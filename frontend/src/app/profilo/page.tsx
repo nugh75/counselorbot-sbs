@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { visualLabel } from '@/lib/i18n-visual-tools';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
@@ -22,7 +23,7 @@ import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
     ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
-    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass,
+    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -39,7 +40,7 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-type PersonalSection = 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation';
+type PersonalSection = 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline';
 
 const PERSONAL_AREAS = [
     {
@@ -85,6 +86,13 @@ const PERSONAL_AREAS = [
         descriptionKey: 'profile.portfolioSection.subtitle',
     },
     {
+        id: 'timeline',
+        slug: 'timeline',
+        icon: Route,
+        titleKey: 'timeline',
+        descriptionKey: 'timelinePurpose',
+    },
+    {
         id: 'sessions',
         slug: 'compilazioni',
         icon: ClipboardList,
@@ -120,8 +128,8 @@ export default function ProfilePage() {
     const personalAreas = PERSONAL_AREAS.map((area) => ({
         ...area,
         href: `/profilo/${area.slug}`,
-        title: t(area.titleKey),
-        description: t(area.descriptionKey),
+        title: area.id === 'timeline' ? visualLabel(lang, area.titleKey) : t(area.titleKey),
+        description: area.id === 'timeline' ? visualLabel(lang, area.descriptionKey) : t(area.descriptionKey),
     }));
     const activeArea = personalAreas.find((area) => area.id === activeSection) ?? null;
     const ActiveAreaIcon = activeArea?.icon;

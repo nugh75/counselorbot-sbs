@@ -943,3 +943,23 @@ test('timeline keyboard ordering and selected chat handoff preserve the other mi
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });
+
+for (const width of [390, 1280]) test(`personal area opens timeline independently at ${width}px`, async () => {
+    const { page, context } = await fixture(width);
+    try {
+        await page.route('**/api/user/questionnaire-results', route => route.fulfill({ json: [{ id: 1, session_id: 'fixture', questionnaire_type: 'QSA', submitted_at: '2026-09-08T09:00:00Z', scores: {} }] }));
+        await page.goto(`${origin}/profilo`);
+        await page.getByRole('link', { name: /Linea del tempo/ }).click();
+        await page.getByRole('heading', { name: 'Scegli una sessione' }).waitFor();
+        await page.getByRole('link', { name: /QSA ·/ }).click();
+        await page.getByLabel('Titolo del percorso', { exact: true }).waitFor();
+        assert.equal(new URL(page.url()).searchParams.get('session'), 'fixture');
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+        await page.route('**/api/user/questionnaire-results', route => route.fulfill({ status: 503, json: {} }));
+        await page.goto(`${origin}/profilo/timeline`);
+        await page.getByText(visualLabel('it', 'loadError'), { exact: true }).waitFor();
+        await page.route('**/api/user/questionnaire-results', route => route.fulfill({ json: [] }));
+        await page.getByRole('button', { name: visualLabel('it', 'retry'), exact: true }).click();
+        await page.getByText('Non ci sono ancora sessioni.', { exact: false }).waitFor();
+    } finally { await context.close(); }
+});

@@ -1,5 +1,7 @@
 const labels: Record<string, Record<string, string>> = {
     "it": {
+        "chooseSession": "Scegli una sessione",
+        "noTimelineSessions": "Non ci sono ancora sessioni. Avvia un percorso dalla pagina iniziale.",
         "snapshotTitle": "Titolo del lavoro",
         "actionKind": "Tipo di obiettivo",
         "activity": "Attività",
@@ -165,6 +167,8 @@ const labels: Record<string, Record<string, string>> = {
         "copyDownload": "Esporta bozza come testo"
     },
     "en": {
+        "chooseSession": "Choose a session",
+        "noTimelineSessions": "No sessions yet. Start a journey from the home page.",
         "snapshotTitle": "Work title",
         "actionKind": "Goal type",
         "activity": "Activity",
@@ -330,6 +334,8 @@ const labels: Record<string, Record<string, string>> = {
         "copyDownload": "Export draft as text"
     },
     "es": {
+        "chooseSession": "Elige una sesión",
+        "noTimelineSessions": "Todavía no hay sesiones. Inicia un recorrido desde la página principal.",
         "snapshotTitle": "Título del trabajo",
         "actionKind": "Tipo de objetivo",
         "activity": "Actividad",
@@ -495,6 +501,8 @@ const labels: Record<string, Record<string, string>> = {
         "copyDownload": "Exportar borrador como texto"
     },
     "fr": {
+        "chooseSession": "Choisissez une session",
+        "noTimelineSessions": "Aucune session pour le moment. Commencez un parcours depuis la page d’accueil.",
         "snapshotTitle": "Titre du travail",
         "actionKind": "Type d’objectif",
         "activity": "Activité",
@@ -660,6 +668,8 @@ const labels: Record<string, Record<string, string>> = {
         "copyDownload": "Exporter le brouillon en texte"
     },
     "de": {
+        "chooseSession": "Sitzung auswählen",
+        "noTimelineSessions": "Noch keine Sitzungen. Beginne einen Weg auf der Startseite.",
         "snapshotTitle": "Titel der Arbeit",
         "actionKind": "Art des Ziels",
         "activity": "Aktivität",
@@ -825,6 +835,8 @@ const labels: Record<string, Record<string, string>> = {
         "copyDownload": "Entwurf als Text exportieren"
     },
     "sv": {
+        "chooseSession": "Välj en session",
+        "noTimelineSessions": "Inga sessioner ännu. Börja från startsidan.",
         "snapshotTitle": "Arbetets titel",
         "actionKind": "Typ av mål",
         "activity": "Aktivitet",
