@@ -18,12 +18,12 @@ MAX_MESSAGES = 40
 MAX_MESSAGE_CHARS = 4000
 
 WELCOME = {
-    "it": "Sono la Bussola di CounselorBot. Ti spiego come funziona la piattaforma e, partendo da ciò che vuoi affrontare adesso, ti aiuto a scegliere da dove iniziare. Puoi tornare qui ogni volta. Cosa ti porta oggi in CounselorBot?",
-    "en": "I am the CounselorBot Compass. I explain how the platform works and help you choose where to begin from what matters to you now. You can return whenever you want. What brings you to CounselorBot today?",
-    "es": "Soy la Brújula de CounselorBot. Te explico cómo funciona la plataforma y te ayudo a elegir por dónde empezar según lo que necesitas ahora. Puedes volver cuando quieras. ¿Qué te trae hoy a CounselorBot?",
-    "fr": "Je suis la Boussole de CounselorBot. Je vous explique le fonctionnement de la plateforme et vous aide à choisir par où commencer selon votre besoin actuel. Vous pouvez revenir quand vous le souhaitez. Qu’est-ce qui vous amène aujourd’hui?",
-    "de": "Ich bin der CounselorBot-Kompass. Ich erkläre die Plattform und helfe dir, ausgehend von deinem aktuellen Anliegen einen Anfang zu wählen. Du kannst jederzeit zurückkommen. Was führt dich heute zu CounselorBot?",
-    "sv": "Jag är CounselorBots kompass. Jag förklarar hur plattformen fungerar och hjälper dig välja var du kan börja utifrån det som är viktigt just nu. Du kan återvända när du vill. Vad tar dig till CounselorBot idag?",
+    "it": "Sono la Bussola di CounselorBot. Ti spiego come funziona la piattaforma e, partendo da ciò che vuoi affrontare adesso, ti aiuto a scegliere da dove iniziare. Se preferisci vedere com’è fatta l’applicazione, la Guida in alto la mostra schermata per schermata. Puoi tornare qui ogni volta. Cosa ti porta oggi in CounselorBot?",
+    "en": "I am the CounselorBot Compass. I explain how the platform works and help you choose where to begin from what matters to you now. If you would rather see how the application looks, the Guide at the top shows it screen by screen. You can return whenever you want. What brings you to CounselorBot today?",
+    "es": "Soy la Brújula de CounselorBot. Te explico cómo funciona la plataforma y te ayudo a elegir por dónde empezar según lo que necesitas ahora. Si prefieres ver cómo es la aplicación, la Guía de arriba la muestra pantalla por pantalla. Puedes volver cuando quieras. ¿Qué te trae hoy a CounselorBot?",
+    "fr": "Je suis la Boussole de CounselorBot. Je vous explique le fonctionnement de la plateforme et vous aide à choisir par où commencer selon votre besoin actuel. Si vous préférez voir à quoi ressemble l’application, le Guide en haut la présente écran par écran. Vous pouvez revenir quand vous le souhaitez. Qu’est-ce qui vous amène aujourd’hui?",
+    "de": "Ich bin der CounselorBot-Kompass. Ich erkläre die Plattform und helfe dir, ausgehend von deinem aktuellen Anliegen einen Anfang zu wählen. Wenn du lieber sehen möchtest, wie die Anwendung aussieht, zeigt sie dir die Anleitung oben Bildschirm für Bildschirm. Du kannst jederzeit zurückkommen. Was führt dich heute zu CounselorBot?",
+    "sv": "Jag är CounselorBots kompass. Jag förklarar hur plattformen fungerar och hjälper dig välja var du kan börja utifrån det som är viktigt just nu. Vill du hellre se hur applikationen ser ut visar Guiden högst upp den skärm för skärm. Du kan återvända när du vill. Vad tar dig till CounselorBot idag?",
 }
 
 
