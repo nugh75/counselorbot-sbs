@@ -719,3 +719,82 @@ def test_orientation_sessions_are_private():
         f"/orientation/sessions/{session_id}/message",
         json={"message": "Provo ad accedere", "language": "it"},
     ).status_code == 404
+
+
+def test_explicit_state_changes_validate_the_closed_catalog_without_fallback_routes():
+    fallback = fallback_analysis('Voglio organizzare lo studio', 'it')
+    for action in ('hold', 'clear', 'unexpected'):
+        result = _clean_analysis({'reply': 'Ripartiamo.', 'state_action': action,
+                                  'recommendations': [{'id': 'QAP', 'reason': 'Da ignorare'}]}, fallback)
+        assert result.state_action == (action if action != 'unexpected' else 'hold')
+        assert result.recommendations == []
+        assert result.reply == 'Ripartiamo.'
+    for recommendations in ([], [{'id': 'UNKNOWN', 'reason': 'Non valido'}], [{'id': 'QAP', 'reason': ''}]):
+        result = _clean_analysis({'reply': 'Parliamone.', 'state_action': 'replace',
+                                 'recommendations': recommendations}, fallback)
+        assert result.state_action == 'hold'
+        assert result.recommendations == []
+    for action in ('clear', 'replace'):
+        result = _clean_analysis({'state_action': action, 'recommendations': [{'id': 'QAP', 'reason': 'Nuova direzione'}]}, fallback)
+        assert result.state_action == 'hold'
+        assert result.recommendations == []
+    result = _clean_analysis({'reply': 'Una nuova direzione.', 'state_action': 'replace',
+                             'recommendations': [{'id': 'QAP', 'reason': 'La scelta di lavoro descritta.'}] * 2}, fallback)
+    assert result.state_action == 'replace'
+    assert result.recommendations == [{'id': 'QAP', 'reason': 'La scelta di lavoro descritta.'}]
+
+
+def test_session_can_hold_replace_and_clear_proposals_without_writing_personal_data():
+    import json
+    username = 'orientation.state-changes'
+    _identity['username'] = username
+    _reset(username)
+    session_id = client.post('/orientation/sessions', json={'language': 'it', 'new_session': True}).json()['session_id']
+    endpoint = f'/orientation/sessions/{session_id}/message'
+    try:
+        first = client.post(endpoint, json={'message': 'Voglio organizzare lo studio'}).json()
+        prior = first['recommendations']
+        assert prior
+        for action, incoming, message, expected in [
+            ('hold', [], 'Dove trovo la guida?', prior),
+            ('replace', [{'id': 'QAP', 'reason': 'Una scelta professionale concreta.'}],
+             'Lo studio non è il mio obiettivo. Devo scegliere fra due lavori.', [{'id': 'QAP', 'reason': 'Una scelta professionale concreta.'}]),
+            ('replace', [{'id': 'UNKNOWN', 'reason': 'Non valido'}], 'Spiegami meglio.', [{'id': 'QAP', 'reason': 'Una scelta professionale concreta.'}]),
+            ('clear', [], 'Non voglio continuare con queste proposte. Non so ancora cosa affrontare.', []),
+        ]:
+            _FakeAIService.override = json.dumps({'reply': 'Ripartiamo da ciò che ti interessa.',
+                'state_action': action, 'recommendations': incoming, 'notebook_draft': {'goal': 'NON SCRIVERE'}})
+            response = client.post(endpoint, json={'message': message})
+            assert response.status_code == 200
+            assert response.json()['recommendations'] == expected
+            assert 'notebook_draft' not in response.json()
+        assert client.post(f'/orientation/sessions/{session_id}/complete').status_code == 409
+        db = _Session()
+        try:
+            assert db.query(models.LearnerProfileRevision).filter_by(username=username).count() == 0
+            assert db.query(models.StudentBooklet).filter_by(username=username).count() == 0
+        finally:
+            db.close()
+    finally:
+        _FakeAIService.override = None
+
+
+def test_current_cards_are_passed_to_the_same_model_call(monkeypatch):
+    calls = []
+    class CaptureService(_FakeAIService):
+        def get_response(self, *args, **kwargs):
+            calls.append((args, kwargs))
+            return '{"reply":"Restiamo su questa proposta.","state_action":"hold","recommendations":[]}'
+    monkeypatch.setattr(orientation, 'AIService', CaptureService)
+    db = _Session()
+    try:
+        result = analyze_turn(db, 'Spiegami meglio', 'it', current_recommendations=[{'id': 'QSA', 'reason': 'Il tuo metodo di studio'}])
+    finally:
+        db.close()
+    assert result.state_action == 'hold'
+    assert len(calls) == 1
+    prompt = calls[0][0][1]
+    assert 'Il tuo metodo di studio' in prompt
+    assert 'untrusted conversation data' in prompt
+    assert 'QUESTIONNAIRES' in prompt and 'competenzestrategiche.it' in prompt
+    assert 'Guide at /guide' in prompt and 'Assistant for platform questions' in prompt

@@ -235,14 +235,20 @@ def orientation_message(
     if row.status != "in_progress":
         raise HTTPException(status_code=409, detail="Orientation session already completed")
     history = list(row.messages or [])
-    analysis = analyze_turn(db, payload.message, payload.language, history, row.counselor_id, row.username)
+    analysis = analyze_turn(db, payload.message, payload.language, history, row.counselor_id, row.username,
+                            current_recommendations=list(row.recommendations or []))
     messages = (history + [
         {"role": "user", "content": payload.message},
         {"role": "assistant", "content": analysis.reply},
     ])[-MAX_MESSAGES:]
     row.language = normalize_language(payload.language)
     row.messages = messages
-    row.recommendations = _merged_recommendations(row.recommendations, analysis.recommendations)
+    if analysis.state_action == "clear":
+        row.recommendations = []
+    elif analysis.state_action == "replace":
+        row.recommendations = analysis.recommendations
+    elif analysis.state_action == "merge":
+        row.recommendations = _merged_recommendations(row.recommendations, analysis.recommendations)
     db.commit()
     db.refresh(row)
     return _serialize(row)
