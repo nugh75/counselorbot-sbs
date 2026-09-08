@@ -24,6 +24,13 @@ def test_partial_answer_is_bounded_at_the_api_boundary(model, values):
         model(**values, partial_response="x" * 60001)
 
 
+def test_opencode_chat_request_accepts_response_length():
+    req = OpencodeChatRequest(session_id="s", message="ciao", response_length="short")
+    assert req.response_length == "short"
+    with pytest.raises(ValidationError):
+        OpencodeChatRequest(session_id="s", response_length="extra")
+
+
 def test_continuation_quotes_the_partial_and_preserves_the_original_question():
     assert continuation_message("Question", "") == "Question"
     prompt = continuation_message("Question", 'Text\n"quoted"')

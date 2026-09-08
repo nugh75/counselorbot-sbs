@@ -32,12 +32,13 @@ import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
 import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
-import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, setExperiencePref, setInputMethodPref } from '@/lib/session-prefs';
+import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, getResponseLengthPref, setExperiencePref, setInputMethodPref, setResponseLengthPref } from '@/lib/session-prefs';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
 import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { shouldReviewNotebookBeforeInstrument } from '@/lib/notebook-flow';
 import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
 import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-history';
@@ -217,6 +218,7 @@ export default function Home() {
     const [sessionId, setSessionId] = useState<string>('');
     const [pdfToken, setPdfToken] = useState<string | undefined>(undefined);
     const [experience, setExperience] = useState<'standard' | 'opencode' | null>(null);
+    const [responseLength, setResponseLength] = useState<ResponseLength>(() => getResponseLengthPref());
     // Apertura della chat in corso: tiene fermo il comando finché le due
     // scritture non sono andate.
     const [starting, setStarting] = useState(false);
@@ -362,6 +364,7 @@ export default function Home() {
                 // La sandbox OpenCode si congela come la chat guidata: riaprirla
                 // in modalità guidata mostrerebbe un percorso che non è il suo.
                 setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
+                if (snapshot.response_length) setResponseLength(snapshot.response_length);
                 // La sandbox rigenera `documento.md` a ogni apertura: senza il
                 // token il PDF del profilo sparirebbe dal workspace.
                 setPdfToken(snapshot.pdf_token || undefined);
@@ -639,6 +642,13 @@ export default function Home() {
         beginInteraction(newSessionId, qType);
     };
 
+    // Lunghezza risposta: scelta nella schermata della modalità e ricordata per
+    // i prossimi strumenti; in chat guidata resta comunque regolabile.
+    const handleResponseLengthChange = (value: ResponseLength) => {
+        setResponseLength(value);
+        setResponseLengthPref(value);
+    };
+
     // Scelta modalità chat: apre la chat, la ricorda per i prossimi strumenti e
     // registra il punto di ripresa (header "Riprendi").
     const chooseExperience = (exp: 'standard' | 'opencode') => {
@@ -883,6 +893,10 @@ export default function Home() {
                                                 {t('guided.mode.sandbox')}
                                             </Button>
                                         </div>
+                                        <div className="mt-4 flex flex-col items-center gap-1.5">
+                                            <p className="text-xs font-semibold text-slate-500">{t('responseLength.label')}</p>
+                                            <ResponseLengthSelector value={responseLength} onChange={handleResponseLengthChange} />
+                                        </div>
                                     </div>
                                 </div>
                             ) : experience === 'standard' ? (
@@ -896,6 +910,7 @@ export default function Home() {
                                     sessionId={sessionId}
                                     locale={lang}
                                     frozenSnapshot={frozenSnapshot}
+                                    initialResponseLength={responseLength}
                                     onFrozen={() => {
                                         setResume(null);
                                         setFrozenSnapshot(null);
@@ -912,6 +927,7 @@ export default function Home() {
                                     sessionId={sessionId}
                                     locale={lang}
                                     onComplete={handleInteractionComplete}
+                                    responseLength={responseLength}
                                     restoredMessages={
                                         frozenSnapshot?.session_id === sessionId
                                             ? frozenSnapshot.messages

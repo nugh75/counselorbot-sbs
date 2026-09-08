@@ -5,9 +5,11 @@
 
 export type InputMethodPref = 'manual' | 'upload';
 export type ExperiencePref = 'standard' | 'opencode';
+export type ResponseLengthPref = 'short' | 'medium' | 'long';
 
 const METHOD_KEY = 'counselorbot_input_method';
 const EXPERIENCE_KEY = 'counselorbot_experience';
+const RESPONSE_LENGTH_KEY = 'counselorbot_response_length';
 const EVENT = 'counselorbot-prefs-change';
 
 function read<T extends string>(key: string, allowed: readonly T[]): T | null {
@@ -55,6 +57,14 @@ export function experiencePrefForInstrument(
 
 export function setExperiencePref(value: ExperiencePref | null): void {
     write(EXPERIENCE_KEY, value);
+}
+
+export function getResponseLengthPref(): ResponseLengthPref {
+    return read(RESPONSE_LENGTH_KEY, ['short', 'medium', 'long'] as const) ?? 'medium';
+}
+
+export function setResponseLengthPref(value: ResponseLengthPref): void {
+    write(RESPONSE_LENGTH_KEY, value);
 }
 
 // Torna a farsi chiedere metodo e modalità al prossimo strumento.

@@ -70,6 +70,7 @@ interface GuidedChatInterfaceProps {
     onFrozen?: () => void;
     onBack?: () => void;
     frozenSnapshot?: FrozenSessionDetail | null;
+    initialResponseLength?: ResponseLength;
 }
 
 interface ChatMessage {
@@ -423,7 +424,7 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 
 // --- Main Component ---
 
-export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const { streamChat, ...continuation } = useChatContinuation();
@@ -494,7 +495,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     })();
 
     const hiddenMessages = messages.length - visibleMessages.length;
-    const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
+    const [responseLength, setResponseLength] = useState<ResponseLength>(initialResponseLength ?? 'medium');
     const [input, setInput] = useState('');
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);

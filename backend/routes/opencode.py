@@ -39,7 +39,9 @@ from ..chat_continuation import continuation_message, continuation_prefix
 from ..chat_logic import (
     _apply_language_directive,
     _apply_qsa_factor_directive,
+    _apply_response_length_directive,
     _ensure_questionnaire_guided_steps,
+    _limit_visible_words,
     _resolve_system_prompt,
     _retrieved_context,
 )
@@ -936,15 +938,18 @@ async def chat_opencode(
                     "GET", f"{config['url']}/event?directory=%2Fwork"
                 ) as events:
                     events.raise_for_status()
+                    system_prompt = (
+                        "Do not expose internal reasoning or narrate tool calls. "
+                        "Return only the final student-facing answer in the required language."
+                    )
+                    if request.response_length:
+                        system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
                     body = {
                         "model": {
                             "providerID": "ollama",
                             "modelID": OPENCODE_CHAT_MODEL,
                         },
-                        "system": (
-                            "Do not expose internal reasoning or narrate tool calls. "
-                            "Return only the final student-facing answer in the required language."
-                        ),
+                        "system": system_prompt,
                         "parts": [{"type": "text", "text": prompt}],
                     }
                     response = await client.post(
@@ -975,7 +980,8 @@ async def chat_opencode(
                                     full_text = ""
                                 full_text += delta
                                 if text_part_count > 1:
-                                    yield f"data: {json.dumps({'display': request.partial_response + full_text})}\n\n"
+                                    display_text, _ = _limit_visible_words(request.partial_response + full_text, request.response_length)
+                                    yield f"data: {json.dumps({'display': display_text})}\n\n"
                         elif event_type == "session.error":
                             error = properties.get("error") or "OpenCode error"
                             yield f"data: {json.dumps({'error': str(error)})}\n\n"
@@ -1002,6 +1008,7 @@ async def chat_opencode(
                             if request.partial_response and not full_text.strip():
                                 raise RuntimeError("The provider returned no continuation.")
                             full_text = request.partial_response + full_text
+                            full_text, _ = _limit_visible_words(full_text, request.response_length)
                             # Persist response as candidate for student feedback
                             response_id = None
                             try:

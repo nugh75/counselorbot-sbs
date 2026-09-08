@@ -99,3 +99,4 @@ class OpencodeChatRequest(schemas.BaseModel):
     session_id: str
     message: str = ""
     seed: bool = False
+    response_length: Optional[Literal["short", "medium", "long"]] = None
