@@ -191,6 +191,26 @@ def _apply_counselor_overrides(
         ai_service.reasoning_budget_override = reasoning_budget
 
 
+# Passi in cui la risposta e' presentazione o patto, non analisi: il testo e'
+# gia' nel prompt del passo e il pensiero non lo cambia, costa soltanto. La
+# regola vince sulla scelta dello studente perche' non c'e' su cosa ragionare.
+NO_REASONING_STEP_MODES = frozenset({"intro"})
+NO_REASONING_STEP_IDS = frozenset({"qap-intro", "qpcc-intro", "qpcs-intro", "savickas-patto"})
+
+
+def _step_forbids_reasoning(step) -> bool:
+    if step is None:
+        return False
+    return step.id in NO_REASONING_STEP_IDS or (step.system_prompt_mode or "") in NO_REASONING_STEP_MODES
+
+
+def _apply_step_reasoning(ai_service: AIService, step) -> None:
+    if not _step_forbids_reasoning(step):
+        return
+    ai_service.disable_thinking = True
+    ai_service.config["disable_thinking"] = "true"
+
+
 def _apply_reasoning_effort(ai_service: AIService, effort: str | None) -> None:
     """Scelta dello studente sullo spazio di ragionamento.
 
@@ -486,6 +506,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
+    _apply_step_reasoning(ai_service, step)
     is_first_step = False
     if request.use_phase_prompt and step:
         first_step = db.query(models.GuidedStep).filter(models.GuidedStep.questionnaire_type == step.questionnaire_type).order_by(models.GuidedStep.sort_order).first()
@@ -711,6 +732,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
+    _apply_step_reasoning(ai_service, step)
     is_first_step = False
     if request.use_phase_prompt and step:
         first_step = db.query(models.GuidedStep).filter(models.GuidedStep.questionnaire_type == step.questionnaire_type).order_by(models.GuidedStep.sort_order).first()
