@@ -15,6 +15,7 @@ import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, subscr
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ChatBubble } from '@/components/ui/ChatBubble';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
+import { NotebookBookletPanel, NotebookBookletTriggers, type DeskTab } from '@/components/profile/NotebookBookletPanel';
 
 // Tabelle con bordi + scroll orizzontale per una lettura pulita dei documenti.
 const mdComponents: Components = {
@@ -125,6 +126,7 @@ export default function AssistentePage() {
     const [collection, setCollection] = useState<Collection>('competenzestrategiche');
     const [messages, setMessages] = useState<Msg[]>([]);
     const [input, setInput] = useState('');
+    const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
     const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
     const [loading, setLoading] = useState(false);
     const [sessionId, setSessionId] = useState<string | undefined>(undefined);
@@ -592,7 +594,13 @@ export default function AssistentePage() {
 
                     <ChatContinuation locale={lang} {...continuation} />
                     {/* Input */}
-                    <div className="mb-2 flex justify-end">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-1">
+                            <NotebookBookletTriggers
+                                buttonClassName="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                                onOpen={setDeskTab}
+                            />
+                        </div>
                         <ResponseLengthSelector
                             value={responseLength}
                             onChange={setResponseLength}
@@ -705,6 +713,7 @@ export default function AssistentePage() {
                     </aside>
                 )}
             </div>
+            <NotebookBookletPanel tab={deskTab} onSelectTab={setDeskTab} onClose={() => setDeskTab(null)} lang={lang} />
         </div>
     );
 }

@@ -27,6 +27,7 @@ import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
+import { NotebookBookletPanel, NotebookBookletTriggers, asBookletType, type DeskTab } from '@/components/profile/NotebookBookletPanel';
 import { VisualTools } from '@/components/visual/VisualTools';
 import '@xterm/xterm/css/xterm.css';
 
@@ -93,6 +94,7 @@ export function OpenCodeExperience({
     const [graphicalAvailable, setGraphicalAvailable] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
+    const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
     const [status, setStatus] = useState('');
     const [busy, setBusy] = useState(false);
     const [streaming, setStreaming] = useState(false);
@@ -571,6 +573,13 @@ export function OpenCodeExperience({
                                 window.requestAnimationFrame(() => document.getElementById('opencode-composer')?.focus());
                             }} />}
 
+                        {viewMode === 'chat' && (
+                            <NotebookBookletTriggers
+                                buttonClassName="flex items-center gap-1.5 rounded-lg p-1.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                                onOpen={setDeskTab}
+                            />
+                        )}
+
                         <button
                             type="button"
                             onClick={concludePath}
@@ -739,6 +748,13 @@ export function OpenCodeExperience({
                     </>
                 )}
             </div>
+            <NotebookBookletPanel
+                tab={deskTab}
+                onSelectTab={setDeskTab}
+                onClose={() => setDeskTab(null)}
+                lang={locale}
+                questionnaireType={asBookletType(questionnaire.id)}
+            />
         </div>
     );
 }
