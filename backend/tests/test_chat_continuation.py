@@ -59,6 +59,29 @@ def test_standard_reasoning_effort_leaves_the_preset_alone():
     assert service.reasoning_budget_override == 3000
 
 
+def test_presentation_steps_never_reason():
+    """Presentazione e patto recitano un testo gia' scritto: il pensiero costa
+    e non cambia la risposta, quindi la regola vince anche su "Esteso"."""
+    for step in (SimpleNamespace(id="intro", system_prompt_mode="intro"),
+                 SimpleNamespace(id="qsar-intro", system_prompt_mode="intro"),
+                 SimpleNamespace(id="savickas-patto", system_prompt_mode="savickas-interview")):
+        service = SimpleNamespace(disable_thinking=False, config={}, reasoning_budget_override=None)
+        chat._apply_reasoning_effort(service, "deep")
+        chat._apply_step_reasoning(service, step)
+        assert service.disable_thinking is True, step.id
+
+
+def test_analysis_steps_keep_the_chosen_reasoning():
+    service = SimpleNamespace(disable_thinking=False, config={}, reasoning_budget_override=None)
+    chat._apply_reasoning_effort(service, "deep")
+    chat._apply_step_reasoning(service, SimpleNamespace(id="sl-synthesis", system_prompt_mode="second-level"))
+    assert service.disable_thinking is False
+    assert service.reasoning_budget_override == 8000
+    # Nessuno step (turno libero): niente da forzare.
+    chat._apply_step_reasoning(service, None)
+    assert service.disable_thinking is False
+
+
 def test_continuation_quotes_the_partial_and_preserves_the_original_question():
     assert continuation_message("Question", "") == "Question"
     prompt = continuation_message("Question", 'Text\n"quoted"')
