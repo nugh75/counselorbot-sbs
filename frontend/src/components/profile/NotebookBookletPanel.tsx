@@ -46,6 +46,47 @@ export function NotebookBookletTriggers({ onOpen, buttonClassName }: TriggersPro
     );
 }
 
+interface ContentProps {
+    tab: DeskTab;
+    lang: string;
+    // Lo strumento della sessione. Dove non ce n'e' uno (chat libera, Bussola)
+    // il libretto lo fa scegliere allo studente.
+    questionnaireType?: BookletType;
+}
+
+// Le due schede senza cornice: cosi' le mostra sia il pannello a se' stante sia
+// la finestra degli strumenti, che le tiene fra le proprie schede.
+export function NotebookBookletContent({ tab, lang, questionnaireType }: ContentProps) {
+    const { t, tf } = useI18n();
+    // Scelta del libretto solo dove lo strumento non lo determina.
+    const [pickedType, setPickedType] = useState<BookletType>('QSA');
+    const bookletType = questionnaireType ?? pickedType;
+
+    if (tab === 'notebook') return <LearnerProfileCard variant="edit" />;
+
+    return (
+        <div className="space-y-3">
+            {!questionnaireType && (
+                <label className="block">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {t('profile.bookletSection.tool')}
+                    </span>
+                    <select
+                        value={bookletType}
+                        onChange={(event) => setPickedType(event.target.value as BookletType)}
+                        className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    >
+                        {ALL_BOOKLET_TYPES.map((type) => (
+                            <option key={type} value={type}>{bookletTypeOptionLabel(type, t, tf)}</option>
+                        ))}
+                    </select>
+                </label>
+            )}
+            <StudentBookletCard questionnaireType={bookletType} lang={lang} />
+        </div>
+    );
+}
+
 interface PanelProps {
     tab: DeskTab | null;
     // La scheda aperta la tiene il chiamante, che la apre gia' dal menu: qui
@@ -53,16 +94,11 @@ interface PanelProps {
     onSelectTab: (tab: DeskTab) => void;
     onClose: () => void;
     lang: string;
-    // Lo strumento della sessione. Dove non ce n'e' uno (chat libera, Bussola)
-    // il libretto lo fa scegliere allo studente.
     questionnaireType?: BookletType;
 }
 
 export function NotebookBookletPanel({ tab, onSelectTab, onClose, lang, questionnaireType }: PanelProps) {
-    const { t, tf } = useI18n();
-    // Scelta del libretto solo dove lo strumento non lo determina.
-    const [pickedType, setPickedType] = useState<BookletType>('QSA');
-    const bookletType = questionnaireType ?? pickedType;
+    const { t } = useI18n();
 
     useEffect(() => {
         if (!tab) return;
@@ -116,29 +152,7 @@ export function NotebookBookletPanel({ tab, onSelectTab, onClose, lang, question
                 </div>
 
                 <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
-                    {tab === 'notebook' ? (
-                        <LearnerProfileCard variant="edit" />
-                    ) : (
-                        <div className="space-y-3">
-                            {!questionnaireType && (
-                                <label className="block">
-                                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                        {t('profile.bookletSection.tool')}
-                                    </span>
-                                    <select
-                                        value={bookletType}
-                                        onChange={(event) => setPickedType(event.target.value as BookletType)}
-                                        className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                                    >
-                                        {ALL_BOOKLET_TYPES.map((type) => (
-                                            <option key={type} value={type}>{bookletTypeOptionLabel(type, t, tf)}</option>
-                                        ))}
-                                    </select>
-                                </label>
-                            )}
-                            <StudentBookletCard questionnaireType={bookletType} lang={lang} />
-                        </div>
-                    )}
+                    <NotebookBookletContent tab={tab} lang={lang} questionnaireType={questionnaireType} />
                 </div>
             </div>
         </div>,

@@ -27,7 +27,7 @@ import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
-import { NotebookBookletPanel, asBookletType, type DeskTab } from '@/components/profile/NotebookBookletPanel';
+import { asBookletType } from '@/components/profile/NotebookBookletPanel';
 import { VisualTools } from '@/components/visual/VisualTools';
 import '@xterm/xterm/css/xterm.css';
 
@@ -94,7 +94,6 @@ export function OpenCodeExperience({
     const [graphicalAvailable, setGraphicalAvailable] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
-    const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
     const [status, setStatus] = useState('');
     const [busy, setBusy] = useState(false);
     const [streaming, setStreaming] = useState(false);
@@ -569,8 +568,7 @@ export function OpenCodeExperience({
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
                         {viewMode === 'chat' && <VisualTools compact sessionId={sessionId} locale={locale}
-                            onOpenNotebook={() => setDeskTab('notebook')}
-                            onOpenBooklet={() => setDeskTab('booklet')}
+                            questionnaireType={asBookletType(questionnaire.id)}
                             onDiscuss={text => {
                                 setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
                                 window.requestAnimationFrame(() => document.getElementById('opencode-composer')?.focus());
@@ -744,13 +742,6 @@ export function OpenCodeExperience({
                     </>
                 )}
             </div>
-            <NotebookBookletPanel
-                tab={deskTab}
-                onSelectTab={setDeskTab}
-                onClose={() => setDeskTab(null)}
-                lang={locale}
-                questionnaireType={asBookletType(questionnaire.id)}
-            />
         </div>
     );
 }

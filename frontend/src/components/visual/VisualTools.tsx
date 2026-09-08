@@ -8,11 +8,16 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
 import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 import { visualLabel } from '@/lib/i18n-visual-tools';
+import { NotebookBookletContent, type DeskTab } from '@/components/profile/NotebookBookletPanel';
+import type { BookletType } from '@/components/profile/StudentBookletCard';
 import { emptyWorkspace, removeCriterion, removeOption, setCell, workspaceText, type ActionStage, type CardBucket, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
 import { VisualPersonalTransfer } from './VisualPersonalTransfer';
 
-type Tab = 'board' | 'comparison' | 'cards';
-export type VisualToolsRequest = { tab: Tab; nonce: number };
+// Le tre schede di lavoro salvano il workspace; taccuino e libretto si salvano
+// da soli, quindi stanno nella stessa fila ma senza barra di salvataggio.
+type WorkTab = 'board' | 'comparison' | 'cards';
+type Tab = WorkTab | DeskTab;
+export type VisualToolsRequest = { tab: WorkTab; nonce: number };
 type Props = {
     sessionId: string;
     locale: string;
@@ -20,27 +25,28 @@ type Props = {
     hideTrigger?: boolean;
     catalog?: RecommendationCatalog;
     onDiscuss?: (text: string) => void;
-    onOpenNotebook?: () => void;
-    onOpenBooklet?: () => void;
+    questionnaireType?: BookletType;
     request?: VisualToolsRequest | null;
 };
 const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
 const buttonClass = 'h-[44px] w-[44px] shrink-0 p-0';
 const stages: ActionStage[] = ['todo', 'doing', 'done'];
 const buckets: CardBucket[] = ['unsorted', 'yes', 'explore', 'no'];
-const tabs: Tab[] = ['board', 'comparison', 'cards'];
+const tabs: Tab[] = ['board', 'comparison', 'cards', 'notebook', 'booklet'];
+const tabIcons = [LayoutList, Columns3, Layers, NotebookPen, BookMarked];
+const isDeskTab = (tab: Tab): tab is DeskTab => tab === 'notebook' || tab === 'booklet';
 
 export function VisualTools(props: Props) {
     return <WorkspaceView key={props.sessionId} {...props} />;
 }
 
-function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, onOpenNotebook, onOpenBooklet, request }: Props) {
+function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, questionnaireType, request }: Props) {
     const l = (key: string) => visualLabel(locale, key);
     const endpoint = `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
     const [open, setOpen] = useState(false);
     const [personalOpen, setPersonalOpen] = useState(false);
     const [tab, setTab] = useState<Tab>('board');
-    const [helpOpen, setHelpOpen] = useState<Record<Tab, boolean>>({ board: false, comparison: false, cards: false });
+    const [helpOpen, setHelpOpen] = useState<Record<WorkTab, boolean>>({ board: false, comparison: false, cards: false });
     const [saved, setSaved] = useState<SavedWorkspace>({ revision: 0, workspace: emptyWorkspace() });
     const [work, setWork] = useState<VisualWorkspace>(emptyWorkspace);
     const [history, setHistory] = useState<VisualWorkspace[]>([]);
@@ -191,18 +197,14 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
                     <div className="flex items-start justify-between gap-2">
                         <div><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{l('title')}</h2></div>
-                        <div className="flex shrink-0 items-center gap-1">
-                            {onOpenNotebook && <Tooltip content={l('notebook')}><Button type="button" variant="ghost" className={buttonClass} aria-label={l('notebook')} onClick={() => { setOpen(false); onOpenNotebook(); }}><NotebookPen className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
-                            {onOpenBooklet && <Tooltip content={l('booklet')}><Button type="button" variant="ghost" className={buttonClass} aria-label={l('booklet')} onClick={() => { setOpen(false); onOpenBooklet(); }}><BookMarked className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
-                            <Tooltip content={l('close')}><Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button></Tooltip>
-                        </div>
+                        <Tooltip content={l('close')}><Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button></Tooltip>
                     </div>
                     <div role="tablist" aria-label={l('title')} className="mt-3 flex flex-wrap gap-1">
-                        {tabs.map((key, index) => { const Icon = [LayoutList, Columns3, Layers][index]; return <Tooltip key={key} content={l(key)}><Button type="button" role="tab" aria-label={l(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
+                        {tabs.map((key, index) => { const Icon = tabIcons[index]; return <Tooltip key={key} content={l(key)}><Button type="button" role="tab" aria-label={l(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
                             variant={tab === key ? 'primary' : 'secondary'} className={buttonClass} onClick={() => { setPersonalOpen(false); setTab(key); }} onKeyDown={event => {
                                 if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                                 event.preventDefault();
-                                const next = event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (index + (event.key === 'ArrowLeft' ? 2 : 1)) % 3;
+                                const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowLeft' ? tabs.length - 1 : 1)) % tabs.length;
                                 setPersonalOpen(false); setTab(tabs[next]); document.getElementById(`${id}-${tabs[next]}`)?.focus();
                             }}><Icon className="h-4 w-4 shrink-0" aria-hidden="true" /></Button></Tooltip>; })}
                     </div>
@@ -215,7 +217,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                             {loaded && <Tooltip content={l('copyDownload')}><Button aria-label={l('copyDownload')} type="button" variant="secondary" className={buttonClass} onClick={() => download(new Blob([workspaceText(work, l)], { type: 'text/plain;charset=utf-8' }), 'counselorbot_visual_draft.txt')}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                         </div>
                     </div>}
-                    {personalOpen && loaded ? <VisualPersonalTransfer sessionId={sessionId} locale={locale} work={work} saveWorkspace={save} onClose={() => { setPersonalOpen(false); window.requestAnimationFrame(() => document.getElementById(`${id}-personal`)?.focus()); }} /> : !loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
+                    {personalOpen && loaded ? <VisualPersonalTransfer sessionId={sessionId} locale={locale} work={work} saveWorkspace={save} onClose={() => { setPersonalOpen(false); window.requestAnimationFrame(() => document.getElementById(`${id}-personal`)?.focus()); }} /> : isDeskTab(tab) ? <NotebookBookletContent tab={tab} lang={locale} questionnaireType={questionnaireType} /> : !loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
                         <section aria-label={l('howTo')} className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm leading-relaxed text-slate-800">
                             <h3 className="font-semibold">{l(tab)}</h3>
                             <details key={tab} open={helpOpen[tab]} onToggle={event => {
@@ -321,7 +323,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                         </>}
                     </fieldset>}
                 </div>
-                <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
+                {!isDeskTab(tab) && <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
                     <p role="status" className="text-sm text-slate-600">{l(busy ? 'saving' : dirty ? 'unsaved' : loaded ? 'saved' : 'loading')}</p>
                     <div className="flex flex-wrap gap-2">
                         <Tooltip content={l('personalLinks')} side="top"><Button id={`${id}-personal`} aria-label={l('personalLinks')} aria-expanded={personalOpen} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy} onClick={() => setPersonalOpen(value => !value)}><BookOpen className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
@@ -330,7 +332,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                         <Tooltip content={l('exportHelp')} side="top"><Button aria-label={l('export')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void exportPdf()}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button aria-label={l('discuss')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void discuss()}><MessageSquare className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}</>}
                     </div>
-                </footer>
+                </footer>}
             </section>
         </div>, document.body)}
     </>;
