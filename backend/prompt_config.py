@@ -795,9 +795,21 @@ DEFAULT_SYSTEM_PROMPT_QAP_INTRO = (
 # Gli step di benvenuto di ogni percorso. QSA/QSAr/ZTPI/SAVICKAS li marcano anche
 # con `system_prompt_mode = "intro"`; QPCS/QPCC/QAP aprono invece con il mode di
 # analisi o intervista, quindi il mode da solo non basta a riconoscerli.
+# Le installazioni storiche a due passi chiamano lo step di apertura
+# `<strumento>-welcome`; qui si chiama `<strumento>-intro`. La riga di prompt e'
+# la stessa, quindi l'id storico viene risolto su quello corrente invece di
+# duplicare la voce nel pannello.
+GUIDED_PHASE_ALIASES: Dict[str, str] = {
+    "qpcs-welcome": "qpcs-intro",
+    "qpcc-welcome": "qpcc-intro",
+    "qap-welcome": "qap-intro",
+}
+
+
 WELCOME_PHASE_IDS = frozenset({
     "intro", "qsar-intro", "ztpi-intro", "savickas-intro",
     "qpcs-intro", "qpcc-intro", "qap-intro",
+    *GUIDED_PHASE_ALIASES,
 })
 
 

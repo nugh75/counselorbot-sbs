@@ -42,6 +42,7 @@ from .prompt_config import (
     DEFAULT_QPCC_GUIDED_STEPS,
     DEFAULT_QAP_GUIDED_STEPS,
     DEFAULT_IDEA_GUIDED_STEPS,
+    GUIDED_PHASE_ALIASES,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
     WELCOME_PHASE_IDS,
     MODE_TO_SYSTEM_PROMPT_KEY,
@@ -1740,6 +1741,7 @@ def _should_sanitize_ztpi_text(mode: Optional[str], phase: Optional[str]) -> boo
 def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str], db):
     """Resolve system prompt key/value with guided-phase override support."""
     # Questions phase has its own system prompt
+    phase = GUIDED_PHASE_ALIASES.get(phase, phase)
     if phase in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS:
         guided_system = GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS[phase]
         guided_key = guided_system["key"]
