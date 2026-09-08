@@ -10,6 +10,7 @@ import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import { CompassMark } from '@/components/ui/CompassMark';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
+import { NotebookBookletPanel, NotebookBookletTriggers, type DeskTab } from '@/components/profile/NotebookBookletPanel';
 import { useI18n } from '@/lib/i18n-context';
 import {
     completeOrientation,
@@ -52,6 +53,7 @@ export default function BussolaPage() {
     const [sending, setSending] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [input, setInput] = useState('');
+    const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
     const [error, setError] = useState('');
     const [nextHref, setNextHref] = useState<string | null>(null);
     // Strumento scelto dalle raccomandazioni: prima di uscire si chiede il taccuino.
@@ -346,6 +348,12 @@ export default function BussolaPage() {
                         {errorNote && <div className="border-t border-slate-100 px-4 py-3 sm:px-6">{errorNote}</div>}
                         {session.status === 'in_progress' && (
                             <form onSubmit={submitMessage} className="border-t border-slate-100 bg-slate-50/70 p-3 sm:p-4">
+                                <div className="mb-2 flex flex-wrap items-center gap-1">
+                                    <NotebookBookletTriggers
+                                        buttonClassName="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                                        onOpen={setDeskTab}
+                                    />
+                                </div>
                                 <div className="flex items-end gap-2">
                                     <textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} rows={2} maxLength={4000} placeholder={t('orientation.input.placeholder')} className="min-h-20 flex-1 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                                     <button type="submit" disabled={!input.trim() || sending} aria-label={t('orientation.input.send')} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40"><Send className="h-4 w-4" /></button>
@@ -388,6 +396,7 @@ export default function BussolaPage() {
             )}
 
             {!session && errorNote}
+            <NotebookBookletPanel tab={deskTab} onSelectTab={setDeskTab} onClose={() => setDeskTab(null)} lang={lang} />
         </div>
     );
 }
