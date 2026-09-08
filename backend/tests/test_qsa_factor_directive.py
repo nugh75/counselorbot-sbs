@@ -247,6 +247,10 @@ def test_second_level_method_does_not_dictate_the_closing_formula():
     assert "matches their experience" not in SECOND_LEVEL_METHOD_TEXT
     assert LEGACY_SECOND_LEVEL_METHOD not in SECOND_LEVEL_METHOD_TEXT
     assert "Do not ask the student to confirm" in SECOND_LEVEL_METHOD_TEXT
+    # Nemmeno gli esempi sono innocui: "taken together, this suggests that..."
+    # e' uscito tradotto ("Prendete insieme, questo suggerisce che") in una
+    # risposta reale, come apertura fissa dell'ipotesi.
+    assert "taken together" not in SECOND_LEVEL_METHOD_TEXT
     assert "not from a fixed set of openers" in SECOND_LEVEL_METHOD_TEXT
     assert "never reuse the opening or the frame" in SECOND_LEVEL_METHOD_TEXT
     # Lo snapshot legacy deve restare riconoscibile dalla migrazione one-off:
