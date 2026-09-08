@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from . import models, pii
 
 ACTION = 'visual_workspace'
+PERSONAL_ACTION = 'personal_timeline_workspace'
 Identifier = Annotated[str, Field(min_length=1, max_length=64, pattern=r'^[a-zA-Z0-9_-]+$')]
 
 
@@ -77,6 +78,10 @@ class PortfolioLink(StrictModel):
 
 
 class TimelineEvent(Item):
+    institution_event: str | None = Field(default=None, max_length=160)
+    institution_available: bool = True
+    institution_date: Literal['start', 'deadline'] = 'start'
+    personal_links: list[Literal['notebook', 'booklet', 'orientation']] = Field(default_factory=list, max_length=3)
     title: str = Field(min_length=1, max_length=160)
     period: str = Field(min_length=1, max_length=100)
     tense: Literal['past', 'future'] = 'past'
@@ -124,13 +129,34 @@ class SaveWorkspace(StrictModel):
     workspace: Workspace
 
 
+class PersonalTimeline(Timeline):
+    # Extraction must preserve all events, even across many session workspaces.
+    events: list[TimelineEvent] = Field(default_factory=list)
+
+
+class PersonalWorkspace(Workspace):
+    actions: list[Action] = Field(default_factory=list)
+    timeline: PersonalTimeline = Field(default_factory=PersonalTimeline)
+
+
+class SavePersonalWorkspace(SaveWorkspace):
+    workspace: PersonalWorkspace
+
+
+def workspace_model(session_id):
+    return PersonalWorkspace if session_id is None else Workspace
+
+
 def load_workspace(db: Session, session_id: str, username: str) -> dict:
     row = db.query(models.Log).filter(
-        models.Log.action == ACTION, models.Log.session_id == session_id,
+        models.Log.action == (PERSONAL_ACTION if session_id is None else ACTION), models.Log.session_id == session_id,
         models.Log.username == username,
     ).order_by(models.Log.id.desc()).first()
-    workspace = Workspace.model_validate(row.details['workspace'] if row else {}).model_dump()
+    workspace = workspace_model(session_id).model_validate(row.details['workspace'] if row else {}).model_dump()
     resolve_portfolio(db, username, workspace)
+    if session_id is None:
+        from .personal_timeline import resolve_institution_events
+        resolve_institution_events(db, username, workspace)
     return {'revision': row.id if row else 0, 'workspace': workspace}
 
 
@@ -142,6 +168,19 @@ def resolve_portfolio(db: Session, username: str, workspace: dict):
         models.PortfolioItem.username == username, models.PortfolioItem.id.in_([p['id'] for p in links])).all())
     for link in links:
         link['title'] = pii.redact(titles.get(link['id'], ''))[:200]
+
+
+def redact_workspace_text(value):
+    # IDs and references are structural: treating a hash as a phone number breaks links.
+    if isinstance(value, list):
+        for item in value:
+            redact_workspace_text(item)
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            if key in {'title', 'detail', 'reflection', 'source', 'text', 'label', 'note', 'reason', 'period'} and isinstance(item, str):
+                value[key] = pii.redact(item)
+            elif isinstance(item, (dict, list)):
+                redact_workspace_text(item)
 
 
 def save_workspace(db: Session, session_id: str, username: str, update: SaveWorkspace) -> dict:
@@ -163,9 +202,14 @@ def save_workspace(db: Session, session_id: str, username: str, update: SaveWork
             raise HTTPException(422, 'Unknown action')
         if {p.id for p in event.portfolio} - owned - {p['id'] for p in old.get('portfolio', [])}:
             raise HTTPException(422, 'Portfolio work is unavailable')
-    clean = Workspace.model_validate_json(pii.redact(update.workspace.model_dump_json())).model_dump()
+    if session_id is None:
+        from .personal_timeline import validate_institution_links
+        validate_institution_links(db, username, update.workspace, previous)
+    clean = update.workspace.model_dump()
+    redact_workspace_text(clean)
+    clean = workspace_model(session_id).model_validate(clean).model_dump()
     resolve_portfolio(db, username, clean)
-    row = models.Log(action=ACTION, session_id=session_id, username=username, details={'workspace': clean})
+    row = models.Log(action=PERSONAL_ACTION if session_id is None else ACTION, session_id=session_id, username=username, details={'workspace': clean})
     db.add(row)
     db.commit()
     return {'revision': row.id, 'workspace': clean}
@@ -183,7 +227,7 @@ LABELS = {
 
 
 def workspace_sections(workspace: dict, language: str) -> list[tuple[str, list[str]]]:
-    w = Workspace.model_validate(workspace)
+    w = PersonalWorkspace.model_validate(workspace)
     labels = LABELS.get((language or 'en')[:2], LABELS['en'])
     sections = []
     if w.actions:

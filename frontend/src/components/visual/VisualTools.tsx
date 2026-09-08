@@ -20,7 +20,9 @@ type WorkTab = 'board' | 'comparison' | 'cards' | 'timeline';
 type Tab = WorkTab | DeskTab;
 export type VisualToolsRequest = { tab: WorkTab; nonce: number; eventId?: string };
 type Props = {
-    sessionId: string;
+    sessionId?: string;
+    personal?: boolean;
+    legacySession?: string;
     locale: string;
     compact?: boolean;
     hideTrigger?: boolean;
@@ -38,12 +40,13 @@ const tabIcons = [LayoutList, Columns3, Layers, GitCommitHorizontal, NotebookPen
 const isDeskTab = (tab: Tab): tab is DeskTab => tab === 'notebook' || tab === 'booklet';
 
 export function VisualTools(props: Props) {
-    return <WorkspaceView key={props.sessionId} {...props} />;
+    return <WorkspaceView key={props.personal ? 'personal' : props.sessionId} {...props} />;
 }
 
-function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, questionnaireType, request }: Props) {
-    const l = (key: string) => visualLabel(locale, key);
-    const endpoint = `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
+function WorkspaceView({ sessionId = '', personal = false, legacySession, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, questionnaireType, request }: Props) {
+    const l = (key: string) => visualLabel(locale, personal ? ({ save: 'personalSave', saved: 'timelineSaved', saveHelp: 'personalSaveHelp', openHelp: 'personalTimelineHelp', working: 'personalTimelineHelp' } as Record<string, string>)[key] || key : key);
+    const endpoint = personal ? '/api/user/timeline' : `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
+    const [focusEvent, setFocusEvent] = useState<string | undefined>();
     const [open, setOpen] = useState(false);
     const [personalOpen, setPersonalOpen] = useState(false);
     const [tab, setTab] = useState<Tab>('board');
@@ -85,24 +88,25 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
         const generation = ++loadGeneration.current;
         setBusy(true); setIssue('');
         try {
-            const response = await apiFetch(endpoint, { signal: AbortSignal.timeout(15000) });
+            const response = await apiFetch(personal ? `${endpoint}?${new URLSearchParams({ lang: locale, ...(legacySession ? { legacy_session: legacySession } : {}), ...(request?.eventId ? { event: request.eventId } : {}) })}` : endpoint, { signal: AbortSignal.timeout(15000) });
             if (!response.ok) throw new Error();
-            const result: SavedWorkspace = await response.json();
+            const result: SavedWorkspace & { focus_event?: string } = await response.json();
+            setFocusEvent(result.focus_event);
             if (generation !== loadGeneration.current) return;
             setSaved(result); setWork(result.workspace); setHistory([]); setLoaded(true);
         } catch { if (generation === loadGeneration.current) setIssue('loadError'); }
         finally { if (generation === loadGeneration.current) setBusy(false); }
-    }, [endpoint]);
+    }, [endpoint, personal, locale, legacySession, request?.eventId]);
 
     useEffect(() => { if (open && !loaded) void load(); }, [open, loaded, load]);
     useEffect(() => {
-        if (!open || providedCatalog) return;
+        if (!open || providedCatalog || personal) return;
         const controller = new AbortController();
         void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/recommendations?lang=${locale}`, { signal: controller.signal })
             .then(response => response.ok ? response.json() : null)
             .then(data => { if (data && !controller.signal.aborted) setCatalog(normalizeRecommendationCatalog(data)); }).catch(() => {});
         return () => controller.abort();
-    }, [open, providedCatalog, sessionId, locale]);
+    }, [open, providedCatalog, sessionId, locale, personal]);
     useEffect(() => {
         if (!request) return;
         opener.current = document.activeElement as HTMLElement;
@@ -146,7 +150,7 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
         if (next === work && !dirty) return saved;
         setBusy(true); setIssue('');
         try {
-            const response = await apiFetch(endpoint, { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            const response = await apiFetch(personal ? `${endpoint}?lang=${locale}` : endpoint, { method: 'PUT', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ revision: saved.revision, workspace: next }), signal: AbortSignal.timeout(15000) });
             if (!response.ok) { setIssue(response.status === 409 ? 'conflict' : 'saveError'); return null; }
             const result: SavedWorkspace = await response.json();
@@ -247,16 +251,17 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                                 }}><ArrowRight className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                             </details>
                         </section>
-                        {tab === 'timeline' && <TimelineTools sessionId={sessionId} locale={locale} work={work} edit={edit} save={save} selected={timelineSelection} select={setTimelineSelection} focusEvent={request?.eventId} />}
+                        {tab === 'timeline' && !personal && <a className="block min-h-11 text-indigo-700 underline" href="/profilo/timeline">{l('openPersonalTimeline')}</a>}
+                        {tab === 'timeline' && personal && <TimelineTools personal sessionId={sessionId} locale={locale} work={work} edit={edit} save={save} selected={timelineSelection} select={setTimelineSelection} focusEvent={focusEvent || request?.eventId} />}
                         {tab === 'board' && <>
                             <details open={!work.actions.length || Boolean(draftTitle)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addAction')}</summary>
-                            <form className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!draftTitle.trim() || draftTitle.length > 160 || work.actions.length >= 30) return;
+                            <form className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!draftTitle.trim() || draftTitle.length > 160 || work.actions.length >= (personal ? Infinity : 30)) return;
                                 edit({ ...work, actions: [...work.actions, { id: crypto.randomUUID(), title: draftTitle.trim(), detail: draftDetail, stage: 'todo', reflection: '', source: draftSource }] }); setDraftTitle(''); setDraftDetail(''); setDraftSource(''); }}>
                                 {sourceSelector('action')}
                                 <label className="block text-sm font-medium">{l('titleField')}<input required maxLength={160} value={draftTitle} onChange={e => setDraftTitle(e.target.value)} className={`${inputClass} mt-1`} /></label>
                                 <label className="block text-sm">{l('detail')}<textarea maxLength={1000} rows={2} value={draftDetail} onChange={e => setDraftDetail(e.target.value)} className={`${inputClass} mt-1`} /></label>
-                                <Tooltip content={l('addAction')}><Button aria-label={l('addAction')} type="submit" className={buttonClass} disabled={work.actions.length >= 30 || draftTitle.length > 160}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                                {work.actions.length >= 30 && <p role="status">{l('limit')}</p>}
+                                <Tooltip content={l('addAction')}><Button aria-label={l('addAction')} type="submit" className={buttonClass} disabled={work.actions.length >= (personal ? Infinity : 30) || draftTitle.length > 160}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                {work.actions.length >= (personal ? Infinity : 30) && <p role="status">{l('limit')}</p>}
                             </form></details>
                             {!work.actions.length && <p className="py-5 text-center text-slate-600">{l('emptyBoard')}</p>}
                             <div className="grid gap-3 lg:grid-cols-3">{stages.map(stage => <section key={stage} aria-label={l(stage)} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -327,10 +332,10 @@ function WorkspaceView({ sessionId, locale, hideTrigger = false, catalog: provid
                         </>}
                     </fieldset>}
                 </div>
-                {!isDeskTab(tab) && <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
+                {!isDeskTab(tab) && (personal || tab !== 'timeline') && <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
                     <p role="status" className="text-sm text-slate-600">{l(busy ? 'saving' : dirty ? 'unsaved' : loaded ? 'saved' : 'loading')}</p>
                     <div className="flex flex-wrap gap-2">
-                        <Tooltip content={l('personalLinks')} side="top"><Button id={`${id}-personal`} aria-label={l('personalLinks')} aria-expanded={personalOpen} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy} onClick={() => setPersonalOpen(value => !value)}><BookOpen className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                        {!personal && <Tooltip content={l('personalLinks')} side="top"><Button id={`${id}-personal`} aria-label={l('personalLinks')} aria-expanded={personalOpen} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy} onClick={() => setPersonalOpen(value => !value)}><BookOpen className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                         {!personalOpen && <><Tooltip content={l('saveHelp')} side="top"><Button aria-label={l('save')} type="button" className={buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}><Save className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         <Tooltip content={l('undoHelp')} side="top"><Button type="button" variant="secondary" aria-label={l('undo')} className={buttonClass} disabled={busy || !history.length} onClick={() => { const previous = history[history.length - 1]; if (previous) { setWork(previous); setHistory(history.slice(0, -1)); } }}><Undo2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         <Tooltip content={l('exportHelp')} side="top"><Button aria-label={l('export')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void exportPdf()}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>

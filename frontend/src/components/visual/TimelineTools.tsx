@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowDown, ArrowUp, BriefcaseBusiness, Flag, GraduationCap, Plus, Repeat2, Trash2, Unlink } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { InstitutionTimelineDates } from './InstitutionTimelineDates';
 import { apiFetch } from '@/lib/auth';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { moveTimelineEvent, type ActionKind, type SavedWorkspace, type TimelineEvent, type VisualWorkspace } from '@/lib/visual-tools';
@@ -13,10 +14,10 @@ const iconButton = 'h-[44px] w-[44px] shrink-0 p-0';
 const symbols = { milestone: Flag, study: GraduationCap, work: BriefcaseBusiness, change: Repeat2 };
 type Preview = { title: string; description: string; preview_hash: string };
 type SnapshotPayload = { revision: number; event_ids: string[]; title: string; reflection: string; language: string };
-type Props = { sessionId: string; locale: string; work: VisualWorkspace; edit: (work: VisualWorkspace) => void;
+type Props = { personal?: boolean; sessionId: string; locale: string; work: VisualWorkspace; edit: (work: VisualWorkspace) => void;
     save: () => Promise<SavedWorkspace | null>; selected: string[] | null; select: (ids: string[]) => void; focusEvent?: string };
 
-export function TimelineTools({ sessionId, locale, work, edit, save, selected, select, focusEvent }: Props) {
+export function TimelineTools({ personal = false, sessionId, locale, work, edit, save, selected, select, focusEvent }: Props) {
     const l = (key: string) => visualLabel(locale, key);
     const timeline = work.timeline ?? { title: '', events: [] };
     const selectedIds = timeline.events.filter(e => selected === null || selected.includes(e.id)).map(e => e.id);
@@ -36,7 +37,8 @@ export function TimelineTools({ sessionId, locale, work, edit, save, selected, s
     const [savedItem, setSavedItem] = useState<number | null>(null);
     const signature = JSON.stringify([work, selectedIds]);
     const validPreview = preview?.signature === signature ? preview : null;
-    const endpoint = `/api/session/${encodeURIComponent(sessionId)}/visual-tools/timeline`;
+    const endpoint = personal ? '/api/user/timeline' : `/api/session/${encodeURIComponent(sessionId)}/visual-tools/timeline`;
+    const limit = personal ? Infinity : 30;
     const loadPortfolio = useCallback(async (signal?: AbortSignal) => {
         setPortfolioIssue(false);
         try {
@@ -78,11 +80,12 @@ export function TimelineTools({ sessionId, locale, work, edit, save, selected, s
         finally { setPending(false); }
     };
     return <fieldset disabled={pending} className="min-w-0 space-y-4">
+        {personal && <InstitutionTimelineDates locale={locale} work={work} edit={edit} />}
         <label className="block text-sm font-medium">{l('timelineTitle')}<input data-workspace-field required={timeline.events.length > 0} maxLength={160} className={field} value={timeline.title} onChange={e => edit({ ...work, timeline: { ...timeline, title: e.target.value } })} /></label>
         <details open={!timeline.events.length || Boolean(title)} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addEvent')}</summary>
             <form className="space-y-3" onSubmit={e => {
-                e.preventDefault(); if (!title.trim() || !period.trim() || !timeline.title.trim() || timeline.events.length >= 30) return;
+                e.preventDefault(); if (!title.trim() || !period.trim() || !timeline.title.trim() || timeline.events.length >= limit) return;
                 const event: TimelineEvent = { id: crypto.randomUUID(), title: title.trim(), period: period.trim(), tense, symbol: 'milestone', reflection: '', source: '', action_ids: [], portfolio: [] };
                 edit({ ...work, timeline: { ...timeline, events: [...timeline.events, event] } });
                 if (selected !== null) select([...selectedIds, event.id]);
@@ -93,8 +96,8 @@ export function TimelineTools({ sessionId, locale, work, edit, save, selected, s
                     <label className="block text-sm">{l('period')}<input required maxLength={100} className={field} value={period} onChange={e => setPeriod(e.target.value)} /></label>
                     <label className="block text-sm">{l('tense')}<select className={field} value={tense} onChange={e => setTense(e.target.value as 'past' | 'future')}><option value="past">{l('past')}</option><option value="future">{l('future')}</option></select></label>
                 </div>
-                <Tooltip content={l('addEvent')}><Button type="submit" aria-label={l('addEvent')} className={iconButton} disabled={!timeline.title.trim() || timeline.events.length >= 30}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                {timeline.events.length >= 30 && <p role="status">{l('limit')}</p>}
+                <Tooltip content={l('addEvent')}><Button type="submit" aria-label={l('addEvent')} className={iconButton} disabled={!timeline.title.trim() || timeline.events.length >= limit}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                {timeline.events.length >= limit && <p role="status">{l('limit')}</p>}
             </form>
         </details>
         {!timeline.events.length && <p className="text-slate-600">{l('timelineEmpty')}</p>}
@@ -105,24 +108,27 @@ export function TimelineTools({ sessionId, locale, work, edit, save, selected, s
                     <label className="flex min-h-[44px] items-center gap-2 text-sm"><input type="checkbox" checked={selectedIds.includes(event.id)} onChange={e => select(e.target.checked ? [...selectedIds, event.id] : selectedIds.filter(id => id !== event.id))} aria-label={`${l('selectEvent')}: ${event.title}`} /><Icon className="h-4 w-4" aria-hidden="true" />{index + 1} · {l(event.tense)}</label>
                     <div className="flex gap-1">{tool(`${l('moveUp')}: ${event.title}`, ArrowUp, () => edit(moveTimelineEvent(work, event.id, -1)), index === 0)}{tool(`${l('moveDown')}: ${event.title}`, ArrowDown, () => edit(moveTimelineEvent(work, event.id, 1)), index === timeline.events.length - 1)}{tool(`${l('remove')}: ${event.title}`, Trash2, () => edit({ ...work, timeline: { ...timeline, events: timeline.events.filter(e => e.id !== event.id) } }))}</div>
                 </div>
-                <label className="block text-sm">{l('eventTitle')}<input data-workspace-field required maxLength={160} className={`${field} font-semibold`} value={event.title} onChange={e => updateEvent(event.id, { title: e.target.value })} /></label>
+                {event.institution_event && <p className="text-sm font-medium text-indigo-700">{l(event.institution_available === false ? 'unavailable' : 'institutionManaged')}{event.institution_date === 'deadline' ? ` · ${l('registrationDeadline')}` : ''}</p>}
+                <label className="block text-sm">{l('eventTitle')}<input readOnly={Boolean(event.institution_event)} data-workspace-field required maxLength={160} className={`${field} font-semibold`} value={event.title} onChange={e => updateEvent(event.id, { title: e.target.value })} /></label>
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                    <label className="block text-sm">{l('period')}<input data-workspace-field required maxLength={100} className={field} value={event.period} onChange={e => updateEvent(event.id, { period: e.target.value })} /></label>
-                    <label className="block text-sm">{l('tense')}<select className={field} value={event.tense} onChange={e => updateEvent(event.id, { tense: e.target.value as TimelineEvent['tense'] })}><option value="past">{l('past')}</option><option value="future">{l('future')}</option></select></label>
+                    <label className="block text-sm">{l('period')}<input readOnly={Boolean(event.institution_event)} data-workspace-field required maxLength={100} className={field} value={event.institution_event && event.institution_available !== false ? new Date(event.period).toLocaleString(locale) : event.period} onChange={e => updateEvent(event.id, { period: e.target.value })} /></label>
+                    <label className="block text-sm">{l('tense')}<select className={field} disabled={Boolean(event.institution_event)} value={event.tense} onChange={e => updateEvent(event.id, { tense: e.target.value as TimelineEvent['tense'] })}><option value="past">{l('past')}</option><option value="future">{l('future')}</option></select></label>
                     <label className="block text-sm">{l('symbol')}<select className={field} value={event.symbol} onChange={e => updateEvent(event.id, { symbol: e.target.value as TimelineEvent['symbol'] })}>{Object.keys(symbols).map(key => <option key={key} value={key}>{l(key)}</option>)}</select></label>
                 </div>
                 <label className="mt-3 block text-sm">{l('reflection')}<textarea aria-label={l('reflection')} rows={2} maxLength={1000} className={field} value={event.reflection} onChange={e => updateEvent(event.id, { reflection: e.target.value })} /></label>
+                {personal && <div className="my-3 flex flex-wrap gap-4">{(['notebook', 'booklet', 'orientation'] as const).map(key => <label key={key} className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={(event.personal_links || []).includes(key)} onChange={e => updateEvent(event.id, { personal_links: e.target.checked ? [...(event.personal_links || []), key] : (event.personal_links || []).filter(link => link !== key) })} />{l(key)}</label>)}</div>}
+                {(event.personal_links || []).map(key => <a key={key} className="mr-4 inline-block min-h-11 py-2 text-indigo-700 underline" href={`/profilo/${{ notebook: 'taccuino', booklet: 'libretto', orientation: 'orientamento' }[key]}`}>{l(key)}</a>)}
                 <div className="mt-3 grid gap-4 lg:grid-cols-2">
                     <section aria-label={l('board')} className="min-w-0 space-y-2">
                         {event.action_ids.map(id => { const action = work.actions.find(a => a.id === id); return <div key={id} className="flex items-center justify-between gap-2 rounded-md bg-slate-50 p-2 text-sm"><span className="min-w-0 break-words">{action ? `${action.kind && action.kind !== 'activity' ? l(action.kind) + ': ' : ''}${action.title} · ${l(action.stage)}` : l('unavailable')}</span>{tool(`${l('unlink')}: ${action?.title || l('unavailable')}`, Unlink, () => updateEvent(event.id, { action_ids: event.action_ids.filter(a => a !== id) }))}</div>; })}
                         <label className="block text-sm">{l('linkAction')}<select className={field} value="" onChange={e => { if (e.target.value) updateEvent(event.id, { action_ids: [...event.action_ids, e.target.value] }); }}><option value="">—</option>{work.actions.filter(a => !event.action_ids.includes(a.id)).map(a => <option key={a.id} value={a.id}>{a.title}</option>)}</select></label>
                         <label className="block text-sm">{l('actionKind')}<select className={field} value={actionKinds[event.id] || 'activity'} onChange={e => setActionKinds(previous => ({ ...previous, [event.id]: e.target.value as ActionKind }))}>{['activity', 'book', 'article', 'film'].map(kind => <option key={kind} value={kind}>{l(kind)}</option>)}</select></label>
                         <form className="flex items-end gap-2" onSubmit={e => {
-                            e.preventDefault(); const name = (actionDrafts[event.id] || '').trim(); if (!name || work.actions.length >= 30) return;
+                            e.preventDefault(); const name = (actionDrafts[event.id] || '').trim(); if (!name || work.actions.length >= limit) return;
                             const actionId = crypto.randomUUID();
                             edit({ ...work, actions: [...work.actions, { id: actionId, title: name, kind: actionKinds[event.id] || 'activity', stage: 'todo', detail: '', reflection: '', source: '' }], timeline: { ...timeline, events: timeline.events.map(t => t.id === event.id ? { ...t, action_ids: [...t.action_ids, actionId] } : t) } });
                             setActionDrafts(previous => ({ ...previous, [event.id]: '' }));
-                        }}><label className="min-w-0 flex-1 text-sm">{l('createAction')}<input required maxLength={160} className={field} value={actionDrafts[event.id] || ''} onChange={e => setActionDrafts(previous => ({ ...previous, [event.id]: e.target.value }))} /></label><Tooltip content={l('createAction')}><Button type="submit" aria-label={l('createAction')} className={iconButton} disabled={work.actions.length >= 30}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip></form>
+                        }}><label className="min-w-0 flex-1 text-sm">{l('createAction')}<input required maxLength={160} className={field} value={actionDrafts[event.id] || ''} onChange={e => setActionDrafts(previous => ({ ...previous, [event.id]: e.target.value }))} /></label><Tooltip content={l('createAction')}><Button type="submit" aria-label={l('createAction')} className={iconButton} disabled={work.actions.length >= limit}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip></form>
                     </section>
                     <section aria-label={l('linkPortfolio')} className="min-w-0 space-y-2">
                         {event.portfolio.map(p => <div key={p.id} className="flex items-center justify-between gap-2 rounded-md bg-slate-50 p-2 text-sm">{p.title ? <a className="min-w-0 break-words text-indigo-700 underline" href={`/profilo/portfolio#portfolio-${p.id}`} target="_blank" rel="noopener noreferrer">{p.title}</a> : <span>{l('unavailable')}</span>}{tool(`${l('unlink')}: ${p.title || l('unavailable')}`, Unlink, () => updateEvent(event.id, { portfolio: event.portfolio.filter(item => item.id !== p.id) }))}</div>)}
