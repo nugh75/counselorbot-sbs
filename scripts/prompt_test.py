@@ -12,7 +12,7 @@ Tutti i parametri arrivano da variabili d'ambiente PT_* (impostate dai target ma
     PT_STUDENT    username dello studente (per identity + punteggi)           [admin]
     PT_LANG       lingua di risposta                                          [it]
     PT_KNOWLEDGE  includi il blocco [KNOWLEDGE] (true/false)                  [true]
-    PT_MSG        messaggio utente (vuoto = messaggio intro generico)         []
+    PT_MSG        messaggio dello studente (vuoto = ingresso nello step)      []
     PT_MODE       live (chiama LLM + logga) | dry (solo envelope, no log)     [live]
 
 In modalita' `live` usa run_prompt_audit_live con identity=studente, cosi' la riga
@@ -78,12 +78,11 @@ def main():
     lang = _env("PT_LANG", "it")
     knowledge = _bool(_env("PT_KNOWLEDGE", "true"))
     mode = _env("PT_MODE", "live").lower()
-    message = _env(
-        "PT_MSG",
-        "Introduce yourself as the counselor, welcome me warmly and explain in "
-        "3-4 sentences how we'll explore my profile together. Do NOT analyse or "
-        "mention any factor or score yet.",
-    )
+    # Senza MSG si prova l'INGRESSO nello step: nessun messaggio dello studente,
+    # il prompt dello step come richiesta. Il default precedente era un finto
+    # messaggio di benvenuto, che rendeva ogni prova un follow-up conversazionale
+    # (prompt QA, niente prompt di analisi) senza dirlo.
+    message = _env("PT_MSG", "")
 
     db = SessionLocal()
     try:
