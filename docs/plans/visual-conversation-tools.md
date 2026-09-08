@@ -65,6 +65,10 @@ consegnate sopra.
 - Una sola attività numerata può essere in corso. Nessuno sviluppo parallelo
   di strumenti diversi, nemmeno tramite altri agenti.
 - Seguire l'ordine sotto; completare anche le sottoattività in sequenza.
+  Aggiornamento 2026-09-08: su indicazione dell'utente si riprende ora la
+  progettazione della linea del tempo (attività 4). Le carte restano aperte;
+  non sono un prerequisito per questa prima versione. Lo sviluppo resta da
+  autorizzare dopo la revisione del piano.
 - Chiudere l'attività con risultato verificabile ed evidenze prima di passare
   alla successiva. Un blocco resta esplicito: non saltarlo iniziando altro.
 - Alla chiusura riportare cosa è terminato, verifiche e limiti, e quale attività
@@ -106,18 +110,102 @@ consegnate sopra.
   consegna Git/runtime secondo il perimetro autorizzato prima di iniziare altro.
 
 - [ ] **4. Definire la linea del tempo personale.**
-  Partire dall'esito delle carte. Definire eventi passati e futuri, date precise
-  o periodi approssimativi, simboli, annotazioni e immagini dal repertorio scelto.
-  Preparare un esempio che colleghi un'esperienza a un prossimo passo.
-  **Chiusura:** esempio revisionato, modello dei dati e interazioni concordati.
+  Definire eventi passati e futuri, date precise o periodi approssimativi,
+  simboli e annotazioni, con collegamenti espliciti alle azioni dello spazio
+  visuale e ai lavori del Portfolio. La prima versione non dipende da API
+  immagini o dalla realizzazione delle carte illustrate.
+  Preparare un esempio che colleghi esperienza, azioni e lavoro realizzato.
+  **Chiusura:** esempio revisionato, modello dei dati e interazioni concordati,
+  inclusi collegamenti, rimozioni e salvataggio di una versione nel Portfolio.
 
 - [ ] **5. Realizzare e chiudere la linea del tempo.**
   Procedere nell'ordine: dati degli eventi; vista temporale; modifica e ordine;
-  salvataggio e riapertura; ripresa in chat; PDF. Usare inizialmente React,
+  salvataggio e riapertura; collegamenti alle azioni; collegamenti al Portfolio;
+  salvataggio di una versione nel Portfolio; ripresa in chat; PDF.
+  Usare inizialmente React,
   CSS/SVG e date-fns già presenti; aggiungere dipendenze solo per un'esigenza
   dimostrata. Non trasformarla in un calendario generale.
   **Chiusura:** verifiche equivalenti alle carte, ordine temporale e periodi
-  incerti inclusi, prova d'uso e consegna completata nel perimetro autorizzato.
+  incerti inclusi, integrità dei collegamenti, prova d'uso e consegna completata
+  nel perimetro autorizzato. Vedere i criteri dettagliati sotto.
+
+### Linea del tempo: piano rivisto (2026-09-08)
+
+**Stato:** revisione del piano richiesta dall'utente; sviluppo non avviato.
+I collegamenti ad azioni e Portfolio sono requisiti richiesti. Le modalità
+operative seguenti sono la proposta da rivedere prima dell'implementazione.
+
+**Scopo educativo.** Collegare ciò che è accaduto, ciò che lo studente vuole
+fare e i lavori che documentano il percorso. Una tappa descrive un'esperienza
+o un passaggio futuro; un'azione descrive cosa fare; un lavoro del Portfolio
+documenta quanto realizzato. Il completamento delle azioni non dimostra
+automaticamente un apprendimento e non chiude automaticamente una tappa.
+
+**Prima versione proposta.** Una linea del tempo nello spazio visuale della
+sessione, con titolo libero. Ogni tappa ha identificativo stabile, titolo,
+data o periodo indicativo, collocazione passata/futura, simbolo e riflessione
+facoltativa. I periodi approssimativi restano tali: non inventare un giorno
+preciso per ordinarli. Prevedere ordinamento esplicito nei casi ambigui.
+Resta da concordare se la consegna privilegi la storia personale ampia oppure
+un obiettivo specifico; il titolo libero permette di preparare esempi di
+entrambi senza introdurre due modalità applicative.
+
+**Azioni.** Ogni tappa può collegare più azioni della bacheca della stessa
+sessione tramite «Collega un'azione» oppure crearne una tramite «Crea
+un'azione». L'azione creata compare nella bacheca e viene collegata alla
+tappa; contenuto e stato hanno un'unica fonte nella bacheca. Rimuovere il
+collegamento non elimina l'azione. La creazione deve essere ripetibile dopo
+un errore di rete senza generare duplicati.
+
+**Portfolio.** «Collega un lavoro dal Portfolio» seleziona uno o più lavori
+appartenenti allo studente. La tappa mostra il riferimento e permette di
+aprire il lavoro; dal lavoro si può risalire alla tappa, quando ancora
+disponibile. Il contenuto del lavoro resta nel Portfolio. Un lavoro può
+documentare più tappe senza essere copiato.
+
+**Una versione nel Portfolio.** Con «Salva nel Portfolio» lo studente vede
+un'anteprima, sceglie il titolo e può aggiungere una riflessione. Il risultato
+è una fotografia datata della linea del tempo, con tappe e riepilogo dei
+collegamenti al momento del salvataggio. Le modifiche successive alla linea
+del tempo non riscrivono il lavoro salvato. Il riferimento all'origine resta
+distinto dal contenuto conservato; nessuna sincronizzazione automatica.
+La rappresentazione deve riusare il contratto attuale dei lavori del Portfolio,
+da verificare prima di decidere eventuali estensioni al modello dei dati.
+
+**Proprietà e rimozioni.** Verificare lato server proprietà della sessione,
+delle azioni e dei lavori a ogni lettura o modifica dei collegamenti.
+Usare riferimenti stabili, non corrispondenze sui titoli. Eliminare una tappa
+rimuove i suoi collegamenti, non le azioni o i lavori. Se un elemento collegato
+non è più disponibile, mostrarlo come tale e permettere di scollegarlo senza
+rompere la linea del tempo. Il Portfolio non deve rendere accessibile una
+sessione altrimenti non autorizzata.
+
+**Ripresa in chat ed esportazione.** Lo studente seleziona le tappe da discutere
+e rivede il testo nel composer prima di inviarlo. Collegare un'azione o un
+lavoro non invia contenuti al modello. Il PDF riporta tappe, riflessioni e
+riepiloghi dei collegamenti, distinguendo azioni da lavori; non incorpora
+automaticamente il contenuto integrale dei lavori collegati.
+
+**Esempio completo.** Tappa «Presentazione del progetto — giugno»; azioni
+«Raccogliere le fonti», «Preparare le slide», «Provare l'esposizione»; lavoro
+del Portfolio «Slide del progetto»; riflessione «Provare con un compagno mi
+ha aiutato a spiegare meglio». Una tappa successiva può collegare l'azione
+«Chiedere un riscontro sulla prossima presentazione».
+
+**Ordine di realizzazione e verifica.**
+
+1. Verificare i contratti esistenti di spazio visuale, azioni e Portfolio;
+   definire dati, riferimenti e un esempio revisionabile di interazione.
+2. Realizzare tappe, ordine, modifica, salvataggio e riapertura.
+3. Collegare e creare azioni, verificando che lo stato coincida con la bacheca.
+4. Collegare lavori e navigazione di ritorno; gestire rimozioni e indisponibilità.
+5. Salvare una versione nel Portfolio con anteprima e riflessione facoltativa.
+6. Integrare ripresa esplicita in chat ed esportazione PDF.
+7. Verificare proprietà e accessi, conflitti tra salvataggi, retry senza
+   duplicati, persistenza, periodi incerti, rimozioni senza cancellazioni a
+   cascata dei contenuti e indipendenza della versione salvata nel Portfolio.
+   Provare l'intero esempio in browser mobile/desktop, tastiera, sei lingue,
+   tema scuro e PDF. Concludere con la consegna Git/runtime autorizzata.
 
 - [ ] **6. Definire lo storyboard di una situazione.**
   Progettare una sequenza guidata di 3–5 scene: situazione, ostacolo, azione,
