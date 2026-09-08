@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchOrientationStatus } from '@/lib/orientation-api';
 import { QUESTIONNAIRES, QuestionnaireConfig, QuestionnaireType, supportsProfileUpload } from '@/lib/questionnaires';
 import { QuestionnaireSelector } from '@/components/questionnaire/QuestionnaireSelector';
-import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { InputMethodSelector } from '@/components/qsa/InputMethodSelector';
 import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
 import { PDFUploader } from '@/components/qsa/PDFUploader';
@@ -15,7 +14,6 @@ import { ChatViewport } from '@/components/qsa/ChatViewport';
 import { cn } from '@/lib/utils';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
 import { SessionReport } from '@/components/qsa/SessionReport';
-import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { ReturningHome } from '@/components/home/ReturningHome';
 import dynamic from 'next/dynamic';
 
@@ -31,7 +29,7 @@ import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
 import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
-import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId } from '@/lib/counselor';
+import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, setActiveSessionCounselorId } from '@/lib/counselor';
 import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, getReasoningPref, getResponseLengthPref, setExperiencePref, setInputMethodPref, setReasoningPref, setResponseLengthPref } from '@/lib/session-prefs';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
@@ -40,12 +38,12 @@ import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
-import { shouldReviewNotebookBeforeInstrument } from '@/lib/notebook-flow';
+import { fetchAccountPreferences } from '@/lib/account-preferences';
 import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
 import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-history';
 
 
-type Step = 'intro' | 'base' | 'notebook' | 'counselor-select' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
+type Step = 'intro' | 'base' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
 
 // Compilazioni già salvate: servono a sapere se c'è qualcosa da riusare prima
 // di saltare la scelta del metodo di inserimento.
@@ -227,6 +225,7 @@ export default function Home() {
     // Apertura della chat in corso: tiene fermo il comando finché le due
     // scritture non sono andate.
     const [starting, setStarting] = useState(false);
+    const [sessionCounselorId, setSessionCounselorId] = useState<number | null>(null);
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
     const [notebookUpdatedAt, setNotebookUpdatedAt] = useState<string | null | undefined>(undefined);
@@ -234,10 +233,6 @@ export default function Home() {
     // rivendica subito, altrimenti si sceglie fra intro e percorso quando i
     // dati dello studente sono arrivati.
     const [ready, setReady] = useState(false);
-    // Il taccuino apre soltanto il primo percorso; dopo resta nell'area personale
-    // e viene proposto alla conclusione di ogni chat guidata.
-    const [notebookReviewed, setNotebookReviewed] = useState(false);
-    const [counselorOpenedFromHome, setCounselorOpenedFromHome] = useState(false);
     const entryClaimed = useRef(false);
     // Cronologia del percorso: un'entrata per passo, così Indietro e Avanti del
     // browser (e la gesture di ritorno) si muovono dentro il percorso invece di
@@ -310,10 +305,10 @@ export default function Home() {
 
     // Un link diretto porta già dove deve: la scelta fra presentazione e
     // percorso non deve sovrascriverlo.
-    const claimEntry = () => {
+    const claimEntry = useCallback(() => {
         entryClaimed.current = true;
         setReady(true);
-    };
+    }, []);
 
     // Il tasto della presentazione. Il primo passo del percorso è la Bussola,
     // non uno strumento: chi la deve ancora fare ci va da qui, invece di
@@ -323,16 +318,21 @@ export default function Home() {
     const startFromIntro = () => {
         void (async () => {
             try {
+                const prefs = await fetchAccountPreferences();
+                if (!prefs.counselor_ready || !prefs.notebook_ready) {
+                    router.push('/inizia?next=%2Fbussola');
+                    return;
+                }
                 const status = await fetchOrientationStatus();
                 if (status.required) {
                     router.push('/bussola');
                     return;
                 }
             } catch {
-                // Il server non risponde: si prosegue nel percorso, e il
-                // cancello rimanderà alla Bussola se serve davvero.
+                toast.error(t('setup.error'));
+                return;
             }
-            setStep(hasCompletedQuestionnaires ? 'questionnaire-select' : 'notebook');
+            setStep('questionnaire-select');
         })();
     };
 
@@ -342,8 +342,102 @@ export default function Home() {
         hasCompletedQuestionnaires || notebookUpdatedAt ? 'base' : 'intro'
     );
 
+    // Nessun link diretto: chi ha già un percorso alle spalle entra dal
+    // percorso, chi arriva per la prima volta dalla presentazione.
     useEffect(() => {
-        if (identity === undefined || !identity?.authenticated) return;
+        if (ready || entryClaimed.current) return;
+        if (!identity?.authenticated) return;
+        if (savedResults === null || notebookUpdatedAt === undefined) return;
+        // Choose the entry screen after the external profile requests resolve.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStep(savedResults.length > 0 || notebookUpdatedAt ? 'base' : 'intro');
+        setReady(true);
+    }, [ready, identity, savedResults, notebookUpdatedAt]);
+
+    // Apre la chat con la modalità già scelta in passato; Idea fa eccezione,
+    // perché mappa grafica e OpenCode devono restare una scelta esplicita.
+    const beginInteraction = useCallback((sid: string, instrument: string) => {
+        setSessionCounselorId(getSelectedCounselorId());
+        const pref = experiencePrefForInstrument(instrument, getExperiencePref());
+        setExperience(pref);
+        if (pref) setResume({ instrument, sessionId: sid, experience: pref, counselorId: getSelectedCounselorId() });
+        setStep('interaction');
+    }, []);
+
+    const startAgentOnlyQuestionnaire = useCallback(async (questionnaire: QuestionnaireConfig, resumeSid?: string) => {
+        const existingSessionId = resumeSid || '';
+        const newSessionId = existingSessionId || generateUUID();
+        setSessionId(newSessionId);
+        setScores({});
+
+        if (!existingSessionId) {
+            addCompletedProfile(questionnaire.id, newSessionId, {});
+            try {
+                const response = await apiFetch('/api/questionnaire-result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: newSessionId,
+                        questionnaire_type: questionnaire.id,
+                        scores: {},
+                    }),
+                });
+                if (response.ok) {
+                    const saved = await response.json() as SavedResult;
+                    setSavedResults((current) => [...(current ?? []), saved]);
+                }
+            } catch (e) {
+                console.error("Failed to save questionnaire result", e);
+            }
+        }
+
+        beginInteraction(newSessionId, questionnaire.id);
+    }, [beginInteraction]);
+
+    // Verifica il counselor per questo strumento prima di avviare il percorso.
+    const prepareInstrument = useCallback(async (questionnaire: QuestionnaireConfig | null, currentScores: Record<string, number> | null, resumeSid?: string) => {
+        if (!questionnaire) {
+            setStep('questionnaire-select');
+            return;
+        }
+        const preferences = await fetchAccountPreferences().catch(() => null);
+        if (!preferences) { toast.error(t('setup.error')); return; }
+        if (!preferences.notebook_ready || !preferences.counselor_ready) {
+            router.push(`${preferences.notebook_ready ? "/counselor" : "/inizia"}?next=${encodeURIComponent(`/?start=${questionnaire.id}`)}`);
+            return;
+        }
+        const counselors = await fetchCounselors(lang, lang, questionnaire.id);
+        const counselor = counselors.find(row => row.id === preferences.counselor_id);
+        if (!counselor || counselor.is_active === false || counselor.suitable === false) {
+            const next = currentScores !== null && resumeSid
+                ? `/?session_id=${encodeURIComponent(resumeSid!)}&instrument=${questionnaire.id}`
+                : `/?start=${questionnaire.id}`;
+            router.push(`/counselor?instrument=${questionnaire.id}&next=${encodeURIComponent(next)}`);
+            return;
+        }
+        setSelectedCounselorId(counselor.id);
+        if (isAgentOnly(questionnaire)) {
+            await startAgentOnlyQuestionnaire(questionnaire, resumeSid);
+            return;
+        }
+        if (currentScores !== null) {
+            setStep('dashboard');
+            return;
+        }
+        // Il metodo ricordato vale solo quando non c'è nulla da riusare: con
+        // compilazioni salvate la scelta "riprendi un profilo" vive solo lì.
+        const method = getInputMethodPref();
+        const hasSaved = savedResults?.some((r) => r.questionnaire_type === questionnaire.id) ?? true;
+        const usable = method === 'upload' ? supportsProfileUpload(questionnaire.id) : method === 'manual';
+        if (method && usable && !hasSaved) {
+            setStep(method === 'manual' ? 'manual-input' : 'upload-input');
+            return;
+        }
+        setStep('method-select');
+    }, [lang, router, savedResults, startAgentOnlyQuestionnaire, t]);
+
+    useEffect(() => {
+        if (entryClaimed.current || !identity?.authenticated) return;
 
         const params = new URLSearchParams(window.location.search);
 
@@ -363,6 +457,7 @@ export default function Home() {
                 if (!q) { setReady(true); return; }
                 setSelectedQuestionnaire(q);
                 setSelectedInstrumentId(snapshot.questionnaire_type);
+                setSessionCounselorId(snapshot.counselor_id ?? getSelectedCounselorId());
                 if (snapshot.counselor_id != null) setSelectedCounselorId(snapshot.counselor_id);
                 setSessionId(snapshot.session_id);
                 setScores(snapshot.scores || {});
@@ -394,6 +489,7 @@ export default function Home() {
                 // eslint-disable-next-line react-hooks/set-state-in-effect
                 setSelectedQuestionnaire(q);
                 setSelectedInstrumentId(r.instrument);
+                setSessionCounselorId(r.counselorId ?? getSelectedCounselorId());
                 if (r.counselorId != null) setSelectedCounselorId(r.counselorId);
                 setSessionId(r.sessionId);
                 setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
@@ -434,7 +530,7 @@ export default function Home() {
             setSessionId(resumeSession);
             setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
             setExperience(null);
-            setStep('counselor-select');
+            void prepareInstrument(questionnaire, profile?.scores ?? {}, resumeSession);
             window.history.replaceState(null, '', window.location.pathname);
             claimEntry();
             return;
@@ -450,125 +546,20 @@ export default function Home() {
         setPdfToken(undefined);
         setSessionId('');
         setExperience(null);
-        setStep('counselor-select');
+        void prepareInstrument(questionnaire, null);
         window.history.replaceState(null, '', window.location.pathname);
         claimEntry();
-    }, [identity]);
+    }, [identity, prepareInstrument, claimEntry, t]);
 
-    // Nessun link diretto: chi ha già un percorso alle spalle entra dal
-    // percorso, chi arriva per la prima volta dalla presentazione.
-    useEffect(() => {
-        if (ready || entryClaimed.current) return;
-        if (!identity?.authenticated) return;
-        if (savedResults === null || notebookUpdatedAt === undefined) return;
-        // Choose the entry screen after the external profile requests resolve.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setStep(savedResults.length > 0 || notebookUpdatedAt ? 'base' : 'intro');
-        setReady(true);
-    }, [ready, identity, savedResults, notebookUpdatedAt]);
-
-    const startAgentOnlyQuestionnaire = async (questionnaire: QuestionnaireConfig) => {
-        const existingSessionId = sessionId;
-        const newSessionId = existingSessionId || generateUUID();
-        setSessionId(newSessionId);
-        setScores({});
-
-        if (!existingSessionId) {
-            addCompletedProfile(questionnaire.id, newSessionId, {});
-            try {
-                const response = await apiFetch('/api/questionnaire-result', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        session_id: newSessionId,
-                        questionnaire_type: questionnaire.id,
-                        scores: {},
-                    }),
-                });
-                if (response.ok) {
-                    const saved = await response.json() as SavedResult;
-                    setSavedResults((current) => [...(current ?? []), saved]);
-                }
-            } catch (e) {
-                console.error("Failed to save questionnaire result", e);
-            }
-        }
-
-        beginInteraction(newSessionId, questionnaire.id);
-    };
-
-    // Apre la chat con la modalità già scelta in passato; Idea fa eccezione,
-    // perché mappa grafica e OpenCode devono restare una scelta esplicita.
-    const beginInteraction = (sid: string, instrument: string) => {
-        const pref = experiencePrefForInstrument(instrument, getExperiencePref());
-        setExperience(pref);
-        if (pref) setResume({ instrument, sessionId: sid, experience: pref, counselorId: getSelectedCounselorId() });
-        setStep('interaction');
-    };
-
-    // Avvio di uno strumento, dal selettore o dalla schermata del percorso. Il
-    // taccuino precede soltanto il primo strumento: chi ha già una compilazione
-    // salvata entra direttamente nel percorso e lo ritrova alla fine della chat.
+    // Tutti gli ingressi riusano le preferenze dell’account.
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
-        setCounselorOpenedFromHome(false);
         setSelectedQuestionnaire(questionnaire);
         setSelectedInstrumentId(questionnaire.id);
         setScores(null);
         setPdfToken(undefined);
         setSessionId('');
         setExperience(null);
-        if (shouldReviewNotebookBeforeInstrument(hasCompletedQuestionnaires, notebookReviewed)) {
-            setStep('notebook');
-            return;
-        }
-        // Counselor già scelto in passato: la fase resta nella catena (ci si
-        // torna con "indietro"), ma non la si ripete a ogni strumento.
-        if (getSelectedCounselorId() != null) {
-            void proceedAfterCounselor(questionnaire, null);
-            return;
-        }
-        setStep('counselor-select');
-    };
-
-    const continueAfterNotebook = () => {
-        setNotebookReviewed(true);
-        if (!selectedQuestionnaire) {
-            setStep('questionnaire-select');
-            return;
-        }
-        if (getSelectedCounselorId() != null) {
-            void proceedAfterCounselor(selectedQuestionnaire, scores);
-            return;
-        }
-        setStep('counselor-select');
-    };
-
-    // Passo successivo alla scelta del counselor. Prende lo strumento come
-    // argomento perché viene chiamata anche subito dopo averlo selezionato,
-    // quando lo stato non è ancora aggiornato.
-    const proceedAfterCounselor = async (questionnaire: QuestionnaireConfig | null, currentScores: Record<string, number> | null) => {
-        if (!questionnaire) {
-            setStep('questionnaire-select');
-            return;
-        }
-        if (isAgentOnly(questionnaire)) {
-            await startAgentOnlyQuestionnaire(questionnaire);
-            return;
-        }
-        if (currentScores !== null) {
-            setStep('dashboard');
-            return;
-        }
-        // Il metodo ricordato vale solo quando non c'è nulla da riusare: con
-        // compilazioni salvate la scelta "riprendi un profilo" vive solo lì.
-        const method = getInputMethodPref();
-        const hasSaved = savedResults?.some((r) => r.questionnaire_type === questionnaire.id) ?? true;
-        const usable = method === 'upload' ? supportsProfileUpload(questionnaire.id) : method === 'manual';
-        if (method && usable && !hasSaved) {
-            setStep(method === 'manual' ? 'manual-input' : 'upload-input');
-            return;
-        }
-        setStep('method-select');
+        void prepareInstrument(questionnaire, null);
     };
 
     const handleMethodSelect = (method: 'manual' | 'upload' | 'resume', resumeData?: { sessionId: string; scores: Record<string, number> }) => {
@@ -601,7 +592,7 @@ export default function Home() {
         if (starting) return;
         if (!getSelectedCounselorId()) {
             toast.info(t('counselor.selectFirst'));
-            setStep('counselor-select');
+            router.push(`/counselor?next=${encodeURIComponent(`/?start=${selectedQuestionnaire?.id || 'QSA'}`)}`);
             return;
         }
         setStarting(true);
@@ -650,7 +641,7 @@ export default function Home() {
 
     useEffect(() => {
         if (step !== 'interaction') return;
-        const counselorId = getSelectedCounselorId();
+        const counselorId = sessionCounselorId;
         if (counselorId == null) return;
         let cancelled = false;
         void fetchCounselors(lang).then((rows) => {
@@ -659,7 +650,12 @@ export default function Home() {
             setReasoningCapable(chosen?.reasoning_capable !== false);
         });
         return () => { cancelled = true; };
-    }, [step, lang]);
+    }, [step, lang, sessionCounselorId]);
+
+    useEffect(() => {
+        setActiveSessionCounselorId(step === 'interaction' ? sessionCounselorId : null);
+        return () => setActiveSessionCounselorId(null);
+    }, [step, sessionCounselorId]);
 
     // Lunghezza risposta: scelta nella schermata della modalità e ricordata per
     // i prossimi strumenti; in chat guidata resta comunque regolabile.
@@ -681,7 +677,7 @@ export default function Home() {
         setExperience(exp);
         setExperiencePref(exp);
         if (selectedQuestionnaire) {
-            setResume({ instrument: selectedQuestionnaire.id, sessionId, experience: exp, counselorId: getSelectedCounselorId() });
+            setResume({ instrument: selectedQuestionnaire.id, sessionId, experience: exp, counselorId: sessionCounselorId });
         }
     };
 
@@ -698,7 +694,6 @@ export default function Home() {
         setSelectedQuestionnaire(null);
         setPdfToken(undefined);
         setExperience(null);
-        setNotebookReviewed(false);
         setStep(homeStep());
     };
 
@@ -712,17 +707,11 @@ export default function Home() {
             window.history.back();
             return;
         }
-        if (step === 'notebook') setStep(homeStep());
-        else if (step === 'questionnaire-select') setStep(hasCompletedQuestionnaires ? homeStep() : 'notebook');
-        else if (step === 'counselor-select' && counselorOpenedFromHome) {
-            setCounselorOpenedFromHome(false);
-            setStep(homeStep());
-        }
-        else if (step === 'counselor-select') setStep(selectedQuestionnaire ? 'questionnaire-select' : homeStep());
-        else if (step === 'method-select') setStep('counselor-select');
+        if (step === 'questionnaire-select') setStep(homeStep());
+        else if (step === 'method-select') setStep('questionnaire-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
         else if (step === 'dashboard') setStep('method-select');
-        else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'counselor-select' : 'dashboard');
+        else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'questionnaire-select' : 'dashboard');
         else if (step === 'completed') setStep('dashboard');
         else if (step === 'farewell') setStep('completed');
     };
@@ -782,24 +771,15 @@ export default function Home() {
     }, {});
     const completedTypes = Object.keys(lastCompiledAt) as QuestionnaireType[];
 
-    // Il taccuino compare nell'orientamento soltanto finché serve come intake.
-    const flowStages = hasCompletedQuestionnaires
-        ? ['CounselorBot', t('flow.select'), t('flow.counselor'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')]
-        : ['CounselorBot', t('flow.taccuino'), t('flow.select'), t('flow.counselor'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
-    const stageOffset = hasCompletedQuestionnaires ? 0 : 1;
-    const stageIndex =
-        step === 'intro' ? 0
-            : step === 'notebook' ? 1
-                : step === 'questionnaire-select' ? 1 + stageOffset
-                    : step === 'counselor-select' ? 2 + stageOffset
-                        : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 3 + stageOffset
-                            : step === 'dashboard' ? 4 + stageOffset
-                                : step === 'interaction' ? 5 + stageOffset
-                                    : 6 + stageOffset;
+    const flowStages = ['CounselorBot', t('flow.select'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
+    const stageIndex = step === 'intro' ? 0
+        : step === 'questionnaire-select' ? 1
+        : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 2
+        : step === 'dashboard' ? 3 : step === 'interaction' ? 4 : 5;
 
     return (
         <div className={cn("page-wide", step === 'interaction' ? "space-y-4" : "space-y-8")}>
-            {step !== 'intro' && step !== 'base' && step !== 'interaction' && !(step === 'counselor-select' && counselorOpenedFromHome) && (
+            {step !== 'intro' && step !== 'base' && step !== 'interaction' && (
                 <FlowStepper steps={flowStages} current={stageIndex} />
             )}
 
@@ -824,37 +804,7 @@ export default function Home() {
                         <ReturningHome
                             lastCompiledAt={lastCompiledAt}
                             onStartInstrument={handleQuestionnaireSelect}
-                            onChangeCounselor={() => {
-                                setSelectedQuestionnaire(null);
-                                setCounselorOpenedFromHome(true);
-                                setStep('counselor-select');
-                            }}
                             onOpenIntro={() => setStep('intro')}
-                        />
-                    )}
-
-                    {/* Step: Taccuino — intake prima del primo strumento. */}
-                    {step === 'notebook' && (
-                        <div className="space-y-4">
-                            <LearnerProfileCard
-                                variant="review"
-                                requireInitial
-                                onDone={continueAfterNotebook}
-                                onUnavailable={continueAfterNotebook}
-                                onBack={goBack}
-                            />
-                        </div>
-                    )}
-
-                    {/* Step: Counselor Selection */}
-                    {step === 'counselor-select' && (
-                        <CounselorSelector
-                            questionnaireName={selectedQuestionnaire?.name}
-                            questionnaireType={selectedQuestionnaire?.id}
-                            onBack={goBack}
-                            onContinue={counselorOpenedFromHome ? undefined : () => {
-                                void proceedAfterCounselor(selectedQuestionnaire, scores);
-                            }}
                         />
                     )}
 
@@ -933,6 +883,7 @@ export default function Home() {
                                 /* Schermata 3: chat (modalità già scelta, nessun toggle in alto). */
                                 <ChatViewport>
                                 <GuidedChatInterface
+                                    counselorId={sessionCounselorId}
                                     onBack={goBack}
                                     scores={scores}
                                     questionnaireType={selectedQuestionnaire.id}
@@ -953,6 +904,7 @@ export default function Home() {
                             ) : (
                                 <ChatViewport>
                                 <OpenCodeExperience
+                                    counselorId={sessionCounselorId}
                                     scores={scores}
                                     questionnaire={selectedQuestionnaire}
                                     pdfToken={pdfToken}

@@ -145,7 +145,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     }, [hidden, dismissed, onUnavailable]);
 
     const save = async (source: string) => {
-        if (requireInitial && !profile && !Object.values(form).some((value) => (value || '').trim())) {
+        if (requireInitial && !Object.values(form).some((value) => (value || '').trim())) {
             setValidationError(t('lp.required'));
             return;
         }
@@ -168,7 +168,11 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     setTimeout(() => setDismissed(true), 1200);
                 }
                 onDone?.();
+            } else {
+                setValidationError(t('setup.error'));
             }
+        } catch {
+            setValidationError(t('setup.error'));
         } finally {
             setSaving(false);
         }
@@ -203,7 +207,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     if (suggestionOnly && (suggestion?.status !== 'ready' || (suggestionHandled && !editing))) return null;
     // Revisione a inizio sessione: se non c'è ancora un profilo si propone
     // l'intake, se c'è si chiede conferma rapida (un click se nulla è cambiato).
-    const isIntake = !profile;
+    const isIntake = !profile || (requireInitial && !Object.values(profile.data).some(value => String(value || '').trim()));
     // Il taccuino compare sia come passo del percorso (la Bussola lo apre quando
     // scegli uno strumento, la home come intake prima del primo) sia come card
     // della pagina personale. Solo nel primo caso e' una fase di una sequenza, e

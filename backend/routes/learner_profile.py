@@ -11,6 +11,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from .. import auth, models, schemas
 from ..database import get_db
@@ -175,3 +176,64 @@ async def delete_learner_profile(
     )
     db.commit()
     return {"deleted_revisions": removed, "deleted_reflections": removed_reflections}
+
+
+class AccountPreferencesSave(BaseModel):
+    counselor_id: Optional[int] = None
+    complete_setup: bool = False
+
+
+def _account_preferences(db: Session, username: str):
+    prefs = db.get(models.AccountPreferences, username)
+    counselor_id = prefs.counselor_id if prefs else None
+    if prefs is None:
+        previous = (db.query(models.OrientationSession)
+                    .filter(models.OrientationSession.username == username,
+                            models.OrientationSession.counselor_id.isnot(None))
+                    .order_by(models.OrientationSession.created_at.desc()).first())
+        if previous:
+            counselor_id = previous.counselor_id
+        else:
+            frozen = (db.query(models.FrozenSession)
+                      .filter(models.FrozenSession.username == username)
+                      .order_by(models.FrozenSession.updated_at.desc()).first())
+            if frozen:
+                counselor_id = (frozen.data or {}).get("counselor_id")
+    counselor = db.get(models.Counselor, counselor_id) if counselor_id else None
+    revision = _latest_revision(db, username)
+    notebook_ready = bool((prefs and prefs.notebook_completed) or
+                          (revision and any(str(v or "").strip() for v in revision.data.values())))
+    return {
+        "counselor_id": counselor_id,
+        "counselor_ready": bool(counselor and counselor.is_active),
+        "notebook_ready": notebook_ready,
+        "setup_completed": bool(prefs and prefs.notebook_completed),
+    }
+
+
+@router.get("/user/account-preferences")
+async def get_account_preferences(current_user: dict = Depends(auth.get_current_user),
+                                  db: Session = Depends(get_db)):
+    return _account_preferences(db, current_user["username"])
+
+
+@router.put("/user/account-preferences")
+async def save_account_preferences(payload: AccountPreferencesSave,
+                                   current_user: dict = Depends(auth.get_current_user),
+                                   db: Session = Depends(get_db)):
+    username = current_user["username"]
+    state = _account_preferences(db, username)
+    counselor_id = payload.counselor_id if payload.counselor_id is not None else state["counselor_id"]
+    counselor = db.get(models.Counselor, counselor_id) if counselor_id else None
+    if not counselor or not counselor.is_active:
+        raise HTTPException(status_code=422, detail="Choose an active counselor")
+    if payload.complete_setup and not state["notebook_ready"]:
+        raise HTTPException(status_code=422, detail="Complete the notebook first")
+    prefs = db.get(models.AccountPreferences, username)
+    if prefs is None:
+        prefs = models.AccountPreferences(username=username)
+        db.add(prefs)
+    prefs.counselor_id = counselor_id
+    prefs.notebook_completed = state["notebook_ready"]
+    db.commit()
+    return _account_preferences(db, username)

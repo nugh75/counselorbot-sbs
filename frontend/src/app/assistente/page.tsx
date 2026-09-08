@@ -11,10 +11,9 @@ import { ai4authLoginUrl, getIdentity, getViewAsAccount, type Identity } from '@
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchAssistantQuestions, type AssistantQuestionsByTopic } from '@/lib/assistant-questions';
-import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, subscribeToCounselor, type PublicCounselor } from '@/lib/counselor';
+import { fetchCounselors, getSelectedCounselorId } from '@/lib/counselor';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ChatBubble } from '@/components/ui/ChatBubble';
-import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { NotebookBookletPanel, NotebookBookletTriggers, type DeskTab } from '@/components/profile/NotebookBookletPanel';
 
 // Tabelle con bordi + scroll orizzontale per una lettura pulita dei documenti.
@@ -143,7 +142,6 @@ export default function AssistentePage() {
     const requestRef = useRef<AbortController | null>(null);
     // Counselor AI: opzionale, scelta in una dropdown. Il sito-chat invia
     // counselor_id al backend che applichera' la persona al system prompt.
-    const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     const [counselorId, setCounselorId] = useState<number | null>(null);
     // Collezioni disponibili (builtin + dinamiche), caricate dal backend.
     const [availableCollections, setAvailableCollections] = useState<CollectionInfo[]>(
@@ -206,22 +204,15 @@ export default function AssistentePage() {
 
     // Carica i counselor attivi per la lingua corrente e mantiene allineata la
     // selezione se cambia dall'esterno (header). counselor_id e' opzionale:
-    // se non ci sono counselor configurati la dropdown resta "nessuno".
+    // in assenza di un counselor attivo si usa l’assistente standard.
     useEffect(() => {
         let active = true;
         fetchCounselors(lang).then((list) => {
             if (!active) return;
-            const assistantList = list.filter((c) => {
-                if (c.show_in_assistant === false) return false;
-                if (c.assistant_audience && c.assistant_audience !== audience) return false;
-                return true;
-            });
-            setCounselors(assistantList);
             const stored = getSelectedCounselorId();
             setCounselorId(list.some((c) => c.id === stored && c.is_active !== false) ? stored : null);
         });
-        const unsub = subscribeToCounselor(() => setCounselorId(getSelectedCounselorId()));
-        return () => { active = false; unsub(); };
+        return () => { active = false; };
     }, [lang, audience]);
 
     // Collezioni RAG disponibili (builtin + create dall'admin).
@@ -240,11 +231,6 @@ export default function AssistentePage() {
         requestAnimationFrame(() => {
             scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
         });
-    };
-
-    const chooseCounselor = (id: number | null) => {
-        setCounselorId(id);
-        setSelectedCounselorId(id);
     };
 
     const prepareQuestion = () => {
@@ -472,31 +458,6 @@ export default function AssistentePage() {
                         </div>
                     </div>
 
-                    {/* Selettore counselor AI: opzionale. Definisce lo stile
-                        dell'assistente (persona). "Nessuno" = assistente neutro. */}
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5 flex items-center gap-1.5">
-                            <Users className="h-3.5 w-3.5" />
-                            {t('assistant.counselor.label')}
-                        </p>
-                        <select
-                            value={counselorId ?? ''}
-                            onChange={(e) => chooseCounselor(e.target.value ? Number(e.target.value) : null)}
-                            disabled={counselors.length === 0}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60"
-                        >
-                            <option value="">{t('assistant.counselor.none')}</option>
-                            {counselors.map((c) => (
-                                <option key={c.id} value={c.id} disabled={c.is_active === false}>
-                                    {c.name}{c.is_active === false ? ` — ${t('assistant.counselor.unavailable')}` : ''}
-                                </option>
-                            ))}
-                        </select>
-                        {counselors.length === 0 && (
-                            <p className="mt-1 text-xs text-slate-500">{t('assistant.counselor.empty')}</p>
-                        )}
-                    </div>
-
                     <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-1">
                         {topics.map((topic) => {
                             const Icon = topic.icon;
@@ -651,13 +612,7 @@ export default function AssistentePage() {
                             </button>
                         )}
                     </div>
-                    {sessionId && messages.filter((message) => message.role === 'user').length >= 4 && (
-                        <LearnerProfileCard
-                            variant="update"
-                            sessionId={sessionId}
-                            suggestionOnly
-                        />
-                    )}
+
                 </div>
 
                 {/* Pannello anteprima documento */}

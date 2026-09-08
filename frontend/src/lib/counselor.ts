@@ -26,6 +26,19 @@ export interface PublicCounselor {
 const KEY = 'counselorbot_selected_counselor';
 const COUNSELOR_EVENT = 'counselorbot-counselor-change';
 
+// The header shows the active conversation's counselor while account defaults
+// can change independently (including in another browser tab).
+let activeSessionCounselorId: number | null = null;
+
+export function getDisplayedCounselorId(): number | null {
+    return activeSessionCounselorId ?? getSelectedCounselorId();
+}
+
+export function setActiveSessionCounselorId(id: number | null): void {
+    activeSessionCounselorId = id;
+    window.dispatchEvent(new Event(COUNSELOR_EVENT));
+}
+
 export function getSelectedCounselorId(): number | null {
     if (typeof window === 'undefined') return null;
     const v = window.localStorage.getItem(KEY);

@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/Button';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import { CompassMark } from '@/components/ui/CompassMark';
-import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
-import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { NotebookBookletPanel, NotebookBookletTriggers, type DeskTab } from '@/components/profile/NotebookBookletPanel';
 import { useI18n } from '@/lib/i18n-context';
 import {
@@ -22,7 +20,7 @@ import {
 } from '@/lib/orientation-api';
 import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { skipOrientationThisVisit, orientationToolHref, safeOrientationNext } from '@/lib/tool-catalog';
-import { getSelectedCounselorId } from '@/lib/counselor';
+import { fetchAccountPreferences } from '@/lib/account-preferences';
 
 function safeNextHref(): string | null {
     if (typeof window === 'undefined') return null;
@@ -45,10 +43,6 @@ export default function BussolaPage() {
     const [session, setSession] = useState<OrientationSession | null>(null);
     const [latestSessionId, setLatestSessionId] = useState<string | null>(null);
     const [orientationRequired, setOrientationRequired] = useState(false);
-    const [choosingCounselor, setChoosingCounselor] = useState(false);
-    const [pendingNewSession, setPendingNewSession] = useState(false);
-    // Taccuino di apertura: lo studente lo rivede prima che la conversazione inizi.
-    const [pendingCounselorId, setPendingCounselorId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [completing, setCompleting] = useState(false);
@@ -56,12 +50,8 @@ export default function BussolaPage() {
     const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
     const [error, setError] = useState('');
     const [nextHref, setNextHref] = useState<string | null>(null);
-    // Strumento scelto dalle raccomandazioni: prima di uscire si chiede il taccuino.
-    const [pendingTool, setPendingTool] = useState<string | null>(null);
-    // Bivio dopo il taccuino: conversazione con la Bussola o catalogo degli strumenti.
     const [atFork, setAtFork] = useState(false);
     const endRef = useRef<HTMLDivElement>(null);
-    const startingRef = useRef(false);
     const leavingRef = useRef(false);
 
     const openSession = useCallback(async (sessionId: string) => {
@@ -69,17 +59,22 @@ export default function BussolaPage() {
         setError('');
         try {
             const row = await fetchOrientationSession(sessionId);
-            setSession(row);
             if (row.status === 'in_progress' && !row.counselor_id) {
-                setPendingNewSession(false);
-                setChoosingCounselor(true);
+                const prefs = await fetchAccountPreferences();
+                if (!prefs.counselor_ready || !prefs.counselor_id) {
+                    router.push('/counselor?next=%2Fbussola');
+                    return;
+                }
+                setSession(await startOrientation(lang, false, prefs.counselor_id));
+            } else {
+                setSession(row);
             }
         } catch {
             setError(t('orientation.error'));
         } finally {
             setLoading(false);
         }
-    }, [t]);
+    }, [lang, router, t]);
 
     const createSession = useCallback(async (newSession: boolean, counselorId: number) => {
         setLoading(true);
@@ -87,48 +82,27 @@ export default function BussolaPage() {
         try {
             const row = await startOrientation(lang, newSession, counselorId);
             setSession(row);
-            setPendingCounselorId(null);
         } catch {
-            startingRef.current = false;
             setError(t('orientation.error'));
         } finally {
             setLoading(false);
         }
     }, [lang, t]);
 
-    const beginCounselorChoice = (newSession: boolean) => {
-        startingRef.current = false;
-        setPendingNewSession(newSession);
-        setPendingCounselorId(null);
-        setChoosingCounselor(true);
-        setError('');
+    const startConversation = async () => {
+        if (loading) return;
+        setLoading(true);
+        try {
+            const prefs = await fetchAccountPreferences();
+            if (!prefs.counselor_ready || !prefs.notebook_ready || !prefs.counselor_id) {
+                router.push('/inizia?next=%2Fbussola');
+                return;
+            }
+            setAtFork(false);
+            await createSession(true, prefs.counselor_id);
+        } catch { setError(t('orientation.error')); }
+        finally { setLoading(false); }
     };
-
-    const continueWithCounselor = () => {
-        startingRef.current = false;
-        const counselorId = getSelectedCounselorId();
-        if (!counselorId) {
-            setError(t('counselor.selectFirst'));
-            return;
-        }
-        setPendingCounselorId(counselorId);
-        setChoosingCounselor(false);
-    };
-
-    // Rivisto il taccuino non si entra dritti in chat: la conversazione con la
-    // Bussola è una delle due strade, e l'altra è il catalogo degli strumenti.
-    // La card chiama onDone e poi onUnavailable dopo il salvataggio: il bivio va aperto una volta sola.
-    const openFork = useCallback(() => {
-        if (startingRef.current || pendingCounselorId === null) return;
-        startingRef.current = true;
-        setAtFork(true);
-    }, [pendingCounselorId]);
-
-    const startConversation = useCallback(() => {
-        if (pendingCounselorId === null) return;
-        setAtFork(false);
-        void createSession(pendingNewSession, pendingCounselorId);
-    }, [createSession, pendingCounselorId, pendingNewSession]);
 
     useEffect(() => {
         let active = true;
@@ -142,11 +116,11 @@ export default function BussolaPage() {
                 if (status.required) {
                     if (status.in_progress_session_id) await openSession(status.in_progress_session_id);
                     else {
-                        setPendingNewSession(false);
-                        setChoosingCounselor(true);
+                        setAtFork(true);
                         setLoading(false);
                     }
                 } else {
+                    setAtFork(!status.latest_session_id);
                     setLoading(false);
                 }
             } catch {
@@ -199,19 +173,17 @@ export default function BussolaPage() {
 
     // Aprire uno strumento chiude la Bussola: il gate rimanda qui chi non l'ha
     // conclusa, quindi la sessione va completata prima di uscire.
-    const leaveForTool = useCallback(async () => {
-        if (leavingRef.current || !pendingTool || !session) return;
+    const leaveForTool = async (tool: string) => {
+        if (leavingRef.current || !session) return;
         leavingRef.current = true;
         try {
             if (session.status === 'in_progress') await completeOrientation(session.session_id);
+            router.push(orientationToolHref(tool));
         } catch {
             setError(t('orientation.error'));
             leavingRef.current = false;
-            setPendingTool(null);
-            return;
         }
-        router.push(orientationToolHref(pendingTool));
-    }, [pendingTool, router, session, t]);
+    };
 
     // L'avviso di errore stava in fondo alla pagina, sotto le raccomandazioni e
     // il taccuino: chi vedeva fallire un invio doveva scorrere per sapere perché.
@@ -260,18 +232,6 @@ export default function BussolaPage() {
 
             {loading ? (
                 <div className="flex justify-center py-12"><Loader2 className="h-7 w-7 animate-spin text-indigo-600" /></div>
-            ) : choosingCounselor ? (
-                <section className="rounded-xl border border-indigo-200 bg-white p-5 shadow-sm sm:p-7">
-                    <div className="mb-6 max-w-2xl">
-                        <p className="text-xs font-semibold uppercase tracking-[0.1em] text-ochre-600">{t('orientation.counselor.step')}</p>
-                        <h2 className="font-display mt-1 text-2xl font-bold text-slate-900">{t('orientation.counselor.title')}</h2>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{t('orientation.counselor.body')}</p>
-                    </div>
-                    <CounselorSelector
-                        onContinue={continueWithCounselor}
-                        onBack={orientationRequired ? undefined : () => setChoosingCounselor(false)}
-                    />
-                </section>
             ) : atFork ? (
                 <section className="rounded-xl border border-indigo-200 bg-white p-5 shadow-sm sm:p-7">
                     <div className="max-w-2xl">
@@ -281,30 +241,15 @@ export default function BussolaPage() {
                     <div className="mt-6 flex flex-wrap gap-3">
                         <Button type="button" variant="accent" onClick={startConversation}>{t('orientation.landing.open')}</Button>
                         <Button type="button" variant="secondary" onClick={goToTools}>{t('orientation.landing.skip')}</Button>
-                        <Button type="button" variant="ghost" onClick={() => { startingRef.current = false; setAtFork(false); }}>{t('nav.back')}</Button>
+
                     </div>
                 </section>
-            ) : pendingCounselorId !== null ? (
-                <LearnerProfileCard
-                    variant="review"
-                    onDone={openFork}
-                    onUnavailable={openFork}
-                    onBack={() => setChoosingCounselor(true)}
-                />
-            ) : session && pendingTool ? (
-                <LearnerProfileCard
-                    variant="update"
-                    sessionId={session.session_id}
-                    onDone={() => void leaveForTool()}
-                    onUnavailable={() => void leaveForTool()}
-                    onBack={() => setPendingTool(null)}
-                />
             ) : !session ? (
                 <section className="glass-panel flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3"><Compass className="h-6 w-6 text-indigo-600" /><p className="text-sm leading-relaxed text-slate-600">{t('orientation.subtitle')}</p></div>
                     <div className="flex flex-wrap gap-2">
                         {latestSessionId && <Button type="button" variant="secondary" onClick={() => void openSession(latestSessionId)}>{t('orientation.landing.latest')}</Button>}
-                        <Button type="button" variant="accent" onClick={() => beginCounselorChoice(true)}>{t('orientation.landing.new')}</Button>
+                        <Button type="button" variant="accent" onClick={() => void startConversation()}>{t('orientation.landing.new')}</Button>
                         {orientationRequired && <Button type="button" variant="ghost" onClick={skipToTools}>{t('orientation.landing.skip')}</Button>}
                     </div>
                 </section>
@@ -381,7 +326,7 @@ export default function BussolaPage() {
 
                     {session.recommendations.length > 0 && (
                         <div id="orientation-recommendations">
-                            <RecommendationSection session={session} onPick={setPendingTool} />
+                            <RecommendationSection session={session} onPick={tool => void leaveForTool(tool)} />
                         </div>
                     )}
 
@@ -402,13 +347,12 @@ export default function BussolaPage() {
                                 nessuna uscita che non fosse aprire uno degli strumenti. */}
                             <Link href={nextHref ?? '/'} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-ochre-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-ochre-700">{nextHref ? t('orientation.continue') : t('nav.home')}<ArrowRight className="h-4 w-4" /></Link>
                             <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                                <Button type="button" variant="ghost" onClick={() => beginCounselorChoice(true)} className="ml-auto text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</Button>
+                                <Button type="button" variant="ghost" onClick={() => void startConversation()} className="ml-auto text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</Button>
                             </div>
                         </section>
                     )}
 
-                    {/* Il taccuino chiude la Bussola: lo studente rivede quanto ha scritto. */}
-                    {session.status === 'completed' && <LearnerProfileCard variant="update" sessionId={session.session_id} />}
+
                 </>
             )}
 
@@ -441,5 +385,3 @@ function RecommendationSection({ session, onPick }: { session: OrientationSessio
         </section>
     );
 }
-
-

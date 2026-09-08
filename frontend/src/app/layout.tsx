@@ -8,6 +8,7 @@ import { ViewAsFetchPatch } from '@/components/layout/ViewAsFetchPatch';
 import { I18nProvider } from '@/lib/i18n-context';
 import { Toaster } from '@/components/ui/Toast';
 import { TooltipProvider } from '@/components/ui/Tooltip';
+import { AccountSetupGate } from '@/components/layout/AccountSetupGate';
 import { OrientationGate } from '@/components/layout/OrientationGate';
 import { SkipLink } from '@/components/layout/SkipLink';
 
@@ -57,7 +58,7 @@ export default function RootLayout({
                         <ViewAsFetchPatch />
                         <Header />
                         <main id="contenuto" className="pt-20 px-4 pb-12">
-                            <OrientationGate>{children}</OrientationGate>
+                            <AccountSetupGate><OrientationGate>{children}</OrientationGate></AccountSetupGate>
                         </main>
                         <RolePreviewBanner />
                         <Toaster />
