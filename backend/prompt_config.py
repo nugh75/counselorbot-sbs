@@ -304,11 +304,11 @@ DEFAULT_GUIDED_TEXT_QPCC_CONCLUSION = (
     "Continua per scegliere il prossimo passaggio."
 )
 DEFAULT_GUIDED_TEXT_QAP_QUESTIONS_INTRO = (
-    "Abbiamo analizzato il tuo profilo di adattabilita' professionale. "
+    "Abbiamo analizzato il tuo profilo di adattabilità professionale. "
     "Ora puoi farmi qualsiasi domanda libera o chiedere consigli pratici."
 )
 DEFAULT_GUIDED_TEXT_QAP_CONCLUSION = (
-    "Hai completato l'analisi dell'adattabilita' professionale (QAP). "
+    "Hai completato l'analisi dell'adattabilità professionale (QAP). "
     "Continua per scegliere il prossimo passaggio."
 )
 
@@ -1129,7 +1129,7 @@ META_SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
     {
         "key": "prompt_meta_QSA_sl-motivation",
         "label": "QSA Motivation - Contesto Pellerey",
-        "description": "Motivazione e volonta': percezione di competenza, perseveranza, orientamento",
+        "description": "Motivazione e volontà: percezione di competenza, perseveranza, orientamento",
         "default": PELLEREY_MOTIVATION,
     },
     {
@@ -1937,7 +1937,7 @@ DEFAULT_IDEA_GUIDED_STEPS: List[Dict] = [
     {
         "id": "idea-question",
         "sort_order": 6,
-        "label": "E' la domanda giusta?",
+        "label": "È la domanda giusta?",
         "prompt": (
             "Question the question. Ask whether the thing they came in with is really what "
             "they need to decide, or whether a different question sits underneath it. "
@@ -2053,7 +2053,7 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
     {
         "id": "qpcs-volizione",
         "sort_order": 4,
-        "label": "4. Volonta' e Perseveranza",
+        "label": "4. Volontà e Perseveranza",
         "prompt": (
             "You are now starting Area 3/5 - Will, perseverance and commitment. If the previous "
             "area's conversation was still open, wrap it up in ONE short sentence (you may briefly "
@@ -2185,7 +2185,7 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{
  {'id': 'qpcc-controllo',
   'questionnaire_type': 'QPCC',
   'sort_order': 3,
-  'label': "3. Ansia, Controllo e Responsabilita'",
+  'label': "3. Ansia, Controllo e Responsabilità",
   'prompt': 'Area 2/5 - Managing anxiety, control and responsibility. Explore how the student reacts when '
             'facing difficult decisions and situations that put them under pressure, and how much they feel '
             'blocked or nervous because of responsibility. Ask for an example. When the area is covered, '
@@ -2230,7 +2230,7 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{
  {'id': 'qpcc-convinzioni',
   'questionnaire_type': 'QPCC',
   'sort_order': 6,
-  'label': "6. Convinzioni su di Se'",
+  'label': "6. Convinzioni su di Sé",
   'prompt': 'Area 5/5 - Beliefs about oneself. Explore how much the student trusts their own ability to '
             'succeed, what they attribute successes and failures to (effort vs external causes) and how much '
             'they are driven by the desire to do well or to do better. Ask for an example. When the area is '
@@ -2328,7 +2328,7 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
  {'id': 'qap-curiosita',
   'questionnaire_type': 'QAP',
   'sort_order': 4,
-  'label': "4. Curiosita' ed Esplorazione",
+  'label': "4. Curiosità ed Esplorazione",
   'prompt': 'Area 3/4 - Curiosity and exploration (Curiosity). Explore how much the student explores the '
             'environment around them, looks for opportunities to grow and carefully examines the options '
             'before choosing. Ask for an example of something new they have explored recently. When the area '

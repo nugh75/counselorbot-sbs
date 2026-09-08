@@ -15,13 +15,13 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
             "Puoi spiegarmi come leggeremo i risultati?",
         ],
         "cognitive": [
-            "Quali fattori cognitivi sono piu' importanti nel mio profilo?",
-            "Qual e' il mio punto di forza principale nello studio?",
+            "Quali fattori cognitivi sono più importanti nel mio profilo?",
+            "Qual è il mio punto di forza principale nello studio?",
             "Su quale strategia cognitiva dovrei lavorare per prima?",
         ],
         "affective": [
-            "Quali aspetti emotivi influenzano di piu' il mio studio?",
-            "C'e' qualcosa nel mio profilo che puo' ostacolarmi?",
+            "Quali aspetti emotivi influenzano di più il mio studio?",
+            "C'è qualcosa nel mio profilo che può ostacolarmi?",
             "Come posso gestire meglio motivazione, ansia o perseveranza?",
         ],
         "sl-elaboration": [
@@ -36,26 +36,26 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
         ],
         "sl-motivation": [
             "Da cosa sembra dipendere la mia motivazione?",
-            "Come posso rafforzare la fiducia nelle mie capacita'?",
+            "Come posso rafforzare la fiducia nelle mie capacità?",
             "Cosa posso fare quando mi manca la perseveranza?",
         ],
         "sl-emotions": [
             "Come posso gestire meglio ansia o interferenze emotive?",
-            "Quali situazioni potrebbero mettermi piu' in difficolta'?",
+            "Quali situazioni potrebbero mettermi più in difficoltà?",
             "Puoi suggerirmi una strategia semplice da usare subito?",
         ],
         "sl-attribution": [
-            "Come interpreto successi e difficolta'?",
+            "Come interpreto successi e difficoltà?",
             "Questo profilo mostra uno stile attributivo utile o da migliorare?",
-            "Come posso leggere gli errori in modo piu' costruttivo?",
+            "Come posso leggere gli errori in modo più costruttivo?",
         ],
         "sl-social": [
             "Che ruolo ha la collaborazione nel mio profilo?",
-            "Studiare con altri puo' aiutarmi?",
+            "Studiare con altri può aiutarmi?",
             "Come posso usare meglio il lavoro di gruppo?",
         ],
         FIXED_QUESTIONS_STEP_ID: [
-            "Qual e' la sintesi piu' importante del mio profilo?",
+            "Qual è la sintesi più importante del mio profilo?",
             "Da dove mi consigli di iniziare concretamente?",
             "Puoi propormi un piccolo piano d'azione?",
         ],
@@ -63,17 +63,17 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
     "QSAr": {
         "qsar-intro": [
             "Come funziona il percorso QSAr?",
-            "In cosa il QSAr e' diverso dal QSA completo?",
+            "In cosa il QSAr è diverso dal QSA completo?",
             "Come useremo i miei risultati in questa analisi?",
         ],
         "qsar-cognitive": [
-            "Quali aspetti cognitivi emergono di piu' dal mio QSAr?",
-            "Quale strategia di studio sembra gia' funzionare?",
+            "Quali aspetti cognitivi emergono di più dal mio QSAr?",
+            "Quale strategia di studio sembra già funzionare?",
             "Quale fattore cognitivo dovrei allenare per primo?",
         ],
         "qsar-affective": [
             "Quali aspetti emotivi o motivazionali emergono dal mio QSAr?",
-            "Cosa puo' ostacolare di piu' il mio studio?",
+            "Cosa può ostacolare di più il mio studio?",
             "Come posso usare questi risultati senza etichettarmi?",
         ],
         "qsar-processing": [
@@ -83,18 +83,18 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
         ],
         "qsar-selfcontrol": [
             "Come posso lavorare su autoregolazione e attenzione?",
-            "Quale routine breve puo' aiutarmi a restare concentrato?",
+            "Quale routine breve può aiutarmi a restare concentrato?",
             "Cosa posso fare quando mi distraggo facilmente?",
         ],
         "qsar-motivation": [
             "Come posso sostenere motivazione e fiducia?",
-            "Quale segnale mi dice che sto perdendo continuita'?",
+            "Quale segnale mi dice che sto perdendo continuità?",
             "Puoi suggerirmi un obiettivo realistico per questa settimana?",
         ],
         "qsar-emotions": [
             "Come posso gestire l'ansia durante lo studio o le prove?",
             "Quale strategia emotiva potrei provare subito?",
-            "Come distinguo una difficolta' temporanea da un blocco?",
+            "Come distinguo una difficoltà temporanea da un blocco?",
         ],
         "qsar-attributions": [
             "Come leggo le cause dei miei successi e insuccessi?",
@@ -102,7 +102,7 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
             "Come posso trasformare un risultato negativo in un passo utile?",
         ],
         FIXED_QUESTIONS_STEP_ID: [
-            "Qual e' il messaggio principale del mio profilo QSAr?",
+            "Qual è il messaggio principale del mio profilo QSAr?",
             "Quali due azioni pratiche mi consigli?",
             "Come posso monitorare i miglioramenti nelle prossime settimane?",
         ],
@@ -116,22 +116,22 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
         "ztpi-t1": [
             "Cosa significa per me il rapporto con il passato negativo?",
             "Come posso evitare che ricordi o rimpianti pesino sul presente?",
-            "Quale piccolo passo puo' aiutarmi a rielaborare le difficolta' passate?",
+            "Quale piccolo passo può aiutarmi a rielaborare le difficoltà passate?",
         ],
         "ztpi-t2": [
-            "Che risorsa puo' essere il passato positivo nel mio profilo?",
+            "Che risorsa può essere il passato positivo nel mio profilo?",
             "Come posso usare i ricordi positivi senza restare bloccato nel passato?",
-            "Quale esperienza passata puo' sostenermi oggi?",
+            "Quale esperienza passata può sostenermi oggi?",
         ],
         "ztpi-t3": [
             "Cosa significa vivere bene il presente nel mio profilo?",
-            "Come posso bilanciare piacere immediato e responsabilita'?",
+            "Come posso bilanciare piacere immediato e responsabilità?",
             "Quando il carpe diem mi aiuta e quando rischia di distrarmi?",
         ],
         "ztpi-t4": [
             "Cosa indica il presente fatalistico nel mio profilo?",
             "Come posso aumentare la sensazione di controllo sulle mie scelte?",
-            "Quale azione piccola ma concreta puo' ridurre la rassegnazione?",
+            "Quale azione piccola ma concreta può ridurre la rassegnazione?",
         ],
         "ztpi-t5": [
             "Come uso il futuro nella mia motivazione?",
@@ -139,35 +139,35 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
             "Come posso trasformare un obiettivo futuro in un passo di oggi?",
         ],
         "ztpi-btp": [
-            "Quanto e' equilibrata la mia prospettiva temporale?",
+            "Quanto è equilibrata la mia prospettiva temporale?",
             "Quale dimensione temporale dovrei riequilibrare per prima?",
             "Puoi propormi una strategia per bilanciare passato, presente e futuro?",
         ],
         FIXED_QUESTIONS_STEP_ID: [
-            "Qual e' la lettura complessiva del mio profilo temporale?",
-            "Quale abitudine quotidiana puo' aiutarmi a riequilibrarmi?",
+            "Qual è la lettura complessiva del mio profilo temporale?",
+            "Quale abitudine quotidiana può aiutarmi a riequilibrarmi?",
             "Come collego questa analisi alle mie scelte di studio o orientamento?",
         ],
     },
     "SAVICKAS": {
         "savickas-intro": [
             "Come funziona l'intervista Savickas?",
-            "Che cosa emergera' dalle cinque domande narrative?",
+            "Che cosa emergerà dalle cinque domande narrative?",
             "Come useremo le mie risposte per parlare di orientamento?",
         ],
         "savickas-patto": [
-            "Perche' serve un patto di collaborazione?",
+            "Perché serve un patto di collaborazione?",
             "Che tipo di risposte dovrei dare?",
             "Posso rispondere anche se non sono sicuro?",
         ],
         "savickas-q1": [
             "Come scelgo le tre persone che ammiravo?",
             "Posso indicare personaggi inventati?",
-            "Quali qualita' devo osservare nei miei modelli?",
+            "Quali qualità devo osservare nei miei modelli?",
         ],
         "savickas-q2": [
             "Che tipo di contenuti posso citare?",
-            "Conta di piu' cosa seguo o perche' mi interessa?",
+            "Conta di più cosa seguo o perché mi interessa?",
             "Come collego i miei interessi alle scelte future?",
         ],
         "savickas-q3": [
@@ -183,15 +183,15 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
         "savickas-q5": [
             "Che cosa si intende per ricordi precoci?",
             "Se non ricordo bene i dettagli, posso raccontare quello che so?",
-            "Perche' devo dare un titolo a ogni ricordo?",
+            "Perché devo dare un titolo a ogni ricordo?",
         ],
         "savickas-final": [
-            "Qual e' il tema centrale che emerge dalla mia storia?",
+            "Qual è il tema centrale che emerge dalla mia storia?",
             "Quali direzioni future sembrano coerenti con il mio racconto?",
             "Puoi aiutarmi a trasformare la sintesi in un piano 7/30/90 giorni?",
         ],
         FIXED_QUESTIONS_STEP_ID: [
-            "Quale parte della mia storia mi fa riflettere di piu'?",
+            "Quale parte della mia storia mi fa riflettere di più?",
             "Quale risorsa personale emerge dal racconto e voglio usare meglio?",
             "Quale primo passo concreto posso fare nei prossimi giorni?",
         ],
@@ -199,7 +199,7 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
     "QPCS": {
         "qpcs-profilo": [
             "Come si leggono questi punteggi?",
-            "Qual e' il mio punto di forza in questo profilo?",
+            "Qual è il mio punto di forza in questo profilo?",
             "Da quale area conviene partire?",
         ],
         "qpcs-intro": [
@@ -213,7 +213,7 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
             "Come leggeremo i miei punteggi?",
         ],
         "qpcs-factors": [
-            "Quali competenze strategiche emergono di piu' dal mio profilo?",
+            "Quali competenze strategiche emergono di più dal mio profilo?",
             "Quale area dovrei rafforzare per prima?",
             "Puoi propormi un esercizio pratico sulle mie competenze?",
         ],
@@ -224,31 +224,31 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
         ],
         "qpcs-comunicazione": [
             "Come posso migliorare la mia comunicazione con gli altri?",
-            "In quali situazioni relazionali questa competenza mi serve di piu'?",
+            "In quali situazioni relazionali questa competenza mi serve di più?",
             "Puoi aiutarmi a capire come preparo e controllo quello che comunico?",
         ],
         "qpcs-volizione": [
-            "Come posso sostenere volonta' e perseveranza?",
+            "Come posso sostenere volontà e perseveranza?",
             "Cosa posso fare quando un compito diventa noioso o faticoso?",
-            "Quale abitudine mi aiuterebbe a portare a termine cio' che inizio?",
+            "Quale abitudine mi aiuterebbe a portare a termine ciò che inizio?",
         ],
         "qpcs-apprendimento": [
             "Quali strategie di apprendimento emergono dal mio profilo?",
-            "Come posso collegare meglio le nuove informazioni a quello che so gia'?",
-            "Quando la collaborazione puo' aiutarmi a imparare meglio?",
+            "Come posso collegare meglio le nuove informazioni a quello che so già?",
+            "Quando la collaborazione può aiutarmi a imparare meglio?",
         ],
         "qpcs-fiducia": [
             "Come posso rafforzare la fiducia nelle mie competenze?",
-            "Che rapporto c'e' tra questa area e il mio progetto di vita?",
-            "Quale segnale concreto mi dice che sto diventando piu' sicuro?",
+            "Che rapporto c'è tra questa area e il mio progetto di vita?",
+            "Quale segnale concreto mi dice che sto diventando più sicuro?",
         ],
         "qpcs-sintesi": [
             "Quali risorse ricorrenti emergono dal percorso QPCS?",
-            "Quali aree di crescita dovrei affrontare con priorita'?",
+            "Quali aree di crescita dovrei affrontare con priorità?",
             "Puoi trasformare la sintesi in un piano 7/30/90 giorni?",
         ],
         FIXED_QUESTIONS_STEP_ID: [
-            "Qual e' la sintesi del mio profilo QPCS?",
+            "Qual è la sintesi del mio profilo QPCS?",
             "Come posso usare queste competenze nello studio o nel lavoro?",
             "Quale piccolo obiettivo posso darmi per la prossima settimana?",
         ],
@@ -256,7 +256,7 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
     "QPCC": {
         "qpcc-profilo": [
             "Come si leggono questi punteggi?",
-            "Qual e' il mio punto di forza in questo profilo?",
+            "Qual è il mio punto di forza in questo profilo?",
             "Da quale area conviene partire?",
         ],
         "qpcc-intro": [
@@ -270,9 +270,9 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
             "Come useremo i miei punteggi in modo pratico?",
         ],
         "qpcc-factors": [
-            "Quali competenze o convinzioni emergono di piu'?",
-            "Quale area puo' sostenere meglio le mie scelte?",
-            "Quale convinzione su di me dovrei osservare con piu' attenzione?",
+            "Quali competenze o convinzioni emergono di più?",
+            "Quale area può sostenere meglio le mie scelte?",
+            "Quale convinzione su di me dovrei osservare con più attenzione?",
         ],
         "qpcc-comunicazione": [
             "Come vivo la comunicazione in pubblico?",
@@ -280,19 +280,19 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
             "Quale esempio concreto mostra il mio modo di comunicare?",
         ],
         "qpcc-controllo": [
-            "Come gestisco ansia e responsabilita' nelle decisioni?",
-            "Quando sento piu' pressione e cosa posso fare?",
+            "Come gestisco ansia e responsabilità nelle decisioni?",
+            "Quando sento più pressione e cosa posso fare?",
             "Quale strategia mi aiuta a mantenere controllo senza irrigidirmi?",
         ],
         "qpcc-volizione": [
             "Come posso rafforzare volizione e autoregolazione?",
             "Cosa mi aiuta a organizzare il lavoro e portarlo a termine?",
-            "Quale routine posso provare per essere piu' costante?",
+            "Quale routine posso provare per essere più costante?",
         ],
         "qpcc-elaborazione": [
             "Come elaboro e collego quello che apprendo?",
-            "Puoi suggerirmi una strategia per applicare meglio cio' che studio?",
-            "Quale metodo puo' aiutarmi a passare dalla comprensione all'uso concreto?",
+            "Puoi suggerirmi una strategia per applicare meglio ciò che studio?",
+            "Quale metodo può aiutarmi a passare dalla comprensione all'uso concreto?",
         ],
         "qpcc-convinzioni": [
             "Quali convinzioni su di me emergono dal percorso?",
@@ -305,7 +305,7 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
             "Puoi trasformare la sintesi in un piano 7/30/90 giorni?",
         ],
         FIXED_QUESTIONS_STEP_ID: [
-            "Qual e' la sintesi del mio profilo QPCC?",
+            "Qual è la sintesi del mio profilo QPCC?",
             "Come collego competenze e convinzioni alle mie decisioni?",
             "Puoi propormi un piano breve per rafforzare un'area?",
         ],
@@ -313,52 +313,52 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
     "QAP": {
         "qap-profilo": [
             "Come si leggono questi punteggi?",
-            "Qual e' la mia risorsa piu' solida in questo profilo?",
+            "Qual è la mia risorsa più solida in questo profilo?",
             "Da quale risorsa conviene partire?",
         ],
         "qap-intro": [
             "Come funziona il percorso QAP?",
-            "Che cosa significa adattabilita' professionale?",
+            "Che cosa significa adattabilità professionale?",
             "Come leggeremo le quattro risorse del mio profilo?",
         ],
         "qap-welcome": [
             "Come funziona il percorso QAP?",
-            "Che cosa significa adattabilita' professionale?",
+            "Che cosa significa adattabilità professionale?",
             "Come leggeremo le quattro risorse del mio profilo?",
         ],
         "qap-factors": [
-            "Quale risorsa di adattabilita' e' piu' forte nel mio profilo?",
+            "Quale risorsa di adattabilità è più forte nel mio profilo?",
             "Quale risorsa dovrei sviluppare per affrontare meglio le scelte?",
             "Puoi farmi un esempio concreto legato al mio futuro professionale?",
         ],
         "qap-preoccupazione": [
             "Quanto sto pensando e preparando il mio futuro?",
-            "Come posso collegare le scelte di oggi alle possibilita' di domani?",
-            "Quale azione concreta puo' aumentare il mio orientamento al futuro?",
+            "Come posso collegare le scelte di oggi alle possibilità di domani?",
+            "Quale azione concreta può aumentare il mio orientamento al futuro?",
         ],
         "qap-controllo": [
             "Quanto sento di poter controllare le mie scelte?",
-            "Come posso aumentare autonomia e responsabilita' decisionale?",
+            "Come posso aumentare autonomia e responsabilità decisionale?",
             "Quale decisione piccola posso prendere per allenare controllo?",
         ],
         "qap-curiosita": [
-            "Quanto sto esplorando alternative e opportunita'?",
-            "Come posso diventare piu' curioso verso percorsi che conosco poco?",
+            "Quanto sto esplorando alternative e opportunità?",
+            "Come posso diventare più curioso verso percorsi che conosco poco?",
             "Quale esplorazione concreta posso fare questa settimana?",
         ],
         "qap-fiducia": [
             "Quanto mi sento capace di affrontare problemi e ostacoli?",
             "Come posso rafforzare fiducia e problem solving?",
-            "Quale esperienza passata mi mostra che so affrontare difficolta'?",
+            "Quale esperienza passata mi mostra che so affrontare difficoltà?",
         ],
         "qap-sintesi": [
-            "Quale risorsa di adattabilita' sostiene di piu' il mio futuro?",
-            "Quale risorsa dovrei allenare con priorita'?",
+            "Quale risorsa di adattabilità sostiene di più il mio futuro?",
+            "Quale risorsa dovrei allenare con priorità?",
             "Puoi trasformare la sintesi in un piano 7/30/90 giorni?",
         ],
         FIXED_QUESTIONS_STEP_ID: [
-            "Qual e' la sintesi del mio profilo QAP?",
-            "Come posso esplorare meglio le opportunita' future?",
+            "Qual è la sintesi del mio profilo QAP?",
+            "Come posso esplorare meglio le opportunità future?",
             "Quale azione concreta posso fare nei prossimi sette giorni?",
         ],
     },
