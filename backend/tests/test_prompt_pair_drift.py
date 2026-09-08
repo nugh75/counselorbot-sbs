@@ -108,6 +108,37 @@ def test_the_three_competence_metas_stay_one_text():
     assert len(set(metas.values())) == 1, "i meta delle competenze sono divergenti"
 
 
+def test_every_step_receives_a_theory_frame():
+    # Ogni step prende il meta della sua chiave, altrimenti quello di strumento:
+    # se nessuno dei due c'e', quello step gira senza quadro teorico. E' quanto
+    # e' successo a ztpi-t1..t4 e alle cinque domande Savickas.
+    from backend.chat_logic import prompt_meta_config_key
+    from backend.prompt_config import (
+        DEFAULT_GUIDED_STEPS,
+        DEFAULT_QAP_GUIDED_STEPS,
+        DEFAULT_QPCC_GUIDED_STEPS,
+        DEFAULT_QPCS_GUIDED_STEPS,
+        DEFAULT_QSAR_GUIDED_STEPS,
+        DEFAULT_SAVICKAS_GUIDED_STEPS,
+        DEFAULT_ZTPI_GUIDED_STEPS,
+    )
+
+    metas = {item["key"]: (item["default"] or "").strip() for item in META_SYSTEM_PROMPT_DEFINITIONS}
+    paths = (
+        ("QSA", DEFAULT_GUIDED_STEPS), ("QSAR", DEFAULT_QSAR_GUIDED_STEPS),
+        ("ZTPI", DEFAULT_ZTPI_GUIDED_STEPS), ("SAVICKAS", DEFAULT_SAVICKAS_GUIDED_STEPS),
+        ("QPCS", DEFAULT_QPCS_GUIDED_STEPS), ("QPCC", DEFAULT_QPCC_GUIDED_STEPS),
+        ("QAP", DEFAULT_QAP_GUIDED_STEPS),
+    )
+    for questionnaire_type, steps in paths:
+        instrument = metas.get(prompt_meta_config_key(questionnaire_type), "")
+        for step in steps:
+            own = metas.get(prompt_meta_config_key(questionnaire_type, step["id"]), "")
+            frame = own or instrument
+            assert frame, f"{questionnaire_type}:{step['id']} senza quadro teorico"
+            assert frame.lstrip().startswith("["), f"{questionnaire_type}:{step['id']} senza sentinella"
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0

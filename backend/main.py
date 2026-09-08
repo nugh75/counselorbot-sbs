@@ -38,6 +38,8 @@ from .prompt_config import (
     DEFAULT_QPCS_GUIDED_STEPS,
     DEFAULT_QPCC_GUIDED_STEPS,
     DEFAULT_QAP_GUIDED_STEPS,
+    META_ZTPI_TIME_PERSPECTIVE,
+    META_SAVICKAS_CAREER_CONSTRUCTION,
     SYSTEM_PROMPT_DEFAULTS,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
     INTRO_ALLOWED_QUESTIONS,
@@ -1103,6 +1105,21 @@ def _run_seed_and_migrations():
         ):
             if not db.query(models.GuidedStep).filter(models.GuidedStep.id == synth_def["id"]).first():
                 db.add(models.GuidedStep(**synth_def))
+                legacy_changed = True
+
+        # One-off: quadro teorico per ZTPI e Savickas. Le due righe `prompt_meta_*`
+        # esistevano vuote, e il meta di strumento e' il ripiego di ogni step che
+        # non ne ha uno proprio: ztpi-t1..t4 e le cinque domande Savickas
+        # giravano senza alcun contesto, mentre gli altri strumenti ce l'hanno.
+        # Riempimento solo se la riga e' ancora vuota: un testo scritto
+        # dall'admin, anche breve, non viene toccato.
+        for meta_key, meta_default in (
+            ("prompt_meta_ZTPI", META_ZTPI_TIME_PERSPECTIVE),
+            ("prompt_meta_SAVICKAS", META_SAVICKAS_CAREER_CONSTRUCTION),
+        ):
+            cfg_meta = db.query(models.Config).filter(models.Config.key == meta_key).first()
+            if cfg_meta and not (cfg_meta.value or "").strip():
+                cfg_meta.value = meta_default
                 legacy_changed = True
 
         # One-off: step di lettura del profilo per QPCS/QPCC/QAP. I prompt di
