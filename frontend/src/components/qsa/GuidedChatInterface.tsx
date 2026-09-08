@@ -16,7 +16,7 @@ import { isNearBottom } from '@/lib/chat-scroll';
 import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
-import { NotebookBookletPanel, asBookletType, type DeskTab } from '@/components/profile/NotebookBookletPanel';
+import { asBookletType } from '@/components/profile/NotebookBookletPanel';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
@@ -514,7 +514,6 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
     const [visualRequest, setVisualRequest] = useState<VisualToolsRequest | null>(null);
     // Taccuino e libretto richiamabili dal menu della chat.
-    const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
     const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
     // Indici dei messaggi con il box "Ragionamento" collassato (toggle per nasconderlo).
     const [hiddenReasoning, setHiddenReasoning] = useState<Set<number>>(new Set());
@@ -1950,16 +1949,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 {stepNavigation && <div className="border-t border-slate-200 lg:hidden">{stepNavigation}</div>}
             </>}
         </ChatWorkspace>
-        <NotebookBookletPanel
-            tab={deskTab}
-            onSelectTab={setDeskTab}
-            onClose={() => setDeskTab(null)}
-            lang={activeLocale}
-            questionnaireType={asBookletType(questionnaireType)}
-        />
         <VisualTools hideTrigger sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}
-                        onOpenNotebook={() => setDeskTab('notebook')}
-                        onOpenBooklet={() => setDeskTab('booklet')}
+                        questionnaireType={asBookletType(questionnaireType)}
                         onDiscuss={currentPhase === FIXED_CONCLUSION_ID ? undefined : text => {
                             setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
                             window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
