@@ -1443,6 +1443,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     // quindi la regione qui sotto porta due soli stati: "sto elaborando" mentre
     // la richiesta è aperta, e il testo della risposta una volta chiusa.
     const lastMessage = messages[messages.length - 1];
+    // La bolla vuota dell'assistente e' gia' in lista (e visibile in questo
+    // ramo, se si sta usando Idea): il pendente in coda ripeterebbe l'attesa.
+    const lastVisible = visibleMessages[visibleMessages.length - 1]?.message;
+    const awaitingAssistantBubble = lastVisible?.role === 'assistant' && !lastVisible.content.trim();
     const liveAnnouncement = isLoading
         ? t('guided.processing')
         : lastMessage?.role === 'assistant' && lastMessage.content.trim()
@@ -1763,7 +1767,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
 
 
-                    {isLoading && !continuation.pending && <ChatPending label={t('guided.processing')} />}
+                    {/* Un solo segnale d'attesa: la bolla dell'assistente dice gia'
+                        "sto pensando", quindi il pendente in coda serve solo quando
+                        quella bolla non c'e' ancora. */}
+                    {isLoading && !continuation.pending && !awaitingAssistantBubble && <ChatPending label={t('guided.processing')} />}
                     {/* Fine sessione: invito a rivedere il profilo dopo la conversazione */}
                     {currentPhase === FIXED_CONCLUSION_ID && (
                         <div className="max-w-full sm:max-w-2xl">
