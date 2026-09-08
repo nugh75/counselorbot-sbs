@@ -18,6 +18,9 @@ export interface PublicCounselor {
     // Adatto allo strumento chiesto. I non adatti arrivano lo stesso: servono
     // a dire perche' quello scelto non va e quali si possono usare.
     suitable?: boolean;
+    // Il modello puo' ragionare: falso solo per le famiglie note come
+    // non-reasoning.
+    reasoning_capable?: boolean;
 }
 
 const KEY = 'counselorbot_selected_counselor';

@@ -18,6 +18,7 @@ import type { Lang } from '@/lib/i18n';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { toast } from '@/components/ui/Toast';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -71,6 +72,10 @@ interface GuidedChatInterfaceProps {
     onBack?: () => void;
     frozenSnapshot?: FrozenSessionDetail | null;
     initialResponseLength?: ResponseLength;
+    initialReasoningEffort?: ReasoningEffort;
+    // Falso solo quando il modello del counselor e' noto come non-reasoning:
+    // il selettore non avrebbe effetto e non va mostrato.
+    reasoningCapable?: boolean;
 }
 
 interface ChatMessage {
@@ -424,7 +429,7 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 
 // --- Main Component ---
 
-export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, reasoningCapable = true }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const { streamChat, ...continuation } = useChatContinuation();
@@ -496,6 +501,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
 
     const hiddenMessages = messages.length - visibleMessages.length;
     const [responseLength, setResponseLength] = useState<ResponseLength>(initialResponseLength ?? 'medium');
+    const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(initialReasoningEffort ?? 'standard');
     const [input, setInput] = useState('');
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
@@ -710,6 +716,9 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     if (frozenSnapshot.response_length) {
                         setResponseLength(frozenSnapshot.response_length);
                     }
+                    if (frozenSnapshot.reasoning_effort) {
+                        setReasoningEffort(frozenSnapshot.reasoning_effort);
+                    }
                     // Le fasi già aperte restano tali: altrimenti l'effetto di cambio
                     // fase rigenera l'intro della fase ripresa e lo studente si
                     // rilegge la presentazione sotto alla conversazione di prima.
@@ -919,6 +928,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 language: activeLocale,
                 max_tokens: 500,
                 response_length: responseLength,
+                reasoning_effort: reasoningEffort,
                 counselor_id: getSelectedCounselorId(),
                 idea_variant: isIdea ? ideaVariant : undefined,
                 idea_budget: isIdea ? ideaBudget : undefined,
@@ -960,6 +970,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                         language: activeLocale,
                         max_tokens: 700,
                         response_length: responseLength,
+                        reasoning_effort: reasoningEffort,
                         counselor_id: getSelectedCounselorId(),
                         idea_variant: isIdea ? ideaVariant : undefined,
                         idea_budget: isIdea ? ideaBudget : undefined,
@@ -977,6 +988,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                     language: activeLocale,
                     max_tokens: 700,
                     response_length: responseLength,
+                    reasoning_effort: reasoningEffort,
                     counselor_id: getSelectedCounselorId(),
                     idea_variant: isIdea ? ideaVariant : undefined,
                     idea_budget: isIdea ? ideaBudget : undefined,
@@ -1166,6 +1178,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 language: activeLocale,
                 max_tokens: 900,
                 response_length: responseLength,
+                reasoning_effort: reasoningEffort,
                 counselor_id: getSelectedCounselorId(),
                 idea_variant: isIdea ? ideaVariant : undefined,
                 idea_budget: isIdea ? ideaBudget : undefined,
@@ -1315,6 +1328,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
         experience: 'standard',
         locale: activeLocale,
         response_length: responseLength,
+        reasoning_effort: reasoningEffort,
         label: `${questionnaireType} — ${getPhaseLabel(currentPhase)}`,
     });
 
@@ -1505,6 +1519,10 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 {currentPhase !== FIXED_CONCLUSION_ID && <>
                     <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
                     <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
+                    {reasoningCapable && <>
+                        <p className="px-2 text-sm font-semibold text-slate-700">{t('reasoning.label')}</p>
+                        <ReasoningSelector value={reasoningEffort} onChange={setReasoningEffort} disabled={isLoading} />
+                    </>}
                     <button type="button" onClick={() => { close(); void handleFreeze(); }} disabled={isLoading || !sessionId} className={messageActionClass}>
                         <Snowflake className="h-4 w-4" aria-hidden="true" />{t('frozen.freeze')}
                     </button>
