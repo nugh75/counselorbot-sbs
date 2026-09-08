@@ -517,6 +517,8 @@ def test_competence_score_profile_resolves_labels_in_the_answer_language():
     out = _apply_competence_step_profile_directive(
         "BASE", "QPCS", "it", scores, set(), _COMPETENCE_IT_FACTOR_NAMES["QPCS"])
     assert "- S1 (Gestione delle emozioni): 2/9 = Un fattore su cui lavorare" in out
+    # I nomi sono testo che lo studente legge: accenti veri, non apostrofi.
+    assert _COMPETENCE_IT_FACTOR_NAMES["QPCS"]["S3"] == "Volontà e perseveranza"
     assert "- S2 (Competenza comunicativa): 5/9 = Buono" in out
     assert "- S5 (Fiducia e progetto di vita): 8/9 = Un tuo punto di forza" in out
     # Le etichette QSA restano fuori: questi strumenti le vietano da sempre.

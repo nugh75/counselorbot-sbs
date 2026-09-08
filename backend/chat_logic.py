@@ -1448,17 +1448,17 @@ _COMPETENCE_INSTRUMENTS = {"QPCS", "QPCC", "QAP"}
 _COMPETENCE_IT_FACTOR_NAMES: dict[str, dict[str, str]] = {
     "QPCS": {
         "S1": "Gestione delle emozioni", "S2": "Competenza comunicativa",
-        "S3": "Volonta' e perseveranza", "S4": "Strategie e collaborazione",
+        "S3": "Volontà e perseveranza", "S4": "Strategie e collaborazione",
         "S5": "Fiducia e progetto di vita",
     },
     "QPCC": {
-        "K1": "Comunicazione in pubblico", "K2": "Ansia, controllo e responsabilita'",
+        "K1": "Comunicazione in pubblico", "K2": "Ansia, controllo e responsabilità",
         "K3": "Volizione e autoregolazione", "K4": "Strategie di elaborazione",
-        "K5": "Convinzioni su di se'",
+        "K5": "Convinzioni su di sé",
     },
     "QAP": {
         "AD1": "Orientamento al futuro", "AD2": "Controllo e autonomia",
-        "AD3": "Curiosita' ed esplorazione", "AD4": "Fiducia e problem solving",
+        "AD3": "Curiosità ed esplorazione", "AD4": "Fiducia e problem solving",
     },
 }
 
