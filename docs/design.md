@@ -167,6 +167,10 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   Strumenti visivi si apre solo dal menu della conversazione, anche a percorso
   concluso, parte da Azioni e occupa tutto il viewport. Le carte si creano nella
   scheda Carte. Il campo vuoto parte da una riga e cresce con il testo.
+  La scheda Linea del tempo usa una sequenza verticale di tappe con periodi
+  anche indicativi, frecce accessibili per l’ordine e collegamenti espliciti
+  ad azioni e Portfolio. Condivide salvataggio, annullamento ed esportazione
+  dei Tools; la copia nel Portfolio ha un’anteprima dedicata.
   Durante la conversazione, su desktop e mobile, la navbar generale resta
   visibile in alto; solo la panoramica superiore delle tappe viene nascosta.
   Le fasi del percorso usano toni slate uniformi: numero, grassetto e segno di

@@ -20,6 +20,8 @@ async function fixture(width, phase = 'intro', options = {}) {
     const page = await context.newPage();
     page.setDefaultTimeout(10000);
     const control = { failSave: false, failLoad: false, failPdf: false, visual: { revision: 0, workspace: { actions: [], cards: [], comparison: { options: [], criteria: [], cells: [], chosen: null, reason: '' } } }, failDiagram: false, failPatch: false, failRender: false, failExport: false, saved: options.graph ? [{ source_text: reply, source_key: createHash('sha256').update(reply).digest('hex'), instruction: '', spec: graphSpec }] : [], requests: [], errors: [] };
+    control.portfolio = [{ id: 91, title: 'Slide del progetto', description: 'Un lavoro di prova', images: [] }];
+    control.copies = new Map();
     control.personal = { questionnaire_type: 'QSA', limits: { notebook: 600, booklet: 2000 }, sources: { actions: 'Strumenti visivi · Piano personale', cards: 'Strumenti visivi · Carte', comparison: 'Strumenti visivi · Confronto' }, notebook: { notes: 'Annotazione originale', goal: 'Organizzare lo studio' }, booklets: [{ id: 7, title: 'La mia scheda', data: { student_notes: 'Nota esistente' } }] };
     const catalog = {
         reading: [{ slug: 'test-book', title: 'Libro per la prova', why: 'Collegato al metodo di studio.', synopsis: 'SINOSSI COMPLETA DEL LIBRO', where: 'https://example.invalid/libro', languages: ['it', 'en'], warning: 'AVVERTENZA DEL LIBRO', status: 'proposed' }],
@@ -34,9 +36,23 @@ async function fixture(width, phase = 'intro', options = {}) {
         if (url.origin !== origin) return route.abort();
         if (!url.pathname.startsWith('/api/')) return request.method() === 'GET' ? route.continue() : route.abort();
         control.requests.push({ path: url.pathname, search: url.search, method: request.method(), body: request.postDataJSON() });
+        if (options.liveTimeline && (url.pathname.startsWith('/api/session/fixture/visual-tools') || url.pathname.startsWith('/api/user/portfolio'))) {
+            const response = await route.fetch({ url: `http://127.0.0.1:8189${url.pathname.slice(4)}${url.search}` });
+            return route.fulfill({ response });
+        }
         let data = [];
         if (url.pathname === '/api/chat/stream') return route.fulfill({ contentType: 'text/event-stream', body: 'data: ' + JSON.stringify({ display: 'Possiamo approfondire questo punto.' }) + '\n\ndata: ' + JSON.stringify({ done: true, response: 'Possiamo approfondire questo punto.', session_id: 'fixture' }) + '\n\n' });
-        if (url.pathname === '/api/opencode/workspace') data = { key: 'fixture', api_available: true, session_id: 'opencode-fixture', needs_seed: false, history: [{ role: 'assistant', content: reply }] };
+        if (url.pathname === '/api/user/portfolio') data = control.portfolio;
+        else if (url.pathname.endsWith('/timeline/preview')) {
+            const body = request.postDataJSON();
+            data = { title: body.title, description: control.visual.workspace.timeline.events.filter(e => body.event_ids.includes(e.id)).map(e => e.title + ': ' + e.reflection).join('\n'), preview_hash: 'a'.repeat(64) };
+        } else if (url.pathname.endsWith('/timeline/portfolio')) {
+            if (control.failCopy) return route.fulfill({ status: 503, body: '{}' });
+            const body = request.postDataJSON();
+            if (!control.copies.has(body.request_id)) control.copies.set(body.request_id, { item_id: 92 });
+            data = control.copies.get(body.request_id);
+        } else if (url.pathname.endsWith('/timeline-links')) data = { links: [], snapshot: false };
+        else if (url.pathname === '/api/opencode/workspace') data = { key: 'fixture', api_available: true, session_id: 'opencode-fixture', needs_seed: false, history: [{ role: 'assistant', content: reply }] };
         else if (url.pathname === '/api/session/fixture/visual-tools/personal') {
             if (control.failPersonal) return route.fulfill({ status: 503, body: '{}' });
             if (request.method() === 'POST') {
@@ -798,3 +814,132 @@ for (const options of [{ width: 320, locale: 'de' }, { width: 390, locale: 'it',
         } finally { await context.close(); }
     });
 }
+
+for (const [locale, width] of [['it', 390], ['en', 1440], ['de', 320], ['es', 390], ['fr', 1440], ['sv', 390]]) {
+    test(`timeline links actions and Portfolio with explicit snapshot at ${width}px in ${locale}`, async () => {
+        const { page, context, control } = await fixture(width, 'intro', { locale, touch: width < 500, dark: locale === 'de' });
+        const l = key => visualLabel(locale, key);
+        try {
+            await openVisual(page, l('open'));
+            const dialog = page.getByRole('dialog');
+            await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
+            await dialog.getByLabel(l('timelineTitle'), { exact: true }).fill('Il mio progetto');
+            await dialog.getByLabel(l('eventTitle'), { exact: true }).fill('Presentazione');
+            await dialog.getByLabel(l('period'), { exact: true }).fill('Giugno, data da definire');
+            await dialog.getByRole('button', { name: l('addEvent'), exact: true }).click();
+            const event = dialog.locator('li[id^="timeline-"]');
+            await event.getByLabel(l('reflection'), { exact: true }).fill('Provare con un compagno');
+            await event.getByRole('textbox', { name: l('createAction'), exact: true }).fill('Preparare le slide');
+            await event.getByRole('combobox', { name: l('actionKind'), exact: true }).selectOption('book');
+            await event.getByRole('button', { name: l('createAction'), exact: true }).click();
+            await event.getByRole('combobox', { name: l('linkPortfolio'), exact: true }).selectOption('91');
+            await dialog.getByRole('button', { name: l('save'), exact: true }).click();
+            await dialog.getByRole('tab', { name: l('board'), exact: true }).click();
+            await dialog.getByRole('combobox').filter({ has: page.locator('option[value="doing"]') }).selectOption('doing');
+            await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
+            assert.match(await event.innerText(), new RegExp(l('doing')));
+            await dialog.getByRole('button', { name: l('savePortfolio'), exact: true }).click();
+            await dialog.getByRole('button', { name: l('preview'), exact: true }).click();
+            await dialog.locator('pre').waitFor();
+            assert.match(await dialog.locator('pre').innerText(), /Provare con un compagno/);
+            control.failCopy = true;
+            await dialog.getByRole('button', { name: l('savePortfolio'), exact: true }).last().click();
+            await dialog.getByRole('alert').waitFor();
+            control.failCopy = false;
+            await dialog.getByRole('button', { name: l('savePortfolio'), exact: true }).last().click();
+            await dialog.getByText(l('snapshotSaved'), { exact: false }).waitFor();
+            assert.equal(control.copies.size, 1);
+            await page.screenshot({ path: `/tmp/timeline-${locale}-${width}.png` });
+            assert.equal(await dialog.evaluate(el => el.scrollWidth > el.clientWidth), false);
+            await dialog.getByRole('button', { name: l('close'), exact: true }).click();
+            await openVisual(page, l('open'));
+            await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
+            assert.equal(await event.getByLabel(l('period'), { exact: true }).inputValue(), 'Giugno, data da definire');
+            assert.equal(control.visual.workspace.actions.length, 1);
+            assert.equal(control.visual.workspace.actions[0].kind, 'book');
+            assert.equal(control.visual.workspace.timeline.events[0].portfolio[0].id, 91);
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+test('timeline real API: reading and film goals, Portfolio return links, immutable copy and PDF', { skip: process.env.TIMELINE_LIVE !== '1' }, async () => {
+    const { page, context, control } = await fixture(1440, 'intro', { locale: 'it', liveTimeline: true, dark: true });
+    const l = key => visualLabel('it', key);
+    try {
+        await openVisual(page, l('open'));
+        let dialog = page.getByRole('dialog');
+        await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
+        await dialog.getByLabel(l('timelineTitle'), { exact: true }).fill('Letture e visioni del progetto');
+        await dialog.getByLabel(l('eventTitle'), { exact: true }).fill('Preparazione della presentazione');
+        await dialog.getByLabel(l('period'), { exact: true }).fill('Autunno, prima della presentazione');
+        await dialog.getByRole('button', { name: l('addEvent'), exact: true }).click();
+        let event = dialog.locator('li[id^="timeline-"]');
+        for (const [kind, title] of [['book', 'Leggere il libro scelto'], ['article', 'Studiare l’articolo scelto'], ['film', 'Vedere il film scelto']]) {
+            await event.getByRole('combobox', { name: l('actionKind'), exact: true }).selectOption(kind);
+            await event.getByRole('textbox', { name: l('createAction'), exact: true }).fill(title);
+            await event.getByRole('button', { name: l('createAction'), exact: true }).click();
+        }
+        await event.getByRole('combobox', { name: l('linkPortfolio'), exact: true }).selectOption('1');
+        await event.getByLabel(l('reflection'), { exact: true }).fill('Le letture mi aiutano a preparare il confronto.');
+        await dialog.getByRole('button', { name: l('savePortfolio'), exact: true }).click();
+        await dialog.getByRole('button', { name: l('preview'), exact: true }).click();
+        await dialog.locator('pre').waitFor();
+        assert.match(await dialog.locator('pre').innerText(), /Libro da leggere/);
+        assert.match(await dialog.locator('pre').innerText(), /Film da vedere/);
+        await dialog.getByRole('button', { name: l('savePortfolio'), exact: true }).last().click();
+        await dialog.getByText(l('snapshotSaved'), { exact: false }).waitFor();
+        const download = page.waitForEvent('download');
+        await dialog.getByRole('button', { name: l('export'), exact: true }).click();
+        await (await download).saveAs('/tmp/timeline-live.pdf');
+        await event.getByLabel(l('reflection'), { exact: true }).fill('Riflessione modificata dopo la copia');
+        await dialog.getByRole('button', { name: l('save'), exact: true }).click();
+        await dialog.getByRole('button', { name: l('save'), exact: true }).waitFor({ state: 'visible' });
+        await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && b.disabled), l('save'));
+        await page.goto(`${origin}/profilo/portfolio#portfolio-2`, { waitUntil: 'networkidle' });
+        const copy = page.locator('#portfolio-2');
+        await copy.getByText(l('viewSnapshot'), { exact: true }).click();
+        assert.match(await copy.innerText(), /Le letture mi aiutano/);
+        assert.doesNotMatch(await copy.innerText(), /Riflessione modificata/);
+        await copy.getByRole('link', { name: /Apri la tappa/ }).click();
+        dialog = page.getByRole('dialog');
+        event = dialog.locator('li[id^="timeline-"]');
+        await event.waitFor();
+        assert.equal(await event.getByLabel(l('reflection'), { exact: true }).inputValue(), 'Riflessione modificata dopo la copia');
+        assert.equal(await page.evaluate(() => document.documentElement.classList.contains('dark')), true);
+        await page.screenshot({ path: '/tmp/timeline-live-dark.png' });
+        await dialog.getByRole('button', { name: /^Rimuovi: Preparazione/ }).click();
+        await dialog.getByRole('button', { name: l('save'), exact: true }).click();
+        await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && b.disabled), l('save'));
+        await dialog.getByRole('tab', { name: l('board'), exact: true }).click();
+        assert.equal(await dialog.locator('article').count(), 3);
+        await page.goto(`${origin}/profilo/portfolio`, { waitUntil: 'networkidle' });
+        await page.locator('#portfolio-2').waitFor();
+        assert.equal(await page.getByRole('link', { name: /Apri la tappa/ }).count(), 0);
+        assert.equal(await page.locator('article[id^="portfolio-"]').count(), 2);
+        assert.deepEqual(control.errors, []);
+    } catch (error) { await page.screenshot({ path: '/tmp/timeline-live-failure.png' }); console.error((await page.locator('body').innerText()).slice(-2000)); throw error; } finally { await context.close(); }
+});
+
+test('timeline keyboard ordering and selected chat handoff preserve the other milestones', async () => {
+    const { page, context, control } = await fixture(390);
+    const l = key => visualLabel('it', key);
+    control.visual.workspace.timeline = { title: 'Il percorso', events: ['Prima', 'Dopo'].map((title, i) => ({ id: `event-${i}`, title, period: i ? 'Fra qualche mese' : 'Durante la scuola', tense: i ? 'future' : 'past', symbol: 'milestone', reflection: '', source: '', action_ids: [], portfolio: [] })) };
+    try {
+        await openVisual(page, l('open'));
+        const dialog = page.getByRole('dialog');
+        await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
+        await dialog.getByRole('button', { name: `${l('moveUp')}: Dopo`, exact: true }).focus();
+        await page.keyboard.press('Enter');
+        assert.equal(await dialog.locator('li[id^="timeline-"]').first().getByLabel(l('period'), { exact: true }).inputValue(), 'Fra qualche mese');
+        await dialog.getByRole('checkbox', { name: `${l('selectEvent')}: Prima`, exact: true }).uncheck();
+        await dialog.getByRole('button', { name: l('discuss'), exact: true }).click();
+        await page.getByRole('dialog').waitFor({ state: 'hidden' });
+        const text = await page.locator('textarea').first().inputValue();
+        assert.match(text, /Fra qualche mese/);
+        assert.doesNotMatch(text, /Durante la scuola/);
+        assert.equal(control.visual.workspace.timeline.events.length, 2);
+        assert.equal(control.requests.filter(r => r.path === '/api/chat/stream').length, 0);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});

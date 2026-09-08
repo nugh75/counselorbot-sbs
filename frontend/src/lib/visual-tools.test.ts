@@ -38,3 +38,37 @@ test('the chat handoff attributes student choices and preserves reflection and s
     assert.match(result, /Source: Suggested strategy/);
     assert.match(result, /Fits me: Examples help me/);
 });
+
+test('timeline order preserves uncertain periods and selected handoff follows live action state', async () => {
+    // @ts-expect-error -- Node runs TypeScript files directly.
+    const { moveTimelineEvent, timelineText } = await import('./visual-tools.ts');
+    const w = emptyWorkspace();
+    w.actions = [{ id: 'a', title: 'Prepare slides', stage: 'doing', detail: '', reflection: '', source: '' }];
+    const event = { id: 'e', title: 'Presentation', period: 'Around June', tense: 'future' as const, symbol: 'milestone' as const, reflection: 'Try together', source: '', action_ids: ['a'], portfolio: [{ id: 1, title: 'Slides' }] };
+    w.timeline = { title: 'My journey', events: [event, { ...event, id: 'p', title: 'Earlier experience', period: 'At school' }] };
+    const moved = moveTimelineEvent(w, 'p', -1);
+    assert.equal(moved.timeline?.events[0].period, 'At school');
+    assert.equal(w.timeline.events[0].id, 'e');
+    assert.equal(moveTimelineEvent(w, 'e', -1), w);
+    const label = (key: string) => visualLabel('en', key);
+    const selected = timelineText(w, label, ['e']);
+    assert.match(selected, /In progress/);
+    assert.match(selected, /Slides/);
+    assert.doesNotMatch(selected, /Earlier experience/);
+    const removed = { ...w, actions: [] };
+    assert.match(timelineText(removed, label), /Unavailable/);
+    assert.match(workspaceText(w, label), /Around June/);
+});
+
+test('removing an unsaved action unlinks it without deleting its milestone or Portfolio work', async () => {
+    // @ts-expect-error -- Node runs TypeScript files directly.
+    const { removeAction } = await import('./visual-tools.ts');
+    const w = emptyWorkspace();
+    w.actions = [{ id: 'new', title: 'Read', kind: 'book', stage: 'todo', detail: '', reflection: '', source: '' }];
+    w.timeline = { title: 'Journey', events: [{ id: 'e', title: 'Reading', period: 'Soon', tense: 'future', symbol: 'study', reflection: '', source: '', action_ids: ['new'], portfolio: [{ id: 1, title: 'Notes' }] }] };
+    const next = removeAction(w, 'new');
+    assert.equal(next.actions.length, 0);
+    assert.deepEqual(next.timeline?.events[0].action_ids, []);
+    assert.equal(next.timeline?.events[0].portfolio[0].title, 'Notes');
+    assert.deepEqual(w.timeline.events[0].action_ids, ['new']);
+});

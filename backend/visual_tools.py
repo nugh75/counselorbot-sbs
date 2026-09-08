@@ -1,6 +1,6 @@
 """Student-owned visual work. No model calls, prompts or questionnaire scores."""
 import hashlib
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from . import models, pii
 
 ACTION = 'visual_workspace'
+Identifier = Annotated[str, Field(min_length=1, max_length=64, pattern=r'^[a-zA-Z0-9_-]+$')]
 
 
 class StrictModel(BaseModel):
@@ -22,6 +23,7 @@ class Item(StrictModel):
 
 
 class Action(Item):
+    kind: Literal['activity', 'book', 'article', 'film'] = 'activity'
     title: str = Field(min_length=1, max_length=160)
     detail: str = Field(default='', max_length=1000)
     stage: Literal['todo', 'doing', 'done'] = 'todo'
@@ -69,10 +71,45 @@ class Comparison(StrictModel):
         return self
 
 
+class PortfolioLink(StrictModel):
+    id: int = Field(gt=0)
+    title: str = Field(default='', max_length=200)
+
+
+class TimelineEvent(Item):
+    title: str = Field(min_length=1, max_length=160)
+    period: str = Field(min_length=1, max_length=100)
+    tense: Literal['past', 'future'] = 'past'
+    symbol: Literal['milestone', 'study', 'work', 'change'] = 'milestone'
+    reflection: str = Field(default='', max_length=1000)
+    action_ids: list[Identifier] = Field(default_factory=list, max_length=30)
+    portfolio: list[PortfolioLink] = Field(default_factory=list, max_length=20)
+
+    @model_validator(mode='after')
+    def unique_links(self):
+        if len(set(self.action_ids)) != len(self.action_ids) or len({p.id for p in self.portfolio}) != len(self.portfolio):
+            raise ValueError('Duplicate links')
+        return self
+
+
+class Timeline(StrictModel):
+    title: str = Field(default='', max_length=160)
+    events: list[TimelineEvent] = Field(default_factory=list, max_length=30)
+
+    @model_validator(mode='after')
+    def unique_events(self):
+        if len({e.id for e in self.events}) != len(self.events):
+            raise ValueError('Duplicate events')
+        if self.events and not self.title:
+            raise ValueError('Timeline title is required')
+        return self
+
+
 class Workspace(StrictModel):
     actions: list[Action] = Field(default_factory=list, max_length=30)
     cards: list[Card] = Field(default_factory=list, max_length=30)
     comparison: Comparison = Field(default_factory=Comparison)
+    timeline: Timeline = Field(default_factory=Timeline)
 
     @model_validator(mode='after')
     def unique_items(self):
@@ -92,8 +129,19 @@ def load_workspace(db: Session, session_id: str, username: str) -> dict:
         models.Log.action == ACTION, models.Log.session_id == session_id,
         models.Log.username == username,
     ).order_by(models.Log.id.desc()).first()
-    return {'revision': row.id if row else 0,
-            'workspace': row.details['workspace'] if row else Workspace().model_dump()}
+    workspace = Workspace.model_validate(row.details['workspace'] if row else {}).model_dump()
+    resolve_portfolio(db, username, workspace)
+    return {'revision': row.id if row else 0, 'workspace': workspace}
+
+
+def resolve_portfolio(db: Session, username: str, workspace: dict):
+    links = [p for e in workspace['timeline']['events'] for p in e['portfolio']]
+    if not links:
+        return
+    titles = dict(db.query(models.PortfolioItem.id, models.PortfolioItem.title).filter(
+        models.PortfolioItem.username == username, models.PortfolioItem.id.in_([p['id'] for p in links])).all())
+    for link in links:
+        link['title'] = pii.redact(titles.get(link['id'], ''))[:200]
 
 
 def save_workspace(db: Session, session_id: str, username: str, update: SaveWorkspace) -> dict:
@@ -105,7 +153,18 @@ def save_workspace(db: Session, session_id: str, username: str, update: SaveWork
     current = load_workspace(db, session_id, username)
     if update.revision != current['revision']:
         raise HTTPException(409, 'The workspace was updated elsewhere')
+    previous = {e['id']: e for e in current['workspace']['timeline']['events']}
+    action_ids = {a.id for a in update.workspace.actions}
+    owned = {row[0] for row in db.query(models.PortfolioItem.id).filter(
+        models.PortfolioItem.username == username).all()} if update.workspace.timeline.events else set()
+    for event in update.workspace.timeline.events:
+        old = previous.get(event.id, {})
+        if set(event.action_ids) - action_ids - set(old.get('action_ids', [])):
+            raise HTTPException(422, 'Unknown action')
+        if {p.id for p in event.portfolio} - owned - {p['id'] for p in old.get('portfolio', [])}:
+            raise HTTPException(422, 'Portfolio work is unavailable')
     clean = Workspace.model_validate_json(pii.redact(update.workspace.model_dump_json())).model_dump()
+    resolve_portfolio(db, username, clean)
     row = models.Log(action=ACTION, session_id=session_id, username=username, details={'workspace': clean})
     db.add(row)
     db.commit()
@@ -152,4 +211,11 @@ def workspace_sections(workspace: dict, language: str) -> list[tuple[str, list[s
         elif c.reason:
             notes.append(f'{labels[13]}: {c.reason}')
         sections.append((labels[11], notes))
-    return sections
+    if w.timeline.events:
+        from .timeline import timeline_sections
+        sections.extend(timeline_sections(w, language))
+    # The PDF renderer uses core-font Latin-1. Keep punctuation readable instead
+    # of replacing typographic apostrophes and timeline separators with '?'.
+    punctuation = str.maketrans({'—': '-', '–': '-', '’': "'", '‘': "'", '“': '"', '”': '"', '…': '...', '→': '->'})
+    return [(heading.translate(punctuation), [entry.translate(punctuation) for entry in entries])
+            for heading, entries in sections]

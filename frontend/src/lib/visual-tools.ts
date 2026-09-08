@@ -1,9 +1,13 @@
 export type ActionStage = 'todo' | 'doing' | 'done';
 export type CardBucket = 'unsorted' | 'yes' | 'explore' | 'no';
-export type VisualAction = { id: string; title: string; detail: string; stage: ActionStage; reflection: string; source: string };
+export type ActionKind = 'activity' | 'book' | 'article' | 'film';
+export type VisualAction = { kind?: ActionKind; id: string; title: string; detail: string; stage: ActionStage; reflection: string; source: string };
 export type ReflectionCard = { id: string; text: string; bucket: CardBucket; source: string };
 export type ComparisonOption = { id: string; title: string; source: string };
+export type TimelineEvent = { id: string; title: string; period: string; tense: 'past' | 'future'; symbol: 'milestone' | 'study' | 'work' | 'change'; reflection: string; source: string; action_ids: string[]; portfolio: { id: number; title: string }[] };
+export type Timeline = { title: string; events: TimelineEvent[] };
 export type VisualWorkspace = {
+    timeline?: Timeline;
     actions: VisualAction[];
     cards: ReflectionCard[];
     comparison: {
@@ -16,6 +20,31 @@ export type VisualWorkspace = {
 };
 export type SavedWorkspace = { revision: number; workspace: VisualWorkspace };
 export const emptyWorkspace = (): VisualWorkspace => ({ actions: [], cards: [], comparison: { options: [], criteria: [], cells: [], chosen: null, reason: '' } });
+
+export function removeAction(w: VisualWorkspace, id: string): VisualWorkspace {
+    return { ...w, actions: w.actions.filter(a => a.id !== id), ...(w.timeline ? {
+        timeline: { ...w.timeline, events: w.timeline.events.map(e => ({ ...e, action_ids: e.action_ids.filter(a => a !== id) })) },
+    } : {}) };
+}
+
+export function timelineText(w: VisualWorkspace, label: (key: string) => string, selected?: string[]): string {
+    const timeline = w.timeline;
+    if (!timeline?.events.length) return '';
+    return [label('timeline') + ' — ' + timeline.title, ...timeline.events.filter(e => !selected || selected.includes(e.id)).map(e =>
+        [e.period + ' — ' + label(e.tense) + ': ' + e.title, e.reflection,
+            ...e.action_ids.map(id => { const action = w.actions.find(a => a.id === id); return label('board') + ': ' + (action ? (action.kind && action.kind !== 'activity' ? label(action.kind) + ': ' : '') + action.title + ' — ' + label(action.stage) : label('unavailable')); }),
+            ...e.portfolio.map(p => label('linkPortfolio') + ': ' + (p.title || label('unavailable')))].filter(Boolean).join('\n'))].join('\n\n');
+}
+
+export function moveTimelineEvent(w: VisualWorkspace, id: string, offset: number): VisualWorkspace {
+    if (!w.timeline) return w;
+    const events = [...w.timeline.events];
+    const index = events.findIndex(e => e.id === id);
+    const target = index + offset;
+    if (index < 0 || target < 0 || target >= events.length) return w;
+    [events[index], events[target]] = [events[target], events[index]];
+    return { ...w, timeline: { ...w.timeline, events } };
+}
 
 export function removeOption(workspace: VisualWorkspace, id: string): VisualWorkspace {
     const c = workspace.comparison;
@@ -43,5 +72,7 @@ export function workspaceText(w: VisualWorkspace, label: (key: string) => string
         if (c.chosen) parts.push(label('choice') + ': ' + c.options.find(o => o.id === c.chosen)?.title);
         if (c.reason) parts.push(label('reason') + ': ' + c.reason);
     }
+    const timeline = timelineText(w, label);
+    if (timeline) parts.push(timeline);
     return parts.join('\n\n');
 }
