@@ -16,6 +16,7 @@ import { isNearBottom } from '@/lib/chat-scroll';
 import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
+import { NotebookBookletPanel, NotebookBookletTriggers, asBookletType, type DeskTab } from '@/components/profile/NotebookBookletPanel';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
@@ -512,6 +513,8 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
     const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
     const [visualRequest, setVisualRequest] = useState<VisualToolsRequest | null>(null);
+    // Taccuino e libretto richiamabili dal menu della chat.
+    const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
     const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
     // Indici dei messaggi con il box "Ragionamento" collassato (toggle per nasconderlo).
     const [hiddenReasoning, setHiddenReasoning] = useState<Set<number>>(new Set());
@@ -1528,6 +1531,7 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 <Tooltip content={visualLabel(activeLocale, 'open')}><button type="button" className={messageActionClass} aria-label={visualLabel(activeLocale, 'open')} onClick={() => { close(); setVisualRequest({ tab: 'board', nonce: Date.now() }); }}>
                     <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'tools')}
                 </button></Tooltip>
+                <NotebookBookletTriggers buttonClassName={messageActionClass} onOpen={(tab) => { close(); setDeskTab(tab); }} />
                 {currentPhase !== FIXED_CONCLUSION_ID && <>
                     <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
                     <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
@@ -1947,6 +1951,13 @@ export function GuidedChatInterface({ scores, questionnaireType, onComplete, ses
                 {stepNavigation && <div className="border-t border-slate-200 lg:hidden">{stepNavigation}</div>}
             </>}
         </ChatWorkspace>
+        <NotebookBookletPanel
+            tab={deskTab}
+            onSelectTab={setDeskTab}
+            onClose={() => setDeskTab(null)}
+            lang={activeLocale}
+            questionnaireType={asBookletType(questionnaireType)}
+        />
         <VisualTools hideTrigger sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}
                         onDiscuss={currentPhase === FIXED_CONCLUSION_ID ? undefined : text => {
                             setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
