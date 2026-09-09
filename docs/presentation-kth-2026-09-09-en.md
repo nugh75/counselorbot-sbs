@@ -1,9 +1,9 @@
 # KTH Presentation — 9 September 2026 — English Version
 
-> Revised spoken script: 16 proposed slide sections, first person, with an academic focus on development, method and preliminary findings. Website slides have not yet been aligned with this structure.
+> Revised spoken script: 17 proposed slide sections, first person, with an academic focus on development, method and preliminary findings. Website slides have not yet been aligned with this structure.
 > This English revision develops the Italian companion script (`presentazione-kth-2026-09-09-it.md`); the two texts are no longer aligned section by section.
 > Development and evaluation data: `Counselorbot-versione-v40-202606191545.docx`, §§3–6. These figures describe the manuscript's study snapshot, not current platform totals.
-> Reading estimate: 30–35 minutes; allow approximately 35–40 minutes with pauses and transitions. Demo and discussion excluded.
+> Reading estimate: 29–36 minutes; allow approximately 34–41 minutes with pauses and transitions. Demo and discussion excluded.
 
 ---
 
@@ -76,18 +76,16 @@ These aspects made me curious about Sweden and Stockholm. I thought this would b
 
 ---
 
-## Slide 6 — CounselorBot: why, and three questions
+## Slide 6 — Why CounselorBot?
 
 **Slide bullets:**
 
-- Understanding questionnaire results and connecting them to one's own experience requires support
-- Time for individual discussions with teachers, tutors and guidance counsellors is limited
-- CounselorBot: additional support for reflection, connected to human guidance
-- **Q1** — Is it possible to build a counselling chatbot for educational and career guidance? Are the technologies mature enough?
-- **Q2** — Can it really help students interpret questionnaire results and reflect on their choices?
-- **Q3** — Can we create a safe space for students' data and reflection, leaving them in control of what they share?
+- Questionnaire results need interpretation and a connection to personal experience
+- Time for individual guidance is limited
+- General-purpose AI needs a pedagogical direction for educational guidance
+- Questionnaire results → guided reflection with CounselorBot → discussion with a teacher or guidance counsellor
 
-### Talk (≈ 3.2–3.8 min reading)
+### Talk (≈ 2.0–2.3 min reading)
 
 And now, after this brief introduction, let us come to the heart of the presentation.
 
@@ -99,7 +97,19 @@ Usually, a teacher, tutor or guidance counsellor supports this step: they help t
 
 There is a second motivation as well. Students use AI to look for information and study, but also to ask for advice about study choices, work and aspects of their lives. General-purpose systems can answer these questions, but they are not specifically designed for educational guidance. Their ability to sustain a conversation could support educational guidance. The question is how to design that conversation so that it helps students understand their results and reflect on their own experiences.
 
-The idea behind CounselorBot is to offer an additional tool with which students can explore their results, ask questions and reflect on themselves. This conversation can become a starting point for a subsequent discussion with a teacher or guidance counsellor, who retains their role in supporting the student.
+CounselorBot helps students explore their questionnaire results and connect them with their own experiences. They can ask questions, reflect on what the results mean to them, and use what emerges as a starting point for a conversation with a teacher or guidance counsellor.
+
+---
+
+## Slide 7 — Three research questions
+
+**Slide bullets:**
+
+- **Q1** — Is it possible to build a counselling chatbot for educational and career guidance? Are the technologies mature enough?
+- **Q2** — Can it really help students interpret questionnaire results and reflect on their choices?
+- **Q3** — Can we create a safe space for students' data and reflection, leaving them in control of what they share?
+
+### Talk (≈ 1.2–1.4 min reading)
 
 Together with my research group and my supervisor, we asked ourselves three questions.
 
@@ -113,7 +123,7 @@ I will first explain the pedagogical framework, then the two development cycles 
 
 ---
 
-## Slide 7 — What guidance means (and why it is not matching)
+## Slide 8 — What guidance means (and why it is not matching)
 
 **Slide bullets:**
 
@@ -147,7 +157,7 @@ Notice what changes. The goal is no longer the right answer, but the right proce
 
 ---
 
-## Slide 8 — Development methodology: two ADDIE cycles
+## Slide 9 — Development methodology: two ADDIE cycles
 
 **Slide bullets (working outline):**
 
@@ -173,7 +183,7 @@ My own background is in education and the humanities, and I developed the platfo
 
 ---
 
-## Slide 9 — The QSA as the focus of the evaluation
+## Slide 10 — The QSA as the focus of the evaluation
 
 **Slide bullets (working outline):**
 
@@ -197,7 +207,7 @@ All the application pathways remain under testing. A questionnaire's existing va
 
 ---
 
-## Slide 10 — From user feedback to redesign
+## Slide 11 — From user feedback to redesign
 
 **Slide bullets (working outline):**
 
@@ -225,7 +235,7 @@ Several components changed together: the interface, the guided sequence, memory 
 
 ---
 
-## Slide 11 — Exploratory evaluation: participants and procedure
+## Slide 12 — Exploratory evaluation: participants and procedure
 
 **Slide bullets (working outline):**
 
@@ -254,7 +264,7 @@ This design provides information about participants' reported experience. It doe
 
 ---
 
-## Slide 12 — Preliminary findings: experience of the two versions
+## Slide 13 — Preliminary findings: experience of the two versions
 
 **Slide bullets (working outline):**
 
@@ -294,7 +304,7 @@ For the ADDIE process, these findings provide directions for the next cycle: inv
 
 ---
 
-## Slide 13 — Time for reflection and human support
+## Slide 14 — Time for reflection and human support
 
 **Slide bullets (working outline):**
 
@@ -320,7 +330,7 @@ These questions connect the immediate experience of using the interface to the w
 
 ---
 
-## Slide 14 — Data protection and local AI (Q3)
+## Slide 15 — Data protection and local AI (Q3)
 
 **Slide bullets:**
 
@@ -349,7 +359,7 @@ The design must therefore also take account of the applicable obligations concer
 
 ---
 
-## Slide 15 — What I am looking for at KTH and next steps
+## Slide 16 — What I am looking for at KTH and next steps
 
 **Slide bullets:**
 
@@ -374,7 +384,7 @@ One direction we have not yet explored is an application that runs entirely on t
 
 ---
 
-## Slide 16 — Conclusions and an invitation to take part in testing
+## Slide 17 — Conclusions and an invitation to take part in testing
 
 **Slide bullets (working outline):**
 
@@ -415,39 +425,40 @@ Thank you.
 | 3 | From Alfa Romeo to Roma Tre (visual only) | 0 | — |
 | 4 | From slaughterhouse to architecture school (visual only) | 0 | — |
 | 5 | Why I chose Sweden | 113 | 0.9–1.0 |
-| 6 | CounselorBot: why, and three questions | 418 | 3.2–3.8 |
-| 7 | What guidance means (and why it is not matching) | 543 | 4.2–4.9 |
-| 8 | Development methodology: two ADDIE cycles | 283 | 2.2–2.6 |
-| 9 | The QSA as the focus of the evaluation | 229 | 1.8–2.1 |
-| 10 | From user feedback to redesign | 291 | 2.2–2.6 |
-| 11 | Exploratory evaluation: participants and procedure | 262 | 2.0–2.4 |
-| 12 | Preliminary findings: experience of the two versions | 312 | 2.4–2.8 |
-| 13 | Time for reflection and human support | 249 | 1.9–2.3 |
-| 14 | Data protection and local AI (Q3) | 345 | 2.7–3.1 |
-| 15 | What I am looking for at KTH and next steps | 304 | 2.3–2.8 |
-| 16 | Conclusions and an invitation to take part in testing | 260 | 2.0–2.4 |
+| 6 | Why CounselorBot? | 256 | 2.0–2.3 |
+| 7 | Three research questions | 157 | 1.2–1.4 |
+| 8 | What guidance means (and why it is not matching) | 543 | 4.2–4.9 |
+| 9 | Development methodology: two ADDIE cycles | 283 | 2.2–2.6 |
+| 10 | The QSA as the focus of the evaluation | 229 | 1.8–2.1 |
+| 11 | From user feedback to redesign | 291 | 2.2–2.6 |
+| 12 | Exploratory evaluation: participants and procedure | 262 | 2.0–2.4 |
+| 13 | Preliminary findings: experience of the two versions | 312 | 2.4–2.8 |
+| 14 | Time for reflection and human support | 249 | 1.9–2.3 |
+| 15 | Data protection and local AI (Q3) | 345 | 2.7–3.1 |
+| 16 | What I am looking for at KTH and next steps | 304 | 2.3–2.8 |
+| 17 | Conclusions and an invitation to take part in testing | 260 | 2.0–2.4 |
 
-The revised English script contains **3,889 spoken words**, counted as whitespace-separated words in the Talk sections only. Slide bullets, the results table, source notes and supporting material are excluded. Reading requires approximately **30–35 minutes**; allow **35–40 minutes** with pauses and transitions. Discussion and any demo require additional time. Check the estimate by rehearsing aloud, particularly the numerical results.
+The revised English script contains **3,884 spoken words**, counted as whitespace-separated words in the Talk sections only. Slide bullets, the results table, source notes and supporting material are excluded. Reading requires approximately **29–36 minutes**; allow **34–41 minutes** with pauses and transitions. Discussion and any demo require additional time. Check the estimate by rehearsing aloud, particularly the numerical results.
 
 ## Cut plan (if you run over)
 
 - Slide 2: reduce the institutional introduction to one sentence.
-- Slide 7: shorten the discussion of matching, retaining self-determination, self-regulation and Savickas's distinct contribution.
-- Slide 9: mention the other instruments briefly and preserve the QSA evaluation boundary.
-- Slide 14: shorten the examples of local-model use.
-- Slide 15: summarise future technical developments, preserving evaluation priorities and the invitation to collaborate.
-- Preserve the participant denominators, the perceived-usefulness result and the limits of the comparison in slides 11–12.
+- Slide 8: shorten the discussion of matching, retaining self-determination, self-regulation and Savickas's distinct contribution.
+- Slide 10: mention the other instruments briefly and preserve the QSA evaluation boundary.
+- Slide 15: shorten the examples of local-model use.
+- Slide 16: summarise future technical developments, preserving evaluation priorities and the invitation to collaborate.
+- Preserve the participant denominators, the perceived-usefulness result and the limits of the comparison in slides 12–13.
 
 ## Delivery notes
 
 - Slides 1–2: keep a personal opening while moving promptly to the research problem.
 - Slide 5: explain the three personal reasons for choosing Sweden, matching the photographs on the website.
-- Slide 8: explain what happened in each development cycle; use ADDIE to connect decisions and evidence.
-- Slide 10: connect each reported difficulty to its corresponding design response without claiming complete resolution.
-- Slide 11: distinguish 34 participants overall from 22 numerical respondents. These are historical study figures.
-- Slide 12: read a few selected values slowly. Keep perceived usefulness visible and explain that the findings are descriptive.
-- Slide 13: distinguish current platform features from the scope of the reported evaluation.
-- Slide 16: return to all three questions, separating technical feasibility, user experience and educational effectiveness.
+- Slide 9: explain what happened in each development cycle; use ADDIE to connect decisions and evidence.
+- Slide 11: connect each reported difficulty to its corresponding design response without claiming complete resolution.
+- Slide 12: distinguish 34 participants overall from 22 numerical respondents. These are historical study figures.
+- Slide 13: read a few selected values slowly. Keep perceived usefulness visible and explain that the findings are descriptive.
+- Slide 14: distinguish current platform features from the scope of the reported evaluation.
+- Slide 17: return to all three questions, separating technical feasibility, user experience and educational effectiveness.
 
 ## Likely questions
 
