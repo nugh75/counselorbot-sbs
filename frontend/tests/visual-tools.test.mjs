@@ -718,11 +718,13 @@ for (const width of [320, 1440]) {
             await tools.focus();
             const tooltip = page.locator('[data-radix-popper-content-wrapper]').filter({ has: page.getByRole('tooltip', { name: visualLabel('it', 'open'), exact: true }) });
             await tooltip.waitFor({ state: 'visible' });
-            assert.equal(await tooltip.evaluate(el => {
+            // Popper can become visible before its final screen position is applied.
+            await page.waitForFunction(el => {
+                if (!el) return false;
                 const r = el.getBoundingClientRect();
                 const front = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
                 return el.contains(front);
-            }), true, 'tooltip is actually painted above the menu');
+            }, await tooltip.elementHandle());
             await page.screenshot({ path: `/tmp/chat-menu-tooltip-${width}.png` });
             await tools.click();
             await page.getByRole('dialog', { name: visualLabel('it', 'title'), exact: true }).waitFor();
