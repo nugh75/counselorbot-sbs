@@ -249,8 +249,6 @@ If the AI model runs on the university’s server, it can process the conversati
 
 Before messages are sent to an external AI server, a local AI model removes information that could identify the student. We are still testing how well it works. Removing names alone does not guarantee anonymity: details about someone’s life may still reveal who they are.
 
-We therefore need clear answers to three questions: what do we save, who can read it, and what information is shared outside the university? Students also need to understand this when deciding what to share.
-
 In the future, we could explore running both the application and the AI model on the student’s own computer. We have not explored this option yet.
 
 ---
@@ -290,10 +288,10 @@ Thank you for your time. I would be very interested to hear your questions and s
 | 11 | Where the conversation begins | 184 | 1.4–1.7 |
 | 12 | Designing the interaction | 132 | 1.0–1.2 |
 | 13 | Time for reflection | 130 | 1.0–1.2 |
-| 14 | Where do the data go? | 164 | 1.3–1.5 |
+| 14 | Where do the data go? | 129 | 1.0–1.2 |
 | 15 | An invitation to collaborate | 129 | 1.0–1.2 |
 
-**1,934 spoken words**, approximately **15–17 minutes** of reading. Pauses, a demonstration and discussion require additional time.
+**1,899 spoken words**, approximately **15–17 minutes** of reading. Pauses, a demonstration and discussion require additional time.
 
 ## Sources
 
