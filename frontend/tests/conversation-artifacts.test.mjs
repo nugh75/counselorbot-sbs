@@ -43,8 +43,19 @@ async function fixture(width, phase = 'intro', options = {}) {
         let data = [];
         if (url.pathname === '/api/auth/me') data = { authenticated: true, is_admin: false, username: 'fixture', name: 'Prova', groups: ['studenti'] };
         else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'fixture', name: 'Counselor di prova', language: ['it'], suitable: true }, { id: 2, slug: 'second', name: 'Secondo counselor', language: ['it'], suitable: true }];
-        else if (url.pathname === '/api/session/frozen/fixture') data = { session_id: 'fixture', questionnaire_type: 'QSA', current_phase: phase, counselor_id: 1, experience: 'standard', scores: { C1: 7 }, messages: [{ role: 'system', content: phase === 'intro' ? '--- Introduzione ---' : 'FINE PERCORSO' }, { role: 'user', content: 'Vorrei organizzarmi.' }, { role: 'assistant', content: reply }] };
+        else if (url.pathname === '/api/session/frozen/fixture') data = { session_id: 'fixture', questionnaire_type: options.idea ? 'IDEA' : 'QSA', current_phase: phase, counselor_id: 1, experience: 'standard', scores: { C1: 7 }, messages: [{ role: 'system', content: phase === 'intro' ? '--- Introduzione ---' : 'FINE PERCORSO' }, { role: 'user', content: 'Vorrei organizzarmi.' }, { role: 'assistant', content: reply }] };
         else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 1, system_prompt_mode: 'qsa-intro', suggested_questions: ['Mi riconosco soprattutto in…'] }], text_guided_conclusion: 'FINE PERCORSO' };
+        else if (options.idea && url.pathname === '/api/idea/map') data = {
+            session_id: 'fixture', revision_id: 7, spec: {
+                title: 'Mappa IDEA', nodes: Array.from({ length: 12 }, (_, i) => ({ id: `n${i}`, label: `Idea ${i}`, role: 'idea' })),
+                edges: Array.from({ length: 11 }, (_, i) => ({ from: `n${i}`, to: `n${i + 1}` })),
+            }, owners: { n1: 'n0' }, missing_roles: [], complete: false,
+        };
+        else if (options.idea && url.pathname === '/api/idea/map/image') return route.fulfill({
+            contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="2400" viewBox="0 0 600 2400">'
+                + Array.from({ length: 12 }, (_, i) => `<g class="node"><title>n${i}</title><rect x="100" y="${i * 200 + 20}" width="400" height="100" fill="#ddd"/><text x="150" y="${i * 200 + 80}">Idea ${i}</text></g>`).join('') + '</svg>',
+        });
+        else if (options.idea && url.pathname === '/api/idea/next-step') return route.fulfill({ status: 404, body: '{}' });
         else if (url.pathname === '/api/chat/stream') return route.fulfill({ contentType: 'text/event-stream', body: 'data: {"done":true,"response":"Proseguiamo."}\n\n' });
         else if (url.pathname === '/api/session/fixture/diagrams') data = control.saved;
         else if (url.pathname === '/api/session/fixture/recommendations') data = catalog;
@@ -553,3 +564,39 @@ test('a response opening fills the composer without sending', async () => {
         assert.equal(control.requests.some(request => request.path === '/api/chat/stream'), false);
     } finally { await context.close(); }
 });
+
+for (const width of [390, 1440]) {
+    test(`IDEA map fits its panel and shares chat controls at ${width}px`, async () => {
+        const { page, context, control } = await fixture(width, 'intro', { idea: true, dark: width === 390 });
+        try {
+            const figure = page.locator('figure');
+            await figure.locator('svg g.node').first().waitFor();
+            assert.equal(await figure.locator('svg g.node').count(), 12, 'all IDEA nodes survive');
+            const drawing = await figure.locator('.dg-svg > svg').boundingBox();
+            const bounds = await figure.locator('[data-diagram-viewport]').boundingBox();
+            assert.ok(drawing.height <= bounds.height && drawing.width <= bounds.width, 'whole tall map fits');
+            for (const name of ['Panoramica', 'Lettura', 'Passo-passo', 'Leggi come testo', 'Zoom ed esportazione', 'Apri il diagramma a schermo intero']) {
+                assert.equal(await figure.getByRole('button', { name, exact: true }).count(), 1);
+            }
+            const focusMoved = page.waitForResponse(response => response.url().endsWith('/api/idea/focus'));
+            await figure.locator('[data-node="n1"]').click();
+            await focusMoved;
+            assert.ok(control.requests.some(request => request.path === '/api/idea/focus' && request.body.node_id === 'n0'), 'node opens its owner branch');
+            await figure.getByRole('button', { name: 'Lettura', exact: true }).click();
+            await figure.locator('[data-reading="true"]').waitFor();
+            await figure.getByRole('button', { name: 'Zoom ed esportazione', exact: true }).click();
+            const download = page.waitForEvent('download');
+            await figure.getByRole('button', { name: 'Scarica SVG', exact: true }).click();
+            await download;
+            assert.ok(control.requests.filter(request => request.path === '/api/idea/map/image').length >= 2);
+            assert.equal(control.requests.filter(request => request.path === '/api/diagram/render').length, 0, 'IDEA keeps its renderer');
+            await page.keyboard.press('Escape');
+            await figure.getByRole('button', { name: 'Apri il diagramma a schermo intero' }).click();
+            await page.getByRole('dialog').waitFor();
+            assert.equal(await page.getByRole('dialog').locator('svg g.node').count(), 12);
+            await page.keyboard.press('Escape');
+            await page.getByRole('dialog').waitFor({ state: 'detached' });
+            assert.deepEqual(control.errors, []);
+        } finally { await context.close(); }
+    });
+}

@@ -15,6 +15,10 @@ import { Tooltip } from '@/components/ui/Tooltip';
 interface DiagramBlockProps {
     spec: DiagramSpec;
     locale: string;
+    // Server-rendered maps keep their own graph and export endpoints.
+    renderedSvg?: string;
+    imageUrl?: (format: 'svg' | 'png') => string;
+    onPickNode?: (id: string) => void;
 }
 
 interface RenderState {
@@ -100,14 +104,14 @@ function DiagramNote({ note }: { note?: string }) {
     );
 }
 
-export function DiagramBlock({ spec, locale }: DiagramBlockProps) {
-    const normalized = JSON.stringify(completeDiagramEdges(spec));
+export function DiagramBlock({ spec, locale, ...mapProps }: DiagramBlockProps) {
+    const normalized = JSON.stringify(mapProps.renderedSvg !== undefined ? spec : completeDiagramEdges(spec));
     const drawnSpec = useMemo(() => JSON.parse(normalized) as DiagramSpec, [normalized]);
     // A regenerated graph gets a fresh reading path and selection.
-    return <DiagramView key={normalized} spec={drawnSpec} locale={locale} />;
+    return <DiagramView key={normalized} spec={drawnSpec} locale={locale} {...mapProps} />;
 }
 
-function DiagramView({ spec, locale }: DiagramBlockProps) {
+function DiagramView({ spec, locale, renderedSvg, imageUrl, onPickNode }: DiagramBlockProps) {
     const isDark = useDarkMode();
     const reduced = useSyncExternalStore(subscribeMotion, reducedMotion, () => true);
     const [animate, setAnimate] = useState(false);
@@ -134,8 +138,9 @@ function DiagramView({ spec, locale }: DiagramBlockProps) {
     const dialog = useRef<HTMLElement>(null);
     const exportRequest = useRef<AbortController | null>(null);
     const labels = (key: Parameters<typeof diagramUiLabel>[0], values?: Record<string, number>) => diagramUiLabel(key, locale, values);
-    const markup = renderState.key === renderKey ? renderState.markup : null;
-    const failed = renderState.key === renderKey && renderState.failed;
+    const suppliedMarkup = useMemo(() => renderedSvg === undefined ? null : sanitizeSvgMarkup(renderedSvg), [renderedSvg]);
+    const markup = renderedSvg !== undefined ? suppliedMarkup : renderState.key === renderKey ? renderState.markup : null;
+    const failed = renderedSvg !== undefined ? !suppliedMarkup : renderState.key === renderKey && renderState.failed;
     const activeNode = spec.nodes.find(node => node.id === selected) ?? (step === null ? null : spec.nodes[step]);
     const relatedEdges = (spec.edges ?? []).filter(edge => {
         if (selected) return edge.from === selected || edge.to === selected;
@@ -146,6 +151,7 @@ function DiagramView({ spec, locale }: DiagramBlockProps) {
         `${spec.nodes.find(node => node.id === edge.from)?.label ?? edge.from} — ${edge.label || edgeKindLabel(edge.kind || 'drives', locale)} → ${spec.nodes.find(node => node.id === edge.to)?.label ?? edge.to}`;
 
     useEffect(() => {
+        if (renderedSvg !== undefined) return;
         const controller = new AbortController();
         const timeout = window.setTimeout(() => {
             setRenderState({ key: renderKey, markup: null, failed: true });
@@ -167,7 +173,7 @@ function DiagramView({ spec, locale }: DiagramBlockProps) {
             if (!controller.signal.aborted) setRenderState({ key: renderKey, markup: null, failed: true });
         }).finally(() => window.clearTimeout(timeout));
         return () => { window.clearTimeout(timeout); controller.abort(); };
-    }, [isDark, locale, normalizedSpecJson, renderKey, retry]);
+    }, [isDark, locale, normalizedSpecJson, renderKey, renderedSvg, retry]);
 
     useEffect(() => () => exportRequest.current?.abort(), []);
     useEffect(() => {
@@ -227,7 +233,10 @@ function DiagramView({ spec, locale }: DiagramBlockProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [playing, step, selected, spec, locale, markup]);
 
-    const select = useCallback((id: string | null) => { setPlaying(false); setSelected(id); }, []);
+    const select = useCallback((id: string | null) => {
+        setPlaying(false); setSelected(id);
+        if (id) onPickNode?.(id);
+    }, [onPickNode]);
     const go = (next: number | null) => { setPlaying(false); setSelected(null); setStep(next); };
     const fit = () => {
         position.current = { x: 0.5, y: 0.5 };
@@ -241,7 +250,7 @@ function DiagramView({ spec, locale }: DiagramBlockProps) {
         setExporting(true); setExportFailed(false);
         try {
             // Export the complete graph, independent of selection, zoom or hidden steps.
-            const response = await apiFetch('/api/diagram/render', {
+            const response = imageUrl ? await apiFetch(imageUrl(format), { signal: controller.signal }) : await apiFetch('/api/diagram/render', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ spec, theme: isDark ? 'dark' : 'light', format, embed_title: true, lang: locale }),
                 signal: controller.signal,
