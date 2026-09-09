@@ -219,17 +219,17 @@ The aim is to keep the conversation connected to the student’s experience and 
 
 **Slide bullets:**
 
-- Explore during the conversation
-- Reflect independently in your own words
-- Revisit what emerged with a teacher or counsellor
+- Explore through interaction with the chatbot
+- Reflect independently in a separate space, without AI
+- Use your written reflections in a new chatbot conversation or with a teacher
 
 ### Talk
 
-Reflection also needs time beyond the conversation. Students need a space to put what they have understood into their own words.
+Reflection does not end when the conversation with the chatbot stops. CounselorBot also provides a separate space where students can pause and reflect on their own, without interacting with the AI. Here, they write in their own words what they have understood, what matters to them and what they want to explore further.
 
-CounselorBot therefore includes a Notebook for reflections about themselves, a Booklet for reflections connected to the questionnaire dimensions, and a Portfolio for selected work. These are spaces for the student's own contribution.
+This space includes a Notebook for reflections about themselves, a Booklet for reflections on the questionnaire dimensions, and a Portfolio for selected work.
 
-What emerges can become a starting point for a later discussion with a teacher or guidance counsellor. The chatbot offers additional support, while the student does the reflective work and human guidance remains part of the process.
+Students can later use this material to begin a new conversation with the chatbot or as a starting point for a discussion with a teacher or guidance counsellor. These are two distinct activities: interacting with the chatbot and reflecting independently. The conversation can stimulate reflection, but students need time to develop their own thoughts.
 
 ---
 
@@ -287,11 +287,11 @@ Thank you for your time. I would be very interested to hear your questions and s
 | 10 | Career construction and life design | 138 | 1.1–1.3 |
 | 11 | Where the conversation begins | 184 | 1.4–1.7 |
 | 12 | Designing the interaction | 132 | 1.0–1.2 |
-| 13 | Time for reflection | 90 | 0.7–0.8 |
+| 13 | Time for reflection | 130 | 1.0–1.2 |
 | 14 | Where do the data go? | 107 | 0.8–1.0 |
 | 15 | An invitation to collaborate | 129 | 1.0–1.2 |
 
-**1,837 spoken words**, approximately **14–17 minutes** of reading. Pauses, a demonstration and discussion require additional time.
+**1,877 spoken words**, approximately **14–17 minutes** of reading. Pauses, a demonstration and discussion require additional time.
 
 ## Sources
 
