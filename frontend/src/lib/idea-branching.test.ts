@@ -5,6 +5,8 @@ import test from 'node:test';
 const chat = () => readFileSync(new URL('../components/qsa/GuidedChatInterface.tsx', import.meta.url), 'utf8');
 const intro = () => readFileSync(new URL('../components/qsa/IdeaBranchIntro.tsx', import.meta.url), 'utf8');
 const panel = () => readFileSync(new URL('../components/qsa/IdeaMapPanel.tsx', import.meta.url), 'utf8');
+const diagram = () => readFileSync(new URL('../components/ui/DiagramBlock.tsx', import.meta.url), 'utf8');
+const viewport = () => readFileSync(new URL('../components/ui/DiagramViewport.tsx', import.meta.url), 'utf8');
 const workspace = () => readFileSync(new URL('../components/qsa/IdeaWorkspace.tsx', import.meta.url), 'utf8');
 
 test('the transcript follows the branch instead of running in one line', () => {
@@ -37,14 +39,19 @@ test('the map is inline so its nodes can be clicked', () => {
     const source = panel();
     // Dentro un <img> l'SVG non riceve click: serve inline.
     assert.doesNotMatch(source, /<img\s/);
-    assert.match(source, /dangerouslySetInnerHTML/);
-    assert.match(source, /closest\('g\.node'\)/);
+    assert.match(source, /<DiagramBlock/);
+    assert.match(source, /renderedSvg=\{svg\}/);
+    assert.match(diagram(), /<DiagramViewport/);
+    assert.match(viewport(), /dangerouslySetInnerHTML/);
+    assert.match(viewport(), /closest\('\.dg-node'\)/);
 });
 
 test('clicking any node lands on the branch that owns it', () => {
     // set_focus accetta solo nodi-ramo: senza owners un click su un'ipotesi
     // finirebbe in 422.
-    assert.match(panel(), /state\?\.owners\?\.\[nodeId\] \?\? nodeId/);
+    assert.match(panel(), /onPickNode=\{onPickNode \? (\w+) => onPickNode\(state\?\.owners\?\.\[\1\] \?\? \1\)/);
+    assert.match(diagram(), /if \(id\) onPickNode\?\.\(id\)/);
+    assert.match(diagram(), /onSelect=\{select\}/);
     assert.match(workspace(), /moveIdeaFocus\(sessionId, nodeId\)/);
 });
 
