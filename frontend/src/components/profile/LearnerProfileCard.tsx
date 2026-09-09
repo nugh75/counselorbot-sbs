@@ -4,9 +4,10 @@
 // profilo auto-dichiarato. Append-only lato server: ogni salvataggio è una
 // revisione, lo storico mostra il cambiamento nel tempo.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
-import { apiFetch } from '@/lib/auth';
+import { apiFetch, getIdentity, withViewAsHeaders } from '@/lib/auth';
+import { notebookAutosave, type NotebookAutosave, type NotebookData, type NotebookRevision, type SaveStatus } from '@/lib/notebook-autosave';
 import { History, Trash2, Pencil, X } from 'lucide-react';
 import { PencilButton } from '@/components/ui/PencilButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
@@ -16,27 +17,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { INSTITUTION_NOT_LISTED, fetchInstitutions, type Institution } from '@/lib/referrals-api';
 
-export interface LearnerProfileData {
-    context?: string;
-    goal?: string;
-    main_difficulty?: string;
-    strengths?: string;
-    weaknesses?: string;
-    notes?: string;
-    gender?: string;
-    age?: string;
-    school_class?: string;
-    school_year?: string;
-    institution_slug?: string;
-}
-
-interface Revision {
-    id: number;
-    data: LearnerProfileData;
-    source: string;
-    session_id?: string | null;
-    created_at: string;
-}
+export type LearnerProfileData = NotebookData;
+type Revision = NotebookRevision;
 
 interface NotebookSuggestion {
     status: 'pending' | 'insufficient_evidence' | 'ready';
@@ -92,6 +74,8 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const autosave = useRef<NotebookAutosave | null>(null);
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
     const [dismissed, setDismissed] = useState(false);
     const [history, setHistory] = useState<Revision[] | null>(null);
     const [showHistory, setShowHistory] = useState(false);
@@ -111,22 +95,63 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     const [suggestion, setSuggestion] = useState<NotebookSuggestion | null>(null);
     const [suggestionHandled, setSuggestionHandled] = useState(false);
 
-    const load = useCallback(async () => {
-        try {
-            const res = await apiFetch('/api/user/learner-profile');
-            if (res.status === 401) { setHidden(true); return; }
-            if (!res.ok) { setHidden(true); return; }
-            const rev: Revision | null = await res.json();
-            setProfile(rev);
-            setForm(rev?.data ?? {});
-        } catch {
-            setHidden(true);
-        } finally {
-            setLoading(false);
-        }
+    useEffect(() => {
+        let active = true;
+        let queue: NotebookAutosave | null = null;
+        let unsubscribe: (() => void) | undefined;
+        const flush = () => { void queue?.flush(); };
+        void (async () => {
+            try {
+                const [identity, res] = await Promise.all([getIdentity(), apiFetch('/api/user/learner-profile')]);
+                if (!active) return;
+                if (!identity?.authenticated || !res.ok) { setHidden(true); return; }
+                const rev: Revision | null = await res.json();
+                if (!active) return;
+                const saveHeaders = withViewAsHeaders({ 'Content-Type': 'application/json' });
+                queue = notebookAutosave(identity.username, rev, async payload => {
+                    const response = await fetch('/api/user/learner-profile', {
+                        method: 'POST', keepalive: true,
+                        headers: saveHeaders,
+                        body: JSON.stringify({ ...payload.data, source: payload.source, session_id: payload.session_id }),
+                    });
+                    if (!response.ok) throw new Error('Notebook save failed');
+                    return await response.json() as Revision;
+                }, {
+                    getItem: key => window.localStorage.getItem(key),
+                    setItem: (key, value) => window.localStorage.setItem(key, value),
+                    removeItem: key => window.localStorage.removeItem(key),
+                });
+                autosave.current = queue;
+                const current = queue;
+                unsubscribe = queue.subscribe(() => {
+                    if (!active) return;
+                    setSaveStatus(current.status);
+                    setSaving(current.status === 'saving');
+                    setSaved(current.status === 'saved');
+                    setProfile(current.revision);
+                    setHistory(null);
+                });
+                setProfile(queue.revision);
+                setForm(queue.data);
+                if (queue.pending) setEditing(true);
+                setSaveStatus(queue.status);
+                if (queue.pending) flush();
+            } catch {
+                if (active) setHidden(true);
+            } finally {
+                if (active) setLoading(false);
+            }
+        })();
+        window.addEventListener('pagehide', flush);
+        window.addEventListener('online', flush);
+        return () => {
+            active = false;
+            unsubscribe?.();
+            flush();
+            window.removeEventListener('pagehide', flush);
+            window.removeEventListener('online', flush);
+        };
     }, []);
-
-    useEffect(() => { void load(); }, [load]);
 
     useEffect(() => {
         if (variant !== 'update' || !sessionId) return;
@@ -150,32 +175,20 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             return;
         }
         setValidationError('');
-        setSaving(true);
-        try {
-            const res = await apiFetch('/api/user/learner-profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...form, source, session_id: sessionId || null }),
-            });
-            if (res.ok) {
-                const rev: Revision = await res.json();
-                setProfile(rev);
-                setForm(rev.data);
-                setSaved(true);
-                setEditing(false);
-                setHistory(null);
-                if (variant !== 'edit') {
-                    setTimeout(() => setDismissed(true), 1200);
-                }
-                onDone?.();
-            } else {
-                setValidationError(t('setup.error'));
-            }
-        } catch {
-            setValidationError(t('setup.error'));
-        } finally {
-            setSaving(false);
-        }
+        const queue = autosave.current;
+        if (!queue) return;
+        queue.update(form, source, sessionId);
+        if (!await queue.flush()) return;
+        setEditing(false);
+        if (variant !== 'edit') setTimeout(() => setDismissed(true), 1200);
+        onDone?.();
+    };
+
+    const changeForm = (next: LearnerProfileData) => {
+        setValidationError('');
+        setForm(next);
+        setEditing(true);
+        autosave.current?.update(next, variant === 'update' ? 'session_end' : (profile ? 'manual' : 'intake'), sessionId);
     };
 
     const loadHistory = async () => {
@@ -188,7 +201,10 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     };
 
     const deleteAll = async () => {
-        await apiFetch('/api/user/learner-profile', { method: 'DELETE' });
+        await autosave.current?.flush();
+        const res = await apiFetch('/api/user/learner-profile', { method: 'DELETE' });
+        if (!res.ok) { setValidationError(t('setup.error')); return; }
+        autosave.current?.reset();
         setProfile(null);
         setForm({});
         setHistory(null);
@@ -198,7 +214,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
 
     const useSuggestion = () => {
         if (suggestion?.status !== 'ready') return;
-        setForm((current) => ({ ...current, ...suggestion.data }));
+        changeForm({ ...form, ...suggestion.data });
         setEditing(true);
         setSuggestionHandled(true);
     };
@@ -238,8 +254,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                             <select
                                 value={form[f.key] || ''}
                                 onChange={(e) => {
-                                    setValidationError('');
-                                    setForm((prev) => ({ ...prev, [f.key]: e.target.value }));
+                                    changeForm({ ...form, [f.key]: e.target.value });
                                 }}
                                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             >
@@ -260,8 +275,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                                 value={form[f.key] || ''}
                                 maxLength={600}
                                 onChange={(e) => {
-                                    setValidationError('');
-                                    setForm((prev) => ({ ...prev, [f.key]: e.target.value }));
+                                    changeForm({ ...form, [f.key]: e.target.value });
                                 }}
                                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             />
@@ -271,8 +285,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                                 maxLength={600}
                                 minRows={f.multiline ? 2 : 1}
                                 onChange={(e) => {
-                                    setValidationError('');
-                                    setForm((prev) => ({ ...prev, [f.key]: e.target.value }));
+                                    changeForm({ ...form, [f.key]: e.target.value });
                                 }}
                                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                             />
@@ -292,7 +305,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                         {t('lp.save')}
                     </Button>
                     {variant === 'edit' && editing && (
-                        <Button variant="ghost" onClick={() => { setEditing(false); setForm(profile?.data ?? {}); }} aria-label={t('lp.skip')}>
+                        <Button variant="ghost" onClick={() => void save(saveSource)} aria-label={t('common.close')}>
                             <X className="w-4 h-4" />
                         </Button>
                     )}
@@ -357,6 +370,10 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
                 </div>
             )}
+            <div role="status" aria-live="polite" className="text-sm text-slate-600">
+                {(saveStatus === 'pending' || saveStatus === 'saving') && t('lp.autosaving')}
+                {saveStatus === 'error' && <><span>{t('lp.autosaveError')}</span> <Button size="sm" onClick={() => void autosave.current?.flush()}>{t('setup.retry')}</Button></>}
+            </div>
             <Card className="p-5 space-y-4">
             {variant !== 'edit' && !suggestionOnly && (
                 <div className="flex items-center gap-2">
