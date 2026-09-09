@@ -10,6 +10,6 @@ test('the notebook suggestion is loaded by session, shown only when ready, and r
     assert.match(source, /learner-profile\/suggestion\?session_id=/);
     assert.match(source, /suggestion\?\.status === 'ready'/);
     assert.match(source, /onClick=\{useSuggestion\}/);
-    assert.match(source, /setForm\(\(current\) => \(\{ \.\.\.current, \.\.\.suggestion\.data \}\)\)/);
+    assert.match(source, /changeForm\(\{ \.\.\.form, \.\.\.suggestion\.data \}\)/);
 
 });
