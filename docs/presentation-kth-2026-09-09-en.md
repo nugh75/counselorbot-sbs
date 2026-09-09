@@ -1,6 +1,6 @@
 # KTH Presentation — 9 September 2026 — English Version
 
-> Spoken script aligned with website slides 1–14. Focus: educational context, pedagogical foundations and how CounselorBot works. Methodology and findings are omitted; the conclusion remains to be decided.
+> Spoken script aligned with website slides 1–15. Focus: educational context, pedagogical foundations and how CounselorBot works. Methodology and findings are omitted; the closing invitation asks colleagues for help.
 > The Italian companion script is unchanged and is not aligned section by section.
 
 ---
@@ -249,11 +249,25 @@ A possible future direction is to run both the model and the application entirel
 
 ---
 
-## Conclusion — to be decided
+## Slide 15 — An invitation to collaborate
 
-*Editorial note, not spoken: the revised sequence currently ends at slide 14. The closing invitation and any demonstration will be agreed separately. The purpose of the final section will be to ask colleagues for help.*
+*Former website slide 17; slides 15 and 16 have been removed.*
 
-## Timing — slides 1–14 only
+### Talk
+
+I would like to close with an invitation. I am looking for colleagues who would be willing to try CounselorBot and help me improve it.
+
+You do not need a technical background. I would value your perspective as teachers, researchers and people with your own learning experiences. Does the conversation help you reflect? Are the questions useful? Is anything unclear, repetitive or too directive?
+
+If you can spend about an hour exploring the system and then share your feedback, that would be a valuable contribution. Please come and talk to me afterwards, or contact me by email.
+
+I would also be happy to discuss future collaboration on the Swedish version of the QSA.
+
+Thank you for your time. I would be very interested to hear your questions and suggestions.
+
+---
+
+## Timing
 
 | Slide | Content | Spoken words | Minutes at 110–130 wpm |
 | --- | --- | ---: | ---: |
@@ -271,8 +285,9 @@ A possible future direction is to run both the model and the application entirel
 | 12 | Designing the interaction | 101 | 0.8–0.9 |
 | 13 | Time for reflection | 90 | 0.7–0.8 |
 | 14 | Where do the data go? | 107 | 0.8–1.0 |
+| 15 | An invitation to collaborate | 129 | 1.0–1.2 |
 
-**1,620 spoken words**, approximately **12–15 minutes** of reading. Allow additional time for pauses and the visual comparisons. A demonstration, conclusion and discussion are not included.
+**1,749 spoken words**, approximately **13–16 minutes** of reading. Pauses, a demonstration and discussion require additional time.
 
 ## Sources
 
