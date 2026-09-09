@@ -1,45 +1,45 @@
 # KTH Presentation — 9 September 2026 — English Version
 
-> Spoken script in English, first person. 11 slides, approximately 35–40 minutes with pauses and slide changes, plus questions. Demo not included in the timing.
-> Italian companion script: `presentazione-kth-2026-09-09-it.md` — this translation follows the revised Italian version.
-> Part 1 (slides 1–3): opening written by Daniele; slide 3 reworked to incorporate the briefing for testing with researchers.
-> Part 2 (slides 4–11): continuation.
+> Revised spoken script: 13 proposed slide sections, first person, with an academic focus on development, method and preliminary findings. Website slides have not yet been aligned with this structure.
+> This English revision develops the Italian companion script (`presentazione-kth-2026-09-09-it.md`); the two texts are no longer aligned section by section.
+> Development and evaluation data: `Counselorbot-versione-v40-202606191545.docx`, §§3–6. These figures describe the manuscript's study snapshot, not current platform totals.
+> Reading estimate: 29–34 minutes; allow approximately 34–39 minutes with pauses and transitions. Demo and discussion excluded.
 
 ---
 
 ## Slide 1 — Who I am
 
-**Slide bullets:**
+**Slide bullets (working outline):**
 
-- Daniele Dragoni — visiting PhD researcher, KTH (May → October 2026)
-- Roma Tre University — PhD in AI and education
-- A return to study: bachelor's degree → cognitive science → e-learning and media education → PhD
-- "It is never too late to learn"
+- Daniele Dragoni — visiting PhD researcher at KTH, May–October 2026
+- Roma Tre University — doctoral research on AI and education
+- Returning to university while working: a personal connection to lifelong learning
 
-### Talk (≈ 2–3 min)
+### Talk (≈ 1.2–1.4 min reading)
 
 Good morning, everyone.
 
-My name is Daniele Dragoni and I am a visiting PhD researcher. My stay at KTH started in May and will end in October. I am here because my programme requires six months of research abroad. I chose Sweden and Stockholm because I am fascinated by Swedish culture: by its green values — I am thinking of the battle over the trees in Kungsträdgården —, by its commitment to equal opportunities — I am thinking of shared parental leave — and by its great capacity to innovate, Spotify for example. So I thought this could be a good place to complete my doctorate and finish writing my thesis.
+My name is Daniele Dragoni. I am a visiting PhD researcher from Roma Tre University, and my stay at KTH runs from May to October. My doctoral research concerns AI and education, and today I will present CounselorBot: a system developed to support reflection in educational and career guidance.
 
-A few words about me. While many people were consolidating their academic positions, I was returning to university to reinvent my life. It was a very important choice for me. I started studying while working, to complete a bachelor's degree I had left unfinished, and little by little I was swept up in university life. I was very lucky: I met people who helped me, who helped me grow, who encouraged me to continue. So I completed a master's degree in cognitive science, then another in e-learning and media education during Covid, and now I am finishing my three years of doctoral research on AI and education. A situation I would never have imagined six years ago, when I walked back into a university classroom. In Italy we say: "it is never too late to learn".
+My interest in this subject also has a personal dimension. I returned to university while working, to complete a bachelor's degree I had left unfinished. With the support of people who encouraged me to continue, I went on to study cognitive science, then e-learning and media education, and eventually began my PhD.
+
+That experience made the relationship between learning, personal choices and human support very concrete for me. In Italy we say, “it is never too late to learn”. The project I will discuss today asks how AI might contribute to that process, and how we can investigate the quality of its contribution.
 
 ---
 
-## Slide 2 — Roma Tre and the Ostiense district
+## Slide 2 — Roma Tre and its educational context
 
-**Slide bullets:**
+**Slide bullets (working outline):**
 
-- Roma Tre: over thirty years old, but heir to the Magistero — where Luigi Pirandello taught
-- No isolated campus: the university is embedded in a neighbourhood, Ostiense
-- Disused factories turned into departments: the former Alfa Romeo plant, the former slaughterhouse
-- A university that changes the face of its neighbourhood
+- Department of Education, Roma Tre University
+- A tradition connected to teacher education
+- Ostiense: former industrial spaces integrated into university life
 
-### Talk (≈ 1–2 min)
+### Talk (≈ 0.7–0.8 min reading)
 
-A few words about my university. I come from Roma Tre University. It is a young university, but it carries on an older tradition: that of Rome's Magistero, an institution dedicated to teacher education, where Luigi Pirandello also taught in the early twentieth century. This tradition continues today in the Department of Education, where I am doing my PhD.
+A few words about the context of this work. I come from the Department of Education at Roma Tre University. The university carries on the tradition of Rome's Magistero, an institution dedicated to teacher education.
 
-Also, Roma Tre does not have an isolated campus structure, like some universities organised as a kind of sheltered haven. Instead, it is woven into the fabric of a neighbourhood in Rome, Ostiense: an industrial district that it has gradually revitalised, turning disused factories — the Alfa Romeo plant, or the slaughterhouse — into university departments. In this way, it has changed the face of the neighbourhood.
+It is also closely connected to its neighbourhood, Ostiense, where former industrial spaces have become places for study and research. I like this connection between the university and the life around it. My project develops within this educational context, through the work of my research group on strategic competences and guidance.
 
 ---
 
@@ -54,7 +54,7 @@ Also, Roma Tre does not have an isolated campus structure, like some universitie
 - **Q2** — Can it really help students interpret questionnaire results and reflect on their choices?
 - **Q3** — Can we create a safe space for students' data and reflection, leaving them in control of what they share?
 
-### Talk (≈ 3–4 min)
+### Talk (≈ 3.1–3.7 min reading)
 
 And now, after this brief introduction, let us come to the heart of the presentation.
 
@@ -76,7 +76,7 @@ The second: can it really help students read and interpret questionnaire results
 
 The third: can we create a safe space where students can store their data and reflect on their experiences? How can we protect this information and leave students in control of what they share?
 
-In the next slides, I will present the choices I have made to address these three questions and the aspects that testing still needs to clarify.
+I will first explain the pedagogical framework, then the two development cycles and the exploratory evaluation. Finally, I will distinguish what these findings tell us from the questions that remain open.
 
 ---
 
@@ -92,7 +92,7 @@ In the next slides, I will present the choices I have made to address these thre
 - Savickas: a career is not discovered, it is *constructed* — the key construct is adaptability
 - Self-regulation requires explicit educational support
 
-### Talk (≈ 4–5 min)
+### Talk (≈ 4.2–4.9 min reading)
 
 At this point, it is useful to clarify what we mean by guidance. For a long time, this term has been associated with *matching*: the work of matching a person's interests and abilities to a job or a course of study.
 
@@ -114,117 +114,191 @@ Notice what changes. The goal is no longer the right answer, but the right proce
 
 ---
 
-## Slide 5 — The instruments: strategic competences
+## Slide 5 — Development methodology: two ADDIE cycles
 
-**Slide bullets:**
+**Slide bullets (working outline):**
 
-- The work of the research group I belong to and the experience of **competenzestrategiche.it**
-- Questionnaires are completed on **competenzestrategiche.it**; CounselorBot uses the results as the basis for conversation
-- Questionnaires: **QSA / QSAr**, **QPCS / QPCC**, **ZTPI**, **QAP**
-- Narrative paths: the **Savickas** interview, significant study and work events; **IDEA** for developing a thought
-- **PQBL**: questions for exploring a document in depth
-- All instruments in CounselorBot are **test versions**
-- The instruments are one part of the process: results and experiences become the subject of reflection and discussion
-- Multilingual versions in **CounselorBot**: still to be validated, a future development outside the current phase of the research
+- ADDIE: **Analysis, Design, Development, Implementation, Evaluation** (Branch, 2009)
+- Cycle 1: **CB-C**, an open conversational prototype with RAG and a system prompt
+- Participant feedback informed the redesign
+- Cycle 2: **CB-SBS**, a guided step-by-step version
+- The v40 study reports evaluation within the second development cycle
 
-### Talk (≈ 6–7 min)
+### Talk (≈ 2.2–2.6 min reading)
 
-Let us move on to the instruments that provide the starting point for working with CounselorBot. The project builds on the work of the research group I belong to and on the experience of competenzestrategiche.it, the free online platform developed with support from CNOS-FAP for schools, universities and guidance settings.
+To organise the development process, we adopted ADDIE: Analysis, Design, Development, Implementation and Evaluation. We used this framework across two iterative development cycles, using participant feedback to inform the redesign of the system.
 
-The path involving the strategic competences questionnaires begins on competenzestrategiche.it, where students complete them and receive their results. CounselorBot takes these results and uses them as the basis for conversation: it helps students understand them, connect them to their own experiences and identify aspects to explore further.
+In the analysis phase, we identified the need for support in interpreting questionnaire results and connecting them to personal experience. In design, we translated this need and the pedagogical framework into requirements for the interaction. Development concerned building the prototype; implementation concerned its use by participants; and evaluation provided information for the next revision.
 
-CounselorBot also includes versions of the questionnaires in several languages. These versions still need to be validated: translation alone is not enough to ensure that an instrument retains its properties in another linguistic and cultural context. Their validation is outside the current phase of the research, but represents one of the next steps in expanding their development.
+The first cycle produced CB-C, the conversational version. It used a system prompt and retrieval-augmented generation, or RAG: relevant information was retrieved from indexed documents and supplied to the language model. The conversation did not follow a predetermined sequence.
 
-These instruments offer a basis for thinking things through together with the student. Through the questionnaires, we can explore how students approach studying, what difficulties they perceive, what resources they recognise and how they see their future. The results are one part of the guidance process: they need to be interpreted, connected to experiences and discussed in the light of the person's aspirations and context.
+Feedback from this version highlighted practical difficulties, particularly entering scores and maintaining consistency between the information supplied and the analysis. These observations informed a second cycle, which produced CB-SBS, the step-by-step version. Here, the application organises the interaction into a guided sequence and supplies the model with the context needed for each step.
 
-Among the instruments is the QSA, the Learning Strategies Questionnaire, developed by Michele Pellerey. It explores the cognitive strategies and affective and motivational dimensions involved in studying, such as anxiety, perseverance and ways of explaining one's successes and failures. The QSAr is its shortened form. The QPCS and QPCC allow students to explore perceived strategic competences and their own beliefs in greater depth. The ZTPI concerns their relationship with the past, present and future. The QAP explores career adaptability: concern for one's future, control over one's choices, curiosity about possibilities and confidence in addressing them.
+The study I am drawing on reports the evaluation stage of this second cycle. Its purpose was to inform further development. ADDIE describes how we organised that process; the comparison between participant groups describes how we investigated their experience. Keeping these two levels distinct helps clarify what the study can establish.
 
-Alongside the questionnaires, there are narrative paths. Savickas's Career Construction Interview offers questions through which people can explore themes and meanings in their own stories. In CounselorBot, these questions are organised into a guided conversation. In the paths focusing on significant events, students instead start from a study or work experience and reflect on what happened, how they dealt with it and what they learned from it.
-
-Then there is IDEA, a space for exploring a thought that has yet to come into focus: a possible thesis topic, a study or work choice, a project, a doubt. During the conversation, a map takes shape that gathers and connects the elements that emerge: hypotheses, evidence, alternatives and open questions. This map helps students revisit their reasoning and identify possible next steps.
-
-There is also PQBL, a path that starts from a document and proposes questions to guide its further exploration. Students can use these questions to examine the content and develop their understanding.
-
-All the instruments available in CounselorBot are currently test versions. We are testing how to offer them through the application and what support they can provide for reflection and learning. This also applies to paths based on questionnaires that have already been validated: validating a questionnaire does not, on its own, demonstrate the quality of its use in a conversation with AI.
-
-There are therefore different starting points: questionnaire results, an account of an experience, an idea to develop or a document to explore in depth. In every case, the work consists of helping students understand and work through what emerges. A score, for example, can open up some questions: do I recognise myself in this result? In which situations? Are there experiences that confirm it, or that make me see things differently?
-
-Teachers, tutors and guidance counsellors support this work. The time available, however, does not always allow them to explore it individually with every student. CounselorBot is designed as additional support: it offers a space to begin or continue reflection and collect questions and points to return to in discussions with them.
+My own background is in education and the humanities, and I developed the platform largely with AI assistance. This is a characteristic of the development process: I supplied the domain requirements and reviewed the resulting behaviour through successive revisions. It is also a reason to make the design decisions and their evaluation explicit.
 
 ---
 
-## Slide 6 — How it is built: the harness (answer to Q1)
+## Slide 6 — The QSA as the focus of the evaluation
 
-**Slide bullets:**
+**Slide bullets (working outline):**
 
-- A deliberately boring stack: FastAPI + Next.js + PostgreSQL, Docker, SSE streaming
-- Not the model — the **harness**: the infrastructure of scripts, commands, texts and prompts around the model
-  - **Envelope** — counselor persona + data and scores + step prompt + retrieved knowledge + notebook + history: reassembled on every turn
-  - **Guided steps** — a state machine for each instrument, stored in the database, editable without touching the code
-  - **Skills engine** — a deterministic classifier: activates at most one primary behaviour
-  - **RAG** — four knowledge collections
-- The design constraint: **link advice to the curated catalogue and limit it to authorised moments in the guided path**
+- The project builds on **competenzestrategiche.it** and the research group's work
+- QSA: cognitive, affective and motivational dimensions of learning strategies
+- Questionnaire results become a starting point for conversation
+- The reported evaluation concerns the **QSA pathway**
+- Other instruments and multilingual versions require their own evaluation
 
-### Talk (≈ 4–5 min)
+### Talk (≈ 1.8–2.1 min reading)
 
-Let us come to the first question: how should a tool like this be built? What constraints should it respect?
+The project builds on the work of my research group and on competenzestrategiche.it, the platform developed with support from CNOS-FAP. Students complete questionnaires there and receive a profile. CounselorBot uses that profile as a starting point for conversation.
 
-My answer, in one word, is: *harness*. Not the model — the harness. By this word, I mean the infrastructure of scripts, commands, texts and prompts that gives a language model the ability to be effective and relevant in a specific domain. The engine is impressive; the harness decides whether the journey is safe and whether you arrive. Most of my engineering work was not in calling the model: it was in building the harness.
+For the evaluation I will present, the instrument was the QSA, the Learning Strategies Questionnaire developed by Michele Pellerey. It explores cognitive strategies and affective and motivational dimensions involved in studying, including anxiety, perseverance and ways of explaining success and failure.
 
-The stack is deliberately boring: a FastAPI backend, a Next.js frontend, PostgreSQL, everything in Docker, chat streaming over SSE. Behind a single abstraction there are thirteen AI providers, from commercial services to local models — and I will come back to this shortly, because it concerns the third question.
+A result can open a question: do I recognise myself in this description? In which situations? Can I recall an experience that supports it, or one that makes me interpret it differently? These connections between scores and experience are central to the intended interaction.
 
-The interesting part is what happens around the model on every single turn. I call it the *envelope*. Every message is assembled from: the counselor persona — because the AI has a name, a character, an area of expertise; the student's data and scores; the prompt for the current step of the guided path; the knowledge retrieved from the collections; the student's notebook; and the conversation history. Turn by turn, the platform selects the context to give the model and the instructions for its response.
+The current platform also includes other questionnaires, narrative paths inspired by Savickas, reflection on significant experiences, IDEA for developing a thought, and PQBL for exploring documents through questions. This wider range describes the current application. The comparative findings I will show concern the QSA pathway and should not be extended to all these instruments.
 
-The guided path is the pedagogical skeleton. For each instrument, there is a sequence of steps stored in the database — introduction, factor analysis, synthesis — each with its own prompt, editable by an administrator without touching the code. The step determines the mode; the mode determines what the model can do.
-
-Then there is the *skills engine*, and it is the part I am most proud of. A deterministic, high-precision intent classifier runs on every turn and activates at most one primary behaviour: certified advice — practical strategies taken from a catalogue curated by educators, to be used as a reference for responses; profile explanation; reading suggestions from a certified catalogue; comparison of profiles over time; or a web search on whitelisted sources for factual questions, rather than relying on the model's memory. If the classifier is not confident, it falls back to normal conversation.
-
-The design principle is to make advice traceable to a curated catalogue and offer it at authorised moments in the guided path. These include steps dedicated to strategies and some synthesis steps; responses to explicit student requests are also provided for, within the constraints of the step. Testing needs to establish how well the actual responses follow these guidelines.
-
-So, the answer to the first question: the design is not in the prompt. It is in the constraints. A good prompt does not guarantee that the advice comes from the catalogue, or that the teacher can see the class, or that the model stops where it should stop. The value lies in the architecture, not in the individual response.
+All the application pathways remain under testing. A questionnaire's existing validation does not establish the quality of an AI conversation built around its results. Multilingual versions introduce a further task: reviewing translations and studying the instruments in their new linguistic and cultural contexts. That work is separate from the evaluation reported here.
 
 ---
 
-## Slide 7 — Time for reflection (second design constraint)
+## Slide 7 — From user feedback to redesign
 
-**Slide bullets:**
+**Slide bullets (working outline):**
 
-- The first constraint was the model. The second is **time**: how should reflection be paced in a chat?
-- Knowledge and choices need time: they need to settle
-- By design: **reflection within the conversation and spaces for independent thinking, without AI**
-- During the conversation: note-taking with dedicated tools — notes, actions, comparisons and cards
-- In their own spaces, without AI: **Notebook** (reflecting on oneself), **Booklet**, **Portfolio**
-- This is where the teacher comes in: reading chats and the Notebook, and writing their own notes to adjust the course
-- Recommendations (books, strategies) and the RAG knowledge base: content entered by teachers, with appropriate information sheets
+- Score-entry difficulties → structured form and PDF upload
+- Inconsistent summaries and missing information → revised session memory and scores supplied at every turn
+- Long responses → response-length limits
+- Open conversation → a guided sequence with step-specific instructions
+- These changes form a combined redesign; their individual effects have not been isolated
 
-### Talk (≈ 2–3 min)
+### Talk (≈ 2.2–2.6 min reading)
 
-The first design constraint was the model — local or an external provider, which I will discuss shortly. The second constraint concerns time: how should time for reflection be paced, through a chat or in some other way?
+Let me make the connection between evaluation and redesign more concrete.
 
-The answer we arrived at is clear: knowledge and choices need time; they need to settle. And students need spaces of their own for reflection, without AI. This is why we have complemented reflection during conversation with spaces for independent thinking, without AI.
+In the first version, three participants reported difficulties entering scores manually. One explicitly asked to upload a PDF. In the second cycle, we introduced a structured initial form and direct upload of the results PDF. This changed how the data entered the conversation.
 
-During the conversation, students can take notes using dedicated tools: annotations, actions to take, comparisons, cards. Then there are moments when they write and reflect on the interaction: this happens in the Notebook, which is used to reflect on oneself, and in the Booklet and Portfolio. Moments when students write in their own words.
+Another participant reported inconsistencies between the supplied data and the final summaries, and another observed that the chatbot forgot information. The redesign revised session memory through dynamic summaries of the dialogue and by supplying the questionnaire scores at every turn. These measures were intended to keep the analysis connected to the original profile.
 
-And the teacher can enter this interaction: reading the student's chats and Notebook, and writing notes in turn, to adjust the course of what has been done.
+A participant also asked for shorter responses. We introduced a response-length limit to help contain the model's interventions. However, controlling length is only part of the problem: the response also has to leave enough space for the student to think and answer. Context management and response calibration remained areas for further development.
 
-Finally, there are recommendation systems — for example, books and strategies — that the chatbot can use, but whose content must be entered by teachers and have appropriate information sheets. And there is a knowledge base, the RAG layer, which underpins the interaction and gives the chatbot the context to interact effectively in a specific task.
+The broader change was the guided sequence. In CB-SBS, the application tracks the current step and assembles the relevant data, instructions, conversation context and retrieved educational material. The model generates its response within this structure. Strategies are linked to curated educational content, and the application specifies when they should be offered. Testing must still establish how consistently the generated responses follow these requirements.
 
-It is a way of saying that AI can support conversation, but it cannot let learning settle on the student's behalf.
+The platform uses a FastAPI backend, a Next.js interface and PostgreSQL, with support for local and external language models. For this study, the important architectural point is how the application organises the model's interaction with the student.
+
+Several components changed together: the interface, the guided sequence, memory management and response constraints. The comparison therefore concerns two configurations of the system. It cannot identify the independent contribution of each change.
 
 ---
 
-## Slide 8 — Privacy, local AI, regulations (answer to Q3)
+## Slide 8 — Exploratory evaluation: participants and procedure
+
+**Slide bullets (working outline):**
+
+- Between-subjects comparison: each participant used **one version**
+- **34 participants:** CB-C 27; CB-SBS 7
+- Numerical ratings: **22 participants**, CB-C 16; CB-SBS 6
+- Open responses: **11 participants**, all CB-C
+- QSA → profile → chatbot interaction → experience questionnaire
+- **10 experience items** and **2 open questions**; descriptive item-level analysis
+
+### Talk (≈ 2.0–2.4 min reading)
+
+I will now present the exploratory evaluation reported in version forty of the manuscript. These figures describe that study snapshot; they are not an updated count of platform use in September.
+
+The study used a between-subjects comparison: each participant used one version of the system. The manuscript reports thirty-four participants overall, twenty-seven for CB-C and seven for CB-SBS. Participants ranged from eighteen to fifty-three years old and had different educational backgrounds. The sample was non-probabilistic, and the manuscript does not report random assignment to the versions.
+
+It is important to distinguish participation from the number of numerical responses. Sixteen participants in CB-C and six in CB-SBS supplied numerical ratings, giving twenty-two respondents for the quantitative comparison. Eleven participants supplied open responses, all in CB-C. The reported quantitative analysis therefore uses sixteen and six, rather than twenty-seven and seven.
+
+The procedure began with completion of the QSA and presentation of the resulting profile. Participants then interacted with the chatbot about the questionnaire factors and completed an experience questionnaire.
+
+This questionnaire contained ten items covering aspects such as perceived usefulness, clarity, ease of use, trust, reflection and intention to use the system again or recommend it. Two open questions collected observations and suggestions. The numerical analysis compared the mean for each item separately; the items were not combined into subscales. The open responses were analysed through thematic categorisation.
+
+This design provides information about participants' reported experience. It does not directly measure changes in learning strategies, the quality of their decisions or longer-term educational outcomes. Those would require additional measures and a different evaluation scope.
+
+**Source note:** v40, §§3.3–3.4 and 4.2–4.3. The manuscript reports 7 CB-SBS participants but numerical ratings from 6; it does not explain the remaining participant's response status. Do not infer an exclusion reason.
+
+---
+
+## Slide 9 — Preliminary findings: experience of the two versions
+
+**Slide bullets (working outline):**
+
+- Higher mean ratings for CB-SBS on **9 of 10 items**
+- Selected means shown below; **CB-C n = 16, CB-SBS n = 6**
+- Perceived usefulness was slightly lower in CB-SBS
+- Small, unequal groups; self-reported experience; multiple simultaneous design changes
+- Descriptive findings informing development; educational effectiveness remains to be assessed
+
+### Talk (≈ 2.4–2.8 min reading)
+
+The guided version received higher mean ratings on nine of the ten items. I will focus on five dimensions, including the one that did not follow this pattern.
+
+Ease of use had a mean of 3.38 in CB-C and 4.17 in CB-SBS. Trust in the information received was 3.19 and 3.83 respectively. These observations are consistent with the intended direction of the redesign, which addressed data entry and consistency. However, the comparison does not establish that those changes caused the differences.
+
+The perceived capacity to stimulate reflection was rated 3.25 in CB-C and 3.83 in CB-SBS. Intention to reuse or recommend the system was 3.12 and 3.83. These are encouraging observations for further investigation, but a rating about reflection is not a direct assessment of the depth or quality of a participant's reflection.
+
+Perceived usefulness was slightly lower in the guided version: 3.17, compared with 3.31 in CB-C. I would keep this result visible because it prevents us from treating ease of interaction and usefulness as interchangeable. The data do not tell us why this difference occurred.
+
+The open responses from the first version also included positive comments on clarity, relevance and usefulness. Alongside those comments, the practical criticisms helped identify priorities for redesign. We do not have corresponding open-response evidence for CB-SBS in this dataset.
+
+There are several limits to interpretation. The numerical groups contain only sixteen and six participants, and their composition may differ. Ratings are self-reported. Several parts of the system changed between versions, and no inferential comparison is reported here. We should therefore describe differences in the observed means, without claiming statistical significance, equivalence or a causal improvement.
+
+For the ADDIE process, these findings provide directions for the next cycle: investigate the user experience with a larger sample, collect qualitative feedback on the guided version, and assess whether the interaction supports meaningful reflection beyond a favourable immediate rating.
+
+**Selected item means — source: v40, §4.2**
+
+| Item | CB-C (n = 16) | CB-SBS (n = 6) |
+| --- | ---: | ---: |
+| Ease of use | 3.38 | 4.17 |
+| Trust in the information received | 3.19 | 3.83 |
+| Perceived capacity to stimulate reflection | 3.25 | 3.83 |
+| Intention to reuse / recommend | 3.12 | 3.83 |
+| Perceived usefulness | 3.31 | 3.17 |
+
+**Editorial note, not spoken:** Means are transcribed from the manuscript. The response-scale endpoints and anchors must be checked against the original questionnaire before finalising the website chart. Do not label the values “out of 5” without that check. Deltas are omitted because differences between rounded displayed means do not always match the manuscript's reported deltas.
+
+---
+
+## Slide 10 — Time for reflection and human support
+
+**Slide bullets (working outline):**
+
+- Reflection during conversation and independent writing afterwards
+- Students' own spaces: **Notebook, Booklet, Portfolio**
+- Teachers and tutors: discussion, feedback and follow-up
+- Curated educational content supports the conversation
+- Features of the current platform; their contribution requires evaluation
+
+### Talk (≈ 1.9–2.3 min reading)
+
+The findings raise a broader design question: what should happen around the conversation, and how much time should reflection take?
+
+Knowledge and choices need time; they need to settle. In the current platform, students can make notes during the interaction and return to their own writing afterwards. The Notebook supports reflection on themselves, while the Booklet and Portfolio provide spaces to record and revisit their work. These are opportunities for students to formulate ideas in their own words, including without AI.
+
+Human support is part of this design. Teachers can work with groups, review the material made available within the platform's access arrangements, write notes and continue the discussion. The intention is that a conversation with CounselorBot can prepare or enrich a subsequent exchange with a teacher, tutor or guidance counsellor.
+
+The same educational responsibility applies to the content used by the chatbot. Strategies and reading recommendations draw on curated material. Their source and their relevance to the student's situation should remain open to examination.
+
+I want to distinguish these features of the current platform from the evidence just presented. The small comparative study does not establish the effects of the Notebook, Portfolio or teacher involvement. They express the direction of the design and introduce further questions for evaluation: do students return to their notes? Do they revise their interpretation? Does the material help a subsequent human conversation?
+
+These questions connect the immediate experience of using the interface to the wider guidance process that we ultimately want to support.
+
+---
+
+## Slide 11 — Data protection and local AI (Q3)
 
 **Slide bullets:**
 
-- Thirteen providers behind a single abstraction — **including local models** (Ollama, llama.cpp)
+- Support for external services and **local models** (Ollama, llama.cpp)
 - Local models: processing on the server; keeping data within the system requires checking the entire configuration, including connected services
 - **Protection layer under testing**: handling identifying information before sending it to external services; anonymisation still to be verified
 - Research: administration plans, informed consent, **research codes**, item-level export
 - Human review of translations and questionnaire validation: two distinct steps
-- GDPR and the AI Act: minors, special-category data, decisions affecting education
+- Data minimisation, access, retention and sharing: requirements to examine in context
 
-### Talk (≈ 3–4 min)
+### Talk (≈ 2.7–3.1 min reading)
 
 The third question, and for me the most difficult: how can we make tools like these safe in terms of privacy, confidentiality and data?
 
@@ -242,33 +316,7 @@ The design must therefore also take account of the applicable obligations concer
 
 ---
 
-## Slide 9 — The human loop (and who wrote the code)
-
-**Slide bullets:**
-
-- The social risk: as models improve, people turn to other people less often
-- AI is **one node** in a human network, not its centre
-  - Teachers: class groups, their students' results and conversations, notes, messages (web and Telegram)
-  - Researchers: administrations, consent, anonymous codes, raw data
-  - Students: notebook, booklets, portfolio
-- And a side result: **this platform was built by a non-programmer**
-- AI changes who is allowed to build software
-
-### Talk (≈ 2–3 min)
-
-There is one concern that worries me more than the others, and it lies behind all three questions. As models get better at conversation, people turn to other people less often. The student who would have asked a friend, a professor or a parent now asks a model. Convenience replaces community.
-
-This is why I designed the platform as *human-in-the-loop* from the beginning, rather than adding it as a feature later. The human loop is in the architecture of the roles. Teachers create class groups — students join with an invitation code — and can see their students' results and conversations, write notes and send messages that arrive on the web or via Telegram. This turns the platform into something a teacher can actually use in class, not a private chatbot. Researchers work with administration plans. And students keep their own artefacts: notebook, booklets, portfolio.
-
-And then there is one final point, which concerns me and, I think, also concerns you.
-
-I am not a programmer. My background is in education and the humanities. And yet this is a working platform, with a backend, a database, a frontend, streaming APIs, a Telegram bot and thirteen providers behind an abstraction. It was written very largely with AI assistance, guided by someone who knows the domain deeply and the code only at arm's length.
-
-For me, this is the most underrated property of today's AI: it changes who is allowed to build software. It enables domain experts to build their own tools, instead of writing a specification and hoping someone else understands what they meant. This is not a detail of this story: it is one of the results.
-
----
-
-## Slide 10 — What I am looking for at KTH and next steps
+## Slide 12 — What I am looking for at KTH and next steps
 
 **Slide bullets:**
 
@@ -279,43 +327,45 @@ For me, this is the most underrated property of today's AI: it changes who is al
 - Next steps: fine-tuning on real QSA sessions, strengthening anonymisation and pseudonymisation, benchmarking local vs external models
 - A direction still to be explored: an application on the student's computer, with local data and LLM
 
-### Talk (≈ 2–3 min)
+### Talk (≈ 2.3–2.8 min reading)
 
 I will now turn to opportunities for collaboration and the next developments of the project.
 
 One possible future development is validating the Swedish version of the QSA with KTH students. If any of you are interested in involving your courses, I would like to discuss this together and develop a possible collaboration. This work is outside the current phase of the research. Cognitive interviews, a pilot study, data collection, then psychometrics — classical test theory, confirmatory factor analysis, and finally norms. The manual is already written, in English, and the data pipeline is already in place in the platform.
 
-For the current work, I am looking for this department's feedback on CounselorBot and on the quality of the interaction it offers. EECS is exactly the place where the pedagogical question and the engineering question can be discussed together.
+For the current work, I am looking for this department's feedback on CounselorBot and on the quality of the interaction it offers. The evaluation priorities are a larger and more balanced sample, qualitative feedback on CB-SBS, and direct examination of conversations for interpretative accuracy and the quality of reflection. EECS offers a context in which we can discuss the pedagogical and engineering questions together.
 
-PQBL, the learning path based on questions generated from documents, is already among the instruments being tested. The next steps include fine-tuning a model on real QSA conversations, because we now have a dataset of supervised interactions; strengthening the anonymisation and pseudonymisation layer; and systematically comparing local and external models in terms of the quality of guidance conversations.
+PQBL, the learning path based on questions generated from documents, is already among the instruments being tested. The next steps include investigating fine-tuning on appropriately prepared QSA conversations; strengthening the anonymisation and pseudonymisation layer; and systematically comparing local and external models in terms of the quality of guidance conversations.
 
 One direction we have not yet explored is an application that runs entirely on the student's computer, with the data and language model stored and run locally. The development of computers capable of running these models — I am thinking, for example, of Macs and NVIDIA solutions — makes this an interesting possibility to study. We will need to establish what resources are required and what quality of interaction can be achieved. The aim is to give students greater control over their data, reducing the need to send it to external services.
 
 ---
 
-## Slide 11 — Answers to the three questions and an invitation to take part in testing
+## Slide 13 — Conclusions and an invitation to take part in testing
 
-**Slide bullets:**
+**Slide bullets (working outline):**
 
-- **Q1 — It can be done:** CounselorBot exists, works and runs on a machine
-- **Q2 — How much does it really help?** Encouraging initial feedback, to be explored further; starting reflection is already a contribution. Human control and supervision are part of the design
-- **Q3 — Yes, we can create a safe space:** local models and control over data; an application on the student's computer could strengthen this further, with ongoing checks
-- All instruments are test versions: **I invite you to take part in testing**
+- **Q1 — Technical feasibility:** a working application and two development cycles
+- **Q2 — User experience:** exploratory findings; educational effectiveness remains open
+- **Q3 — Data protection:** architectural measures with verification still required
+- ADDIE: evaluation informs the next development cycle
 - **It works. Now we need to understand how much it helps.**
 
-### Talk (≈ 2–3 min)
+### Talk (≈ 2.0–2.4 min reading)
 
 To conclude, I will return to the three questions we started with.
 
-We can answer yes to the first question: it can be done. CounselorBot exists, works and runs on a machine. Its technical feasibility is demonstrated by the application itself.
+For the first question, the project demonstrates the technical feasibility of this application. We developed an initial conversational prototype and a guided version, and participants were able to use them in the QSA pathway. The two ADDIE cycles make it possible to explain how feedback informed the development decisions.
 
-The second question concerns how much CounselorBot really helps students understand the results and reflect. The first tests I have carried out are encouraging: many participants found it useful and functional. These are initial findings, to be explored through more systematic testing. Simply managing to start a reflection on one's own experience is, however, an important contribution. Human control and supervision are part of CounselorBot's design: the platform provides for the involvement of teachers, tutors and guidance counsellors, who can support students, read what emerges and intervene when necessary.
+For the second question, we have exploratory evidence about user experience. The guided version received higher mean ratings on nine of ten items, while perceived usefulness was slightly lower. These observations justify further investigation. They do not yet establish that the system improves learning strategies, reflection or educational and career decisions.
 
-The third: can we create a safe space for data and personal reflection? Here too, the answer is yes: we can design the application to protect data, control access and leave students in control of what they share. Using local models already offers a concrete possibility in this direction. In the future, an application running entirely on the student's computer could further strengthen this control, keeping both the data and the model on the device. The anonymisation layer is still being tested, and data protection requires ongoing checks.
+For the third question, the platform provides architectural options for local processing and measures for access and data handling. Their adequacy still needs to be verified in the actual setting of use. A local model is one part of that work; protection also depends on the surrounding services, permissions and data practices.
 
-This is where I would like to involve you. All the instruments are test versions, and I would like to gather contributions from experts who can try them and discuss them critically. I invite you to take part in testing: to observe the conversation, identify what helps and point out what feels repetitive, unclear or too directive.
+This is where I would like to involve you. All the application pathways are test versions. I invite you to try the interaction critically: examine whether interpretations remain consistent with the profile, whether questions help participants explore concrete experiences, and where responses become repetitive, unclear or too directive.
 
-We know we can build it. Now we want to understand how useful it can be. And your contribution can help us do that.
+Your feedback can help us define the next evaluation cycle and the evidence we need to collect. The longer-term aim is to understand how the system can contribute to guidance alongside teachers, tutors and counsellors.
+
+It works. Now we need to understand how much it helps.
 
 Thank you.
 
@@ -325,61 +375,69 @@ Thank you.
 
 ## Timing
 
-| Slide | Content | Approximate words | Indicative minutes |
+| Slide | Content | Spoken words | Reading minutes at 110–130 wpm |
 | --- | --- | ---: | ---: |
-| 1 | Who I am | 240 | 2–3 |
-| 2 | Roma Tre and Ostiense | 118 | 1–2 |
-| 3 | CounselorBot and the three questions | 397 | 3–4 |
-| 4 | What guidance means | 544 | 4–5 |
-| 5 | The instruments | 657 | 6–7 |
-| 6 | Architecture and constraints | 472 | 4–5 |
-| 7 | Time for reflection | 247 | 2–3 |
-| 8 | Privacy and local AI | 353 | 3–4 |
-| 9 | The human loop and development with AI | 280 | 2–3 |
-| 10 | Collaborations and next steps | 278 | 2–3 |
-| 11 | Answers and invitation to take part in testing | 290 | 2–3 |
+| 1 | Who I am | 155 | 1.2–1.4 |
+| 2 | Roma Tre and its educational context | 86 | 0.7–0.8 |
+| 3 | CounselorBot: why, and three questions | 406 | 3.1–3.7 |
+| 4 | What guidance means (and why it is not matching) | 543 | 4.2–4.9 |
+| 5 | Development methodology: two ADDIE cycles | 283 | 2.2–2.6 |
+| 6 | The QSA as the focus of the evaluation | 229 | 1.8–2.1 |
+| 7 | From user feedback to redesign | 291 | 2.2–2.6 |
+| 8 | Exploratory evaluation: participants and procedure | 262 | 2.0–2.4 |
+| 9 | Preliminary findings: experience of the two versions | 312 | 2.4–2.8 |
+| 10 | Time for reflection and human support | 249 | 1.9–2.3 |
+| 11 | Data protection and local AI (Q3) | 345 | 2.7–3.1 |
+| 12 | What I am looking for at KTH and next steps | 304 | 2.3–2.8 |
+| 13 | Conclusions and an invitation to take part in testing | 260 | 2.0–2.4 |
 
-The script contains approximately **3,876 words** of spoken text, excluding slide bullets and supporting material. At 110–130 words per minute, it requires approximately **30–35 minutes of reading**; with pauses and slide changes, allow **35–40 minutes**. Adding 10 minutes of discussion: **45–50 minutes in total**. Demo excluded. These estimates should be checked by rehearsing aloud and recalculated after translation into English.
-
-> Translation note: the word counts and timing estimates above are retained from the Italian source; they have not been recalculated for this English version.
+The revised English script contains **3,725 spoken words**, counted as whitespace-separated words in the Talk sections only. Slide bullets, the results table, source notes and supporting material are excluded. Reading requires approximately **29–34 minutes**; allow **34–39 minutes** with pauses and transitions. Discussion and any demo require additional time. Check the estimate by rehearsing aloud, particularly the numerical results.
 
 ## Cut plan (if you run over)
 
-- Slide 4: shorten the comparison with matching, keeping self-determination and self-regulation.
-- Slide 5: shorten the description of individual questionnaires; keep the relationship between the two sites, IDEA, PQBL and the testing status.
-- Slide 6: shorten the technical list and retain the meaning of the design constraints.
-- Slide 10: summarise the next steps, keeping the invitation to collaborate.
-- Indicative target: save 4–6 minutes; check the saving by rehearsing aloud.
+- Slide 2: reduce the institutional introduction to one sentence.
+- Slide 4: shorten the discussion of matching, retaining self-determination, self-regulation and Savickas's distinct contribution.
+- Slide 6: mention the other instruments briefly and preserve the QSA evaluation boundary.
+- Slide 11: shorten the examples of local-model use.
+- Slide 12: summarise future technical developments, preserving evaluation priorities and the invitation to collaborate.
+- Preserve the participant denominators, the perceived-usefulness result and the limits of the comparison in slides 8–9.
 
 ## Delivery notes
 
-- Slides 1–2 are personal: speak slowly, look around the room. This is where the audience decides whether to listen to you.
-- Slide 3: the three questions are the backbone. Number them aloud and with your hand. Return to all of them in slide 11, distinguishing what has been achieved from what remains to be verified.
-- Slide 4: two hands for the two pillars — right for self-determination, left for self-regulation.
-- Line to let land, with a pause afterwards: *"a matching model optimises people for yesterday's jobs"*.
-- Slide 8: distinguish the protection measures already provided for from the checks still needed.
-- Slide 9: make the non-programmer point without apologising. It is a result, not a confession.
-- Slide 10: address the invitation to collaborate to anyone interested in involving their courses.
+- Slides 1–2: keep a personal opening while moving promptly to the research problem.
+- Slide 5: explain what happened in each development cycle; use ADDIE to connect decisions and evidence.
+- Slide 7: connect each reported difficulty to its corresponding design response without claiming complete resolution.
+- Slide 8: distinguish 34 participants overall from 22 numerical respondents. These are historical study figures.
+- Slide 9: read a few selected values slowly. Keep perceived usefulness visible and explain that the findings are descriptive.
+- Slide 10: distinguish current platform features from the scope of the reported evaluation.
+- Slide 13: return to all three questions, separating technical feasibility, user experience and educational effectiveness.
 
 ## Likely questions
 
-1. **"Why isn't ChatGPT with a good prompt enough?"** — The prompt contains the instructions for the model. Harness = state, data, retrieval, constraints, certification. A prompt does not guarantee that advice comes from the catalogue, or that the teacher can see the class, or that the model stops.
-2. **"How do you guarantee that the advice is good?"** — The system is designed to use strategies from the curated catalogue at authorised moments. The quality and observance of these constraints need to be checked in conversations, including through participant feedback.
-3. **"What about minors' privacy?"** — Protection tools, consent during administration and a local-model option are provided for. The anonymisation layer is being tested; retention, access and connected services require checks in the context of use.
-4. **"How did a non-programmer build it?"** — Simple, modular architecture, continuous iteration with AI, smoke tests on a dedicated DB, continuous documentation. The domain was mine; AI translated the domain into code.
-5. **"Is it validated?"** — We need to distinguish questionnaires with their own history of validation from the application's experimental paths. The platform is the subject of the current research. The multilingual versions in CounselorBot still need to be validated; possible validation of the QSA in Swedish is a future development, outside the current phase of the research.
-6. **"What if the model says something wrong?"** — The selected context and the constraints of the guided path aim to reduce errors, without eliminating them. Human supervision also serves to recognise them and discuss them with the student.
+1. **"Is ADDIE your experimental design?"** — ADDIE organised iterative development. The evaluation used a between-subjects comparison of two versions, with descriptive item-level analysis and thematic categorisation of open responses.
+2. **"Were participants randomly assigned?"** — The manuscript reports a non-probabilistic sample and does not report random assignment. Group differences and simultaneous design changes limit causal interpretation.
+3. **"Why 34 participants but only 22 numerical respondents?"** — CB-C had 27 participants: 16 provided numerical ratings and 11 open responses only. CB-SBS had 7 participants, with numerical ratings reported for 6. The manuscript does not explain the remaining participant's response status.
+4. **"Does the guided version work better?"** — It received higher mean ratings on 9 of 10 experience items in this small sample. Perceived usefulness was slightly lower. This does not establish superiority or improved educational outcomes.
+5. **"Why isn't a good prompt enough?"** — The application also manages the guided sequence, profile data, retrieved content and conversation context. Their combined contribution needs evaluation.
+6. **"How do you establish the quality of advice?"** — The design uses curated strategies and step-specific constraints. Evaluation should examine actual conversations for interpretative accuracy, relevance and adherence to those constraints.
+7. **"Is the system validated?"** — The reported study is exploratory. Questionnaire validation, validation of translated instruments, and evaluation of AI-mediated interaction are separate tasks.
+8. **"What about privacy?"** — Local processing and access and data-handling measures are part of the design. Their adequacy requires checks in the actual deployment and context of use.
+9. **"How did you develop it with AI assistance?"** — I supplied the educational requirements and used AI assistance in implementation, with iterative review of the resulting behaviour. This describes the development process; it is not a separate evaluation of AI-assisted programming.
 
-## To fill in before the 9th
+## Checks before finalising the website slides
 
-- [ ] Registered students: ___
-- [ ] Completed guided sessions: ___
-- [ ] Materials to present for future validation of the QSA in Swedish
-- [ ] How to collect expressions of interest from teachers in involving their courses
-- [ ] Possible demo separate from the script: define duration, available network and backup screenshots
+- [ ] Confirm response-scale endpoints and anchors from the original experience questionnaire before labelling a chart.
+- [ ] Clarify the response status of the seventh CB-SBS participant if the original records are available; retain n = 6 for the reported means.
+- [ ] Keep v40 study figures separate from any subsequently verified platform usage totals.
+- [ ] Verify model identifiers, configuration, benchmark protocol and automated evaluator before using technical benchmark figures in backup slides.
+- [ ] Align website slides with the revised script after review.
+- [ ] Define how to collect expressions of interest and testing feedback.
+- [ ] If a demo is included, establish its duration and prepare backup screenshots.
 
-## Sources (if requested)
+## Sources
 
+- Counselorbot manuscript, `Counselorbot-versione-v40-202606191545.docx`, supplied source in `/home/nugh75/TD_daniele/01_Articoli/Counselorbot/articoli/`: §3.1 (ADDIE and two development cycles); §§3.3–3.4 (participants, procedure and instruments); §§4.2–4.3 (numerical and open responses); §§5–6 (interpretation and limitations). No raw-data reanalysis was performed for this script revision.
+- Branch, R. M. (2009). *Instructional Design: The ADDIE Approach*. Springer. DOI: 10.1007/978-0-387-09506-6. Reference reported in the supplied manuscript.
 - Pellerey M., *Orientamento come potenziamento della persona umana in vista della sua occupabilità*, Rassegna CNOS, 1 (2016), pp. 41–50.
 - Pellerey M., Margottini M., Ottone E. (eds.), *Dirigere se stessi nello studio e nel lavoro*, Roma TrE-Press, 2020.
 - Epifani F., Margottini M., Ottone E., *Guida all'uso della piattaforma competenzestrategiche.it*, CNOS-FAP, 3rd ed., 2023.
