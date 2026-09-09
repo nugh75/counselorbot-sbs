@@ -1,9 +1,9 @@
 # KTH Presentation — 9 September 2026 — English Version
 
-> Revised spoken script: 13 proposed slide sections, first person, with an academic focus on development, method and preliminary findings. Website slides have not yet been aligned with this structure.
+> Revised spoken script: 14 proposed slide sections, first person, with an academic focus on development, method and preliminary findings. Website slides have not yet been aligned with this structure.
 > This English revision develops the Italian companion script (`presentazione-kth-2026-09-09-it.md`); the two texts are no longer aligned section by section.
 > Development and evaluation data: `Counselorbot-versione-v40-202606191545.docx`, §§3–6. These figures describe the manuscript's study snapshot, not current platform totals.
-> Reading estimate: 29–34 minutes; allow approximately 34–39 minutes with pauses and transitions. Demo and discussion excluded.
+> Reading estimate: 30–35 minutes; allow approximately 35–40 minutes with pauses and transitions. Demo and discussion excluded.
 
 ---
 
@@ -45,7 +45,26 @@ My project develops within this educational context, through the work of my rese
 
 ---
 
-## Slide 3 — CounselorBot: why, and three questions
+## Slide 3 — Why I chose Sweden
+
+**Slide bullets (working outline):**
+
+- Environmental engagement: the defence of the elm trees in Kungsträdgården
+- Equal opportunities: shared parental leave
+- Innovation: Spotify
+- Stockholm as a place to complete my doctoral research and work on my thesis
+
+### Talk (≈ 0.9–1.0 min reading)
+
+I would also like to explain why I chose Sweden for my research stay. Three aspects particularly interested me: its environmental engagement, its commitment to equal opportunities, and its capacity for innovation.
+
+The defence of the elm trees in Kungsträdgården is an example of citizens taking action to protect their environment. Shared parental leave reflects a commitment to making equal opportunities part of everyday family life. And Spotify is an example of how an idea can develop into an innovation with international reach.
+
+These aspects made me curious about Sweden and Stockholm. I thought this would be a stimulating place to spend six months, complete my doctoral research and work on my thesis.
+
+---
+
+## Slide 4 — CounselorBot: why, and three questions
 
 **Slide bullets:**
 
@@ -82,7 +101,7 @@ I will first explain the pedagogical framework, then the two development cycles 
 
 ---
 
-## Slide 4 — What guidance means (and why it is not matching)
+## Slide 5 — What guidance means (and why it is not matching)
 
 **Slide bullets:**
 
@@ -116,7 +135,7 @@ Notice what changes. The goal is no longer the right answer, but the right proce
 
 ---
 
-## Slide 5 — Development methodology: two ADDIE cycles
+## Slide 6 — Development methodology: two ADDIE cycles
 
 **Slide bullets (working outline):**
 
@@ -142,7 +161,7 @@ My own background is in education and the humanities, and I developed the platfo
 
 ---
 
-## Slide 6 — The QSA as the focus of the evaluation
+## Slide 7 — The QSA as the focus of the evaluation
 
 **Slide bullets (working outline):**
 
@@ -166,7 +185,7 @@ All the application pathways remain under testing. A questionnaire's existing va
 
 ---
 
-## Slide 7 — From user feedback to redesign
+## Slide 8 — From user feedback to redesign
 
 **Slide bullets (working outline):**
 
@@ -194,7 +213,7 @@ Several components changed together: the interface, the guided sequence, memory 
 
 ---
 
-## Slide 8 — Exploratory evaluation: participants and procedure
+## Slide 9 — Exploratory evaluation: participants and procedure
 
 **Slide bullets (working outline):**
 
@@ -223,7 +242,7 @@ This design provides information about participants' reported experience. It doe
 
 ---
 
-## Slide 9 — Preliminary findings: experience of the two versions
+## Slide 10 — Preliminary findings: experience of the two versions
 
 **Slide bullets (working outline):**
 
@@ -263,7 +282,7 @@ For the ADDIE process, these findings provide directions for the next cycle: inv
 
 ---
 
-## Slide 10 — Time for reflection and human support
+## Slide 11 — Time for reflection and human support
 
 **Slide bullets (working outline):**
 
@@ -289,7 +308,7 @@ These questions connect the immediate experience of using the interface to the w
 
 ---
 
-## Slide 11 — Data protection and local AI (Q3)
+## Slide 12 — Data protection and local AI (Q3)
 
 **Slide bullets:**
 
@@ -318,7 +337,7 @@ The design must therefore also take account of the applicable obligations concer
 
 ---
 
-## Slide 12 — What I am looking for at KTH and next steps
+## Slide 13 — What I am looking for at KTH and next steps
 
 **Slide bullets:**
 
@@ -343,7 +362,7 @@ One direction we have not yet explored is an application that runs entirely on t
 
 ---
 
-## Slide 13 — Conclusions and an invitation to take part in testing
+## Slide 14 — Conclusions and an invitation to take part in testing
 
 **Slide bullets (working outline):**
 
@@ -381,38 +400,40 @@ Thank you.
 | --- | --- | ---: | ---: |
 | 1 | Who I am | 155 | 1.2–1.4 |
 | 2 | Roma Tre and its educational context | 125 | 1.0–1.1 |
-| 3 | CounselorBot: why, and three questions | 418 | 3.2–3.8 |
-| 4 | What guidance means (and why it is not matching) | 543 | 4.2–4.9 |
-| 5 | Development methodology: two ADDIE cycles | 283 | 2.2–2.6 |
-| 6 | The QSA as the focus of the evaluation | 229 | 1.8–2.1 |
-| 7 | From user feedback to redesign | 291 | 2.2–2.6 |
-| 8 | Exploratory evaluation: participants and procedure | 262 | 2.0–2.4 |
-| 9 | Preliminary findings: experience of the two versions | 312 | 2.4–2.8 |
-| 10 | Time for reflection and human support | 249 | 1.9–2.3 |
-| 11 | Data protection and local AI (Q3) | 345 | 2.7–3.1 |
-| 12 | What I am looking for at KTH and next steps | 304 | 2.3–2.8 |
-| 13 | Conclusions and an invitation to take part in testing | 260 | 2.0–2.4 |
+| 3 | Why I chose Sweden | 113 | 0.9–1.0 |
+| 4 | CounselorBot: why, and three questions | 418 | 3.2–3.8 |
+| 5 | What guidance means (and why it is not matching) | 543 | 4.2–4.9 |
+| 6 | Development methodology: two ADDIE cycles | 283 | 2.2–2.6 |
+| 7 | The QSA as the focus of the evaluation | 229 | 1.8–2.1 |
+| 8 | From user feedback to redesign | 291 | 2.2–2.6 |
+| 9 | Exploratory evaluation: participants and procedure | 262 | 2.0–2.4 |
+| 10 | Preliminary findings: experience of the two versions | 312 | 2.4–2.8 |
+| 11 | Time for reflection and human support | 249 | 1.9–2.3 |
+| 12 | Data protection and local AI (Q3) | 345 | 2.7–3.1 |
+| 13 | What I am looking for at KTH and next steps | 304 | 2.3–2.8 |
+| 14 | Conclusions and an invitation to take part in testing | 260 | 2.0–2.4 |
 
-The revised English script contains **3,776 spoken words**, counted as whitespace-separated words in the Talk sections only. Slide bullets, the results table, source notes and supporting material are excluded. Reading requires approximately **29–34 minutes**; allow **34–39 minutes** with pauses and transitions. Discussion and any demo require additional time. Check the estimate by rehearsing aloud, particularly the numerical results.
+The revised English script contains **3,889 spoken words**, counted as whitespace-separated words in the Talk sections only. Slide bullets, the results table, source notes and supporting material are excluded. Reading requires approximately **30–35 minutes**; allow **35–40 minutes** with pauses and transitions. Discussion and any demo require additional time. Check the estimate by rehearsing aloud, particularly the numerical results.
 
 ## Cut plan (if you run over)
 
 - Slide 2: reduce the institutional introduction to one sentence.
-- Slide 4: shorten the discussion of matching, retaining self-determination, self-regulation and Savickas's distinct contribution.
-- Slide 6: mention the other instruments briefly and preserve the QSA evaluation boundary.
-- Slide 11: shorten the examples of local-model use.
-- Slide 12: summarise future technical developments, preserving evaluation priorities and the invitation to collaborate.
-- Preserve the participant denominators, the perceived-usefulness result and the limits of the comparison in slides 8–9.
+- Slide 5: shorten the discussion of matching, retaining self-determination, self-regulation and Savickas's distinct contribution.
+- Slide 7: mention the other instruments briefly and preserve the QSA evaluation boundary.
+- Slide 12: shorten the examples of local-model use.
+- Slide 13: summarise future technical developments, preserving evaluation priorities and the invitation to collaborate.
+- Preserve the participant denominators, the perceived-usefulness result and the limits of the comparison in slides 9–10.
 
 ## Delivery notes
 
 - Slides 1–2: keep a personal opening while moving promptly to the research problem.
-- Slide 5: explain what happened in each development cycle; use ADDIE to connect decisions and evidence.
-- Slide 7: connect each reported difficulty to its corresponding design response without claiming complete resolution.
-- Slide 8: distinguish 34 participants overall from 22 numerical respondents. These are historical study figures.
-- Slide 9: read a few selected values slowly. Keep perceived usefulness visible and explain that the findings are descriptive.
-- Slide 10: distinguish current platform features from the scope of the reported evaluation.
-- Slide 13: return to all three questions, separating technical feasibility, user experience and educational effectiveness.
+- Slide 3: explain the three personal reasons for choosing Sweden, matching the photographs on the website.
+- Slide 6: explain what happened in each development cycle; use ADDIE to connect decisions and evidence.
+- Slide 8: connect each reported difficulty to its corresponding design response without claiming complete resolution.
+- Slide 9: distinguish 34 participants overall from 22 numerical respondents. These are historical study figures.
+- Slide 10: read a few selected values slowly. Keep perceived usefulness visible and explain that the findings are descriptive.
+- Slide 11: distinguish current platform features from the scope of the reported evaluation.
+- Slide 14: return to all three questions, separating technical feasibility, user experience and educational effectiveness.
 
 ## Likely questions
 
