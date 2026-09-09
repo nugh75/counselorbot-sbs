@@ -205,11 +205,13 @@ Students can also start from a significant study or work experience, an idea the
 
 ### Talk
 
-Behind this conversation, the language model receives more than the student's latest message. The application brings together relevant questionnaire results, the conversation so far, information the student has provided, and selected educational material.
+Each time a student sends a message, CounselorBot prepares the information the language model needs to reply. This includes the student’s message, relevant questionnaire results, earlier parts of the conversation, and information the student has shared about themselves.
 
-Guided steps and instructions give the conversation a pedagogical direction. They help determine what to explore and when advice can be offered. The language model then generates a response using this context.
+The model also receives selected educational material and instructions for the current step. These instructions explain what to focus on, what kind of questions to ask, and when it is appropriate to offer advice.
 
-The system can use either a local model or an external service. What matters educationally is how these elements support the conversation: whether the response is relevant, understandable and leaves room for the student's own thinking.
+Using this information, the model produces a reply. The student can then answer, add an example or ask another question. CounselorBot prepares the context again for the next exchange.
+
+The aim is to keep the conversation connected to the student’s experience and give them space to think. The model can run on the institution’s server or through an external service.
 
 ---
 
@@ -284,12 +286,12 @@ Thank you for your time. I would be very interested to hear your questions and s
 | 9 | Directing oneself in study and work | 122 | 0.9–1.1 |
 | 10 | Career construction and life design | 138 | 1.1–1.3 |
 | 11 | Where the conversation begins | 184 | 1.4–1.7 |
-| 12 | Designing the interaction | 101 | 0.8–0.9 |
+| 12 | Designing the interaction | 132 | 1.0–1.2 |
 | 13 | Time for reflection | 90 | 0.7–0.8 |
 | 14 | Where do the data go? | 107 | 0.8–1.0 |
 | 15 | An invitation to collaborate | 129 | 1.0–1.2 |
 
-**1,806 spoken words**, approximately **14–16 minutes** of reading. Pauses, a demonstration and discussion require additional time.
+**1,837 spoken words**, approximately **14–17 minutes** of reading. Pauses, a demonstration and discussion require additional time.
 
 ## Sources
 
