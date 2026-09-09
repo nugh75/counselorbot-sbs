@@ -830,3 +830,72 @@ def test_welcome_explains_pacing_and_flexible_time_in_every_language():
     assert 'una domanda alla volta' in italian
     assert 'Non serve farli tutti' in italian
     assert 'non una durata fissa' in italian
+
+
+def test_new_session_starts_from_latest_owned_notebook_and_resume_preserves_it():
+    username = _identity['username']
+    _reset(username)
+    with _Session() as db:
+        db.add(models.LearnerProfileRevision(username=username, source='manual', data={'goal': 'Old goal'}))
+        db.flush()
+        db.add(models.LearnerProfileRevision(username=username, source='manual', data={'goal': 'Organizzare lo studio', 'main_difficulty': 'Mi distraggo'}))
+        db.add(models.LearnerProfileRevision(username='someone.else', source='manual', data={'goal': 'PRIVATE OTHER NOTEBOOK'}))
+        db.commit()
+    try:
+        result = client.post('/orientation/sessions', json={'language': 'it', 'new_session': True})
+        assert result.status_code == 200
+        data = result.json()
+        assert data['messages'][0]['content'] == 'Hai descritto un obiettivo di studio concreto.'
+        assert len(data['recommendations']) == 1
+        prompt = _FakeAIService.last_call[0][1]
+        assert 'Organizzare lo studio' in prompt and 'Mi distraggo' in prompt
+        assert 'Old goal' not in prompt and 'PRIVATE OTHER NOTEBOOK' not in prompt
+        assert 'This is the opening of a new Compass session' in prompt
+        _FakeAIService.last_call = None
+        resumed = client.post('/orientation/sessions', json={'language': 'it'}).json()
+        assert resumed['session_id'] == data['session_id']
+        assert resumed['messages'] == data['messages']
+        assert _FakeAIService.last_call is None
+        with _Session() as db:
+            assert db.query(models.LearnerProfileRevision).filter_by(username=username).count() == 2
+    finally:
+        _reset(username)
+        with _Session() as db:
+            db.query(models.LearnerProfileRevision).filter_by(username='someone.else').delete()
+            db.commit()
+
+
+def test_notebook_goal_survives_long_demographics_and_notes():
+    username = 'long.notebook.student'
+    with _Session() as db:
+        db.add(models.LearnerProfileRevision(username=username, source='manual', data={
+            'school_class': 'x' * 5000, 'notes': 'y' * 5000,
+            'goal': 'Choose my studies', 'main_difficulty': 'Choosing between courses',
+            'strengths': 'Writing',
+        }))
+        db.commit()
+        try:
+            block = student_context(db, username)
+            assert 'Choose my studies' in block and 'Choosing between courses' in block
+            assert 'Writing' in block and len(block) <= 2001
+        finally:
+            db.query(models.LearnerProfileRevision).filter_by(username=username).delete()
+            db.commit()
+
+
+def test_opening_model_failure_still_uses_notebook(monkeypatch):
+    class Unavailable(_FakeAIService):
+        def get_response(self, *args, **kwargs):
+            raise ValueError('model unavailable')
+    monkeypatch.setattr(orientation, 'AIService', Unavailable)
+    username = 'offline.notebook.student'
+    with _Session() as db:
+        db.add(models.LearnerProfileRevision(username=username, source='manual', data={'goal': 'Organizzare lo studio'}))
+        db.commit()
+        try:
+            result = analyze_turn(db, 'Begin', 'it', username=username, opening=True)
+            assert 'Organizzare lo studio' in result.reply
+            assert result.recommendations == []
+        finally:
+            db.query(models.LearnerProfileRevision).filter_by(username=username).delete()
+            db.commit()
