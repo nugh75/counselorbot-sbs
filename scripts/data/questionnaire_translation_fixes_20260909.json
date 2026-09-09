@@ -1,0 +1,720 @@
+{
+  "revision": "editorial-2026-09-09",
+  "items": [
+    {
+      "code": "QSA",
+      "item_number": 3,
+      "locale": "en",
+      "before": "Sometimes I do poorly on an assignment because I cannot understand exactly what I am expected to do.",
+      "after": "I do poorly on an assignment because I cannot understand exactly what I am expected to do.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 3,
+      "locale": "sv",
+      "before": "Ibland går det dåligt på en uppgift eftersom jag inte kan förstå exakt vad jag ska göra.",
+      "after": "Det går dåligt på en uppgift eftersom jag inte kan förstå exakt vad jag ska göra.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 3,
+      "locale": "fr",
+      "before": "Parfois, je fais de mauvais résultats sur un devoir parce que je ne comprends pas exactement ce qui est attendu de moi.",
+      "after": "J’obtiens de mauvais résultats à un devoir parce que je ne comprends pas exactement ce qui est attendu de moi.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "QSA",
+      "item_number": 3,
+      "locale": "de",
+      "before": "Manchmal schneide ich bei einer Aufgabe schlecht ab, weil ich nicht genau verstehe, was von mir erwartet wird.",
+      "after": "Ich schneide bei einer Aufgabe schlecht ab, weil ich nicht genau verstehe, was von mir erwartet wird.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 3,
+      "locale": "es",
+      "before": "A veces hago mal una tarea porque no entiendo exactamente lo que se espera de mí.",
+      "after": "Hago mal una tarea porque no entiendo exactamente lo que se espera de mí.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 16,
+      "locale": "en",
+      "before": "I sometimes think that I am capable of completing my study commitments successfully.",
+      "after": "I find myself thinking that I am capable of completing my study commitments successfully.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 16,
+      "locale": "sv",
+      "before": "Jag tänker ibland att jag klarar av att genomföra mina studieåtaganden med framgång.",
+      "after": "Jag tänker att jag klarar av att genomföra mina studieåtaganden med framgång.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 16,
+      "locale": "fr",
+      "before": "Parfois, je pense être capable de réussir mes engagements d'études.",
+      "after": "Je pense être capable de réussir mes engagements d'études.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 16,
+      "locale": "de",
+      "before": "Manchmal denke ich, dass ich in der Lage bin, meine Studienverpflichtungen erfolgreich zu erfüllen.",
+      "after": "Ich denke, dass ich in der Lage bin, meine Studienverpflichtungen erfolgreich zu erfüllen.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 16,
+      "locale": "es",
+      "before": "A veces pienso que soy capaz de cumplir con éxito mis compromisos de estudio.",
+      "after": "Pienso que soy capaz de cumplir con éxito mis compromisos de estudio.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 40,
+      "locale": "en",
+      "before": "During an oral assessment, I sometimes realise that I studied the wrong subject.",
+      "after": "During an oral assessment, I realise that I studied the wrong subject.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 40,
+      "locale": "fr",
+      "before": "Lors d'un examen oral, je me rends parfois compte que j'ai étudié la mauvaise matière.",
+      "after": "Lors d'un examen oral, je me rends compte que j'ai étudié la mauvaise matière.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 40,
+      "locale": "de",
+      "before": "Bei einer mündlichen Prüfung merke ich manchmal, dass ich das falsche Fach gelernt habe.",
+      "after": "Bei einer mündlichen Prüfung merke ich, dass ich das falsche Fach gelernt habe.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 40,
+      "locale": "es",
+      "before": "Durante una evaluación oral, a veces me doy cuenta de que he estudiado la materia equivocada.",
+      "after": "Durante una evaluación oral, me doy cuenta de que he estudiado la materia equivocada.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 47,
+      "locale": "en",
+      "before": "I sometimes think that failures at school depend fundamentally on people not being capable.",
+      "after": "I find myself thinking that failures at school depend fundamentally on people not being capable.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 47,
+      "locale": "sv",
+      "before": "Jag tänker ibland att misslyckanden i skolan i grunden beror på att personer inte har förmågan.",
+      "after": "Jag tänker att misslyckanden i skolan i grunden beror på att personer inte har förmågan.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 47,
+      "locale": "fr",
+      "before": "Je pense parfois que les échecs à l'école dépendent fondamentalement de l'incapacité des personnes.",
+      "after": "Je pense que les échecs à l'école dépendent fondamentalement de l'incapacité des personnes.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 47,
+      "locale": "de",
+      "before": "Ich denke manchmal, dass Misserfolge in der Schule grundlegend von der Unfähigkeit der Menschen abhängen.",
+      "after": "Ich denke, dass Misserfolge in der Schule grundlegend von der Unfähigkeit der Menschen abhängen.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 47,
+      "locale": "es",
+      "before": "A veces pienso que los fracasos en la escuela dependen fundamentalmente de que las personas no sean capaces.",
+      "after": "Pienso que los fracasos en la escuela dependen fundamentalmente de que las personas no sean capaces.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 52,
+      "locale": "en",
+      "before": "I sometimes find that a study topic is more difficult than I expected.",
+      "after": "I find that a study topic is more difficult than I expected.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 52,
+      "locale": "sv",
+      "before": "Ibland tycker jag att ett studieområde är svårare än jag hade väntat mig.",
+      "after": "Jag tycker att ett studieområde är svårare än jag hade väntat mig.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 52,
+      "locale": "fr",
+      "before": "Parfois, je trouve qu'un sujet d'étude est plus difficile que je ne l'attendais.",
+      "after": "Je trouve qu'un sujet d'étude est plus difficile que je ne l'attendais.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 52,
+      "locale": "de",
+      "before": "Manchmal finde ich, dass ein Lernthema schwieriger ist, als ich erwartet habe.",
+      "after": "Ich finde, dass ein Lernthema schwieriger ist, als ich erwartet habe.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 52,
+      "locale": "es",
+      "before": "A veces, encuentro que un tema de estudio es más difícil de lo que esperaba.",
+      "after": "Encuentro que un tema de estudio es más difícil de lo que esperaba.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 53,
+      "locale": "en",
+      "before": "When I do not feel able to complete it, I sometimes leave a piece of work unfinished.",
+      "after": "When I do not feel able to complete it, I leave a piece of work unfinished.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 53,
+      "locale": "fr",
+      "before": "Quand je ne me sens pas capable de le terminer, je laisse parfois un travail inachevé.",
+      "after": "Quand je ne me sens pas capable de le terminer, je laisse un travail inachevé.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 53,
+      "locale": "de",
+      "before": "Wenn ich nicht in der Lage bin, es zu beenden, lasse ich eine Aufgabe manchmal unvollendet.",
+      "after": "Wenn ich nicht in der Lage bin, es zu beenden, lasse ich eine Aufgabe unvollendet.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 53,
+      "locale": "es",
+      "before": "Cuando no me siento capaz de terminarlo, a veces dejo una tarea sin acabar.",
+      "after": "Cuando no me siento capaz de terminarlo, dejo una tarea sin acabar.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 59,
+      "locale": "en",
+      "before": "Even if I work very hard, I sometimes think that I cannot become more intelligent anyway.",
+      "after": "Even if I work very hard, I find myself thinking that I cannot become more intelligent anyway.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 59,
+      "locale": "sv",
+      "before": "Även om jag anstränger mig mycket tänker jag ibland att jag ändå inte kan bli mer intelligent.",
+      "after": "Även om jag anstränger mig mycket tänker jag att jag ändå inte kan bli mer intelligent.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 59,
+      "locale": "fr",
+      "before": "Même si je travaille très dur, je pense parfois que je ne peux pas devenir plus intelligent de toute façon.",
+      "after": "Même si je travaille très dur, je pense que je ne peux pas devenir plus intelligent de toute façon.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 59,
+      "locale": "de",
+      "before": "Auch wenn ich sehr hart arbeite, denke ich manchmal, dass ich ohnehin nicht intelligenter werden kann.",
+      "after": "Auch wenn ich sehr hart arbeite, denke ich, dass ich ohnehin nicht intelligenter werden kann.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 59,
+      "locale": "es",
+      "before": "Aunque trabaje muy duro, a veces pienso que de todos modos no puedo volverse más inteligente.",
+      "after": "Aunque trabaje muy duro, pienso que de todos modos no puedo volverme más inteligente.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "QSA",
+      "item_number": 64,
+      "locale": "en",
+      "before": "I sometimes think that succeeding at school depends on the intellectual ability a person has.",
+      "after": "I find myself thinking that succeeding at school depends on the intellectual ability a person has.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 64,
+      "locale": "sv",
+      "before": "Jag tänker ibland att förmågan att lyckas i skolan beror på den intelligens en person har.",
+      "after": "Jag tänker att förmågan att lyckas i skolan beror på den intelligens en person har.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 64,
+      "locale": "fr",
+      "before": "Parfois, je pense que réussir à l'école dépend des capacités intellectuelles d'une personne.",
+      "after": "Je pense que réussir à l'école dépend des capacités intellectuelles d'une personne.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 64,
+      "locale": "de",
+      "before": "Manchmal denke ich, dass der Schulerfolg von der intellektuellen Fähigkeit einer Person abhängt.",
+      "after": "Ich denke, dass der Schulerfolg von der intellektuellen Fähigkeit einer Person abhängt.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 64,
+      "locale": "es",
+      "before": "A veces pienso que tener éxito en la escuela depende de la capacidad intelectual de una persona.",
+      "after": "Pienso que tener éxito en la escuela depende de la capacidad intelectual de una persona.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 78,
+      "locale": "en",
+      "before": "I sometimes think that a person's intelligence is something that cannot really change: it is a natural gift.",
+      "after": "I find myself thinking that a person's intelligence is something that cannot really change: it is a natural gift.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 78,
+      "locale": "sv",
+      "before": "Jag tänker ibland att en persons intelligens är något som egentligen inte går att förändra: den är en naturgåva.",
+      "after": "Jag tänker att en persons intelligens är något som egentligen inte går att förändra: den är en naturgåva.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 78,
+      "locale": "fr",
+      "before": "Parfois, je pense que l'intelligence d'une personne est quelque chose qui ne peut vraiment pas changer : c'est un don naturel.",
+      "after": "Je pense que l'intelligence d'une personne est quelque chose qui ne peut vraiment pas changer : c'est un don naturel.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 78,
+      "locale": "de",
+      "before": "Manchmal denke ich, dass die Intelligenz einer Person etwas ist, das sich wirklich nicht ändern kann: Es ist ein natürliches Talent.",
+      "after": "Ich denke, dass die Intelligenz einer Person etwas ist, das sich wirklich nicht ändern kann: Es ist ein natürliches Talent.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 78,
+      "locale": "es",
+      "before": "A veces pienso que la inteligencia de una persona es algo que realmente no puede cambiar: es un don natural.",
+      "after": "Pienso que la inteligencia de una persona es algo que realmente no puede cambiar: es un don natural.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 82,
+      "locale": "en",
+      "before": "When I think about the things I need to learn, I sometimes regard them as too difficult.",
+      "after": "When I think about the things I need to learn, I regard them as too difficult.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 82,
+      "locale": "fr",
+      "before": "Quand je pense aux choses que j'ai besoin d'apprendre, je les trouve parfois trop difficiles.",
+      "after": "Quand je pense aux choses que j'ai besoin d'apprendre, je les trouve trop difficiles.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 82,
+      "locale": "de",
+      "before": "Wenn ich an die Dinge denke, die ich lernen muss, empfinde ich sie manchmal als zu schwierig.",
+      "after": "Wenn ich an die Dinge denke, die ich lernen muss, empfinde ich sie als zu schwierig.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 82,
+      "locale": "es",
+      "before": "Cuando pienso en las cosas que necesito aprender, a veces las considero demasiado difíciles.",
+      "after": "Cuando pienso en las cosas que necesito aprender, las considero demasiado difíciles.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 91,
+      "locale": "en",
+      "before": "At home and outside home, I sometimes enjoy talking about the things I do at school.",
+      "after": "At home and outside home, I enjoy talking about the things I do at school.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 91,
+      "locale": "fr",
+      "before": "À la maison et à l'extérieur, j'aime parfois parler des choses que je fais à l'école.",
+      "after": "À la maison et à l'extérieur, j'aime parler des choses que je fais à l'école.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 91,
+      "locale": "de",
+      "before": "Zu Hause und außerhalb genieße ich es manchmal, über die Dinge zu sprechen, die ich in der Schule mache.",
+      "after": "Zu Hause und außerhalb genieße ich es, über die Dinge zu sprechen, die ich in der Schule mache.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 91,
+      "locale": "es",
+      "before": "En casa y fuera de ella, a veces disfruto hablando de las cosas que hago en la escuela.",
+      "after": "En casa y fuera de ella, disfruto hablando de las cosas que hago en la escuela.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 94,
+      "locale": "en",
+      "before": "I sometimes think that with serious effort a person can also develop their intelligence.",
+      "after": "I find myself thinking that with serious effort a person can also develop their intelligence.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 94,
+      "locale": "sv",
+      "before": "Jag tänker ibland att man genom seriös ansträngning också kan utveckla sin intelligens.",
+      "after": "Jag tänker att man genom seriös ansträngning också kan utveckla sin intelligens.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 94,
+      "locale": "fr",
+      "before": "Je pense parfois qu'avec un effort sérieux, une personne peut aussi développer son intelligence.",
+      "after": "Je pense qu'avec un effort sérieux, une personne peut aussi développer son intelligence.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 94,
+      "locale": "de",
+      "before": "Ich denke manchmal, dass man mit ernsthaftem Einsatz auch seine Intelligenz entwickeln kann.",
+      "after": "Ich denke, dass man mit ernsthaftem Einsatz auch seine Intelligenz entwickeln kann.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 94,
+      "locale": "es",
+      "before": "A veces pienso que con un esfuerzo serio una persona también puede desarrollar su inteligencia.",
+      "after": "Pienso que con un esfuerzo serio una persona también puede desarrollar su inteligencia.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSAr",
+      "item_number": 39,
+      "locale": "en",
+      "before": "I sometimes think that a person's intelligence is something that cannot really change: it is a natural gift.",
+      "after": "I find myself thinking that a person's intelligence is something that cannot really change: it is a natural gift.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSAr",
+      "item_number": 39,
+      "locale": "sv",
+      "before": "Jag tänker ibland att en persons intelligens är något som egentligen inte går att förändra: den är en naturgåva.",
+      "after": "Jag tänker att en persons intelligens är något som egentligen inte går att förändra: den är en naturgåva.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSAr",
+      "item_number": 39,
+      "locale": "fr",
+      "before": "Parfois, je pense que l'intelligence d'une personne est quelque chose qui ne peut vraiment pas changer : c'est un don naturel.",
+      "after": "Je pense que l'intelligence d'une personne est quelque chose qui ne peut vraiment pas changer : c'est un don naturel.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSAr",
+      "item_number": 39,
+      "locale": "de",
+      "before": "Manchmal denke ich, dass die Intelligenz einer Person etwas ist, das sich wirklich nicht ändern kann: Es ist ein natürliches Talent.",
+      "after": "Ich denke, dass die Intelligenz einer Person etwas ist, das sich wirklich nicht ändern kann: Es ist ein natürliches Talent.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSAr",
+      "item_number": 39,
+      "locale": "es",
+      "before": "A veces pienso que la inteligencia de una persona es algo que realmente no puede cambiar: es un don natural.",
+      "after": "Pienso que la inteligencia de una persona es algo que realmente no puede cambiar: es un don natural.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSAr",
+      "item_number": 44,
+      "locale": "en",
+      "before": "While studying, I sometimes find myself thinking about other things.",
+      "after": "While studying, I find myself thinking about other things.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSAr",
+      "item_number": 44,
+      "locale": "fr",
+      "before": "En étudiant, je me surprends parfois à penser à d'autres choses.",
+      "after": "En étudiant, je me surprends à penser à d'autres choses.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSAr",
+      "item_number": 44,
+      "locale": "de",
+      "before": "Beim Lernen denke ich manchmal über andere Dinge nach.",
+      "after": "Beim Lernen denke ich über andere Dinge nach.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSAr",
+      "item_number": 44,
+      "locale": "es",
+      "before": "Mientras estudio, a veces me descubro pensando en otras cosas.",
+      "after": "Mientras estudio, me descubro pensando en otras cosas.",
+      "reason": "Remove explicit frequency added to the stem; frequency remains in response labels."
+    },
+    {
+      "code": "QSA",
+      "item_number": 23,
+      "locale": "es",
+      "before": "Me pánico cuando sé que tengo que hacer un examen escrito importante.",
+      "after": "Entro en pánico cuando sé que tengo que hacer un examen escrito importante.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "QSA",
+      "item_number": 23,
+      "locale": "de",
+      "before": "Ich panikere, wenn ich weiß, dass ich eine wichtige schriftliche Prüfung ablegen muss.",
+      "after": "Ich gerate in Panik, wenn ich weiß, dass ich eine wichtige schriftliche Prüfung ablegen muss.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "QPCC",
+      "item_number": 6,
+      "locale": "es",
+      "before": "Sé capaz de manejar la presión al tomar decisiones importantes.",
+      "after": "Soy capaz de manejar la presión al tomar decisiones importantes.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "ZTPI",
+      "item_number": 26,
+      "locale": "es",
+      "before": "Es es importante poner emoción en mi vida.",
+      "after": "Es importante poner emoción en mi vida.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "ZTPI",
+      "item_number": 48,
+      "locale": "es",
+      "before": "Es es más importante ahorrar para el futuro que comprar lo que se desea hoy.",
+      "after": "Es más importante ahorrar para el futuro que comprar lo que se desea hoy.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "ZTPI",
+      "item_number": 40,
+      "locale": "fr",
+      "before": "Je pense aux mauvaises choses qui m'arrivées dans le passé.",
+      "after": "Je pense aux mauvaises choses qui me sont arrivées dans le passé.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "QSAr",
+      "item_number": 32,
+      "locale": "es",
+      "before": "Aunque una tarea parezca aburrida, siempre intento terminarla.",
+      "after": "Aunque una tarea parezca aburrida, intento de todos modos terminarla.",
+      "reason": "Translate concessive still without adding always."
+    },
+    {
+      "code": "ZTPI",
+      "item_number": 54,
+      "locale": "sv",
+      "before": "Jag rycks ofta med av stundens spänning.",
+      "after": "Jag rycks med av stundens spänning.",
+      "reason": "Remove often added only in Swedish."
+    },
+    {
+      "code": "QSA",
+      "item_number": 81,
+      "locale": "fr",
+      "before": "Au début de mes études, je vérifie ce que j'ai à faire.",
+      "after": "Quand je commence à étudier, je vérifie ce que j'ai à faire.",
+      "reason": "Beginning of a study session, not of an academic programme."
+    },
+    {
+      "code": "QSA",
+      "item_number": 81,
+      "locale": "de",
+      "before": "Zu Beginn meines Studiums prüfe ich, was ich zu tun habe.",
+      "after": "Wenn ich mit dem Lernen beginne, prüfe ich, was ich zu tun habe.",
+      "reason": "Beginning of a study session, not of an academic programme."
+    },
+    {
+      "code": "QAP",
+      "item_number": 6,
+      "locale": "fr",
+      "before": "S'inquiéter pour ma carrière.",
+      "after": "M'intéresser à mon avenir professionnel.",
+      "reason": "Career concern as engagement with the future, not anxiety."
+    },
+    {
+      "code": "QAP",
+      "item_number": 6,
+      "locale": "de",
+      "before": "Sich um meine Karriere sorgen.",
+      "after": "Mich mit meiner beruflichen Zukunft befassen.",
+      "reason": "Career concern as engagement with the future, not anxiety."
+    },
+    {
+      "code": "QAP",
+      "item_number": 6,
+      "locale": "es",
+      "before": "Preocuparme por mi carrera.",
+      "after": "Interesarme por mi futuro profesional.",
+      "reason": "Career concern as engagement with the future, not anxiety."
+    },
+    {
+      "code": "QSA",
+      "item_number": 19,
+      "locale": "fr",
+      "before": "Lors d'une évaluation orale, la peur de faire une erreur me gêne tellement que je me comporte moins bien.",
+      "after": "Lors d'une évaluation orale, la peur de faire une erreur me gêne tellement que mes résultats sont moins bons.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "QSA",
+      "item_number": 63,
+      "locale": "fr",
+      "before": "Lorsque j'effectue une tâche ennuyeuse, je me concentre sur ses aspects positifs et la satisfaction que j'éprouverai à la terminer.",
+      "after": "Lorsque j'effectue une tâche ennuyeuse, je me concentre sur ses aspects moins négatifs et la satisfaction que j'éprouverai à la terminer.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "QSA",
+      "item_number": 63,
+      "locale": "de",
+      "before": "Wenn ich eine langweilige Aufgabe erledige, denke ich an ihre positiven Seiten und die Zufriedenheit, die ich empfinden werde, wenn ich fertig bin.",
+      "after": "Wenn ich eine langweilige Aufgabe erledige, denke ich an ihre weniger negativen Seiten und die Zufriedenheit, die ich empfinden werde, wenn ich fertig bin.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "QSA",
+      "item_number": 68,
+      "locale": "de",
+      "before": "Ich denke, dass der Schulerfolg davon abhängt, wie viel Mühe sich jeder in ein sorgfältiges Lernen investiert.",
+      "after": "Ich denke, dass der Schulerfolg davon abhängt, wie viel Mühe jeder in sorgfältiges Lernen investiert.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "QSA",
+      "item_number": 89,
+      "locale": "fr",
+      "before": "Lorsque j'étudie, je me distrais en rêvant à la belle vie et en faisant toutes sortes de projets.",
+      "after": "Lorsque j'étudie, je me distrais en rêvassant et en faisant toutes sortes de projets.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "QSAr",
+      "item_number": 46,
+      "locale": "de",
+      "before": "Wenn ich auf eine Schwierigkeit stoße, gebe ich mehr Mühe, sie zu überwinden.",
+      "after": "Wenn ich auf eine Schwierigkeit stoße, gebe ich mir mehr Mühe, sie zu überwinden.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "ZTPI",
+      "item_number": 29,
+      "locale": "de",
+      "before": "Ich bin nostalgisch auf meine Kindheit zurück.",
+      "after": "Ich denke mit Nostalgie an meine Kindheit zurück.",
+      "reason": "Correct German syntax."
+    },
+    {
+      "code": "ZTPI",
+      "item_number": 34,
+      "locale": "de",
+      "before": "Es ist mir schwer, unangenehme Bilder aus meiner Jugend zu vergessen.",
+      "after": "Es fällt mir schwer, unangenehme Bilder aus meiner Jugend zu vergessen.",
+      "reason": "Correct grammar or meaning against the source text."
+    },
+    {
+      "code": "ZTPI",
+      "item_number": 49,
+      "locale": "de",
+      "before": "Ich schaffe Projekte pünktlich ab, indem ich stetig vorankomme.",
+      "after": "Ich schließe Projekte pünktlich ab, indem ich stetig vorankomme.",
+      "reason": "Correct grammar or meaning against the source text."
+    }
+  ],
+  "response_labels": [
+    {
+      "code": "QPCC",
+      "locale": "de",
+      "before": [
+        "Stimme überhaupt nicht zu",
+        "Eher zustimmend",
+        "Eher zustimmend",
+        "Stimme voll und ganz zu"
+      ],
+      "after": [
+        "Stimme überhaupt nicht zu",
+        "Stimme teilweise zu",
+        "Stimme weitgehend zu",
+        "Stimme voll und ganz zu"
+      ],
+      "reason": "Give response categories 2 and 3 distinct ordered agreement labels."
+    }
+  ]
+}
