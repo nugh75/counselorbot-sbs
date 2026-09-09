@@ -187,9 +187,11 @@ Let me now show you how CounselorBot works from the student's point of view.
 
 A student can begin with questionnaire results from competenzestrategiche.it. These questionnaires concern areas such as learning strategies, perceived competences, time perspective and career adaptability. CounselorBot uses the results as a starting point for a conversation.
 
-The student can ask what a result means and connect it with a concrete experience. For example: “Does this describe how I study? Can I think of a situation in which it happens?” The purpose is to help the student explore the result, rather than accept it as a fixed description of who they are.
+I have also translated the questionnaires into several languages, and students can complete these versions directly within CounselorBot. However, the translated versions still need to be validated. That is a separate research project—and probably a topic for another seminar.
 
-There are also other starting points: a significant study or work experience, an idea to develop, or a document to explore through questions.
+During the conversation, students can ask what a result means and connect it with their own experience. For example: “Does this describe how I study? Can I think of a situation in which this happens?” The aim is to help them explore the results, rather than accept them as a fixed description of who they are.
+
+Students can also start from a significant study or work experience, an idea they want to develop, or a document they want to explore through questions.
 
 ---
 
@@ -281,13 +283,13 @@ Thank you for your time. I would be very interested to hear your questions and s
 | 8 | Guidance as matching | 131 | 1.0–1.2 |
 | 9 | Directing oneself in study and work | 122 | 0.9–1.1 |
 | 10 | Career construction and life design | 138 | 1.1–1.3 |
-| 11 | Where the conversation begins | 127 | 1.0–1.2 |
+| 11 | Where the conversation begins | 170 | 1.3–1.5 |
 | 12 | Designing the interaction | 101 | 0.8–0.9 |
 | 13 | Time for reflection | 90 | 0.7–0.8 |
 | 14 | Where do the data go? | 107 | 0.8–1.0 |
 | 15 | An invitation to collaborate | 129 | 1.0–1.2 |
 
-**1,749 spoken words**, approximately **13–16 minutes** of reading. Pauses, a demonstration and discussion require additional time.
+**1,792 spoken words**, approximately **14–16 minutes** of reading. Pauses, a demonstration and discussion require additional time.
 
 ## Sources
 
