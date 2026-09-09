@@ -1,5 +1,6 @@
 """Student-owned visual work. No model calls, prompts or questionnaire scores."""
 import hashlib
+from datetime import date
 from typing import Annotated, Literal
 
 from fastapi import HTTPException
@@ -78,6 +79,10 @@ class PortfolioLink(StrictModel):
 
 
 class TimelineEvent(Item):
+    date_mode: Literal['point', 'period'] | None = None
+    start_date: str | None = Field(default=None, pattern=r'^\d{4}-\d{2}-\d{2}$')
+    end_date: str | None = Field(default=None, pattern=r'^\d{4}-\d{2}-\d{2}$')
+    planned: str = Field(default='', max_length=1000)
     institution_event: str | None = Field(default=None, max_length=160)
     institution_available: bool = True
     institution_date: Literal['start', 'deadline'] = 'start'
@@ -92,6 +97,19 @@ class TimelineEvent(Item):
 
     @model_validator(mode='after')
     def unique_links(self):
+        for value in (self.start_date, self.end_date):
+            if value:
+                date.fromisoformat(value)
+        if self.date_mode == 'point' and (not self.start_date or self.end_date):
+            raise ValueError('A single event requires only a start date')
+        if self.date_mode == 'period' and not (self.start_date or self.end_date):
+            raise ValueError('A period requires a start or end date')
+        if self.date_mode is None and (self.start_date or self.end_date):
+            raise ValueError('Choose an event or a period')
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValueError('End date precedes start date')
+        if self.date_mode and not self.institution_event:
+            self.period = self.start_date if self.date_mode == 'point' else f'{self.start_date or "…"} → {self.end_date or "…"}'
         if len(set(self.action_ids)) != len(self.action_ids) or len({p.id for p in self.portfolio}) != len(self.portfolio):
             raise ValueError('Duplicate links')
         return self
@@ -132,6 +150,11 @@ class SaveWorkspace(StrictModel):
 class PersonalTimeline(Timeline):
     # Extraction must preserve all events, even across many session workspaces.
     events: list[TimelineEvent] = Field(default_factory=list)
+
+    @model_validator(mode='after')
+    def chronological_events(self):
+        self.events.sort(key=lambda e: e.start_date or e.end_date or (e.period[:10] if e.institution_event else '9999-99-99'))
+        return self
 
 
 class PersonalWorkspace(Workspace):
@@ -177,7 +200,7 @@ def redact_workspace_text(value):
             redact_workspace_text(item)
     elif isinstance(value, dict):
         for key, item in value.items():
-            if key in {'title', 'detail', 'reflection', 'source', 'text', 'label', 'note', 'reason', 'period'} and isinstance(item, str):
+            if key in {'title', 'detail', 'reflection', 'planned', 'source', 'text', 'label', 'note', 'reason', 'period'} and isinstance(item, str):
                 value[key] = pii.redact(item)
             elif isinstance(item, (dict, list)):
                 redact_workspace_text(item)

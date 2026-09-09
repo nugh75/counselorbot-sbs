@@ -823,22 +823,18 @@ for (const [locale, width] of [['it', 390], ['en', 1440], ['de', 320], ['es', 39
         try {
             await page.goto(`${origin}/profilo/timeline`);
             const dialog = page.getByRole('dialog');
-            await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
-            await dialog.getByLabel(l('timelineTitle'), { exact: true }).fill('Il mio progetto');
+
             await dialog.getByLabel(l('eventTitle'), { exact: true }).fill('Presentazione');
-            await dialog.getByLabel(l('period'), { exact: true }).fill('Giugno, data da definire');
+            await dialog.getByLabel(l('singleDate'), { exact: true }).fill('2026-10-15');
             await dialog.getByRole('button', { name: l('addEvent'), exact: true }).click();
             const event = dialog.locator('li[id^="timeline-"]');
-            await event.getByLabel(l('reflection'), { exact: true }).fill('Provare con un compagno');
+            await event.getByLabel(l('diary'), { exact: true }).fill('Provare con un compagno');
             await event.getByRole('textbox', { name: l('createAction'), exact: true }).fill('Preparare le slide');
             await event.getByRole('combobox', { name: l('actionKind'), exact: true }).selectOption('book');
             await event.getByRole('button', { name: l('createAction'), exact: true }).click();
             await event.getByRole('combobox', { name: l('linkPortfolio'), exact: true }).selectOption('91');
             await dialog.getByRole('button', { name: l('save'), exact: true }).click();
-            await dialog.getByRole('tab', { name: l('board'), exact: true }).click();
-            await dialog.getByRole('combobox').filter({ has: page.locator('option[value="doing"]') }).selectOption('doing');
-            await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
-            assert.match(await event.innerText(), new RegExp(l('doing')));
+            assert.equal(control.visual.workspace.actions[0].title, 'Preparare le slide');
             await dialog.getByRole('button', { name: l('savePortfolio'), exact: true }).click();
             await dialog.getByRole('button', { name: l('preview'), exact: true }).click();
             await dialog.locator('pre').waitFor();
@@ -854,8 +850,9 @@ for (const [locale, width] of [['it', 390], ['en', 1440], ['de', 320], ['es', 39
             assert.equal(await dialog.evaluate(el => el.scrollWidth > el.clientWidth), false);
             await dialog.getByRole('button', { name: l('close'), exact: true }).click();
             await page.goto(`${origin}/profilo/timeline`);
-            await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
-            assert.equal(await event.getByLabel(l('period'), { exact: true }).inputValue(), 'Giugno, data da definire');
+
+            await dialog.getByRole('button', { name: `${l('eventDetails')}: Presentazione`, exact: true }).filter({ visible: true }).click();
+            assert.equal(await event.getByLabel(l('singleDate'), { exact: true }).inputValue(), '2026-10-15');
             assert.equal(control.visual.workspace.actions.length, 1);
             assert.equal(control.visual.workspace.actions[0].kind, 'book');
             assert.equal(control.visual.workspace.timeline.events[0].portfolio[0].id, 91);
@@ -870,10 +867,9 @@ test('timeline real API: reading and film goals, Portfolio return links, immutab
     try {
         await page.goto(`${origin}/profilo/timeline`);
         let dialog = page.getByRole('dialog');
-        await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
-        await dialog.getByLabel(l('timelineTitle'), { exact: true }).fill('Letture e visioni del progetto');
+
         await dialog.getByLabel(l('eventTitle'), { exact: true }).fill('Preparazione della presentazione');
-        await dialog.getByLabel(l('period'), { exact: true }).fill('Autunno, prima della presentazione');
+        await dialog.getByLabel(l('singleDate'), { exact: true }).fill('2026-10-15');
         await dialog.getByRole('button', { name: l('addEvent'), exact: true }).click();
         let event = dialog.locator('li[id^="timeline-"]');
         for (const [kind, title] of [['book', 'Leggere il libro scelto'], ['article', 'Studiare l’articolo scelto'], ['film', 'Vedere il film scelto']]) {
@@ -882,7 +878,7 @@ test('timeline real API: reading and film goals, Portfolio return links, immutab
             await event.getByRole('button', { name: l('createAction'), exact: true }).click();
         }
         await event.getByRole('combobox', { name: l('linkPortfolio'), exact: true }).selectOption('1');
-        await event.getByLabel(l('reflection'), { exact: true }).fill('Le letture mi aiutano a preparare il confronto.');
+        await event.getByLabel(l('diary'), { exact: true }).fill('Le letture mi aiutano a preparare il confronto.');
         await dialog.getByRole('button', { name: l('savePortfolio'), exact: true }).click();
         await dialog.getByRole('button', { name: l('preview'), exact: true }).click();
         await dialog.locator('pre').waitFor();
@@ -893,7 +889,7 @@ test('timeline real API: reading and film goals, Portfolio return links, immutab
         const download = page.waitForEvent('download');
         await dialog.getByRole('button', { name: l('export'), exact: true }).click();
         await (await download).saveAs('/tmp/timeline-live.pdf');
-        await event.getByLabel(l('reflection'), { exact: true }).fill('Riflessione modificata dopo la copia');
+        await event.getByLabel(l('diary'), { exact: true }).fill('Riflessione modificata dopo la copia');
         await dialog.getByRole('button', { name: l('save'), exact: true }).click();
         await dialog.getByRole('button', { name: l('save'), exact: true }).waitFor({ state: 'visible' });
         await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && b.disabled), l('save'));
@@ -906,14 +902,13 @@ test('timeline real API: reading and film goals, Portfolio return links, immutab
         dialog = page.getByRole('dialog');
         event = dialog.locator('li[id^="timeline-"]');
         await event.waitFor();
-        assert.equal(await event.getByLabel(l('reflection'), { exact: true }).inputValue(), 'Riflessione modificata dopo la copia');
+        assert.equal(await event.getByLabel(l('diary'), { exact: true }).inputValue(), 'Riflessione modificata dopo la copia');
         assert.equal(await page.evaluate(() => document.documentElement.classList.contains('dark')), true);
         await page.screenshot({ path: '/tmp/timeline-live-dark.png' });
         await dialog.getByRole('button', { name: /^Rimuovi: Preparazione/ }).click();
         await dialog.getByRole('button', { name: l('save'), exact: true }).click();
         await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && b.disabled), l('save'));
-        await dialog.getByRole('tab', { name: l('board'), exact: true }).click();
-        assert.equal(await dialog.locator('article').count(), 3);
+        assert.equal((await (await page.request.get('http://127.0.0.1:8189/user/timeline')).json()).workspace.actions.length, 3);
         await page.goto(`${origin}/profilo/portfolio`, { waitUntil: 'networkidle' });
         await page.locator('#portfolio-2').waitFor();
         assert.equal(await page.getByRole('link', { name: /Apri la tappa/ }).count(), 0);
@@ -922,22 +917,74 @@ test('timeline real API: reading and film goals, Portfolio return links, immutab
     } catch (error) { await page.screenshot({ path: '/tmp/timeline-live-failure.png' }); console.error((await page.locator('body').innerText()).slice(-2000)); throw error; } finally { await context.close(); }
 });
 
-test('personal timeline keyboard ordering preserves the other milestones', async () => {
-    const { page, context, control } = await fixture(390);
+for (const width of [390, 1440]) test(`personal calendar plans four date forms and closes an open period without losing the diary at ${width}px`, async () => {
+    const { page, context, control } = await fixture(width, 'intro', { dark: width === 390 });
     const l = key => visualLabel('it', key === 'save' ? 'personalSave' : key);
-    control.visual.workspace.timeline = { title: 'Il percorso', events: ['Prima', 'Dopo'].map((title, i) => ({ id: `event-${i}`, title, period: i ? 'Fra qualche mese' : 'Durante la scuola', tense: i ? 'future' : 'past', symbol: 'milestone', reflection: '', source: '', action_ids: [], portfolio: [] })) };
     try {
         await page.goto(`${origin}/profilo/timeline`);
         const dialog = page.getByRole('dialog');
-        await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
-        await dialog.getByRole('button', { name: `${l('moveUp')}: Dopo`, exact: true }).focus();
+        const form = dialog.locator('form').first();
+        await form.waitFor({ state: 'visible' });
+        for (const [title, mode, start, end] of [
+            ['Tirocinio', 'period', '2026-09-10', ''],
+            ['Visita', 'point', '2026-09-01', ''],
+            ['Iscrizione', 'period', '', '2026-10-01'],
+            ['Corso', 'period', '2026-09-05', '2026-09-25'],
+        ]) {
+            if (!(await form.getByLabel(l('eventTitle'), { exact: true }).isVisible())) await dialog.locator('summary').filter({ hasText: l('addEvent') }).click();
+            await form.getByLabel(l('eventTitle'), { exact: true }).fill(title);
+            await form.getByLabel(l('dateMode'), { exact: true }).selectOption(mode);
+            if (start) await form.getByLabel(l(mode === 'point' ? 'singleDate' : 'startDate'), { exact: true }).fill(start);
+            if (end) await form.getByLabel(l('endDate'), { exact: true }).fill(end);
+            await form.getByRole('button', { name: l('addEvent'), exact: true }).click();
+        }
+        const calendar = dialog.getByRole('region', { name: l('calendarView'), exact: true });
+        assert.deepEqual(await calendar.getByRole('button').filter({ visible: true }).evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))), ['Visita', 'Corso', 'Tirocinio', 'Iscrizione'].map(title => `${l('eventDetails')}: ${title}`));
+        await calendar.getByRole('button', { name: `${l('eventDetails')}: Tirocinio`, exact: true }).filter({ visible: true }).click();
+        const event = dialog.locator('li[id^="timeline-"]');
+        await event.getByLabel(l('planned'), { exact: true }).fill('Conoscere il lavoro');
+        await event.getByLabel(l('diary'), { exact: true }).fill('Ho imparato ad ascoltare');
+        await dialog.getByRole('button', { name: l('save'), exact: true }).click();
+        await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && b.disabled), l('save'));
+        await event.locator('summary').click();
+        await calendar.scrollIntoViewIfNeeded();
+        await page.screenshot({ path: `/tmp/personal-calendar-${width}.png` });
+        await page.reload();
+        await calendar.getByRole('button', { name: `${l('eventDetails')}: Tirocinio`, exact: true }).filter({ visible: true }).click();
+        await event.getByLabel(l('endDate'), { exact: true }).fill('2026-09-30');
+        assert.equal(await event.getByLabel(l('planned'), { exact: true }).inputValue(), 'Conoscere il lavoro');
+        assert.equal(await event.getByLabel(l('diary'), { exact: true }).inputValue(), 'Ho imparato ad ascoltare');
+        await dialog.getByRole('button', { name: l('save'), exact: true }).click();
+        await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && b.disabled), l('save'));
+        assert.equal(control.visual.workspace.timeline.events.find(e => e.title === 'Tirocinio').end_date, '2026-09-30');
+        const writes = control.requests.filter(r => r.method === 'PUT').length;
+        await event.getByLabel(l('endDate'), { exact: true }).fill('2026-09-01');
+        await dialog.getByRole('button', { name: l('save'), exact: true }).click();
+        await dialog.getByRole('alert').filter({ hasText: l('dateError') }).waitFor();
+        assert.equal(control.requests.filter(r => r.method === 'PUT').length, writes);
+        assert.equal(await dialog.evaluate(el => el.scrollWidth > el.clientWidth), false);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+test('personal timeline preserves legacy text until explicitly placed on the calendar', async () => {
+    const { page, context, control } = await fixture(390);
+    const l = key => visualLabel('it', key === 'save' ? 'personalSave' : key);
+    control.visual.workspace.timeline = { title: 'Il percorso', events: ['Prima', 'Dopo'].map((title, i) => ({ id: `event-${i}`, title, period: i ? 'Fra qualche mese' : 'Durante la scuola', tense: 'past', symbol: 'milestone', reflection: 'Ricordo originale', source: '', action_ids: [], portfolio: [] })) };
+    try {
+        await page.goto(`${origin}/profilo/timeline`);
+        const dialog = page.getByRole('dialog');
+        await dialog.getByRole('button', { name: 'Dopo · Fra qualche mese', exact: true }).focus();
         await page.keyboard.press('Enter');
-        assert.equal(await dialog.locator('li[id^="timeline-"]').first().getByLabel(l('period'), { exact: true }).inputValue(), 'Fra qualche mese');
-        await dialog.getByRole('checkbox', { name: `${l('selectEvent')}: Prima`, exact: true }).uncheck();
+        const event = dialog.locator('li[id^="timeline-"]');
+        await event.getByLabel(l('dateMode'), { exact: true }).selectOption('period');
+        await event.getByLabel(l('endDate'), { exact: true }).fill('2026-12-01');
         await dialog.getByRole('button', { name: l('save'), exact: true }).click();
         await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && b.disabled), l('save'));
         assert.equal(control.visual.workspace.timeline.events.length, 2);
-        assert.equal(control.requests.filter(r => r.path === '/api/chat/stream').length, 0);
+        const legacy = control.visual.workspace.timeline.events.find(e => e.id === 'event-0');
+        assert.equal(legacy.period, 'Durante la scuola');
+        assert.equal(legacy.reflection, 'Ricordo originale');
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });
@@ -947,16 +994,16 @@ for (const width of [390, 1280]) test(`personal area opens timeline without any 
     try {
         await page.goto(`${origin}/profilo`);
         await page.getByRole('link', { name: /Linea del tempo/ }).click();
-        await page.getByLabel('Titolo del percorso', { exact: true }).waitFor();
+        await page.getByRole('region', { name: visualLabel('it', 'calendarView'), exact: true }).waitFor();
         assert.equal(new URL(page.url()).searchParams.has('session'), false);
         assert.equal(await page.getByText('Scegli una sessione', { exact: true }).count(), 0);
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
         control.failLoad = true;
         await page.reload();
-        await page.getByRole('alert').waitFor();
+        await page.getByRole('alert').filter({ hasText: visualLabel('it', 'loadError') }).waitFor();
         control.failLoad = false;
         await page.getByRole('button', { name: visualLabel('it', 'retry'), exact: true }).click();
-        await page.getByLabel('Titolo del percorso', { exact: true }).waitFor();
+        await page.getByRole('region', { name: visualLabel('it', 'calendarView'), exact: true }).waitFor();
     } finally { await context.close(); }
 });
 
@@ -970,8 +1017,8 @@ for (const width of [390, 1280]) test(`personal timeline integrates institution 
         await page.getByText(/Date di orientamento/).click();
         await page.getByRole('button', { name: 'Aggiungi appuntamento', exact: true }).click();
         await page.getByRole('button', { name: 'Aggiungi scadenza', exact: true }).click();
+        await page.getByRole('button', { name: `${visualLabel('it', 'eventDetails')}: Open day dell’istituto`, exact: true }).filter({ visible: true }).first().click();
         const events = page.locator('li[id^="timeline-"]');
-        assert.equal(await events.count(), 2);
         assert.equal(await events.first().getByLabel('Titolo della tappa', { exact: true }).evaluate(el => el.readOnly), true);
         await events.first().getByRole('checkbox', { name: 'Taccuino', exact: true }).check();
         await events.first().getByRole('checkbox', { name: 'Libretto', exact: true }).check();
@@ -979,7 +1026,7 @@ for (const width of [390, 1280]) test(`personal timeline integrates institution 
         await page.getByRole('button', { name: visualLabel('it', 'personalSave'), exact: true }).click();
         await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && b.disabled), visualLabel('it', 'personalSave'));
         assert.equal(control.visual.workspace.timeline.events[0].institution_event, 'open-day');
-        assert.equal(control.visual.workspace.timeline.events[1].institution_date, 'deadline');
+        assert.equal(control.visual.workspace.timeline.events[0].institution_date, 'deadline');
         await page.screenshot({ path: `/tmp/personal-timeline-institution-${width}.png` });
         assert.equal(await page.getByRole('dialog').evaluate(el => el.scrollWidth > el.clientWidth), false);
     } finally { await context.close(); }

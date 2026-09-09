@@ -4,7 +4,7 @@ export type ActionKind = 'activity' | 'book' | 'article' | 'film';
 export type VisualAction = { kind?: ActionKind; id: string; title: string; detail: string; stage: ActionStage; reflection: string; source: string };
 export type ReflectionCard = { id: string; text: string; bucket: CardBucket; source: string };
 export type ComparisonOption = { id: string; title: string; source: string };
-export type TimelineEvent = { institution_event?: string | null; institution_available?: boolean; institution_date?: 'start' | 'deadline'; personal_links?: ('notebook' | 'booklet' | 'orientation')[]; id: string; title: string; period: string; tense: 'past' | 'future'; symbol: 'milestone' | 'study' | 'work' | 'change'; reflection: string; source: string; action_ids: string[]; portfolio: { id: number; title: string }[] };
+export type TimelineEvent = { date_mode?: 'point' | 'period' | null; start_date?: string | null; end_date?: string | null; planned?: string; institution_event?: string | null; institution_available?: boolean; institution_date?: 'start' | 'deadline'; personal_links?: ('notebook' | 'booklet' | 'orientation')[]; id: string; title: string; period: string; tense: 'past' | 'future'; symbol: 'milestone' | 'study' | 'work' | 'change'; reflection: string; source: string; action_ids: string[]; portfolio: { id: number; title: string }[] };
 export type Timeline = { title: string; events: TimelineEvent[] };
 export type VisualWorkspace = {
     timeline?: Timeline;
@@ -31,7 +31,7 @@ export function timelineText(w: VisualWorkspace, label: (key: string) => string,
     const timeline = w.timeline;
     if (!timeline?.events.length) return '';
     return [label('timeline') + ' — ' + timeline.title, ...timeline.events.filter(e => !selected || selected.includes(e.id)).map(e =>
-        [e.period + ' — ' + label(e.tense) + ': ' + e.title, e.reflection,
+        [e.period + (e.date_mode ? '' : ' — ' + label(e.tense)) + ': ' + e.title, e.planned && label('planned') + ': ' + e.planned, e.reflection && label('diary') + ': ' + e.reflection,
             ...e.action_ids.map(id => { const action = w.actions.find(a => a.id === id); return label('board') + ': ' + (action ? (action.kind && action.kind !== 'activity' ? label(action.kind) + ': ' : '') + action.title + ' — ' + label(action.stage) : label('unavailable')); }),
             ...e.portfolio.map(p => label('linkPortfolio') + ': ' + (p.title || label('unavailable')))].filter(Boolean).join('\n'))].join('\n\n');
 }

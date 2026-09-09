@@ -40,7 +40,14 @@ def timeline_sections(w: Workspace, language: str):
         if event.institution_event and event.institution_date == 'deadline':
             label = {'it': 'Scadenza di iscrizione', 'en': 'Registration deadline', 'es': 'Plazo de inscripción', 'fr': 'Date limite d’inscription', 'de': 'Anmeldefrist', 'sv': 'Sista anmälningsdag'}.get(language[:2], 'Registration deadline')
             title = f'{label}: {title}'
-        lines = [f'{event.period} — {labels[1 if event.tense == "past" else 2]}: {title}', event.reflection]
+        planned_label, diary_label = {
+            'it': ('Cosa programmo', 'Diario'), 'en': ('What I plan', 'Diary'),
+            'es': ('Qué planeo', 'Diario'), 'fr': ('Ce que je prévois', 'Journal'),
+            'de': ('Was ich plane', 'Tagebuch'), 'sv': ('Vad jag planerar', 'Dagbok'),
+        }.get(language[:2], ('What I plan', 'Diary'))
+        period = event.period if event.date_mode else f'{event.period} — {labels[1 if event.tense == "past" else 2]}'
+        lines = [f'{period}: {title}', f'{planned_label}: {event.planned}' if event.planned else '',
+                 f'{diary_label}: {event.reflection}' if event.reflection else '']
         for action_id in event.action_ids:
             action = actions.get(action_id)
             lines.append(f'{GOAL_LABELS.get(language[:2], GOAL_LABELS["en"]).get(action.kind, common[1])}: {action.title} — {common[2 + ["todo", "doing", "done"].index(action.stage)]}'

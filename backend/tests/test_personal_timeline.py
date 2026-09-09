@@ -44,6 +44,53 @@ def test_new_user_needs_no_session_and_has_private_versioned_work(setup):
     assert 'Leggere un libro' in '\n'.join(p.extract_text() for p in PdfReader(BytesIO(pdf.content)).pages)
 
 
+def test_calendar_dates_diary_chronology_and_legacy_roundtrip(setup):
+    _, client, _ = setup
+    state = client.get('/user/timeline').json()
+    state['workspace']['timeline'] = {'title': 'Percorso', 'events': [
+        {'id': 'legacy', 'title': 'Scuola', 'period': 'Durante la scuola', 'reflection': 'Ricordo originale'},
+        {'id': 'open', 'title': 'Tirocinio', 'period': 'placeholder', 'date_mode': 'period', 'start_date': '2026-10-01',
+         'planned': 'Conoscere il lavoro', 'reflection': 'Ho imparato ad ascoltare'},
+        {'id': 'deadline', 'title': 'Iscrizione', 'period': 'placeholder', 'date_mode': 'period', 'end_date': '2026-09-20'},
+        {'id': 'point', 'title': 'Visita', 'period': 'placeholder', 'date_mode': 'point', 'start_date': '2026-09-10'},
+        {'id': 'range', 'title': 'Corso', 'period': 'placeholder', 'date_mode': 'period', 'start_date': '2026-09-01', 'end_date': '2026-09-30'},
+    ]}
+    saved = client.put('/user/timeline', json={key: state[key] for key in ('revision', 'workspace')})
+    assert saved.status_code == 200, saved.text
+    state = client.get('/user/timeline').json()
+    events = state['workspace']['timeline']['events']
+    assert [e['id'] for e in events] == ['range', 'point', 'deadline', 'open', 'legacy']
+    assert events[-1]['period'] == 'Durante la scuola'
+    assert events[-1]['reflection'] == 'Ricordo originale'
+    assert events[3]['period'] == '2026-10-01 → …'
+    events[3]['end_date'] = '2026-11-30'
+    saved = client.put('/user/timeline', json={key: state[key] for key in ('revision', 'workspace')})
+    assert saved.status_code == 200, saved.text
+    closed = saved.json()['workspace']['timeline']['events'][3]
+    assert closed['period'] == '2026-10-01 → 2026-11-30'
+    assert closed['planned'] == 'Conoscere il lavoro'
+    assert closed['reflection'] == 'Ho imparato ad ascoltare'
+    pdf = client.get('/user/timeline/pdf')
+    content = '\n'.join(p.extract_text() for p in PdfReader(BytesIO(pdf.content)).pages)
+    assert 'Conoscere il lavoro' in content and 'Ho imparato ad ascoltare' in content
+
+
+@pytest.mark.parametrize('dates', [
+    {'date_mode': 'point'}, {'date_mode': 'period'},
+    {'date_mode': 'point', 'start_date': '2026-02-29'},
+    {'date_mode': 'point', 'start_date': '2026-09-01', 'end_date': '2026-09-02'},
+    {'date_mode': 'period', 'start_date': '2026-09-30', 'end_date': '2026-09-01'},
+    {'start_date': '2026-09-01'},
+])
+def test_calendar_rejects_invalid_dates_without_saving(setup, dates):
+    _, client, _ = setup
+    state = client.get('/user/timeline').json()
+    state['workspace']['timeline'] = {'title': 'Percorso', 'events': [
+        {'id': 'bad', 'title': 'Tappa', 'period': 'placeholder', **dates}]}
+    assert client.put('/user/timeline', json={key: state[key] for key in ('revision', 'workspace')}).status_code == 422
+    assert client.get('/user/timeline').json()['workspace']['timeline']['events'] == []
+
+
 def test_extract_all_sessions_once_with_colliding_ids_and_live_portfolio(setup):
     db, client, identity = setup
     db.add(models.PortfolioItem(username='alice', title='Portfolio originale', images=[])); db.commit()
@@ -102,7 +149,7 @@ def test_institution_dates_are_scoped_authoritative_and_revocable(setup, monkeyp
     saved['workspace']['timeline']['events'].append({**event, 'id': 'deadline', 'institution_date': 'deadline'})
     response = client.put('/user/timeline', json=saved)
     assert response.status_code == 200, response.text
-    assert response.json()['workspace']['timeline']['events'][1]['period'] != event['period']
+    assert next(e for e in response.json()['workspace']['timeline']['events'] if e['id'] == 'deadline')['period'] != event['period']
     preview = client.post('/user/timeline/preview', json={'revision': response.json()['revision'],
         'event_ids': ['deadline'], 'title': 'Iscrizione'})
     assert preview.status_code == 200, preview.text
