@@ -56,7 +56,7 @@ My project develops within this educational context, through the work of my rese
 - **Q2** — Can it really help students interpret questionnaire results and reflect on their choices?
 - **Q3** — Can we create a safe space for students' data and reflection, leaving them in control of what they share?
 
-### Talk (≈ 3.1–3.7 min reading)
+### Talk (≈ 3.2–3.8 min reading)
 
 And now, after this brief introduction, let us come to the heart of the presentation.
 
@@ -66,7 +66,7 @@ The starting point is a concrete problem. We have various guidance tools, such a
 
 Usually, a teacher, tutor or guidance counsellor supports this step: they help the student read the results, ask themselves whether they recognise themselves in them, and reflect on concrete situations. The time available, however, does not always allow every student to have an in-depth individual discussion.
 
-There is a second motivation as well. Students use AI to look for information and study, but also to ask for advice about study choices, work and aspects of their lives. General-purpose systems can answer these questions, but they are not specifically designed for educational guidance. Their conversational ability therefore opens up a possibility, along with a question about how to give it a pedagogical direction.
+There is a second motivation as well. Students use AI to look for information and study, but also to ask for advice about study choices, work and aspects of their lives. General-purpose systems can answer these questions, but they are not specifically designed for educational guidance. Their ability to sustain a conversation could support educational guidance. The question is how to design that conversation so that it helps students understand their results and reflect on their own experiences.
 
 The idea behind CounselorBot is to offer an additional tool with which students can explore their results, ask questions and reflect on themselves. This conversation can become a starting point for a subsequent discussion with a teacher or guidance counsellor, who retains their role in supporting the student.
 
@@ -381,7 +381,7 @@ Thank you.
 | --- | --- | ---: | ---: |
 | 1 | Who I am | 155 | 1.2–1.4 |
 | 2 | Roma Tre and its educational context | 125 | 1.0–1.1 |
-| 3 | CounselorBot: why, and three questions | 406 | 3.1–3.7 |
+| 3 | CounselorBot: why, and three questions | 418 | 3.2–3.8 |
 | 4 | What guidance means (and why it is not matching) | 543 | 4.2–4.9 |
 | 5 | Development methodology: two ADDIE cycles | 283 | 2.2–2.6 |
 | 6 | The QSA as the focus of the evaluation | 229 | 1.8–2.1 |
@@ -393,7 +393,7 @@ Thank you.
 | 12 | What I am looking for at KTH and next steps | 304 | 2.3–2.8 |
 | 13 | Conclusions and an invitation to take part in testing | 260 | 2.0–2.4 |
 
-The revised English script contains **3,764 spoken words**, counted as whitespace-separated words in the Talk sections only. Slide bullets, the results table, source notes and supporting material are excluded. Reading requires approximately **29–34 minutes**; allow **34–39 minutes** with pauses and transitions. Discussion and any demo require additional time. Check the estimate by rehearsing aloud, particularly the numerical results.
+The revised English script contains **3,776 spoken words**, counted as whitespace-separated words in the Talk sections only. Slide bullets, the results table, source notes and supporting material are excluded. Reading requires approximately **29–34 minutes**; allow **34–39 minutes** with pauses and transitions. Discussion and any demo require additional time. Check the estimate by rehearsing aloud, particularly the numerical results.
 
 ## Cut plan (if you run over)
 
