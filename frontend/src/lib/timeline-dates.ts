@@ -17,7 +17,8 @@ export function datePeriod(event: TimelineDates): string {
 
 export function eventDates(event: TimelineEvent): TimelineDates {
     if (event.institution_event && /^\d{4}-\d{2}-\d{2}T/.test(event.period)) {
-        return { date_mode: 'point', start_date: event.period.slice(0, 10), end_date: null };
+        // Match the local date shown in the institutional event details.
+        return { date_mode: 'point', start_date: localDate(new Date(event.period)), end_date: null };
     }
     return event;
 }
@@ -31,7 +32,10 @@ export function sortedTimeline(events: TimelineEvent[]): TimelineEvent[] {
     return [...events].sort((a, b) => eventDateKey(a).localeCompare(eventDateKey(b)));
 }
 
+function localDate(value: Date): string {
+    return `${String(value.getFullYear()).padStart(4, '0')}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+}
+
 export function localToday(): string {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    return localDate(new Date());
 }
