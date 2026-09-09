@@ -243,13 +243,15 @@ Students can later use this material to begin a new conversation with the chatbo
 
 ### Talk
 
-There is one more practical question: where do these conversations go?
+There is one more practical question: where do students’ messages go?
 
-With a local model, processing can take place on the institution's server. With an external model, information is sent to another provider. Keeping data inside therefore depends on the whole configuration, including connected services.
+If the AI model runs on the university’s server, it can process the conversation there. If we use an external AI provider, the messages are sent to that provider. We also need to check the other services connected to the application, because they may receive data too.
 
-The layer intended to protect identifying information is still being tested. Removing names alone does not make a conversation anonymous. We also need to be clear about what is stored, who has access and what students share.
+We are testing a way to remove information that could identify a student. But removing a name is not enough: details about someone’s life may still reveal who they are.
 
-A possible future direction is to run both the model and the application entirely on the student's own computer. This has not yet been explored.
+We therefore need clear answers to three questions: what do we save, who can read it, and what information is shared outside the university? Students also need to understand this when deciding what to share.
+
+In the future, we could explore running both the application and the AI model on the student’s own computer. We have not explored this option yet.
 
 ---
 
@@ -288,10 +290,10 @@ Thank you for your time. I would be very interested to hear your questions and s
 | 11 | Where the conversation begins | 184 | 1.4–1.7 |
 | 12 | Designing the interaction | 132 | 1.0–1.2 |
 | 13 | Time for reflection | 130 | 1.0–1.2 |
-| 14 | Where do the data go? | 107 | 0.8–1.0 |
+| 14 | Where do the data go? | 149 | 1.1–1.4 |
 | 15 | An invitation to collaborate | 129 | 1.0–1.2 |
 
-**1,877 spoken words**, approximately **14–17 minutes** of reading. Pauses, a demonstration and discussion require additional time.
+**1,919 spoken words**, approximately **15–17 minutes** of reading. Pauses, a demonstration and discussion require additional time.
 
 ## Sources
 
