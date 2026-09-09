@@ -1,300 +1,321 @@
 # KTH Presentation — 9 September 2026 — English Version
 
-> Spoken script, first person. 11 slides, ~40 minutes (30 min talk + demo + questions).
-> Italian companion script: `presentazione-kth-2026-09-09-it.md` — same structure, slide by slide.
+> Spoken script in English, first person. 11 slides, approximately 35–40 minutes with pauses and slide changes, plus questions. Demo not included in the timing.
+> Italian companion script: `presentazione-kth-2026-09-09-it.md` — this translation follows the revised Italian version.
+> Part 1 (slides 1–3): opening written by Daniele; slide 3 reworked to incorporate the briefing for testing with researchers.
+> Part 2 (slides 4–11): continuation.
 
 ---
 
 ## Slide 1 — Who I am
 
 **Slide bullets:**
-- Daniele Dragoni — PhD visiting researcher, KTH (May → October 2026)
+
+- Daniele Dragoni — visiting PhD researcher, KTH (May → October 2026)
 - Roma Tre University — PhD in AI and education
-- A return to study: bachelor's → cognitive science → e-learning and media education → PhD
+- A return to study: bachelor's degree → cognitive science → e-learning and media education → PhD
 - "It is never too late to learn"
 
-### Talk (≈ 3 min)
+### Talk (≈ 2–3 min)
 
 Good morning, everyone.
 
-My name is Daniele Dragoni and I am a visiting PhD researcher. My stay at KTH started in May and will end in October. I am here because my programme requires six months of research abroad. I chose Sweden and Stockholm because I am fascinated by Swedish culture: by its green values — I am thinking of the battle of the elms in Kungsträdgården —, by its respect for the person — I am thinking of the MeToo movement — and by its great capacity to innovate, Spotify for example. So I thought this could be a good place to finish my doctorate and finish writing my thesis.
+My name is Daniele Dragoni and I am a visiting PhD researcher. My stay at KTH started in May and will end in October. I am here because my programme requires six months of research abroad. I chose Sweden and Stockholm because I am fascinated by Swedish culture: by its green values — I am thinking of the battle over the trees in Kungsträdgården —, by its commitment to equal opportunities — I am thinking of shared parental leave — and by its great capacity to innovate, Spotify for example. So I thought this could be a good place to complete my doctorate and finish writing my thesis.
 
-A few words about me. My passion for studying was a return. While many people were finishing their studies and entering academia, aiming to become professors, with a career already under way, I was coming back. And I have to say it was a very important choice, because it changed my life. I started studying while working, to complete a bachelor's degree I had abandoned halfway, and little by little the university swept me away. I was very lucky: I met people who helped me, who made me grow, who pushed me to continue. So I took a master's degree in cognitive science, then during Covid another one in e-learning and media education, and now I am finishing my three years of doctoral work on AI and education. A situation I would never have imagined six years ago, when I walked back into a university classroom. In Italy we say: "it is never too late to learn".
+A few words about me. While many people were consolidating their academic positions, I was returning to university to reinvent my life. It was a very important choice for me. I started studying while working, to complete a bachelor's degree I had left unfinished, and little by little I was swept up in university life. I was very lucky: I met people who helped me, who helped me grow, who encouraged me to continue. So I completed a master's degree in cognitive science, then another in e-learning and media education during Covid, and now I am finishing my three years of doctoral research on AI and education. A situation I would never have imagined six years ago, when I walked back into a university classroom. In Italy we say: "it is never too late to learn".
 
 ---
 
 ## Slide 2 — Roma Tre and the Ostiense district
 
 **Slide bullets:**
-- Roma Tre: 30 years old, but heir to the Magistero — where Luigi Pirandello taught
-- No isolated campus: the university is grafted into a district, Ostiense
+
+- Roma Tre: over thirty years old, but heir to the Magistero — where Luigi Pirandello taught
+- No isolated campus: the university is embedded in a neighbourhood, Ostiense
 - Disused factories turned into departments: the former Alfa Romeo plant, the former slaughterhouse
-- A university that changed the face of its neighbourhood
+- A university that changes the face of its neighbourhood
 
-### Talk (≈ 3 min)
+### Talk (≈ 1–2 min)
 
-A few words about my university. I come from Roma Tre University. A young university, thirty years old — not as many as KTH —, but a university that inherits a very old Roman tradition, that of the Magistero, where one of the Italian Nobel laureates in literature, Luigi Pirandello, taught in the early years of the twentieth century.
+A few words about my university. I come from Roma Tre University. It is a young university, but it carries on an older tradition: that of Rome's Magistero, an institution dedicated to teacher education, where Luigi Pirandello also taught in the early twentieth century. This tradition continues today in the Department of Education, where I am doing my PhD.
 
-Also, the university did not develop in isolation, the way the KTH campus did. It is grafted into a district of Rome, Ostiense: an industrial district that it has gradually revitalised, turning disused factories — the Alfa Romeo plant, or the old slaughterhouse — into university departments. In doing so it changed the face of the neighbourhood.
+Also, Roma Tre does not have an isolated campus structure, like some universities organised as a kind of sheltered haven. Instead, it is woven into the fabric of a neighbourhood in Rome, Ostiense: an industrial district that it has gradually revitalised, turning disused factories — the Alfa Romeo plant, or the slaughterhouse — into university departments. In this way, it has changed the face of the neighbourhood.
 
 ---
 
 ## Slide 3 — CounselorBot: why, and three questions
 
 **Slide bullets:**
-- Students already use AI as an adviser: study, friendships, love, work, health
-- AI is becoming a cultural mediator
-- **Q1** — Can we build an AI tool that genuinely helps with orientation? Under which constraints, with which design?
-- **Q2** — Can it give a first consultation on the results of orientation instruments?
-- **Q3** — Can it be safe in terms of privacy, confidentiality and data, in line with European and Italian regulation?
 
-### Talk (≈ 4 min)
+- Understanding questionnaire results and connecting them to one's own experience requires support
+- Time for individual discussions with teachers, tutors and guidance counsellors is limited
+- CounselorBot: additional support for reflection, connected to human guidance
+- **Q1** — Is it possible to build a counselling chatbot for educational and career guidance? Are the technologies mature enough?
+- **Q2** — Can it really help students interpret questionnaire results and reflect on their choices?
+- **Q3** — Can we create a safe space for students' data and reflection, leaving them in control of what they share?
 
-And now, after this short introduction, let us come to the heart of the presentation.
+### Talk (≈ 3–4 min)
 
-One of the projects of my doctorate is to create an AI tool that could help students in the process of educational and career orientation. That is how I built CounselorBot.
+And now, after this brief introduction, let us come to the heart of the presentation.
 
-What were the motivations that pushed me into this project?
+One of my PhD projects concerns the use of AI to support students in the guidance process. It is in this context that I developed CounselorBot.
 
-The first is that AI tools are now very widespread among students, and they are used not only as study aids but as genuine advisers. They serve both to look for information and to get advice on what to do. And across many domains: choosing friends, love, work, medical advice, life advice. AI is becoming a cultural mediator.
+The starting point is a concrete problem. We have various guidance tools, such as self-assessment questionnaires and interviews, that help students explore learning strategies, abilities, interests and aspirations. But receiving questionnaire results does not necessarily mean understanding them or knowing how to connect them to one's own experience.
 
-So my first question was: is it possible to create a tool that actually helps students in the orientation process? How must it be built? Which constraints must it respect? Which design must it have?
+Usually, a teacher, tutor or guidance counsellor supports this step: they help the student read the results, ask themselves whether they recognise themselves in them, and reflect on concrete situations. The time available, however, does not always allow every student to have an in-depth individual discussion.
 
-Another question we asked ourselves, with my research group and my supervisor, is this: can these objects give a first consultation on the results of the instruments we use for orientation? These instruments are usually interviews and self-assessment questionnaires, which let students evaluate their skills, capacities, interests, values, worldview, aspirations, and so on. And reflect on their life design.
+There is a second motivation as well. Students use AI to look for information and study, but also to ask for advice about study choices, work and aspects of their lives. General-purpose systems can answer these questions, but they are not specifically designed for educational guidance. Their conversational ability therefore opens up a possibility, along with a question about how to give it a pedagogical direction.
 
-A third question: how can they be safe to use, in terms of privacy, confidentiality and data, in line with European and Italian regulation?
+The idea behind CounselorBot is to offer an additional tool with which students can explore their results, ask questions and reflect on themselves. This conversation can become a starting point for a subsequent discussion with a teacher or guidance counsellor, who retains their role in supporting the student.
+
+Together with my research group and my supervisor, we asked ourselves three questions.
+
+The first: is it possible to build a chatbot that plays a counselling role in guidance? Do we already have the necessary technologies? Are they mature enough to support this kind of interaction?
+
+The second: can it really help students read and interpret questionnaire results? Can it help them connect those results to their own experience? Do the questions it asks stimulate reflection? Can it support them in exploring their choices, leaving them room to reach their own conclusions?
+
+The third: can we create a safe space where students can store their data and reflect on their experiences? How can we protect this information and leave students in control of what they share?
+
+In the next slides, I will present the choices I have made to address these three questions and the aspects that testing still needs to clarify.
 
 ---
 
-## Slide 4 — What orientation means (and why it is not matching)
+## Slide 4 — What guidance means (and why it is not matching)
 
 **Slide bullets:**
-- The classic answer: *matching* — measure the person, catalogue the jobs, fit them together (Parsons, 1909)
-- It rests on two stabilities that no longer exist: a stable person, a stable labour market
-- Pellerey: orientation = **directing oneself** in study and work
-  - **Self-determination** — values, motives, sense, existential perspective
+
+- The classic answer: *matching* — measure the person, catalogue the jobs, match them up (Parsons, 1909)
+- It rests on two forms of stability that no longer exist: a stable person, a stable market
+- Pellerey: guidance = **directing oneself** in study and work
+  - **Self-determination** — values, motives, meaning, an existential perspective
   - **Self-regulation** — planning, monitoring, persisting, attributing causes
 - Savickas: a career is not discovered, it is *constructed* — the key construct is adaptability
-- Schools teach almost no explicit self-regulation (Greene, 2018)
+- Self-regulation requires explicit educational support
 
-### Talk (≈ 5 min)
+### Talk (≈ 4–5 min)
 
-At this point it is worth clarifying what we mean by orientation. For a long time this word has been paired with *matching*: the work of making a person's interests and capacities fit a job or a course of study.
+At this point, it is useful to clarify what we mean by guidance. For a long time, this term has been associated with *matching*: the work of matching a person's interests and abilities to a job or a course of study.
 
-The appeal of that model is obvious. It is clean, it is measurable, it produces a clear output: the student takes a test and receives a list of suitable professions. It looks like science. And in part it is: it goes back to Frank Parsons, at the beginning of the twentieth century, and it has more than a century of use behind it.
+The appeal of this model is obvious. It is neat, it is measurable, it produces a clear output: the student takes a test and receives a list of suitable occupations. It looks like science. And in part it is: it comes from Frank Parsons, from the early twentieth century, and has more than a century of use behind it.
 
-But for us that is not enough. Orientation should be about helping a person develop themselves, develop the competences and abilities that allow them to reach their own aspirations and live a satisfying life — while looking at the context they are in, which means respecting the environment and other people's work.
+But for us, this is not enough. Guidance should mean helping people develop themselves, develop the competences and skills that enable them to fulfil their aspirations and live a satisfying life — taking account of the context they are in, which means respecting the environment and other people's work.
 
-And there is also a technical reason why matching is no longer sufficient. Michele Pellerey — professor emeritus, the intellectual father of this tradition in Italy — puts it sharply: the matching model rests on two assumptions of stability that no longer hold. The first is a stable person, as if the aptitudes of a sixteen-year-old were finished facts waiting to be measured. The second is a stable market, as if the world of work politely stood still while we make the diagnosis. But the market is not standing still: automation, digitalisation, artificial intelligence, job polarisation. You cannot read a young person's future employability from the current demand of the labour market, because that demand will already have changed by the time the young person arrives. A matching model, taken seriously, optimises people for yesterday's jobs.
+And there is also a technical reason why matching is no longer enough. Michele Pellerey — emeritus professor, the intellectual father of this tradition in Italy — puts it clearly: the matching model rests on two assumptions of stability that no longer hold today. The first is a stable person, as if a sixteen-year-old's aptitudes were settled facts, waiting to be measured. The second is a stable market, as if the world of work would politely stand still while we make our diagnosis. But the market is not standing still: automation, digitalisation, artificial intelligence, polarisation of occupations. You cannot read a young person's future employability from current market demand, because that demand will already have changed by the time they enter the labour market. A matching model, taken seriously, optimises people for yesterday's jobs.
 
-What replaces it? Two answers, and they are complementary.
+What replaces it? Two complementary answers.
 
-The first is Pellerey's: orientation as the capacity to **direct oneself**. Not a moment, but a competence, with two pillars. The first pillar is self-determination: the strategic component, the capacity to choose where to go — values, motives, ideals, and a sense of one's own life, an existential perspective. Without that, no amount of information about careers helps, because there is no "you" doing the choosing. The second pillar is self-regulation: the operational component. Once you have a direction, you have to manage the journey — plan, monitor, persist, and above all attribute causes correctly. Did I fail because I am incapable, or because I studied with the wrong strategy? That attribution decides whether a student tries again.
+The first is Pellerey's: guidance as the ability to **direct oneself**. Not a moment, but a competence, with two pillars. The first is self-determination: the strategic component, the ability to choose where to go — values, motives, ideals, and a sense of one's own life, an existential perspective. Without that, no amount of career information helps, because there is no "you" making the choice. The second pillar is self-regulation: the operational component. Once you have a direction, you need to manage the journey — plan, monitor, persist, and above all attribute causes correctly. Did I fail because I am incapable, or because I studied using the wrong strategy? That attribution determines whether a student tries again.
 
-The second answer is Mark Savickas's: career construction, life designing. A career is not the discovery of a fit that was already there; it is something the person constructs, a story they tell and revise, in which work is one chapter. The key construct becomes adaptability, not fit.
+The second answer is Mark Savickas's: *career construction*, *life designing*. A career is not the discovery of a fit that already existed; it is something a person constructs, a story they tell and revise, in which work is one chapter. The key construct becomes adaptability, not fit.
 
-And there is a hard empirical reason to take all of this seriously. As Jeffrey Greene documented in 2018, schools all over the world spend close to zero time teaching self-regulation explicitly, despite solid evidence that it works. The result is what every university sees: first-year students who were excellent inside a highly controlled school environment, and who fall apart — or drop out — the moment that control is removed. Nobody ever taught them to direct themselves.
+This raises an educational question: how can we help students develop self-regulation? The transition to university, for example, requires them to organise their studies more independently. Supporting this transition means helping students recognise their strategies, evaluate them and change them when they do not work.
 
-Notice what changes. The goal is no longer the right answer, but the right process. And the right process is made of conversation and reflection. Which is exactly what a conversational AI could support — if it is built to support that process, and not to sell answers.
+Notice what changes. The goal is no longer the right answer, but the right process. And the right process consists of conversation and reflection. Which is exactly what conversational AI could support — if it is built to support that process, rather than to sell answers.
 
 ---
 
 ## Slide 5 — The instruments: strategic competences
 
 **Slide bullets:**
-- Heritage: **competenzestrategiche.it** — free platform by the Pellerey group (CNOS-FAP), since 2011
-- Questionnaires: **QSA** (1996) and **QSAr** — learning strategies; **QPCS** / **QPCC** — perceived strategic competences; **ZTPI** — time perspective; **QAP** — career adaptability
-- Narrative: the **Savickas** career construction interview, significant study and work events
-- Reflective: **IDEA** — a cumulative map of an idea, a thesis topic, a doubt
-- The profile is a beginning, not a verdict
-- **The bottleneck is not the instruments: it is mediation**
 
-### Talk (≈ 5 min)
+- The work of the research group I belong to and the experience of **competenzestrategiche.it**
+- Questionnaires are completed on **competenzestrategiche.it**; CounselorBot uses the results as the basis for conversation
+- Questionnaires: **QSA / QSAr**, **QPCS / QPCC**, **ZTPI**, **QAP**
+- Narrative paths: the **Savickas** interview, significant study and work events; **IDEA** for developing a thought
+- **PQBL**: questions for exploring a document in depth
+- All instruments in CounselorBot are **test versions**
+- The instruments are one part of the process: results and experiences become the subject of reflection and discussion
+- Multilingual versions in **CounselorBot**: still to be validated, a future development outside the current phase of the research
 
-Now the instruments. Because I did not invent new instruments: I took validated instruments and gave them a conversational layer.
+### Talk (≈ 6–7 min)
 
-Everything descends from a real, living infrastructure: competenzestrategiche.it, the free online platform built by Pellerey's research group with the support of CNOS-FAP, the Salesian vocational training federation. It has been serving schools, universities and guidance centres since around 2011.
+Let us move on to the instruments that provide the starting point for working with CounselorBot. The project builds on the work of the research group I belong to and on the experience of competenzestrategiche.it, the free online platform developed with support from CNOS-FAP for schools, universities and guidance settings.
 
-The family tree starts with the QSA, the Questionnaire on Learning Strategies, published by Pellerey in 1996: thirty years of validation history. It measures how a student studies — cognitive strategies on one side, affective and motivational factors on the other: anxiety, volition, perseverance, causal attribution. The QSAr is the reduced form. Then there are the QPCS and the QPCC, on perceived strategic competences and beliefs, for older students and adults. The ZTPI, from Zimbardo's research, measures how a person relates to past, present and future — a construct deeply connected to academic success. The QAP measures career adaptability along Savickas's four dimensions: concern, control, curiosity, confidence.
+The path involving the strategic competences questionnaires begins on competenzestrategiche.it, where students complete them and receive their results. CounselorBot takes these results and uses them as the basis for conversation: it helps students understand them, connect them to their own experiences and identify aspects to explore further.
 
-Two instruments do not produce scores, but stories. The Savickas career construction interview — which on paper is something a counsellor does in person, and on the platform becomes a step-by-step guided conversation. And significant events, in study or in work, where the student tells a story and the AI helps to analyse it.
+CounselorBot also includes versions of the questionnaires in several languages. These versions still need to be validated: translation alone is not enough to ensure that an instrument retains its properties in another linguistic and cultural context. Their validation is outside the current phase of the research, but represents one of the next steps in expanding their development.
 
-And then there is IDEA, the newest one, and my favourite. It is not a questionnaire. The student arrives with a shapeless idea: a possible thesis topic, a career hypothesis, a project, a doubt. The platform does not score anything: it builds, turn after turn, a cumulative map of that idea — assumptions, evidence, alternatives, implications, open questions — and it ends with an explicit plan. IDEA is the purest form of what this platform wants to be: not diagnosing the person, but helping the person develop a thought.
+These instruments offer a basis for thinking things through together with the student. Through the questionnaires, we can explore how students approach studying, what difficulties they perceive, what resources they recognise and how they see their future. The results are one part of the guidance process: they need to be interpreted, connected to experiences and discussed in the light of the person's aspirations and context.
 
-And here comes the pedagogical principle that governs all of them: the profile — the set of scores — is a beginning, not a verdict. In this tradition the questionnaire is a reflective device: its purpose is to open a conversation about oneself.
+Among the instruments is the QSA, the Learning Strategies Questionnaire, developed by Michele Pellerey. It explores the cognitive strategies and affective and motivational dimensions involved in studying, such as anxiety, perseverance and ways of explaining one's successes and failures. The QSAr is its shortened form. The QPCS and QPCC allow students to explore perceived strategic competences and their own beliefs in greater depth. The ZTPI concerns their relationship with the past, present and future. The QAP explores career adaptability: concern for one's future, control over one's choices, curiosity about possibilities and confidence in addressing them.
 
-But this is also the weak point of the whole system. Because a profile of scores means nothing without that conversation. The research group itself insists on it: the questionnaires only work when a teacher, a tutor or a counsellor helps the student read and interpret the results. And experts are not always available. Not at scale, not at eleven at night before an exam, not for every student who would need one.
+Alongside the questionnaires, there are narrative paths. Savickas's Career Construction Interview offers questions through which people can explore themes and meanings in their own stories. In CounselorBot, these questions are organised into a guided conversation. In the paths focusing on significant events, students instead start from a study or work experience and reflect on what happened, how they dealt with it and what they learned from it.
 
-The instruments are waiting for a guide who is rarely there. That is the gap CounselorBot steps into.
+Then there is IDEA, a space for exploring a thought that has yet to come into focus: a possible thesis topic, a study or work choice, a project, a doubt. During the conversation, a map takes shape that gathers and connects the elements that emerge: hypotheses, evidence, alternatives and open questions. This map helps students revisit their reasoning and identify possible next steps.
+
+There is also PQBL, a path that starts from a document and proposes questions to guide its further exploration. Students can use these questions to examine the content and develop their understanding.
+
+All the instruments available in CounselorBot are currently test versions. We are testing how to offer them through the application and what support they can provide for reflection and learning. This also applies to paths based on questionnaires that have already been validated: validating a questionnaire does not, on its own, demonstrate the quality of its use in a conversation with AI.
+
+There are therefore different starting points: questionnaire results, an account of an experience, an idea to develop or a document to explore in depth. In every case, the work consists of helping students understand and work through what emerges. A score, for example, can open up some questions: do I recognise myself in this result? In which situations? Are there experiences that confirm it, or that make me see things differently?
+
+Teachers, tutors and guidance counsellors support this work. The time available, however, does not always allow them to explore it individually with every student. CounselorBot is designed as additional support: it offers a space to begin or continue reflection and collect questions and points to return to in discussions with them.
 
 ---
 
 ## Slide 6 — How it is built: the harness (answer to Q1)
 
 **Slide bullets:**
+
 - A deliberately boring stack: FastAPI + Next.js + PostgreSQL, Docker, SSE streaming
 - Not the model — the **harness**: the infrastructure of scripts, commands, texts and prompts around the model
-  - **Envelope** — counselor persona + data and scores + step prompt + retrieved knowledge + notebook + history: reassembled every turn
-  - **Guided steps** — a state machine per instrument, stored in the database, editable without touching code
+  - **Envelope** — counselor persona + data and scores + step prompt + retrieved knowledge + notebook + history: reassembled on every turn
+  - **Guided steps** — a state machine for each instrument, stored in the database, editable without touching the code
   - **Skills engine** — a deterministic classifier: activates at most one primary behaviour
   - **RAG** — four knowledge collections
-- The design constraint: **advice comes only from the certified catalogue, and only in authorised steps**
+- The design constraint: **link advice to the curated catalogue and limit it to authorised moments in the guided path**
 
-### Talk (≈ 5 min)
+### Talk (≈ 4–5 min)
 
-Let us come to the first question: how must such a tool be built? Which constraints must it respect?
+Let us come to the first question: how should a tool like this be built? What constraints should it respect?
 
-My answer, in one word, is: *harness*. Not the model — the harness. By that word I mean the infrastructure of scripts, commands, texts and prompts that gives a language model the capacity to be effective and pertinent in a specific domain. The engine is impressive; the harness decides whether the journey is safe and whether you arrive. Most of my engineering effort was not in calling the model: it was in building the harness.
+My answer, in one word, is: *harness*. Not the model — the harness. By this word, I mean the infrastructure of scripts, commands, texts and prompts that gives a language model the ability to be effective and relevant in a specific domain. The engine is impressive; the harness decides whether the journey is safe and whether you arrive. Most of my engineering work was not in calling the model: it was in building the harness.
 
-The stack is deliberately boring: a FastAPI backend, a Next.js frontend, PostgreSQL, everything in Docker, chat streaming over SSE. Behind a single abstraction there are thirteen AI providers, from commercial services to local models — and I will come back to that shortly, because it concerns the third question.
+The stack is deliberately boring: a FastAPI backend, a Next.js frontend, PostgreSQL, everything in Docker, chat streaming over SSE. Behind a single abstraction there are thirteen AI providers, from commercial services to local models — and I will come back to this shortly, because it concerns the third question.
 
-The interesting part is what happens around the model on every single turn. I call it the envelope. Every message is assembled from: the counselor persona — because the AI has a name, a character, a scope; the student's data and scores; the prompt of the current step of the guided path; the knowledge retrieved from the collections; the student's notebook; and the conversation history. Nothing is improvised: the platform decides, turn by turn, what the model is allowed to know and what it is asked to do.
+The interesting part is what happens around the model on every single turn. I call it the *envelope*. Every message is assembled from: the counselor persona — because the AI has a name, a character, an area of expertise; the student's data and scores; the prompt for the current step of the guided path; the knowledge retrieved from the collections; the student's notebook; and the conversation history. Turn by turn, the platform selects the context to give the model and the instructions for its response.
 
-The guided path is the pedagogical skeleton. For each instrument there is a sequence of steps stored in the database — introduction, factor analysis, synthesis — each with its own prompt, editable by an administrator without touching code. The step decides the mode; the mode decides what the model may do.
+The guided path is the pedagogical skeleton. For each instrument, there is a sequence of steps stored in the database — introduction, factor analysis, synthesis — each with its own prompt, editable by an administrator without touching the code. The step determines the mode; the mode determines what the model can do.
 
-Then there is the skills engine, and this is the part I am most proud of. A deterministic, high-precision intent classifier runs on every turn and activates at most one primary behaviour: certified advice — practical strategies taken from a catalogue curated by educators, never invented by the model; profile explanation; reading suggestions from a certified catalogue; profile comparison over time; or a whitelisted web lookup for factual questions, instead of the model's memory. If the classifier is not confident, it falls back to plain conversation.
+Then there is the *skills engine*, and it is the part I am most proud of. A deterministic, high-precision intent classifier runs on every turn and activates at most one primary behaviour: certified advice — practical strategies taken from a catalogue curated by educators, to be used as a reference for responses; profile explanation; reading suggestions from a certified catalogue; comparison of profiles over time; or a web search on whitelisted sources for factual questions, rather than relying on the model's memory. If the classifier is not confident, it falls back to normal conversation.
 
-The point is this: the model can be creative in form, but the advice is always traceable to a catalogue. And advice is allowed only in specific steps — the synthesis steps — and nowhere else. That is what a counsellor's responsibility means, mechanically.
+The design principle is to make advice traceable to a curated catalogue and offer it at authorised moments in the guided path. These include steps dedicated to strategies and some synthesis steps; responses to explicit student requests are also provided for, within the constraints of the step. Testing needs to establish how well the actual responses follow these guidelines.
 
-So, the answer to the first question: the design is not in the prompt. It is in the constraints. A good prompt does not guarantee that the advice comes from the catalogue, nor that the teacher can see the class, nor that the model stops where it should stop. The value is in the architecture, not in the individual answer.
+So, the answer to the first question: the design is not in the prompt. It is in the constraints. A good prompt does not guarantee that the advice comes from the catalogue, or that the teacher can see the class, or that the model stops where it should stop. The value lies in the architecture, not in the individual response.
 
 ---
 
-## Slide 7 — The time of reflection (second design constraint)
+## Slide 7 — Time for reflection (second design constraint)
 
 **Slide bullets:**
+
 - The first constraint was the model. The second is **time**: how should reflection be paced in a chat?
-- Knowledge and choices need time: they have to settle
-- By design: **conversation and reflection are two separate moments**
+- Knowledge and choices need time: they need to settle
+- By design: **reflection within the conversation and spaces for independent thinking, without AI**
 - During the conversation: note-taking with dedicated tools — notes, actions, comparisons and cards
-- In their own spaces, without AI: **notebook** (reflection on the self), **booklets**, **portfolio**
-- The teacher enters there: reads the chats and the notebook, and writes notes in turn to correct the aim
-- Recommendations (books, strategies) and the RAG knowledge base: content entered by teachers, with proper cards
+- In their own spaces, without AI: **Notebook** (reflecting on oneself), **Booklet**, **Portfolio**
+- This is where the teacher comes in: reading chats and the Notebook, and writing their own notes to adjust the course
+- Recommendations (books, strategies) and the RAG knowledge base: content entered by teachers, with appropriate information sheets
 
-### Talk (≈ 3 min)
+### Talk (≈ 2–3 min)
 
-The first design constraint was the model — local or external provider, I will come back to that shortly. The second constraint concerns time: how should the time of reflection be paced, through a chat or in some other way?
+The first design constraint was the model — local or an external provider, which I will discuss shortly. The second constraint concerns time: how should time for reflection be paced, through a chat or in some other way?
 
-Our answer is blunt: a piece of knowledge and a choice both need time; they have to settle. And students need spaces of their own for reflection, without AI. That is why, by design, we separated the moment of conversation from the moment of reflection.
+The answer we arrived at is clear: knowledge and choices need time; they need to settle. And students need spaces of their own for reflection, without AI. This is why we have complemented reflection during conversation with spaces for independent thinking, without AI.
 
-During the conversation, the student can take notes with dedicated tools: annotations, actions to take, comparisons, cards. Then there are moments when they write and reflect on the interaction: this happens in the notebook, which is for reflecting on oneself, and in the booklets and the portfolio. Moments when the student writes in their own hand.
+During the conversation, students can take notes using dedicated tools: annotations, actions to take, comparisons, cards. Then there are moments when they write and reflect on the interaction: this happens in the Notebook, which is used to reflect on oneself, and in the Booklet and Portfolio. Moments when students write in their own words.
 
-And the teacher can enter this interaction: reading the student's chats and their notebook, and writing notes in turn, to correct the aim of what has been done.
+And the teacher can enter this interaction: reading the student's chats and Notebook, and writing notes in turn, to adjust the course of what has been done.
 
-Finally, there are recommendation systems — books and strategies, for example — that the chatbot can use, but which must be entered by teachers and carry proper cards. And there is a knowledge base, the RAG layer, which underpins the interaction and gives the chatbot the context for engaging well in a specific task.
+Finally, there are recommendation systems — for example, books and strategies — that the chatbot can use, but whose content must be entered by teachers and have appropriate information sheets. And there is a knowledge base, the RAG layer, which underpins the interaction and gives the chatbot the context to interact effectively in a specific task.
 
-It is a way of saying that AI can support the conversation, but it cannot settle things in the student's place.
-
----
-
-## Slide 8 — A first consultation on results (answer to Q2) + demo
-
-**Slide bullets:**
-- It does not replace the counsellor: it is the **first line** of the conversation
-- What it does: reads the profile with the student, connects scores to concrete behaviour, proposes strategies, opens questions
-- What it does not do: no diagnosis, no decisions, no invented advice, no closing the case
-- The **notebook**: an append-only open learner model, written by the student, with revision history
-- The teacher reads it back; the session remains as a trace
-- **[DEMO — 4 min]**
-
-### Talk (≈ 5 min + demo)
-
-Second question: can these objects give a first consultation on the results of the instruments?
-
-My answer, for now, is: yes — on condition that it is explicitly *a first* consultation. CounselorBot does not automate orientation counselling. It structures a first reflective conversation, and it leaves it open.
-
-Concretely. The student fills in a questionnaire — say the QSAr. They get a profile by factors. At that point, instead of receiving a PDF full of charts that nobody will ever explain to them, they enter a guided path: the counselor presents one factor at a time, asks whether they recognise themselves in it, asks them to tell a concrete episode, connects the score to real study behaviour. Then, in the synthesis steps, it proposes strategies drawn from the certified catalogue. And at the end the student writes in their own notebook what they understood.
-
-The notebook matters. It is an open learner model: append-only, with a full revision history. It is not the AI writing a report about the student; it is the student writing about themselves, with the AI helping them do it. The whole difference is there.
-
-And there are things the system does not do, by design. It does not diagnose. It does not decide for the student. It does not invent advice. And it does not close the case: the session remains as a trace, the teacher reads it back, and the conversation can continue with a human being.
-
-We have a dataset of supervised interactions that we are analysing, and the experimentation is under way. I am not presenting effectiveness results: that would be dishonest. I am presenting a working platform and a research object.
-
-And now let me show you how it works. [DEMO]
+It is a way of saying that AI can support conversation, but it cannot let learning settle on the student's behalf.
 
 ---
 
-## Slide 9 — Privacy, local AI, regulation (answer to Q3)
+## Slide 8 — Privacy, local AI, regulations (answer to Q3)
 
 **Slide bullets:**
-- Thirteen providers behind one abstraction — **including local models** (Ollama, llama.cpp)
-- Local means the data never leaves: demos, cost control, sensitive interactions
-- Before data leaves: a **privacy gateway** — names, emails, institutions, free-text identifiers
-  - Anonymisation when the answer does not require re-identification
-  - Pseudonymisation when it does, with the mapping kept only on the local server
-- Research: administration plans, informed consent, **anonymous codes**, item-level export
-- No translation reaches a student without human certification
+
+- Thirteen providers behind a single abstraction — **including local models** (Ollama, llama.cpp)
+- Local models: processing on the server; keeping data within the system requires checking the entire configuration, including connected services
+- **Protection layer under testing**: handling identifying information before sending it to external services; anonymisation still to be verified
+- Research: administration plans, informed consent, **research codes**, item-level export
+- Human review of translations and questionnaire validation: two distinct steps
 - GDPR and the AI Act: minors, special-category data, decisions affecting education
 
-### Talk (≈ 4 min)
+### Talk (≈ 3–4 min)
 
-Third question, and for me the hardest: how do we make such tools safe with respect to privacy, confidentiality and data?
+The third question, and for me the most difficult: how can we make tools like these safe in terms of privacy, confidentiality and data?
 
-Let me start from an architectural choice. CounselorBot can route requests to external providers, but it also supports local models, through Ollama and llama.cpp. Local models are useful for demonstrations, for cost control, for offline or low-budget operation — but above all for sensitive interactions, because in that case the data never leaves the server. External providers remain useful when quality, latency or specific capabilities matter.
+Let me start with an architectural choice. CounselorBot can route requests to external providers, but it also supports local models through Ollama and llama.cpp. Local models are useful for demonstrations, cost control, offline or low-budget operation — and also for processing conversations on one's own server. However, keeping data within the system requires checking the entire configuration, including any connected external services. External providers remain useful when quality, latency or specific capabilities matter.
 
-We kept both paths open when building CounselorBot, because local models keep getting stronger: Qwen 3, for example, outperforms many proprietary models, even if some reasoning capabilities are still the exclusive domain of the large ones. The choice we made is the agnostic one: whoever uses the software decides, transparently, what to use.
+When building CounselorBot, we kept both paths open. The choice depends on response quality, waiting times, available resources and data protection requirements. Comparing local models and external services is one of the research developments.
 
-The point is that this decision must be explicit, and it must be visible. Before data leaves the local system, a privacy gateway should identify names, emails, institutions, free-text identifiers and potentially sensitive details. When the answer does not require re-identification, the data is anonymised. When re-identification is needed for the session, we use pseudonymisation, keeping the mapping only on the local server. This is not a complete solution to the privacy problem — I want to be clear about that — but it makes the boundary visible and governable. And a visible boundary is the precondition for any kind of compliance.
+This decision must be explicit. The data protection layer is designed to identify and handle identifying information before it is sent to external services. It is still being tested: we need to check which information it recognises and which may slip through. Removing names or email addresses alone does not demonstrate that a conversation is anonymous. Retention, access and sharing are also part of the data protection work.
 
-On the research side the picture is cleaner, because there are established procedures: researchers administer the instruments through administration plans with informed consent and anonymous research codes. The researcher works on data that never carries a name. Export is item by item, for psychometric analysis.
+On the research side, the platform provides for administration plans, informed consent and research codes. Item-level export supports psychometric analysis. Using codes helps separate results from participants' identities, but the possibilities of linking data back to a person also need to be checked.
 
-And there is a principle that applies to content as well: no translation reaches a student until a human being has certified it. There is a protocol — draft, translated, reviewed, pilot, validated — and an automatic translation can only ever reach the first rung. Humans decide what students see.
+For multilingual versions, we distinguish two steps. Human review is used to check translation quality. Validation, on the other hand, requires studies of the instrument in the new linguistic and cultural context. The versions in CounselorBot still need to go through this process, which remains a future research development.
 
-The European regulatory framework, here, is not an obstacle: it is a design constraint. The GDPR tells us we are processing data about minors and, potentially, special-category data — because a conversation about exam anxiety *is* health data. The AI Act tells us that systems affecting educational trajectories are not toys. Designing for those constraints from the start is easier than chasing them afterwards. And in a sense it is the same thing pedagogy asks for: always knowing who is looking at what.
+The design must therefore also take account of the applicable obligations concerning data protection and AI use. For the project, this means clarifying what data is needed, where it is stored, who can access it and how to inform the people involved. These conditions need to be checked in the actual context of use.
 
 ---
 
-## Slide 10 — The human loop (and who wrote the code)
+## Slide 9 — The human loop (and who wrote the code)
 
 **Slide bullets:**
-- The social risk: as models get better, people ask fewer people
-- The AI is **one node** in a human network, not its centre
-  - Teachers: class groups, their own students' results and conversations, notes, messages (web and Telegram)
+
+- The social risk: as models improve, people turn to other people less often
+- AI is **one node** in a human network, not its centre
+  - Teachers: class groups, their students' results and conversations, notes, messages (web and Telegram)
   - Researchers: administrations, consent, anonymous codes, raw data
   - Students: notebook, booklets, portfolio
 - And a side result: **this platform was built by a non-programmer**
 - AI changes who is allowed to build software
 
-### Talk (≈ 4 min)
+### Talk (≈ 2–3 min)
 
-There is one reason that worries me more than the others, and it sits behind all three questions. As models get better at conversation, people ask fewer people. The student who would have asked a friend, a professor, a parent, now asks a model. Convenience replaces community.
+There is one concern that worries me more than the others, and it lies behind all three questions. As models get better at conversation, people turn to other people less often. The student who would have asked a friend, a professor or a parent now asks a model. Convenience replaces community.
 
-That is why I designed the platform as human-in-the-loop from the start, and not as a feature added afterwards. The human loop is in the architecture of roles. Teachers create class groups — students join with an invite code — and they can see their own students' results and conversations, write notes, send messages that arrive on the web or through Telegram. This turns the platform into something a teacher can actually use in a classroom, not a private chatbot. Researchers work through administration plans. And the student keeps their own artefacts: notebook, booklets, portfolio.
+This is why I designed the platform as *human-in-the-loop* from the beginning, rather than adding it as a feature later. The human loop is in the architecture of the roles. Teachers create class groups — students join with an invitation code — and can see their students' results and conversations, write notes and send messages that arrive on the web or via Telegram. This turns the platform into something a teacher can actually use in class, not a private chatbot. Researchers work with administration plans. And students keep their own artefacts: notebook, booklets, portfolio.
 
-And then there is a last point, which concerns me and, I think, concerns you as well.
+And then there is one final point, which concerns me and, I think, also concerns you.
 
-I am not a programmer. My background is educational and humanistic. And yet this is a working platform, with a backend, a database, a frontend, streaming APIs, a Telegram bot, thirteen providers behind one abstraction. It was written for the most part with AI assistance, guided by somebody who knows the domain deeply and the code only at arm's length.
+I am not a programmer. My background is in education and the humanities. And yet this is a working platform, with a backend, a database, a frontend, streaming APIs, a Telegram bot and thirteen providers behind an abstraction. It was written very largely with AI assistance, guided by someone who knows the domain deeply and the code only at arm's length.
 
-For me this is the most underrated property of current AI: it changes who is allowed to build software. It lets a domain expert build their own tools, instead of writing a specification and hoping somebody else understands what they meant. That is not a detail of this story: it is one of the findings.
+For me, this is the most underrated property of today's AI: it changes who is allowed to build software. It enables domain experts to build their own tools, instead of writing a specification and hoping someone else understands what they meant. This is not a detail of this story: it is one of the results.
 
 ---
 
-## Slide 11 — What I am looking for at KTH, and closing
+## Slide 10 — What I am looking for at KTH and next steps
 
 **Slide bullets:**
-- Collaboration with KTH (Prof. Olle Bälter): **validating the Swedish QSAr** with KTH students
+
+- Possible future collaboration: **validating the QSA in Swedish** with anyone interested in involving their courses, outside the current phase of the research
   - Cognitive interviews → pilot → data collection → psychometrics (CTT, CFA) → norms
   - The manual is already written, in English
-- Next steps: PQBL, fine-tuning on real QSA sessions, strengthening anonymisation and pseudonymisation, benchmarking local vs external models
-- **The model is a commodity; the position is not**
-- Try it, break it, question it
+- **PQBL**: an instrument already being tested
+- Next steps: fine-tuning on real QSA sessions, strengthening anonymisation and pseudonymisation, benchmarking local vs external models
+- A direction still to be explored: an application on the student's computer, with local data and LLM
 
-### Talk (≈ 3 min)
+### Talk (≈ 2–3 min)
 
-Let me close with what I came here to look for.
+I will now turn to opportunities for collaboration and the next developments of the project.
 
-In May I wrote to Professor Olle Bälter, here at KTH, proposing a collaboration: validating the Swedish version of the QSAr with KTH students. Cognitive interviews, a pilot study, data collection, then the psychometrics — classical test theory, confirmatory factor analysis, and finally the norms. The manual is already written, in English, and the data pipeline is already in the platform.
+One possible future development is validating the Swedish version of the QSA with KTH students. If any of you are interested in involving your courses, I would like to discuss this together and develop a possible collaboration. This work is outside the current phase of the research. Cognitive interviews, a pilot study, data collection, then psychometrics — classical test theory, confirmatory factor analysis, and finally norms. The manual is already written, in English, and the data pipeline is already in place in the platform.
 
-So if this presentation has a practical ask, it is this: I am looking for a home for that validation — students, courses, a pilot context — and I am looking for this department's feedback on the system itself. EECS is exactly the place where the pedagogical question and the engineering question can be discussed together.
+For the current work, I am looking for this department's feedback on CounselorBot and on the quality of the interaction it offers. EECS is exactly the place where the pedagogical question and the engineering question can be discussed together.
 
-And then there are the next steps: PQBL, question-based learning generated from documents; fine-tuning a model on real QSA conversations, because by now we have a dataset of supervised interactions; strengthening the anonymisation and pseudonymisation layer; and a systematic comparison between local and external models on the quality of an orientation conversation.
+PQBL, the learning path based on questions generated from documents, is already among the instruments being tested. The next steps include fine-tuning a model on real QSA conversations, because we now have a dataset of supervised interactions; strengthening the anonymisation and pseudonymisation layer; and systematically comparing local and external models in terms of the quality of guidance conversations.
 
-But the general claim I want to leave you with is a single one. Educational AI cannot be reduced to a model plus a prompt. It needs a controlled mediation layer: a clear theory of orientation, validated instruments, certified content, local AI where possible, privacy-aware routing where it is not, and a real human loop around every student.
+One direction we have not yet explored is an application that runs entirely on the student's computer, with the data and language model stored and run locally. The development of computers capable of running these models — I am thinking, for example, of Macs and NVIDIA solutions — makes this an interesting possibility to study. We will need to establish what resources are required and what quality of interaction can be achieved. The aim is to give students greater control over their data, reducing the need to send it to external services.
 
-A harness is what lets a strong animal pull something heavy in the right direction. The models are strong. The direction has to come from us: from pedagogy, from ethics, from the people who care about students. The model is a commodity; the position is not.
+---
 
-And that is why the invitation, in the end, is to you: try it, break it, question it. That is what a department is for.
+## Slide 11 — Answers to the three questions and an invitation to take part in testing
+
+**Slide bullets:**
+
+- **Q1 — It can be done:** CounselorBot exists, works and runs on a machine
+- **Q2 — How much does it really help?** Encouraging initial feedback, to be explored further; starting reflection is already a contribution. Human control and supervision are part of the design
+- **Q3 — Yes, we can create a safe space:** local models and control over data; an application on the student's computer could strengthen this further, with ongoing checks
+- All instruments are test versions: **I invite you to take part in testing**
+- **It works. Now we need to understand how much it helps.**
+
+### Talk (≈ 2–3 min)
+
+To conclude, I will return to the three questions we started with.
+
+We can answer yes to the first question: it can be done. CounselorBot exists, works and runs on a machine. Its technical feasibility is demonstrated by the application itself.
+
+The second question concerns how much CounselorBot really helps students understand the results and reflect. The first tests I have carried out are encouraging: many participants found it useful and functional. These are initial findings, to be explored through more systematic testing. Simply managing to start a reflection on one's own experience is, however, an important contribution. Human control and supervision are part of CounselorBot's design: the platform provides for the involvement of teachers, tutors and guidance counsellors, who can support students, read what emerges and intervene when necessary.
+
+The third: can we create a safe space for data and personal reflection? Here too, the answer is yes: we can design the application to protect data, control access and leave students in control of what they share. Using local models already offers a concrete possibility in this direction. In the future, an application running entirely on the student's computer could further strengthen this control, keeping both the data and the model on the device. The anonymisation layer is still being tested, and data protection requires ongoing checks.
+
+This is where I would like to involve you. All the instruments are test versions, and I would like to gather contributions from experts who can try them and discuss them critically. I invite you to take part in testing: to observe the conversation, identify what helps and point out what feels repetitive, unclear or too directive.
+
+We know we can build it. Now we want to understand how useful it can be. And your contribution can help us do that.
 
 Thank you.
 
@@ -304,60 +325,60 @@ Thank you.
 
 ## Timing
 
-| Slide | Content | Minutes |
-|---|---|---|
-| 1 | Who I am | 3 |
-| 2 | Roma Tre and Ostiense | 3 |
-| 3 | CounselorBot: why + three questions | 4 |
-| 4 | What orientation means | 5 |
-| 5 | The instruments | 5 |
-| 6 | The harness (Q1) | 5 |
-| 7 | The time of reflection | 3 |
-| 8 | First consultation (Q2) + demo | 5 + 4 |
-| 9 | Privacy and local AI (Q3) | 4 |
-| 10 | Human loop + non-programmer | 4 |
-| 11 | KTH and closing | 3 |
-| | **Total spoken** | **~48** |
-| | With cuts (see below) | ~35 + 5 for questions |
+| Slide | Content | Approximate words | Indicative minutes |
+| --- | --- | ---: | ---: |
+| 1 | Who I am | 240 | 2–3 |
+| 2 | Roma Tre and Ostiense | 118 | 1–2 |
+| 3 | CounselorBot and the three questions | 397 | 3–4 |
+| 4 | What guidance means | 544 | 4–5 |
+| 5 | The instruments | 657 | 6–7 |
+| 6 | Architecture and constraints | 472 | 4–5 |
+| 7 | Time for reflection | 247 | 2–3 |
+| 8 | Privacy and local AI | 353 | 3–4 |
+| 9 | The human loop and development with AI | 280 | 2–3 |
+| 10 | Collaborations and next steps | 278 | 2–3 |
+| 11 | Answers and invitation to take part in testing | 290 | 2–3 |
 
-## Cut plan (if you run long)
+The script contains approximately **3,876 words** of spoken text, excluding slide bullets and supporting material. At 110–130 words per minute, it requires approximately **30–35 minutes of reading**; with pauses and slide changes, allow **35–40 minutes**. Adding 10 minutes of discussion: **45–50 minutes in total**. Demo excluded. These estimates should be checked by rehearsing aloud and recalculated after translation into English.
 
-- Slide 4: cut the Greene paragraph and the first-year students → −1 min
-- Slide 5: list the questionnaires without commenting on each, keep only QSA, QAP and IDEA → −2 min
-- Slide 7: cut it entirely if you run long — it is the link between Q1 and Q2 → −3 min
-- Slide 8: demo from 4 to 2.5 min → −1.5 min
-- Slide 10: cut the social risk, keep only the roles and the non-programmer point → −1.5 min
-- Slide 11: compressible to 1.5 min → −1.5 min
-- Recoverable: ~7.5 min
+> Translation note: the word counts and timing estimates above are retained from the Italian source; they have not been recalculated for this English version.
+
+## Cut plan (if you run over)
+
+- Slide 4: shorten the comparison with matching, keeping self-determination and self-regulation.
+- Slide 5: shorten the description of individual questionnaires; keep the relationship between the two sites, IDEA, PQBL and the testing status.
+- Slide 6: shorten the technical list and retain the meaning of the design constraints.
+- Slide 10: summarise the next steps, keeping the invitation to collaborate.
+- Indicative target: save 4–6 minutes; check the saving by rehearsing aloud.
 
 ## Delivery notes
 
-- Slides 1–2 are personal: speak slowly, look at the room. This is where the audience decides whether to listen.
-- Slide 3: the three questions are the spine. Number them out loud and with your hand. Then call them back explicitly at the start of slides 6, 8 and 9 ("first question", "second question", "third question").
+- Slides 1–2 are personal: speak slowly, look around the room. This is where the audience decides whether to listen to you.
+- Slide 3: the three questions are the backbone. Number them aloud and with your hand. Return to all of them in slide 11, distinguishing what has been achieved from what remains to be verified.
 - Slide 4: two hands for the two pillars — right for self-determination, left for self-regulation.
-- Line to land, then pause: *"a matching model optimises people for yesterday's jobs"*.
-- Slide 9: this is the slide an EECS audience will attack first. Concede the limit immediately ("this is not a complete solution") — it takes the force out of the objection.
-- Slide 10: make the non-programmer point without apologising. It is a finding, not a confession.
-- If Olle Bälter is in the room: name him while looking at him.
+- Line to let land, with a pause afterwards: *"a matching model optimises people for yesterday's jobs"*.
+- Slide 8: distinguish the protection measures already provided for from the checks still needed.
+- Slide 9: make the non-programmer point without apologising. It is a result, not a confession.
+- Slide 10: address the invitation to collaborate to anyone interested in involving their courses.
 
 ## Likely questions
 
-1. **"Why not just use ChatGPT with a good prompt?"** — A prompt is a sentence. A harness is state, data, retrieval, constraints, certification. A prompt does not guarantee that advice comes from the catalogue, nor that the teacher can see the class, nor that the model stops.
-2. **"How do you guarantee the advice is good?"** — Only from the certified catalogue, activated by a deterministic classifier, only in authorised steps. Student feedback is collected. Never improvised.
-3. **"What about the privacy of minors?"** — PII redaction on logs, anonymous research codes, consent in administration, age filters on the reading catalogue, local-model option.
-4. **"How did a non-programmer build this?"** — Simple modular architecture, continuous AI-driven iteration, smoke tests on a dedicated DB, continuous documentation. The domain was mine; the AI translated the domain into code.
-5. **"Is it validated?"** — The instruments are (QSA since 1996). The platform is not, and that is exactly the research programme: QSAr validation with KTH, data pipeline already in place.
-6. **"What if the model says something wrong?"** — The envelope narrows the space: only retrieved knowledge, advice only from the catalogue, steps with restricted modes. And there is a human in the loop who sees the conversations.
+1. **"Why isn't ChatGPT with a good prompt enough?"** — The prompt contains the instructions for the model. Harness = state, data, retrieval, constraints, certification. A prompt does not guarantee that advice comes from the catalogue, or that the teacher can see the class, or that the model stops.
+2. **"How do you guarantee that the advice is good?"** — The system is designed to use strategies from the curated catalogue at authorised moments. The quality and observance of these constraints need to be checked in conversations, including through participant feedback.
+3. **"What about minors' privacy?"** — Protection tools, consent during administration and a local-model option are provided for. The anonymisation layer is being tested; retention, access and connected services require checks in the context of use.
+4. **"How did a non-programmer build it?"** — Simple, modular architecture, continuous iteration with AI, smoke tests on a dedicated DB, continuous documentation. The domain was mine; AI translated the domain into code.
+5. **"Is it validated?"** — We need to distinguish questionnaires with their own history of validation from the application's experimental paths. The platform is the subject of the current research. The multilingual versions in CounselorBot still need to be validated; possible validation of the QSA in Swedish is a future development, outside the current phase of the research.
+6. **"What if the model says something wrong?"** — The selected context and the constraints of the guided path aim to reduce errors, without eliminating them. Human supervision also serves to recognise them and discuss them with the student.
 
 ## To fill in before the 9th
 
 - [ ] Registered students: ___
 - [ ] Completed guided sessions: ___
-- [ ] Item-level responses collected for QSAr validation (N = ___)
-- [ ] Status of Olle Bälter's reply
-- [ ] Demo: network available? Backup screenshots ready?
+- [ ] Materials to present for future validation of the QSA in Swedish
+- [ ] How to collect expressions of interest from teachers in involving their courses
+- [ ] Possible demo separate from the script: define duration, available network and backup screenshots
 
-## Sources (if asked)
+## Sources (if requested)
 
 - Pellerey M., *Orientamento come potenziamento della persona umana in vista della sua occupabilità*, Rassegna CNOS, 1 (2016), pp. 41–50.
 - Pellerey M., Margottini M., Ottone E. (eds.), *Dirigere se stessi nello studio e nel lavoro*, Roma TrE-Press, 2020.
@@ -366,4 +387,4 @@ Thank you.
 - Savickas M. L., *Career Studies and Life Designing: Self-Making*, 2024.
 - Savickas M. L., Porfeli E. J., *Career Adapt-Abilities Scale*, 2012.
 - Zimbardo P. G., Boyd J. N., *Putting time in perspective*, JPSP, 1999.
-- Council of the EU Recommendation on Key Competences for Lifelong Learning (2018).
+- EU Council Recommendation on Key Competences for Lifelong Learning (2018).
