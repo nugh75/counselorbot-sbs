@@ -2,6 +2,7 @@
 // ogni turno con la patch che il modello manda, e il browser la rilegge.
 
 import { apiFetch } from '@/lib/auth';
+import type { DiagramEdge } from '@/lib/diagram-content';
 
 export type IdeaVariant = 'student-path' | 'student-open' | 'research' | 'concept';
 
@@ -62,7 +63,7 @@ export interface IdeaMapState {
     session_id: string;
     revision_id: number | null;
     updated_at: string | null;
-    spec: { title: string; nodes: IdeaMapNode[] } | null;
+    spec: { title: string; nodes: IdeaMapNode[]; edges?: DiagramEdge[] } | null;
     description: string | null;
     missing_roles: IdeaRole[];
     complete: boolean;
