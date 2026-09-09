@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from .. import auth, models
 from ..database import get_db
 from ..orientation import analyze_turn, normalize_language
+from ..student_context import latest_learner_profile
 
 router = APIRouter()
 
@@ -200,14 +201,21 @@ def start_orientation(
                 db.refresh(existing)
             return _serialize(existing)
     lang = normalize_language(payload.language)
+    notebook = latest_learner_profile(db, owner)
+    opening = None
+    if notebook is not None and isinstance(notebook.data, dict) and any(str(value or "").strip() for value in notebook.data.values()):
+        opening = analyze_turn(
+            db, "Begin the Compass conversation using the student context provided.", lang,
+            counselor_id=counselor.id if counselor else None, username=owner, opening=True,
+        )
     row = models.OrientationSession(
         session_id=str(uuid.uuid4()),
         username=owner,
         language=lang,
         counselor_id=counselor.id if counselor else None,
         status="in_progress",
-        messages=[{"role": "assistant", "content": _welcome(lang, counselor)}],
-        recommendations=[],
+        messages=[{"role": "assistant", "content": opening.reply if opening else _welcome(lang, counselor)}],
+        recommendations=opening.recommendations[:1] if opening else [],
     )
     db.add(row)
     db.commit()

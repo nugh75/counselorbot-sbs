@@ -33,8 +33,7 @@ LEARNER_PROFILE_LABELS = {
 }
 
 # Tetto complessivo del blocco. Le sezioni sono ordinate per valore di
-# instradamento e il taglio arriva dal fondo: se si sfora cade il portfolio,
-# non l'elenco degli strumenti già compilati.
+# instradamento: prima il taccuino (campi limitati), poi attività e portfolio.
 MAX_STUDENT_CONTEXT_CHARS = 2000
 
 _MAX_PORTFOLIO_ITEMS = 8
@@ -87,11 +86,13 @@ def _notebook_lines(db: Session, username: str) -> list[str]:
     if revision is None or not revision.data:
         return []
     lines = []
-    for key, label in LEARNER_PROFILE_LABELS.items():
+    for key in dict.fromkeys(("goal", "main_difficulty", "strengths", "weaknesses", "context", *LEARNER_PROFILE_LABELS)):
+        label = LEARNER_PROFILE_LABELS[key]
         value = str(revision.data.get(key) or "").strip()
         if value:
-            lines.append(f"- {label}: {value}")
-    return lines
+            lines.append(f"- {label}: {value[:160]}")
+    # Riserva spazio anche agli strumenti già compilati e alle sessioni sospese.
+    return "\n".join(lines)[:1000].splitlines()
 
 
 def _portfolio_lines(db: Session, username: str) -> list[str]:
@@ -115,6 +116,7 @@ def student_context(db: Session, username: str) -> str:
         return ""
 
     sections: list[tuple[str, list[str], str]] = [
+        ("The student's notebook, in their own words", _notebook_lines(db, username), ""),
         (
             "Instruments already completed",
             _completed_instruments(db, username),
@@ -122,7 +124,6 @@ def student_context(db: Session, username: str) -> str:
             "so the student does not fill it in again. You never see the scores and never interpret them.",
         ),
         ("Interrupted sessions that can be resumed", _frozen_instruments(db, username), ""),
-        ("The student's notebook, in their own words", _notebook_lines(db, username), ""),
         ("Portfolio", _portfolio_lines(db, username), ""),
     ]
 
