@@ -35,11 +35,13 @@ That experience made the relationship between learning, personal choices and hum
 - A tradition connected to teacher education
 - Ostiense: former industrial spaces integrated into university life
 
-### Talk (≈ 0.7–0.8 min reading)
+### Talk (≈ 1.0–1.1 min reading)
 
-A few words about the context of this work. I come from the Department of Education at Roma Tre University. The university carries on the tradition of Rome's Magistero, an institution dedicated to teacher education.
+A few words about the context of this work. I come from the Department of Education at Roma Tre University. The university carries on the tradition of Rome’s Magistero, an institution dedicated to teacher education.
 
-It is also closely connected to its neighbourhood, Ostiense, where former industrial spaces have become places for study and research. I like this connection between the university and the life around it. My project develops within this educational context, through the work of my research group on strategic competences and guidance.
+Roma Tre has also helped revitalise Ostiense, a former industrial district of Rome where disused factories and neglected spaces have been transformed into university buildings. By bringing students, teaching and research into the neighbourhood, the university has contributed to giving the area new life. This reminds me of places here in Stockholm, such as Fotografiska, where I see a similar connection between the reuse of older buildings, culture and urban renewal.
+
+My project develops within this educational context, through the work of my research group on strategic competences and guidance.
 
 ---
 
@@ -378,7 +380,7 @@ Thank you.
 | Slide | Content | Spoken words | Reading minutes at 110–130 wpm |
 | --- | --- | ---: | ---: |
 | 1 | Who I am | 155 | 1.2–1.4 |
-| 2 | Roma Tre and its educational context | 86 | 0.7–0.8 |
+| 2 | Roma Tre and its educational context | 125 | 1.0–1.1 |
 | 3 | CounselorBot: why, and three questions | 406 | 3.1–3.7 |
 | 4 | What guidance means (and why it is not matching) | 543 | 4.2–4.9 |
 | 5 | Development methodology: two ADDIE cycles | 283 | 2.2–2.6 |
@@ -391,7 +393,7 @@ Thank you.
 | 12 | What I am looking for at KTH and next steps | 304 | 2.3–2.8 |
 | 13 | Conclusions and an invitation to take part in testing | 260 | 2.0–2.4 |
 
-The revised English script contains **3,725 spoken words**, counted as whitespace-separated words in the Talk sections only. Slide bullets, the results table, source notes and supporting material are excluded. Reading requires approximately **29–34 minutes**; allow **34–39 minutes** with pauses and transitions. Discussion and any demo require additional time. Check the estimate by rehearsing aloud, particularly the numerical results.
+The revised English script contains **3,764 spoken words**, counted as whitespace-separated words in the Talk sections only. Slide bullets, the results table, source notes and supporting material are excluded. Reading requires approximately **29–34 minutes**; allow **34–39 minutes** with pauses and transitions. Discussion and any demo require additional time. Check the estimate by rehearsing aloud, particularly the numerical results.
 
 ## Cut plan (if you run over)
 
