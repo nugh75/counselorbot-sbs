@@ -15,11 +15,12 @@
 
 ### Talk
 
+
 Good morning, everyone.
 
-My name is Daniele Dragoni. I am a visiting PhD researcher from Roma Tre University, and my stay at KTH runs from May to October. My doctoral research concerns AI and education, and today I will present CounselorBot: a system developed to support reflection in educational and career guidance.
+My name is Daniele Dragoni. I am a visiting PhD researcher, currently enrolled in a national PhD programme coordinated by the University of Macerata, with my research activities based at Roma Tre University. My research stay here lasts from May 1st to October 31st. My doctoral research concerns AI and education, and today I will present CounselorBot: a system developed to support reflection in educational and career guidance.
 
-My interest in this subject also has a personal dimension. I returned to university while working, to complete a bachelor's degree I had left unfinished. With the support of people who encouraged me to continue, I went on to study cognitive science, then e-learning and media education, and eventually began my PhD.
+My interest in this subject also has a personal dimension. I returned to university while working, to complete a bachelor's degree I had left unfinished. With the support of people who encouraged me to continue, I went on to complete two master's degrees, one in Cognitive Sciences and Communication and another in E-learning and Media Education, and eventually began my PhD, which I am now close to completing.
 
 That experience made the relationship between learning, personal choices and human support very concrete for me. In Italy we say, “it is never too late to learn”. The project I will discuss today asks how AI might contribute to that process, and how we can investigate the quality of its contribution.
 
@@ -35,7 +36,7 @@ That experience made the relationship between learning, personal choices and hum
 
 ### Talk
 
-A few words about the context of this work. I come from the Department of Education at Roma Tre University. The university carries on the tradition of Rome’s Magistero, an institution dedicated to teacher education.
+A few words about the context of this work. As I mentioned earlier, I’m from the Department of Education at Roma Tre University. The university carries on the tradition of Rome’s Magistero, an institution dedicated to teacher education. Among the distinguished scholars who taught there was Luigi Pirandello, the Italian writer and playwright who later received the Nobel Prize in Literature.
 
 Roma Tre has also helped revitalise Ostiense, a former industrial district of Rome where disused factories and neglected spaces have been transformed into university buildings. By bringing students, teaching and research into the neighbourhood, the university has contributed to giving the area new life. This reminds me of places here in Stockholm, such as Fotografiska, where I see a similar connection between the reuse of older buildings, culture and urban renewal.
 
@@ -70,6 +71,8 @@ I would also like to explain why I chose Sweden for my research stay. Three aspe
 
 The defence of the elm trees in Kungsträdgården is an example of citizens taking action to protect their environment. Shared parental leave reflects a commitment to making equal opportunities part of everyday family life. And Spotify is an example of how an idea can develop into an innovation with international reach.
 
+There was also a more personal reason. I wanted to improve my Swedish, which I started learning several years ago together with my wife. She is also doing a research stay here in Stockholm, so coming here gave us the opportunity to continue this experience together.
+
 These aspects made me curious about Sweden and Stockholm. I thought this would be a stimulating place to spend six months, complete my doctoral research and work on my thesis.
 
 ---
@@ -89,7 +92,7 @@ And now, after this brief introduction, let us come to the heart of the presenta
 
 One of my PhD projects concerns the use of AI to support students in the guidance process. It is in this context that I developed CounselorBot.
 
-The starting point is a concrete problem. We have various guidance tools, such as self-assessment questionnaires and interviews, that help students explore learning strategies, abilities, interests and aspirations. But receiving questionnaire results does not necessarily mean understanding them or knowing how to connect them to one's own experience.
+The starting point is a concrete problem. We have various guidance tools, such as self-assessment questionnaires, that help students explore learning strategies, abilities, interests and aspirations. But receiving questionnaire results does not necessarily mean understanding them or knowing how to connect them to one's own experience.
 
 Usually, a teacher, tutor or guidance counsellor supports this step: they help the student read the results, ask themselves whether they recognise themselves in them, and reflect on concrete situations. The time available, however, does not always allow every student to have an in-depth individual discussion.
 
@@ -109,7 +112,7 @@ CounselorBot helps students explore their questionnaire results and connect them
 
 ### Talk
 
-Together with my research group and my supervisor, we asked ourselves three questions.
+Together with my research group and my supervisor Massimo Margottini, we asked ourselves three questions.
 
 The first: is it possible to build a chatbot that plays a counselling role in guidance? Do we already have the necessary technologies? Are they mature enough to support this kind of interaction?
 
@@ -275,13 +278,13 @@ Thank you for your time. I would be very interested to hear your questions and s
 
 | Slide | Content | Spoken words | Minutes at 110–130 wpm |
 | --- | --- | ---: | ---: |
-| 1 | Who I am | 155 | 1.2–1.4 |
-| 2 | Roma Tre and its educational context | 125 | 1.0–1.1 |
+| 1 | Who I am | 190 | 1.5–1.7 |
+| 2 | Roma Tre and its educational context | 151 | 1.2–1.4 |
 | 3 | From Alfa Romeo to Roma Tre | 0 | 0.0–0.0 |
 | 4 | From slaughterhouse to architecture school | 0 | 0.0–0.0 |
-| 5 | Why I chose Sweden | 113 | 0.9–1.0 |
-| 6 | Why CounselorBot? | 256 | 2.0–2.3 |
-| 7 | Three research questions | 155 | 1.2–1.4 |
+| 5 | Why I chose Sweden | 159 | 1.2–1.4 |
+| 6 | Why CounselorBot? | 254 | 2.0–2.3 |
+| 7 | Three research questions | 157 | 1.2–1.4 |
 | 8 | Guidance as matching | 131 | 1.0–1.2 |
 | 9 | Directing oneself in study and work | 122 | 0.9–1.1 |
 | 10 | Career construction and life design | 138 | 1.1–1.3 |
@@ -291,7 +294,7 @@ Thank you for your time. I would be very interested to hear your questions and s
 | 14 | Where do the data go? | 129 | 1.0–1.2 |
 | 15 | An invitation to collaborate | 129 | 1.0–1.2 |
 
-**1,899 spoken words**, approximately **15–17 minutes** of reading. Pauses, a demonstration and discussion require additional time.
+**2,006 spoken words**, approximately **15–18 minutes** of reading. Pauses, a demonstration and discussion require additional time.
 
 ## Sources
 
