@@ -135,7 +135,7 @@ I will first explain the pedagogical framework, then the two development cycles 
 - Savickas: a career is not discovered, it is *constructed* — the key construct is adaptability
 - Self-regulation requires explicit educational support
 
-### Talk (≈ 4.2–4.9 min reading)
+### Talk (≈ 3.8–4.5 min reading)
 
 At this point, it is useful to clarify what we mean by guidance. For a long time, this term has been associated with *matching*: the work of matching a person's interests and abilities to a job or a course of study.
 
@@ -143,7 +143,11 @@ The appeal of this model is obvious. It is neat, it is measurable, it produces a
 
 But for us, this is not enough. Guidance should mean helping people develop themselves, develop the competences and skills that enable them to fulfil their aspirations and live a satisfying life — taking account of the context they are in, which means respecting the environment and other people's work.
 
-And there is also a technical reason why matching is no longer enough. Michele Pellerey — emeritus professor, the intellectual father of this tradition in Italy — puts it clearly: the matching model rests on two assumptions of stability that no longer hold today. The first is a stable person, as if a sixteen-year-old's aptitudes were settled facts, waiting to be measured. The second is a stable market, as if the world of work would politely stand still while we make our diagnosis. But the market is not standing still: automation, digitalisation, artificial intelligence, polarisation of occupations. You cannot read a young person's future employability from current market demand, because that demand will already have changed by the time they enter the labour market. A matching model, taken seriously, optimises people for yesterday's jobs.
+There is another reason why matching alone is not enough. Michele Pellerey points out that this approach assumes that both the person and the labour market are stable. But both change over time.
+
+Young people develop new interests, abilities and aspirations. The world of work also changes, as technologies such as AI transform jobs and the skills they require.
+
+For this reason, matching a student’s current profile with today’s job opportunities is not enough. Guidance should also help students understand themselves, make choices and adapt as their lives and circumstances change.
 
 What replaces it? Two complementary answers.
 
@@ -427,7 +431,7 @@ Thank you.
 | 5 | Why I chose Sweden | 113 | 0.9–1.0 |
 | 6 | Why CounselorBot? | 256 | 2.0–2.3 |
 | 7 | Three research questions | 157 | 1.2–1.4 |
-| 8 | What guidance means (and why it is not matching) | 543 | 4.2–4.9 |
+| 8 | What guidance means (and why it is not matching) | 500 | 3.8–4.5 |
 | 9 | Development methodology: two ADDIE cycles | 283 | 2.2–2.6 |
 | 10 | The QSA as the focus of the evaluation | 229 | 1.8–2.1 |
 | 11 | From user feedback to redesign | 291 | 2.2–2.6 |
@@ -438,7 +442,7 @@ Thank you.
 | 16 | What I am looking for at KTH and next steps | 304 | 2.3–2.8 |
 | 17 | Conclusions and an invitation to take part in testing | 260 | 2.0–2.4 |
 
-The revised English script contains **3,884 spoken words**, counted as whitespace-separated words in the Talk sections only. Slide bullets, the results table, source notes and supporting material are excluded. Reading requires approximately **29–36 minutes**; allow **34–41 minutes** with pauses and transitions. Discussion and any demo require additional time. Check the estimate by rehearsing aloud, particularly the numerical results.
+The revised English script contains **3,841 spoken words**, counted as whitespace-separated words in the Talk sections only. Slide bullets, the results table, source notes and supporting material are excluded. Reading requires approximately **29–36 minutes**; allow **34–41 minutes** with pauses and transitions. Discussion and any demo require additional time. Check the estimate by rehearsing aloud, particularly the numerical results.
 
 ## Cut plan (if you run over)
 
