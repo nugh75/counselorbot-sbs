@@ -12,6 +12,7 @@ import { NotebookBookletContent, type DeskTab } from '@/components/profile/Noteb
 import type { BookletType } from '@/components/profile/StudentBookletCard';
 import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, type ActionStage, type CardBucket, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
 import { VisualPersonalTransfer } from './VisualPersonalTransfer';
+import { validTimelineDates } from '@/lib/timeline-dates';
 import { TimelineTools } from './TimelineTools';
 
 // Le schede di lavoro salvano il workspace; taccuino e libretto si salvano
@@ -49,7 +50,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [focusEvent, setFocusEvent] = useState<string | undefined>();
     const [open, setOpen] = useState(false);
     const [personalOpen, setPersonalOpen] = useState(false);
-    const [tab, setTab] = useState<Tab>('board');
+    const [tab, setTab] = useState<Tab>(personal ? 'timeline' : 'board');
     const [helpOpen, setHelpOpen] = useState<Record<WorkTab, boolean>>({ board: false, comparison: false, cards: false, timeline: false });
     const [saved, setSaved] = useState<SavedWorkspace>({ revision: 0, workspace: emptyWorkspace() });
     const [work, setWork] = useState<VisualWorkspace>(emptyWorkspace);
@@ -143,6 +144,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
 
     const save = async (next = work): Promise<SavedWorkspace | null> => {
         if (!loaded || busy) return null;
+        if (next.timeline?.events.some(event => !validTimelineDates(event))) { setIssue('dateError'); return null; }
         if (next.actions.some(a => !a.title.trim()) || next.cards.some(c => !c.text.trim()) || next.comparison.options.some(o => !o.title.trim()) || next.comparison.criteria.some(c => !c.label.trim()) || (next.timeline?.events.length && (!next.timeline.title.trim() || next.timeline.events.some(e => !e.title.trim() || !e.period.trim())))) { setIssue('requiredFields'); return null; }
         for (const field of dialog.current?.querySelectorAll<HTMLInputElement>('[data-workspace-field]') ?? []) {
             if (!field.reportValidity()) return null;
@@ -202,9 +204,11 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
             <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
                     <div className="flex items-start justify-between gap-2">
-                        <div><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{l('title')}</h2></div>
+                        <div><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{l(personal ? 'timeline' : 'title')}</h2></div>
                         <Tooltip content={l('close')}><Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button></Tooltip>
                     </div>
+                    <details open={!personal}>
+                    <summary hidden={!personal} className="min-h-11 cursor-pointer py-2 text-sm text-indigo-700">{l('otherTools')}</summary>
                     <div role="tablist" aria-label={l('title')} className="mt-3 flex flex-wrap gap-1">
                         {tabs.map((key, index) => { const Icon = tabIcons[index]; return <Tooltip key={key} content={l(key)}><Button type="button" role="tab" aria-label={l(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
                             variant={tab === key ? 'primary' : 'secondary'} className={buttonClass} onClick={() => { setPersonalOpen(false); setTab(key); }} onKeyDown={event => {
@@ -214,6 +218,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 setPersonalOpen(false); setTab(tabs[next]); document.getElementById(`${id}-${tabs[next]}`)?.focus();
                             }}><Icon className="h-4 w-4 shrink-0" aria-hidden="true" /></Button></Tooltip>; })}
                     </div>
+                    </details>
                 </header>
                 <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4" id={`${id}-panel`} role={personalOpen ? "region" : "tabpanel"} aria-label={personalOpen ? l('personalLinks') : undefined} aria-labelledby={personalOpen ? undefined : `${id}-${tab}`}>
                     {issue && <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
@@ -224,7 +229,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                         </div>
                     </div>}
                     {personalOpen && loaded ? <VisualPersonalTransfer sessionId={sessionId} locale={locale} work={work} saveWorkspace={save} onClose={() => { setPersonalOpen(false); window.requestAnimationFrame(() => document.getElementById(`${id}-personal`)?.focus()); }} /> : isDeskTab(tab) ? <NotebookBookletContent tab={tab} lang={locale} questionnaireType={questionnaireType} /> : !loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
-                        <section aria-label={l('howTo')} className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm leading-relaxed text-slate-800">
+                        {!(personal && tab === 'timeline') && <section aria-label={l('howTo')} className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm leading-relaxed text-slate-800">
                             <h3 className="font-semibold">{l(tab)}</h3>
                             <details key={tab} open={helpOpen[tab]} onToggle={event => {
                                 const expanded = event.currentTarget.open;
@@ -250,7 +255,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     });
                                 }}><ArrowRight className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                             </details>
-                        </section>
+                        </section>}
                         {tab === 'timeline' && !personal && <a className="block min-h-11 text-indigo-700 underline" href="/profilo/timeline">{l('openPersonalTimeline')}</a>}
                         {tab === 'timeline' && personal && <TimelineTools personal sessionId={sessionId} locale={locale} work={work} edit={edit} save={save} selected={timelineSelection} select={setTimelineSelection} focusEvent={focusEvent || request?.eventId} />}
                         {tab === 'board' && <>
@@ -336,7 +341,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                     <p role="status" className="text-sm text-slate-600">{l(busy ? 'saving' : dirty ? 'unsaved' : loaded ? 'saved' : 'loading')}</p>
                     <div className="flex flex-wrap gap-2">
                         {!personal && <Tooltip content={l('personalLinks')} side="top"><Button id={`${id}-personal`} aria-label={l('personalLinks')} aria-expanded={personalOpen} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy} onClick={() => setPersonalOpen(value => !value)}><BookOpen className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
-                        {!personalOpen && <><Tooltip content={l('saveHelp')} side="top"><Button aria-label={l('save')} type="button" className={buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}><Save className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                        {!personalOpen && <><Tooltip content={l('saveHelp')} side="top"><Button aria-label={l('save')} type="button" className={personal ? 'min-h-11 px-4' : buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}><Save className="h-4 w-4" aria-hidden="true" />{personal && l('save')}</Button></Tooltip>
                         <Tooltip content={l('undoHelp')} side="top"><Button type="button" variant="secondary" aria-label={l('undo')} className={buttonClass} disabled={busy || !history.length} onClick={() => { const previous = history[history.length - 1]; if (previous) { setWork(previous); setHistory(history.slice(0, -1)); } }}><Undo2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         <Tooltip content={l('exportHelp')} side="top"><Button aria-label={l('export')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void exportPdf()}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button aria-label={l('discuss')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork || (tab === 'timeline' && !(work.timeline?.events.some(e => timelineSelection === null || timelineSelection.includes(e.id))))} onClick={() => void discuss()}><MessageSquare className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}</>}

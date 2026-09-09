@@ -80,6 +80,9 @@ def resolve_institution_events(db, username, workspace, language='it'):
         start = date.replace(tzinfo=timezone.utc) if date.tzinfo is None else date
         event.update(title=_i18n(row.title_i18n, language)[:160], period=start.isoformat(),
                      tense='past' if start < datetime.now(timezone.utc) else 'future', source='')
+    workspace['timeline']['events'].sort(key=lambda event: (
+        event['period'][:10] if event.get('institution_event') else
+        event.get('start_date') or event.get('end_date') or '9999-99-99'))
 
 
 def validate_institution_links(db, username, workspace, previous):
@@ -98,7 +101,9 @@ def validate_institution_links(db, username, workspace, previous):
             raise HTTPException(422, 'Institution event is unavailable')
     data = workspace.model_dump()
     resolve_institution_events(db, username, data)
-    for event, resolved in zip(workspace.timeline.events, data['timeline']['events']):
+    resolved_by_id = {event['id']: event for event in data['timeline']['events']}
+    for event in workspace.timeline.events:
+        resolved = resolved_by_id[event.id]
         if event.institution_event:
             event.title, event.period, event.tense = resolved['title'], resolved['period'], resolved['tense']
             event.source = ''
