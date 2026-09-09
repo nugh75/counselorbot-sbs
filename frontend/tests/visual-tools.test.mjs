@@ -16,7 +16,7 @@ const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="280" height="180" vi
 const graphSpec = JSON.parse(readFileSync(new URL('./fixtures/reading-diagram.json', import.meta.url), 'utf8'));
 
 async function fixture(width, phase = 'intro', options = {}) {
-    const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: options.motion || 'reduce', hasTouch: Boolean(options.touch), isMobile: Boolean(options.touch) });
+    const context = await browser.newContext({ viewport: { width, height: 844 }, timezoneId: options.timezone, reducedMotion: options.motion || 'reduce', hasTouch: Boolean(options.touch), isMobile: Boolean(options.touch) });
     const page = await context.newPage();
     page.setDefaultTimeout(10000);
     const control = { failSave: false, failLoad: false, failPdf: false, visual: { revision: 0, workspace: { actions: [], cards: [], comparison: { options: [], criteria: [], cells: [], chosen: null, reason: '' } } }, failDiagram: false, failPatch: false, failRender: false, failExport: false, saved: options.graph ? [{ source_text: reply, source_key: createHash('sha256').update(reply).digest('hex'), instruction: '', spec: graphSpec }] : [], requests: [], errors: [] };
@@ -965,6 +965,19 @@ for (const width of [390, 1440]) test(`personal calendar plans four date forms a
         await dialog.getByRole('alert').filter({ hasText: l('dateError') }).waitFor();
         assert.equal(control.requests.filter(r => r.method === 'PUT').length, writes);
         assert.equal(await dialog.evaluate(el => el.scrollWidth > el.clientWidth), false);
+        assert.deepEqual(control.errors, []);
+    } finally { await context.close(); }
+});
+
+test('institutional calendar and details agree near midnight in the local timezone', async () => {
+    const { page, context, control } = await fixture(390, 'intro', { timezone: 'Europe/Rome' });
+    control.visual.workspace.timeline = { title: 'Percorso', events: [{ id: 'late', institution_event: 'open-day', title: 'Open day', period: '2026-11-10T23:30:00Z', tense: 'future', symbol: 'milestone', reflection: '', source: '', action_ids: [], portfolio: [] }] };
+    try {
+        await page.goto(`${origin}/profilo/timeline`);
+        const button = page.getByRole('button', { name: 'Apri la tappa: Open day', exact: true }).filter({ visible: true });
+        assert.match(await button.innerText(), /11\/11\/2026/);
+        await button.click();
+        assert.match(await page.locator('#timeline-late').getByLabel(visualLabel('it', 'period'), { exact: true }).inputValue(), /11\/11\/2026/);
         assert.deepEqual(control.errors, []);
     } finally { await context.close(); }
 });
