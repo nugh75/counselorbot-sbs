@@ -5,10 +5,12 @@ tutti, anche nella guida pubblica. **Ascolta pagina** legge il testo visibile
 della pagina corrente; non include moduli, bozze, navigazione, pannelli nascosti
 o trascrizioni delle chat. Le risposte di Bussola e della chat guidata hanno il
 proprio pulsante **Ascolta**. Aprire il lettore lascia montata l'attività e
-conserva i messaggi non ancora inviati. Il pannello è affiancato alla pagina
-su desktop e non blocca clic, scrittura o invio dei messaggi. **Riduci lettore**
+conserva i messaggi non ancora inviati. Il pannello è fluttuante: non riduce la larghezza della pagina e non
+blocca clic, scrittura o invio dei messaggi. Si può spostare trascinando
+il titolo con mouse o touch, oppure usando le frecce quando il titolo ha
+il focus. Rimane entro lo schermo anche dopo un ridimensionamento. **Riduci lettore**
 lascia l'audio attivo e mostra una barra con pausa/ripresa, espansione e chiusura;
-sul telefono, Ascolta apre direttamente questa barra compatta.
+Ascolta apre direttamente questa barra compatta su desktop e telefono.
 
 Il pannello offre pausa/ripresa, arresto, segmento precedente/successivo,
 chiusura ed Escape quando il focus è nel lettore. Navigazione, cambio lingua,

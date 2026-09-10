@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
-import { Headphones, Maximize2, Minimize2, Pause, Play, SkipBack, SkipForward, Square, Volume2, X } from 'lucide-react';
+import { GripVertical, Headphones, Maximize2, Minimize2, Pause, Play, SkipBack, SkipForward, Square, Volume2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useI18n } from '@/lib/i18n-context';
@@ -59,7 +59,7 @@ export function VoiceReaderProvider({ children }: { children: React.ReactNode })
     useEffect(() => () => close(), [pathname, lang, displayedCounselorId, close]);
     const read = useCallback((next: Target) => {
         if (!document.activeElement?.closest('[data-voice-reader]')) setOpener(document.activeElement as HTMLElement);
-        if (!open) setExpanded(window.matchMedia('(min-width: 1024px)').matches);
+        if (!open) setExpanded(false);
         source.current = next.id;
         setTarget(next);
         setOpen(true);
@@ -135,21 +135,33 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
     const [engineValue, voice = ''] = selected.split(':');
     const engine = engineValue === 'piper' ? 'piper' : 'edge';
     const panel = useRef<HTMLElement>(null);
+    const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
+    const drag = useRef<{ pointer: number; x: number; y: number; left: number; top: number } | null>(null);
     const [voices, setVoices] = useState<{ id: string; name: string; locale: string; gender?: string }[]>([]);
     const [catalogError, setCatalogError] = useState(false);
     const [retry, setRetry] = useState(0);
     const [catalogEngine, setCatalogEngine] = useState(engine);
 
+    const keepInView = useCallback((left: number, top: number) => {
+        const bounds = panel.current?.getBoundingClientRect();
+        return {
+            left: Math.max(8, Math.min(left, window.innerWidth - (bounds?.width ?? 0) - 8)),
+            top: Math.max(72, Math.min(top, window.innerHeight - (bounds?.height ?? 0) - 8)),
+        };
+    }, []);
     useLayoutEffect(() => {
         const element = panel.current;
-        const layout = element?.parentElement;
-        if (!element || !layout) return;
-        const measure = () => layout.style.setProperty('--reader-measured-height', `${element.getBoundingClientRect().height}px`);
-        measure();
-        const observer = new ResizeObserver(measure);
+        if (!element) return;
+        const contain = () => setPosition(current => {
+            if (!current) return current;
+            const next = keepInView(current.left, current.top);
+            return next.left === current.left && next.top === current.top ? current : next;
+        });
+        const observer = new ResizeObserver(contain);
         observer.observe(element);
-        return () => { observer.disconnect(); layout.style.removeProperty('--reader-measured-height'); };
-    }, [expanded]);
+        window.addEventListener('resize', contain);
+        return () => { observer.disconnect(); window.removeEventListener('resize', contain); };
+    }, [keepInView]);
     useEffect(() => {
         const element = panel.current;
         const escape = (event: KeyboardEvent) => {
@@ -201,12 +213,35 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
     const available = catalogEngine === engine ? voices.filter(v => v.locale.split('-')[0] === language) : [];
     const currentPosition = state.segments.findIndex(s => s.index === state.current);
     return <aside ref={panel} aria-label={t('voice.title')} tabIndex={-1} data-voice-ignore data-voice-reader
+        style={position ? { left: position.left, top: position.top, right: 'auto' } : undefined}
         onKeyDown={event => { if (event.key === 'Escape' && !event.defaultPrevented) { event.preventDefault(); onClose(); } }}
         className="voice-reader-panel border-slate-200 bg-slate-50 text-slate-900">
         <div className="flex h-full min-h-0 flex-col">
             <div className="shrink-0 border-b border-slate-200 bg-white">
                 <div className="flex items-center justify-between gap-1 px-3 py-2">
-                    <h2 className={`min-w-0 flex-1 font-display font-bold ${expanded ? 'text-xl' : 'text-base'}`}>{t('voice.title')}</h2>
+                    <h2 className={`min-w-0 flex-1 font-display font-bold ${expanded ? 'text-xl' : 'text-base'}`}>
+                        <button type="button" aria-label={t('voice.move')} title={t('voice.moveHelp')}
+                            className="flex min-h-[44px] w-full touch-none select-none items-center gap-1 rounded-md text-left cursor-grab active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-indigo-500"
+                            onPointerDown={event => {
+                                if (event.button !== 0 || !panel.current) return;
+                                const bounds = panel.current.getBoundingClientRect();
+                                drag.current = { pointer: event.pointerId, x: event.clientX, y: event.clientY, left: bounds.left, top: bounds.top };
+                                event.currentTarget.setPointerCapture(event.pointerId);
+                            }}
+                            onPointerMove={event => {
+                                const start = drag.current;
+                                if (start?.pointer === event.pointerId) setPosition(keepInView(start.left + event.clientX - start.x, start.top + event.clientY - start.y));
+                            }}
+                            onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}
+                            onLostPointerCapture={() => { drag.current = null; }}
+                            onKeyDown={event => {
+                                const delta: Record<string, [number, number]> = { ArrowLeft: [-24, 0], ArrowRight: [24, 0], ArrowUp: [0, -24], ArrowDown: [0, 24] };
+                                const change = delta[event.key], bounds = panel.current?.getBoundingClientRect();
+                                if (change && bounds) { event.preventDefault(); setPosition(keepInView(bounds.left + change[0], bounds.top + change[1])); }
+                            }}>
+                            <GripVertical className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" /><span className="truncate">{t('voice.title')}</span>
+                        </button>
+                    </h2>
                     {!expanded && <Button type="button" variant="secondary" disabled={!target} onClick={togglePlayback} aria-label={playbackLabel} className="min-h-[44px] min-w-[44px] px-2">{active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</Button>}
                     <Button type="button" variant="ghost" onClick={onToggle} aria-label={t(expanded ? 'voice.minimize' : 'voice.expand')} aria-expanded={expanded} className="min-h-[44px] min-w-[44px] px-2">{expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</Button>
                     <Button type="button" variant="ghost" onClick={onClose} aria-label={t('voice.close')} className="min-h-[44px] min-w-[44px] px-2"><X className="h-5 w-5" /></Button>

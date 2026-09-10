@@ -7,8 +7,8 @@ let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser.close(); });
 
-async function fixture({ width = 1440, guest = false, live = false, dark = false } = {}) {
-    const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
+async function fixture({ width = 1440, guest = false, live = false, dark = false, touch = false } = {}) {
+    const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce', hasTouch: touch });
     const page = await context.newPage();
     page.setDefaultTimeout(15000);
     const requests = [], errors = [];
@@ -164,24 +164,21 @@ for (const width of [390, 1024, 1440]) {
             await page.getByRole('button', { name: 'Inizia un nuovo orientamento', exact: true }).click();
             const composer = page.locator('#bussola-composer');
             await composer.fill('La mia domanda');
+            const pageWidth = (await page.locator('main').boundingBox()).width;
             await page.getByRole('log').getByRole('button', { name: 'Ascolta', exact: true }).click();
             const panel = page.getByRole('complementary', { name: 'Lettore audio' });
             await panel.getByRole('status').filter({ hasText: 'In lettura' }).waitFor();
             assert.equal(await page.locator(':modal').count(), 0);
             assert.notEqual(await page.evaluate(() => document.body.style.overflow), 'hidden');
-            if (width >= 1024) {
-                const box = await composer.boundingBox(), side = await panel.boundingBox();
-                assert.ok(box.x + box.width <= side.x, 'reader reserves space beside the chat');
-            } else {
-                await panel.getByRole('button', { name: 'Espandi lettore' }).waitFor();
-                assert.ok((await panel.boundingBox()).height < 120, 'mobile starts compact');
-            }
+            await panel.getByRole('button', { name: 'Espandi lettore' }).waitFor();
+            assert.ok((await panel.boundingBox()).height < 120, 'reading starts with compact floating controls');
+            assert.equal((await page.locator('main').boundingBox()).width, pageWidth, 'reader does not narrow the page');
             await composer.fill('Scrivo mentre ascolto');
             await page.getByRole('button', { name: 'Invia alla Bussola', exact: true }).click();
             await page.getByRole('log').getByText('Scrivo mentre ascolto', { exact: true }).waitFor();
             assert.ok(requests.some(r => r.path.endsWith('/message') && r.body.message === 'Scrivo mentre ascolto'));
             assert.equal(await page.evaluate(() => window.__audios.at(-1).paused), false);
-            if (width < 1024) await panel.getByRole('button', { name: 'Espandi lettore' }).click();
+            await panel.getByRole('button', { name: 'Espandi lettore' }).click();
             await panel.getByRole('button', { name: 'Riduci lettore' }).click();
             await composer.fill('Una seconda bozza');
             if (width < 1024) {
@@ -206,6 +203,61 @@ for (const width of [390, 1024, 1440]) {
             await panel.getByRole('button', { name: 'Chiudi lettore' }).click();
             assert.equal(await page.evaluate(() => window.__audios.at(-1).src), '');
             assert.equal(await page.locator('[data-voice-active]').count(), 0);
+            assert.deepEqual(f.errors, []);
+        } finally { await f.context.close(); }
+    });
+}
+
+for (const width of [390, 1440]) {
+    test(`floating reader moves by ${width === 390 ? 'touch' : 'mouse'} and keyboard without stopping audio at ${width}px`, async () => {
+        const f = await fixture({ width, touch: width === 390 });
+        try {
+            const { page } = f;
+            await page.goto(`${origin}/guide`);
+            const mainBefore = await page.locator('main').boundingBox();
+            await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+            const panel = page.getByRole('complementary');
+            await panel.getByRole('button', { name: 'Ascolta pagina' }).click();
+            await panel.getByRole('status').filter({ hasText: 'In lettura' }).waitFor();
+            await panel.getByRole('button', { name: 'Riduci lettore' }).click();
+            await panel.getByRole('button', { name: 'Espandi lettore' }).waitFor();
+            const handle = panel.getByRole('button', { name: 'Sposta lettore', exact: true });
+            await handle.scrollIntoViewIfNeeded();
+            const before = await panel.boundingBox();
+            const grab = await handle.boundingBox();
+            const start = { x: grab.x + 20, y: grab.y + 20 }, end = { x: start.x - 40, y: start.y + 140 };
+            if (width === 390) {
+                const cdp = await f.context.newCDPSession(page);
+                await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [start] });
+                await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [end] });
+                await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+                await cdp.detach();
+            } else {
+                await page.mouse.move(start.x, start.y); await page.mouse.down();
+                await page.mouse.move(end.x, end.y, { steps: 5 }); await page.mouse.up();
+            }
+            await handle.scrollIntoViewIfNeeded();
+            let box = await panel.boundingBox();
+            assert.ok(box.x < before.x && box.y > before.y + 100, `drag moves the reader: ${JSON.stringify({ before, box, start, end, style: await panel.getAttribute('style') })}`);
+            const top = box.y;
+            await handle.focus(); await handle.press('ArrowDown');
+            await handle.scrollIntoViewIfNeeded();
+            box = await panel.boundingBox();
+            assert.equal(box.y, top + 24, 'keyboard can also position the reader');
+            assert.equal((await page.locator('main').boundingBox()).width, mainBefore.width);
+            assert.equal(await page.evaluate(() => window.__audios.at(-1).paused), false);
+            await page.screenshot({ path: `/tmp/voice-floating-${width}.png` });
+            await page.setViewportSize({ width: 390, height: 560 });
+            await panel.getByRole('button', { name: 'Espandi lettore' }).click();
+            await handle.scrollIntoViewIfNeeded();
+            await page.waitForFunction(() => {
+                const rect = document.querySelector('[data-voice-reader]').getBoundingClientRect();
+                return rect.left >= 7 && rect.right <= 383 && rect.top >= 71 && rect.bottom <= 553;
+            });
+            box = await panel.boundingBox();
+            assert.ok(box.x >= 7 && box.x + box.width <= 383, 'panel stays inside a narrower viewport');
+            assert.ok(box.y >= 71 && box.y + box.height <= 553, 'expanded controls remain reachable');
+            await panel.getByRole('button', { name: 'Chiudi lettore' }).click();
             assert.deepEqual(f.errors, []);
         } finally { await f.context.close(); }
     });
@@ -284,6 +336,7 @@ test('page reading follows the selected counselor and separates personal voice c
         await panel.waitFor({ state: 'detached' });
         await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
         assert.equal(await panel.getByLabel('Voce', { exact: true }).inputValue(), '', 'Sara uses her automatic profile');
+        await panel.locator('option[value="it_IT-paola-medium"]').waitFor({ state: 'attached' });
         assert.match(await panel.getByLabel('Voce', { exact: true }).textContent(), /Paola.*Femminile/);
         assert.match(await panel.getByLabel('Voce', { exact: true }).textContent(), /Riccardo.*Maschile/);
         await panel.getByRole('button', { name: 'Prova voce' }).click();
