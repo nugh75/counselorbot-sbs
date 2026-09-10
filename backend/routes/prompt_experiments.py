@@ -118,7 +118,7 @@ def options(_=ADMIN, db: Session = Depends(database.get_db)):
         pass
     return {'enabled': enabled, 'reason': None if enabled else 'Laboratorio non configurato o non disponibile.',
             'presets': [snapshots.values(p, snapshots.PRESET_FIELDS) for p in db.query(models.ModelPreset).filter_by(provider='ollama', is_active=True).order_by(models.ModelPreset.name)],
-            'targets': [{'id': s.id, 'label': s.label} for s in db.query(models.GuidedStep).filter_by(questionnaire_type='QSA').order_by(models.GuidedStep.sort_order) if not s.system_prompt_mode.endswith('summary')],
+            'targets': [snapshots.values(s, ('id', 'label', 'label_i18n', 'sort_order', 'prompt', 'system_prompt_mode', 'questionnaire_type')) for s in db.query(models.GuidedStep).filter_by(questionnaire_type='QSA').order_by(models.GuidedStep.sort_order) if not s.system_prompt_mode.endswith('summary')],
             'languages': list(snapshots.LANGUAGES)}
 
 

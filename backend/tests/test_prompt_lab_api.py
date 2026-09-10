@@ -196,3 +196,24 @@ def test_approval_binds_the_candidate_text_to_recorded_trials(context, monkeypat
     assert response.status_code == 409
     assert prod.get(models.GuidedStep,'intro').prompt == 'Introduce the profile.'
     assert prod.query(models.PromptExperimentDecision).count() == 0
+
+
+def test_options_explain_target_and_historical_context_stays_frozen(context):
+    client, prod, _, _ = context
+    prod.add(models.GuidedStep(id='summary', sort_order=1, label='Sintesi', prompt='Summarize.', system_prompt_mode='qsa-summary', questionnaire_type='QSA'))
+    prod.commit()
+    targets = client.get('/admin/prompt-experiments/options').json()['targets']
+    assert len(targets) == 1
+    assert targets[0]['id'] == 'intro'
+    assert targets[0]['prompt'] == 'Introduce the profile.'
+    assert targets[0]['questionnaire_type'] == 'QSA'
+    assert targets[0]['system_prompt_mode'] == 'qsa-intro'
+    experiment_id = create(client)
+    prod.get(models.GuidedStep, 'intro').label = 'Nuovo titolo'
+    prod.get(models.GuidedStep, 'intro').prompt = 'New live text.'
+    prod.commit()
+    saved = client.get('/admin/prompt-experiments/' + experiment_id).json()
+    step = next(s for s in saved['snapshot']['render_data']['steps'] if s['id'] == 'intro')
+    assert step['label'] == 'Introduzione'
+    assert saved['snapshot']['baseline'] == 'Introduce the profile.'
+    assert client.get('/admin/prompt-experiments/options').json()['targets'][0]['prompt'] == 'New live text.'

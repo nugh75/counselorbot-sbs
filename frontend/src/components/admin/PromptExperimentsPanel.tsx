@@ -9,6 +9,9 @@ import { Callout } from '@/components/ui/Callout';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { cn } from '@/lib/utils';
 import { promptLabCopy, type PromptLabCopy } from './prompt-lab-copy';
+import { PromptExperimentContext, targetLabel, type PromptTarget } from './PromptExperimentContext';
+import { promptLabContextCopy } from './prompt-lab-context-copy';
+import { compareCandidate } from './prompt-lab-comparison';
 
 // The backend owns eligibility and version checks; this panel presents the evidence.
 
@@ -27,12 +30,11 @@ interface Preset {
     max_tokens: number | null;
     disable_thinking: boolean;
 }
-interface Target { id: string; label: string; }
 interface LabOptions {
     enabled: boolean;
     reason: string | null;
     presets: Preset[];
-    targets: Target[];
+    targets: PromptTarget[];
     languages: string[];
 }
 interface HistoryTurn { role: 'user' | 'assistant'; content: string; }
@@ -48,7 +50,7 @@ interface LabCase {
 interface Goal { text: string; criterion: string; }
 interface Candidate { id: string; text: string; reason: string; expected: string; }
 interface SnapshotPresets { designer: Preset; proposer: Preset | null; judge: Preset; tested: Preset[]; }
-interface Snapshot { baseline: string; presets: SnapshotPresets; [key: string]: unknown; }
+interface Snapshot { baseline: string; presets: SnapshotPresets; render_data?: { steps: PromptTarget[] }; [key: string]: unknown; }
 interface LabRun {
     id: string;
     kind: 'prepare' | 'evaluate';
@@ -225,6 +227,7 @@ function PromptDiff({ baseline, candidate, C }: { baseline: string; candidate: s
 export function PromptExperimentsPanel() {
     const { lang } = useI18n();
     const C = useMemo(() => promptLabCopy(lang), [lang]);
+    const contextCopy = promptLabContextCopy[lang];
 
     const [options, setOptions] = useState<LabOptions | null>(null);
     const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -562,7 +565,7 @@ export function PromptExperimentsPanel() {
                     </L>
                     <L label={C.target}>
                         <select className={inputCls} value={form.target_key} onChange={(e) => setField({ target_key: e.target.value })}>
-                            {options.targets.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                            {options.targets.map((t) => <option key={t.id} value={t.id}>{`QSA · ${targetLabel(t, lang)} (${t.id})`}</option>)}
                         </select>
                     </L>
                     <L label={C.designer}>
@@ -588,6 +591,7 @@ export function PromptExperimentsPanel() {
                         <input className={inputCls} type="number" min={1} max={60} value={form.max_minutes} onChange={(e) => setField({ max_minutes: e.target.value })} />
                     </L>
                 </div>
+                <PromptExperimentContext targetKey={form.target_key} steps={options.targets} frozen={false} lang={lang} />
                 <fieldset>
                     <legend className="text-xs font-medium text-slate-500">{C.languages}</legend>
                     <div className="mt-1 flex flex-wrap gap-2">
@@ -667,7 +671,7 @@ export function PromptExperimentsPanel() {
                             <tr key={exp.id}>
                                 <td className="px-3 py-2 font-medium text-slate-800">{exp.title}</td>
                                 <td className="px-3 py-2 text-slate-600">{C.purposes[exp.purpose] ?? exp.purpose}</td>
-                                <td className="px-3 py-2 font-mono text-xs text-slate-600">{exp.target_key}</td>
+                                <td className="px-3 py-2 font-mono text-xs text-slate-600">{experimentTargetLabel(exp)}</td>
                                 <td className="px-3 py-2"><StateBadge value={exp.state} map={C.states} kind="state" /></td>
                                 <td className="px-3 py-2 text-xs text-slate-500">{fmtTime(exp.created_at)}</td>
                                 <td className="px-3 py-2 text-right">
@@ -762,6 +766,44 @@ export function PromptExperimentsPanel() {
         );
     }
 
+    function experimentTargetLabel(exp: Experiment) {
+        const step = exp.snapshot?.render_data?.steps.find((s) => s.id === exp.target_key);
+        // Historical labels come from the snapshot, never today's options.
+        return `QSA · ${step ? targetLabel(step, lang) : exp.target_key}`;
+    }
+
+    function renderProposalReport(exp: Experiment, candidate: Candidate) {
+        const { pairs, incomplete } = compareCandidate(exp.summary?.metrics ?? [], candidate.id);
+        const rows = (direction: string) => pairs.filter((p) => p.direction === direction).map(({ before, after }) => (
+            <li key={`${after.preset_id}-${after.language}-${after.split}`}>
+                {presetLabel(after.preset_id)} · {after.language ?? '—'} · {C.splits[after.split]}: {before.passed}/{before.total} → {after.passed}/{after.total}
+            </li>
+        ));
+        const pros = rows('pro');
+        return <section aria-label={contextCopy.report} className="space-y-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
+            <h5 className="font-bold">{contextCopy.report}</h5>
+            <p><span className="font-semibold">{contextCopy.expected}:</span> {candidate.expected}</p>
+            <p className="text-xs text-slate-500">{contextCopy.evidence}</p>
+            <div className="grid gap-3 md:grid-cols-2">
+                <div><h6 className="font-semibold">{contextCopy.pros}</h6>
+                    {pros.length ? <ul className="list-disc space-y-1 pl-4">{pros}</ul> : <p>{contextCopy.noPros}</p>}
+                </div>
+                <div><h6 className="font-semibold">{contextCopy.cons}</h6>
+                    <ul className="list-disc space-y-1 pl-4">
+                        {rows('con')}
+                        {incomplete && <li>{contextCopy.noData}</li>}
+                        <li>{contextCopy.synthetic}</li>
+                        <li>{contextCopy.shared}</li>
+                        {(exp.approval_blockers ?? []).map((b) => <li key={b}>{b}</li>)}
+                    </ul>
+                </div>
+            </div>
+            {rows('neutral').length > 0 && <details><summary className="cursor-pointer">{contextCopy.neutral}</summary><ul className="list-disc pl-4">{rows('neutral')}</ul></details>}
+            <p><span className="font-semibold">{contextCopy.verdict}:</span> {exp.summary ? C.eligibility[exp.summary.eligibility] : contextCopy.noVerdict}</p>
+            {exp.summary?.reason && <p>{exp.summary.reason}</p>}
+        </section>;
+    }
+
     function renderCandidates(exp: Experiment) {
         return (
             <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
@@ -774,8 +816,8 @@ export function PromptExperimentsPanel() {
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600">
                             <span className="font-mono text-indigo-700">{c.id}</span>
                             <span><span className="font-semibold">{C.candidateReason}:</span> {c.reason}</span>
-                            <span><span className="font-semibold">{C.candidateExpected}:</span> {c.expected}</span>
                         </div>
+                        {renderProposalReport(exp, c)}
                         <PromptDiff baseline={exp.snapshot?.baseline ?? ''} candidate={c.text} C={C} />
                     </div>
                 ))}
@@ -1045,7 +1087,7 @@ export function PromptExperimentsPanel() {
                             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                                 <StateBadge value={exp.state} map={C.states} kind="state" />
                                 <span>{C.purposes[exp.purpose] ?? exp.purpose}</span>
-                                <span className="font-mono text-xs">{exp.target_key}</span>
+                                <span className="text-xs">{experimentTargetLabel(exp)}</span>
                                 <span className="text-xs">{C.created} {fmtTime(exp.created_at)}</span>
                             </div>
                         </div>
@@ -1095,6 +1137,7 @@ export function PromptExperimentsPanel() {
                     </div>
                 </div>
 
+                <PromptExperimentContext targetKey={exp.target_key} steps={exp.snapshot?.render_data?.steps ?? []} baseline={exp.snapshot?.baseline} frozen lang={lang} />
                 {actionError && <Callout variant="danger" title={C.error}>{actionError}</Callout>}
                 {exp.error && <Callout variant="danger" title={C.error}>{exp.error}</Callout>}
                 {blockers.length > 0 && (
@@ -1105,11 +1148,11 @@ export function PromptExperimentsPanel() {
                 )}
 
                 <details className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-600">
-                    <summary className="cursor-pointer">{C.target} · {C.summaryTitle}</summary>
+                    <summary className="cursor-pointer">{contextCopy.technical}</summary>
                     <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify({ manifest_hash: exp.manifest_hash, limits: exp.snapshot?.limits, model_digests: exp.snapshot?.model_digests }, null, 2)}</pre>
                 </details>
-                {renderCases(exp)}
                 {exp.candidates.length > 0 && renderCandidates(exp)}
+                {renderCases(exp)}
                 {exp.summary && renderSummary(exp)}
                 {renderResults(exp)}
                 {renderRuns(exp)}
@@ -1123,6 +1166,7 @@ export function PromptExperimentsPanel() {
             <div className="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4">
                 <div>
                     <h2 className="text-lg font-bold text-slate-900">{C.title}</h2>
+                    <p className="mt-2 max-w-3xl text-sm text-slate-700">{contextCopy.workflow}</p>
                     <p className="text-sm text-slate-500">{C.subtitle}</p>
                 </div>
                 <div className="flex items-center gap-2">
