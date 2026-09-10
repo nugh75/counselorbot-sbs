@@ -271,6 +271,15 @@ def apply_patch(current: DiagramSpec | None, patch: IdeaPatch, *,
             continue
         edges.append(edge)
 
+    # Un nodo che era un ramo e torna con un altro ruolo resta segnato: il
+    # pannello continua a mostrarlo e la persona puo' chiedere di rimetterlo.
+    was_task = {node.id for node in current.nodes if node.role == "task"} if current else set()
+    for node in nodes:
+        if node.role == "task":
+            node.demoted = False
+        elif node.id in was_task:
+            node.demoted = True
+
     # Un solo nodo accentato: se il modello ne accende un secondo, vince
     # l'ultimo dichiarato e gli altri si spengono.
     accented = [node for node in nodes if node.accent]
@@ -359,6 +368,7 @@ def _limit_task_depth(spec: DiagramSpec) -> DiagramSpec:
             copy.role = "step"
             copy.icon = NODE_ROLES["step"]
             copy.task_type = None
+            copy.demoted = True
             changed = True
         nodes.append(copy)
     return spec.model_copy(update={"nodes": nodes}) if changed else spec
@@ -742,6 +752,8 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
             marks.append(f"FLAW: {node.flaw}")
         if node.closed:
             marks.append("closed")
+        if node.demoted:
+            marks.append("was a branch, not one any more")
         if node.accent:
             marks.append("centre")
         where = "" if owner.get(node.id) in (None, focus) else f" [in branch {owner[node.id]}]"
@@ -753,6 +765,17 @@ def map_context(spec: DiagramSpec | None, message: str = "", lang: str = "it",
     for edge in spec.edges:
         label = f' "{edge.label}"' if edge.label else ""
         lines.append(f"- {edge.source} -{edge.kind}->{label} {edge.target}")
+
+    demoted = [node for node in spec.nodes if node.demoted]
+    if demoted:
+        listed = ", ".join(f"{node.id} ({node.label})" for node in demoted)
+        lines.append(
+            f"These were branches and are not any more: {listed}. The person "
+            "sees them marked that way and can ask for one back. If they do, "
+            "send an update with `\"role\":\"task\"` for that id, keep its "
+            "links, and give it a `task_type`. Never restore one on your own, "
+            "and never claim a branch is still there when it is on this line."
+        )
 
     move = next_move(spec, chosen_focus)
     lines.append("")
@@ -986,6 +1009,9 @@ def branches(spec: DiagramSpec | None, chosen_focus: str | None = None) -> list[
 
     Solo i nodi che sono lavoro - l'idea e i task -, con quanto manca a
     ciascuno: e' l'unica cosa che dice se vale la pena tornarci.
+
+    Chi era un ramo e non lo e' piu' resta in elenco, segnato: toglierlo
+    farebbe sparire senza avviso lavoro che la persona ha fatto davvero.
     """
     if spec is None:
         return []
@@ -993,10 +1019,12 @@ def branches(spec: DiagramSpec | None, chosen_focus: str | None = None) -> list[
     owner = owning_task(spec)
     out = []
     for node in spec.nodes:
-        if not _is_task_node(node):
+        if not _is_task_node(node) and not node.demoted:
             continue
         parent = None
-        if node.role == "task":
+        if node.demoted:
+            parent = owner.get(node.id) or root_id(spec)
+        elif node.role == "task":
             # Il proprietario di un task e' se stesso: il padre e' quello del
             # primo vicino che lo precede nell'albero.
             links = _adjacency(spec)
@@ -1020,6 +1048,7 @@ def branches(spec: DiagramSpec | None, chosen_focus: str | None = None) -> list[
             "missing_roles": missing_roles(spec, node.id),
             "flaws": len(branch_flaws(spec, node.id)),
             "is_focus": node.id == focus,
+            "demoted": bool(node.demoted),
         })
     out.sort(key=lambda item: (item["depth"], item["id"]))
     return out
