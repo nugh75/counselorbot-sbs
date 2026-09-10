@@ -160,8 +160,9 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   la scrittura. I comandi dei passi sono icone da 44px con etichette accessibili.
   Un solo menu a tre punti verticali (kebab), accanto alla scrittura, raccoglie
   percorso e risorse, Strumenti visivi, lunghezza della risposta e congelamento.
-  Include anche Conversazione vocale: i controlli di registrazione e ascolto
-  sostituiscono la casella di scrittura, mentre tutta la chat resta visibile.
+  Include anche Conversazione vocale: solo il pulsante principale sostituisce
+  la casella di scrittura, mentre tutta la chat resta visibile. Stato, istruzioni,
+  pausa, ripresa, riascolto e ritorno alla scrittura restano nei tre puntini.
   Un clic avvia la registrazione, un altro invia; il microfono resta spento
   durante la risposta. La modalità usa la voce del counselor e permette di
   interrompere, riascoltare e tornare a scrivere, senza finestre sovrapposte.

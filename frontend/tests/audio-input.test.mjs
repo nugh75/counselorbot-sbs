@@ -127,7 +127,14 @@ async function fixture({ bussola = false, width = 390, lang = 'it', live = false
         await page.getByRole('button', {name:'Conversazione vocale',exact:true}).click();
         await page.getByRole('group', {name:'Conversazione vocale',exact:true}).waitFor();
     }
-    return { page, context, composer, control, sent, menu, audio, automatic, open, voice };
+    async function options() {
+        const trigger = page.getByRole('button', {name:'Opzioni della conversazione',exact:true});
+        if (await trigger.getAttribute('aria-expanded') !== 'true') await trigger.click();
+        const panel = page.getByRole('group', {name:'Opzioni della conversazione',exact:true});
+        await panel.waitFor();
+        return panel;
+    }
+    return { page, context, composer, control, sent, menu, audio, automatic, open, voice, options };
 }
 
 for (const bussola of [false, true]) {
@@ -308,8 +315,8 @@ test('real MediaRecorder audio and WAV upload reach local Whisper', {skip:!proce
     } finally { await f.context.close(); }
 });
 
-for (const bussola of [false, true]) test(`${bussola ? 'Bussola' : 'guided chat'} voice turns keep the full transcript visible and wait for an explicit microphone press`, async () => {
-    const f = await fixture({bussola,width:bussola ? 1440 : 320});
+for (const bussola of [false, true]) for (const width of [320, 1440]) test(`${bussola ? 'Bussola' : 'guided chat'} voice turns at ${width}px keep the full transcript visible and wait for an explicit microphone press`, async () => {
+    const f = await fixture({bussola,width});
     try {
         await f.page.evaluate(() => localStorage.setItem('cb_voice_it_counselor_1','piper:'));
         await f.composer.fill('La mia premessa');
@@ -317,11 +324,20 @@ for (const bussola of [false, true]) test(`${bussola ? 'Bussola' : 'guided chat'
         const panel = f.page.getByRole('group', {name:'Conversazione vocale',exact:true});
         assert.equal(await f.page.getByRole('log').isVisible(), true);
         assert.equal(await f.composer.isVisible(), false);
+        assert.equal(await panel.getByRole('button').count(), 1, 'Only the talk button stays in the composer');
+        assert.equal((await panel.innerText()).trim(), 'Premi per parlare', 'No extra heading, status or instructions');
+        assert.ok((await panel.boundingBox()).height <= 52, 'Voice controls occupy a single compact row');
+        assert.equal(await f.page.getByRole('button', {name:'Torna a scrivere'}).isVisible(), false);
+        const options = await f.options();
+        await options.getByText(/Il testo resta nella chat/).waitFor();
+        await options.getByRole('button', {name:'Torna a scrivere'}).waitFor();
+        await f.page.keyboard.press('Escape');
+        assert.equal(await panel.isVisible(), true, 'Escape in the menu closes it without exiting voice mode');
         assert.equal(await f.page.evaluate(() => window.__tracks.length), 0);
         assert.equal(f.control.requests.filter(r => r.path === '/api/tts/stream').length, 0, 'Never replay restored history on entry');
         await panel.getByRole('button', {name:'Premi per parlare',exact:true}).click();
         await panel.getByRole('button', {name:'Ferma e invia'}).click();
-        await panel.getByRole('status').filter({hasText:'In lettura'}).waitFor();
+        await panel.getByRole('button', {name:'Interrompi e parla'}).waitFor();
         assert.equal(f.sent().length, 1);
         assert.equal(f.sent()[0].body.message, 'La mia premessa\nVorrei studiare meglio.');
         await f.page.getByRole('log').getByText('La mia premessa\nVorrei studiare meglio.',{exact:true}).waitFor();
@@ -334,22 +350,33 @@ for (const bussola of [false, true]) test(`${bussola ? 'Bussola' : 'guided chat'
         assert.equal(spoken[0].body.engine, 'piper');
         assert.equal(spoken[0].body.voice_override, false);
         assert.equal(await f.page.evaluate(() => window.__overlap), false);
+        await f.options();
+        await options.getByRole('button', {name:'Pausa',exact:true}).click();
+        assert.equal(await f.page.evaluate(() => window.__speakers.every(a => a.paused)), true);
+        await options.getByRole('button', {name:'Riprendi',exact:true}).click();
+        await options.getByRole('status').filter({hasText:'In lettura'}).waitFor();
         await f.page.evaluate(() => window.__speakers.at(-1).onended());
-        await panel.getByRole('status').filter({hasText:'Microfono spento'}).waitFor();
+        await options.getByRole('button', {name:'Riascolta la risposta'}).click();
+        await options.getByRole('status').filter({hasText:'In lettura'}).waitFor();
+        assert.equal(f.sent().length, 1, 'Playback commands never resend the chat message');
+        await f.page.evaluate(() => window.__speakers.at(-1).onended());
+        await f.page.screenshot({path:`/tmp/compact-voice-options-${bussola ? 'bussola' : 'chat'}-${width}.png`});
+        await f.page.keyboard.press('Escape');
+        await panel.getByRole('button', {name:'Premi per parlare',exact:true}).waitFor();
         assert.equal(await f.page.evaluate(() => window.__tracks.length), 1, 'No automatic microphone restart');
         for (const button of await panel.getByRole('button').all()) {
             const box = await button.boundingBox();
-            assert.ok(box.height >= 44 && box.x >= 0 && box.x + box.width <= (bussola ? 1440 : 320));
+            assert.ok(box.height >= 44 && box.x >= 0 && box.x + box.width <= width);
         }
-        await f.page.screenshot({path:`/tmp/voice-conversation-${bussola ? 'bussola' : 'chat'}.png`});
+        await f.page.screenshot({path:`/tmp/compact-voice-conversation-${bussola ? 'bussola' : 'chat'}-${width}.png`});
         await panel.getByRole('button', {name:'Premi per parlare',exact:true}).click();
         await panel.getByRole('button', {name:'Ferma e invia'}).click();
-        await panel.getByRole('status').filter({hasText:'In lettura'}).waitFor();
+        await panel.getByRole('button', {name:'Interrompi e parla'}).waitFor();
         assert.equal(f.sent().length, 2);
         await panel.getByRole('button', {name:'Interrompi e parla'}).click();
         await panel.getByRole('button', {name:'Ferma e invia'}).waitFor();
         assert.equal(await f.page.evaluate(() => window.__speakers.every(a => a.paused)), true);
-        await panel.getByRole('button', {name:'Torna a scrivere'}).click();
+        await (await f.options()).getByRole('button', {name:'Torna a scrivere'}).click();
         await f.composer.waitFor();
         assert.ok((await f.composer.boundingBox()).height >= 44, 'Composer restores its usable height');
         assert.equal(await f.page.evaluate(() => window.__tracks.every(t => t.stopped)), true);
@@ -367,8 +394,8 @@ test('leaving voice mode during a reply keeps the conversation but suppresses la
         const panel = f.page.getByRole('group', {name:'Conversazione vocale',exact:true});
         await panel.getByRole('button', {name:'Premi per parlare'}).click();
         await panel.getByRole('button', {name:'Ferma e invia'}).click();
-        await panel.getByRole('status').filter({hasText:'Il counselor sta rispondendo'}).waitFor();
-        await panel.getByRole('button', {name:'Torna a scrivere'}).click();
+        await panel.getByRole('button', {name:/Il counselor sta rispondendo/}).waitFor();
+        await (await f.options()).getByRole('button', {name:'Torna a scrivere'}).click();
         release();
         await f.page.getByRole('log').getByText('Proseguiamo.',{exact:true}).last().waitFor();
         await f.page.getByRole('button',{name:'Invia',exact:true}).waitFor();
@@ -386,10 +413,12 @@ test('blocked playback resumes without sending again and incomplete replies are 
         const panel = f.page.getByRole('group', {name:'Conversazione vocale',exact:true});
         await panel.getByRole('button', {name:'Premi per parlare'}).click();
         await panel.getByRole('button', {name:'Ferma e invia'}).click();
-        await panel.getByRole('alert').filter({hasText:'Premi Riprendi'}).waitFor();
+        const options = f.page.getByRole('group', {name:'Opzioni della conversazione',exact:true});
+        await options.getByRole('alert').filter({hasText:'Premi Riprendi'}).waitFor();
         await f.page.evaluate(() => { window.__blockPlayback = false; });
-        await panel.getByRole('button', {name:'Riprendi',exact:true}).click();
-        await panel.getByRole('status').filter({hasText:'In lettura'}).waitFor();
+        await options.getByRole('button', {name:'Riprendi',exact:true}).click();
+        await f.page.keyboard.press('Escape');
+        await panel.getByRole('button', {name:'Interrompi e parla'}).waitFor();
         assert.equal(f.sent().length, 1);
         f.control.incomplete = true;
         await panel.getByRole('button', {name:'Interrompi e parla'}).click();
@@ -400,7 +429,7 @@ test('blocked playback resumes without sending again and incomplete replies are 
         assert.equal(await f.page.evaluate(() => window.__tracks.every(t => t.stopped)), true);
         f.control.incomplete = false;
         await continueReply.click();
-        await panel.getByRole('status').filter({hasText:'In lettura'}).waitFor();
+        await panel.getByRole('button', {name:'Interrompi e parla'}).waitFor();
         assert.equal(f.control.requests.filter(r => r.path === '/api/tts/stream').length, 2, 'Speak only when continuation finishes');
         assert.deepEqual(f.control.errors, []);
     } finally { await f.context.close(); }
@@ -417,7 +446,7 @@ test('live voice turn records, transcribes locally and plays Piper while showing
         await new Promise(resolve => setTimeout(resolve, 4000));
         await panel.getByRole('button', {name:'Ferma e invia'}).click();
         await f.page.waitForFunction(() => window.__speakers.some(audio => audio.currentTime > 0), null, {timeout:30000});
-        await panel.getByRole('status').filter({hasText:'Microfono spento'}).waitFor();
+        await panel.getByRole('button', {name:'Premi per parlare',exact:true}).waitFor();
         await f.page.getByRole('log').getByText(/organizzare/).waitFor();
         assert.equal(f.sent().length, 1);
         assert.equal(await f.page.evaluate(() => window.__streams.length), 1);
@@ -434,6 +463,9 @@ test('manual listening stops voice capture and the next recording stops manual l
         const panel = f.page.getByRole('group', {name:'Conversazione vocale',exact:true});
         await panel.getByRole('button', {name:'Premi per parlare'}).click();
         await panel.getByRole('button', {name:'Ferma e invia'}).waitFor();
+        // Playwright can click through opacity 0 during the page entrance animation;
+        // the reader deliberately skips invisible text, so wait for the actual message.
+        await f.page.waitForFunction(() => document.querySelector('[data-voice-source]')?.checkVisibility({checkOpacity:true}));
         await f.page.getByRole('log').getByRole('button', {name:'Ascolta',exact:true}).first().click();
         await f.page.getByRole('complementary', {name:'Lettore audio'}).getByRole('status').filter({hasText:'In lettura'}).waitFor();
         assert.equal(await f.page.evaluate(() => window.__tracks.every(t => t.stopped)), true);
@@ -458,10 +490,10 @@ test('the final guided reply remains audible after the path completes', async ()
         const panel = f.page.getByRole('group', {name:'Conversazione vocale',exact:true});
         await panel.getByRole('button', {name:'Premi per parlare'}).click();
         await panel.getByRole('button', {name:'Ferma e invia'}).click();
-        await panel.getByRole('status').filter({hasText:'In lettura'}).waitFor();
+        await panel.getByRole('button', {name:'Interrompi e parla'}).waitFor();
         assert.equal(f.control.requests.find(r => r.path === '/api/tts/stream').body.text, 'Proseguiamo.');
         assert.equal(await panel.getByRole('button', {name:'Interrompi e parla'}).isDisabled(), true);
-        await panel.getByRole('button', {name:'Torna a scrivere'}).click();
+        await (await f.options()).getByRole('button', {name:'Torna a scrivere'}).click();
         assert.equal(await f.composer.count(), 0, 'Completed paths keep their normal closed composer');
         assert.deepEqual(f.control.errors, []);
     } finally { await f.context.close(); }
@@ -475,14 +507,15 @@ test('shortening an overlong voice transcript sends it once and clears its error
         const panel = f.page.getByRole('group', {name:'Conversazione vocale',exact:true});
         await panel.getByRole('button', {name:'Premi per parlare'}).click();
         await panel.getByRole('button', {name:'Ferma e invia'}).click();
-        await panel.getByLabel('Trascrizione',{exact:true}).fill('Una domanda più breve.');
+        const options = f.page.getByRole('group', {name:'Opzioni della conversazione',exact:true});
+        await options.getByLabel('Trascrizione',{exact:true}).fill('Una domanda più breve.');
         assert.equal(f.sent().length, 0);
-        await panel.getByRole('button', {name:'Ferma e invia'}).click();
-        await panel.getByRole('status').filter({hasText:'In lettura'}).waitFor();
+        await options.getByRole('button', {name:'Ferma e invia'}).click();
+        await options.getByRole('status').filter({hasText:'In lettura'}).waitFor();
         assert.equal(f.sent().length, 1);
         assert.equal(f.sent()[0].body.message, 'Una domanda più breve.');
-        assert.equal(await panel.getByLabel('Trascrizione',{exact:true}).count(), 0);
-        assert.equal(await panel.getByRole('alert').count(), 0);
+        assert.equal(await options.getByLabel('Trascrizione',{exact:true}).count(), 0);
+        assert.equal(await options.getByRole('alert').count(), 0);
         assert.deepEqual(f.control.errors, []);
     } finally { await f.context.close(); }
 });

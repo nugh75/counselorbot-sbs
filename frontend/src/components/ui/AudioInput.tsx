@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import { FileAudio, Loader2, Mic, Pause, Play, Square, X } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
@@ -8,13 +9,12 @@ import { ChatActionsPopover } from './ChatActionsPopover';
 import { useAudioAutoSend } from './AudioSendOption';
 import { VoiceReaderController } from '@/lib/voice-reader';
 import { speechInput } from '@/components/voice-reader/VoiceReader';
-import { Tooltip } from './Tooltip';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_SECONDS = 180;
 type Stage = 'idle' | 'permission' | 'recording' | 'transcribing' | 'waiting' | 'reply';
 
-export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, sessionKey, disabled, maxLength = 60000, voiceMode = false, onExitVoice, counselorId }: {
+export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, sessionKey, disabled, maxLength = 60000, voiceMode = false, onExitVoice, counselorId, voiceOptionsContainer }: {
     value: string;
     onChange: (text: string) => void;
     onSend: (text: string) => Promise<string | undefined>;
@@ -26,6 +26,7 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
     voiceMode?: boolean;
     onExitVoice?: () => void;
     counselorId?: number | null;
+    voiceOptionsContainer?: HTMLElement | null;
 }) {
     const { t, lang } = useI18n();
     const autoSend = useAudioAutoSend();
@@ -84,6 +85,11 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
         };
     }, [cancel, lang, sessionKey, voiceMode, counselorId]);
     useEffect(() => { if (voiceMode) talkButton.current?.focus(); }, [voiceMode]);
+    const voiceError = error || (stage === 'reply' ? playback.error : null);
+    useEffect(() => {
+        // Reveal recovery controls when an error needs attention, even with the menu closed.
+        if (voiceMode && voiceError) voiceOptionsContainer?.closest<HTMLElement>('[popover]')?.showPopover();
+    }, [voiceMode, voiceError, voiceOptionsContainer]);
 
     function playReply() {
         void speech.start(speechInput({ id: 'voice-conversation', text: replyText.current, language: lang, counselorId }));
@@ -211,18 +217,17 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
             : stage === 'idle' || (stage === 'reply' && playback.status === 'complete') ? t('audio.voice.ready')
             : stage === 'reply' ? t(`voice.${playback.status === 'error' ? 'paused' : playback.status}`)
             : t(`audio.${stage}`);
-        return <div role="group" aria-label={t('audio.voice.title')} className="min-w-0 flex-1 space-y-2 rounded-lg border border-indigo-200 bg-indigo-50 p-3" data-voice-ignore
+        return <><div role="group" aria-label={t('audio.voice.title')} className="min-w-0 flex-1" data-voice-ignore
             onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); cancel(); onExitVoice?.(); } }}>
-            <div className="flex items-center justify-between gap-2">
-                <div><p className="text-sm font-semibold text-indigo-800">{t('audio.voice.title')}</p><p role="status" className="text-xs text-slate-700">{status}</p></div>
-                <Tooltip content={t('audio.voice.exit')}><button type="button" aria-label={t('audio.voice.exit')} className="inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
-                    onClick={() => { cancel(); onExitVoice?.(); }}><X className="h-5 w-5" /></button></Tooltip>
-            </div>
             <button ref={talkButton} type="button" disabled={waiting || (disabled && stage !== 'recording')} className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
                 onClick={() => { if (stage === 'recording') { if (recorder.current?.state === 'recording') recorder.current.stop(); } else void startRecording(() => {}); }}>
                 {waiting ? <Loader2 className="h-5 w-5 shrink-0 animate-spin" /> : stage === 'recording' ? <Square className="h-5 w-5 shrink-0" /> : <Mic className="h-5 w-5 shrink-0" />}
-                {stage === 'recording' ? t('audio.voice.send') : speaking ? t('audio.voice.interrupt') : t('audio.voice.talk')}
+                {waiting ? status : stage === 'recording' ? t('audio.voice.send') : speaking ? t('audio.voice.interrupt') : t('audio.voice.talk')}
             </button>
+        </div>
+        {voiceOptionsContainer && createPortal(<div className="space-y-2" data-voice-ignore>
+            <p className="px-2 text-sm font-semibold">{t('audio.voice.title')}</p>
+            <p role="status" className="px-2 text-xs text-slate-500">{status}</p>
             {stage === 'reply' && <button type="button" className={actionClass} onClick={() => {
                 if (speaking) speech.pause();
                 else if (playback.status === 'paused') speech.resume();
@@ -235,8 +240,13 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
                 <textarea aria-label={t('audio.transcript')} value={overflow} onChange={event => setOverflow(event.target.value)} rows={3} className="w-full rounded-md border border-slate-300 bg-white p-2 text-sm" />
                 <button type="button" className={actionClass} onClick={() => void insert(overflow, () => {})}>{t('audio.voice.send')}</button>
             </>}
-            <p className="text-xs text-slate-500">{t('audio.voice.help')}</p>
-        </div>;
+            <button type="button" className={actionClass} onClick={() => {
+                voiceOptionsContainer.closest<HTMLElement>('[popover]')?.hidePopover();
+                cancel(); onExitVoice?.();
+                window.requestAnimationFrame(() => document.getElementById(composerId)?.focus());
+            }}><X className="h-4 w-4 shrink-0" />{t('audio.voice.exit')}</button>
+            <p className="px-2 text-xs text-slate-500">{t('audio.voice.help')}</p>
+        </div>, voiceOptionsContainer)}</>;
     }
     return <ChatActionsPopover label={t('audio.add')} icon={<Mic className="h-5 w-5" aria-hidden="true" />} disabled={disabled}
         onOpenChange={open => { if (!open) cancel(); }}>

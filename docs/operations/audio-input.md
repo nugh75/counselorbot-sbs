@@ -18,8 +18,8 @@ sincronizzazione fra dispositivi.
 **Tre puntini → Conversazione vocale** attiva i turni parlati nella chat
 guidata e nella Bussola. La conversazione completa resta visibile e scorrevole:
 ogni messaggio trascritto e ogni risposta del counselor vi compaiono normalmente.
-I controlli vocali prendono il posto della casella di scrittura, senza aprire
-finestre sovrapposte o duplicare la trascrizione.
+Al posto della casella di scrittura rimane solo il pulsante principale.
+Stato, istruzioni e comandi secondari si trovano nei **tre puntini**.
 
 1. **Premi per parlare** attiva il microfono.
 2. **Ferma e invia** termina la registrazione, la trascrive e invia il messaggio
@@ -28,16 +28,19 @@ finestre sovrapposte o duplicare la trascrizione.
    durante l'ascolto e alla fine della risposta: per un nuovo turno si preme di nuovo.
 
 **Interrompi e parla** arresta l'ascolto e avvia una nuova registrazione.
-Sono disponibili pausa, ripresa e riascolto, senza inviare di nuovo il messaggio.
+Nei **tre puntini** sono disponibili pausa, ripresa e riascolto, senza inviare di nuovo il messaggio.
 Se il browser blocca la riproduzione automatica, **Riprendi** la avvia con un clic.
+Il menu si apre automaticamente in caso di errore per mostrare il problema
+e gli eventuali comandi di recupero.
 Voce, motore, lingua, profilo del counselor e correzioni della pronuncia sono
 gli stessi del lettore audio. Il riconoscimento resta locale; la risposta
 usa Piper oppure il servizio online Edge secondo la preferenza del lettore.
 
-**Torna a scrivere** (X), oppure Escape dai controlli vocali, interrompe audio,
+**Tre puntini → Torna a scrivere**, oppure Escape dal pulsante vocale, interrompe audio,
 microfono e trascrizione in corso. Un messaggio già inviato prosegue nella chat,
 ma la sua risposta tardiva non avvia l'audio. Cambiare lingua, counselor o
 sessione interrompe l'attività audio; il microfono richiede sempre un nuovo clic.
+Escape dentro il menu chiude solo il menu, lasciando attiva la modalità vocale.
 Anche **Ascolta** su un messaggio arresta un'eventuale registrazione prima di
 avviare il lettore. I pulsanti dei passi e il comando **Continua** per una
 risposta interrotta restano disponibili: la lettura attende il completamento
