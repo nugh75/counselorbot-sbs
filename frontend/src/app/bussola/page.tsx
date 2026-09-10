@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowDown, ArrowRight, Check, Compass, Loader2, Send, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowRight, Check, Compass, Loader2, Mic, Send, Sparkles } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
@@ -51,6 +51,7 @@ export default function BussolaPage() {
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [audioBusy, setAudioBusy] = useState(false);
+    const [voiceMode, setVoiceMode] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [input, setInput] = useState('');
     const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
@@ -153,6 +154,7 @@ export default function BussolaPage() {
         try {
             const row = await sendOrientationMessage(session.session_id, message, lang);
             setSession(row);
+            return row.messages.at(-1)?.role === 'assistant' ? row.messages.at(-1)?.content : undefined;
         } catch {
             setInput(message);
             setError(t('orientation.error'));
@@ -327,12 +329,18 @@ export default function BussolaPage() {
                                     />
                                 </div>
                                 <div className="flex items-end gap-2">
-                                    <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{() => <AudioSendOption />}</ChatActionsPopover>
-                                    <textarea id="bussola-composer" value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} rows={2} maxLength={4000} placeholder={t('orientation.input.placeholder')} className="min-h-20 min-w-0 flex-1 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                                    <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <>
+                                        <button type="button" disabled={sending || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(value => !value); }}>
+                                            <Mic className="h-4 w-4 shrink-0" />{t(voiceMode ? 'audio.voice.exit' : 'audio.voice.title')}
+                                        </button>
+                                        {!voiceMode && <AudioSendOption />}
+                                    </>}</ChatActionsPopover>
+                                    <textarea id="bussola-composer" hidden={voiceMode} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} rows={2} maxLength={4000} placeholder={t('orientation.input.placeholder')} className="min-h-20 min-w-0 flex-1 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                                     <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
-                                        onSend={text => void submitMessage({ preventDefault() {} }, text)}
+                                        onSend={text => submitMessage({ preventDefault() {} }, text)}
+                                        voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={session.counselor_id}
                                         composerId="bussola-composer" sessionKey={session.session_id} disabled={sending} maxLength={4000} />
-                                    <button type="submit" disabled={!input.trim() || sending || audioBusy} aria-label={t('orientation.input.send')} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40"><Send className="h-4 w-4" /></button>
+                                    {!voiceMode && <button type="submit" disabled={!input.trim() || sending || audioBusy} aria-label={t('orientation.input.send')} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40"><Send className="h-4 w-4" /></button>}
                                 </div>
                             </form>
                         )}

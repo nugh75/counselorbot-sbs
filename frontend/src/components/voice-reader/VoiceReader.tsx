@@ -31,7 +31,7 @@ function subscribePreference(notify: () => void) {
     window.addEventListener(PREFERENCE_EVENT, notify);
     return () => { window.removeEventListener('storage', notify); window.removeEventListener(PREFERENCE_EVENT, notify); };
 }
-function speechInput(target: Target): ReaderInput {
+export function speechInput(target: Target): ReaderInput {
     const [storedEngine, voice] = preference(target.language, target.counselorId).split(':');
     const engine = storedEngine === 'piper' ? 'piper' : 'edge';
     return { text: target.text, language: target.language, engine,
@@ -63,6 +63,7 @@ export function VoiceReaderProvider({ children }: { children: React.ReactNode })
     }, [controller]);
     useEffect(() => () => close(), [pathname, lang, displayedCounselorId, close]);
     const read = useCallback((next: Target) => {
+        window.dispatchEvent(new Event('counselorbot-audio-playback'));
         if (!document.activeElement?.closest('[data-voice-reader]')) setOpener(document.activeElement as HTMLElement);
         if (!open) setExpanded(false);
         source.current = next.id;

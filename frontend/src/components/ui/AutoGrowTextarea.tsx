@@ -26,7 +26,7 @@ export function AutoGrowTextarea({ value, minRows = 1, maxRows = 8, style, ...re
         const next = Math.min(el.scrollHeight, maxH);
         el.style.height = `${next}px`;
         el.style.overflowY = el.scrollHeight > maxH ? 'auto' : 'hidden';
-    }, [value, maxRows]);
+    }, [value, maxRows, rest.hidden]);
 
     return (
         <textarea

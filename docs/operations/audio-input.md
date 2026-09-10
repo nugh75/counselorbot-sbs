@@ -13,6 +13,39 @@ trascritto insieme all'eventuale bozza già scritta. La scelta è condivisa
 fra chat guidata e Bussola e resta nel browser (`cb_audio_auto_send`), senza
 sincronizzazione fra dispositivi.
 
+## Conversazione vocale con chat visibile
+
+**Tre puntini → Conversazione vocale** attiva i turni parlati nella chat
+guidata e nella Bussola. La conversazione completa resta visibile e scorrevole:
+ogni messaggio trascritto e ogni risposta del counselor vi compaiono normalmente.
+I controlli vocali prendono il posto della casella di scrittura, senza aprire
+finestre sovrapposte o duplicare la trascrizione.
+
+1. **Premi per parlare** attiva il microfono.
+2. **Ferma e invia** termina la registrazione, la trascrive e invia il messaggio
+   insieme all'eventuale bozza già presente.
+3. La risposta completa viene letta automaticamente. Il microfono rimane spento
+   durante l'ascolto e alla fine della risposta: per un nuovo turno si preme di nuovo.
+
+**Interrompi e parla** arresta l'ascolto e avvia una nuova registrazione.
+Sono disponibili pausa, ripresa e riascolto, senza inviare di nuovo il messaggio.
+Se il browser blocca la riproduzione automatica, **Riprendi** la avvia con un clic.
+Voce, motore, lingua, profilo del counselor e correzioni della pronuncia sono
+gli stessi del lettore audio. Il riconoscimento resta locale; la risposta
+usa Piper oppure il servizio online Edge secondo la preferenza del lettore.
+
+**Torna a scrivere** (X), oppure Escape dai controlli vocali, interrompe audio,
+microfono e trascrizione in corso. Un messaggio già inviato prosegue nella chat,
+ma la sua risposta tardiva non avvia l'audio. Cambiare lingua, counselor o
+sessione interrompe l'attività audio; il microfono richiede sempre un nuovo clic.
+Anche **Ascolta** su un messaggio arresta un'eventuale registrazione prima di
+avviare il lettore. I pulsanti dei passi e il comando **Continua** per una
+risposta interrotta restano disponibili: la lettura attende il completamento
+della risposta. La modalità vocale non modifica la preferenza di invio
+immediato dei normali caricamenti e non si riattiva dopo aver ricaricato la pagina.
+
+## Lingua
+
 L'interfaccia e il riconoscimento usano la lingua selezionata nell'applicazione:
 italiano, inglese, spagnolo, francese, tedesco o svedese. Il riconoscimento
 trascrive; non traduce. Se la lingua parlata è diversa, selezionarla prima
@@ -95,10 +128,12 @@ Test mirati:
   parametri del modello e rilascio della risorsa di inferenza.
 - Da `frontend/`: `node --test tests/audio-input.test.mjs` verifica
   revisione, invio immediato, persistenza della preferenza, annullamento,
-  errori e controlli su schermi stretti contro un frontend su localhost:3108.
+  errori, turni vocali con testo visibile, completamento delle risposte,
+  riproduzione bloccata e controlli su schermi stretti contro un frontend su localhost:3108.
   `AUDIO_INPUT_BASE_URL` può indicare un altro frontend.
 - La prova facoltativa `AUDIO_INPUT_LIVE=1` richiede un WAV sintetico
   `/tmp/audio-input-it.wav` contenente «Vorrei organizzare…» e un servizio
   di trascrizione di prova su localhost:3111. Usa il vero `MediaRecorder`
-  Chromium e il vero riconoscimento locale; autenticazione e chat restano
+  Chromium, il vero riconoscimento locale e una risposta vocale Piper attraverso
+  il proxy Next `/api/tts/stream`; autenticazione e risposte della chat restano
   simulate, senza scrivere conversazioni reali.

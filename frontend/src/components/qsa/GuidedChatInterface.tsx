@@ -2,7 +2,7 @@
 
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, LayoutList, BookOpen } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, LayoutList, BookOpen, Mic } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -499,6 +499,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(initialReasoningEffort ?? 'standard');
     const [input, setInput] = useState('');
     const [audioBusy, setAudioBusy] = useState(false);
+    const [voiceMode, setVoiceMode] = useState(false);
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -1118,7 +1119,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const handleSend = async (e: { preventDefault: () => void }, overrideText?: string, audioReady = false) => {
         e.preventDefault();
         const userMessage = (overrideText ?? input).trim();
-        if (!userMessage || isLoading || (audioBusy && !audioReady)) return;
+        if (!userMessage || isLoading || currentPhase === FIXED_CONCLUSION_ID || (audioBusy && !audioReady)) return;
 
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
         setInput('');
@@ -1135,7 +1136,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 content: t('guided.pattoAck'),
             }]);
             await advancePhase(userMessage);
-            return;
+            return t('guided.pattoAck');
         }
 
         setIsLoading(true);
@@ -1217,6 +1218,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     await advancePhase();
                 }
             }
+            return cleanText || undefined;
         } catch {
             if (controller.signal.aborted) return;
             setMessages(prev => [...prev, { role: 'assistant', content: t('guided.connError') }]);
@@ -1470,7 +1472,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 {currentPhase !== FIXED_CONCLUSION_ID && <>
                     <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
                     <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
-                    <AudioSendOption />
+                    <button type="button" className={messageActionClass} disabled={isLoading || audioBusy} onClick={() => { close(); setVoiceMode(value => !value); }}>
+                        <Mic className="h-4 w-4 shrink-0" />{t(voiceMode ? 'audio.voice.exit' : 'audio.voice.title')}
+                    </button>
+                    {!voiceMode && <AudioSendOption />}
                     {reasoningCapable && <>
                         <p className="px-2 text-sm font-semibold text-slate-700">{t('reasoning.label')}</p>
                         <ReasoningSelector value={reasoningEffort} onChange={setReasoningEffort} disabled={isLoading} />
@@ -1722,7 +1727,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
                 <ChatContinuation locale={activeLocale} {...continuation} />
                 {/* Input Area */}
-                {currentPhase === FIXED_CONCLUSION_ID ? (
+                {currentPhase === FIXED_CONCLUSION_ID && !voiceMode ? (
                     <div className="flex items-center justify-center gap-2 border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
                         {renderConversationOptions(openPanel)}
                         <button
@@ -1806,7 +1811,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             </div>
                         )}
                         <div className="relative flex items-end gap-2">
-                            {isIdea && (
+                            {isIdea && !voiceMode && (
                                 <>
                                     <input
                                         ref={ideaReferenceInputRef}
@@ -1836,6 +1841,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             {renderConversationOptions(openPanel)}
                             <AutoGrowTextarea
                                 id="guided-composer"
+                                hidden={voiceMode}
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={(e) => {
@@ -1853,9 +1859,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             {/* Mentre la risposta arriva il primario ferma, non invia: la
                                 richiesta ha già il suo AbortController, mancava il comando. */}
                             <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
-                                onSend={text => void handleSend({ preventDefault() {} }, text, true)}
-                                composerId="guided-composer" sessionKey={`${sessionId}:${currentPhase}`} disabled={isLoading} />
-                            {isLoading ? (
+                                onSend={text => handleSend({ preventDefault() {} }, text, true)}
+                                voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={counselorId}
+                                composerId="guided-composer" sessionKey={`${sessionId}:${voiceMode ? 'voice' : currentPhase}`} disabled={isLoading || currentPhase === FIXED_CONCLUSION_ID} />
+                            {!voiceMode && (isLoading ? (
                                 <button
                                     type="button"
                                     onClick={stopGeneration}
@@ -1874,7 +1881,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                 >
                                     <Send className="w-5 h-5" />
                                 </button>
-                            )}
+                            ))}
                         </div>
                         {isSavickasAgreement && <p className="mt-2 text-sm text-slate-500">{t('guided.hint.savickasPatto')}</p>}
                         </div>

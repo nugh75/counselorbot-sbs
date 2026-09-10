@@ -1,6 +1,16 @@
 import type { Lang } from './i18n';
 
 const it: Record<string, string> = {
+    "audio.voice.title": "Conversazione vocale",
+    "audio.voice.ready": "Microfono spento",
+    "audio.voice.send": "Ferma e invia",
+    "audio.voice.interrupt": "Interrompi e parla",
+    "audio.voice.talk": "Premi per parlare",
+    "audio.voice.exit": "Torna a scrivere",
+    "audio.voice.replay": "Riascolta la risposta",
+    "audio.voice.help": "Il testo resta nella chat. Premi per registrare, poi ferma per inviare.",
+    "audio.waiting": "Il counselor sta rispondendo…",
+    "audio.error.reply": "Non è arrivata una risposta completa. Controlla la chat prima di riprovare.",
     "audio.autoSend": "Invia subito dopo la trascrizione",
     "audio.autoSendHelp": "Vale per microfono e file audio. Include il testo già presente nella casella. La scelta viene ricordata in questo browser.",
     "audio.helpAuto": "Registra o carica un audio: massimo 3 minuti e 10 MB. Viene trascritto sul server di CounselorBot e inviato subito insieme alla bozza.",
@@ -83,6 +93,16 @@ const it: Record<string, string> = {
 };
 
 const en: Record<string, string> = {
+    "audio.voice.title": "Voice conversation",
+    "audio.voice.ready": "Microphone off",
+    "audio.voice.send": "Stop and send",
+    "audio.voice.interrupt": "Interrupt and speak",
+    "audio.voice.talk": "Press to speak",
+    "audio.voice.exit": "Back to typing",
+    "audio.voice.replay": "Replay reply",
+    "audio.voice.help": "Text stays in the chat. Press to record, then stop to send.",
+    "audio.waiting": "The counselor is replying…",
+    "audio.error.reply": "No complete reply arrived. Check the chat before trying again.",
     "audio.autoSend": "Send immediately after transcription",
     "audio.autoSendHelp": "Applies to recordings and audio files. Includes any text already in the message box. This browser remembers your choice.",
     "audio.helpAuto": "Record or upload audio: up to 3 minutes and 10 MB. It is transcribed on the CounselorBot server and sent immediately with your draft.",
@@ -165,6 +185,16 @@ const en: Record<string, string> = {
 };
 
 const es: Record<string, string> = {
+    "audio.voice.title": "Conversación por voz",
+    "audio.voice.ready": "Micrófono apagado",
+    "audio.voice.send": "Detener y enviar",
+    "audio.voice.interrupt": "Interrumpir y hablar",
+    "audio.voice.talk": "Pulsa para hablar",
+    "audio.voice.exit": "Volver a escribir",
+    "audio.voice.replay": "Volver a escuchar",
+    "audio.voice.help": "El texto sigue en el chat. Pulsa para grabar y detén para enviar.",
+    "audio.waiting": "El orientador está respondiendo…",
+    "audio.error.reply": "No ha llegado una respuesta completa. Revisa el chat antes de reintentar.",
     "audio.autoSend": "Enviar justo después de transcribir",
     "audio.autoSendHelp": "Se aplica al micrófono y a los archivos de audio. Incluye el texto que ya está en la casilla. Este navegador recuerda tu elección.",
     "audio.helpAuto": "Graba o sube un audio de hasta 3 minutos y 10 MB. Se transcribe en el servidor de CounselorBot y se envía inmediatamente con el borrador.",
@@ -247,6 +277,16 @@ const es: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+    "audio.voice.title": "Conversation vocale",
+    "audio.voice.ready": "Microphone désactivé",
+    "audio.voice.send": "Arrêter et envoyer",
+    "audio.voice.interrupt": "Interrompre et parler",
+    "audio.voice.talk": "Appuyer pour parler",
+    "audio.voice.exit": "Revenir au clavier",
+    "audio.voice.replay": "Réécouter la réponse",
+    "audio.voice.help": "Le texte reste dans le chat. Appuyez pour enregistrer, puis arrêtez pour envoyer.",
+    "audio.waiting": "Le conseiller répond…",
+    "audio.error.reply": "Aucune réponse complète reçue. Vérifiez le chat avant de réessayer.",
     "audio.autoSend": "Envoyer dès la transcription terminée",
     "audio.autoSendHelp": "Pour le microphone et les fichiers audio. Inclut le texte déjà présent dans le message. Ce navigateur mémorise votre choix.",
     "audio.helpAuto": "Enregistrez ou importez un audio de 3 minutes et 10 Mo maximum. Il est transcrit sur le serveur de CounselorBot et envoyé immédiatement avec le brouillon.",
@@ -329,6 +369,16 @@ const fr: Record<string, string> = {
 };
 
 const de: Record<string, string> = {
+    "audio.voice.title": "Sprachgespräch",
+    "audio.voice.ready": "Mikrofon aus",
+    "audio.voice.send": "Stoppen und senden",
+    "audio.voice.interrupt": "Unterbrechen und sprechen",
+    "audio.voice.talk": "Zum Sprechen drücken",
+    "audio.voice.exit": "Zurück zum Tippen",
+    "audio.voice.replay": "Antwort erneut anhören",
+    "audio.voice.help": "Der Text bleibt im Chat. Zum Aufnehmen drücken, zum Senden stoppen.",
+    "audio.waiting": "Der Counselor antwortet…",
+    "audio.error.reply": "Keine vollständige Antwort erhalten. Prüfe den Chat, bevor du es erneut versuchst.",
     "audio.autoSend": "Nach der Transkription sofort senden",
     "audio.autoSendHelp": "Gilt für Mikrofonaufnahmen und Audiodateien. Text im Nachrichtenfeld wird mitgesendet. Dieser Browser merkt sich deine Auswahl.",
     "audio.helpAuto": "Audio aufnehmen oder hochladen: höchstens 3 Minuten und 10 MB. Es wird auf dem CounselorBot-Server transkribiert und sofort mit deinem Entwurf gesendet.",
@@ -411,6 +461,16 @@ const de: Record<string, string> = {
 };
 
 const sv: Record<string, string> = {
+    "audio.voice.title": "Röstsamtal",
+    "audio.voice.ready": "Mikrofonen avstängd",
+    "audio.voice.send": "Stoppa och skicka",
+    "audio.voice.interrupt": "Avbryt och prata",
+    "audio.voice.talk": "Tryck för att prata",
+    "audio.voice.exit": "Tillbaka till text",
+    "audio.voice.replay": "Lyssna på svaret igen",
+    "audio.voice.help": "Texten finns kvar i chatten. Tryck för att spela in och stoppa för att skicka.",
+    "audio.waiting": "Vägledaren svarar…",
+    "audio.error.reply": "Inget fullständigt svar kom fram. Kontrollera chatten innan du försöker igen.",
     "audio.autoSend": "Skicka direkt efter transkriptionen",
     "audio.autoSendHelp": "Gäller mikrofoninspelningar och ljudfiler. Text som redan finns i meddelandefältet följer med. Webbläsaren kommer ihåg ditt val.",
     "audio.helpAuto": "Spela in eller ladda upp ljud: högst 3 minuter och 10 MB. Det transkriberas på CounselorBots server och skickas direkt tillsammans med utkastet.",
