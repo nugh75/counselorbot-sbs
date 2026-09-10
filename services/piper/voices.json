@@ -1,0 +1,221 @@
+{
+  "revision": "1162a9173d0ce503555aed757976b7a9912eae4c",
+  "voices": [
+    {
+      "key": "it_IT-paola-medium",
+      "name": "paola",
+      "language": {
+        "code": "it_IT",
+        "family": "it",
+        "region": "IT",
+        "name_native": "Italiano",
+        "name_english": "Italian",
+        "country_english": "Italy"
+      },
+      "quality": "medium",
+      "num_speakers": 1,
+      "speaker_id_map": {},
+      "files": {
+        "it/it_IT/paola/medium/it_IT-paola-medium.onnx": {
+          "size_bytes": 63511038,
+          "md5_digest": "3a44e73b12ca5d0c21a72e388b5847c8"
+        },
+        "it/it_IT/paola/medium/it_IT-paola-medium.onnx.json": {
+          "size_bytes": 7099,
+          "md5_digest": "cd471a3757c88a7a4baee6207248b5d5"
+        },
+        "it/it_IT/paola/medium/MODEL_CARD": {
+          "size_bytes": 303,
+          "md5_digest": "436971e8acb0a92dd8dbc42542e59d03"
+        }
+      },
+      "aliases": []
+    },
+    {
+      "key": "it_IT-riccardo-x_low",
+      "name": "riccardo",
+      "language": {
+        "code": "it_IT",
+        "family": "it",
+        "region": "IT",
+        "name_native": "Italiano",
+        "name_english": "Italian",
+        "country_english": "Italy"
+      },
+      "quality": "x_low",
+      "num_speakers": 1,
+      "speaker_id_map": {},
+      "files": {
+        "it/it_IT/riccardo/x_low/it_IT-riccardo-x_low.onnx": {
+          "size_bytes": 28130791,
+          "md5_digest": "2c564b67f6bfaf3ad02d28ab528929b8"
+        },
+        "it/it_IT/riccardo/x_low/it_IT-riccardo-x_low.onnx.json": {
+          "size_bytes": 4161,
+          "md5_digest": "ed24cd550b79acbdc337e519849e9636"
+        },
+        "it/it_IT/riccardo/x_low/MODEL_CARD": {
+          "size_bytes": 260,
+          "md5_digest": "3e70f29ab998ac0380edc0cec7395e80"
+        }
+      },
+      "aliases": [
+        "it-riccardo_fasol-x-low"
+      ]
+    },
+    {
+      "key": "en_US-lessac-medium",
+      "name": "lessac",
+      "language": {
+        "code": "en_US",
+        "family": "en",
+        "region": "US",
+        "name_native": "English",
+        "name_english": "English",
+        "country_english": "United States"
+      },
+      "quality": "medium",
+      "num_speakers": 1,
+      "speaker_id_map": {},
+      "files": {
+        "en/en_US/lessac/medium/en_US-lessac-medium.onnx": {
+          "size_bytes": 63201294,
+          "md5_digest": "2fc642b535197b6305c7c8f92dc8b24f"
+        },
+        "en/en_US/lessac/medium/en_US-lessac-medium.onnx.json": {
+          "size_bytes": 4885,
+          "md5_digest": "c1f2b7bddefe113f3255ff9ef234cfd3"
+        },
+        "en/en_US/lessac/medium/MODEL_CARD": {
+          "size_bytes": 351,
+          "md5_digest": "42f2dd4a98149e12fc70b301d9579dfd"
+        }
+      },
+      "aliases": [
+        "en-us-lessac-medium"
+      ]
+    },
+    {
+      "key": "es_ES-davefx-medium",
+      "name": "davefx",
+      "language": {
+        "code": "es_ES",
+        "family": "es",
+        "region": "ES",
+        "name_native": "Español",
+        "name_english": "Spanish",
+        "country_english": "Spain"
+      },
+      "quality": "medium",
+      "num_speakers": 1,
+      "speaker_id_map": {},
+      "files": {
+        "es/es_ES/davefx/medium/es_ES-davefx-medium.onnx": {
+          "size_bytes": 63201294,
+          "md5_digest": "dc515cd4ecc5f6f72fe14a941188fc9c"
+        },
+        "es/es_ES/davefx/medium/es_ES-davefx-medium.onnx.json": {
+          "size_bytes": 4817,
+          "md5_digest": "dd157b5eaf6930bf949cf416d9a9307a"
+        },
+        "es/es_ES/davefx/medium/MODEL_CARD": {
+          "size_bytes": 276,
+          "md5_digest": "980f3ebe5987b10488da3a7f4a462970"
+        }
+      },
+      "aliases": []
+    },
+    {
+      "key": "fr_FR-siwis-medium",
+      "name": "siwis",
+      "language": {
+        "code": "fr_FR",
+        "family": "fr",
+        "region": "FR",
+        "name_native": "Français",
+        "name_english": "French",
+        "country_english": "France"
+      },
+      "quality": "medium",
+      "num_speakers": 1,
+      "speaker_id_map": {},
+      "files": {
+        "fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx": {
+          "size_bytes": 63201294,
+          "md5_digest": "20e876e8c839e9b11a26085858f2300c"
+        },
+        "fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx.json": {
+          "size_bytes": 4875,
+          "md5_digest": "a407e7e6901feb79c2ea2a5466076cce"
+        },
+        "fr/fr_FR/siwis/medium/MODEL_CARD": {
+          "size_bytes": 284,
+          "md5_digest": "2b9ea48b15e9e1fd25f95b415caaf66f"
+        }
+      },
+      "aliases": [
+        "fr-siwis-medium"
+      ]
+    },
+    {
+      "key": "de_DE-thorsten-medium",
+      "name": "thorsten",
+      "language": {
+        "code": "de_DE",
+        "family": "de",
+        "region": "DE",
+        "name_native": "Deutsch",
+        "name_english": "German",
+        "country_english": "Germany"
+      },
+      "quality": "medium",
+      "num_speakers": 1,
+      "speaker_id_map": {},
+      "files": {
+        "de/de_DE/thorsten/medium/de_DE-thorsten-medium.onnx": {
+          "size_bytes": 63201294,
+          "md5_digest": "a129b00fb3078df43c96bab6c94535c0"
+        },
+        "de/de_DE/thorsten/medium/de_DE-thorsten-medium.onnx.json": {
+          "size_bytes": 4819,
+          "md5_digest": "843a7bd7272724f750534dd5a26d1aad"
+        },
+        "de/de_DE/thorsten/medium/MODEL_CARD": {
+          "size_bytes": 285,
+          "md5_digest": "e84cf8b09957fccceb068a3c1664d0f3"
+        }
+      },
+      "aliases": []
+    },
+    {
+      "key": "sv_SE-nst-medium",
+      "name": "nst",
+      "language": {
+        "code": "sv_SE",
+        "family": "sv",
+        "region": "SE",
+        "name_native": "Svenska",
+        "name_english": "Swedish",
+        "country_english": "Sweden"
+      },
+      "quality": "medium",
+      "num_speakers": 1,
+      "speaker_id_map": {},
+      "files": {
+        "sv/sv_SE/nst/medium/sv_SE-nst-medium.onnx": {
+          "size_bytes": 63104526,
+          "md5_digest": "20266cf58e93ca2140444b77398aea04"
+        },
+        "sv/sv_SE/nst/medium/sv_SE-nst-medium.onnx.json": {
+          "size_bytes": 4157,
+          "md5_digest": "3a95d9b88bb3214bf4d0d7fcf8a1aea9"
+        },
+        "sv/sv_SE/nst/medium/MODEL_CARD": {
+          "size_bytes": 306,
+          "md5_digest": "4a7cdb8f218a909b2b5e81d1903628da"
+        }
+      },
+      "aliases": []
+    }
+  ]
+}

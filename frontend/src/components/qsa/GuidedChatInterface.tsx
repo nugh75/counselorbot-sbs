@@ -1,6 +1,8 @@
 'use client';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Volume2, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, LayoutList, BookOpen } from 'lucide-react';
+import { ListenButton } from '@/components/voice-reader/VoiceReader';
+
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, LayoutList, BookOpen } from 'lucide-react';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -97,15 +99,6 @@ type QuickReply = {
 const ZTPI_REQUIRED_STEP_IDS = ['ztpi-t1', 'ztpi-t2', 'ztpi-t3', 'ztpi-t4', 'ztpi-t5', 'ztpi-btp'];
 const SAVICKAS_REQUIRED_STEP_IDS = ['savickas-patto', 'savickas-q1', 'savickas-q2', 'savickas-q3', 'savickas-q4', 'savickas-q5', 'savickas-final'];
 const SUPPORTED_LOCALES = new Set<Lang>(['it', 'en', 'es', 'fr', 'de', 'sv']);
-// edge-tts voice per language (matches backend TTSRequest)
-const TTS_VOICE_BY_LOCALE: Record<Lang, string> = {
-    it: 'it-IT-IsabellaNeural',
-    en: 'en-US-AriaNeural',
-    es: 'es-ES-ElviraNeural',
-    fr: 'fr-FR-DeniseNeural',
-    de: 'de-DE-KatjaNeural',
-    sv: 'sv-SE-SofieNeural',
-};
 const SAVICKAS_ACCEPT_PATTERNS: Record<string, RegExp> = {
     it: /\baccetto\b/i,
     en: /\b(?:i\s+accept|accept|i\s+agree|agree)\b/i,
@@ -506,8 +499,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
-    const [playingMessageIdx, setPlayingMessageIdx] = useState<number | null>(null);
-    const [isAudioLoading, setIsAudioLoading] = useState(false);
     const [showAdvanceSuggestion, setShowAdvanceSuggestion] = useState(false);
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
     const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
@@ -529,7 +520,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [questionsIntro, setQuestionsIntro] = useState(() => t('guided.questionsIntro'));
     const [conclusionText, setConclusionText] = useState(() => t('guided.conclusionText'));
 
-    const audioRef = useRef<HTMLAudioElement | null>(null);
     const requestRef = useRef<AbortController | null>(null);
     const messagesRef = useRef<HTMLDivElement>(null);
     // Finche' il lettore e' in fondo lo streaming ce lo tiene; appena risale a
@@ -620,9 +610,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
     useEffect(() => {
         return () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-            }
             requestRef.current?.abort();
         };
     }, []);
@@ -1273,58 +1260,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         if (step) generateAnalysis(step);
     };
 
-    const handlePlayTTS = async (text: string, idx: number) => {
-        if (playingMessageIdx === idx && audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = null;
-            setPlayingMessageIdx(null);
-            return;
-        }
-
-        if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = null;
-        }
-
-        setPlayingMessageIdx(idx);
-        setIsAudioLoading(true);
-
-        try {
-            const response = await fetch('/api/tts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text,
-                    voice: TTS_VOICE_BY_LOCALE[activeLocale],
-                    counselor_id: counselorId
-                }),
-            });
-
-            if (!response.ok) throw new Error('TTS failed');
-
-            const audioBlob = await response.blob();
-            const audioUrl = URL.createObjectURL(audioBlob);
-            const audio = new Audio(audioUrl);
-            audioRef.current = audio;
-
-            audio.onended = () => {
-                setPlayingMessageIdx(null);
-                URL.revokeObjectURL(audioUrl);
-            };
-
-            audio.onerror = () => {
-                setPlayingMessageIdx(null);
-            };
-
-            await audio.play();
-        } catch (error) {
-            console.error('TTS error:', error);
-            setPlayingMessageIdx(null);
-        } finally {
-            setIsAudioLoading(false);
-        }
-    };
-
     // Stato congelabile della chat: lo usano il fiocco di neve e
     // l'autosalvataggio.
     const buildSnapshot = (): FrozenSessionSnapshot => ({
@@ -1754,9 +1689,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                                     <Tooltip content={t('guided.diagram')}><Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.diagram')} disabled={isLoading} aria-expanded={diagramOpen} onClick={toggleDiagram}>
                                                         <GitBranch className="h-4 w-4" aria-hidden="true" />
                                                     </Button></Tooltip>
-                                                    {diagramContentForSpeech(msg.content) && <Tooltip content={t(playingMessageIdx === idx ? 'guided.stopListen' : 'guided.listen')}><Button type="button" variant="ghost" className={stepButtonClass} aria-label={t(playingMessageIdx === idx ? 'guided.stopListen' : 'guided.listen')} disabled={isAudioLoading} onClick={() => void handlePlayTTS(diagramContentForSpeech(msg.content), idx)}>
-                                                        {isAudioLoading && playingMessageIdx === idx ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : playingMessageIdx === idx ? <Square className="h-4 w-4 fill-current" aria-hidden="true" /> : <Volume2 className="h-4 w-4" aria-hidden="true" />}
-                                                    </Button></Tooltip>}
+                                                    {diagramContentForSpeech(msg.content) && <ListenButton id={`guided-${sessionId}-${idx}`} text={diagramContentForSpeech(msg.content)} language={activeLocale} counselorId={counselorId} className={stepButtonClass} />}
                                                     {(!!msg.strategyIds?.length || !!msg.responseId) && <>
                                                         <Tooltip content={t('guided.feedback.helpful')}><Button type="button" variant="ghost" className={`${stepButtonClass} aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700`} aria-label={t('guided.feedback.helpful')} aria-pressed={msg.feedback === true} onClick={() => void submitStrategyFeedback(idx, true)}>
                                                             <ThumbsUp className="h-4 w-4" aria-hidden="true" />

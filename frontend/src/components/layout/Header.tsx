@@ -11,6 +11,7 @@ import { HeaderInstrument } from './HeaderInstrument';
 import { HeaderResume } from './HeaderResume';
 import { MotionToggle } from './MotionToggle';
 import { ThemeToggle } from './ThemeToggle';
+import { VoiceReaderTrigger } from '@/components/voice-reader/VoiceReader';
 import { FlagIcon } from './FlagIcon';
 import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
 import { CompassMark } from '@/components/ui/CompassMark';
@@ -100,6 +101,7 @@ export function Header() {
                     </div>
 
                     <div className="ml-auto flex min-w-0 items-center gap-1">
+                        <VoiceReaderTrigger />
                         {/* Strumento e counselor selezionati: badge compatti durante il percorso. */}
                         <div className="hidden shrink-0 items-center gap-1 xl:flex">
                             <HeaderInstrument />

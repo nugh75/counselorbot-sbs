@@ -12,6 +12,7 @@ import { TooltipProvider } from '@/components/ui/Tooltip';
 import { AccountSetupGate } from '@/components/layout/AccountSetupGate';
 import { OrientationGate } from '@/components/layout/OrientationGate';
 import { SkipLink } from '@/components/layout/SkipLink';
+import { VoiceReaderProvider } from '@/components/voice-reader/VoiceReader';
 
 // Tre ruoli tipografici. Body = Inter (invariato). Display = Bricolage Grotesque,
 // grottesco contemporaneo, usato con parsimonia su titoli/wordmark. Mono = IBM Plex
@@ -55,6 +56,7 @@ export default function RootLayout({
                         dell'albero, presente e futuro. */}
                     <MotionConfig reducedMotion="user">
                     <TooltipProvider delayDuration={300}>
+                        <VoiceReaderProvider>
                         <CounselorNavigation>
                         <SkipLink />
                         <ViewAsFetchPatch />
@@ -65,6 +67,7 @@ export default function RootLayout({
                         <RolePreviewBanner />
                         <Toaster />
                         </CounselorNavigation>
+                        </VoiceReaderProvider>
                     </TooltipProvider>
                     </MotionConfig>
                 </I18nProvider>
