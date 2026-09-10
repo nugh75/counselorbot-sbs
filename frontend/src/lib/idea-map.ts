@@ -3,6 +3,7 @@
 
 import { apiFetch } from '@/lib/auth';
 import type { DiagramEdge } from '@/lib/diagram-content';
+import type { IdeaRole } from '@/lib/idea-roles';
 
 export type IdeaVariant = 'student-path' | 'student-open' | 'research' | 'concept';
 
@@ -40,13 +41,8 @@ export async function deleteIdeaReference(sessionId: string): Promise<boolean> {
     return response.ok;
 }
 
-export const IDEA_ROLES = [
-    'idea', 'assumption', 'evidence', 'alternative',
-    'implication', 'open-question', 'constraint', 'step',
-    'decision', 'task',
-] as const;
-
-export type IdeaRole = typeof IDEA_ROLES[number];
+export { IDEA_ROLES } from '@/lib/idea-roles';
+export type { IdeaRole } from '@/lib/idea-roles';
 
 export interface IdeaMapNode {
     id: string;
@@ -125,6 +121,8 @@ export function ideaMapImageUrl(
     theme: 'light' | 'dark',
     format: 'svg' | 'png',
     lang: string,
+    // Una tappa precedente invece di quella corrente.
+    stage?: number | null,
 ): string {
     const params = new URLSearchParams({
         session_id: sessionId,
@@ -133,7 +131,24 @@ export function ideaMapImageUrl(
         lang,
         v: String(revisionId ?? 0),
     });
+    if (stage) params.set('revision', String(stage));
     return `/api/idea/map/image?${params.toString()}`;
+}
+
+export interface IdeaMapStage {
+    revision_id: number;
+    created_at: string;
+    source: string;
+    step_id: string | null;
+    nodes: number;
+}
+
+// Le tappe della mappa. Registrarle senza poterle guardare tiene solo meta'
+// del loro senso: l'altra meta' e' vedere il pensiero muoversi.
+export async function fetchIdeaMapHistory(sessionId: string): Promise<IdeaMapStage[]> {
+    const response = await apiFetch(`/api/idea/map/history?session_id=${encodeURIComponent(sessionId)}`);
+    if (!response.ok) return [];
+    return response.json() as Promise<IdeaMapStage[]>;
 }
 
 // La mappa serve inline, non come <img>: dentro un'immagine l'SVG non e'
@@ -143,8 +158,9 @@ export async function fetchIdeaMapSvg(
     revisionId: number | null,
     theme: 'light' | 'dark',
     lang: string,
+    stage?: number | null,
 ): Promise<string | null> {
-    const response = await apiFetch(ideaMapImageUrl(sessionId, revisionId, theme, 'svg', lang));
+    const response = await apiFetch(ideaMapImageUrl(sessionId, revisionId, theme, 'svg', lang, stage));
     if (!response.ok) return null;
     return response.text();
 }
@@ -264,6 +280,38 @@ export async function deleteIdeaBranch(
         cascade: String(cascade),
     });
     const response = await apiFetch(`/api/idea/branch?${params.toString()}`, { method: 'DELETE' });
+    return response.ok;
+}
+
+// Il contenuto della mappa non e' solo del modello: quello che la persona ha
+// in testa entra da qui, senza passare da una frase in chat.
+export async function addIdeaNode(
+    sessionId: string,
+    label: string,
+    role: IdeaRole,
+    parentId?: string,
+): Promise<string | null> {
+    const response = await apiFetch('/api/idea/node', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, label, role, parent_id: parentId ?? null }),
+    });
+    if (!response.ok) return null;
+    const data = await response.json() as { node_id?: string };
+    return data.node_id ?? null;
+}
+
+export async function editIdeaNode(
+    sessionId: string,
+    nodeId: string,
+    label: string,
+    role: IdeaRole,
+): Promise<boolean> {
+    const response = await apiFetch('/api/idea/node/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, node_id: nodeId, label, role }),
+    });
     return response.ok;
 }
 
