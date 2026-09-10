@@ -1,0 +1,118 @@
+# Opt in: docker compose -f docker-compose.yml -f docker-compose.prompt-lab.yml up -d --build
+services:
+  backend:
+    environment:
+      PROMPT_LAB_DATABASE_URL_FILE: /run/lab-owner/database_url
+      PROMPT_LAB_MODEL_URL: http://prompt-lab-model-gateway:8080
+    volumes:
+      - prompt_lab_owner:/run/lab-owner:ro
+    networks:
+      - lab-control
+    depends_on:
+      prompt-lab-init:
+        condition: service_completed_successfully
+
+  prompt-lab-bootstrap:
+    image: python:3.10-slim
+    network_mode: none
+    command: [python, /bootstrap.py]
+    volumes:
+      - ./infrastructure/prompt-lab/bootstrap.py:/bootstrap.py:ro
+      - prompt_lab_owner:/secrets/owner
+      - prompt_lab_worker:/secrets/worker
+    restart: "no"
+
+  prompt-lab-postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: prompt_lab_owner
+      POSTGRES_DB: prompt_lab
+      POSTGRES_PASSWORD_FILE: /run/lab-owner/password
+    volumes:
+      - prompt_lab_data:/var/lib/postgresql/data
+      - prompt_lab_owner:/run/lab-owner:ro
+      - prompt_lab_worker:/run/lab-worker:ro
+      - ./infrastructure/prompt-lab/init-db.sh:/docker-entrypoint-initdb.d/10-worker.sh:ro
+    networks: [lab-control, lab-execution]
+    depends_on:
+      prompt-lab-bootstrap:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U prompt_lab_owner -d prompt_lab]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  prompt-lab-init:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: [python, -m, backend.prompt_lab.provision]
+    environment:
+      PROMPT_LAB_DATABASE_URL_FILE: /run/lab-owner/database_url
+    volumes:
+      - prompt_lab_owner:/run/lab-owner:ro
+    networks: [lab-control]
+    depends_on:
+      prompt-lab-postgres:
+        condition: service_healthy
+    restart: "no"
+
+  prompt-lab-worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: [python, -m, backend.prompt_lab.worker]
+    user: "10001:10001"
+    environment:
+      PROMPT_LAB_DATABASE_URL_FILE: /run/lab-worker/database_url
+      SESSION_MEMORY_DIR: /tmp/session_memory
+      PROMPT_LAB_MODEL_URL: http://prompt-lab-model-gateway:8080
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - prompt_lab_worker:/run/lab-worker:ro
+    networks: [lab-execution]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    cpus: 1
+    mem_limit: 1g
+    depends_on:
+      prompt-lab-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  prompt-lab-model-gateway:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: [uvicorn, backend.prompt_lab.gateway:app, --host, 0.0.0.0, --port, "8080"]
+    user: "10001:10001"
+    environment:
+      PROMPT_LAB_OLLAMA_UPSTREAM: ${PROMPT_LAB_OLLAMA_UPSTREAM:-http://host.docker.internal:11434}
+      PYTHONDONTWRITEBYTECODE: "1"
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks: [lab-control, lab-execution, lab-model-egress]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    restart: unless-stopped
+
+volumes:
+  prompt_lab_data:
+  prompt_lab_owner:
+  prompt_lab_worker:
+networks:
+  lab-control:
+    internal: true
+  lab-execution:
+    internal: true
+  lab-model-egress:
+    ipam:
+      config:
+        - subnet: ${PROMPT_LAB_EGRESS_SUBNET:-10.203.30.0/28}

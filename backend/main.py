@@ -57,6 +57,7 @@ from . import prompt_revisions
 # Logica/helper estratti (vedi chat_logic.py); router in routes/.
 from .chat_logic import _memory_cleanup_loop, _log_retention_loop
 from .routes import admin as admin_routes
+from .routes import prompt_experiments as prompt_experiments_routes
 from .routes import survey as survey_routes
 from .routes import chat as chat_routes
 from .routes import memory as memory_routes
@@ -1840,3 +1841,4 @@ app.include_router(frozen_sessions_routes.router)
 app.include_router(idea_map_routes.router)
 app.include_router(institutions_routes.router)
 app.include_router(orientation_referrals_routes.router)
+app.include_router(prompt_experiments_routes.router)

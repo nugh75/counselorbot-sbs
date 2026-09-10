@@ -24,6 +24,7 @@ COPY backend/prompts/ backend/prompts/
 COPY backend/diagram_icons/ backend/diagram_icons/
 COPY backend/routes/ backend/routes/
 COPY backend/skills/ backend/skills/
+COPY backend/prompt_lab/ backend/prompt_lab/
 COPY backend/tests/ backend/tests/
 COPY knowledge/ knowledge/
 
