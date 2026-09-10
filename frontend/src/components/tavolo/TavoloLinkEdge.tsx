@@ -69,7 +69,7 @@ const side = (dx: number, dy: number) => (Math.abs(dx) > Math.abs(dy)
     ? (dx > 0 ? Position.Right : Position.Left)
     : (dy > 0 ? Position.Bottom : Position.Top));
 
-function Link({ id, source, target, data, markerEnd }: EdgeProps & { data: LinkData }) {
+function Link({ id, source, target, data, markerStart, markerEnd }: EdgeProps & { data: LinkData }) {
     const from = useInternalNode<Node<PieceData>>(source);
     const to = useInternalNode<Node<PieceData>>(target);
     if (!from || !to) return null;
@@ -91,6 +91,7 @@ function Link({ id, source, target, data, markerEnd }: EdgeProps & { data: LinkD
             <BaseEdge
                 id={id}
                 path={path}
+                markerStart={markerStart}
                 markerEnd={markerEnd}
                 style={{
                     stroke: colour,

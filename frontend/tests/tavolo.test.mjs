@@ -220,3 +220,20 @@ test('il punto e uno solo, e si vede', async () => {
     assert.equal(await fill('a'), plain, 'e lascia il precedente com era');
     await context.close();
 });
+
+test('un legame puo valere nei due sensi', async () => {
+    const { page, context } = await fixture();
+    const arrow = () => page.locator('.react-flow__edge-path').first().getAttribute('marker-start');
+    assert.equal(await arrow(), null, 'di serie la punta e una sola');
+
+    await page.locator('.react-flow__edge').first().click({ force: true });
+    await page.getByLabel('Vale nei due sensi').check();
+    await page.waitForTimeout(300);
+    assert.ok(await arrow(), "la punta compare anche dall'altra parte");
+
+    // L'appartenenza non ha punte, quindi non ha nemmeno la scelta.
+    await page.getByRole('button', { name: 'Appartenenza' }).click();
+    await page.waitForTimeout(300);
+    assert.equal(await page.getByLabel('Vale nei due sensi').count(), 0);
+    await context.close();
+});

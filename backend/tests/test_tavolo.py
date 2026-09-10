@@ -83,6 +83,24 @@ def test_strength_and_doubt_are_modifiers_of_any_rel():
     assert [edge.hypothesis for edge in graph.edges] == [False, True]
 
 
+def test_a_link_can_hold_both_ways():
+    """Il terzo modificatore: due punte, non due verbi."""
+    graph = parse_graph({**GRAPH, "edges": [
+        {"from": "a", "to": "b", "rel": "causes", "reciprocal": True},
+        {"from": "b", "to": "c", "rel": "causes"},
+    ]})
+    assert [edge.reciprocal for edge in graph.edges] == [True, False]
+    assert [edge.rel for edge in graph.edges] == ["causes", "causes"]
+
+
+def test_the_rendition_says_a_link_holds_both_ways():
+    graph = parse_graph({**GRAPH, "edges": [
+        {"from": "a", "to": "b", "rel": "causes", "reciprocal": True},
+    ]})
+    assert "nei due sensi" in rendition(graph, "it")
+    assert "both ways" in rendition(graph, "en")
+
+
 def test_a_strength_outside_the_scale_is_refused():
     with pytest.raises(TavoloError):
         parse_graph({**GRAPH, "edges": [{"from": "a", "to": "b", "rel": "causes", "strength": 7}]})

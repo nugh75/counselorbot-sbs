@@ -124,6 +124,12 @@ function Canvas({ graph, locale, onChange }: {
             markerEnd: familyOf(edge.rel) === 'part'
                 ? undefined
                 : { type: MarkerType.ArrowClosed, width: 16, height: 16 },
+            // La punta all'altro capo dice che il verbo si legge anche
+            // all'incontrario. L'appartenenza non ne ha nessuna: un contenuto
+            // non contiene chi lo contiene.
+            markerStart: edge.reciprocal && familyOf(edge.rel) !== 'part'
+                ? { type: MarkerType.ArrowClosed, width: 16, height: 16 }
+                : undefined,
             data: {
                 rel: edge.rel, label: edge.label, strength: edge.strength,
                 hypothesis: edge.hypothesis, state: edge.state, locale,
@@ -148,7 +154,7 @@ function Canvas({ graph, locale, onChange }: {
         if (graph.edges.some((edge) => edgeKey(edge) === key)) return;
         const edge: TavoloEdgeData = {
             from: connection.source, to: connection.target, rel: DEFAULT_REL,
-            strength: 2, hypothesis: false, by: 'person', state: 'live',
+            strength: 2, hypothesis: false, reciprocal: false, by: 'person', state: 'live',
         };
         onChange({ ...graph, edges: [...graph.edges, edge] });
         setSelected({ kind: 'edge', id: key });
@@ -333,6 +339,13 @@ function Canvas({ graph, locale, onChange }: {
                                 onChange={(event) => patchEdge(edgeKey(edge), { hypothesis: event.target.checked })} />
                             {label('hypothesis')}
                         </label>
+                        {familyOf(edge.rel) !== 'part' && (
+                            <label className="flex min-h-11 items-center gap-2 text-sm text-slate-700">
+                                <input type="checkbox" checked={Boolean(edge.reciprocal)}
+                                    onChange={(event) => patchEdge(edgeKey(edge), { reciprocal: event.target.checked })} />
+                                {label('reciprocal')}
+                            </label>
+                        )}
                     </div>
                 )}
 
