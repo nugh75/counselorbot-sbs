@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, GitCommitHorizontal, BookMarked, BookOpen, Columns3, Download, LayoutList, Layers, MessageSquare, NotebookPen, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
+import { ArrowRight, GitCommitHorizontal, BookMarked, BookOpen, Columns3, Download, LayoutList, Layers, MessageSquare, NotebookPen, Plus, RotateCcw, Save, Table2, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
@@ -11,14 +11,19 @@ import { visualLabel } from '@/lib/i18n-visual-tools';
 import { NotebookBookletContent, type DeskTab } from '@/components/profile/NotebookBookletPanel';
 import type { BookletType } from '@/components/profile/StudentBookletCard';
 import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, type ActionStage, type CardBucket, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
+import { TavoloList } from '@/components/tavolo/TavoloList';
+import { tavoloEnabled } from '@/lib/tavolo';
+import { tavoloLabel } from '@/lib/i18n-tavolo';
 import { VisualPersonalTransfer } from './VisualPersonalTransfer';
 import { validTimelineDates } from '@/lib/timeline-dates';
 import { TimelineTools } from './TimelineTools';
 
-// Le schede di lavoro salvano il workspace; taccuino e libretto si salvano
-// da soli, quindi stanno nella stessa fila ma senza barra di salvataggio.
+// Le schede di lavoro salvano il workspace; taccuino, libretto e tavolo si
+// salvano da soli, quindi stanno nella stessa fila ma senza barra di
+// salvataggio. Il tavolo, in piu', si apre a tutta finestra: la scheda ne
+// elenca i salvati e ne apre uno nuovo, il disegno si fa altrove.
 type WorkTab = 'board' | 'comparison' | 'cards' | 'timeline';
-type Tab = WorkTab | DeskTab;
+type Tab = WorkTab | DeskTab | 'tavolo';
 export type VisualToolsRequest = { tab: WorkTab; nonce: number; eventId?: string };
 type Props = {
     sessionId?: string;
@@ -36,8 +41,11 @@ const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white p
 const buttonClass = 'h-[44px] w-[44px] shrink-0 p-0';
 const stages: ActionStage[] = ['todo', 'doing', 'done'];
 const buckets: CardBucket[] = ['unsorted', 'yes', 'explore', 'no'];
-const tabs: Tab[] = ['board', 'comparison', 'cards', 'timeline', 'notebook', 'booklet'];
-const tabIcons = [LayoutList, Columns3, Layers, GitCommitHorizontal, NotebookPen, BookMarked];
+const baseTabs: Tab[] = ['board', 'comparison', 'cards', 'timeline', 'notebook', 'booklet'];
+const tabIcons: Record<Tab, typeof LayoutList> = {
+    board: LayoutList, comparison: Columns3, cards: Layers, timeline: GitCommitHorizontal,
+    notebook: NotebookPen, booklet: BookMarked, tavolo: Table2,
+};
 const isDeskTab = (tab: Tab): tab is DeskTab => tab === 'notebook' || tab === 'booklet';
 
 export function VisualTools(props: Props) {
@@ -58,6 +66,9 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [history, setHistory] = useState<VisualWorkspace[]>([]);
     const [loaded, setLoaded] = useState(false);
     const [busy, setBusy] = useState(false);
+    // Con la funzione spenta la scheda del tavolo sparisce: una scheda che
+    // apre un 404 e' peggio che non esserci.
+    const [tavoloOn, setTavoloOn] = useState(false);
     const [issue, setIssue] = useState('');
     const [catalog, setCatalog] = useState<RecommendationCatalog>({ reading: [], strategy: [], advice: [] });
     const [draftTitle, setDraftTitle] = useState('');
@@ -68,6 +79,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [criterion, setCriterion] = useState('');
     const [option, setOption] = useState('');
     const [optionSource, setOptionSource] = useState('');
+    const tabs = tavoloOn ? [...baseTabs, 'tavolo' as Tab] : baseTabs;
+    const tabLabel = (key: Tab) => key === 'tavolo' ? tavoloLabel('title', locale) : l(key);
     const dialog = useRef<HTMLElement>(null);
     const loadGeneration = useRef(0);
     const opener = useRef<HTMLElement | null>(null);
@@ -100,6 +113,12 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     }, [endpoint, personal, locale, legacySession, request?.eventId]);
 
     useEffect(() => { if (open && !loaded) void load(); }, [open, loaded, load]);
+    useEffect(() => {
+        if (!open) return;
+        let cancelled = false;
+        void tavoloEnabled().then(value => { if (!cancelled) setTavoloOn(value); });
+        return () => { cancelled = true; };
+    }, [open]);
     useEffect(() => {
         if (!open || providedCatalog || personal) return;
         const controller = new AbortController();
@@ -210,7 +229,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                     <details open={!personal}>
                     <summary hidden={!personal} className="min-h-11 cursor-pointer py-2 text-sm text-indigo-700">{l('otherTools')}</summary>
                     <div role="tablist" aria-label={l('title')} className="mt-3 flex flex-wrap gap-1">
-                        {tabs.map((key, index) => { const Icon = tabIcons[index]; return <Tooltip key={key} content={l(key)}><Button type="button" role="tab" aria-label={l(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
+                        {tabs.map((key, index) => { const Icon = tabIcons[key]; return <Tooltip key={key} content={tabLabel(key)}><Button type="button" role="tab" aria-label={tabLabel(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
                             variant={tab === key ? 'primary' : 'secondary'} className={buttonClass} onClick={() => { setPersonalOpen(false); setTab(key); }} onKeyDown={event => {
                                 if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                                 event.preventDefault();
@@ -228,7 +247,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             {loaded && <Tooltip content={l('copyDownload')}><Button aria-label={l('copyDownload')} type="button" variant="secondary" className={buttonClass} onClick={() => download(new Blob([workspaceText(work, l)], { type: 'text/plain;charset=utf-8' }), 'counselorbot_visual_draft.txt')}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                         </div>
                     </div>}
-                    {personalOpen && loaded ? <VisualPersonalTransfer sessionId={sessionId} locale={locale} work={work} saveWorkspace={save} onClose={() => { setPersonalOpen(false); window.requestAnimationFrame(() => document.getElementById(`${id}-personal`)?.focus()); }} /> : isDeskTab(tab) ? <NotebookBookletContent tab={tab} lang={locale} questionnaireType={questionnaireType} /> : !loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
+                    {personalOpen && loaded ? <VisualPersonalTransfer sessionId={sessionId} locale={locale} work={work} saveWorkspace={save} onClose={() => { setPersonalOpen(false); window.requestAnimationFrame(() => document.getElementById(`${id}-personal`)?.focus()); }} /> : tab === 'tavolo' ? <TavoloList /> : isDeskTab(tab) ? <NotebookBookletContent tab={tab} lang={locale} questionnaireType={questionnaireType} /> : !loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
                         {!(personal && tab === 'timeline') && <section aria-label={l('howTo')} className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm leading-relaxed text-slate-800">
                             <h3 className="font-semibold">{l(tab)}</h3>
                             <details key={tab} open={helpOpen[tab]} onToggle={event => {
@@ -337,7 +356,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                         </>}
                     </fieldset>}
                 </div>
-                {!isDeskTab(tab) && (personal || tab !== 'timeline') && <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
+                {!isDeskTab(tab) && tab !== 'tavolo' && (personal || tab !== 'timeline') && <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
                     <p role="status" className="text-sm text-slate-600">{l(busy ? 'saving' : dirty ? 'unsaved' : loaded ? 'saved' : 'loading')}</p>
                     <div className="flex flex-wrap gap-2">
                         {!personal && <Tooltip content={l('personalLinks')} side="top"><Button id={`${id}-personal`} aria-label={l('personalLinks')} aria-expanded={personalOpen} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy} onClick={() => setPersonalOpen(value => !value)}><BookOpen className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}

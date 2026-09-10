@@ -1241,3 +1241,56 @@ class PromptExperimentDecision(Base):
     author = Column(String, nullable=False)
     note = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Tavolo(Base):
+    """Il tavolo di lavoro: nasce dentro una discussione, si salva, si riprende.
+
+    `saved_at` vuoto vuol dire bozza, ancora legata alla sessione che l'ha
+    aperta. Salvarlo gli da' un nome e lo stacca: da li' vive nell'elenco della
+    persona e puo' essere ripreso da un'altra sessione.
+    """
+
+    __tablename__ = "tavoli"
+
+    id = Column(String, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    title = Column(String, nullable=True)
+    # Da quale discussione e' nato. Resta scritto anche dopo il salvataggio:
+    # un tavolo senza origine e' un disegno senza il motivo per cui fu fatto.
+    origin_session_id = Column(String, nullable=True, index=True)
+    origin_instrument = Column(String, nullable=True)
+    saved_at = Column(DateTime(timezone=True), nullable=True)
+    # L'immagine e' catturata dal browser al salvataggio, percio' non invecchia:
+    # un tavolo cambia solo quando lo si salva. La resa a parole la scrive il
+    # server, e c'e' sempre, anche quando la cattura fallisce.
+    capture_path = Column(String, nullable=True)
+    rendition = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class TavoloRevision(Base):
+    """Ogni mossa sul tavolo, append-only, come le revisioni della mappa Idea.
+
+    Si conserva il grafo intero e non la patch: un tavolo sta sotto i quaranta
+    nodi, e poter rileggere una revisione senza rigiocare la storia vale piu'
+    dei byte risparmiati. La patch resta il modo in cui parla il modello, non
+    il modo in cui si conserva.
+
+    `index` cresce di uno e serve al controllo di conflitto: due schede aperte
+    sullo stesso tavolo non devono sovrascriversi in silenzio.
+    """
+
+    __tablename__ = "tavolo_revisions"
+    __table_args__ = (
+        UniqueConstraint("tavolo_id", "index", name="uq_tavolo_revision_index"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    tavolo_id = Column(String, nullable=False, index=True)
+    index = Column(Integer, nullable=False)
+    graph = Column(JSON, nullable=False)
+    author = Column(String, nullable=False)  # person|model
+    kind = Column(String, nullable=False)  # seed|edit|proposal|accept|reject
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
