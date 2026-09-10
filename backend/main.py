@@ -88,6 +88,7 @@ from .routes import frozen_sessions as frozen_sessions_routes
 from .routes import idea_map as idea_map_routes
 from .routes import skills as skills_routes
 from .routes import diagram as diagram_routes
+from .routes import tavolo as tavolo_routes
 from .routes import visual_tools as visual_tools_routes
 from .routes import institutions as institutions_routes
 from .routes import orientation_referrals as orientation_referrals_routes
@@ -766,6 +767,7 @@ def _run_seed_and_migrations():
             ("external_pii_fallback", "block", "Se il detector NER locale non risponde: 'block' blocca la chiamata esterna, 'send_raw' invia comunque."),
             ("pii_ner_enabled", "true", "Layer NER locale (Ollama) per nomi/indirizzi nell'anonimizzazione esterna. Spento: solo layer deterministico checksum (true/false)."),
             ("pii_ner_model", "qwen3:0.6b", "Modello Ollama usato dal layer NER PII."),
+            ("feature_tavolo", "false", "Il tavolo: grafo di lavoro che persona e modello costruiscono insieme, aperto da chat e da Idea. Il modello propone, la persona accetta. Spento: gli endpoint /tavolo rispondono 404 e i bottoni spariscono."),
         ]:
             if not db.query(models.Config).filter(models.Config.key == key).first():
                 db.add(models.Config(key=key, value=default, description=descr))
@@ -1834,6 +1836,7 @@ app.include_router(certified_readings_routes.router)
 app.include_router(research_contacts_routes.router)
 app.include_router(skills_routes.router)
 app.include_router(diagram_routes.router)
+app.include_router(tavolo_routes.router)
 app.include_router(visual_tools_routes.router)
 app.include_router(administration_plans_routes.router)
 app.include_router(assistant_questions_routes.router)

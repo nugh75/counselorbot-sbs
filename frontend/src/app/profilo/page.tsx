@@ -16,6 +16,7 @@ import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-track
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
+import { TavoloList } from '@/components/tavolo/TavoloList';
 import { CrossSynthesisCard } from '@/components/profile/CrossSynthesisCard';
 import { TelegramLinkCard } from '@/components/profile/TelegramLinkCard';
 import { TeacherNotesCard } from '@/components/profile/TeacherNotesCard';
@@ -23,7 +24,7 @@ import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
     ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
-    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route,
+    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -40,7 +41,7 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-type PersonalSection = 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline';
+type PersonalSection = 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo';
 
 const PERSONAL_AREAS = [
     {
@@ -98,6 +99,13 @@ const PERSONAL_AREAS = [
         icon: ClipboardList,
         titleKey: 'profile.myCompilations',
         descriptionKey: 'profile.sessions.subtitle',
+    },
+    {
+        id: 'tavolo',
+        slug: 'tavolo',
+        icon: Table2,
+        titleKey: 'profile.tavolo.title',
+        descriptionKey: 'profile.tavolo.subtitle',
     },
 ] as const;
 
@@ -832,6 +840,11 @@ export default function ProfilePage() {
             {activeSection === 'portfolio' && (
             <section className="space-y-4" aria-label={t('profile.portfolioSection.title')}>
                 <PortfolioCard />
+            </section>
+            )}
+            {activeSection === 'tavolo' && (
+            <section className="space-y-4" aria-label={t('profile.tavolo.title')}>
+                <TavoloList />
             </section>
             )}
         </div>

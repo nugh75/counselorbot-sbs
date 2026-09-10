@@ -1856,6 +1856,30 @@ export function ConfigForm() {
                 <code className="block overflow-x-auto text-xs text-slate-700">{'{"ollama/qwen3.8:latest":{"context_tokens":16384,"input_tokens":8000,"compact":true}}'}</code>
             </div>
 
+            {/* 1bis. Funzioni */}
+            <div className="space-y-4 rounded-lg border border-slate-200 p-4">
+                <h3 className="text-sm font-semibold text-slate-700">{t('admin.features.title')}</h3>
+                <div className="space-y-2">
+                    <label htmlFor="feature_tavolo" className="block text-sm font-medium text-slate-700">{t('admin.features.tavolo')}</label>
+                    <select
+                        id="feature_tavolo"
+                        value={getConfigValue('feature_tavolo') === 'true' ? 'true' : 'false'}
+                        onChange={event => setConfigDraft('feature_tavolo', event.target.value, t('admin.features.tavolo'))}
+                        className="w-full rounded-md border border-slate-300 bg-slate-50 p-2 font-mono text-xs text-slate-900"
+                    >
+                        <option value="false">{String(false)}</option>
+                        <option value="true">{String(true)}</option>
+                    </select>
+                    <Button onClick={() => handleSaveConfig({
+                        key: 'feature_tavolo',
+                        value: getConfigValue('feature_tavolo') || 'false',
+                        description: t('admin.features.tavolo'),
+                    })}>
+                        {t('common.save')}
+                    </Button>
+                </div>
+            </div>
+
             {/* 2. API Keys */}
             <div className="space-y-4">
                 <div>
