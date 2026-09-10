@@ -32,11 +32,13 @@ from ..idea_reference import (
 from ..idea_map import (
     FEATURE_KEY,
     IDEA_INSTRUMENT,
+    arrange_branch,
     branches,
     chosen_focus,
     closure_ready,
     create_manual_branch,
     current_focus,
+    delete_branch,
     next_move,
     PACE_STOPS,
     effective_title,
@@ -548,6 +550,52 @@ def create_branch(
         "step_id": move["step_id"],
         "reason": move["reason"],
     }
+
+
+class ArrangeBranchRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    node_id: str = Field(min_length=1, max_length=40)
+    op: Literal["up", "down", "indent", "outdent", "restore"]
+
+
+@router.post("/idea/branch/arrange")
+def arrange_branch_endpoint(
+    request: ArrangeBranchRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Sposta un ramo nell'ordine o nell'albero, o lo rimette a essere un ramo.
+
+    L'albero lo tiene in ordine la persona: il modello non sa quale ramo conti
+    di piu'.
+    """
+    _require_feature(db)
+    owner = _owner(identity)
+    try:
+        revision = arrange_branch(db, owner, request.session_id, request.node_id, request.op)
+    except IdeaMapError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {"revision_id": revision.id, "focus": getattr(revision, "focus_id", None)}
+
+
+@router.delete("/idea/branch")
+def delete_branch_endpoint(
+    session_id: str = Query(min_length=1),
+    node_id: str = Query(min_length=1),
+    cascade: bool = False,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Cancella un ramo, da solo o con tutto quello che gli sta sotto."""
+    _require_feature(db)
+    owner = _owner(identity)
+    try:
+        revision, removed = delete_branch(db, owner, session_id, node_id, cascade=cascade)
+    except IdeaMapError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    idea_sources.remove_branch(db, owner, session_id, removed)
+    return {"revision_id": revision.id, "focus": getattr(revision, "focus_id", None),
+            "removed": removed}
 
 
 @router.post("/idea/reopen")

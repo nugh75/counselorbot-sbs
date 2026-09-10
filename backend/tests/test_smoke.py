@@ -3621,6 +3621,123 @@ def test_a_branch_says_whether_the_person_opened_it_or_the_talk_did():
         _set_idea_feature("false")
 
 
+def _seed_three_branches(session_id: str) -> None:
+    seeded = client.post("/idea/map/patch", json={
+        "session_id": session_id,
+        "source": "turn",
+        "patch": {
+            "title": "Tesi sulla dispersione",
+            "add_nodes": [
+                {"id": "idea", "label": "Tesi sulla dispersione", "role": "idea", "accent": True},
+                {"id": "t1", "label": "Trovare i dati", "role": "task"},
+                {"id": "t2", "label": "Leggere la normativa", "role": "task"},
+            ],
+            "add_edges": [{"from": "idea", "to": "t1", "kind": "link"},
+                          {"from": "idea", "to": "t2", "kind": "link"}],
+        },
+    })
+    assert seeded.status_code == 200, seeded.text
+
+
+def test_the_branches_are_reordered_and_nested_from_the_panel():
+    """L'albero lo tiene in ordine la persona: il modello non sa quale ramo
+    conti di piu', e finora non c'era modo di dirglielo."""
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-branch-arrange"
+    try:
+        _seed_three_branches(session_id)
+
+        moved = client.post("/idea/branch/arrange", json={
+            "session_id": session_id, "node_id": "t2", "op": "up",
+        })
+        assert moved.status_code == 200, moved.text
+        listed = client.get("/idea/branches", params={"session_id": session_id, "lang": "it"})
+        assert [row["id"] for row in listed.json()] == ["idea", "t2", "t1"]
+
+        nested = client.post("/idea/branch/arrange", json={
+            "session_id": session_id, "node_id": "t1", "op": "indent",
+        })
+        assert nested.status_code == 200, nested.text
+        rows = {row["id"]: row for row in client.get(
+            "/idea/branches", params={"session_id": session_id, "lang": "it"}).json()}
+        assert rows["t1"]["parent"] == "t2" and rows["t1"]["depth"] == 2
+
+        # L'idea e' la radice: non si sposta, e il rifiuto dice perche'.
+        refused = client.post("/idea/branch/arrange", json={
+            "session_id": session_id, "node_id": "idea", "op": "up",
+        })
+        assert refused.status_code == 422, refused.text
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
+def test_a_deleted_branch_leaves_what_hung_from_it_to_the_parent():
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-branch-delete"
+    try:
+        _seed_three_branches(session_id)
+        grown = client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "source": "turn",
+            "patch": {
+                "add_nodes": [{"id": "a1", "label": "I dati siano accessibili",
+                               "role": "assumption"}],
+                "add_edges": [{"from": "t1", "to": "a1", "kind": "link"}],
+            },
+        })
+        assert grown.status_code == 200, grown.text
+
+        gone = client.delete("/idea/branch", params={
+            "session_id": session_id, "node_id": "t1", "cascade": "false",
+        })
+        assert gone.status_code == 200, gone.text
+        assert gone.json()["removed"] == ["t1"]
+
+        listed = client.get("/idea/branches", params={"session_id": session_id, "lang": "it"})
+        assert [row["id"] for row in listed.json()] == ["idea", "t2"]
+        # L'ipotesi che ci pendeva resta sulla mappa, sotto l'idea.
+        current = client.get("/idea/map", params={"session_id": session_id})
+        assert "a1" in [node["id"] for node in current.json()["spec"]["nodes"]]
+        assert current.json()["owners"]["a1"] == "idea"
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
+def test_deleting_a_branch_with_everything_under_it_drops_its_kept_sources():
+    """Le fonti sono attaccate al ramo: lasciarle senza ramo le renderebbe
+    righe invisibili che nessuno puo' piu' vedere ne' cancellare."""
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-branch-delete-sources"
+    try:
+        _seed_three_branches(session_id)
+        kept = client.post("/idea/sources", json={
+            "session_id": session_id,
+            "branch_id": "t1",
+            "items": [{
+                "source": "openalex",
+                "title": "Early school leaving",
+                "url": "https://doi.org/10.1000/leaving",
+                "pdf_url": "",
+            }],
+        })
+        assert kept.status_code == 200, kept.text
+        assert len(kept.json()["kept"]) == 1
+
+        gone = client.delete("/idea/branch", params={
+            "session_id": session_id, "node_id": "t1", "cascade": "true",
+        })
+        assert gone.status_code == 200, gone.text
+        assert client.get("/idea/sources", params={"session_id": session_id}).json() == []
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
 OPENALEX_BRANCH_SEARCH = {"results": [{
     "title": "Early school leaving in upper secondary education",
     "publication_year": 2021,
