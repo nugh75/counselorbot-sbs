@@ -229,6 +229,38 @@ export async function createIdeaBranch(sessionId: string, label: string): Promis
     return data.revision_id ?? null;
 }
 
+// I comandi della persona sull'albero: l'ordine e l'annidamento non li sa il
+// modello, e finora non c'era modo di dirglielo.
+export type IdeaBranchOp = 'up' | 'down' | 'indent' | 'outdent' | 'restore';
+
+export async function arrangeIdeaBranch(
+    sessionId: string,
+    nodeId: string,
+    op: IdeaBranchOp,
+): Promise<boolean> {
+    const response = await apiFetch('/api/idea/branch/arrange', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, node_id: nodeId, op }),
+    });
+    return response.ok;
+}
+
+// `cascade` decide che fine fa cio' che pende dal ramo: al padre, o via con lui.
+export async function deleteIdeaBranch(
+    sessionId: string,
+    nodeId: string,
+    cascade: boolean,
+): Promise<boolean> {
+    const params = new URLSearchParams({
+        session_id: sessionId,
+        node_id: nodeId,
+        cascade: String(cascade),
+    });
+    const response = await apiFetch(`/api/idea/branch?${params.toString()}`, { method: 'DELETE' });
+    return response.ok;
+}
+
 export type IdeaKeepTarget = 'notebook' | 'portfolio';
 
 export interface IdeaConclusion {

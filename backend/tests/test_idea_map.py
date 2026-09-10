@@ -10,6 +10,8 @@ import pytest
 from backend.idea_map import (
     IdeaMapError,
     apply_patch,
+    arrange,
+    drop_branch,
     closure_ready,
     computed_flaws,
     effective_title,
@@ -704,6 +706,149 @@ def test_a_map_saved_before_this_rule_reads_back_with_a_real_name():
     spec = _untitled("Il tutoraggio tra pari")
     stale = spec.model_copy(update={"title": "Idea"})
     assert effective_title(stale) == "Il tutoraggio tra pari"
+
+
+# --- riordinare, annidare, cancellare i rami a mano ---
+
+def _three_branches():
+    """Idea con tre rami di pari livello, nell'ordine in cui sono nati."""
+    return apply_patch(None, parse_patch({
+        "title": "Tesi",
+        "add_nodes": [
+            {"id": "idea", "label": "Tesi", "role": "idea", "accent": True,
+             "task_type": "thesis-chapter"},
+            {"id": "t1", "label": "Rivedere la letteratura", "role": "task",
+             "task_type": "systematic-review"},
+            {"id": "t2", "label": "Decidere il disegno", "role": "task",
+             "task_type": "empirical-study"},
+            {"id": "t3", "label": "Scegliere la scuola", "role": "task",
+             "task_type": "personal-project"},
+        ],
+        "add_edges": [{"from": "idea", "to": "t1"}, {"from": "idea", "to": "t2"},
+                      {"from": "idea", "to": "t3"}],
+    }))
+
+
+def _branch_ids(spec, chosen=None):
+    return [row["id"] for row in branches(spec, chosen)]
+
+
+def test_the_tree_reads_top_down_not_level_by_level():
+    """Un sotto-ramo sta sotto il suo, non in fondo con tutti i pari grado."""
+    spec = apply_patch(_three_branches(), parse_patch({
+        "add_nodes": [{"id": "s1", "label": "Trovare i criteri", "role": "task",
+                       "task_type": "systematic-review"}],
+        "add_edges": [{"from": "t1", "to": "s1"}],
+    }))
+    assert _branch_ids(spec) == ["idea", "t1", "s1", "t2", "t3"]
+
+
+def test_a_branch_moved_up_comes_before_the_one_it_followed():
+    spec = arrange(_three_branches(), "t2", "up")
+    assert _branch_ids(spec) == ["idea", "t2", "t1", "t3"]
+
+
+def test_a_branch_moved_down_comes_after_the_one_it_preceded():
+    spec = arrange(_three_branches(), "t2", "down")
+    assert _branch_ids(spec) == ["idea", "t1", "t3", "t2"]
+
+
+def test_a_branch_takes_its_sub_branches_along_when_it_moves():
+    spec = apply_patch(_three_branches(), parse_patch({
+        "add_nodes": [{"id": "s1", "label": "Trovare i criteri", "role": "task",
+                       "task_type": "systematic-review"}],
+        "add_edges": [{"from": "t1", "to": "s1"}],
+    }))
+    assert _branch_ids(arrange(spec, "t1", "down")) == ["idea", "t2", "t1", "s1", "t3"]
+
+
+def test_the_first_branch_has_nowhere_to_go_up():
+    with pytest.raises(IdeaMapError):
+        arrange(_three_branches(), "t1", "up")
+
+
+def test_the_last_branch_has_nowhere_to_go_down():
+    with pytest.raises(IdeaMapError):
+        arrange(_three_branches(), "t3", "down")
+
+
+def test_a_branch_made_a_sub_branch_hangs_from_the_one_above_it():
+    spec = arrange(_three_branches(), "t2", "indent")
+    row = next(r for r in branches(spec) if r["id"] == "t2")
+    assert row["parent"] == "t1" and row["depth"] == 2
+    assert _branch_ids(spec) == ["idea", "t1", "t2", "t3"]
+
+
+def test_the_first_branch_has_nothing_to_nest_under():
+    with pytest.raises(IdeaMapError):
+        arrange(_three_branches(), "t1", "indent")
+
+
+def test_nesting_is_refused_when_the_work_would_go_too_deep():
+    """Tre livelli di lavoro non sono messa a fuoco: il comando si rifiuta."""
+    spec = arrange(_three_branches(), "t2", "indent")
+    spec = arrange(spec, "t3", "indent")
+    # Ora t2 e t3 pendono entrambi da t1: annidare ancora porterebbe al terzo
+    # livello di lavoro.
+    with pytest.raises(IdeaMapError):
+        arrange(spec, "t3", "indent")
+
+
+def test_a_sub_branch_sent_up_hangs_from_its_grandparent():
+    spec = arrange(_three_branches(), "t2", "indent")
+    back = arrange(spec, "t2", "outdent")
+    row = next(r for r in branches(back) if r["id"] == "t2")
+    assert row["parent"] == "idea" and row["depth"] == 1
+
+
+def test_a_branch_already_under_the_idea_cannot_rise_further():
+    with pytest.raises(IdeaMapError):
+        arrange(_three_branches(), "t1", "outdent")
+
+
+def test_what_hung_from_a_deleted_branch_moves_to_its_parent():
+    spec = apply_patch(_three_branches(), parse_patch({
+        "add_nodes": [{"id": "a1", "label": "I dati siano accessibili", "role": "assumption"}],
+        "add_edges": [{"from": "t1", "to": "a1"}],
+    }))
+    pruned, removed = drop_branch(spec, "t1", cascade=False)
+    assert removed == ["t1"]
+    assert "t1" not in {n.id for n in pruned.nodes}
+    assert owning_task(pruned)["a1"] == "idea"
+
+
+def test_deleting_a_branch_with_everything_under_it_takes_the_lot():
+    spec = apply_patch(_three_branches(), parse_patch({
+        "add_nodes": [
+            {"id": "s1", "label": "Trovare i criteri", "role": "task",
+             "task_type": "systematic-review"},
+            {"id": "a1", "label": "I dati siano accessibili", "role": "assumption"},
+        ],
+        "add_edges": [{"from": "t1", "to": "s1"}, {"from": "s1", "to": "a1"}],
+    }))
+    pruned, removed = drop_branch(spec, "t1", cascade=True)
+    assert sorted(removed) == ["a1", "s1", "t1"]
+    assert {n.id for n in pruned.nodes} == {"idea", "t2", "t3"}
+
+
+def test_the_idea_itself_cannot_be_deleted():
+    with pytest.raises(IdeaMapError):
+        drop_branch(_three_branches(), "idea", cascade=True)
+
+
+def test_a_node_that_stopped_being_a_branch_can_be_made_one_again():
+    spec = apply_patch(_three_branches(), parse_patch({
+        "update": [{"id": "t2", "role": "constraint"}],
+    }))
+    back = arrange(spec, "t2", "restore")
+    node = next(n for n in back.nodes if n.id == "t2")
+    assert node.role == "task" and node.demoted is False
+    assert next(r for r in branches(back) if r["id"] == "t2")["demoted"] is False
+
+
+def test_only_a_node_that_was_a_branch_can_be_restored():
+    with pytest.raises(IdeaMapError):
+        arrange(_three_branches(), "t2", "restore")
 
 
 if __name__ == "__main__":
