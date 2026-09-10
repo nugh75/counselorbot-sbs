@@ -112,12 +112,16 @@ Pagina dedicata `/tavolo/[id]`, a tutta finestra. Non un pannello dentro la
 chat: li' ci sono gia' i messaggi, la mappa di Idea e l'albero dei rami, e un
 canvas non ha spazio.
 
-Si apre da un posto solo: **l'area personale**, che elenca i tavoli salvati e
-ha il bottone che ne apre uno nuovo. Il tavolo non e' un gesto dentro la
-conversazione: e' uno strumento in cui lo studente fa il suo diagramma, e
-l'ingresso dai messaggi di chat o dal workspace di Idea e' stato tolto per
-decisione esplicita. L'endpoint di creazione accetta ancora i semi (testo di
-chat, mappa di Idea) ma nessuna interfaccia li manda piu'.
+Si apre da due posti, e sono lo stesso posto visto due volte: **l'area
+personale** e la **scheda "Tavolo" nella fila degli strumenti**, quella di
+taccuino e libretto, che nella chat sta dietro il pannello degli strumenti.
+Tutte e due mostrano l'elenco dei tavoli salvati e il bottone che ne apre uno
+nuovo; il disegno si fa sempre nella pagina a tutta finestra. Il tavolo resta
+uno strumento e non un gesto dentro la conversazione: dai messaggi e dal
+workspace di Idea non si entra, e l'ingresso dalla chat e' la voce nella fila
+degli strumenti, non un bottone su un messaggio. L'endpoint di creazione
+accetta ancora i semi (testo di chat, mappa di Idea) ma nessuna interfaccia li
+manda piu'. Con `feature_tavolo` spento la scheda non compare.
 
 Sotto la soglia desktop il bottone non compare, e un tavolo salvato si mostra
 come immagine catturata piu' la resa testuale.
@@ -184,8 +188,8 @@ Fatto e verificato: il vocabolario e i due modificatori, l'entita' e le
 revisioni append-only con il controllo di conflitto, le proposte con
 accetta/scarta, la tela React Flow con le quattro forme e i quattro colori, il
 salvataggio con cattura e resa testuale, l'elenco dei tavoli salvati con il
-bottone che ne apre uno nuovo nell'area personale, l'interruttore della
-funzione nel pannello admin. Gli ingressi da un messaggio di chat e dal
+bottone che ne apre uno nuovo nell'area personale e nella fila degli strumenti
+della chat, l'interruttore della funzione nel pannello admin. Gli ingressi da un messaggio di chat e dal
 pannello della mappa di Idea sono stati rimossi: il tavolo si apre solo
 dall'area personale.
 
