@@ -1,6 +1,7 @@
 """Bussola: catalogo chiuso, sessioni private e nessuna scrittura su Taccuino o Libretto."""
 from __future__ import annotations
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -863,6 +864,55 @@ def test_new_session_starts_from_latest_owned_notebook_and_resume_preserves_it()
         with _Session() as db:
             db.query(models.LearnerProfileRevision).filter_by(username='someone.else').delete()
             db.commit()
+
+
+@pytest.mark.parametrize(('language', 'name'), [
+    ('it', 'Italian'), ('en', 'English'), ('es', 'Spanish'),
+    ('fr', 'French'), ('de', 'German'), ('sv', 'Swedish'),
+])
+def test_opening_uses_selected_language_for_reply_and_reasons_with_english_notebook(language, name):
+    username = _identity['username']
+    _reset(username)
+    with _Session() as db:
+        db.add(models.LearnerProfileRevision(username=username, source='manual', data={
+            'goal': 'I want to understand how I learn.',
+            'main_difficulty': 'I find it difficult to concentrate when studying.',
+        }))
+        db.commit()
+    try:
+        result = client.post('/orientation/sessions', json={'language': language, 'new_session': True})
+        assert result.status_code == 200
+        assert result.json()['language'] == language
+        prompt = _FakeAIService.last_call[0][1]
+        assert f'Selected interface language: {name} ({language}).' in prompt
+        assert f'Write reply and every recommendations[].reason in {name}.' in prompt
+        assert 'I want to understand how I learn.' in prompt
+        assert 'Do not infer the response language from the Notebook, conversation history' in prompt
+        assert prompt.rstrip().endswith(f'All student-facing text must be in {name} ({language}).')
+    finally:
+        _reset(username)
+
+
+def test_followup_language_follows_current_selection_and_preserves_english_history():
+    username = _identity['username']
+    _reset(username)
+    try:
+        started = client.post('/orientation/sessions', json={'language': 'en', 'new_session': True}).json()
+        message = 'Can we explore QSA together?'
+        result = client.post(f"/orientation/sessions/{started['session_id']}/message", json={
+            'message': message, 'language': 'it',
+        })
+        assert result.status_code == 200
+        data = result.json()
+        assert data['language'] == 'it'
+        assert data['messages'][:-2] == started['messages']
+        args, kwargs = _FakeAIService.last_call
+        assert args[0] == message
+        assert kwargs['history'] == started['messages']
+        assert 'Selected interface language: Italian (it).' in args[1]
+        assert 'Write reply and every recommendations[].reason in Italian.' in args[1]
+    finally:
+        _reset(username)
 
 
 def test_notebook_goal_survives_long_demographics_and_notes():
