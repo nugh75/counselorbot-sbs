@@ -3,6 +3,7 @@
 
 import { apiFetch } from '@/lib/auth';
 import type { DiagramEdge } from '@/lib/diagram-content';
+import type { IdeaRole } from '@/lib/idea-roles';
 
 export type IdeaVariant = 'student-path' | 'student-open' | 'research' | 'concept';
 
@@ -40,13 +41,8 @@ export async function deleteIdeaReference(sessionId: string): Promise<boolean> {
     return response.ok;
 }
 
-export const IDEA_ROLES = [
-    'idea', 'assumption', 'evidence', 'alternative',
-    'implication', 'open-question', 'constraint', 'step',
-    'decision', 'task',
-] as const;
-
-export type IdeaRole = typeof IDEA_ROLES[number];
+export { IDEA_ROLES } from '@/lib/idea-roles';
+export type { IdeaRole } from '@/lib/idea-roles';
 
 export interface IdeaMapNode {
     id: string;
@@ -264,6 +260,38 @@ export async function deleteIdeaBranch(
         cascade: String(cascade),
     });
     const response = await apiFetch(`/api/idea/branch?${params.toString()}`, { method: 'DELETE' });
+    return response.ok;
+}
+
+// Il contenuto della mappa non e' solo del modello: quello che la persona ha
+// in testa entra da qui, senza passare da una frase in chat.
+export async function addIdeaNode(
+    sessionId: string,
+    label: string,
+    role: IdeaRole,
+    parentId?: string,
+): Promise<string | null> {
+    const response = await apiFetch('/api/idea/node', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, label, role, parent_id: parentId ?? null }),
+    });
+    if (!response.ok) return null;
+    const data = await response.json() as { node_id?: string };
+    return data.node_id ?? null;
+}
+
+export async function editIdeaNode(
+    sessionId: string,
+    nodeId: string,
+    label: string,
+    role: IdeaRole,
+): Promise<boolean> {
+    const response = await apiFetch('/api/idea/node/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, node_id: nodeId, label, role }),
+    });
     return response.ok;
 }
 

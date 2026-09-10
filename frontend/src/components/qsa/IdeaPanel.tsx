@@ -147,6 +147,7 @@ export function IdeaPanel({
                         variant={variant}
                         move={move}
                         onPickNode={(nodeId) => void pickNode(nodeId)}
+                        onEdited={onFocusMoved}
                     />
                 </>
             )}

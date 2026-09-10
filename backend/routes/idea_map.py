@@ -32,6 +32,7 @@ from ..idea_reference import (
 from ..idea_map import (
     FEATURE_KEY,
     IDEA_INSTRUMENT,
+    add_node,
     arrange_branch,
     branches,
     chosen_focus,
@@ -39,6 +40,7 @@ from ..idea_map import (
     create_manual_branch,
     current_focus,
     delete_branch,
+    edit_node,
     next_move,
     PACE_STOPS,
     effective_title,
@@ -556,6 +558,59 @@ def create_branch(
     }
 
 
+class AddNodeRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    label: str = Field(min_length=1, max_length=80)
+    role: str = Field(min_length=1, max_length=20)
+    # Vuoto: va nel ramo in lavorazione, che e' quasi sempre quel che si vuole.
+    parent_id: str | None = Field(default=None, max_length=40)
+
+
+class EditNodeRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=120)
+    node_id: str = Field(min_length=1, max_length=40)
+    label: str | None = Field(default=None, min_length=1, max_length=80)
+    role: str | None = Field(default=None, max_length=20)
+
+
+@router.post("/idea/node")
+def add_node_endpoint(
+    request: AddNodeRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Mette sulla mappa un nodo scritto dalla persona.
+
+    La mappa e' il ragionamento di chi la fa: quello che ha in testa deve
+    poterci entrare senza passare da una frase e dalla patch del modello.
+    """
+    _require_feature(db)
+    owner = _owner(identity)
+    try:
+        revision, node_id = add_node(db, owner, request.session_id, request.label,
+                                     request.role, request.parent_id)
+    except IdeaMapError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {"revision_id": revision.id, "node_id": node_id}
+
+
+@router.post("/idea/node/edit")
+def edit_node_endpoint(
+    request: EditNodeRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Corregge l'etichetta o il ruolo di un nodo della mappa."""
+    _require_feature(db)
+    owner = _owner(identity)
+    try:
+        revision = edit_node(db, owner, request.session_id, request.node_id,
+                             request.label, request.role)
+    except IdeaMapError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return {"revision_id": revision.id, "node_id": request.node_id}
+
+
 class ArrangeBranchRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=120)
     node_id: str = Field(min_length=1, max_length=40)
@@ -590,7 +645,10 @@ def delete_branch_endpoint(
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
 ):
-    """Cancella un ramo, da solo o con tutto quello che gli sta sotto."""
+    """Cancella un nodo, da solo o con tutto quello che gli sta sotto.
+
+    Un ramo e' un nodo come gli altri: questa porta serve a entrambi.
+    """
     _require_feature(db)
     owner = _owner(identity)
     try:
