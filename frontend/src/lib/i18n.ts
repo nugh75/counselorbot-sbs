@@ -40,6 +40,8 @@ const it: Dict = {
     'admin.routing.context': "Capacità per provider/modello (JSON)",
     'admin.routing.timeout': "Timeout per tentativo (secondi)",
     'admin.routing.example': "Esempi di configurazione; adatta modelli e limiti al server utilizzato.",
+    'admin.features.title': 'Funzioni',
+    'admin.features.tavolo': 'Tavolo di lavoro — grafo che persona e modello costruiscono insieme, aperto da chat e da Idea. Spento: endpoint 404 e bottoni nascosti.',
 
     // nav
     'nav.admin': 'Admin',
@@ -1175,6 +1177,8 @@ const en: Dict = {
     'admin.routing.context': "Capacity by provider/model (JSON)",
     'admin.routing.timeout': "Timeout per attempt (seconds)",
     'admin.routing.example': "Configuration examples; adapt models and limits to your server.",
+    'admin.features.title': 'Features',
+    'admin.features.tavolo': 'Working table — a graph the person and the model build together, opened from chat and Idea. Off: endpoints 404 and buttons hidden.',
 
     'nav.admin': 'Admin',
     'nav.groupsClasses': 'Groups and classes',
@@ -2291,6 +2295,8 @@ const es: Dict = {
     'admin.routing.context': "Capacidad por proveedor/modelo (JSON)",
     'admin.routing.timeout': "Tiempo de espera por intento (segundos)",
     'admin.routing.example': "Ejemplos de configuración; adapta los modelos y límites a tu servidor.",
+    'admin.features.title': 'Funciones',
+    'admin.features.tavolo': 'Mesa de trabajo — grafo que persona y modelo construyen juntos, abierto desde el chat y desde Idea. Apagada: endpoints 404 y botones ocultos.',
 
     'nav.admin': 'Admin',
     'nav.groupsClasses': 'Grupos y clases',
@@ -3406,6 +3412,8 @@ const fr: Dict = {
     'admin.routing.context': "Capacité par fournisseur/modèle (JSON)",
     'admin.routing.timeout': "Délai par tentative (secondes)",
     'admin.routing.example': "Exemples de configuration ; adaptez les modèles et limites à votre serveur.",
+    'admin.features.title': 'Fonctions',
+    'admin.features.tavolo': 'Table de travail — graphe que la personne et le modèle construisent ensemble, ouvert depuis le chat et Idea. Désactivée : endpoints 404 et boutons masqués.',
 
     'nav.admin': 'Admin',
     'nav.groupsClasses': 'Groupes et classes',
@@ -4521,6 +4529,8 @@ const de: Dict = {
     'admin.routing.context': "Kapazität je Anbieter/Modell (JSON)",
     'admin.routing.timeout': "Zeitlimit je Versuch (Sekunden)",
     'admin.routing.example': "Konfigurationsbeispiele; Modelle und Grenzen an den Server anpassen.",
+    'admin.features.title': 'Funktionen',
+    'admin.features.tavolo': 'Arbeitstisch — Graph, den Person und Modell gemeinsam aufbauen, geöffnet aus Chat und Idea. Aus: Endpoints 404 und Schaltflächen verborgen.',
 
     'nav.admin': 'Admin',
     'nav.groupsClasses': 'Gruppen und Klassen',
@@ -5636,6 +5646,8 @@ const sv: Dict = {
     'admin.routing.context': "Kapacitet per leverantör/modell (JSON)",
     'admin.routing.timeout': "Tidsgräns per försök (sekunder)",
     'admin.routing.example': "Konfigurationsexempel; anpassa modeller och gränser till servern.",
+    'admin.features.title': 'Funktioner',
+    'admin.features.tavolo': 'Arbetsbord — graf som person och modell bygger tillsammans, öppnat från chatt och Idea. Av: endpoints 404 och knappar dolda.',
 
     'nav.admin': 'Admin',
     'nav.groupsClasses': 'Grupper och klasser',
