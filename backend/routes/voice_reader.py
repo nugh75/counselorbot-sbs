@@ -8,6 +8,7 @@ import base64
 import json
 import re
 import time
+from pathlib import Path
 from typing import Literal
 
 import edge_tts
@@ -26,6 +27,7 @@ from .chat import _split_text_for_tts
 router = APIRouter(prefix="/tts")
 LANGUAGES = {"it", "en", "es", "fr", "de", "sv"}
 _voice_cache: tuple[float, list[dict]] = (0, [])
+VOICE_PROFILES = json.loads((Path(__file__).resolve().parents[1] / "voice_profiles.json").read_text())
 
 
 class PronunciationRule(BaseModel):
@@ -97,10 +99,20 @@ def spoken_segments(text: str, language: str, rules: list[PronunciationRule] | N
 
 
 def reader_voice(request: ReaderRequest, db: Session) -> str:
-    if request.engine == "edge" and request.counselor_id and not request.voice_override:
+    if request.counselor_id and not request.voice_override:
         counselor = db.get(models.Counselor, request.counselor_id)
         if counselor and counselor.voice_mapping:
-            return counselor.voice_mapping.get(request.language) or request.voice
+            assigned = counselor.voice_mapping.get(request.language)
+            if request.engine == "edge":
+                return assigned or request.voice
+            # Use the counselor's configured voice profile, including multilingual
+            # voices, without a network call or guessing gender from a new name.
+            gender = VOICE_PROFILES["edge_genders"].get(assigned)
+            if not gender:
+                gender = next((VOICE_PROFILES["edge_genders"][voice] for voice in counselor.voice_mapping.values()
+                               if voice in VOICE_PROFILES["edge_genders"]), None)
+            if gender:
+                return VOICE_PROFILES["piper_defaults"][request.language][gender]
     return request.voice
 
 
@@ -124,7 +136,7 @@ async def voices(engine: Literal["edge", "piper"] = "edge"):
         raise HTTPException(503, "Voice catalog unavailable") from exc
     available = sorted([
         {"id": v["ShortName"], "locale": v["Locale"],
-         "name": v["ShortName"].split("-")[-1].removesuffix("Neural")}
+         "name": v["ShortName"].split("-")[-1].removesuffix("Neural"), "gender": v["Gender"].lower()}
         for v in catalog if v["Locale"].split("-")[0] in LANGUAGES
     ], key=lambda v: (v["locale"], v["name"]))
     _voice_cache = (time.monotonic(), available)
