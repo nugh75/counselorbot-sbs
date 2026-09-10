@@ -218,11 +218,17 @@ export async function moveIdeaFocus(sessionId: string, nodeId: string): Promise<
     return response.ok;
 }
 
-export async function createIdeaBranch(sessionId: string, label: string): Promise<number | null> {
+// Senza mappa questa chiamata la avvia, con l'idea appena scritta: `lang`
+// serve alla casella di partenza.
+export async function createIdeaBranch(
+    sessionId: string,
+    label: string,
+    lang: string,
+): Promise<number | null> {
     const response = await apiFetch('/api/idea/branch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId, label }),
+        body: JSON.stringify({ session_id: sessionId, label, lang }),
     });
     if (!response.ok) return null;
     const data = await response.json() as { revision_id?: number };
