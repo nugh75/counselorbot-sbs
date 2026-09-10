@@ -283,6 +283,9 @@ class DiagramNode(BaseModel):
     task_type: str | None = Field(default=None, max_length=24)
     closed: bool = False
     conclusion: str | None = Field(default=None, max_length=120)
+    # Era un ramo e non lo e' piu'. Il declassamento resta scritto sul nodo:
+    # sparire dal pannello senza dirlo perde lavoro che la persona ha fatto.
+    demoted: bool = False
 
     @field_validator("factor", mode="before")
     @classmethod

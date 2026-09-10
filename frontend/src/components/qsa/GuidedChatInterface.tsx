@@ -5,6 +5,7 @@ import { ListenButton } from '@/components/voice-reader/VoiceReader';
 import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, LayoutList, BookOpen, Mic } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
+import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -1117,7 +1118,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         }
     };
 
-    const handleSend = async (e: { preventDefault: () => void }, overrideText?: string, audioReady = false) => {
+    const handleSend = async (e: { preventDefault: () => void }, overrideText?: string, audioReady = false, onPartial?: (reply: string) => void) => {
         e.preventDefault();
         const userMessage = (overrideText ?? input).trim();
         if (!userMessage || isLoading || currentPhase === FIXED_CONCLUSION_ID || (audioBusy && !audioReady)) return;
@@ -1189,7 +1190,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             }
             const result = await streamChat(
                 chatPayload,
-                (full) => updateLast(full),
+                (full) => { updateLast(full); onPartial?.(full); },
                 controller.signal,
                 (r) => updateReasoning(r),
             );
@@ -1478,6 +1479,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
                     </button>}
                     {!voiceMode && <AudioSendOption />}
+                    <AudioLanguageOption />
                     {reasoningCapable && <>
                         <p className="px-2 text-sm font-semibold text-slate-700">{t('reasoning.label')}</p>
                         <ReasoningSelector value={reasoningEffort} onChange={setReasoningEffort} disabled={isLoading} />
@@ -1861,7 +1863,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             {/* Mentre la risposta arriva il primario ferma, non invia: la
                                 richiesta ha già il suo AbortController, mancava il comando. */}
                             <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
-                                onSend={text => handleSend({ preventDefault() {} }, text, true)}
+                                onSend={(text, onPartial) => handleSend({ preventDefault() {} }, text, true, onPartial)}
                                 voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={counselorId}
                                 voiceOptionsContainer={voiceOptionsContainer}
                                 composerId="guided-composer" sessionKey={`${sessionId}:${voiceMode ? 'voice' : currentPhase}`} disabled={isLoading || currentPhase === FIXED_CONCLUSION_ID} />

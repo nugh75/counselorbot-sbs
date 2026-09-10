@@ -156,7 +156,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                         key={row.id}
                         type="button"
                         onClick={() => void goTo(row.id)}
-                        disabled={row.is_focus || moving !== null}
+                        disabled={row.is_focus || row.demoted || moving !== null}
                         style={{ paddingLeft: `${0.5 + row.depth * 1.1}rem` }}
                         className={cn(
                             'flex w-full items-start gap-2 rounded-lg py-2 pr-2 text-left text-xs transition-colors',
@@ -182,7 +182,17 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                                         {row.task_label}
                                     </span>
                                 )}
+                                {row.demoted && (
+                                    <span className="text-2xs uppercase tracking-wide text-amber-700">
+                                        {t('idea.branches.demoted')}
+                                    </span>
+                                )}
                             </span>
+                            {row.demoted && (
+                                <span className="mt-0.5 block text-[11px] text-slate-500">
+                                    {t('idea.branches.demotedHint')}
+                                </span>
+                            )}
                             {row.closed && row.conclusion && (
                                 <span className="mt-0.5 block text-[11px] text-teal-700">{row.conclusion}</span>
                             )}

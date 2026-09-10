@@ -24,8 +24,10 @@ Stato, istruzioni e comandi secondari si trovano nei **tre puntini**.
 1. **Premi per parlare** attiva il microfono.
 2. **Ferma e invia** termina la registrazione, la trascrive e invia il messaggio
    insieme all'eventuale bozza già presente.
-3. La risposta completa viene letta automaticamente. Il microfono rimane spento
-   durante l'ascolto e alla fine della risposta: per un nuovo turno si preme di nuovo.
+3. La risposta viene letta man mano che il counselor la scrive: la lettura parte
+   dalla prima frase conclusa e prosegue con le successive, senza attendere il
+   testo completo. Il microfono rimane spento durante l'ascolto e alla fine
+   della risposta: per un nuovo turno si preme di nuovo.
 
 **Interrompi e parla** arresta l'ascolto e avvia una nuova registrazione.
 Nei **tre puntini** sono disponibili pausa, ripresa e riascolto, senza inviare di nuovo il messaggio.
@@ -49,11 +51,17 @@ immediato dei normali caricamenti e non si riattiva dopo aver ricaricato la pagi
 
 ## Lingua
 
-L'interfaccia e il riconoscimento usano la lingua selezionata nell'applicazione:
-italiano, inglese, spagnolo, francese, tedesco o svedese. Il riconoscimento
-trascrive; non traduce. Se la lingua parlata è diversa, selezionarla prima
-di registrare. Il testo può contenere errori, soprattutto con nomi propri,
-rumore o accenti: la modalità con revisione permette di correggerli.
+Nei **tre puntini → Opzioni della conversazione**, **Lingua del parlato** vale
+per microfono e file audio ed è indipendente dalla lingua dell'interfaccia.
+L'impostazione iniziale è **Riconoscimento automatico**: il modello riconosce
+da solo la lingua parlata, quindi non serve cambiarla passando da una lingua
+all'altra. Le sei lingue (italiano, inglese, spagnolo, francese, tedesco,
+svedese) restano selezionabili: su registrazioni brevi o rumorose una lingua
+scelta a mano è più affidabile del riconoscimento automatico. La scelta resta
+nel browser (`cb_audio_language`), senza sincronizzazione fra dispositivi.
+Il riconoscimento trascrive; non traduce. Il testo può contenere errori,
+soprattutto con nomi propri, rumore o accenti: la modalità con revisione
+permette di correggerli.
 
 ## Limiti e interruzioni
 
@@ -79,23 +87,51 @@ rumore o accenti: la modalità con revisione permette di correggerli.
 
 `POST /api/audio/transcribe` (frontend) → `POST /audio/transcribe` (backend)
 richiede una sessione autenticata. Riceve multipart con `audio` e `language`
-obbligatori e restituisce `{ "text": "...", "language": "it" }`.
+(`auto` oppure una delle sei lingue; `auto` è il valore predefinito) e
+restituisce `{ "text": "...", "language": "it", "model": "large-v3-turbo" }`,
+dove `language` è la lingua riconosciuta. `GET /audio/models`, riservato agli
+amministratori, elenca i modelli disponibili e quello attivo.
 La route sostituisce il nome originale del file con `recording` e inoltra
 l'audio esclusivamente a `http://transcription:8000/transcribe`.
 
 Il servizio Docker `transcription` esegue
 [faster-whisper](https://github.com/SYSTRAN/faster-whisper) 1.2.1 con
-CTranslate2 4.8.2 e il modello multilingue
-[Systran/faster-whisper-small, revisione 536b066](https://huggingface.co/Systran/faster-whisper-small/tree/536b0662742c02347bc0e980a01041f333bce120).
-Il Dockerfile include il modello durante la build; durante l'uso non scarica
+CTranslate2 4.8.2 e tre modelli multilingue inclusi nell'immagine:
+
+| id | provenienza | uso |
+| --- | --- | --- |
+| `small` | [Systran/faster-whisper-small, rev. 536b066](https://huggingface.co/Systran/faster-whisper-small/tree/536b0662742c02347bc0e980a01041f333bce120) | veloce, meno preciso sui termini tecnici |
+| `large-v3-turbo` | [deepdml/faster-whisper-large-v3-turbo-ct2, rev. 4df90f7](https://huggingface.co/deepdml/faster-whisper-large-v3-turbo-ct2/tree/4df90f75321148c3a29a9e2351b7ddf8f5b115a8) | predefinito: qualità alta, tempi vicini a `small` |
+| `large-v3` | [Systran/faster-whisper-large-v3, rev. edaa852](https://huggingface.co/Systran/faster-whisper-large-v3/tree/edaa852ec7e145841d8ffdb056a99866b5f0a478) | qualità massima, nettamente più lento su CPU |
+
+Il modello attivo si sceglie dalla console di amministrazione, scheda
+**Trascrizione audio** (gruppo Monitoraggio), che elenca i modelli presenti
+nell'immagine e quali sono già in memoria. La scelta è la chiave di
+configurazione `transcription_model`; un valore sconosciuto ricade sul
+predefinito senza interrompere il servizio. Un modello si carica al primo uso
+e resta residente.
+
+Il Dockerfile include i modelli durante la build; durante l'uso non scarica
 modelli, non contatta fornitori esterni e non usa chiavi API. PyAV decodifica
 e ricampiona a mono 16 kHz, controllando anche la durata decodificata.
 La sintesi vocale del lettore è un servizio distinto.
 
-La trascrizione usa CPU int8, quattro thread, una richiesta alla volta e
-VAD per escludere il silenzio. Il container dispone di quattro CPU e 2 GiB
-di memoria, filesystem in sola lettura e `/tmp` temporanea. Non espone porte
-sull'host. `GET /health` risponde quando il modello è caricato.
+La trascrizione usa CPU int8, otto thread per modello, `beam_size` 5, VAD per
+escludere il silenzio e un `initial_prompt` con il lessico del progetto (QSA, QSAr, ZTPI,
+QPCS, QPCC, QAP, Savickas e i termini del dominio nella lingua scelta): senza
+quel contesto le sigle venivano trascritte come parole comuni. Con lingua
+automatica il prompt si riduce alle sole sigle, per non influenzare il
+riconoscimento della lingua. La lingua automatica viene riconosciuta dal modello
+`small`, non da quello grande: su un modello grande il solo riconoscimento
+costa quanto l'intera trascrizione. Sotto una probabilità di 0,7 la scelta
+torna al modello che trascrive. Due richieste vengono servite in parallelo e
+le altre attendono in coda fino a 90 secondi prima di ricevere `busy`; la
+decodifica dell'audio avviene fuori dalla coda. Thread e worker restano
+contenuti perché ogni modello residente tiene i propri pool in attesa attiva,
+che sottraggono CPU a quello che sta trascrivendo. Il container dispone di
+trentadue CPU e 8 GiB di memoria, filesystem in sola lettura e `/tmp` temporanea. Non
+espone porte sull'host. `GET /health` risponde quando almeno un modello è
+caricato e `GET /models` elenca i modelli inclusi.
 
 Audio e file temporanei servono solo alla richiesta: l'applicazione non li
 archivia in database o volumi, né registra il loro contenuto nei log. La
@@ -105,7 +141,7 @@ configurazione e la conservazione della conversazione.
 
 Gli errori restituiscono `detail`: `empty`/`invalid_audio` (400),
 `too_large`/`too_long` (413), lingua non supportata (422), `busy` (503),
-`unavailable` (502/503) o `timeout` (504, attesa backend massima 180 secondi).
+`unavailable` (502/503) o `timeout` (504, attesa backend massima 300 secondi).
 Una richiesta anonima riceve 401. Non sono esposti dettagli interni del servizio.
 
 ## Avvio e verifica
@@ -116,12 +152,21 @@ docker compose ps transcription backend frontend
 docker compose exec transcription python -c "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/health').read().decode())"
 ```
 
-La prima build richiede accesso al modello e alle dipendenze; l'inferenza è
+La prima build richiede accesso ai modelli e alle dipendenze; l'inferenza è
 locale. La latenza dipende dalla durata e dal carico della CPU. Su questo
-host, tre brevi campioni sintetici italiani, inglesi e svedesi di circa
-2–3 secondi hanno richiesto circa 1–1,3 secondi con modello già caricato.
+host, con `large-v3-turbo` già caricato e campioni sintetici italiani:
+
+| audio | lingua indicata | lingua automatica |
+| --- | --- | --- |
+| 5 secondi | ~3,1 s | ~3,7 s |
+| 15 secondi | ~3,6 s | ~4,4 s |
+
+Il costo quasi fisso è la finestra da 30 secondi dell'encoder; il
+riconoscimento automatico aggiunge il passaggio sul modello piccolo.
 Sono prove funzionali, non una stima garantita per registrazioni lunghe
-né una valutazione dell'accuratezza del riconoscimento.
+né una valutazione dell'accuratezza del riconoscimento. Il glossario ha
+corretto, sugli stessi campioni, le sigle che il modello piccolo senza
+prompt restituiva come parole comuni («QSA» come «questa»).
 
 Test mirati:
 

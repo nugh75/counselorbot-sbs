@@ -186,6 +186,8 @@ export interface IdeaBranch {
     wants_plan: boolean;
     // Chi ha aperto il ramo: la persona, o la conversazione stessa.
     origin: 'manual' | 'conversation';
+    // Era un ramo e non lo e' piu': resta in elenco, ma non ci si sposta.
+    demoted: boolean;
 }
 
 // L'albero dei rami: la chat e' una riga sola, i rami esistono solo nella
