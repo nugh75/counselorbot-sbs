@@ -1,6 +1,8 @@
 import type { Lang } from './i18n';
 
 const it: Record<string, string> = {
+    "voice.female": "Femminile",
+    "voice.male": "Maschile",
     "voice.title": "Lettore audio",
     "voice.page": "Ascolta pagina",
     "voice.listen": "Ascolta",
@@ -10,7 +12,7 @@ const it: Record<string, string> = {
     "voice.piper": "Piper · server locale",
     "voice.auto": "Automatica (counselor o lingua)",
     "voice.preview": "Prova voce",
-    "voice.saved": "La voce scelta viene salvata in questo browser per questa lingua.",
+    "voice.saved": "La voce scelta viene salvata in questo browser per lingua e counselor.",
     "voice.pause": "Pausa",
     "voice.resume": "Riprendi",
     "voice.stop": "Ferma",
@@ -52,6 +54,8 @@ const it: Record<string, string> = {
 };
 
 const en: Record<string, string> = {
+    "voice.female": "Female",
+    "voice.male": "Male",
     "voice.title": "Audio reader",
     "voice.page": "Read page aloud",
     "voice.listen": "Listen",
@@ -61,7 +65,7 @@ const en: Record<string, string> = {
     "voice.piper": "Piper · local server",
     "voice.auto": "Automatic (counsellor or language)",
     "voice.preview": "Try voice",
-    "voice.saved": "Your voice choice is saved in this browser for this language.",
+    "voice.saved": "Your voice choice is saved in this browser for each language and counselor.",
     "voice.pause": "Pause",
     "voice.resume": "Resume",
     "voice.stop": "Stop",
@@ -103,6 +107,8 @@ const en: Record<string, string> = {
 };
 
 const es: Record<string, string> = {
+    "voice.female": "Femenina",
+    "voice.male": "Masculina",
     "voice.title": "Lector de audio",
     "voice.page": "Escuchar página",
     "voice.listen": "Escuchar",
@@ -112,7 +118,7 @@ const es: Record<string, string> = {
     "voice.piper": "Piper · servidor local",
     "voice.auto": "Automática (orientador o idioma)",
     "voice.preview": "Probar voz",
-    "voice.saved": "La voz elegida se guarda en este navegador para este idioma.",
+    "voice.saved": "La voz elegida se guarda en este navegador por idioma y counselor.",
     "voice.pause": "Pausar",
     "voice.resume": "Reanudar",
     "voice.stop": "Detener",
@@ -154,6 +160,8 @@ const es: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+    "voice.female": "Féminine",
+    "voice.male": "Masculine",
     "voice.title": "Lecteur audio",
     "voice.page": "Écouter la page",
     "voice.listen": "Écouter",
@@ -163,7 +171,7 @@ const fr: Record<string, string> = {
     "voice.piper": "Piper · serveur local",
     "voice.auto": "Automatique (conseiller ou langue)",
     "voice.preview": "Tester la voix",
-    "voice.saved": "La voix choisie est enregistrée dans ce navigateur pour cette langue.",
+    "voice.saved": "La voix choisie est enregistrée dans ce navigateur par langue et counselor.",
     "voice.pause": "Pause",
     "voice.resume": "Reprendre",
     "voice.stop": "Arrêter",
@@ -205,6 +213,8 @@ const fr: Record<string, string> = {
 };
 
 const de: Record<string, string> = {
+    "voice.female": "Weiblich",
+    "voice.male": "Männlich",
     "voice.title": "Audioleser",
     "voice.page": "Seite vorlesen",
     "voice.listen": "Anhören",
@@ -214,7 +224,7 @@ const de: Record<string, string> = {
     "voice.piper": "Piper · lokaler Server",
     "voice.auto": "Automatisch (Berater oder Sprache)",
     "voice.preview": "Stimme testen",
-    "voice.saved": "Die gewählte Stimme wird in diesem Browser für diese Sprache gespeichert.",
+    "voice.saved": "Die gewählte Stimme wird in diesem Browser pro Sprache und Counselor gespeichert.",
     "voice.pause": "Pause",
     "voice.resume": "Fortsetzen",
     "voice.stop": "Stoppen",
@@ -256,6 +266,8 @@ const de: Record<string, string> = {
 };
 
 const sv: Record<string, string> = {
+    "voice.female": "Kvinnlig",
+    "voice.male": "Manlig",
     "voice.title": "Ljudläsare",
     "voice.page": "Läs upp sidan",
     "voice.listen": "Lyssna",
@@ -265,7 +277,7 @@ const sv: Record<string, string> = {
     "voice.piper": "Piper · lokal server",
     "voice.auto": "Automatisk (vägledare eller språk)",
     "voice.preview": "Prova rösten",
-    "voice.saved": "Ditt röstval sparas i den här webbläsaren för det här språket.",
+    "voice.saved": "Röstvalet sparas i den här webbläsaren för varje språk och counselor.",
     "voice.pause": "Pausa",
     "voice.resume": "Fortsätt",
     "voice.stop": "Stoppa",

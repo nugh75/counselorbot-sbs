@@ -28,7 +28,37 @@ def test_voice_precedence():
     request.voice_override = True
     assert reader.reader_voice(request, db) == 'it-IT-IsabellaNeural'
     request.engine, request.voice_override, request.voice = 'piper', False, 'it_IT-paola-medium'
+    assert reader.reader_voice(request, db) == 'it_IT-riccardo-x_low'
+    request.voice_override = True
     assert reader.reader_voice(request, db) == 'it_IT-paola-medium'
+
+
+def test_counselor_gender_matches_both_engines_in_all_languages():
+    profiles = [('Sara', 'en-US-AvaMultilingualNeural', 'female'),
+                ('Marco', 'it-IT-GiuseppeMultilingualNeural', 'male')]
+    for name, assigned, gender in profiles:
+        counselor = SimpleNamespace(name=name, voice_mapping={lang: assigned for lang in reader.LANGUAGES})
+        db = SimpleNamespace(get=lambda *args: counselor)
+        for lang in reader.LANGUAGES:
+            request = reader.ReaderRequest(text='Test', counselor_id=1, language=lang)
+            assert reader.reader_voice(request, db) == assigned
+            request.engine = 'piper'
+            assert reader.reader_voice(request, db) == reader.VOICE_PROFILES['piper_defaults'][lang][gender]
+
+
+def test_unconfigured_counselors_and_explicit_choices_keep_the_requested_voice():
+    for counselor in (None, SimpleNamespace(voice_mapping=None)):
+        db = SimpleNamespace(get=lambda *args: counselor)
+        for engine, voice in [('edge', 'it-IT-IsabellaNeural'), ('piper', 'it_IT-paola-medium')]:
+            request = reader.ReaderRequest(text='Ciao', counselor_id=1, engine=engine, voice=voice)
+            assert reader.reader_voice(request, db) == voice
+
+
+def test_piper_uses_another_language_to_identify_a_legacy_voice_profile():
+    db = SimpleNamespace(get=lambda *args: SimpleNamespace(voice_mapping={
+        'es': 'es-ES-LauraNeural', 'it': 'it-IT-ElsaNeural'}))
+    request = reader.ReaderRequest(text='Hola', language='es', engine='piper', counselor_id=1)
+    assert reader.reader_voice(request, db) == 'es_ES-sharvard-medium'
 
 
 def test_short_opening_preserves_text_and_keeps_later_segments_long():
@@ -138,4 +168,4 @@ if __name__ == '__main__':
     for name, fn in list(globals().items()):
         if name.startswith('test_'):
             fn()
-    print('OK: test_voice_reader (12 tests)')
+    print('OK: test_voice_reader (15 tests)')

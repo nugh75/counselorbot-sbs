@@ -29,7 +29,8 @@
           "md5_digest": "436971e8acb0a92dd8dbc42542e59d03"
         }
       },
-      "aliases": []
+      "aliases": [],
+      "gender": "female"
     },
     {
       "key": "it_IT-riccardo-x_low",
@@ -61,7 +62,8 @@
       },
       "aliases": [
         "it-riccardo_fasol-x-low"
-      ]
+      ],
+      "gender": "male"
     },
     {
       "key": "en_US-lessac-medium",
@@ -93,7 +95,8 @@
       },
       "aliases": [
         "en-us-lessac-medium"
-      ]
+      ],
+      "gender": "female"
     },
     {
       "key": "es_ES-davefx-medium",
@@ -123,7 +126,8 @@
           "md5_digest": "980f3ebe5987b10488da3a7f4a462970"
         }
       },
-      "aliases": []
+      "aliases": [],
+      "gender": "male"
     },
     {
       "key": "fr_FR-siwis-medium",
@@ -155,7 +159,8 @@
       },
       "aliases": [
         "fr-siwis-medium"
-      ]
+      ],
+      "gender": "female"
     },
     {
       "key": "de_DE-thorsten-medium",
@@ -185,7 +190,8 @@
           "md5_digest": "e84cf8b09957fccceb068a3c1664d0f3"
         }
       },
-      "aliases": []
+      "aliases": [],
+      "gender": "male"
     },
     {
       "key": "sv_SE-nst-medium",
@@ -215,7 +221,173 @@
           "md5_digest": "4a7cdb8f218a909b2b5e81d1903628da"
         }
       },
-      "aliases": []
+      "aliases": [],
+      "gender": "male"
+    },
+    {
+      "key": "en_US-hfc_male-medium",
+      "name": "hfc_male",
+      "language": {
+        "code": "en_US",
+        "family": "en",
+        "region": "US",
+        "name_native": "English",
+        "name_english": "English",
+        "country_english": "United States"
+      },
+      "quality": "medium",
+      "num_speakers": 1,
+      "speaker_id_map": {},
+      "files": {
+        "en/en_US/hfc_male/medium/en_US-hfc_male-medium.onnx": {
+          "size_bytes": 63201294,
+          "md5_digest": "cd2fda1933f0653d3ddc85e5f30ebdd2"
+        },
+        "en/en_US/hfc_male/medium/en_US-hfc_male-medium.onnx.json": {
+          "size_bytes": 5033,
+          "md5_digest": "9b4849dbc1e72f35de7391528dea60d9"
+        },
+        "en/en_US/hfc_male/medium/MODEL_CARD": {
+          "size_bytes": 352,
+          "md5_digest": "0bc174f6fe7a6d795a790110e8bf9096"
+        }
+      },
+      "aliases": [],
+      "gender": "male"
+    },
+    {
+      "key": "es_ES-sharvard-medium",
+      "name": "sharvard",
+      "language": {
+        "code": "es_ES",
+        "family": "es",
+        "region": "ES",
+        "name_native": "Español",
+        "name_english": "Spanish",
+        "country_english": "Spain"
+      },
+      "quality": "medium",
+      "num_speakers": 2,
+      "speaker_id_map": {
+        "M": 0,
+        "F": 1
+      },
+      "files": {
+        "es/es_ES/sharvard/medium/es_ES-sharvard-medium.onnx": {
+          "size_bytes": 76733615,
+          "md5_digest": "77e6f9c26e92799fb04bb90b46bf1834"
+        },
+        "es/es_ES/sharvard/medium/es_ES-sharvard-medium.onnx.json": {
+          "size_bytes": 4903,
+          "md5_digest": "e49cab310ce362145f7d94b347c291ff"
+        },
+        "es/es_ES/sharvard/medium/MODEL_CARD": {
+          "size_bytes": 392,
+          "md5_digest": "b600a21381af84fa21b29f519a3a829a"
+        }
+      },
+      "aliases": [],
+      "gender": "female",
+      "default_speaker_id": 1
+    },
+    {
+      "key": "fr_FR-upmc-medium",
+      "name": "upmc",
+      "language": {
+        "code": "fr_FR",
+        "family": "fr",
+        "region": "FR",
+        "name_native": "Français",
+        "name_english": "French",
+        "country_english": "France"
+      },
+      "quality": "medium",
+      "num_speakers": 2,
+      "speaker_id_map": {
+        "jessica": 0,
+        "pierre": 1
+      },
+      "files": {
+        "fr/fr_FR/upmc/medium/fr_FR-upmc-medium.onnx": {
+          "size_bytes": 76733615,
+          "md5_digest": "6837ede9408c7e1b39fa4a126af9e865"
+        },
+        "fr/fr_FR/upmc/medium/fr_FR-upmc-medium.onnx.json": {
+          "size_bytes": 4996,
+          "md5_digest": "574571ae93aba72dbd159582981037da"
+        },
+        "fr/fr_FR/upmc/medium/MODEL_CARD": {
+          "size_bytes": 316,
+          "md5_digest": "9a49df5c79d89290ac626ebe08f05830"
+        }
+      },
+      "aliases": [],
+      "gender": "male",
+      "default_speaker_id": 1
+    },
+    {
+      "key": "de_DE-kerstin-low",
+      "name": "kerstin",
+      "language": {
+        "code": "de_DE",
+        "family": "de",
+        "region": "DE",
+        "name_native": "Deutsch",
+        "name_english": "German",
+        "country_english": "Germany"
+      },
+      "quality": "low",
+      "num_speakers": 1,
+      "speaker_id_map": {},
+      "files": {
+        "de/de_DE/kerstin/low/de_DE-kerstin-low.onnx": {
+          "size_bytes": 63104526,
+          "md5_digest": "1d5e5788cfddb04cbb34418f2841931e"
+        },
+        "de/de_DE/kerstin/low/de_DE-kerstin-low.onnx.json": {
+          "size_bytes": 4158,
+          "md5_digest": "a96995af6c1c5b37ed3d62b5107e1d9a"
+        },
+        "de/de_DE/kerstin/low/MODEL_CARD": {
+          "size_bytes": 272,
+          "md5_digest": "69ec1bc99fc7e19c9ddcdf712920a6c7"
+        }
+      },
+      "aliases": [
+        "de-kerstin-low"
+      ],
+      "gender": "female"
+    },
+    {
+      "key": "sv_SE-lisa-medium",
+      "name": "lisa",
+      "language": {
+        "code": "sv_SE",
+        "family": "sv",
+        "region": "SE",
+        "name_native": "Svenska",
+        "name_english": "Swedish",
+        "country_english": "Sweden"
+      },
+      "quality": "medium",
+      "num_speakers": 1,
+      "speaker_id_map": {},
+      "files": {
+        "sv/sv_SE/lisa/medium/sv_SE-lisa-medium.onnx": {
+          "size_bytes": 63511038,
+          "md5_digest": "46398d70bbb12d033e15e601a92cd711"
+        },
+        "sv/sv_SE/lisa/medium/sv_SE-lisa-medium.onnx.json": {
+          "size_bytes": 7239,
+          "md5_digest": "1a768f208277aa835e203a969df71345"
+        },
+        "sv/sv_SE/lisa/medium/MODEL_CARD": {
+          "size_bytes": 198,
+          "md5_digest": "730544963a31316127b188dd2a4f462b"
+        }
+      },
+      "aliases": [],
+      "gender": "female"
     }
   ]
 }

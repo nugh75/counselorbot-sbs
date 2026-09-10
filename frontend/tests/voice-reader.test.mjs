@@ -50,8 +50,8 @@ async function fixture({ width = 1440, guest = false, live = false, dark = false
         else if (url.pathname === '/api/chat/stream') return route.fulfill({ contentType: 'text/event-stream', body: 'data: ' + JSON.stringify({ display: 'Possiamo approfondire questo punto.' }) + '\n\ndata: ' + JSON.stringify({ done: true, response: 'Possiamo approfondire questo punto.', session_id: 'voice-fixture' }) + '\n\n' });
         else if (url.pathname === '/api/user/learner-profile') data = { id: 1, data: { goal: 'Organizzare lo studio' } };
         else if (url.pathname === '/api/tts/voices') data = { voices: url.searchParams.get('engine') === 'piper'
-            ? [{ id: 'it_IT-paola-medium', name: 'Paola', locale: 'it-IT' }, { id: 'it_IT-riccardo-x_low', name: 'Riccardo', locale: 'it-IT' }]
-            : [{ id: 'it-IT-IsabellaNeural', name: 'Isabella', locale: 'it-IT' }, { id: 'it-IT-DiegoNeural', name: 'Diego', locale: 'it-IT' }] };
+            ? [{ id: 'it_IT-paola-medium', name: 'Paola', locale: 'it-IT', gender: 'female' }, { id: 'it_IT-riccardo-x_low', name: 'Riccardo', locale: 'it-IT', gender: 'male' }]
+            : [{ id: 'it-IT-IsabellaNeural', name: 'Isabella', locale: 'it-IT' }, { id: 'it-IT-DiegoNeural', name: 'Diego', locale: 'it-IT', gender: 'male' }] };
         else if (url.pathname === '/api/tts/stream') {
             const { text, engine } = request.postDataJSON();
             const segments = text.split(/\n\n/).filter(Boolean).slice(0, 3).map((text, index) => ({ text, index, paragraph_id: index }));
@@ -147,7 +147,7 @@ for (const width of [390, 1440]) {
             const composer = page.locator('#guided-composer');
             await composer.fill('Continuo mentre ascolto');
             await composer.press('Enter');
-            await page.getByText('Possiamo approfondire questo punto.', { exact: true }).waitFor();
+            await page.locator('[data-voice-source]').getByText('Possiamo approfondire questo punto.', { exact: true }).first().waitFor();
             assert.ok(requests.some(r => r.path === '/api/chat/stream'));
             assert.equal(await page.evaluate(() => window.__audios[0].paused), false);
             assert.deepEqual(f.errors, []);
@@ -255,6 +255,48 @@ test('double click inside a Bussola response reads only the selected message', a
         assert.equal(body.text, 'riflettere sul tuo modo di studiare. Quale difficoltà vorresti affrontare?');
         assert.equal(body.counselor_id, 1);
         assert.equal(body.language, 'it');
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('page reading follows the selected counselor and separates personal voice choices', async () => {
+    const f = await fixture({ guest: true });
+    try {
+        const { page, requests } = f;
+        await page.goto(`${origin}/guide`);
+        await page.evaluate(() => {
+            localStorage.setItem('cb_voice_it', 'piper:it_IT-riccardo-x_low');
+            localStorage.setItem('counselorbot_selected_counselor', '1');
+            window.dispatchEvent(new Event('storage'));
+        });
+        await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        const panel = page.getByRole('complementary');
+        assert.equal(await panel.getByLabel('Voce', { exact: true }).inputValue(), '', 'legacy voice is not assigned to every counselor');
+        await panel.getByLabel('Voce', { exact: true }).selectOption('it_IT-riccardo-x_low');
+        await panel.getByRole('button', { name: 'Ascolta pagina' }).click();
+        await panel.getByRole('status').filter({ hasText: 'In lettura' }).waitFor();
+        assert.equal(requests.at(-1).body.counselor_id, 1);
+        assert.equal(requests.at(-1).body.voice_override, true);
+        await page.evaluate(() => {
+            localStorage.setItem('counselorbot_selected_counselor', '2');
+            window.dispatchEvent(new Event('storage'));
+        });
+        await panel.waitFor({ state: 'detached' });
+        await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        assert.equal(await panel.getByLabel('Voce', { exact: true }).inputValue(), '', 'Sara uses her automatic profile');
+        assert.match(await panel.getByLabel('Voce', { exact: true }).textContent(), /Paola.*Femminile/);
+        assert.match(await panel.getByLabel('Voce', { exact: true }).textContent(), /Riccardo.*Maschile/);
+        await panel.getByRole('button', { name: 'Prova voce' }).click();
+        await panel.getByRole('status').filter({ hasText: 'In lettura' }).waitFor();
+        assert.equal(requests.at(-1).body.counselor_id, 2);
+        assert.equal(requests.at(-1).body.voice_override, false);
+        await page.evaluate(() => {
+            localStorage.setItem('counselorbot_selected_counselor', '1');
+            window.dispatchEvent(new Event('storage'));
+        });
+        await panel.waitFor({ state: 'detached' });
+        await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        assert.equal(await panel.getByLabel('Voce', { exact: true }).inputValue(), 'it_IT-riccardo-x_low', 'Marco retains his personal choice');
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });

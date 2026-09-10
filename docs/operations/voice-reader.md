@@ -32,17 +32,43 @@ né spostare automaticamente lo scorrimento mentre si scrive.
   produce tempi delle singole parole. Entrambi i motori evidenziano il
   passaggio originale nella pagina, anche quando la pronuncia lo trasforma.
 
-Voce e motore sono salvati nel browser, separatamente per lingua
-(`cb_voice_it`, ecc.). La preferenza è disponibile a tutti i ruoli, senza
-privilegi amministrativi; non è sincronizzata fra dispositivi. La scelta
-automatica conserva la voce del counselor per Edge, o usa la voce della lingua
-per pagine senza counselor. Una scelta esplicita prevale sulla voce del
-counselor. Piper usa il proprio catalogo e non le associazioni Edge del counselor.
+Voce e motore sono salvati nel browser per lingua e counselor
+(`cb_voice_it_counselor_2`, ecc.; `cb_voice_it` per chi non ha un counselor).
+La preferenza è disponibile a tutti i ruoli, senza privilegi amministrativi;
+non è sincronizzata fra dispositivi. Le vecchie preferenze globali conservano
+il motore, ma non impongono a tutti i counselor la stessa voce personale.
+Una scelta esplicita prevale sul profilo soltanto per quel counselor e lingua.
 
-Piper include queste sette voci: italiano Paola e Riccardo, inglese Lessac,
-spagnolo Davefx, francese Siwis, tedesco Thorsten e svedese NST. Il selettore
-mostra le voci della lingua del contenuto. **Prova voce** riproduce una frase
-di esempio nella stessa lingua.
+La modalità automatica usa il counselor della risposta oppure quello mostrato
+nell'intestazione quando si legge una pagina o si prova una pronuncia. Edge
+conserva la sua `voice_mapping`; Piper sceglie una voce dello stesso genere
+vocale nella lingua richiesta. `backend/voice_profiles.json` conserva una
+copia dei metadati `Gender` del catalogo Edge (10 settembre 2026) e gli
+abbinamenti Piper, così la scelta locale non richiede chiamate a Microsoft.
+I profili configurati distinguono, per esempio, Sara/Ava da Marco/Giuseppe;
+il codice non deduce il genere dalla desinenza di un nome. Se un counselor
+non ha un profilo vocale noto, resta la voce predefinita della lingua.
+
+Piper include dodici voci, femminili e maschili in tutte le sei lingue:
+
+| Lingua | Femminile | Maschile |
+| --- | --- | --- |
+| Italiano | Paola | Riccardo |
+| Inglese | Lessac | HFC male |
+| Spagnolo | Sharvard, speaker F (1) | Davefx |
+| Francese | Siwis | UPMC, speaker Pierre (1) |
+| Tedesco | Kerstin | Thorsten |
+| Svedese | Lisa | NST |
+
+I metadati e i file restano fissati alla revisione del
+[catalogo Piper](https://huggingface.co/rhasspy/piper-voices/blob/1162a9173d0ce503555aed757976b7a9912eae4c/voices.json).
+Il manifest conserva `gender` e, per i modelli con più parlanti,
+`default_speaker_id`: la sintesi deve passarlo a `SynthesisConfig`.
+Lessac usa la voce di Catherine Byers, documentata dal
+[progetto Blizzard](https://www.cstr.ed.ac.uk/projects/blizzard/2013/lessac_blizzard2013/).
+Kerstin è documentata nel [dataset originale](https://github.com/rhasspy/dataset-voice-kerstin).
+Il selettore indica genere vocale e lingua. **Prova voce** e le prove di
+pronuncia usano lo stesso profilo della lettura.
 
 ## Correzioni della pronuncia
 
@@ -80,7 +106,8 @@ Le altre regole ignorano la differenza fra maiuscole e minuscole.
 ## Contratto e distribuzione
 
 - `GET /tts/voices?engine=edge|piper`: catalogo del motore; Edge ha una cache
-  in memoria di un'ora, Piper espone soltanto le voci installate.
+  in memoria di un'ora, Piper espone soltanto le voci installate. Ogni voce
+  include `id`, `name`, `locale` e `gender` (`female` o `male`).
 - `POST /tts/stream`: `text`, `language`, `engine`, `voice`, `counselor_id`
   facoltativo, `voice_override`, `pronunciations: [{term, spoken}]` e
   `plain_text` (default false). Il frontend usa `plain_text: true` per il
@@ -113,6 +140,7 @@ docker compose up -d --build --no-deps piper backend frontend
 docker compose ps piper backend frontend
 docker exec counselorbot_backend python -m pytest backend/tests/test_voice_reader.py
 docker exec counselorbot_backend python -m backend.tests.test_tts_chunking
+docker run --rm --network none -v "$PWD/services/piper/test_server.py:/app/test_server.py:ro" counselorbot-10-step-piper python test_server.py
 cd frontend
 npm test
 npm run lint

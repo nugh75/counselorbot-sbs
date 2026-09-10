@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useI18n } from '@/lib/i18n-context';
 import { translate, type Lang } from '@/lib/i18n';
+import { getDisplayedCounselorId, subscribeToCounselor } from '@/lib/counselor';
 import { DEFAULT_VOICES, PIPER_VOICES, VOICE_EXCLUDED, pageReadingSource, highlightReadingBlock, type ReadingBlock } from '@/lib/voice-content';
 import { VoiceReaderController, type ReaderInput } from '@/lib/voice-reader';
 import { pronunciationRules } from '@/lib/voice-pronunciation';
@@ -16,10 +17,14 @@ type Target = { id: string; text: string; language: Lang; counselorId?: number |
 type ReaderContext = { openSettings: () => void; read: (target: Target) => void; release: (id: string) => void };
 const Context = createContext<ReaderContext | null>(null);
 const PREFERENCE_EVENT = 'counselorbot-voice-change';
-const preferenceKey = (language: Lang) => `cb_voice_${language}`;
-const sessionPreferences = new Map<Lang, string>();
-function preference(language: Lang) {
-    try { return localStorage.getItem(preferenceKey(language)) || sessionPreferences.get(language) || 'edge:'; } catch { return sessionPreferences.get(language) || 'edge:'; }
+const preferenceKey = (language: Lang, counselorId?: number | null) => `cb_voice_${language}${counselorId ? `_counselor_${counselorId}` : ''}`;
+const sessionPreferences = new Map<string, string>();
+function preference(language: Lang, counselorId?: number | null): string {
+    const key = preferenceKey(language, counselorId);
+    let saved = sessionPreferences.get(key);
+    try { saved = localStorage.getItem(key) || saved; } catch { /* Session preference works without storage. */ }
+    // A legacy page-wide voice must not give Sara the voice chosen for Marco.
+    return saved || (counselorId ? `${preference(language).split(':')[0]}:` : 'edge:');
 }
 function subscribePreference(notify: () => void) {
     window.addEventListener('storage', notify);
@@ -27,7 +32,7 @@ function subscribePreference(notify: () => void) {
     return () => { window.removeEventListener('storage', notify); window.removeEventListener(PREFERENCE_EVENT, notify); };
 }
 function speechInput(target: Target): ReaderInput {
-    const [storedEngine, voice] = preference(target.language).split(':');
+    const [storedEngine, voice] = preference(target.language, target.counselorId).split(':');
     const engine = storedEngine === 'piper' ? 'piper' : 'edge';
     return { text: target.text, language: target.language, engine,
         voice: voice || (engine === 'piper' ? PIPER_VOICES : DEFAULT_VOICES)[target.language],
@@ -38,6 +43,7 @@ function speechInput(target: Target): ReaderInput {
 export function VoiceReaderProvider({ children }: { children: React.ReactNode }) {
     const { lang } = useI18n();
     const pathname = usePathname();
+    const displayedCounselorId = useSyncExternalStore(subscribeToCounselor, getDisplayedCounselorId, () => null);
     const [controller] = useState(() => new VoiceReaderController());
     const [open, setOpen] = useState(false);
     const [expanded, setExpanded] = useState(true);
@@ -50,7 +56,7 @@ export function VoiceReaderProvider({ children }: { children: React.ReactNode })
         setOpen(false);
         setTarget(null);
     }, [controller]);
-    useEffect(() => () => close(), [pathname, lang, close]);
+    useEffect(() => () => close(), [pathname, lang, displayedCounselorId, close]);
     const read = useCallback((next: Target) => {
         if (!document.activeElement?.closest('[data-voice-reader]')) setOpener(document.activeElement as HTMLElement);
         if (!open) setExpanded(window.matchMedia('(min-width: 1024px)').matches);
@@ -74,7 +80,7 @@ export function VoiceReaderProvider({ children }: { children: React.ReactNode })
             if (!snapshot.text) return;
             read({ id: root.dataset.voiceSource || 'page', ...snapshot,
                 language: (root.dataset.voiceLanguage as Lang) || lang,
-                counselorId: Number(root.dataset.voiceCounselor) || undefined });
+                counselorId: Number(root.dataset.voiceCounselor) || getDisplayedCounselorId() });
         };
         document.addEventListener('dblclick', startAtSelection);
         return () => document.removeEventListener('dblclick', startAtSelection);
@@ -121,13 +127,15 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
 }) {
     const { t, lang } = useI18n();
     const language = target?.language ?? lang;
+    const displayedCounselorId = useSyncExternalStore(subscribeToCounselor, getDisplayedCounselorId, () => null);
+    const counselorId = target?.counselorId ?? displayedCounselorId;
     const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
     const currentIndex = state.current;
-    const selected = useSyncExternalStore(subscribePreference, () => preference(language), () => 'edge:');
+    const selected = useSyncExternalStore(subscribePreference, () => preference(language, counselorId), () => 'edge:');
     const [engineValue, voice = ''] = selected.split(':');
     const engine = engineValue === 'piper' ? 'piper' : 'edge';
     const panel = useRef<HTMLElement>(null);
-    const [voices, setVoices] = useState<{ id: string; name: string; locale: string }[]>([]);
+    const [voices, setVoices] = useState<{ id: string; name: string; locale: string; gender?: string }[]>([]);
     const [catalogError, setCatalogError] = useState(false);
     const [retry, setRetry] = useState(0);
     const [catalogEngine, setCatalogEngine] = useState(engine);
@@ -174,13 +182,14 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
     }, [currentIndex, state.segments, state.status, target]);
     const choose = (value: string) => {
         controller.stop();
-        sessionPreferences.set(language, value);
-        try { localStorage.setItem(preferenceKey(language), value); } catch { /* Storage can be disabled. */ }
+        const key = preferenceKey(language, counselorId);
+        sessionPreferences.set(key, value);
+        try { localStorage.setItem(key, value); } catch { /* Storage can be disabled. */ }
         window.dispatchEvent(new Event(PREFERENCE_EVENT));
     };
     const readPage = () => {
         const root = document.getElementById('contenuto');
-        onRead({ id: 'page', text: '', language: lang, ...(root ? pageReadingSource(root) : {}) });
+        onRead({ id: 'page', text: '', language: lang, counselorId: displayedCounselorId, ...(root ? pageReadingSource(root) : {}) });
     };
     const active = state.status === 'playing' || state.status === 'buffering';
     const playbackLabel = t(active ? 'voice.pause' : state.status === 'idle' || state.status === 'error' ? 'voice.listen' : 'voice.resume');
@@ -213,17 +222,17 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
                         <select aria-label={t('voice.voice')} value={voice} onChange={event => choose(`${engine}:${event.target.value}`)} className="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-2 text-sm">
                             <option value="">{t('voice.auto')}</option>
                             {voice && !available.some(v => v.id === voice) && <option value={voice}>{voice}</option>}
-                            {available.map(v => <option key={v.id} value={v.id}>{v.name} · {v.locale}</option>)}
+                            {available.map(v => <option key={v.id} value={v.id}>{v.name} · {v.locale}{(v.gender === 'male' || v.gender === 'female') && ` · ${t(`voice.${v.gender}`)}`}</option>)}
                         </select>
                     </label>
                 </div>
                 <p className="text-xs text-slate-500">{t('voice.saved')}</p>
                 <PronunciationEditor key={language} language={language} onChange={controller.stop}
-                    onPreview={(text, literalPronunciation) => onRead({ id: 'pronunciation-preview', text, language, literalPronunciation })} />
+                    onPreview={(text, literalPronunciation) => onRead({ id: 'pronunciation-preview', text, language, counselorId, literalPronunciation })} />
                 {catalogError && <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-red-700">{t('voice.catalogError')}<Button variant="ghost" onClick={() => setRetry(n => n + 1)}>{t('voice.retry')}</Button></div>}
                 <div className="flex flex-wrap gap-2">
                     <Button onClick={readPage}><Headphones className="h-4 w-4" />{t('voice.page')}</Button>
-                    <Button variant="secondary" onClick={() => onRead({ id: 'preview', text: translate(language, 'voice.sample'), language })}>{t('voice.preview')}</Button>
+                    <Button variant="secondary" onClick={() => onRead({ id: 'preview', text: translate(language, 'voice.sample'), language, counselorId })}>{t('voice.preview')}</Button>
                 </div>
                 </div>
             </div>

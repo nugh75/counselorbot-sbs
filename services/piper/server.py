@@ -8,7 +8,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
-from piper import PiperVoice
+from piper import PiperVoice, SynthesisConfig
 from piper.config import PiperConfig
 import onnxruntime
 from pydantic import BaseModel, Field
@@ -41,7 +41,7 @@ def load_voice(voice: str):
 @app.get("/voices")
 def voices():
     return {"voices": [{"id": key, "name": v["name"].capitalize(),
-                        "locale": v["language"]["code"].replace("_", "-")}
+                        "locale": v["language"]["code"].replace("_", "-"), "gender": v["gender"]}
                        for key, v in catalog.items()]}
 
 
@@ -52,6 +52,7 @@ def synthesize(request: SpeechRequest):
     with lock:
         output = io.BytesIO()
         with wave.open(output, "wb") as wav:
-            load_voice(request.voice).synthesize_wav(request.text, wav)
+            load_voice(request.voice).synthesize_wav(request.text, wav,
+                syn_config=SynthesisConfig(speaker_id=catalog[request.voice].get("default_speaker_id")))
         return Response(output.getvalue(), media_type="audio/wav",
                         headers={"Cache-Control": "no-store"})
