@@ -7,17 +7,34 @@ import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { ChatActionsPopover } from './ChatActionsPopover';
 import { useAudioAutoSend } from './AudioSendOption';
+import { useAudioLanguage } from './AudioLanguageOption';
 import { VoiceReaderController } from '@/lib/voice-reader';
 import { speechInput } from '@/components/voice-reader/VoiceReader';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_SECONDS = 180;
+const FIRST_SPOKEN = 60;
+const NEXT_SPOKEN = 240;
+
+/** End of the next stretch worth speaking, or `from` when the reply has not
+ *  reached a sentence end yet. An open code fence is never cut in half: the
+ *  server strips fenced blocks, and half a fence would be read out loud. */
+function spokenUpTo(text: string, from: number, minimum: number) {
+    const pending = text.slice(from);
+    if ((pending.match(/```/g) || []).length % 2) return from;
+    const boundaries = /[.!?…]["'\u201d\u00bb)]*(\s|$)|\n\n/g;
+    for (let match = boundaries.exec(pending); match; match = boundaries.exec(pending)) {
+        const end = match.index + match[0].length;
+        if (end >= minimum) return from + end;
+    }
+    return from;
+}
 type Stage = 'idle' | 'permission' | 'recording' | 'transcribing' | 'waiting' | 'reply';
 
 export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, sessionKey, disabled, maxLength = 60000, voiceMode = false, onExitVoice, counselorId, voiceOptionsContainer }: {
     value: string;
     onChange: (text: string) => void;
-    onSend: (text: string) => Promise<string | undefined>;
+    onSend: (text: string, onPartial?: (reply: string) => void) => Promise<string | undefined>;
     onBusyChange: (busy: boolean) => void;
     composerId: string;
     sessionKey: string;
@@ -30,6 +47,7 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
 }) {
     const { t, lang } = useI18n();
     const autoSend = useAudioAutoSend();
+    const speechLanguage = useAudioLanguage();
     const [stage, setStage] = useState<Stage>('idle');
     const [error, setErrorCode] = useState('');
     const [seconds, setSeconds] = useState(0);
@@ -46,8 +64,8 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
     const generation = useRef(0);
     const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
     const recorded = useRef<Blob | null>(null);
-    const latest = useRef({ value, onChange, onSend, autoSend, voiceMode });
-    useLayoutEffect(() => { latest.current = { value, onChange, onSend, autoSend, voiceMode }; }, [value, onChange, onSend, autoSend, voiceMode]);
+    const latest = useRef({ value, onChange, onSend, autoSend, voiceMode, speechLanguage });
+    useLayoutEffect(() => { latest.current = { value, onChange, onSend, autoSend, voiceMode, speechLanguage }; }, [value, onChange, onSend, autoSend, voiceMode, speechLanguage]);
     useEffect(() => { onBusyChange(stage !== 'idle' && stage !== 'reply'); }, [stage, onBusyChange]);
 
     const releaseMicrophone = useCallback(() => {
@@ -97,15 +115,35 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
 
     async function sendAndSpeak(text: string, token: number) {
         setStage('waiting');
-        try {
-            const reply = await latest.current.onSend(text);
-            if (token !== generation.current) return;
-            if (!reply?.trim()) { setErrorCode('reply'); setStage('idle'); return; }
-            replyText.current = reply;
+        // Speak each finished sentence as it is written: waiting for the whole
+        // reply left the student in silence for the length of the generation.
+        let spoken = 0;
+        let speaking = false;
+        const speak = (piece: string) => {
+            if (!piece.trim()) return;
+            const input = speechInput({ id: 'voice-conversation', text: piece, language: lang, counselorId });
+            if (speaking) { void speech.enqueue(input); return; }
+            speaking = true;
             setStage('reply');
-            playReply();
+            void speech.start(input);
+        };
+        const flush = (soFar: string, final: boolean) => {
+            if (token !== generation.current || soFar.length < spoken) return;
+            const end = final ? soFar.length : spokenUpTo(soFar, spoken, spoken + (speaking ? NEXT_SPOKEN : FIRST_SPOKEN));
+            if (end <= spoken) return;
+            const piece = soFar.slice(spoken, end);
+            spoken = end;
+            speak(piece);
+        };
+        try {
+            const reply = await latest.current.onSend(text, partial => flush(partial, false));
+            if (token !== generation.current) return;
+            if (!reply?.trim()) { speech.stop(); setErrorCode('reply'); setStage('idle'); return; }
+            replyText.current = reply;
+            flush(reply, true);
+            if (!speaking) { setStage('reply'); playReply(); }
         } catch {
-            if (token === generation.current) { setErrorCode('reply'); setStage('idle'); }
+            if (token === generation.current) { speech.stop(); setErrorCode('reply'); setStage('idle'); }
         }
     }
 
@@ -141,7 +179,7 @@ export function AudioInput({ value, onChange, onSend, onBusyChange, composerId, 
         request.current = controller;
         const form = new FormData();
         form.append('audio', blob, 'recording');
-        form.append('language', lang);
+        form.append('language', latest.current.speechLanguage);
         try {
             const response = await apiFetch('/api/audio/transcribe', { method: 'POST', body: form, signal: controller.signal });
             const result = await response.json();

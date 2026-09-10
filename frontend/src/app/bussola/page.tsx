@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowDown, ArrowRight, Check, Compass, Loader2, Mic, Send, Sparkles } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
+import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { Button } from '@/components/ui/Button';
@@ -336,6 +337,7 @@ export default function BussolaPage() {
                                             <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
                                         </button>}
                                         {!voiceMode && <AudioSendOption />}
+                                        <AudioLanguageOption />
                                     </>}</ChatActionsPopover>
                                     <textarea id="bussola-composer" hidden={voiceMode} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} rows={2} maxLength={4000} placeholder={t('orientation.input.placeholder')} className="min-h-20 min-w-0 flex-1 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                                     <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}

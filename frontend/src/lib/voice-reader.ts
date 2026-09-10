@@ -58,6 +58,8 @@ export class VoiceReaderController {
     private wantsPlay = false;
     private revision = 0;
     private selection = 0;
+    private streams = 0;
+    private queue: Promise<void> = Promise.resolve();
     private loaded = -1;
 
     getSnapshot = () => this.state;
@@ -85,6 +87,8 @@ export class VoiceReaderController {
         }
         this.audio = null;
         this.loaded = -1;
+        this.streams = 0;
+        this.queue = Promise.resolve();
         for (const segment of this.state.segments) if (segment.url) URL.revokeObjectURL(segment.url);
         this.state = initial();
         this.listeners.forEach(listener => listener());
@@ -93,9 +97,7 @@ export class VoiceReaderController {
     start = async (input: ReaderInput) => {
         this.stop();
         if (!input.text.trim()) { this.update({ status: 'error', error: 'empty' }); return; }
-        const revision = this.revision;
         this.abort = new AbortController();
-        const signal = this.abort.signal;
         this.audio = new Audio();
         this.wantsPlay = true;
         this.audio.onended = () => { this.cancelFrame(); this.advance(); };
@@ -105,7 +107,33 @@ export class VoiceReaderController {
             this.trackWord();
         };
         this.audio.onerror = () => this.fail('playback');
+        this.streams = 1;
         this.update({ status: 'buffering', generating: true });
+        this.queue = this.run(input, this.revision);
+        await this.queue;
+    };
+
+    /** Speak text that arrived after playback began, without cutting off what is
+     *  already playing: a reply read aloud while the model is still writing it. */
+    enqueue = async (input: ReaderInput) => {
+        if (!this.audio || this.state.status === 'error') return this.start(input);
+        if (!input.text.trim()) return;
+        if (this.state.status === 'complete') this.wantsPlay = true;
+        this.streams++;
+        this.update({ generating: true });
+        // Runs are serialized: each one numbers its segments after those already
+        // known, so two requests in flight would claim the same indices.
+        const revision = this.revision;
+        this.queue = this.queue.then(() => this.run(input, revision));
+        await this.queue;
+    };
+
+    private async run(input: ReaderInput, revision: number) {
+        const signal = this.abort?.signal;
+        if (!signal || revision !== this.revision) return;
+        // Appended segments continue the numbering: indices are what playback follows.
+        const offset = this.state.segments.reduce((top, segment) => Math.max(top, segment.index + 1), 0);
+        let expected = 0;
         try {
             const response = await fetch('/api/tts/stream', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input), signal,
@@ -113,10 +141,13 @@ export class VoiceReaderController {
             await readVoiceEvents(response, event => {
                 if (revision !== this.revision || signal.aborted) return;
                 if (event.type === 'init') {
-                    const segments = (event.segments as Segment[]).map(s => ({ ...s, words: [] })).sort((a, b) => a.index - b.index);
-                    this.update({ segments, current: segments[0]?.index ?? -1 });
+                    const incoming = (event.segments as Segment[]).map(s => ({ ...s, index: s.index + offset, words: [] })).sort((a, b) => a.index - b.index);
+                    expected = incoming.length;
+                    const segments = [...this.state.segments, ...incoming];
+                    this.update({ segments, current: this.state.current === -1 ? (incoming[0]?.index ?? -1) : this.state.current });
                 } else if (event.type === 'chunk' || event.type === 'chunk_error') {
-                    const segment = this.state.segments.find(s => s.index === event.index);
+                    const index = (event.index as number) + offset;
+                    const segment = this.state.segments.find(s => s.index === index);
                     if (!segment || segment.url || segment.failed) return;
                     const failed = event.type === 'chunk_error';
                     let url: string | undefined;
@@ -128,16 +159,21 @@ export class VoiceReaderController {
                         ...(failed ? { error: 'segments' as const } : {}) });
                     if (this.state.current === segment.index) this.select(segment.index);
                 } else if (event.type === 'done') {
-                    if (this.state.segments.some(s => !s.url && !s.failed)) throw new Error('interrupted');
-                    this.update({ generating: false });
-                    if (this.state.current === -1) this.complete();
+                    const mine = this.state.segments.filter(s => s.index >= offset && s.index < offset + expected);
+                    if (mine.some(s => !s.url && !s.failed)) throw new Error('interrupted');
+                    this.streams = Math.max(0, this.streams - 1);
+                    if (this.streams === 0) {
+                        this.update({ generating: false });
+                        if (this.state.current === -1) this.complete();
+                    }
                 }
             });
         } catch (error) {
             if (revision !== this.revision || signal.aborted) return;
+            this.streams = 0;
             this.fail(error instanceof Error && error.message === 'interrupted' ? 'interrupted' : 'request');
         }
-    };
+    }
 
     private fail(error: ReaderError) {
         this.wantsPlay = false;
