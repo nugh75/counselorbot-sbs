@@ -17,6 +17,36 @@ di test; completare il replay rappresentativo e la copertura è ancora necessari
 prima di consentire «Accetta e attiva» in produzione. Non esiste un pulsante per
 ignorare questi blocchi. Nessun prompt attivo viene modificato durante le prove.
 
+## Orientarsi nel pannello
+
+**Dove interviene la proposta** mostra il percorso «Chat guidata → QSA → ingresso
+nel passaggio», il nome del passaggio evidenziato tra quelli del percorso e il
+suo testo. Durante la creazione è un'anteprima della configurazione attuale;
+quando si apre un esperimento, nomi, ordine e testo provengono dalla copia
+congelata alla sua creazione. Il codice tecnico resta consultabile nei dettagli.
+L'elenco degli esperimenti mostra anche il nome storico del passaggio.
+
+Il bersaglio è il campo `guided_steps.prompt`: le istruzioni che avviano quel
+passaggio. Il sistema le carica quando la chat richiede il prompt della fase e
+non fornisce un messaggio sostitutivo. Non è l'intero prompt composto per il
+modello: direttive generali, system prompt, riferimenti pedagogici e contesto
+contribuiscono separatamente. La modifica, se attivabile e approvata, sarebbe
+condivisa dalle sessioni che caricano quel passaggio, non limitata al modello
+scelto per la prova. Il pilota non modifica Bussola, IDEA o altri strumenti.
+
+Ogni candidato presenta un breve **Pro e contro della proposta**, prima del
+confronto dei testi. Il beneficio atteso è esplicitamente un'ipotesi del
+proponente. I vantaggi e gli svantaggi misurati confrontano risposte che superano
+i controlli, mantenendo separati modello, lingua e insieme di validazione o
+verifica finale. Campioni mancanti, di dimensione diversa o con errori non
+vengono presentati come vantaggi. Le ripetizioni non sono studenti diversi e i
+conteggi non sostituiscono l'esito complessivo del protocollo. Il report mostra
+anche limiti e blocchi dell'attivazione, senza nuove chiamate AI.
+
+L'API amministrativa `GET /admin/prompt-experiments/options` include nei target
+`label_i18n`, `sort_order`, `prompt`, `system_prompt_mode` e `questionnaire_type`
+per rendere consultabile l'anteprima; le prove salvate usano lo snapshot esistente.
+
 ## Avvio
 
 Il file Compose ordinario lascia il laboratorio disattivato. Per abilitarlo:
