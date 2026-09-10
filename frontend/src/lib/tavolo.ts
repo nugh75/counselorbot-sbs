@@ -140,6 +140,17 @@ export const fetchTavolo = (id: string) =>
 export const listTavoli = () =>
     apiFetch('/api/tavolo').then((response) => json<TavoloSummary[]>(response));
 
+// Se la funzione e' spenta gli endpoint rispondono 404, e i bottoni devono
+// sparire invece di portare a un vicolo cieco. Non c'e' un canale per i flag
+// verso il browser, quindi lo si chiede all'elenco: la promessa e' memorizzata
+// qui perche' il bottone compare una volta per messaggio, e senza questa cache
+// una conversazione lunga farebbe una richiesta per bolla.
+let probe: Promise<boolean> | null = null;
+export function tavoloEnabled(): Promise<boolean> {
+    probe ??= apiFetch('/api/tavolo').then((response) => response.ok).catch(() => false);
+    return probe;
+}
+
 export const writeTavolo = (id: string, graph: TavoloGraph, baseIndex: number) =>
     apiFetch(`/api/tavolo/${encodeURIComponent(id)}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },

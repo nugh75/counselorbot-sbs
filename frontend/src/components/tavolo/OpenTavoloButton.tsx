@@ -4,10 +4,10 @@
 // tavolo e' un posto in cui si sta, e chiuderlo per tornare al messaggio da
 // cui si e' partiti perderebbe tutte e due le cose.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2, Table2 } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { createTavolo } from '@/lib/tavolo';
+import { createTavolo, tavoloEnabled } from '@/lib/tavolo';
 import { tavoloLabel } from '@/lib/i18n-tavolo';
 
 export function OpenTavoloButton({ sessionId, instrument, counselorId, locale, sourceText, ideaMap,
@@ -23,7 +23,16 @@ export function OpenTavoloButton({ sessionId, instrument, counselorId, locale, s
     disabled?: boolean;
 }) {
     const [busy, setBusy] = useState(false);
+    // Con la funzione spenta il bottone sparisce: portare a un 404 a metà
+    // discussione e' peggio che non esserci.
+    const [enabled, setEnabled] = useState<boolean | null>(null);
+    useEffect(() => {
+        let cancelled = false;
+        void tavoloEnabled().then((value) => { if (!cancelled) setEnabled(value); });
+        return () => { cancelled = true; };
+    }, []);
     const label = tavoloLabel('openFromChat', locale);
+    if (enabled === false) return null;
 
     const open = async () => {
         if (busy) return;
