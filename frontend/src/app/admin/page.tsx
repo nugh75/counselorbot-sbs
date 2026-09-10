@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Compass, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, Wand2, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot, Download } from 'lucide-react';
+import { BookOpen, Compass, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, Wand2, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot, Download, Mic } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
@@ -33,6 +33,7 @@ import { RagDocsPanel } from '@/components/admin/RagDocsPanel';
 import { GuidedStepQuestionsPanel } from '@/components/admin/GuidedStepQuestionsPanel';
 import { PromptExportPanel } from '@/components/admin/PromptExportPanel';
 import { UsersSummaryPanel } from '@/components/admin/UsersSummaryPanel';
+import { AudioModelsPanel } from '@/components/admin/AudioModelsPanel';
 import { getRealIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
@@ -40,7 +41,7 @@ import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'promptExperiments' | 'counselors' | 'approvedStrategies' | 'toolBriefs' | 'threadGuard' | 'certifiedStrategies' | 'certifiedReadings' | 'orientationReferrals' | 'skills' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'promptExperiments' | 'counselors' | 'approvedStrategies' | 'toolBriefs' | 'threadGuard' | 'certifiedStrategies' | 'certifiedReadings' | 'orientationReferrals' | 'skills' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'audio' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -102,6 +103,7 @@ export default function AdminPage() {
                 { id: 'logs', label: t('admin.tab.logs'), icon: FileText },
                 { id: 'costs', label: t('admin.tab.costs'), icon: Coins },
                 { id: 'benchmark', label: t('admin.tab.benchmark'), icon: Gauge },
+                { id: 'audio', label: t('admin.tab.audio'), icon: Mic },
                 { id: 'promptExperiments', label: { it: 'Esperimenti sui prompt', en: 'Prompt experiments', es: 'Experimentos de prompts', fr: 'Expériences sur les prompts', de: 'Prompt-Experimente', sv: 'Promptexperiment' }[lang], icon: Gauge },
             ],
         },
@@ -269,6 +271,7 @@ export default function AdminPage() {
                         {activeTab === 'guidedStepQuestions' && <GuidedStepQuestionsPanel />}
                         {activeTab === 'promptExport' && <PromptExportPanel />}
                         {activeTab === 'ragDocs' && <RagDocsPanel />}
+                        {activeTab === 'audio' && <AudioModelsPanel />}
                         {activeTab === 'surveys' && <SurveyViewer />}
                         {activeTab === 'results' && <QuestionnaireResultsViewer />}
                         {activeTab === 'questionnaires' && <QuestionnaireEditor />}
