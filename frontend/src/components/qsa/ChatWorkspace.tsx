@@ -7,9 +7,6 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { useI18n } from '@/lib/i18n-context';
 
-const preferenceKey = 'cb_chat_panel';
-const minWidth = 260;
-const maxWidth = 480;
 const desktopQuery = '(min-width: 1024px)';
 const desktopSnapshot = () => window.matchMedia(desktopQuery).matches;
 const serverSnapshot = () => false;
@@ -18,14 +15,14 @@ const subscribeDesktop = (notify: () => void) => {
     media.addEventListener('change', notify);
     return () => media.removeEventListener('change', notify);
 };
-function readPreferences() {
+function readPreferences(key: string, bounds: { min: number; max: number; initial: number }) {
     try {
-        const saved = JSON.parse(localStorage.getItem(preferenceKey) || 'null');
+        const saved = JSON.parse(localStorage.getItem(key) || 'null');
         return {
             open: typeof saved?.open === 'boolean' ? saved.open : true,
-            width: typeof saved?.width === 'number' && Number.isFinite(saved.width) ? Math.max(minWidth, Math.min(maxWidth, saved.width)) : 300,
+            width: typeof saved?.width === 'number' && Number.isFinite(saved.width) ? Math.max(bounds.min, Math.min(bounds.max, saved.width)) : bounds.initial,
         };
-    } catch { return { open: true, width: 300 }; }
+    } catch { return { open: true, width: bounds.initial }; }
 }
 
 type MobilePanel = 'path' | 'scores' | 'resources';
@@ -36,15 +33,22 @@ type Props = {
     onBack?: () => void;
     sidebar: (closeOnMobile: () => void, mobilePanel: MobilePanel | null) => ReactNode;
     advancement?: ReactNode;
+    // Quanto puo' essere largo il pannello. Un elenco di consigli sta in 480 px,
+    // una mappa no, e i due strumenti non devono nemmeno spartirsi la misura
+    // ricordata: per questo la chiave e' un parametro.
+    panelBounds?: { min: number; max: number; initial: number };
+    preferenceKey?: string;
     children: (openPanel: (panel?: MobilePanel) => void) => ReactNode;
 };
 
-export function ChatWorkspace({ locale, subtitle, headerClassName = '', onBack, sidebar, advancement, children }: Props) {
+export function ChatWorkspace({ locale, subtitle, headerClassName = '', onBack, sidebar, advancement,
+    panelBounds = { min: 260, max: 480, initial: 300 }, preferenceKey = 'cb_chat_panel', children }: Props) {
+    const { min: minWidth, max: maxWidth } = panelBounds;
     const { t } = useI18n();
     const l = (key: string) => chatLayoutLabel(locale, key);
     const id = useId();
     const desktop = useSyncExternalStore(subscribeDesktop, desktopSnapshot, serverSnapshot);
-    const [preferences, setPreferences] = useState(readPreferences);
+    const [preferences, setPreferences] = useState(() => readPreferences(preferenceKey, panelBounds));
     const { open: desktopOpen, width } = preferences;
     const [mobileOpen, setMobileOpen] = useState(false);
     const [mobilePanel, setMobilePanel] = useState<MobilePanel>('path');
@@ -61,11 +65,11 @@ export function ChatWorkspace({ locale, subtitle, headerClassName = '', onBack, 
         });
         if (grid.current) observer.observe(grid.current);
         return () => observer.disconnect();
-    }, []);
+    }, [minWidth, maxWidth]);
 
     useEffect(() => {
         try { localStorage.setItem(preferenceKey, JSON.stringify(preferences)); } catch { /* Storage can be unavailable. */ }
-    }, [preferences]);
+    }, [preferences, preferenceKey]);
 
     useEffect(() => {
         const element = dialog.current;

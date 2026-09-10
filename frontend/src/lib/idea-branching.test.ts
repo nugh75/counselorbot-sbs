@@ -11,7 +11,7 @@ const intro = () => readFileSync(new URL('../components/qsa/IdeaBranchIntro.tsx'
 const panel = () => readFileSync(new URL('../components/qsa/IdeaMapPanel.tsx', import.meta.url), 'utf8');
 const diagram = () => readFileSync(new URL('../components/ui/DiagramBlock.tsx', import.meta.url), 'utf8');
 const viewport = () => readFileSync(new URL('../components/ui/DiagramViewport.tsx', import.meta.url), 'utf8');
-const workspace = () => readFileSync(new URL('../components/qsa/IdeaWorkspace.tsx', import.meta.url), 'utf8');
+const workspace = () => readFileSync(new URL('../components/qsa/IdeaPanel.tsx', import.meta.url), 'utf8');
 const tree = () => readFileSync(new URL('../components/qsa/IdeaBranchTree.tsx', import.meta.url), 'utf8');
 
 test('the transcript follows the branch instead of running in one line', () => {
