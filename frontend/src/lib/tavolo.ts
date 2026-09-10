@@ -11,6 +11,11 @@ export type TavoloRel =
     | 'then' | 'blocks' | 'if'
     | 'part-of' | 'example-of';
 export type TavoloForm = 'concept' | 'action' | 'decision' | 'outcome';
+// Il raggruppamento della persona. Non e' un canale condiviso come la famiglia
+// dell'arco: vale quello che lei ci mette, e resta chiuso perche' una tavolozza
+// libera su quaranta pezzi smette di raggruppare.
+export type TavoloColor = 'green' | 'blue' | 'violet' | 'pink' | 'grey';
+export const NODE_COLORS: TavoloColor[] = ['green', 'blue', 'violet', 'pink', 'grey'];
 export type TavoloState = 'live' | 'pending' | 'dropped';
 export type TavoloBy = 'person' | 'model';
 
@@ -48,6 +53,7 @@ export interface TavoloNodeData {
     label: string;
     form: TavoloForm;
     icon?: string | null;
+    color?: TavoloColor | null;
     // Il pezzo che conta: uno solo per tavolo, come nei diagrammi.
     accent?: boolean;
     by: TavoloBy;

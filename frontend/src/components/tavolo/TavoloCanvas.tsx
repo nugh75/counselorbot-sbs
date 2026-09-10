@@ -15,6 +15,7 @@ import {
     ConnectionMode,
     Controls,
     MarkerType,
+    Panel,
     ReactFlow,
     ReactFlowProvider,
     useNodesState,
@@ -25,12 +26,14 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import Dagre from '@dagrejs/dagre';
-import { Plus, Star, Trash2 } from 'lucide-react';
+import { Maximize2, Minimize2, Plus, Star, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
 import {
     FAMILIES,
+    NODE_COLORS,
     RELS_BY_FAMILY,
     edgeKey,
     familyOf,
+    type TavoloColor,
     type TavoloEdgeData,
     type TavoloForm,
     type TavoloGraph,
@@ -43,6 +46,15 @@ import { TavoloLinkEdge, type LinkData } from './TavoloLinkEdge';
 const nodeTypes = { piece: TavoloPieceNode };
 const edgeTypes = { link: TavoloLinkEdge };
 const FORMS: TavoloForm[] = ['concept', 'action', 'decision', 'outcome'];
+// Le pastiglie della tavolozza: le stesse tinte dei pezzi, in piccolo.
+const SWATCH: Record<string, string> = {
+    none: 'border-indigo-400 bg-indigo-50',
+    green: 'border-emerald-400 bg-emerald-50',
+    blue: 'border-sky-400 bg-sky-50',
+    violet: 'border-violet-400 bg-violet-50',
+    pink: 'border-rose-400 bg-rose-50',
+    grey: 'border-slate-400 bg-slate-100',
+};
 const DEFAULT_REL: TavoloRel = 'causes';
 
 /** Il seme arriva senza posizioni: si dispone una volta, poi e' della persona. */
@@ -77,7 +89,10 @@ export function TavoloCanvas(props: {
 function Canvas({ graph, locale, onChange }: {
     graph: TavoloGraph; locale: string; onChange: (graph: TavoloGraph) => void;
 }) {
-    const { fitView } = useReactFlow();
+    const { fitView, zoomIn, zoomOut } = useReactFlow();
+    // Il pannello si chiude: su un tavolo fitto le settanta colonne a destra
+    // sono lo spazio che manca al disegno.
+    const [panelOpen, setPanelOpen] = useState(true);
     const [selected, setSelected] = useState<{ kind: 'node' | 'edge'; id: string } | null>(null);
     const label = useCallback((key: Parameters<typeof tavoloLabel>[0]) => tavoloLabel(key, locale), [locale]);
     // Il seme si dispone una volta sola: rifarlo a ogni render rimetterebbe in
@@ -108,7 +123,7 @@ function Canvas({ graph, locale, onChange }: {
                     type: 'piece',
                     position: { x: node.x, y: node.y },
                     selected: selected?.kind === 'node' && selected.id === node.id,
-                    data: { label: node.label, form: node.form, state: node.state, byModel: node.by === 'model', accent: Boolean(node.accent) },
+                    data: { label: node.label, form: node.form, state: node.state, byModel: node.by === 'model', accent: Boolean(node.accent), color: node.color ?? null },
                 }));
         });
     }, [graph.nodes, selected, setNodes]);
@@ -186,7 +201,7 @@ function Canvas({ graph, locale, onChange }: {
         setSelected(null);
     };
 
-    const patchNode = (id: string, change: Partial<{ label: string; form: TavoloForm }>) =>
+    const patchNode = (id: string, change: Partial<{ label: string; form: TavoloForm; color: TavoloColor | null }>) =>
         onChange({
             ...graph,
             nodes: graph.nodes.map((node) => (node.id === id ? { ...node, ...change } : node)),
@@ -226,15 +241,33 @@ function Canvas({ graph, locale, onChange }: {
                     // Permissiva: con quattro agganci tutti sorgenti, e' questa
                     // modalita' a farli valere anche come bersagli.
                     connectionMode={ConnectionMode.Loose}
+                    // Il tetto di serie e' 2, e su un tavolo piccolo `fitView`
+                    // ci arriva subito: il tasto che ingrandisce non avrebbe
+                    // piu' niente da fare. Quattro lascia spazio per leggere.
+                    maxZoom={4}
                     proOptions={{ hideAttribution: false }}
                     fitView
                 >
                     <Background />
                     <Controls showInteractive={false} />
+                    <Panel position="top-right" className="flex gap-1">
+                        {([
+                            ['zoomOut', ZoomOut, () => void zoomOut()],
+                            ['zoomIn', ZoomIn, () => void zoomIn()],
+                            ['fit', Maximize2, () => void fitView({ padding: 0.2 })],
+                            [panelOpen ? 'widen' : 'panel', panelOpen ? Minimize2 : Maximize2,
+                                () => setPanelOpen((open) => !open)],
+                        ] as const).map(([key, Icon, act]) => (
+                            <button key={key} type="button" onClick={act} aria-label={label(key)} title={label(key)}
+                                className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+                                <Icon className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                        ))}
+                    </Panel>
                 </ReactFlow>
             </div>
 
-            <aside className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto border-l border-slate-200 bg-white p-3">
+            {panelOpen && <aside className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto border-l border-slate-200 bg-white p-3">
                 <div className="flex gap-2">
                     <button type="button" onClick={addPiece}
                         className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700">
@@ -267,6 +300,20 @@ function Canvas({ graph, locale, onChange }: {
                                             : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
                                         {label(form)}
                                     </button>
+                                ))}
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <legend className="text-xs font-medium text-slate-500">{label('color')}</legend>
+                            <div className="mt-1 flex flex-wrap gap-1">
+                                {([null, ...NODE_COLORS] as (TavoloColor | null)[]).map((tint) => (
+                                    <button key={tint ?? 'none'} type="button"
+                                        onClick={() => patchNode(node.id, { color: tint })}
+                                        aria-pressed={(node.color ?? null) === tint}
+                                        aria-label={label(tint ?? 'noColor')} title={label(tint ?? 'noColor')}
+                                        className={`h-11 w-11 rounded-lg border-2 ${SWATCH[tint ?? 'none']} ${(node.color ?? null) === tint
+                                            ? 'ring-2 ring-slate-800 ring-offset-1'
+                                            : ''}`} />
                                 ))}
                             </div>
                         </fieldset>
@@ -352,7 +399,7 @@ function Canvas({ graph, locale, onChange }: {
                 {!node && !edge && (
                     <p className="text-sm text-slate-500">{label('proposalHint')}</p>
                 )}
-            </aside>
+            </aside>}
         </div>
     );
 }

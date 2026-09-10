@@ -237,3 +237,44 @@ test('un legame puo valere nei due sensi', async () => {
     assert.equal(await page.getByLabel('Vale nei due sensi').count(), 0);
     await context.close();
 });
+
+test('il colore raggruppa i pezzi senza toccarne lo stato', async () => {
+    const { page, context } = await fixture();
+    const fill = (id) => page.locator(`.react-flow__node[data-id="${id}"] > div`)
+        .evaluate((element) => getComputedStyle(element).backgroundColor);
+    const plain = await fill('a');
+
+    await page.locator('.react-flow__node[data-id="a"]').click();
+    await page.getByRole('button', { name: 'Verde' }).click();
+    await page.waitForTimeout(300);
+    const green = await fill('a');
+    assert.notEqual(green, plain, 'il pezzo colorato si distingue');
+    assert.equal(await fill('c'), plain, 'e gli altri restano com erano');
+
+    // Il pezzo proposto resta tratteggiato in ocra: lo stato batte il gruppo.
+    const proposed = await fill('d');
+    await page.locator('.react-flow__node[data-id="d"]').click();
+    await page.getByRole('button', { name: 'Verde' }).click();
+    await page.waitForTimeout(300);
+    assert.equal(await fill('d'), proposed, 'una proposta si vede ancora come proposta');
+    await context.close();
+});
+
+test('il tavolo si ingrandisce e si allarga', async () => {
+    const { page, context } = await fixture();
+    const zoom = () => page.locator('.react-flow__viewport')
+        .evaluate((element) => getComputedStyle(element).transform);
+    const before = await zoom();
+    await page.getByRole('button', { name: 'Ingrandisci' }).click();
+    await page.waitForTimeout(500);
+    assert.notEqual(await zoom(), before, 'il tasto ingrandisce davvero');
+
+    assert.equal(await page.locator('aside').count(), 1);
+    await page.getByRole('button', { name: 'Allarga il tavolo' }).click();
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator('aside').count(), 0, 'il pannello lascia il posto al disegno');
+    await page.getByRole('button', { name: 'Mostra il pannello' }).click();
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator('aside').count(), 1, 'e torna quando serve');
+    await context.close();
+});
