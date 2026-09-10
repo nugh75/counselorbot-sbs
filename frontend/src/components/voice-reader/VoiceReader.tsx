@@ -45,6 +45,11 @@ export function VoiceReaderProvider({ children }: { children: React.ReactNode })
     const pathname = usePathname();
     const displayedCounselorId = useSyncExternalStore(subscribeToCounselor, getDisplayedCounselorId, () => null);
     const [controller] = useState(() => new VoiceReaderController());
+    useEffect(() => {
+        const stop = () => controller.stop();
+        window.addEventListener('counselorbot-audio-recording', stop);
+        return () => window.removeEventListener('counselorbot-audio-recording', stop);
+    }, [controller]);
     const [open, setOpen] = useState(false);
     const [expanded, setExpanded] = useState(true);
     const [target, setTarget] = useState<Target | null>(null);

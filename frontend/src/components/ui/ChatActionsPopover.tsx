@@ -5,9 +5,12 @@ import { MoreVertical } from 'lucide-react';
 import { Tooltip, TooltipPortalContainer } from '@/components/ui/Tooltip';
 
 /** Native popovers escape the transcript's clipping and handle outside tap/Escape. */
-export function ChatActionsPopover({ label, children }: {
+export function ChatActionsPopover({ label, children, icon, disabled, onOpenChange }: {
     label: string;
     children: (close: () => void) => ReactNode;
+    icon?: ReactNode;
+    disabled?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }) {
     const id = useId();
     const trigger = useRef<HTMLButtonElement>(null);
@@ -60,13 +63,13 @@ export function ChatActionsPopover({ label, children }: {
 
     return <div className="shrink-0">
             <Tooltip content={label}>
-                <button ref={trigger} id={`${id}-trigger`} type="button" popoverTarget={id} aria-label={label} aria-expanded={open} aria-controls={id}
-                    className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-md text-slate-500 hover:bg-slate-100">
-                    <MoreVertical className="h-5 w-5" aria-hidden="true" />
+                <button ref={trigger} id={`${id}-trigger`} type="button" popoverTarget={id} aria-label={label} aria-expanded={open} aria-controls={id} disabled={disabled}
+                    className="inline-flex h-[44px] w-[44px] items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 disabled:opacity-50">
+                    {icon ?? <MoreVertical className="h-5 w-5" aria-hidden="true" />}
                 </button>
             </Tooltip>
             <div ref={attachPanel} id={id} popover="auto" role="group" aria-label={label}
-                onToggle={event => setOpen(event.newState === 'open')}
+                onToggle={event => { const next = event.newState === 'open'; setOpen(next); onOpenChange?.(next); }}
                 className="chat-options fixed m-0 overflow-visible rounded-lg border border-slate-200 bg-white text-slate-700 shadow-lg"
                 style={{ inset: 'auto', visibility: open ? 'visible' : 'hidden' }}>
                 <TooltipPortalContainer.Provider value={tooltipContainer}>

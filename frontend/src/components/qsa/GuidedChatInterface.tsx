@@ -3,6 +3,8 @@
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 
 import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, LayoutList, BookOpen } from 'lucide-react';
+import { AudioInput } from '@/components/ui/AudioInput';
+import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
@@ -496,6 +498,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [responseLength, setResponseLength] = useState<ResponseLength>(initialResponseLength ?? 'medium');
     const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(initialReasoningEffort ?? 'standard');
     const [input, setInput] = useState('');
+    const [audioBusy, setAudioBusy] = useState(false);
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -1112,10 +1115,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         }
     };
 
-    const handleSend = async (e: { preventDefault: () => void }, overrideText?: string) => {
+    const handleSend = async (e: { preventDefault: () => void }, overrideText?: string, audioReady = false) => {
         e.preventDefault();
         const userMessage = (overrideText ?? input).trim();
-        if (!userMessage || isLoading) return;
+        if (!userMessage || isLoading || (audioBusy && !audioReady)) return;
 
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
         setInput('');
@@ -1467,6 +1470,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 {currentPhase !== FIXED_CONCLUSION_ID && <>
                     <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
                     <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
+                    <AudioSendOption />
                     {reasoningCapable && <>
                         <p className="px-2 text-sm font-semibold text-slate-700">{t('reasoning.label')}</p>
                         <ReasoningSelector value={reasoningEffort} onChange={setReasoningEffort} disabled={isLoading} />
@@ -1848,6 +1852,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             />
                             {/* Mentre la risposta arriva il primario ferma, non invia: la
                                 richiesta ha già il suo AbortController, mancava il comando. */}
+                            <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
+                                onSend={text => void handleSend({ preventDefault() {} }, text, true)}
+                                composerId="guided-composer" sessionKey={`${sessionId}:${currentPhase}`} disabled={isLoading} />
                             {isLoading ? (
                                 <button
                                     type="button"
@@ -1861,7 +1868,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             ) : (
                                 <button
                                     type="submit"
-                                    disabled={!input.trim()}
+                                    disabled={!input.trim() || audioBusy}
                                     aria-label={t('chat.send')}
                                     className="shrink-0 rounded-md bg-indigo-600 p-3 text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
                                 >
