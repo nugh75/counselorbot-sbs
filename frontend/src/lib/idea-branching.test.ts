@@ -4,6 +4,8 @@ import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { branchCommands } from './idea-branching.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { EDITABLE_ROLES } from './idea-roles.ts';
 import type { IdeaBranch } from './idea-map';
 
 const chat = () => readFileSync(new URL('../components/qsa/GuidedChatInterface.tsx', import.meta.url), 'utf8');
@@ -11,8 +13,9 @@ const intro = () => readFileSync(new URL('../components/qsa/IdeaBranchIntro.tsx'
 const panel = () => readFileSync(new URL('../components/qsa/IdeaMapPanel.tsx', import.meta.url), 'utf8');
 const diagram = () => readFileSync(new URL('../components/ui/DiagramBlock.tsx', import.meta.url), 'utf8');
 const viewport = () => readFileSync(new URL('../components/ui/DiagramViewport.tsx', import.meta.url), 'utf8');
-const workspace = () => readFileSync(new URL('../components/qsa/IdeaWorkspace.tsx', import.meta.url), 'utf8');
+const workspace = () => readFileSync(new URL('../components/qsa/IdeaPanel.tsx', import.meta.url), 'utf8');
 const tree = () => readFileSync(new URL('../components/qsa/IdeaBranchTree.tsx', import.meta.url), 'utf8');
+const map = () => readFileSync(new URL('../components/qsa/IdeaMapPanel.tsx', import.meta.url), 'utf8');
 
 test('the transcript follows the branch instead of running in one line', () => {
     const source = chat();
@@ -54,7 +57,7 @@ test('the map is inline so its nodes can be clicked', () => {
 test('clicking any node lands on the branch that owns it', () => {
     // set_focus accetta solo nodi-ramo: senza owners un click su un'ipotesi
     // finirebbe in 422.
-    assert.match(panel(), /onPickNode=\{onPickNode \? (\w+) => onPickNode\(state\?\.owners\?\.\[\1\] \?\? \1\)/);
+    assert.match(panel(), /onPickNode\(state\?\.owners\?\.\[id\] \?\? id\)/);
     assert.match(diagram(), /if \(id\) onPickNode\?\.\(id\)/);
     assert.match(diagram(), /onSelect=\{select\}/);
     assert.match(workspace(), /moveIdeaFocus\(sessionId, nodeId\)/);
@@ -152,4 +155,26 @@ test('an Idea with no map yet offers to start one instead of a dead end', () => 
     assert.match(source, /idea\.branches\.startName/);
     assert.match(source, /idea\.branches\.start'/);
     assert.doesNotMatch(source, /if \(rows\.length === 0\) \{\s*return <p/);
+});
+
+// --- correggere la mappa a mano ---
+
+test('the roles offered by hand leave out the ones that are not a person\'s to set', () => {
+    // `idea` e' la radice, `task` e' un ramo: hanno porte loro, e aprirle da
+    // qui salterebbe il tipo di lavoro.
+    assert.ok(!EDITABLE_ROLES.includes('task'));
+    assert.ok(!EDITABLE_ROLES.includes('idea'));
+    assert.ok(EDITABLE_ROLES.includes('assumption'));
+    assert.ok(EDITABLE_ROLES.includes('evidence'));
+});
+
+test('the map can be corrected without going through a sentence in the chat', () => {
+    const source = map();
+    // Il clic normale continua a portare al ramo: le correzioni stanno dietro
+    // un interruttore, altrimenti navigare e correggere si pestano i piedi.
+    assert.match(source, /aria-pressed=\{editing\}/);
+    assert.match(source, /editing \? \(id: string\) => select\(id\) : onPickNode/);
+    assert.match(source, /editIdeaNode\(sessionId, selected, draftLabel, draftRole\)/);
+    assert.match(source, /addIdeaNode\(sessionId, draftLabel, draftRole\)/);
+    assert.match(source, /deleteIdeaBranch\(sessionId, selected, false\)/);
 });

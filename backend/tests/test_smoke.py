@@ -3647,6 +3647,91 @@ def test_the_map_can_be_started_from_the_panel_when_the_talk_has_not_drawn_one()
         _set_idea_feature("false")
 
 
+def test_a_node_is_added_and_corrected_by_hand_from_the_map():
+    """La mappa e' il ragionamento della persona: correggere un'etichetta o
+    spostare un nodo nel ruolo giusto non deve passare da una frase in chat."""
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-node-by-hand"
+    try:
+        _seed_idea_branch(session_id)
+
+        added = client.post("/idea/node", json={
+            "session_id": session_id,
+            "label": "I dati siano accessibili",
+            "role": "assumption",
+        })
+        assert added.status_code == 200, added.text
+        node_id = added.json()["node_id"]
+
+        current = client.get("/idea/map", params={"session_id": session_id})
+        assert current.json()["owners"][node_id] == "t1"
+
+        fixed = client.post("/idea/node/edit", json={
+            "session_id": session_id,
+            "node_id": node_id,
+            "label": "I dati sono accessibili",
+            "role": "evidence",
+        })
+        assert fixed.status_code == 200, fixed.text
+        node = next(n for n in client.get("/idea/map", params={"session_id": session_id})
+                    .json()["spec"]["nodes"] if n["id"] == node_id)
+        assert node["label"] == "I dati sono accessibili" and node["role"] == "evidence"
+
+        gone = client.request("DELETE", "/idea/branch", params={
+            "session_id": session_id, "node_id": node_id, "cascade": "false",
+        })
+        assert gone.status_code == 200, gone.text
+        assert node_id not in [n["id"] for n in client.get(
+            "/idea/map", params={"session_id": session_id}).json()["spec"]["nodes"]]
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
+def test_an_older_stage_of_the_map_can_be_drawn_again():
+    """Le tappe erano registrate e non guardabili: vedere il pensiero muoversi
+    e' meta' del senso di tenere uno storico."""
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-map-history"
+    try:
+        _seed_idea_branch(session_id)
+        grown = client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "source": "turn",
+            "patch": {
+                "add_nodes": [{"id": "a1", "label": "I dati siano accessibili",
+                               "role": "assumption"}],
+                "add_edges": [{"from": "t1", "to": "a1", "kind": "link"}],
+            },
+        })
+        assert grown.status_code == 200, grown.text
+
+        stages = client.get("/idea/map/history", params={"session_id": session_id})
+        assert stages.status_code == 200, stages.text
+        rows = stages.json()
+        assert len(rows) == 2 and rows[0]["nodes"] < rows[1]["nodes"]
+
+        first = client.get("/idea/map/image", params={
+            "session_id": session_id, "revision": rows[0]["revision_id"], "format": "svg",
+        })
+        now = client.get("/idea/map/image", params={"session_id": session_id, "format": "svg"})
+        assert first.status_code == 200 and now.status_code == 200
+        # Il disegno di allora non e' quello di adesso.
+        assert first.headers["ETag"] != now.headers["ETag"]
+        assert "I dati siano accessibili" in now.text
+        assert "I dati siano accessibili" not in first.text
+
+        # Una revisione di un'altra sessione non si guarda da qui.
+        assert client.get("/idea/map/image", params={
+            "session_id": session_id, "revision": 999999,
+        }).status_code == 404
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
 def _seed_three_branches(session_id: str) -> None:
     seeded = client.post("/idea/map/patch", json={
         "session_id": session_id,

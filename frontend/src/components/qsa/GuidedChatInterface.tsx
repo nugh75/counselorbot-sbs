@@ -31,7 +31,11 @@ import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
 import { IdeaBranchIntro } from '@/components/qsa/IdeaBranchIntro';
-import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
+import { IdeaPanel } from '@/components/qsa/IdeaPanel';
+import { IdeaSourcesPanel } from '@/components/qsa/IdeaSourcesPanel';
+import { IdeaTabs } from '@/components/qsa/IdeaTabs';
+import { IdeaBranchTree } from '@/components/qsa/IdeaBranchTree';
+import { useIsDesktop } from '@/lib/use-desktop';
 import { RecommendationsPanel } from '@/components/qsa/RecommendationsPanel';
 import { ChatWorkspace } from '@/components/qsa/ChatWorkspace';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
@@ -425,6 +429,11 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 
 // --- Main Component ---
 
+// Una mappa in 480 px non si legge: il pannello di Idea e' piu' largo di
+// quello fatto per un elenco di consigli, e ricorda la sua misura per conto
+// suo per non portarsela dietro negli altri strumenti.
+const IDEA_PANEL_BOUNDS = { min: 360, max: 720, initial: 480 };
+
 export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, reasoningCapable = true }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
@@ -434,6 +443,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // Strumento Idea: la variante decide di che materia si parla, la versione
     // dice al pannello che la mappa e' cambiata.
     const isIdea = questionnaireType === 'IDEA';
+    const desktop = useIsDesktop();
+    // Se l'ultimo turno ha disegnato. Null prima del primo: una mappa che non
+    // c'e' ancora non e' una mappa rimasta ferma.
+    const [ideaDrew, setIdeaDrew] = useState<boolean | null>(null);
     const [ideaVariant, setIdeaVariant] = useState<IdeaVariant>('student-path');
     const [ideaMapVersion, setIdeaMapVersion] = useState(0);
     const [ideaMove, setIdeaMove] = useState<IdeaNextStep | null>(null);
@@ -939,6 +952,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             adoptRecommendations(result.recommendations);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
             refreshIdeaWorkspace(result.idea_revision_id);
+            if (isIdea) setIdeaDrew(result.idea_revision_id != null);
             if (!result.response?.trim()) dropLast();
         } catch {
             if (!controller.signal.aborted) dropLast();
@@ -1023,6 +1037,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 adoptRecommendations(result.recommendations);
                 setLastFeedbackTargets(result.strategy_ids, result.response_id);
                 refreshIdeaWorkspace(result.idea_revision_id);
+                if (isIdea) setIdeaDrew(result.idea_revision_id != null);
+            if (isIdea) setIdeaDrew(result.idea_revision_id != null);
                 streamOk = true;
             } catch {
                 if (controller.signal.aborted) return;
@@ -1118,6 +1134,13 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         }
     };
 
+    // Chiedere la mappa e' un turno come gli altri, e si vede nella chat: un
+    // giro nascosto lascerebbe la persona senza sapere che cosa e' stato
+    // chiesto al modello.
+    const askForIdeaMap = () => {
+        void handleSend({ preventDefault() {} }, t('idea.map.askMessage'));
+    };
+
     const handleSend = async (e: { preventDefault: () => void }, overrideText?: string, audioReady = false, onPartial?: (reply: string) => void) => {
         e.preventDefault();
         const userMessage = (overrideText ?? input).trim();
@@ -1199,6 +1222,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             adoptRecommendations(result.recommendations);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
             refreshIdeaWorkspace(result.idea_revision_id);
+            if (isIdea) setIdeaDrew(result.idea_revision_id != null);
 
             // Sul testo completo applica il segnale di avanzamento
             const { cleanText, shouldAdvance } = extractAdvanceSignal(response || '');
@@ -1492,12 +1516,30 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         </ChatActionsPopover>
     );
 
-    return (
+    const conversation = (
         <div className="space-y-4">
         <ChatWorkspace locale={activeLocale} subtitle={getPhaseLabel(currentPhase)}
             onBack={onBack}
             advancement={stepNavigation}
+            panelBounds={isIdea ? IDEA_PANEL_BOUNDS : undefined}
+            preferenceKey={isIdea ? 'cb_chat_panel_idea' : undefined}
             sidebar={(closePanel, mobilePanel) => <>
+                {/* Idea: mappa e rami accanto alla conversazione. Il percorso e
+                    i consigli qui sotto non esistono in questo strumento. */}
+                {isIdea && (
+                    <IdeaPanel
+                        sessionId={sessionId}
+                        version={ideaMapVersion}
+                        locale={activeLocale}
+                        variant={ideaVariant}
+                        move={ideaMove}
+                        budget={ideaBudget}
+                        onBudgetChange={setIdeaBudget}
+                        onFocusMoved={() => setIdeaMapVersion((value) => value + 1)}
+                        drew={ideaDrew}
+                        onAskForMap={askForIdeaMap}
+                    />
+                )}
                 {/* Phase Progress — per Idea non esiste una sequenza da mostrare:
                     il passo successivo dipende da cosa manca alla mappa. */}
                 <div hidden={isIdea || (mobilePanel !== null && mobilePanel !== 'path')} className="glass-panel overflow-hidden">
@@ -1902,19 +1944,58 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
                         }} />
 
-        {/* Idea: mappa e rami sotto la conversazione, sempre raggiungibili. */}
-        {isIdea && (
-            <IdeaWorkspace
+        {/* Le fonti restano sotto la conversazione e larghe quanto la pagina:
+            una ricerca produce righe di testo lungo, in una colonna stretta
+            sarebbero illeggibili. */}
+        {isIdea && desktop && (
+            <IdeaSourcesPanel
                 sessionId={sessionId}
                 version={ideaMapVersion}
                 locale={activeLocale}
-                variant={ideaVariant}
-                move={ideaMove}
-                budget={ideaBudget}
-                onBudgetChange={setIdeaBudget}
-                onFocusMoved={() => setIdeaMapVersion((value) => value + 1)}
+                focus={ideaMove?.focus ?? null}
             />
         )}
         </div>
+    );
+
+    if (!isIdea || desktop) return conversation;
+
+    // Su telefono i quattro pezzi sono schede: una colonna unica costringerebbe
+    // a percorrerla tutta a ogni turno.
+    return (
+        <IdeaTabs
+            chat={conversation}
+            map={(
+                <IdeaPanel
+                    show="map"
+                    sessionId={sessionId}
+                    version={ideaMapVersion}
+                    locale={activeLocale}
+                    variant={ideaVariant}
+                    move={ideaMove}
+                    budget={ideaBudget}
+                    onBudgetChange={setIdeaBudget}
+                    onFocusMoved={() => setIdeaMapVersion((value) => value + 1)}
+                    drew={ideaDrew}
+                    onAskForMap={askForIdeaMap}
+                />
+            )}
+            branches={(
+                <IdeaBranchTree
+                    sessionId={sessionId}
+                    version={ideaMapVersion}
+                    locale={activeLocale}
+                    onFocusMoved={() => setIdeaMapVersion((value) => value + 1)}
+                />
+            )}
+            sources={(
+                <IdeaSourcesPanel
+                    sessionId={sessionId}
+                    version={ideaMapVersion}
+                    locale={activeLocale}
+                    focus={ideaMove?.focus ?? null}
+                />
+            )}
+        />
     );
 }
