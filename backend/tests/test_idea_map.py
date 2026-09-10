@@ -12,6 +12,7 @@ from backend.idea_map import (
     IdeaMapError,
     apply_patch,
     arrange,
+    outline,
     add_node_patch,
     edit_node_patch,
     root_id,
@@ -924,6 +925,50 @@ def test_a_node_added_by_hand_is_never_a_branch():
 def test_an_unknown_role_is_refused_instead_of_being_dropped():
     with pytest.raises(IdeaMapError):
         edit_node_patch("t1", role="banana")
+
+
+# --- la mappa in parole ---
+
+def _outlined():
+    return apply_patch(_two_branches(), parse_patch({
+        "add_nodes": [
+            {"id": "a1", "label": "I dati siano accessibili", "role": "assumption"},
+            {"id": "q1", "label": "Quali scuole?", "role": "open-question"},
+        ],
+        "add_edges": [{"from": "t1", "to": "a1"}, {"from": "t2", "to": "q1"}],
+    }))
+
+
+def test_the_map_in_words_is_an_outline_not_a_string_of_links():
+    """Un periodo per arco: a trenta nodi diventa illeggibile, e la struttura -
+    che e' l'unica cosa che quella mappa ha da dire - sparisce."""
+    text = outline(_outlined(), "it")
+    lines = text.splitlines()
+    assert lines[0] == "Tesi"
+    assert "porta a" not in text
+    # Il ramo sta sotto l'idea, e cio' che ci pende sta sotto il ramo.
+    assert "  Rivedere la letteratura" in lines
+    assert "    - assunto: I dati siano accessibili" in lines
+    assert "    - domanda aperta: Quali scuole?" in lines
+
+
+def test_a_closed_branch_says_so_with_what_it_settled():
+    spec = apply_patch(_outlined(), parse_patch({
+        "update": [{"id": "t1", "closed": True, "conclusion": "Criteri fissati"}],
+    }))
+    assert "  Rivedere la letteratura [chiuso: Criteri fissati]" in outline(spec, "it").splitlines()
+
+
+def test_a_flaw_travels_with_the_node_it_belongs_to():
+    spec = apply_patch(_outlined(), parse_patch({
+        "update": [{"id": "a1", "flaw": "duplicate"}],
+    }))
+    line = next(row for row in outline(spec, "it").splitlines() if "I dati siano accessibili" in row)
+    assert line.endswith(")") and "assunto" in line
+
+
+def test_the_outline_speaks_the_language_it_is_asked_for():
+    assert "- assumption: I dati siano accessibili" in outline(_outlined(), "en")
 
 
 if __name__ == "__main__":

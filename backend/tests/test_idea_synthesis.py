@@ -13,6 +13,7 @@ import contextlib
 import pytest
 
 from backend.ai_service import AIError
+from backend.idea_map import outline
 from backend.diagram_render import describe, parse_spec
 import backend.idea_synthesis as synthesis_module
 from backend.idea_synthesis import synthesis_for
@@ -84,7 +85,7 @@ def _raising_get_response(*args, **kwargs):
 
 def test_falls_back_to_deterministic_when_the_model_fails():
     with _model(_raising_get_response):
-        assert synthesis_for(_ConfigDB(), SPEC, "it") == describe(SPEC, "it")
+        assert synthesis_for(_ConfigDB(), SPEC, "it") == outline(SPEC, "it")
 
 
 def test_uses_the_model_and_the_requested_language():
@@ -100,7 +101,7 @@ def test_uses_the_model_and_the_requested_language():
     assert result == "Una sintesi in prosa."
     # Il prompt impone la lingua della sessione e riceve il testo grezzo.
     assert "Italian" in seen["system"]
-    assert seen["user"] == describe(SPEC, "it")
+    assert seen["user"] == outline(SPEC, "it")
 
 
 def test_the_language_follows_the_interaction():

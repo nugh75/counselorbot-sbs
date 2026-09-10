@@ -54,3 +54,13 @@ test('the stages of the map can be walked back through, not only recorded', () =
     assert.match(source, /disabled=\{past\}/);
     assert.match(source, /idea\.map\.backToNow/);
 });
+
+test('the map in words keeps its line breaks, it is an outline now', () => {
+    const block = readFileSync(new URL('../components/ui/DiagramBlock.tsx', import.meta.url), 'utf8');
+    assert.match(block, /whitespace-pre-line/);
+    const client = readFileSync(new URL('./idea-map.ts', import.meta.url), 'utf8');
+    // La descrizione e' scritta dal server: senza la lingua tornerebbe
+    // l'indice in italiano a chi lavora in un'altra.
+    assert.match(client, /fetchIdeaMap\(sessionId: string, lang = 'it'\)/);
+    assert.match(client, /session_id: sessionId, lang \}\);/);
+});
