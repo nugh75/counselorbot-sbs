@@ -1,10 +1,17 @@
 # Laboratorio di miglioramento dei prompt con approvazione amministrativa
 
-**Stato**: piano operativo da rivedere; laboratorio non implementato.
+**Stato**: pilota locale implementato; replay completo e copertura per l’attivazione ancora da completare.
 **Aggiornamento**: 2026-09-10.
 **Perimetro**: backend, ambiente di test isolato e pagina di amministrazione.
-**Autorizzazione di questa sessione**: preparazione del piano e revisioni con
-Claude Code e Claude Code–DeepSeek; nessuna implementazione o prova sui dati reali.
+**Autorizzazione di questa sessione**: sviluppo richiesto dall’utente dopo il piano;
+sottotask con Claude Code e Claude Code–DeepSeek. Prove di rilascio su casi sintetici,
+nessuna importazione di dati personali né attivazione di prompt operativi.
+
+**Implementazione e uso**: [guida del pilota](../operations/prompt-lab.md). Il laboratorio
+è disponibile in amministrazione con modelli e obiettivi selezionabili. Le condizioni
+di attivazione restano bloccanti: l’attuale replay sintetico non copre persona, skill,
+retrieval e contesti personali. La prima prova locale ha completato quattro casi con
+dieci chiamate; revisioni e ricevute sono verificate su PostgreSQL di test.
 
 Questo documento sostituisce il piano del 2026-09-08. La richiesta del
 2026-09-10 introduce l'approvazione preventiva: l'AI propone e sperimenta,
@@ -510,11 +517,11 @@ aggiungono alle directory già usate dal progetto accanto ai contratti verificat
 - [ ] Inventariare dipendenze, lingue e preset serviti; verificare modelli locali
   disponibili e capacità del giudice senza dedurle dal nome del modello.
 - [ ] Definire rubrica, controlli critici, budget e politica dei dati prima dell'importazione.
-- [ ] Definire contratti per obiettivi manuali, finalità e selezione dei preset
+- [x] Definire contratti per obiettivi manuali, finalità e selezione dei preset
   per ruolo e dei modelli da testare, con snapshot immutabili.
-- [ ] Introdurre DB laboratorio, worker disabilitato per default e configurazione
+- [x] Introdurre DB laboratorio, worker disabilitato per default e configurazione
   distinta, documentata senza valori segreti in `.env.example`.
-- [ ] Implementare persistenza dei job e snapshot sintetici.
+- [x] Implementare persistenza dei job e snapshot sintetici.
 
 **Chiusura**: il worker completa un job sintetico; non raggiunge DB, API
 privilegiate e file di produzione né endpoint esterni, anche forzando un errore
@@ -523,13 +530,13 @@ attivo modificato. Nessuna importazione reale prima di questa verifica.
 
 ### Fase 2 — Replay fedele e valutazione senza scritture operative
 
-- [ ] Preparare casi congelati e tre insiemi separati; iniziare da dati sintetici.
+- [x] Preparare casi congelati e tre insiemi separati; iniziare da dati sintetici.
 - [ ] Implementare l'iniezione del componente e verificare parità della baseline.
-- [ ] Separare la valutazione pura dal percorso operativo del thread guard.
+- [x] Separare la valutazione pura dal percorso operativo del thread guard.
 - [ ] Eseguire baseline e variante scritta a mano per verificare il banco di prova.
 - [ ] Verificare gli stessi casi su almeno due preset selezionati, attribuendo
   correttamente risultati, parametri e consumo al modello testato.
-- [ ] Salvare risultati completi, esclusioni, errori e manifest.
+- [x] Salvare risultati completi, esclusioni, errori e manifest.
 
 **Chiusura**: una modifica volutamente difettosa viene rilevata; una variante
 identica alla baseline non viene dichiarata un miglioramento sistematico.
@@ -538,12 +545,12 @@ Taccuino o memoria reale cambia. La mancanza del giudice non produce un pass.
 
 ### Fase 3 — Proponente locale e confronto delle varianti
 
-- [ ] Generare al massimo due proposte sul solo insieme di sviluppo.
-- [ ] Accettare obiettivi amministrativi anche senza un errore storico; separare
+- [x] Generare al massimo due proposte sul solo insieme di sviluppo.
+- [x] Accettare obiettivi amministrativi anche senza un errore storico; separare
   la preparazione dei casi dalla proposta e supportare la sola verifica.
 - [ ] Validare target, blocchi protetti e immutabilità delle varianti.
-- [ ] Selezionare in validazione, poi verificare il finalista su casi indipendenti.
-- [ ] Applicare budget, ripetizioni e regole di ammissibilità; registrare tutte le varianti.
+- [x] Selezionare in validazione, poi verificare il finalista su casi indipendenti.
+- [x] Applicare budget, ripetizioni e regole di ammissibilità; registrare tutte le varianti.
 
 **Chiusura**: prova completa e riproducibile anche quando nessun candidato
 migliora; nessun accesso del proponente ai casi finali. Dataset, modello o
@@ -552,12 +559,13 @@ risultato incompleto, mai attivabile.
 
 ### Fase 4 — Pagina amministrativa e decisioni
 
-- [ ] Implementare elenco, dettaglio, diff e confronto dei casi.
-- [ ] Implementare editor degli obiettivi, scelta della finalità e selettori
+- [x] Implementare elenco, dettaglio, diff e confronto dei casi.
+- [x] Implementare editor degli obiettivi, scelta della finalità e selettori
   distinti per modelli di preparazione/proposta/valutazione e modelli da testare.
-- [ ] Aggiungere avvio, interruzione, ripetizione e rifiuto con motivazione.
-- [ ] Mostrare copertura, limiti e ragioni che impediscono l'attivazione.
-- [ ] Verificare autorizzazioni, sei lingue UI, tastiera, desktop/mobile e temi.
+- [x] Aggiungere avvio, interruzione, ripetizione e rifiuto con motivazione.
+- [x] Mostrare copertura, limiti e ragioni che impediscono l'attivazione.
+- [x] Verificare autorizzazioni, sei lingue UI, selettori accessibili, desktop/mobile e temi.
+  Restano da ampliare gli scenari di uso completo da tastiera e il replay rappresentativo.
 
 **Chiusura**: browser su dati sintetici con successi, regressioni e timeout;
 un non amministratore non legge casi né avvia/decide prove. Navigazione e
@@ -570,10 +578,10 @@ già eseguiti; una nuova selezione richiede nuove prove.
 
 ### Fase 5 — Attivazione e ripristino protetti
 
-- [ ] Implementare decisione atomica, vincoli univoci e riconciliazione tra DB.
-- [ ] Collegare la revisione amministrativa all'esperimento e al manifest.
-- [ ] Bloccare approvazioni obsolete o con copertura incompleta.
-- [ ] Implementare ripristino senza sovrascrivere modifiche successive.
+- [x] Implementare decisione atomica, vincoli univoci e riconciliazione tra DB.
+- [x] Collegare la revisione amministrativa all'esperimento e al manifest.
+- [x] Bloccare approvazioni obsolete o con copertura incompleta.
+- [x] Implementare ripristino senza sovrascrivere modifiche successive.
 
 **Chiusura**: test PostgreSQL di doppio clic, due admin, accettazione/rifiuto
 concorrenti, target o dipendenze cambiati, crash prima/dopo commit e DB
