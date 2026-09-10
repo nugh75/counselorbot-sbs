@@ -1,454 +1,545 @@
-# Loop notturno di miglioramento dei prompt
+# Laboratorio di miglioramento dei prompt con approvazione amministrativa
 
-**Stato**: piano approvato, non implementato. Progettato il 2026-09-08.
-**Perimetro**: backend, nessuna modifica al frontend.
+**Stato**: piano operativo da rivedere; laboratorio non implementato.
+**Aggiornamento**: 2026-09-10.
+**Perimetro**: backend, ambiente di test isolato e pagina di amministrazione.
+**Autorizzazione di questa sessione**: preparazione del piano e revisioni con
+Claude Code e Claude Code–DeepSeek; nessuna implementazione o prova sui dati reali.
 
----
+Questo documento sostituisce il piano del 2026-09-08. La richiesta del
+2026-09-10 introduce l'approvazione preventiva: l'AI propone e sperimenta,
+l'amministratore decide se attivare. L'applicazione automatica, il rollback
+automatico e il cron delle 04:00 del vecchio piano non fanno parte del nuovo
+percorso. Il nome del file resta invariato per conservare i collegamenti.
 
-## Il problema
+## 1. Risultato atteso e confini
 
-Il thread guard (`backend/thread_guard.py`) giudica ogni turno del counselor e
-scrive il verdetto in `Log(action="thread_guard")`. Sa dire che un turno ha
-perso il filo, che la domanda era fuori posto, che il consiglio non era fondato
-su quello che lo studente aveva detto. Ma il verdetto vive un turno e muore lì:
-serve a iniettare al massimo due note nel turno successivo, e nessuno legge la
-somma di migliaia di verdetti per chiedersi *quale prompt* continua a produrre
-quei fallimenti.
+Un amministratore deve poter leggere il problema, vedere la modifica esatta,
+confrontare le risposte ottenute e accettare o rifiutare con piena tracciabilità.
+Una proposta non cambia mai il comportamento delle conversazioni reali prima
+dell'accettazione. Il miglioramento riguarda il testo dei prompt, non
+l'addestramento dei pesi del modello.
 
-Il prompt che ha generato la risposta non pertinente resta intatto. Questo
-documento descrive il circuito che lo chiude: raccogliere i fallimenti,
-attribuirli a un prompt, formulare ipotesi sul perché, testarle su casi reali
-congelati, applicare quella che vince e revocarla se il miglioramento non si
-vede.
-
-Gira di notte, su modello locale, senza costo per token e senza toccare le ore
-in cui gli studenti usano l'app.
-
----
-
-## Decisioni prese
-
-| Domanda | Decisione |
+| Decisione | Prima versione |
 |---|---|
-| Autorità | **Auto-apply con rollback**. Il loop scrive in produzione da solo; l'admin vede il diff dopo e può fare rollback. |
-| Banco di prova | **Suite di regressione che cresce**. Ogni turno bocciato viene congelato come caso; il test rigioca i casi congelati. |
-| Perimetro | **Pieno**: `guided_steps.prompt`, chiavi di prompt in `configs`, `counselors.persona` — con soglie di evidenza diverse. |
-| Segnale di fallimento | **thread_guard + feedback umano**. Il guard trova i candidati in volume, i voti degli studenti fanno da ancora. |
-| Ritmo | **Un target a notte, ore 04:00**, poi 7 giorni di osservazione con revert automatico. |
+| Avvio | Manuale, dalla pagina amministrativa |
+| Target | Un solo `guided_step` QSA per esperimento, scelto da una lista ammessa |
+| Varianti | Al massimo due, immutabili dopo l'avvio delle prove |
+| Modelli | Proponente, counselor simulato e giudice serviti localmente; nessun fallback esterno |
+| Ambiente | Worker e database del laboratorio separati dalla produzione |
+| Valutazione | Controlli di codice, giudice calibrato e revisione umana delle risposte |
+| Attivazione | Solo mediante «Accetta e attiva» da parte di un amministratore |
+| Ripristino | Manuale, versionato e protetto contro modifiche successive |
+| Automazione successiva | Raccolta dei problemi e avvio programmato, sempre con approvazione preventiva |
 
-Il rischio accettato con l'auto-apply è dichiarato: un prompt peggiorato
-raggiunge gli studenti prima che una persona lo legga. Le contromisure sono la
-finestra di osservazione, il revert automatico e i vincoli sulla forma della
-modifica (sotto, §5 e §6).
+Restano fuori dalla prima versione: modifica di prompt globali o personalità,
+Bussola, IDEA, modifica del giudice o delle rubriche da parte del proponente,
+prove A/B sugli studenti, auto-apply e fine-tuning. L'estensione a un altro
+strumento richiede casi e controlli coerenti con quello strumento.
 
----
+L'unità della prima prova è un turno con storia congelata. Una prova su un
+turno non dimostra la qualità di un'intera conversazione: prima di estendere
+il laboratorio a sintesi o percorsi completi serviranno scenari con più turni.
 
-## Architettura
+## 2. Componenti esistenti verificati e limiti del riuso
 
-Una run notturna, cinque fasi, tutto dentro il container backend.
-
-```
-04:00  cron host → docker exec counselorbot_backend python -m backend.prompt_loop
-   │
-   ├─ 1. HARVEST      verdetti thread_guard (7 gg) ⨝ feedback umano ⨝ Log(chat_message)
-   │                  → congela i turni bocciati come casi di regressione
-   ├─ 2. ATTRIBUTE    aggrega per target → sceglie UN target (evidenza più forte)
-   ├─ 3. HYPOTHESIZE  qwen3.8 legge il prompt vivo + K turni falliti → ≤3 ipotesi
-   │                  ciascuna: causa dichiarata + testo candidato + predizione
-   ├─ 4. TRIAL        replay dei casi congelati × (baseline + ogni candidato)
-   │                  giudice = thread_guard → pass-rate
-   └─ 5. APPLY        vince solo chi supera la soglia → write_live + PromptRevision
-                      → target in osservazione 7 gg → revert se non migliora
-```
-
-### Moduli nuovi
-
-| File | Responsabilità | Stima |
+| Componente | Riuso previsto | Limite da rispettare |
 |---|---|---|
-| `backend/prompt_loop.py` | orchestratore della run, entry `python -m`, budget di tempo | ~150 righe |
-| `backend/prompt_loop_harvest.py` | verdetti + feedback → casi congelati | ~200 |
-| `backend/prompt_loop_hypothesis.py` | prompt al modello locale, parsing e validazione dei candidati | ~180 |
-| `backend/prompt_loop_trial.py` | replay A/B sui casi congelati | ~200 |
-| `backend/prompt_loop_guard.py` | soglie, apply, osservazione, revert | ~180 |
+| `backend/chat_preparation.py` | Preparazione condivisa di chat sincrona, streaming e audit | Va alimentata con snapshot isolati; identificare gli accessi a DB, memoria e skill |
+| `backend/prompt_audit.py` | Envelope e controlli di lingua, fattori e formato | Il dry-run non esegue retrieval/skill; il live audit scrive log. Non è già un laboratorio isolato |
+| `backend/thread_guard.py` | Rubrica, struttura del verdetto e parsing | `evaluate()` chiama `store()`, che committa log e può chiudere domande. Non chiamarlo sulle sessioni reali durante un test |
+| `backend/ai_service.py` | Chiamate ai modelli locali e gestione delle risposte | Configurazione del laboratorio esplicita; non ereditare credenziali o fallback di produzione |
+| `backend/prompt_revisions.py` | Storico, scrittura del testo attivo e ripristino | La modifica accettata deve avere `origin="admin"` per mantenere la protezione dalle migrazioni |
+| `backend/prompt_updates.py` | Blocco della riga e verifica dell'hash prima della scrittura | `apply_plan()` committa internamente: il nuovo servizio deve includere anche la ricevuta di approvazione nella stessa transazione |
+| `frontend/src/components/admin/PromptHistory.tsx` | Consultazione dello storico e collegamento alla revisione | Non contiene il confronto degli esperimenti |
+| `frontend/src/components/admin/BenchmarkPanel.tsx` | Convenzioni per avvio, stato e dettaglio delle prove | Il benchmark attuale confronta modelli su uno scenario QSA fisso; non confronta revisioni dei prompt reali |
 
-### Riuso
+I prompt attivi sono valori nel database; i file `backend/prompts/` e i default
+in `prompt_config.py` coprono installazioni nuove e fallback. L'attivazione
+amministrativa aggiorna il valore nel database. Un eventuale consolidamento
+nei default sarà una modifica di codice distinta, revisionata e testata.
 
-Il grosso esiste già e non va riscritto:
+## 3. Architettura e confine dell'ambiente di test
 
-- `thread_guard.evaluate` — rilevatore in produzione **e** giudice del test.
-- `prompt_revisions.write_live` / `record` / `restore` — apply e rollback già
-  pronti, con `origin` che distingue chi ha scritto.
-- `AIService` — qwen3.8 locale via preset, `temperature=0`, thinking off.
-- `pii.redact_always` — gli envelope congelati passano di qui prima di essere
-  salvati.
-- `chat_logic.build_log_envelope` — l'envelope completo di ogni turno reale è
-  **già** in `Log.details` quando `log_full_prompt` è attiva (default). È la
-  scoperta che rende il replay semplice: non si ricostruisce niente.
+```mermaid
+flowchart TD
+    A[Amministratore: problema e target] --> B[Backend: prepara snapshot depurato]
+    B --> L[(Database laboratorio)]
+    L --> W[Worker locale: propone e prova]
+    W --> L
+    L --> U[Pagina admin: risultati e confronto]
+    U --> D{Decisione amministratore}
+    D -->|Rifiuta| R[Conserva esito e motivazione]
+    D -->|Accetta e attiva| P[Backend: verifica versioni e registra approvazione]
+    P --> V[(Prompt attivi e storico in produzione)]
+```
 
----
+### Separazione concreta
 
-## 1. Harvest — dal verdetto al caso congelato
+- Servizio Compose dedicato al worker e istanza PostgreSQL del laboratorio,
+  con credenziali e volume propri. Non riusare `counselorbot_test`: le suite
+  automatiche potrebbero azzerarne o modificarne i dati.
+- Il worker riceve soltanto snapshot, configurazione locale ammessa e accesso
+  al DB laboratorio. Nessun accesso al DB di produzione, al socket Docker,
+  ai volumi di sessioni/upload o alle credenziali dell'applicazione.
+- L'uscita di rete consente soltanto il database del laboratorio e gli endpoint
+  locali ammessi. Verificare anche DNS, redirect e indisponibilità del modello:
+  la sola etichetta del provider non garantisce che una richiesta resti locale.
+- Il backend amministrativo è il punto di collegamento: esporta i dati ammessi,
+  legge i risultati e gestisce l'attivazione. Il worker non possiede un token
+  che possa chiamare l'API amministrativa di attivazione.
+- Il caricamento di snapshot importa solo le tabelle/strutture necessarie alla
+  prova, tramite un elenco esplicito di campi ammessi. Campi sconosciuti fanno
+  fallire l'importazione. Nessuna copia integrale del database di produzione.
+- Il worker gira senza privilegi root, con limiti CPU/RAM. Gli snapshot e i
+  manifest congelati non sono modificabili dal suo ruolo DB; risultati e
+  varianti già congelati sono immutabili anche nello storage. I modelli ricevono
+  payload testuali senza strumenti per interrogare database o eseguire comandi.
 
-### Segnali
+Le generazioni usano un job persistente con un solo worker e una sola prova
+attiva inizialmente. Limiti pilota: due varianti, 60 minuti e 240 chiamate
+complessive, includendo giudizi e tentativi ripetuti. Sono tetti di risorse,
+non una promessa di durata o adeguatezza del campione. La concorrenza locale
+iniziale è uno; l'admin può interrompere il job.
 
-**Primario, in volume** — `Log(action="thread_guard")`. Il verdetto è un
-`Verdict` con tre `Check`, ciascuno `{ok: bool, note: str|None}`:
-`on_thread`, `question_fit`, `advice_grounded`. Un turno è *candidato al
-fallimento* se almeno un check ha `ok=false`.
+Alla scadenza del budget o dopo un arresto, conservare i risultati parziali e
+chiudere la run come incompleta. Un processo riavviato riconosce un job rimasto
+`running` senza worker e lo chiude come interrotto; il riavvio delle prove crea
+una nuova run. Nessuna ripartenza infinita o continuazione invisibile.
 
-**Ancora di verità, in campione** — i voti degli studenti già salvati:
+## 4. Dati, attribuzione del problema e riproducibilità
 
-- `SharedChatResponse.helpful` (join al turno via `Log.response_id`),
-- `StrategyFeedback.helpful` (per `questionnaire_type` + `phase`).
+### Casi e provenienza
 
-### Regola di combinazione
+Per il primo esperimento l'amministratore sceglie un problema e casi pertinenti,
+comprendendo fallimenti e risposte già riuscite. I verdetti del thread guard
+sono indizi, non dimostrazioni che la causa sia il prompt. Un problema dovuto a
+retrieval assente, errore applicativo o limite del modello non autorizza una
+riscrittura compensativa.
 
-| guard | umano | esito |
+Il feedback umano resta distinto dal verdetto automatico. Un voto negativo non
+spiega da solo la causa; un disaccordo resta visibile e non viene scartato per
+far aumentare il punteggio. Non attribuire `StrategyFeedback` a un singolo turno
+tramite la sola coppia strumento/fase. Usare collegamenti certi; se mancano,
+conservare il segnale solo a livello aggregato.
+
+Ogni caso contiene:
+
+- identificatore pseudonimo per raggruppare casi della stessa persona/sessione;
+- origine reale o sintetica, strumento, step, lingua e metadati di provenienza;
+- testo dello studente, risposta storica, storia e input effettivamente inviati;
+- contesto congelato necessario: fattori, fonti/strategie, memoria e direttive;
+- target, testo di base, revisione e impronte dei componenti utilizzati;
+- eventuale valutazione umana, verdetto precedente e motivo di inclusione.
+
+La depurazione copre input, risposte, storia, fonti e note. Redigere i campi di
+testo con `pii.redact_always` e verificare un campione prima dell'importazione;
+non alterare identificatori strutturali o hash. La depurazione non garantisce
+anonimato assoluto: l'accesso ai casi resta riservato agli amministratori.
+Conservare la mappatura verso i log reali soltanto in produzione, se necessaria.
+Prima di importare dati reali definire durata di conservazione e cancellazione
+propagata ai relativi snapshot e risultati; conservare separatamente le ricevute
+di approvazione prive di contenuti personali.
+
+### Tre insiemi separati
+
+1. **Sviluppo**: esempi che il proponente può leggere per formulare le varianti.
+2. **Validazione**: confronto che seleziona un solo candidato secondo la regola
+   registrata prima della prova.
+3. **Verifica finale**: casi esclusi dalla proposta e dalla selezione; si prova
+   soltanto il candidato selezionato contro la baseline.
+
+La separazione avviene per persona/sessione, con deduplicazione dei casi quasi
+identici. Come prima raccolta esplorativa si possono preparare 12 casi per
+insieme, mescolando problemi e controlli; questi numeri non definiscono una
+soglia di significatività. Registrare numerosità, composizione e lacune.
+
+Gli esiti della verifica finale non tornano al proponente durante la stessa
+ricerca. Se servono a costruire una nuova variante, quei casi diventano casi di
+sviluppo/regressione e occorre una nuova verifica finale indipendente. Lo storico
+può crescere senza dichiarare sempre «mai visti» gli stessi casi riutilizzati.
+
+### Baseline e manifest immutabile
+
+La baseline è il prompt attivo fotografato all'inizio dell'esperimento. La
+risposta storica rimane un'evidenza distinta: non è il risultato della baseline
+ricalcolata. Casi precedenti con altri prompt richiedono una ricostruzione
+verificabile; altrimenti sono esclusi dal confronto e contati come tali.
+
+Congelare in un manifest: hash di baseline, candidato, dataset e suddivisione;
+commit del codice; impronte delle configurazioni dipendenti, preset e modello
+locale realmente servito; temperatura, contesto, token massimi, seed se
+supportato; rubrica e versione dei controlli. Il nome `latest` da solo non
+identifica la versione del modello. I risultati includono l'input finale e gli
+errori di ogni chiamata, con contenuti depurati.
+
+## 5. Generazione delle varianti e replay
+
+Il proponente riceve il solo target ammesso, il problema, i casi di sviluppo e
+i vincoli del dominio. Produce al massimo due proposte strutturate:
+`causa_ipotizzata`, `modifica`, `risultato_atteso`, `criterio_da_migliorare`.
+La spiegazione è una motivazione verificabile, non una traccia di ragionamento
+interno. Ogni variante viene salvata prima di eseguirla.
+
+Il codice rifiuta modifiche fuori dal target, segnaposto/sentinelle rimossi,
+violazioni dei blocchi protetti o del formato previsto. La lingua del prompt
+resta quella delle istruzioni AI del progetto: non coincide necessariamente
+con la lingua della risposta. Similarità e lunghezza sono informazioni per la
+revisione, non prove che una modifica sia innocua. Il proponente non modifica
+rubrica, soglie, esempi finali o logica di valutazione.
+
+Il replay deve dimostrare che cambia soltanto il componente scelto:
+
+1. ricostruire l'input completo dagli snapshot, con la preparazione condivisa
+   alimentata da dipendenze isolate e senza retrieval o memoria aggiornati;
+2. verificare la parità della baseline rispetto all'envelope congelato, dopo le
+   sole trasformazioni dichiarate, compresa la depurazione;
+3. applicare la variante all'origine del componente e ricomporre l'envelope,
+   mantenendo identici contesto e parametri degli altri componenti;
+4. salvare il diff degli input effettivi prima della chiamata al modello.
+
+Non usare una sostituzione cieca dentro `system_prompt_final`: uno step può
+finire in `full_message`, essere composto con altri blocchi o contenere
+segnaposto risolti. Casi con origine ambigua, frammenti assenti o envelope
+incompleto non sono prove valide. Registrare esclusioni e motivi; non ridurre
+silenziosamente il denominatore per far superare la prova.
+
+La prima implementazione supporta soltanto gli envelope per cui questa parità
+è verificabile. Non serve emulare tutta la piattaforma: le dipendenze non
+supportate rendono il caso esplicitamente non applicabile. Nel pilota non si
+ottimizzano componenti che cambiano selezione di skill o retrieval: un contesto
+congelato non riproduce gli effetti di quella nuova selezione.
+
+## 6. Valutazione e regole di ammissibilità
+
+### Controlli e giudice
+
+- Controlli deterministici su segnaposto, formato e proprietà verificabili:
+  codici dei fattori, dati numerici, riferimenti a strategie ammesse e struttura.
+  Le euristiche testuali non certificano da sole l'interpretazione pedagogica.
+- Rubrica fissa: pertinenza al turno, continuità, domanda appropriata, consigli
+  fondati, correttezza rispetto allo strumento e rispetto della lingua richiesta.
+- Riutilizzare schema e parsing del guard attraverso una funzione senza effetti
+  collaterali, con verdetto strutturato distinto da errore/assenza di giudizio.
+  Non riutilizzare `thread_guard.evaluate()` come funzione pura.
+- Giudice locale configurato per l'esperimento e calibrato su risposte corrette
+  e volutamente scorrette valutate da una persona. Un modello diverso dal
+  proponente è preferibile, ma non è garanzia di imparzialità.
+- Registrare accordi/disaccordi con le annotazioni umane per criterio, compresi
+  i falsi negativi sui difetti noti. Non importare soglie universali di accordo:
+  la calibrazione deve essere accettata prima di giudicare le varianti.
+- Nascondere al giudice identità della variante e raccomandazione del proponente.
+  Alternare l'ordine A/B nei confronti; non premiare automaticamente la lunghezza.
+
+Ripetere la baseline in validazione e baseline/candidato nella verifica finale
+(almeno due esecuzioni nel protocollo pilota). Registrare oscillazioni delle
+risposte e dei giudizi; `temperature=0` non prova determinismo. Se il vantaggio
+è comparabile alla variabilità osservata, l'esito è inconcludente.
+Interlacciare le esecuzioni dei bracci e fissare la stessa politica di tentativi
+per entrambi: al massimo un nuovo tentativo per errore transitorio, conteggiato
+nel budget. Conservare il primo errore insieme all'eventuale recupero.
+
+### Report e decisione
+
+Per ciascun insieme, criterio, lingua e preset mostrare: casi pianificati,
+eseguiti, esclusi, falliti tecnicamente; casi migliorati, peggiorati, invariati;
+conteggi dei controlli critici; giudizi mancanti; tempi e chiamate consumate.
+Presentare conteggi e denominatori prima delle percentuali. La selezione in
+validazione considera prima le regressioni, poi il criterio dichiarato; a
+parità scegliere la modifica più circoscritta o dichiarare inconcludenza.
+Prima della prima run, il protocollo deve rendere eseguibili queste regole:
+definizione di successo per caso, aggregazione delle ripetizioni, misura della
+variabilità e margine minimo richiesto. Se tali regole non sono definite,
+l'esperimento rimane in bozza. Non sceglierle dopo aver visto i risultati.
+
+La proposta arriva come **ammissibile alla decisione** soltanto se:
+
+- il manifest è integro e tutte le prove obbligatorie sono complete;
+- non sono emerse regressioni sui controlli critici definiti prima dell'avvio;
+- il criterio dichiarato migliora oltre la variabilità osservata, senza
+  peggioramenti sostanziali sugli altri criteri, secondo la rubrica congelata;
+- esiste una verifica finale indipendente e il giudice ha superato la calibrazione;
+- è coperto l'ambito reale del target che si intende attivare.
+
+Un errore di chiamata, risposta tronca o giudizio mancante non è un successo;
+una prova incompleta non può produrre una proposta attivabile. Conservare anche
+le varianti perdenti, i risultati inconcludenti e le motivazioni del rifiuto.
+L'ammissibilità automatica non sostituisce la decisione amministrativa.
+
+### Ambito effettivo: lingue, modelli e counselor
+
+Uno step condiviso può influenzare più counselor, preset e tutte le sei lingue.
+Un risultato positivo in italiano con un solo modello vale solo per quel
+confronto. Prima dell'attivazione occorre una matrice di regressione per le
+configurazioni effettivamente servite dal target, comprese quelle di fallback.
+Le configurazioni con input effettivamente equivalenti possono condividere un
+caso solo se l'equivalenza è documentata.
+
+Il laboratorio locale non può dichiarare verificato un modello esterno.
+Se un target serve configurazioni non verificabili localmente, resta in sola
+sperimentazione e l'attivazione è bloccata finché il problema di copertura non
+è risolto con una decisione esplicita sul perimetro. Non cambiare il routing
+reale per far passare il test. Più run possono completare una matrice soltanto
+se baseline, candidato, protocollo e dipendenze restano identici.
+
+Sono confronti tecnici su casi selezionati: non misure dell'efficacia educativa
+né una dimostrazione che l'intera conversazione migliori.
+
+## 7. Pagina «Esperimenti sui prompt»
+
+Nuova voce nell'amministrazione, coerente con i componenti esistenti e con le
+sei lingue dell'interfaccia. Prima di implementare il layout leggere
+`docs/design.md`.
+
+**Elenco**: target, problema, autore, data, stato, avanzamento, esito e copertura.
+Filtri essenziali per stato e strumento; nessuna graduatoria basata su un unico
+punteggio sintetico.
+
+**Dettaglio**:
+
+1. Problema, ipotesi e risultato atteso; versione di base e ambito coinvolto.
+2. Diff del prompt attuale fotografato e del candidato, con testo completo.
+3. Numerosità e provenienza dei casi, suddivisione, modelli e impostazioni.
+4. Conteggi dei risultati e accesso diretto a peggioramenti, errori ed esclusioni.
+5. Casi affiancati: storia necessaria, messaggio dello studente, risposta baseline,
+   risposta candidata, controlli, giudizi e annotazioni umane.
+6. Limiti, lacune di copertura, consumi, manifest e cronologia delle decisioni.
+
+Azioni: **Avvia le prove**, **Interrompi**, **Ripeti le prove**,
+**Accetta e attiva**, **Rifiuta**. La ripetizione crea una run distinta;
+la modifica del testo crea una nuova variante e invalida i suoi vecchi risultati.
+I risultati già consultati non tornano a essere una verifica finale indipendente.
+
+«Accetta e attiva» esplicita che il testo entrerà in uso nelle successive
+preparazioni di risposta. Una risposta già in generazione conserva l'input
+precedente; una sessione già aperta potrà usare il nuovo prompt al turno
+successivo. Verificare il comportamento effettivo delle cache prima del rilascio.
+
+L'azione è disabilitata con motivazione per prove incomplete, regressioni
+critiche, copertura insufficiente o proposta obsoleta. Rifiuto e accettazione
+registrano una nota amministrativa. Dopo l'attivazione mostrare il collegamento
+alla revisione e l'azione **Ripristina versione precedente**. Esplicitare che
+il prompt accettato diventa una personalizzazione amministrativa: gli
+aggiornamenti automatici dei default non lo sovrascriveranno. Anche un
+successivo ripristino resta una revisione amministrativa.
+
+## 8. Persistenza, stati e API previste
+
+Nomi indicativi, da mantenere coerenti durante l'implementazione:
+
+| Entità | Database | Contenuto |
 |---|---|---|
-| boccia | boccia | **caso forte** → suite di regressione, peso 2 |
-| boccia | assente | caso debole → suite, peso 1 |
-| boccia | promuove | **scartato** — e registrato come disaccordo |
-| promuove | boccia | caso di controllo invertito → suite, peso 1 |
-| promuove | promuove/assente | **caso di controllo**, peso 1 |
-
-I casi di controllo servono quanto quelli falliti: una modifica che aggiusta
-dieci turni rotti e ne rompe cinque che funzionavano non è un miglioramento.
-
-Il conteggio dei disaccordi (guard boccia / umano promuove) è di per sé una
-metrica: se sale, il giudice si sta scollando dalla realtà e il loop va fermato.
-Il valore va in un log dedicato e nel report della run.
-
-### Il caso congelato
-
-Ogni caso salvato contiene:
-
-- l'envelope completo del turno, PII già redatta:
-  `{system_prompt_final, full_message, history}` letto da `Log.details`;
-- la risposta originale del counselor;
-- il verdetto originale del guard e l'eventuale voto umano;
-- il target attribuito (§2), la lingua, il modello e il preset usati;
-- l'hash del frammento di prompt vivo al momento della cattura.
-
-Congelato una volta, riusabile per sempre: un prompt aggiustato oggi non può
-rompere in silenzio un caso di sei mesi fa.
-
-**Tetto**: al massimo 200 casi per target, i più recenti; il resto viene
-scartato con una nota. Senza tetto la suite diventa impossibile da far girare in
-una notte.
-
----
-
-## 2. Attribuzione — quale prompt ha colpa
-
-Un turno ha `questionnaire_type`, `phase`, counselor e modello. Tre livelli
-possibili, tre soglie di evidenza diverse: più il testo è condiviso, più forte
-deve essere la prova prima di toccarlo.
-
-| Scope | Target | Quando è lui | Evidenza minima |
-|---|---|---|---|
-| `guided_step` | `guided_steps.prompt` di uno step | il fallimento si concentra su **uno step di uno strumento**, attraverso più counselor e più studenti | ≥ 20 turni bocciati, ≥ 3 counselor distinti, ≥ 8 studenti distinti, tasso ≥ 1,5× la mediana degli altri step dello stesso strumento |
-| `counselor_persona` | `counselors.persona` | il fallimento segue **un counselor** attraverso più strumenti | ≥ 30 turni bocciati, ≥ 3 strumenti distinti, ≥ 10 studenti, tasso ≥ 2× la mediana degli altri counselor |
-| `config` | chiave di prompt in `configs` | il fallimento è **trasversale**: più strumenti, più counselor, nessuna concentrazione | ≥ 50 turni bocciati, ≥ 4 strumenti, ≥ 5 counselor, ≥ 20 studenti |
-
-Le soglie sono da tarare sui volumi veri alla prima settimana di dry-run: sono
-un punto di partenza, non un risultato.
-
-L'ordine di verifica è dal più specifico al più generale. Se un fallimento si
-spiega con uno step, si ferma lì: si tocca lo step. Solo quando nessuna
-concentrazione regge si sale di livello. Questo evita il caso peggiore —
-riscrivere un prompt globale per un difetto che stava in una riga di uno
-strumento.
-
-Fra i target che superano la soglia, la run ne prende **uno**: quello con il
-numero maggiore di casi forti (guard + umano d'accordo). A parità, il più
-recente.
-
-### Esclusioni
-
-Un target è saltato se:
-
-- la sua ultima `PromptRevision` ha `origin="admin"` ed è più recente di 14
-  giorni — una persona ci ha appena messo mano, il loop non la scavalca;
-- è già in osservazione da una run precedente;
-- è stato modificato dal loop e poi revertito **due volte**: il loop si arrende
-  su quel target e lo segnala, perché il problema non è il testo del prompt.
-
----
-
-## 3. Ipotesi — leggere prima di riscrivere
-
-Il modello locale (qwen3.8, `temperature=0`, thinking off) riceve:
-
-- il testo vivo del prompt target;
-- K = 12 turni falliti campionati sul target, ciascuno come
-  `(cosa ha detto lo studente, cosa ha risposto il counselor, nota del giudice)`;
-- 4 turni di controllo promossi, per mostrare cosa già funziona;
-- il nome dello step e dello strumento — **mai** l'istruzione integrale degli
-  altri step (lezione appresa nel thread guard: dato lo script verbatim, il
-  modello lo spunta invece di leggere la conversazione).
-
-Restituisce al massimo **3 ipotesi**, ciascuna in JSON:
-
-```json
-{
-  "causa": "il prompt chiede una sintesi e una domanda nello stesso turno; il modello sceglie la sintesi e la domanda cade",
-  "predizione": "separando le due richieste, question_fit passa da 0.55 a >0.8 senza toccare on_thread",
-  "modifica": { "tipo": "sostituzione", "cerca": "...", "sostituisci": "..." }
-}
-```
-
-La **causa** e la **predizione** sono obbligatorie e non decorative: la
-predizione è quella che il test §4 verifica. Un'ipotesi che non dice in anticipo
-quale check dovrebbe migliorare viene scartata prima del test — altrimenti
-qualunque risultato la conferma.
-
-### Vincoli di forma sul candidato (validati in codice, non chiesti al modello)
-
-Il modello propone, il codice filtra. Un candidato è rifiutato se:
-
-1. cambia la lunghezza del prompt di più del ±25%;
-2. ha meno del 60% di similarità (token overlap) con l'originale — riscrittura
-   totale, non correzione mirata;
-3. rimuove una **sentinella** (`[DEPTH ON REQUEST]`, `FACTOR_INTERPLAY`,
-   `[SECOND-LEVEL METHOD]` e le altre): le migrazioni d'avvio le usano per
-   l'idempotenza, toglierne una fa riscrivere il blocco a ogni riavvio;
-4. rimuove un segnaposto (`{{counselor_name}}` e simili);
-5. cambia la lingua del prompt;
-6. introduce un'istruzione che nomina il thread guard o i suoi tre check — il
-   loop non deve poter insegnare al counselor a compiacere il giudice.
-
-Il punto 6 è la difesa contro il fallimento più insidioso di tutto il sistema.
-
----
-
-## 4. Trial — il test A/B
-
-### Come gira il replay
-
-Per ogni caso congelato e per ogni braccio (baseline + candidati):
-
-1. si prende `system_prompt_final` congelato;
-2. si **sostituisce** il frammento di prompt vecchio con quello candidato
-   (sostituzione di stringa esatta; se il frammento non si trova nell'envelope,
-   il caso è saltato e contato come non applicabile);
-3. si chiama `AIService` con lo stesso modello e preset del turno originale,
-   `temperature=0`;
-4. si giudica la risposta con `thread_guard.evaluate`, stesso preset del guard
-   di produzione.
-
-Nessuna ricostruzione dell'envelope, nessun passaggio da `prompt_audit`: il
-contesto è quello reale del turno, bit per bit, tranne il frammento sotto test.
-
-### Metrica
-
-Per ogni braccio, su ciascun check (`on_thread`, `question_fit`,
-`advice_grounded`):
-
-- **fixed** = casi falliti che ora passano;
-- **broken** = casi di controllo che ora falliscono;
-- **pass-rate** complessivo, pesato (casi forti valgono 2).
-
-### Rumore di fondo
-
-Anche a `temperature=0` la stessa chiamata non dà sempre la stessa risposta. Il
-braccio **baseline viene girato due volte**: la differenza fra le due run è il
-rumore di fondo della sessione. Un candidato deve battere il baseline di più del
-rumore misurato, altrimenti la run si chiude senza applicare niente e lo scrive
-nel report.
-
-### Soglia di vittoria
-
-Un candidato vince solo se, tutte insieme:
-
-- `fixed ≥ 5` e `fixed / falliti ≥ 0.30`;
-- `broken = 0` sui casi di controllo forti, `broken ≤ 1` in totale;
-- il guadagno di pass-rate supera il rumore di fondo di almeno 2×;
-- il check che l'ipotesi aveva **predetto** è fra quelli migliorati.
-
-Se vincono in due, passa quello con `fixed` maggiore. Se non vince nessuno, la
-run non applica niente: è l'esito normale, non un errore.
-
-### Costo di una run
-
-Con 60 casi (40 falliti + 20 controllo), 3 candidati e il baseline doppio:
-`60 × 5 = 300` generazioni + 300 giudizi = 600 chiamate locali. A ~8 s l'una,
-in serie, circa 80 minuti. Rientra nella finestra 04:00–06:00 con margine; il
-budget di tempo è comunque un parametro e la run si interrompe pulita quando
-scade, senza applicare nulla.
-
----
-
-## 5. Apply, osservazione, revert
-
-### Apply
-
-`prompt_revisions.write_live(scope, target_key, testo)` +
-`record(..., origin="auto", author="prompt_loop", note=<causa dell'ipotesi>)`.
-
-`origin="auto"` è un valore nuovo, da aggiungere a `ORIGINS` in
-`prompt_revisions.py`. Serve a distinguerlo da `admin`: una revisione `auto` non
-va protetta dalle migrazioni d'avvio come lo è una personalizzazione umana.
-
-Il target entra in osservazione: `applied_at`, tasso di fallimento pre-apply,
-revisione precedente per il ritorno.
-
-### Osservazione — 7 giorni
-
-Ogni notte la run controlla i target in osservazione **prima** di cercarne di
-nuovi. Al settimo giorno confronta il tasso di fallimento del target nei 7
-giorni dopo l'apply con quello dei 7 giorni prima, stessa definizione, stessi
-check.
-
-- migliorato di almeno il 20% relativo → la revisione resta, osservazione chiusa;
-- entro il ±20% → **revert** (`prompt_revisions.restore` sulla revisione
-  precedente): non ha fatto danno, ma non ha nemmeno pagato il rischio;
-- peggiorato oltre il 20% → **revert immediato**, e il target va in quarantena
-  per 30 giorni.
-
-**Revert anticipato**: la run controlla ogni notte, non solo al settimo giorno.
-Se dopo 48 ore con almeno 15 turni il tasso è peggiorato di oltre il 50%, il
-revert scatta subito.
-
-Un target su cui un admin scrive a mano durante l'osservazione esce
-dall'osservazione senza verdetto: la persona ha deciso, il loop si toglie di
-mezzo.
-
-### Visibilità
-
-Ogni run scrive un `Log(action="prompt_loop_run")` con il report completo:
-target scelto ed evidenza, ipotesi con causa e predizione, risultati per
-braccio, decisione, e i revert eseguiti. Il pannello admin mostra la storia
-(già leggibile da `prompt_revisions.history`) e il diff before/after di ogni
-revisione `auto`.
-
----
-
-## Schema DB — due tabelle nuove
-
-```python
-class PromptLoopCase(Base):
-    """Turno reale congelato come caso di regressione per il loop notturno."""
-    __tablename__ = "prompt_loop_cases"
-
-    id = Column(Integer, primary_key=True, index=True)
-    scope = Column(String, nullable=False, index=True)       # guided_step | config | counselor_persona
-    target_key = Column(String, nullable=False, index=True)
-    questionnaire_type = Column(String, index=True, nullable=True)
-    phase = Column(String, index=True, nullable=True)
-    counselor_id = Column(Integer, index=True, nullable=True)
-    language = Column(String, nullable=True)
-    provider = Column(String, nullable=True)
-    model_name = Column(String, nullable=True)
-    envelope = Column(JSON, nullable=False)                  # system_prompt_final, full_message, history (PII redatta)
-    response_text = Column(Text, nullable=False)
-    verdict = Column(JSON, nullable=False)                   # Verdict originale del guard
-    human_helpful = Column(Boolean, nullable=True)           # voto studente, se esiste
-    kind = Column(String, nullable=False, index=True)        # failing | control
-    weight = Column(Integer, nullable=False, default=1)
-    prompt_hash = Column(String, nullable=False)             # frammento vivo alla cattura
-    source_log_id = Column(Integer, index=True, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
-
-
-class PromptLoopTrial(Base):
-    """Una revisione applicata dal loop e la sua finestra di osservazione."""
-    __tablename__ = "prompt_loop_trials"
-
-    id = Column(Integer, primary_key=True, index=True)
-    scope = Column(String, nullable=False, index=True)
-    target_key = Column(String, nullable=False, index=True)
-    hypothesis = Column(JSON, nullable=False)                # causa, predizione, modifica
-    trial_result = Column(JSON, nullable=False)              # fixed/broken/pass-rate per braccio, rumore
-    revision_id = Column(Integer, index=True, nullable=True)     # PromptRevision applicata
-    previous_revision_id = Column(Integer, nullable=True)        # dove tornare
-    baseline_failure_rate = Column(Float, nullable=False)
-    status = Column(String, nullable=False, index=True)      # observing | kept | reverted | quarantined
-    applied_at = Column(DateTime(timezone=True), server_default=func.now())
-    resolved_at = Column(DateTime(timezone=True), nullable=True)
-    resolution_note = Column(String, nullable=True)
-```
-
----
-
-## Modifiche a codice esistente
-
-1. **`backend/thread_guard.py`** — `store()` scrive solo
-   `session_id / username / action / details`. Aggiungere
-   `questionnaire_type`, `phase`, `response_id` (colonne già presenti su `Log`)
-   così l'aggregazione è un `GROUP BY` invece di un join per timestamp
-   sull'ordine dei log. Cambiamento additivo, nessun effetto sul turno.
-2. **`backend/prompt_revisions.py`** — aggiungere `ORIGIN_AUTO = "auto"` a
-   `ORIGINS`. `is_admin_owned` **non** deve considerarlo di proprietà admin: una
-   revisione automatica non protegge il target dalle migrazioni.
-3. **`backend/models.py`** — le due tabelle sopra.
-
-Nient'altro. In particolare `prompt_audit.py`, `chat_logic.py` e la catena del
-turno restano intatte: il loop legge e scrive prompt, non partecipa alla
-conversazione.
-
----
-
-## Cron
-
-Le 01:00, 02:00 e 03:00 sono occupate da `graphify-cron`.
-
-```cron
-0 4 * * * cd /home/nugh75/counselorbot-sbs && docker exec counselorbot_backend \
-  python -m backend.prompt_loop >> /home/nugh75/counselorbot-sbs/logs/prompt-loop.log 2>&1 # counselorbot-prompt-loop
-```
-
-Il loop rifiuta di partire fuori dalla finestra 22:00–07:00 salvo
-`--force`, così un'esecuzione manuale a mano non finisce per caricare Ollama
-mentre gli studenti sono in chat.
-
-Flag previsti: `--dry-run` (tutto tranne l'apply), `--target scope:key`
-(forza un target), `--budget-min N`, `--force`.
-
----
-
-## Come si testa il loop
-
-- **Unit**, senza modello: attribuzione (dati sintetici di verdetti → il target
-  atteso), validazione dei candidati (i sei vincoli di forma), calcolo delle
-  soglie di vittoria, decisione di revert. Sono funzioni pure, si testano tutte
-  senza rete.
-- **Integrazione, DB di test** (`counselorbot_test`, vedi le regole di progetto):
-  harvest da log finti, ciclo apply → osservazione → revert con date iniettate.
-- **Dry-run sul DB di produzione**, sul modello di
-  `scripts/thread_guard_dry_run.py`: legge i verdetti veri, sceglie il target,
-  genera le ipotesi, gira il trial e **stampa** cosa avrebbe fatto. Nessuna
-  scrittura. Va tenuto acceso per almeno due settimane prima del primo apply
-  vero, ed è lì che si tarano le soglie di §2.
-- **Il caso rotto noto**: come per il thread guard, serve almeno un target di cui
-  si sappia in anticipo che il prompt è difettoso, per verificare che il loop lo
-  trovi. Il silenzio non è accuratezza.
-
----
-
-## Rischi noti
-
-| Rischio | Contromisura |
+| `PromptExperimentCase` | Laboratorio | Caso depurato, provenienza, gruppo di separazione e snapshot |
+| `PromptExperiment` | Laboratorio | Target, baseline, problema, manifest, suddivisione e varianti immutabili in JSON |
+| `PromptExperimentRun` | Laboratorio | Job, fase, stato, heartbeat, budget, versioni e riepilogo |
+| `PromptExperimentResult` | Laboratorio | Caso/variante/ripetizione, input, risposta, giudizi, controlli ed errori |
+| `PromptExperimentDecision` | Produzione | Ricevuta immutabile della decisione, amministratore, hash, revisioni e motivazione |
+
+Separare stato di esecuzione e decisione. Run:
+`queued → running → completed | failed | cancelled | budget_exceeded | interrupted`.
+Esito della valutazione: `eligible | not_eligible | inconclusive`.
+Decisione: `pending | rejected | activated | stale | reverted`.
+Una run `completed` può essere non ammissibile; `stale` indica che la prova non
+riguarda più le versioni attuali. Una nuova esecuzione non cancella lo storico.
+Le transizioni sono validate lato server: una proposta rifiutata o obsoleta
+non torna approvabile riaprendo la stessa run. Ogni risultato ha chiave univoca
+`(run_id, case_id, variant_id, repetition, attempt)` per evitare duplicazioni.
+
+API amministrative sotto `/api/admin/prompt-experiments`:
+
+- creazione, elenco e dettaglio degli esperimenti;
+- avvio, stato, risultati e interruzione di una run;
+- decisione di accettazione/rifiuto con hash atteso del manifest;
+- ripristino protetto collegato alla ricevuta di attivazione.
+
+Applicare `get_current_active_admin` a tutte le operazioni, compresa la lettura
+delle conversazioni. Il token dell'audit non autorizza le decisioni. Validare
+lato server stato, target ammesso e manifest: il pulsante disabilitato non è
+una barriera sufficiente.
+
+### Transazione di attivazione e concorrenza
+
+1. Verificare e congelare la decisione sull'esatto pacchetto di risultati
+   completo e immutabile; gli artefatti del worker sono input da validare.
+2. Nel database di produzione bloccare la riga del target e ricontrollare testo,
+   revisione e dipendenze rilevanti. Ogni modifica concorrente a queste
+   dipendenze deve partecipare allo stesso protocollo di blocco/versionamento;
+   una lettura degli hash seguita da una scrittura non basta.
+3. Verificare che non esista una decisione terminale incompatibile o una
+   precedente attivazione della stessa proposta, usando un vincolo univoco.
+4. Salvare baseline se necessaria, nuovo testo, `PromptRevision` con
+   `origin="admin"`, autore reale e riferimento all'esperimento, insieme alla
+   ricevuta `PromptExperimentDecision`, in una sola transazione.
+5. Aggiornare lo stato visibile nel laboratorio dopo il commit. Se questo
+   aggiornamento fallisce, riconciliare dalla ricevuta di produzione senza
+   attivare una seconda volta. La ricevuta è la fonte autorevole della decisione.
+
+Richieste duplicate restituiscono la decisione già registrata; accettazione e
+rifiuto concorrenti non possono entrambi prevalere. Un crash prima del commit
+non attiva nulla; un crash dopo il commit non perde la ricevuta.
+
+Il ripristino è una nuova azione amministrativa: verificare che il prompt sia
+ancora quello attivato dall'esperimento, poi registrare ripristino e ricevuta
+nella stessa transazione. Non cancellare una successiva modifica manuale.
+
+## 9. Implementazione sequenziale e prove di chiusura
+
+Una sola fase attiva. Per ciascuna: implementazione circoscritta, verifica,
+riepilogo dell'esito e poi passaggio alla successiva. Le caselle seguenti sono
+attività future, non lavoro completato da questa sessione di pianificazione.
+
+Mappa indicativa dei file, da confermare senza creare moduli vuoti:
+
+| Area | File previsti |
 |---|---|
-| Il loop ottimizza verso il suo stesso giudice (qwen3.8 propone e qwen3.8 valuta) | Ancora umana obbligatoria in §1, conteggio dei disaccordi, vincolo 6 sui candidati (vietato nominare i check del guard) |
-| Un prompt peggiorato raggiunge gli studenti | Osservazione 7 giorni, revert anticipato a 48 ore, un solo target a notte, vincoli di forma sul candidato |
-| Deriva lenta: molte modifiche piccole, ciascuna innocua, che insieme snaturano il prompt | Massimo un apply per target ogni 30 giorni; `prompt_revisions.history` mostra la catena; alert quando un target supera 4 revisioni `auto` in 6 mesi |
-| Volumi troppo bassi perché le soglie abbiano senso | Le soglie di §2 si tarano nel dry-run; sotto i minimi la run non fa niente e lo dice |
-| La finestra notturna non basta | Budget di tempo esplicito, interruzione pulita senza apply |
-| Riscrittura della persona che cambia l'identità del counselor, non la pertinenza | Soglia più alta per `counselor_persona` (§2) e vincolo di similarità ≥60% |
+| Connessione e tabelle laboratorio | `backend/prompt_lab/storage.py`; ricevuta di produzione in `backend/models.py` |
+| Snapshot e replay | `backend/prompt_lab/snapshots.py`, con estensioni mirate alla preparazione condivisa |
+| Job, proposte e prove | `backend/prompt_lab/runner.py` |
+| Rubrica e risultati | `backend/prompt_lab/evaluation.py`, con separazione mirata delle parti pure del guard |
+| Decisione atomica | `backend/prompt_lab/approval.py`, riusando primitive delle revisioni |
+| API | `backend/routes/prompt_experiments.py`, registrazione in `backend/main.py` |
+| Interfaccia | `frontend/src/components/admin/PromptExperimentsPanel.tsx`, collegamento in `frontend/src/app/admin/page.tsx` e cataloghi i18n |
+| Ambiente | `docker-compose.yml`, definizione dell'immagine worker e documentazione delle variabili |
 
----
+I nomi nuovi sono proposte architetturali e non file esistenti. I test si
+aggiungono alle directory già usate dal progetto accanto ai contratti verificati.
 
-## Punti aperti
+### Fase 1 — Contratto del pilota e isolamento
 
-1. **Soglie numeriche** — tutte da tarare sui volumi veri; i valori di questo
-   documento sono un punto di partenza dichiarato.
-2. **Multilingua** — un target serve sei lingue. Se il fallimento si concentra
-   su una lingua sola, la modifica giusta probabilmente non è al prompt inglese
-   ma alla traduzione. Da decidere: attribuire per `(target, lingua)` o tenere
-   la lingua come sola diagnostica.
-3. **Interazione con `prompt_updates.py`** — il plan/apply compare-and-swap
-   esistente serve alle riscritture manuali in blocco. Se il loop applica
-   mentre un piano manuale è aperto, l'hash non torna più. Decidere se il loop
-   deve rifiutarsi di partire quando esiste un piano non applicato.
-4. **Il modello del counselor cambia** — un caso congelato con un modello
-   dismesso non è più replayabile. Serve una politica di scadenza dei casi.
+- [ ] Scegliere lo step QSA sulla base di casi reali disponibili e del suo ambito.
+- [ ] Inventariare dipendenze, lingue e preset serviti; verificare modelli locali
+  disponibili e capacità del giudice senza dedurle dal nome del modello.
+- [ ] Definire rubrica, controlli critici, budget e politica dei dati prima dell'importazione.
+- [ ] Introdurre DB laboratorio, worker disabilitato per default e configurazione
+  distinta, documentata senza valori segreti in `.env.example`.
+- [ ] Implementare persistenza dei job e snapshot sintetici.
+
+**Chiusura**: il worker completa un job sintetico; non raggiunge DB, API
+privilegiate e file di produzione né endpoint esterni, anche forzando un errore
+del modello locale. Riavvio/interruzione conservano lo stato. Nessun prompt
+attivo modificato. Nessuna importazione reale prima di questa verifica.
+
+### Fase 2 — Replay fedele e valutazione senza scritture operative
+
+- [ ] Preparare casi congelati e tre insiemi separati; iniziare da dati sintetici.
+- [ ] Implementare l'iniezione del componente e verificare parità della baseline.
+- [ ] Separare la valutazione pura dal percorso operativo del thread guard.
+- [ ] Eseguire baseline e variante scritta a mano per verificare il banco di prova.
+- [ ] Salvare risultati completi, esclusioni, errori e manifest.
+
+**Chiusura**: una modifica volutamente difettosa viene rilevata; una variante
+identica alla baseline non viene dichiarata un miglioramento sistematico.
+Un envelope ambiguo viene escluso con motivo. Nessun log chat, domanda,
+Taccuino o memoria reale cambia. La mancanza del giudice non produce un pass.
+
+### Fase 3 — Proponente locale e confronto delle varianti
+
+- [ ] Generare al massimo due proposte sul solo insieme di sviluppo.
+- [ ] Validare target, blocchi protetti e immutabilità delle varianti.
+- [ ] Selezionare in validazione, poi verificare il finalista su casi indipendenti.
+- [ ] Applicare budget, ripetizioni e regole di ammissibilità; registrare tutte le varianti.
+
+**Chiusura**: prova completa e riproducibile anche quando nessun candidato
+migliora; nessun accesso del proponente ai casi finali. Dataset, modello o
+candidato diversi producono un nuovo manifest. Budget esaurito significa
+risultato incompleto, mai attivabile.
+
+### Fase 4 — Pagina amministrativa e decisioni
+
+- [ ] Implementare elenco, dettaglio, diff e confronto dei casi.
+- [ ] Aggiungere avvio, interruzione, ripetizione e rifiuto con motivazione.
+- [ ] Mostrare copertura, limiti e ragioni che impediscono l'attivazione.
+- [ ] Verificare autorizzazioni, sei lingue UI, tastiera, desktop/mobile e temi.
+
+**Chiusura**: browser su dati sintetici con successi, regressioni e timeout;
+un non amministratore non legge casi né avvia/decide prove. Navigazione e
+ricarica non perdono job o annotazioni. I risultati restano distinguibili
+quando una variante viene modificata o ripetuta.
+
+### Fase 5 — Attivazione e ripristino protetti
+
+- [ ] Implementare decisione atomica, vincoli univoci e riconciliazione tra DB.
+- [ ] Collegare la revisione amministrativa all'esperimento e al manifest.
+- [ ] Bloccare approvazioni obsolete o con copertura incompleta.
+- [ ] Implementare ripristino senza sovrascrivere modifiche successive.
+
+**Chiusura**: test PostgreSQL di doppio clic, due admin, accettazione/rifiuto
+concorrenti, target o dipendenze cambiati, crash prima/dopo commit e DB
+laboratorio indisponibile dopo il commit. Un riavvio dell'applicazione conserva
+il prompt accettato grazie alla proprietà amministrativa. Prove iniziali solo
+su DB dedicati; nessuna attivazione reale implicita nel rilascio della funzione.
+
+### Fase 6 — Pilota osservato e automazione successiva
+
+- [ ] Importare il campione reale depurato secondo la politica concordata.
+- [ ] Eseguire una prova manuale e completare la copertura del target.
+- [ ] Rivedere risposte e decisione con l'amministratore.
+- [ ] Dopo un'eventuale attivazione, osservare errori e feedback come segnali
+  descrittivi; proporre un ripristino se necessario, senza eseguirlo da soli.
+- [ ] Solo dopo la chiusura del pilota, progettare raccolta automatica dei casi,
+  attribuzione e pianificazione oraria in base a carico e volumi misurati.
+
+**Chiusura**: esperimento archiviato con esito anche negativo/inconcludente,
+limiti e decisione umana. La programmazione futura arriva alla coda delle
+proposte da valutare e non introduce applicazione o rollback automatici.
+
+## 10. Verifica, rilascio e delega
+
+Le modifiche future devono includere test mirati di contratto, isolamento,
+calcolo degli esiti, autorizzazioni e concorrenza. I test d'integrazione usano
+PostgreSQL dedicato; non il database del laboratorio che conserva gli esperimenti.
+Per il frontend: type check, controllo i18n e prove browser delle azioni e degli
+stati. Per il backend: suite pertinenti di prompt, revisioni e thread guard,
+oltre ai nuovi casi. Ampliare i controlli solo per dipendenze realmente toccate.
+
+Ricostruire i servizi Docker interessati quando cambiano codice, dipendenze o
+Compose; verificare salute e connettività, conservando volumi e dati. Prima del
+rilascio documentare nuove variabili, migrazioni, avvio/arresto del worker e
+ripristino. L'attivazione di una proposta rimane un'azione successiva esplicita.
+
+Claude Code e Claude Code–DeepSeek possono svolgere sottotask delimitati:
+revisione dell'isolamento e delle transazioni; revisione della valutazione;
+implementazione di un modulo o dei relativi test dopo l'approvazione del piano.
+Ogni consegna deve dichiarare file ammessi, input, risultato atteso e verifica.
+Le decisioni che attraversano moduli restano coordinate dall'agente principale;
+non affidare contemporaneamente gli stessi file a due esecutori.
+
+Per questa pianificazione i due strumenti ricevono una descrizione tecnica
+senza dati degli studenti, con strumenti di modifica disabilitati. Sono ausili
+alla progettazione: non sono i modelli locali previsti per gli esperimenti.
+
+### Revisione tecnica del piano, 2026-09-10
+
+- **Claude Code**: revisione circoscritta di isolamento, replay, concorrenza e
+  revisioni. Recepiti elenco dei campi ammessi, immutabilità nello storage,
+  replay dei componenti tramite preparazione condivisa, blocco delle prove
+  obsolete e visibilità della protezione amministrativa del prompt.
+- **Claude Code–DeepSeek** (CLI `claude-deepseek`): revisione del disegno
+  sperimentale e delle evidenze amministrative. Recepiti protocollo congelato,
+  esecuzioni interlacciate, stessa politica dei tentativi, calibrazione
+  documentata e conteggi per configurazione.
+- Non adottati come requisiti del pilota i grandi campioni e le soglie
+  statistiche numeriche suggeriti dal secondo revisore: non sono giustificati
+  dai dati disponibili. Il pilota resta esplorativo, con esito inconcludente
+  quando l'evidenza non basta. Non aggiunto un secondo token monouso per
+  l'approvazione: vincolo univoco e transazione idempotente coprono il doppio
+  invio senza introdurre un meccanismo parallelo.
+
+Le revisioni hanno ricevuto una descrizione tecnica, non hanno ispezionato il
+repository né eseguito test. Il controllo dei riferimenti al codice e delle
+osservazioni recepite è responsabilità dell'agente principale.
+
+## 11. Decisioni da chiudere nella fase 1
+
+- Step iniziale e disponibilità di casi adeguati, senza selezionare solo quelli
+  su cui una modifica sembra vincere.
+- Preset locali per i tre ruoli e copertura del target, soprattutto se serve
+  anche modelli esterni.
+- Criteri critici, esempi umani di riferimento e limiti del campione pilota.
+- Conservazione/cancellazione dei casi e verifica della depurazione prima
+  dell'uso di conversazioni reali.
+- Budget e finestra di esecuzione dopo una misura del carico locale.
+
+Questi punti non impediscono di rivedere il piano. La loro chiusura precede le
+attività dipendenti; nessun valore del vecchio piano costituisce un dato
+misurato o un'autorizzazione a scrivere in produzione.
