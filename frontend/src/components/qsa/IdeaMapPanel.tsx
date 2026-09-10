@@ -75,7 +75,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
         setIsLoading(true);
         try {
             const [next, tappe] = await Promise.all([
-                fetchIdeaMap(sessionId),
+                fetchIdeaMap(sessionId, locale),
                 fetchIdeaMapHistory(sessionId),
             ]);
             setState(next);
