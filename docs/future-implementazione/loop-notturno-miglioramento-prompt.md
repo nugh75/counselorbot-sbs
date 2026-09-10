@@ -23,9 +23,11 @@ l'addestramento dei pesi del modello.
 | Decisione | Prima versione |
 |---|---|
 | Avvio | Manuale, dalla pagina amministrativa |
+| Origine | Problema rilevato dal sistema oppure obiettivi specifici scritti dall'amministratore |
+| Finalità | Verificare come rispondono i modelli oppure proporre e valutare un miglioramento del prompt |
 | Target | Un solo `guided_step` QSA per esperimento, scelto da una lista ammessa |
-| Varianti | Al massimo due, immutabili dopo l'avvio delle prove |
-| Modelli | Proponente, counselor simulato e giudice serviti localmente; nessun fallback esterno |
+| Varianti | Al massimo due nella finalità di miglioramento, immutabili dopo l'avvio delle prove |
+| Modelli | Scelti nell'interfaccia per ruolo: preparazione prove, proposta di modifiche, valutazione; uno o più modelli da testare. Tutti locali, senza fallback esterno |
 | Ambiente | Worker e database del laboratorio separati dalla produzione |
 | Valutazione | Controlli di codice, giudice calibrato e revisione umana delle risposte |
 | Attivazione | Solo mediante «Accetta e attiva» da parte di un amministratore |
@@ -123,11 +125,43 @@ far aumentare il punteggio. Non attribuire `StrategyFeedback` a un singolo turno
 tramite la sola coppia strumento/fase. Usare collegamenti certi; se mancano,
 conservare il segnale solo a livello aggregato.
 
+### Obiettivi specifici dell'amministratore
+
+L'amministratore può avviare un esperimento senza attendere un errore rilevato
+dal sistema. Scrive uno o più obiettivi, indica quello principale e aggiunge
+eventuali vincoli da preservare. Esempi: «Non chiedere di nuovo informazioni già
+presenti nella storia», «Concludere con al massimo una domanda focalizzata»,
+«Accorciare la risposta mantenendo corretti i significati dei fattori».
+
+Ogni obiettivo registra testo originale, ambito, priorità, comportamento atteso,
+criterio osservabile e casi che lo mettono alla prova. L'AI può aiutare a
+trasformare l'obiettivo in casi e criteri, ma l'amministratore li rivede prima
+dell'avvio. Un obiettivo generico come «rispondere meglio» resta una bozza finché
+non viene precisato; obiettivi incompatibili devono essere risolti prima del test.
+I vincoli del dominio restano controlli obbligatori anche se non sono citati
+nell'obiettivo. I risultati vengono mostrati per obiettivo e per modello.
+
+Il laboratorio offre due finalità esplicite:
+
+- **Verifica delle risposte**: usa il prompt attuale sui modelli selezionati e
+  valuta gli obiettivi; non genera varianti né presenta un'azione di attivazione.
+- **Miglioramento del prompt**: propone varianti orientate agli obiettivi e le
+  confronta con la baseline, mantenendo l'approvazione preventiva già prevista.
+
+L'origine automatica o manuale dell'obiettivo non cambia isolamento, limiti e
+tracciabilità. I casi possono essere reali depurati oppure sintetici, con origine
+sempre visibile. La preparazione di casi sintetici avviene prima della ricerca
+delle varianti, senza mostrare al generatore una variante da favorire. Separare
+le invocazioni di preparazione e proposta: anche usando lo stesso modello, il
+proponente riceve soltanto i casi di sviluppo, mai gli altri insiemi.
+
+### Struttura del caso
+
 Ogni caso contiene:
 
 - identificatore pseudonimo per raggruppare casi della stessa persona/sessione;
 - origine reale o sintetica, strumento, step, lingua e metadati di provenienza;
-- testo dello studente, risposta storica, storia e input effettivamente inviati;
+- testo dello studente, risposta storica se presente, storia e input effettivamente inviati;
 - contesto congelato necessario: fattori, fonti/strategie, memoria e direttive;
 - target, testo di base, revisione e impronte dei componenti utilizzati;
 - eventuale valutazione umana, verdetto precedente e motivo di inclusione.
@@ -158,6 +192,10 @@ Gli esiti della verifica finale non tornano al proponente durante la stessa
 ricerca. Se servono a costruire una nuova variante, quei casi diventano casi di
 sviluppo/regressione e occorre una nuova verifica finale indipendente. Lo storico
 può crescere senza dichiarare sempre «mai visti» gli stessi casi riutilizzati.
+Nella sola verifica delle risposte non serve un insieme per generare varianti:
+si congela il campione di valutazione e si applica lo stesso a tutti i modelli.
+Se i suoi risultati guidano una successiva ottimizzazione, quel campione non
+può essere presentato come verifica finale indipendente del nuovo prompt.
 
 ### Baseline e manifest immutabile
 
@@ -166,17 +204,24 @@ risposta storica rimane un'evidenza distinta: non è il risultato della baseline
 ricalcolata. Casi precedenti con altri prompt richiedono una ricostruzione
 verificabile; altrimenti sono esclusi dal confronto e contati come tali.
 
-Congelare in un manifest: hash di baseline, candidato, dataset e suddivisione;
+Congelare in un manifest: finalità e origine dell'esperimento, obiettivi originali
+e criteri concordati; hash di baseline, candidato se presente, dataset e suddivisione;
 commit del codice; impronte delle configurazioni dipendenti, preset e modello
 locale realmente servito; temperatura, contesto, token massimi, seed se
 supportato; rubrica e versione dei controlli. Il nome `latest` da solo non
 identifica la versione del modello. I risultati includono l'input finale e gli
 errori di ogni chiamata, con contenuti depurati.
+Conservare i preset scelti per ciascun ruolo e l'elenco completo dei preset da
+testare come snapshot dei valori, non soltanto come ID modificabili. A ogni
+risposta associare il preset effettivamente testato. Cambiare obiettivi, criteri
+o selezioni dopo l'avvio richiede un nuovo manifest e una nuova run; non
+ricalcolare retroattivamente gli esiti con il nuovo obiettivo.
 
 ## 5. Generazione delle varianti e replay
 
-Il proponente riceve il solo target ammesso, il problema, i casi di sviluppo e
-i vincoli del dominio. Produce al massimo due proposte strutturate:
+Nella finalità di miglioramento, il proponente riceve il solo target ammesso,
+il problema o gli obiettivi specifici, i casi di sviluppo e i vincoli del dominio.
+Produce al massimo due proposte strutturate:
 `causa_ipotizzata`, `modifica`, `risultato_atteso`, `criterio_da_migliorare`.
 La spiegazione è una motivazione verificabile, non una traccia di ragionamento
 interno. Ogni variante viene salvata prima di eseguirla.
@@ -209,6 +254,14 @@ La prima implementazione supporta soltanto gli envelope per cui questa parità
 supportate rendono il caso esplicitamente non applicabile. Nel pilota non si
 ottimizzano componenti che cambiano selezione di skill o retrieval: un contesto
 congelato non riproduce gli effetti di quella nuova selezione.
+
+Con più modelli da testare, ogni variante viene confrontata con la baseline
+all'interno di ciascun preset. Il contesto di partenza è comune; eventuali
+adattamenti ai limiti del modello sono registrati e identici tra baseline e
+candidato per quel preset. Non attribuire al prompt un miglioramento ottenuto
+cambiando contemporaneamente modello o impostazioni. Il budget totale comprende
+tutta la matrice modelli × casi × varianti × ripetizioni; mostrare il numero
+previsto di chiamate prima dell'avvio.
 
 ## 6. Valutazione e regole di ammissibilità
 
@@ -265,6 +318,10 @@ Un errore di chiamata, risposta tronca o giudizio mancante non è un successo;
 una prova incompleta non può produrre una proposta attivabile. Conservare anche
 le varianti perdenti, i risultati inconcludenti e le motivazioni del rifiuto.
 L'ammissibilità automatica non sostituisce la decisione amministrativa.
+Queste condizioni di attivazione valgono per la finalità di miglioramento.
+Una sola verifica produce un rapporto sul raggiungimento degli obiettivi,
+senza candidato vincente o proposta attivabile. Con più modelli, un vantaggio
+medio non compensa una regressione critica su uno dei preset coinvolti.
 
 ### Ambito effettivo: lingue, modelli e counselor
 
@@ -291,19 +348,54 @@ Nuova voce nell'amministrazione, coerente con i componenti esistenti e con le
 sei lingue dell'interfaccia. Prima di implementare il layout leggere
 `docs/design.md`.
 
+### Configurazione di un esperimento
+
+Il modulo di creazione contiene origine (problema rilevato oppure obiettivo
+manuale), finalità, target, obiettivi e vincoli, lingue, casi e limiti della prova.
+Tutte le scelte dei modelli sono disponibili qui, senza modificare le
+impostazioni generali dei counselor:
+
+| Controllo | Scelta e funzione |
+|---|---|
+| **Modello per preparare le prove** | Un preset locale per trasformare gli obiettivi in casi e criteri da rivedere |
+| **Modello per proporre miglioramenti** | Un preset locale che genera le varianti; richiesto solo per il miglioramento |
+| **Modello valutatore** | Un preset locale che giudica le risposte secondo la rubrica fissata |
+| **Modelli da testare** | Selezione multipla di preset locali che rispondono agli stessi casi |
+
+Riutilizzare il catalogo `ModelPreset` già presente. Mostrare nome, modello,
+provider e parametri rilevanti del preset; verificare disponibilità locale e
+compatibilità prima dell'avvio. È possibile scegliere lo stesso preset per
+più ruoli, mantenendo separati input e risultati e rendendo visibile quando il
+giudice coincide con un modello valutato o con il proponente. Nessun cambio
+silenzioso del modello se quello scelto non risponde.
+
+I selettori restano modificabili in bozza; all'avvio vengono congelati nel
+manifest. Gli esperimenti automatici futuri usano una configurazione esplicita
+salvata dall'amministratore con gli stessi selettori. Non ereditano implicitamente
+il modello della chat attiva. La prima versione mantiene l'avvio manuale.
+
+### Elenco, confronto e azioni
+
 **Elenco**: target, problema, autore, data, stato, avanzamento, esito e copertura.
 Filtri essenziali per stato e strumento; nessuna graduatoria basata su un unico
 punteggio sintetico.
 
 **Dettaglio**:
 
-1. Problema, ipotesi e risultato atteso; versione di base e ambito coinvolto.
-2. Diff del prompt attuale fotografato e del candidato, con testo completo.
+1. Problema o obiettivi, origine, finalità, ipotesi se presente e risultato atteso;
+   versione di base e ambito coinvolto.
+2. Diff del prompt attuale fotografato e del candidato, con testo completo,
+   quando l'esperimento propone un miglioramento.
 3. Numerosità e provenienza dei casi, suddivisione, modelli e impostazioni.
 4. Conteggi dei risultati e accesso diretto a peggioramenti, errori ed esclusioni.
 5. Casi affiancati: storia necessaria, messaggio dello studente, risposta baseline,
    risposta candidata, controlli, giudizi e annotazioni umane.
 6. Limiti, lacune di copertura, consumi, manifest e cronologia delle decisioni.
+
+Il confronto permette di scegliere caso, modello e obiettivo. Nella sola
+verifica affianca le risposte dei modelli; nel miglioramento affianca baseline e
+candidato per il modello scelto. Giudizi e risultati restano attribuiti al
+modello valutatore e al preset testato, senza confonderli.
 
 Azioni: **Avvia le prove**, **Interrompi**, **Ripeti le prove**,
 **Accetta e attiva**, **Rifiuta**. La ripetizione crea una run distinta;
@@ -330,24 +422,29 @@ Nomi indicativi, da mantenere coerenti durante l'implementazione:
 | Entità | Database | Contenuto |
 |---|---|---|
 | `PromptExperimentCase` | Laboratorio | Caso depurato, provenienza, gruppo di separazione e snapshot |
-| `PromptExperiment` | Laboratorio | Target, baseline, problema, manifest, suddivisione e varianti immutabili in JSON |
+| `PromptExperiment` | Laboratorio | Target, baseline, origine, finalità, obiettivi, criteri, snapshot dei preset per ruolo e da testare, manifest, suddivisione e varianti immutabili in JSON |
 | `PromptExperimentRun` | Laboratorio | Job, fase, stato, heartbeat, budget, versioni e riepilogo |
-| `PromptExperimentResult` | Laboratorio | Caso/variante/ripetizione, input, risposta, giudizi, controlli ed errori |
+| `PromptExperimentResult` | Laboratorio | Caso/preset testato/variante/ripetizione, input, risposta, risultati per obiettivo, giudice, controlli ed errori |
 | `PromptExperimentDecision` | Produzione | Ricevuta immutabile della decisione, amministratore, hash, revisioni e motivazione |
 
 Separare stato di esecuzione e decisione. Run:
 `queued → running → completed | failed | cancelled | budget_exceeded | interrupted`.
-Esito della valutazione: `eligible | not_eligible | inconclusive`.
+Esito di ammissibilità: `eligible | not_eligible | inconclusive | not_applicable`;
+`not_applicable` identifica la sola verifica, che non ha una proposta da attivare.
 Decisione: `pending | rejected | activated | stale | reverted`.
+La decisione riguarda soltanto le proposte di miglioramento; i rapporti di sola
+verifica restano consultabili senza entrare nella coda delle approvazioni.
 Una run `completed` può essere non ammissibile; `stale` indica che la prova non
 riguarda più le versioni attuali. Una nuova esecuzione non cancella lo storico.
 Le transizioni sono validate lato server: una proposta rifiutata o obsoleta
 non torna approvabile riaprendo la stessa run. Ogni risultato ha chiave univoca
-`(run_id, case_id, variant_id, repetition, attempt)` per evitare duplicazioni.
+`(run_id, case_id, tested_preset_snapshot_id, variant_id, repetition, attempt)`
+per evitare duplicazioni; la baseline ha una propria chiave anche senza varianti.
 
 API amministrative sotto `/api/admin/prompt-experiments`:
 
-- creazione, elenco e dettaglio degli esperimenti;
+- creazione, elenco e dettaglio degli esperimenti, con origine, finalità,
+  obiettivi e selezioni dei preset validate per ruolo;
 - avvio, stato, risultati e interruzione di una run;
 - decisione di accettazione/rifiuto con hash atteso del manifest;
 - ripristino protetto collegato alla ricevuta di attivazione.
@@ -356,6 +453,9 @@ Applicare `get_current_active_admin` a tutte le operazioni, compresa la lettura
 delle conversazioni. Il token dell'audit non autorizza le decisioni. Validare
 lato server stato, target ammesso e manifest: il pulsante disabilitato non è
 una barriera sufficiente.
+Un obiettivo mancante/non definito, un elenco vuoto di modelli da testare o un
+preset non ammesso impediscono l'avvio. Il server respinge l'attivazione di un
+esperimento di sola verifica anche se chiamata direttamente via API.
 
 ### Transazione di attivazione e concorrenza
 
@@ -410,6 +510,8 @@ aggiungono alle directory già usate dal progetto accanto ai contratti verificat
 - [ ] Inventariare dipendenze, lingue e preset serviti; verificare modelli locali
   disponibili e capacità del giudice senza dedurle dal nome del modello.
 - [ ] Definire rubrica, controlli critici, budget e politica dei dati prima dell'importazione.
+- [ ] Definire contratti per obiettivi manuali, finalità e selezione dei preset
+  per ruolo e dei modelli da testare, con snapshot immutabili.
 - [ ] Introdurre DB laboratorio, worker disabilitato per default e configurazione
   distinta, documentata senza valori segreti in `.env.example`.
 - [ ] Implementare persistenza dei job e snapshot sintetici.
@@ -425,6 +527,8 @@ attivo modificato. Nessuna importazione reale prima di questa verifica.
 - [ ] Implementare l'iniezione del componente e verificare parità della baseline.
 - [ ] Separare la valutazione pura dal percorso operativo del thread guard.
 - [ ] Eseguire baseline e variante scritta a mano per verificare il banco di prova.
+- [ ] Verificare gli stessi casi su almeno due preset selezionati, attribuendo
+  correttamente risultati, parametri e consumo al modello testato.
 - [ ] Salvare risultati completi, esclusioni, errori e manifest.
 
 **Chiusura**: una modifica volutamente difettosa viene rilevata; una variante
@@ -435,6 +539,8 @@ Taccuino o memoria reale cambia. La mancanza del giudice non produce un pass.
 ### Fase 3 — Proponente locale e confronto delle varianti
 
 - [ ] Generare al massimo due proposte sul solo insieme di sviluppo.
+- [ ] Accettare obiettivi amministrativi anche senza un errore storico; separare
+  la preparazione dei casi dalla proposta e supportare la sola verifica.
 - [ ] Validare target, blocchi protetti e immutabilità delle varianti.
 - [ ] Selezionare in validazione, poi verificare il finalista su casi indipendenti.
 - [ ] Applicare budget, ripetizioni e regole di ammissibilità; registrare tutte le varianti.
@@ -447,6 +553,8 @@ risultato incompleto, mai attivabile.
 ### Fase 4 — Pagina amministrativa e decisioni
 
 - [ ] Implementare elenco, dettaglio, diff e confronto dei casi.
+- [ ] Implementare editor degli obiettivi, scelta della finalità e selettori
+  distinti per modelli di preparazione/proposta/valutazione e modelli da testare.
 - [ ] Aggiungere avvio, interruzione, ripetizione e rifiuto con motivazione.
 - [ ] Mostrare copertura, limiti e ragioni che impediscono l'attivazione.
 - [ ] Verificare autorizzazioni, sei lingue UI, tastiera, desktop/mobile e temi.
@@ -455,6 +563,10 @@ risultato incompleto, mai attivabile.
 un non amministratore non legge casi né avvia/decide prove. Navigazione e
 ricarica non perdono job o annotazioni. I risultati restano distinguibili
 quando una variante viene modificata o ripetuta.
+Verificare nel browser: avvio da obiettivo manuale senza log di fallimento,
+confronto tra due modelli, cambio del giudice e assenza dell'attivazione nella
+sola verifica. Modificare un preset o un obiettivo non altera gli esperimenti
+già eseguiti; una nuova selezione richiede nuove prove.
 
 ### Fase 5 — Attivazione e ripristino protetti
 
@@ -529,12 +641,18 @@ Le revisioni hanno ricevuto una descrizione tecnica, non hanno ispezionato il
 repository né eseguito test. Il controllo dei riferimenti al codice e delle
 osservazioni recepite è responsabilità dell'agente principale.
 
+**Integrazione successiva del 2026-09-10**: la richiesta dell'utente aggiunge
+selettori dei modelli nell'interfaccia e obiettivi amministrativi specifici.
+Questa integrazione aggiorna configurazione, manifest, confronto per modello,
+finalità di sola verifica e prove di chiusura. Non è stata sottoposta nuovamente
+ai due revisori; non modifica l'autorizzazione limitata alla pianificazione.
+
 ## 11. Decisioni da chiudere nella fase 1
 
 - Step iniziale e disponibilità di casi adeguati, senza selezionare solo quelli
   su cui una modifica sembra vincere.
-- Preset locali per i tre ruoli e copertura del target, soprattutto se serve
-  anche modelli esterni.
+- Preset locali per preparazione, proposta, valutazione e modelli da testare,
+  con copertura del target, soprattutto se serve anche modelli esterni.
 - Criteri critici, esempi umani di riferimento e limiti del campione pilota.
 - Conservazione/cancellazione dei casi e verifica della depurazione prima
   dell'uso di conversazioni reali.
