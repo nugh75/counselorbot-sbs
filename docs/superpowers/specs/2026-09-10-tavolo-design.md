@@ -138,6 +138,18 @@ dire che il verbo si legge anche all'incontrario. Non e' un verbo nuovo, e
 l'appartenenza non ce l'ha, perche' quella famiglia non disegna punte: un
 contenuto non contiene chi lo contiene.
 
+Il colore del pezzo e' un raggruppamento, non un significato: cinque tinte
+chiuse, scelte dalla persona, che valgono quello che lei ci mette. Non entrano
+nel canale delle famiglie, che resta degli archi. Petrolio e ocra restano fuori
+dalla tavolozza: il primo e' il pezzo senza gruppo, il secondo dice gia'
+"proposta". Lo stato batte il gruppo, e la resa a parole legge i gruppi, se
+no il raggruppamento sparirebbe per chi ascolta.
+
+La tela ha i suoi tasti: ingrandisci, rimpicciolisci, adatta, allarga. L'ultimo
+chiude il pannello laterale e lascia la finestra al disegno. Il tetto dello
+zoom e' quattro invece di due, perche' su un tavolo piccolo `fitView` arriva
+subito a due e il tasto che ingrandisce non avrebbe piu' niente da fare.
+
 Due cose le scrive la persona e nessun altro. La parola sull'arco: se ne scrive
 una sua prende il posto del verbo del vocabolario, e la resa a parole dice
 quella. L'accento: un pezzo solo per tavolo, il punto, riempito di petrolio
