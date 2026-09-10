@@ -4,6 +4,7 @@ import { Archive, BookOpen, ChevronDown, ChevronRight, MessageSquare, RotateCcw,
 import { useId, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 
+import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { recommendationText } from '@/lib/i18n-recommendations';
@@ -162,6 +163,7 @@ export function RecommendationsPanel({
                         id={tabId('reading')}
                         controls={panelId('reading')}
                         label={t('recommendations.reading')}
+                        icon={<BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />}
                         onClick={() => setActiveTab('reading')}
                         onKeyDown={onTabKeys}
                     />
@@ -172,6 +174,7 @@ export function RecommendationsPanel({
                         id={tabId('strategy')}
                         controls={panelId('strategy')}
                         label={t('recommendations.strategy')}
+                        icon={<Target className="h-4 w-4 shrink-0" aria-hidden="true" />}
                         onClick={() => setActiveTab('strategy')}
                         onKeyDown={onTabKeys}
                     />
@@ -180,6 +183,7 @@ export function RecommendationsPanel({
                         active={visibleTab === 'advice'} count={advice.open.length}
                         id={tabId('advice')} controls={panelId('advice')}
                         label={rec('advice.tab')} onClick={() => setActiveTab('advice')}
+                        icon={<MessageSquare className="h-4 w-4 shrink-0" aria-hidden="true" />}
                         onKeyDown={onTabKeys}
                     />
                 </div>
@@ -643,31 +647,35 @@ interface TabButtonProps {
     id: string;
     controls: string;
     label: string;
+    icon: ReactNode;
     onClick: () => void;
     onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
     ref: (node: HTMLButtonElement | null) => void;
 }
 
-function TabButton({ active, count, id, controls, label, onClick, onKeyDown, ref }: TabButtonProps) {
+function TabButton({ active, count, id, controls, label, icon, onClick, onKeyDown, ref }: TabButtonProps) {
     return (
-        <button
-            ref={ref}
-            type="button"
-            role="tab"
-            id={id}
-            aria-selected={active}
-            aria-controls={controls}
-            tabIndex={active ? 0 : -1}
-            onClick={onClick}
-            onKeyDown={onKeyDown}
-            className={cn(
-                'min-w-0 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
-                active ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700',
-            )}
-        >
-            <span className="block break-words">{label}</span>
-            <span className="text-2xs tabular-nums">{count}</span>
-        </button>
+        <Tooltip content={label} side="top">
+            <button
+                ref={ref}
+                type="button"
+                role="tab"
+                id={id}
+                aria-label={`${label} (${count})`}
+                aria-selected={active}
+                aria-controls={controls}
+                tabIndex={active ? 0 : -1}
+                onClick={onClick}
+                onKeyDown={onKeyDown}
+                className={cn(
+                    'flex min-h-[44px] min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
+                    active ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+                )}
+            >
+                {icon}
+                <span className="text-2xs tabular-nums">{count}</span>
+            </button>
+        </Tooltip>
     );
 }
 
