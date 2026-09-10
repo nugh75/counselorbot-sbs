@@ -63,6 +63,8 @@ export interface TavoloEdgeData {
     label?: string | null;
     strength: number;
     hypothesis: boolean;
+    // Vale anche dall'altra parte: due punte invece di una.
+    reciprocal?: boolean;
     by: TavoloBy;
     state: TavoloState;
 }

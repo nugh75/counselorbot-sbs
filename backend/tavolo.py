@@ -102,6 +102,13 @@ DOUBT_WORD = {
     "fr": "hypothese", "de": "Annahme", "sv": "antagande",
 }
 
+# Il legame che vale nei due sensi. E' un modificatore come gli altri: non
+# raddoppia il vocabolario, dice che il verbo si legge anche all'incontrario.
+RECIPROCAL_WORD = {
+    "it": "nei due sensi", "en": "both ways", "es": "en los dos sentidos",
+    "fr": "dans les deux sens", "de": "in beide Richtungen", "sv": "at bada hallen",
+}
+
 # Quanto pesa il legame, per chi ascolta. Il peso medio non si dice: dirlo a
 # ogni arco riempirebbe la lettura di parole che non distinguono niente.
 STRENGTH_WORD = {
@@ -173,6 +180,8 @@ class TavoloEdge(BaseModel):
     # I due modificatori. Non moltiplicano il vocabolario: lo qualificano.
     strength: int = Field(default=2, ge=1, le=3)
     hypothesis: bool = False
+    # Vale anche dall'altra parte: due punte invece di una.
+    reciprocal: bool = False
     by: Literal["person", "model"] = "person"
     state: Literal["live", "pending", "dropped"] = "live"
 
@@ -353,13 +362,18 @@ def rendition(graph: TavoloGraph, lang: str = "it") -> str:
     words = REL_WORDS.get(code, REL_WORDS["en"])
     weights = STRENGTH_WORD.get(code, STRENGTH_WORD["en"])
     doubt = DOUBT_WORD.get(code, DOUBT_WORD["en"])
+    ways = RECIPROCAL_WORD.get(code, RECIPROCAL_WORD["en"])
     content = live(graph)
     by_id = {node.id: node.label for node in content.nodes}
 
     relations = []
     for edge in content.edges:
         verb = edge.label.strip() if edge.label and edge.label.strip() else words[edge.rel]
-        marks = [mark for mark in (weights.get(edge.strength), doubt if edge.hypothesis else None) if mark]
+        marks = [mark for mark in (
+            weights.get(edge.strength),
+            doubt if edge.hypothesis else None,
+            ways if edge.reciprocal else None,
+        ) if mark]
         tail = f" ({', '.join(marks)})" if marks else ""
         relations.append(f"{by_id[edge.source]} {verb} {by_id[edge.target]}{tail}")
 
