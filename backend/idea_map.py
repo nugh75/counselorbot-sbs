@@ -22,10 +22,12 @@ from sqlalchemy.orm import Session
 from . import models
 from .idea_lexicon import opening_question
 from .diagram_render import (
+    FLAW_WORDS,
     MAX_TITLE,
     NODE_FLAWS,
     NODE_ROLES,
     NODE_STATUSES,
+    ROLE_WORDS,
     TASK_TYPES,
     DiagramEdge,
     DiagramNode,
@@ -1182,6 +1184,69 @@ def _tree_order(rows: list[dict]) -> list[dict]:
     walk(None)
     ordered.extend(row for row in rows if row["id"] not in seen)
     return ordered
+
+
+# Come si dice "chiuso" nelle sei lingue. Una riga di elenco che dicesse
+# `closed` in mezzo a un testo italiano sarebbe un residuo del codice.
+CLOSED_WORDS = {"it": "chiuso", "en": "closed", "es": "cerrada", "fr": "fermee",
+                "de": "geschlossen", "sv": "stangd"}
+
+
+def outline(spec: DiagramSpec | None, lang: str = "it") -> str:
+    """La mappa in parole, come un indice: rami annidati e sotto ognuno cio' che ci pende.
+
+    La descrizione generica mette un periodo per ogni arco. Su una mappa da
+    trenta nodi diventa un muro in cui la struttura - l'unica cosa che quella
+    mappa ha da dire - non si vede piu'.
+    """
+    if spec is None or not spec.nodes:
+        return ""
+    code = (lang or "it").lower()[:2]
+    roles = ROLE_WORDS.get(code, ROLE_WORDS["en"])
+    flaws = FLAW_WORDS.get(code, FLAW_WORDS["en"])
+    closed_word = CLOSED_WORDS.get(code, CLOSED_WORDS["en"])
+
+    by_id = {node.id: node for node in spec.nodes}
+    parents = branch_parents(spec)
+    owner = owning_task(spec)
+    children: dict[str | None, list[str]] = {}
+    for node_id, parent in parents.items():
+        children.setdefault(parent if parent in parents else None, []).append(node_id)
+
+    def _marks(node) -> str:
+        listed = [roles[node.role]] if node.role and node.role in roles else []
+        if node.flaw:
+            listed.append(flaws.get(node.flaw, node.flaw))
+        return f" ({', '.join(listed)})" if listed else ""
+
+    lines = [spec.title, ""]
+
+    def _walk(branch_id: str, depth: int) -> None:
+        node = by_id[branch_id]
+        pad = "  " * depth
+        head = node.label
+        if node.demoted:
+            head += _marks(node)
+        if node.closed:
+            head += f" [{closed_word}: {node.conclusion}]" if node.conclusion else f" [{closed_word}]"
+        lines.append(f"{pad}{head}")
+        # Prima cio' che pende da questo ramo, poi i rami che ne nascono: il
+        # ramo si legge tutto prima di scendere.
+        for other in spec.nodes:
+            if other.id in parents or owner.get(other.id) != branch_id:
+                continue
+            role = roles.get(other.role or "", "")
+            label = f"{role}: {other.label}" if role else other.label
+            flaw = f" ({flaws.get(other.flaw, other.flaw)})" if other.flaw else ""
+            lines.append(f"{pad}  - {label}{flaw}")
+        for child in children.get(branch_id, ()):
+            _walk(child, depth + 1)
+
+    for root in children.get(None, ()):
+        _walk(root, 0)
+    if spec.note:
+        lines += ["", spec.note]
+    return "\n".join(lines)
 
 
 # --- i comandi della persona sull'albero -------------------------------------

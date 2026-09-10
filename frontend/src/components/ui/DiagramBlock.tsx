@@ -98,7 +98,7 @@ function DiagramNote({ note }: { note?: string }) {
     const text = note?.trim();
     if (!text) return null;
     return (
-        <p className="w-full min-w-0 max-w-full border-t border-slate-200 px-3 py-2 text-sm leading-snug text-slate-600">
+        <p className="w-full min-w-0 max-w-full whitespace-pre-line border-t border-slate-200 px-3 py-2 text-sm leading-snug text-slate-600">
             {text}
         </p>
     );

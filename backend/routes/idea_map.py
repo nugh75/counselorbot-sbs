@@ -42,6 +42,7 @@ from ..idea_map import (
     delete_branch,
     edit_node,
     next_move,
+    outline,
     PACE_STOPS,
     effective_title,
     pivot_question,
@@ -182,6 +183,7 @@ def delete_reference(
 @router.get("/idea/map")
 def read_map(
     session_id: str = Query(min_length=1),
+    lang: str = "it",
     username: str | None = None,
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
@@ -197,7 +199,7 @@ def read_map(
         "revision_id": getattr(revision, "id", None),
         "updated_at": getattr(revision, "created_at", None),
         "spec": None if spec is None else spec.model_dump(by_alias=True),
-        "description": None if spec is None else describe(spec),
+        "description": None if spec is None else outline(spec, lang),
         "missing_roles": missing_roles(spec, focus),
         "complete": spec is not None and bool(focus) and closure_ready(spec, focus),
         "focus": focus,

@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from .ai_service import AIService, AIError
 from .chat_logic import SUPPORTED_AI_LANGUAGES
+from .idea_map import outline
 from .diagram_render import DiagramSpec, describe, spec_fingerprint
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,9 @@ def _lang_name(lang: str) -> str:
 
 def synthesis_for(db: Session, spec: DiagramSpec, lang: str) -> str:
     """La sintesi in prosa scritta dal modello; il testo deterministico come fallback."""
-    raw = describe(spec, lang)
+    # L'indice invece dell'elenco degli archi: il modello riceve la struttura,
+    # e se la sintesi non arriva il ripiego resta leggibile.
+    raw = outline(spec, lang)
     code = (lang or "it").lower()[:2]
     key = (spec_fingerprint(spec), code)
 
