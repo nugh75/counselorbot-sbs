@@ -121,6 +121,8 @@ export function ideaMapImageUrl(
     theme: 'light' | 'dark',
     format: 'svg' | 'png',
     lang: string,
+    // Una tappa precedente invece di quella corrente.
+    stage?: number | null,
 ): string {
     const params = new URLSearchParams({
         session_id: sessionId,
@@ -129,7 +131,24 @@ export function ideaMapImageUrl(
         lang,
         v: String(revisionId ?? 0),
     });
+    if (stage) params.set('revision', String(stage));
     return `/api/idea/map/image?${params.toString()}`;
+}
+
+export interface IdeaMapStage {
+    revision_id: number;
+    created_at: string;
+    source: string;
+    step_id: string | null;
+    nodes: number;
+}
+
+// Le tappe della mappa. Registrarle senza poterle guardare tiene solo meta'
+// del loro senso: l'altra meta' e' vedere il pensiero muoversi.
+export async function fetchIdeaMapHistory(sessionId: string): Promise<IdeaMapStage[]> {
+    const response = await apiFetch(`/api/idea/map/history?session_id=${encodeURIComponent(sessionId)}`);
+    if (!response.ok) return [];
+    return response.json() as Promise<IdeaMapStage[]>;
 }
 
 // La mappa serve inline, non come <img>: dentro un'immagine l'SVG non e'
@@ -139,8 +158,9 @@ export async function fetchIdeaMapSvg(
     revisionId: number | null,
     theme: 'light' | 'dark',
     lang: string,
+    stage?: number | null,
 ): Promise<string | null> {
-    const response = await apiFetch(ideaMapImageUrl(sessionId, revisionId, theme, 'svg', lang));
+    const response = await apiFetch(ideaMapImageUrl(sessionId, revisionId, theme, 'svg', lang, stage));
     if (!response.ok) return null;
     return response.text();
 }

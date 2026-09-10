@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Loader2, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { Check, History, Loader2, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
@@ -12,8 +12,10 @@ import {
     deleteIdeaBranch,
     editIdeaNode,
     fetchIdeaMap,
+    fetchIdeaMapHistory,
     fetchIdeaMapSvg,
     ideaMapImageUrl,
+    type IdeaMapStage,
     type IdeaMapState,
     type IdeaNextStep,
     type IdeaRole,
@@ -64,21 +66,28 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
     const [draftRole, setDraftRole] = useState<IdeaRole>('assumption');
     const [busy, setBusy] = useState(false);
     const [failed, setFailed] = useState(false);
+    // Le tappe della mappa e quella che si sta guardando. Null = adesso.
+    const [stages, setStages] = useState<IdeaMapStage[]>([]);
+    const [stage, setStage] = useState<number | null>(null);
     const theme = isDark ? 'dark' : 'light';
 
     const reload = useCallback(async () => {
         setIsLoading(true);
         try {
-            const next = await fetchIdeaMap(sessionId);
+            const [next, tappe] = await Promise.all([
+                fetchIdeaMap(sessionId),
+                fetchIdeaMapHistory(sessionId),
+            ]);
             setState(next);
+            setStages(tappe);
             // Inline e non <img>: dentro un'immagine i nodi non si possono cliccare.
             setSvg(next?.revision_id == null
                 ? null
-                : await fetchIdeaMapSvg(sessionId, next.revision_id, theme, locale));
+                : await fetchIdeaMapSvg(sessionId, next.revision_id, theme, locale, stage));
         } finally {
             setIsLoading(false);
         }
-    }, [sessionId, theme, locale]);
+    }, [sessionId, theme, locale, stage]);
 
     useEffect(() => {
         void reload();
@@ -136,6 +145,10 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
         }
     };
 
+    // Guardare indietro non e' modificare: la tappa scelta e' un'altra mappa,
+    // e correggerla vorrebbe dire correggere qualcosa che non c'e' piu'.
+    const past = stage !== null;
+
     // I difetti non stanno dentro il disegno: il tratteggio si vede, il nome no.
     const flawed = (state?.spec?.nodes ?? []).filter((node) => node.flaw);
 
@@ -155,6 +168,7 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                         type="button"
                         onClick={() => { setEditing((value) => !value); closeEditor(); }}
                         aria-pressed={editing}
+                        disabled={past}
                         aria-label={t('idea.map.edit')}
                         className={cn(
                             'rounded-md p-1.5',
@@ -194,6 +208,44 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode, onE
                 />
             ) : (
                 <p className="px-3 py-4 text-sm text-slate-500">{t('idea.map.empty')}</p>
+            )}
+
+            {stages.length > 1 && (
+                <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 px-3 py-2 text-[11px] text-slate-600">
+                    <History className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+                    <label htmlFor="idea-stage" className="font-medium">{t('idea.map.history')}</label>
+                    <input
+                        id="idea-stage"
+                        type="range"
+                        min={0}
+                        max={stages.length - 1}
+                        step={1}
+                        value={stage === null
+                            ? stages.length - 1
+                            : stages.findIndex((row) => row.revision_id === stage)}
+                        onChange={(event) => {
+                            const index = Number(event.target.value);
+                            setEditing(false);
+                            closeEditor();
+                            setStage(index === stages.length - 1 ? null : stages[index].revision_id);
+                        }}
+                        className="h-1.5 w-32 cursor-pointer accent-teal-700"
+                    />
+                    <span>
+                        {(stage === null
+                            ? stages.length
+                            : stages.findIndex((row) => row.revision_id === stage) + 1)} / {stages.length}
+                    </span>
+                    {past && (
+                        <button
+                            type="button"
+                            onClick={() => setStage(null)}
+                            className="ml-auto rounded-full border border-slate-200 px-2 py-0.5 font-medium text-slate-600 hover:border-slate-300"
+                        >
+                            {t('idea.map.backToNow')}
+                        </button>
+                    )}
+                </div>
             )}
 
             {editing && (

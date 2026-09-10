@@ -43,3 +43,14 @@ test('the kept sources keep the full width, they are long lines of text', () => 
     assert.match(chat(), /<IdeaSourcesPanel/);
     assert.doesNotMatch(panel(), /IdeaSourcesPanel/);
 });
+
+test('the stages of the map can be walked back through, not only recorded', () => {
+    const source = readFileSync(new URL('../components/qsa/IdeaMapPanel.tsx', import.meta.url), 'utf8');
+    assert.match(source, /fetchIdeaMapHistory\(sessionId\)/);
+    assert.match(source, /type="range"/);
+    // Guardare indietro non e' modificare: l'interruttore delle correzioni si
+    // spegne, altrimenti si correggerebbe una tappa che non e' piu' quella.
+    assert.match(source, /const past = stage !== null/);
+    assert.match(source, /disabled=\{past\}/);
+    assert.match(source, /idea\.map\.backToNow/);
+});

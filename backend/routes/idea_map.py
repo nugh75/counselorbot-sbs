@@ -53,6 +53,7 @@ from ..idea_map import (
     current_map,
     current_revision,
     history,
+    revision_map,
     manual_branch_ids,
     missing_roles,
     owning_task,
@@ -262,15 +263,20 @@ async def map_image(
     theme: str = "light",
     format: str = Query(default="svg", pattern="^(svg|png)$"),
     lang: str = "it",
+    # Una tappa precedente invece di quella corrente: e' cosi' che si guarda
+    # l'idea prendere forma.
+    revision: int | None = None,
     username: str | None = None,
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
 ):
-    """Disegna la mappa corrente. Non passa da /diagram/render: Idea non deve
-    spegnersi quando l'admin spegne la skill dei diagrammi in chat."""
+    """Disegna la mappa, corrente o a una certa tappa. Non passa da
+    /diagram/render: Idea non deve spegnersi quando l'admin spegne la skill dei
+    diagrammi in chat."""
     _require_feature(db)
     owner = _readable_owner(identity, username)
-    spec = current_map(db, owner, session_id)
+    spec = (revision_map(db, owner, session_id, revision) if revision
+            else current_map(db, owner, session_id))
     if spec is None:
         raise HTTPException(status_code=404, detail="nessuna mappa per questa sessione")
 
