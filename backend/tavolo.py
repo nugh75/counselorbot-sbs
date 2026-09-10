@@ -120,6 +120,26 @@ STRENGTH_WORD = {
     "sv": {1: "ibland", 3: "alltid"},
 }
 
+# I colori del pezzo. Non sono un canale di significato condiviso come la
+# famiglia dell'arco: sono il raggruppamento della persona, e valgono quello
+# che lei ci mette. Chiusi lo stesso, perche' una tavolozza libera su quaranta
+# pezzi smette di raggruppare.
+NODE_COLORS = ("green", "blue", "violet", "pink", "grey")
+
+COLOR_WORD = {
+    "it": {"green": "verde", "blue": "blu", "violet": "viola", "pink": "rosa", "grey": "grigio"},
+    "en": {"green": "green", "blue": "blue", "violet": "violet", "pink": "pink", "grey": "grey"},
+    "es": {"green": "verde", "blue": "azul", "violet": "violeta", "pink": "rosa", "grey": "gris"},
+    "fr": {"green": "vert", "blue": "bleu", "violet": "violet", "pink": "rose", "grey": "gris"},
+    "de": {"green": "gruen", "blue": "blau", "violet": "violett", "pink": "rosa", "grey": "grau"},
+    "sv": {"green": "gron", "blue": "bla", "violet": "violett", "pink": "rosa", "grey": "gra"},
+}
+
+GROUPS_WORD = {
+    "it": "Gruppi", "en": "Groups", "es": "Grupos",
+    "fr": "Groupes", "de": "Gruppen", "sv": "Grupper",
+}
+
 ISOLATED_WORD = {
     "it": "Senza legami", "en": "Unconnected", "es": "Sin vinculos",
     "fr": "Sans liens", "de": "Ohne Verbindung", "sv": "Utan kopplingar",
@@ -152,6 +172,9 @@ class TavoloNode(BaseModel):
     label: str = Field(min_length=1, max_length=MAX_LABEL)
     form: str = DEFAULT_FORM
     icon: str | None = Field(default=None, max_length=24)
+    # Il raggruppamento della persona: nessun significato condiviso, solo il
+    # suo. Un colore inventato si ignora, come una forma inventata.
+    color: str | None = None
     # L'enfasi della persona: il pezzo che conta. Uno solo per tavolo, come
     # nei diagrammi: due accenti non accentano niente.
     accent: bool = False
@@ -168,6 +191,11 @@ class TavoloNode(BaseModel):
     @classmethod
     def _known_form(cls, value):
         return value if value in NODE_FORMS else DEFAULT_FORM
+
+    @field_validator("color", mode="before")
+    @classmethod
+    def _known_color_or_none(cls, value):
+        return value if value in NODE_COLORS else None
 
 
 class TavoloEdge(BaseModel):
@@ -269,7 +297,7 @@ def propose(graph: TavoloGraph, proposal: TavoloProposal) -> TavoloGraph:
         if node.id in known:
             continue
         # L'accento e' della persona: il modello propone pezzi, non enfasi.
-        nodes.append(node.model_copy(update={"by": "model", "state": "pending", "accent": False}))
+        nodes.append(node.model_copy(update={"by": "model", "state": "pending", "accent": False, "color": None}))
         known.add(node.id)
     for edge in proposal.add_edges:
         if edge.key in known_edges:
@@ -380,7 +408,17 @@ def rendition(graph: TavoloGraph, lang: str = "it") -> str:
     touched = {end for edge in content.edges for end in (edge.source, edge.target)}
     alone = [node.label for node in content.nodes if node.id not in touched]
     accented = next((node.label for node in content.nodes if node.accent), None)
+    grouped = {
+        COLOR_WORD.get(code, COLOR_WORD["en"])[colour]: [
+            node.label for node in content.nodes if node.color == colour
+        ]
+        for colour in NODE_COLORS
+        if any(node.color == colour for node in content.nodes)
+    }
     parts = ["; ".join(relations)] if relations else []
+    if grouped:
+        parts.append(f"{GROUPS_WORD.get(code, GROUPS_WORD['en'])}: " + "; ".join(
+            f"{name} ({', '.join(labels)})" for name, labels in grouped.items()))
     if accented:
         parts.append(f"{ACCENT_WORD.get(code, ACCENT_WORD['en'])}: {accented}")
     if alone:

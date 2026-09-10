@@ -11,7 +11,7 @@
 
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import type { TavoloForm, TavoloState } from '@/lib/tavolo';
+import type { TavoloColor, TavoloForm, TavoloState } from '@/lib/tavolo';
 
 export interface PieceData extends Record<string, unknown> {
     label: string;
@@ -19,7 +19,19 @@ export interface PieceData extends Record<string, unknown> {
     state: TavoloState;
     byModel: boolean;
     accent: boolean;
+    color: TavoloColor | null;
 }
+
+// Le tinte del raggruppamento. Il petrolio non e' fra queste: e' il pezzo senza
+// gruppo, cioe' il caso normale. L'ocra nemmeno, perche' qui dice gia'
+// "proposta".
+const TINT: Record<TavoloColor, string> = {
+    green: 'border-emerald-400 bg-emerald-50',
+    blue: 'border-sky-400 bg-sky-50',
+    violet: 'border-violet-400 bg-violet-50',
+    pink: 'border-rose-400 bg-rose-50',
+    grey: 'border-slate-400 bg-slate-100',
+};
 
 const SIDES: [Position, string][] = [
     [Position.Top, 't'], [Position.Right, 'r'], [Position.Bottom, 'b'], [Position.Left, 'l'],
@@ -54,7 +66,9 @@ function Piece({ data, selected }: NodeProps & { data: PieceData }) {
                     // un accento che sembra una proposta non accentua niente.
                     : data.accent
                         ? 'border-indigo-700 bg-indigo-600 font-medium text-white'
-                        : 'border-indigo-400 bg-indigo-50 text-slate-800',
+                        // Lo stato batte il gruppo: una proposta e il punto si
+                        // vedono per quello che sono, il colore aspetta.
+                        : `text-slate-800 ${data.color ? TINT[data.color] : 'border-indigo-400 bg-indigo-50'}`,
                 selected ? 'ring-2 ring-indigo-500 ring-offset-1' : '',
             ].join(' ')}
         >

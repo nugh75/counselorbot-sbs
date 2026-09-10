@@ -230,6 +230,35 @@ def test_the_rendition_leaves_out_what_is_only_proposed():
     assert "Meno tempo" not in rendition(proposed, "it")
 
 
+def test_an_invented_colour_is_dropped_like_an_invented_form():
+    graph = parse_graph({**GRAPH, "nodes": [
+        {"id": "a", "label": "Compito difficile", "color": "green"},
+        {"id": "b", "label": "Ansia", "color": "fucsia"},
+        {"id": "c", "label": "Rimando"},
+    ]})
+    assert [node.color for node in graph.nodes] == ["green", None, None]
+
+
+def test_the_model_cannot_colour_a_piece():
+    """Il colore e' il raggruppamento della persona, non una mossa del modello."""
+    proposed = propose(_base(), parse_proposal({
+        "add_nodes": [{"id": "d", "label": "Meno tempo", "color": "blue"}],
+    }))
+    assert proposed.nodes[-1].color is None
+
+
+def test_the_rendition_reads_the_colour_groups():
+    graph = parse_graph({**GRAPH, "nodes": [
+        {"id": "a", "label": "Compito difficile", "color": "green"},
+        {"id": "b", "label": "Ansia", "color": "green"},
+        {"id": "c", "label": "Rimando", "color": "blue"},
+    ]})
+    said = rendition(graph, "it")
+    assert "Gruppi: verde (Compito difficile, Ansia); blu (Rimando)" in said
+    # Senza colori non si dice niente: una riga vuota e' rumore.
+    assert "Gruppi" not in rendition(_base(), "it")
+
+
 def test_the_rendition_says_which_piece_is_the_point():
     graph = parse_graph({**GRAPH, "nodes": [
         {"id": "a", "label": "Compito difficile"},
