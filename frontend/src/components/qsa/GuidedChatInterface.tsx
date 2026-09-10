@@ -29,6 +29,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
 import { MessageDiagramButton, type SavedMessageDiagram } from '@/components/ui/MessageDiagramButton';
+import { OpenTavoloButton } from '@/components/tavolo/OpenTavoloButton';
 import { IdeaBranchBar } from '@/components/qsa/IdeaBranchBar';
 import { IdeaBranchIntro } from '@/components/qsa/IdeaBranchIntro';
 import { IdeaWorkspace } from '@/components/qsa/IdeaWorkspace';
@@ -1704,6 +1705,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                                         <GitBranch className="h-4 w-4" aria-hidden="true" />
                                                     </Button></Tooltip>
                                                     {diagramContentForSpeech(msg.content) && <ListenButton id={`guided-${sessionId}-${idx}`} text={diagramContentForSpeech(msg.content)} language={activeLocale} counselorId={counselorId} className={stepButtonClass} />}
+                                                    <OpenTavoloButton sessionId={sessionId} instrument={questionnaireType}
+                                                        counselorId={counselorId} locale={activeLocale}
+                                                        sourceText={diagramContentForSpeech(msg.content) || msg.content}
+                                                        className={stepButtonClass} disabled={isLoading} />
                                                     {(!!msg.strategyIds?.length || !!msg.responseId) && <>
                                                         <Tooltip content={t('guided.feedback.helpful')}><Button type="button" variant="ghost" className={`${stepButtonClass} aria-pressed:bg-indigo-50 aria-pressed:text-indigo-700`} aria-label={t('guided.feedback.helpful')} aria-pressed={msg.feedback === true} onClick={() => void submitStrategyFeedback(idx, true)}>
                                                             <ThumbsUp className="h-4 w-4" aria-hidden="true" />

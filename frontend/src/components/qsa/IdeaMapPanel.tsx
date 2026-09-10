@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { DiagramBlock } from '@/components/ui/DiagramBlock';
+import { OpenTavoloButton } from '@/components/tavolo/OpenTavoloButton';
 import { useI18n } from '@/lib/i18n-context';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import {
@@ -83,6 +84,17 @@ export function IdeaMapPanel({ sessionId, version, locale, move, onPickNode }: I
                     )}
                 </h3>
                 <div className="flex shrink-0 items-center gap-1">
+                    {/* La mappa e' gia' un vocabolario: al tavolo arriva tradotta,
+                        senza passare da un modello e senza perdere pezzi. */}
+                    {state?.spec && (
+                        <OpenTavoloButton
+                            sessionId={sessionId}
+                            instrument="IDEA"
+                            locale={locale}
+                            ideaMap={state.spec}
+                            className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        />
+                    )}
                     <button
                         type="button"
                         onClick={() => void reload()}
