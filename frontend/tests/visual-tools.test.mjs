@@ -281,7 +281,8 @@ for (const width of [320, 1440]) {
         const { page, context, control } = await fixture(width, 'intro', { feedback: true, longConversation: true });
         try {
             await page.evaluate(() => { window.Audio = class { play() { return Promise.resolve(); } pause() {} load() {} removeAttribute() {} }; });
-            assert.equal(await page.locator('button[popovertarget]').count(), 1);
+            assert.equal(await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).count(), 1);
+            assert.equal(await page.getByRole('button', { name: 'Inserisci audio', exact: true }).count(), 1);
             assert.equal(await page.getByRole('button', { name: 'Azioni del messaggio', exact: true }).count(), 0);
             const row = page.getByRole('group', { name: 'Azioni del messaggio', exact: true }).last();
             for (const name of ['Diagramma', 'Ascolta', 'Risposta utile', 'Risposta non utile']) {
