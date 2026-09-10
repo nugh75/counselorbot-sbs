@@ -7,10 +7,13 @@ Eseguibile senza pytest:
 """
 import pytest
 
+from backend.idea_lexicon import opening_question
 from backend.idea_map import (
     IdeaMapError,
     apply_patch,
     arrange,
+    root_id,
+    start_map_patch,
     drop_branch,
     closure_ready,
     computed_flaws,
@@ -849,6 +852,32 @@ def test_a_node_that_stopped_being_a_branch_can_be_made_one_again():
 def test_only_a_node_that_was_a_branch_can_be_restored():
     with pytest.raises(IdeaMapError):
         arrange(_three_branches(), "t2", "restore")
+
+
+# --- la mappa avviata a mano ---
+
+def test_a_map_can_be_started_by_hand_when_the_talk_has_not_drawn_one():
+    """Finche' il modello non disegna, il pannello non ha niente da mostrare:
+    la persona deve poter mettere giu' l'idea da se'."""
+    spec = apply_patch(None, start_map_patch("Un benchmark per CounselorBot", "it"))
+    root = next(node for node in spec.nodes if node.id == root_id(spec))
+    assert root.label == "Un benchmark per CounselorBot" and root.role == "idea"
+    assert spec.title == "Un benchmark per CounselorBot"
+    assert [row["id"] for row in branches(spec)] == [root.id]
+
+
+def test_the_second_box_of_a_started_map_invents_nothing():
+    """Una mappa salvata vuole due nodi: il secondo e' la domanda da cui parte
+    lo strumento, non contenuto messo li' dal server."""
+    spec = apply_patch(None, start_map_patch("Un benchmark", "it"))
+    other = next(node for node in spec.nodes if node.id != root_id(spec))
+    assert other.role == "open-question"
+    assert other.label == opening_question("it")
+
+
+def test_the_opening_question_speaks_the_language_of_the_session():
+    assert opening_question("sv") != opening_question("it")
+    assert opening_question("zz") == opening_question("en")
 
 
 if __name__ == "__main__":

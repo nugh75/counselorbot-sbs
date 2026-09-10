@@ -526,6 +526,9 @@ class FocusRequest(BaseModel):
 class CreateBranchRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=120)
     label: str = Field(min_length=1, max_length=80)
+    # Serve solo alla mappa avviata a mano: la casella di partenza e' scritta
+    # nella lingua della sessione.
+    lang: str = Field(default="it", max_length=5)
 
 
 @router.post("/idea/branch")
@@ -534,11 +537,12 @@ def create_branch(
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
 ):
-    """Crea una ramificazione esplicita dalla diramazione attualmente in uso."""
+    """Crea un ramo dalla diramazione in uso, o avvia la mappa se non c'e'."""
     _require_feature(db)
     owner = _owner(identity)
     try:
-        revision = create_manual_branch(db, owner, request.session_id, request.label)
+        revision = create_manual_branch(db, owner, request.session_id, request.label,
+                                        request.lang)
     except IdeaMapError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     spec = current_map(db, owner, request.session_id)

@@ -111,7 +111,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
         setMoving('new');
         setCreateFailed(false);
         try {
-            const revisionId = await createIdeaBranch(sessionId, label);
+            const revisionId = await createIdeaBranch(sessionId, label, locale);
             if (revisionId === null) {
                 setCreateFailed(true);
                 return;
@@ -163,10 +163,9 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
         }
     };
 
-    if (rows.length === 0) {
-        return <p className="px-3 py-4 text-xs text-slate-500">{t('idea.branches.empty')}</p>;
-    }
-
+    // Senza righe non c'e' mappa: il pannello chiede l'idea invece di
+    // limitarsi a dire che non c'e' niente.
+    const starting = rows.length === 0;
     const focused = rows.find((row) => row.is_focus);
 
     return (
@@ -177,7 +176,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                     onSubmit={(event) => { event.preventDefault(); void addBranch(); }}
                 >
                     <label htmlFor="idea-new-branch" className="mb-1 block text-[11px] font-medium text-teal-900">
-                        {t('idea.branches.name')}
+                        {t(starting ? 'idea.branches.startName' : 'idea.branches.name')}
                     </label>
                     <div className="flex gap-1">
                         <input
@@ -192,7 +191,7 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                             type="submit"
                             disabled={!branchLabel.trim() || moving !== null}
                             className="rounded-md bg-teal-700 p-1.5 text-white hover:bg-teal-800 disabled:opacity-50"
-                            aria-label={t('idea.branches.create')}
+                            aria-label={t(starting ? 'idea.branches.start' : 'idea.branches.create')}
                         >
                             {moving === 'new'
                                 ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -218,8 +217,11 @@ export function IdeaBranchTree({ sessionId, version, locale, onFocusMoved }: Ide
                     className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-teal-300 px-2 py-2 text-xs font-medium text-teal-800 hover:bg-teal-50"
                 >
                     <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-                    {t('idea.branches.create')}
+                    {t(starting ? 'idea.branches.start' : 'idea.branches.create')}
                 </button>
+            )}
+            {starting && !adding && (
+                <p className="px-1 pb-2 text-[11px] text-slate-500">{t('idea.branches.empty')}</p>
             )}
             {rows.map((row) => {
                 const isRoot = row.depth === 0;
