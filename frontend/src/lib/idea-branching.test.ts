@@ -144,3 +144,12 @@ test('the panel sends the commands to the server and asks before deleting', () =
     assert.match(source, /idea\.branches\.deleteOnly/);
     assert.match(source, /idea\.branches\.deleteAll/);
 });
+
+test('an Idea with no map yet offers to start one instead of a dead end', () => {
+    const source = tree();
+    // Lo stato vuoto non e' piu' solo una frase: porta il campo per avviare
+    // la mappa, perche' senza mappa non c'e' niente su cui cliccare.
+    assert.match(source, /idea\.branches\.startName/);
+    assert.match(source, /idea\.branches\.start'/);
+    assert.doesNotMatch(source, /if \(rows\.length === 0\) \{\s*return <p/);
+});

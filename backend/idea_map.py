@@ -20,6 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy.orm import Session
 
 from . import models
+from .idea_lexicon import opening_question
 from .diagram_render import (
     MAX_TITLE,
     NODE_FLAWS,
@@ -653,11 +654,38 @@ def apply_and_store(db: Session, username: str, session_id: str, patch: IdeaPatc
     )
 
 
-def create_manual_branch(db: Session, username: str, session_id: str, label: str) -> models.IdeaMapRevision:
-    """Aggiunge un ramo nominato dalla persona e sposta subito il fuoco su di esso."""
+def start_map_patch(label: str, lang: str = "it") -> IdeaPatch:
+    """La prima mappa, quando a metterla giu' e' la persona.
+
+    Una mappa salvata vuole almeno due caselle e un arco. La seconda non
+    inventa contenuto: e' la domanda da cui lo strumento parte comunque, ed e'
+    l'unica cosa vera finche' non si e' detto altro.
+    """
+    return parse_patch({
+        "title": label.strip(),
+        "add_nodes": [
+            {"id": "idea", "label": label.strip(), "role": "idea", "accent": True,
+             "status": "mentioned"},
+            {"id": "q1", "label": opening_question(lang), "role": "open-question"},
+        ],
+        "add_edges": [{"from": "idea", "to": "q1", "kind": "link"}],
+    })
+
+
+def create_manual_branch(db: Session, username: str, session_id: str, label: str,
+                         lang: str = "it") -> models.IdeaMapRevision:
+    """Aggiunge un ramo nominato dalla persona e sposta subito il fuoco su di esso.
+
+    Senza mappa non fallisce: la mappa la avvia, con l'idea che la persona ha
+    scritto. Un pannello che rifiuta di partire finche' il modello non disegna
+    lascia la persona senza niente su cui cliccare.
+    """
     spec = current_map(db, username, session_id)
     if spec is None:
-        raise IdeaMapError("non c'e' ancora una mappa")
+        return apply_and_store(
+            db, username, session_id, start_map_patch(label, lang),
+            source="manual", focus_id="idea",
+        )
     parent_id = resolve_focus(spec, chosen_focus(db, username, session_id)) or root_id(spec)
     if parent_id is None:
         raise IdeaMapError("la mappa non ha un punto da cui creare il ramo")
