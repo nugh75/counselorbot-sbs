@@ -16,7 +16,7 @@ async function fixture({ bussola = false, width = 390, lang = 'it', live = false
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
     const page = await context.newPage();
     page.setDefaultTimeout(10000);
-    const control = { requests: [], uploads: [], errors: [], text: 'Vorrei studiare meglio.', status: 200, wait: null, replyWait: null, incomplete: false, reply: 'Proseguiamo.' };
+    const control = { requests: [], uploads: [], errors: [], text: 'Vorrei studiare meglio.', status: 200, wait: null, replyWait: null, incomplete: false, reply: 'Proseguiamo.', deltas: null };
     page.on('pageerror', error => control.errors.push(error.message));
     await page.addInitScript(({ lang, dark, live }) => {
         localStorage.setItem('cb_lang', lang);
@@ -100,7 +100,12 @@ async function fixture({ bussola = false, width = 390, lang = 'it', live = false
             data=session;
         } else if (path === '/api/session/frozen/audio-fixture') data = {...session,questionnaire_type:'QSA',current_phase:phase,experience:'standard',scores:{C1:7}};
         else if (path === '/api/qsa/guided-ui-texts') data = {guided_steps:[{id:'intro',label:'Introduzione',sort_order:1,system_prompt_mode:'qsa-intro',suggested_questions:[]}]};
-        else if (path === '/api/chat/stream') return route.fulfill({contentType:'text/event-stream',body:'data: '+JSON.stringify({done:true,response:control.reply,session_id:'audio-fixture',incomplete:control.incomplete})+'\n\n'});
+        else if (path === '/api/chat/stream') {
+            const frames = (control.deltas || []).map(delta => ({delta}));
+            const reply = control.deltas ? control.deltas.join('') : control.reply;
+            return route.fulfill({contentType:'text/event-stream',body:[...frames, {done:true,response:reply,session_id:'audio-fixture',incomplete:control.incomplete}]
+                .map(event => 'data: '+JSON.stringify(event)+'\n\n').join('')});
+        }
         return route.fulfill({json:data});
     });
     async function open() {
@@ -155,7 +160,7 @@ for (const bussola of [false, true]) {
             await f.page.waitForFunction(id => document.querySelector(id).value.split('Vorrei studiare meglio.').length === 3, bussola ? '#bussola-composer' : '#guided-composer');
             assert.equal(f.sent().length, 0);
             assert.equal(f.control.uploads.length, 2);
-            assert.match(f.control.uploads[0], /name="language"\r\n\r\nit/);
+            assert.match(f.control.uploads[0], /name="language"\r\n\r\nauto/);
             assert.deepEqual(f.control.errors, []);
         } finally { await f.context.close(); }
     });
@@ -267,7 +272,7 @@ test('English audio options fit on a narrow screen and use the selected language
         await f.page.screenshot({path:'/tmp/chat-audio-input-320.png'});
         await f.menu.getByLabel('Upload audio file').setInputFiles(audioFile);
         await f.page.waitForFunction(() => document.querySelector('#guided-composer').value.length > 0);
-        assert.match(f.control.uploads[0], /name="language"\r\n\r\nen/);
+        assert.match(f.control.uploads[0], /name="language"\r\n\r\nauto/);
         assert.equal(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
         assert.deepEqual(f.control.errors, []);
     } finally { await f.context.close(); }
@@ -516,6 +521,45 @@ test('shortening an overlong voice transcript sends it once and clears its error
         assert.equal(f.sent()[0].body.message, 'Una domanda più breve.');
         assert.equal(await options.getByLabel('Trascrizione',{exact:true}).count(), 0);
         assert.equal(await options.getByRole('alert').count(), 0);
+        assert.deepEqual(f.control.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('the spoken language is chosen apart from the interface language', async () => {
+    const f = await fixture();
+    try {
+        const panel = await f.options();
+        await panel.getByRole('combobox', {name:'Lingua del parlato'}).selectOption('en');
+        await f.page.keyboard.press('Escape');
+        await f.audio();
+        await f.menu.getByLabel('Carica file audio').setInputFiles(audioFile);
+        await f.page.waitForFunction(() => document.querySelector('#guided-composer').value.length > 0);
+        assert.match(f.control.uploads[0], /name="language"\r\n\r\nen/);
+        await f.open();
+        const restored = await f.options();
+        assert.equal(await restored.getByRole('combobox', {name:'Lingua del parlato'}).inputValue(), 'en');
+        assert.deepEqual(f.control.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('a long reply is spoken in pieces while it is still being written', async () => {
+    const f = await fixture();
+    try {
+        await f.page.evaluate(() => localStorage.setItem('cb_voice_it_counselor_1','piper:'));
+        f.control.deltas = [
+            'Cominciamo dal tempo che dedichi allo studio ogni giorno della settimana. ',
+            'Poi guardiamo insieme come organizzi le pause e il ripasso. ',
+            'Che cosa ti sembra più faticoso?',
+        ];
+        await f.voice();
+        const panel = f.page.getByRole('group', {name:'Conversazione vocale',exact:true});
+        await panel.getByRole('button', {name:'Premi per parlare'}).click();
+        await panel.getByRole('button', {name:'Ferma e invia'}).click();
+        await panel.getByRole('button', {name:'Interrompi e parla'}).waitFor();
+        const spoken = f.control.requests.filter(r => r.path === '/api/tts/stream');
+        assert.ok(spoken.length > 1, `the reply is read in pieces, got ${spoken.length}`);
+        assert.equal(spoken.map(r => r.body.text).join(''), f.control.deltas.join(''), 'every word is spoken once, in order');
+        assert.equal(f.sent().length, 1);
         assert.deepEqual(f.control.errors, []);
     } finally { await f.context.close(); }
 });
