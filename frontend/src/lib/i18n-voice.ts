@@ -1,6 +1,8 @@
 import type { Lang } from './i18n';
 
 const it: Record<string, string> = {
+    "voice.move": "Sposta lettore",
+    "voice.moveHelp": "Trascina il titolo per spostare il lettore, oppure usa i tasti freccia.",
     "voice.female": "Femminile",
     "voice.male": "Maschile",
     "voice.title": "Lettore audio",
@@ -54,6 +56,8 @@ const it: Record<string, string> = {
 };
 
 const en: Record<string, string> = {
+    "voice.move": "Move reader",
+    "voice.moveHelp": "Drag the title to move the reader, or use the arrow keys.",
     "voice.female": "Female",
     "voice.male": "Male",
     "voice.title": "Audio reader",
@@ -107,6 +111,8 @@ const en: Record<string, string> = {
 };
 
 const es: Record<string, string> = {
+    "voice.move": "Mover lector",
+    "voice.moveHelp": "Arrastra el título para mover el lector o usa las flechas.",
     "voice.female": "Femenina",
     "voice.male": "Masculina",
     "voice.title": "Lector de audio",
@@ -160,6 +166,8 @@ const es: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+    "voice.move": "Déplacer le lecteur",
+    "voice.moveHelp": "Faites glisser le titre pour déplacer le lecteur ou utilisez les flèches.",
     "voice.female": "Féminine",
     "voice.male": "Masculine",
     "voice.title": "Lecteur audio",
@@ -213,6 +221,8 @@ const fr: Record<string, string> = {
 };
 
 const de: Record<string, string> = {
+    "voice.move": "Leser verschieben",
+    "voice.moveHelp": "Ziehe den Titel, um den Leser zu verschieben, oder verwende die Pfeiltasten.",
     "voice.female": "Weiblich",
     "voice.male": "Männlich",
     "voice.title": "Audioleser",
@@ -266,6 +276,8 @@ const de: Record<string, string> = {
 };
 
 const sv: Record<string, string> = {
+    "voice.move": "Flytta läsaren",
+    "voice.moveHelp": "Dra i rubriken för att flytta läsaren, eller använd piltangenterna.",
     "voice.female": "Kvinnlig",
     "voice.male": "Manlig",
     "voice.title": "Ljudläsare",

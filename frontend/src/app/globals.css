@@ -186,49 +186,28 @@
   @apply max-w-6xl mx-auto;
 }
 
-/* The reader shares the workspace; it never makes the conversation inert. */
-.voice-reader-layout[data-reader-open="true"] {
-  --reader-top-space: var(--reader-measured-height, 6rem);
-}
-.voice-reader-layout[data-reader-open="true"][data-reader-expanded="true"] {
-  --reader-top-space: var(--reader-measured-height, min(65dvh, 42rem));
-}
+/* Floating reader: page width and chat interaction remain independent. */
 .voice-reader-workspace {
   min-width: 0;
-  padding-top: var(--reader-top-space, 0px);
-}
-.voice-reader-workspace :is(input, textarea, button, [tabindex]) {
-  scroll-margin-top: calc(5rem + var(--reader-top-space, 0px));
 }
 .voice-reader-panel {
   position: fixed;
   z-index: 40;
-  top: 4rem;
-  right: 0;
-  width: 100%;
-  max-height: min(65dvh, 42rem);
+  top: 5rem;
+  right: 1rem;
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 6rem);
   overflow-y: auto;
-  border-bottom-width: 1px;
+  border-width: 1px;
+  border-radius: 1rem;
+  box-shadow: 0 12px 36px rgb(0 0 0 / 18%);
+}
+.voice-reader-layout[data-reader-expanded="false"] > .voice-reader-panel {
+  width: min(20rem, calc(100vw - 2rem));
 }
 .voice-reading-fallback {
   outline: 2px solid var(--color-indigo-400);
   outline-offset: 2px;
-}
-@media (min-width: 1024px) {
-  .voice-reader-panel {
-    width: 24rem;
-    border-left-width: 1px;
-  }
-  .voice-reader-layout[data-reader-open="true"][data-reader-expanded="true"] {
-    --reader-top-space: 0px;
-  }
-  .voice-reader-layout[data-reader-open="true"][data-reader-expanded="true"] > .voice-reader-workspace {
-    margin-right: 24rem;
-  }
-  .voice-reader-layout[data-reader-expanded="true"] > .voice-reader-panel {
-    height: auto;
-    max-height: calc(100dvh - 4rem);
-  }
 }
 
 @supports (height: 100dvh) {
