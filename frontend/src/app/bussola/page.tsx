@@ -52,6 +52,7 @@ export default function BussolaPage() {
     const [sending, setSending] = useState(false);
     const [audioBusy, setAudioBusy] = useState(false);
     const [voiceMode, setVoiceMode] = useState(false);
+    const [voiceOptionsContainer, setVoiceOptionsContainer] = useState<HTMLDivElement | null>(null);
     const [completing, setCompleting] = useState(false);
     const [input, setInput] = useState('');
     const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
@@ -330,15 +331,17 @@ export default function BussolaPage() {
                                 </div>
                                 <div className="flex items-end gap-2">
                                     <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <>
-                                        <button type="button" disabled={sending || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(value => !value); }}>
-                                            <Mic className="h-4 w-4 shrink-0" />{t(voiceMode ? 'audio.voice.exit' : 'audio.voice.title')}
-                                        </button>
+                                        <div ref={setVoiceOptionsContainer} />
+                                        {!voiceMode && <button type="button" disabled={sending || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
+                                            <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
+                                        </button>}
                                         {!voiceMode && <AudioSendOption />}
                                     </>}</ChatActionsPopover>
                                     <textarea id="bussola-composer" hidden={voiceMode} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} rows={2} maxLength={4000} placeholder={t('orientation.input.placeholder')} className="min-h-20 min-w-0 flex-1 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
                                     <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
                                         onSend={text => submitMessage({ preventDefault() {} }, text)}
                                         voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={session.counselor_id}
+                                        voiceOptionsContainer={voiceOptionsContainer}
                                         composerId="bussola-composer" sessionKey={session.session_id} disabled={sending} maxLength={4000} />
                                     {!voiceMode && <button type="submit" disabled={!input.trim() || sending || audioBusy} aria-label={t('orientation.input.send')} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40"><Send className="h-4 w-4" /></button>}
                                 </div>

@@ -500,6 +500,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [input, setInput] = useState('');
     const [audioBusy, setAudioBusy] = useState(false);
     const [voiceMode, setVoiceMode] = useState(false);
+    const [voiceOptionsContainer, setVoiceOptionsContainer] = useState<HTMLDivElement | null>(null);
     const [conversationId, setConversationId] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -1450,6 +1451,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const renderConversationOptions = (openPanel: (panel?: 'path' | 'scores' | 'resources') => void) => (
         <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
             {close => <div className="space-y-2">
+                <div ref={setVoiceOptionsContainer} />
                 <button type="button" className={`${messageActionClass} hidden lg:flex`} onClick={() => { close(); openPanel(); }}>
                     <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{chatLayoutLabel(activeLocale, 'panelTitle')}
                     {recommendations.reading.length + recommendations.strategy.length > 0 && <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>}
@@ -1472,9 +1474,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 {currentPhase !== FIXED_CONCLUSION_ID && <>
                     <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
                     <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
-                    <button type="button" className={messageActionClass} disabled={isLoading || audioBusy} onClick={() => { close(); setVoiceMode(value => !value); }}>
-                        <Mic className="h-4 w-4 shrink-0" />{t(voiceMode ? 'audio.voice.exit' : 'audio.voice.title')}
-                    </button>
+                    {!voiceMode && <button type="button" className={messageActionClass} disabled={isLoading || audioBusy} onClick={() => { close(); setVoiceMode(true); }}>
+                        <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
+                    </button>}
                     {!voiceMode && <AudioSendOption />}
                     {reasoningCapable && <>
                         <p className="px-2 text-sm font-semibold text-slate-700">{t('reasoning.label')}</p>
@@ -1861,6 +1863,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             <AudioInput value={input} onChange={setInput} onBusyChange={setAudioBusy}
                                 onSend={text => handleSend({ preventDefault() {} }, text, true)}
                                 voiceMode={voiceMode} onExitVoice={() => setVoiceMode(false)} counselorId={counselorId}
+                                voiceOptionsContainer={voiceOptionsContainer}
                                 composerId="guided-composer" sessionKey={`${sessionId}:${voiceMode ? 'voice' : currentPhase}`} disabled={isLoading || currentPhase === FIXED_CONCLUSION_ID} />
                             {!voiceMode && (isLoading ? (
                                 <button
