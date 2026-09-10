@@ -654,6 +654,38 @@ def apply_and_store(db: Session, username: str, session_id: str, patch: IdeaPatc
     )
 
 
+def add_node_patch(label: str, role: str, parent_id: str) -> IdeaPatch:
+    """Un nodo messo dalla persona, appeso dove sta lavorando.
+
+    Il ruolo `task` non si passa da qui: un ramo ha la sua porta, e aprirlo
+    senza dichiarare il genere di lavoro salterebbe cio' che decide quando il
+    ramo e' a fuoco.
+    """
+    if role not in NODE_ROLES or role == "task":
+        raise IdeaMapError(f"ruolo non valido per un nodo: {role}")
+    node_id = f"node-{uuid.uuid4().hex[:8]}"
+    return parse_patch({
+        "add_nodes": [{"id": node_id, "label": label.strip(), "role": role,
+                       "status": "mentioned"}],
+        "add_edges": [{"from": parent_id, "to": node_id, "kind": "link"}],
+    })
+
+
+def edit_node_patch(node_id: str, label: str | None = None,
+                    role: str | None = None) -> IdeaPatch:
+    """Correggere un nodo: l'etichetta, il ruolo, o tutti e due."""
+    if role is not None and role not in NODE_ROLES:
+        raise IdeaMapError(f"ruolo sconosciuto: {role}")
+    change: dict = {"id": node_id}
+    if label is not None:
+        change["label"] = label.strip()
+    if role is not None:
+        change["role"] = role
+    if len(change) == 1:
+        raise IdeaMapError("niente da cambiare")
+    return parse_patch({"update": [change]})
+
+
 def start_map_patch(label: str, lang: str = "it") -> IdeaPatch:
     """La prima mappa, quando a metterla giu' e' la persona.
 
@@ -1379,6 +1411,32 @@ def set_focus(db: Session, username: str, session_id: str, node_id: str) -> mode
     if not any(node.id == node_id and _is_task_node(node) for node in spec.nodes):
         raise IdeaMapError(f"non e' un ramo: {node_id}")
     return save_revision(db, username, session_id, spec, source="focus", focus_id=node_id)
+
+
+def add_node(db: Session, username: str, session_id: str, label: str, role: str,
+             parent_id: str | None = None) -> tuple[models.IdeaMapRevision, str]:
+    """Appende un nodo scritto dalla persona al ramo in lavorazione."""
+    spec = current_map(db, username, session_id)
+    if spec is None:
+        raise IdeaMapError("non c'e' ancora una mappa")
+    parent = parent_id or resolve_focus(spec, chosen_focus(db, username, session_id)) or root_id(spec)
+    if parent is None or not any(node.id == parent for node in spec.nodes):
+        raise IdeaMapError(f"non c'e' un nodo a cui appenderlo: {parent}")
+    patch = add_node_patch(label, role, parent)
+    revision = apply_and_store(db, username, session_id, patch, source="manual")
+    return revision, patch.add_nodes[0].id
+
+
+def edit_node(db: Session, username: str, session_id: str, node_id: str,
+              label: str | None = None, role: str | None = None) -> models.IdeaMapRevision:
+    """Corregge etichetta o ruolo di un nodo gia' sulla mappa."""
+    spec = current_map(db, username, session_id)
+    if spec is None:
+        raise IdeaMapError("non c'e' ancora una mappa")
+    if not any(node.id == node_id for node in spec.nodes):
+        raise IdeaMapError(f"nodo assente: {node_id}")
+    return apply_and_store(db, username, session_id,
+                           edit_node_patch(node_id, label, role), source="manual")
 
 
 def arrange_branch(db: Session, username: str, session_id: str, node_id: str,

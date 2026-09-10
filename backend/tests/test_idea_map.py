@@ -12,6 +12,8 @@ from backend.idea_map import (
     IdeaMapError,
     apply_patch,
     arrange,
+    add_node_patch,
+    edit_node_patch,
     root_id,
     start_map_patch,
     drop_branch,
@@ -878,6 +880,50 @@ def test_the_second_box_of_a_started_map_invents_nothing():
 def test_the_opening_question_speaks_the_language_of_the_session():
     assert opening_question("sv") != opening_question("it")
     assert opening_question("zz") == opening_question("en")
+
+
+# --- i nodi messi e corretti a mano ---
+
+def test_a_node_added_by_hand_hangs_from_the_branch_in_hand():
+    """Il contenuto della mappa non e' solo del modello: un'ipotesi che la
+    persona ha in testa deve poterci entrare senza passare da una frase."""
+    spec = apply_patch(_two_branches(), add_node_patch("I dati siano accessibili", "assumption", "t1"))
+    added = next(n for n in spec.nodes if n.label == "I dati siano accessibili")
+    assert added.role == "assumption"
+    assert owning_task(spec)[added.id] == "t1"
+
+
+def test_two_nodes_added_by_hand_do_not_collide():
+    first = add_node_patch("Uno", "assumption", "t1")
+    second = add_node_patch("Due", "assumption", "t1")
+    assert first.add_nodes[0].id != second.add_nodes[0].id
+
+
+def test_a_node_can_be_renamed_without_touching_what_it_is():
+    spec = apply_patch(_two_branches(), edit_node_patch("t1", label="Rivedere la rassegna"))
+    node = next(n for n in spec.nodes if n.id == "t1")
+    assert node.label == "Rivedere la rassegna" and node.role == "task"
+
+
+def test_a_node_filed_under_the_wrong_role_can_be_moved_to_the_right_one():
+    spec = apply_patch(_two_branches(), parse_patch({
+        "add_nodes": [{"id": "c1", "label": "Tre mesi", "role": "constraint"}],
+        "add_edges": [{"from": "t1", "to": "c1"}],
+    }))
+    spec = apply_patch(spec, edit_node_patch("c1", role="evidence"))
+    assert next(n for n in spec.nodes if n.id == "c1").role == "evidence"
+
+
+def test_a_node_added_by_hand_is_never_a_branch():
+    """I rami hanno una porta loro: aprirne uno da qui salterebbe il tipo di
+    lavoro, che e' cio' che decide quando il ramo e' a fuoco."""
+    with pytest.raises(IdeaMapError):
+        add_node_patch("Un lavoro", "task", "idea")
+
+
+def test_an_unknown_role_is_refused_instead_of_being_dropped():
+    with pytest.raises(IdeaMapError):
+        edit_node_patch("t1", role="banana")
 
 
 if __name__ == "__main__":

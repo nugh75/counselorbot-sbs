@@ -3647,6 +3647,48 @@ def test_the_map_can_be_started_from_the_panel_when_the_talk_has_not_drawn_one()
         _set_idea_feature("false")
 
 
+def test_a_node_is_added_and_corrected_by_hand_from_the_map():
+    """La mappa e' il ragionamento della persona: correggere un'etichetta o
+    spostare un nodo nel ruolo giusto non deve passare da una frase in chat."""
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-node-by-hand"
+    try:
+        _seed_idea_branch(session_id)
+
+        added = client.post("/idea/node", json={
+            "session_id": session_id,
+            "label": "I dati siano accessibili",
+            "role": "assumption",
+        })
+        assert added.status_code == 200, added.text
+        node_id = added.json()["node_id"]
+
+        current = client.get("/idea/map", params={"session_id": session_id})
+        assert current.json()["owners"][node_id] == "t1"
+
+        fixed = client.post("/idea/node/edit", json={
+            "session_id": session_id,
+            "node_id": node_id,
+            "label": "I dati sono accessibili",
+            "role": "evidence",
+        })
+        assert fixed.status_code == 200, fixed.text
+        node = next(n for n in client.get("/idea/map", params={"session_id": session_id})
+                    .json()["spec"]["nodes"] if n["id"] == node_id)
+        assert node["label"] == "I dati sono accessibili" and node["role"] == "evidence"
+
+        gone = client.request("DELETE", "/idea/branch", params={
+            "session_id": session_id, "node_id": node_id, "cascade": "false",
+        })
+        assert gone.status_code == 200, gone.text
+        assert node_id not in [n["id"] for n in client.get(
+            "/idea/map", params={"session_id": session_id}).json()["spec"]["nodes"]]
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
 def _seed_three_branches(session_id: str) -> None:
     seeded = client.post("/idea/map/patch", json={
         "session_id": session_id,
