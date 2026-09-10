@@ -16,12 +16,11 @@ import {
     MarkerType,
     ReactFlow,
     ReactFlowProvider,
-    applyNodeChanges,
+    useNodesState,
     useReactFlow,
     type Connection,
     type Edge,
     type Node,
-    type NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import Dagre from '@dagrejs/dagre';
@@ -91,15 +90,27 @@ function Canvas({ graph, locale, onChange }: {
         window.setTimeout(() => fitView({ padding: 0.2 }), 0);
     }, [graph, onChange, fitView]);
 
-    const nodes: Node<PieceData>[] = useMemo(() => graph.nodes
-        .filter((node) => node.state !== 'dropped')
-        .map((node) => ({
-            id: node.id,
-            type: 'piece',
-            position: { x: node.x, y: node.y },
-            selected: selected?.kind === 'node' && selected.id === node.id,
-            data: { label: node.label, form: node.form, state: node.state, byModel: node.by === 'model' },
-        })), [graph.nodes, selected]);
+    // React Flow tiene la propria copia dei nodi, e ci tiene attaccata la misura
+    // che prende dal DOM. Ricostruire gli oggetti a ogni render gliela toglieva,
+    // e un nodo senza misura resta `visibility: hidden`: la tela si disegnava e
+    // non si vedeva niente. Qui il grafo resta l'autorita' su cosa c'e' e dove
+    // sta, ma la misura di prima viaggia con lui.
+    const [nodes, setNodes, onNodesChange] = useNodesState<Node<PieceData>>([]);
+    useEffect(() => {
+        setNodes((previous) => {
+            const measured = new Map(previous.map((node) => [node.id, node]));
+            return graph.nodes
+                .filter((node) => node.state !== 'dropped')
+                .map((node) => ({
+                    ...measured.get(node.id),
+                    id: node.id,
+                    type: 'piece',
+                    position: { x: node.x, y: node.y },
+                    selected: selected?.kind === 'node' && selected.id === node.id,
+                    data: { label: node.label, form: node.form, state: node.state, byModel: node.by === 'model' },
+                }));
+        });
+    }, [graph.nodes, selected, setNodes]);
 
     const edges: Edge<LinkData>[] = useMemo(() => graph.edges
         .filter((edge) => edge.state !== 'dropped')
@@ -118,17 +129,17 @@ function Canvas({ graph, locale, onChange }: {
             },
         })), [graph.edges, selected, locale]);
 
-    const onNodesChange = useCallback((changes: NodeChange[]) => {
-        const moved = applyNodeChanges(changes, nodes);
-        const position = new Map(moved.map((node) => [node.id, node.position]));
+    // Solo la fine del trascinamento esce di qui. Ogni fotogramma di un
+    // trascinamento e' un cambio di posizione, e mandarli tutti al grafo
+    // riempirebbe lo storico di rumore invece che di pensiero.
+    const onNodeDragStop = useCallback((_event: unknown, moved: Node) => {
         onChange({
             ...graph,
-            nodes: graph.nodes.map((node) => {
-                const spot = position.get(node.id);
-                return spot ? { ...node, x: spot.x, y: spot.y } : node;
-            }),
+            nodes: graph.nodes.map((node) => (node.id === moved.id
+                ? { ...node, x: moved.position.x, y: moved.position.y }
+                : node)),
         });
-    }, [graph, nodes, onChange]);
+    }, [graph, onChange]);
 
     const onConnect = useCallback((connection: Connection) => {
         if (!connection.source || !connection.target || connection.source === connection.target) return;
@@ -192,6 +203,7 @@ function Canvas({ graph, locale, onChange }: {
                     nodeTypes={nodeTypes}
                     edgeTypes={edgeTypes}
                     onNodesChange={onNodesChange}
+                    onNodeDragStop={onNodeDragStop}
                     onConnect={onConnect}
                     onNodeClick={(_event, clicked) => setSelected({ kind: 'node', id: clicked.id })}
                     onEdgeClick={(_event, clicked) => setSelected({ kind: 'edge', id: clicked.id })}
