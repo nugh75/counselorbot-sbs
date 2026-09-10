@@ -112,18 +112,12 @@ Pagina dedicata `/tavolo/[id]`, a tutta finestra. Non un pannello dentro la
 chat: li' ci sono gia' i messaggi, la mappa di Idea e l'albero dei rami, e un
 canvas non ha spazio.
 
-Si apre da tre posti:
-
-- **chat guidata**, da un messaggio: il seme lo estrae il modello del tavolo
-  dal testo, e **arriva come proposta**, non come contenuto. Cosi' il tavolo
-  nasce gia' dentro la regola che lo governa, invece di fare un'eccezione al
-  primo gesto: la persona tiene i pezzi che riconosce come suoi e scarta gli
-  altri. Un seme che fallisce lascia un tavolo vuoto, non un errore;
-- **workspace di Idea**: la mappa si traduce senza modello, ruoli in `form` e
-  `kind` in `rel` secondo la tabella dell'eredita', e arriva come **contenuto**:
-  e' roba che la persona ha gia' costruito, e farle riaccettare pezzo per pezzo
-  il proprio lavoro sarebbe un insulto, non una garanzia;
-- **area personale**: l'elenco dei tavoli salvati.
+Si apre da un posto solo: **l'area personale**, che elenca i tavoli salvati e
+ha il bottone che ne apre uno nuovo. Il tavolo non e' un gesto dentro la
+conversazione: e' uno strumento in cui lo studente fa il suo diagramma, e
+l'ingresso dai messaggi di chat o dal workspace di Idea e' stato tolto per
+decisione esplicita. L'endpoint di creazione accetta ancora i semi (testo di
+chat, mappa di Idea) ma nessuna interfaccia li manda piu'.
 
 Sotto la soglia desktop il bottone non compare, e un tavolo salvato si mostra
 come immagine catturata piu' la resa testuale.
@@ -188,10 +182,12 @@ delle tabelle.
 
 Fatto e verificato: il vocabolario e i due modificatori, l'entita' e le
 revisioni append-only con il controllo di conflitto, le proposte con
-accetta/scarta, i due semi (mappa di Idea tradotta, testo di chat proposto),
-la tela React Flow con le quattro forme e i quattro colori, il salvataggio con
-cattura e resa testuale, l'elenco dei tavoli salvati, gli ingressi da un
-messaggio di chat e dal pannello della mappa di Idea.
+accetta/scarta, la tela React Flow con le quattro forme e i quattro colori, il
+salvataggio con cattura e resa testuale, l'elenco dei tavoli salvati con il
+bottone che ne apre uno nuovo nell'area personale, l'interruttore della
+funzione nel pannello admin. Gli ingressi da un messaggio di chat e dal
+pannello della mappa di Idea sono stati rimossi: il tavolo si apre solo
+dall'area personale.
 
 Non fatto, e da fare in un giro successivo:
 
@@ -200,8 +196,6 @@ Non fatto, e da fare in un giro successivo:
 - **PDF finale, taccuino e portfolio.** La cattura e la resa esistono e sono
   salvate; nessuno dei tre le legge ancora.
 - **Telegram.** Non mostra l'ultima cattura.
-- **La voce nell'area personale.** L'elenco vive a `/tavolo` e si raggiunge dal
-  tavolo stesso; non e' ancora una sezione di `/profilo`.
 
 ## Fuori perimetro
 
