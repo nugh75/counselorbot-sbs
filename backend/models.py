@@ -1221,3 +1221,23 @@ class PromptRevision(Base):
     author = Column(String, nullable=True)
     note = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
+class PromptExperimentDecision(Base):
+    """Production receipt, committed atomically with a human-approved prompt write."""
+
+    __tablename__ = "prompt_experiment_decisions"
+    id = Column(String, primary_key=True)
+    decision_key = Column(String, unique=True, nullable=False)
+    experiment_id = Column(String, index=True, nullable=False)
+    action = Column(String, nullable=False)
+    target_key = Column(String, nullable=False)
+    candidate_id = Column(String, nullable=True)
+    manifest_hash = Column(String, nullable=False)
+    source_hash = Column(String, nullable=False)
+    before_value = Column(Text, nullable=True)
+    after_value = Column(Text, nullable=True)
+    revision_id = Column(Integer, nullable=True)
+    author = Column(String, nullable=False)
+    note = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

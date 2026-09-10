@@ -7,6 +7,7 @@ import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
 import { PresetsPanel } from '@/components/admin/PresetsPanel';
+import { PromptExperimentsPanel } from '@/components/admin/PromptExperimentsPanel';
 import { BenchmarkPanel } from '@/components/admin/BenchmarkPanel';
 import { CounselorsPanel } from '@/components/admin/CounselorsPanel';
 import { ApprovedStrategiesPanel } from '@/components/admin/ApprovedStrategiesPanel';
@@ -39,11 +40,11 @@ import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'counselors' | 'approvedStrategies' | 'toolBriefs' | 'threadGuard' | 'certifiedStrategies' | 'certifiedReadings' | 'orientationReferrals' | 'skills' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'promptExperiments' | 'counselors' | 'approvedStrategies' | 'toolBriefs' | 'threadGuard' | 'certifiedStrategies' | 'certifiedReadings' | 'orientationReferrals' | 'skills' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const [activeTab, setActiveTab] = useState<AdminTab>('config');
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [authState, setAuthState] = useState<'loading' | 'admin' | 'forbidden'>('loading');
@@ -101,6 +102,7 @@ export default function AdminPage() {
                 { id: 'logs', label: t('admin.tab.logs'), icon: FileText },
                 { id: 'costs', label: t('admin.tab.costs'), icon: Coins },
                 { id: 'benchmark', label: t('admin.tab.benchmark'), icon: Gauge },
+                { id: 'promptExperiments', label: { it: 'Esperimenti sui prompt', en: 'Prompt experiments', es: 'Experimentos de prompts', fr: 'Expériences sur les prompts', de: 'Prompt-Experimente', sv: 'Promptexperiment' }[lang], icon: Gauge },
             ],
         },
         {
@@ -254,6 +256,7 @@ export default function AdminPage() {
                         {activeTab === 'costs' && <CostStats />}
                         {activeTab === 'presets' && <PresetsPanel />}
                         {activeTab === 'benchmark' && <BenchmarkPanel />}
+                        {activeTab === 'promptExperiments' && <PromptExperimentsPanel />}
                         {activeTab === 'counselors' && <CounselorsPanel />}
                         {activeTab === 'approvedStrategies' && <ApprovedStrategiesPanel />}
                         {activeTab === 'toolBriefs' && <ToolBriefsPanel />}
