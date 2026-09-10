@@ -292,7 +292,8 @@ for (const width of [320, 1440]) {
                 assert.equal((await button.innerText()).trim(), '', `${name} uses an icon`);
             }
             await row.getByRole('button', { name: 'Ascolta', exact: true }).click();
-            const reader = page.getByRole('dialog', { name: 'Lettore audio' });
+            const reader = page.getByRole('complementary', { name: 'Lettore audio' });
+            if (await reader.getByRole('button', { name: 'Espandi lettore' }).count()) await reader.getByRole('button', { name: 'Espandi lettore' }).click();
             const stop = reader.getByRole('button', { name: 'Ferma', exact: true });
             await stop.waitFor();
             await stop.click();

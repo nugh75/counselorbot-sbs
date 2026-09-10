@@ -1654,7 +1654,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                                     </div>
                                                 )}
                                                 {msg.content.trim() ? (
-                                                    <div className="min-w-0 max-w-full overflow-hidden bg-white lg:rounded-lg lg:border lg:border-slate-200/80">
+                                                    <div className="min-w-0 max-w-full overflow-hidden bg-white lg:rounded-lg lg:border lg:border-slate-200/80"
+                                                        data-voice-source={`guided-${sessionId}-${idx}`} data-voice-language={activeLocale} data-voice-counselor={counselorId ?? undefined}>
                                                         <GuidedMessageContent
                                                             content={msg.content}
                                                             locale={activeLocale}

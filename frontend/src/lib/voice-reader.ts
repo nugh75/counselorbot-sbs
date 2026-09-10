@@ -5,7 +5,7 @@ export type ReaderError = 'request' | 'interrupted' | 'playback' | 'segments' | 
 export type WordTiming = { word: string; start: number; end: number; from: number; to: number };
 export type Segment = { index: number; paragraph_id: number; text: string; words: WordTiming[]; url?: string; failed?: boolean };
 export type ReaderState = { status: ReaderStatus; generating: boolean; segments: Segment[]; current: number; word: number; error: ReaderError };
-export type ReaderInput = { text: string; language: string; voice: string; counselor_id?: number | null; voice_override?: boolean; engine: 'edge' | 'piper'; pronunciations?: { term: string; spoken: string }[] };
+export type ReaderInput = { text: string; language: string; voice: string; counselor_id?: number | null; voice_override?: boolean; engine: 'edge' | 'piper'; pronunciations?: { term: string; spoken: string }[]; plain_text?: boolean };
 const initial = (): ReaderState => ({ status: 'idle', generating: false, segments: [], current: -1, word: -1, error: null });
 
 export function normalizeWords(raw: unknown, text: string): WordTiming[] {
