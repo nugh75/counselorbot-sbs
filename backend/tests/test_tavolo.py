@@ -88,6 +88,21 @@ def test_a_strength_outside_the_scale_is_refused():
         parse_graph({**GRAPH, "edges": [{"from": "a", "to": "b", "rel": "causes", "strength": 7}]})
 
 
+def test_only_one_piece_can_be_accented():
+    graph = parse_graph({**GRAPH, "nodes": [
+        {"id": "a", "label": "Compito difficile", "accent": True},
+        {"id": "b", "label": "Ansia"},
+        {"id": "c", "label": "Rimando"},
+    ]})
+    assert [node.accent for node in graph.nodes] == [True, False, False]
+    with pytest.raises(TavoloError):
+        parse_graph({**GRAPH, "nodes": [
+            {"id": "a", "label": "Compito difficile", "accent": True},
+            {"id": "b", "label": "Ansia", "accent": True},
+            {"id": "c", "label": "Rimando"},
+        ]})
+
+
 # --- le proposte ---
 
 def test_a_proposal_never_enters_the_live_graph():
@@ -140,6 +155,14 @@ def test_a_dropped_element_stays_dropped():
     assert [node.state for node in settled.nodes if node.id == "d"] == ["dropped"]
 
 
+def test_the_model_cannot_accent_a_piece():
+    """L'enfasi e' della persona: una proposta che si accenta da sola scriverebbe."""
+    proposed = propose(_base(), parse_proposal({
+        "add_nodes": [{"id": "d", "label": "Meno tempo", "accent": True}],
+    }))
+    assert [node.accent for node in proposed.nodes] == [False, False, False, False]
+
+
 def test_a_proposal_cannot_rewrite_what_is_already_there():
     proposed = propose(_base(), parse_proposal({
         "add_nodes": [{"id": "a", "label": "Un altro nome"}],
@@ -187,6 +210,16 @@ def test_the_rendition_says_the_doubt_out_loud():
 def test_the_rendition_leaves_out_what_is_only_proposed():
     proposed = propose(_base(), parse_proposal({"add_nodes": [{"id": "d", "label": "Meno tempo"}]}))
     assert "Meno tempo" not in rendition(proposed, "it")
+
+
+def test_the_rendition_says_which_piece_is_the_point():
+    graph = parse_graph({**GRAPH, "nodes": [
+        {"id": "a", "label": "Compito difficile"},
+        {"id": "b", "label": "Ansia", "accent": True},
+        {"id": "c", "label": "Rimando"},
+    ]})
+    assert "Il punto: Ansia" in rendition(graph, "it")
+    assert "The point: Ansia" in rendition(graph, "en")
 
 
 def test_the_rendition_speaks_every_supported_language():

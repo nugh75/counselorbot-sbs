@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     Background,
+    ConnectionMode,
     Controls,
     MarkerType,
     ReactFlow,
@@ -24,7 +25,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import Dagre from '@dagrejs/dagre';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Star, Trash2 } from 'lucide-react';
 import {
     FAMILIES,
     RELS_BY_FAMILY,
@@ -107,7 +108,7 @@ function Canvas({ graph, locale, onChange }: {
                     type: 'piece',
                     position: { x: node.x, y: node.y },
                     selected: selected?.kind === 'node' && selected.id === node.id,
-                    data: { label: node.label, form: node.form, state: node.state, byModel: node.by === 'model' },
+                    data: { label: node.label, form: node.form, state: node.state, byModel: node.by === 'model', accent: Boolean(node.accent) },
                 }));
         });
     }, [graph.nodes, selected, setNodes]);
@@ -185,6 +186,14 @@ function Canvas({ graph, locale, onChange }: {
             nodes: graph.nodes.map((node) => (node.id === id ? { ...node, ...change } : node)),
         });
 
+    // L'accento e' uno solo: accentare un pezzo sposta l'enfasi invece di
+    // aggiungerne una. Due punti sul tavolo non sono un punto.
+    const accent = (id: string, on: boolean) =>
+        onChange({
+            ...graph,
+            nodes: graph.nodes.map((node) => ({ ...node, accent: on && node.id === id })),
+        });
+
     const patchEdge = (key: string, change: Partial<TavoloEdgeData>) =>
         onChange({
             ...graph,
@@ -208,6 +217,9 @@ function Canvas({ graph, locale, onChange }: {
                     onNodeClick={(_event, clicked) => setSelected({ kind: 'node', id: clicked.id })}
                     onEdgeClick={(_event, clicked) => setSelected({ kind: 'edge', id: clicked.id })}
                     onPaneClick={() => setSelected(null)}
+                    // Permissiva: con quattro agganci tutti sorgenti, e' questa
+                    // modalita' a farli valere anche come bersagli.
+                    connectionMode={ConnectionMode.Loose}
                     proOptions={{ hideAttribution: false }}
                     fitView
                 >
@@ -252,6 +264,13 @@ function Canvas({ graph, locale, onChange }: {
                                 ))}
                             </div>
                         </fieldset>
+                        <button type="button" onClick={() => accent(node.id, !node.accent)}
+                            aria-pressed={Boolean(node.accent)}
+                            className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border px-2 text-sm ${node.accent
+                                ? 'border-indigo-700 bg-indigo-600 text-white'
+                                : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+                            <Star className="h-4 w-4" aria-hidden="true" />{label('accent')}
+                        </button>
                     </div>
                 )}
 
@@ -284,6 +303,17 @@ function Canvas({ graph, locale, onChange }: {
                                 ))}
                             </div>
                         </fieldset>
+                        <label className="block text-xs font-medium text-slate-500">
+                            {label('ownWords')}
+                            <input
+                                value={edge.label ?? ''}
+                                placeholder={relLabel(edge.rel, locale)}
+                                onChange={(event) => patchEdge(edgeKey(edge), {
+                                    label: event.target.value.slice(0, 40) || null,
+                                })}
+                                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800"
+                            />
+                        </label>
                         <fieldset>
                             <legend className="text-xs font-medium text-slate-500">{label('strength')}</legend>
                             <div className="mt-1 grid grid-cols-3 gap-1">

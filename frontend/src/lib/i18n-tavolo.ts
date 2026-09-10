@@ -101,6 +101,8 @@ const uiIt = {
     newOne: 'Nuovo tavolo',
     none: 'Non hai ancora salvato nessun tavolo.',
     openOne: 'Apri',
+    accent: 'Il punto',
+    ownWords: 'Parole tue',
 };
 type UiKey = keyof typeof uiIt;
 
@@ -148,6 +150,8 @@ const UI: Record<Lang, Record<UiKey, string>> = {
         newOne: 'New table',
         none: 'You have not saved any table yet.',
         openOne: 'Open',
+        accent: 'The point',
+        ownWords: 'Your own words',
     },
     es: {
         title: 'Mesa de trabajo',
@@ -191,6 +195,8 @@ const UI: Record<Lang, Record<UiKey, string>> = {
         newOne: 'Nueva mesa',
         none: 'Todavía no has guardado ninguna mesa.',
         openOne: 'Abrir',
+        accent: 'El punto',
+        ownWords: 'Tus palabras',
     },
     fr: {
         title: 'Table de travail',
@@ -234,6 +240,8 @@ const UI: Record<Lang, Record<UiKey, string>> = {
         newOne: 'Nouvelle table',
         none: "Vous n'avez encore enregistré aucune table.",
         openOne: 'Ouvrir',
+        accent: 'Le point',
+        ownWords: 'Vos mots',
     },
     de: {
         title: 'Arbeitstisch',
@@ -277,6 +285,8 @@ const UI: Record<Lang, Record<UiKey, string>> = {
         newOne: 'Neuer Tisch',
         none: 'Sie haben noch keinen Tisch gespeichert.',
         openOne: 'Öffnen',
+        accent: 'Der Punkt',
+        ownWords: 'Deine Worte',
     },
     sv: {
         title: 'Arbetsbord',
@@ -320,6 +330,8 @@ const UI: Record<Lang, Record<UiKey, string>> = {
         newOne: 'Nytt bord',
         none: 'Du har inte sparat något bord än.',
         openOne: 'Öppna',
+        accent: 'Poängen',
+        ownWords: 'Dina ord',
     },
 };
 
