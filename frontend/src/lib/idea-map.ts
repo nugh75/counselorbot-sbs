@@ -107,8 +107,9 @@ export async function fetchIdeaNextStep(
     return response.json() as Promise<IdeaNextStep>;
 }
 
-export async function fetchIdeaMap(sessionId: string): Promise<IdeaMapState | null> {
-    const response = await apiFetch(`/api/idea/map?session_id=${encodeURIComponent(sessionId)}`);
+export async function fetchIdeaMap(sessionId: string, lang = 'it'): Promise<IdeaMapState | null> {
+    const params = new URLSearchParams({ session_id: sessionId, lang });
+    const response = await apiFetch(`/api/idea/map?${params.toString()}`);
     if (!response.ok) return null;
     return response.json() as Promise<IdeaMapState>;
 }
