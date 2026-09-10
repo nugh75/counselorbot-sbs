@@ -42,6 +42,7 @@ class PronunciationRule(BaseModel):
 
 class ReaderRequest(TTSRequest):
     engine: Literal["edge", "piper"] = "edge"
+    plain_text: bool = False
     text: str = Field(min_length=1, max_length=120000)
     language: str = Field(default="it", pattern="^(it|en|es|fr|de|sv)$")
     voice: str = Field(default="it-IT-IsabellaNeural", max_length=100,
@@ -64,19 +65,32 @@ def correct_pronunciation(text: str, rules: list[PronunciationRule]) -> str:
     return regex.sub(lambda match: ordered[int(match.lastgroup[1:])].spoken, text)
 
 
-def spoken_segments(text: str, language: str, rules: list[PronunciationRule] | None = None) -> list[dict]:
-    clean = strip_for_speech(text, lang=language)
-    clean = re.sub(r'```.*?```', ' ', clean, flags=re.DOTALL)
-    clean = re.sub(r'!\[[^\]]*\]\([^)]*\)', '', clean)
-    clean = re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', clean)
-    clean = re.sub(r'\[(?:\^|@)[^\]]*\]', '', clean)
-    clean = re.sub(r'`([^`]*)`', r'\1', clean)
-    clean = strip_markdown(clean)
+def spoken_segments(text: str, language: str, rules: list[PronunciationRule] | None = None, plain_text: bool = False) -> list[dict]:
+    clean = text
+    if not plain_text:
+        clean = strip_for_speech(clean, lang=language)
+        clean = re.sub(r'```.*?```', ' ', clean, flags=re.DOTALL)
+        clean = re.sub(r'!\[[^\]]*\]\([^)]*\)', '', clean)
+        clean = re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', clean)
+        clean = re.sub(r'\[(?:\^|@)[^\]]*\]', '', clean)
+        clean = re.sub(r'`([^`]*)`', r'\1', clean)
+        clean = strip_markdown(clean)
     clean = correct_pronunciation(clean, rules or [])
     if len(clean) > 120000:
         raise HTTPException(422, "Corrected text exceeds the reader limit")
     segments = []
     for paragraph_id, paragraph in enumerate(re.split(r"\n\s*\n", clean)):
+        paragraph = paragraph.strip()
+        if paragraph and not segments:
+            # Deliver a short opening before synthesizing the longer body.
+            # Prefer a complete sentence; otherwise split at a word boundary.
+            cut = len(paragraph)
+            if cut > 180:
+                endings = list(re.finditer(r'[.!?](?=\s)', paragraph[:181]))
+                spaces = list(re.finditer(r'\s+', paragraph[:181]))
+                cut = endings[-1].end() if endings else spaces[-1].start() if spaces else 180
+            segments.append({"index": 0, "paragraph_id": paragraph_id, "text": paragraph[:cut].strip()})
+            paragraph = paragraph[cut:].strip()
         for part in _split_text_for_tts(paragraph, max_len=700):
             segments.append({"index": len(segments), "paragraph_id": paragraph_id, "text": part})
     return segments
@@ -159,7 +173,7 @@ async def reader_events(segments: list[dict], voice: str, engine: str = "edge"):
 
 @router.post("/stream")
 async def stream(request: ReaderRequest, db: Session = Depends(database.get_db)):
-    segments = spoken_segments(request.text, request.language, request.pronunciations)
+    segments = spoken_segments(request.text, request.language, request.pronunciations, request.plain_text)
     if not segments:
         raise HTTPException(422, "No readable text")
     voice = reader_voice(request, db)

@@ -31,6 +31,44 @@ def test_voice_precedence():
     assert reader.reader_voice(request, db) == 'it_IT-paola-medium'
 
 
+def test_short_opening_preserves_text_and_keeps_later_segments_long():
+    for ending in ('.', '?', '!'):
+        opening = 'Una prima frase completa per iniziare subito la lettura' + ending
+        body = 'Una riflessione sul modo di studiare ' * 7 + '. '
+        text = opening + ' ' + body * 5
+        segments = reader.spoken_segments(text, 'it')
+        assert len(segments[0]['text']) <= 180
+        assert segments[0]['text'] == opening
+        assert any(len(s['text']) > 180 for s in segments[1:])
+        assert ' '.join(s['text'] for s in segments) == text.strip()
+        assert [s['index'] for s in segments] == list(range(len(segments)))
+        assert {s['paragraph_id'] for s in segments} == {0}
+
+
+def test_opening_splits_long_sentences_without_losing_words_or_paragraphs():
+    text = 'Concentrazione e riflessione ' * 30 + '\n\nSecondo paragrafo.'
+    segments = reader.spoken_segments(text, 'it')
+    assert len(segments[0]['text']) <= 180
+    assert segments[0]['text'].split()[-1] in {'Concentrazione', 'e', 'riflessione'}
+    assert ' '.join(s['text'] for s in segments if s['paragraph_id'] == 0) == text.split('\n\n')[0].strip()
+    assert segments[-1]['paragraph_id'] == 1
+    assert segments[-1]['text'] == 'Secondo paragrafo.'
+
+
+def test_opening_limit_applies_after_pronunciation_corrections():
+    rules = [reader.PronunciationRule(term='QSA', spoken='Questionario sulle strategie di apprendimento')]
+    segments = reader.spoken_segments('QSA ' * 40, 'it', rules)
+    assert len(segments[0]['text']) <= 180
+    assert ' '.join(s['text'] for s in segments) == ((rules[0].spoken + ' ') * 40).strip()
+
+
+def test_rendered_page_text_is_not_parsed_as_markdown_again():
+    text = 'Prima frase con * visibile.\n\nUna seconda frase.'
+    segments = reader.spoken_segments(text, 'it', plain_text=True)
+    assert segments[0]['text'] == 'Prima frase con * visibile.'
+    assert segments[1]['paragraph_id'] == 1
+
+
 def test_pronunciation_rules_are_literal_bounded_and_do_not_cascade():
     rules = [reader.PronunciationRule(term='AI', spoken='A-I'),
              reader.PronunciationRule(term='GenAI', spoken='AI generativa'),
@@ -100,4 +138,4 @@ if __name__ == '__main__':
     for name, fn in list(globals().items()):
         if name.startswith('test_'):
             fn()
-    print('OK: test_voice_reader (8 tests)')
+    print('OK: test_voice_reader (12 tests)')

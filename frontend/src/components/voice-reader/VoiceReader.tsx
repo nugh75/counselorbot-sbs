@@ -1,18 +1,18 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
-import { Headphones, Pause, Play, SkipBack, SkipForward, Square, Volume2, X } from 'lucide-react';
+import { Headphones, Maximize2, Minimize2, Pause, Play, SkipBack, SkipForward, Square, Volume2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useI18n } from '@/lib/i18n-context';
 import { translate, type Lang } from '@/lib/i18n';
-import { DEFAULT_VOICES, PIPER_VOICES, pageReadingText } from '@/lib/voice-content';
-import { VoiceReaderController, type ReaderInput, type Segment } from '@/lib/voice-reader';
+import { DEFAULT_VOICES, PIPER_VOICES, VOICE_EXCLUDED, pageReadingSource, highlightReadingBlock, type ReadingBlock } from '@/lib/voice-content';
+import { VoiceReaderController, type ReaderInput } from '@/lib/voice-reader';
 import { pronunciationRules } from '@/lib/voice-pronunciation';
 import { PronunciationEditor } from './PronunciationEditor';
 
-type Target = { id: string; text: string; language: Lang; counselorId?: number | null; literalPronunciation?: boolean };
+type Target = { id: string; text: string; language: Lang; counselorId?: number | null; literalPronunciation?: boolean; blocks?: ReadingBlock[] };
 type ReaderContext = { openSettings: () => void; read: (target: Target) => void; release: (id: string) => void };
 const Context = createContext<ReaderContext | null>(null);
 const PREFERENCE_EVENT = 'counselorbot-voice-change';
@@ -31,7 +31,8 @@ function speechInput(target: Target): ReaderInput {
     const engine = storedEngine === 'piper' ? 'piper' : 'edge';
     return { text: target.text, language: target.language, engine,
         voice: voice || (engine === 'piper' ? PIPER_VOICES : DEFAULT_VOICES)[target.language],
-        counselor_id: target.counselorId, voice_override: !!voice, pronunciations: target.literalPronunciation ? [] : pronunciationRules(target.language) };
+        counselor_id: target.counselorId, voice_override: !!voice, plain_text: !!target.blocks,
+        pronunciations: target.literalPronunciation ? [] : pronunciationRules(target.language) };
 }
 
 export function VoiceReaderProvider({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,7 @@ export function VoiceReaderProvider({ children }: { children: React.ReactNode })
     const pathname = usePathname();
     const [controller] = useState(() => new VoiceReaderController());
     const [open, setOpen] = useState(false);
+    const [expanded, setExpanded] = useState(true);
     const [target, setTarget] = useState<Target | null>(null);
     const source = useRef<string | null>(null);
     const [opener, setOpener] = useState<HTMLElement | null>(null);
@@ -50,19 +52,45 @@ export function VoiceReaderProvider({ children }: { children: React.ReactNode })
     }, [controller]);
     useEffect(() => () => close(), [pathname, lang, close]);
     const read = useCallback((next: Target) => {
-        if (!document.activeElement?.closest('dialog')) setOpener(document.activeElement as HTMLElement);
+        if (!document.activeElement?.closest('[data-voice-reader]')) setOpener(document.activeElement as HTMLElement);
+        if (!open) setExpanded(window.matchMedia('(min-width: 1024px)').matches);
         source.current = next.id;
         setTarget(next);
         setOpen(true);
         void controller.start(speechInput(next));
-    }, [controller]);
+    }, [controller, open]);
     const release = useCallback((id: string) => { if (source.current === id) close(); }, [close]);
+    useEffect(() => {
+        const startAtSelection = (event: MouseEvent) => {
+            const element = event.target instanceof Element ? event.target : null;
+            const main = document.getElementById('contenuto');
+            const selection = window.getSelection();
+            if (!main || !element || !main.contains(element) || element.closest(`${VOICE_EXCLUDED}, a`) || !selection?.rangeCount || selection.isCollapsed) return;
+            const root = element.closest<HTMLElement>('[data-voice-source]') ?? main;
+            if (root === main && element.closest('[role="log"]')) return;
+            const range = selection.getRangeAt(0).cloneRange();
+            if (!root.contains(range.startContainer)) return;
+            const snapshot = pageReadingSource(root, range);
+            if (!snapshot.text) return;
+            read({ id: root.dataset.voiceSource || 'page', ...snapshot,
+                language: (root.dataset.voiceLanguage as Lang) || lang,
+                counselorId: Number(root.dataset.voiceCounselor) || undefined });
+        };
+        document.addEventListener('dblclick', startAtSelection);
+        return () => document.removeEventListener('dblclick', startAtSelection);
+    }, [lang, read]);
     return <Context.Provider value={{ read, release, openSettings: () => {
         setOpener(document.activeElement as HTMLElement);
+        setExpanded(true);
         setOpen(true);
     } }}>
-        {children}
-        {open && <ReaderPanel controller={controller} target={target} onRead={read} onClose={close} opener={opener} />}
+        <div className="voice-reader-layout" data-reader-open={open} data-reader-expanded={expanded}>
+            {/* The bundled CSS parser rejects ::highlight; browsers accept it. */}
+            <style>{'::highlight(voice-reading) { background-color: var(--color-indigo-100); color: var(--color-indigo-950); }'}</style>
+            <div className="voice-reader-workspace">{children}</div>
+            {open && <ReaderPanel controller={controller} target={target} onRead={read} onClose={close} opener={opener}
+                expanded={expanded} onToggle={() => setExpanded(value => !value)} />}
+        </div>
     </Context.Provider>;
 }
 
@@ -81,11 +109,15 @@ export function ListenButton({ id, text, language, counselorId, className }: Tar
     // guided steps which do not change the URL. Opening the reader keeps drafts.
     useEffect(() => () => release?.(id), [release, id, text]);
     return <Tooltip content={t('voice.listen')}><Button type="button" variant="ghost" className={className} aria-label={t('voice.listen')}
-        onClick={() => reader?.read({ id, text, language, counselorId })}><Volume2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>;
+        onClick={() => {
+            const element = document.querySelector<HTMLElement>(`[data-voice-source="${CSS.escape(id)}"]`);
+            reader?.read({ id, text, language, counselorId, ...(element ? pageReadingSource(element) : {}) });
+        }}><Volume2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>;
 }
 
-function ReaderPanel({ controller, target, onRead, onClose, opener }: {
+function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, onToggle }: {
     controller: VoiceReaderController; target: Target | null; onRead: (target: Target) => void; onClose: () => void; opener: HTMLElement | null;
+    expanded: boolean; onToggle: () => void;
 }) {
     const { t, lang } = useI18n();
     const language = target?.language ?? lang;
@@ -94,24 +126,36 @@ function ReaderPanel({ controller, target, onRead, onClose, opener }: {
     const selected = useSyncExternalStore(subscribePreference, () => preference(language), () => 'edge:');
     const [engineValue, voice = ''] = selected.split(':');
     const engine = engineValue === 'piper' ? 'piper' : 'edge';
-    const dialog = useRef<HTMLDialogElement>(null);
-    const transcript = useRef<HTMLDivElement>(null);
+    const panel = useRef<HTMLElement>(null);
     const [voices, setVoices] = useState<{ id: string; name: string; locale: string }[]>([]);
     const [catalogError, setCatalogError] = useState(false);
     const [retry, setRetry] = useState(0);
     const [catalogEngine, setCatalogEngine] = useState(engine);
 
+    useLayoutEffect(() => {
+        const element = panel.current;
+        const layout = element?.parentElement;
+        if (!element || !layout) return;
+        const measure = () => layout.style.setProperty('--reader-measured-height', `${element.getBoundingClientRect().height}px`);
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(element);
+        return () => { observer.disconnect(); layout.style.removeProperty('--reader-measured-height'); };
+    }, [expanded]);
     useEffect(() => {
-        const element = dialog.current;
-        element?.showModal();
-        const overflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => {
-            element?.close();
-            document.body.style.overflow = overflow;
-            if (opener?.isConnected) opener.focus({ preventScroll: true });
+        const element = panel.current;
+        const escape = (event: KeyboardEvent) => {
+            // A disabled transport button can return focus to the body.
+            if (event.key === 'Escape' && !event.defaultPrevented && document.activeElement === document.body && !document.querySelector('dialog[open]')) onClose();
         };
-    }, [opener]);
+        document.addEventListener('keydown', escape);
+        return () => {
+            document.removeEventListener('keydown', escape);
+            // Closing the reader must not steal focus from a chat being edited.
+            if (opener?.isConnected && (element?.contains(document.activeElement) || document.activeElement === document.body)) opener.focus({ preventScroll: true });
+        };
+    }, [opener, onClose]);
+    useEffect(() => { if (expanded) panel.current?.focus({ preventScroll: true }); }, [expanded]);
     useEffect(() => {
         const abort = new AbortController();
         fetch(`/api/tts/voices?engine=${engine}`, { signal: abort.signal }).then(async response => {
@@ -123,12 +167,11 @@ function ReaderPanel({ controller, target, onRead, onClose, opener }: {
         return () => abort.abort();
     }, [engine, retry]);
     useEffect(() => {
-        const active = transcript.current?.querySelector<HTMLElement>('[data-active-word="true"]')
-            ?? transcript.current?.querySelector<HTMLElement>('[data-active-segment="true"]');
-        if (!active || !transcript.current || state.status !== 'playing') return;
-        const bounds = transcript.current.getBoundingClientRect(), rect = active.getBoundingClientRect();
-        if (rect.top < bounds.top || rect.bottom > bounds.bottom) active.scrollIntoView({ block: 'nearest', behavior: 'instant' });
-    }, [currentIndex, state.word, state.status]);
+        if (state.status !== 'playing' && state.status !== 'paused') return;
+        const segment = state.segments.find(s => s.index === currentIndex);
+        const block = segment && target?.blocks?.[segment.paragraph_id];
+        if (block) return highlightReadingBlock(block);
+    }, [currentIndex, state.segments, state.status, target]);
     const choose = (value: string) => {
         controller.stop();
         sessionPreferences.set(language, value);
@@ -136,25 +179,31 @@ function ReaderPanel({ controller, target, onRead, onClose, opener }: {
         window.dispatchEvent(new Event(PREFERENCE_EVENT));
     };
     const readPage = () => {
-        // Native showModal makes the rest of the document inert implicitly;
-        // this does not change its visible content or the explicit inert attribute.
         const root = document.getElementById('contenuto');
-        onRead({ id: 'page', text: root ? pageReadingText(root) : '', language: lang });
+        onRead({ id: 'page', text: '', language: lang, ...(root ? pageReadingSource(root) : {}) });
     };
     const active = state.status === 'playing' || state.status === 'buffering';
+    const playbackLabel = t(active ? 'voice.pause' : state.status === 'idle' || state.status === 'error' ? 'voice.listen' : 'voice.resume');
+    const togglePlayback = () => {
+        if (active) controller.pause();
+        else if (state.status === 'idle' || state.status === 'error') { if (target) onRead(target); }
+        else controller.resume();
+    };
     const available = catalogEngine === engine ? voices.filter(v => v.locale.split('-')[0] === language) : [];
     const currentPosition = state.segments.findIndex(s => s.index === state.current);
-    return <dialog ref={dialog} aria-label={t('voice.title')} aria-modal="true" data-voice-ignore
-        onCancel={event => { event.preventDefault(); onClose(); }}
-        className="fixed inset-y-0 left-auto right-0 m-0 h-dvh max-h-none w-full max-w-xl border-0 bg-slate-50 p-0 text-slate-900 backdrop:bg-slate-950/40">
+    return <aside ref={panel} aria-label={t('voice.title')} tabIndex={-1} data-voice-ignore data-voice-reader
+        onKeyDown={event => { if (event.key === 'Escape' && !event.defaultPrevented) { event.preventDefault(); onClose(); } }}
+        className="voice-reader-panel border-slate-200 bg-slate-50 text-slate-900">
         <div className="flex h-full min-h-0 flex-col">
             <div className="shrink-0 border-b border-slate-200 bg-white">
-                <div className="flex items-center justify-between gap-3 p-4 sm:px-5">
-                    <h2 className="font-display text-xl font-bold">{t('voice.title')}</h2>
+                <div className="flex items-center justify-between gap-1 px-3 py-2">
+                    <h2 className={`min-w-0 flex-1 font-display font-bold ${expanded ? 'text-xl' : 'text-base'}`}>{t('voice.title')}</h2>
+                    {!expanded && <Button type="button" variant="secondary" disabled={!target} onClick={togglePlayback} aria-label={playbackLabel} className="min-h-[44px] min-w-[44px] px-2">{active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</Button>}
+                    <Button type="button" variant="ghost" onClick={onToggle} aria-label={t(expanded ? 'voice.minimize' : 'voice.expand')} aria-expanded={expanded} className="min-h-[44px] min-w-[44px] px-2">{expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</Button>
                     <Button type="button" variant="ghost" onClick={onClose} aria-label={t('voice.close')} className="min-h-[44px] min-w-[44px] px-2"><X className="h-5 w-5" /></Button>
                 </div>
-                <div className="max-h-[45dvh] space-y-3 overflow-y-auto px-4 pb-4 sm:px-5 sm:pb-5">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div hidden={!expanded} className="max-h-[min(40dvh,calc(65dvh-14rem))] space-y-3 overflow-y-auto px-4 pb-4 sm:px-5 sm:pb-5 lg:max-h-[40dvh]">
+                <div className="grid grid-cols-1 gap-3">
                     <label className="min-w-0 text-sm font-semibold">{t('voice.engine')}
                         <select aria-label={t('voice.engine')} value={engine} onChange={event => choose(`${event.target.value}:`)} className="mt-1 min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-2 text-sm">
                             <option value="edge">{t('voice.edge')}</option><option value="piper">{t('voice.piper')}</option>
@@ -178,34 +227,20 @@ function ReaderPanel({ controller, target, onRead, onClose, opener }: {
                 </div>
                 </div>
             </div>
-            <div className="shrink-0 space-y-2 border-b border-slate-200 px-4 py-3 sm:px-5">
+            <div className={`shrink-0 space-y-2 px-4 sm:px-5 ${expanded ? 'border-b border-slate-200 py-3' : 'py-1'}`}>
+                <div hidden={!expanded}>
                 <div className="flex flex-wrap items-center gap-1">
                     <Button variant="ghost" onClick={controller.previous} disabled={currentPosition <= 0} aria-label={t('voice.previous')} className="min-h-[44px] min-w-[44px] px-2"><SkipBack className="h-5 w-5" /></Button>
-                    <Button variant="secondary" disabled={!target} onClick={() => {
-                        if (active) controller.pause();
-                        else if (state.status === 'idle' || state.status === 'error') { if (target) onRead(target); }
-                        else controller.resume();
-                    }}>{active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}{t(active ? 'voice.pause' : state.status === 'idle' || state.status === 'error' ? 'voice.listen' : 'voice.resume')}</Button>
+                    <Button variant="secondary" disabled={!target} onClick={togglePlayback}>{active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}{playbackLabel}</Button>
                     <Button variant="ghost" onClick={controller.next} disabled={currentPosition < 0 || currentPosition >= state.segments.length - 1} aria-label={t('voice.next')} className="min-h-[44px] min-w-[44px] px-2"><SkipForward className="h-5 w-5" /></Button>
                     <Button variant="ghost" onClick={controller.stop} disabled={state.status === 'idle'} aria-label={t('voice.stop')} className="min-h-[44px] min-w-[44px] px-2"><Square className="h-4 w-4" /></Button>
                 </div>
-                <p role="status" className="text-sm text-slate-600">{t(`voice.${state.status === 'error' ? 'error.request' : state.status}`)}{currentPosition >= 0 && ` · ${t('voice.progress', { current: currentPosition + 1, total: state.segments.length })}`}</p>
-                {state.generating && <p className="text-xs text-slate-500">{t('voice.generating')}</p>}
+                </div>
+                <p role="status" className={`${expanded ? 'text-sm' : 'truncate text-xs'} text-slate-600`}>{t(`voice.${state.status === 'error' ? 'error.request' : state.status}`)}{currentPosition >= 0 && ` · ${t('voice.progress', { current: currentPosition + 1, total: state.segments.length })}`}</p>
+                {expanded && state.generating && <p className="text-xs text-slate-500">{t('voice.generating')}</p>}
                 {state.error && <p role="alert" className="text-sm text-red-700">{t(`voice.error.${state.error}`)}</p>}
-                {engine === 'piper' && <p className="text-xs text-slate-500">{t('voice.segmentOnly')}</p>}
-            </div>
-            <div ref={transcript} role="region" aria-label={t('voice.transcript')} tabIndex={0} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 sm:p-5">
-                {state.segments.map(segment => <p key={segment.index} data-active-segment={segment.index === state.current}
-                    className={`rounded-md border-l-2 p-2 text-base leading-relaxed whitespace-pre-wrap break-words ${segment.index === state.current ? 'border-indigo-600 bg-indigo-50' : 'border-transparent'} ${segment.failed ? 'text-slate-500 line-through' : ''}`}>
-                    <SegmentText segment={segment} word={segment.index === state.current ? state.word : -1} />
-                </p>)}
+                {expanded && <p className="text-xs text-slate-500">{t('voice.pageHelp')}</p>}
             </div>
         </div>
-    </dialog>;
-}
-
-function SegmentText({ segment, word }: { segment: Segment; word: number }) {
-    const timing = segment.words[word];
-    if (!timing) return segment.text;
-    return <>{segment.text.slice(0, timing.from)}<mark data-active-word="true" className="rounded-sm bg-indigo-200 text-indigo-950">{segment.text.slice(timing.from, timing.to)}</mark>{segment.text.slice(timing.to)}</>;
+    </aside>;
 }

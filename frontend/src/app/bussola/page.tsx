@@ -270,7 +270,8 @@ export default function BussolaPage() {
                             {session.messages.map((message, index) => (
                                 <div key={`${message.role}-${index}`} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <ChatBubble role={message.role === 'user' ? 'user' : 'assistant'} className="max-w-[88%] whitespace-pre-line sm:max-w-2xl">
-                                        {message.content}
+                                        <div data-voice-source={message.role === 'assistant' ? `bussola-${session.session_id}-${index}` : undefined}
+                                            data-voice-language={session.language || lang} data-voice-counselor={session.counselor_id ?? undefined}>{message.content}</div>
                                         {message.role === 'assistant' && <div className="mt-2" data-voice-ignore>
                                             <ListenButton id={`bussola-${session.session_id}-${index}`} text={message.content} language={session.language as typeof lang || lang} counselorId={session.counselor_id} className="min-h-[44px] min-w-[44px] px-2" />
                                         </div>}

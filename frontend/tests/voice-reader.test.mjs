@@ -41,7 +41,13 @@ async function fixture({ width = 1440, guest = false, live = false, dark = false
         else if (url.pathname === '/api/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
         else if (url.pathname === '/api/counselors') data = [{ id: 1, name: 'Counselor 1', language: ['it'], is_active: true, suitable: true }];
         else if (url.pathname === '/api/orientation/status') data = { required: false, completed: true, latest_session_id: 'voice-fixture' };
-        else if (url.pathname.startsWith('/api/orientation/sessions')) data = session;
+        else if (url.pathname.startsWith('/api/orientation/sessions')) {
+            if (url.pathname.endsWith('/message')) session.messages.push(
+                { role: 'user', content: request.postDataJSON().message },
+                { role: 'assistant', content: 'Possiamo continuare da questo esempio.' });
+            data = session;
+        }
+        else if (url.pathname === '/api/chat/stream') return route.fulfill({ contentType: 'text/event-stream', body: 'data: ' + JSON.stringify({ display: 'Possiamo approfondire questo punto.' }) + '\n\ndata: ' + JSON.stringify({ done: true, response: 'Possiamo approfondire questo punto.', session_id: 'voice-fixture' }) + '\n\n' });
         else if (url.pathname === '/api/user/learner-profile') data = { id: 1, data: { goal: 'Organizzare lo studio' } };
         else if (url.pathname === '/api/tts/voices') data = { voices: url.searchParams.get('engine') === 'piper'
             ? [{ id: 'it_IT-paola-medium', name: 'Paola', locale: 'it-IT' }, { id: 'it_IT-riccardo-x_low', name: 'Riccardo', locale: 'it-IT' }]
@@ -66,10 +72,10 @@ for (const width of [390, 1440]) {
             const { page, requests } = f;
             await page.goto(`${origin}/guide`);
             await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
-            const panel = page.getByRole('dialog', { name: 'Lettore audio' });
+            const panel = page.getByRole('complementary', { name: 'Lettore audio' });
             await panel.getByLabel('Voce', { exact: true }).selectOption('it-IT-DiegoNeural');
             await panel.getByRole('button', { name: 'Ascolta pagina' }).click();
-            await panel.locator('[data-active-word="true"]').waitFor();
+            await page.locator('[data-voice-active="true"]').waitFor();
             const body = requests.find(r => r.path === '/api/tts/stream').body;
             assert.equal(body.voice, 'it-IT-DiegoNeural'); assert.equal(body.voice_override, true);
             assert.ok(body.text.length > 1000, 'reads the full static guide');
@@ -101,7 +107,8 @@ test('Bussola uses chosen Piper voice and preserves the unsent draft', async () 
         await page.getByRole('button', { name: 'Inizia un nuovo orientamento', exact: true }).click();
         await page.locator('#bussola-composer').fill('La mia bozza da conservare');
         await page.getByRole('log').getByRole('button', { name: 'Ascolta', exact: true }).click();
-        const panel = page.getByRole('dialog', { name: 'Lettore audio' });
+        const panel = page.getByRole('complementary', { name: 'Lettore audio' });
+        if (await panel.getByRole('button', { name: 'Espandi lettore' }).count()) await panel.getByRole('button', { name: 'Espandi lettore' }).click();
         await panel.getByLabel('Motore').selectOption('piper');
         await panel.getByLabel('Voce', { exact: true }).selectOption('it_IT-riccardo-x_low');
         await panel.getByRole('button', { name: 'Ascolta', exact: true }).click();
@@ -121,10 +128,133 @@ test('guided chat uses the same reader and keeps its composer mounted', async ()
         await f.page.goto(`${origin}/?frozen=voice-fixture`);
         await f.page.locator('#guided-composer').fill('Una domanda non inviata');
         await f.page.getByRole('button', { name: 'Ascolta', exact: true }).first().click();
-        await f.page.getByRole('dialog', { name: 'Lettore audio' }).locator('[data-active-word="true"]').waitFor();
+        await f.page.locator('[data-voice-active="true"]').waitFor();
         assert.equal(f.requests.find(r => r.path === '/api/tts/stream').body.counselor_id, 1);
         await f.page.keyboard.press('Escape');
         assert.equal(await f.page.locator('#guided-composer').inputValue(), 'Una domanda non inviata');
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+for (const width of [390, 1440]) {
+    test(`guided chat accepts a new message during audio at ${width}px`, async () => {
+        const f = await fixture({ width });
+        try {
+            const { page, requests } = f;
+            await page.goto(`${origin}/?frozen=voice-fixture`);
+            await page.getByRole('button', { name: 'Ascolta', exact: true }).first().click();
+            await page.getByRole('complementary').getByRole('status').filter({ hasText: 'In lettura' }).waitFor();
+            const composer = page.locator('#guided-composer');
+            await composer.fill('Continuo mentre ascolto');
+            await composer.press('Enter');
+            await page.getByText('Possiamo approfondire questo punto.', { exact: true }).waitFor();
+            assert.ok(requests.some(r => r.path === '/api/chat/stream'));
+            assert.equal(await page.evaluate(() => window.__audios[0].paused), false);
+            assert.deepEqual(f.errors, []);
+        } finally { await f.context.close(); }
+    });
+}
+
+for (const width of [390, 1024, 1440]) {
+    test(`Bussola remains editable while reading, including minimized controls at ${width}px`, async () => {
+        const f = await fixture({ width, dark: width === 390 });
+        try {
+            const { page, requests } = f;
+            await page.goto(`${origin}/bussola`);
+            await page.getByRole('button', { name: 'Inizia un nuovo orientamento', exact: true }).click();
+            const composer = page.locator('#bussola-composer');
+            await composer.fill('La mia domanda');
+            await page.getByRole('log').getByRole('button', { name: 'Ascolta', exact: true }).click();
+            const panel = page.getByRole('complementary', { name: 'Lettore audio' });
+            await panel.getByRole('status').filter({ hasText: 'In lettura' }).waitFor();
+            assert.equal(await page.locator(':modal').count(), 0);
+            assert.notEqual(await page.evaluate(() => document.body.style.overflow), 'hidden');
+            if (width >= 1024) {
+                const box = await composer.boundingBox(), side = await panel.boundingBox();
+                assert.ok(box.x + box.width <= side.x, 'reader reserves space beside the chat');
+            } else {
+                await panel.getByRole('button', { name: 'Espandi lettore' }).waitFor();
+                assert.ok((await panel.boundingBox()).height < 120, 'mobile starts compact');
+            }
+            await composer.fill('Scrivo mentre ascolto');
+            await page.getByRole('button', { name: 'Invia alla Bussola', exact: true }).click();
+            await page.getByRole('log').getByText('Scrivo mentre ascolto', { exact: true }).waitFor();
+            assert.ok(requests.some(r => r.path.endsWith('/message') && r.body.message === 'Scrivo mentre ascolto'));
+            assert.equal(await page.evaluate(() => window.__audios.at(-1).paused), false);
+            if (width < 1024) await panel.getByRole('button', { name: 'Espandi lettore' }).click();
+            await panel.getByRole('button', { name: 'Riduci lettore' }).click();
+            await composer.fill('Una seconda bozza');
+            if (width < 1024) {
+                await page.setViewportSize({ width, height: 560 });
+                await composer.scrollIntoViewIfNeeded();
+                await composer.click();
+                const box = await composer.boundingBox(), bar = await panel.boundingBox();
+                assert.ok(box.y >= bar.y + bar.height, 'compact controls do not cover the composer');
+                assert.ok(box.y + box.height <= 560, 'composer remains visible in a short viewport');
+                await page.screenshot({ path: `/tmp/voice-workspace-compact-${width}.png` });
+                await page.setViewportSize({ width, height: 900 });
+            }
+            const audioCount = await page.evaluate(() => window.__audios.length);
+            await panel.getByRole('button', { name: 'Pausa', exact: true }).click();
+            await panel.getByRole('button', { name: 'Riprendi', exact: true }).click();
+            await panel.getByRole('button', { name: 'Espandi lettore' }).click();
+            assert.equal(await page.evaluate(() => window.__audios.length), audioCount, 'expanding never restarts synthesis');
+            assert.equal(await composer.inputValue(), 'Una seconda bozza');
+            assert.equal(await panel.getByText('Possiamo riflettere sul tuo modo di studiare.', { exact: false }).count(), 0, 'no duplicate chat text');
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+            await page.screenshot({ path: `/tmp/voice-workspace-${width}.png` });
+            await panel.getByRole('button', { name: 'Chiudi lettore' }).click();
+            assert.equal(await page.evaluate(() => window.__audios.at(-1).src), '');
+            assert.equal(await page.locator('[data-voice-active]').count(), 0);
+            assert.deepEqual(f.errors, []);
+        } finally { await f.context.close(); }
+    });
+}
+
+test('double click starts at the selected word across inline markup and later paragraphs', async () => {
+    const f = await fixture({ guest: true });
+    try {
+        const { page, requests } = f;
+        await page.goto(`${origin}/guide`);
+        await page.locator('main').evaluate(el => {
+            el.innerHTML = '<h1>Titolo precedente</h1><p>Prima <strong>seconda</strong> terza parola.</p><p>Segue il prossimo paragrafo.</p><textarea>BOZZA PRIVATA</textarea><p hidden>TESTO NASCOSTO</p>';
+        });
+        const original = await page.locator('main').textContent();
+        await page.locator('main strong').dblclick();
+        await page.locator('[data-voice-active]').waitFor();
+        const first = requests.filter(r => r.path === '/api/tts/stream').at(-1).body;
+        assert.equal(first.text, 'seconda terza parola.\n\nSegue il prossimo paragrafo.');
+        assert.equal(first.plain_text, true);
+        assert.equal(await page.locator('main').textContent(), original);
+        assert.ok(await page.evaluate(() => CSS.highlights.get('voice-reading')?.size > 0));
+        const firstAudio = await page.evaluate(() => window.__audios.length);
+        await page.locator('main strong').dblclick();
+        await page.waitForFunction(count => window.__audios.length > count, firstAudio);
+        assert.equal(await page.evaluate(() => window.__audios[0].src), '', 'seeking cancels the old audio');
+        await page.locator('main textarea').dblclick();
+        assert.equal(requests.filter(r => r.path === '/api/tts/stream').length, 2, 'draft selection never becomes speech');
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('double click inside a Bussola response reads only the selected message', async () => {
+    const f = await fixture();
+    try {
+        const { page, requests } = f;
+        await page.goto(`${origin}/bussola`);
+        await page.getByRole('button', { name: 'Inizia un nuovo orientamento', exact: true }).click();
+        const source = page.locator('[data-voice-source]').first();
+        const position = await source.evaluate(el => {
+            const node = el.firstChild, start = node.textContent.indexOf('riflettere');
+            const range = document.createRange(); range.setStart(node, start); range.setEnd(node, start + 'riflettere'.length);
+            const rect = range.getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+        });
+        await page.mouse.dblclick(position.x, position.y);
+        await page.getByRole('complementary').getByRole('status').filter({ hasText: 'In lettura' }).waitFor();
+        const body = requests.find(r => r.path === '/api/tts/stream').body;
+        assert.equal(body.text, 'riflettere sul tuo modo di studiare. Quale difficoltà vorresti affrontare?');
+        assert.equal(body.counselor_id, 1);
+        assert.equal(body.language, 'it');
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });
@@ -138,7 +268,7 @@ test('static page extraction excludes drafts, hidden content, chat logs and butt
         });
         await f.page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
         await f.page.getByRole('button', { name: 'Ascolta pagina' }).click();
-        await f.page.getByRole('dialog').locator('[data-active-word="true"]').waitFor();
+        await f.page.locator('[data-voice-active="true"]').waitFor();
         assert.equal(f.requests.find(r => r.path === '/api/tts/stream').body.text, 'Titolo leggibile\n\nParagrafo importante.');
     } finally { await f.context.close(); }
 });
@@ -149,7 +279,7 @@ test('imported pronunciation rules can be edited, previewed, disabled and persis
         const { page } = f;
         await page.goto(`${origin}/guide`);
         await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
-        const panel = page.getByRole('dialog');
+        const panel = page.getByRole('complementary');
         await panel.locator('summary').filter({ hasText: 'Correzione della pronuncia (80)' }).click();
         await panel.getByRole('button', { name: 'Modifica mediano', exact: true }).click();
         assert.equal(await panel.getByLabel('Leggi come', { exact: true }).inputValue(), 'mèdiano');
@@ -191,30 +321,30 @@ test('language changes stop audio and load a separate pronunciation dictionary',
         await f.page.getByRole('button', { name: 'Prova voce' }).click();
         await f.page.getByRole('status').filter({ hasText: 'In lettura' }).waitFor();
         await f.page.evaluate(() => { localStorage.setItem('cb_lang', 'en'); window.dispatchEvent(new Event('storage')); });
-        await f.page.getByRole('dialog').waitFor({ state: 'detached' });
+        await f.page.getByRole('complementary').waitFor({ state: 'detached' });
         assert.equal(await f.page.evaluate(() => window.__audios.at(-1).src), '');
         await f.page.getByRole('button', { name: 'Audio reader', exact: true }).click();
         assert.equal(await f.page.getByLabel('Voice', { exact: true }).inputValue(), '');
-        await f.page.getByRole('dialog').locator('summary').filter({ hasText: 'Pronunciation corrections (49)' }).waitFor();
+        await f.page.getByRole('complementary').locator('summary').filter({ hasText: 'Pronunciation corrections (49)' }).waitFor();
         await f.page.getByRole('button', { name: 'Try voice' }).click();
         await f.page.getByRole('status').filter({ hasText: 'Reading' }).waitFor();
         const request = f.requests.filter(r => r.path === '/api/tts/stream').at(-1).body;
         assert.equal(request.language, 'en'); assert.equal(request.pronunciations.length, 49);
         await f.page.evaluate(() => history.pushState({}, '', '/bussola'));
-        await f.page.getByRole('dialog').waitFor({ state: 'detached' });
+        await f.page.getByRole('complementary').waitFor({ state: 'detached' });
         assert.equal(await f.page.evaluate(() => window.__audios.at(-1).src), '');
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });
 
-test('live Edge playback highlights actual word timings', { skip: !process.env.VOICE_LIVE }, async () => {
+test('live Edge preview plays without a duplicate transcript', { skip: !process.env.VOICE_LIVE }, async () => {
     const f = await fixture({ guest: true, live: true });
     try {
         await f.page.goto(`${origin}/guide`);
         await f.page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
-        const panel = f.page.getByRole('dialog');
+        const panel = f.page.getByRole('complementary');
         await panel.getByRole('button', { name: 'Prova voce' }).click();
-        await panel.locator('[data-active-word="true"]').waitFor({ timeout: 45000 });
+        await f.page.waitForFunction(() => window.__audios.some(audio => audio.currentTime > .15), null, { timeout: 45000 });
         assert.ok(await f.page.evaluate(() => window.__audios.at(-1).currentTime > 0));
         await panel.getByRole('status').filter({ hasText: 'Lettura completata' }).waitFor();
         assert.equal(await panel.getByRole('alert').count(), 0);
@@ -227,7 +357,8 @@ test('live Piper delivers playable WAV through the Next streaming proxy', { skip
     try {
         await f.page.goto(`${origin}/guide`);
         await f.page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
-        const panel = f.page.getByRole('dialog');
+        const panel = f.page.getByRole('complementary');
+        if (await panel.getByRole('button', { name: 'Espandi lettore' }).count()) await panel.getByRole('button', { name: 'Espandi lettore' }).click();
         await panel.getByLabel('Motore').selectOption('piper');
         await panel.getByLabel('Voce', { exact: true }).selectOption('it_IT-paola-medium');
         await panel.getByRole('button', { name: 'Prova voce' }).click();

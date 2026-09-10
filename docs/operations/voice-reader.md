@@ -5,21 +5,32 @@ tutti, anche nella guida pubblica. **Ascolta pagina** legge il testo visibile
 della pagina corrente; non include moduli, bozze, navigazione, pannelli nascosti
 o trascrizioni delle chat. Le risposte di Bussola e della chat guidata hanno il
 proprio pulsante **Ascolta**. Aprire il lettore lascia montata l'attività e
-conserva i messaggi non ancora inviati.
+conserva i messaggi non ancora inviati. Il pannello è affiancato alla pagina
+su desktop e non blocca clic, scrittura o invio dei messaggi. **Riduci lettore**
+lascia l'audio attivo e mostra una barra con pausa/ripresa, espansione e chiusura;
+sul telefono, Ascolta apre direttamente questa barra compatta.
 
 Il pannello offre pausa/ripresa, arresto, segmento precedente/successivo,
-scorrimento del testo e chiusura con Escape. Navigazione, cambio lingua,
+chiusura ed Escape quando il focus è nel lettore. Navigazione, cambio lingua,
 cambio contenuto e chiusura interrompono richieste e audio. Il testo originale
-della pagina o della conversazione non viene modificato.
+della pagina o della conversazione non viene modificato né duplicato nel pannello.
+Il passaggio in lettura è evidenziato direttamente nel testo originale. Un
+doppio clic su una parola avvia una nuova lettura da quella parola: continua
+nei paragrafi successivi della pagina oppure fino alla fine della risposta
+selezionata nella chat. Le selezioni in moduli, bozze, pulsanti o link non
+avviano la lettura. Su dispositivi touch rimane disponibile il pulsante Ascolta.
+L'evidenziazione usa intervalli DOM, senza sostituire i nodi di testo di React
+né spostare automaticamente lo scorrimento mentre si scrive.
 
 ## Motori e voci
 
 - **Edge · servizio online** usa il servizio di sintesi di Microsoft tramite
-  `edge-tts`. Evidenzia le parole usando gli eventi reali `WordBoundary`.
+  `edge-tts`. Conserva gli eventi reali `WordBoundary` nel protocollo audio.
 - **Piper · server locale** usa esclusivamente il servizio Docker `piper` sul
   server di CounselorBot. Durante la sintesi non richiede una connessione
-  esterna e non ripiega su Edge in caso di errore. Evidenzia il segmento
-  corrente: questa integrazione non produce tempi delle singole parole.
+  esterna e non ripiega su Edge in caso di errore. Questa integrazione non
+  produce tempi delle singole parole. Entrambi i motori evidenziano il
+  passaggio originale nella pagina, anche quando la pronuncia lo trasforma.
 
 Voce e motore sono salvati nel browser, separatamente per lingua
 (`cb_voice_it`, ecc.). La preferenza è disponibile a tutti i ruoli, senza
@@ -56,8 +67,11 @@ Le modifiche sono personali e salvate per lingua in questo browser
 (`cb_pronunciation_it`, ecc.), senza alterare il dizionario sorgente di
 TD_daniele. Si applicano a entrambi i motori e a tutti i punti di lettura.
 Il server pulisce Markdown, link, citazioni Pandoc e diagrammi, applica le
-correzioni e divide il risultato in segmenti. Il pannello visualizza questo
-testo parlato canonico: ad esempio mostra `Q-S-A` se quella è la regola scelta.
+correzioni e divide il risultato in segmenti. Il primo contiene al massimo
+180 caratteri, preferendo una frase completa e poi uno spazio fra parole;
+i successivi mantengono il limite di 700 caratteri. L'audio del primo segmento
+parte appena disponibile, mentre il server prepara i successivi. Il testo
+parlato canonico resta nel protocollo; la pagina mantiene la grafia originale.
 Le sostituzioni usano parole/termini interi, privilegiano quelli più lunghi e
 avvengono in un solo passaggio. Le sigle tutte maiuscole fino a quattro
 caratteri distinguono le maiuscole (`AI` non modifica la preposizione `ai`).
@@ -68,7 +82,9 @@ Le altre regole ignorano la differenza fra maiuscole e minuscole.
 - `GET /tts/voices?engine=edge|piper`: catalogo del motore; Edge ha una cache
   in memoria di un'ora, Piper espone soltanto le voci installate.
 - `POST /tts/stream`: `text`, `language`, `engine`, `voice`, `counselor_id`
-  facoltativo, `voice_override` e `pronunciations: [{term, spoken}]`.
+  facoltativo, `voice_override`, `pronunciations: [{term, spoken}]` e
+  `plain_text` (default false). Il frontend usa `plain_text: true` per il
+  testo già estratto dal DOM: non va interpretato di nuovo come Markdown.
   Massimo 120.000 caratteri, anche dopo le sostituzioni, e 200 regole.
 - SSE: `init` contiene tutti i segmenti con `index`, `paragraph_id`, `text`;
   `chunk` contiene audio Base64, MIME e tempi `[parola, inizio, fine]` in secondi;
@@ -95,7 +111,7 @@ modelli conservano separatamente le indicazioni dei rispettivi dataset.
 ```bash
 docker compose up -d --build --no-deps piper backend frontend
 docker compose ps piper backend frontend
-docker exec counselorbot_backend python -m backend.tests.test_voice_reader
+docker exec counselorbot_backend python -m pytest backend/tests/test_voice_reader.py
 docker exec counselorbot_backend python -m backend.tests.test_tts_chunking
 cd frontend
 npm test
