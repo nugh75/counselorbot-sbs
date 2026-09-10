@@ -159,6 +159,23 @@ TASK_LABELS = {
 }
 
 
+# La domanda da cui parte lo strumento. Serve quando la mappa la avvia la
+# persona: una mappa salvata vuole due caselle, e questa e' l'unica cosa vera
+# prima che si sia detto altro.
+OPENING_QUESTION = {
+    "it": "Di che cosa parliamo?",
+    "en": "What are we talking about?",
+    "es": "De que hablamos?",
+    "fr": "De quoi parlons-nous ?",
+    "de": "Woruber sprechen wir?",
+    "sv": "Vad talar vi om?",
+}
+
+
+def opening_question(lang: str = "it") -> str:
+    return OPENING_QUESTION.get((lang or "it")[:2], OPENING_QUESTION["en"])
+
+
 def _pick(table: dict, register: str, lang: str) -> dict:
     by_register = table.get(register, table[PLAIN])
     return by_register.get((lang or "it")[:2], by_register["en"])

@@ -3621,6 +3621,32 @@ def test_a_branch_says_whether_the_person_opened_it_or_the_talk_did():
         _set_idea_feature("false")
 
 
+def test_the_map_can_be_started_from_the_panel_when_the_talk_has_not_drawn_one():
+    """Il pannello non deve essere un vicolo cieco: se il modello non ha
+    disegnato niente, la persona mette giu' l'idea e i rami ripartono."""
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-start-by-hand"
+    try:
+        made = client.post("/idea/branch", json={
+            "session_id": session_id,
+            "label": "Un benchmark per CounselorBot",
+            "lang": "it",
+        })
+        assert made.status_code == 200, made.text
+
+        listed = client.get("/idea/branches", params={"session_id": session_id, "lang": "it"})
+        rows = listed.json()
+        assert [(row["label"], row["depth"]) for row in rows] == [
+            ("Un benchmark per CounselorBot", 0)
+        ]
+        current = client.get("/idea/map", params={"session_id": session_id})
+        assert current.json()["spec"]["title"] == "Un benchmark per CounselorBot"
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
 def _seed_three_branches(session_id: str) -> None:
     seeded = client.post("/idea/map/patch", json={
         "session_id": session_id,
