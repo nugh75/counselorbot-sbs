@@ -212,6 +212,27 @@ def remove(db: Session, username: str, session_id: str, source_id: int) -> bool:
     return True
 
 
+def remove_branch(db: Session, username: str, session_id: str,
+                  branch_ids: list[str]) -> int:
+    """Toglie le fonti dei rami cancellati.
+
+    Una fonte senza il suo ramo non si vede piu' da nessuna parte: resterebbe
+    una riga che nessuno puo' leggere ne' cancellare.
+    """
+    if not branch_ids:
+        return 0
+    rows = (
+        db.query(models.IdeaSource)
+        .filter(
+            models.IdeaSource.username == username,
+            models.IdeaSource.session_id == session_id,
+            models.IdeaSource.branch_id.in_(branch_ids),
+        )
+        .all()
+    )
+    return sum(1 for row in rows if remove(db, username, session_id, row.id))
+
+
 # --- PDF ad accesso aperto ---------------------------------------------------
 
 def _is_public_host(host: str) -> bool:

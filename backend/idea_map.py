@@ -1016,27 +1016,12 @@ def branches(spec: DiagramSpec | None, chosen_focus: str | None = None) -> list[
     if spec is None:
         return []
     focus = resolve_focus(spec, chosen_focus)
-    owner = owning_task(spec)
+    parents = branch_parents(spec)
     out = []
     for node in spec.nodes:
-        if not _is_task_node(node) and not node.demoted:
+        if node.id not in parents:
             continue
-        parent = None
-        if node.demoted:
-            parent = owner.get(node.id) or root_id(spec)
-        elif node.role == "task":
-            # Il proprietario di un task e' se stesso: il padre e' quello del
-            # primo vicino che lo precede nell'albero.
-            links = _adjacency(spec)
-            levels = _levels(spec)
-            here = levels.get(node.id)
-            candidates = [
-                neighbour for neighbour in links.get(node.id, ())
-                if here is not None and levels.get(neighbour, 99) < here
-            ]
-            parent = owner.get(candidates[0]) if candidates else root_id(spec)
-            if parent == node.id:
-                parent = root_id(spec)
+        parent = parents[node.id]
         out.append({
             "id": node.id,
             "label": node.label,
@@ -1050,8 +1035,229 @@ def branches(spec: DiagramSpec | None, chosen_focus: str | None = None) -> list[
             "is_focus": node.id == focus,
             "demoted": bool(node.demoted),
         })
-    out.sort(key=lambda item: (item["depth"], item["id"]))
-    return out
+    return _tree_order(out)
+
+
+def branch_parents(spec: DiagramSpec) -> dict[str, str | None]:
+    """Da quale ramo pende ogni ramo. Ordine di mappa, radice per prima.
+
+    Un ramo non e' sempre attaccato al padre direttamente: puo' pendere da un
+    nodo concettuale che sta in un altro ramo, e il padre e' il ramo di quel
+    nodo.
+    """
+    owner = owning_task(spec)
+    links = _adjacency(spec)
+    levels = _levels(spec)
+    root = root_id(spec)
+    parents: dict[str, str | None] = {}
+    for node in spec.nodes:
+        if not _is_task_node(node) and not node.demoted:
+            continue
+        if node.id == root:
+            parents[node.id] = None
+            continue
+        if node.demoted:
+            parents[node.id] = owner.get(node.id) or root
+            continue
+        here = levels.get(node.id)
+        above = [
+            neighbour for neighbour in links.get(node.id, ())
+            if here is not None and levels.get(neighbour, 99) < here
+        ]
+        parent = owner.get(above[0]) if above else root
+        parents[node.id] = root if parent == node.id else parent
+    return parents
+
+
+def _tree_order(rows: list[dict]) -> list[dict]:
+    """Ogni ramo subito sotto il suo, non tutti i pari grado in fila.
+
+    Per livelli l'elenco e' leggibile solo finche' i rami sono pochi: al primo
+    sotto-ramo non si capisce piu' da chi pende, e "alza" e "abbassa" non
+    avrebbero un effetto visibile.
+    """
+    known = {row["id"] for row in rows}
+    children: dict[str | None, list[dict]] = {}
+    for row in rows:
+        parent = row["parent"] if row["parent"] in known else None
+        children.setdefault(parent, []).append(row)
+
+    ordered: list[dict] = []
+    seen: set[str] = set()
+
+    def walk(parent: str | None) -> None:
+        for row in children.get(parent, ()):
+            if row["id"] in seen:
+                continue
+            seen.add(row["id"])
+            ordered.append(row)
+            walk(row["id"])
+
+    walk(None)
+    ordered.extend(row for row in rows if row["id"] not in seen)
+    return ordered
+
+
+# --- i comandi della persona sull'albero -------------------------------------
+
+# Cosa si puo' fare a un ramo a mano. Il modello lavora per patch; questi sono
+# gli unici cambi di struttura che partono dalla persona.
+BRANCH_OPS = ("up", "down", "indent", "outdent", "restore")
+
+
+def arrange(spec: DiagramSpec, node_id: str, op: str) -> DiagramSpec:
+    """Sposta un ramo nell'ordine o nell'albero, o lo rimette a essere un ramo.
+
+    Non muta `spec`: come per le patch del modello, la revisione nuova e' una
+    mappa nuova.
+    """
+    if op not in BRANCH_OPS:
+        raise IdeaMapError(f"comando sconosciuto: {op}")
+    node = next((n for n in spec.nodes if n.id == node_id), None)
+    if node is None:
+        raise IdeaMapError(f"nodo assente: {node_id}")
+    if op == "restore":
+        return _restore_branch(spec, node)
+
+    parents = branch_parents(spec)
+    if node_id not in parents:
+        raise IdeaMapError(f"non e' un ramo: {node_id}")
+    if parents[node_id] is None:
+        raise IdeaMapError("l'idea e' la radice: non si sposta")
+
+    siblings = [other for other, parent in parents.items() if parent == parents[node_id]]
+    here = siblings.index(node_id)
+
+    if op in ("up", "down"):
+        target = here - 1 if op == "up" else here + 1
+        if target < 0:
+            raise IdeaMapError(f"il ramo {node_id} e' gia' il primo")
+        if target >= len(siblings):
+            raise IdeaMapError(f"il ramo {node_id} e' gia' l'ultimo")
+        return _swap_nodes(spec, node_id, siblings[target])
+
+    if op == "indent":
+        if here == 0:
+            raise IdeaMapError("non c'e' un ramo sopra a cui appenderlo")
+        above = siblings[here - 1]
+        if next(n for n in spec.nodes if n.id == above).demoted:
+            raise IdeaMapError(f"il ramo sopra non e' piu' un ramo: {above}")
+        return _reparent(spec, node_id, above)
+
+    grandparent = parents.get(parents[node_id])
+    if grandparent is None:
+        raise IdeaMapError(f"il ramo {node_id} pende gia' dall'idea")
+    return _reparent(spec, node_id, grandparent)
+
+
+def drop_branch(spec: DiagramSpec, node_id: str, *, cascade: bool) -> tuple[DiagramSpec, list[str]]:
+    """Cancella un ramo. Restituisce la mappa nuova e cosa e' stato tolto.
+
+    Senza `cascade` sparisce solo il nodo del ramo e cio' che ci pendeva passa
+    al padre: cancellare un ramo non deve poter cancellare di nascosto il
+    lavoro che ci stava dentro.
+    """
+    if node_id == root_id(spec):
+        raise IdeaMapError("l'idea non si cancella: e' la mappa")
+    if not any(node.id == node_id for node in spec.nodes):
+        raise IdeaMapError(f"nodo assente: {node_id}")
+
+    levels = _levels(spec)
+    links = _adjacency(spec)
+    here = levels.get(node_id, 0)
+    doomed = {node_id} | (_hanging_from(spec, node_id) if cascade else set())
+
+    edges = [
+        edge.model_copy(deep=True) for edge in spec.edges
+        if edge.source not in doomed and edge.target not in doomed
+    ]
+    if not cascade:
+        above = [n for n in links.get(node_id, ()) if levels.get(n, 99) < here]
+        keeper = above[0] if above else root_id(spec)
+        for child in sorted(n for n in links.get(node_id, ()) if levels.get(n, -1) > here):
+            if keeper is not None and not any(
+                edge.source == keeper and edge.target == child for edge in edges
+            ):
+                edges.append(DiagramEdge(source=keeper, target=child, kind="link"))
+
+    nodes = [node.model_copy(deep=True) for node in spec.nodes if node.id not in doomed]
+    if len(nodes) < 2 or not edges:
+        raise IdeaMapError("resterebbe una mappa vuota")
+    pruned = spec.model_copy(update={"nodes": nodes, "edges": edges})
+    return with_computed_flaws(pruned), sorted(doomed)
+
+
+def _hanging_from(spec: DiagramSpec, node_id: str) -> set[str]:
+    """Cio' che senza quel nodo non tocca piu' la radice: il suo sottoalbero."""
+    start = root_id(spec)
+    if start is None:
+        return set()
+    links = _adjacency(spec)
+    reachable = {start, node_id}
+    queue = [start]
+    while queue:
+        current = queue.pop(0)
+        for neighbour in links.get(current, ()):
+            if neighbour in reachable:
+                continue
+            reachable.add(neighbour)
+            queue.append(neighbour)
+    # Chi era gia' staccato prima resta dov'e': non e' roba di questo ramo.
+    return set(_levels(spec)) - reachable
+
+
+def _swap_nodes(spec: DiagramSpec, first: str, second: str) -> DiagramSpec:
+    """Scambia due rami di posto: l'ordine dell'elenco e' l'ordine dei nodi."""
+    nodes = [node.model_copy(deep=True) for node in spec.nodes]
+    ids = [node.id for node in nodes]
+    here, there = ids.index(first), ids.index(second)
+    nodes[here], nodes[there] = nodes[there], nodes[here]
+    return spec.model_copy(update={"nodes": nodes})
+
+
+def _reparent(spec: DiagramSpec, node_id: str, parent_id: str) -> DiagramSpec:
+    """Stacca il ramo da chi lo teneva e lo appende altrove."""
+    levels = _levels(spec)
+    here = levels.get(node_id, 0)
+    edges = [
+        edge.model_copy(deep=True) for edge in spec.edges
+        if not ((edge.source == node_id and levels.get(edge.target, 99) < here)
+                or (edge.target == node_id and levels.get(edge.source, 99) < here))
+    ]
+    if not any(edge.source == parent_id and edge.target == node_id for edge in edges):
+        edges.append(DiagramEdge(source=parent_id, target=node_id, kind="link"))
+    moved = spec.model_copy(update={"edges": edges})
+    _refuse_if_too_deep(moved)
+    return moved
+
+
+def _restore_branch(spec: DiagramSpec, node) -> DiagramSpec:
+    """Rimette a ramo un nodo che era stato declassato."""
+    if not node.demoted:
+        raise IdeaMapError(f"non era un ramo: {node.id}")
+    nodes = []
+    for current in spec.nodes:
+        copy = current.model_copy(deep=True)
+        if copy.id == node.id:
+            copy.role = "task"
+            copy.icon = NODE_ROLES["task"]
+            copy.demoted = False
+        nodes.append(copy)
+    restored = spec.model_copy(update={"nodes": nodes})
+    _refuse_if_too_deep(restored)
+    return restored
+
+
+def _refuse_if_too_deep(spec: DiagramSpec) -> None:
+    """Oltre la profondita' massima il comando si rifiuta invece di declassare.
+
+    `_limit_task_depth` declassa in silenzio, e va bene per una patch del
+    modello: qui il comando e' della persona, e un comando che fa il contrario
+    di quel che dice e' peggio di un comando negato.
+    """
+    for node in spec.nodes:
+        if node.role == "task" and task_depth(spec, node.id) > MAX_TASK_DEPTH:
+            raise IdeaMapError(f"il ramo {node.id} finirebbe troppo in giu'")
 
 
 def next_move(spec: DiagramSpec | None, chosen_focus: str | None = None) -> dict:
@@ -1145,6 +1351,35 @@ def set_focus(db: Session, username: str, session_id: str, node_id: str) -> mode
     if not any(node.id == node_id and _is_task_node(node) for node in spec.nodes):
         raise IdeaMapError(f"non e' un ramo: {node_id}")
     return save_revision(db, username, session_id, spec, source="focus", focus_id=node_id)
+
+
+def arrange_branch(db: Session, username: str, session_id: str, node_id: str,
+                   op: str) -> models.IdeaMapRevision:
+    """Esegue sulla mappa in corso un comando della persona sull'albero."""
+    spec = current_map(db, username, session_id)
+    if spec is None:
+        raise IdeaMapError("non c'e' ancora una mappa")
+    moved = arrange(spec, node_id, op)
+    return save_revision(db, username, session_id, moved, source="manual",
+                         focus_id=chosen_focus(db, username, session_id))
+
+
+def delete_branch(db: Session, username: str, session_id: str, node_id: str, *,
+                  cascade: bool) -> tuple[models.IdeaMapRevision, list[str]]:
+    """Cancella un ramo e dice cosa se n'e' andato con lui.
+
+    Se il lavoro era proprio li', il fuoco torna a quello che la mappa
+    indica: restare su un ramo che non c'e' piu' bloccherebbe la sessione.
+    """
+    spec = current_map(db, username, session_id)
+    if spec is None:
+        raise IdeaMapError("non c'e' ancora una mappa")
+    pruned, removed = drop_branch(spec, node_id, cascade=cascade)
+    focus = chosen_focus(db, username, session_id)
+    if focus in removed:
+        focus = resolve_focus(pruned, None)
+    revision = save_revision(db, username, session_id, pruned, source="manual", focus_id=focus)
+    return revision, removed
 
 
 def reopen(db: Session, username: str, session_id: str, node_id: str) -> models.IdeaMapRevision:
