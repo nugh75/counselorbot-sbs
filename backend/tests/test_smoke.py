@@ -3689,6 +3689,49 @@ def test_a_node_is_added_and_corrected_by_hand_from_the_map():
         _set_idea_feature("false")
 
 
+def test_an_older_stage_of_the_map_can_be_drawn_again():
+    """Le tappe erano registrate e non guardabili: vedere il pensiero muoversi
+    e' meta' del senso di tenere uno storico."""
+    _set_idea_feature("true")
+    main.app.dependency_overrides[auth.get_identity_view_as] = _fake_user_identity
+    session_id = "idea-map-history"
+    try:
+        _seed_idea_branch(session_id)
+        grown = client.post("/idea/map/patch", json={
+            "session_id": session_id,
+            "source": "turn",
+            "patch": {
+                "add_nodes": [{"id": "a1", "label": "I dati siano accessibili",
+                               "role": "assumption"}],
+                "add_edges": [{"from": "t1", "to": "a1", "kind": "link"}],
+            },
+        })
+        assert grown.status_code == 200, grown.text
+
+        stages = client.get("/idea/map/history", params={"session_id": session_id})
+        assert stages.status_code == 200, stages.text
+        rows = stages.json()
+        assert len(rows) == 2 and rows[0]["nodes"] < rows[1]["nodes"]
+
+        first = client.get("/idea/map/image", params={
+            "session_id": session_id, "revision": rows[0]["revision_id"], "format": "svg",
+        })
+        now = client.get("/idea/map/image", params={"session_id": session_id, "format": "svg"})
+        assert first.status_code == 200 and now.status_code == 200
+        # Il disegno di allora non e' quello di adesso.
+        assert first.headers["ETag"] != now.headers["ETag"]
+        assert "I dati siano accessibili" in now.text
+        assert "I dati siano accessibili" not in first.text
+
+        # Una revisione di un'altra sessione non si guarda da qui.
+        assert client.get("/idea/map/image", params={
+            "session_id": session_id, "revision": 999999,
+        }).status_code == 404
+    finally:
+        main.app.dependency_overrides.pop(auth.get_identity_view_as, None)
+        _set_idea_feature("false")
+
+
 def _seed_three_branches(session_id: str) -> None:
     seeded = client.post("/idea/map/patch", json={
         "session_id": session_id,

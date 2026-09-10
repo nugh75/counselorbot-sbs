@@ -619,6 +619,32 @@ def current_map(db: Session, username: str, session_id: str) -> DiagramSpec | No
         return None
 
 
+def revision_map(db: Session, username: str, session_id: str,
+                 revision_id: int) -> DiagramSpec | None:
+    """La mappa com'era a una certa tappa.
+
+    Le revisioni erano registrate e non guardabili: vedere il pensiero muoversi
+    e' meta' del senso di tenerle.
+    """
+    revision = (
+        db.query(models.IdeaMapRevision)
+        .filter(
+            models.IdeaMapRevision.id == revision_id,
+            models.IdeaMapRevision.username == username,
+            models.IdeaMapRevision.session_id == session_id,
+        )
+        .first()
+    )
+    if revision is None:
+        return None
+    try:
+        spec = parse_spec(revision.spec)
+        return spec.model_copy(update={"title": effective_title(spec)})
+    except DiagramSpecError as exc:
+        logger.warning("Revisione %s della mappa Idea illeggibile: %s", revision.id, exc)
+        return None
+
+
 def save_revision(db: Session, username: str, session_id: str, spec: DiagramSpec, *,
                   source: str = "turn", step_id: str | None = None,
                   focus_id: str | None = None) -> models.IdeaMapRevision:
