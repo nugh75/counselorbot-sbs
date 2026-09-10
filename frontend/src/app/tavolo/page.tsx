@@ -8,15 +8,21 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Loader2, Table2 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { listTavoli, type TavoloSummary } from '@/lib/tavolo';
+import { listTavoli, tavoloEnabled, type TavoloSummary } from '@/lib/tavolo';
 import { tavoloLabel } from '@/lib/i18n-tavolo';
 
 export default function TavoliPage() {
     const { lang } = useI18n();
     const [rows, setRows] = useState<TavoloSummary[] | null>(null);
+    // Con la funzione spenta l'elenco risponde 404: dirlo, invece di mostrare
+    // "nessun tavolo" a chi ne ha di salvati.
+    const [disabled, setDisabled] = useState(false);
 
     useEffect(() => {
-        listTavoli().then(setRows).catch(() => setRows([]));
+        void tavoloEnabled().then((enabled) => {
+            setDisabled(!enabled);
+            if (enabled) listTavoli().then(setRows).catch(() => setRows([]));
+        });
     }, []);
 
     const label = (key: Parameters<typeof tavoloLabel>[0]) => tavoloLabel(key, lang);
@@ -24,6 +30,8 @@ export default function TavoliPage() {
     return (
         <main className="mx-auto max-w-3xl space-y-4 p-4">
             <h1 className="text-lg font-semibold text-slate-800">{label('all')}</h1>
+
+            {disabled && <p className="text-sm text-slate-600">{label('notFound')}</p>}
 
             {rows === null && (
                 <p className="flex items-center gap-2 text-sm text-slate-600" role="status">
