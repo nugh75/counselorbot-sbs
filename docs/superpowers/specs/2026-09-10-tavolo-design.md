@@ -126,6 +126,19 @@ manda piu'. Con `feature_tavolo` spento la scheda non compare.
 Sotto la soglia desktop il bottone non compare, e un tavolo salvato si mostra
 come immagine catturata piu' la resa testuale.
 
+Sulla tela il filo non parte da un aggancio fisso: parte dal bordo che guarda
+l'altro pezzo, calcolato sulla forma (rettangolo, rombo, ellisse). Con due soli
+agganci ogni filo usciva dal fondo ed entrava in cima, e oltre i tre o quattro
+archi si accavallavano. Cosi' non c'e' niente in piu' da salvare, e i quattro
+agganci per pezzo servono solo a far partire il trascinamento da qualunque
+lato.
+
+Due cose le scrive la persona e nessun altro. La parola sull'arco: se ne scrive
+una sua prende il posto del verbo del vocabolario, e la resa a parole dice
+quella. L'accento: un pezzo solo per tavolo, il punto, riempito di petrolio
+perche' l'ocra qui vuol dire gia' "proposta". Il modello non lo mette mai, un
+secondo accento e' un errore di contratto, e la resa a parole lo nomina.
+
 ## Le proposte del modello
 
 `POST /api/tavolo/{id}/suggest` con un `intent` da un elenco chiuso:
@@ -186,7 +199,8 @@ delle tabelle.
 
 Fatto e verificato: il vocabolario e i due modificatori, l'entita' e le
 revisioni append-only con il controllo di conflitto, le proposte con
-accetta/scarta, la tela React Flow con le quattro forme e i quattro colori, il
+accetta/scarta, la tela React Flow con le quattro forme e i quattro colori, gli archi che si
+attaccano al bordo, la parola propria sull'arco, l'accento singolo, il
 salvataggio con cattura e resa testuale, l'elenco dei tavoli salvati con il
 bottone che ne apre uno nuovo nell'area personale e nella fila degli strumenti
 della chat, l'interruttore della funzione nel pannello admin. Gli ingressi da un messaggio di chat e dal
