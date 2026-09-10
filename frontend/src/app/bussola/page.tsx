@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowDown, ArrowRight, Check, Compass, Loader2, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ListenButton } from '@/components/voice-reader/VoiceReader';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import { CompassMark } from '@/components/ui/CompassMark';
@@ -270,6 +271,9 @@ export default function BussolaPage() {
                                 <div key={`${message.role}-${index}`} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <ChatBubble role={message.role === 'user' ? 'user' : 'assistant'} className="max-w-[88%] whitespace-pre-line sm:max-w-2xl">
                                         {message.content}
+                                        {message.role === 'assistant' && <div className="mt-2" data-voice-ignore>
+                                            <ListenButton id={`bussola-${session.session_id}-${index}`} text={message.content} language={session.language as typeof lang || lang} counselorId={session.counselor_id} className="min-h-[44px] min-w-[44px] px-2" />
+                                        </div>}
                                     </ChatBubble>
                                 </div>
                             ))}

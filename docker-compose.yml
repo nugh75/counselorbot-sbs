@@ -1,5 +1,22 @@
 name: counselorbot-10-step
 services:
+  piper:
+    build:
+      context: ./services/piper
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    cpus: 2
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/voices', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - default
+
   backend:
     build:
       context: .

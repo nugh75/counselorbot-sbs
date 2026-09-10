@@ -60,6 +60,7 @@ from .routes import admin as admin_routes
 from .routes import prompt_experiments as prompt_experiments_routes
 from .routes import survey as survey_routes
 from .routes import chat as chat_routes
+from .routes import voice_reader as voice_reader_routes
 from .routes import memory as memory_routes
 from .routes import site_chat as site_chat_routes
 from .routes import learner_profile as learner_profile_routes
@@ -1812,6 +1813,7 @@ def _seed_instruments_catalog(db):
 app.include_router(admin_routes.router)
 app.include_router(survey_routes.router)
 app.include_router(chat_routes.router)
+app.include_router(voice_reader_routes.router)
 app.include_router(memory_routes.router)
 app.include_router(site_chat_routes.router)
 app.include_router(learner_profile_routes.router)

@@ -1351,7 +1351,7 @@ async def text_to_speech(request: TTSRequest, db: Session = Depends(get_db)):
         clean_text = strip_markdown(spoken)
 
         voice = request.voice
-        if request.counselor_id:
+        if request.counselor_id and not request.voice_override:
             counselor = db.query(models.Counselor).filter(models.Counselor.id == request.counselor_id).first()
             if counselor and counselor.voice_mapping:
                 lang_code = request.voice.split("-")[0].lower()

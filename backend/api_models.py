@@ -62,6 +62,7 @@ class TTSRequest(schemas.BaseModel):
     text: str
     voice: str = "it-IT-IsabellaNeural"  # Italian female voice
     counselor_id: Optional[int] = None
+    voice_override: bool = False
 
 
 # --- pQBL da PDF ---

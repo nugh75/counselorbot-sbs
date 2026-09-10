@@ -41,6 +41,13 @@ async function fixture(width, phase = 'intro', options = {}) {
             return route.fulfill({ response });
         }
         let data = [];
+        if (url.pathname === '/api/tts/voices') return route.fulfill({ json: { voices: [] } });
+        if (url.pathname === '/api/tts/stream') {
+            const segment = { index: 0, paragraph_id: 0, text: request.postDataJSON().text };
+            return route.fulfill({ contentType: 'text/event-stream', body: [
+                { type: 'init', segments: [segment] }, { type: 'chunk', ...segment, audio: 'YXVkaW8=', words: [] }, { type: 'done' },
+            ].map(event => `data: ${JSON.stringify(event)}\n\n`).join('') });
+        }
         if (url.pathname === '/api/chat/stream') return route.fulfill({ contentType: 'text/event-stream', body: 'data: ' + JSON.stringify({ display: 'Possiamo approfondire questo punto.' }) + '\n\ndata: ' + JSON.stringify({ done: true, response: 'Possiamo approfondire questo punto.', session_id: 'fixture' }) + '\n\n' });
         if (url.pathname === '/api/orientation-directory') data = { institution: null, events: [], referrals: [] };
         else if (url.pathname === '/api/user/portfolio') data = control.portfolio;
@@ -273,7 +280,7 @@ for (const width of [320, 1440]) {
     test(`one kebab and direct per-response audio and feedback at ${width}px`, async () => {
         const { page, context, control } = await fixture(width, 'intro', { feedback: true, longConversation: true });
         try {
-            await page.evaluate(() => { window.Audio = class { play() { return Promise.resolve(); } pause() {} }; });
+            await page.evaluate(() => { window.Audio = class { play() { return Promise.resolve(); } pause() {} load() {} removeAttribute() {} }; });
             assert.equal(await page.locator('button[popovertarget]').count(), 1);
             assert.equal(await page.getByRole('button', { name: 'Azioni del messaggio', exact: true }).count(), 0);
             const row = page.getByRole('group', { name: 'Azioni del messaggio', exact: true }).last();
@@ -285,10 +292,12 @@ for (const width of [320, 1440]) {
                 assert.equal((await button.innerText()).trim(), '', `${name} uses an icon`);
             }
             await row.getByRole('button', { name: 'Ascolta', exact: true }).click();
-            const stop = row.getByRole('button', { name: 'Stop Lettura', exact: true });
+            const reader = page.getByRole('dialog', { name: 'Lettore audio' });
+            const stop = reader.getByRole('button', { name: 'Ferma', exact: true });
             await stop.waitFor();
             await stop.click();
-            assert.equal(control.requests.find(r => r.path === '/api/tts').body.text, reply);
+            assert.equal(control.requests.find(r => r.path === '/api/tts/stream').body.text, reply);
+            await reader.getByRole('button', { name: 'Chiudi lettore', exact: true }).click();
             await row.getByRole('button', { name: 'Ascolta', exact: true }).waitFor();
             const helpful = width === 320;
             const vote = row.getByRole('button', { name: helpful ? 'Risposta utile' : 'Risposta non utile', exact: true });

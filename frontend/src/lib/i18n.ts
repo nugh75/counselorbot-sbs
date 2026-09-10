@@ -6726,14 +6726,15 @@ import { SURVEY_DICTS } from './i18n-survey';
 import { ADMIN_DICTS } from './i18n-admin';
 import { ORIENTATION_DICTS } from './i18n-orientation';
 import { REFERRAL_DICTS } from './i18n-referrals';
+import { VOICE_DICTS } from './i18n-voice';
 
 const DICTS: Record<Lang, Dict> = {
-    it: { ...it, ...FACTOR_DICTS.it, ...SURVEY_DICTS.it, ...ADMIN_DICTS.it, ...ORIENTATION_DICTS.it, ...REFERRAL_DICTS.it },
-    en: { ...en, ...FACTOR_DICTS.en, ...SURVEY_DICTS.en, ...ADMIN_DICTS.en, ...ORIENTATION_DICTS.en, ...REFERRAL_DICTS.en },
-    es: { ...es, ...FACTOR_DICTS.es, ...SURVEY_DICTS.es, ...ADMIN_DICTS.es, ...ORIENTATION_DICTS.es, ...REFERRAL_DICTS.es },
-    fr: { ...fr, ...FACTOR_DICTS.fr, ...SURVEY_DICTS.fr, ...ADMIN_DICTS.fr, ...ORIENTATION_DICTS.fr, ...REFERRAL_DICTS.fr },
-    de: { ...de, ...FACTOR_DICTS.de, ...SURVEY_DICTS.de, ...ADMIN_DICTS.de, ...ORIENTATION_DICTS.de, ...REFERRAL_DICTS.de },
-    sv: { ...sv, ...FACTOR_DICTS.sv, ...SURVEY_DICTS.sv, ...ADMIN_DICTS.sv, ...ORIENTATION_DICTS.sv, ...REFERRAL_DICTS.sv },
+    it: { ...it, ...FACTOR_DICTS.it, ...SURVEY_DICTS.it, ...ADMIN_DICTS.it, ...ORIENTATION_DICTS.it, ...REFERRAL_DICTS.it, ...VOICE_DICTS.it },
+    en: { ...en, ...FACTOR_DICTS.en, ...SURVEY_DICTS.en, ...ADMIN_DICTS.en, ...ORIENTATION_DICTS.en, ...REFERRAL_DICTS.en, ...VOICE_DICTS.en },
+    es: { ...es, ...FACTOR_DICTS.es, ...SURVEY_DICTS.es, ...ADMIN_DICTS.es, ...ORIENTATION_DICTS.es, ...REFERRAL_DICTS.es, ...VOICE_DICTS.es },
+    fr: { ...fr, ...FACTOR_DICTS.fr, ...SURVEY_DICTS.fr, ...ADMIN_DICTS.fr, ...ORIENTATION_DICTS.fr, ...REFERRAL_DICTS.fr, ...VOICE_DICTS.fr },
+    de: { ...de, ...FACTOR_DICTS.de, ...SURVEY_DICTS.de, ...ADMIN_DICTS.de, ...ORIENTATION_DICTS.de, ...REFERRAL_DICTS.de, ...VOICE_DICTS.de },
+    sv: { ...sv, ...FACTOR_DICTS.sv, ...SURVEY_DICTS.sv, ...ADMIN_DICTS.sv, ...ORIENTATION_DICTS.sv, ...REFERRAL_DICTS.sv, ...VOICE_DICTS.sv },
 };
 
 function lookup(lang: Lang, key: string): string | undefined {
