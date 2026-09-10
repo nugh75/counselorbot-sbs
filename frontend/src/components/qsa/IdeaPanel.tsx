@@ -1,13 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCheck } from 'lucide-react';
+import { CheckCheck, Compass, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { IdeaBranchTree } from '@/components/qsa/IdeaBranchTree';
 import { IdeaConclusion } from '@/components/qsa/IdeaConclusion';
 import { IdeaMapPanel } from '@/components/qsa/IdeaMapPanel';
-import { IDEA_PACE_STOPS, moveIdeaFocus, type IdeaNextStep, type IdeaVariant } from '@/lib/idea-map';
+import { stepLine } from '@/lib/idea-step';
+import {
+    IDEA_PACE_STOPS,
+    moveIdeaFocus,
+    type IdeaNextStep,
+    type IdeaRole,
+    type IdeaVariant,
+} from '@/lib/idea-map';
+
+const ROLE_KEY: Record<IdeaRole, string> = {
+    idea: 'idea.role.idea',
+    assumption: 'idea.role.assumption',
+    evidence: 'idea.role.evidence',
+    alternative: 'idea.role.alternative',
+    implication: 'idea.role.implication',
+    'open-question': 'idea.role.openQuestion',
+    constraint: 'idea.role.constraint',
+    step: 'idea.role.step',
+    decision: 'idea.role.decision',
+    task: 'idea.role.task',
+};
 
 interface IdeaPanelProps {
     sessionId: string;
@@ -19,6 +39,10 @@ interface IdeaPanelProps {
     budget: number;
     onBudgetChange: (budget: number) => void;
     onFocusMoved: () => void;
+    // Se l'ultimo turno ha toccato la mappa. Null finche' non ne e' passato uno.
+    drew: boolean | null;
+    // Chiede al modello di disegnare adesso quello che si e' detto.
+    onAskForMap: () => void;
     // Su schermo largo mappa e rami stanno insieme nel pannello; su telefono
     // sono due schede, e ognuna chiede solo il suo pezzo.
     show?: 'all' | 'map' | 'branches';
@@ -28,7 +52,8 @@ interface IdeaPanelProps {
 // scorrendo, e la mappa e' la cosa che deve restare sotto gli occhi mentre si
 // scrive.
 export function IdeaPanel({
-    sessionId, version, locale, variant, move, budget, onBudgetChange, onFocusMoved, show = 'all',
+    sessionId, version, locale, variant, move, budget, onBudgetChange, onFocusMoved,
+    drew, onAskForMap, show = 'all',
 }: IdeaPanelProps) {
     const { t } = useI18n();
     const [concluding, setConcluding] = useState(false);
@@ -42,8 +67,35 @@ export function IdeaPanel({
         if (await moveIdeaFocus(sessionId, nodeId)) onFocusMoved();
     };
 
+    // Il server sa a ogni turno cosa manca e perche': senza questa riga il
+    // motivo restava dentro i dati e a schermo arrivavano solo i ruoli.
+    const line = stepLine(move);
+
     return (
         <div className="space-y-3">
+            {show !== 'branches' && line && (
+                <p className="flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                    <Compass className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" aria-hidden="true" />
+                    <span>
+                        {t(line.key, { what: line.role ? t(ROLE_KEY[line.role]) : line.text ?? '' })}
+                    </span>
+                </p>
+            )}
+
+            {show !== 'branches' && drew === false && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    <p className="mb-1.5">{t('idea.map.stale')}</p>
+                    <button
+                        type="button"
+                        onClick={onAskForMap}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-white px-2.5 py-1 font-medium text-amber-900 hover:bg-amber-100"
+                    >
+                        <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t('idea.map.askForIt')}
+                    </button>
+                </div>
+            )}
+
             {show !== 'branches' && (
                 <>
                     {/* La durata si cambia anche a meta' strada: ci si accorge di

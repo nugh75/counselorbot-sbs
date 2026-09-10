@@ -444,6 +444,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // dice al pannello che la mappa e' cambiata.
     const isIdea = questionnaireType === 'IDEA';
     const desktop = useIsDesktop();
+    // Se l'ultimo turno ha disegnato. Null prima del primo: una mappa che non
+    // c'e' ancora non e' una mappa rimasta ferma.
+    const [ideaDrew, setIdeaDrew] = useState<boolean | null>(null);
     const [ideaVariant, setIdeaVariant] = useState<IdeaVariant>('student-path');
     const [ideaMapVersion, setIdeaMapVersion] = useState(0);
     const [ideaMove, setIdeaMove] = useState<IdeaNextStep | null>(null);
@@ -949,6 +952,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             adoptRecommendations(result.recommendations);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
             refreshIdeaWorkspace(result.idea_revision_id);
+            if (isIdea) setIdeaDrew(result.idea_revision_id != null);
             if (!result.response?.trim()) dropLast();
         } catch {
             if (!controller.signal.aborted) dropLast();
@@ -1033,6 +1037,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 adoptRecommendations(result.recommendations);
                 setLastFeedbackTargets(result.strategy_ids, result.response_id);
                 refreshIdeaWorkspace(result.idea_revision_id);
+                if (isIdea) setIdeaDrew(result.idea_revision_id != null);
+            if (isIdea) setIdeaDrew(result.idea_revision_id != null);
                 streamOk = true;
             } catch {
                 if (controller.signal.aborted) return;
@@ -1128,6 +1134,13 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         }
     };
 
+    // Chiedere la mappa e' un turno come gli altri, e si vede nella chat: un
+    // giro nascosto lascerebbe la persona senza sapere che cosa e' stato
+    // chiesto al modello.
+    const askForIdeaMap = () => {
+        void handleSend({ preventDefault() {} }, t('idea.map.askMessage'));
+    };
+
     const handleSend = async (e: { preventDefault: () => void }, overrideText?: string, audioReady = false, onPartial?: (reply: string) => void) => {
         e.preventDefault();
         const userMessage = (overrideText ?? input).trim();
@@ -1209,6 +1222,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             adoptRecommendations(result.recommendations);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
             refreshIdeaWorkspace(result.idea_revision_id);
+            if (isIdea) setIdeaDrew(result.idea_revision_id != null);
 
             // Sul testo completo applica il segnale di avanzamento
             const { cleanText, shouldAdvance } = extractAdvanceSignal(response || '');
@@ -1522,6 +1536,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         budget={ideaBudget}
                         onBudgetChange={setIdeaBudget}
                         onFocusMoved={() => setIdeaMapVersion((value) => value + 1)}
+                        drew={ideaDrew}
+                        onAskForMap={askForIdeaMap}
                     />
                 )}
                 {/* Phase Progress — per Idea non esiste una sequenza da mostrare:
@@ -1960,6 +1976,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     budget={ideaBudget}
                     onBudgetChange={setIdeaBudget}
                     onFocusMoved={() => setIdeaMapVersion((value) => value + 1)}
+                    drew={ideaDrew}
+                    onAskForMap={askForIdeaMap}
                 />
             )}
             branches={(
