@@ -118,6 +118,13 @@ ISOLATED_WORD = {
     "fr": "Sans liens", "de": "Ohne Verbindung", "sv": "Utan kopplingar",
 }
 
+# Il pezzo accentato: uno solo, e la resa a parole lo dice, altrimenti chi
+# ascolta perde l'unica enfasi che il tavolo sa portare.
+ACCENT_WORD = {
+    "it": "Il punto", "en": "The point", "es": "El punto",
+    "fr": "Le point", "de": "Der Punkt", "sv": "Poangen",
+}
+
 
 class TavoloError(ValueError):
     """Un tavolo che non sta in piedi: contratto violato, non errore di sistema."""
@@ -138,6 +145,9 @@ class TavoloNode(BaseModel):
     label: str = Field(min_length=1, max_length=MAX_LABEL)
     form: str = DEFAULT_FORM
     icon: str | None = Field(default=None, max_length=24)
+    # L'enfasi della persona: il pezzo che conta. Uno solo per tavolo, come
+    # nei diagrammi: due accenti non accentano niente.
+    accent: bool = False
     # Chi lo ha messo li', e a che punto e'. Una proposta del modello non e'
     # contenuto del tavolo finche' la persona non l'ha guardata.
     by: Literal["person", "model"] = "person"
@@ -207,6 +217,8 @@ def _validated(graph: TavoloGraph) -> TavoloGraph:
         missing = {edge.source, edge.target} - known
         if missing:
             raise TavoloError(f"legame verso un nodo che non c'e': {', '.join(sorted(missing))}")
+    if sum(1 for node in graph.nodes if node.accent) > 1:
+        raise TavoloError("al massimo un pezzo accentato")
     return graph
 
 
@@ -247,7 +259,8 @@ def propose(graph: TavoloGraph, proposal: TavoloProposal) -> TavoloGraph:
     for node in proposal.add_nodes:
         if node.id in known:
             continue
-        nodes.append(node.model_copy(update={"by": "model", "state": "pending"}))
+        # L'accento e' della persona: il modello propone pezzi, non enfasi.
+        nodes.append(node.model_copy(update={"by": "model", "state": "pending", "accent": False}))
         known.add(node.id)
     for edge in proposal.add_edges:
         if edge.key in known_edges:
@@ -352,7 +365,10 @@ def rendition(graph: TavoloGraph, lang: str = "it") -> str:
 
     touched = {end for edge in content.edges for end in (edge.source, edge.target)}
     alone = [node.label for node in content.nodes if node.id not in touched]
+    accented = next((node.label for node in content.nodes if node.accent), None)
     parts = ["; ".join(relations)] if relations else []
+    if accented:
+        parts.append(f"{ACCENT_WORD.get(code, ACCENT_WORD['en'])}: {accented}")
     if alone:
         parts.append(f"{ISOLATED_WORD.get(code, ISOLATED_WORD['en'])}: {', '.join(alone)}")
     body = ". ".join(part for part in parts if part)

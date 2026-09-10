@@ -48,6 +48,8 @@ export interface TavoloNodeData {
     label: string;
     form: TavoloForm;
     icon?: string | null;
+    // Il pezzo che conta: uno solo per tavolo, come nei diagrammi.
+    accent?: boolean;
     by: TavoloBy;
     state: TavoloState;
     x: number;

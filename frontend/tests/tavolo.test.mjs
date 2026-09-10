@@ -161,3 +161,62 @@ test('il salvataggio porta con se la cattura del tavolo', async () => {
     assert.deepEqual(errors, [], 'nessun errore in pagina');
     await context.close();
 });
+
+test('ogni pezzo si aggancia da quattro lati', async () => {
+    const { page, context } = await fixture();
+    const handles = await page.locator('.react-flow__node[data-id="a"] .react-flow__handle').count();
+    assert.equal(handles, 4, 'sopra, a destra, sotto e a sinistra');
+    await context.close();
+});
+
+test("il filo esce dal lato che guarda l'altro pezzo", async () => {
+    const { page, context } = await fixture();
+    const box = await page.locator('.react-flow__node[data-id="a"]')
+        .evaluate((element) => ({ w: element.offsetWidth, h: element.offsetHeight }));
+    // Il primo arco va da `a` a `b`, che gli sta a destra sulla stessa riga. Le
+    // coordinate del tracciato sono quelle del piano, e `a` sta nell'origine:
+    // con gli agganci fissi di prima il filo partiva dal centro del fondo.
+    const path = await page.locator('.react-flow__edge-path').first().getAttribute('d');
+    const [x, y] = path.slice(1).split(/[ ,C]/).map(Number);
+    assert.ok(Math.abs(x - box.w) < 2, `parte dal bordo destro (${x} contro ${box.w})`);
+    // Non esattamente a meta': il bivio a destra e' piu' alto, e il filo punta
+    // al suo centro. Quello che conta e' che esca dal fianco e non dal fondo.
+    assert.ok(y > box.h * 0.25 && y < box.h * 0.75, `dal fianco e non dal fondo (${y} su ${box.h})`);
+    await context.close();
+});
+
+test('la parola sull arco si puo scrivere a mano', async () => {
+    const { page, context } = await fixture();
+    await page.locator('.react-flow__edge').first().click({ force: true });
+    const input = page.getByPlaceholder('porta a');
+    await input.fill('mi blocca');
+    await page.waitForTimeout(300);
+    let words = await page.locator('.react-flow__edgelabel-renderer span').allInnerTexts();
+    assert.ok(words.includes('mi blocca'), 'la parola scritta prende il posto del verbo');
+    // Svuotare non lascia un arco muto: torna il verbo del vocabolario.
+    await input.fill('');
+    await page.waitForTimeout(300);
+    words = await page.locator('.react-flow__edgelabel-renderer span').allInnerTexts();
+    assert.ok(words.includes('porta a'), 'senza parola propria torna la convenzione');
+    await context.close();
+});
+
+test('il punto e uno solo, e si vede', async () => {
+    const { page, context } = await fixture();
+    const fill = (id) => page.locator(`.react-flow__node[data-id="${id}"] > div`)
+        .evaluate((element) => getComputedStyle(element).backgroundColor);
+    const point = async (id) => {
+        await page.locator(`.react-flow__node[data-id="${id}"]`).click();
+        await page.getByRole('button', { name: 'Il punto' }).click();
+        await page.waitForTimeout(300);
+    };
+    const plain = await fill('a');
+    await point('a');
+    const accented = await fill('a');
+    assert.notEqual(accented, plain, 'il pezzo accentato si distingue dagli altri');
+
+    await point('b');
+    assert.equal(await fill('b'), accented, "l'enfasi si sposta sul pezzo scelto");
+    assert.equal(await fill('a'), plain, 'e lascia il precedente com era');
+    await context.close();
+});
