@@ -53,7 +53,7 @@ export function IdeaBranchBar({ sessionId, version, locale, onFocusMoved }: Idea
         setBusy(true);
         setFailed(false);
         try {
-            if (await createIdeaBranch(sessionId, name) === null) {
+            if (await createIdeaBranch(sessionId, name, locale) === null) {
                 setFailed(true);
                 return;
             }
