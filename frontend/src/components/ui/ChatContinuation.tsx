@@ -6,6 +6,10 @@ import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { Button } from './Button';
 
 // Keep the caller's turn open: phase changes and final metadata wait for done.
+// Resume an interrupted answer without asking: the button is only the last resort.
+const AUTO_CONTINUATIONS = 3;
+const AUTO_CONTINUATION_DELAY_MS = 400;
+
 export function useChatContinuation() {
     const [pending, setPending] = useState(false);
     const resume = useRef<(() => void) | null>(null);
@@ -21,6 +25,7 @@ export function useChatContinuation() {
         signal?.addEventListener('abort', abort, { once: true });
         if (signal?.aborted) abort();
         let payload = originalPayload;
+        let autoLeft = AUTO_CONTINUATIONS;
         try {
             for (;;) {
                 try {
@@ -39,6 +44,12 @@ export function useChatContinuation() {
                         session_id: partial.session_id ?? payload.session_id,
                         conversation_id: partial.conversation_id ?? payload.conversation_id,
                     };
+                    if (autoLeft > 0) {
+                        autoLeft -= 1;
+                        await new Promise(resolve => setTimeout(resolve, AUTO_CONTINUATION_DELAY_MS));
+                        if (controller.signal.aborted) throw error;
+                        continue;
+                    }
                     setPending(true);
                     await new Promise<void>((resolve, reject) => {
                         const onAbort = () => { cleanup(); reject(new DOMException('Aborted', 'AbortError')); };

@@ -66,24 +66,16 @@ async function fixture(width = 390, { initialError = false, experience = 'standa
 
 for (const width of [390, 1440]) {
     for (const incompleteDone of [false, true]) {
-    test(`guided partial response survives two failures and continues once at ${width}px (incompleteDone=${incompleteDone})`, async () => {
+    test(`guided partial response survives two failures and resumes without the button at ${width}px (incompleteDone=${incompleteDone})`, async () => {
         const { page, context, control } = await fixture(width, { incompleteDone });
         try {
             await page.goto(`${origin}/?frozen=recovery`, { waitUntil: 'networkidle' });
             await page.locator('#guided-composer').fill('Come posso studiare?');
             await page.locator('#guided-composer').press('Enter');
-            const button = page.getByRole('button', { name: 'Continua', exact: true });
-            await button.waitFor();
-            assert.equal(await page.getByText('Studia e', { exact: true }).count(), 1);
-            await Promise.all([
-                page.waitForResponse(response => response.url().endsWith('/api/chat/stream') && response.status() === 503),
-                button.click(),
-            ]);
-            await button.waitFor();
-            await button.click();
             await page.getByRole('log').getByText('Studia e verifica.', { exact: true }).waitFor();
-            await button.waitFor({ state: 'hidden' });
+            assert.equal(await page.getByRole('button', { name: 'Continua', exact: true }).count(), 0);
             assert.equal(control.streams.length, 3);
+            assert.equal(control.streams[1].partial_response, 'Studia e');
             assert.equal(control.streams[2].partial_response, 'Studia e');
             assert.equal(control.streams[2].message, control.streams[0].message);
             assert.equal(control.streams[2].conversation_id, 'turn-session');
@@ -139,15 +131,10 @@ for (const surface of ['site', 'opencode']) {
             const input = surface === 'site' ? page.locator('textarea').first() : page.locator('#opencode-composer');
             await input.fill('Come posso studiare?');
             await input.press('Enter');
-            const button = page.getByRole('button', { name: 'Continua', exact: true });
-            await button.waitFor();
-            await Promise.all([page.waitForResponse(response => response.status() === 503), button.click()]);
-            await button.waitFor();
-            await button.click();
-            await button.waitFor({ state: 'hidden' });
+            await page.getByText('Studia e verifica.', { exact: true }).last().waitFor();
+            assert.equal(await page.getByRole('button', { name: 'Continua', exact: true }).count(), 0);
             assert.equal(control.streams.length, 3);
             assert.equal(control.streams[2].partial_response, 'Studia e');
-            await page.getByText('Studia e verifica.', { exact: true }).last().waitFor();
             assert.deepEqual(control.errors, []);
         } finally { await context.close(); }
     });
