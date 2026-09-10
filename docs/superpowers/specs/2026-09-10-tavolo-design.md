@@ -133,6 +133,11 @@ archi si accavallavano. Cosi' non c'e' niente in piu' da salvare, e i quattro
 agganci per pezzo servono solo a far partire il trascinamento da qualunque
 lato.
 
+Il terzo modificatore e' `reciprocal`: una seconda punta all'altro capo, per
+dire che il verbo si legge anche all'incontrario. Non e' un verbo nuovo, e
+l'appartenenza non ce l'ha, perche' quella famiglia non disegna punte: un
+contenuto non contiene chi lo contiene.
+
 Due cose le scrive la persona e nessun altro. La parola sull'arco: se ne scrive
 una sua prende il posto del verbo del vocabolario, e la resa a parole dice
 quella. L'accento: un pezzo solo per tavolo, il punto, riempito di petrolio
