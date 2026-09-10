@@ -254,6 +254,34 @@ def test_a_third_level_task_becomes_a_step():
     }))
     deepest = next(n for n in spec.nodes if n.id == "t3")
     assert deepest.role == "step" and deepest.task_type is None
+    assert deepest.demoted is True
+
+
+def test_a_branch_rewritten_as_something_else_stays_in_the_list():
+    spec = apply_patch(_tree(), parse_patch({
+        "update": [{"id": "t1", "role": "constraint"}],
+    }))
+    demoted = next(n for n in spec.nodes if n.id == "t1")
+    assert demoted.role == "constraint" and demoted.demoted is True
+    row = next(item for item in branches(spec) if item["id"] == "t1")
+    assert row["demoted"] is True and row["parent"] == "idea"
+
+
+def test_a_branch_put_back_is_a_branch_again():
+    spec = apply_patch(_tree(), parse_patch({"update": [{"id": "t1", "role": "constraint"}]}))
+    spec = apply_patch(spec, parse_patch({
+        "update": [{"id": "t1", "role": "task", "task_type": "systematic-review"}],
+    }))
+    back = next(n for n in spec.nodes if n.id == "t1")
+    assert back.role == "task" and back.demoted is False
+    assert next(item for item in branches(spec) if item["id"] == "t1")["demoted"] is False
+
+
+def test_the_model_is_told_which_branches_are_not_branches_any_more():
+    spec = apply_patch(_tree(), parse_patch({"update": [{"id": "t1", "role": "constraint"}]}))
+    context = map_context(spec)
+    assert "These were branches and are not any more: t1" in context
+    assert "was a branch, not one any more" in context
 
 
 def test_the_branch_in_hand_is_the_deepest_open_one():
