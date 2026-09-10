@@ -2,12 +2,17 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { branchCommands } from './idea-branching.ts';
+import type { IdeaBranch } from './idea-map';
+
 const chat = () => readFileSync(new URL('../components/qsa/GuidedChatInterface.tsx', import.meta.url), 'utf8');
 const intro = () => readFileSync(new URL('../components/qsa/IdeaBranchIntro.tsx', import.meta.url), 'utf8');
 const panel = () => readFileSync(new URL('../components/qsa/IdeaMapPanel.tsx', import.meta.url), 'utf8');
 const diagram = () => readFileSync(new URL('../components/ui/DiagramBlock.tsx', import.meta.url), 'utf8');
 const viewport = () => readFileSync(new URL('../components/ui/DiagramViewport.tsx', import.meta.url), 'utf8');
 const workspace = () => readFileSync(new URL('../components/qsa/IdeaWorkspace.tsx', import.meta.url), 'utf8');
+const tree = () => readFileSync(new URL('../components/qsa/IdeaBranchTree.tsx', import.meta.url), 'utf8');
 
 test('the transcript follows the branch instead of running in one line', () => {
     const source = chat();
@@ -71,4 +76,71 @@ test('the empty branch says how it was born, what it hangs from and what is done
     assert.match(source, /empty && \(/);
     // La scheda resta in testa al ramo anche quando il ramo ha gia' messaggi.
     assert.match(chat(), /<IdeaBranchIntro[\s\S]{0,240}empty=\{visibleMessages\.length === 0\}/);
+});
+
+// --- i comandi sull'albero dei rami ---
+
+const branchRow = (over: Partial<IdeaBranch> & { id: string }): IdeaBranch => ({
+    label: over.id,
+    task_type: 'systematic-review',
+    task_label: null,
+    depth: 1,
+    parent: 'idea',
+    closed: false,
+    conclusion: null,
+    missing_roles: [],
+    flaws: 0,
+    is_focus: false,
+    wants_plan: true,
+    origin: 'conversation',
+    demoted: false,
+    ...over,
+});
+
+const TREE: IdeaBranch[] = [
+    branchRow({ id: 'idea', depth: 0, parent: null }),
+    branchRow({ id: 't1' }),
+    branchRow({ id: 's1', depth: 2, parent: 't1' }),
+    branchRow({ id: 't2' }),
+];
+
+test('the first branch cannot go up and the last cannot go down', () => {
+    assert.equal(branchCommands(TREE, 't1').up, false);
+    assert.equal(branchCommands(TREE, 't1').down, true);
+    assert.equal(branchCommands(TREE, 't2').up, true);
+    assert.equal(branchCommands(TREE, 't2').down, false);
+});
+
+test('the idea itself takes no commands', () => {
+    // La radice e' la mappa: spostarla o cancellarla non vuol dire niente.
+    assert.deepEqual(branchCommands(TREE, 'idea'), {
+        up: false, down: false, indent: false, outdent: false, remove: false, restore: false,
+    });
+});
+
+test('a branch that already carries a sub-branch cannot be nested deeper', () => {
+    // t1 ha s1 sotto: annidarlo porterebbe s1 al terzo livello di lavoro.
+    assert.equal(branchCommands(TREE, 't1').indent, false);
+    assert.equal(branchCommands(TREE, 't2').indent, true);
+});
+
+test('only a branch under another branch can be sent up a level', () => {
+    assert.equal(branchCommands(TREE, 's1').outdent, true);
+    assert.equal(branchCommands(TREE, 't1').outdent, false);
+});
+
+test('putting a node back to being a branch is offered only where it applies', () => {
+    const demoted = [...TREE, branchRow({ id: 'c1', depth: 0, demoted: true })];
+    assert.equal(branchCommands(demoted, 'c1').restore, true);
+    assert.equal(branchCommands(demoted, 't1').restore, false);
+});
+
+test('the panel sends the commands to the server and asks before deleting', () => {
+    const source = tree();
+    assert.match(source, /arrangeIdeaBranch\(sessionId, row\.id, op\)/);
+    assert.match(source, /deleteIdeaBranch\(sessionId, .*cascade/);
+    // La cancellazione non parte da un clic solo: si sceglie cosa fare di
+    // quello che ci pende sotto.
+    assert.match(source, /idea\.branches\.deleteOnly/);
+    assert.match(source, /idea\.branches\.deleteAll/);
 });
