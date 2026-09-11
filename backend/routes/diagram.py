@@ -1,7 +1,9 @@
 """Rendering dei diagrammi concettuali della chat: /diagram/render, /diagram/from-message.
 
 L'interruttore della funzione e' la skill `concept-diagram` nel pannello admin:
-spenta o non pubblicata, questi endpoint non esistono.
+spenta o non pubblicata, questi endpoint non esistono. Le due rotte
+`/diagram-icons` e `/diagram-icons/{id}.svg` fanno eccezione apposta: servono
+anche al tavolo, che vive senza questa skill, e restano attive comunque.
 """
 import asyncio
 import logging

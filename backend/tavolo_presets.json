@@ -11,6 +11,7 @@
       "decision",
       "outcome"
     ],
+    "default_form": "action",
     "rankdir": "LR",
     "edge_label_required": false,
     "prompt": "Draw it as a workflow: the work in the order it is done. Time runs one way, so never send two edges that close a cycle. Use decision only where the work really forks, and outcome only for where it ends up. blocks says one step cannot start before another is out of the way; if says a step happens only under a condition.",
@@ -201,6 +202,7 @@
       "concept",
       "outcome"
     ],
+    "default_form": "concept",
     "rankdir": "TB",
     "edge_label_required": false,
     "prompt": "Draw it as a causal map. causes means the two quantities move together (more of one, more of the other); hinders means they move opposite ways (more of one, less of the other). Use feeds-back only for the edge that closes a loop, and on that edge write in label the name of the loop in plain words, what it does, never a code like R1. Keep the nodes as quantities that can go up or down, not as actions.",
@@ -413,6 +415,7 @@
       "concept",
       "outcome"
     ],
+    "default_form": "concept",
     "rankdir": "TB",
     "edge_label_required": true,
     "prompt": "Draw it as a concept map: concepts joined by named relations. Every edge must carry a label of at most 40 characters that reads as the relation between the two concepts, because a concept map without words on the edges is a badly drawn mind map. Pick the rel that comes closest to what the label says. Keep the nodes as concepts, not as sentences.",
@@ -652,6 +655,7 @@
       "concept",
       "outcome"
     ],
+    "default_form": "concept",
     "rankdir": "TB",
     "edge_label_required": false,
     "prompt": "Draw it as an argument map. One node is the claim; every other node is a reason, an objection, an assumption or a gap, and it points at what it acts on. Never draw a cause: this map is about an argument holding or not. Use needs-evidence for what the person has not checked yet, and hypothesis:true on any edge you are extending rather than reading.",
@@ -830,6 +834,7 @@
       "action",
       "outcome"
     ],
+    "default_form": "action",
     "rankdir": "LR",
     "edge_label_required": false,
     "prompt": "Draw it as a procedure with forks. Every decision node is a question that can be answered, and it must have at least two edges leaving it; write the answer that takes that branch in the label of the edge (yes, no, a threshold). Use if for the edge that depends on the answer, then for the step that simply follows, and outcome for where a branch ends.",
