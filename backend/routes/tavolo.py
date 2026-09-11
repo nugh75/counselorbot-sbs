@@ -35,6 +35,7 @@ from ..tavolo import (
     MAX_PROPOSED,
     MAX_TITLE,
     REL_FAMILY,
+    TavoloComposition,
     TavoloError,
     TavoloGraph,
     accept,
@@ -158,6 +159,22 @@ def _compose_request(graph: TavoloGraph, prompt: str, preset: dict | None, lang:
     if preset:
         lines.append(f"Genre: {preset['id']}.")
     return "\n".join(lines)
+
+
+async def _compose(db: Session, *, graph: TavoloGraph, text: str, preset: dict | None,
+                    lang: str, counselor_id: int | None,
+                    ) -> tuple[TavoloComposition | None, bool]:
+    """Uno schema intero dal modello: stesso passo per il seme di `/tavolo` e
+    per `/compose`, che divergono solo in cosa fanno del risultato.
+    """
+    return await _ask_model(
+        db,
+        task=_compose_request(graph, text, preset, lang),
+        counselor_id=counselor_id,
+        system_prompt=_compose_system_prompt(preset),
+        parse=parse_composition,
+        max_tokens=2400,
+    )
 
 
 class CreateRequest(BaseModel):
@@ -340,13 +357,9 @@ async def create_tavolo(
         # Un seme che non riesce lascia un tavolo vuoto, non un errore: la
         # persona e' gia' arrivata qui, e puo' cominciare a mano.
         preset = preset_of(request.preset)
-        composition, _unavailable = await _ask_model(
-            db,
-            task=_compose_request(graph, request.source_text, preset, request.lang),
-            counselor_id=request.counselor_id,
-            system_prompt=_compose_system_prompt(preset),
-            parse=parse_composition,
-            max_tokens=2400,
+        composition, _unavailable = await _compose(
+            db, graph=graph, text=request.source_text, preset=preset,
+            lang=request.lang, counselor_id=request.counselor_id,
         )
         if composition is not None:
             if preset:
@@ -521,13 +534,9 @@ async def compose_tavolo(
     graph = _graph_of(revision)
     preset = preset_of(request.preset)
 
-    composition, unavailable = await _ask_model(
-        db,
-        task=_compose_request(graph, request.prompt, preset, request.lang),
-        counselor_id=request.counselor_id,
-        system_prompt=_compose_system_prompt(preset),
-        parse=parse_composition,
-        max_tokens=2400,
+    composition, unavailable = await _compose(
+        db, graph=graph, text=request.prompt, preset=preset,
+        lang=request.lang, counselor_id=request.counselor_id,
     )
     if composition is None:
         raise HTTPException(status_code=503 if unavailable else 502, detail="nessuno schema")
