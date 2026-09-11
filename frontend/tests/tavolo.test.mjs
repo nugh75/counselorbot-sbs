@@ -17,7 +17,7 @@ const graph = {
     title: 'Perche rimando',
     nodes: [
         { id: 'a', label: 'Compito difficile', form: 'concept', by: 'person', state: 'live', x: 0, y: 0 },
-        { id: 'b', label: 'Ansia', form: 'decision', by: 'person', state: 'live', x: 260, y: 0 },
+        { id: 'b', label: 'Ansia', form: 'decision', icon: 'distress', by: 'person', state: 'live', x: 260, y: 0 },
         { id: 'c', label: 'Rimando', form: 'action', by: 'person', state: 'live', x: 0, y: 160 },
         { id: 'd', label: 'Meno tempo', form: 'outcome', by: 'model', state: 'pending', x: 260, y: 160 },
     ],
@@ -36,6 +36,31 @@ let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser?.close(); });
 
+// La cattura del tavolo e' un PNG dentro un form multipart: per provare che
+// l'icona ci e' finita davvero (non solo sullo schermo) serve il file, non
+// solo la sua dimensione. Playwright non lo scompone da solo.
+function multipartFilePart(request) {
+    const contentType = request.headers()['content-type'] || '';
+    const boundaryMatch = contentType.match(/boundary=(.+)$/);
+    const body = request.postDataBuffer();
+    if (!boundaryMatch || !body) return null;
+    const boundary = Buffer.from(`--${boundaryMatch[1]}`);
+    const headerEnd = Buffer.from('\r\n\r\n');
+    let start = body.indexOf(boundary);
+    while (start !== -1) {
+        const nextStart = body.indexOf(boundary, start + boundary.length);
+        const headersEnd = body.indexOf(headerEnd, start);
+        if (headersEnd === -1 || nextStart === -1) return null;
+        const headers = body.slice(start, headersEnd).toString('latin1');
+        if (/filename=/.test(headers)) {
+            // Il contenuto finisce appena prima del CRLF che precede il prossimo boundary.
+            return body.slice(headersEnd + headerEnd.length, nextStart - 2);
+        }
+        start = nextStart;
+    }
+    return null;
+}
+
 async function fixture() {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
@@ -51,12 +76,14 @@ async function fixture() {
         if (!url.pathname.startsWith('/api/')) {
             return request.method() === 'GET' ? route.continue() : route.abort();
         }
-        // Il corpo della cattura e' un PNG: delle multipart si registra la
-        // dimensione, non il contenuto.
+        // Il corpo della cattura e' un PNG: delle multipart si registra anche
+        // il file estratto (`png`), non solo la dimensione, cosi' un test puo'
+        // guardare dentro l'immagine invece di fidarsi solo dello schermo.
         const multipart = (request.headers()['content-type'] || '').includes('multipart');
         calls.push({
             path: url.pathname, method: request.method(),
             body: multipart ? { bytes: request.postDataBuffer()?.length ?? 0 } : request.postDataJSON(),
+            png: multipart ? multipartFilePart(request) : undefined,
         });
         // Il difetto di serie e' una lista: il guscio dell'app itera su parecchie
         // di queste risposte, e un oggetto vuoto lo fa cadere prima della pagina.
@@ -65,12 +92,37 @@ async function fixture() {
         else if (url.pathname === '/api/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
         else if (url.pathname === '/api/orientation/status') data = { required: false, completed: true };
         else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'f', name: 'Counselor di prova', language: ['it'], suitable: true }];
+        else if (url.pathname === '/api/tavolo/presets') data = { presets: [{ id: 'causal', rels: ['causes', 'hinders', 'feeds-back'], forms: ['concept', 'outcome'], rankdir: 'TB', edge_label_required: false, prompts: ['i fattori del QSA', 'perche rimando'], has_example: true }] };
+        else if (url.pathname === '/api/diagram-icons') data = { icons: [{ id: 'distress', meaning: 'distress', label: 'Disagio' }] };
         else if (url.pathname === `/api/tavolo/${ID}`) data = view;
         else if (url.pathname.endsWith('/settle')) data = { ...view, index: view.index + 1 };
         else if (url.pathname.endsWith('/save')) data = { ...view, title: 'Tavolo di prova', saved: true, rendition: 'resa' };
         else if (url.pathname.endsWith('/capture')) data = { has_capture: true };
+        // Un genere composto porta un pezzo e un arco in piu', entrambi
+        // `pending`: senza questo ramo il generico `[]` qui sotto lascia la
+        // pagina sulla schermata "non trovato", e il test del compose non
+        // proverebbe mai che la risposta arriva davvero sulla tela.
+        else if (url.pathname.endsWith('/compose')) data = {
+            ...view,
+            index: view.index + 1,
+            graph: {
+                title: graph.title,
+                nodes: [...graph.nodes, { id: 'e', label: 'Uso di strategie', form: 'concept', by: 'model', state: 'pending', x: 520, y: 0 }],
+                edges: [...graph.edges, { from: 'd', to: 'e', rel: 'causes', strength: 2, hypothesis: false, by: 'model', state: 'pending' }],
+            },
+            note: null,
+        };
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
     });
+    // L'SVG non e' JSON: una rotta a parte, registrata dopo quella generica
+    // cosi' vince su di lei per gli id che la riguardano. Il colore e' un
+    // magenta puro che non compare altrove nella palette dell'app (indigo,
+    // ocra, ardesia, rosa): un test puo' cercarlo nel PNG catturato senza
+    // rischiare di trovarlo per caso in un bordo o in uno sfondo.
+    await page.route('**/api/diagram-icons/*.svg', (route) => route.fulfill({
+        contentType: 'image/svg+xml',
+        body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><circle cx="12" cy="12" r="9" fill="#ff00ff"/></svg>',
+    }));
     await page.goto(`${origin}/tavolo/${ID}`, { waitUntil: 'networkidle' });
     await page.waitForSelector('.react-flow__node', { timeout: 20000 });
     return { page, context, calls, errors };
@@ -276,5 +328,77 @@ test('il tavolo si ingrandisce e si allarga', async () => {
     await page.getByRole('button', { name: 'Mostra il pannello' }).click();
     await page.waitForTimeout(300);
     assert.equal(await page.locator('aside').count(), 1, 'e torna quando serve');
+    await context.close();
+});
+
+test('the prompt box offers the genres and the example prompts', async () => {
+    const { page, context } = await fixture();
+    await page.getByRole('button', { name: 'Mappa causale' }).click();
+    await page.getByRole('button', { name: 'i fattori del QSA' }).click();
+    assert.equal(await page.getByLabel('Scrivi uno schema').inputValue(), 'i fattori del QSA');
+    await context.close();
+});
+
+test('a composed schema arrives dashed and nothing is live before it is kept', async () => {
+    const { page, context, calls } = await fixture();
+    const before = await page.locator('.react-flow__node > div.border-dashed').count();
+    await page.getByLabel('Scrivi uno schema').fill('i fattori del QSA');
+    await page.getByRole('button', { name: 'Componi' }).click();
+    await page.waitForResponse((response) => response.url().includes('/compose'));
+    // `calls` registra `path` e `body` gia' scomposto (vedi `fixture()`), non
+    // `url` ne' una stringa da ri-parsare: e' la stessa forma delle altre
+    // prove che leggono `calls` in questo file.
+    const body = calls.find((call) => call.path.endsWith('/compose'))?.body;
+    assert.equal(body?.base_index, 4);
+    assert.equal(body?.prompt, 'i fattori del QSA');
+    // Non basta che la richiesta sia partita bene: il pezzo che la risposta
+    // porta deve arrivare sulla tela, tratteggiato come ogni proposta.
+    await page.waitForFunction(
+        (previous) => document.querySelectorAll('.react-flow__node > div.border-dashed').length > previous,
+        before,
+    );
+    const after = await page.locator('.react-flow__node > div.border-dashed').count();
+    assert.ok(after > before, `i pezzi tratteggiati crescono dopo compose (${before} -> ${after})`);
+    await context.close();
+});
+
+test('the icon of a piece is drawn on the canvas', async () => {
+    const { page, context, calls } = await fixture();
+    const icon = page.locator('.react-flow__node img').first();
+    await icon.waitFor({ state: 'visible' });
+    const box = await icon.boundingBox();
+    assert.ok(box.width >= 16, `icona troppo piccola: ${box.width}`);
+
+    // Sullo schermo non basta: la spec chiede che l'icona sia dentro il PNG
+    // catturato, perche' e' quel file che mostrano la vista da mobile e il
+    // PDF. `html-to-image` deve inlineare l'<img> same-origin; lo si prova
+    // decodificando davvero il file caricato, cercandoci il magenta
+    // dell'icona pixel per pixel, non fidandosi che lo schermo basti.
+    page.on('dialog', (dialog) => dialog.accept('Tavolo di prova'));
+    await page.getByRole('button', { name: 'Salva il tavolo' }).click();
+    await page.waitForTimeout(4000);
+    const capture = calls.find((call) => call.path.endsWith('/capture'));
+    assert.ok(capture?.png, 'il PNG catturato si legge');
+    const base64 = capture.png.toString('base64');
+    const hasMarkerColor = await page.evaluate(async (data) => {
+        const image = new Image();
+        const loaded = new Promise((resolve, reject) => {
+            image.onload = resolve;
+            image.onerror = reject;
+        });
+        image.src = `data:image/png;base64,${data}`;
+        await loaded;
+        const canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const context2d = canvas.getContext('2d');
+        context2d.drawImage(image, 0, 0);
+        const { data: pixels } = context2d.getImageData(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < pixels.length; i += 4) {
+            if (pixels[i] > 200 && pixels[i + 1] < 60 && pixels[i + 2] > 200) return true;
+        }
+        return false;
+    }, base64);
+    assert.ok(hasMarkerColor, "il magenta dell'icona e' nei pixel del PNG catturato, non solo sullo schermo");
     await context.close();
 });

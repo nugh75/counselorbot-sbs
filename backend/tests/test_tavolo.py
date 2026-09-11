@@ -15,6 +15,7 @@ from backend.tavolo import (
     family_of,
     from_idea_map,
     live,
+    parse_composition,
     parse_graph,
     parse_proposal,
     propose,
@@ -272,6 +273,45 @@ def test_the_rendition_says_which_piece_is_the_point():
 def test_the_rendition_speaks_every_supported_language():
     for lang in ("it", "en", "es", "fr", "de", "sv"):
         assert rendition(_base(), lang).startswith("Perche' rimando")
+
+
+def test_an_invented_icon_is_dropped_like_an_invented_form():
+    graph = parse_graph({**GRAPH, "nodes": [
+        {"id": "a", "label": "Compito difficile", "icon": "unicorno"},
+        {"id": "b", "label": "Ansia", "icon": "distress"},
+        {"id": "c", "label": "Rimando"},
+    ]})
+    assert graph.nodes[0].icon is None
+    assert graph.nodes[1].icon == "distress"
+
+
+def test_an_invented_genre_is_dropped_like_an_invented_colour():
+    assert parse_graph({**GRAPH, "preset": "mind-map"}).preset is None
+    assert parse_graph({**GRAPH, "preset": "causal"}).preset == "causal"
+
+
+def test_the_genre_survives_a_proposal_and_the_live_view():
+    graph = parse_graph({**GRAPH, "preset": "causal"})
+    proposed = propose(graph, parse_proposal({"add_nodes": [{"id": "d", "label": "Meno tempo"}]}))
+    assert proposed.preset == "causal"
+    assert live(proposed).preset == "causal"
+
+
+def test_a_composition_that_overflows_the_table_is_a_tavolo_error_not_a_validation_error():
+    """Il difetto trovato in review: un tavolo pieno sollevava `ValidationError`
+    (pydantic) da dentro `propose()`, che `except TavoloError` nelle rotte non
+    prende, e FastAPI rispondeva 500. Trenta pezzi piu' sedici e' esattamente
+    la riproduzione della review: sotto ai due tetti singolarmente, sopra
+    insieme (MAX_NODES = 40)."""
+    full = parse_graph({
+        "title": "Pieno",
+        "nodes": [{"id": f"n{i}", "label": f"Pezzo {i}"} for i in range(30)],
+    })
+    composition = parse_composition({
+        "add_nodes": [{"id": f"m{i}", "label": f"Nuovo {i}"} for i in range(16)],
+    })
+    with pytest.raises(TavoloError):
+        propose(full, composition)
 
 
 if __name__ == "__main__":  # pragma: no cover

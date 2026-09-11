@@ -1,20 +1,23 @@
 """Rendering dei diagrammi concettuali della chat: /diagram/render, /diagram/from-message.
 
 L'interruttore della funzione e' la skill `concept-diagram` nel pannello admin:
-spenta o non pubblicata, questi endpoint non esistono.
+spenta o non pubblicata, questi endpoint non esistono. Le due rotte
+`/diagram-icons` e `/diagram-icons/{id}.svg` fanno eccezione apposta: servono
+anche al tavolo, che vive senza questa skill, e restano attive comunque.
 """
 import asyncio
 import logging
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, FileResponse
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
 from .. import auth, database, models
 from ..ai_service import AIService, AIError
-from ..diagram_icon_catalog import ICON_SELECTION_PROMPT
+from ..diagram_icon_catalog import DIAGRAM_ICONS, ICON_CATALOG, ICON_SELECTION_PROMPT
 from ..diagram_symbols import factor_selection_prompt
 from ..message_diagrams import session_owner, session_questionnaire, save_diagram, list_diagrams
 from ..diagram_render import (
@@ -31,6 +34,38 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 get_db = database.get_db
+
+# I cento SVG del catalogo stanno accanto al modulo che li nomina. Finora li
+# leggeva solo Graphviz; la tela del tavolo li chiede via HTTP, e restano una
+# fonte sola per tutti e tre gli usi.
+ICONS_DIR = Path(__file__).resolve().parent.parent / "diagram_icons"
+
+
+@router.get("/diagram-icons")
+def list_diagram_icons(lang: str = "it"):
+    """Il catalogo per il selettore: si cerca per significato o per etichetta."""
+    italian = (lang or "").lower().startswith("it")
+    return {"icons": [
+        {
+            "id": entry["id"],
+            "meaning": entry["meaning"],
+            "label": entry["label_it"] if italian else entry["meaning"],
+        }
+        for entry in ICON_CATALOG
+    ]}
+
+
+@router.get("/diagram-icons/{icon_id}.svg")
+def read_diagram_icon(icon_id: str):
+    """Un'icona del catalogo. L'allowlist e' il catalogo stesso, percio' nessun
+    percorso arriva dal richiedente: un id fuori elenco e' `404`, punto."""
+    if icon_id not in DIAGRAM_ICONS:
+        raise HTTPException(status_code=404, detail="icona sconosciuta")
+    return FileResponse(
+        ICONS_DIR / f"{icon_id}.svg",
+        media_type="image/svg+xml",
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )
 
 SKILL_SLUG = "concept-diagram"
 DIAGRAM_PRESET_KEY = "diagram_preset_id"

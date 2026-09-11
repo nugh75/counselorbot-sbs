@@ -12,6 +12,7 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { TavoloColor, TavoloForm, TavoloState } from '@/lib/tavolo';
+import { iconUrl } from '@/lib/tavolo-icons';
 
 export interface PieceData extends Record<string, unknown> {
     label: string;
@@ -20,6 +21,7 @@ export interface PieceData extends Record<string, unknown> {
     byModel: boolean;
     accent: boolean;
     color: TavoloColor | null;
+    icon: string | null;
 }
 
 // Le tinte del raggruppamento. Il petrolio non e' fra queste: e' il pezzo senza
@@ -76,7 +78,14 @@ function Piece({ data, selected }: NodeProps & { data: PieceData }) {
                 <Handle key={key} id={key} type="source" position={position}
                     className="!h-2 !w-2 !border-0 !bg-slate-400" />
             ))}
-            <span className="break-words">{data.label}</span>
+            <span className={`flex min-w-0 items-center gap-1.5 ${data.form === 'decision' ? 'flex-col' : ''}`}>
+                {data.icon && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={iconUrl(data.icon)} alt="" width={20} height={20} aria-hidden="true"
+                        className={`h-5 w-5 shrink-0 ${data.accent && data.state !== 'pending' ? 'rounded bg-white p-0.5' : ''}`} />
+                )}
+                <span className="break-words">{data.label}</span>
+            </span>
         </div>
     );
 }
