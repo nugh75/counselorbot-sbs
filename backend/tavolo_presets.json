@@ -41,155 +41,534 @@
         "Hur jag arbetar med ett arbete: insamling, skrivande, granskning, inlämning."
       ]
     },
-    "example": {
-      "title": {
-        "it": "Preparare un esame in tre settimane",
-        "en": "Preparing an exam in three weeks",
-        "es": "Preparar un examen en tres semanas",
-        "fr": "Préparer un examen en trois semaines",
-        "de": "Eine Prüfung in drei Wochen vorbereiten",
-        "sv": "Förbereda en tentamen på tre veckor"
+    "examples": [
+      {
+        "id": "savickas-interview",
+        "title": {
+          "it": "Il colloquio di costruzione di carriera",
+          "en": "The career construction interview",
+          "es": "La entrevista de construcción de carrera",
+          "fr": "L'entretien de construction de carrière",
+          "de": "Das Karrierekonstruktions-Interview",
+          "sv": "Karriärkonstruktionsintervjun"
+        },
+        "nodes": [
+          {
+            "id": "pact",
+            "form": "action",
+            "icon": "agreement",
+            "x": 0,
+            "y": 0,
+            "label": {
+              "it": "Patto di collaborazione",
+              "en": "Collaboration agreement",
+              "es": "Pacto de colaboración",
+              "fr": "Pacte de collaboration",
+              "de": "Kooperationsvereinbarung",
+              "sv": "Samarbetsöverenskommelse"
+            }
+          },
+          {
+            "id": "ok",
+            "form": "decision",
+            "icon": "choice",
+            "x": 260,
+            "y": 0,
+            "label": {
+              "it": "Hai dato il consenso?",
+              "en": "Have you agreed?",
+              "es": "¿Has dado tu consentimiento?",
+              "fr": "As-tu donné ton accord ?",
+              "de": "Hast du zugestimmt?",
+              "sv": "Har du samtyckt?"
+            }
+          },
+          {
+            "id": "q1",
+            "form": "action",
+            "icon": "individual",
+            "x": 540,
+            "y": 0,
+            "label": {
+              "it": "Modelli di ruolo",
+              "en": "Role models",
+              "es": "Modelos de rol",
+              "fr": "Modèles de rôle",
+              "de": "Rollenvorbilder",
+              "sv": "Förebilder"
+            }
+          },
+          {
+            "id": "q2",
+            "form": "action",
+            "icon": "digital",
+            "x": 780,
+            "y": 0,
+            "label": {
+              "it": "Media preferiti",
+              "en": "Favourite media",
+              "es": "Medios favoritos",
+              "fr": "Médias préférés",
+              "de": "Lieblingsmedien",
+              "sv": "Favoritmedier"
+            }
+          },
+          {
+            "id": "q3",
+            "form": "action",
+            "icon": "book",
+            "x": 1020,
+            "y": 0,
+            "label": {
+              "it": "Storia preferita",
+              "en": "Favourite story",
+              "es": "Historia favorita",
+              "fr": "Histoire préférée",
+              "de": "Lieblingsgeschichte",
+              "sv": "Favoritberättelse"
+            }
+          },
+          {
+            "id": "q4",
+            "form": "action",
+            "icon": "writing",
+            "x": 1260,
+            "y": 0,
+            "label": {
+              "it": "Motto personale",
+              "en": "Personal motto",
+              "es": "Lema personal",
+              "fr": "Devise personnelle",
+              "de": "Persönliches Motto",
+              "sv": "Personligt motto"
+            }
+          },
+          {
+            "id": "q5",
+            "form": "action",
+            "icon": "experience",
+            "x": 1500,
+            "y": 0,
+            "label": {
+              "it": "Ricordi precoci",
+              "en": "Early recollections",
+              "es": "Recuerdos tempranos",
+              "fr": "Souvenirs précoces",
+              "de": "Frühe Erinnerungen",
+              "sv": "Tidiga minnen"
+            }
+          },
+          {
+            "id": "final",
+            "form": "outcome",
+            "icon": "synthesis",
+            "x": 1760,
+            "y": 0,
+            "label": {
+              "it": "Sintesi narrativa e piano d'azione",
+              "en": "Narrative synthesis and action plan",
+              "es": "Síntesis narrativa y plan de acción",
+              "fr": "Synthèse narrative et plan d'action",
+              "de": "Narrative Synthese und Aktionsplan",
+              "sv": "Narrativ syntes och handlingsplan"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "pact",
+            "to": "ok",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "ok",
+            "to": "q1",
+            "rel": "if",
+            "strength": 3,
+            "hypothesis": false,
+            "label": {
+              "it": "si",
+              "en": "yes",
+              "es": "sí",
+              "fr": "oui",
+              "de": "ja",
+              "sv": "ja"
+            }
+          },
+          {
+            "from": "q1",
+            "to": "q2",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "q2",
+            "to": "q3",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "q3",
+            "to": "q4",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "q4",
+            "to": "q5",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "q5",
+            "to": "final",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          }
+        ]
       },
-      "nodes": [
-        {
-          "id": "a",
-          "form": "action",
-          "icon": "resources",
-          "x": 0,
-          "y": 0,
-          "label": {
-            "it": "Raccogli il materiale",
-            "en": "Gather the material",
-            "es": "Reúne el material",
-            "fr": "Rassemble le matériel",
-            "de": "Sammle das Material",
-            "sv": "Samla ihop materialet"
+      {
+        "id": "school-search",
+        "title": {
+          "it": "Scegliere la scuola dopo la terza media",
+          "en": "Choosing a school after middle school",
+          "es": "Elegir la escuela después de secundaria",
+          "fr": "Choisir l'école après le collège",
+          "de": "Die Schule nach der Mittelstufe wählen",
+          "sv": "Välja skola efter grundskolan"
+        },
+        "nodes": [
+          {
+            "id": "list",
+            "form": "action",
+            "icon": "search",
+            "x": 0,
+            "y": 0,
+            "label": {
+              "it": "Raccogli gli indirizzi possibili",
+              "en": "Gather the possible tracks",
+              "es": "Reúne los itinerarios posibles",
+              "fr": "Rassemble les filières possibles",
+              "de": "Sammle die möglichen Zweige",
+              "sv": "Samla möjliga program"
+            }
+          },
+          {
+            "id": "plans",
+            "form": "action",
+            "icon": "document",
+            "x": 260,
+            "y": 0,
+            "label": {
+              "it": "Leggi i piani di studio",
+              "en": "Read the study plans",
+              "es": "Lee los planes de estudio",
+              "fr": "Lis les programmes",
+              "de": "Lies die Lehrpläne",
+              "sv": "Läs studieplanerna"
+            }
+          },
+          {
+            "id": "open",
+            "form": "action",
+            "icon": "community",
+            "x": 520,
+            "y": 0,
+            "label": {
+              "it": "Vai agli open day",
+              "en": "Go to the open days",
+              "es": "Ve a las jornadas de puertas abiertas",
+              "fr": "Va aux journées portes ouvertes",
+              "de": "Geh zu den Tagen der offenen Tür",
+              "sv": "Gå på öppet hus"
+            }
+          },
+          {
+            "id": "talk",
+            "form": "action",
+            "icon": "dialogue",
+            "x": 780,
+            "y": 0,
+            "label": {
+              "it": "Parla con chi ci studia",
+              "en": "Talk to students already there",
+              "es": "Habla con quien ya estudia allí",
+              "fr": "Parle à ceux qui y étudient",
+              "de": "Sprich mit dortigen Schülern",
+              "sv": "Prata med elever som går där"
+            }
+          },
+          {
+            "id": "short",
+            "form": "action",
+            "icon": "notes",
+            "x": 1040,
+            "y": 0,
+            "label": {
+              "it": "Scrivi la lista corta",
+              "en": "Write the short list",
+              "es": "Escribe la lista corta",
+              "fr": "Écris la liste courte",
+              "de": "Schreib die engere Liste",
+              "sv": "Skriv kortlistan"
+            }
+          },
+          {
+            "id": "enrol",
+            "form": "outcome",
+            "icon": "finish",
+            "x": 1300,
+            "y": 0,
+            "label": {
+              "it": "Iscrizione",
+              "en": "Enrolment",
+              "es": "Matrícula",
+              "fr": "Inscription",
+              "de": "Anmeldung",
+              "sv": "Anmälan"
+            }
+          },
+          {
+            "id": "deadline",
+            "form": "decision",
+            "icon": "deadline",
+            "x": 1040,
+            "y": 200,
+            "label": {
+              "it": "La scadenza è passata?",
+              "en": "Has the deadline passed?",
+              "es": "¿Ha pasado el plazo?",
+              "fr": "La date limite est passée ?",
+              "de": "Ist die Frist vorbei?",
+              "sv": "Har deadline passerat?"
+            }
+          },
+          {
+            "id": "test",
+            "form": "decision",
+            "icon": "measure",
+            "x": 1300,
+            "y": 200,
+            "label": {
+              "it": "Serve un test d'ingresso?",
+              "en": "Is there an entrance test?",
+              "es": "¿Hace falta una prueba de acceso?",
+              "fr": "Faut-il un test d'entrée ?",
+              "de": "Braucht es einen Eingangstest?",
+              "sv": "Krävs ett inträdesprov?"
+            }
           }
-        },
-        {
-          "id": "b",
-          "form": "action",
-          "icon": "calendar",
-          "x": 240,
-          "y": 0,
-          "label": {
-            "it": "Piano delle tre settimane",
-            "en": "Plan the three weeks",
-            "es": "Plan de las tres semanas",
-            "fr": "Plan des trois semaines",
-            "de": "Plan für die drei Wochen",
-            "sv": "Plan för de tre veckorna"
+        ],
+        "edges": [
+          {
+            "from": "list",
+            "to": "plans",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "plans",
+            "to": "open",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "open",
+            "to": "talk",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "talk",
+            "to": "short",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "short",
+            "to": "enrol",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "deadline",
+            "to": "enrol",
+            "rel": "blocks",
+            "strength": 3,
+            "hypothesis": false
+          },
+          {
+            "from": "test",
+            "to": "enrol",
+            "rel": "blocks",
+            "strength": 2,
+            "hypothesis": false
           }
+        ]
+      },
+      {
+        "id": "exam-three-weeks",
+        "title": {
+          "it": "Preparare un esame in tre settimane",
+          "en": "Preparing an exam in three weeks",
+          "es": "Preparar un examen en tres semanas",
+          "fr": "Préparer un examen en trois semaines",
+          "de": "Eine Prüfung in drei Wochen vorbereiten",
+          "sv": "Förbereda en tentamen på tre veckor"
         },
-        {
-          "id": "c",
-          "form": "action",
-          "icon": "focus",
-          "x": 480,
-          "y": 0,
-          "label": {
-            "it": "Studio a blocchi",
-            "en": "Study in blocks",
-            "es": "Estudio en bloques",
-            "fr": "Étude en blocs",
-            "de": "Blockweise Lernen",
-            "sv": "Studium i block"
+        "nodes": [
+          {
+            "id": "a",
+            "form": "action",
+            "icon": "resources",
+            "x": 0,
+            "y": 0,
+            "label": {
+              "it": "Raccogli il materiale",
+              "en": "Gather the material",
+              "es": "Reúne el material",
+              "fr": "Rassemble le matériel",
+              "de": "Sammle das Material",
+              "sv": "Samla ihop materialet"
+            }
+          },
+          {
+            "id": "b",
+            "form": "action",
+            "icon": "calendar",
+            "x": 240,
+            "y": 0,
+            "label": {
+              "it": "Piano delle tre settimane",
+              "en": "Plan the three weeks",
+              "es": "Plan de las tres semanas",
+              "fr": "Plan des trois semaines",
+              "de": "Plan für die drei Wochen",
+              "sv": "Plan för de tre veckorna"
+            }
+          },
+          {
+            "id": "c",
+            "form": "action",
+            "icon": "focus",
+            "x": 480,
+            "y": 0,
+            "label": {
+              "it": "Studio a blocchi",
+              "en": "Study in blocks",
+              "es": "Estudio en bloques",
+              "fr": "Étude en blocs",
+              "de": "Blockweise Lernen",
+              "sv": "Studium i block"
+            }
+          },
+          {
+            "id": "d",
+            "form": "action",
+            "icon": "experiment",
+            "x": 720,
+            "y": 0,
+            "label": {
+              "it": "Prove d'esame",
+              "en": "Practice papers",
+              "es": "Exámenes de prueba",
+              "fr": "Examens blancs",
+              "de": "Probeklausuren",
+              "sv": "Övningsprov"
+            }
+          },
+          {
+            "id": "e",
+            "form": "action",
+            "icon": "review",
+            "x": 960,
+            "y": 0,
+            "label": {
+              "it": "Ripasso finale",
+              "en": "Final review",
+              "es": "Repaso final",
+              "fr": "Révision finale",
+              "de": "Abschlusswiederholung",
+              "sv": "Slutgenomgång"
+            }
+          },
+          {
+            "id": "f",
+            "form": "outcome",
+            "icon": "finish",
+            "x": 1200,
+            "y": 0,
+            "label": {
+              "it": "Esame",
+              "en": "The exam",
+              "es": "Examen",
+              "fr": "Examen",
+              "de": "Prüfung",
+              "sv": "Prov"
+            }
+          },
+          {
+            "id": "g",
+            "form": "decision",
+            "icon": "obstacle",
+            "x": 480,
+            "y": 180,
+            "label": {
+              "it": "Manca un capitolo?",
+              "en": "A chapter missing?",
+              "es": "¿Falta un capítulo?",
+              "fr": "Manque-t-il un chapitre ?",
+              "de": "Fehlt ein Kapitel?",
+              "sv": "Saknas ett kapitel?"
+            }
           }
-        },
-        {
-          "id": "d",
-          "form": "action",
-          "icon": "experiment",
-          "x": 720,
-          "y": 0,
-          "label": {
-            "it": "Prove d'esame",
-            "en": "Practice papers",
-            "es": "Exámenes de prueba",
-            "fr": "Examens blancs",
-            "de": "Probeklausuren",
-            "sv": "Övningsprov"
+        ],
+        "edges": [
+          {
+            "from": "a",
+            "to": "b",
+            "rel": "then"
+          },
+          {
+            "from": "b",
+            "to": "c",
+            "rel": "then"
+          },
+          {
+            "from": "c",
+            "to": "d",
+            "rel": "then"
+          },
+          {
+            "from": "d",
+            "to": "e",
+            "rel": "then"
+          },
+          {
+            "from": "e",
+            "to": "f",
+            "rel": "then"
+          },
+          {
+            "from": "g",
+            "to": "c",
+            "rel": "blocks"
           }
-        },
-        {
-          "id": "e",
-          "form": "action",
-          "icon": "review",
-          "x": 960,
-          "y": 0,
-          "label": {
-            "it": "Ripasso finale",
-            "en": "Final review",
-            "es": "Repaso final",
-            "fr": "Révision finale",
-            "de": "Abschlusswiederholung",
-            "sv": "Slutgenomgång"
-          }
-        },
-        {
-          "id": "f",
-          "form": "outcome",
-          "icon": "finish",
-          "x": 1200,
-          "y": 0,
-          "label": {
-            "it": "Esame",
-            "en": "The exam",
-            "es": "Examen",
-            "fr": "Examen",
-            "de": "Prüfung",
-            "sv": "Prov"
-          }
-        },
-        {
-          "id": "g",
-          "form": "decision",
-          "icon": "obstacle",
-          "x": 480,
-          "y": 180,
-          "label": {
-            "it": "Manca un capitolo?",
-            "en": "A chapter missing?",
-            "es": "¿Falta un capítulo?",
-            "fr": "Manque-t-il un chapitre ?",
-            "de": "Fehlt ein Kapitel?",
-            "sv": "Saknas ett kapitel?"
-          }
-        }
-      ],
-      "edges": [
-        {
-          "from": "a",
-          "to": "b",
-          "rel": "then"
-        },
-        {
-          "from": "b",
-          "to": "c",
-          "rel": "then"
-        },
-        {
-          "from": "c",
-          "to": "d",
-          "rel": "then"
-        },
-        {
-          "from": "d",
-          "to": "e",
-          "rel": "then"
-        },
-        {
-          "from": "e",
-          "to": "f",
-          "rel": "then"
-        },
-        {
-          "from": "g",
-          "to": "c",
-          "rel": "blocks"
-        }
-      ]
-    }
+        ]
+      }
+    ]
   },
   {
     "id": "causal",
@@ -232,168 +611,385 @@
         "Varför jag skjuter upp studierna: vad som matar vad, och vad som sluter ringen."
       ]
     },
-    "example": {
-      "title": {
-        "it": "Come i fattori del QSA si influenzano",
-        "en": "How the QSA factors influence each other",
-        "es": "Cómo se influyen mutuamente los factores del QSA",
-        "fr": "Comment les facteurs du QSA s'influencent mutuellement",
-        "de": "Wie sich die Faktoren des QSA gegenseitig beeinflussen",
-        "sv": "Hur faktorerna i QSA påverkar varandra"
+    "examples": [
+      {
+        "id": "qsa-attribution",
+        "title": {
+          "it": "Attribuzione e perseveranza",
+          "en": "Attribution and perseverance",
+          "es": "Atribución y perseverancia",
+          "fr": "Attribution et persévérance",
+          "de": "Attribution und Ausdauer",
+          "sv": "Attribution och uthållighet"
+        },
+        "nodes": [
+          {
+            "id": "a4",
+            "form": "concept",
+            "icon": "context",
+            "x": 0,
+            "y": 0,
+            "label": {
+              "it": "Attribuzione a cause incontrollabili",
+              "en": "Attribution to uncontrollable causes",
+              "es": "Atribución a causas incontrolables",
+              "fr": "Attribution à des causes incontrôlables",
+              "de": "Attribution auf unkontrollierbare Ursachen",
+              "sv": "Attribution till okontrollerbara orsaker"
+            }
+          },
+          {
+            "id": "a6",
+            "form": "concept",
+            "icon": "individual",
+            "x": 320,
+            "y": 0,
+            "label": {
+              "it": "Percezione di competenza",
+              "en": "Perceived competence",
+              "es": "Percepción de competencia",
+              "fr": "Perception de compétence",
+              "de": "Kompetenzwahrnehmung",
+              "sv": "Upplevd kompetens"
+            }
+          },
+          {
+            "id": "a2",
+            "form": "concept",
+            "icon": "start",
+            "x": 320,
+            "y": 200,
+            "label": {
+              "it": "Volizione",
+              "en": "Volition",
+              "es": "Volición",
+              "fr": "Volition",
+              "de": "Volition",
+              "sv": "Vilja"
+            }
+          },
+          {
+            "id": "a5",
+            "form": "concept",
+            "icon": "pause",
+            "x": 0,
+            "y": 200,
+            "label": {
+              "it": "Mancanza di perseveranza",
+              "en": "Lack of perseverance",
+              "es": "Falta de perseverancia",
+              "fr": "Manque de persévérance",
+              "de": "Mangelnde Ausdauer",
+              "sv": "Brist på uthållighet"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "a4",
+            "to": "a6",
+            "rel": "hinders",
+            "strength": 3,
+            "hypothesis": false
+          },
+          {
+            "from": "a6",
+            "to": "a2",
+            "rel": "causes",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "a2",
+            "to": "a5",
+            "rel": "hinders",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "a5",
+            "to": "a4",
+            "rel": "feeds-back",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "Anello: la resa conferma la resa",
+              "en": "Loop: giving up confirms giving up",
+              "es": "Bucle: rendirse confirma rendirse",
+              "fr": "Boucle : renoncer confirme renoncer",
+              "de": "Schleife: Aufgeben bestätigt Aufgeben",
+              "sv": "Loop: att ge upp bekräftar uppgivenhet"
+            }
+          }
+        ]
       },
-      "nodes": [
-        {
-          "id": "anx",
-          "form": "concept",
-          "icon": "distress",
-          "x": 0,
-          "y": 0,
-          "label": {
-            "it": "Ansia da prestazione",
-            "en": "Performance anxiety",
-            "es": "Ansiedad por el rendimiento",
-            "fr": "Anxiété de performance",
-            "de": "Leistungsangst",
-            "sv": "Prestationsångest"
+      {
+        "id": "qsa-emotions",
+        "title": {
+          "it": "Emozioni e concentrazione",
+          "en": "Emotions and concentration",
+          "es": "Emociones y concentración",
+          "fr": "Émotions et concentration",
+          "de": "Emotionen und Konzentration",
+          "sv": "Känslor och koncentration"
+        },
+        "nodes": [
+          {
+            "id": "a1",
+            "form": "concept",
+            "icon": "distress",
+            "x": 0,
+            "y": 0,
+            "label": {
+              "it": "Ansietà di base",
+              "en": "Baseline anxiety",
+              "es": "Ansiedad de base",
+              "fr": "Anxiété de base",
+              "de": "Grundangst",
+              "sv": "Grundångest"
+            }
+          },
+          {
+            "id": "a7",
+            "form": "concept",
+            "icon": "heart",
+            "x": 300,
+            "y": 0,
+            "label": {
+              "it": "Interferenze emotive",
+              "en": "Emotional interference",
+              "es": "Interferencias emocionales",
+              "fr": "Interférences émotionnelles",
+              "de": "Emotionale Interferenzen",
+              "sv": "Emotionella störningar"
+            }
+          },
+          {
+            "id": "c6",
+            "form": "concept",
+            "icon": "distraction",
+            "x": 300,
+            "y": 190,
+            "label": {
+              "it": "Difficoltà di concentrazione",
+              "en": "Concentration difficulties",
+              "es": "Dificultades de concentración",
+              "fr": "Difficultés de concentration",
+              "de": "Konzentrationsschwierigkeiten",
+              "sv": "Koncentrationssvårigheter"
+            }
+          },
+          {
+            "id": "c3",
+            "form": "concept",
+            "icon": "uncertainty",
+            "x": 0,
+            "y": 190,
+            "label": {
+              "it": "Disorientamento",
+              "en": "Disorientation",
+              "es": "Desorientación",
+              "fr": "Désorientation",
+              "de": "Desorientierung",
+              "sv": "Desorientering"
+            }
+          },
+          {
+            "id": "half",
+            "form": "outcome",
+            "icon": "obstacle",
+            "x": 150,
+            "y": 380,
+            "label": {
+              "it": "Compito lasciato a metà",
+              "en": "Task left half done",
+              "es": "Tarea dejada a medias",
+              "fr": "Tâche laissée à moitié",
+              "de": "Halb erledigte Aufgabe",
+              "sv": "Halvfärdig uppgift"
+            }
           }
-        },
-        {
-          "id": "str",
-          "form": "concept",
-          "icon": "structure",
-          "x": 280,
-          "y": 0,
-          "label": {
-            "it": "Uso di strategie",
-            "en": "Use of strategies",
-            "es": "Uso de estrategias",
-            "fr": "Utilisation de stratégies",
-            "de": "Einsatz von Strategien",
-            "sv": "Användning av strategier"
+        ],
+        "edges": [
+          {
+            "from": "a1",
+            "to": "a7",
+            "rel": "causes",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "a7",
+            "to": "c6",
+            "rel": "causes",
+            "strength": 3,
+            "hypothesis": false
+          },
+          {
+            "from": "c6",
+            "to": "c3",
+            "rel": "causes",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "c3",
+            "to": "half",
+            "rel": "causes",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "half",
+            "to": "a1",
+            "rel": "feeds-back",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "Anello: l'incompiuto alimenta l'ansia",
+              "en": "Loop: unfinished work feeds anxiety",
+              "es": "Bucle: lo inacabado nutre la ansiedad",
+              "fr": "Boucle : l'inachevé nourrit l'anxiété",
+              "de": "Schleife: Unfertiges nährt die Angst",
+              "sv": "Loop: ofärdigt göder ångesten"
+            }
           }
+        ]
+      },
+      {
+        "id": "ztpi-evening",
+        "title": {
+          "it": "Perché la sera non riesco a smettere",
+          "en": "Why I can't stop in the evening",
+          "es": "Por qué de noche no consigo parar",
+          "fr": "Pourquoi le soir je n'arrive pas à m'arrêter",
+          "de": "Warum ich abends nicht aufhören kann",
+          "sv": "Varför jag inte kan sluta på kvällen"
         },
-        {
-          "id": "res",
-          "form": "outcome",
-          "icon": "progress",
-          "x": 280,
-          "y": 180,
-          "label": {
-            "it": "Risultati",
-            "en": "Results",
-            "es": "Resultados",
-            "fr": "Résultats",
-            "de": "Ergebnisse",
-            "sv": "Resultat"
+        "nodes": [
+          {
+            "id": "t4",
+            "form": "concept",
+            "icon": "constraint",
+            "x": 0,
+            "y": 0,
+            "label": {
+              "it": "Presente Fatalistico",
+              "en": "Present Fatalistic",
+              "es": "Presente Fatalista",
+              "fr": "Présent Fataliste",
+              "de": "Fatalistische Gegenwart",
+              "sv": "Fatalistisk Nutid"
+            }
+          },
+          {
+            "id": "t5",
+            "form": "concept",
+            "icon": "calendar",
+            "x": 300,
+            "y": 0,
+            "label": {
+              "it": "Futuro",
+              "en": "Future",
+              "es": "Futuro",
+              "fr": "Futur",
+              "de": "Zukunft",
+              "sv": "Framtid"
+            }
+          },
+          {
+            "id": "delay",
+            "form": "concept",
+            "icon": "delay",
+            "x": 300,
+            "y": 190,
+            "label": {
+              "it": "Rimando",
+              "en": "Putting off",
+              "es": "Aplazamiento",
+              "fr": "Report",
+              "de": "Aufschieben",
+              "sv": "Uppskjutande"
+            }
+          },
+          {
+            "id": "night",
+            "form": "concept",
+            "icon": "clock",
+            "x": 300,
+            "y": 380,
+            "label": {
+              "it": "Studio notturno",
+              "en": "Studying at night",
+              "es": "Estudio nocturno",
+              "fr": "Étude nocturne",
+              "de": "Nachtlernen",
+              "sv": "Nattstudier"
+            }
+          },
+          {
+            "id": "tired",
+            "form": "concept",
+            "icon": "fatigue",
+            "x": 0,
+            "y": 380,
+            "label": {
+              "it": "Stanchezza",
+              "en": "Tiredness",
+              "es": "Cansancio",
+              "fr": "Fatigue",
+              "de": "Müdigkeit",
+              "sv": "Trötthet"
+            }
           }
-        },
-        {
-          "id": "com",
-          "form": "concept",
-          "icon": "growth",
-          "x": 0,
-          "y": 180,
-          "label": {
-            "it": "Percezione di competenza",
-            "en": "Perceived competence",
-            "es": "Percepción de competencia",
-            "fr": "Perception de compétence",
-            "de": "Wahrgenommene Kompetenz",
-            "sv": "Upplevd kompetens"
+        ],
+        "edges": [
+          {
+            "from": "t4",
+            "to": "t5",
+            "rel": "hinders",
+            "strength": 3,
+            "hypothesis": false
+          },
+          {
+            "from": "t5",
+            "to": "delay",
+            "rel": "hinders",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "delay",
+            "to": "night",
+            "rel": "causes",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "night",
+            "to": "tired",
+            "rel": "causes",
+            "strength": 3,
+            "hypothesis": false
+          },
+          {
+            "from": "tired",
+            "to": "t4",
+            "rel": "feeds-back",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "Anello: la stanchezza nutre il fato",
+              "en": "Loop: tiredness feeds fatalism",
+              "es": "Bucle: el cansancio nutre el fatalismo",
+              "fr": "Boucle : fatigue nourrit fatalisme",
+              "de": "Schleife: Müdigkeit nährt Fatalismus",
+              "sv": "Loop: trötthet göder fatalismen"
+            }
           }
-        },
-        {
-          "id": "vol",
-          "form": "concept",
-          "icon": "energy",
-          "x": 0,
-          "y": 360,
-          "label": {
-            "it": "Volizione",
-            "en": "Volition",
-            "es": "Volición",
-            "fr": "Volition",
-            "de": "Wille",
-            "sv": "Vilja"
-          }
-        },
-        {
-          "id": "del",
-          "form": "concept",
-          "icon": "delay",
-          "x": 280,
-          "y": 360,
-          "label": {
-            "it": "Rimando",
-            "en": "Putting off",
-            "es": "Aplazamiento",
-            "fr": "Report",
-            "de": "Aufschieben",
-            "sv": "Uppskjutande"
-          }
-        }
-      ],
-      "edges": [
-        {
-          "from": "anx",
-          "to": "str",
-          "rel": "hinders",
-          "strength": 2
-        },
-        {
-          "from": "str",
-          "to": "res",
-          "rel": "causes",
-          "strength": 3
-        },
-        {
-          "from": "res",
-          "to": "com",
-          "rel": "causes",
-          "strength": 2
-        },
-        {
-          "from": "com",
-          "to": "anx",
-          "rel": "hinders",
-          "strength": 2,
-          "label": {
-            "it": "anello: competenza calma l'ansia",
-            "en": "loop: competence calms anxiety",
-            "es": "Bucle: la competencia calma la ansiedad",
-            "fr": "Boucle : la compétence calme l'anxiété",
-            "de": "Schleife: Kompetenz beruhigt Angst",
-            "sv": "Loopen: kompetensen lugnar ångesten"
-          }
-        },
-        {
-          "from": "com",
-          "to": "vol",
-          "rel": "causes",
-          "strength": 2
-        },
-        {
-          "from": "vol",
-          "to": "del",
-          "rel": "hinders",
-          "strength": 2
-        },
-        {
-          "from": "del",
-          "to": "anx",
-          "rel": "feeds-back",
-          "strength": 2,
-          "label": {
-            "it": "anello: rimando e ansia si alimentano",
-            "en": "loop: putting off feeds anxiety",
-            "es": "Bucle: aplazamiento y ansiedad",
-            "fr": "Boucle : report et anxiété",
-            "de": "Schleife: Aufschieben speist Angst",
-            "sv": "Loopen: uppskjutande och ångest matar"
-          }
-        }
-      ]
-    }
+        ]
+      }
+    ]
   },
   {
     "id": "concept",
@@ -445,203 +1041,698 @@
         "Vad är vilja och hur hänger den ihop med strategier, mål och ansträngning?"
       ]
     },
-    "example": {
-      "title": {
-        "it": "Com'e' fatto il QSA",
-        "en": "How the QSA is built",
-        "es": "¿Cómo está estructurado el QSA?",
-        "fr": "Comment est construit le QSA ?",
-        "de": "Wie ist der QSA aufgebaut?",
-        "sv": "Hur är QSA uppbyggt?"
+    "examples": [
+      {
+        "id": "qsa-two-areas",
+        "title": {
+          "it": "Le due aree e i sei raggruppamenti",
+          "en": "The two areas and the six groupings",
+          "es": "Las dos áreas y los seis agrupamientos",
+          "fr": "Les deux domaines et les six regroupements",
+          "de": "Die zwei Bereiche und die sechs Gruppen",
+          "sv": "De två områdena och de sex grupperna"
+        },
+        "nodes": [
+          {
+            "id": "qsa",
+            "form": "concept",
+            "icon": "measure",
+            "x": 320,
+            "y": 0,
+            "label": {
+              "it": "QSA",
+              "en": "QSA",
+              "es": "QSA",
+              "fr": "QSA",
+              "de": "QSA",
+              "sv": "QSA"
+            }
+          },
+          {
+            "id": "cog",
+            "form": "concept",
+            "icon": "brain",
+            "x": 0,
+            "y": 180,
+            "label": {
+              "it": "Area cognitiva",
+              "en": "Cognitive area",
+              "es": "Área cognitiva",
+              "fr": "Domaine cognitif",
+              "de": "Kognitiver Bereich",
+              "sv": "Kognitivt område"
+            }
+          },
+          {
+            "id": "aff",
+            "form": "concept",
+            "icon": "heart",
+            "x": 640,
+            "y": 180,
+            "label": {
+              "it": "Area affettivo-motivazionale",
+              "en": "Affective-motivational area",
+              "es": "Área afectivo-motivacional",
+              "fr": "Domaine affectivo-motivationnel",
+              "de": "Affektiv-motivationaler Bereich",
+              "sv": "Affektivt-motivationellt område"
+            }
+          },
+          {
+            "id": "elab",
+            "form": "concept",
+            "icon": "connections",
+            "x": 0,
+            "y": 380,
+            "label": {
+              "it": "Elaborazione (C1, C5, C7)",
+              "en": "Elaboration (C1, C5, C7)",
+              "es": "Elaboración (C1, C5, C7)",
+              "fr": "Élaboration (C1, C5, C7)",
+              "de": "Elaboration (C1, C5, C7)",
+              "sv": "Bearbetning (C1, C5, C7)"
+            }
+          },
+          {
+            "id": "ctrl",
+            "form": "concept",
+            "icon": "tasks",
+            "x": 220,
+            "y": 380,
+            "label": {
+              "it": "Autocontrollo (C2, C3, C6)",
+              "en": "Self-control (C2, C3, C6)",
+              "es": "Autocontrol (C2, C3, C6)",
+              "fr": "Autocontrôle (C2, C3, C6)",
+              "de": "Selbstkontrolle (C2, C3, C6)",
+              "sv": "Självkontroll (C2, C3, C6)"
+            }
+          },
+          {
+            "id": "coop",
+            "form": "concept",
+            "icon": "cooperation",
+            "x": 440,
+            "y": 380,
+            "label": {
+              "it": "Collaborazione (C4)",
+              "en": "Collaboration (C4)",
+              "es": "Colaboración (C4)",
+              "fr": "Collaboration (C4)",
+              "de": "Zusammenarbeit (C4)",
+              "sv": "Samarbete (C4)"
+            }
+          },
+          {
+            "id": "emo",
+            "form": "concept",
+            "icon": "distress",
+            "x": 660,
+            "y": 380,
+            "label": {
+              "it": "Emozioni (A1, A7)",
+              "en": "Emotions (A1, A7)",
+              "es": "Emociones (A1, A7)",
+              "fr": "Émotions (A1, A7)",
+              "de": "Emotionen (A1, A7)",
+              "sv": "Känslor (A1, A7)"
+            }
+          },
+          {
+            "id": "mot",
+            "form": "concept",
+            "icon": "energy",
+            "x": 880,
+            "y": 380,
+            "label": {
+              "it": "Motivazione (A2, A5, A6)",
+              "en": "Motivation (A2, A5, A6)",
+              "es": "Motivación (A2, A5, A6)",
+              "fr": "Motivation (A2, A5, A6)",
+              "de": "Motivation (A2, A5, A6)",
+              "sv": "Motivation (A2, A5, A6)"
+            }
+          },
+          {
+            "id": "attr",
+            "form": "concept",
+            "icon": "access",
+            "x": 1100,
+            "y": 380,
+            "label": {
+              "it": "Attribuzione (A3, A4, A6)",
+              "en": "Attribution (A3, A4, A6)",
+              "es": "Atribución (A3, A4, A6)",
+              "fr": "Attribution (A3, A4, A6)",
+              "de": "Attribution (A3, A4, A6)",
+              "sv": "Attribution (A3, A4, A6)"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "cog",
+            "to": "qsa",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "è una delle due aree",
+              "en": "is one of the two areas",
+              "es": "es una de las dos áreas",
+              "fr": "est l'un des deux domaines",
+              "de": "ist einer der zwei Bereiche",
+              "sv": "är ett av de två områdena"
+            }
+          },
+          {
+            "from": "aff",
+            "to": "qsa",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "è una delle due aree",
+              "en": "is one of the two areas",
+              "es": "es una de las dos áreas",
+              "fr": "est l'un des deux domaines",
+              "de": "ist einer der zwei Bereiche",
+              "sv": "är ett av de två områdena"
+            }
+          },
+          {
+            "from": "elab",
+            "to": "cog",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "raggruppa fattori cognitivi",
+              "en": "groups cognitive factors",
+              "es": "agrupa factores cognitivos",
+              "fr": "regroupe des facteurs cognitifs",
+              "de": "gruppiert kognitive Faktoren",
+              "sv": "grupperar kognitiva faktorer"
+            }
+          },
+          {
+            "from": "ctrl",
+            "to": "cog",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "raggruppa fattori cognitivi",
+              "en": "groups cognitive factors",
+              "es": "agrupa factores cognitivos",
+              "fr": "regroupe des facteurs cognitifs",
+              "de": "gruppiert kognitive Faktoren",
+              "sv": "grupperar kognitiva faktorer"
+            }
+          },
+          {
+            "from": "coop",
+            "to": "cog",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "raggruppa fattori cognitivi",
+              "en": "groups cognitive factors",
+              "es": "agrupa factores cognitivos",
+              "fr": "regroupe des facteurs cognitifs",
+              "de": "gruppiert kognitive Faktoren",
+              "sv": "grupperar kognitiva faktorer"
+            }
+          },
+          {
+            "from": "emo",
+            "to": "aff",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "raggruppa fattori affettivi",
+              "en": "groups affective factors",
+              "es": "agrupa factores afectivos",
+              "fr": "regroupe des facteurs affectifs",
+              "de": "gruppiert affektive Faktoren",
+              "sv": "grupperar affektiva faktorer"
+            }
+          },
+          {
+            "from": "mot",
+            "to": "aff",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "raggruppa fattori affettivi",
+              "en": "groups affective factors",
+              "es": "agrupa factores afectivos",
+              "fr": "regroupe des facteurs affectifs",
+              "de": "gruppiert affektive Faktoren",
+              "sv": "grupperar affektiva faktorer"
+            }
+          },
+          {
+            "from": "attr",
+            "to": "aff",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "raggruppa fattori affettivi",
+              "en": "groups affective factors",
+              "es": "agrupa factores afectivos",
+              "fr": "regroupe des facteurs affectifs",
+              "de": "gruppiert affektive Faktoren",
+              "sv": "grupperar affektiva faktorer"
+            }
+          }
+        ]
       },
-      "nodes": [
-        {
-          "id": "qsa",
-          "form": "concept",
-          "icon": "measure",
-          "x": 280,
-          "y": 0,
-          "label": {
-            "it": "QSA",
-            "en": "QSA",
-            "es": "QSA",
-            "fr": "QSA",
-            "de": "QSA",
-            "sv": "QSA"
-          }
+      {
+        "id": "ztpi-five",
+        "title": {
+          "it": "Le cinque prospettive del tempo",
+          "en": "The five time perspectives",
+          "es": "Las cinco perspectivas del tiempo",
+          "fr": "Les cinq perspectives temporelles",
+          "de": "Die fünf Zeitperspektiven",
+          "sv": "De fem tidsperspektiven"
         },
-        {
-          "id": "cog",
-          "form": "concept",
-          "icon": "brain",
-          "x": 0,
-          "y": 160,
-          "label": {
-            "it": "Area cognitiva",
-            "en": "Cognitive area",
-            "es": "Área cognitiva",
-            "fr": "Domaine cognitif",
-            "de": "Kognitiver Bereich",
-            "sv": "Kognitivt område"
+        "nodes": [
+          {
+            "id": "ztpi",
+            "form": "concept",
+            "icon": "clock",
+            "x": 440,
+            "y": 0,
+            "label": {
+              "it": "ZTPI",
+              "en": "ZTPI",
+              "es": "ZTPI",
+              "fr": "ZTPI",
+              "de": "ZTPI",
+              "sv": "ZTPI"
+            }
+          },
+          {
+            "id": "t1",
+            "form": "concept",
+            "icon": "experience",
+            "x": 0,
+            "y": 190,
+            "label": {
+              "it": "Passato Negativo",
+              "en": "Past Negative",
+              "es": "Pasado Negativo",
+              "fr": "Passé Négatif",
+              "de": "Negative Vergangenheit",
+              "sv": "Negativt Förflutet"
+            }
+          },
+          {
+            "id": "t2",
+            "form": "concept",
+            "icon": "experience",
+            "x": 220,
+            "y": 190,
+            "label": {
+              "it": "Passato Positivo",
+              "en": "Past Positive",
+              "es": "Pasado Positivo",
+              "fr": "Passé Positif",
+              "de": "Positive Vergangenheit",
+              "sv": "Positivt Förflutet"
+            }
+          },
+          {
+            "id": "t3",
+            "form": "concept",
+            "icon": "wellbeing",
+            "x": 440,
+            "y": 190,
+            "label": {
+              "it": "Presente Edonistico",
+              "en": "Present Hedonistic",
+              "es": "Presente Hedonista",
+              "fr": "Présent Hédoniste",
+              "de": "Hedonistische Gegenwart",
+              "sv": "Hedonistisk Nutid"
+            }
+          },
+          {
+            "id": "t4",
+            "form": "concept",
+            "icon": "constraint",
+            "x": 660,
+            "y": 190,
+            "label": {
+              "it": "Presente Fatalistico",
+              "en": "Present Fatalistic",
+              "es": "Presente Fatalista",
+              "fr": "Présent Fataliste",
+              "de": "Fatalistische Gegenwart",
+              "sv": "Fatalistisk Nutid"
+            }
+          },
+          {
+            "id": "t5",
+            "form": "concept",
+            "icon": "calendar",
+            "x": 880,
+            "y": 190,
+            "label": {
+              "it": "Futuro",
+              "en": "Future",
+              "es": "Futuro",
+              "fr": "Futur",
+              "de": "Zukunft",
+              "sv": "Framtid"
+            }
+          },
+          {
+            "id": "fear",
+            "form": "concept",
+            "icon": "uncertainty",
+            "x": 660,
+            "y": 390,
+            "label": {
+              "it": "Rimandare per paura di sbagliare",
+              "en": "Putting off for fear of getting it wrong",
+              "es": "Aplazar por miedo a equivocarse",
+              "fr": "Reporter par peur de se tromper",
+              "de": "Aufschieben aus Angst vor Fehlern",
+              "sv": "Skjuta upp av rädsla för fel"
+            }
+          },
+          {
+            "id": "plan",
+            "form": "concept",
+            "icon": "calendar",
+            "x": 880,
+            "y": 390,
+            "label": {
+              "it": "Fare piani a tre settimane",
+              "en": "Planning three weeks ahead",
+              "es": "Planificar a tres semanas",
+              "fr": "Planifier à trois semaines",
+              "de": "Drei Wochen vorausplanen",
+              "sv": "Planera tre veckor framåt"
+            }
           }
+        ],
+        "edges": [
+          {
+            "from": "t1",
+            "to": "ztpi",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "è una delle cinque prospettive",
+              "en": "is one of the five perspectives",
+              "es": "es una de las cinco perspectivas",
+              "fr": "est l'une des cinq perspectives",
+              "de": "ist eine der fünf Perspektiven",
+              "sv": "är ett av de fem perspektiven"
+            }
+          },
+          {
+            "from": "t2",
+            "to": "ztpi",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "è una delle cinque prospettive",
+              "en": "is one of the five perspectives",
+              "es": "es una de las cinco perspectivas",
+              "fr": "est l'une des cinq perspectives",
+              "de": "ist eine der fünf Perspektiven",
+              "sv": "är ett av de fem perspektiven"
+            }
+          },
+          {
+            "from": "t3",
+            "to": "ztpi",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "è una delle cinque prospettive",
+              "en": "is one of the five perspectives",
+              "es": "es una de las cinco perspectivas",
+              "fr": "est l'une des cinq perspectives",
+              "de": "ist eine der fünf Perspektiven",
+              "sv": "är ett av de fem perspektiven"
+            }
+          },
+          {
+            "from": "t4",
+            "to": "ztpi",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "è una delle cinque prospettive",
+              "en": "is one of the five perspectives",
+              "es": "es una de las cinco perspectivas",
+              "fr": "est l'une des cinq perspectives",
+              "de": "ist eine der fünf Perspektiven",
+              "sv": "är ett av de fem perspektiven"
+            }
+          },
+          {
+            "from": "t5",
+            "to": "ztpi",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "è una delle cinque prospettive",
+              "en": "is one of the five perspectives",
+              "es": "es una de las cinco perspectivas",
+              "fr": "est l'une des cinq perspectives",
+              "de": "ist eine der fünf Perspektiven",
+              "sv": "är ett av de fem perspektiven"
+            }
+          },
+          {
+            "from": "fear",
+            "to": "t4",
+            "rel": "example-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "è un modo di viverlo",
+              "en": "is one way of living it",
+              "es": "es una forma de vivirlo",
+              "fr": "est une façon de le vivre",
+              "de": "ist eine Art, sie zu leben",
+              "sv": "är ett sätt att leva det"
+            }
+          },
+          {
+            "from": "plan",
+            "to": "t5",
+            "rel": "example-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "è un modo di viverlo",
+              "en": "is one way of living it",
+              "es": "es una forma de vivirlo",
+              "fr": "est une façon de le vivre",
+              "de": "ist eine Art, sie zu leben",
+              "sv": "är ett sätt att leva det"
+            }
+          }
+        ]
+      },
+      {
+        "id": "volition",
+        "title": {
+          "it": "Cos'è la volizione",
+          "en": "What volition is",
+          "es": "Qué es la volición",
+          "fr": "Qu'est-ce que la volition",
+          "de": "Was Volition ist",
+          "sv": "Vad vilja är"
         },
-        {
-          "id": "aff",
-          "form": "concept",
-          "icon": "heart",
-          "x": 560,
-          "y": 160,
-          "label": {
-            "it": "Area affettivo-motivazionale",
-            "en": "Affective-motivational area",
-            "es": "Área afectivo-motivacional",
-            "fr": "Domaine affectif et motivationnel",
-            "de": "Affektiv-motivationaler Bereich",
-            "sv": "Affektiv-motivationsområde"
+        "nodes": [
+          {
+            "id": "a2",
+            "form": "concept",
+            "icon": "start",
+            "x": 300,
+            "y": 180,
+            "label": {
+              "it": "Volizione",
+              "en": "Volition",
+              "es": "Volición",
+              "fr": "Volition",
+              "de": "Volition",
+              "sv": "Vilja"
+            }
+          },
+          {
+            "id": "aff",
+            "form": "concept",
+            "icon": "heart",
+            "x": 300,
+            "y": 0,
+            "label": {
+              "it": "Area affettivo-motivazionale",
+              "en": "Affective-motivational area",
+              "es": "Área afectivo-motivacional",
+              "fr": "Domaine affectivo-motivationnel",
+              "de": "Affektiv-motivationaler Bereich",
+              "sv": "Affektivt-motivationellt område"
+            }
+          },
+          {
+            "id": "goal",
+            "form": "concept",
+            "icon": "target",
+            "x": 0,
+            "y": 180,
+            "label": {
+              "it": "Obiettivo che ho scelto io",
+              "en": "A goal I chose myself",
+              "es": "Un objetivo que elegí yo",
+              "fr": "Un objectif que j'ai choisi",
+              "de": "Ein Ziel, das ich selbst wählte",
+              "sv": "Ett mål jag valt själv"
+            }
+          },
+          {
+            "id": "effort",
+            "form": "concept",
+            "icon": "fatigue",
+            "x": 600,
+            "y": 180,
+            "label": {
+              "it": "Fatica che non passa",
+              "en": "Effort that doesn't let up",
+              "es": "Esfuerzo que no cede",
+              "fr": "Effort qui ne faiblit pas",
+              "de": "Anstrengung, die nicht nachlässt",
+              "sv": "Ansträngning som inte ger sig"
+            }
+          },
+          {
+            "id": "a5",
+            "form": "concept",
+            "icon": "pause",
+            "x": 600,
+            "y": 380,
+            "label": {
+              "it": "Mancanza di perseveranza",
+              "en": "Lack of perseverance",
+              "es": "Falta de perseverancia",
+              "fr": "Manque de persévérance",
+              "de": "Mangelnde Ausdauer",
+              "sv": "Brist på uthållighet"
+            }
+          },
+          {
+            "id": "c2",
+            "form": "concept",
+            "icon": "tasks",
+            "x": 0,
+            "y": 380,
+            "label": {
+              "it": "Autoregolazione",
+              "en": "Self-regulation",
+              "es": "Autorregulación",
+              "fr": "Autorégulation",
+              "de": "Selbstregulation",
+              "sv": "Självreglering"
+            }
           }
-        },
-        {
-          "id": "stg",
-          "form": "concept",
-          "icon": "structure",
-          "x": 0,
-          "y": 320,
-          "label": {
-            "it": "Strategie di studio",
-            "en": "Study strategies",
-            "es": "Estrategias de estudio",
-            "fr": "Stratégies d'étude",
-            "de": "Lernstrategien",
-            "sv": "Studiestrategier"
+        ],
+        "edges": [
+          {
+            "from": "a2",
+            "to": "aff",
+            "rel": "part-of",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "è un fattore dell'area",
+              "en": "is a factor of the area",
+              "es": "es un factor del área",
+              "fr": "est un facteur du domaine",
+              "de": "ist ein Faktor des Bereichs",
+              "sv": "är en faktor i området"
+            }
+          },
+          {
+            "from": "a2",
+            "to": "goal",
+            "rel": "supports",
+            "strength": 3,
+            "hypothesis": false,
+            "label": {
+              "it": "tiene fermo l'obiettivo",
+              "en": "holds the goal steady",
+              "es": "mantiene firme el objetivo",
+              "fr": "maintient le cap sur l'objectif",
+              "de": "hält das Ziel fest",
+              "sv": "håller målet stadigt"
+            }
+          },
+          {
+            "from": "effort",
+            "to": "a2",
+            "rel": "hinders",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "la mette alla prova",
+              "en": "puts it to the test",
+              "es": "la pone a prueba",
+              "fr": "la met à l'épreuve",
+              "de": "stellt sie auf die Probe",
+              "sv": "sätter den på prov"
+            }
+          },
+          {
+            "from": "a5",
+            "to": "a2",
+            "rel": "contradicts",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "è il suo venir meno",
+              "en": "is its failing",
+              "es": "es su fallo",
+              "fr": "est sa défaillance",
+              "de": "ist ihr Nachlassen",
+              "sv": "är dess svikande"
+            }
+          },
+          {
+            "from": "c2",
+            "to": "a2",
+            "rel": "supports",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "le dà un metodo",
+              "en": "gives it a method",
+              "es": "le da un método",
+              "fr": "lui donne une méthode",
+              "de": "gibt ihr eine Methode",
+              "sv": "ger den en metod"
+            }
           }
-        },
-        {
-          "id": "aut",
-          "form": "concept",
-          "icon": "repeat",
-          "x": 200,
-          "y": 480,
-          "label": {
-            "it": "Autoregolazione",
-            "en": "Self-regulation",
-            "es": "Autorregulación",
-            "fr": "Autorégulation",
-            "de": "Selbstregulation",
-            "sv": "Självreglering"
-          }
-        },
-        {
-          "id": "anx",
-          "form": "concept",
-          "icon": "distress",
-          "x": 560,
-          "y": 320,
-          "label": {
-            "it": "Ansia",
-            "en": "Anxiety",
-            "es": "Ansiedad",
-            "fr": "Anxiété",
-            "de": "Angst",
-            "sv": "Ångest"
-          }
-        },
-        {
-          "id": "com",
-          "form": "concept",
-          "icon": "growth",
-          "x": 800,
-          "y": 480,
-          "label": {
-            "it": "Percezione di competenza",
-            "en": "Perceived competence",
-            "es": "Percepción de competencia",
-            "fr": "Perception de compétence",
-            "de": "Wahrgenommene Kompetenz",
-            "sv": "Upplevd kompetens"
-          }
-        }
-      ],
-      "edges": [
-        {
-          "from": "cog",
-          "to": "qsa",
-          "rel": "part-of",
-          "label": {
-            "it": "e' una delle due aree",
-            "en": "is one of the two areas",
-            "es": "es una de las dos áreas",
-            "fr": "c'est l'un des deux domaines",
-            "de": "es ist einer der beiden Bereiche",
-            "sv": "det är ett av de två områdena"
-          }
-        },
-        {
-          "from": "aff",
-          "to": "qsa",
-          "rel": "part-of",
-          "label": {
-            "it": "e' una delle due aree",
-            "en": "is one of the two areas",
-            "es": "es una de las dos áreas",
-            "fr": "c'est l'un des deux domaines",
-            "de": "es ist einer der beiden Bereiche",
-            "sv": "det är ett av de två områdena"
-          }
-        },
-        {
-          "from": "stg",
-          "to": "cog",
-          "rel": "part-of",
-          "label": {
-            "it": "e' misurata dall'area",
-            "en": "is measured by the area",
-            "es": "se mide por el área",
-            "fr": "elle est mesurée par le domaine",
-            "de": "sie wird durch den Bereich gemessen",
-            "sv": "den mäts av området"
-          }
-        },
-        {
-          "from": "aut",
-          "to": "stg",
-          "rel": "example-of",
-          "label": {
-            "it": "e' un tipo di strategia",
-            "en": "is a kind of strategy",
-            "es": "es un tipo de estrategia",
-            "fr": "c'est un type de stratégie",
-            "de": "es ist eine Art Strategie",
-            "sv": "det är en typ av strategi"
-          }
-        },
-        {
-          "from": "anx",
-          "to": "aff",
-          "rel": "part-of",
-          "label": {
-            "it": "e' un fattore dell'area",
-            "en": "is a factor of the area",
-            "es": "es un factor del área",
-            "fr": "c'est un facteur du domaine",
-            "de": "es ist ein Faktor des Bereichs",
-            "sv": "det är en faktor inom området"
-          }
-        },
-        {
-          "from": "com",
-          "to": "aff",
-          "rel": "part-of",
-          "label": {
-            "it": "e' un fattore dell'area",
-            "en": "is a factor of the area",
-            "es": "es un factor del área",
-            "fr": "c'est un facteur du domaine",
-            "de": "es ist ein Faktor des Bereichs",
-            "sv": "det är en faktor inom området"
-          }
-        }
-      ]
-    }
+        ]
+      }
+    ]
   },
   {
     "id": "argument",
@@ -685,142 +1776,449 @@
         "Varför denna metod fungerar för mig och vilka bevis jag saknar."
       ]
     },
-    "example": {
-      "title": {
-        "it": "Studio meglio di sera",
-        "en": "I study better in the evening",
-        "es": "Estudio mejor por la noche",
-        "fr": "J'étudie mieux le soir",
-        "de": "Ich lerne am Abend besser",
-        "sv": "Jag studerar bättre på kvällen"
+    "examples": [
+      {
+        "id": "savickas-motto",
+        "title": {
+          "it": "Il motto che mi sono dato regge?",
+          "en": "Does the motto I gave myself hold?",
+          "es": "¿Se sostiene el lema que me he dado?",
+          "fr": "Ma devise tient-elle ?",
+          "de": "Hält mein Motto stand?",
+          "sv": "Håller mitt motto?"
+        },
+        "nodes": [
+          {
+            "id": "motto",
+            "form": "concept",
+            "icon": "idea",
+            "x": 300,
+            "y": 0,
+            "label": {
+              "it": "Il mio motto: prima provo, poi giudico",
+              "en": "My motto: try first, judge later",
+              "es": "Mi lema: primero pruebo, luego juzgo",
+              "fr": "Ma devise : j'essaie d'abord, je juge ensuite",
+              "de": "Mein Motto: erst versuchen, dann urteilen",
+              "sv": "Mitt motto: prova först, döm sedan"
+            },
+            "accent": true
+          },
+          {
+            "id": "model",
+            "form": "concept",
+            "icon": "individual",
+            "x": 0,
+            "y": 200,
+            "label": {
+              "it": "Il modello di ruolo che ho scelto fa così",
+              "en": "My role model does exactly that",
+              "es": "Mi modelo de rol hace justo eso",
+              "fr": "Mon modèle de rôle fait exactement cela",
+              "de": "Mein Rollenvorbild macht genau das",
+              "sv": "Min förebild gör just det"
+            }
+          },
+          {
+            "id": "memory",
+            "form": "concept",
+            "icon": "experience",
+            "x": 300,
+            "y": 200,
+            "label": {
+              "it": "Un ricordo precoce: il primo tuffo",
+              "en": "An early memory: the first dive",
+              "es": "Un recuerdo temprano: el primer salto",
+              "fr": "Un souvenir précoce : le premier plongeon",
+              "de": "Eine frühe Erinnerung: der erste Sprung",
+              "sv": "Ett tidigt minne: det första hoppet"
+            }
+          },
+          {
+            "id": "choice",
+            "form": "concept",
+            "icon": "error",
+            "x": 600,
+            "y": 200,
+            "label": {
+              "it": "L'anno scorso ho rinunciato senza provare",
+              "en": "Last year I gave up without trying",
+              "es": "El año pasado renuncié sin probar",
+              "fr": "L'an dernier j'ai renoncé sans essayer",
+              "de": "Letztes Jahr gab ich ohne Versuch auf",
+              "sv": "I fjol gav jag upp utan att prova"
+            }
+          },
+          {
+            "id": "assume",
+            "form": "concept",
+            "icon": "uncertainty",
+            "x": 0,
+            "y": 400,
+            "label": {
+              "it": "Do per scontato di avere sempre tempo per provare",
+              "en": "I take for granted there is always time to try",
+              "es": "Doy por supuesto que siempre hay tiempo para probar",
+              "fr": "Je tiens pour acquis qu'il y a toujours le temps d'essayer",
+              "de": "Ich setze voraus, dass immer Zeit zum Versuchen bleibt",
+              "sv": "Jag tar för givet att det alltid finns tid att prova"
+            }
+          },
+          {
+            "id": "gap",
+            "form": "concept",
+            "icon": "evidence",
+            "x": 600,
+            "y": 400,
+            "label": {
+              "it": "Non ho mai raccontato il motto a nessuno",
+              "en": "I have never told anyone the motto",
+              "es": "Nunca le he contado el lema a nadie",
+              "fr": "Je n'ai jamais raconté ma devise à personne",
+              "de": "Ich habe das Motto nie jemandem erzählt",
+              "sv": "Jag har aldrig berättat mottot för någon"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "model",
+            "to": "motto",
+            "rel": "supports",
+            "strength": 3,
+            "hypothesis": false
+          },
+          {
+            "from": "memory",
+            "to": "motto",
+            "rel": "supports",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "choice",
+            "to": "motto",
+            "rel": "contradicts",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "assume",
+            "to": "motto",
+            "rel": "assumes",
+            "strength": 2,
+            "hypothesis": true
+          },
+          {
+            "from": "gap",
+            "to": "motto",
+            "rel": "needs-evidence",
+            "strength": 3,
+            "hypothesis": false
+          }
+        ]
       },
-      "nodes": [
-        {
-          "id": "cl",
-          "form": "concept",
-          "icon": "idea",
-          "x": 280,
-          "y": 0,
-          "accent": true,
-          "label": {
-            "it": "Studio meglio di sera",
-            "en": "I study better in the evening",
-            "es": "Estudio mejor por la noche",
-            "fr": "J'étudie mieux le soir",
-            "de": "Ich lerne besser am Abend",
-            "sv": "Jag studerar bättre på kvällen"
+      {
+        "id": "school-choice",
+        "title": {
+          "it": "Questo indirizzo è quello giusto per me",
+          "en": "Is this track the right one for me?",
+          "es": "¿Es este itinerario el adecuado para mí?",
+          "fr": "Cette filière est-elle la bonne pour moi ?",
+          "de": "Ist dieser Zweig der richtige für mich?",
+          "sv": "Är detta program rätt för mig?"
+        },
+        "nodes": [
+          {
+            "id": "claim",
+            "form": "concept",
+            "icon": "compass",
+            "x": 300,
+            "y": 0,
+            "label": {
+              "it": "Questo indirizzo è quello giusto per me",
+              "en": "This track is the right one for me",
+              "es": "Este itinerario es el adecuado para mí",
+              "fr": "Cette filière est la bonne pour moi",
+              "de": "Dieser Zweig ist der richtige für mich",
+              "sv": "Detta program är rätt för mig"
+            },
+            "accent": true
+          },
+          {
+            "id": "s1",
+            "form": "concept",
+            "icon": "progress",
+            "x": 0,
+            "y": 200,
+            "label": {
+              "it": "Le materie che vanno bene sono le sue",
+              "en": "The subjects I do well in are its own",
+              "es": "Las asignaturas que me van bien son las suyas",
+              "fr": "Les matières où je réussis sont les siennes",
+              "de": "Die Fächer, die mir liegen, sind seine",
+              "sv": "Ämnena jag klarar bra är dess egna"
+            }
+          },
+          {
+            "id": "s2",
+            "form": "concept",
+            "icon": "dialogue",
+            "x": 300,
+            "y": 200,
+            "label": {
+              "it": "Chi ci studia racconta le stesse cose",
+              "en": "Students there describe the same things",
+              "es": "Quien estudia allí cuenta lo mismo",
+              "fr": "Ceux qui y étudient racontent la même chose",
+              "de": "Wer dort lernt, erzählt das Gleiche",
+              "sv": "De som går där berättar samma sak"
+            }
+          },
+          {
+            "id": "o1",
+            "form": "concept",
+            "icon": "error",
+            "x": 600,
+            "y": 200,
+            "label": {
+              "it": "In laboratorio i miei voti crollano",
+              "en": "In the lab my marks collapse",
+              "es": "En el laboratorio mis notas caen",
+              "fr": "En atelier mes notes s'effondrent",
+              "de": "Im Labor brechen meine Noten ein",
+              "sv": "I labbet rasar mina betyg"
+            }
+          },
+          {
+            "id": "a1",
+            "form": "concept",
+            "icon": "uncertainty",
+            "x": 0,
+            "y": 400,
+            "label": {
+              "it": "Do per scontato che l'indirizzo non cambi in cinque anni",
+              "en": "I take for granted the track won't change in five years",
+              "es": "Doy por supuesto que el itinerario no cambiará en cinco años",
+              "fr": "Je tiens pour acquis que la filière ne changera pas en cinq ans",
+              "de": "Ich setze voraus, dass der Zweig fünf Jahre gleich bleibt",
+              "sv": "Jag tar för givet att programmet inte ändras på fem år"
+            }
+          },
+          {
+            "id": "g1",
+            "form": "concept",
+            "icon": "evidence",
+            "x": 300,
+            "y": 400,
+            "label": {
+              "it": "Non ho mai parlato con un diplomato",
+              "en": "I have never spoken to a graduate",
+              "es": "Nunca he hablado con un egresado",
+              "fr": "Je n'ai jamais parlé à un diplômé",
+              "de": "Ich sprach nie mit einem Absolventen",
+              "sv": "Jag har aldrig talat med en utexaminerad"
+            }
+          },
+          {
+            "id": "g2",
+            "form": "concept",
+            "icon": "search",
+            "x": 600,
+            "y": 400,
+            "label": {
+              "it": "Non ho visto cosa si fa in quarta",
+              "en": "I haven't seen what the fourth year looks like",
+              "es": "No he visto qué se hace en cuarto",
+              "fr": "Je n'ai pas vu ce qu'on fait en quatrième année",
+              "de": "Ich sah nicht, was im vierten Jahr passiert",
+              "sv": "Jag har inte sett vad fjärde året innebär"
+            }
           }
-        },
-        {
-          "id": "s1",
-          "form": "concept",
-          "icon": "observation",
-          "x": 0,
-          "y": 200,
-          "label": {
-            "it": "Dopo le 21 resto sul libro piu' a lungo",
-            "en": "After 9pm I stay on the book longer",
-            "es": "Después de las 21:00 me quedo más tiempo con el libro",
-            "fr": "Après 21 h, je reste plus longtemps sur le livre",
-            "de": "Nach 21 Uhr bleibe ich länger beim Buch",
-            "sv": "Efter klockan 21 stannar jag längre vid boken"
+        ],
+        "edges": [
+          {
+            "from": "s1",
+            "to": "claim",
+            "rel": "supports",
+            "strength": 3,
+            "hypothesis": false
+          },
+          {
+            "from": "s2",
+            "to": "claim",
+            "rel": "supports",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "o1",
+            "to": "claim",
+            "rel": "contradicts",
+            "strength": 3,
+            "hypothesis": false
+          },
+          {
+            "from": "a1",
+            "to": "claim",
+            "rel": "assumes",
+            "strength": 2,
+            "hypothesis": true
+          },
+          {
+            "from": "g1",
+            "to": "claim",
+            "rel": "needs-evidence",
+            "strength": 3,
+            "hypothesis": false
+          },
+          {
+            "from": "g2",
+            "to": "claim",
+            "rel": "needs-evidence",
+            "strength": 2,
+            "hypothesis": false
           }
+        ]
+      },
+      {
+        "id": "evening-study",
+        "title": {
+          "it": "Studio meglio di sera",
+          "en": "I study better in the evening",
+          "es": "Estudio mejor por la noche",
+          "fr": "J'étudie mieux le soir",
+          "de": "Ich lerne am Abend besser",
+          "sv": "Jag studerar bättre på kvällen"
         },
-        {
-          "id": "s2",
-          "form": "concept",
-          "icon": "notes",
-          "x": 280,
-          "y": 200,
-          "label": {
-            "it": "Di sera nessuno mi interrompe",
-            "en": "In the evening nobody interrupts me",
-            "es": "Por la noche nadie me interrumpe",
-            "fr": "Le soir, personne ne m'interrompt",
-            "de": "Abends unterbricht mich niemand",
-            "sv": "På kvällen avbryter ingen mig"
+        "nodes": [
+          {
+            "id": "cl",
+            "form": "concept",
+            "icon": "idea",
+            "x": 280,
+            "y": 0,
+            "accent": true,
+            "label": {
+              "it": "Studio meglio di sera",
+              "en": "I study better in the evening",
+              "es": "Estudio mejor por la noche",
+              "fr": "J'étudie mieux le soir",
+              "de": "Ich lerne besser am Abend",
+              "sv": "Jag studerar bättre på kvällen"
+            }
+          },
+          {
+            "id": "s1",
+            "form": "concept",
+            "icon": "observation",
+            "x": 0,
+            "y": 200,
+            "label": {
+              "it": "Dopo le 21 resto sul libro piu' a lungo",
+              "en": "After 9pm I stay on the book longer",
+              "es": "Después de las 21:00 me quedo más tiempo con el libro",
+              "fr": "Après 21 h, je reste plus longtemps sur le livre",
+              "de": "Nach 21 Uhr bleibe ich länger beim Buch",
+              "sv": "Efter klockan 21 stannar jag längre vid boken"
+            }
+          },
+          {
+            "id": "s2",
+            "form": "concept",
+            "icon": "notes",
+            "x": 280,
+            "y": 200,
+            "label": {
+              "it": "Di sera nessuno mi interrompe",
+              "en": "In the evening nobody interrupts me",
+              "es": "Por la noche nadie me interrumpe",
+              "fr": "Le soir, personne ne m'interrompt",
+              "de": "Abends unterbricht mich niemand",
+              "sv": "På kvällen avbryter ingen mig"
+            }
+          },
+          {
+            "id": "o1",
+            "form": "concept",
+            "icon": "sleep",
+            "x": 560,
+            "y": 200,
+            "label": {
+              "it": "Dormo meno e il giorno dopo rendo poco",
+              "en": "I sleep less and the next day I do little",
+              "es": "Duermo menos y al día siguiente rindo poco",
+              "fr": "Je dors moins et le lendemain je rends peu",
+              "de": "Ich schlafe weniger und am nächsten Tag leiste ich wenig",
+              "sv": "Jag sover mindre och presterar lite dagen efter"
+            }
+          },
+          {
+            "id": "a1",
+            "form": "concept",
+            "icon": "uncertainty",
+            "x": 0,
+            "y": 380,
+            "label": {
+              "it": "Do per scontato che la stanchezza non conti",
+              "en": "I take for granted that tiredness does not count",
+              "es": "Doy por sentado que la fatiga no importa",
+              "fr": "Je prends pour acquis que la fatigue n'a pas d'importance",
+              "de": "Ich gehe davon aus, dass Müdigkeit keine Rolle spielt",
+              "sv": "Jag tar för givet att trötthet inte spelar någon roll"
+            }
+          },
+          {
+            "id": "g1",
+            "form": "concept",
+            "icon": "evidence",
+            "x": 560,
+            "y": 380,
+            "label": {
+              "it": "Non ho mai provato una settimana di mattina",
+              "en": "I have never tried a week of mornings",
+              "es": "Nunca he tenido una semana de mañanas",
+              "fr": "Je n'ai jamais eu une semaine de matins",
+              "de": "Ich hatte nie eine Woche voller Vormittage",
+              "sv": "Jag har aldrig haft en vecka av morgnar"
+            }
           }
-        },
-        {
-          "id": "o1",
-          "form": "concept",
-          "icon": "sleep",
-          "x": 560,
-          "y": 200,
-          "label": {
-            "it": "Dormo meno e il giorno dopo rendo poco",
-            "en": "I sleep less and the next day I do little",
-            "es": "Duermo menos y al día siguiente rindo poco",
-            "fr": "Je dors moins et le lendemain je rends peu",
-            "de": "Ich schlafe weniger und am nächsten Tag leiste ich wenig",
-            "sv": "Jag sover mindre och presterar lite dagen efter"
+        ],
+        "edges": [
+          {
+            "from": "s1",
+            "to": "cl",
+            "rel": "supports",
+            "strength": 2
+          },
+          {
+            "from": "s2",
+            "to": "cl",
+            "rel": "supports",
+            "strength": 2
+          },
+          {
+            "from": "o1",
+            "to": "cl",
+            "rel": "contradicts",
+            "strength": 2
+          },
+          {
+            "from": "a1",
+            "to": "cl",
+            "rel": "assumes",
+            "strength": 2,
+            "hypothesis": true
+          },
+          {
+            "from": "g1",
+            "to": "cl",
+            "rel": "needs-evidence",
+            "strength": 3
           }
-        },
-        {
-          "id": "a1",
-          "form": "concept",
-          "icon": "uncertainty",
-          "x": 0,
-          "y": 380,
-          "label": {
-            "it": "Do per scontato che la stanchezza non conti",
-            "en": "I take for granted that tiredness does not count",
-            "es": "Doy por sentado que la fatiga no importa",
-            "fr": "Je prends pour acquis que la fatigue n'a pas d'importance",
-            "de": "Ich gehe davon aus, dass Müdigkeit keine Rolle spielt",
-            "sv": "Jag tar för givet att trötthet inte spelar någon roll"
-          }
-        },
-        {
-          "id": "g1",
-          "form": "concept",
-          "icon": "evidence",
-          "x": 560,
-          "y": 380,
-          "label": {
-            "it": "Non ho mai provato una settimana di mattina",
-            "en": "I have never tried a week of mornings",
-            "es": "Nunca he tenido una semana de mañanas",
-            "fr": "Je n'ai jamais eu une semaine de matins",
-            "de": "Ich hatte nie eine Woche voller Vormittage",
-            "sv": "Jag har aldrig haft en vecka av morgnar"
-          }
-        }
-      ],
-      "edges": [
-        {
-          "from": "s1",
-          "to": "cl",
-          "rel": "supports",
-          "strength": 2
-        },
-        {
-          "from": "s2",
-          "to": "cl",
-          "rel": "supports",
-          "strength": 2
-        },
-        {
-          "from": "o1",
-          "to": "cl",
-          "rel": "contradicts",
-          "strength": 2
-        },
-        {
-          "from": "a1",
-          "to": "cl",
-          "rel": "assumes",
-          "strength": 2,
-          "hypothesis": true
-        },
-        {
-          "from": "g1",
-          "to": "cl",
-          "rel": "needs-evidence",
-          "strength": 3
-        }
-      ]
-    }
+        ]
+      }
+    ]
   },
   {
     "id": "algorithm",
@@ -864,207 +2262,637 @@
         "Proceduren för att välja en kurs: krav, förgreningar, resultat."
       ]
     },
-    "example": {
-      "title": {
-        "it": "Il metodo sta funzionando?",
-        "en": "Is the method working?",
-        "es": "¿El método está funcionando?",
-        "fr": "La méthode fonctionne-t-elle ?",
-        "de": "Funktioniert die Methode?",
-        "sv": "Fungerar metoden?"
+    "examples": [
+      {
+        "id": "which-instrument",
+        "title": {
+          "it": "Quale strumento compilo adesso?",
+          "en": "Which instrument do I fill in now?",
+          "es": "¿Qué instrumento completo ahora?",
+          "fr": "Quel instrument remplir maintenant ?",
+          "de": "Welches Instrument fülle ich jetzt aus?",
+          "sv": "Vilket instrument fyller jag i nu?"
+        },
+        "nodes": [
+          {
+            "id": "q1",
+            "form": "decision",
+            "icon": "measure",
+            "x": 0,
+            "y": 0,
+            "label": {
+              "it": "Hai già un profilo numerico?",
+              "en": "Do you already have a numeric profile?",
+              "es": "¿Ya tienes un perfil numérico?",
+              "fr": "As-tu déjà un profil numérique ?",
+              "de": "Hast du schon ein Zahlenprofil?",
+              "sv": "Har du redan en sifferprofil?"
+            }
+          },
+          {
+            "id": "oqsa",
+            "form": "outcome",
+            "icon": "measure",
+            "x": 0,
+            "y": 220,
+            "label": {
+              "it": "Compila il QSA",
+              "en": "Fill in the QSA",
+              "es": "Completa el QSA",
+              "fr": "Remplis le QSA",
+              "de": "Fülle den QSA aus",
+              "sv": "Fyll i QSA"
+            }
+          },
+          {
+            "id": "q2",
+            "form": "decision",
+            "icon": "clock",
+            "x": 320,
+            "y": 0,
+            "label": {
+              "it": "Il tema è come usi il tempo?",
+              "en": "Is the topic how you use time?",
+              "es": "¿El tema es cómo usas el tiempo?",
+              "fr": "Le sujet est-il l'usage du temps ?",
+              "de": "Geht es um den Umgang mit Zeit?",
+              "sv": "Handlar det om hur du använder tiden?"
+            }
+          },
+          {
+            "id": "oztpi",
+            "form": "outcome",
+            "icon": "clock",
+            "x": 320,
+            "y": 220,
+            "label": {
+              "it": "Compila lo ZTPI",
+              "en": "Fill in the ZTPI",
+              "es": "Completa el ZTPI",
+              "fr": "Remplis le ZTPI",
+              "de": "Fülle den ZTPI aus",
+              "sv": "Fyll i ZTPI"
+            }
+          },
+          {
+            "id": "q3",
+            "form": "decision",
+            "icon": "pace",
+            "x": 640,
+            "y": 0,
+            "label": {
+              "it": "Hai venti minuti o cinque?",
+              "en": "Twenty minutes or five?",
+              "es": "¿Tienes veinte minutos o cinco?",
+              "fr": "Vingt minutes ou cinq ?",
+              "de": "Zwanzig Minuten oder fünf?",
+              "sv": "Tjugo minuter eller fem?"
+            }
+          },
+          {
+            "id": "osav",
+            "form": "outcome",
+            "icon": "dialogue",
+            "x": 900,
+            "y": 0,
+            "label": {
+              "it": "Fai il colloquio Savickas",
+              "en": "Do the Savickas interview",
+              "es": "Haz la entrevista Savickas",
+              "fr": "Fais l'entretien Savickas",
+              "de": "Mach das Savickas-Interview",
+              "sv": "Gör Savickas-intervjun"
+            }
+          },
+          {
+            "id": "onote",
+            "form": "outcome",
+            "icon": "notes",
+            "x": 640,
+            "y": 220,
+            "label": {
+              "it": "Scrivi due righe sul taccuino",
+              "en": "Write two lines in the notebook",
+              "es": "Escribe dos líneas en el cuaderno",
+              "fr": "Écris deux lignes dans le carnet",
+              "de": "Schreib zwei Zeilen ins Notizbuch",
+              "sv": "Skriv två rader i anteckningsboken"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "q1",
+            "to": "oqsa",
+            "rel": "if",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "no",
+              "en": "no",
+              "es": "no",
+              "fr": "non",
+              "de": "nein",
+              "sv": "nej"
+            }
+          },
+          {
+            "from": "q1",
+            "to": "q2",
+            "rel": "if",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "si",
+              "en": "yes",
+              "es": "sí",
+              "fr": "oui",
+              "de": "ja",
+              "sv": "ja"
+            }
+          },
+          {
+            "from": "q2",
+            "to": "oztpi",
+            "rel": "if",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "si",
+              "en": "yes",
+              "es": "sí",
+              "fr": "oui",
+              "de": "ja",
+              "sv": "ja"
+            }
+          },
+          {
+            "from": "q2",
+            "to": "q3",
+            "rel": "if",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "no",
+              "en": "no",
+              "es": "no",
+              "fr": "non",
+              "de": "nein",
+              "sv": "nej"
+            }
+          },
+          {
+            "from": "q3",
+            "to": "osav",
+            "rel": "if",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "venti",
+              "en": "twenty",
+              "es": "veinte",
+              "fr": "vingt",
+              "de": "zwanzig",
+              "sv": "tjugo"
+            }
+          },
+          {
+            "from": "q3",
+            "to": "onote",
+            "rel": "if",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "cinque",
+              "en": "five",
+              "es": "cinco",
+              "fr": "cinq",
+              "de": "fünf",
+              "sv": "fem"
+            }
+          }
+        ]
       },
-      "nodes": [
-        {
-          "id": "q1",
-          "form": "decision",
-          "icon": "measure",
-          "x": 0,
-          "y": 0,
-          "label": {
-            "it": "Hai una misura del risultato?",
-            "en": "Do you have a measure of the result?",
-            "es": "¿Tienes una medida del resultado?",
-            "fr": "As-tu une mesure du résultat ?",
-            "de": "Hast du ein Maß für das Ergebnis?",
-            "sv": "Har du ett mått på resultatet?"
-          }
+      {
+        "id": "what-first",
+        "title": {
+          "it": "Cosa studio prima",
+          "en": "What do I study first",
+          "es": "Qué estudio primero",
+          "fr": "Qu'est-ce que j'étudie d'abord",
+          "de": "Was lerne ich zuerst",
+          "sv": "Vad studerar jag först"
         },
-        {
-          "id": "a1",
-          "form": "action",
-          "icon": "experiment",
-          "x": 300,
-          "y": 180,
-          "label": {
-            "it": "Fai una prova e misurala",
-            "en": "Run one test and measure it",
-            "es": "Haz una prueba y mídela",
-            "fr": "Fais un essai et mesure-le",
-            "de": "Mache einen Test und messe ihn",
-            "sv": "Gör ett prov och mät det"
+        "nodes": [
+          {
+            "id": "q1",
+            "form": "decision",
+            "icon": "deadline",
+            "x": 0,
+            "y": 0,
+            "label": {
+              "it": "C'è una scadenza entro tre giorni?",
+              "en": "Is there a deadline within three days?",
+              "es": "¿Hay un plazo en tres días?",
+              "fr": "Y a-t-il une échéance sous trois jours ?",
+              "de": "Gibt es eine Frist in drei Tagen?",
+              "sv": "Finns en deadline inom tre dagar?"
+            }
+          },
+          {
+            "id": "o1",
+            "form": "outcome",
+            "icon": "start",
+            "x": 0,
+            "y": 240,
+            "label": {
+              "it": "Parti da questo",
+              "en": "Start with this",
+              "es": "Empieza por esto",
+              "fr": "Commence par ça",
+              "de": "Fang damit an",
+              "sv": "Börja med detta"
+            }
+          },
+          {
+            "id": "q2",
+            "form": "decision",
+            "icon": "review",
+            "x": 320,
+            "y": 0,
+            "label": {
+              "it": "L'hai già capito una volta?",
+              "en": "Did you understand it once already?",
+              "es": "¿Ya lo entendiste una vez?",
+              "fr": "L'as-tu déjà compris une fois ?",
+              "de": "Hast du es schon einmal verstanden?",
+              "sv": "Har du förstått det en gång?"
+            }
+          },
+          {
+            "id": "a1",
+            "form": "action",
+            "icon": "correction",
+            "x": 320,
+            "y": 240,
+            "label": {
+              "it": "Ripassa solo i punti che sbagli",
+              "en": "Review only the points you get wrong",
+              "es": "Repasa solo lo que fallas",
+              "fr": "Revois seulement ce que tu rates",
+              "de": "Wiederhole nur die Fehler",
+              "sv": "Repetera bara det du missar"
+            }
+          },
+          {
+            "id": "o2",
+            "form": "outcome",
+            "icon": "sequence",
+            "x": 320,
+            "y": 460,
+            "label": {
+              "it": "Mettilo in coda",
+              "en": "Put it at the back",
+              "es": "Ponlo al final",
+              "fr": "Mets-le en dernier",
+              "de": "Stell es nach hinten",
+              "sv": "Lägg det sist"
+            }
+          },
+          {
+            "id": "q3",
+            "form": "decision",
+            "icon": "clock",
+            "x": 660,
+            "y": 0,
+            "label": {
+              "it": "Ci stai dentro in trenta minuti?",
+              "en": "Does it fit in thirty minutes?",
+              "es": "¿Te cabe en treinta minutos?",
+              "fr": "Ça tient en trente minutes ?",
+              "de": "Passt es in dreißig Minuten?",
+              "sv": "Ryms det i trettio minuter?"
+            }
+          },
+          {
+            "id": "o3",
+            "form": "outcome",
+            "icon": "repeat",
+            "x": 660,
+            "y": 240,
+            "label": {
+              "it": "Spezzalo in due sedute",
+              "en": "Split it into two sittings",
+              "es": "Divídelo en dos sesiones",
+              "fr": "Découpe-le en deux séances",
+              "de": "Teile es in zwei Sitzungen",
+              "sv": "Dela det i två pass"
+            }
           }
+        ],
+        "edges": [
+          {
+            "from": "q1",
+            "to": "o1",
+            "rel": "if",
+            "strength": 3,
+            "hypothesis": false,
+            "label": {
+              "it": "si",
+              "en": "yes",
+              "es": "sí",
+              "fr": "oui",
+              "de": "ja",
+              "sv": "ja"
+            }
+          },
+          {
+            "from": "q1",
+            "to": "q2",
+            "rel": "if",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "no",
+              "en": "no",
+              "es": "no",
+              "fr": "non",
+              "de": "nein",
+              "sv": "nej"
+            }
+          },
+          {
+            "from": "q2",
+            "to": "a1",
+            "rel": "if",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "si",
+              "en": "yes",
+              "es": "sí",
+              "fr": "oui",
+              "de": "ja",
+              "sv": "ja"
+            }
+          },
+          {
+            "from": "a1",
+            "to": "o2",
+            "rel": "then",
+            "strength": 2,
+            "hypothesis": false
+          },
+          {
+            "from": "q2",
+            "to": "q3",
+            "rel": "if",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "no",
+              "en": "no",
+              "es": "no",
+              "fr": "non",
+              "de": "nein",
+              "sv": "nej"
+            }
+          },
+          {
+            "from": "q3",
+            "to": "o1",
+            "rel": "if",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "si",
+              "en": "yes",
+              "es": "sí",
+              "fr": "oui",
+              "de": "ja",
+              "sv": "ja"
+            }
+          },
+          {
+            "from": "q3",
+            "to": "o3",
+            "rel": "if",
+            "strength": 2,
+            "hypothesis": false,
+            "label": {
+              "it": "no",
+              "en": "no",
+              "es": "no",
+              "fr": "non",
+              "de": "nein",
+              "sv": "nej"
+            }
+          }
+        ]
+      },
+      {
+        "id": "method-working",
+        "title": {
+          "it": "Il metodo sta funzionando?",
+          "en": "Is the method working?",
+          "es": "¿El método está funcionando?",
+          "fr": "La méthode fonctionne-t-elle ?",
+          "de": "Funktioniert die Methode?",
+          "sv": "Fungerar metoden?"
         },
-        {
-          "id": "q2",
-          "form": "decision",
-          "icon": "compare",
-          "x": 300,
-          "y": 0,
-          "label": {
-            "it": "E' migliorato in due settimane?",
-            "en": "Has it improved in two weeks?",
-            "es": "¿Ha mejorado en dos semanas?",
-            "fr": "Est-ce que ça s'est amélioré en deux semaines ?",
-            "de": "Hat es sich in zwei Wochen verbessert?",
-            "sv": "Har det förbättrats på två veckor?"
+        "nodes": [
+          {
+            "id": "q1",
+            "form": "decision",
+            "icon": "measure",
+            "x": 0,
+            "y": 0,
+            "label": {
+              "it": "Hai una misura del risultato?",
+              "en": "Do you have a measure of the result?",
+              "es": "¿Tienes una medida del resultado?",
+              "fr": "As-tu une mesure du résultat ?",
+              "de": "Hast du ein Maß für das Ergebnis?",
+              "sv": "Har du ett mått på resultatet?"
+            }
+          },
+          {
+            "id": "a1",
+            "form": "action",
+            "icon": "experiment",
+            "x": 300,
+            "y": 180,
+            "label": {
+              "it": "Fai una prova e misurala",
+              "en": "Run one test and measure it",
+              "es": "Haz una prueba y mídela",
+              "fr": "Fais un essai et mesure-le",
+              "de": "Mache einen Test und messe ihn",
+              "sv": "Gör ett prov och mät det"
+            }
+          },
+          {
+            "id": "q2",
+            "form": "decision",
+            "icon": "compare",
+            "x": 300,
+            "y": 0,
+            "label": {
+              "it": "E' migliorato in due settimane?",
+              "en": "Has it improved in two weeks?",
+              "es": "¿Ha mejorado en dos semanas?",
+              "fr": "Est-ce que ça s'est amélioré en deux semaines ?",
+              "de": "Hat es sich in zwei Wochen verbessert?",
+              "sv": "Har det förbättrats på två veckor?"
+            }
+          },
+          {
+            "id": "o1",
+            "form": "outcome",
+            "icon": "check",
+            "x": 620,
+            "y": 0,
+            "label": {
+              "it": "Tieni il metodo",
+              "en": "Keep the method",
+              "es": "Mantén el método",
+              "fr": "Garde cette méthode",
+              "de": "Behalte die Methode bei",
+              "sv": "Behåll metoden"
+            }
+          },
+          {
+            "id": "q3",
+            "form": "decision",
+            "icon": "detail",
+            "x": 620,
+            "y": 180,
+            "label": {
+              "it": "L'hai applicato come previsto?",
+              "en": "Did you apply it as planned?",
+              "es": "¿Lo aplicaste como se esperaba?",
+              "fr": "L'as-tu appliqué comme prévu ?",
+              "de": "Hast du es wie vorgesehen angewendet?",
+              "sv": "Har du tillämpat det som förväntat?"
+            }
+          },
+          {
+            "id": "o2",
+            "form": "outcome",
+            "icon": "correction",
+            "x": 900,
+            "y": 180,
+            "label": {
+              "it": "Cambia una cosa sola",
+              "en": "Change one thing only",
+              "es": "Cambia solo una cosa",
+              "fr": "Change une seule chose",
+              "de": "Ändere nur eine Sache",
+              "sv": "Ändra bara en sak"
+            }
+          },
+          {
+            "id": "o3",
+            "form": "outcome",
+            "icon": "repeat",
+            "x": 900,
+            "y": 360,
+            "label": {
+              "it": "Riprova applicandolo davvero",
+              "en": "Try again, applying it for real",
+              "es": "Vuelve a intentarlo aplicándolo de verdad",
+              "fr": "Réessaie en l'appliquant vraiment",
+              "de": "Versuche es erneut, indem du es wirklich anwendest",
+              "sv": "Försök igen genom att verkligen tillämpa det"
+            }
           }
-        },
-        {
-          "id": "o1",
-          "form": "outcome",
-          "icon": "check",
-          "x": 620,
-          "y": 0,
-          "label": {
-            "it": "Tieni il metodo",
-            "en": "Keep the method",
-            "es": "Mantén el método",
-            "fr": "Garde cette méthode",
-            "de": "Behalte die Methode bei",
-            "sv": "Behåll metoden"
+        ],
+        "edges": [
+          {
+            "from": "q1",
+            "to": "a1",
+            "rel": "if",
+            "label": {
+              "it": "no",
+              "en": "no",
+              "es": "no",
+              "fr": "non",
+              "de": "nein",
+              "sv": "nej"
+            }
+          },
+          {
+            "from": "a1",
+            "to": "q2",
+            "rel": "then"
+          },
+          {
+            "from": "q1",
+            "to": "q2",
+            "rel": "if",
+            "label": {
+              "it": "si",
+              "en": "yes",
+              "es": "sí",
+              "fr": "oui",
+              "de": "ja",
+              "sv": "ja"
+            }
+          },
+          {
+            "from": "q2",
+            "to": "o1",
+            "rel": "if",
+            "label": {
+              "it": "si",
+              "en": "yes",
+              "es": "sí",
+              "fr": "oui",
+              "de": "ja",
+              "sv": "ja"
+            }
+          },
+          {
+            "from": "q2",
+            "to": "q3",
+            "rel": "if",
+            "label": {
+              "it": "no",
+              "en": "no",
+              "es": "no",
+              "fr": "non",
+              "de": "nein",
+              "sv": "nej"
+            }
+          },
+          {
+            "from": "q3",
+            "to": "o2",
+            "rel": "if",
+            "label": {
+              "it": "si",
+              "en": "yes",
+              "es": "sí",
+              "fr": "oui",
+              "de": "ja",
+              "sv": "ja"
+            }
+          },
+          {
+            "from": "q3",
+            "to": "o3",
+            "rel": "if",
+            "label": {
+              "it": "no",
+              "en": "no",
+              "es": "no",
+              "fr": "non",
+              "de": "nein",
+              "sv": "nej"
+            }
           }
-        },
-        {
-          "id": "q3",
-          "form": "decision",
-          "icon": "detail",
-          "x": 620,
-          "y": 180,
-          "label": {
-            "it": "L'hai applicato come previsto?",
-            "en": "Did you apply it as planned?",
-            "es": "¿Lo aplicaste como se esperaba?",
-            "fr": "L'as-tu appliqué comme prévu ?",
-            "de": "Hast du es wie vorgesehen angewendet?",
-            "sv": "Har du tillämpat det som förväntat?"
-          }
-        },
-        {
-          "id": "o2",
-          "form": "outcome",
-          "icon": "correction",
-          "x": 900,
-          "y": 180,
-          "label": {
-            "it": "Cambia una cosa sola",
-            "en": "Change one thing only",
-            "es": "Cambia solo una cosa",
-            "fr": "Change une seule chose",
-            "de": "Ändere nur eine Sache",
-            "sv": "Ändra bara en sak"
-          }
-        },
-        {
-          "id": "o3",
-          "form": "outcome",
-          "icon": "repeat",
-          "x": 900,
-          "y": 360,
-          "label": {
-            "it": "Riprova applicandolo davvero",
-            "en": "Try again, applying it for real",
-            "es": "Vuelve a intentarlo aplicándolo de verdad",
-            "fr": "Réessaie en l'appliquant vraiment",
-            "de": "Versuche es erneut, indem du es wirklich anwendest",
-            "sv": "Försök igen genom att verkligen tillämpa det"
-          }
-        }
-      ],
-      "edges": [
-        {
-          "from": "q1",
-          "to": "a1",
-          "rel": "if",
-          "label": {
-            "it": "no",
-            "en": "no",
-            "es": "no",
-            "fr": "non",
-            "de": "nein",
-            "sv": "nej"
-          }
-        },
-        {
-          "from": "a1",
-          "to": "q2",
-          "rel": "then"
-        },
-        {
-          "from": "q1",
-          "to": "q2",
-          "rel": "if",
-          "label": {
-            "it": "si",
-            "en": "yes",
-            "es": "sí",
-            "fr": "oui",
-            "de": "ja",
-            "sv": "ja"
-          }
-        },
-        {
-          "from": "q2",
-          "to": "o1",
-          "rel": "if",
-          "label": {
-            "it": "si",
-            "en": "yes",
-            "es": "sí",
-            "fr": "oui",
-            "de": "ja",
-            "sv": "ja"
-          }
-        },
-        {
-          "from": "q2",
-          "to": "q3",
-          "rel": "if",
-          "label": {
-            "it": "no",
-            "en": "no",
-            "es": "no",
-            "fr": "non",
-            "de": "nein",
-            "sv": "nej"
-          }
-        },
-        {
-          "from": "q3",
-          "to": "o2",
-          "rel": "if",
-          "label": {
-            "it": "si",
-            "en": "yes",
-            "es": "sí",
-            "fr": "oui",
-            "de": "ja",
-            "sv": "ja"
-          }
-        },
-        {
-          "from": "q3",
-          "to": "o3",
-          "rel": "if",
-          "label": {
-            "it": "no",
-            "en": "no",
-            "es": "no",
-            "fr": "non",
-            "de": "nein",
-            "sv": "nej"
-          }
-        }
-      ]
-    }
+        ]
+      }
+    ]
   }
 ]

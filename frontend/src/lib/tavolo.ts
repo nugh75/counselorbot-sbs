@@ -61,7 +61,14 @@ export interface TavoloPreset {
     rankdir: 'LR' | 'TB';
     edge_label_required: boolean;
     prompts: string[];
-    has_example: boolean;
+    examples: TavoloPresetExample[];
+}
+
+// Un esempio gia' fatto, per l'elenco: l'id e' il suo indirizzo, il titolo la
+// sola cosa che la persona legge prima di aprirlo.
+export interface TavoloPresetExample {
+    id: string;
+    title: string;
 }
 
 // Il messaggio esatto di backend/tavolo.py (TAVOLO_FULL_MESSAGE). Il confronto
@@ -229,8 +236,10 @@ export const fetchPresets = (lang: string): Promise<TavoloPreset[]> =>
         .then((response) => json<{ presets: TavoloPreset[] }>(response))
         .then((body) => body.presets);
 
-export const fetchPresetExample = (id: TavoloPresetId, lang: string): Promise<TavoloGraph> =>
-    apiFetch(`/api/tavolo/presets/${id}/example?lang=${encodeURIComponent(lang)}`)
+export const fetchPresetExample = (
+    id: TavoloPresetId, exampleId: string, lang: string,
+): Promise<TavoloGraph> =>
+    apiFetch(`/api/tavolo/presets/${id}/examples/${encodeURIComponent(exampleId)}?lang=${encodeURIComponent(lang)}`)
         .then((response) => json<{ graph: TavoloGraph }>(response))
         .then((body) => body.graph);
 
