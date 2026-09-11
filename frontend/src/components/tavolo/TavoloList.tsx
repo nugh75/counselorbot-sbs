@@ -7,13 +7,24 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Loader2, Plus, Table2 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { createTavolo, listTavoli, tavoloEnabled, type TavoloSummary } from '@/lib/tavolo';
+import { TavoloCompose } from '@/components/tavolo/TavoloCompose';
+import {
+    createTavolo,
+    fetchPresetExample,
+    listTavoli,
+    tavoloEnabled,
+    writeTavolo,
+    type TavoloPresetId,
+    type TavoloSummary,
+} from '@/lib/tavolo';
 import { tavoloLabel } from '@/lib/i18n-tavolo';
 
 export function TavoloList() {
     const { lang } = useI18n();
+    const router = useRouter();
     const [rows, setRows] = useState<TavoloSummary[] | null>(null);
     // Con la funzione spenta l'elenco risponde 404: dirlo, invece di mostrare
     // "nessun tavolo" a chi ne ha di salvati.
@@ -43,6 +54,36 @@ export function TavoloList() {
         }
     };
 
+    // L'esempio e' materiale nostro, non una proposta del modello: arriva gia'
+    // "live", per questo si scrive con writeTavolo invece di passare da compose.
+    const openExample = async (preset: TavoloPresetId) => {
+        if (busy) return;
+        setBusy(true);
+        try {
+            const graph = await fetchPresetExample(preset, lang);
+            const created = await createTavolo({ preset, title: graph.title, lang });
+            await writeTavolo(created.id, graph, created.index);
+            router.push(`/tavolo/${created.id}`);
+        } catch {
+            // Stesso comportamento del bottone vuoto: si resta sull'elenco.
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const composeNew = async (preset: TavoloPresetId | null, prompt: string) => {
+        if (busy) return;
+        setBusy(true);
+        try {
+            const created = await createTavolo({ preset, source_text: prompt.trim(), lang });
+            router.push(`/tavolo/${created.id}`);
+        } catch {
+            // Stesso comportamento del bottone vuoto: si resta sull'elenco.
+        } finally {
+            setBusy(false);
+        }
+    };
+
     return (
         <div className="space-y-4">
             <button type="button" disabled={busy} onClick={() => void openNew()}
@@ -50,6 +91,8 @@ export function TavoloList() {
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
                 {label('newOne')}
             </button>
+
+            <TavoloCompose busy={busy} onCompose={composeNew} onOpenExample={openExample} />
 
             {disabled && <p className="text-sm text-slate-600">{label('notFound')}</p>}
 

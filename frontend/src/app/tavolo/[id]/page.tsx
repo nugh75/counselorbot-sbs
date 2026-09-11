@@ -14,8 +14,11 @@ import { toPng } from 'html-to-image';
 import { Check, Loader2, Save, Sparkles, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { TavoloCanvas } from '@/components/tavolo/TavoloCanvas';
+import { TavoloCompose } from '@/components/tavolo/TavoloCompose';
 import {
     INTENTS,
+    composeBody,
+    composeTavolo,
     fetchTavolo,
     liveGraph,
     pendingIds,
@@ -26,6 +29,7 @@ import {
     writeTavolo,
     type TavoloGraph,
     type TavoloIntent,
+    type TavoloPresetId,
     type TavoloView,
 } from '@/lib/tavolo';
 import { tavoloLabel } from '@/lib/i18n-tavolo';
@@ -115,6 +119,23 @@ export default function TavoloPage() {
             setGraph(next.graph);
         } catch {
             setMessage(label('askFailed'));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const compose = async (preset: TavoloPresetId | null, prompt: string) => {
+        if (!view) return;
+        const body = composeBody({ preset, prompt, lang, index: view.index, counselorId });
+        if (!body) return;
+        setBusy(true);
+        setMessage(null);
+        try {
+            const next = await composeTavolo(id, body);
+            setView(next);
+            setGraph(next.graph);
+        } catch {
+            setMessage(label('composeFailed'));
         } finally {
             setBusy(false);
         }
@@ -226,6 +247,10 @@ export default function TavoloPage() {
             )}
 
             {message && <p role="status" className="shrink-0 px-4 py-2 text-sm text-slate-600">{message}</p>}
+
+            <div className="shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-2">
+                <TavoloCompose busy={busy} onCompose={compose} />
+            </div>
 
             <div ref={canvas} className="min-h-0 flex-1">
                 <TavoloCanvas graph={graph} locale={lang} onChange={change} />

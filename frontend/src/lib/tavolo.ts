@@ -2,7 +2,8 @@
 // backend/tavolo.py: la famiglia si deriva dal verbo, non si dichiara, e forza
 // e incertezza restano modificatori invece di moltiplicare i tipi.
 
-import { apiFetch } from '@/lib/auth';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { apiFetch } from './auth.ts';
 
 export type TavoloFamily = 'argument' | 'cause' | 'time' | 'part';
 export type TavoloRel =
@@ -48,6 +49,47 @@ export const FAMILY_STROKE: Record<TavoloFamily, string> = {
 export const INTENTS = ['what-is-missing', 'organize', 'connect', 'continue'] as const;
 export type TavoloIntent = typeof INTENTS[number];
 
+// I generi di schema. Gli id li conosce anche il server (backend/tavolo.py):
+// il vocabolario di un genere arriva da la', queste sono le sue chiavi.
+export const PRESET_IDS = ['workflow', 'causal', 'concept', 'argument', 'algorithm'] as const;
+export type TavoloPresetId = typeof PRESET_IDS[number];
+
+export interface TavoloPreset {
+    id: TavoloPresetId;
+    rels: TavoloRel[];
+    forms: TavoloForm[];
+    rankdir: 'LR' | 'TB';
+    edge_label_required: boolean;
+    prompts: string[];
+    has_example: boolean;
+}
+
+export interface ComposeBody {
+    preset: TavoloPresetId | null;
+    prompt: string;
+    counselor_id?: number;
+    lang: string;
+    base_index: number;
+}
+
+// Un prompt vuoto o un genere inventato non diventano una richiesta: il tetto
+// del testo e la lista chiusa si controllano qui, dove costa niente.
+export function composeBody(
+    { preset, prompt, lang, index, counselorId }:
+        { preset: TavoloPresetId | null; prompt: string; lang: string; index: number; counselorId?: number },
+): ComposeBody | null {
+    const text = prompt.trim().slice(0, 1200);
+    if (!text) return null;
+    if (preset !== null && !(PRESET_IDS as readonly string[]).includes(preset)) return null;
+    return {
+        preset,
+        prompt: text,
+        lang,
+        base_index: index,
+        ...(counselorId ? { counselor_id: counselorId } : {}),
+    };
+}
+
 export interface TavoloNodeData {
     id: string;
     label: string;
@@ -77,6 +119,7 @@ export interface TavoloEdgeData {
 
 export interface TavoloGraph {
     title: string;
+    preset?: string | null;
     nodes: TavoloNodeData[];
     edges: TavoloEdgeData[];
 }
@@ -142,6 +185,7 @@ export const createTavolo = (body: {
     // I due semi, esclusivi: la mappa di Idea arriva come contenuto, il testo
     // di una chat come proposta da accettare pezzo per pezzo.
     idea_map?: unknown; source_text?: string;
+    preset?: TavoloPresetId | null;
 }) => post('/api/tavolo', body).then((response) => json<TavoloView>(response));
 
 export const fetchTavolo = (id: string) =>
@@ -174,6 +218,20 @@ export const settleTavolo = (id: string, ids: string[], action: 'accept' | 'reje
 export const suggestTavolo = (id: string, body: {
     intent: TavoloIntent; counselor_id?: number; lang: string; base_index: number;
 }) => post(`/api/tavolo/${encodeURIComponent(id)}/suggest`, body).then((response) => json<TavoloView>(response));
+
+export const fetchPresets = (lang: string): Promise<TavoloPreset[]> =>
+    apiFetch(`/api/tavolo/presets?lang=${encodeURIComponent(lang)}`)
+        .then((response) => json<{ presets: TavoloPreset[] }>(response))
+        .then((body) => body.presets);
+
+export const fetchPresetExample = (id: TavoloPresetId, lang: string): Promise<TavoloGraph> =>
+    apiFetch(`/api/tavolo/presets/${id}/example?lang=${encodeURIComponent(lang)}`)
+        .then((response) => json<{ graph: TavoloGraph }>(response))
+        .then((body) => body.graph);
+
+export const composeTavolo = (id: string, body: ComposeBody): Promise<TavoloView & { note?: string | null }> =>
+    post(`/api/tavolo/${encodeURIComponent(id)}/compose`, body)
+        .then((response) => json<TavoloView & { note?: string | null }>(response));
 
 export const saveTavolo = (id: string, title: string, lang: string) =>
     post(`/api/tavolo/${encodeURIComponent(id)}/save`, { title, lang })
