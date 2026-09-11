@@ -64,11 +64,17 @@ def main() -> int:
                             else:
                                 complete.discard(lang)
                     field.update({lang: produced[lang] for lang in complete})
-                    print(f"  {entry['id']}: prompt -> {','.join(sorted(complete))}")
+                    print(f"  {entry['id']}: prompt")
+                    for lang in sorted(complete):
+                        for text in produced[lang]:
+                            print(f"    {lang}: {text}")
                 else:
                     done = translate(field[SOURCE], SOURCE, wanted)
-                    field.update({lang: done[lang] for lang in wanted if done.get(lang)})
-                    print(f"  {entry['id']}: {field[SOURCE][:40]} -> {','.join(wanted)}")
+                    written = {lang: done[lang] for lang in wanted if done.get(lang)}
+                    field.update(written)
+                    print(f"  {entry['id']}: {field[SOURCE][:40]}")
+                    for lang in sorted(written):
+                        print(f"    {lang}: {written[lang]}")
     finally:
         db.close()
 

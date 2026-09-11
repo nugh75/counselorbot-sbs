@@ -36,7 +36,9 @@ def conform(preset: dict, moves: Moves) -> Moves:
     """
     rels = set(preset["rels"])
     forms = set(preset["forms"])
-    default_form = preset["forms"][0]
+    # Non e' preset["forms"][0]: per `algorithm` sarebbe "decision", un bivio
+    # senza diramazioni, la sola cosa che la grammatica di quel genere vieta.
+    default_form = preset["default_form"]
     nodes = [
         node if node.form in forms else node.model_copy(update={"form": default_form})
         for node in moves.add_nodes

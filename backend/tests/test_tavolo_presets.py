@@ -107,5 +107,18 @@ def test_the_rendition_names_the_genre_of_the_table():
     assert "Genre: causal map" in rendition(parse_graph(example_graph("causal", "en")), "en")
 
 
+def test_the_presets_route_is_declared_before_the_catch_all_tavolo_id_route():
+    """`/tavolo/presets` deve stare prima di `/tavolo/{tavolo_id}`: FastAPI
+    prova le rotte nell'ordine in cui sono dichiarate, e un path parametrico
+    dichiarato prima intercetterebbe "presets" come se fosse un id, con un
+    404 silenzioso sui chip del genere. Si controlla sul router stesso, non
+    su `app.routes`: la versione di FastAPI installata avvolge le rotte
+    incluse in un `_IncludedRouter` pigro che non elenca i path propri."""
+    from backend.routes.tavolo import router
+
+    paths = [route.path for route in router.routes]
+    assert paths.index("/tavolo/presets") < paths.index("/tavolo/{tavolo_id}")
+
+
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(pytest.main([__file__, "-q"]))

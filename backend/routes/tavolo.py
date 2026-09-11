@@ -543,8 +543,11 @@ async def compose_tavolo(
         raise HTTPException(status_code=503 if unavailable else 502, detail="nessuno schema")
     if preset:
         composition = conform(preset, composition)
-    if not composition.add_nodes:
-        # Uno schema rimasto senza pezzi non e' uno schema: il tavolo resta com'e'.
+    # Nessun pezzo, o - per un genere che impone la parola sull'arco - nessun
+    # arco rimasto dopo il filtro: una mappa concettuale senza archi e' una
+    # mappa mentale disegnata male, la cosa che quella grammatica vieta.
+    no_edges_where_required = preset and preset["edge_label_required"] and not composition.add_edges
+    if not composition.add_nodes or no_edges_where_required:
         raise HTTPException(status_code=502, detail="nessuno schema")
 
     # Il genere si scrive una volta: un tavolo nato flusso di lavoro non

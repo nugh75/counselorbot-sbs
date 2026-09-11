@@ -6,7 +6,7 @@ import ts from 'typescript';
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sourceRoot = path.join(frontendRoot, 'src');
 const languages = ['it', 'en', 'es', 'fr', 'de', 'sv'];
-const i18nModules = ['i18n.ts', 'i18n-admin.ts', 'i18n-factors.ts', 'i18n-survey.ts', 'i18n-readings.ts', 'i18n-orientation.ts', 'i18n-referrals.ts', 'i18n-voice.ts'];
+const i18nModules = ['i18n.ts', 'i18n-admin.ts', 'i18n-factors.ts', 'i18n-survey.ts', 'i18n-readings.ts', 'i18n-orientation.ts', 'i18n-referrals.ts', 'i18n-voice.ts', 'i18n-tavolo.ts'];
 const modules = new Map();
 
 function sourceFile(file, kind = ts.ScriptKind.TS) {
@@ -72,10 +72,20 @@ function containerValues(moduleName, declarationName, language) {
         (candidate) => ts.isPropertyAssignment(candidate) && propertyName(candidate.name) === language,
     );
     const values = new Map();
-    if (!property || !ts.isObjectLiteralExpression(property.initializer)) return values;
-    for (const spread of property.initializer.properties) {
-        if (ts.isSpreadAssignment(spread) && ts.isIdentifier(spread.expression)) {
-            for (const [key, value] of objectValues(moduleName, spread.expression.text)) values.set(key, value);
+    if (!property) return values;
+    // `it: uiIt` invece di `it: { ...it }`: il container rimanda a un altro
+    // oggetto dichiarato nello stesso modulo, come in i18n-tavolo.ts.
+    if (ts.isIdentifier(property.initializer)) {
+        return objectValues(moduleName, property.initializer.text);
+    }
+    if (!ts.isObjectLiteralExpression(property.initializer)) return values;
+    for (const entry of property.initializer.properties) {
+        if (ts.isSpreadAssignment(entry) && ts.isIdentifier(entry.expression)) {
+            for (const [key, value] of objectValues(moduleName, entry.expression.text)) values.set(key, value);
+        } else if (ts.isPropertyAssignment(entry)) {
+            const key = propertyName(entry.name);
+            const value = literalValue(entry.initializer);
+            if (key && value !== null) values.set(key, value);
         }
     }
     return values;
@@ -91,6 +101,7 @@ const dictionaries = Object.fromEntries(languages.map((language) => [
         ...containerValues('i18n-orientation.ts', 'ORIENTATION_DICTS', language),
         ...containerValues('i18n-referrals.ts', 'REFERRAL_DICTS', language),
         ...containerValues('i18n-voice.ts', 'VOICE_DICTS', language),
+        ...containerValues('i18n-tavolo.ts', 'UI', language),
     ]),
 ]));
 const allKeys = new Set(languages.flatMap((language) => [...dictionaries[language].keys()]));
