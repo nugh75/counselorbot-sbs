@@ -40,6 +40,7 @@ import {
     type TavoloRel,
 } from '@/lib/tavolo';
 import { familyLabel, relLabel, tavoloLabel } from '@/lib/i18n-tavolo';
+import { fetchIcons, iconUrl, matchIcons, type IconEntry } from '@/lib/tavolo-icons';
 import { TavoloPieceNode, type PieceData } from './TavoloPieceNode';
 import { TavoloLinkEdge, type LinkData } from './TavoloLinkEdge';
 
@@ -95,6 +96,17 @@ function Canvas({ graph, locale, onChange }: {
     const [panelOpen, setPanelOpen] = useState(true);
     const [selected, setSelected] = useState<{ kind: 'node' | 'edge'; id: string } | null>(null);
     const label = useCallback((key: Parameters<typeof tavoloLabel>[0]) => tavoloLabel(key, locale), [locale]);
+
+    // Il catalogo arriva una volta per lingua: il selettore lo filtra a video,
+    // non lo richiede a ogni tasto premuto.
+    const [icons, setIcons] = useState<IconEntry[]>([]);
+    const [iconQuery, setIconQuery] = useState('');
+    useEffect(() => {
+        let alive = true;
+        fetchIcons(locale).then((next) => { if (alive) setIcons(next); }).catch(() => undefined);
+        return () => { alive = false; };
+    }, [locale]);
+
     // Il seme si dispone una volta sola: rifarlo a ogni render rimetterebbe in
     // riga i pezzi che la persona ha appena spostato.
     const laid = useRef(false);
@@ -123,7 +135,7 @@ function Canvas({ graph, locale, onChange }: {
                     type: 'piece',
                     position: { x: node.x, y: node.y },
                     selected: selected?.kind === 'node' && selected.id === node.id,
-                    data: { label: node.label, form: node.form, state: node.state, byModel: node.by === 'model', accent: Boolean(node.accent), color: node.color ?? null },
+                    data: { label: node.label, form: node.form, state: node.state, byModel: node.by === 'model', accent: Boolean(node.accent), color: node.color ?? null, icon: node.icon ?? null },
                 }));
         });
     }, [graph.nodes, selected, setNodes]);
@@ -201,7 +213,7 @@ function Canvas({ graph, locale, onChange }: {
         setSelected(null);
     };
 
-    const patchNode = (id: string, change: Partial<{ label: string; form: TavoloForm; color: TavoloColor | null }>) =>
+    const patchNode = (id: string, change: Partial<{ label: string; form: TavoloForm; color: TavoloColor | null; icon: string | null }>) =>
         onChange({
             ...graph,
             nodes: graph.nodes.map((node) => (node.id === id ? { ...node, ...change } : node)),
@@ -314,6 +326,31 @@ function Canvas({ graph, locale, onChange }: {
                                         className={`h-11 w-11 rounded-lg border-2 ${SWATCH[tint ?? 'none']} ${(node.color ?? null) === tint
                                             ? 'ring-2 ring-slate-800 ring-offset-1'
                                             : ''}`} />
+                                ))}
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <legend className="text-xs font-medium text-slate-500">{label('icon')}</legend>
+                            <input value={iconQuery} onChange={(event) => setIconQuery(event.target.value)}
+                                placeholder={label('iconSearch')} aria-label={label('iconSearch')}
+                                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800" />
+                            <div className="mt-1 grid max-h-48 grid-cols-6 gap-1 overflow-y-auto">
+                                <button type="button" onClick={() => patchNode(node.id, { icon: null })}
+                                    aria-label={label('noIcon')} title={label('noIcon')}
+                                    aria-pressed={!node.icon}
+                                    className={`flex h-11 w-11 items-center justify-center rounded-lg border text-xs ${!node.icon
+                                        ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                    —
+                                </button>
+                                {matchIcons(icons, iconQuery).map((icon) => (
+                                    <button key={icon.id} type="button" onClick={() => patchNode(node.id, { icon: icon.id })}
+                                        aria-label={icon.label} title={icon.label}
+                                        aria-pressed={node.icon === icon.id}
+                                        className={`flex h-11 w-11 items-center justify-center rounded-lg border ${node.icon === icon.id
+                                            ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={iconUrl(icon.id)} alt="" width={20} height={20} className="h-5 w-5" />
+                                    </button>
                                 ))}
                             </div>
                         </fieldset>
