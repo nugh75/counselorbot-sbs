@@ -17,7 +17,7 @@ const graph = {
     title: 'Perche rimando',
     nodes: [
         { id: 'a', label: 'Compito difficile', form: 'concept', by: 'person', state: 'live', x: 0, y: 0 },
-        { id: 'b', label: 'Ansia', form: 'decision', by: 'person', state: 'live', x: 260, y: 0 },
+        { id: 'b', label: 'Ansia', form: 'decision', icon: 'distress', by: 'person', state: 'live', x: 260, y: 0 },
         { id: 'c', label: 'Rimando', form: 'action', by: 'person', state: 'live', x: 0, y: 160 },
         { id: 'd', label: 'Meno tempo', form: 'outcome', by: 'model', state: 'pending', x: 260, y: 160 },
     ],
@@ -65,12 +65,20 @@ async function fixture() {
         else if (url.pathname === '/api/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
         else if (url.pathname === '/api/orientation/status') data = { required: false, completed: true };
         else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'f', name: 'Counselor di prova', language: ['it'], suitable: true }];
+        else if (url.pathname === '/api/tavolo/presets') data = { presets: [{ id: 'causal', rels: ['causes', 'hinders', 'feeds-back'], forms: ['concept', 'outcome'], rankdir: 'TB', edge_label_required: false, prompts: ['i fattori del QSA', 'perche rimando'], has_example: true }] };
+        else if (url.pathname === '/api/diagram-icons') data = { icons: [{ id: 'distress', meaning: 'distress', label: 'Disagio' }] };
         else if (url.pathname === `/api/tavolo/${ID}`) data = view;
         else if (url.pathname.endsWith('/settle')) data = { ...view, index: view.index + 1 };
         else if (url.pathname.endsWith('/save')) data = { ...view, title: 'Tavolo di prova', saved: true, rendition: 'resa' };
         else if (url.pathname.endsWith('/capture')) data = { has_capture: true };
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
     });
+    // L'SVG non e' JSON: una rotta a parte, registrata dopo quella generica
+    // cosi' vince su di lei per gli id che la riguardano.
+    await page.route('**/api/diagram-icons/*.svg', (route) => route.fulfill({
+        contentType: 'image/svg+xml',
+        body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><circle cx="12" cy="12" r="9" fill="#17747a"/></svg>',
+    }));
     await page.goto(`${origin}/tavolo/${ID}`, { waitUntil: 'networkidle' });
     await page.waitForSelector('.react-flow__node', { timeout: 20000 });
     return { page, context, calls, errors };
@@ -276,5 +284,36 @@ test('il tavolo si ingrandisce e si allarga', async () => {
     await page.getByRole('button', { name: 'Mostra il pannello' }).click();
     await page.waitForTimeout(300);
     assert.equal(await page.locator('aside').count(), 1, 'e torna quando serve');
+    await context.close();
+});
+
+test('the prompt box offers the genres and the example prompts', async () => {
+    const { page, context } = await fixture();
+    await page.getByRole('button', { name: 'Mappa causale' }).click();
+    await page.getByRole('button', { name: 'i fattori del QSA' }).click();
+    assert.equal(await page.getByLabel('Scrivi uno schema').inputValue(), 'i fattori del QSA');
+    await context.close();
+});
+
+test('a composed schema arrives dashed and nothing is live before it is kept', async () => {
+    const { page, context, calls } = await fixture();
+    await page.getByLabel('Scrivi uno schema').fill('i fattori del QSA');
+    await page.getByRole('button', { name: 'Componi' }).click();
+    await page.waitForResponse((response) => response.url().includes('/compose'));
+    // `calls` registra `path` e `body` gia' scomposto (vedi `fixture()`), non
+    // `url` ne' una stringa da ri-parsare: e' la stessa forma delle altre
+    // prove che leggono `calls` in questo file.
+    const body = calls.find((call) => call.path.endsWith('/compose'))?.body;
+    assert.equal(body?.base_index, 4);
+    assert.equal(body?.prompt, 'i fattori del QSA');
+    await context.close();
+});
+
+test('the icon of a piece is drawn on the canvas', async () => {
+    const { page, context } = await fixture();
+    const icon = page.locator('.react-flow__node img').first();
+    await icon.waitFor({ state: 'visible' });
+    const box = await icon.boundingBox();
+    assert.ok(box.width >= 16, `icona troppo piccola: ${box.width}`);
     await context.close();
 });
