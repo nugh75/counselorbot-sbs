@@ -21,6 +21,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+from .diagram_icon_catalog import DIAGRAM_ICONS
 from .diagram_render import DEFAULT_FORM, FORM_FROM_ROLE, NODE_FORMS
 
 FEATURE_KEY = "feature_tavolo"
@@ -34,6 +35,16 @@ MAX_TITLE = 80
 # Quante mosse il modello puo' proporre in una volta. Oltre, la persona non
 # giudica piu' le proposte una per una: le accetta in blocco o le scarta tutte.
 MAX_PROPOSED = 6
+
+# Quanto grande puo' nascere uno schema chiesto con un prompt. Piu' alto di una
+# proposta perche' un genere di schema nasce con dieci pezzi, non con sei: la
+# persona lo guarda tutto insieme e lo tiene o lo scarta in blocco.
+MAX_COMPOSED_NODES = 16
+MAX_COMPOSED_EDGES = 24
+
+# I generi di schema. Qui stanno solo gli id, perche' il grafo li valida; la
+# grammatica sta in `tavolo_presets.py`, che importa da qui e non viceversa.
+PRESET_IDS = ("workflow", "causal", "concept", "argument", "algorithm")
 
 FAMILIES = ("argument", "cause", "time", "part")
 
@@ -152,6 +163,34 @@ ACCENT_WORD = {
     "fr": "Le point", "de": "Der Punkt", "sv": "Poangen",
 }
 
+# Il genere con cui il tavolo e' nato, per chi lo legge a voce: senza questa
+# parola la convenzione con cui va letto lo schema si perde.
+GENRE_WORD = {
+    "it": "Genere", "en": "Genre", "es": "Genero",
+    "fr": "Genre", "de": "Art", "sv": "Slag",
+}
+
+PRESET_WORD = {
+    "it": {"workflow": "flusso di lavoro", "causal": "mappa causale",
+           "concept": "mappa concettuale", "argument": "mappa argomentativa",
+           "algorithm": "algoritmo"},
+    "en": {"workflow": "workflow", "causal": "causal map",
+           "concept": "concept map", "argument": "argument map",
+           "algorithm": "algorithm"},
+    "es": {"workflow": "flujo de trabajo", "causal": "mapa causal",
+           "concept": "mapa conceptual", "argument": "mapa argumentativo",
+           "algorithm": "algoritmo"},
+    "fr": {"workflow": "flux de travail", "causal": "carte causale",
+           "concept": "carte conceptuelle", "argument": "carte argumentative",
+           "algorithm": "algorithme"},
+    "de": {"workflow": "Arbeitsablauf", "causal": "Ursachenkarte",
+           "concept": "Begriffskarte", "argument": "Argumentkarte",
+           "algorithm": "Algorithmus"},
+    "sv": {"workflow": "arbetsflode", "causal": "orsakskarta",
+           "concept": "begreppskarta", "argument": "argumentkarta",
+           "algorithm": "algoritm"},
+}
+
 
 class TavoloError(ValueError):
     """Un tavolo che non sta in piedi: contratto violato, non errore di sistema."""
@@ -191,6 +230,13 @@ class TavoloNode(BaseModel):
     @classmethod
     def _known_form(cls, value):
         return value if value in NODE_FORMS else DEFAULT_FORM
+
+    @field_validator("icon", mode="before")
+    @classmethod
+    def _known_icon_or_none(cls, value):
+        # Un nome d'icona inventato non vale piu' del pezzo: si perde l'icona,
+        # non il tavolo. Stessa regola della forma e del colore.
+        return value if value in DIAGRAM_ICONS else None
 
     @field_validator("color", mode="before")
     @classmethod
@@ -232,8 +278,16 @@ class TavoloGraph(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     title: str = Field(default="", max_length=MAX_TITLE)
+    # Il genere con cui il tavolo e' nato. Sta dentro il grafo e non in una
+    # colonna: il grafo e' JSON, e un campo nuovo qui non costa una migrazione.
+    preset: str | None = None
     nodes: list[TavoloNode] = Field(default_factory=list, max_length=MAX_NODES)
     edges: list[TavoloEdge] = Field(default_factory=list, max_length=MAX_EDGES)
+
+    @field_validator("preset", mode="before")
+    @classmethod
+    def _known_preset_or_none(cls, value):
+        return value if value in PRESET_IDS else None
 
 
 class TavoloProposal(BaseModel):
@@ -244,6 +298,32 @@ class TavoloProposal(BaseModel):
     add_nodes: list[TavoloNode] = Field(default_factory=list, max_length=MAX_PROPOSED)
     add_edges: list[TavoloEdge] = Field(default_factory=list, max_length=MAX_PROPOSED)
     note: str | None = Field(default=None, max_length=200)
+
+
+class TavoloComposition(BaseModel):
+    """Uno schema intero, chiesto con un prompt: come una proposta, piu' grande.
+
+    Sono due tipi e non un parametro perche' i tetti dicono due cose diverse:
+    sei mosse si giudicano una per una, sedici pezzi si guardano tutti insieme.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    add_nodes: list[TavoloNode] = Field(default_factory=list, max_length=MAX_COMPOSED_NODES)
+    add_edges: list[TavoloEdge] = Field(default_factory=list, max_length=MAX_COMPOSED_EDGES)
+    note: str | None = Field(default=None, max_length=200)
+
+
+def parse_composition(data: dict | str | TavoloComposition) -> TavoloComposition:
+    """Uno schema che arriva dal modello. Mai fidato: sempre validato."""
+    if isinstance(data, TavoloComposition):
+        return data
+    try:
+        if isinstance(data, str):
+            return TavoloComposition.model_validate_json(data)
+        return TavoloComposition.model_validate(data)
+    except ValidationError as exc:
+        raise TavoloError(str(exc)) from exc
 
 
 def _validated(graph: TavoloGraph) -> TavoloGraph:
@@ -283,7 +363,7 @@ def parse_proposal(data: dict | str | TavoloProposal) -> TavoloProposal:
         raise TavoloError(str(exc)) from exc
 
 
-def propose(graph: TavoloGraph, proposal: TavoloProposal) -> TavoloGraph:
+def propose(graph: TavoloGraph, proposal: TavoloProposal | TavoloComposition) -> TavoloGraph:
     """Le mosse del modello entrano in sospeso e non toccano cio' che c'e'.
 
     Un id gia' presente non viene riscritto: il modello propone, e proporre di
@@ -304,7 +384,7 @@ def propose(graph: TavoloGraph, proposal: TavoloProposal) -> TavoloGraph:
             continue
         edges.append(edge.model_copy(update={"by": "model", "state": "pending"}))
         known_edges.add(edge.key)
-    return _validated(TavoloGraph(title=graph.title, nodes=nodes, edges=edges))
+    return _validated(TavoloGraph(title=graph.title, preset=graph.preset, nodes=nodes, edges=edges))
 
 
 def _settle(graph: TavoloGraph, ids: list[str], state: str) -> TavoloGraph:
@@ -328,7 +408,7 @@ def _settle(graph: TavoloGraph, ids: list[str], state: str) -> TavoloGraph:
         else edge
         for edge in graph.edges
     ]
-    return TavoloGraph(title=graph.title, nodes=nodes, edges=edges)
+    return TavoloGraph(title=graph.title, preset=graph.preset, nodes=nodes, edges=edges)
 
 
 def accept(graph: TavoloGraph, ids: list[str]) -> TavoloGraph:
@@ -349,7 +429,7 @@ def live(graph: TavoloGraph) -> TavoloGraph:
         edge for edge in graph.edges
         if edge.state == "live" and edge.source in alive and edge.target in alive
     ]
-    return TavoloGraph(title=graph.title, nodes=nodes, edges=edges)
+    return TavoloGraph(title=graph.title, preset=graph.preset, nodes=nodes, edges=edges)
 
 
 def from_idea_map(spec: dict) -> TavoloGraph:
@@ -377,7 +457,7 @@ def from_idea_map(spec: dict) -> TavoloGraph:
         })
         for edge in spec.get("edges", [])
     ]
-    return _validated(TavoloGraph(title=spec.get("title", ""), nodes=nodes, edges=edges))
+    return _validated(TavoloGraph(title=spec.get("title", ""), preset=None, nodes=nodes, edges=edges))
 
 
 def rendition(graph: TavoloGraph, lang: str = "it") -> str:
@@ -416,6 +496,9 @@ def rendition(graph: TavoloGraph, lang: str = "it") -> str:
         if any(node.color == colour for node in content.nodes)
     }
     parts = ["; ".join(relations)] if relations else []
+    if content.preset:
+        parts.append(f"{GENRE_WORD.get(code, GENRE_WORD['en'])}: "
+                     f"{PRESET_WORD.get(code, PRESET_WORD['en'])[content.preset]}")
     if grouped:
         parts.append(f"{GROUPS_WORD.get(code, GROUPS_WORD['en'])}: " + "; ".join(
             f"{name} ({', '.join(labels)})" for name, labels in grouped.items()))

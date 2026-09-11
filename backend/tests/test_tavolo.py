@@ -274,5 +274,27 @@ def test_the_rendition_speaks_every_supported_language():
         assert rendition(_base(), lang).startswith("Perche' rimando")
 
 
+def test_an_invented_icon_is_dropped_like_an_invented_form():
+    graph = parse_graph({**GRAPH, "nodes": [
+        {"id": "a", "label": "Compito difficile", "icon": "unicorno"},
+        {"id": "b", "label": "Ansia", "icon": "distress"},
+        {"id": "c", "label": "Rimando"},
+    ]})
+    assert graph.nodes[0].icon is None
+    assert graph.nodes[1].icon == "distress"
+
+
+def test_an_invented_genre_is_dropped_like_an_invented_colour():
+    assert parse_graph({**GRAPH, "preset": "mind-map"}).preset is None
+    assert parse_graph({**GRAPH, "preset": "causal"}).preset == "causal"
+
+
+def test_the_genre_survives_a_proposal_and_the_live_view():
+    graph = parse_graph({**GRAPH, "preset": "causal"})
+    proposed = propose(graph, parse_proposal({"add_nodes": [{"id": "d", "label": "Meno tempo"}]}))
+    assert proposed.preset == "causal"
+    assert live(proposed).preset == "causal"
+
+
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(pytest.main([__file__, "-q"]))
