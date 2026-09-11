@@ -1,0 +1,232 @@
+[
+  {
+    "id": "workflow",
+    "rels": ["then", "blocks", "if"],
+    "forms": ["action", "decision", "outcome"],
+    "rankdir": "LR",
+    "edge_label_required": false,
+    "prompt": "Draw it as a workflow: the work in the order it is done. Time runs one way, so never send two edges that close a cycle. Use decision only where the work really forks, and outcome only for where it ends up. blocks says one step cannot start before another is out of the way; if says a step happens only under a condition.",
+    "prompts": {
+      "it": [
+        "Il flusso per preparare un esame in tre settimane: cosa faccio, in che ordine, cosa blocca cosa.",
+        "Come lavoro su una relazione: raccolta, scrittura, revisione, consegna."
+      ],
+      "en": [
+        "The workflow for preparing an exam in three weeks: what I do, in what order, what blocks what.",
+        "How I work on a report: gathering, writing, revising, handing in."
+      ]
+    },
+    "example": {
+      "title": {"it": "Preparare un esame in tre settimane", "en": "Preparing an exam in three weeks"},
+      "nodes": [
+        {"id": "a", "form": "action", "icon": "resources", "x": 0, "y": 0,
+         "label": {"it": "Raccogli il materiale", "en": "Gather the material"}},
+        {"id": "b", "form": "action", "icon": "calendar", "x": 240, "y": 0,
+         "label": {"it": "Piano delle tre settimane", "en": "Plan the three weeks"}},
+        {"id": "c", "form": "action", "icon": "focus", "x": 480, "y": 0,
+         "label": {"it": "Studio a blocchi", "en": "Study in blocks"}},
+        {"id": "d", "form": "action", "icon": "experiment", "x": 720, "y": 0,
+         "label": {"it": "Prove d'esame", "en": "Practice papers"}},
+        {"id": "e", "form": "action", "icon": "review", "x": 960, "y": 0,
+         "label": {"it": "Ripasso finale", "en": "Final review"}},
+        {"id": "f", "form": "outcome", "icon": "finish", "x": 1200, "y": 0,
+         "label": {"it": "Esame", "en": "The exam"}},
+        {"id": "g", "form": "decision", "icon": "obstacle", "x": 480, "y": 180,
+         "label": {"it": "Manca un capitolo?", "en": "A chapter missing?"}}
+      ],
+      "edges": [
+        {"from": "a", "to": "b", "rel": "then"},
+        {"from": "b", "to": "c", "rel": "then"},
+        {"from": "c", "to": "d", "rel": "then"},
+        {"from": "d", "to": "e", "rel": "then"},
+        {"from": "e", "to": "f", "rel": "then"},
+        {"from": "g", "to": "c", "rel": "blocks"}
+      ]
+    }
+  },
+  {
+    "id": "causal",
+    "rels": ["causes", "hinders", "feeds-back"],
+    "forms": ["concept", "outcome"],
+    "rankdir": "TB",
+    "edge_label_required": false,
+    "prompt": "Draw it as a causal map. causes means the two quantities move together (more of one, more of the other); hinders means they move opposite ways (more of one, less of the other). Use feeds-back only for the edge that closes a loop, and on that edge write in label the name of the loop in plain words, what it does, never a code like R1. Keep the nodes as quantities that can go up or down, not as actions.",
+    "prompts": {
+      "it": [
+        "Come i fattori del QSA si influenzano tra loro: ansia, uso di strategie, percezione di competenza, volizione.",
+        "Perche' rimando lo studio: cosa alimenta cosa, e cosa chiude l'anello."
+      ],
+      "en": [
+        "How the QSA factors influence each other: anxiety, use of strategies, perceived competence, volition.",
+        "Why I put off studying: what feeds what, and what closes the loop."
+      ]
+    },
+    "example": {
+      "title": {"it": "Come i fattori del QSA si influenzano", "en": "How the QSA factors influence each other"},
+      "nodes": [
+        {"id": "anx", "form": "concept", "icon": "distress", "x": 0, "y": 0,
+         "label": {"it": "Ansia da prestazione", "en": "Performance anxiety"}},
+        {"id": "str", "form": "concept", "icon": "structure", "x": 280, "y": 0,
+         "label": {"it": "Uso di strategie", "en": "Use of strategies"}},
+        {"id": "res", "form": "outcome", "icon": "progress", "x": 280, "y": 180,
+         "label": {"it": "Risultati", "en": "Results"}},
+        {"id": "com", "form": "concept", "icon": "growth", "x": 0, "y": 180,
+         "label": {"it": "Percezione di competenza", "en": "Perceived competence"}},
+        {"id": "vol", "form": "concept", "icon": "energy", "x": 0, "y": 360,
+         "label": {"it": "Volizione", "en": "Volition"}},
+        {"id": "del", "form": "concept", "icon": "delay", "x": 280, "y": 360,
+         "label": {"it": "Rimando", "en": "Putting off"}}
+      ],
+      "edges": [
+        {"from": "anx", "to": "str", "rel": "hinders", "strength": 2},
+        {"from": "str", "to": "res", "rel": "causes", "strength": 3},
+        {"from": "res", "to": "com", "rel": "causes", "strength": 2},
+        {"from": "com", "to": "anx", "rel": "hinders", "strength": 2,
+         "label": {"it": "anello: competenza calma l'ansia", "en": "loop: competence calms anxiety"}},
+        {"from": "com", "to": "vol", "rel": "causes", "strength": 2},
+        {"from": "vol", "to": "del", "rel": "hinders", "strength": 2},
+        {"from": "del", "to": "anx", "rel": "feeds-back", "strength": 2,
+         "label": {"it": "anello: rimando e ansia si alimentano", "en": "loop: putting off feeds anxiety"}}
+      ]
+    }
+  },
+  {
+    "id": "concept",
+    "rels": ["supports", "contradicts", "assumes", "needs-evidence", "causes", "hinders", "feeds-back", "then", "blocks", "if", "part-of", "example-of"],
+    "forms": ["concept", "outcome"],
+    "rankdir": "TB",
+    "edge_label_required": true,
+    "prompt": "Draw it as a concept map: concepts joined by named relations. Every edge must carry a label of at most 40 characters that reads as the relation between the two concepts, because a concept map without words on the edges is a badly drawn mind map. Pick the rel that comes closest to what the label says. Keep the nodes as concepts, not as sentences.",
+    "prompts": {
+      "it": [
+        "Com'e' fatto il QSA: le due aree, i fattori, cosa misurano.",
+        "Cos'e' la volizione e come si lega a strategie, obiettivi e fatica."
+      ],
+      "en": [
+        "How the QSA is built: the two areas, the factors, what they measure.",
+        "What volition is and how it ties to strategies, goals and effort."
+      ]
+    },
+    "example": {
+      "title": {"it": "Com'e' fatto il QSA", "en": "How the QSA is built"},
+      "nodes": [
+        {"id": "qsa", "form": "concept", "icon": "measure", "x": 280, "y": 0,
+         "label": {"it": "QSA", "en": "QSA"}},
+        {"id": "cog", "form": "concept", "icon": "brain", "x": 0, "y": 160,
+         "label": {"it": "Area cognitiva", "en": "Cognitive area"}},
+        {"id": "aff", "form": "concept", "icon": "heart", "x": 560, "y": 160,
+         "label": {"it": "Area affettivo-motivazionale", "en": "Affective-motivational area"}},
+        {"id": "stg", "form": "concept", "icon": "structure", "x": 0, "y": 320,
+         "label": {"it": "Strategie di studio", "en": "Study strategies"}},
+        {"id": "aut", "form": "concept", "icon": "repeat", "x": 200, "y": 480,
+         "label": {"it": "Autoregolazione", "en": "Self-regulation"}},
+        {"id": "anx", "form": "concept", "icon": "distress", "x": 560, "y": 320,
+         "label": {"it": "Ansia", "en": "Anxiety"}},
+        {"id": "com", "form": "concept", "icon": "growth", "x": 800, "y": 480,
+         "label": {"it": "Percezione di competenza", "en": "Perceived competence"}}
+      ],
+      "edges": [
+        {"from": "cog", "to": "qsa", "rel": "part-of",
+         "label": {"it": "e' una delle due aree", "en": "is one of the two areas"}},
+        {"from": "aff", "to": "qsa", "rel": "part-of",
+         "label": {"it": "e' una delle due aree", "en": "is one of the two areas"}},
+        {"from": "stg", "to": "cog", "rel": "part-of",
+         "label": {"it": "e' misurata dall'area", "en": "is measured by the area"}},
+        {"from": "aut", "to": "stg", "rel": "example-of",
+         "label": {"it": "e' un tipo di strategia", "en": "is a kind of strategy"}},
+        {"from": "anx", "to": "aff", "rel": "part-of",
+         "label": {"it": "e' un fattore dell'area", "en": "is a factor of the area"}},
+        {"from": "com", "to": "aff", "rel": "part-of",
+         "label": {"it": "e' un fattore dell'area", "en": "is a factor of the area"}}
+      ]
+    }
+  },
+  {
+    "id": "argument",
+    "rels": ["supports", "contradicts", "assumes", "needs-evidence"],
+    "forms": ["concept", "outcome"],
+    "rankdir": "TB",
+    "edge_label_required": false,
+    "prompt": "Draw it as an argument map. One node is the claim; every other node is a reason, an objection, an assumption or a gap, and it points at what it acts on. Never draw a cause: this map is about an argument holding or not. Use needs-evidence for what the person has not checked yet, and hypothesis:true on any edge you are extending rather than reading.",
+    "prompts": {
+      "it": [
+        "La mia tesi: studio meglio di sera. Cosa la sostiene, cosa la contraddice, cosa non ho verificato.",
+        "Perche' questo metodo funziona per me, e quali prove mi mancano."
+      ],
+      "en": [
+        "My claim: I study better in the evening. What supports it, what contradicts it, what I have not checked.",
+        "Why this method works for me, and which evidence I am missing."
+      ]
+    },
+    "example": {
+      "title": {"it": "Studio meglio di sera", "en": "I study better in the evening"},
+      "nodes": [
+        {"id": "cl", "form": "concept", "icon": "idea", "x": 280, "y": 0, "accent": true,
+         "label": {"it": "Studio meglio di sera", "en": "I study better in the evening"}},
+        {"id": "s1", "form": "concept", "icon": "observation", "x": 0, "y": 200,
+         "label": {"it": "Dopo le 21 resto sul libro piu' a lungo", "en": "After 9pm I stay on the book longer"}},
+        {"id": "s2", "form": "concept", "icon": "notes", "x": 280, "y": 200,
+         "label": {"it": "Di sera nessuno mi interrompe", "en": "In the evening nobody interrupts me"}},
+        {"id": "o1", "form": "concept", "icon": "sleep", "x": 560, "y": 200,
+         "label": {"it": "Dormo meno e il giorno dopo rendo poco", "en": "I sleep less and the next day I do little"}},
+        {"id": "a1", "form": "concept", "icon": "uncertainty", "x": 0, "y": 380,
+         "label": {"it": "Do per scontato che la stanchezza non conti", "en": "I take for granted that tiredness does not count"}},
+        {"id": "g1", "form": "concept", "icon": "evidence", "x": 560, "y": 380,
+         "label": {"it": "Non ho mai provato una settimana di mattina", "en": "I have never tried a week of mornings"}}
+      ],
+      "edges": [
+        {"from": "s1", "to": "cl", "rel": "supports", "strength": 2},
+        {"from": "s2", "to": "cl", "rel": "supports", "strength": 2},
+        {"from": "o1", "to": "cl", "rel": "contradicts", "strength": 2},
+        {"from": "a1", "to": "cl", "rel": "assumes", "strength": 2, "hypothesis": true},
+        {"from": "g1", "to": "cl", "rel": "needs-evidence", "strength": 3}
+      ]
+    }
+  },
+  {
+    "id": "algorithm",
+    "rels": ["then", "if", "blocks"],
+    "forms": ["decision", "action", "outcome"],
+    "rankdir": "LR",
+    "edge_label_required": false,
+    "prompt": "Draw it as a procedure with forks. Every decision node is a question that can be answered, and it must have at least two edges leaving it; write the answer that takes that branch in the label of the edge (yes, no, a threshold). Use if for the edge that depends on the answer, then for the step that simply follows, and outcome for where a branch ends.",
+    "prompts": {
+      "it": [
+        "Come decido se un metodo di studio sta funzionando: cosa guardo, in che ordine, cosa concludo.",
+        "La procedura per scegliere un corso: requisiti, bivi, esiti."
+      ],
+      "en": [
+        "How I decide whether a study method is working: what I look at, in what order, what I conclude.",
+        "The procedure for choosing a course: requirements, forks, outcomes."
+      ]
+    },
+    "example": {
+      "title": {"it": "Il metodo sta funzionando?", "en": "Is the method working?"},
+      "nodes": [
+        {"id": "q1", "form": "decision", "icon": "measure", "x": 0, "y": 0,
+         "label": {"it": "Hai una misura del risultato?", "en": "Do you have a measure of the result?"}},
+        {"id": "a1", "form": "action", "icon": "experiment", "x": 300, "y": 180,
+         "label": {"it": "Fai una prova e misurala", "en": "Run one test and measure it"}},
+        {"id": "q2", "form": "decision", "icon": "compare", "x": 300, "y": 0,
+         "label": {"it": "E' migliorato in due settimane?", "en": "Has it improved in two weeks?"}},
+        {"id": "o1", "form": "outcome", "icon": "check", "x": 620, "y": 0,
+         "label": {"it": "Tieni il metodo", "en": "Keep the method"}},
+        {"id": "q3", "form": "decision", "icon": "detail", "x": 620, "y": 180,
+         "label": {"it": "L'hai applicato come previsto?", "en": "Did you apply it as planned?"}},
+        {"id": "o2", "form": "outcome", "icon": "correction", "x": 900, "y": 180,
+         "label": {"it": "Cambia una cosa sola", "en": "Change one thing only"}},
+        {"id": "o3", "form": "outcome", "icon": "repeat", "x": 900, "y": 360,
+         "label": {"it": "Riprova applicandolo davvero", "en": "Try again, applying it for real"}}
+      ],
+      "edges": [
+        {"from": "q1", "to": "a1", "rel": "if", "label": {"it": "no", "en": "no"}},
+        {"from": "a1", "to": "q2", "rel": "then"},
+        {"from": "q1", "to": "q2", "rel": "if", "label": {"it": "si", "en": "yes"}},
+        {"from": "q2", "to": "o1", "rel": "if", "label": {"it": "si", "en": "yes"}},
+        {"from": "q2", "to": "q3", "rel": "if", "label": {"it": "no", "en": "no"}},
+        {"from": "q3", "to": "o2", "rel": "if", "label": {"it": "si", "en": "yes"}},
+        {"from": "q3", "to": "o3", "rel": "if", "label": {"it": "no", "en": "no"}}
+      ]
+    }
+  }
+]
