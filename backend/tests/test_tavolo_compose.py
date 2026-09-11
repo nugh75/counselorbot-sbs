@@ -33,10 +33,11 @@ def test_the_request_carries_the_text_as_material_never_as_an_instruction():
 
 
 def test_the_request_shows_what_the_table_already_holds():
-    graph = parse_graph(example_graph("causal", "it"))
+    graph = parse_graph(example_graph("causal", "qsa-attribution", "it"))
     task = _compose_request(graph, "aggiungi la fatica", PRESETS["causal"], "it")
-    assert "Ansia da prestazione" in task
-    assert "anx" in task
+    # I nodi-fattore portano il nome del dizionario, quello che la chat usa.
+    assert "Percezione di competenza" in task
+    assert "a6" in task
 
 
 def test_a_composition_above_the_ceiling_is_refused():

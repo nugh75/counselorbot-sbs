@@ -28,7 +28,7 @@ const GENRE_LABEL: Record<TavoloPresetId, Parameters<typeof tavoloLabel>[0]> = {
 interface Props {
     busy: boolean;
     onCompose: (preset: TavoloPresetId | null, prompt: string) => void | Promise<void>;
-    onOpenExample?: (preset: TavoloPresetId) => void | Promise<void>;
+    onOpenExample?: (preset: TavoloPresetId, exampleId: string) => void | Promise<void>;
 }
 
 export function TavoloCompose({ busy, onCompose, onOpenExample }: Props) {
@@ -94,13 +94,23 @@ export function TavoloCompose({ busy, onCompose, onOpenExample }: Props) {
                         : <Sparkles className="h-4 w-4" aria-hidden="true" />}
                     {label('composeGo')}
                 </button>
-                {chosen?.has_example && onOpenExample && (
-                    <button type="button" disabled={busy} onClick={() => void onOpenExample(chosen.id)}
-                        className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-200 px-3 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-40">
-                        {label('openExample')}
-                    </button>
-                )}
             </div>
+
+            {chosen && onOpenExample && chosen.examples.length > 0 && (
+                // Gli esempi gia' fatti sono piu' di uno per genere: un elenco
+                // di titoli, non un bottone, perche' la scelta e' fra tavoli e
+                // non fra aprire e non aprire.
+                <div className="space-y-1">
+                    <p className="text-xs font-medium text-slate-500">{label('readyTables')}</p>
+                    {chosen.examples.map((example) => (
+                        <button key={example.id} type="button" disabled={busy}
+                            onClick={() => void onOpenExample(chosen.id, example.id)}
+                            className="block w-full rounded-lg border border-slate-200 px-2 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 disabled:opacity-40">
+                            {example.title}
+                        </button>
+                    ))}
+                </div>
+            )}
         </section>
     );
 }

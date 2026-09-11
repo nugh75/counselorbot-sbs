@@ -92,7 +92,7 @@ async function fixture() {
         else if (url.pathname === '/api/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
         else if (url.pathname === '/api/orientation/status') data = { required: false, completed: true };
         else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'f', name: 'Counselor di prova', language: ['it'], suitable: true }];
-        else if (url.pathname === '/api/tavolo/presets') data = { presets: [{ id: 'causal', rels: ['causes', 'hinders', 'feeds-back'], forms: ['concept', 'outcome'], rankdir: 'TB', edge_label_required: false, prompts: ['i fattori del QSA', 'perche rimando'], has_example: true }] };
+        else if (url.pathname === '/api/tavolo/presets') data = { presets: [{ id: 'causal', rels: ['causes', 'hinders', 'feeds-back'], forms: ['concept', 'outcome'], rankdir: 'TB', edge_label_required: false, prompts: ['i fattori del QSA', 'perche rimando'], examples: [{ id: 'qsa-influences', title: 'Come i fattori del QSA si influenzano' }] }] };
         else if (url.pathname === '/api/diagram-icons') data = { icons: [{ id: 'distress', meaning: 'distress', label: 'Disagio' }] };
         else if (url.pathname === `/api/tavolo/${ID}`) data = view;
         else if (url.pathname.endsWith('/settle')) data = { ...view, index: view.index + 1 };

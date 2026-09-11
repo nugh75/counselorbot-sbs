@@ -7,6 +7,7 @@ import pytest
 
 from backend.tavolo import MAX_LABEL, PRESET_IDS, REL_FAMILY, TavoloProposal, parse_graph, rendition
 from backend.tavolo_presets import (
+    examples_of,
     PRESETS,
     conform,
     example_graph,
@@ -76,18 +77,19 @@ def test_every_example_graph_holds_up_and_obeys_its_own_genre():
     lingue deve trovare qui, non in produzione.
     """
     for preset_id, preset in PRESETS.items():
-        for lang in LANGS:
-            graph = parse_graph(example_graph(preset_id, lang))
-            here = (preset_id, lang)
-            assert graph.preset == preset_id, here
-            assert graph.nodes, here
-            assert {edge.rel for edge in graph.edges} <= set(preset["rels"]), here
-            assert {node.form for node in graph.nodes} <= set(preset["forms"]), here
-            if preset["edge_label_required"]:
-                assert all((edge.label or "").strip() for edge in graph.edges), here
-            assert all(len(node.label) <= MAX_LABEL for node in graph.nodes), here
-            assert all(len(edge.label or "") <= MAX_EDGE_LABEL for edge in graph.edges), here
-            assert sum(1 for node in graph.nodes if node.accent) <= 1, here
+        for example in preset["examples"]:
+            for lang in LANGS:
+                graph = parse_graph(example_graph(preset_id, example["id"], lang))
+                here = (preset_id, example["id"], lang)
+                assert graph.preset == preset_id, here
+                assert graph.nodes, here
+                assert {edge.rel for edge in graph.edges} <= set(preset["rels"]), here
+                assert {node.form for node in graph.nodes} <= set(preset["forms"]), here
+                if preset["edge_label_required"]:
+                    assert all((edge.label or "").strip() for edge in graph.edges), here
+                assert all(len(node.label) <= MAX_LABEL for node in graph.nodes), here
+                assert all(len(edge.label or "") <= MAX_EDGE_LABEL for edge in graph.edges), here
+                assert sum(1 for node in graph.nodes if node.accent) <= 1, here
 
 
 def test_a_missing_language_falls_back_to_english():
@@ -102,9 +104,64 @@ def test_every_genre_offers_two_example_prompts():
 
 
 def test_the_rendition_names_the_genre_of_the_table():
-    spoken = rendition(parse_graph(example_graph("causal", "it")), "it")
+    first = PRESETS["causal"]["examples"][0]["id"]
+    spoken = rendition(parse_graph(example_graph("causal", first, "it")), "it")
     assert "Genere: mappa causale" in spoken
-    assert "Genre: causal map" in rendition(parse_graph(example_graph("causal", "en")), "en")
+    assert "Genre: causal map" in rendition(
+        parse_graph(example_graph("causal", first, "en")), "en")
+
+
+def test_every_example_has_a_stable_id_and_a_title_in_every_language():
+    """L'id e' l'indirizzo dell'esempio: due esempi con lo stesso id sarebbero
+    uno solo, e un titolo che manca lascia la riga dell'elenco senza nome."""
+    seen = set()
+    for preset_id, preset in PRESETS.items():
+        for example in preset["examples"]:
+            here = (preset_id, example["id"])
+            assert example["id"] not in seen, here
+            seen.add(example["id"])
+            for lang in LANGS:
+                assert example["title"].get(lang, "").strip(), (*here, lang)
+
+
+def test_the_listing_gives_every_example_of_the_genre():
+    for preset_id, preset in PRESETS.items():
+        listed = examples_of(preset_id, "it")
+        assert [row["id"] for row in listed] == [ex["id"] for ex in preset["examples"]]
+        assert all(row["title"] for row in listed), preset_id
+
+
+def test_an_unknown_example_is_not_served():
+    with pytest.raises(KeyError):
+        example_graph("causal", "non-esiste", "it")
+
+
+def test_no_translated_string_is_left_identical_to_the_italian():
+    """La spia delle traduzioni mancate: una stringa lunga identica all'italiano
+    in una lingua di destinazione e' italiano etichettato male, non una
+    traduzione. Sotto i 24 caratteri si taglia, perche' li' le coincidenze sono
+    vere ("Futuro" in spagnolo e in italiano si scrivono allo stesso modo)."""
+    floor = 24
+    targets = ("es", "fr", "de", "sv")
+    leaks = []
+    for preset_id, preset in PRESETS.items():
+        fields = [preset["prompts"]]
+        for example in preset["examples"]:
+            fields.append(example["title"])
+            fields += [node["label"] for node in example["nodes"]]
+            fields += [edge["label"] for edge in example["edges"] if isinstance(edge.get("label"), dict)]
+        for field in fields:
+            source = field["it"]
+            values = source if isinstance(source, list) else [source]
+            for lang in targets:
+                other = field.get(lang)
+                if other is None:
+                    continue
+                pairs = zip(values, other) if isinstance(other, list) else [(values[0], other)]
+                for italian, translated in pairs:
+                    if len(italian) >= floor and italian == translated:
+                        leaks.append((preset_id, lang, italian[:40]))
+    assert leaks == [], leaks
 
 
 def test_the_presets_route_is_declared_before_the_catch_all_tavolo_id_route():

@@ -53,7 +53,14 @@ from .chat import _apply_counselor_overrides, _resolve_counselor
 from .diagram import _diagram_fallback, _json_object, ModelChoice
 from ..diagram_icon_catalog import ICON_SELECTION_PROMPT
 from ..diagram_render import NODE_FORMS
-from ..tavolo_presets import PRESETS, conform, example_graph, preset_of, prompt_examples
+from ..tavolo_presets import (
+    PRESETS,
+    conform,
+    example_graph,
+    examples_of,
+    preset_of,
+    prompt_examples,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -412,24 +419,29 @@ def list_presets(
             "rankdir": preset["rankdir"],
             "edge_label_required": preset["edge_label_required"],
             "prompts": prompt_examples(preset["id"], lang),
-            "has_example": True,
+            "examples": examples_of(preset["id"], lang),
         }
         for preset in PRESETS.values()
     ]}
 
 
-@router.get("/tavolo/presets/{preset_id}/example")
+@router.get("/tavolo/presets/{preset_id}/examples/{example_id}")
 def read_preset_example(
     preset_id: str,
+    example_id: str,
     lang: str = "it",
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
 ):
-    """Il grafo d'esempio del genere: si apre come tavolo, non come proposta."""
+    """Un grafo d'esempio: si apre come tavolo, non come proposta."""
     _require_feature(db)
     if preset_id not in PRESETS:
         raise HTTPException(status_code=404, detail="genere sconosciuto")
-    return {"graph": example_graph(preset_id, lang)}
+    try:
+        graph = example_graph(preset_id, example_id, lang)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="esempio sconosciuto") from exc
+    return {"graph": graph}
 
 
 @router.get("/tavolo/{tavolo_id}")

@@ -64,11 +64,11 @@ export function TavoloList({ showCompose = true }: TavoloListProps = {}) {
 
     // L'esempio e' materiale nostro, non una proposta del modello: arriva gia'
     // "live", per questo si scrive con writeTavolo invece di passare da compose.
-    const openExample = async (preset: TavoloPresetId) => {
+    const openExample = async (preset: TavoloPresetId, exampleId: string) => {
         if (busy) return;
         setBusy(true);
         try {
-            const graph = await fetchPresetExample(preset, lang);
+            const graph = await fetchPresetExample(preset, exampleId, lang);
             const created = await createTavolo({ preset, title: graph.title, lang });
             await writeTavolo(created.id, graph, created.index);
             router.push(`/tavolo/${created.id}`);

@@ -56,9 +56,31 @@ def _word(value: dict, lang: str) -> str:
     return value.get((lang or "en").lower()[:2]) or value["en"]
 
 
-def example_graph(preset_id: str, lang: str) -> dict:
-    """Il grafo d'esempio del genere, pronto da passare a `POST /tavolo`."""
-    example = PRESETS[preset_id]["example"]
+def examples_of(preset_id: str, lang: str) -> list[dict]:
+    """Gli esempi del genere, id e titolo: l'elenco che la persona scorre.
+
+    Sono piu' di uno per genere perche' un genere si capisce dal confronto: due
+    mappe causali diverse dicono cos'e' una mappa causale meglio di una sola.
+    """
+    return [
+        {"id": example["id"], "title": _word(example["title"], lang)}
+        for example in PRESETS[preset_id]["examples"]
+    ]
+
+
+def example_graph(preset_id: str, example_id: str, lang: str) -> dict:
+    """Un grafo d'esempio, pronto da passare a `POST /tavolo`.
+
+    Solleva `KeyError` se il genere o l'esempio non esistono: chi chiama
+    traduce, qui non si inventa un ripiego su un esempio che non e' stato
+    chiesto.
+    """
+    example = next(
+        (item for item in PRESETS[preset_id]["examples"] if item["id"] == example_id),
+        None,
+    )
+    if example is None:
+        raise KeyError(example_id)
     return {
         "title": _word(example["title"], lang),
         "preset": preset_id,
