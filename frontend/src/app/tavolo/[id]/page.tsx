@@ -25,6 +25,7 @@ import {
     saveTavolo,
     settleTavolo,
     suggestTavolo,
+    TAVOLO_FULL_DETAIL,
     uploadCapture,
     writeTavolo,
     type TavoloGraph,
@@ -117,8 +118,13 @@ export default function TavoloPage() {
             });
             setView(next);
             setGraph(next.graph);
-        } catch {
-            setMessage(label('askFailed'));
+        } catch (error) {
+            if ((error as { status?: number }).status === 409) {
+                setMessage(label('stale'));
+                void load();
+            } else {
+                setMessage(label('askFailed'));
+            }
         } finally {
             setBusy(false);
         }
@@ -134,8 +140,20 @@ export default function TavoloPage() {
             const next = await composeTavolo(id, body);
             setView(next);
             setGraph(next.graph);
-        } catch {
-            setMessage(label('composeFailed'));
+            // "Decidi tu" lascia il genere scelto solo nella nota: il grafo
+            // non lo scrive quando il chip e' auto, quindi e' l'unico posto
+            // dove quella scelta si vede.
+            if (next.note) setMessage(next.note);
+        } catch (error) {
+            const status = (error as { status?: number }).status;
+            if (status === 409) {
+                setMessage(label('stale'));
+                void load();
+            } else if (status === 422 && (error as Error).message === TAVOLO_FULL_DETAIL) {
+                setMessage(label('composeFull'));
+            } else {
+                setMessage(label('composeFailed'));
+            }
         } finally {
             setBusy(false);
         }

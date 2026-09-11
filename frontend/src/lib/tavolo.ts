@@ -64,6 +64,11 @@ export interface TavoloPreset {
     has_example: boolean;
 }
 
+// Il messaggio esatto di backend/tavolo.py (TAVOLO_FULL_MESSAGE). Il confronto
+// e' testuale apposta: e' un 422 distinto dal 502 generico di "nessuno
+// schema", e va riconosciuto senza tradurlo, non mostrato cosi' com'e'.
+export const TAVOLO_FULL_DETAIL = "il tavolo e' pieno";
+
 export interface ComposeBody {
     preset: TavoloPresetId | null;
     prompt: string;
