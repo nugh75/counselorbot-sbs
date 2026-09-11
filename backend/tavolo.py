@@ -196,6 +196,13 @@ class TavoloError(ValueError):
     """Un tavolo che non sta in piedi: contratto violato, non errore di sistema."""
 
 
+# Messaggio esatto sollevato da `propose()` quando il tavolo e' pieno. Un
+# marcatore, non un dettaglio a caso: le rotte lo confrontano per rispondere
+# 422 invece del 502 generico, e il client lo riconosce per dare un messaggio
+# diverso da "il modello non ha proposto niente".
+TAVOLO_FULL_MESSAGE = "il tavolo e' pieno"
+
+
 def family_of(rel: str) -> str:
     """La famiglia non la dichiara nessuno: e' una proprieta' del verbo."""
     try:
@@ -384,7 +391,15 @@ def propose(graph: TavoloGraph, proposal: TavoloProposal | TavoloComposition) ->
             continue
         edges.append(edge.model_copy(update={"by": "model", "state": "pending"}))
         known_edges.add(edge.key)
-    return _validated(TavoloGraph(title=graph.title, preset=graph.preset, nodes=nodes, edges=edges))
+    # Il tavolo esistente piu' la proposta puo' sforare i suoi stessi tetti
+    # (MAX_NODES, MAX_EDGES): qui e' un tavolo pieno, non un contratto rotto
+    # dal modello, e va detto con lo stesso tipo di errore invece di lasciar
+    # scappare il ValidationError di pydantic.
+    try:
+        merged = TavoloGraph(title=graph.title, preset=graph.preset, nodes=nodes, edges=edges)
+    except ValidationError as exc:
+        raise TavoloError(TAVOLO_FULL_MESSAGE) from exc
+    return _validated(merged)
 
 
 def _settle(graph: TavoloGraph, ids: list[str], state: str) -> TavoloGraph:
