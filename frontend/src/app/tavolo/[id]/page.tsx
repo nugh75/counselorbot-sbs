@@ -13,6 +13,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { toPng } from 'html-to-image';
 import { Check, Loader2, Save, Sparkles, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { BackButton } from '@/components/ui/BackButton';
 import { TavoloCanvas } from '@/components/tavolo/TavoloCanvas';
 import { TavoloCompose } from '@/components/tavolo/TavoloCompose';
 import {
@@ -50,7 +51,7 @@ const DESKTOP_WIDTH = 1024;
 export default function TavoloPage() {
     const params = useParams<{ id: string }>();
     const search = useSearchParams();
-    const { lang } = useI18n();
+    const { lang, t } = useI18n();
     const id = params.id;
     const counselorId = Number(search.get('counselor')) || undefined;
 
@@ -231,6 +232,12 @@ export default function TavoloPage() {
     return (
         <main className="flex h-dvh flex-col">
             <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-200 bg-white px-4 py-2">
+                {/* La tela prende tutta la finestra, percio' l'intestazione
+                    dell'app resta sopra il bordo alto e la rotella del mouse la
+                    intercetta React Flow per lo zoom: senza questo bottone dal
+                    tavolo non si torna al menu'. "Tutti i tavoli" porta
+                    all'elenco, che e' un salto diverso. */}
+                <BackButton variant="labelled" href="/" label={t('nav.home')} className="!min-h-11 !px-3" />
                 <h1 className="min-w-0 truncate text-sm font-semibold text-slate-800">
                     {view.title || label('untitled')}
                     {!view.saved && <span className="ml-2 rounded bg-ochre-50 px-1.5 py-0.5 text-xs font-normal text-ochre-700">{label('draft')}</span>}
