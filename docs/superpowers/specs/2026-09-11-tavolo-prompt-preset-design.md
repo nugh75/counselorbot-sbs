@@ -193,7 +193,6 @@ convenzione con cui va letto.
 | la persona | selettore nel pannello del pezzo: griglia dei cento, ricerca su significato e label italiana, voce "nessuna icona" |
 | resa sulla tela | `<img>` da 20px a sinistra della label; nel rombo sopra la label, che li' lo spazio orizzontale e' poco |
 | cattura | `html-to-image` inlinea le immagini same-origin: il test browser verifica che l'icona sia nel PNG, non solo sullo schermo |
-| resa testuale | la riga del nodo nomina l'icona con la sua label, cosi' TTS, PDF e ricerca non la perdono |
 
 ## Test
 
@@ -217,3 +216,5 @@ tutto", pezzi `live`; icona visibile nella cattura.
 - Generi sulla mappa di Idea.
 - Galleria di tavoli d'esempio da sfogliare: c'e' un grafo per genere, non una
   raccolta.
+- L'icona dentro la resa a parole: e' scelta dal significato della label, e
+  dirla a voce ripeterebbe la label. La resa nomina il genere, non le icone.
