@@ -5,7 +5,7 @@ Eseguibile senza pytest:
 """
 import pytest
 
-from backend.tavolo import PRESET_IDS, REL_FAMILY, TavoloProposal, parse_graph, rendition
+from backend.tavolo import MAX_LABEL, PRESET_IDS, REL_FAMILY, TavoloProposal, parse_graph, rendition
 from backend.tavolo_presets import (
     PRESETS,
     conform,
@@ -13,6 +13,13 @@ from backend.tavolo_presets import (
     preset_of,
     prompt_examples,
 )
+
+# Le sei lingue dell'interfaccia: un esempio deve reggere in ognuna, non solo
+# nella lingua in cui e' stato scritto a mano.
+LANGS = ("it", "en", "es", "fr", "de", "sv")
+# `TavoloEdge.label` non ha una costante nominata come `MAX_LABEL`: il tetto e'
+# scritto qui perche' e' lo stesso numero del `Field(max_length=40)` in tavolo.py.
+MAX_EDGE_LABEL = 40
 
 
 def test_the_five_genres_are_the_ones_the_graph_accepts():
@@ -61,14 +68,26 @@ def test_a_concept_map_refuses_an_edge_without_a_word_on_it():
 
 
 def test_every_example_graph_holds_up_and_obeys_its_own_genre():
+    """Ogni esempio, in ognuna delle sei lingue: non solo quella scritta a mano.
+
+    Una traduzione che sfora il tetto di un'etichetta arriva comunque a
+    `preset_of`/`_word` senza sfigurare, ma poi `parse_graph` la rifiuta a
+    runtime quando la persona apre l'esempio: e' lo scarto che questo giro di
+    lingue deve trovare qui, non in produzione.
+    """
     for preset_id, preset in PRESETS.items():
-        graph = parse_graph(example_graph(preset_id, "it"))
-        assert graph.preset == preset_id
-        assert graph.nodes, preset_id
-        assert {edge.rel for edge in graph.edges} <= set(preset["rels"]), preset_id
-        assert {node.form for node in graph.nodes} <= set(preset["forms"]), preset_id
-        if preset["edge_label_required"]:
-            assert all((edge.label or "").strip() for edge in graph.edges), preset_id
+        for lang in LANGS:
+            graph = parse_graph(example_graph(preset_id, lang))
+            here = (preset_id, lang)
+            assert graph.preset == preset_id, here
+            assert graph.nodes, here
+            assert {edge.rel for edge in graph.edges} <= set(preset["rels"]), here
+            assert {node.form for node in graph.nodes} <= set(preset["forms"]), here
+            if preset["edge_label_required"]:
+                assert all((edge.label or "").strip() for edge in graph.edges), here
+            assert all(len(node.label) <= MAX_LABEL for node in graph.nodes), here
+            assert all(len(edge.label or "") <= MAX_EDGE_LABEL for edge in graph.edges), here
+            assert sum(1 for node in graph.nodes if node.accent) <= 1, here
 
 
 def test_a_missing_language_falls_back_to_english():

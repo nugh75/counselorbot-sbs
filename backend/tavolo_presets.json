@@ -358,9 +358,9 @@
           "label": {
             "it": "anello: competenza calma l'ansia",
             "en": "loop: competence calms anxiety",
-            "es": "El anillo: la competencia calma la ansiedad",
+            "es": "Anillo: la competencia calma la ansiedad",
             "fr": "L'anneau : la compétence calme l'anxiété",
-            "de": "Der Ring: Die Kompetenz beruhigt die Angst",
+            "de": "Ring: Die Kompetenz beruhigt die Angst",
             "sv": "Ringen: kompetensen lugnar ångesten"
           }
         },
@@ -384,10 +384,10 @@
           "label": {
             "it": "anello: rimando e ansia si alimentano",
             "en": "loop: putting off feeds anxiety",
-            "es": "El anillo: el aplazamiento y la ansiedad se alimentan mutuamente",
-            "fr": "L'anneau : le report et l'anxiété s'alimentent mutuellement",
-            "de": "Der Ring: Aufschieben und Angst speisen sich gegenseitig",
-            "sv": "Ringen: uppskjutande och ångest matar varandra"
+            "es": "El aplazamiento y ansiedad se alimentan",
+            "fr": "Le report et l'anxiété s'alimentent",
+            "de": "Ring: Aufschieben und Angst speisen sich",
+            "sv": "Ringen: uppskjutande och ångest matar"
           }
         }
       ]
@@ -478,7 +478,7 @@
             "en": "Cognitive area",
             "es": "Área cognitiva",
             "fr": "Domaine cognitif",
-            "de": "Kognitive Ebene",
+            "de": "Kognitiver Bereich",
             "sv": "Kognitivt område"
           }
         },
@@ -567,7 +567,7 @@
             "it": "e' una delle due aree",
             "en": "is one of the two areas",
             "es": "es una de las dos áreas",
-            "fr": "c'est l'une des deux zones",
+            "fr": "c'est l'un des deux domaines",
             "de": "es ist einer der beiden Bereiche",
             "sv": "det är ett av de två områdena"
           }
@@ -580,7 +580,7 @@
             "it": "e' una delle due aree",
             "en": "is one of the two areas",
             "es": "es una de las dos áreas",
-            "fr": "c'est l'une des deux zones",
+            "fr": "c'est l'un des deux domaines",
             "de": "es ist einer der beiden Bereiche",
             "sv": "det är ett av de två områdena"
           }
@@ -593,9 +593,9 @@
             "it": "e' misurata dall'area",
             "en": "is measured by the area",
             "es": "se mide por el área",
-            "fr": "elle est mesurée par la surface",
-            "de": "sie wird durch die Fläche gemessen",
-            "sv": "den mäts av arean"
+            "fr": "elle est mesurée par le domaine",
+            "de": "sie wird durch den Bereich gemessen",
+            "sv": "den mäts av området"
           }
         },
         {
@@ -880,7 +880,7 @@
             "en": "Do you have a measure of the result?",
             "es": "¿Tienes una medida del resultado?",
             "fr": "As-tu une mesure du résultat ?",
-            "de": "Hast du eine Maßnahme des Ergebnisses?",
+            "de": "Hast du ein Maß für das Ergebnis?",
             "sv": "Har du ett mått på resultatet?"
           }
         },
@@ -923,10 +923,10 @@
           "label": {
             "it": "Tieni il metodo",
             "en": "Keep the method",
-            "es": "Tienes método",
-            "fr": "Tu as de la méthode",
-            "de": "Du hast Methode",
-            "sv": "Du har metod"
+            "es": "Mantén el método",
+            "fr": "Garde cette méthode",
+            "de": "Behalte die Methode bei",
+            "sv": "Behåll metoden"
           }
         },
         {

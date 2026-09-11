@@ -49,13 +49,22 @@ def main() -> int:
                     continue
                 if isinstance(field.get(SOURCE), list):
                     # I prompt d'esempio sono due per lingua: si traducono uno per uno.
+                    # Una lingua a cui manca anche un solo prompt non si scrive: come
+                    # nel ramo scalare qui sotto, meglio lasciare il buco che spacciare
+                    # l'italiano per una traduzione, perche' _word() lo noterebbe solo
+                    # se la chiave mancasse del tutto.
                     produced = {lang: [] for lang in wanted}
+                    complete = set(wanted)
                     for text in field[SOURCE]:
                         done = translate(text, SOURCE, wanted)
                         for lang in wanted:
-                            produced[lang].append(done.get(lang) or text)
-                    field.update(produced)
-                    print(f"  {entry['id']}: prompt -> {','.join(wanted)}")
+                            value = done.get(lang)
+                            if value:
+                                produced[lang].append(value)
+                            else:
+                                complete.discard(lang)
+                    field.update({lang: produced[lang] for lang in complete})
+                    print(f"  {entry['id']}: prompt -> {','.join(sorted(complete))}")
                 else:
                     done = translate(field[SOURCE], SOURCE, wanted)
                     field.update({lang: done[lang] for lang in wanted if done.get(lang)})
