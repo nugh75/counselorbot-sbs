@@ -72,8 +72,9 @@ def test_every_example_graph_holds_up_and_obeys_its_own_genre():
 
 
 def test_a_missing_language_falls_back_to_english():
-    assert example_graph("workflow", "sv")["title"] == example_graph("workflow", "en")["title"]
-    assert prompt_examples("workflow", "sv") == prompt_examples("workflow", "en")
+    from backend.tavolo_presets import _word
+    assert _word({"en": "only english"}, "sv") == "only english"
+    assert _word({"en": "english", "it": "italiano"}, "it") == "italiano"
 
 
 def test_every_genre_offers_two_example_prompts():
