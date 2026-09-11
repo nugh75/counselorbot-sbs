@@ -35,6 +35,7 @@ from ..tavolo import (
     MAX_PROPOSED,
     MAX_TITLE,
     REL_FAMILY,
+    TAVOLO_FULL_MESSAGE,
     TavoloComposition,
     TavoloError,
     TavoloGraph,
@@ -553,7 +554,10 @@ async def compose_tavolo(
     try:
         proposed = propose(graph, composition)
     except TavoloError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        # Il tavolo pieno non e' un modello che ha sbagliato il contratto: e'
+        # un 422, cosi' il client lo distingue da "nessuno schema" (502).
+        status = 422 if str(exc) == TAVOLO_FULL_MESSAGE else 502
+        raise HTTPException(status_code=status, detail=str(exc)) from exc
     written = _write(db, tavolo, revision, proposed, author="model", kind="proposal")
     return {**_view(tavolo, written), "note": composition.note}
 
