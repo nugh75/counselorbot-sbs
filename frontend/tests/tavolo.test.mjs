@@ -331,6 +331,17 @@ test('il tavolo si ingrandisce e si allarga', async () => {
     await context.close();
 });
 
+test('from an open table you can go back to the main menu', async () => {
+    // La tela occupa la finestra e l'intestazione dell'app resta fuori schermo:
+    // se questo collegamento sparisce, dal tavolo non si esce piu'.
+    const { page } = await fixture();
+    // Dentro `main`: il logo dell'intestazione globale porta anche lui a "/",
+    // ma sta fuori schermo, ed e' il motivo per cui questo bottone esiste.
+    const home = page.locator('main header').getByRole('link', { name: 'Torna alla home' });
+    await home.waitFor({ state: 'visible' });
+    assert.equal(await home.getAttribute('href'), '/');
+});
+
 test('the prompt box offers the genres and the example prompts', async () => {
     const { page, context } = await fixture();
     await page.getByRole('button', { name: 'Mappa causale' }).click();
