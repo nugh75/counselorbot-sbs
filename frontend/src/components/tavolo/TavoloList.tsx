@@ -22,7 +22,15 @@ import {
 } from '@/lib/tavolo';
 import { tavoloLabel } from '@/lib/i18n-tavolo';
 
-export function TavoloList() {
+interface TavoloListProps {
+    // La casella del prompt resta nell'area personale: nel pannello della
+    // chat (VisualTools) l'ingresso non riapre, e' solo l'elenco. Vedi la
+    // spec, "Non fatto": "Prompt del tavolo dentro la chat: l'ingresso resta
+    // l'area personale".
+    showCompose?: boolean;
+}
+
+export function TavoloList({ showCompose = true }: TavoloListProps = {}) {
     const { lang } = useI18n();
     const router = useRouter();
     const [rows, setRows] = useState<TavoloSummary[] | null>(null);
@@ -92,7 +100,7 @@ export function TavoloList() {
                 {label('newOne')}
             </button>
 
-            <TavoloCompose busy={busy} onCompose={composeNew} onOpenExample={openExample} />
+            {showCompose && <TavoloCompose busy={busy} onCompose={composeNew} onOpenExample={openExample} />}
 
             {disabled && <p className="text-sm text-slate-600">{label('notFound')}</p>}
 
