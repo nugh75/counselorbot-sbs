@@ -104,10 +104,10 @@
           "label": {
             "it": "Prove d'esame",
             "en": "Practice papers",
-            "es": "Exámenes",
-            "fr": "Examens",
-            "de": "Prüfungen",
-            "sv": "Provor"
+            "es": "Exámenes de prueba",
+            "fr": "Examens blancs",
+            "de": "Probeklausuren",
+            "sv": "Övningsprov"
           }
         },
         {
@@ -309,8 +309,8 @@
           "label": {
             "it": "Volizione",
             "en": "Volition",
-            "es": "Voluntad",
-            "fr": "Volonté",
+            "es": "Volición",
+            "fr": "Volition",
             "de": "Wille",
             "sv": "Vilja"
           }
@@ -358,10 +358,10 @@
           "label": {
             "it": "anello: competenza calma l'ansia",
             "en": "loop: competence calms anxiety",
-            "es": "Anillo: la competencia calma la ansiedad",
-            "fr": "L'anneau : la compétence calme l'anxiété",
-            "de": "Ring: Die Kompetenz beruhigt die Angst",
-            "sv": "Ringen: kompetensen lugnar ångesten"
+            "es": "Bucle: la competencia calma la ansiedad",
+            "fr": "Boucle : la compétence calme l'anxiété",
+            "de": "Schleife: Kompetenz beruhigt Angst",
+            "sv": "Loopen: kompetensen lugnar ångesten"
           }
         },
         {
@@ -384,10 +384,10 @@
           "label": {
             "it": "anello: rimando e ansia si alimentano",
             "en": "loop: putting off feeds anxiety",
-            "es": "El aplazamiento y ansiedad se alimentan",
-            "fr": "Le report et l'anxiété s'alimentent",
-            "de": "Ring: Aufschieben und Angst speisen sich",
-            "sv": "Ringen: uppskjutande och ångest matar"
+            "es": "Bucle: aplazamiento y ansiedad",
+            "fr": "Boucle : report et anxiété",
+            "de": "Schleife: Aufschieben speist Angst",
+            "sv": "Loopen: uppskjutande och ångest matar"
           }
         }
       ]
@@ -446,10 +446,10 @@
       "title": {
         "it": "Com'e' fatto il QSA",
         "en": "How the QSA is built",
-        "es": "¿Cómo se elabora el QSA?",
-        "fr": "Comment est élaboré le QSA ?",
-        "de": "Wie wird der QSA erstellt?",
-        "sv": "Hur utvecklas QSA?"
+        "es": "¿Cómo está estructurado el QSA?",
+        "fr": "Comment est construit le QSA ?",
+        "de": "Wie ist der QSA aufgebaut?",
+        "sv": "Hur är QSA uppbyggt?"
       },
       "nodes": [
         {
@@ -746,7 +746,7 @@
           "label": {
             "it": "Dormo meno e il giorno dopo rendo poco",
             "en": "I sleep less and the next day I do little",
-            "es": "Dormo menos y al día siguiente rindo poco",
+            "es": "Duermo menos y al día siguiente rindo poco",
             "fr": "Je dors moins et le lendemain je rends peu",
             "de": "Ich schlafe weniger und am nächsten Tag leiste ich wenig",
             "sv": "Jag sover mindre och presterar lite dagen efter"
