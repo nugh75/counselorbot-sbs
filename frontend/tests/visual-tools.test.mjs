@@ -248,7 +248,8 @@ test('the single conversation kebab opens full-page visual tools on Actions and 
         assert.equal(await page.getByRole('button', { name: l('organize'), exact: true }).count(), 0);
         assert.equal(await page.getByRole('button', { name: 'Diagramma', exact: true }).count(), 1);
         const trigger = page.getByRole('button', { name: chatLayoutLabel('it', 'options'), exact: true });
-        assert.equal(await page.locator('button[popovertarget]').count(), 1);
+        // Audio input has its own popover; count the conversation menu only.
+        assert.equal(await trigger.count(), 1);
         const menu = page.getByRole('group', { name: chatLayoutLabel('it', 'options'), exact: true });
         await trigger.click();
         const dots = await trigger.locator('svg circle').evaluateAll(elements => elements.map(el => [el.getAttribute('cx'), el.getAttribute('cy')]));
