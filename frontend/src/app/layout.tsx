@@ -12,6 +12,7 @@ import { TooltipProvider } from '@/components/ui/Tooltip';
 import { AccountSetupGate } from '@/components/layout/AccountSetupGate';
 import { OrientationGate } from '@/components/layout/OrientationGate';
 import { SkipLink } from '@/components/layout/SkipLink';
+import { NavigationHistory } from '@/components/layout/NavigationHistory';
 import { VoiceReaderProvider } from '@/components/voice-reader/VoiceReader';
 
 // Tre ruoli tipografici. Body = Inter (invariato). Display = Bricolage Grotesque,
@@ -59,6 +60,7 @@ export default function RootLayout({
                         <VoiceReaderProvider>
                         <CounselorNavigation>
                         <SkipLink />
+                        <NavigationHistory />
                         <ViewAsFetchPatch />
                         <Header />
                         <main id="contenuto" className="pt-20 px-4 pb-12">

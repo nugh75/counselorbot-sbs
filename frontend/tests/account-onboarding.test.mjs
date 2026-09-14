@@ -85,11 +85,12 @@ test('new Compass and recommended tools reuse defaults without notebook interrup
         assert.equal(writes.filter(w => w.path === '/api/user/learner-profile').length, 0);
     } finally { await context.close(); }
 });
-test('incompatible counselor opens the dedicated page and cannot be confirmed', async () => {
+test('incompatible counselor reopens selection inside the flow and cannot be confirmed', async () => {
     const { page, context, prefs } = await fixture({ incompatible: true });
     try {
         await page.goto(`${origin}/?start=QSA`);
         await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).waitFor();
+        assert.equal(new URL(page.url()).pathname, '/', 'input stays in the same flow');
         assert.equal(await page.getByRole('button', { name: 'Continua', exact: true }).isDisabled(), true);
         await page.getByRole('button', { name: /Counselor 2/ }).click();
         await page.getByRole('button', { name: 'Continua', exact: true }).click();
@@ -231,3 +232,31 @@ for (const width of [390, 1440]) {
         } finally { await context.close(); }
     });
 }
+
+for (const width of [390, 1440]) {
+    test(`back from incompatible counselor selection returns to tools at ${width}px`, async () => {
+        const { page, context, prefs } = await fixture({ width, incompatible: true });
+        try {
+            await page.goto(`${origin}/?view=questionnaires`);
+            await page.getByRole('heading', { name: 'QSA', exact: true }).click();
+            await page.getByRole('button', { name: 'Continua', exact: true }).click();
+            await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).waitFor();
+            await page.getByRole('button', { name: 'Indietro', exact: true }).click();
+            await page.getByRole('button', { name: /^QSA\s/ }).waitFor();
+            assert.equal(prefs.counselor_id, 1);
+            assert.equal(await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).count(), 0);
+        } finally { await context.close(); }
+    });
+}
+
+test('instrument details return to the actual catalog rather than the home screen', async () => {
+    const { page, context } = await fixture();
+    try {
+        await page.goto(`${origin}/?view=questionnaires`);
+        await page.locator('a[href="/strumenti/QSA"]').click();
+        await page.waitForURL(/\/strumenti\//);
+        await page.getByRole('button', { name: 'Indietro', exact: true }).click();
+        await page.getByRole('heading', { name: 'QSA', exact: true }).waitFor();
+        assert.equal(await page.getByRole('button', { name: 'Continua', exact: true }).count(), 1);
+    } finally { await context.close(); }
+});

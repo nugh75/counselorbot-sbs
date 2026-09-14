@@ -5,16 +5,20 @@
 // non hanno un nome con cui riconoscerle: una bozza vive dentro la discussione
 // che l'ha aperta, e li' si ritrova.
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Loader2, Plus, Table2 } from 'lucide-react';
+import { Loader2, Pencil, Plus, Table2, Trash2 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { TavoloCompose } from '@/components/tavolo/TavoloCompose';
+import { TavoloCounselor } from '@/components/tavolo/TavoloCounselor';
 import {
     createTavolo,
+    deleteTavolo,
+    renameTavolo,
     fetchPresetExample,
     listTavoli,
+    pendingIds,
     tavoloEnabled,
     writeTavolo,
     type TavoloPresetId,
@@ -28,9 +32,10 @@ interface TavoloListProps {
     // spec, "Non fatto": "Prompt del tavolo dentro la chat: l'ingresso resta
     // l'area personale".
     showCompose?: boolean;
+    onOpen?: (id: string, counselorId?: number) => void;
 }
 
-export function TavoloList({ showCompose = true }: TavoloListProps = {}) {
+export function TavoloList({ showCompose = true, onOpen }: TavoloListProps = {}) {
     const { lang } = useI18n();
     const router = useRouter();
     const [rows, setRows] = useState<TavoloSummary[] | null>(null);
@@ -38,6 +43,14 @@ export function TavoloList({ showCompose = true }: TavoloListProps = {}) {
     // "nessun tavolo" a chi ne ha di salvati.
     const [disabled, setDisabled] = useState(false);
     const [busy, setBusy] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
+    const [counselorId, setCounselorId] = useState<number | undefined>();
+    const [aiAvailable, setAiAvailable] = useState(false);
+    const counselorChanged = useCallback((id: number | undefined, available: boolean) => {
+        setCounselorId(id); setAiAvailable(available);
+    }, []);
+    const openTable = (id: string) => onOpen ? onOpen(id, counselorId) : router.push(tableHref(id));
+    const tableHref = (id: string) => `/tavolo/${id}${counselorId ? `?counselor=${counselorId}` : ''}`;
 
     useEffect(() => {
         void tavoloEnabled().then((enabled) => {
@@ -52,11 +65,10 @@ export function TavoloList({ showCompose = true }: TavoloListProps = {}) {
         if (busy) return;
         setBusy(true);
         try {
-            const tavolo = await createTavolo({});
-            window.open(`/tavolo/${tavolo.id}`, '_blank', 'noopener');
+            const tavolo = await createTavolo({ counselor_id: counselorId, lang });
+            openTable(tavolo.id);
         } catch {
-            // Un tavolo che non si apre non deve rompere la pagina: il bottone
-            // torna com'era e l'elenco resta dov'e'.
+            setMessage(label('openFailed'));
         } finally {
             setBusy(false);
         }
@@ -71,9 +83,9 @@ export function TavoloList({ showCompose = true }: TavoloListProps = {}) {
             const graph = await fetchPresetExample(preset, exampleId, lang);
             const created = await createTavolo({ preset, title: graph.title, lang });
             await writeTavolo(created.id, graph, created.index);
-            router.push(`/tavolo/${created.id}`);
+            openTable(created.id);
         } catch {
-            // Stesso comportamento del bottone vuoto: si resta sull'elenco.
+            setMessage(label('openFailed'));
         } finally {
             setBusy(false);
         }
@@ -83,24 +95,46 @@ export function TavoloList({ showCompose = true }: TavoloListProps = {}) {
         if (busy) return;
         setBusy(true);
         try {
-            const created = await createTavolo({ preset, source_text: prompt.trim(), lang });
-            router.push(`/tavolo/${created.id}`);
+            const created = await createTavolo({ preset, source_text: prompt.trim(), lang, counselor_id: counselorId });
+            if (!pendingIds(created.graph).length) { setMessage(label('composeFailed')); return; }
+            openTable(created.id);
         } catch {
-            // Stesso comportamento del bottone vuoto: si resta sull'elenco.
+            setMessage(label('openFailed'));
         } finally {
             setBusy(false);
         }
     };
 
+    const manage = async (row: TavoloSummary, action: 'rename' | 'delete') => {
+        if (busy) return;
+        const title = action === 'rename' ? window.prompt(label('renameTable'), row.title || '') : null;
+        if (action === 'rename' && !title?.trim()) return;
+        if (action === 'delete' && !window.confirm(`${row.title || label('untitled')}\n\n${label('deleteConfirm')}`)) return;
+        setBusy(true); setMessage(null);
+        try {
+            if (action === 'rename') {
+                const updated = await renameTavolo(row.id, title!.trim().slice(0, 80));
+                setRows((items) => items?.map((item) => item.id === row.id ? { ...item, title: updated.title } : item) ?? null);
+            } else {
+                await deleteTavolo(row.id);
+                setRows((items) => items?.filter((item) => item.id !== row.id) ?? null);
+            }
+        } catch { setMessage(label('manageFailed')); }
+        finally { setBusy(false); }
+    };
+
     return (
         <div className="space-y-4">
-            <button type="button" disabled={busy} onClick={() => void openNew()}
+            <p className="text-sm text-slate-600">{label('manualHint')}</p>
+            <TavoloCounselor busy={busy} onChange={counselorChanged} />
+            {message && <p role="alert" className="text-sm text-amber-800">{message}</p>}
+            <button type="button" disabled={busy || disabled} onClick={() => void openNew()}
                 className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40">
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
                 {label('newOne')}
             </button>
 
-            {showCompose && <TavoloCompose busy={busy} onCompose={composeNew} onOpenExample={openExample} />}
+            {showCompose && <TavoloCompose busy={busy || disabled} aiAvailable={aiAvailable} onCompose={composeNew} onOpenExample={openExample} />}
 
             {disabled && <p className="text-sm text-slate-600">{label('notFound')}</p>}
 
@@ -113,9 +147,9 @@ export function TavoloList({ showCompose = true }: TavoloListProps = {}) {
 
             <ul className="space-y-2">
                 {rows?.map((row) => (
-                    <li key={row.id}>
-                        <Link href={`/tavolo/${row.id}`}
-                            className="flex min-h-14 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 hover:bg-slate-50">
+                    <li key={row.id} className="flex items-center gap-1">
+                        <Link href={tableHref(row.id)} onClick={(event) => { if (onOpen) { event.preventDefault(); onOpen(row.id, counselorId); } }}
+                            className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 hover:bg-slate-50">
                             <Table2 className="h-4 w-4 shrink-0 text-indigo-600" aria-hidden="true" />
                             <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">
                                 {row.title || label('untitled')}
@@ -127,6 +161,13 @@ export function TavoloList({ showCompose = true }: TavoloListProps = {}) {
                             )}
                             <span className="shrink-0 text-xs text-indigo-700">{label('openOne')}</span>
                         </Link>
+                        {([['rename', Pencil, 'renameTable'], ['delete', Trash2, 'deleteTable']] as const).map(([action, Icon, key]) => (
+                            <button key={action} type="button" disabled={busy} onClick={() => void manage(row, action)}
+                                aria-label={`${label(key)}: ${row.title || label('untitled')}`} title={label(key)}
+                                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40">
+                                <Icon className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                        ))}
                     </li>
                 ))}
             </ul>

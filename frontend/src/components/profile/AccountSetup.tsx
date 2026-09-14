@@ -37,6 +37,11 @@ export function AccountSetup({ counselorOnly = false, onReturn }: { counselorOnl
         if (onReturn) onReturn();
         else router.replace(safeAccountNext(new URLSearchParams(window.location.search).get('next')));
     };
+    const goBack = () => {
+        if (onReturn) onReturn();
+        else if (window.history.state?.cbPreviousPage && window.history.length > 1) router.back();
+        else router.replace('/?view=questionnaires');
+    };
     const finish = async (id: number | null, complete = false) => {
         if (busy) return;
         setBusy(true); setError(false);
@@ -58,7 +63,7 @@ export function AccountSetup({ counselorOnly = false, onReturn }: { counselorOnl
         {error && <div role="alert"><p>{t('setup.error')}</p><Button onClick={() => setRetry(n => n + 1)}>{t('setup.retry')}</Button></div>}
         {prefs && (counselorOnly || !prefs.counselor_ready ?
             <CounselorSelector questionnaireType={instrument} questionnaireName={instrument} initialSelectedId={prefs.counselor_id ?? getSelectedCounselorId()} busy={busy}
-                onContinue={id => void finish(id)} onBack={returnToWork} /> :
+                onContinue={id => void finish(id)} onBack={goBack} /> :
             !prefs.notebook_ready ? <LearnerProfileCard key={retry} variant="review" requireInitial onUnavailable={() => setError(true)} onDone={() => void finish(prefs.counselor_id, true)} /> :
             <Button disabled={busy} onClick={() => void finish(prefs.counselor_id, true)}>{t('counselor.continue')}</Button>)}
     </div>;

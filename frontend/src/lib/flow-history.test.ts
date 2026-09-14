@@ -67,6 +67,6 @@ test('the home page pushes a history entry per step and answers popstate', () =>
     const source = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
     assert.match(source, /enterStep/);
     assert.match(source, /stepAtDepth/);
-    assert.match(source, /window\.history\.pushState\(\{ cbDepth/);
+    assert.match(source, /window\.history\.pushState\(\{[^}]*\bcbDepth:/);
     assert.match(source, /addEventListener\('popstate'/);
 });

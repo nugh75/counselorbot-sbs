@@ -12,6 +12,7 @@ import { NotebookBookletContent, type DeskTab } from '@/components/profile/Noteb
 import type { BookletType } from '@/components/profile/StudentBookletCard';
 import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, type ActionStage, type CardBucket, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
 import { TavoloList } from '@/components/tavolo/TavoloList';
+import { TavoloWorkspace } from '@/components/tavolo/TavoloWorkspace';
 import { tavoloEnabled } from '@/lib/tavolo';
 import { tavoloLabel } from '@/lib/i18n-tavolo';
 import { VisualPersonalTransfer } from './VisualPersonalTransfer';
@@ -57,6 +58,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const endpoint = personal ? '/api/user/timeline' : `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
     const [focusEvent, setFocusEvent] = useState<string | undefined>();
     const [open, setOpen] = useState(false);
+    const [toolsExpanded, setToolsExpanded] = useState(!personal);
+    const [table, setTable] = useState<{ id: string; counselorId?: number } | null>(null);
     const [personalOpen, setPersonalOpen] = useState(false);
     const [tab, setTab] = useState<Tab>(personal ? 'timeline' : 'board');
     const [helpOpen, setHelpOpen] = useState<Record<WorkTab, boolean>>({ board: false, comparison: false, cards: false, timeline: false });
@@ -146,7 +149,9 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
             if (event.key === 'Escape') {
                 // Let the tooltip dismiss first; a second Escape closes the workspace.
                 if (event.defaultPrevented || document.querySelector('[role="tooltip"]')) return;
-                event.preventDefault(); setOpen(false);
+                event.preventDefault();
+                if (table) dialog.current?.querySelector<HTMLButtonElement>('.tavolo-back')?.click();
+                else setOpen(false);
             }
             if (event.key !== 'Tab') return;
             const controls = [...(dialog.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), summary, [tabindex="0"]') ?? [])]
@@ -159,7 +164,25 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
         };
         document.addEventListener('keydown', keyboard);
         return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', keyboard); opener.current?.focus({ preventScroll: true }); };
-    }, [open]);
+    }, [open, table]);
+
+    useEffect(() => {
+        if (!table) return;
+        const onPopState = (event: PopStateEvent) => {
+            if (event.state?.cbTavolo !== table.id) setTable(null);
+        };
+        window.addEventListener('popstate', onPopState);
+        return () => window.removeEventListener('popstate', onPopState);
+    }, [table]);
+
+    const openTable = (id: string, counselorId?: number) => {
+        window.history.pushState({ ...window.history.state, cbTavolo: id }, '');
+        setTable({ id, counselorId });
+    };
+    const returnFromTable = () => {
+        if (window.history.state?.cbTavolo) window.history.back();
+        else setTable(null);
+    };
 
     const save = async (next = work): Promise<SavedWorkspace | null> => {
         if (!loaded || busy) return null;
@@ -220,13 +243,16 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
             </Button>
         </Tooltip>}
         {open && createPortal(<div className="fixed inset-0 z-[85] flex bg-white">
+            {table ? <section ref={dialog} role="dialog" aria-modal="true" aria-label={tavoloLabel('title', locale)} className="h-full w-full">
+                <TavoloWorkspace key={table.id} id={table.id} initialCounselorId={table.counselorId} onReturn={returnFromTable} />
+            </section> : <>
             <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
                     <div className="flex items-start justify-between gap-2">
                         <div><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{l(personal ? 'timeline' : 'title')}</h2></div>
                         <Tooltip content={l('close')}><Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button></Tooltip>
                     </div>
-                    <details open={!personal}>
+                    <details open={toolsExpanded} onToggle={(event) => setToolsExpanded(event.currentTarget.open)}>
                     <summary hidden={!personal} className="min-h-11 cursor-pointer py-2 text-sm text-indigo-700">{l('otherTools')}</summary>
                     <div role="tablist" aria-label={l('title')} className="mt-3 flex flex-wrap gap-1">
                         {tabs.map((key, index) => { const Icon = tabIcons[key]; return <Tooltip key={key} content={tabLabel(key)}><Button type="button" role="tab" aria-label={tabLabel(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
@@ -247,7 +273,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             {loaded && <Tooltip content={l('copyDownload')}><Button aria-label={l('copyDownload')} type="button" variant="secondary" className={buttonClass} onClick={() => download(new Blob([workspaceText(work, l)], { type: 'text/plain;charset=utf-8' }), 'counselorbot_visual_draft.txt')}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                         </div>
                     </div>}
-                    {personalOpen && loaded ? <VisualPersonalTransfer sessionId={sessionId} locale={locale} work={work} saveWorkspace={save} onClose={() => { setPersonalOpen(false); window.requestAnimationFrame(() => document.getElementById(`${id}-personal`)?.focus()); }} /> : tab === 'tavolo' ? <TavoloList showCompose={false} /> : isDeskTab(tab) ? <NotebookBookletContent tab={tab} lang={locale} questionnaireType={questionnaireType} /> : !loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
+                    {personalOpen && loaded ? <VisualPersonalTransfer sessionId={sessionId} locale={locale} work={work} saveWorkspace={save} onClose={() => { setPersonalOpen(false); window.requestAnimationFrame(() => document.getElementById(`${id}-personal`)?.focus()); }} /> : tab === 'tavolo' ? <TavoloList showCompose={false} onOpen={openTable} /> : isDeskTab(tab) ? <NotebookBookletContent tab={tab} lang={locale} questionnaireType={questionnaireType} /> : !loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
                         {!(personal && tab === 'timeline') && <section aria-label={l('howTo')} className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm leading-relaxed text-slate-800">
                             <h3 className="font-semibold">{l(tab)}</h3>
                             <details key={tab} open={helpOpen[tab]} onToggle={event => {
@@ -367,6 +393,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                     </div>
                 </footer>}
             </section>
+            </>}
         </div>, document.body)}
     </>;
 }

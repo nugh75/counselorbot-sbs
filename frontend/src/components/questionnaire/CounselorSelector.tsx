@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Check, Cpu, Cloud } from 'lucide-react';
 import { fetchCounselors, getSelectedCounselorId, PublicCounselor } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
+import { counselorHelp } from '@/lib/i18n-counselor-help';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 
@@ -155,6 +156,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName, quest
 
     return (
         <section className="space-y-5">
+            <p className="text-sm leading-relaxed text-slate-600">{counselorHelp(lang).tools}</p>
             {chosenIsUnfit && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
                     <p>
@@ -192,6 +194,7 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName, quest
                         </span>
                         <span className="h-px flex-1 bg-slate-200" />
                     </div>
+                    <p className="text-sm text-slate-600">{counselorHelp(lang)[group.key]}</p>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {group.items.map(renderCard)}
                     </div>

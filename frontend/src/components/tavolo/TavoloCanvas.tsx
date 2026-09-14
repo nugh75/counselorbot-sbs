@@ -19,6 +19,7 @@ import {
     ReactFlow,
     ReactFlowProvider,
     useNodesState,
+    useNodesInitialized,
     useReactFlow,
     type Connection,
     type Edge,
@@ -79,6 +80,9 @@ export function TavoloCanvas(props: {
     graph: TavoloGraph;
     locale: string;
     onChange: (graph: TavoloGraph) => void;
+    onSave?: () => Promise<unknown>;
+    busy?: boolean;
+    focusIds?: string[];
 }) {
     return (
         <ReactFlowProvider>
@@ -87,10 +91,17 @@ export function TavoloCanvas(props: {
     );
 }
 
-function Canvas({ graph, locale, onChange }: {
+function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
     graph: TavoloGraph; locale: string; onChange: (graph: TavoloGraph) => void;
+    onSave?: () => Promise<unknown>; busy?: boolean; focusIds?: string[];
 }) {
-    const { fitView, zoomIn, zoomOut } = useReactFlow();
+    const { fitView, zoomIn, zoomOut, screenToFlowPosition } = useReactFlow();
+    const surface = useRef<HTMLDivElement>(null);
+    const nodesReady = useNodesInitialized();
+    const [connecting, setConnecting] = useState(false);
+    const [fromId, setFromId] = useState('');
+    const [toId, setToId] = useState('');
+    const [words, setWords] = useState('');
     // Il pannello si chiude: su un tavolo fitto le settanta colonne a destra
     // sono lo spazio che manca al disegno.
     const [panelOpen, setPanelOpen] = useState(true);
@@ -107,16 +118,29 @@ function Canvas({ graph, locale, onChange }: {
         return () => { alive = false; };
     }, [locale]);
 
-    // Il seme si dispone una volta sola: rifarlo a ogni render rimetterebbe in
-    // riga i pezzi che la persona ha appena spostato.
-    const laid = useRef(false);
+    // Position incoming proposals without moving pieces already arranged by the person.
+    const known = useRef<Set<string> | null>(null);
     useEffect(() => {
-        if (laid.current) return;
-        laid.current = true;
-        const placed = seeded(graph);
-        if (placed !== graph) onChange(placed);
-        window.setTimeout(() => fitView({ padding: 0.2 }), 0);
-    }, [graph, onChange, fitView]);
+        const previous = known.current;
+        known.current = new Set(graph.nodes.map((node) => node.id));
+        if (!previous) {
+            const placed = seeded(graph);
+            if (placed !== graph) onChange(placed);
+            return;
+        }
+        const added = graph.nodes.filter((node) => !previous.has(node.id) && node.x === 0 && node.y === 0);
+        if (!added.length) return;
+        const bottom = Math.max(0, ...graph.nodes.filter((node) => previous.has(node.id)).map((node) => node.y)) + 160;
+        onChange({ ...graph, nodes: graph.nodes.map((node) => {
+            const index = added.findIndex((item) => item.id === node.id);
+            return index < 0 ? node : { ...node, x: (index % 3) * 260, y: bottom + Math.floor(index / 3) * 150 };
+        }) });
+    }, [graph, onChange]);
+
+    useEffect(() => {
+        if (!nodesReady || !focusIds?.length) return;
+        void fitView({ nodes: focusIds.map((id) => ({ id })), padding: 0.3, maxZoom: 1.5 });
+    }, [focusIds, nodesReady, fitView]);
 
     // React Flow tiene la propria copia dei nodi, e ci tiene attaccata la misura
     // che prende dal DOM. Ricostruire gli oggetti a ogni render gliela toglieva,
@@ -160,6 +184,7 @@ function Canvas({ graph, locale, onChange }: {
             data: {
                 rel: edge.rel, label: edge.label, strength: edge.strength,
                 hypothesis: edge.hypothesis, state: edge.state, locale,
+                onSelect: () => { setSelected({ kind: 'edge', id: edgeKey(edge) }); setPanelOpen(true); },
             },
         })), [graph.edges, selected, locale]);
 
@@ -175,25 +200,30 @@ function Canvas({ graph, locale, onChange }: {
         });
     }, [graph, onChange]);
 
-    const onConnect = useCallback((connection: Connection) => {
+    const onConnect = useCallback((connection: Connection, linkingWords = '') => {
         if (!connection.source || !connection.target || connection.source === connection.target) return;
         const key = `${connection.source}->${connection.target}`;
-        if (graph.edges.some((edge) => edgeKey(edge) === key)) return;
+        if (graph.edges.some((edge) => edgeKey(edge) === key && edge.state !== 'dropped')) {
+            setSelected({ kind: 'edge', id: key }); setPanelOpen(true); return;
+        }
         const edge: TavoloEdgeData = {
-            from: connection.source, to: connection.target, rel: DEFAULT_REL,
+            from: connection.source, to: connection.target, rel: DEFAULT_REL, label: linkingWords.trim() || null,
             strength: 2, hypothesis: false, reciprocal: false, by: 'person', state: 'live',
         };
-        onChange({ ...graph, edges: [...graph.edges, edge] });
+        onChange({ ...graph, edges: [...graph.edges.filter((item) => edgeKey(item) !== key), edge] });
         setSelected({ kind: 'edge', id: key });
+        setPanelOpen(true);
     }, [graph, onChange]);
 
     const addPiece = () => {
         const id = `n${Date.now().toString(36)}`;
+        const bounds = surface.current?.getBoundingClientRect();
+        const position = bounds ? screenToFlowPosition({ x: bounds.left + bounds.width / 2 - 80, y: bounds.top + bounds.height / 2 - 30 }) : { x: 40, y: 40 };
         onChange({
             ...graph,
             nodes: [...graph.nodes, {
                 id, label: label('newNode'), form: 'concept', by: 'person', state: 'live',
-                x: 40 + graph.nodes.length * 24, y: 40 + graph.nodes.length * 16,
+                x: position.x, y: position.y,
             }],
         });
         setSelected({ kind: 'node', id });
@@ -237,8 +267,8 @@ function Canvas({ graph, locale, onChange }: {
     const edge = selected?.kind === 'edge' ? graph.edges.find((item) => edgeKey(item) === selected.id) : undefined;
 
     return (
-        <div className="flex h-full min-h-0 w-full">
-            <div className="min-w-0 flex-1" data-tavolo-canvas>
+        <div className="flex h-full min-h-0 w-full" inert={busy}>
+            <div ref={surface} className="min-w-0 flex-1" data-tavolo-canvas>
                 <ReactFlow
                     nodes={nodes}
                     edges={edges}
@@ -247,8 +277,8 @@ function Canvas({ graph, locale, onChange }: {
                     onNodesChange={onNodesChange}
                     onNodeDragStop={onNodeDragStop}
                     onConnect={onConnect}
-                    onNodeClick={(_event, clicked) => setSelected({ kind: 'node', id: clicked.id })}
-                    onEdgeClick={(_event, clicked) => setSelected({ kind: 'edge', id: clicked.id })}
+                    onNodeClick={(_event, clicked) => { setSelected({ kind: 'node', id: clicked.id }); setPanelOpen(true); }}
+                    onEdgeClick={(_event, clicked) => { setSelected({ kind: 'edge', id: clicked.id }); setPanelOpen(true); }}
                     onPaneClick={() => setSelected(null)}
                     // Permissiva: con quattro agganci tutti sorgenti, e' questa
                     // modalita' a farli valere anche come bersagli.
@@ -292,11 +322,39 @@ function Canvas({ graph, locale, onChange }: {
                     </button>
                 </div>
 
+                <button type="button" onClick={() => { setConnecting((open) => !open); setFromId(node?.id ?? graph.nodes.find((item) => item.state === 'live')?.id ?? ''); }}
+                    aria-expanded={connecting} className="min-h-11 rounded-lg border border-slate-200 px-3 text-sm text-indigo-700">{label('connectPieces')}</button>
+                {connecting && <form className="space-y-2" onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!fromId || !toId || fromId === toId) return;
+                    onConnect({ source: fromId, target: toId, sourceHandle: null, targetHandle: null }, words);
+                    setConnecting(false); setWords(''); setToId('');
+                }}>
+                    <p className="text-xs text-slate-600">{label('connectHint')}</p>
+                    {([['fromPiece', fromId, setFromId], ['toPiece', toId, setToId]] as const).map(([key, value, update]) => <label key={key} className="block text-xs text-slate-600">
+                        {label(key)}
+                        <select aria-label={label(key)} value={value} onChange={(event) => update(event.target.value)} required
+                            className="mt-1 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-800">
+                            <option value="">—</option>
+                            {graph.nodes.filter((item) => item.state === 'live').map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+                        </select>
+                    </label>)}
+                    <label className="block text-xs text-slate-600">{label('linkWords')}
+                        <input value={words} onChange={(event) => setWords(event.target.value)} maxLength={40}
+                            className="mt-1 min-h-11 w-full rounded-lg border border-slate-200 px-2 text-sm text-slate-800" />
+                    </label>
+                    <button disabled={!fromId || !toId || fromId === toId} className="min-h-11 w-full rounded-lg bg-indigo-600 px-3 text-sm text-white disabled:opacity-40">{label('connectPieces')}</button>
+                </form>}
+
+                {(node || edge) && onSave && <button type="button" onClick={() => void onSave().then(() => setSelected(null)).catch(() => undefined)}
+                    className="min-h-11 rounded-lg bg-indigo-600 px-3 text-sm text-white">{label('saveChanges')}</button>}
+
                 {node && (
                     <div className="space-y-3">
                         <label className="block text-xs font-medium text-slate-500">
                             {label('rename')}
                             <input
+                                onKeyDown={(event) => { if (event.key === 'Enter' && onSave) { event.preventDefault(); void onSave().then(() => setSelected(null)).catch(() => undefined); } }}
                                 value={node.label}
                                 onChange={(event) => patchNode(node.id, { label: event.target.value.slice(0, 80) })}
                                 className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800"
@@ -366,6 +424,18 @@ function Canvas({ graph, locale, onChange }: {
 
                 {edge && (
                     <div className="space-y-3">
+                        <label className="block text-xs font-medium text-slate-500">
+                            {label('linkWords')}
+                            <input
+                                value={edge.label ?? ''}
+                                placeholder={relLabel(edge.rel, locale)}
+                                onChange={(event) => patchEdge(edgeKey(edge), {
+                                    label: event.target.value.slice(0, 40) || null,
+                                })}
+                                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800"
+                            />
+                        </label>
+
                         <fieldset>
                             <legend className="text-xs font-medium text-slate-500">{label('family')}</legend>
                             <div className="mt-1 grid grid-cols-2 gap-1">
@@ -393,17 +463,6 @@ function Canvas({ graph, locale, onChange }: {
                                 ))}
                             </div>
                         </fieldset>
-                        <label className="block text-xs font-medium text-slate-500">
-                            {label('ownWords')}
-                            <input
-                                value={edge.label ?? ''}
-                                placeholder={relLabel(edge.rel, locale)}
-                                onChange={(event) => patchEdge(edgeKey(edge), {
-                                    label: event.target.value.slice(0, 40) || null,
-                                })}
-                                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800"
-                            />
-                        </label>
                         <fieldset>
                             <legend className="text-xs font-medium text-slate-500">{label('strength')}</legend>
                             <div className="mt-1 grid grid-cols-3 gap-1">
