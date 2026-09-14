@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { fetchOrientationStatus } from '@/lib/orientation-api';
 import { QUESTIONNAIRES, QuestionnaireConfig, QuestionnaireType, supportsProfileUpload } from '@/lib/questionnaires';
 import { QuestionnaireSelector } from '@/components/questionnaire/QuestionnaireSelector';
+import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { InputMethodSelector } from '@/components/qsa/InputMethodSelector';
 import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
 import { PDFUploader } from '@/components/qsa/PDFUploader';
@@ -38,12 +39,12 @@ import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
-import { fetchAccountPreferences } from '@/lib/account-preferences';
+import { fetchAccountPreferences, saveAccountPreferences } from '@/lib/account-preferences';
 import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
 import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-history';
 
 
-type Step = 'intro' | 'base' | 'questionnaire-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
+type Step = 'intro' | 'base' | 'questionnaire-select' | 'counselor-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
 
 // Compilazioni già salvate: servono a sapere se c'è qualcosa da riusare prima
 // di saltare la scelta del metodo di inserimento.
@@ -216,6 +217,9 @@ export default function Home() {
     const router = useRouter();
     const [step, setStep] = useState<Step>('intro');
     const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
+    const [counselorRequest, setCounselorRequest] = useState<{
+        questionnaire: QuestionnaireConfig; scores: Record<string, number> | null; resumeSid?: string; previousId: number | null;
+    } | null>(null);
     const [scores, setScores] = useState<Record<string, number> | null>(null);
     const [sessionId, setSessionId] = useState<string>('');
     const [pdfToken, setPdfToken] = useState<string | undefined>(undefined);
@@ -228,6 +232,7 @@ export default function Home() {
     // Apertura della chat in corso: tiene fermo il comando finché le due
     // scritture non sono andate.
     const [starting, setStarting] = useState(false);
+    const [preparingInstrument, setPreparingInstrument] = useState(false);
     const [sessionCounselorId, setSessionCounselorId] = useState<number | null>(null);
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
@@ -266,7 +271,7 @@ export default function Home() {
     // Un'entrata di cronologia per ogni passo, dal secondo in poi: la prima è
     // quella con cui la pagina è stata aperta e va lasciata al browser.
     useEffect(() => {
-        if (!ready) return;
+        if (!ready || preparingInstrument) return;
         if (movingRef.current) {
             movingRef.current = false;
             return;
@@ -274,13 +279,14 @@ export default function Home() {
         const previous = trailRef.current;
         if (!previous) {
             trailRef.current = startTrail(step);
+            window.history.replaceState({ ...window.history.state, cbPageStep: step, cbDepth: 1 }, '');
             return;
         }
         const next = enterStep(previous, step);
         if (next === previous) return;
         trailRef.current = next;
-        window.history.pushState({ cbDepth: next.depth }, '');
-    }, [ready, step]);
+        window.history.pushState({ ...window.history.state, cbDepth: next.depth, cbPageStep: step }, '');
+    }, [ready, step, preparingInstrument]);
 
     useEffect(() => {
         const onPopState = (event: PopStateEvent) => {
@@ -288,7 +294,7 @@ export default function Home() {
             if (!trail) return;
             const depth = (event.state as { cbDepth?: number } | null)?.cbDepth ?? 1;
             const moved = stepAtDepth(trail, depth);
-            if (!moved.step) return;
+            if (!moved.step || moved.trail.depth === trail.depth) return;
             trailRef.current = moved.trail;
             movingRef.current = true;
             setStep(moved.step);
@@ -352,7 +358,6 @@ export default function Home() {
         if (!identity?.authenticated) return;
         if (savedResults === null || notebookUpdatedAt === undefined) return;
         // Choose the entry screen after the external profile requests resolve.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStep(savedResults.length > 0 || notebookUpdatedAt ? 'base' : 'intro');
         setReady(true);
     }, [ready, identity, savedResults, notebookUpdatedAt]);
@@ -403,40 +408,41 @@ export default function Home() {
             setStep('questionnaire-select');
             return;
         }
-        const preferences = await fetchAccountPreferences().catch(() => null);
-        if (!preferences) { toast.error(t('setup.error')); return; }
-        if (!preferences.notebook_ready || !preferences.counselor_ready) {
-            router.push(`${preferences.notebook_ready ? "/counselor" : "/inizia"}?next=${encodeURIComponent(`/?start=${questionnaire.id}`)}`);
-            return;
-        }
-        const counselors = await fetchCounselors(lang, lang, questionnaire.id);
-        const counselor = counselors.find(row => row.id === preferences.counselor_id);
-        if (!counselor || counselor.is_active === false || counselor.suitable === false) {
-            const next = currentScores !== null && resumeSid
-                ? `/?session_id=${encodeURIComponent(resumeSid!)}&instrument=${questionnaire.id}`
-                : `/?start=${questionnaire.id}`;
-            router.push(`/counselor?instrument=${questionnaire.id}&next=${encodeURIComponent(next)}`);
-            return;
-        }
-        setSelectedCounselorId(counselor.id);
-        if (isAgentOnly(questionnaire)) {
-            await startAgentOnlyQuestionnaire(questionnaire, resumeSid);
-            return;
-        }
-        if (currentScores !== null) {
-            setStep('dashboard');
-            return;
-        }
-        // Il metodo ricordato vale solo quando non c'è nulla da riusare: con
-        // compilazioni salvate la scelta "riprendi un profilo" vive solo lì.
-        const method = getInputMethodPref();
-        const hasSaved = savedResults?.some((r) => r.questionnaire_type === questionnaire.id) ?? true;
-        const usable = method === 'upload' ? supportsProfileUpload(questionnaire.id) : method === 'manual';
-        if (method && usable && !hasSaved) {
-            setStep(method === 'manual' ? 'manual-input' : 'upload-input');
-            return;
-        }
-        setStep('method-select');
+        setPreparingInstrument(true);
+        try {
+            const preferences = await fetchAccountPreferences().catch(() => null);
+            if (!preferences) { toast.error(t('setup.error')); return; }
+            if (!preferences.notebook_ready || !preferences.counselor_ready) {
+                router.push(`${preferences.notebook_ready ? "/counselor" : "/inizia"}?next=${encodeURIComponent(`/?start=${questionnaire.id}`)}`);
+                return;
+            }
+            const counselors = await fetchCounselors(lang, lang, questionnaire.id);
+            const counselor = counselors.find(row => row.id === preferences.counselor_id);
+            if (!counselor || counselor.is_active === false || counselor.suitable === false) {
+                setCounselorRequest({ questionnaire, scores: currentScores, resumeSid, previousId: preferences.counselor_id });
+                setStep('counselor-select');
+                return;
+            }
+            setSelectedCounselorId(counselor.id);
+            if (isAgentOnly(questionnaire)) {
+                await startAgentOnlyQuestionnaire(questionnaire, resumeSid);
+                return;
+            }
+            if (currentScores !== null) {
+                setStep('dashboard');
+                return;
+            }
+            // Il metodo ricordato vale solo quando non c'è nulla da riusare: con
+            // compilazioni salvate la scelta "riprendi un profilo" vive solo lì.
+            const method = getInputMethodPref();
+            const hasSaved = savedResults?.some((r) => r.questionnaire_type === questionnaire.id) ?? true;
+            const usable = method === 'upload' ? supportsProfileUpload(questionnaire.id) : method === 'manual';
+            if (method && usable && !hasSaved) {
+                setStep(method === 'manual' ? 'manual-input' : 'upload-input');
+                return;
+            }
+            setStep('method-select');
+        } finally { setPreparingInstrument(false); }
     }, [lang, router, savedResults, startAgentOnlyQuestionnaire, t]);
 
     useEffect(() => {
@@ -448,7 +454,7 @@ export default function Home() {
         const frozenParam = params.get('frozen');
         if (frozenParam) {
             entryClaimed.current = true;
-            window.history.replaceState(null, '', window.location.pathname);
+            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             void (async () => {
                 const snapshot = await getFrozenSession(frozenParam);
                 if (!snapshot) {
@@ -482,14 +488,13 @@ export default function Home() {
         // Riprendi la sessione interrotta (pulsante header): torna dritto alla chat.
         if (params.get('resume')) {
             const r = getResume();
-            window.history.replaceState(null, '', window.location.pathname);
+            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             if (r && QUESTIONNAIRES[r.instrument as QuestionnaireType]) {
                 const q = QUESTIONNAIRES[r.instrument as QuestionnaireType];
                 const profiles = getCompletedProfiles();
                 const profile = profiles.find((p) => p.sessionId === r.sessionId)
                     ?? profiles.find((p) => p.questionnaireType === r.instrument);
                 // Restore the persisted external session when entering the page.
-                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setSelectedQuestionnaire(q);
                 setSelectedInstrumentId(r.instrument);
                 setSessionCounselorId(r.counselorId ?? getSelectedCounselorId());
@@ -506,7 +511,8 @@ export default function Home() {
         // `view=home` arriva dal bivio della Bussola: chi sceglie gli strumenti
         // deve trovare il catalogo di chi torna, non la presentazione, anche se
         // è la prima volta e non ha ancora compilato nulla.
-        const view = params.get('view');
+        const view = params.get('view') || (!params.get('start') && !params.get('session_id')
+            ? ({ 'questionnaire-select': 'questionnaires', base: 'home' } as Record<string, string>)[window.history.state?.cbPageStep] : null);
         if (view === 'questionnaires' || view === 'home') {
             setSelectedQuestionnaire(null);
             setScores(null);
@@ -514,7 +520,7 @@ export default function Home() {
             setSessionId('');
             setExperience(null);
             setStep(view === 'home' ? 'base' : 'questionnaire-select');
-            window.history.replaceState(null, '', window.location.pathname);
+            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             claimEntry();
             return;
         }
@@ -534,7 +540,7 @@ export default function Home() {
             setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
             setExperience(null);
             void prepareInstrument(questionnaire, profile?.scores ?? {}, resumeSession);
-            window.history.replaceState(null, '', window.location.pathname);
+            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             claimEntry();
             return;
         }
@@ -550,7 +556,7 @@ export default function Home() {
         setSessionId('');
         setExperience(null);
         void prepareInstrument(questionnaire, null);
-        window.history.replaceState(null, '', window.location.pathname);
+        window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
         claimEntry();
     }, [identity, prepareInstrument, claimEntry, t]);
 
@@ -710,8 +716,9 @@ export default function Home() {
             window.history.back();
             return;
         }
+        if (window.history.state?.cbPreviousPage && window.history.length > 1) { router.back(); return; }
         if (step === 'questionnaire-select') setStep(homeStep());
-        else if (step === 'method-select') setStep('questionnaire-select');
+        else if (step === 'method-select' || step === 'counselor-select') setStep('questionnaire-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
         else if (step === 'dashboard') setStep('method-select');
         else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'questionnaire-select' : 'dashboard');
@@ -751,7 +758,7 @@ export default function Home() {
         );
     }
 
-    if (!ready) {
+    if (!ready || preparingInstrument) {
         return (
             <div className="page-narrow">
                 <div className="glass-panel p-8 text-center text-sm text-slate-500">
@@ -776,7 +783,7 @@ export default function Home() {
 
     const flowStages = ['CounselorBot', t('flow.select'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
     const stageIndex = step === 'intro' ? 0
-        : step === 'questionnaire-select' ? 1
+        : step === 'questionnaire-select' || step === 'counselor-select' ? 1
         : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 2
         : step === 'dashboard' ? 3 : step === 'interaction' ? 4 : 5;
 
@@ -814,6 +821,23 @@ export default function Home() {
                     {/* Step: Questionnaire Selection */}
                     {step === 'questionnaire-select' && (
                         <QuestionnaireSelector onSelect={handleQuestionnaireSelect} onBack={goBack} completed={completedTypes} />
+                    )}
+
+                    {step === 'counselor-select' && counselorRequest && (
+                        <section className="space-y-4">
+                            <h1 className="text-2xl font-bold text-slate-900">{t('setup.counselor')}</h1>
+                            <p className="text-sm text-slate-600">{t('setup.compatibility', { instrument: counselorRequest.questionnaire.name })}</p>
+                            <CounselorSelector questionnaireType={counselorRequest.questionnaire.id}
+                                questionnaireName={counselorRequest.questionnaire.name} initialSelectedId={counselorRequest.previousId}
+                                busy={starting} onBack={goBack} onContinue={(id) => {
+                                    if (starting) return;
+                                    setStarting(true);
+                                    void saveAccountPreferences(id)
+                                        .then(() => prepareInstrument(counselorRequest.questionnaire, counselorRequest.scores, counselorRequest.resumeSid))
+                                        .catch(() => toast.error(t('setup.error')))
+                                        .finally(() => setStarting(false));
+                                }} />
+                        </section>
                     )}
 
                     {/* Step: Input Method Selection */}

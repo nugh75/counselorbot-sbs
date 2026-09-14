@@ -27,11 +27,12 @@ const GENRE_LABEL: Record<TavoloPresetId, Parameters<typeof tavoloLabel>[0]> = {
 
 interface Props {
     busy: boolean;
+    aiAvailable?: boolean;
     onCompose: (preset: TavoloPresetId | null, prompt: string) => void | Promise<void>;
     onOpenExample?: (preset: TavoloPresetId, exampleId: string) => void | Promise<void>;
 }
 
-export function TavoloCompose({ busy, onCompose, onOpenExample }: Props) {
+export function TavoloCompose({ busy, aiAvailable = true, onCompose, onOpenExample }: Props) {
     const { lang } = useI18n();
     const label = (key: Parameters<typeof tavoloLabel>[0]) => tavoloLabel(key, lang);
     const [presets, setPresets] = useState<TavoloPreset[]>([]);
@@ -87,7 +88,7 @@ export function TavoloCompose({ busy, onCompose, onOpenExample }: Props) {
             )}
 
             <div className="flex gap-2">
-                <button type="button" disabled={busy || !prompt.trim()}
+                <button type="button" disabled={busy || !aiAvailable || !prompt.trim()}
                     onClick={() => void onCompose(genre, prompt)}
                     className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-40">
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />

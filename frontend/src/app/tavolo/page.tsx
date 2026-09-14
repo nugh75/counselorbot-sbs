@@ -6,11 +6,13 @@
 import { useI18n } from '@/lib/i18n-context';
 import { TavoloList } from '@/components/tavolo/TavoloList';
 import { tavoloLabel } from '@/lib/i18n-tavolo';
+import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 
 export default function TavoliPage() {
     const { lang } = useI18n();
     return (
         <main className="mx-auto max-w-3xl space-y-4 p-4">
+            <PreviousPageButton fallbackHref="/profilo" />
             <h1 className="text-lg font-semibold text-slate-800">{tavoloLabel('all', lang)}</h1>
             <TavoloList />
         </main>

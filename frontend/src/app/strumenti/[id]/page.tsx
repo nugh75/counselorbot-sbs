@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
-import { BackButton } from '@/components/ui/BackButton';
+import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { fetchInstruments } from '@/lib/instruments-api';
@@ -44,7 +44,7 @@ export default function InstrumentDetailsPage() {
                 <h1 className="text-xl font-bold text-slate-900">{t('detail.unavailable.title')}</h1>
                 <p className="text-slate-600">{t('detail.unavailable.body')}</p>
                 <div className="flex items-center justify-center gap-3">
-                    <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('detail.back')} />
+                    <PreviousPageButton fallbackHref={QUESTIONNAIRE_SELECTION_HREF} />
                 </div>
             </div>
         );
@@ -53,7 +53,7 @@ export default function InstrumentDetailsPage() {
     return (
         <div className="page-narrow space-y-6">
             <div className="flex items-center gap-3">
-                <BackButton href={QUESTIONNAIRE_SELECTION_HREF} label={t('detail.back')} />
+                <PreviousPageButton fallbackHref={QUESTIONNAIRE_SELECTION_HREF} />
                 <ForwardButton href={`/?start=${questionnaire.id}`} label={t('selector.start')} />
             </div>
 

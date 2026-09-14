@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { useI18n } from '@/lib/i18n-context';
-import { BackButton } from '@/components/ui/BackButton';
+import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
@@ -436,11 +436,7 @@ export default function ProfilePage() {
                         </p>
                     </div>
                 </div>
-                <BackButton
-                    variant="labelled"
-                    href={activeArea ? '/profilo' : '/'}
-                    label={activeArea ? t('profile.nav') : t('nav.home')}
-                />
+                <PreviousPageButton fallbackHref={activeArea ? '/profilo' : '/?view=questionnaires'} />
             </div>
 
             {!activeArea && (

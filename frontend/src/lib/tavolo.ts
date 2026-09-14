@@ -206,6 +206,30 @@ export const fetchTavolo = (id: string) =>
 export const listTavoli = () =>
     apiFetch('/api/tavolo').then((response) => json<TavoloSummary[]>(response));
 
+export const renameTavolo = (id: string, title: string) =>
+    apiFetch(`/api/tavolo/${encodeURIComponent(id)}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title }),
+    }).then((response) => json<TavoloView>(response));
+
+export const deleteTavolo = (id: string) =>
+    apiFetch(`/api/tavolo/${encodeURIComponent(id)}`, { method: 'DELETE' }).then(json);
+
+export interface TavoloCapabilities {
+    available: boolean;
+    fallback_origin: 'local' | 'external' | null;
+}
+
+export const fetchTavoloCapabilities = (counselorId?: number) =>
+    apiFetch(`/api/tavolo/capabilities${counselorId ? `?counselor_id=${counselorId}` : ''}`)
+        .then((response) => json<TavoloCapabilities>(response));
+
+export interface TavoloHelpTurn { question: string; reply: string }
+
+export const helpTavolo = (id: string, body: {
+    question: string; history: TavoloHelpTurn[]; counselor_id?: number; lang: string;
+}) => post(`/api/tavolo/${encodeURIComponent(id)}/help`, body)
+    .then((response) => json<{ reply: string }>(response));
+
 // Se la funzione e' spenta gli endpoint rispondono 404, e i bottoni devono
 // sparire invece di portare a un vicolo cieco. Non c'e' un canale per i flag
 // verso il browser, quindi lo si chiede all'elenco: la promessa e' memorizzata

@@ -11,12 +11,14 @@ import personalToolsImage from '../../../public/guide/strumenti-annotazioni.png'
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, MoreVertical, RotateCcw, BookOpen, Send, Snowflake, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { useI18n } from '@/lib/i18n-context';
+import { counselorHelp } from '@/lib/i18n-counselor-help';
 
 const SECTION_COUNT = 9;
 
 export default function GuidePage() {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const sections = Array.from({ length: SECTION_COUNT }, (_, i) => i + 1);
     const chatControls = [
         { key: 'options', icon: <MoreVertical className="h-4 w-4" aria-hidden="true" /> },
@@ -95,7 +97,10 @@ export default function GuidePage() {
 
     return (
         <div className="page-narrow scroll-smooth space-y-8">
-            <PageHeader title={t('guide.title')} subtitle={t('guide.subtitle')} backHref="/" backLabel={t('guide.back')} />
+            <div className="flex flex-wrap items-center gap-4">
+                <PreviousPageButton fallbackHref="/?view=questionnaires" />
+                <PageHeader title={t('guide.title')} subtitle={t('guide.subtitle')} />
+            </div>
 
             {/* Indice con ancore (GUA-03): ogni sezione è raggiungibile senza
                 attraversare l'intero documento. */}
@@ -141,6 +146,14 @@ export default function GuidePage() {
                             </div>
                         </div>
 
+                        {n === 4 && (
+                            <div className="mt-4 space-y-2 text-sm leading-relaxed text-slate-600">
+                                <h3 className="font-semibold text-slate-900">{counselorHelp(lang).title}</h3>
+                                <p>{counselorHelp(lang).local}</p>
+                                <p>{counselorHelp(lang).external}</p>
+                                <p>{counselorHelp(lang).tools}</p>
+                            </div>
+                        )}
                         {n === 7 && (
                             <div className="mt-6 space-y-6 border-t border-slate-100 pt-6">
                                 {renderFigure(chatOverview, t('guide.chat.overviewAlt'), t('guide.chat.overviewCaption'))}

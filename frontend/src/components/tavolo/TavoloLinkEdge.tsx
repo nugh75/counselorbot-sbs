@@ -28,6 +28,7 @@ export interface LinkData extends Record<string, unknown> {
     hypothesis: boolean;
     state: TavoloState;
     locale: string;
+    onSelect: () => void;
 }
 
 const WIDTH: Record<number, number> = { 1: 1, 2: 1.8, 3: 3 };
@@ -103,14 +104,14 @@ function Link({ id, source, target, data, markerStart, markerEnd }: EdgeProps & 
                 }}
             />
             <EdgeLabelRenderer>
-                <span
+                <button type="button" onClick={data.onSelect}
                     // La pastiglia opaca sotto il testo e' la stessa cura dei diagrammi
                     // Graphviz: senza, la linea taglia la parola.
-                    className="pointer-events-none absolute rounded bg-white px-1.5 py-0.5 text-[11px] leading-tight text-slate-600"
+                    className="nodrag nopan pointer-events-auto absolute cursor-pointer rounded bg-white px-1.5 py-0.5 text-[11px] leading-tight text-slate-600"
                     style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
                 >
                     {word}
-                </span>
+                </button>
             </EdgeLabelRenderer>
         </>
     );
