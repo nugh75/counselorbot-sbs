@@ -28,7 +28,7 @@ CounselorBot is an AI-powered web app that helps students analyze learning/caree
 
 ### Glossary (student-facing terminology — use consistently)
 - **Profilo (profile)**: the outcome of a questionnaire from the Competenze Strategiche site — a set of factor scores (`QuestionnaireResult`). "Profilo" refers ONLY to this.
-- **Taccuino (notebook)**: the student's self-declared notes about themselves — the open learner model (`LearnerProfileRevision`, `/user/learner-profile` API). Internal identifiers keep the `learner_profile` name; UI must say taccuino/notebook.
+- **Taccuino (notebook)**: the student's self-declared notes about themselves — the open learner model (`LearnerProfileRevision`, `/user/learner-profile` API). Internal identifiers keep the `learner_profile` name; UI must say taccuino/notebook. The form serves adults too: school-bound labels pair study and work wording with a slash (class / occupation, institution / work context), keys unchanged.
 - **Libretto (booklet)**: per-instrument reflection on a dimension (`StudentBooklet`).
 - **Portfolio**: collection of the student's works (`PortfolioItem`).
 - **Idea**: the free-chat instrument that brings a still-shapeless idea into focus (code `IDEA`), including study/career choices, free ideas, research/teaching work, and the exploration of a concept or construct. Same name in every language except FR *Idée*, DE *Idee*, SV *Idé*.
