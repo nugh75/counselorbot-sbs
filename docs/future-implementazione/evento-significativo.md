@@ -57,6 +57,8 @@ Il percorso **non fa**:
 | D2 | Nome | "Evento significativo", coerente con le etichette dei libretti esistenti |
 | D3 | Varianti per pubblico | No |
 | D4 | Esito | Libretto dell'evento compilato a fine percorso, salvato solo su conferma esplicita |
+| D5 | Comportamento a intervista | Comune a tutti i percorsi a intervista: SAVICKAS, QPCC, QAP e i due Evento. QSA, QSAr, ZTPI, QPCS e IDEA restano come sono |
+| D6 | Amministrazione | Parità con gli altri strumenti: prompt, passi, domande suggerite, log, risultati, export, skill, counselor |
 
 Costo noto di D1: gli step esistono due volte nel database e una modifica dal
 pannello admin va fatta su entrambi. Per contenerlo, i testi di fabbrica
@@ -185,6 +187,83 @@ lingue. Esempi in italiano:
 - rilettura: "Guardandolo oggi, l'essenziale è…"
 - sintesi: "La prossima volta provo a…"
 
+## Percorsi a intervista: un comportamento comune
+
+Oggi il comportamento da intervista è sparso e diverso per strumento, anche
+dove i passi sono scritti allo stesso modo. QPCC e QAP hanno già un patto ("If
+you agree, write: I accept") e passi di intervista con `[[AVANZA_STEP]]`, ma
+`GuidedChatInterface.tsx` riserva il trattamento da intervista al solo
+`'SAVICKAS'`.
+
+| Comportamento | SAVICKAS | QPCC, QAP |
+|---|---|---|
+| Patto: "accetto" riconosciuto in sei lingue, si avanza senza chiamare l'AI | sì | no: risponde l'AI e si avanza sul marcatore |
+| Avanzamento nei passi di intervista | lo decide la persona (suggerimento + pulsante) | automatico sul marcatore |
+| Avanzamento sulla sintesi finale | automatico | automatico |
+| Risposte rapide (Accetto, Riformula, Aiutami a riflettere, Passa al prossimo tema) | sì | no |
+| Istruzioni del passo rimandate a ogni turno (web e Telegram) | sì | no |
+| Pulsante "avanti" | dopo il suggerimento o 3 messaggi, mai sul patto | sempre |
+
+**Proposta.** Un modulo puro `frontend/src/lib/interview-path.ts`, testabile
+con `node --test` come `idea-step.ts`, con una tabella per strumento:
+
+| Strumento | Passo del patto | Passo di sintesi |
+|---|---|---|
+| SAVICKAS | `savickas-patto` | `savickas-final` |
+| QPCC | `qpcc-intro` | `qpcc-sintesi` |
+| QAP | `qap-intro` | `qap-sintesi` |
+| EVENTO_STUDIO | `evstudio-patto` | `evstudio-final` |
+| EVENTO_PROFESSIONALE | `evprof-patto` | `evprof-final` |
+
+e le funzioni che oggi sono condizioni inline su `'SAVICKAS'`: è un percorso a
+intervista, è il passo del patto, il testo accetta il patto, chi decide
+l'avanzamento, avanzamento automatico alla generazione, messaggio con le
+istruzioni del passo, risposte rapide, visibilità del pulsante "avanti".
+`GuidedChatInterface.tsx` le chiama al posto dei controlli su `'SAVICKAS'`.
+Restano per strumento gli step di riserva e la riga di contesto sui punteggi
+(QPCC e QAP hanno punteggi, Savickas no). QPCS non entra nella famiglia: non ha
+patto e mantiene la sua regola.
+
+In Telegram (`telegram_state.py`) l'involucro delle istruzioni del passo passa
+dalla condizione su `SAVICKAS` alla stessa tabella, replicata lato backend.
+
+**Punto da confermare — passi che non sono di intervista.** Con le regole di
+Savickas, sui passi di presentazione e di lettura del profilo (`savickas-intro`,
+`qpcc-profilo`, `qap-profilo`) il pulsante "avanti" compare solo dopo tre
+messaggi. Per la lettura del profilo di QPCC e QAP blocca chi vuole passare
+subito alle aree. Proposta: i passi il cui modo non finisce in `-interview` o
+`-summary` tengono il pulsante sempre visibile. Per Savickas cambia solo la
+presentazione, dove il pulsante compare subito.
+
+**Test.** Prima della modifica si fissano in `interview-path.test.ts` i casi
+del comportamento attuale di Savickas; dopo, gli stessi casi devono passare e
+QPCC e QAP li seguono. Un test backend per l'involucro Telegram.
+
+## Amministrazione: parità con gli altri strumenti
+
+I due Evento devono comparire in ogni pannello admin dove compare Savickas,
+salvo le esclusioni motivate.
+
+| Area | Dove |
+|---|---|
+| Prompt di sistema, meta, testi di fase | `ConfigForm.tsx` (sezione per strumento, elenco modi, mappa modo→chiave, intro), voci config in `prompt_config.py`, etichette in `i18n-admin.ts` (sei lingue). I modi `evento-interview` ed `evento-summary` sono condivisi dai due strumenti; meta e testi di fase sono per strumento (`prompt_meta_EVENTO_STUDIO`, …) |
+| Passi guidati: modifica, revisioni, ripristino | editor passi di `ConfigForm.tsx` (già generico sul tipo), `prompt_revisions.py`, `prompt_updates.py` |
+| Domande suggerite | `GuidedStepQuestionsPanel.tsx` (mappa id dei passi) |
+| Log | `LogViewer.tsx` (`DEFAULT_QUESTIONNAIRES`) |
+| Risultati delle sessioni | `QuestionnaireResultsViewer.tsx`: elenco tipi e ramo qualitativo come Savickas |
+| Export dei prompt | `routes/admin.py` (`_EXPORT_INSTRUMENT_ORDER`), `PromptExportPanel.tsx` |
+| Skill | `SkillsPanel.tsx`, `skills_seed.py` (`ENGINE_INSTRUMENTS`) |
+| Counselor per strumento | `CounselorsPanel.tsx` (`QTYPES`) |
+| Assistente del sito | `routes/site_chat.py` (mappa strumento) |
+
+Esclusi di proposito, come Savickas o Idea: letture certificate
+(`CertifiedReadingsPanel`), piani di somministrazione e contatti di ricerca
+(solo questionari a punteggio).
+
+Test di rete: le liste sparse falliscono in silenzio, quindi un test verifica
+che i due codici compaiano in ogni lista backend e frontend dove compare
+`SAVICKAS`, con l'elenco esplicito delle esclusioni.
+
 ## Esito: il libretto dell'evento
 
 Alla fine della sintesi il modello emette un blocco privato, rimosso dalla
@@ -245,17 +324,10 @@ compare in circa 24 file backend e 26 frontend.
   `isQuestionnaireType` decide le opzioni fattore del libretto (riga 133 esclude
   solo SAVICKAS): va esteso agli eventi.
 - `lib/tool-catalog.ts`: categoria `guided`.
-- `GuidedChatInterface.tsx`: il comportamento da intervista narrativa è cablato
-  su `'SAVICKAS'` e sugli id `savickas-patto` / `savickas-final` (accettazione
-  del patto senza AI, istruzioni di step nel messaggio, avanzamento deciso
-  dall'utente, risposte rapide, step di riserva, riga punteggi). Va
-  generalizzato in un helper per la famiglia "intervista narrativa" con id di
-  patto e sintesi per strumento. È il punto più rischioso: Savickas deve
-  restare identico.
+- `GuidedChatInterface.tsx`: vedi "Percorsi a intervista".
 - Liste sparse: `questionario/page.tsx`, `strumenti/[id]/page.tsx`,
-  `profilo/page.tsx`, `ProfileVisualization.tsx`, `profile-tracker.ts`, pannelli
-  admin (`LogViewer`, `PromptExportPanel`, `SkillsPanel`, `CounselorsPanel`,
-  `QuestionnaireResultsViewer`, `ConfigForm`).
+  `profilo/page.tsx`, `ProfileVisualization.tsx`, `profile-tracker.ts`; per i
+  pannelli admin vedi "Amministrazione".
 - `i18n.ts`, `i18n-survey.ts`, `i18n-admin.ts` nelle sei lingue;
   `npm run i18n:check`.
 
@@ -268,13 +340,16 @@ compare in circa 24 file backend e 26 frontend.
 
 ## Fasi
 
+0. **Percorsi a intervista**: modulo comune, Savickas invariato, QPCC e QAP
+   allineati, Telegram. Si rilascia da sola, prima degli Evento.
 1. **Backend**: step, prompt, modi, cancelli, seed. La sessione si apre con
    `/?start=EVENTO_STUDIO`.
-2. **Frontend**: famiglia "intervista narrativa" in `GuidedChatInterface`,
-   catalogo, liste, i18n.
-3. **Libretto**: blocco privato, modulo precompilato, salvataggio confermato.
-4. **Bussola**: descrizione e proposta dei due strumenti.
-5. **Dopo**: sintesi di secondo livello su più eventi della stessa persona (fili
+2. **Frontend**: i due Evento nella famiglia a intervista, catalogo, liste,
+   i18n.
+3. **Amministrazione**: parità dei pannelli e test di rete.
+4. **Libretto**: blocco privato, modulo precompilato, salvataggio confermato.
+5. **Bussola**: descrizione e proposta dei due strumenti.
+6. **Dopo**: sintesi di secondo livello su più eventi della stessa persona (fili
    che ritornano, criticità che scompaiono), da agganciare a
    `/profilo/cambiamenti`.
 
