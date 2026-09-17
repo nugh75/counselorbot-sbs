@@ -13,7 +13,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     Background,
     ConnectionMode,
-    Controls,
     MarkerType,
     Panel,
     ReactFlow,
@@ -27,7 +26,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import Dagre from '@dagrejs/dagre';
-import { Maximize2, Minimize2, Plus, Star, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
+import { PanelRightClose, PanelRightOpen, Plus, Scan, Star, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
 import {
     FAMILIES,
     NODE_COLORS,
@@ -291,17 +290,16 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                     fitView
                 >
                     <Background />
-                    <Controls showInteractive={false} />
                     <Panel position="top-right" className="flex gap-1">
                         {([
                             ['zoomOut', ZoomOut, () => void zoomOut()],
                             ['zoomIn', ZoomIn, () => void zoomIn()],
-                            ['fit', Maximize2, () => void fitView({ padding: 0.2 })],
-                            [panelOpen ? 'widen' : 'panel', panelOpen ? Minimize2 : Maximize2,
+                            ['fit', Scan, () => void fitView({ padding: 0.2 })],
+                            [panelOpen ? 'widen' : 'panel', panelOpen ? PanelRightClose : PanelRightOpen,
                                 () => setPanelOpen((open) => !open)],
                         ] as const).map(([key, Icon, act]) => (
                             <button key={key} type="button" onClick={act} aria-label={label(key)} title={label(key)}
-                                className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+                                className={`inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 ${key === 'widen' || key === 'panel' ? 'ml-2' : ''}`}>
                                 <Icon className="h-4 w-4" aria-hidden="true" />
                             </button>
                         ))}

@@ -344,6 +344,10 @@ test('il tavolo si ingrandisce e si allarga', async () => {
     const { page, context } = await fixture();
     const zoom = () => page.locator('.react-flow__viewport')
         .evaluate((element) => getComputedStyle(element).transform);
+    // Un solo gruppo di comandi, in alto: quelli di serie di React Flow li
+    // ripetevano in basso.
+    assert.equal(await page.getByRole('button', { name: 'Ingrandisci' }).count(), 1);
+    assert.equal(await page.locator('.react-flow__controls').count(), 0);
     const before = await zoom();
     await page.getByRole('button', { name: 'Ingrandisci' }).click();
     await page.waitForTimeout(500);
