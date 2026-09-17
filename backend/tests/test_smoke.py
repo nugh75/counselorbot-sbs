@@ -5687,6 +5687,18 @@ def test_telegram_idea_has_no_score_context():
         db.close()
 
 
+def test_telegram_interview_turns_carry_the_step_instructions():
+    """QPCC e QAP sono interviste come Savickas: ogni turno ripete il passo."""
+    expected = (
+        'CURRENT STEP INTERNAL INSTRUCTIONS (use them only as guidance; answer the student in language "es"):\n'
+        "Explore concern.\n\nSTUDENT ANSWER:\nPienso poco"
+    )
+    for qtype in ("SAVICKAS", "QPCC", "QAP"):
+        assert telegram_state.step_instructions_message(qtype, "Explore concern.", "es", "Pienso poco") == expected
+    assert telegram_state.step_instructions_message("QSA", "Analyse C1.", "it", "ciao") == "ciao"
+    assert telegram_state.step_instructions_message("QAP", None, "it", "ciao") == "ciao"
+
+
 def test_telegram_link_code_flow():
     from datetime import datetime, timedelta, timezone
     db = _TestSession()

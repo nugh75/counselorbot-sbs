@@ -34,6 +34,9 @@ ALL_QUESTIONNAIRES = SCORE_QUESTIONNAIRES + NARRATIVE_QUESTIONNAIRES
 # Variante Idea usata dal bot: la stessa che il web propone di default.
 IDEA_DEFAULT_VARIANT = "student-path"
 STEP_ADVANCE_MARKER = "[[AVANZA_STEP]]"
+# Percorsi a intervista: ogni turno ripete le istruzioni del passo
+# (speculare a frontend/src/lib/interview-path.ts).
+INTERVIEW_PATH_QUESTIONNAIRES = ("SAVICKAS", "QPCC", "QAP")
 # Fallback quando la tabella Factor non ha righe per lo strumento.
 FALLBACK_FACTORS = {**QUESTIONNAIRE_FACTORS, "ZTPI": ("T1", "T2", "T3", "T4", "T5")}
 
@@ -766,16 +769,20 @@ async def _handle_scores_text(db: Session, state: models.TelegramConversationSta
     await telegram_bot.send_message(state.telegram_chat_id, _t("scores_recap", language, qtype=qtype, recap=recap), keyboard=keyboard)
 
 
+def step_instructions_message(questionnaire_type: str, step_prompt: str | None, language: str, text: str) -> str:
+    if questionnaire_type not in INTERVIEW_PATH_QUESTIONNAIRES or not step_prompt:
+        return text
+    return (
+        f"CURRENT STEP INTERNAL INSTRUCTIONS (use them only as guidance; "
+        f"answer the student in language \"{language}\"):\n{step_prompt}\n\nSTUDENT ANSWER:\n{text}"
+    )
+
+
 async def _handle_free_text(db: Session, state: models.TelegramConversationState, text: str) -> None:
     steps = {s.id: s for s in _steps(db, state.questionnaire_type)}
     step = steps.get(state.step_id)
     mode = _interactive_mode(state.questionnaire_type, step)
-    message = text
-    if state.questionnaire_type == "SAVICKAS" and step and step.prompt:
-        message = (
-            f"CURRENT STEP INTERNAL INSTRUCTIONS (use them only as guidance; "
-            f"answer the student in language \"{state.language}\"):\n{step.prompt}\n\nSTUDENT ANSWER:\n{text}"
-        )
+    message = step_instructions_message(state.questionnaire_type, step.prompt if step else None, state.language, text)
     response = await _call_chat(
         db, state, message=message, memory_message=text,
         mode=mode, phase=state.step_id, use_phase_prompt=False,
