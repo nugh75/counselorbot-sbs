@@ -1225,10 +1225,16 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 // Percorsi a intervista e QPCS: l'utente decide quando cambiare step.
                 // Non avanzare automaticamente sul marker [[AVANZA_STEP]]; mostra il
                 // suggerimento e lascia che sia l'utente a usare il pulsante "prossimo step".
-                if (userDecidesAdvance(questionnaireType, currentPhase)) {
+                if (userDecidesAdvance(questionnaireType, currentPhase, cleanText)) {
                     setShowAdvanceSuggestion(true);
                 } else {
                     await advancePhase();
+                    // Turno senza testo: in voce dire dove si va, invece di
+                    // segnalare una risposta mancante.
+                    const nextPhase = phases[phases.indexOf(currentPhase) + 1];
+                    if (!cleanText && nextPhase) {
+                        return `${t(advanceLabelKey(questionnaireType, currentPhase))}: ${getPhaseLabel(nextPhase)}`;
+                    }
                 }
             }
             return cleanText || undefined;

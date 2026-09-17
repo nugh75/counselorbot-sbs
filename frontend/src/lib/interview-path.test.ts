@@ -73,15 +73,22 @@ test('generating a step keeps the old rules outside the family', () => {
 });
 
 test('in an interview the person decides when to change topic, except on the summary', () => {
-    assert.equal(userDecidesAdvance('SAVICKAS', 'savickas-q3'), true);
-    assert.equal(userDecidesAdvance('SAVICKAS', 'savickas-final'), false);
-    assert.equal(userDecidesAdvance('QAP', 'qap-fiducia'), true);
-    assert.equal(userDecidesAdvance('QAP', 'qap-sintesi'), false);
+    assert.equal(userDecidesAdvance('SAVICKAS', 'savickas-q3', 'Mini-sintesi.'), true);
+    assert.equal(userDecidesAdvance('SAVICKAS', 'savickas-final', 'Sintesi.'), false);
+    assert.equal(userDecidesAdvance('QAP', 'qap-fiducia', 'Mini-sintesi.'), true);
+    assert.equal(userDecidesAdvance('QAP', 'qap-sintesi', 'Sintesi.'), false);
+});
+
+// Alla richiesta "andiamo avanti" il modello risponde con il solo marcatore:
+// e' la persona che ha deciso, e fermarsi lascerebbe il turno senza risposta.
+test('a reply made only of the marker means the person asked to move on', () => {
+    assert.equal(userDecidesAdvance('EVENTO_STUDIO', 'evstudio-intro', ''), false);
+    assert.equal(userDecidesAdvance('QPCC', 'qpcc-controllo', '   '), false);
 });
 
 test('outside the family only QPCS leaves the advance to the person', () => {
-    assert.equal(userDecidesAdvance('QPCS', 'qpcs-emozioni'), true);
-    assert.equal(userDecidesAdvance('ZTPI', 'ztpi-t1'), false);
+    assert.equal(userDecidesAdvance('QPCS', 'qpcs-emozioni', 'Mini-sintesi.'), true);
+    assert.equal(userDecidesAdvance('ZTPI', 'ztpi-t1', 'Analisi.'), false);
 });
 
 test('the agreement step offers only the acceptance', () => {

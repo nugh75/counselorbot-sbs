@@ -55,7 +55,11 @@ export function autoAdvancesOnGenerate(questionnaireType: string, stepId: string
     return questionnaireType !== 'QPCS';
 }
 
-export function userDecidesAdvance(questionnaireType: string, phase: string): boolean {
+// Una risposta fatta del solo marcatore e' la risposta alla richiesta della
+// persona di andare avanti (il contesto del percorso chiede proprio quella): li'
+// ha gia' deciso lei, e fermarsi lascerebbe il turno senza risposta.
+export function userDecidesAdvance(questionnaireType: string, phase: string, visibleReply: string): boolean {
+    if (!visibleReply.trim()) return false;
     const path = INTERVIEW_PATHS[questionnaireType];
     if (path) return phase !== path.finalStepId;
     return questionnaireType === 'QPCS';
