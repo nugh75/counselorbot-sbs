@@ -227,13 +227,16 @@ patto e mantiene la sua regola.
 In Telegram (`telegram_state.py`) l'involucro delle istruzioni del passo passa
 dalla condizione su `SAVICKAS` alla stessa tabella, replicata lato backend.
 
-**Punto da confermare — passi che non sono di intervista.** Con le regole di
+**Deciso (2026-09-17) — passi che non sono di intervista.** Con le regole di
 Savickas, sui passi di presentazione e di lettura del profilo (`savickas-intro`,
-`qpcc-profilo`, `qap-profilo`) il pulsante "avanti" compare solo dopo tre
-messaggi. Per la lettura del profilo di QPCC e QAP blocca chi vuole passare
-subito alle aree. Proposta: i passi il cui modo non finisce in `-interview` o
-`-summary` tengono il pulsante sempre visibile. Per Savickas cambia solo la
-presentazione, dove il pulsante compare subito.
+`qpcc-profilo`, `qap-profilo`) il pulsante "avanti" compariva solo dopo tre
+messaggi, bloccando chi vuole passare subito alle aree. I passi il cui modo non
+finisce in `-interview` o `-summary`, e la fase delle domande, tengono il
+pulsante sempre visibile. Per Savickas cambiano la presentazione e la fase delle
+domande, dove il pulsante compare subito.
+
+**Stato:** fase 0 implementata sul branch `feature/interview-paths` per
+SAVICKAS, QPCC e QAP; i due Evento entrano nella tabella quando esistono.
 
 **Test.** Prima della modifica si fissano in `interview-path.test.ts` i casi
 del comportamento attuale di Savickas; dopo, gli stessi casi devono passare e
