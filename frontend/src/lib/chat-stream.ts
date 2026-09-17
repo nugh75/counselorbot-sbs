@@ -4,6 +4,7 @@
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { withViewAsHeaders } from './auth.ts';
 import type { RecommendationCatalog } from '@/lib/recommendations';
+import type { EventBookletDraft } from '@/lib/event-booklet';
 
 export interface ChatStreamResult {
     response: string;
@@ -14,6 +15,7 @@ export interface ChatStreamResult {
     idea_revision_id?: number;
     sources?: string[];
     recommendations?: RecommendationCatalog;
+    event_booklet?: EventBookletDraft | null;
 }
 
 export class IncompleteChatStreamError extends Error {
@@ -57,6 +59,7 @@ export async function streamChat(
     let ideaRevisionId: number | undefined;
     let sources: string[] | undefined;
     let recommendations: RecommendationCatalog | undefined;
+    let eventBooklet: EventBookletDraft | null | undefined;
 
     try {
         for (;;) {
@@ -73,7 +76,7 @@ export async function streamChat(
                 const json = line.slice(5).trim();
                 if (!json) continue;
 
-                let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; incomplete?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; recommendations?: RecommendationCatalog; error?: string };
+                let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; incomplete?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; recommendations?: RecommendationCatalog; event_booklet?: EventBookletDraft | null; error?: string };
                 try {
                     evt = JSON.parse(json);
                 } catch {
@@ -108,6 +111,7 @@ export async function streamChat(
                     ideaRevisionId = evt.idea_revision_id;
                     sources = evt.sources;
                     recommendations = evt.recommendations;
+                    eventBooklet = evt.event_booklet;
                 }
             }
             if (completed) break;
@@ -123,5 +127,5 @@ export async function streamChat(
         throw new IncompleteChatStreamError({ response: full, session_id: sessionId, conversation_id: conversationId });
     }
 
-    return { response: full, session_id: sessionId, conversation_id: conversationId, strategy_ids: strategyIds, response_id: responseId, idea_revision_id: ideaRevisionId, sources, recommendations };
+    return { response: full, session_id: sessionId, conversation_id: conversationId, strategy_ids: strategyIds, response_id: responseId, idea_revision_id: ideaRevisionId, sources, recommendations, event_booklet: eventBooklet };
 }

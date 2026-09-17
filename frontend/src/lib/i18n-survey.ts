@@ -84,6 +84,8 @@ const it: Dict = {
     'survey.paese.Regno Unito (Inghilterra)': 'Regno Unito (Inghilterra)',
     'survey.paese.Spagna': 'Spagna', 'survey.paese.Francia': 'Francia',
     'survey.paese.Germania': 'Germania', 'survey.paese.Altro': 'Altro',
+    'survey.tool.EVENTO_STUDIO': 'Evento significativo di studio',
+    'survey.tool.EVENTO_PROFESSIONALE': 'Evento significativo professionale',
 };
 
 const en: Dict = {
@@ -164,6 +166,8 @@ const en: Dict = {
     'survey.paese.Regno Unito (Inghilterra)': 'United Kingdom (England)',
     'survey.paese.Spagna': 'Spain', 'survey.paese.Francia': 'France',
     'survey.paese.Germania': 'Germany', 'survey.paese.Altro': 'Other',
+    'survey.tool.EVENTO_STUDIO': 'Significant study event',
+    'survey.tool.EVENTO_PROFESSIONALE': 'Significant professional event',
 };
 
 const es: Dict = {
@@ -244,6 +248,8 @@ const es: Dict = {
     'survey.paese.Regno Unito (Inghilterra)': 'Reino Unido (Inglaterra)',
     'survey.paese.Spagna': 'España', 'survey.paese.Francia': 'Francia',
     'survey.paese.Germania': 'Alemania', 'survey.paese.Altro': 'Otro',
+    'survey.tool.EVENTO_STUDIO': 'Evento significativo de estudio',
+    'survey.tool.EVENTO_PROFESSIONALE': 'Evento significativo profesional',
 };
 
 const fr: Dict = {
@@ -324,6 +330,8 @@ const fr: Dict = {
     'survey.paese.Regno Unito (Inghilterra)': 'Royaume-Uni (Angleterre)',
     'survey.paese.Spagna': 'Espagne', 'survey.paese.Francia': 'France',
     'survey.paese.Germania': 'Allemagne', 'survey.paese.Altro': 'Autre',
+    'survey.tool.EVENTO_STUDIO': 'Événement d’étude significatif',
+    'survey.tool.EVENTO_PROFESSIONALE': 'Événement professionnel significatif',
 };
 
 const de: Dict = {
@@ -404,6 +412,8 @@ const de: Dict = {
     'survey.paese.Regno Unito (Inghilterra)': 'Vereinigtes Königreich (England)',
     'survey.paese.Spagna': 'Spanien', 'survey.paese.Francia': 'Frankreich',
     'survey.paese.Germania': 'Deutschland', 'survey.paese.Altro': 'Sonstiges',
+    'survey.tool.EVENTO_STUDIO': 'Bedeutsames Lernereignis',
+    'survey.tool.EVENTO_PROFESSIONALE': 'Bedeutsames berufliches Ereignis',
 };
 
 const sv: Dict = {
@@ -484,6 +494,8 @@ const sv: Dict = {
     'survey.paese.Regno Unito (Inghilterra)': 'Storbritannien (England)',
     'survey.paese.Spagna': 'Spanien', 'survey.paese.Francia': 'Frankrike',
     'survey.paese.Germania': 'Tyskland', 'survey.paese.Altro': 'Annat',
+    'survey.tool.EVENTO_STUDIO': 'Betydelsefull studiehändelse',
+    'survey.tool.EVENTO_PROFESSIONALE': 'Betydelsefull professionell händelse',
 };
 
 export const SURVEY_DICTS: Record<Lang, Dict> = { it, en, es, fr, de, sv };

@@ -35,7 +35,9 @@ function safeNextHref(): string | null {
 
 function toolName(id: string, t: (key: string) => string): string {
     if (id === 'pqbl') return t('pqbl.card.title');
-    return QUESTIONNAIRES[id as QuestionnaireType]?.name ?? id;
+    const name = QUESTIONNAIRES[id as QuestionnaireType]?.name ?? id;
+    const localized = t(`q.${id}.name`);
+    return localized === `q.${id}.name` ? name : localized;
 }
 
 function toolDescription(id: string, t: (key: string) => string): string {

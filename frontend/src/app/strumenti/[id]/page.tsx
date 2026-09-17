@@ -11,7 +11,7 @@ import { fetchInstruments } from '@/lib/instruments-api';
 import { useI18n } from '@/lib/i18n-context';
 import { STRATEGIC_COMPETENCES_URLS, STRATEGIC_COMPETENCES_CODE, STRATEGIC_COMPETENCES_PASSWORD } from '@/lib/questionnaire-sources';
 
-const AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS', 'IDEA'];
+const AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'IDEA'];
 const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
 
 export default function InstrumentDetailsPage() {

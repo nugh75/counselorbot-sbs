@@ -11,6 +11,8 @@ test('each interview path opens with its own agreement step', () => {
     assert.equal(isAgreementStep('SAVICKAS', 'savickas-patto'), true);
     assert.equal(isAgreementStep('QPCC', 'qpcc-intro'), true);
     assert.equal(isAgreementStep('QAP', 'qap-intro'), true);
+    assert.equal(isAgreementStep('EVENTO_STUDIO', 'evstudio-patto'), true);
+    assert.equal(isAgreementStep('EVENTO_PROFESSIONALE', 'evprof-patto'), true);
     assert.equal(isAgreementStep('SAVICKAS', 'savickas-q1'), false);
 });
 
@@ -61,6 +63,8 @@ test('generating a step advances by itself only on the final summary of an inter
     assert.equal(autoAdvancesOnGenerate('SAVICKAS', 'savickas-q1'), false);
     assert.equal(autoAdvancesOnGenerate('QPCC', 'qpcc-sintesi'), true);
     assert.equal(autoAdvancesOnGenerate('QPCC', 'qpcc-comunicazione'), false);
+    assert.equal(autoAdvancesOnGenerate('EVENTO_PROFESSIONALE', 'evprof-final'), true);
+    assert.equal(autoAdvancesOnGenerate('EVENTO_PROFESSIONALE', 'evprof-prossima'), false);
 });
 
 test('generating a step keeps the old rules outside the family', () => {

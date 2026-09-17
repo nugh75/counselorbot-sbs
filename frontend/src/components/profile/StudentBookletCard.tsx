@@ -7,6 +7,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { EVENT_ROLES } from '@/lib/event-booklet';
 
 // Libretti narrativi senza dimensioni (fattori): eventi significativi.
 export const EVENT_BOOKLET_TYPES = ['EVENTO_STUDIO', 'EVENTO_PROFESSIONALE'] as const;
@@ -17,8 +18,14 @@ const BOOKLET_TYPE_LABEL: Record<string, string> = {
     EVENTO_PROFESSIONALE: 'Evento significativo professionale',
 };
 
+// I due Evento significativo sono anche strumenti con un percorso, ma il libretto
+// li nomina per esteso: la sigla di un questionario qui non esiste.
+function isEventType(type: BookletType): boolean {
+    return (EVENT_BOOKLET_TYPES as readonly string[]).includes(type);
+}
+
 function isQuestionnaireType(type: BookletType): type is QuestionnaireType {
-    return type in QUESTIONNAIRES;
+    return type in QUESTIONNAIRES && !isEventType(type);
 }
 
 type TranslateFn = (key: string, vars?: Record<string, string | number>) => string;
@@ -50,6 +57,7 @@ type BookletData = {
     bio_context: string;
     bio_discovery: string;
     bio_keywords: string;
+    event_role: string;
     student_notes: string;
     final_satisfaction: string;
     final_observations: string;
@@ -84,6 +92,7 @@ const EMPTY_BOOKLET: BookletData = {
     bio_context: '',
     bio_discovery: '',
     bio_keywords: '',
+    event_role: '',
     student_notes: '',
     final_satisfaction: '',
     final_observations: '',
@@ -474,9 +483,19 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                 <div className="space-y-6">
                     {simpleInput('title', t('booklet.field.title'))}
 
+                    {isEventType(questionnaireType) && (
+                        <label className="block">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('booklet.field.eventRole')}</span>
+                            <select value={form.event_role} onChange={(event) => setValue('event_role', event.target.value)} className={inputClass}>
+                                <option value="">{t('booklet.select')}</option>
+                                {EVENT_ROLES.map((role) => <option key={role} value={role}>{t(`eventBooklet.role.${role}`)}</option>)}
+                            </select>
+                        </label>
+                    )}
+
                     <div className="grid gap-3 md:grid-cols-2">
-                        {factorMulti('strength', t('booklet.field.strength'))}
-                        {factorMulti('growth_area', t('booklet.field.growth'))}
+                        {factorMulti('strength', t(isEventType(questionnaireType) ? 'eventBooklet.field.worked' : 'booklet.field.strength'))}
+                        {factorMulti('growth_area', t(isEventType(questionnaireType) ? 'eventBooklet.field.didNotWork' : 'booklet.field.growth'))}
                     </div>
                     {textField('motivation', t('booklet.field.motivation'), 2)}
 

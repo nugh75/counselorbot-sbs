@@ -12,6 +12,8 @@ const INTERVIEW_PATHS: Readonly<Record<string, InterviewPath>> = {
     SAVICKAS: { agreementStepId: 'savickas-patto', finalStepId: 'savickas-final' },
     QPCC: { agreementStepId: 'qpcc-intro', finalStepId: 'qpcc-sintesi' },
     QAP: { agreementStepId: 'qap-intro', finalStepId: 'qap-sintesi' },
+    EVENTO_STUDIO: { agreementStepId: 'evstudio-patto', finalStepId: 'evstudio-final' },
+    EVENTO_PROFESSIONALE: { agreementStepId: 'evprof-patto', finalStepId: 'evprof-final' },
 };
 
 const QUESTIONS_PHASE_ID = 'questions';
