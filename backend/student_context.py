@@ -22,9 +22,9 @@ from . import models
 LEARNER_PROFILE_LABELS = {
     "age": "Età",
     "gender": "Genere",
-    "school_class": "Classe / contesto",
-    "school_year": "Anno / percorso",
-    "context": "Contesto di studio",
+    "school_class": "Classe / professione",
+    "school_year": "Anno di corso / percorso formativo o lavorativo",
+    "context": "Contesto di studio o lavorativo",
     "goal": "Obiettivo attuale",
     "main_difficulty": "Difficoltà principale percepita",
     "strengths": "Punti di forza",
