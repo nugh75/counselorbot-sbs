@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo } from 'react';
 import Link from 'next/link';
+import { BackButton } from '@/components/ui/BackButton';
 import { useSearchParams } from 'next/navigation';
 import { VisualTools } from '@/components/visual/VisualTools';
 import { useI18n } from '@/lib/i18n-context';
@@ -13,10 +14,12 @@ function TimelinePage() {
     const eventId = params.get('event') || undefined;
     const request = useMemo(() => ({ tab: 'timeline' as const, nonce: 1, eventId }), [eventId]);
     return <main className="page-narrow space-y-4 p-4">
-        <h1 className="text-2xl font-bold">{visualLabel(lang, 'timeline')}</h1>
+        <div className="flex items-center gap-2">
+            <BackButton href="/profilo" label={t('profile.nav')} />
+            <h1 className="text-2xl font-bold">{visualLabel(lang, 'timeline')}</h1>
+        </div>
         <p>{visualLabel(lang, 'personalTimelineHelp')}</p>
         <nav className="flex flex-wrap gap-4">
-            <Link className="text-indigo-700 underline" href="/profilo">{t('profile.title')}</Link>
             <Link className="text-indigo-700 underline" href="/profilo/portfolio">{visualLabel(lang, 'openPortfolio')}</Link>
             <Link className="text-indigo-700 underline" href="/profilo/orientamento">{t('referrals.area.title')}</Link>
         </nav>

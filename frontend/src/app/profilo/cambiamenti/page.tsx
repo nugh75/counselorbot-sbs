@@ -79,7 +79,7 @@ export default function ProfileChangesPage() {
         <div className="page-wide px-4 py-8 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold text-slate-900">{t('profileChanges.title')}</h1>
-                <BackButton variant="labelled" href="/profilo" label={t('profileChanges.backToNotebook')} />
+                <BackButton href="/profilo" label={t('profile.nav')} />
             </div>
             <ProfileChangeReflection lang={lang} />
         </div>
