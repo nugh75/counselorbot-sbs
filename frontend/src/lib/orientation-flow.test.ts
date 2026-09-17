@@ -98,8 +98,7 @@ test('a concluded Compass has a way out even when no tool is opened', () => {
     // Senza `?next=` — cioè per chi apre la Bussola dalla topbar invece di
     // esserci rimandato dal cancello — il pannello finale non aveva alcun
     // collegamento: restavano le schede degli strumenti e nient'altro.
-    assert.match(source, /href=\{nextHref \?\? '\/'\}/);
-    assert.match(source, /nextHref \? t\('orientation\.continue'\) : t\('nav\.home'\)/);
+    assert.match(source, /<div className="flex flex-wrap gap-2">\s*<Button type="button" variant="accent" onClick=\{goToTools\}>/);
 
 });
 
@@ -108,13 +107,15 @@ test('Bussola cards do not use decorative left borders', () => {
     assert.doesNotMatch(source, /border-l-/);
 });
 
-test('the end of the Compass opens every tool too, and its close button sits left', () => {
-    // Chi concludeva la Bussola aveva solo gli strumenti proposti e la home:
-    // per vedere il catalogo intero doveva ripassare dalla presentazione.
+test('the end of the Compass has one way home to every tool, and its close button sits left', () => {
+    // Chi concludeva la Bussola aveva "Torna alla home" e "Vedi tutti gli
+    // strumenti": due tasti per la stessa strada. Ne resta uno, e "Continua da
+    // dove eri diretto" compare solo se il cancello ha mandato qui con `?next=`.
     const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
     const completed = source.slice(source.indexOf("session.status === 'completed' && ("), source.indexOf('function RecommendationSection'));
-    assert.match(completed, /onClick=\{goToTools\}/);
-    assert.match(completed, /orientation\.completed\.allTools/);
+    assert.match(completed, /onClick=\{goToTools\}>\{t\('orientation\.completed\.allTools'\)\}/);
+    assert.doesNotMatch(completed, /nav\.home/);
+    assert.match(completed, /\{nextHref && <Link href=\{nextHref\}[^]*?orientation\.continue/);
     const close = source.slice(source.indexOf("session.status === 'in_progress' && session.recommendations.length > 0"), source.indexOf("t('orientation.complete')"));
     assert.match(close, /justify-start/);
     const dict = readFileSync(new URL('./i18n-orientation.ts', import.meta.url), 'utf8');
