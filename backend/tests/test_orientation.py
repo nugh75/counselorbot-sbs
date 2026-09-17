@@ -167,7 +167,10 @@ def test_the_catalog_is_not_reprinted_when_the_student_is_still_lost():
         fallback_analysis("sono confuso non so da dove iniziare", "it"), history, "it"
     )
     assert repeated.reply != orientation._PLATFORM_HELP["it"]
-    assert "il modo in cui studi" in repeated.reply
+    # Chi chiede ancora da dove partire riceve il punto di partenza, non una domanda
+    # che dice "non ho elementi per indicarti uno strumento" accanto alla scheda QSA.
+    assert "partirei da QSA" in repeated.reply
+    assert [row["id"] for row in repeated.recommendations] == ["QSA"]
 
     first_time = orientation._fallback_without_repetition(
         fallback_analysis("sono confuso non so da dove iniziare", "it"), [], "it"
@@ -214,8 +217,9 @@ def test_asking_about_a_tool_also_proposes_it():
     assert analysis.informational is True
     assert [row["id"] for row in analysis.recommendations] == ["QSA"]
 
-    # La panoramica di piattaforma non e' una richiesta su uno strumento: nessuna scheda.
-    assert fallback_analysis("Cosa posso fare?", "it").recommendations == []
+    # Chiedere di un altro strumento spiega quello: la regola del QSA decide da dove
+    # partire, non che cosa spiegare.
+    assert [row["id"] for row in fallback_analysis("Che cosa è lo ZTPI?", "it").recommendations] == ["ZTPI"]
 
 
 def test_tools_are_read_out_of_the_reply_as_whole_words():
@@ -820,7 +824,39 @@ def test_orientation_paces_tools_and_time_in_the_effective_prompt(monkeypatch):
 
 def test_offline_recommendations_propose_only_one_starting_tool():
     result = fallback_analysis('studio concentrazione motivazione futuro competenze', 'it')
-    assert len(result.recommendations) == 1
+    # Un solo punto di partenza, il QSA; al massimo uno strumento per dopo.
+    assert [row['id'] for row in result.recommendations] == ['QSA', 'ZTPI']
+
+
+def test_where_to_start_always_begins_with_qsa():
+    """Chi chiede da dove partire parte dal QSA, anche se il bisogno porta altrove."""
+    assert [row['id'] for row in fallback_analysis('Cosa posso fare?', 'it').recommendations] == ['QSA']
+    career = fallback_analysis('Voglio capire che lavoro fare', 'it')
+    assert [row['id'] for row in career.recommendations] == ['QSA', 'QAP']
+    assert 'partirei da QSA' in career.reply
+
+
+def test_qsar_starts_only_when_the_reduced_version_is_asked_for():
+    shorter = fallback_analysis('Non so da dove iniziare, vorrei il questionario ridotto', 'it')
+    assert [row['id'] for row in shorter.recommendations] == ['QSAr']
+    english = fallback_analysis('I want the short version of the study questionnaire', 'en')
+    assert [row['id'] for row in english.recommendations][0] == 'QSAr'
+    assert 'QSAr' not in [row['id'] for row in fallback_analysis('Da dove inizio?', 'it').recommendations]
+
+
+def test_prompt_makes_qsa_the_starting_tool(monkeypatch):
+    monkeypatch.setattr(orientation, 'AIService', _FakeAIService)
+    db = _Session()
+    try:
+        analyze_turn(db, 'Quali strumenti dovrei usare?', 'it')
+        prompt = _FakeAIService.last_call[0][1]
+    finally:
+        db.close()
+    assert 'STARTING TOOL' in prompt
+    assert 'the first recommendation is always QSA' in prompt
+    assert 'only when the student explicitly asks for the shorter or reduced version' in prompt
+    assert 'use "merge" with QSA first' in prompt
+    assert 'ask about their area of interest and explain the options yourself' not in prompt
 
 
 def test_welcome_explains_pacing_and_flexible_time_in_every_language():
