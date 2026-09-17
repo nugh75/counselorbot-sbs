@@ -37,7 +37,9 @@ interface TypeStats {
     factors: FactorStats[];
 }
 
-const QUESTIONNAIRE_TYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'];
+const QUESTIONNAIRE_TYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'QPCS', 'QPCC', 'QAP'];
+// Percorsi narrativi: nessun punteggio da mostrare.
+const QUALITATIVE_TYPES = new Set(['SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE']);
 
 type TranslateFallback = (key: string, fallback: string) => string;
 
@@ -439,7 +441,7 @@ export function QuestionnaireResultsViewer() {
                                                 {result.session_id.substring(0, 8)}…
                                             </td>
                                             <td className="px-4 py-3">
-                                                {result.questionnaire_type === 'SAVICKAS' ? (
+                                                {QUALITATIVE_TYPES.has(result.questionnaire_type) ? (
                                                     <span className="text-xs text-slate-500 italic">{t('admin.results.qualitative')}</span>
                                                 ) : scoreKeys.length > 0 ? (
                                                     <div className="flex flex-wrap gap-1">
@@ -468,7 +470,7 @@ export function QuestionnaireResultsViewer() {
                                                         <div className="flex items-center gap-2 text-slate-500 mb-3">
                                                             <span className="font-mono">{t('admin.results.sessionFull')}: {result.session_id}</span>
                                                         </div>
-                                                        {result.questionnaire_type === 'SAVICKAS' ? (
+                                                        {QUALITATIVE_TYPES.has(result.questionnaire_type) ? (
                                                             <p className="text-slate-500 italic">{t('admin.results.qualitativeDesc')}</p>
                                                         ) : result.scores ? (
                                                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">

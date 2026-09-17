@@ -185,6 +185,8 @@ const SYSTEM_PROMPT_MODES = [
     { value: 'ztpi-btp', label: 'ZTPI Profilo Temporale Bilanciato' },
     { value: 'savickas-interview', label: 'Savickas Intervista' },
     { value: 'savickas-summary', label: 'Savickas Sintesi' },
+    { value: 'evento-interview', label: 'Evento significativo Intervista' },
+    { value: 'evento-summary', label: 'Evento significativo Sintesi' },
     { value: 'qpcs-factor', label: 'QPCS Analisi Fattori' },
     { value: 'qpcc-factor', label: 'QPCC Analisi Fattori' },
     { value: 'qap-factor', label: 'QAP Analisi Risorse' },
@@ -240,6 +242,8 @@ const SYSTEM_PROMPT_KEY_BY_MODE: Record<string, string> = {
     'ztpi-btp': 'prompt_ztpi_btp',
     'savickas-interview': 'prompt_savickas_interview',
     'savickas-summary': 'prompt_savickas_summary',
+    'evento-interview': 'prompt_evento_interview',
+    'evento-summary': 'prompt_evento_summary',
     'qpcs-factor': 'prompt_qpcs_factor',
     'qpcc-factor': 'prompt_qpcc_factor',
     'qap-factor': 'prompt_qap_factor',
@@ -487,6 +491,8 @@ const SYSTEM_PROMPT_KEY_BY_PHASE: Record<string, string> = {
     'qsar-intro': 'prompt_qsar_intro',
     'ztpi-intro': 'prompt_ztpi_intro',
     'savickas-intro': 'prompt_savickas_intro',
+    'evstudio-intro': 'prompt_evstudio_intro',
+    'evprof-intro': 'prompt_evprof_intro',
     'qpcs-welcome': 'prompt_qpcs_welcome',
     'qpcc-welcome': 'prompt_qpcc_welcome',
     'qap-welcome': 'prompt_qap_welcome',
@@ -1594,6 +1600,36 @@ export function ConfigForm() {
             texts: [
                 { key: 'text_savickas_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
                 { key: 'text_savickas_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
+            ],
+        },
+        {
+            id: 'evento-studio',
+            questionnaireType: 'EVENTO_STUDIO',
+            title: t('q.EVENTO_STUDIO.fullName'),
+            color: 'amber' as const,
+            systemPrompts: [
+                { key: 'prompt_meta_EVENTO_STUDIO', label: 'Meta system prompt Evento significativo di studio' },
+                { key: 'prompt_evento_interview', label: 'Prompt Intervista' },
+                { key: 'prompt_evento_summary', label: 'Prompt Sintesi Finale' },
+            ],
+            texts: [
+                { key: 'text_evento_studio_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
+                { key: 'text_evento_studio_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
+            ],
+        },
+        {
+            id: 'evento-professionale',
+            questionnaireType: 'EVENTO_PROFESSIONALE',
+            title: t('q.EVENTO_PROFESSIONALE.fullName'),
+            color: 'amber' as const,
+            systemPrompts: [
+                { key: 'prompt_meta_EVENTO_PROFESSIONALE', label: 'Meta system prompt Evento significativo professionale' },
+                { key: 'prompt_evento_interview', label: 'Prompt Intervista' },
+                { key: 'prompt_evento_summary', label: 'Prompt Sintesi Finale' },
+            ],
+            texts: [
+                { key: 'text_evento_professionale_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
+                { key: 'text_evento_professionale_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
             ],
         },
         {

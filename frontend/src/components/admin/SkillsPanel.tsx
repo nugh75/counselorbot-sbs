@@ -49,7 +49,7 @@ const EMPTY: FormState = {
     isActive: true, status: 'draft',
 };
 
-const INSTRUMENTS = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP', 'SAVICKAS', 'IDEA'];
+const INSTRUMENTS = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'IDEA'];
 
 const TEXTS = {
     it: {

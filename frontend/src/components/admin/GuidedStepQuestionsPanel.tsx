@@ -10,6 +10,8 @@ const STEPS_BY_QUESTIONNAIRE: Record<string, string[]> = {
     QSAr: ['qsar-intro', 'qsar-cognitive', 'qsar-affective', 'qsar-processing', 'qsar-selfcontrol', 'qsar-motivation', 'qsar-emotions', 'qsar-attributions', 'questions'],
     ZTPI: ['ztpi-intro', 'ztpi-t1', 'ztpi-t2', 'ztpi-t3', 'ztpi-t4', 'ztpi-t5', 'ztpi-btp', 'questions'],
     SAVICKAS: ['savickas-intro', 'savickas-patto', 'savickas-q1', 'savickas-q2', 'savickas-q3', 'savickas-q4', 'savickas-q5', 'savickas-final', 'questions'],
+    EVENTO_STUDIO: ['evstudio-intro', 'evstudio-patto', 'evstudio-evento', 'evstudio-fatto', 'evstudio-funzionato', 'evstudio-criticita', 'evstudio-rilettura', 'evstudio-prossima', 'evstudio-final', 'questions'],
+    EVENTO_PROFESSIONALE: ['evprof-intro', 'evprof-patto', 'evprof-evento', 'evprof-fatto', 'evprof-funzionato', 'evprof-criticita', 'evprof-rilettura', 'evprof-prossima', 'evprof-final', 'questions'],
     QPCS: ['qpcs-intro', 'qpcs-welcome', 'qpcs-factors', 'qpcs-emozioni', 'qpcs-comunicazione', 'qpcs-volizione', 'qpcs-apprendimento', 'qpcs-fiducia', 'qpcs-sintesi', 'questions'],
     QPCC: ['qpcc-intro', 'qpcc-welcome', 'qpcc-factors', 'qpcc-comunicazione', 'qpcc-controllo', 'qpcc-volizione', 'qpcc-elaborazione', 'qpcc-convinzioni', 'qpcc-sintesi', 'questions'],
     QAP: ['qap-intro', 'qap-welcome', 'qap-factors', 'qap-preoccupazione', 'qap-controllo', 'qap-curiosita', 'qap-fiducia', 'qap-sintesi', 'questions'],
