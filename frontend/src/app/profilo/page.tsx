@@ -151,7 +151,7 @@ export default function ProfilePage() {
             return ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', ...EVENT_BOOKLET_TYPES];
         }
 
-        return [...completed, ...EVENT_BOOKLET_TYPES];
+        return [...completed, ...EVENT_BOOKLET_TYPES.filter((type) => !completed.includes(type))];
     }, [sessions]);
 
     const loadData = useCallback(async () => {

@@ -18,6 +18,8 @@ export const ACTIVE_QUESTIONNAIRE_IDS: readonly QuestionnaireType[] = [
     'QPCC',
     'QAP',
     'SAVICKAS',
+    'EVENTO_STUDIO',
+    'EVENTO_PROFESSIONALE',
     'IDEA',
 ];
 
@@ -29,7 +31,7 @@ export const TOOL_CATEGORIES: readonly ToolCategoryDefinition[] = [
     },
     {
         id: 'guided',
-        questionnaireIds: ['SAVICKAS', 'IDEA'],
+        questionnaireIds: ['SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'IDEA'],
         standaloneIds: [],
     },
     {

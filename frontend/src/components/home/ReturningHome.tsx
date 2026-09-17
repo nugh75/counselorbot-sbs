@@ -32,7 +32,7 @@ export function ReturningHome({
     onStartInstrument,
     onOpenIntro,
 }: Props) {
-    const { t, lang } = useI18n();
+    const { t, tf, lang } = useI18n();
     const resumeEntries = useResumeEntries();
     const { frozen, localResume, pqbl: pqblResume, count: resumeCount } = resumeEntries;
     const [counselorInfo, setCounselorInfo] = useState<{ id: number; name: string } | null>(null);
@@ -187,7 +187,7 @@ export function ReturningHome({
                                             <div>
                                                 <span className="flex items-center gap-2">
                                                     <span className={cn('h-1.5 w-1.5 rounded-full', done ? 'bg-teal-500' : 'bg-slate-300')} />
-                                                    <span className="font-bold text-slate-900">{q.name}</span>
+                                                    <span className="font-bold text-slate-900">{tf(`q.${q.id}.name`, q.name)}</span>
                                                 </span>
                                                 <h4 className="mt-1 text-sm font-medium leading-snug text-slate-600">{t(`q.${q.id}.fullName`)}</h4>
                                             </div>

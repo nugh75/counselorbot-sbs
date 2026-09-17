@@ -41,6 +41,8 @@ import { RecommendationsPanel } from '@/components/qsa/RecommendationsPanel';
 import { ChatWorkspace } from '@/components/qsa/ChatWorkspace';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { VisualTools, type VisualToolsRequest } from '@/components/visual/VisualTools';
+import { EventBookletCard } from '@/components/qsa/EventBookletCard';
+import { isEventInstrument, type EventBookletDraft } from '@/lib/event-booklet';
 import { Button } from '@/components/ui/Button';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import {
@@ -512,6 +514,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [isLoading, setIsLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [showAdvanceSuggestion, setShowAdvanceSuggestion] = useState(false);
+    // Bozza del libretto dalla sintesi dell'Evento significativo.
+    const [eventBookletDraft, setEventBookletDraft] = useState<EventBookletDraft | null>(null);
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
     const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
     const [visualRequest, setVisualRequest] = useState<VisualToolsRequest | null>(null);
@@ -1028,6 +1032,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 responseText = result.response || '';
                 if (result.conversation_id) setConversationId(result.conversation_id);
                 adoptRecommendations(result.recommendations);
+                if (result.event_booklet) setEventBookletDraft(result.event_booklet);
                 setLastFeedbackTargets(result.strategy_ids, result.response_id);
                 refreshIdeaWorkspace(result.idea_revision_id);
                 if (isIdea) setIdeaDrew(result.idea_revision_id != null);
@@ -1204,6 +1209,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             const { response } = result;
             if (result.conversation_id) setConversationId(result.conversation_id);
             adoptRecommendations(result.recommendations);
+            if (result.event_booklet) setEventBookletDraft(result.event_booklet);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
             refreshIdeaWorkspace(result.idea_revision_id);
             if (isIdea) setIdeaDrew(result.idea_revision_id != null);
@@ -1742,6 +1748,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
                 <ChatContinuation locale={activeLocale} {...continuation} />
                 {/* Input Area */}
+                {currentPhase === FIXED_CONCLUSION_ID && !voiceMode && isEventInstrument(questionnaireType) && (
+                    <EventBookletCard questionnaireType={questionnaireType} draft={eventBookletDraft} />
+                )}
                 {currentPhase === FIXED_CONCLUSION_ID && !voiceMode ? (
                     <div className="flex items-center justify-center gap-2 border-t border-slate-100 bg-slate-50 p-3 sm:p-4">
                         {renderConversationOptions(openPanel)}

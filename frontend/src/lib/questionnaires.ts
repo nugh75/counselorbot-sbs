@@ -1,7 +1,7 @@
 // Questionnaire Configuration
 // This file defines all available questionnaires and their configurations
 
-export type QuestionnaireType = 'QSA' | 'QSAr' | 'QPCS' | 'QPCC' | 'ZTPI' | 'QAP' | 'SAVICKAS' | 'IDEA';
+export type QuestionnaireType = 'QSA' | 'QSAr' | 'QPCS' | 'QPCC' | 'ZTPI' | 'QAP' | 'SAVICKAS' | 'EVENTO_STUDIO' | 'EVENTO_PROFESSIONALE' | 'IDEA';
 
 export interface QuestionnaireConfig {
     id: QuestionnaireType;
@@ -160,6 +160,30 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         invertedFactors: [],
         color: 'bg-emerald-500',
         icon: 'compass',
+        agentOnly: true,
+    },
+    EVENTO_STUDIO: {
+        id: 'EVENTO_STUDIO',
+        name: 'Evento significativo di studio',
+        fullName: 'Evento significativo di studio',
+        description: 'Percorso guidato che rilegge un solo episodio della tua esperienza di studio: i fatti, cosa ha funzionato, cosa no, e cosa provare la prossima volta',
+        factorPrefix: [],
+        factors: [],
+        invertedFactors: [],
+        color: 'bg-cyan-500',
+        icon: 'clipboard',
+        agentOnly: true,
+    },
+    EVENTO_PROFESSIONALE: {
+        id: 'EVENTO_PROFESSIONALE',
+        name: 'Evento significativo professionale',
+        fullName: 'Evento significativo professionale',
+        description: 'Percorso guidato che rilegge un solo episodio della tua esperienza di lavoro o di tirocinio: i fatti, cosa ha funzionato, cosa no, e cosa provare la prossima volta',
+        factorPrefix: [],
+        factors: [],
+        invertedFactors: [],
+        color: 'bg-cyan-600',
+        icon: 'briefcase',
         agentOnly: true,
     },
     IDEA: {

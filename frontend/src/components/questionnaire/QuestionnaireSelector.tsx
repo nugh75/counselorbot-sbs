@@ -23,7 +23,7 @@ interface QuestionnaireSelectorProps {
 }
 
 export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: QuestionnaireSelectorProps) {
-    const { t, lang, setLang } = useI18n();
+    const { t, tf, lang, setLang } = useI18n();
     const router = useRouter();
     const [expanded, setExpanded] = useState<string | null>(null);
     // Selezione come nel CounselorSelector: si clicca la card per evidenziarla,
@@ -100,7 +100,7 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                 )}
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-bold text-slate-800">{q.name}</h3>
+                        <h3 className="font-bold text-slate-800">{tf(`q.${q.id}.name`, q.name)}</h3>
                         <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-2xs font-bold rounded-full">
                             {t('selector.active')}
                         </span>
@@ -201,7 +201,7 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
             <div className="sticky top-20 z-20 flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                 <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700" aria-live="polite">
-                    {selectedKey === 'pqbl' ? t('pqbl.card.title') : active.find((q) => q.id === selectedKey)?.name || t('flow.select')}
+                    {selectedKey === 'pqbl' ? t('pqbl.card.title') : (() => { const q = active.find((item) => item.id === selectedKey); return q ? tf(`q.${q.id}.name`, q.name) : t('flow.select'); })()}
                 </p>
                 <ForwardButton onClick={handleContinue} disabled={!selectedKey} label={t('counselor.continue')} />
             </div>
