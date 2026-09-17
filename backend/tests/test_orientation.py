@@ -859,6 +859,22 @@ def test_prompt_makes_qsa_the_starting_tool(monkeypatch):
     assert 'ask about their area of interest and explain the options yourself' not in prompt
 
 
+def test_prompt_keeps_the_guided_chat_off_the_compass_screen(monkeypatch):
+    """La Bussola orienta: la chat guidata vive nella schermata dello strumento."""
+    monkeypatch.setattr(orientation, 'AIService', _FakeAIService)
+    db = _Session()
+    try:
+        analyze_turn(db, 'Ma posso fare il QSA dentro questa schermata?', 'it')
+        prompt = _FakeAIService.last_call[0][1]
+    finally:
+        db.close()
+    assert 'WHAT HAPPENS WHERE' in prompt
+    assert 'no profile is read here' in prompt
+    assert "reopened from 'Resume' in the header" in prompt
+    assert 'do not ask which factor to begin with' in prompt
+    assert 'instrument details such as item counts' in prompt
+
+
 def test_welcome_explains_pacing_and_flexible_time_in_every_language():
     assert set(orientation_routes.WELCOME) == {'it', 'en', 'es', 'fr', 'de', 'sv'}
     for text in orientation_routes.WELCOME.values():
