@@ -360,7 +360,7 @@ export default function BussolaPage() {
                     )}
 
                     {session.status === 'in_progress' && session.recommendations.length > 0 && (
-                        <div className="flex justify-end">
+                        <div className="flex justify-start">
                             <Button type="button" size="lg" onClick={() => void finish()} disabled={completing}>
                                 {completing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{t('orientation.complete')}
                             </Button>
@@ -374,7 +374,10 @@ export default function BussolaPage() {
                                 dipendeva da `?next=`, che mette solo il cancello quando rimanda
                                 qui: chi apriva la Bussola dalla topbar arrivava in fondo senza
                                 nessuna uscita che non fosse aprire uno degli strumenti. */}
-                            <Link href={nextHref ?? '/'} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-ochre-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-ochre-700">{nextHref ? t('orientation.continue') : t('nav.home')}<ArrowRight className="h-4 w-4" /></Link>
+                            <div className="flex flex-wrap gap-2">
+                                <Link href={nextHref ?? '/'} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-ochre-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-ochre-700">{nextHref ? t('orientation.continue') : t('nav.home')}<ArrowRight className="h-4 w-4" /></Link>
+                                <Button type="button" variant="secondary" onClick={goToTools}>{t('orientation.completed.allTools')}</Button>
+                            </div>
                             <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                                 <Button type="button" variant="ghost" onClick={() => void startConversation()} className="ml-auto text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</Button>
                             </div>

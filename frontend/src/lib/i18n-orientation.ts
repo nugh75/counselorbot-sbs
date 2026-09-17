@@ -33,6 +33,7 @@ const it: Dict = {
     'orientation.completed.title': 'La rotta è pronta',
     'orientation.completed.body': "Puoi aprire uno degli strumenti proposti. La Bussola resterà sempre disponibile.",
     'orientation.continue': 'Continua da dove eri diretto',
+    'orientation.completed.allTools': 'Vedi tutti gli strumenti',
     'orientation.error': 'Non riesco a completare questa azione. Riprova.',
 };
 
@@ -55,7 +56,7 @@ const en: Dict = {
 'orientation.recommendations.jump': 'Go to the suggested tools ({count})',
     'orientation.recommendation.start': 'Explore this tool', 'orientation.complete': 'Complete orientation', 'orientation.completed.title': 'Your route is ready',
     'orientation.completed.body': "You can open one of the suggested tools. The Compass remains available.",
-    'orientation.continue': 'Continue to your previous destination', 'orientation.error': 'This action could not be completed. Try again.',
+    'orientation.continue': 'Continue to your previous destination', 'orientation.completed.allTools': 'See all tools', 'orientation.error': 'This action could not be completed. Try again.',
 };
 
 const es: Dict = {
@@ -77,7 +78,7 @@ const es: Dict = {
 'orientation.recommendations.jump': 'Ir a las herramientas propuestas ({count})',
     'orientation.recommendation.start': 'Explorar esta herramienta', 'orientation.complete': 'Concluir la orientación', 'orientation.completed.title': 'La ruta está lista',
     'orientation.completed.body': "Puedes abrir una de las herramientas propuestas. La Brújula sigue disponible.",
-    'orientation.continue': 'Continuar al destino anterior', 'orientation.error': 'No se pudo completar esta acción. Inténtalo de nuevo.',
+    'orientation.continue': 'Continuar al destino anterior', 'orientation.completed.allTools': 'Ver todas las herramientas', 'orientation.error': 'No se pudo completar esta acción. Inténtalo de nuevo.',
 };
 
 const fr: Dict = {
@@ -99,7 +100,7 @@ const fr: Dict = {
 'orientation.recommendations.jump': 'Aller aux outils proposés ({count})',
     'orientation.recommendation.start': 'Explorer cet outil', 'orientation.complete': 'Terminer l’orientation', 'orientation.completed.title': 'La route est prête',
     'orientation.completed.body': "Vous pouvez ouvrir un des outils proposés. La Boussole reste disponible.",
-    'orientation.continue': 'Continuer vers la destination précédente', 'orientation.error': 'Impossible de terminer cette action. Réessayez.',
+    'orientation.continue': 'Continuer vers la destination précédente', 'orientation.completed.allTools': 'Voir tous les outils', 'orientation.error': 'Impossible de terminer cette action. Réessayez.',
 };
 
 const de: Dict = {
@@ -121,7 +122,7 @@ const de: Dict = {
 'orientation.recommendations.jump': 'Zu den vorgeschlagenen Werkzeugen ({count})',
     'orientation.recommendation.start': 'Dieses Werkzeug erkunden', 'orientation.complete': 'Orientierung abschließen', 'orientation.completed.title': 'Die Route ist bereit',
     'orientation.completed.body': "Du kannst eines der vorgeschlagenen Werkzeuge öffnen. Der Kompass bleibt verfügbar.",
-    'orientation.continue': 'Zum vorherigen Ziel weitergehen', 'orientation.error': 'Diese Aktion konnte nicht abgeschlossen werden. Versuche es erneut.',
+    'orientation.continue': 'Zum vorherigen Ziel weitergehen', 'orientation.completed.allTools': 'Alle Werkzeuge ansehen', 'orientation.error': 'Diese Aktion konnte nicht abgeschlossen werden. Versuche es erneut.',
 };
 
 const sv: Dict = {
@@ -143,7 +144,7 @@ const sv: Dict = {
 'orientation.recommendations.jump': 'Till de föreslagna verktygen ({count})',
     'orientation.recommendation.start': 'Utforska verktyget', 'orientation.complete': 'Avsluta orienteringen', 'orientation.completed.title': 'Vägen är klar',
     'orientation.completed.body': "Du kan öppna ett av de föreslagna verktygen. Kompassen finns kvar.",
-    'orientation.continue': 'Fortsätt till föregående mål', 'orientation.error': 'Åtgärden kunde inte slutföras. Försök igen.',
+    'orientation.continue': 'Fortsätt till föregående mål', 'orientation.completed.allTools': 'Se alla verktyg', 'orientation.error': 'Åtgärden kunde inte slutföras. Försök igen.',
 };
 
 export const ORIENTATION_DICTS: Record<Lang, Dict> = {
