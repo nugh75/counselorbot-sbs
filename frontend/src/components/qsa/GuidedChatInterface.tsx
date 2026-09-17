@@ -20,6 +20,7 @@ import { isNearBottom } from '@/lib/chat-scroll';
 import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
 import { asBookletType } from '@/components/profile/NotebookBookletPanel';
+import { acceptsAgreement, advanceButtons, advanceLabelKey, autoAdvancesOnGenerate, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from '@/lib/interview-path';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
@@ -106,14 +107,6 @@ type QuickReply = {
 const ZTPI_REQUIRED_STEP_IDS = ['ztpi-t1', 'ztpi-t2', 'ztpi-t3', 'ztpi-t4', 'ztpi-t5', 'ztpi-btp'];
 const SAVICKAS_REQUIRED_STEP_IDS = ['savickas-patto', 'savickas-q1', 'savickas-q2', 'savickas-q3', 'savickas-q4', 'savickas-q5', 'savickas-final'];
 const SUPPORTED_LOCALES = new Set<Lang>(['it', 'en', 'es', 'fr', 'de', 'sv']);
-const SAVICKAS_ACCEPT_PATTERNS: Record<string, RegExp> = {
-    it: /\baccetto\b/i,
-    en: /\b(?:i\s+accept|accept|i\s+agree|agree)\b/i,
-    es: /\b(?:acepto|estoy\s+de\s+acuerdo|de\s+acuerdo)\b/i,
-    fr: /\b(?:j['’]\s*accepte|accepte|d['’]\s*accord)\b/i,
-    de: /\b(?:ich\s+akzeptiere|akzeptiere|einverstanden)\b/i,
-    sv: /\b(?:jag\s+accepterar|accepterar|godk[aä]nner)\b/i,
-};
 
 function normalizeLocale(value?: string): Lang {
     const primary = (value || 'it').toLowerCase().replace('_', '-').split('-')[0] as Lang;
@@ -1048,14 +1041,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             if (streamOk && extractAdvanceSignal(responseText).cleanText) {
                 const { cleanText, shouldAdvance } = extractAdvanceSignal(responseText);
                 updateLast(cleanText);
-                // Savickas e QPCS: l'utente decide quando cambiare step. Non avanzare
-                // automaticamente sulla generazione dello step (per Savickas resta valido
-                // solo l'ultimo step).
-                const allowAutoAdvanceOnGenerate =
-                    questionnaireType === 'SAVICKAS'
-                        ? step.id === 'savickas-final'
-                        : questionnaireType !== 'QPCS';
-                if (shouldAdvance && allowAutoAdvanceOnGenerate) {
+                // Percorsi a intervista e QPCS: l'utente decide quando cambiare step.
+                // Non avanzare automaticamente sulla generazione dello step (nei
+                // percorsi a intervista resta valida solo la sintesi).
+                if (shouldAdvance && autoAdvancesOnGenerate(questionnaireType, step.id)) {
                     await advancePhase();
                 }
             } else if (streamOk) {
@@ -1150,12 +1139,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         setInput('');
         setUserMessagesInPhase(prev => prev + 1);
 
-        // Patto Savickas: l'accettazione localizzata avanza senza chiamare l'AI.
-        const isPattoAck =
-            questionnaireType === 'SAVICKAS'
-            && currentPhase === 'savickas-patto'
-            && (SAVICKAS_ACCEPT_PATTERNS[activeLocale] || SAVICKAS_ACCEPT_PATTERNS.it).test(userMessage);
-        if (isPattoAck) {
+        // Patto dei percorsi a intervista: l'accettazione localizzata avanza
+        // senza chiamare l'AI.
+        if (acceptsAgreement(questionnaireType, currentPhase, activeLocale, userMessage)) {
             setMessages(prev => [...prev, {
                 role: 'assistant',
                 content: t('guided.pattoAck'),
@@ -1170,9 +1156,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
         try {
             const currentStep = isAnalysisStep(currentPhase) ? getStepDef(currentPhase) : undefined;
-            const effectiveMessage = (questionnaireType === 'SAVICKAS' && currentStep?.prompt)
-                ? `CURRENT STEP INTERNAL INSTRUCTIONS (use them only as guidance; answer the student in language "${activeLocale}"):\n${currentStep.prompt}\n\nSTUDENT ANSWER:\n${userMessage}`
-                : userMessage;
+            const effectiveMessage = stepInstructionsMessage(questionnaireType, currentStep?.prompt, activeLocale, userMessage);
 
             // Placeholder dell'assistente, riempito in streaming
             setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
@@ -1232,13 +1216,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 dropLast();
             }
             if (shouldAdvance) {
-                // Savickas e QPCS: l'utente decide quando cambiare step. Non avanzare
-                // automaticamente sul marker [[AVANZA_STEP]]; mostra il suggerimento e
-                // lascia che sia l'utente a usare il pulsante "prossimo step".
-                const userDecidesAdvance =
-                    (questionnaireType === 'SAVICKAS' && currentPhase !== 'savickas-final')
-                    || questionnaireType === 'QPCS';
-                if (userDecidesAdvance) {
+                // Percorsi a intervista e QPCS: l'utente decide quando cambiare step.
+                // Non avanzare automaticamente sul marker [[AVANZA_STEP]]; mostra il
+                // suggerimento e lascia che sia l'utente a usare il pulsante "prossimo step".
+                if (userDecidesAdvance(questionnaireType, currentPhase)) {
                     setShowAdvanceSuggestion(true);
                 } else {
                     await advancePhase();
@@ -1393,25 +1374,12 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const totalSteps = phases.length;
     const sidebarPhases = phases;
     const hasScoreEntries = scoreGroups.some(group => group.entries.length > 0);
-    const isSavickasAgreement = questionnaireType === 'SAVICKAS' && currentPhase === 'savickas-patto';
-    const quickReplies: QuickReply[] = (() => {
-        if (questionnaireType === 'SAVICKAS') {
-            if (isSavickasAgreement) {
-                return [{ label: t('guided.qr.accept'), action: 'send', emphasis: true }];
-            }
-            if (isAnalysisStep(currentPhase)) {
-                const replies: QuickReply[] = [
-                    { label: t('guided.qr.rephrase'), action: 'send' },
-                    { label: t('guided.qr.reflect'), action: 'send' },
-                ];
-                if (showAdvanceSuggestion || userMessagesInPhase > 0) {
-                    replies.push({ label: t('guided.qr.readyNext'), action: 'advance' });
-                }
-                return replies;
-            }
-        }
-        return [];
-    })();
+    const isAgreementPhase = isAgreementStep(questionnaireType, currentPhase);
+    const quickReplies: QuickReply[] = interviewQuickReplies(questionnaireType, currentPhase, {
+        analysisStep: isAnalysisStep(currentPhase),
+        suggestion: showAdvanceSuggestion,
+        userMessages: userMessagesInPhase,
+    }).map(({ key, ...reply }) => ({ ...reply, label: t(key) }));
     // Annuncio per screen reader. Il trascritto è un role="log": va bene per
     // navigarlo, ma da solo non dice nulla mentre la risposta arriva. Un
     // aria-live sul contenitore riannuncerebbe a ogni token dello streaming,
@@ -1430,19 +1398,20 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
     // Nessun segnaposto d'attesa: la casella resta scrivibile mentre la risposta
     // arriva, così il pensiero successivo si scrive quando nasce.
-    const inputPlaceholder = isSavickasAgreement
+    const inputPlaceholder = isAgreementPhase
         ? t('guided.input.pattoPlaceholder')
         : t('guided.input.placeholder');
     const showPreviousStep = currentPhase !== FIXED_CONCLUSION_ID && phases.indexOf(currentPhase) > 0;
-    const showStandardAdvance = currentPhase !== FIXED_CONCLUSION_ID && questionnaireType !== 'SAVICKAS';
-    const showSavickasAdvance = currentPhase !== FIXED_CONCLUSION_ID
-        && questionnaireType === 'SAVICKAS'
-        && currentPhase !== 'savickas-patto'
-        && (showAdvanceSuggestion || userMessagesInPhase >= 3);
+    const { standard: showStandardAdvance, interview: showInterviewAdvance } = advanceButtons(
+        questionnaireType,
+        currentPhase,
+        getStepDef(currentPhase)?.system_prompt_mode,
+        { conclusion: currentPhase === FIXED_CONCLUSION_ID, suggestion: showAdvanceSuggestion, userMessages: userMessagesInPhase },
+    );
     const showRepeatStep = currentPhase !== FIXED_CONCLUSION_ID;
-    const hasStepNavigation = showPreviousStep || showStandardAdvance || showSavickasAdvance || showRepeatStep;
+    const hasStepNavigation = showPreviousStep || showStandardAdvance || showInterviewAdvance || showRepeatStep;
 
-    const nextStepLabel = currentPhase === FIXED_QUESTIONS_ID ? t('guided.concludeSession') : t(questionnaireType === 'SAVICKAS' ? 'guided.nextTopic' : 'guided.nextStep');
+    const nextStepLabel = t(advanceLabelKey(questionnaireType, currentPhase));
     const stepButtonClass = 'h-[44px] w-[44px] shrink-0 p-0';
     const messageActionClass = 'chat-action-item flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
     const renderStepNavigation = () => (
@@ -1457,7 +1426,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     <RotateCcw className="h-5 w-5" aria-hidden="true" />
                 </Button>
             </Tooltip>}
-            {(showStandardAdvance || showSavickasAdvance) && <Tooltip content={nextStepLabel} side="top">
+            {(showStandardAdvance || showInterviewAdvance) && <Tooltip content={nextStepLabel} side="top">
                 <Button type="button" variant="ghost" className={stepButtonClass} aria-label={nextStepLabel} disabled={isLoading} onClick={() => void advancePhase()}>
                     {currentPhase === FIXED_QUESTIONS_ID ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <ChevronRight className="h-5 w-5" aria-hidden="true" />}
                 </Button>
@@ -1812,7 +1781,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                 </div>
                             </details>
                         ) : null}
-                        {/* Risposte rapide ancora necessarie per il flusso Savickas. */}
+                        {/* Risposte rapide dei percorsi a intervista. */}
                         {!isLoading && messages.length > 0 && quickReplies.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-1.5">
                                 {quickReplies.map((reply) => (
@@ -1930,7 +1899,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                 </button>
                             ))}
                         </div>
-                        {isSavickasAgreement && <p className="mt-2 text-sm text-slate-500">{t('guided.hint.savickasPatto')}</p>}
+                        {isAgreementPhase && <p className="mt-2 text-sm text-slate-500">{t('guided.hint.savickasPatto')}</p>}
                         </div>
                     </form>
                 )}
