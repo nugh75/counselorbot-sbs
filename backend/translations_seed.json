@@ -1849,6 +1849,496 @@
           "Vilken resurs är det bäst att börja med?"
         ]
       }
+    },
+    "EVENTO_STUDIO": {
+      "evstudio-intro": {
+        "en": [
+          "How does this path work?",
+          "What kind of event can I choose?",
+          "What will I do with the final summary?"
+        ],
+        "es": [
+          "¿Cómo funciona este recorrido?",
+          "¿Qué tipo de evento puedo elegir?",
+          "¿Qué haré con la síntesis final?"
+        ],
+        "fr": [
+          "Comment fonctionne ce parcours ?",
+          "Quel type d’événement puis-je choisir ?",
+          "Que ferai-je de la synthèse finale ?"
+        ],
+        "de": [
+          "Wie funktioniert dieser Weg?",
+          "Welche Art von Ereignis kann ich wählen?",
+          "Was mache ich mit der abschließenden Zusammenfassung?"
+        ],
+        "sv": [
+          "Hur fungerar den här vägen?",
+          "Vilken sorts händelse kan jag välja?",
+          "Vad gör jag med den slutliga sammanfattningen?"
+        ]
+      },
+      "evstudio-patto": {
+        "en": [
+          "Why is a collaboration agreement needed?",
+          "Can I choose an event where I only watched?",
+          "How do I talk about the other people involved?"
+        ],
+        "es": [
+          "¿Por qué es necesario un pacto de colaboración?",
+          "¿Puedo elegir un evento en el que solo observé?",
+          "¿Cómo hablo de las otras personas implicadas?"
+        ],
+        "fr": [
+          "Pourquoi un pacte de collaboration est-il nécessaire ?",
+          "Puis-je choisir un événement où j’ai seulement observé ?",
+          "Comment parler des autres personnes impliquées ?"
+        ],
+        "de": [
+          "Warum ist eine Kooperationsvereinbarung nötig?",
+          "Kann ich ein Ereignis wählen, bei dem ich nur zugeschaut habe?",
+          "Wie spreche ich über die anderen beteiligten Personen?"
+        ],
+        "sv": [
+          "Varför behövs en samarbetsöverenskommelse?",
+          "Kan jag välja en händelse där jag bara observerade?",
+          "Hur pratar jag om de andra personerna som var med?"
+        ]
+      },
+      "evstudio-evento": {
+        "en": [
+          "The event that stayed with me is…",
+          "It stayed with me because…",
+          "I don't know which event to choose: where do I start?"
+        ],
+        "es": [
+          "El evento que se me quedó grabado es…",
+          "Se me quedó grabado porque…",
+          "No sé qué evento elegir: ¿por dónde empiezo?"
+        ],
+        "fr": [
+          "L’événement qui m’est resté est…",
+          "Il m’est resté parce que…",
+          "Je ne sais pas quel événement choisir : par où commencer ?"
+        ],
+        "de": [
+          "Das Ereignis, das mir in Erinnerung geblieben ist, ist…",
+          "Es ist mir in Erinnerung geblieben, weil…",
+          "Ich weiß nicht, welches Ereignis ich wählen soll: Wo fange ich an?"
+        ],
+        "sv": [
+          "Händelsen som har stannat kvar hos mig är…",
+          "Den stannade kvar hos mig eftersom…",
+          "Jag vet inte vilken händelse jag ska välja: var börjar jag?"
+        ]
+      },
+      "evstudio-fatto": {
+        "en": [
+          "What happened is that…",
+          "At that moment I…",
+          "While it was happening I was thinking…"
+        ],
+        "es": [
+          "Lo que pasó es que…",
+          "En ese momento yo…",
+          "Mientras pasaba, pensaba…"
+        ],
+        "fr": [
+          "Ce qui s’est passé, c’est que…",
+          "À ce moment-là, j’ai…",
+          "Pendant que cela se passait, je pensais…"
+        ],
+        "de": [
+          "Passiert ist, dass…",
+          "In dem Moment habe ich…",
+          "Während es passierte, dachte ich…"
+        ],
+        "sv": [
+          "Det som hände var att…",
+          "I det ögonblicket gjorde jag…",
+          "Medan det hände tänkte jag…"
+        ]
+      },
+      "evstudio-funzionato": {
+        "en": [
+          "It worked when…",
+          "What helped me was…",
+          "In the setting, what helped was…"
+        ],
+        "es": [
+          "Funcionó cuando…",
+          "Me ayudó que…",
+          "En el contexto ayudó…"
+        ],
+        "fr": [
+          "Ça a fonctionné quand…",
+          "Ce qui m’a aidé, c’est…",
+          "Dans le contexte, ce qui a aidé, c’est…"
+        ],
+        "de": [
+          "Es hat funktioniert, als…",
+          "Geholfen hat mir, dass…",
+          "Im Umfeld hat geholfen, dass…"
+        ],
+        "sv": [
+          "Det fungerade när…",
+          "Det som hjälpte mig var…",
+          "I sammanhanget hjälpte det att…"
+        ]
+      },
+      "evstudio-criticita": {
+        "en": [
+          "It did not work when…",
+          "What I was missing was…",
+          "In the setting, what got in the way was…"
+        ],
+        "es": [
+          "No funcionó cuando…",
+          "Me faltó…",
+          "En el contexto lo que dificultó fue…"
+        ],
+        "fr": [
+          "Ça n’a pas fonctionné quand…",
+          "Ce qui m’a manqué, c’est…",
+          "Dans le contexte, ce qui a gêné, c’est…"
+        ],
+        "de": [
+          "Es hat nicht funktioniert, als…",
+          "Gefehlt hat mir…",
+          "Im Umfeld hat behindert, dass…"
+        ],
+        "sv": [
+          "Det fungerade inte när…",
+          "Det som saknades för mig var…",
+          "I sammanhanget hindrades det av…"
+        ]
+      },
+      "evstudio-rilettura": {
+        "en": [
+          "Looking at it today, what matters most is…",
+          "Can you suggest a lens to look at it again?",
+          "I connect it to what I learned about…"
+        ],
+        "es": [
+          "Mirándolo hoy, lo esencial es…",
+          "¿Puedes proponerme una perspectiva para volver a mirarlo?",
+          "Lo relaciono con lo que aprendí sobre…"
+        ],
+        "fr": [
+          "En le regardant aujourd’hui, l’essentiel est…",
+          "Peux-tu me proposer un angle pour le relire ?",
+          "Je le relie à ce que j’ai appris sur…"
+        ],
+        "de": [
+          "Wenn ich es heute betrachte, ist das Wesentliche…",
+          "Kannst du mir eine Sichtweise vorschlagen, um es neu zu betrachten?",
+          "Ich verbinde es mit dem, was ich gelernt habe über…"
+        ],
+        "sv": [
+          "När jag ser på det i dag är det viktigaste…",
+          "Kan du föreslå ett perspektiv för att se på det igen?",
+          "Jag kopplar det till det jag har lärt mig om…"
+        ]
+      },
+      "evstudio-prossima": {
+        "en": [
+          "In a similar situation I could…",
+          "I would like to try…",
+          "Can you help me find an alternative?"
+        ],
+        "es": [
+          "En una situación parecida podría…",
+          "Me gustaría probar a…",
+          "¿Me ayudas a encontrar una alternativa?"
+        ],
+        "fr": [
+          "Dans une situation semblable, je pourrais…",
+          "J’aimerais essayer de…",
+          "Peux-tu m’aider à trouver une alternative ?"
+        ],
+        "de": [
+          "In einer ähnlichen Situation könnte ich…",
+          "Ich möchte versuchen,…",
+          "Hilfst du mir, eine Alternative zu finden?"
+        ],
+        "sv": [
+          "I en liknande situation skulle jag kunna…",
+          "Jag skulle vilja prova att…",
+          "Kan du hjälpa mig att hitta ett alternativ?"
+        ]
+      },
+      "evstudio-final": {
+        "en": [
+          "What do I do with this summary?",
+          "How do I save it in my booklet?",
+          "When does it make sense to come back to this event?"
+        ],
+        "es": [
+          "¿Qué hago con esta síntesis?",
+          "¿Cómo la guardo en mi cuadernillo?",
+          "¿Cuándo tiene sentido volver a este evento?"
+        ],
+        "fr": [
+          "Que faire de cette synthèse ?",
+          "Comment l’enregistrer dans mon livret ?",
+          "Quand est-il utile de revenir sur cet événement ?"
+        ],
+        "de": [
+          "Was mache ich mit dieser Zusammenfassung?",
+          "Wie speichere ich sie in meinem Arbeitsheft?",
+          "Wann ist es sinnvoll, auf dieses Ereignis zurückzukommen?"
+        ],
+        "sv": [
+          "Vad gör jag med den här sammanfattningen?",
+          "Hur sparar jag den i mitt arbetshäfte?",
+          "När är det meningsfullt att återvända till den här händelsen?"
+        ]
+      }
+    },
+    "EVENTO_PROFESSIONALE": {
+      "evprof-intro": {
+        "en": [
+          "How does this path work?",
+          "What kind of event can I choose?",
+          "What will I do with the final summary?"
+        ],
+        "es": [
+          "¿Cómo funciona este recorrido?",
+          "¿Qué tipo de evento puedo elegir?",
+          "¿Qué haré con la síntesis final?"
+        ],
+        "fr": [
+          "Comment fonctionne ce parcours ?",
+          "Quel type d’événement puis-je choisir ?",
+          "Que ferai-je de la synthèse finale ?"
+        ],
+        "de": [
+          "Wie funktioniert dieser Weg?",
+          "Welche Art von Ereignis kann ich wählen?",
+          "Was mache ich mit der abschließenden Zusammenfassung?"
+        ],
+        "sv": [
+          "Hur fungerar den här vägen?",
+          "Vilken sorts händelse kan jag välja?",
+          "Vad gör jag med den slutliga sammanfattningen?"
+        ]
+      },
+      "evprof-patto": {
+        "en": [
+          "Why is a collaboration agreement needed?",
+          "Can I choose an event where I only watched?",
+          "How do I talk about the other people involved?"
+        ],
+        "es": [
+          "¿Por qué es necesario un pacto de colaboración?",
+          "¿Puedo elegir un evento en el que solo observé?",
+          "¿Cómo hablo de las otras personas implicadas?"
+        ],
+        "fr": [
+          "Pourquoi un pacte de collaboration est-il nécessaire ?",
+          "Puis-je choisir un événement où j’ai seulement observé ?",
+          "Comment parler des autres personnes impliquées ?"
+        ],
+        "de": [
+          "Warum ist eine Kooperationsvereinbarung nötig?",
+          "Kann ich ein Ereignis wählen, bei dem ich nur zugeschaut habe?",
+          "Wie spreche ich über die anderen beteiligten Personen?"
+        ],
+        "sv": [
+          "Varför behövs en samarbetsöverenskommelse?",
+          "Kan jag välja en händelse där jag bara observerade?",
+          "Hur pratar jag om de andra personerna som var med?"
+        ]
+      },
+      "evprof-evento": {
+        "en": [
+          "The event that stayed with me is…",
+          "It stayed with me because…",
+          "I don't know which event to choose: where do I start?"
+        ],
+        "es": [
+          "El evento que se me quedó grabado es…",
+          "Se me quedó grabado porque…",
+          "No sé qué evento elegir: ¿por dónde empiezo?"
+        ],
+        "fr": [
+          "L’événement qui m’est resté est…",
+          "Il m’est resté parce que…",
+          "Je ne sais pas quel événement choisir : par où commencer ?"
+        ],
+        "de": [
+          "Das Ereignis, das mir in Erinnerung geblieben ist, ist…",
+          "Es ist mir in Erinnerung geblieben, weil…",
+          "Ich weiß nicht, welches Ereignis ich wählen soll: Wo fange ich an?"
+        ],
+        "sv": [
+          "Händelsen som har stannat kvar hos mig är…",
+          "Den stannade kvar hos mig eftersom…",
+          "Jag vet inte vilken händelse jag ska välja: var börjar jag?"
+        ]
+      },
+      "evprof-fatto": {
+        "en": [
+          "What happened is that…",
+          "At that moment I…",
+          "While it was happening I was thinking…"
+        ],
+        "es": [
+          "Lo que pasó es que…",
+          "En ese momento yo…",
+          "Mientras pasaba, pensaba…"
+        ],
+        "fr": [
+          "Ce qui s’est passé, c’est que…",
+          "À ce moment-là, j’ai…",
+          "Pendant que cela se passait, je pensais…"
+        ],
+        "de": [
+          "Passiert ist, dass…",
+          "In dem Moment habe ich…",
+          "Während es passierte, dachte ich…"
+        ],
+        "sv": [
+          "Det som hände var att…",
+          "I det ögonblicket gjorde jag…",
+          "Medan det hände tänkte jag…"
+        ]
+      },
+      "evprof-funzionato": {
+        "en": [
+          "It worked when…",
+          "What helped me was…",
+          "In the setting, what helped was…"
+        ],
+        "es": [
+          "Funcionó cuando…",
+          "Me ayudó que…",
+          "En el contexto ayudó…"
+        ],
+        "fr": [
+          "Ça a fonctionné quand…",
+          "Ce qui m’a aidé, c’est…",
+          "Dans le contexte, ce qui a aidé, c’est…"
+        ],
+        "de": [
+          "Es hat funktioniert, als…",
+          "Geholfen hat mir, dass…",
+          "Im Umfeld hat geholfen, dass…"
+        ],
+        "sv": [
+          "Det fungerade när…",
+          "Det som hjälpte mig var…",
+          "I sammanhanget hjälpte det att…"
+        ]
+      },
+      "evprof-criticita": {
+        "en": [
+          "It did not work when…",
+          "What I was missing was…",
+          "In the setting, what got in the way was…"
+        ],
+        "es": [
+          "No funcionó cuando…",
+          "Me faltó…",
+          "En el contexto lo que dificultó fue…"
+        ],
+        "fr": [
+          "Ça n’a pas fonctionné quand…",
+          "Ce qui m’a manqué, c’est…",
+          "Dans le contexte, ce qui a gêné, c’est…"
+        ],
+        "de": [
+          "Es hat nicht funktioniert, als…",
+          "Gefehlt hat mir…",
+          "Im Umfeld hat behindert, dass…"
+        ],
+        "sv": [
+          "Det fungerade inte när…",
+          "Det som saknades för mig var…",
+          "I sammanhanget hindrades det av…"
+        ]
+      },
+      "evprof-rilettura": {
+        "en": [
+          "Looking at it today, what matters most is…",
+          "Can you suggest a lens to look at it again?",
+          "I connect it to what I learned about…"
+        ],
+        "es": [
+          "Mirándolo hoy, lo esencial es…",
+          "¿Puedes proponerme una perspectiva para volver a mirarlo?",
+          "Lo relaciono con lo que aprendí sobre…"
+        ],
+        "fr": [
+          "En le regardant aujourd’hui, l’essentiel est…",
+          "Peux-tu me proposer un angle pour le relire ?",
+          "Je le relie à ce que j’ai appris sur…"
+        ],
+        "de": [
+          "Wenn ich es heute betrachte, ist das Wesentliche…",
+          "Kannst du mir eine Sichtweise vorschlagen, um es neu zu betrachten?",
+          "Ich verbinde es mit dem, was ich gelernt habe über…"
+        ],
+        "sv": [
+          "När jag ser på det i dag är det viktigaste…",
+          "Kan du föreslå ett perspektiv för att se på det igen?",
+          "Jag kopplar det till det jag har lärt mig om…"
+        ]
+      },
+      "evprof-prossima": {
+        "en": [
+          "In a similar situation I could…",
+          "I would like to try…",
+          "Can you help me find an alternative?"
+        ],
+        "es": [
+          "En una situación parecida podría…",
+          "Me gustaría probar a…",
+          "¿Me ayudas a encontrar una alternativa?"
+        ],
+        "fr": [
+          "Dans une situation semblable, je pourrais…",
+          "J’aimerais essayer de…",
+          "Peux-tu m’aider à trouver une alternative ?"
+        ],
+        "de": [
+          "In einer ähnlichen Situation könnte ich…",
+          "Ich möchte versuchen,…",
+          "Hilfst du mir, eine Alternative zu finden?"
+        ],
+        "sv": [
+          "I en liknande situation skulle jag kunna…",
+          "Jag skulle vilja prova att…",
+          "Kan du hjälpa mig att hitta ett alternativ?"
+        ]
+      },
+      "evprof-final": {
+        "en": [
+          "What do I do with this summary?",
+          "How do I save it in my booklet?",
+          "When does it make sense to come back to this event?"
+        ],
+        "es": [
+          "¿Qué hago con esta síntesis?",
+          "¿Cómo la guardo en mi cuadernillo?",
+          "¿Cuándo tiene sentido volver a este evento?"
+        ],
+        "fr": [
+          "Que faire de cette synthèse ?",
+          "Comment l’enregistrer dans mon livret ?",
+          "Quand est-il utile de revenir sur cet événement ?"
+        ],
+        "de": [
+          "Was mache ich mit dieser Zusammenfassung?",
+          "Wie speichere ich sie in meinem Arbeitsheft?",
+          "Wann ist es sinnvoll, auf dieses Ereignis zurückzukommen?"
+        ],
+        "sv": [
+          "Vad gör jag med den här sammanfattningen?",
+          "Hur sparar jag den i mitt arbetshäfte?",
+          "När är det meningsfullt att återvända till den här händelsen?"
+        ]
+      }
     }
   },
   "assistant_questions": {

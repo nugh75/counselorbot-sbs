@@ -1,6 +1,8 @@
 """Small, explicit turn rules shared by app and exported counselor prompts."""
 from __future__ import annotations
 
+from .event_booklet import DIRECTIVE as EVENT_BOOKLET_DIRECTIVE, is_event_instrument
+
 
 def persona_context(persona: str | None, name: str | None = None) -> str:
     if not persona:
@@ -79,6 +81,8 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
     if synthesis:
         lines.append("Integrate the entire journey evidence, including early answers and later corrections. "
                      "Distinguish counselor proposals from student commitments; never turn an unaccepted proposal into an agreed plan.")
+        if is_event_instrument(questionnaire_type):
+            lines.append(EVENT_BOOKLET_DIRECTIVE)
     if questionnaire_type == "IDEA":
         lines.append("IDEA follows the focused branch of its map. Use no [[AVANZA_STEP]] marker or fixed sequence. "
                      "Write visible text first, a recommendations block if required second, and the idea patch LAST. "

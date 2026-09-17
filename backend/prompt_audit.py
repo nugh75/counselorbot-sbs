@@ -222,6 +222,10 @@ def _add_static_warnings(
         warnings.append({"code": "unresolved_persona", "message": "Unresolved counselor name placeholder."})
 
 
+# Interviste il cui passo si chiude con il marcatore di avanzamento.
+_ADVANCE_MARKER_INSTRUMENTS = ("SAVICKAS", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE")
+
+
 def _scores_context_from_result(result: models.QuestionnaireResult | None) -> str:
     if not result:
         return ""
@@ -495,8 +499,8 @@ def response_checks(result: dict[str, Any], response_text: str) -> dict[str, Any
             "ok": None if questionnaire_type != "ZTPI" else not bool(_ZTPI_TECHNICAL_RE.search(response_text or "")),
         },
         "savickas_advance_marker": {
-            "applicable": questionnaire_type == "SAVICKAS",
-            "present": "[[AVANZA_STEP]]" in (response_text or "") if questionnaire_type == "SAVICKAS" else None,
+            "applicable": questionnaire_type in _ADVANCE_MARKER_INSTRUMENTS,
+            "present": "[[AVANZA_STEP]]" in (response_text or "") if questionnaire_type in _ADVANCE_MARKER_INSTRUMENTS else None,
             "phase": phase,
         },
     }

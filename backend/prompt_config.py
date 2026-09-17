@@ -249,6 +249,42 @@ DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION = (
 )
 
 
+# --- Evento significativo (EVENTO_STUDIO, EVENTO_PROFESSIONALE) ---
+# Due strumenti con lo stesso percorso a intervista: cambia solo l'ambito
+# dell'esperienza che si rilegge. I testi di fabbrica vivono una volta sola in
+# backend/prompts/, con il segnaposto {domain}.
+EVENT_DOMAINS = {"EVENTO_STUDIO": "study", "EVENTO_PROFESSIONALE": "work"}
+EVENT_STEP_PREFIXES = {"EVENTO_STUDIO": "evstudio", "EVENTO_PROFESSIONALE": "evprof"}
+
+DEFAULT_SYSTEM_PROMPT_EVENTO_INTERVIEW = _text("default_system_prompt_evento_interview")
+
+DEFAULT_SYSTEM_PROMPT_EVENTO_SUMMARY = _text("default_system_prompt_evento_summary")
+
+META_EVENTO_REFLECTIVE_PRACTICE = _text("meta_evento_reflective_practice")
+
+DEFAULT_GUIDED_TEXT_EVENTO_STUDIO_QUESTIONS_INTRO = (
+    "Abbiamo riletto insieme il tuo evento di studio. "
+    "Ora puoi chiedere chiarimenti sulla sintesi o approfondire ciò che hai scelto di provare."
+)
+
+DEFAULT_GUIDED_TEXT_EVENTO_STUDIO_CONCLUSION = (
+    "Hai completato la rilettura del tuo evento significativo di studio. "
+    "Puoi salvare la sintesi nel tuo libretto e riprenderla dopo aver provato ciò che hai scelto. "
+    "Continua per scegliere il prossimo passaggio."
+)
+
+DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_QUESTIONS_INTRO = (
+    "Abbiamo riletto insieme il tuo evento professionale. "
+    "Ora puoi chiedere chiarimenti sulla sintesi o approfondire ciò che hai scelto di provare."
+)
+
+DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_CONCLUSION = (
+    "Hai completato la rilettura del tuo evento significativo professionale. "
+    "Puoi salvare la sintesi nel tuo libretto e riprenderla dopo aver provato ciò che hai scelto. "
+    "Continua per scegliere il prossimo passaggio."
+)
+
+
 # --- Questionari basati su punteggi di fattore (QPCS, QPCC, QAP) ---
 # Come il QSA: lo studente inserisce i valori dei fattori (scala 1-9) e l'AI
 # produce un'analisi guidata. Tutti i fattori sono diretti (alto = forza).
@@ -423,6 +459,18 @@ SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "label": "Prompt Savickas Sintesi Finale",
         "description": "Prompt di sistema per la sintesi finale dell'intervista Savickas",
         "default": DEFAULT_SYSTEM_PROMPT_SAVICKAS_SUMMARY,
+    },
+    {
+        "key": "prompt_evento_interview",
+        "label": "Prompt Evento significativo Intervista",
+        "description": "Prompt di sistema per la conduzione dei percorsi Evento significativo (studio e professionale)",
+        "default": DEFAULT_SYSTEM_PROMPT_EVENTO_INTERVIEW,
+    },
+    {
+        "key": "prompt_evento_summary",
+        "label": "Prompt Evento significativo Sintesi Finale",
+        "description": "Prompt di sistema per la sintesi finale dei percorsi Evento significativo",
+        "default": DEFAULT_SYSTEM_PROMPT_EVENTO_SUMMARY,
     },
     {
         "key": "prompt_qpcs_factor",
@@ -759,6 +807,25 @@ DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO = (
     "welcome, not the interview."
 ) + INTRO_ALLOWED_QUESTIONS
 
+_EVENTO_INTRO_FLOW = _text("evento_intro_flow") + '\n'
+
+
+def _evento_intro_system_prompt(domain: str) -> str:
+    return (
+        "You are introducing yourself to the person at the start of the significant-event "
+        f"path on their {domain} experience.\n\n"
+        "In this turn:\n"
+        + _EVENTO_INTRO_FLOW.replace("{domain}", domain)
+        + "\n"
+        "Do NOT yet: ask about the event or analyse anything. This is only the "
+        "welcome, not the interview."
+    ) + INTRO_ALLOWED_QUESTIONS
+
+
+DEFAULT_SYSTEM_PROMPT_EVSTUDIO_INTRO = _evento_intro_system_prompt("study")
+
+DEFAULT_SYSTEM_PROMPT_EVPROF_INTRO = _evento_intro_system_prompt("work")
+
 DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
     "You are introducing yourself to the student at the start of the QPCS "
     "reflection on their strategic competences.\n\n"
@@ -808,6 +875,7 @@ GUIDED_PHASE_ALIASES: Dict[str, str] = {
 
 WELCOME_PHASE_IDS = frozenset({
     "intro", "qsar-intro", "ztpi-intro", "savickas-intro",
+    "evstudio-intro", "evprof-intro",
     "qpcs-intro", "qpcc-intro", "qap-intro",
     *GUIDED_PHASE_ALIASES,
 })
@@ -843,6 +911,18 @@ GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS: Dict[str, Dict[str, str]] = {
         "label": "Guided - 0. Presentazione SAVICKAS (system)",
         "description": "Prompt di sistema per lo step intro SAVICKAS",
         "default": DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO,
+    },
+    "evstudio-intro": {
+        "key": "prompt_evstudio_intro",
+        "label": "Guided - 0. Presentazione Evento significativo di studio (system)",
+        "description": "Prompt di sistema per lo step intro EVENTO_STUDIO",
+        "default": DEFAULT_SYSTEM_PROMPT_EVSTUDIO_INTRO,
+    },
+    "evprof-intro": {
+        "key": "prompt_evprof_intro",
+        "label": "Guided - 0. Presentazione Evento significativo professionale (system)",
+        "description": "Prompt di sistema per lo step intro EVENTO_PROFESSIONALE",
+        "default": DEFAULT_SYSTEM_PROMPT_EVPROF_INTRO,
     },
     "qpcs-intro": {
         "key": "prompt_qpcs_welcome",
@@ -922,6 +1002,30 @@ GUIDED_STATIC_TEXT_DEFINITIONS: List[Dict[str, str]] = [
         "default": DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION,
     },
     {
+        "key": "text_evento_studio_questions_intro",
+        "label": "Evento significativo di studio - Messaggio intro fase Domande",
+        "description": "Messaggio introduttivo della fase domande per EVENTO_STUDIO",
+        "default": DEFAULT_GUIDED_TEXT_EVENTO_STUDIO_QUESTIONS_INTRO,
+    },
+    {
+        "key": "text_evento_studio_conclusion",
+        "label": "Evento significativo di studio - Messaggio Conclusione",
+        "description": "Messaggio statico finale della guided chat EVENTO_STUDIO",
+        "default": DEFAULT_GUIDED_TEXT_EVENTO_STUDIO_CONCLUSION,
+    },
+    {
+        "key": "text_evento_professionale_questions_intro",
+        "label": "Evento significativo professionale - Messaggio intro fase Domande",
+        "description": "Messaggio introduttivo della fase domande per EVENTO_PROFESSIONALE",
+        "default": DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_QUESTIONS_INTRO,
+    },
+    {
+        "key": "text_evento_professionale_conclusion",
+        "label": "Evento significativo professionale - Messaggio Conclusione",
+        "description": "Messaggio statico finale della guided chat EVENTO_PROFESSIONALE",
+        "default": DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_CONCLUSION,
+    },
+    {
         "key": "text_qpcs_questions_intro",
         "label": "QPCS - Messaggio intro fase Domande",
         "description": "Messaggio introduttivo della fase domande per QPCS",
@@ -992,6 +1096,8 @@ MODE_TO_SYSTEM_PROMPT_KEY: Dict[str, str] = {
     "savickas-interview": "prompt_savickas_interview",
     "savickas-summary": "prompt_savickas_summary",
     "qpcs-factor": "prompt_qpcs_factor",
+    "evento-interview": "prompt_evento_interview",
+    "evento-summary": "prompt_evento_summary",
     "qpcc-factor": "prompt_qpcc_factor",
     "qap-factor": "prompt_qap_factor",
     # Keep compatibility with detailed guided paths already configured in existing databases.
@@ -1076,6 +1182,18 @@ META_SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "label": "Meta system prompt Savickas",
         "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento Savickas",
         "default": META_SAVICKAS_CAREER_CONSTRUCTION,
+    },
+    {
+        "key": "prompt_meta_EVENTO_STUDIO",
+        "label": "Meta system prompt Evento significativo di studio",
+        "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento EVENTO_STUDIO",
+        "default": META_EVENTO_REFLECTIVE_PRACTICE,
+    },
+    {
+        "key": "prompt_meta_EVENTO_PROFESSIONALE",
+        "label": "Meta system prompt Evento significativo professionale",
+        "description": "Contesto aggiuntivo iniettato come [META SYSTEM PROMPT] per lo strumento EVENTO_PROFESSIONALE",
+        "default": META_EVENTO_REFLECTIVE_PRACTICE,
     },
     {
         "key": "prompt_meta_QPCS",
@@ -1845,6 +1963,57 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
         "questionnaire_type": "SAVICKAS",
     },
 ]
+
+
+# --- Default Evento significativo guided steps (seeded into guided_steps table) ---
+# Stesso percorso per i due strumenti: presentazione, patto, sei passi di
+# intervista, sintesi. I testi contengono il segnaposto {domain}.
+_EVENTO_STEP_TEXTS = {
+    "intro": _text("evento_intro_step_prompt"),
+    "patto": _text("evento_step_patto"),
+    "evento": _text("evento_step_evento"),
+    "fatto": _text("evento_step_fatto"),
+    "funzionato": _text("evento_step_funzionato"),
+    "criticita": _text("evento_step_criticita"),
+    "rilettura": _text("evento_step_rilettura"),
+    "prossima": _text("evento_step_prossima"),
+    "final": _text("evento_step_final"),
+}
+
+# (suffisso id, ordine, etichetta, modo, colore)
+_EVENTO_STEP_SPECS = (
+    ("intro", -1, "0. Presentazione", "intro", "teal"),
+    ("patto", 0, "0. Patto di Collaborazione", "evento-interview", "cyan"),
+    ("evento", 1, "1. L'evento", "evento-interview", "blue"),
+    ("fatto", 2, "2. Il fatto", "evento-interview", "indigo"),
+    ("funzionato", 3, "3. Cosa ha funzionato", "evento-interview", "green"),
+    ("criticita", 4, "4. Cosa non ha funzionato", "evento-interview", "amber"),
+    ("rilettura", 5, "5. Rilettura", "evento-interview", "purple"),
+    ("prossima", 6, "6. La prossima volta", "evento-interview", "rose"),
+    ("final", 7, "7. Sintesi dell'evento", "evento-summary", "purple"),
+)
+
+
+def _evento_guided_steps(questionnaire_type: str) -> List[Dict]:
+    prefix = EVENT_STEP_PREFIXES[questionnaire_type]
+    domain = EVENT_DOMAINS[questionnaire_type]
+    return [
+        {
+            "id": f"{prefix}-{suffix}",
+            "sort_order": sort_order,
+            "label": label,
+            "prompt": _EVENTO_STEP_TEXTS[suffix].replace("{domain}", domain),
+            "system_prompt_mode": mode,
+            "color_theme": color,
+            "questionnaire_type": questionnaire_type,
+        }
+        for suffix, sort_order, label, mode, color in _EVENTO_STEP_SPECS
+    ]
+
+
+DEFAULT_EVENTO_STUDIO_GUIDED_STEPS: List[Dict] = _evento_guided_steps("EVENTO_STUDIO")
+
+DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS: List[Dict] = _evento_guided_steps("EVENTO_PROFESSIONALE")
 
 
 # --- Default QPCS guided steps (guided analysis of self-assessment results, 5 areas + summary) ---

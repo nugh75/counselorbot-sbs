@@ -410,6 +410,115 @@ GUIDED_TEXT_I18N: Dict[str, Dict[str, str]] = {
 }
 
 
+# Evento significativo: testi di chiusura dei due percorsi.
+_EVENTO_TEXTS: Dict[str, Dict[str, str]] = {
+    "en": {
+        "text_evento_studio_questions_intro": (
+            "We have looked back together at your study event. "
+            "Now you can ask for clarifications on the summary or explore what you chose to try."
+        ),
+        "text_evento_studio_conclusion": (
+            "You have completed the look back at your significant study event. "
+            "You can save the summary in your booklet and return to it after trying what you chose. "
+            "Use the button below to choose your next step."
+        ),
+        "text_evento_professionale_questions_intro": (
+            "We have looked back together at your professional event. "
+            "Now you can ask for clarifications on the summary or explore what you chose to try."
+        ),
+        "text_evento_professionale_conclusion": (
+            "You have completed the look back at your significant professional event. "
+            "You can save the summary in your booklet and return to it after trying what you chose. "
+            "Use the button below to choose your next step."
+        ),
+    },
+    "es": {
+        "text_evento_studio_questions_intro": (
+            "Hemos vuelto juntos sobre tu evento de estudio. "
+            "Ahora puedes pedir aclaraciones sobre la síntesis o profundizar en lo que elegiste probar."
+        ),
+        "text_evento_studio_conclusion": (
+            "Has completado la revisión de tu evento significativo de estudio. "
+            "Puedes guardar la síntesis en tu cuadernillo y volver a ella después de probar lo que elegiste. "
+            "Usa el botón de abajo para elegir el siguiente paso."
+        ),
+        "text_evento_professionale_questions_intro": (
+            "Hemos vuelto juntos sobre tu evento profesional. "
+            "Ahora puedes pedir aclaraciones sobre la síntesis o profundizar en lo que elegiste probar."
+        ),
+        "text_evento_professionale_conclusion": (
+            "Has completado la revisión de tu evento significativo profesional. "
+            "Puedes guardar la síntesis en tu cuadernillo y volver a ella después de probar lo que elegiste. "
+            "Usa el botón de abajo para elegir el siguiente paso."
+        ),
+    },
+    "fr": {
+        "text_evento_studio_questions_intro": (
+            "Nous sommes revenus ensemble sur ton événement d'étude. "
+            "Tu peux maintenant demander des précisions sur la synthèse ou approfondir ce que tu as choisi d'essayer."
+        ),
+        "text_evento_studio_conclusion": (
+            "Tu as terminé le retour sur ton événement d'étude significatif. "
+            "Tu peux enregistrer la synthèse dans ton livret et y revenir après avoir essayé ce que tu as choisi. "
+            "Utilise le bouton ci-dessous pour choisir la prochaine étape."
+        ),
+        "text_evento_professionale_questions_intro": (
+            "Nous sommes revenus ensemble sur ton événement professionnel. "
+            "Tu peux maintenant demander des précisions sur la synthèse ou approfondir ce que tu as choisi d'essayer."
+        ),
+        "text_evento_professionale_conclusion": (
+            "Tu as terminé le retour sur ton événement professionnel significatif. "
+            "Tu peux enregistrer la synthèse dans ton livret et y revenir après avoir essayé ce que tu as choisi. "
+            "Utilise le bouton ci-dessous pour choisir la prochaine étape."
+        ),
+    },
+    "de": {
+        "text_evento_studio_questions_intro": (
+            "Wir haben gemeinsam auf dein Lernereignis zurückgeblickt. "
+            "Jetzt kannst du Fragen zur Zusammenfassung stellen oder vertiefen, was du ausprobieren möchtest."
+        ),
+        "text_evento_studio_conclusion": (
+            "Du hast den Rückblick auf dein bedeutsames Lernereignis abgeschlossen. "
+            "Du kannst die Zusammenfassung in deinem Arbeitsheft speichern und darauf zurückkommen, "
+            "wenn du ausprobiert hast, was du gewählt hast. "
+            "Nutze die Schaltfläche unten, um den nächsten Schritt auszuwählen."
+        ),
+        "text_evento_professionale_questions_intro": (
+            "Wir haben gemeinsam auf dein berufliches Ereignis zurückgeblickt. "
+            "Jetzt kannst du Fragen zur Zusammenfassung stellen oder vertiefen, was du ausprobieren möchtest."
+        ),
+        "text_evento_professionale_conclusion": (
+            "Du hast den Rückblick auf dein bedeutsames berufliches Ereignis abgeschlossen. "
+            "Du kannst die Zusammenfassung in deinem Arbeitsheft speichern und darauf zurückkommen, "
+            "wenn du ausprobiert hast, was du gewählt hast. "
+            "Nutze die Schaltfläche unten, um den nächsten Schritt auszuwählen."
+        ),
+    },
+    "sv": {
+        "text_evento_studio_questions_intro": (
+            "Vi har tillsammans blickat tillbaka på din studiehändelse. "
+            "Nu kan du be om förtydliganden av sammanfattningen eller fördjupa det du valde att prova."
+        ),
+        "text_evento_studio_conclusion": (
+            "Du har slutfört återblicken på din betydelsefulla studiehändelse. "
+            "Du kan spara sammanfattningen i ditt arbetshäfte och återvända till den när du har provat det du valde. "
+            "Använd knappen nedan för att välja nästa steg."
+        ),
+        "text_evento_professionale_questions_intro": (
+            "Vi har tillsammans blickat tillbaka på din professionella händelse. "
+            "Nu kan du be om förtydliganden av sammanfattningen eller fördjupa det du valde att prova."
+        ),
+        "text_evento_professionale_conclusion": (
+            "Du har slutfört återblicken på din betydelsefulla professionella händelse. "
+            "Du kan spara sammanfattningen i ditt arbetshäfte och återvända till den när du har provat det du valde. "
+            "Använd knappen nedan för att välja nästa steg."
+        ),
+    },
+}
+for _lang, _texts in _EVENTO_TEXTS.items():
+    GUIDED_TEXT_I18N[_lang].update(_texts)
+
+
 def localized_key(base_key: str, language: Optional[str]) -> str:
     """Italian (and missing/unknown) -> base key; other supported langs -> suffixed key."""
     lang = (language or "it").lower()

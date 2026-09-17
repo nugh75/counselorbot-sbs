@@ -787,6 +787,7 @@ def _run_seed_and_migrations():
                 apply_diagram_factor_symbols_policy,
                 apply_english_skill_instructions_policy,
                 apply_idea_focus_policy,
+                apply_event_paths_policy,
                 apply_idea_concept_policy,
                 apply_idea_wayfinder_policy,
                 apply_skills_budget_policy,
@@ -809,6 +810,7 @@ def _run_seed_and_migrations():
             diagram_semantic_icons_changed = apply_diagram_semantic_icons_policy(db)
             diagram_factor_symbols_changed = apply_diagram_factor_symbols_policy(db)
             idea_changed = apply_idea_focus_policy(db)
+            event_paths_changed = apply_event_paths_policy(db)
             idea_concept_changed = apply_idea_concept_policy(db)
             wayfinder_changed = apply_idea_wayfinder_policy(db)
             budget_changed = apply_skills_budget_policy(db)
@@ -819,7 +821,7 @@ def _run_seed_and_migrations():
                     or diagram_symbol_changed or idea_changed or idea_concept_changed or wayfinder_changed
                     or diagram_semantic_icons_changed
                     or diagram_factor_symbols_changed
-                    or budget_changed):
+                    or budget_changed or event_paths_changed):
                 logger.info("Seed skill completato")
         except Exception as e:
             logger.warning(f"Seed skill fallito: {e}")
@@ -1198,6 +1200,11 @@ def _run_seed_and_migrations():
 
         # Seed counselor per l'assistente (se non esistono già).
         _seed_assistant_counselors(db)
+
+        # I counselor delle interviste narrative servono anche i due Evento
+        # significativo. Una tantum: una scelta successiva dell'admin resta.
+        from .counselor_scope import extend_interview_counselors
+        extend_interview_counselors(db)
 
         # Seed catalogo strumenti (item + regole di scala) se non già presente.
         # Idempotente per strumento: salta quelli già seminati/editati.

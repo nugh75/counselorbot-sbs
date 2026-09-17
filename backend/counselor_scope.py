@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 RESTRICTED_CONFIG_KEY = "counselor_restricted_instruments"
 DEFAULT_RESTRICTED = ("IDEA",)
+EVENT_PATHS_MARKER = "counselor_scope_event_paths_v1"
+EVENT_INSTRUMENTS = ("EVENTO_STUDIO", "EVENTO_PROFESSIONALE")
 
 
 def restricted_instruments(db) -> set[str]:
@@ -66,3 +68,34 @@ def suitable_names(counselors, questionnaire_type: str | None, restricted: set[s
         for counselor in counselors
         if getattr(counselor, "is_active", True) and suits(counselor, questionnaire_type, restricted)
     ]
+
+
+def extend_interview_counselors(db) -> bool:
+    """Chi serve SAVICKAS serve anche i due Evento significativo, una volta sola.
+
+    Un counselor con lista vuota li serve gia'. Uno con lista esplicita che
+    nomina SAVICKAS e' stato scelto per le interviste narrative: senza questa
+    migrazione i due percorsi nuovi, anch'essi interviste, lo troverebbero
+    inadatto. Il marker impedisce di rimetterli se l'admin poi li toglie.
+    """
+    from . import models
+
+    if db.query(models.Config).filter(models.Config.key == EVENT_PATHS_MARKER).first() is not None:
+        return False
+    updated = False
+    for counselor in db.query(models.Counselor).all():
+        declared = list(counselor.questionnaire_types or [])
+        codes = {str(item).upper() for item in declared}
+        if "SAVICKAS" not in codes:
+            continue
+        missing = [code for code in EVENT_INSTRUMENTS if code not in codes]
+        if missing:
+            counselor.questionnaire_types = declared + missing
+            updated = True
+    db.add(models.Config(
+        key=EVENT_PATHS_MARKER,
+        value="applied",
+        description="Migrazione una tantum: i counselor che servono SAVICKAS servono anche i due Evento significativo.",
+    ))
+    db.commit()
+    return updated

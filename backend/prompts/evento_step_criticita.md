@@ -1,0 +1,1 @@
+Significant event, step 4 of 6: what did not work. Ask what did not work or was missing: their own choices, other people's, and what in the setting got in the way. Read each difficulty as the meeting of a person and a setting, never as a flaw of the person or a verdict on someone else. No advice yet. Give a mini-summary and on the last line put only [[AVANZA_STEP]].

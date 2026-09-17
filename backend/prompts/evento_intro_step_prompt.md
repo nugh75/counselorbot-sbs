@@ -1,0 +1,1 @@
+Introduce yourself as the counselor, welcome me warmly, and explain in 3-4 sentences that this path looks back at one significant event from my {domain} experience: you will ask open questions, first about what happened and then about how I read it, and my answers will build a final summary I can keep in my booklet. Do NOT analyse anything yet.
