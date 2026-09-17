@@ -691,6 +691,16 @@ const it: Dict = {
     'admin.referrals.kind.university': 'università',
     'admin.referrals.deactivate': 'disattiva',
     'admin.referrals.inactive': 'non attiva',
+    'admin.mode.evento-interview': 'Evento significativo - Intervista',
+    'admin.mode.evento-summary': 'Evento significativo - Sintesi finale',
+    'admin.config.label.prompt_meta_EVENTO_STUDIO': 'Meta system prompt Evento significativo di studio',
+    'admin.config.label.prompt_meta_EVENTO_PROFESSIONALE': 'Meta system prompt Evento significativo professionale',
+    'admin.config.label.prompt_evento_interview': 'Prompt Intervista',
+    'admin.config.label.prompt_evento_summary': 'Prompt Sintesi Finale',
+    'admin.config.label.text_evento_studio_questions_intro': 'Messaggio Intro Fase Domande',
+    'admin.config.label.text_evento_studio_conclusion': 'Messaggio Conclusione',
+    'admin.config.label.text_evento_professionale_questions_intro': 'Messaggio Intro Fase Domande',
+    'admin.config.label.text_evento_professionale_conclusion': 'Messaggio Conclusione',
 };
 
 const en: Dict = {
@@ -1372,6 +1382,16 @@ const en: Dict = {
     'admin.referrals.kind.university': 'university',
     'admin.referrals.deactivate': 'deactivate',
     'admin.referrals.inactive': 'inactive',
+    'admin.mode.evento-interview': 'Significant event - Interview',
+    'admin.mode.evento-summary': 'Significant event - Final summary',
+    'admin.config.label.prompt_meta_EVENTO_STUDIO': 'Significant study event meta system prompt',
+    'admin.config.label.prompt_meta_EVENTO_PROFESSIONALE': 'Significant professional event meta system prompt',
+    'admin.config.label.prompt_evento_interview': 'Interview Prompt',
+    'admin.config.label.prompt_evento_summary': 'Final Summary Prompt',
+    'admin.config.label.text_evento_studio_questions_intro': 'Questions Phase Intro Message',
+    'admin.config.label.text_evento_studio_conclusion': 'Conclusion Message',
+    'admin.config.label.text_evento_professionale_questions_intro': 'Questions Phase Intro Message',
+    'admin.config.label.text_evento_professionale_conclusion': 'Conclusion Message',
 };
 
 const es: Dict = {
@@ -1920,6 +1940,16 @@ const es: Dict = {
     'admin.referrals.kind.university': 'universidad',
     'admin.referrals.deactivate': 'desactivar',
     'admin.referrals.inactive': 'inactivo',
+    'admin.mode.evento-interview': 'Evento significativo - Entrevista',
+    'admin.mode.evento-summary': 'Evento significativo - Síntesis final',
+    'admin.config.label.prompt_meta_EVENTO_STUDIO': 'Meta prompt de sistema Evento significativo de estudio',
+    'admin.config.label.prompt_meta_EVENTO_PROFESSIONALE': 'Meta prompt de sistema Evento significativo profesional',
+    'admin.config.label.prompt_evento_interview': 'Prompt de entrevista',
+    'admin.config.label.prompt_evento_summary': 'Prompt de síntesis final',
+    'admin.config.label.text_evento_studio_questions_intro': 'Mensaje inicial de la fase de preguntas',
+    'admin.config.label.text_evento_studio_conclusion': 'Mensaje de conclusión',
+    'admin.config.label.text_evento_professionale_questions_intro': 'Mensaje inicial de la fase de preguntas',
+    'admin.config.label.text_evento_professionale_conclusion': 'Mensaje de conclusión',
 };
 
 const fr: Dict = {
@@ -2468,6 +2498,16 @@ const fr: Dict = {
     'admin.referrals.kind.university': 'université',
     'admin.referrals.deactivate': 'désactiver',
     'admin.referrals.inactive': 'inactive',
+    'admin.mode.evento-interview': 'Événement significatif - Entretien',
+    'admin.mode.evento-summary': 'Événement significatif - Synthèse finale',
+    'admin.config.label.prompt_meta_EVENTO_STUDIO': 'Méta prompt système Événement d’étude significatif',
+    'admin.config.label.prompt_meta_EVENTO_PROFESSIONALE': 'Méta prompt système Événement professionnel significatif',
+    'admin.config.label.prompt_evento_interview': 'Prompt d’entretien',
+    'admin.config.label.prompt_evento_summary': 'Prompt de synthèse finale',
+    'admin.config.label.text_evento_studio_questions_intro': 'Message d’introduction de la phase Questions',
+    'admin.config.label.text_evento_studio_conclusion': 'Message de conclusion',
+    'admin.config.label.text_evento_professionale_questions_intro': 'Message d’introduction de la phase Questions',
+    'admin.config.label.text_evento_professionale_conclusion': 'Message de conclusion',
 };
 
 const de: Dict = {
@@ -3016,6 +3056,16 @@ const de: Dict = {
     'admin.referrals.kind.university': 'Universität',
     'admin.referrals.deactivate': 'deaktivieren',
     'admin.referrals.inactive': 'inaktiv',
+    'admin.mode.evento-interview': 'Bedeutsames Ereignis - Interview',
+    'admin.mode.evento-summary': 'Bedeutsames Ereignis - Abschlusszusammenfassung',
+    'admin.config.label.prompt_meta_EVENTO_STUDIO': 'Meta-System-Prompt Bedeutsames Lernereignis',
+    'admin.config.label.prompt_meta_EVENTO_PROFESSIONALE': 'Meta-System-Prompt Bedeutsames berufliches Ereignis',
+    'admin.config.label.prompt_evento_interview': 'Interview-Prompt',
+    'admin.config.label.prompt_evento_summary': 'Prompt für die Abschlusszusammenfassung',
+    'admin.config.label.text_evento_studio_questions_intro': 'Einleitung der Fragenphase',
+    'admin.config.label.text_evento_studio_conclusion': 'Abschlussnachricht',
+    'admin.config.label.text_evento_professionale_questions_intro': 'Einleitung der Fragenphase',
+    'admin.config.label.text_evento_professionale_conclusion': 'Abschlussnachricht',
 };
 
 const sv: Dict = {
@@ -3564,6 +3614,16 @@ const sv: Dict = {
     'admin.referrals.kind.university': 'universitet',
     'admin.referrals.deactivate': 'inaktivera',
     'admin.referrals.inactive': 'inaktiv',
+    'admin.mode.evento-interview': 'Betydelsefull händelse - Intervju',
+    'admin.mode.evento-summary': 'Betydelsefull händelse - Slutlig sammanfattning',
+    'admin.config.label.prompt_meta_EVENTO_STUDIO': 'Meta-systemprompt Betydelsefull studiehändelse',
+    'admin.config.label.prompt_meta_EVENTO_PROFESSIONALE': 'Meta-systemprompt Betydelsefull professionell händelse',
+    'admin.config.label.prompt_evento_interview': 'Intervjuprompt',
+    'admin.config.label.prompt_evento_summary': 'Prompt för slutlig sammanfattning',
+    'admin.config.label.text_evento_studio_questions_intro': 'Inledande meddelande för frågefasen',
+    'admin.config.label.text_evento_studio_conclusion': 'Avslutande meddelande',
+    'admin.config.label.text_evento_professionale_questions_intro': 'Inledande meddelande för frågefasen',
+    'admin.config.label.text_evento_professionale_conclusion': 'Avslutande meddelande',
 };
 
 const trainingIt: Dict = {

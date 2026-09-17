@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { LANGUAGES } from '@/lib/i18n';
 
-const QTYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
+const QTYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 
 const AVAILABLE_VOICES_BY_LOCALE = {
     it: [
