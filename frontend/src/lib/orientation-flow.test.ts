@@ -107,3 +107,16 @@ test('Bussola cards do not use decorative left borders', () => {
     const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
     assert.doesNotMatch(source, /border-l-/);
 });
+
+test('the end of the Compass opens every tool too, and its close button sits left', () => {
+    // Chi concludeva la Bussola aveva solo gli strumenti proposti e la home:
+    // per vedere il catalogo intero doveva ripassare dalla presentazione.
+    const source = readFileSync(new URL('../app/bussola/page.tsx', import.meta.url), 'utf8');
+    const completed = source.slice(source.indexOf("session.status === 'completed' && ("), source.indexOf('function RecommendationSection'));
+    assert.match(completed, /onClick=\{goToTools\}/);
+    assert.match(completed, /orientation\.completed\.allTools/);
+    const close = source.slice(source.indexOf("session.status === 'in_progress' && session.recommendations.length > 0"), source.indexOf("t('orientation.complete')"));
+    assert.match(close, /justify-start/);
+    const dict = readFileSync(new URL('./i18n-orientation.ts', import.meta.url), 'utf8');
+    assert.equal(dict.match(/'orientation\.completed\.allTools'/g)?.length, 6);
+});
