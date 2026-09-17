@@ -356,6 +356,51 @@ STEP_LABEL_I18N: Dict[str, Dict[str, str]] = {
 }
 
 
+# --- EVENTO_STUDIO / EVENTO_PROFESSIONALE: stesso percorso, stesse etichette ---
+_EVENTO_STEP_LABELS: Dict[str, Dict[str, str]] = {
+    "intro": {
+        "en": "0. Introduction", "es": "0. Presentación", "fr": "0. Présentation",
+        "de": "0. Vorstellung", "sv": "0. Presentation",
+    },
+    "patto": {
+        "en": "0. Collaboration Agreement", "es": "0. Pacto de Colaboración",
+        "fr": "0. Pacte de Collaboration", "de": "0. Kooperationsvereinbarung",
+        "sv": "0. Samarbetsöverenskommelse",
+    },
+    "evento": {
+        "en": "1. The event", "es": "1. El evento", "fr": "1. L’événement",
+        "de": "1. Das Ereignis", "sv": "1. Händelsen",
+    },
+    "fatto": {
+        "en": "2. What happened", "es": "2. Lo que pasó", "fr": "2. Ce qui s’est passé",
+        "de": "2. Was geschah", "sv": "2. Vad som hände",
+    },
+    "funzionato": {
+        "en": "3. What worked", "es": "3. Lo que funcionó", "fr": "3. Ce qui a fonctionné",
+        "de": "3. Was funktioniert hat", "sv": "3. Det som fungerade",
+    },
+    "criticita": {
+        "en": "4. What did not work", "es": "4. Lo que no funcionó", "fr": "4. Ce qui n’a pas fonctionné",
+        "de": "4. Was nicht funktioniert hat", "sv": "4. Det som inte fungerade",
+    },
+    "rilettura": {
+        "en": "5. A second look", "es": "5. Una segunda mirada", "fr": "5. Un second regard",
+        "de": "5. Ein zweiter Blick", "sv": "5. En andra blick",
+    },
+    "prossima": {
+        "en": "6. Next time", "es": "6. La próxima vez", "fr": "6. La prochaine fois",
+        "de": "6. Beim nächsten Mal", "sv": "6. Nästa gång",
+    },
+    "final": {
+        "en": "7. Summary of the event", "es": "7. Síntesis del evento", "fr": "7. Synthèse de l’événement",
+        "de": "7. Zusammenfassung des Ereignisses", "sv": "7. Sammanfattning av händelsen",
+    },
+}
+for _prefix in ("evstudio", "evprof"):
+    for _suffix, _labels in _EVENTO_STEP_LABELS.items():
+        STEP_LABEL_I18N[f"{_prefix}-{_suffix}"] = dict(_labels)
+
+
 def resolve_step_label(step, lang: str) -> str:
     """Return the localized label for a GuidedStep, falling back to the Italian base."""
     if lang and lang != "it" and step.label_i18n:

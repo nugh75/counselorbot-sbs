@@ -21,8 +21,10 @@ logger = logging.getLogger(__name__)
 SEEDED_INSTRUMENTS = ("QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP", "SAVICKAS")
 
 # Idea usa il motore di skill ma non il materiale certificato: monta solo la
-# propria skill, percio' sta qui e non in SEEDED_INSTRUMENTS.
-ENGINE_INSTRUMENTS = SEEDED_INSTRUMENTS + ("IDEA",)
+# propria skill, percio' sta qui e non in SEEDED_INSTRUMENTS. Lo stesso vale per
+# i due Evento significativo, che non hanno strategie certificate proprie.
+EVENT_INSTRUMENTS = ("EVENTO_STUDIO", "EVENTO_PROFESSIONALE")
+ENGINE_INSTRUMENTS = SEEDED_INSTRUMENTS + ("IDEA",) + EVENT_INSTRUMENTS
 
 CERTIFIED_ADVICE_INSTRUCTIONS_EN = """## Student advice contract
 
@@ -188,6 +190,7 @@ PREVIOUS_DIAGRAM_INSTRUCTIONS_SHA256 = "23490f2ce25f8697af5890d3db4dda2eb9890670
 DIAGRAM_FACTOR_SYMBOLS_POLICY_MARKER = "skills_diagram_factor_symbols_v1"
 PREVIOUS_SEMANTIC_INSTRUCTIONS_SHA256 = "d92dc5a59f870714f48963acbf57587f86889d48414aae06cd7146b23e5d7c64"
 IDEA_FOCUS_POLICY_MARKER = "skills_idea_focus_v2"
+EVENT_PATHS_POLICY_MARKER = "skills_event_paths_v1"
 IDEA_WAYFINDER_POLICY_MARKER = "skills_idea_wayfinder_v1"
 IDEA_CONCEPT_POLICY_MARKER = "skills_idea_concept_v1"
 SKILLS_BUDGET_POLICY_MARKER = "skills_total_budget_6500_v1"
@@ -789,6 +792,37 @@ def apply_diagram_factor_symbols_policy(db) -> bool:
             updated = True
     db.add(models.Config(key=DIAGRAM_FACTOR_SYMBOLS_POLICY_MARKER, value="applied",
                          description="One-time migration: fixed questionnaire factor symbols."))
+    db.commit()
+    return updated
+
+
+def apply_event_paths_policy(db) -> bool:
+    """Accoda i due Evento significativo alla lista del motore, una volta sola.
+
+    Le installazioni esistenti hanno `skills_engine_instruments` scritto, e il
+    seed non lo tocca: senza questa migrazione i nuovi strumenti resterebbero
+    fuori dal motore. Il marker impedisce di rimetterli se l'admin li toglie.
+    """
+    marker = db.query(models.Config).filter(models.Config.key == EVENT_PATHS_POLICY_MARKER).first()
+    if marker is not None:
+        return False
+    row = db.query(models.Config).filter(models.Config.key == "skills_engine_instruments").first()
+    updated = False
+    if row is not None:
+        try:
+            current = json.loads(row.value or "[]")
+        except (TypeError, ValueError):
+            current = []
+        if isinstance(current, list):
+            missing = [code for code in EVENT_INSTRUMENTS if code not in current]
+            if missing:
+                row.value = json.dumps(current + missing)
+                updated = True
+    db.add(models.Config(
+        key=EVENT_PATHS_POLICY_MARKER,
+        value="applied",
+        description="Migrazione una tantum: Evento significativo nella lista degli strumenti del motore di skill.",
+    ))
     db.commit()
     return updated
 

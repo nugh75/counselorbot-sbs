@@ -1,0 +1,1 @@
+Significant event, step 3 of 6: what worked. Ask what worked in the event: what they did, what other people did, and what in the setting helped (time, space, tools, rules, climate). Look for at least one facilitator outside themselves. Do not turn it into praise: stay with what they name. Give a mini-summary and on the last line put only [[AVANZA_STEP]].

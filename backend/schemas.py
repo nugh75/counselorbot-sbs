@@ -828,7 +828,7 @@ class PortfolioItemResponse(BaseModel):
 
 # --- Sessioni guidate congelate ---
 
-FROZEN_SESSION_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA"}
+FROZEN_SESSION_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE"}
 FROZEN_SESSION_MAX_MESSAGES = 400
 FROZEN_SESSION_MAX_CONTENT_CHARS = 20000
 # Il PDF del profilo caricato per la sandbox OpenCode: il workspace rigenera

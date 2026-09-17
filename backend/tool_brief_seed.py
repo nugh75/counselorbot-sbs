@@ -129,6 +129,36 @@ TOOL_BRIEFS: dict[str, str] = {
         "takes more of the student than answering items, and it is not the right move for someone "
         "who wants a quick picture."
     ),
+    "EVENTO_STUDIO": (
+        "WHAT IT LOOKS AT — One single episode from the student's studies that stayed with them: a "
+        "lesson, an exam, a group project, an internship day. It becomes significant because the "
+        "student chose it, not because it was dramatic.\n"
+        "WHAT YOU GET — A guided interview in six steps: the event, what happened (facts kept apart "
+        "from judgement), what worked, what did not, a second look through concepts they know, and "
+        "one thing to try next time. At the end a summary the student can save in their Booklet. "
+        "No score, no questionnaire.\n"
+        "WHEN IT IS THE RIGHT MOMENT — When the student brings a concrete episode they keep thinking "
+        "about, good or bad, and wants to understand it rather than judge it; after a placement or "
+        "a difficult exam; when a profile result needs an example from real life.\n"
+        "WHAT IT DOES NOT DO — It does not look at the whole story (that is SAVICKAS) or bring an "
+        "idea into focus (that is IDEA), and it does not assess anyone else involved: other people "
+        "are named by role only."
+    ),
+    "EVENTO_PROFESSIONALE": (
+        "WHAT IT LOOKS AT — One single episode from the person's work or placement that stayed with "
+        "them: a meeting, a conversation with a colleague or a client, a task, a lesson taught. It "
+        "becomes significant because the person chose it, not because it was dramatic.\n"
+        "WHAT YOU GET — A guided interview in six steps: the event, what happened (facts kept apart "
+        "from judgement), what worked, what did not, a second look through concepts they know, and "
+        "one thing to try next time. At the end a summary they can save in their Booklet. No score, "
+        "no questionnaire.\n"
+        "WHEN IT IS THE RIGHT MOMENT — For adults and trainees who reflect on their practice, such "
+        "as teachers in training after a lesson or a staff meeting; for students after a placement "
+        "or a first job experience.\n"
+        "WHAT IT DOES NOT DO — It does not measure career adaptability (that is QAP) or retell the "
+        "whole career story (that is SAVICKAS), and it does not assess anyone else involved: other "
+        "people are named by role only."
+    ),
     "IDEA": (
         "WHAT IT LOOKS AT — One idea, decision or project the student already carries, and works to "
         "bring it into focus: what it actually is, what it depends on, what is missing, what the "

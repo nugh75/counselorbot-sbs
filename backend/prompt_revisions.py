@@ -196,6 +196,8 @@ def _factory_defaults() -> dict:
         prompt_config.DEFAULT_ZTPI_GUIDED_STEPS,
         prompt_config.DEFAULT_SAVICKAS_GUIDED_STEPS,
         prompt_config.DEFAULT_IDEA_GUIDED_STEPS,
+        prompt_config.DEFAULT_EVENTO_STUDIO_GUIDED_STEPS,
+        prompt_config.DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS,
         prompt_config.DEFAULT_QPCS_GUIDED_STEPS,
         prompt_config.DEFAULT_QPCC_GUIDED_STEPS,
         prompt_config.DEFAULT_QAP_GUIDED_STEPS,

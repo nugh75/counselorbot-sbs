@@ -365,6 +365,60 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
 }
 
 
+# Evento significativo: stesse domande per i due strumenti, un id di passo per
+# strumento. Frasi d'avvio nei passi di intervista, domande altrove.
+_EVENTO_STEP_QUESTIONS: dict[str, list[str]] = {
+    "intro": [
+        "Come funziona questo percorso?",
+        "Che tipo di evento posso scegliere?",
+        "Cosa farò della sintesi finale?"
+    ],
+    "patto": [
+        "Perché serve un patto di collaborazione?",
+        "Posso scegliere un evento in cui ho solo osservato?",
+        "Come parlo delle altre persone coinvolte?"
+    ],
+    "evento": [
+        "L'evento che mi è rimasto in mente è…",
+        "Mi è rimasto in mente perché…",
+        "Non so quale evento scegliere: da dove parto?"
+    ],
+    "fatto": [
+        "È successo che…",
+        "In quel momento io ho…",
+        "Mentre succedeva pensavo…"
+    ],
+    "funzionato": [
+        "Ha funzionato quando…",
+        "Mi ha aiutato che…",
+        "Nel contesto ha aiutato…"
+    ],
+    "criticita": [
+        "Non ha funzionato quando…",
+        "Mi è mancato…",
+        "Nel contesto ha ostacolato…"
+    ],
+    "rilettura": [
+        "Guardandolo oggi, l'essenziale è…",
+        "Puoi propormi una lente per rileggerlo?",
+        "Lo collego a ciò che ho imparato su…"
+    ],
+    "prossima": [
+        "In una situazione simile potrei…",
+        "Vorrei provare a…",
+        "Mi aiuti a trovare un'alternativa?"
+    ],
+    "final": [
+        "Cosa faccio di questa sintesi?",
+        "Come la salvo nel mio libretto?",
+        "Quando ha senso tornare su questo evento?"
+    ]
+}
+for _questionnaire_type, _prefix in (("EVENTO_STUDIO", "evstudio"), ("EVENTO_PROFESSIONALE", "evprof")):
+    DEFAULT_GUIDED_STEP_QUESTIONS[_questionnaire_type] = {
+        f"{_prefix}-{_suffix}": list(_questions) for _suffix, _questions in _EVENTO_STEP_QUESTIONS.items()
+    }
+
 def seed_guided_step_questions(db, models) -> None:
     """Inserisce le domande di default mancanti per questionario/step/lingua."""
 
