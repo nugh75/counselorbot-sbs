@@ -1,7 +1,7 @@
 # Evento significativo — percorso guidato di rilettura di un evento
 
 Data: 2026-09-17
-Stato: proposta, nessun codice scritto
+Stato: implementato (fasi 0-5) il 2026-09-17; la fase 6 resta da fare
 Strumenti: `EVENTO_STUDIO`, `EVENTO_PROFESSIONALE`
 Nome visibile: Evento significativo (di studio / professionale)
 
@@ -96,7 +96,7 @@ classmate, the tutor, a colleague), never names.
 
 ## Il percorso
 
-Stessa struttura di Savickas: presentazione, patto, cinque step di intervista,
+Stessa struttura di Savickas: presentazione, patto, sei step di intervista,
 sintesi. Id con prefisso per strumento (`evstudio-*`, `evprof-*`), modi
 `evento-interview` ed `evento-summary`.
 
@@ -109,7 +109,13 @@ sintesi. Id con prefisso per strumento (`evstudio-*`, `evprof-*`), modi
 | 3 | `funzionato` | Cosa ha funzionato | Azioni proprie, delle altre persone, facilitatori del contesto |
 | 4 | `criticita` | Cosa non ha funzionato | Scelte proprie e altrui, barriere del contesto, cosa mancava |
 | 5 | `rilettura` | Rilettura | Cosa è essenziale; al massimo due lenti, formulate come domande |
-| 6 | `final` | Sintesi e prossima volta | Ritratto, alternative, una cosa da provare |
+| 6 | `prossima` | La prossima volta | Alternative per una situazione simile, poi la persona sceglie cosa provare e quando |
+| 7 | `final` | Sintesi dell'evento | Ritratto, alternative emerse, la scelta fatta; bozza privata del libretto |
+
+Rispetto alla prima bozza, "la prossima volta" è diventato un passo di
+intervista a sé: se stava dentro la sintesi, che parte e avanza da sola, la
+scelta di cosa provare la faceva il modello e non la persona. I testi di
+fabbrica dei passi stanno in `backend/prompts/evento_*.md`.
 
 Il ruolo nell'evento ha tre valori: **protagonista** (ha agito), **osservatore**
 (ha guardato), **affiancato** (ha agito insieme a qualcuno). Nasce dalla
@@ -343,22 +349,25 @@ compare in circa 24 file backend e 26 frontend.
 
 ## Fasi
 
-0. **Percorsi a intervista**: modulo comune, Savickas invariato, QPCC e QAP
-   allineati, Telegram. Si rilascia da sola, prima degli Evento.
-1. **Backend**: step, prompt, modi, cancelli, seed. La sessione si apre con
-   `/?start=EVENTO_STUDIO`.
-2. **Frontend**: i due Evento nella famiglia a intervista, catalogo, liste,
-   i18n.
-3. **Amministrazione**: parità dei pannelli e test di rete.
-4. **Libretto**: blocco privato, modulo precompilato, salvataggio confermato.
-5. **Bussola**: descrizione e proposta dei due strumenti.
+0. **Percorsi a intervista** (fatto): modulo comune, QPCC e QAP allineati a
+   Savickas, Telegram.
+1. **Backend** (fatto): step, prompt, modi, cancelli, seed, migrazioni una
+   tantum (counselor che servono SAVICKAS, lista del motore di skill).
+2. **Frontend** (fatto): i due Evento nella famiglia a intervista, catalogo,
+   liste, nome breve traducibile (`q.<id>.name`), i18n.
+3. **Amministrazione** (fatto): parità dei pannelli e test di rete
+   (`event-instrument-parity.test.ts`, `test_evento_significativo.py`).
+4. **Libretto** (fatto): blocco privato ```booklet (`backend/event_booklet.py`),
+   modulo precompilato `EventBookletCard`, salvataggio confermato.
+5. **Bussola** (fatto): catalogo, parole chiave, schede nelle sei lingue.
 6. **Dopo**: sintesi di secondo livello su più eventi della stessa persona (fili
    che ritornano, criticità che scompaiono), da agganciare a
    `/profilo/cambiamenti`.
 
 ## Questioni aperte
 
-- Telegram nella prima versione, o solo web?
+- Telegram: nella prima versione i due Evento sono solo web; il bot non li
+  propone.
 - Collegamento inverso: dalla scheda libretto in area personale, "rileggi con
   il counselor"?
 - Le lenti del passo 5 possono citare le letture certificate, o solo concetti
