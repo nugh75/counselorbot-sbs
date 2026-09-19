@@ -8,46 +8,47 @@ import { canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlansPanel';
 import { GroupsPanel } from '@/components/admin/GroupsPanel';
+import { TeacherCatalogs } from '@/components/teacher/TeacherCatalogs';
 
 // Local copy is complete for every supported interface language.
 const TEXTS = {
     it: {
-        title: 'I miei gruppi',
+        title: 'Area docenti',
         subtitle: 'Piani di somministrazione dei tuoi gruppi: link di invito (web e Telegram), studenti, profili, note e messaggi.',
         forbidden: 'Pagina riservata a docenti, ricercatori e amministratori.',
         back: 'Torna a CounselorBot',
         loading: 'Verifica in corso...',
     },
     en: {
-        title: 'My groups',
+        title: 'Teacher area',
         subtitle: 'Administration plans for your groups: invitation links (web and Telegram), students, profiles, notes and messages.',
         forbidden: 'This page is reserved for teachers, researchers and administrators.',
         back: 'Back to CounselorBot',
         loading: 'Checking access...',
     },
     es: {
-        title: 'Mis grupos',
+        title: 'Área docente',
         subtitle: 'Planes de administración de tus grupos: enlaces de invitación (web y Telegram), estudiantes, perfiles, notas y mensajes.',
         forbidden: 'Esta página está reservada a docentes, investigadores y administradores.',
         back: 'Volver a CounselorBot',
         loading: 'Comprobando el acceso...',
     },
     fr: {
-        title: 'Mes groupes',
+        title: 'Espace enseignant',
         subtitle: 'Plans de passation de vos groupes : liens d’invitation (web et Telegram), étudiants, profils, notes et messages.',
         forbidden: 'Cette page est réservée aux enseignants, chercheurs et administrateurs.',
         back: 'Retour à CounselorBot',
         loading: 'Vérification de l’accès...',
     },
     de: {
-        title: 'Meine Gruppen',
+        title: 'Lehrkräftebereich',
         subtitle: 'Durchführungspläne für Ihre Gruppen: Einladungslinks (Web und Telegram), Lernende, Profile, Notizen und Nachrichten.',
         forbidden: 'Diese Seite ist Lehrkräften, Forschenden und Administratoren vorbehalten.',
         back: 'Zurück zu CounselorBot',
         loading: 'Zugriff wird geprüft...',
     },
     sv: {
-        title: 'Mina grupper',
+        title: 'Lärarområde',
         subtitle: 'Genomförandeplaner för dina grupper: inbjudningslänkar (webb och Telegram), studenter, profiler, anteckningar och meddelanden.',
         forbidden: 'Den här sidan är endast för lärare, forskare och administratörer.',
         back: 'Tillbaka till CounselorBot',
@@ -101,6 +102,7 @@ export default function TeacherPage() {
                 <div className="mt-10">
                     <AdministrationPlansPanel />
                 </div>
+                <TeacherCatalogs />
             </section>
         </div>
     );

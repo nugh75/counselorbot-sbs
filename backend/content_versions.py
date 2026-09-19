@@ -15,8 +15,10 @@ APP_LOCALES = ("it", "en", "es", "fr", "de", "sv")
 # (docs/validazione/progetto-validazione-qsa-qsar-sv-en.md).
 INSTRUMENT_STATUSES = ("draft", "translated", "reviewed", "pilot", "validated")
 
-# Tool: non sono misure, non hanno norme, si fermano alla revisione admin.
+# Tool: non sono misure, non hanno norme, si fermano alla revisione editoriale.
 TOOL_STATUSES = ("draft", "translated", "certified")
+
+CATALOG_CONTENT_TYPES = ("certified_strategy", "certified_reading")
 
 CONTENT_TYPES: dict[str, tuple[str, ...]] = {
     "instrument": INSTRUMENT_STATUSES,

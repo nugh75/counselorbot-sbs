@@ -4,8 +4,8 @@ import type { Metadata } from 'next';
 // dell'app portava lo stesso titolo generico, e più schede aperte erano
 // indistinguibili.
 export const metadata: Metadata = {
-    title: 'Gruppi e classi - CounselorBot',
-    description: 'Classi, piani di somministrazione, note e messaggi.',
+    title: 'Area docenti - CounselorBot',
+    description: 'Classi, somministrazioni e cataloghi di strategie, libri, film e materiali.',
 };
 
 export default function DocenteLayout({ children }: { children: React.ReactNode }) {

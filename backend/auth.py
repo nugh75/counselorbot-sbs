@@ -191,3 +191,12 @@ async def get_current_plan_manager(identity: dict = Depends(get_current_user)) -
             detail="Accesso riservato ad amministratori, ricercatori e docenti",
         )
     return identity
+
+
+async def get_current_catalog_editor(identity: dict = Depends(get_current_plan_manager)) -> dict:
+    """Docenti, ricercatori e admin pubblicano i cataloghi didattici direttamente.
+
+    Non estende il ruolo amministrativo: configurazione e strumenti psicometrici
+    continuano a usare get_current_active_admin.
+    """
+    return identity

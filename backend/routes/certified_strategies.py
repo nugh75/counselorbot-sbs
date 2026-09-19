@@ -1,4 +1,4 @@
-"""Catalogo strategie di apprendimento certificate: CRUD admin.
+"""Catalogo strategie di apprendimento certificate: gestione editoriale dei docenti.
 
 Tabella DB strutturata (nome, fattori collegati, quando raccomandarla), distinta
 dalla knowledge base file-based. Le voci `certified` attive vengono iniettate nel
@@ -13,13 +13,14 @@ from sqlalchemy.orm import Session
 from .. import models, schemas, auth, database
 from ..certified_translation import translate_strategies
 from ..content_versions_seed import derive_strategy_versions
+from ..content_version_service import publish_catalog_source
 
 router = APIRouter()
 get_db = database.get_db
 
 @router.get("/admin/certified-strategies", response_model=List[schemas.CertifiedStrategyResponse])
 async def list_certified_strategies(
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     return (
@@ -32,7 +33,7 @@ async def list_certified_strategies(
 @router.post("/admin/certified-strategies", response_model=schemas.CertifiedStrategyResponse)
 async def create_certified_strategy(
     payload: schemas.CertifiedStrategyCreate,
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     slug = (payload.slug or "").strip()
@@ -47,6 +48,8 @@ async def create_certified_strategy(
     db.commit()
     db.refresh(strategy)
     derive_strategy_versions(db)
+    if strategy.status == "certified":
+        publish_catalog_source(db, "certified_strategy", strategy, current_user["username"])
     return strategy
 
 
@@ -54,12 +57,13 @@ async def create_certified_strategy(
 async def update_certified_strategy(
     strategy_id: int,
     payload: schemas.CertifiedStrategyUpdate,
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     strategy = db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.id == strategy_id).first()
     if not strategy:
         raise HTTPException(status_code=404, detail="Strategia non trovata")
+    was_published = strategy.status == "certified"
     updates = payload.model_dump(exclude_unset=True)
     if "slug" in updates:
         new_slug = (updates["slug"] or "").strip()
@@ -77,13 +81,16 @@ async def update_certified_strategy(
         setattr(strategy, field, value)
     db.commit()
     db.refresh(strategy)
+    if strategy.status == "certified" and not was_published:
+        derive_strategy_versions(db)
+        publish_catalog_source(db, "certified_strategy", strategy, current_user["username"])
     return strategy
 
 
 @router.delete("/admin/certified-strategies/{strategy_id}")
 async def delete_certified_strategy(
     strategy_id: int,
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     strategy = db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.id == strategy_id).first()
@@ -100,10 +107,10 @@ async def delete_certified_strategy(
 )
 async def translate_certified_strategy(
     strategy_id: int,
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
-    """Riempie le cinque lingue da IT nel JSON; l'admin poi certifica per lingua."""
+    """Riempie le cinque lingue da IT nel JSON; il docente o altro curatore pubblica per lingua."""
     strategy = db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.id == strategy_id).first()
     if not strategy:
         raise HTTPException(status_code=404, detail="Strategia non trovata")
