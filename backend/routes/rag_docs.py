@@ -8,7 +8,7 @@ Endpoint per:
 - eliminare un documento caricato e reindicizzare.
 
 Nota per le collezioni graphify (competenzestrategiche/framework/questionari):
-i file caricati vengono comunque ingeriti direttamente (pdftotext/markdown)
+i PDF caricati vengono convertiti in Markdown prima di salvare la sorgente
 al reindex, ma il grafo semantico va rigenerato a parte con la pipeline
 graphify sull'host (`converted/` + `cache/semantic/`).
 """
@@ -24,6 +24,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .. import auth, database
 from ..ai_service import AIService
+from ..pdf_markdown import pdf_to_markdown, publish_markdown
 from ..rag_index import (
     COLLECTION_COMPETENZE,
     _GUIDE_STEMS,
@@ -312,35 +313,63 @@ async def rag_docs_upload(
         raise HTTPException(status_code=400, detail="Nome file non valido")
     if not filename.lower().endswith(_ALLOWED_EXTENSIONS):
         raise HTTPException(status_code=400, detail="Sono ammessi solo file .md e .pdf")
-    content = await file.read()
+    content = await file.read(_MAX_UPLOAD_BYTES + 1)
     if len(content) > _MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="File troppo grande (max 50 MB)")
     if not content:
         raise HTTPException(status_code=400, detail="File vuoto")
 
+    original_filename = filename
+    converted = filename.lower().endswith(".pdf")
+    warning = None
+    if converted:
+        filename = os.path.splitext(filename)[0] + ".md"
+        if os.path.lexists(os.path.join(upload_dir, filename)):
+            raise HTTPException(status_code=409, detail="Esiste già un Markdown con questo nome: rinomina il PDF o elimina prima la sorgente esistente.")
+        try:
+            content, warning = await run_in_threadpool(pdf_to_markdown, content)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc))
+    else:
+        try:
+            if not content.decode("utf-8").strip():
+                raise ValueError("Markdown vuoto")
+        except (UnicodeError, ValueError):
+            raise HTTPException(status_code=422, detail="Carica un Markdown non vuoto in UTF-8.")
+
     os.makedirs(upload_dir, exist_ok=True)
     dest = os.path.join(upload_dir, filename)
     try:
-        with open(dest, "wb") as f:
-            f.write(content)
+        await run_in_threadpool(publish_markdown, upload_dir, filename, content, exclusive=converted)
+    except FileExistsError:
+        raise HTTPException(status_code=409, detail="La sorgente Markdown esiste già: scegli un altro nome.")
     except OSError as e:
         logger.error("Upload RAG fallito (%s): %s", dest, e)
         raise HTTPException(status_code=500, detail=f"Scrittura fallita: {e}")
     logger.info("RAG upload: %s -> %s (%d byte) da %s",
                 filename, coll, len(content), _admin_username(current_user))
 
-    warning = None
     if coll == COLLECTION_COMPETENZE:
         stem = os.path.splitext(filename)[0].lower()
         if stem not in _GUIDE_STEMS:
-            warning = (
+            scope_warning = (
                 "La collezione 'competenzestrategiche' indicizza solo le guide "
                 f"({', '.join(sorted(_GUIDE_STEMS))}): questo file è stato salvato "
                 "ma parte fuori scope. Usa il flag Scope per includerlo qui."
             )
+            warning = " ".join(filter(None, [warning, scope_warning]))
+
+    # Hand-authored MD uploaded by an admin is an explicit knowledge source.
+    # Preserve saved exclusions and the guide-only boundary of competenzestrategiche.
+    if not converted and (coll != COLLECTION_COMPETENZE or os.path.splitext(filename)[0].lower() in _GUIDE_STEMS):
+        source = os.path.relpath(dest, docs_roots_for(coll)[0]).replace("\\", "/")
+        scope = source_scope_state(coll, source)
+        if not scope["in_scope"] and not scope["forced"]:
+            set_source_scope(coll, source, True)
 
     stats = await run_in_threadpool(_reindex, db, coll)
-    return {"status": "ok", "filename": filename, "warning": warning, "stats": stats}
+    return {"status": "ok", "filename": filename, "original_filename": original_filename,
+            "converted": converted, "warning": warning, "stats": stats}
 
 
 @router.delete("/admin/rag/docs")

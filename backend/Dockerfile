@@ -9,7 +9,7 @@ COPY backend/requirements.txt .
 # PNG per Telegram e PDF). I font servono a rasterizzare il PNG: Inter e'
 # quello dell'interfaccia, DejaVu resta il fallback se il pacchetto manca.
 RUN apt-get update \
-    && apt-get install -y poppler-utils graphviz fonts-dejavu-core \
+    && apt-get install -y poppler-utils graphviz fonts-dejavu-core tesseract-ocr-ita tesseract-ocr-eng \
     && (apt-get install -y fonts-inter || echo "fonts-inter non disponibile: resta DejaVu") \
     && rm -rf /var/lib/apt/lists/*
 
