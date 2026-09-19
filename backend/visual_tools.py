@@ -206,7 +206,7 @@ def redact_workspace_text(value):
                 redact_workspace_text(item)
 
 
-def save_workspace(db: Session, session_id: str, username: str, update: SaveWorkspace) -> dict:
+def save_workspace(db: Session, session_id: str, username: str, update: SaveWorkspace, *, commit: bool = True) -> dict:
     # Serialize writes even for narrative sessions without a questionnaire row.
     # The version check prevents one browser tab overwriting another tab's work.
     if db.get_bind().dialect.name == 'postgresql':
@@ -234,7 +234,7 @@ def save_workspace(db: Session, session_id: str, username: str, update: SaveWork
     resolve_portfolio(db, username, clean)
     row = models.Log(action=PERSONAL_ACTION if session_id is None else ACTION, session_id=session_id, username=username, details={'workspace': clean})
     db.add(row)
-    db.commit()
+    db.commit() if commit else db.flush()
     return {'revision': row.id, 'workspace': clean}
 
 

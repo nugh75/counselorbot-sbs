@@ -4,6 +4,7 @@ import { Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import { BackButton } from '@/components/ui/BackButton';
 import { useSearchParams } from 'next/navigation';
+import { JourneyOverview } from '@/components/goals/JourneyOverview';
 import { VisualTools } from '@/components/visual/VisualTools';
 import { useI18n } from '@/lib/i18n-context';
 import { visualLabel } from '@/lib/i18n-visual-tools';
@@ -12,17 +13,20 @@ function TimelinePage() {
     const params = useSearchParams();
     const { lang, t } = useI18n();
     const eventId = params.get('event') || undefined;
-    const request = useMemo(() => ({ tab: 'timeline' as const, nonce: 1, eventId }), [eventId]);
+    const requestedTab = params.get('tab');
+    const tab: 'board' | 'cards' | 'comparison' | 'timeline' = requestedTab === 'board' || requestedTab === 'cards' || requestedTab === 'comparison' ? requestedTab : 'timeline';
+    const request = useMemo(() => ({ tab, nonce: 1, eventId }), [eventId, tab]);
     return <main className="page-narrow space-y-4 p-4">
         <div className="flex items-center gap-2">
             <BackButton href="/profilo" label={t('profile.nav')} />
-            <h1 className="text-2xl font-bold">{visualLabel(lang, 'timeline')}</h1>
+            <h1 className="text-2xl font-bold">{visualLabel(lang, tab)}</h1>
         </div>
-        <p>{visualLabel(lang, 'personalTimelineHelp')}</p>
+        <p>{visualLabel(lang, tab === 'timeline' ? 'personalTimelineHelp' : `${tab}Purpose`)}</p>
         <nav className="flex flex-wrap gap-4">
             <Link className="text-indigo-700 underline" href="/profilo/portfolio">{visualLabel(lang, 'openPortfolio')}</Link>
             <Link className="text-indigo-700 underline" href="/profilo/orientamento">{t('referrals.area.title')}</Link>
         </nav>
+        <JourneyOverview kind={tab === 'timeline' ? 'event' : tab === 'board' ? 'action' : tab === 'cards' ? 'card' : 'comparison'} />
         <VisualTools personal locale={lang} request={request} legacySession={params.get('session') || undefined} />
     </main>;
 }

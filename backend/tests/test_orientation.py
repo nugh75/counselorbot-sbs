@@ -29,6 +29,7 @@ for table in (
     models.QuestionnaireResult.__table__,
     models.LearnerProfileRevision.__table__,
     models.OrientationSession.__table__,
+    models.PersonalGoal.__table__,
     models.StudentBooklet.__table__,
     # La Bussola legge anche sessioni congelate e portfolio per sapere che cosa
     # lo studente ha gia' fatto (student_context).

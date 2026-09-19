@@ -67,6 +67,7 @@ from .routes import site_chat as site_chat_routes
 from .routes import learner_profile as learner_profile_routes
 from .routes import orientation as orientation_routes
 from .routes import cross_synthesis as cross_synthesis_routes
+from .routes import goals as goals_routes
 from .routes import portfolio as portfolio_routes
 from .routes import pqbl as pqbl_routes
 from .routes import opencode as opencode_routes
@@ -1244,6 +1245,9 @@ def _run_seed_and_migrations():
 
         # Seed domande suggerite dell'assistente docenti (it). Idempotente:
         # salta se la tabella contiene già righe.
+        from .goals import seed_goals
+        seed_goals(db)
+
         from .assistant_questions_seed import seed_assistant_questions
         seed_assistant_questions(db, models)
 
@@ -1831,6 +1835,7 @@ app.include_router(learner_profile_routes.router)
 app.include_router(orientation_routes.router)
 app.include_router(cross_synthesis_routes.router)
 app.include_router(portfolio_routes.router)
+app.include_router(goals_routes.router)
 app.include_router(pqbl_routes.router)
 app.include_router(opencode_routes.router)
 app.include_router(presets_routes.router)
