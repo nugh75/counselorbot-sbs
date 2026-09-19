@@ -59,8 +59,7 @@ class MarkdownCorpusTests(unittest.TestCase):
         self.write("fonti/teoria.pdf", "PDF placeholder, must not be read")
         self.write("fonti/teoria.md", "# Nuovo\nContenuto aggiornato.")
         self.legacy("fonti/teoria.pdf")
-        with patch.object(rag, "_extract_pdf_text", side_effect=AssertionError("PDF read")):
-            chunks, signature = rag._collect_corpus()
+        chunks, signature = rag._collect_corpus()
         self.assertEqual({c["source"] for c in chunks}, {"fonti/teoria.md"})
         self.assertIn("aggiornato", chunks[0]["text"])
         self.assertNotIn("vecchio", chunks[0]["text"])
@@ -70,13 +69,24 @@ class MarkdownCorpusTests(unittest.TestCase):
         self.assertEqual(rel_to_node["fonti/teoria.md"], "node1")
         self.assertEqual(node_to_rel["node1"], "fonti/teoria.md")
 
-    def test_legacy_pdf_without_markdown_still_uses_converted_copy(self):
+    def test_legacy_pdf_without_canonical_markdown_is_not_indexed(self):
         self.write("fonti/teoria.pdf", "PDF placeholder")
         self.legacy("fonti/teoria.pdf")
-        with patch.object(rag, "_extract_pdf_text", side_effect=AssertionError("PDF read")):
-            chunks, signature = rag._collect_corpus()
-        self.assertEqual({c["source"] for c in chunks}, {"fonti/teoria.pdf"})
+        chunks, signature = rag._collect_corpus()
+        self.assertEqual(chunks, [])
         self.assertEqual(signature, rag._corpus_signature())
+
+    def test_raw_pdf_is_excluded_even_when_forced_into_scope(self):
+        self.write("fonti/raw.pdf", "PDF must never feed the index directly")
+        self.scope.write_text(json.dumps({rag.COLLECTION_FRAMEWORK: {
+            "include": ["fonti/raw.pdf"], "exclude": [],
+        }}))
+        chunks, signature = rag._collect_framework()
+        self.assertEqual(chunks, [])
+        self.assertEqual(signature, rag._scoped_corpus_signature(rag.COLLECTION_FRAMEWORK))
+        chunks, signature = rag._collect_plain_corpus(str(self.docs))
+        self.assertEqual(chunks, [])
+        self.assertEqual(signature, rag._plain_signature(str(self.docs)))
 
     def test_build_artifacts_stay_excluded(self):
         self.write("fonti/teoria.md", "# Teoria\nTesto valido.")
@@ -112,8 +122,7 @@ class MarkdownCorpusTests(unittest.TestCase):
         self.scope.write_text(json.dumps({rag.COLLECTION_FRAMEWORK: {
             "include": ["fonti/teoria.pdf"], "exclude": [],
         }}))
-        with patch.object(rag, "_extract_pdf_text", side_effect=AssertionError("PDF read")):
-            chunks, signature = rag._collect_framework()
+        chunks, signature = rag._collect_framework()
         self.assertEqual(len(chunks), 1)
         self.assertEqual(chunks[0]["source"], "fonti/teoria.md")
         self.assertEqual(signature, rag._scoped_corpus_signature(rag.COLLECTION_FRAMEWORK))
@@ -128,8 +137,7 @@ class MarkdownCorpusTests(unittest.TestCase):
     def test_plain_collection_prefers_markdown_and_has_matching_signature(self):
         self.write("paper.md", "# Articolo\nTesto aggiornato.")
         self.write("paper.pdf", "Do not read")
-        with patch.object(rag, "_extract_pdf_text", side_effect=AssertionError("PDF read")):
-            chunks, signature = rag._collect_plain_corpus(str(self.docs))
+        chunks, signature = rag._collect_plain_corpus(str(self.docs))
         self.assertEqual({c["source"] for c in chunks}, {"paper.md"})
         self.assertEqual(signature, rag._plain_signature(str(self.docs)))
 

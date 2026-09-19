@@ -24,7 +24,6 @@ import json
 import logging
 import os
 import re
-import subprocess
 import threading
 import time
 
@@ -48,7 +47,7 @@ CACHE_PATH = os.path.join(INDEX_DIR, "site_embed_cache.npz")      # cache hash�
 LOCK_PATH = os.path.join(INDEX_DIR, ".build.lock")                # lock cross-worker
 
 # --- Collezione separata: documenti specifici di CounselorBot (la piattaforma) ---
-# Cartella semplice di markdown/PDF (niente pipeline graphify, niente grafo): è una
+# Cartella semplice di Markdown (niente pipeline graphify, niente grafo): è una
 # base di conoscenza distinta da competenzestrategiche.it, selezionabile a parte
 # nell'assistente. Indice persistito in file dedicati nella stessa INDEX_DIR.
 COUNSELORBOT_DOCS_DIR = os.environ.get(
@@ -153,7 +152,7 @@ _GRAPH_EXPANSION_CAP = 4  # chunk extra portati via vicini nel grafo
 
 # Versione della normalizzazione del markdown: cambiarla invalida l'indice
 # salvato (forza il re-embed) anche se i file sorgente non sono cambiati.
-_NORMALIZER_VERSION = 1
+_NORMALIZER_VERSION = 2
 
 
 # ---------------------------------------------------------------------------
@@ -268,22 +267,6 @@ def _split_long_block(block: str, limit: int) -> list[str]:
     if cur.strip():
         pieces.append(cur.strip())
     return pieces
-
-
-def _extract_pdf_text(abspath: str) -> str:
-    """Estrae il testo da un PDF via pdftotext (poppler). Stringa vuota se fallisce."""
-    try:
-        res = subprocess.run(
-            ["pdftotext", "-q", abspath, "-"],
-            capture_output=True,
-            timeout=180,
-        )
-        if res.returncode != 0:
-            return ""
-        return res.stdout.decode("utf-8", errors="replace").replace("\f", "\n\n")
-    except Exception as e:
-        logger.warning("pdftotext fallito per %s: %s", abspath, e)
-        return ""
 
 
 def _chunk_markdown(text: str) -> list[str]:
@@ -435,7 +418,7 @@ def _collect_corpus() -> tuple[list[dict], dict[str, str]]:
             relpath = basename_to_relpath.get(stem, "")
         if not relpath:
             relpath = filename  # fallback: usa il nome convertito
-        if _is_excluded(relpath) or _markdown_replacement(relpath, markdown_sources):
+        if not relpath.lower().endswith(".md") or _is_excluded(relpath) or _markdown_replacement(relpath, markdown_sources):
             continue
 
         path = os.path.join(CONVERTED_DIR, filename)
@@ -455,7 +438,7 @@ def _collect_corpus() -> tuple[list[dict], dict[str, str]]:
                 "title": title,
                 "text": chunk_text,
             })
-    # --- Sorgenti dirette: Markdown canonico oppure PDF di fallback ---
+    # --- Sorgenti dirette: esclusivamente Markdown ---
     covered_sources = {c["source"] for c in chunks}
     for subdir in PDF_INCLUDE_DIRS:
         base = os.path.join(DOCS_DIR, subdir)
@@ -463,13 +446,11 @@ def _collect_corpus() -> tuple[list[dict], dict[str, str]]:
             continue
         for root, _dirs, files in os.walk(base):
             for fn in sorted(files):
-                if not fn.lower().endswith((".pdf", ".md")):
+                if not fn.lower().endswith(".md"):
                     continue
                 abspath = os.path.join(root, fn)
                 relpath = os.path.relpath(abspath, DOCS_DIR).replace("\\", "/")
                 if _is_excluded(relpath) or _is_build_artifact(relpath):
-                    continue
-                if fn.lower().endswith(".pdf") and _markdown_replacement(relpath, markdown_sources):
                     continue
                 # Firma registrata SEMPRE (anche se saltato), per combaciare con
                 # _corpus_signature ed evitare rebuild perpetui.
@@ -477,21 +458,18 @@ def _collect_corpus() -> tuple[list[dict], dict[str, str]]:
                     stat = os.stat(abspath)
                     signature[relpath] = f"{stat.st_size}:{int(stat.st_mtime)}"
                 except OSError:
-                    signature[relpath] = "pdf"
+                    signature[relpath] = "md"
                 if relpath in covered_sources:
                     continue
-                if fn.lower().endswith(".md"):
-                    with open(abspath, encoding="utf-8") as stream:
-                        raw = stream.read()
-                else:
-                    raw = _extract_pdf_text(abspath)
+                with open(abspath, encoding="utf-8") as stream:
+                    raw = stream.read()
                 if not raw.strip():
-                    logger.info("PDF senza testo estraibile (saltato): %s", relpath)
+                    logger.info("Markdown senza testo (saltato): %s", relpath)
                     continue
                 text = _normalize_markdown(raw)
                 title = _first_heading(text) or os.path.splitext(fn)[0].replace("_", " ")
                 doc_chunks = _chunk_markdown(text)
-                logger.info("PDF ingerito: %s (%d chunk)", relpath, len(doc_chunks))
+                logger.info("Markdown ingerito: %s (%d chunk)", relpath, len(doc_chunks))
                 for i, chunk_text in enumerate(doc_chunks):
                     chunks.append({
                         "id": f"{relpath}#{i}",
@@ -539,7 +517,7 @@ def _corpus_signature() -> dict[str, str]:
                 relpath = basename_to_relpath.get(stem, "")
             if not relpath:
                 relpath = filename
-            if _is_excluded(relpath) or _markdown_replacement(relpath, markdown_sources):
+            if not relpath.lower().endswith(".md") or _is_excluded(relpath) or _markdown_replacement(relpath, markdown_sources):
                 continue
             path = os.path.join(CONVERTED_DIR, filename)
             sig[filename] = hash8 or str(int(os.path.getmtime(path)))
@@ -549,18 +527,16 @@ def _corpus_signature() -> dict[str, str]:
             continue
         for root, _dirs, files in os.walk(base):
             for fn in sorted(files):
-                if not fn.lower().endswith((".pdf", ".md")):
+                if not fn.lower().endswith(".md"):
                     continue
                 relpath = os.path.relpath(os.path.join(root, fn), DOCS_DIR).replace("\\", "/")
                 if _is_excluded(relpath) or _is_build_artifact(relpath):
-                    continue
-                if fn.lower().endswith(".pdf") and _markdown_replacement(relpath, markdown_sources):
                     continue
                 try:
                     st = os.stat(os.path.join(root, fn))
                     sig[relpath] = f"{st.st_size}:{int(st.st_mtime)}"
                 except OSError:
-                    sig[relpath] = "pdf"
+                    sig[relpath] = "md"
     # Stato del grafo semantico graphify: cambia quando vengono aggiunti/aggiornati
     # frammenti in cache/semantic → forza il reload del grafo (re-embed cache-hit).
     if os.path.isdir(SEMANTIC_DIR):
@@ -577,7 +553,7 @@ def _corpus_signature() -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# Collezione "plain" (cartella semplice di .md/.pdf, senza graphify né grafo)
+# Collezione "plain" (cartella semplice di .md, senza graphify né grafo)
 # ---------------------------------------------------------------------------
 def _empty_graph():
     """Grafo vuoto: le collezioni plain non hanno espansione via grafo."""
@@ -585,7 +561,7 @@ def _empty_graph():
 
 
 def _collect_plain_corpus(docs_dir: str) -> tuple[list[dict], dict[str, str]]:
-    """Ingerisce tutti i .md e .pdf sotto docs_dir direttamente (niente graphify).
+    """Ingerisce solo i .md sotto docs_dir direttamente (niente graphify).
 
     Ritorna (chunks, signature). La firma usa size/mtime dei file: deve combaciare
     con _plain_signature per non innescare rebuild perpetui."""
@@ -602,8 +578,6 @@ def _collect_plain_corpus(docs_dir: str) -> tuple[list[dict], dict[str, str]]:
             relpath = os.path.relpath(abspath, docs_dir).replace("\\", "/")
             if _is_build_artifact(relpath):
                 continue
-            if low.endswith(".pdf") and os.path.isfile(os.path.splitext(abspath)[0] + ".md"):
-                continue
             if low.endswith(".md"):
                 try:
                     with open(abspath, encoding="utf-8") as f:
@@ -615,17 +589,6 @@ def _collect_plain_corpus(docs_dir: str) -> tuple[list[dict], dict[str, str]]:
                     signature[relpath] = str(int(os.path.getmtime(abspath)))
                 except OSError:
                     signature[relpath] = "md"
-            elif low.endswith(".pdf"):
-                try:
-                    st = os.stat(abspath)
-                    signature[relpath] = f"{st.st_size}:{int(st.st_mtime)}"
-                except OSError:
-                    signature[relpath] = "pdf"
-                raw = _extract_pdf_text(abspath)
-                if not raw.strip():
-                    logger.info("PDF senza testo estraibile (saltato): %s", relpath)
-                    continue
-                text = _normalize_markdown(raw)
             else:
                 continue
             title = _first_heading(text) or os.path.splitext(fn)[0].replace("_", " ")
@@ -642,16 +605,14 @@ def _plain_signature(docs_dir: str) -> dict[str, str]:
         for root, _dirs, files in os.walk(docs_dir):
             for fn in sorted(files):
                 low = fn.lower()
-                if not (low.endswith(".md") or low.endswith(".pdf")):
+                if not low.endswith(".md"):
                     continue
                 relpath = os.path.relpath(os.path.join(root, fn), docs_dir).replace("\\", "/")
                 if _is_build_artifact(relpath):
                     continue
-                if fn.lower().endswith(".pdf") and os.path.isfile(os.path.splitext(os.path.join(root, fn))[0] + ".md"):
-                    continue
                 try:
                     st = os.stat(os.path.join(root, fn))
-                    sig[relpath] = f"{st.st_size}:{int(st.st_mtime)}" if low.endswith(".pdf") else str(int(st.st_mtime))
+                    sig[relpath] = str(int(st.st_mtime))
                 except OSError:
                     sig[relpath] = "f"
     sig["__normalizer_version__"] = str(_NORMALIZER_VERSION)
@@ -734,16 +695,16 @@ def default_scope_for(collection: str, source: str) -> bool:
     if collection == COLLECTION_COMPETENZE:
         if "/schede-bibliografiche/" in src or _is_build_artifact(src):
             return False
-        return ext in {".pdf", ".md"} and stem in _GUIDE_STEMS
+        return ext == ".md" and stem in _GUIDE_STEMS
     if collection == COLLECTION_FRAMEWORK:
         if "/graphify-out/" in src or "/schede-bibliografiche/" in src:
             return False
-        return ext in {".pdf", ".md"} and src.startswith("fonti/") and stem not in _GUIDE_STEMS
+        return ext == ".md" and src.startswith("fonti/") and stem not in _GUIDE_STEMS
     if collection == COLLECTION_QUESTIONARI:
         if "/graphify-out/" in src or "/schede-bibliografiche/" in src:
             return False
-        return ext in {".pdf", ".md"} and src.startswith("questionari/")
-    return ext in {".md", ".pdf"}
+        return ext == ".md" and src.startswith("questionari/")
+    return ext == ".md"
 
 
 def source_in_scope(collection: str, source: str, default_in_scope: bool | None = None) -> bool:
@@ -811,6 +772,8 @@ def _collect_direct_source(collection: str, source: str) -> tuple[list[dict], di
     if not path:
         return [], {}
     ext = os.path.splitext(path)[1].lower()
+    if ext != ".md":
+        return [], {}
     try:
         st = os.stat(path)
         sig = {src: f"{st.st_size}:{int(st.st_mtime)}"}
@@ -823,12 +786,6 @@ def _collect_direct_source(collection: str, source: str) -> tuple[list[dict], di
         except Exception as e:
             logger.warning("Impossibile leggere sorgente inclusa %s: %s", path, e)
             return [], sig
-    elif ext == ".pdf":
-        raw = _extract_pdf_text(path)
-        if not raw.strip():
-            logger.info("PDF incluso nello scope ma senza testo estraibile: %s", src)
-            return [], sig
-        text = _normalize_markdown(raw)
     else:
         return [], sig
     title = _first_heading(text) or os.path.splitext(os.path.basename(src))[0].replace("_", " ")
@@ -891,14 +848,14 @@ def _scoped_plain_signature(collection: str, docs_dir: str) -> dict[str, str]:
 
 
 def _collect_guides_only() -> tuple[list[dict], dict[str, str]]:
-    """Graphify: solo le guide PDF del progetto competenzestrategiche.it."""
+    """Graphify: solo le guide Markdown del progetto competenzestrategiche.it."""
     chunks, sig = _collect_corpus()
     return _filter_chunks(COLLECTION_COMPETENZE, chunks, sig,
         keep=lambda src: default_scope_for(COLLECTION_COMPETENZE, src))
 
 
 def _collect_framework() -> tuple[list[dict], dict[str, str]]:
-    """Graphify: tutti i PDF/markdown teorici tranne le guide."""
+    """Graphify: tutti i Markdown teorici tranne le guide."""
     chunks, sig = _collect_corpus()
     return _filter_chunks(COLLECTION_FRAMEWORK, chunks, sig,
         keep=lambda src: default_scope_for(COLLECTION_FRAMEWORK, src))
@@ -1336,7 +1293,7 @@ BUILTIN_COLLECTION_LABELS = {
 # Collezioni dinamiche (create dall'admin a runtime)
 # ---------------------------------------------------------------------------
 # Ogni collezione dinamica è una sottocartella di DYNAMIC_ROOT contenente
-# .md/.pdf (modalità plain, nessun grafo) più un file meta `.collection.json`
+# .md (modalità plain, nessun grafo) più un file meta `.collection.json`
 # ({"id": slug, "label": ...}). Gli indici vivono in INDEX_DIR con prefisso
 # `dyn_<slug>_` e sopravvivono al riavvio come quelli builtin.
 DYNAMIC_ROOT = os.environ.get(
@@ -1482,7 +1439,7 @@ def upload_dir_for(collection: str) -> str | None:
     """Cartella scrivibile in cui l'admin carica i documenti della collezione.
 
     Per le collezioni graphify i nuovi file sono comunque ingeriti direttamente
-    (pdftotext/markdown) al reindex; il grafo semantico va rigenerato a parte."""
+    (Markdown, dopo conversione dei PDF) al reindex; il grafo semantico va rigenerato a parte."""
     if collection == COLLECTION_COUNSELORBOT:
         return COUNSELORBOT_DOCS_DIR
     if collection == COLLECTION_QUESTIONARI:

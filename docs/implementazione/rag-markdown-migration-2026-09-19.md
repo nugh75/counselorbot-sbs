@@ -47,10 +47,12 @@ quattro collezioni, dopo aver distribuito il backend aggiornato. Il modello
 di embedding configurato rimane invariato. Gli indici precedenti sono stati
 copiati nell'archivio locale `rag-index-before/` prima della ricostruzione.
 
-Per ripristinare un documento: verificare l'hash del PDF archiviato con il
-manifest, ripristinarlo nel percorso `source`, spostare fuori dalle cartelle
-indicizzate il relativo `replacement` e ricostruire la collezione. La sola
-ricomparsa del PDF non basta: il Markdown omonimo mantiene la precedenza.
+Per ripristinare un derivato: verificare l'hash del Markdown archiviato con il
+manifest, ripristinarlo nel percorso `replacement` e ricostruire la collezione.
+Per rigenerarlo dal PDF, verificare l'hash dell'originale e convertirlo nuovamente
+prima della sostituzione. Gli indici ora accettano solo Markdown: rimettere il
+PDF nella cartella non lo rende indicizzabile. Per i nuovi caricamenti vale il
+[contratto di conversione automatica](rag-markdown-upload.md).
 
 Verifica mirata senza rete o database:
 

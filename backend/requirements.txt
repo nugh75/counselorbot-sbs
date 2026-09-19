@@ -20,6 +20,6 @@ pillow
 fpdf2
 numpy
 pypdf
-pymupdf
-pymupdf4llm
+pymupdf==1.28.2
+pymupdf4llm==1.28.2
 pytest
