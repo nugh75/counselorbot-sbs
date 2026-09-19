@@ -15,7 +15,7 @@ from backend.routes import tavolo
 @pytest.fixture
 def table_api(tmp_path, monkeypatch):
     engine = create_engine('sqlite://', connect_args={'check_same_thread': False}, poolclass=StaticPool)
-    for model in (models.Config, models.ModelPreset, models.Counselor, models.Tavolo, models.TavoloRevision):
+    for model in (models.Config, models.ModelPreset, models.Counselor, models.Tavolo, models.TavoloRevision, models.PersonalGoal, models.GoalResourceLink):
         model.__table__.create(engine)
     Session = sessionmaker(bind=engine)
     with Session() as db:

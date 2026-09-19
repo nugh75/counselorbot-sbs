@@ -2781,6 +2781,8 @@ def build_context_envelope(
 
     # --- [PROFILE] modello discente (auto-dichiarato) + PUNTEGGI (riferimento) ---
     username_for_context = identity.get("username", "") if identity else ""
+    from .goals import goals_context
+    goal_context = goals_context(db, username_for_context) if include_profile else ""
     profile_context = _learner_profile_context(db, username_for_context) if include_profile else ""
     portfolio_context = _portfolio_context(db, username_for_context) if include_profile else ""
     # Punteggi: nel turno di analisi arrivano nel messaggio utente, nei follow-up
@@ -2798,7 +2800,7 @@ def build_context_envelope(
             system_prompt_scores = ""
     else:
         system_prompt_scores = ""
-    profile_block = "\n\n".join(s for s in (profile_context, portfolio_context, system_prompt_scores) if s)
+    profile_block = "\n\n".join(s for s in (profile_context, portfolio_context, goal_context, system_prompt_scores) if s)
     if components is not None:
         components["profile"] = profile_block
         components["cognitive_factors"] = filter_scores_by_components(message_scores_context, questionnaire_type, {"cognitive_factors": True, "affective_factors": False})

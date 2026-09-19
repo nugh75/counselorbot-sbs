@@ -16,6 +16,8 @@ import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-track
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
+import { JourneyOverview } from '@/components/goals/JourneyOverview';
+import { goalText, type GoalTextKey } from '@/lib/i18n-goals';
 import { TavoloList } from '@/components/tavolo/TavoloList';
 import { CrossSynthesisCard } from '@/components/profile/CrossSynthesisCard';
 import { TelegramLinkCard } from '@/components/profile/TelegramLinkCard';
@@ -151,8 +153,8 @@ export default function ProfilePage() {
             return ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', ...EVENT_BOOKLET_TYPES];
         }
 
-        return [...completed, ...EVENT_BOOKLET_TYPES.filter((type) => !completed.includes(type))];
-    }, [sessions]);
+        return [...new Set([...completed, selectedBookletType, ...EVENT_BOOKLET_TYPES])];
+    }, [sessions, selectedBookletType]);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -173,7 +175,8 @@ export default function ProfilePage() {
                         ));
 
                         if (data.length > 0) {
-                            setSelectedBookletType(data[0].questionnaire_type as BookletType);
+                            const requested = new URLSearchParams(window.location.search).get('instrument');
+                            setSelectedBookletType((requested && [...Object.keys(QUESTIONNAIRES), ...EVENT_BOOKLET_TYPES].includes(requested) ? requested : data[0].questionnaire_type) as BookletType);
                         }
 
                         // Sync localStorage completed profiles
@@ -199,6 +202,8 @@ export default function ProfilePage() {
     }, []);
 
     useEffect(() => {
+        const requested = new URLSearchParams(window.location.search).get('instrument');
+        if (requested && [...Object.keys(QUESTIONNAIRES), ...EVENT_BOOKLET_TYPES].includes(requested)) setSelectedBookletType(requested as BookletType);
         void loadData();
     }, [loadData]);
 
@@ -466,8 +471,16 @@ export default function ProfilePage() {
                         </div>
                     </section>
 
-                    <nav className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label={t('profile.title')}>
-                        {personalAreas.map((area) => {
+                    <JourneyOverview />
+                    {([
+                        ['understand', ['notebook', 'booklet', 'sessions']],
+                        ['explore', ['tavolo']],
+                        ['document', ['timeline', 'portfolio']],
+                        ['support', ['groups', 'orientation', 'telegram']],
+                    ] as [GoalTextKey, string[]][]).map(([group, ids]) => <section key={group} className="space-y-3">
+                    <h2 className="text-lg font-bold text-slate-800">{goalText(lang, group)}</h2>
+                    <nav className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label={goalText(lang, group)}>
+                        {personalAreas.filter(area => ids.includes(area.id)).map((area) => {
                             const Icon = area.icon;
                             return (
                                 <Link
@@ -486,10 +499,13 @@ export default function ProfilePage() {
                                 </Link>
                             );
                         })}
+                        {group === 'explore' && (['board', 'cards', 'comparison'] as const).map(tab => <Link key={tab} href={`/profilo/timeline?tab=${tab}`} className="glass-panel min-h-28 p-5 hover:border-indigo-300"><span className="block font-bold text-slate-900">{visualLabel(lang, tab)}</span><span className="mt-1 block text-sm text-slate-500">{visualLabel(lang, `${tab}Purpose`)}</span></Link>)}
                     </nav>
+                    </section>)}
                 </>
             )}
 
+            {activeSection && ['notebook', 'booklet', 'portfolio', 'tavolo'].includes(activeSection) && <JourneyOverview kind={activeSection as 'notebook' | 'booklet' | 'portfolio' | 'tavolo'} />}
             {activeSection === 'notebook' && (
             <section className="space-y-4" aria-label={t('profile.about.title')}>
                 <LearnerProfileCard variant="edit" />

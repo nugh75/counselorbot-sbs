@@ -730,7 +730,9 @@ def analyze_turn(
     sources = _questionnaire_sources(lang)
     # Che cosa lo studente ha gia' fatto: senza, la Bussola raccomanda al buio
     # e sa di un questionario compilato solo se lo studente glielo scrive.
+    from .goals import goals_context
     student = student_context(db, username)
+    student += "\n" + goals_context(db, username)
     briefs = _tool_briefs(db, message, history, lang)
     current_cards = [{"id": item["id"], "reason": str(item.get("reason") or "")[:600]}
                      for item in (current_recommendations or []) if item.get("id") in TOOL_IDS][:3]
