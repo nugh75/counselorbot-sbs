@@ -1,7 +1,7 @@
 """Catalog authoring, voluntary adoption and links to owned personal resources."""
 import hashlib
 from datetime import date
-from sqlalchemy import text
+from sqlalchemy import text, and_, or_
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -12,7 +12,7 @@ from ..goals import (ActionCreate, CatalogWrite, GoalCreate, GoalWrite, LinkWrit
                      resources, validate_share)
 from ..personal_timeline import ensure_personal_timeline
 from ..visual_tools import load_workspace, save_workspace, SavePersonalWorkspace
-from .groups import _require_visible_group
+from .groups import _require_visible_group, _visible_group_query
 
 router = APIRouter()
 
@@ -26,7 +26,9 @@ def student_catalog(db: Session = Depends(database.get_db), user=Depends(auth.ge
 def teacher_catalog(db: Session = Depends(database.get_db), user=Depends(auth.get_current_plan_manager)):
     query = db.query(models.GoalCatalogEntry)
     if not user.get('is_admin'):
-        query = query.filter_by(author_username=user['username'])
+        groups = _visible_group_query(db, user).filter(models.StudentGroup.is_active.is_(True)).with_entities(models.StudentGroup.id)
+        query = query.filter(or_(models.GoalCatalogEntry.author_username == user['username'],
+            and_(models.GoalCatalogEntry.status == 'published', or_(models.GoalCatalogEntry.group_id.is_(None), models.GoalCatalogEntry.group_id.in_(groups)))))
     return [catalog_dict(row) for row in query.order_by(models.GoalCatalogEntry.id.desc()).all()]
 
 

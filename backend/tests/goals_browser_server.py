@@ -1,6 +1,7 @@
 """Opt-in browser fixture, isolated in a rolled-back counselorbot_test schema.
 Run only as a module; no production app import, models, credentials or AI calls.
 """
+import os
 from fastapi import FastAPI, Request
 import uvicorn
 from backend import auth, database, models
@@ -29,7 +30,7 @@ def main():
         @app.get('/fixture/groups')
         def groups():
             return [dict(id=group.id, name=group.name, code=group.code, is_active=True, members_count=7, shares_count=0)]
-        uvicorn.run(app, host='0.0.0.0', port=8096, log_level='warning')
+        uvicorn.run(app, host=os.getenv('GOALS_TEST_HOST', '0.0.0.0'), port=int(os.getenv('GOALS_TEST_PORT', '8096')), log_level='warning')
 
 
 if __name__ == '__main__':

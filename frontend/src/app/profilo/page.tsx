@@ -22,6 +22,8 @@ import { TavoloList } from '@/components/tavolo/TavoloList';
 import { CrossSynthesisCard } from '@/components/profile/CrossSynthesisCard';
 import { TelegramLinkCard } from '@/components/profile/TelegramLinkCard';
 import { TeacherNotesCard } from '@/components/profile/TeacherNotesCard';
+import { AssignmentsPanel } from '@/components/teacher/AssignmentsPanel';
+import { assignmentText } from '@/lib/i18n-assignments';
 import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
@@ -43,9 +45,10 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-type PersonalSection = 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo';
+type PersonalSection = 'assignments' | 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo';
 
 const PERSONAL_AREAS = [
+    { id: 'assignments', slug: 'assegnazioni', icon: ClipboardList, titleKey: 'received', descriptionKey: 'intro' },
     {
         id: 'notebook',
         slug: 'taccuino',
@@ -138,8 +141,8 @@ export default function ProfilePage() {
     const personalAreas = PERSONAL_AREAS.map((area) => ({
         ...area,
         href: `/profilo/${area.slug}`,
-        title: area.id === 'timeline' ? visualLabel(lang, area.titleKey) : t(area.titleKey),
-        description: area.id === 'timeline' ? visualLabel(lang, area.descriptionKey) : t(area.descriptionKey),
+        title: area.id === 'assignments' ? assignmentText(lang, 'received') : area.id === 'timeline' ? visualLabel(lang, area.titleKey) : t(area.titleKey),
+        description: area.id === 'assignments' ? assignmentText(lang, 'intro') : area.id === 'timeline' ? visualLabel(lang, area.descriptionKey) : t(area.descriptionKey),
     }));
     const activeArea = personalAreas.find((area) => area.id === activeSection) ?? null;
     const ActiveAreaIcon = activeArea?.icon;
@@ -476,7 +479,7 @@ export default function ProfilePage() {
                         ['understand', ['notebook', 'booklet', 'sessions']],
                         ['explore', ['tavolo']],
                         ['document', ['timeline', 'portfolio']],
-                        ['support', ['groups', 'orientation', 'telegram']],
+                        ['support', ['assignments', 'groups', 'orientation', 'telegram']],
                     ] as [GoalTextKey, string[]][]).map(([group, ids]) => <section key={group} className="space-y-3">
                     <h2 className="text-lg font-bold text-slate-800">{goalText(lang, group)}</h2>
                     <nav className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label={goalText(lang, group)}>
@@ -839,6 +842,7 @@ export default function ProfilePage() {
             </section>
             )}
 
+            {activeSection === 'assignments' && <AssignmentsPanel showHeading={false} />}
             {activeSection === 'groups' && <MyGroupsCard lang={lang} showHeading={false} canManageGroups={canUseTeacherAssistant(identity)} />}
 
             {activeSection === 'telegram' && <TelegramLinkCard lang={lang} showHeading={false} />}
