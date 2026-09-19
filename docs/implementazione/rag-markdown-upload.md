@@ -69,4 +69,5 @@ e una scansione attraverso l'endpoint HTTP, indicizzandoli con
 `qwen3-embedding:4b`. La ricerca reale ha restituito `text.md` e `scan.md`;
 anteprima HTTP 200 e collisione HTTP 409. La collezione di prova è stata rimossa.
 I quattro indici persistenti sono stati ricostruiti: 8.173 blocchi, tutte le
-sorgenti Markdown, nessun nuovo embedding necessario per il corpus esistente.
+sorgenti Markdown; riutilizzati 7.961 embedding in cache e rigenerati i 212
+blocchi della collezione delle guide.
