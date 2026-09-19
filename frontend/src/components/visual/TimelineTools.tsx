@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowDown, ArrowUp, BriefcaseBusiness, Flag, GraduationCap, Plus, Repeat2, Trash2, Unlink } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { AssignmentSource } from '@/components/teacher/AssignmentSource';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { TimelineCalendar } from './TimelineCalendar';
 import { TimelineDateFields } from './TimelineDateFields';
@@ -117,6 +118,7 @@ export function TimelineTools({ personal = false, sessionId, locale, work, edit,
                 {!personal && <div className="absolute -left-[23px] top-5 h-3 w-3 rounded-full bg-indigo-500" aria-hidden="true" />}
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <label className="flex min-h-[44px] items-center gap-2 text-sm"><input type="checkbox" checked={selectedIds.includes(event.id)} onChange={e => select(e.target.checked ? [...selectedIds, event.id] : selectedIds.filter(id => id !== event.id))} aria-label={`${l('selectEvent')}: ${event.title}`} /><Icon className="h-4 w-4" aria-hidden="true" />{index + 1}{!event.date_mode && !personal ? ` · ${l(event.tense)}` : ''}</label>
+                    {event.source && <p className="break-words text-xs text-slate-500"><AssignmentSource source={event.source} lang={locale} /></p>}
                     <div className="flex gap-1">{!personal && tool(`${l('moveUp')}: ${event.title}`, ArrowUp, () => edit(moveTimelineEvent(work, event.id, -1)), index === 0)}{!personal && tool(`${l('moveDown')}: ${event.title}`, ArrowDown, () => edit(moveTimelineEvent(work, event.id, 1)), index === timeline.events.length - 1)}{tool(`${l('remove')}: ${event.title}`, Trash2, () => edit({ ...work, timeline: { ...timeline, events: timeline.events.filter(e => e.id !== event.id) } }))}</div>
                 </div>
                 {event.institution_event && <p className="text-sm font-medium text-indigo-700">{l(event.institution_available === false ? 'unavailable' : 'institutionManaged')}{event.institution_date === 'deadline' ? ` · ${l('registrationDeadline')}` : ''}</p>}

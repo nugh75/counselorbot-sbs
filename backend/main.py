@@ -86,6 +86,7 @@ from .routes import guided_step_questions as guided_step_questions_routes
 from .routes import telegram as telegram_routes
 from .routes import groups as groups_routes
 from .routes import assignments as assignments_routes
+from .routes import assignment_work as assignment_work_routes
 from .routes import frozen_sessions as frozen_sessions_routes
 from .routes import idea_map as idea_map_routes
 from .routes import skills as skills_routes
@@ -1858,6 +1859,7 @@ app.include_router(guided_step_questions_routes.router)
 app.include_router(telegram_routes.router)
 app.include_router(groups_routes.router)
 app.include_router(assignments_routes.router)
+app.include_router(assignment_work_routes.router)
 app.include_router(frozen_sessions_routes.router)
 app.include_router(idea_map_routes.router)
 app.include_router(institutions_routes.router)

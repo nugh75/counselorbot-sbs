@@ -1,6 +1,8 @@
 'use client';
+import { AssignmentSource } from '@/components/teacher/AssignmentSource';
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import { ArrowRight, GitCommitHorizontal, BookMarked, BookOpen, Columns3, Download, LayoutList, Layers, MessageSquare, NotebookPen, Plus, RotateCcw, Save, Table2, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -316,17 +318,19 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             {!work.actions.length && <p className="py-5 text-center text-slate-600">{l('emptyBoard')}</p>}
                             <div className="grid gap-3 lg:grid-cols-3">{stages.map(stage => <section key={stage} aria-label={l(stage)} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
                                 <h3 className="mb-3 font-semibold text-slate-700">{l(stage)} <span className="font-mono text-sm text-slate-500">{work.actions.filter(a => a.stage === stage).length}</span></h3>
-                                <div className="space-y-3">{work.actions.filter(a => a.stage === stage).map(action => <article key={action.id} className="rounded-lg border border-slate-200 bg-white p-3">
+                                <div className="space-y-3">{work.actions.filter(a => a.stage === stage).map(action => {
+                                    const diary = /^\/profilo\/assegnazioni#assignment-\d+$/.test(action.source || '') ? work.timeline?.events.find(event => event.action_ids.includes(action.id)) : undefined;
+                                    return <article key={action.id} className="rounded-lg border border-slate-200 bg-white p-3">
                                     <label className="block text-sm">{l('titleField')}<input data-workspace-field required maxLength={160} value={action.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, title: e.target.value } : a) })} /></label>
                                     <label className="mt-3 block text-sm">{l('move')}<select id={`${id}-action-${action.id}`} aria-label={`${l('move')}: ${action.title}`} value={action.stage} className={`${inputClass} mt-1 min-h-[44px]`} onChange={e => { edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, stage: e.target.value as ActionStage } : a) }); focusMoved(`${id}-action-${action.id}`); }}>{stages.map(s => <option key={s} value={s}>{l(s)}</option>)}</select></label>
                                     <details className="mt-2"><summary className="min-h-[44px] cursor-pointer py-3 text-sm font-medium text-indigo-700">{l('detail')} · {l('reflection')}</summary>
                                         <label className="block text-sm">{l('actionKind')}<select className={`${inputClass} mt-1`} value={action.kind || 'activity'} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, kind: e.target.value as 'activity' | 'book' | 'article' | 'film' } : a) })}>{['activity', 'book', 'article', 'film'].map(kind => <option key={kind} value={kind}>{l(kind)}</option>)}</select></label>
                                         <label className="block text-sm">{l('detail')}<textarea value={action.detail} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, detail: e.target.value } : a) })} /></label>
-                                        <label className="mt-2 block text-sm">{l('reflection')}<textarea value={action.reflection} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>
-                                        <p className="mt-2 break-words text-xs text-slate-500">{l('source')}: {action.source || l('personal')}</p>
+                                        {diary ? <Link className="mt-2 block py-2 text-sm text-indigo-700 underline" href={`/profilo/timeline?event=${encodeURIComponent(diary.id)}`}>{l('reflection')} · {l('timeline')}</Link> : <label className="mt-2 block text-sm">{l('reflection')}<textarea value={action.reflection} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>}
+                                        <p className="mt-2 break-words text-xs text-slate-500">{l('source')}: <AssignmentSource source={action.source || l('personal')} lang={locale} /></p>
                                         {removeButton(action.title, () => edit(removeAction(work, action.id)))}
                                     </details>
-                                </article>)}</div>
+                                </article>; })}</div>
                             </section>)}</div>
                         </>}
                         {tab === 'cards' && <>

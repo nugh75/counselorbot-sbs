@@ -24,6 +24,7 @@ import { TelegramLinkCard } from '@/components/profile/TelegramLinkCard';
 import { TeacherNotesCard } from '@/components/profile/TeacherNotesCard';
 import { AssignmentsPanel } from '@/components/teacher/AssignmentsPanel';
 import { assignmentText } from '@/lib/i18n-assignments';
+import { learningText } from '@/lib/i18n-assignment-work';
 import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
@@ -509,6 +510,7 @@ export default function ProfilePage() {
             )}
 
             {activeSection && ['notebook', 'booklet', 'portfolio', 'tavolo'].includes(activeSection) && <JourneyOverview kind={activeSection as 'notebook' | 'booklet' | 'portfolio' | 'tavolo'} />}
+            {activeSection && ['notebook', 'sessions'].includes(activeSection) && <p className="rounded-lg border border-slate-200 p-3 text-sm text-slate-600">{learningText(lang, 'groupVisibility')}</p>}
             {activeSection === 'notebook' && (
             <section className="space-y-4" aria-label={t('profile.about.title')}>
                 <LearnerProfileCard variant="edit" />

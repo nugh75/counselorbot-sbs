@@ -1,7 +1,7 @@
 """Published catalog entries assigned to a group or an individual member."""
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -24,6 +24,9 @@ class AssignmentWrite(Strict):
     instructions: str = Field(default='', max_length=3000)
     language: Literal['it', 'en', 'es', 'fr', 'de', 'sv'] = 'it'
     request_id: str = Field(pattern=r'^[a-zA-Z0-9_-]{8,64}$')
+    intent: Literal['proposal', 'requested'] = 'proposal'
+    due_date: date | None = None
+    response_prompt: str = Field(default='', max_length=1500)
 
 
 def _snapshot(db, payload):
@@ -58,12 +61,15 @@ def _snapshot(db, payload):
                 source_reference=row.source_reference or '')
 
 
-def _record(row, recipient_count=None):
+def _record(row, recipient_count=None, settings=None):
     data = {key: getattr(row, key) for key in ('id', 'author_username', 'author_name', 'group_id',
             'group_name', 'source_kind', 'source_id', 'snapshot', 'instructions', 'created_at', 'revoked_at')}
     # The recipient list / individual target is available only to the sender.
     if recipient_count is not None:
         data.update(recipient_username=row.recipient_username, recipient_count=recipient_count)
+    data.update(intent=settings.intent if settings else 'proposal',
+                due_date=settings.due_date if settings else None,
+                response_prompt=settings.response_prompt if settings else '')
     return data
 
 
@@ -94,7 +100,12 @@ def targets(db: Session = Depends(database.get_db), user=Depends(auth.get_curren
 @router.post('/teacher/assignments', status_code=201)
 def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), user=Depends(auth.get_current_plan_manager)):
     group = _managed_group(db, user, payload.group_id)
-    digest = hashlib.sha256(json.dumps(payload.model_dump(), sort_keys=True).encode()).hexdigest()
+    values = payload.model_dump(mode='json')
+    # Preserve retries from clients predating the additive learning settings.
+    for field, default in [('intent', 'proposal'), ('due_date', None), ('response_prompt', '')]:
+        if values[field] == default:
+            values.pop(field)
+    digest = hashlib.sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
     # Serialize retries before checking the unique key, including concurrent requests.
     key = int.from_bytes(hashlib.sha256(f"assignment:{user['username']}:{payload.request_id}".encode()).digest()[:8], 'big', signed=True)
     db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
@@ -102,7 +113,7 @@ def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), use
     if existing:
         if existing.request_hash != digest:
             raise HTTPException(409, 'Request changed: use a new request id')
-        return _record(existing, _recipient_count(db, existing))
+        return _record(existing, _recipient_count(db, existing), db.get(models.AssignmentLearningSettings, existing.id))
     members = db.query(models.GroupMembership.username).filter_by(group_id=group.id)
     if payload.recipient_username is not None:
         members = members.filter_by(username=payload.recipient_username)
@@ -115,9 +126,12 @@ def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), use
         source_kind=payload.source_kind, source_id=payload.source_id, snapshot=snapshot,
         instructions=payload.instructions, request_id=payload.request_id, request_hash=digest)
     db.add(row); db.flush()
+    settings = models.AssignmentLearningSettings(assignment_id=row.id, intent=payload.intent,
+        due_date=payload.due_date, response_prompt=payload.response_prompt)
+    db.add(settings)
     db.add_all([models.AssignmentRecipient(assignment_id=row.id, username=name) for name in sorted(recipients)])
     db.commit(); db.refresh(row)
-    return _record(row, len(recipients))
+    return _record(row, len(recipients), settings)
 
 
 @router.get('/teacher/assignments')
@@ -125,7 +139,7 @@ def sent(db: Session = Depends(database.get_db), user=Depends(auth.get_current_p
     visible = _visible_group_query(db, user).filter(models.StudentGroup.is_active.is_(True)).with_entities(models.StudentGroup.id)
     rows = db.query(models.TeacherAssignment).filter(models.TeacherAssignment.author_username == user['username'],
         models.TeacherAssignment.group_id.in_(visible)).order_by(models.TeacherAssignment.id.desc()).all()
-    return [_record(row, _recipient_count(db, row)) for row in rows]
+    return [_record(row, _recipient_count(db, row), db.get(models.AssignmentLearningSettings, row.id)) for row in rows]
 
 
 @router.delete('/teacher/assignments/{assignment_id}')
@@ -150,4 +164,9 @@ def received(db: Session = Depends(database.get_db), user=Depends(auth.get_curre
         models.TeacherAssignment.revoked_at.is_(None),
         models.TeacherAssignment.group_id.in_(membership_ids(db, user['username'])),
     ).order_by(models.TeacherAssignment.id.desc()).all()
-    return [_record(row) for row in rows]
+    work = {w.assignment_id: w for w in db.query(models.AssignmentWork).filter_by(username=user['username']).all()}
+    return [{**_record(row, settings=db.get(models.AssignmentLearningSettings, row.id)),
+             'progress': dict(planned=bool(work.get(row.id) and work[row.id].action_id),
+                              shared=bool(work.get(row.id) and work[row.id].submission),
+                              feedback_available=bool(work.get(row.id) and work[row.id].submission and work[row.id].feedback))}
+            for row in rows]

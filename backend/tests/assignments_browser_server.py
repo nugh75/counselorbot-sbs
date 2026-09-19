@@ -3,7 +3,7 @@ import asyncio
 from fastapi import FastAPI, Request
 import uvicorn
 from backend import auth, database, models
-from backend.routes import assignments, goals, groups, certified_strategies, certified_readings
+from backend.routes import assignments, assignment_work, goals, groups, portfolio, visual_tools, certified_strategies, certified_readings
 from backend.tests.artifact_database import artifact_session
 
 
@@ -25,7 +25,7 @@ def main():
                                     why_i18n={'it': 'Confronta le scelte dei protagonisti'}, where_to_find='Biblioteca'),
         ]); db.commit()
         app = FastAPI()
-        for module in [assignments, goals, groups, certified_strategies, certified_readings]:
+        for module in [assignments, assignment_work, goals, groups, portfolio, visual_tools, certified_strategies, certified_readings]:
             app.include_router(module.router)
         def identity(request: Request):
             username = request.headers.get('x-test-user', 'alice')

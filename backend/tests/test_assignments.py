@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from backend import auth, database, models
 from backend.routes.assignments import router
+from backend.routes.assignment_work import router as work_router
 from backend.routes.goals import router as goals_router
 from backend.tests.artifact_database import artifact_session
 
@@ -12,7 +13,7 @@ from backend.tests.artifact_database import artifact_session
 def setup():
     with artifact_session() as db:
         identity = dict(username='teacher', name='Docente Uno', authenticated=True, is_admin=False, groups=['docenti'])
-        app = FastAPI(); app.include_router(router); app.include_router(goals_router)
+        app = FastAPI(); app.include_router(router); app.include_router(goals_router); app.include_router(work_router)
         app.dependency_overrides[database.get_db] = lambda: db
         app.dependency_overrides[auth.get_identity] = lambda: dict(identity)
         group = models.StudentGroup(name='Universitari', code='GR-ASSIGN', owner_username='teacher')

@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, DateTime, JSON, UniqueConstraint, ForeignKey
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, DateTime, JSON, UniqueConstraint, ForeignKey
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -496,6 +496,31 @@ class TeacherAssignment(Base):
     request_hash = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     revoked_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class AssignmentLearningSettings(Base):
+    """Additive settings; assignments predating this table remain proposals."""
+    __tablename__ = "assignment_learning_settings"
+    assignment_id = Column(Integer, ForeignKey("teacher_assignments.id", ondelete="CASCADE"), primary_key=True)
+    intent = Column(String, nullable=False, default="proposal")
+    due_date = Column(Date, nullable=True)
+    response_prompt = Column(Text, nullable=False, default="")
+
+
+class AssignmentWork(Base):
+    """Private workspace references and the student's explicitly shared snapshot."""
+    __tablename__ = "assignment_work"
+    __table_args__ = (UniqueConstraint("assignment_id", "username", name="uq_assignment_work_student"),)
+    id = Column(Integer, primary_key=True)
+    assignment_id = Column(Integer, ForeignKey("teacher_assignments.id", ondelete="CASCADE"), nullable=False, index=True)
+    username = Column(String, nullable=False, index=True)
+    action_id = Column(String, nullable=True)
+    event_id = Column(String, nullable=True)
+    revision = Column(Integer, nullable=False, default=1)
+    submission = Column(JSON, nullable=True)
+    submitted_at = Column(DateTime(timezone=True), nullable=True)
+    feedback = Column(Text, nullable=False, default="")
+    feedback_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class AssignmentRecipient(Base):

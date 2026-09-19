@@ -5,6 +5,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { goalText } from '@/lib/i18n-goals';
 import { goalApi, type PersonalGoal, type ResourceKind } from '@/lib/goals';
 import { GoalIssue } from './GoalUI';
+import { AssignmentJourney } from '@/components/teacher/AssignmentJourney';
 
 export function JourneyOverview({ kind }: { kind?: ResourceKind }) {
     const { lang } = useI18n(); const [goals, setGoals] = useState<PersonalGoal[]>([]); const [error, setError] = useState<unknown>(null); const [loaded, setLoaded] = useState(false);
@@ -17,6 +18,7 @@ export function JourneyOverview({ kind }: { kind?: ResourceKind }) {
         <GoalIssue error={error} lang={lang} retry={load} />
         {active.length > 0 ? <div className="flex flex-wrap gap-2">{active.slice(0, 6).map(g => <Link key={g.id} className="min-h-11 max-w-full break-words rounded-md border border-indigo-200 bg-white p-3 text-indigo-700" href={`/profilo/obiettivi?goal=${g.id}`}>{g.title}{!kind && g.review_date && <span className="mt-1 block text-xs text-slate-600">{goalText(lang, 'reviewDate')}: {g.review_date}</span>}</Link>)}</div> : loaded && !kind && <p className="text-sm text-slate-600">{goalText(lang, 'empty')}</p>}
         {!kind && next.length > 0 && <div><h3 className="mb-2 text-sm font-bold">{goalText(lang, 'next')}</h3><ul className="space-y-2">{next.map(action => <li key={action.target_id} className="text-sm"><Link className="text-indigo-700 underline" href={`/profilo/obiettivi?goal=${action.goal.id}`}>{action.title}</Link><span className="text-slate-600"> · {action.goal.title}</span></li>)}</ul></div>}
+        {!kind && <AssignmentJourney />}
         {!kind && <Link className="inline-block py-1 text-sm text-indigo-700 underline" href="/bussola">{goalText(lang, 'unsure')}</Link>}
     </section>;
 }

@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { assignmentText } from '@/lib/i18n-assignments';
+import { learningText } from '@/lib/i18n-assignment-work';
 
 type Source = { kind: 'goal' | 'strategy' | 'reading'; id: number; title: string; groupId?: number | null };
 type Group = { id: number; name: string; participants: { username: string; name: string }[] };
@@ -14,6 +15,7 @@ function AssignmentDialog({ source, close, saved }: { source: Source; close: () 
     const dialog = useRef<HTMLDialogElement>(null); const heading = useId();
     const [groups, setGroups] = useState<Group[]>([]); const [groupId, setGroupId] = useState('');
     const [recipient, setRecipient] = useState(''); const [instructions, setInstructions] = useState('');
+    const [intent, setIntent] = useState('proposal'); const [dueDate, setDueDate] = useState(''); const [responsePrompt, setResponsePrompt] = useState('');
     const [loading, setLoading] = useState(true); const [failed, setFailed] = useState(false); const [busy, setBusy] = useState(false);
     const request = useRef<{ body: string; id: string } | null>(null);
     const group = groups.find(row => String(row.id) === groupId);
@@ -35,7 +37,8 @@ function AssignmentDialog({ source, close, saved }: { source: Source; close: () 
         {!loading && !failed && !groups.length && <p>{l('emptyTargets')}</p>}
         <form onSubmit={async event => {
             event.preventDefault(); if (!group || busy) return;
-            const body = { source_kind: source.kind, source_id: source.id, group_id: group.id, recipient_username: recipient || null, instructions, language: lang };
+            const body = { source_kind: source.kind, source_id: source.id, group_id: group.id, recipient_username: recipient || null, instructions, language: lang,
+                intent, due_date: dueDate || null, response_prompt: responsePrompt };
             const signature = JSON.stringify(body);
             if (request.current?.body !== signature) request.current = { body: signature, id: crypto.randomUUID() };
             setBusy(true); setFailed(false);
@@ -52,6 +55,9 @@ function AssignmentDialog({ source, close, saved }: { source: Source; close: () 
                     <p className="text-sm text-slate-600">{l('recipients')}: {recipient ? 1 : group.participants.length}. {!recipient && l('current')}</p>
                 </>}
                 <label className="block text-sm font-medium">{l('instructions')}<textarea rows={3} maxLength={3000} className={input} value={instructions} onChange={e => setInstructions(e.target.value)} /></label>
+                <label className="block text-sm font-medium">{learningText(lang, 'intent')}<select className={input} value={intent} onChange={e => setIntent(e.target.value)}>{(['proposal', 'requested'] as const).map(value => <option key={value} value={value}>{learningText(lang, value)}</option>)}</select></label>
+                <label className="block text-sm font-medium">{learningText(lang, 'dueDate')}<input type="date" className={input} value={dueDate} onChange={e => setDueDate(e.target.value)} /></label>
+                <label className="block text-sm font-medium">{learningText(lang, 'responsePrompt')}<textarea rows={2} maxLength={1500} className={input} value={responsePrompt} onChange={e => setResponsePrompt(e.target.value)} /></label>
                 <div className="flex flex-wrap gap-3">
                     <button disabled={!group || busy} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{l('send')}</button>
                     <button type="button" onClick={close} className="rounded-md border border-slate-300 px-4 py-2 text-sm">{l('cancel')}</button>
