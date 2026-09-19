@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { apiFetch } from '@/lib/auth';
 import { Users, LogOut } from 'lucide-react';
 
@@ -16,40 +17,46 @@ interface MyGroup {
 // Local copy is complete for every supported interface language.
 const TEXTS = {
     it: {
-        title: 'Le mie classi',
-        leave: 'Esci dalla classe',
+        manage: 'Per configurare obiettivi, gestire gruppi e classi e aggiornare i cataloghi, vai all’Area docenti.',
+        title: "Gruppi e classi a cui partecipo",
+        leave: "Lascia il gruppo o la classe",
         via: 'iscritto via',
-        joinPlaceholder: 'Codice classe (es. GR-ABC123)',
+        joinPlaceholder: "Codice di invito (GR-ABC123)",
         join: 'Entra',
-        joinError: 'Codice classe non valido.',
+        joinError: "Codice di invito non valido.",
     },
     en: {
-        title: 'My classes',
-        leave: 'Leave the class',
+        manage: 'To configure goals, manage groups and classes, and update catalogs, go to the Teacher area.',
+        title: "Groups and classes I participate in",
+        leave: "Leave the group or class",
         via: 'joined via',
-        joinPlaceholder: 'Class code (e.g. GR-ABC123)',
+        joinPlaceholder: "Invitation code (GR-ABC123)",
         join: 'Join',
-        joinError: 'Invalid class code.',
+        joinError: "Invalid invitation code.",
     },
     es: {
-        title: 'Mis clases', leave: 'Salir de la clase', via: 'inscrito mediante',
-        joinPlaceholder: 'Código de clase (p. ej., GR-ABC123)', join: 'Entrar', joinError: 'Código de clase no válido.',
+        manage: 'Para configurar objetivos, gestionar grupos y clases y actualizar los catálogos, ve al Área docente.',
+        title: "Grupos y clases en los que participo", leave: "Salir del grupo o de la clase", via: 'inscrito mediante',
+        joinPlaceholder: "Código de invitación (GR-ABC123)", join: 'Entrar', joinError: "Código de invitación no válido.",
     },
     fr: {
-        title: 'Mes classes', leave: 'Quitter la classe', via: 'inscrit via',
-        joinPlaceholder: 'Code de classe (ex. GR-ABC123)', join: 'Rejoindre', joinError: 'Code de classe non valide.',
+        manage: 'Pour configurer les objectifs, gérer les groupes et les classes et enrichir les catalogues, accède à l’Espace enseignant.',
+        title: "Groupes et classes auxquels je participe", leave: "Quitter le groupe ou la classe", via: 'inscrit via',
+        joinPlaceholder: "Code d’invitation (GR-ABC123)", join: 'Rejoindre', joinError: "Code d’invitation non valide.",
     },
     de: {
-        title: 'Meine Klassen', leave: 'Klasse verlassen', via: 'beigetreten über',
-        joinPlaceholder: 'Klassencode (z. B. GR-ABC123)', join: 'Beitreten', joinError: 'Ungültiger Klassencode.',
+        manage: 'Um Ziele festzulegen, Gruppen und Klassen zu verwalten und Kataloge zu bearbeiten, öffne den Lehrkräftebereich.',
+        title: "Gruppen und Klassen, an denen ich teilnehme", leave: "Gruppe oder Klasse verlassen", via: 'beigetreten über',
+        joinPlaceholder: "Einladungscode (GR-ABC123)", join: 'Beitreten', joinError: "Ungültiger Einladungscode.",
     },
     sv: {
-        title: 'Mina klasser', leave: 'Lämna klassen', via: 'gick med via',
-        joinPlaceholder: 'Klasskod (t.ex. GR-ABC123)', join: 'Gå med', joinError: 'Ogiltig klasskod.',
+        manage: 'För att konfigurera mål, hantera grupper och klasser och uppdatera kataloger, gå till Lärarområdet.',
+        title: "Grupper och klasser jag deltar i", leave: "Lämna gruppen eller klassen", via: 'gick med via',
+        joinPlaceholder: "Inbjudningskod (GR-ABC123)", join: 'Gå med', joinError: "Ogiltig inbjudningskod.",
     },
 };
 
-export function MyGroupsCard({ lang, showHeading = true }: { lang: string; showHeading?: boolean }) {
+export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false }: { lang: string; showHeading?: boolean; canManageGroups?: boolean }) {
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [groups, setGroups] = useState<MyGroup[]>([]);
     const [joinCode, setJoinCode] = useState('');
@@ -104,6 +111,11 @@ export function MyGroupsCard({ lang, showHeading = true }: { lang: string; showH
                     <h2 id="my-groups-section" className="text-lg font-bold text-slate-800">{texts.title}</h2>
                 </div>
             )}
+            {canManageGroups && (
+                <Link href="/docente" className="block text-sm text-indigo-700 underline underline-offset-2">
+                    {texts.manage}
+                </Link>
+            )}
             <ul className="space-y-2">
                 {groups.map((group) => (
                     <li key={group.membership_id} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">
@@ -130,7 +142,8 @@ export function MyGroupsCard({ lang, showHeading = true }: { lang: string; showH
                     value={joinCode}
                     onChange={(event) => setJoinCode(event.target.value)}
                     placeholder={texts.joinPlaceholder}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm"
+                    aria-label={texts.joinPlaceholder}
+                    className="min-w-0 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-sm"
                 />
                 <button
                     type="button"

@@ -7,11 +7,12 @@ let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser?.close(); });
 
-async function prepare(page, { teacher = true, lang = 'it', dark = false } = {}) {
+async function prepare(page, { teacher = true, lang = 'it', dark = false, path = '/docente' } = {}) {
     page.setDefaultTimeout(10000);
     const writes = [];
     const errors = [];
     const rows = { strategies: [], readings: [] };
+    let memberships = [{ membership_id: 71, group_id: 91, code: 'GR-ADULTI', name: 'Formazione adulti', joined_via: 'web', joined_at: null }];
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(({ lang, dark }) => {
         localStorage.setItem('cb_lang', lang);
@@ -41,13 +42,59 @@ async function prepare(page, { teacher = true, lang = 'it', dark = false } = {})
                 data = { ...body, id: rows[kind].length + 1 };
                 rows[kind].push(data);
             } else data = rows[kind];
+        } else if (url.pathname === '/api/user/groups' && request.method() === 'GET') {
+            data = memberships;
+        } else if (url.pathname === '/api/groups/join' && request.method() === 'POST') {
+            const body = request.postDataJSON();
+            writes.push({ kind: 'membership-join', body });
+            const member = { membership_id: 72, group_id: 92, code: body.code, name: 'Laboratorio universitario', joined_via: 'web', joined_at: null };
+            memberships.push(member);
+            data = member;
+        } else if (url.pathname === '/api/user/groups/71' && request.method() === 'DELETE') {
+            writes.push({ kind: 'membership-leave', membership_id: 71 });
+            memberships = memberships.filter(member => member.membership_id !== 71);
+            data = { ok: true };
         } else if (request.method() !== 'GET') {
             throw new Error(`Unexpected write: ${request.method()} ${url.pathname}`);
         }
         return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
     });
-    await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
+    await page.goto(`${origin}${path}`, { waitUntil: 'networkidle' });
     return { writes, errors };
+}
+
+for (const scenario of [{ width: 1440, teacher: true }, { width: 390, teacher: true }, { width: 390, teacher: false }]) {
+    test(`personal membership remains distinct from management: ${scenario.width}px, teacher=${scenario.teacher}`, async () => {
+        const page = await browser.newPage({ viewport: { width: scenario.width, height: 950 } });
+        try {
+            const { writes, errors } = await prepare(page, { ...scenario, path: '/profilo/classi', dark: scenario.width === 390 });
+            await page.getByRole('heading', { name: 'Gruppi e classi a cui partecipo', exact: true }).waitFor();
+            await page.getByText(/Qui sei iscritto come partecipante, anche se sei docente/).waitFor();
+            const membership = page.getByRole('region', { name: 'Gruppi e classi a cui partecipo', exact: true });
+            await membership.getByText('Formazione adulti', { exact: true }).waitFor();
+            const management = membership.getByRole('link', { name: /vai all’Area docenti/ });
+            assert.equal(await management.count(), scenario.teacher ? 1 : 0);
+            await membership.getByRole('textbox', { name: /Codice di invito/ }).fill('GR-UNIVERSITA');
+            await membership.getByRole('button', { name: 'Entra', exact: true }).click();
+            await membership.getByText('Laboratorio universitario', { exact: true }).waitFor();
+            await membership.getByRole('listitem').filter({ hasText: 'Formazione adulti' }).getByRole('button', { name: 'Lascia il gruppo o la classe' }).click();
+            await membership.getByText('Formazione adulti', { exact: true }).waitFor({ state: 'detached' });
+            assert.deepEqual(writes, [{ kind: 'membership-join', body: { code: 'GR-UNIVERSITA' } }, { kind: 'membership-leave', membership_id: 71 }]);
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+            if (scenario.teacher) {
+                await management.click();
+                await page.getByRole('heading', { name: 'Catalogo obiettivi', exact: true }).waitFor();
+                await page.getByRole('heading', { name: 'Gruppi e classi che gestisco', exact: true }).waitFor();
+                await page.getByRole('button', { name: 'Nuovo gruppo o classe', exact: true }).click();
+                await page.getByPlaceholder('Nome (es. 3B, universitari, formazione adulti)').waitFor();
+                assert.equal(await page.locator('option').filter({ hasText: /^Adulti$/ }).count(), 1);
+                assert.equal(await page.locator('option').filter({ hasText: /^Università$/ }).count(), 1);
+                assert.equal(await page.locator('a[href="/admin"]').count(), 0);
+                assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+            }
+            assert.deepEqual(errors, []);
+        } finally { await page.close(); }
+    });
 }
 
 for (const scenario of [{ width: 1440, height: 1000, dark: false }, { width: 390, height: 844, dark: true }]) {

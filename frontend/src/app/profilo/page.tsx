@@ -7,7 +7,7 @@ import { visualLabel } from '@/lib/i18n-visual-tools';
 import { useI18n } from '@/lib/i18n-context';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
-import { canUsePersonalPage } from '@/lib/roles';
+import { canUsePersonalPage, canUseTeacherAssistant } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { toast } from '@/components/ui/Toast';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -839,7 +839,7 @@ export default function ProfilePage() {
             </section>
             )}
 
-            {activeSection === 'groups' && <MyGroupsCard lang={lang} showHeading={false} />}
+            {activeSection === 'groups' && <MyGroupsCard lang={lang} showHeading={false} canManageGroups={canUseTeacherAssistant(identity)} />}
 
             {activeSection === 'telegram' && <TelegramLinkCard lang={lang} showHeading={false} />}
 

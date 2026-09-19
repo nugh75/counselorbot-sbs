@@ -6182,9 +6182,9 @@ const counselorExtrasIt: Dict = {
     'admin.presets.reloadModels': 'Ricarica modelli',
     'admin.presets.useList': 'Usa elenco modelli',
     'admin.presets.useManual': 'Inserisci modello manualmente',
-    'admin.ap.class': 'Classe',
-    'admin.ap.noClass': '- nessuna classe',
-    'admin.ap.students': 'Studenti',
+    'admin.ap.class': "Gruppo o classe",
+    'admin.ap.noClass': "— Nessun gruppo o classe",
+    'admin.ap.students': "Partecipanti",
 };
 
 const counselorExtrasEn: Dict = {
@@ -6213,9 +6213,9 @@ const counselorExtrasEn: Dict = {
     'admin.presets.reloadModels': 'Reload models',
     'admin.presets.useList': 'Use model list',
     'admin.presets.useManual': 'Enter model manually',
-    'admin.ap.class': 'Class',
-    'admin.ap.noClass': '- no class',
-    'admin.ap.students': 'Students',
+    'admin.ap.class': "Group or class",
+    'admin.ap.noClass': "— No group or class",
+    'admin.ap.students': "Participants",
 };
 
 const counselorExtrasEs: Dict = {
@@ -6244,9 +6244,9 @@ const counselorExtrasEs: Dict = {
     'admin.presets.reloadModels': 'Recargar modelos',
     'admin.presets.useList': 'Usar lista de modelos',
     'admin.presets.useManual': 'Introducir el modelo manualmente',
-    'admin.ap.class': 'Clase',
-    'admin.ap.noClass': '- ninguna clase',
-    'admin.ap.students': 'Estudiantes',
+    'admin.ap.class': "Grupo o clase",
+    'admin.ap.noClass': "— Ningún grupo o clase",
+    'admin.ap.students': "Participantes",
 };
 
 const counselorExtrasFr: Dict = {
@@ -6275,9 +6275,9 @@ const counselorExtrasFr: Dict = {
     'admin.presets.reloadModels': 'Recharger les modèles',
     'admin.presets.useList': 'Utiliser la liste des modèles',
     'admin.presets.useManual': 'Saisir le modèle manuellement',
-    'admin.ap.class': 'Classe',
-    'admin.ap.noClass': '- aucune classe',
-    'admin.ap.students': 'Étudiants',
+    'admin.ap.class': "Groupe ou classe",
+    'admin.ap.noClass': "— Aucun groupe ou classe",
+    'admin.ap.students': "Participants",
 };
 
 const counselorExtrasDe: Dict = {
@@ -6306,9 +6306,9 @@ const counselorExtrasDe: Dict = {
     'admin.presets.reloadModels': 'Modelle neu laden',
     'admin.presets.useList': 'Modellliste verwenden',
     'admin.presets.useManual': 'Modell manuell eingeben',
-    'admin.ap.class': 'Klasse',
-    'admin.ap.noClass': '- keine Klasse',
-    'admin.ap.students': 'Lernende',
+    'admin.ap.class': "Gruppe oder Klasse",
+    'admin.ap.noClass': "— Keine Gruppe oder Klasse",
+    'admin.ap.students': "Teilnehmende",
 };
 
 const counselorExtrasSv: Dict = {
@@ -6337,9 +6337,9 @@ const counselorExtrasSv: Dict = {
     'admin.presets.reloadModels': 'Ladda om modeller',
     'admin.presets.useList': 'Använd modellistan',
     'admin.presets.useManual': 'Ange modell manuellt',
-    'admin.ap.class': 'Klass',
-    'admin.ap.noClass': '- ingen klass',
-    'admin.ap.students': 'Studenter',
+    'admin.ap.class': "Grupp eller klass",
+    'admin.ap.noClass': "— Ingen grupp eller klass",
+    'admin.ap.students': "Deltagare",
 };
 
 export const ADMIN_DICTS: Record<Lang, Dict> = {
