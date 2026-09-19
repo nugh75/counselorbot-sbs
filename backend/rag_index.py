@@ -100,8 +100,7 @@ EXCLUDED_PREFIXES = (
     "image/",
 )
 
-# Cartelle (relative a docs/) da cui ingerire i PDF direttamente (estrazione testo
-# via pdftotext) quando non esiste una versione markdown convertita da graphify.
+# Cartelle con sorgenti dirette. Il Markdown prevale su PDF e derivati Graphify.
 PDF_INCLUDE_DIRS = ("fonti", "questionari", "validazione")
 
 # I 6 libri di riferimento voluminosi → categoria "approfondimenti" (peso basso),
@@ -349,6 +348,29 @@ def _build_basename_to_relpath() -> dict[str, str]:
     return out
 
 
+def _direct_markdown_sources() -> dict[str, str]:
+    """Markdown canonici, esclusi report e cache Graphify."""
+    sources = {}
+    for subdir in PDF_INCLUDE_DIRS:
+        for root, dirs, files in os.walk(os.path.join(DOCS_DIR, subdir)):
+            dirs[:] = [d for d in dirs if d != "graphify-out"]
+            for name in files:
+                if not name.lower().endswith(".md"):
+                    continue
+                path = os.path.join(root, name)
+                source = os.path.relpath(path, DOCS_DIR).replace("\\", "/")
+                if not _is_excluded(source):
+                    sources[source] = path
+    return sources
+
+
+def _markdown_replacement(source: str, markdown_sources: dict[str, str]) -> str | None:
+    candidate = os.path.splitext(source)[0] + ".md"
+    if source.lower().endswith((".pdf", ".md")) and candidate in markdown_sources:
+        return candidate
+    return None
+
+
 def _load_graph():
     """Aggrega i JSON del grafo semantico graphify.
 
@@ -360,6 +382,7 @@ def _load_graph():
     node_to_relpath: dict[str, str] = {}
     if not os.path.isdir(SEMANTIC_DIR):
         return adjacency, relpath_to_node, node_to_relpath
+    markdown_sources = _direct_markdown_sources()
     for name in os.listdir(SEMANTIC_DIR):
         if not name.endswith(".json"):
             continue
@@ -371,6 +394,7 @@ def _load_graph():
         for node in data.get("nodes", []):
             nid = node.get("id")
             rp = _relpath_from_source(node.get("source_file", ""))
+            rp = _markdown_replacement(rp, markdown_sources) or rp
             if nid and rp:
                 node_to_relpath[nid] = rp
                 relpath_to_node[rp] = nid
@@ -389,14 +413,11 @@ def _collect_corpus() -> tuple[list[dict], dict[str, str]]:
     {id, source, title, text} e signature è {filename: hash8} (firma corpus)."""
     chunks: list[dict] = []
     signature: dict[str, str] = {}
-    if not os.path.isdir(CONVERTED_DIR):
-        logger.warning("Cartella converted assente: %s", CONVERTED_DIR)
-        return chunks, signature
-
+    markdown_sources = _direct_markdown_sources()
     hash_to_relpath = _load_hash_to_relpath()
     basename_to_relpath = _build_basename_to_relpath()
 
-    for filename in sorted(os.listdir(CONVERTED_DIR)):
+    for filename in sorted(os.listdir(CONVERTED_DIR) if os.path.isdir(CONVERTED_DIR) else []):
         if not filename.endswith(".md"):
             continue
         hash8 = _hash8_from_converted_name(filename)
@@ -414,8 +435,7 @@ def _collect_corpus() -> tuple[list[dict], dict[str, str]]:
             relpath = basename_to_relpath.get(stem, "")
         if not relpath:
             relpath = filename  # fallback: usa il nome convertito
-        if _is_excluded(relpath):
-            logger.info("Corpus: escluso %s", relpath)
+        if _is_excluded(relpath) or _markdown_replacement(relpath, markdown_sources):
             continue
 
         path = os.path.join(CONVERTED_DIR, filename)
@@ -435,7 +455,7 @@ def _collect_corpus() -> tuple[list[dict], dict[str, str]]:
                 "title": title,
                 "text": chunk_text,
             })
-    # --- PDF ingeriti direttamente (quando manca una versione convertita) ---
+    # --- Sorgenti dirette: Markdown canonico oppure PDF di fallback ---
     covered_sources = {c["source"] for c in chunks}
     for subdir in PDF_INCLUDE_DIRS:
         base = os.path.join(DOCS_DIR, subdir)
@@ -443,11 +463,13 @@ def _collect_corpus() -> tuple[list[dict], dict[str, str]]:
             continue
         for root, _dirs, files in os.walk(base):
             for fn in sorted(files):
-                if not fn.lower().endswith(".pdf"):
+                if not fn.lower().endswith((".pdf", ".md")):
                     continue
                 abspath = os.path.join(root, fn)
                 relpath = os.path.relpath(abspath, DOCS_DIR).replace("\\", "/")
-                if _is_excluded(relpath):
+                if _is_excluded(relpath) or _is_build_artifact(relpath):
+                    continue
+                if fn.lower().endswith(".pdf") and _markdown_replacement(relpath, markdown_sources):
                     continue
                 # Firma registrata SEMPRE (anche se saltato), per combaciare con
                 # _corpus_signature ed evitare rebuild perpetui.
@@ -458,12 +480,16 @@ def _collect_corpus() -> tuple[list[dict], dict[str, str]]:
                     signature[relpath] = "pdf"
                 if relpath in covered_sources:
                     continue
-                raw = _extract_pdf_text(abspath)
+                if fn.lower().endswith(".md"):
+                    with open(abspath, encoding="utf-8") as stream:
+                        raw = stream.read()
+                else:
+                    raw = _extract_pdf_text(abspath)
                 if not raw.strip():
                     logger.info("PDF senza testo estraibile (saltato): %s", relpath)
                     continue
                 text = _normalize_markdown(raw)
-                title = os.path.splitext(fn)[0].replace("_", " ")
+                title = _first_heading(text) or os.path.splitext(fn)[0].replace("_", " ")
                 doc_chunks = _chunk_markdown(text)
                 logger.info("PDF ingerito: %s (%d chunk)", relpath, len(doc_chunks))
                 for i, chunk_text in enumerate(doc_chunks):
@@ -494,6 +520,7 @@ def _corpus_signature() -> dict[str, str]:
     leggere/estate i contenuti. Deve combaciare con la signature prodotta da
     _collect_corpus, così needs_rebuild non ri-estrae i PDF a ogni query."""
     sig: dict[str, str] = {}
+    markdown_sources = _direct_markdown_sources()
     if os.path.isdir(CONVERTED_DIR):
         hash_to_relpath = _load_hash_to_relpath()
         basename_to_relpath = _build_basename_to_relpath()
@@ -512,7 +539,7 @@ def _corpus_signature() -> dict[str, str]:
                 relpath = basename_to_relpath.get(stem, "")
             if not relpath:
                 relpath = filename
-            if _is_excluded(relpath):
+            if _is_excluded(relpath) or _markdown_replacement(relpath, markdown_sources):
                 continue
             path = os.path.join(CONVERTED_DIR, filename)
             sig[filename] = hash8 or str(int(os.path.getmtime(path)))
@@ -522,10 +549,12 @@ def _corpus_signature() -> dict[str, str]:
             continue
         for root, _dirs, files in os.walk(base):
             for fn in sorted(files):
-                if not fn.lower().endswith(".pdf"):
+                if not fn.lower().endswith((".pdf", ".md")):
                     continue
                 relpath = os.path.relpath(os.path.join(root, fn), DOCS_DIR).replace("\\", "/")
-                if _is_excluded(relpath):
+                if _is_excluded(relpath) or _is_build_artifact(relpath):
+                    continue
+                if fn.lower().endswith(".pdf") and _markdown_replacement(relpath, markdown_sources):
                     continue
                 try:
                     st = os.stat(os.path.join(root, fn))
@@ -573,6 +602,8 @@ def _collect_plain_corpus(docs_dir: str) -> tuple[list[dict], dict[str, str]]:
             relpath = os.path.relpath(abspath, docs_dir).replace("\\", "/")
             if _is_build_artifact(relpath):
                 continue
+            if low.endswith(".pdf") and os.path.isfile(os.path.splitext(abspath)[0] + ".md"):
+                continue
             if low.endswith(".md"):
                 try:
                     with open(abspath, encoding="utf-8") as f:
@@ -615,6 +646,8 @@ def _plain_signature(docs_dir: str) -> dict[str, str]:
                     continue
                 relpath = os.path.relpath(os.path.join(root, fn), docs_dir).replace("\\", "/")
                 if _is_build_artifact(relpath):
+                    continue
+                if fn.lower().endswith(".pdf") and os.path.isfile(os.path.splitext(os.path.join(root, fn))[0] + ".md"):
                     continue
                 try:
                     st = os.stat(os.path.join(root, fn))
@@ -667,7 +700,14 @@ def _scope_entry(data: dict, collection: str) -> dict:
 def _scope_sources(collection: str, key: str) -> set[str]:
     entry = _load_scope_config().get(collection, {})
     values = entry.get(key, []) if isinstance(entry, dict) else []
-    return {_normalize_source(v) for v in values if _normalize_source(v)}
+    sources = {_normalize_source(v) for v in values if _normalize_source(v)}
+    for source in tuple(sources):
+        if source.lower().endswith(".pdf"):
+            replacement = os.path.splitext(source)[0] + ".md"
+            if _resolve_collection_source(collection, replacement):
+                sources.discard(source)
+                sources.add(replacement)
+    return sources
 
 
 def _scope_signature(collection: str) -> str:
@@ -681,16 +721,28 @@ def default_scope_for(collection: str, source: str) -> bool:
     src = _normalize_source(source).lower()
     stem = os.path.splitext(os.path.basename(src))[0]
     ext = os.path.splitext(src)[1]
+    if collection in {COLLECTION_COMPETENZE, COLLECTION_FRAMEWORK, COLLECTION_QUESTIONARI} and ext == ".md":
+        # Replacing PDFs must not also enroll existing README/bibliography files.
+        # Hand-authored Markdown remains available through explicit admin scope.
+        path = _resolve_collection_source(collection, source)
+        try:
+            with open(path, encoding="utf-8") as stream:
+                if stream.read(12) != "<!-- pdf2md ":
+                    return False
+        except (OSError, TypeError):
+            return False
     if collection == COLLECTION_COMPETENZE:
-        return ext == ".pdf" and stem in _GUIDE_STEMS
+        if "/schede-bibliografiche/" in src or _is_build_artifact(src):
+            return False
+        return ext in {".pdf", ".md"} and stem in _GUIDE_STEMS
     if collection == COLLECTION_FRAMEWORK:
         if "/graphify-out/" in src or "/schede-bibliografiche/" in src:
             return False
-        return ext == ".pdf" and src.startswith("fonti/") and stem not in _GUIDE_STEMS
+        return ext in {".pdf", ".md"} and src.startswith("fonti/") and stem not in _GUIDE_STEMS
     if collection == COLLECTION_QUESTIONARI:
         if "/graphify-out/" in src or "/schede-bibliografiche/" in src:
             return False
-        return ext == ".pdf" and src.startswith("questionari/")
+        return ext in {".pdf", ".md"} and src.startswith("questionari/")
     return ext in {".md", ".pdf"}
 
 
@@ -726,8 +778,13 @@ def set_source_scope(collection: str, source: str, in_scope: bool) -> dict:
         entry = _scope_entry(data, collection)
         include = {_normalize_source(v) for v in entry.get("include", []) if _normalize_source(v)}
         exclude = {_normalize_source(v) for v in entry.get("exclude", []) if _normalize_source(v)}
-        include.discard(src)
-        exclude.discard(src)
+        aliases = {src}
+        if src.lower().endswith((".pdf", ".md")):
+            aliases.update(value for value in include | exclude
+                           if os.path.splitext(value)[0] == os.path.splitext(src)[0]
+                           and os.path.splitext(value)[1].lower() in {".pdf", ".md"})
+        include.difference_update(aliases)
+        exclude.difference_update(aliases)
         if in_scope:
             include.add(src)
         else:
@@ -1497,6 +1554,10 @@ def _plain_document_preview(source: str, docs_dir: str):
     """Anteprima per una collezione plain: PDF originale o markdown del file."""
     low = source.lower()
     p = _safe_doc_abspath(source, docs_dir)
+    if p and not os.path.isfile(p) and low.endswith(".pdf"):
+        source = os.path.splitext(source)[0] + ".md"
+        low = source.lower()
+        p = _safe_doc_abspath(source, docs_dir)
     if not p or not os.path.isfile(p):
         return None
     if low.endswith(".pdf"):
