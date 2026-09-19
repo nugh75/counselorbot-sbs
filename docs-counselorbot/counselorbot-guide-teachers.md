@@ -4,6 +4,24 @@ This guide describes how teachers, researchers, and administrators use the
 CounselorBot platform. It covers the **platform's operation**, not the theory of
 strategic competences (for that, consult the "Strategic Competences" knowledge base).
 
+## Teacher catalogs
+
+The teacher area (`/docente`) includes **Catalogs**, with separate expandable
+sections for **Strategies** and **Books, films and other resources**. Teachers,
+researchers, and administrators curate the same shared catalogs: they can add,
+edit, publish, deactivate, or delete entries. Teachers publish directly, without
+administrator approval. This editorial permission does not grant access to
+technical settings or modification/validation of psychometric questionnaires.
+
+Choose **Draft** to keep unfinished work, or **Published** and save to make it
+eligible for student recommendations. Publication preserves the existing checks
+for educational relevance, sources, and sensitive content; actual recommendations
+still depend on the student's context. Publishing a previously saved draft also
+publishes its complete source-language version and records the publisher. Other
+existing language versions retain their individual review status, which teachers
+can manage from the same editor. Closing a catalog section keeps an unsaved form
+while the page remains open.
+
 ## Administration console
 
 Users with administrator or researcher roles (groups containing "ricerc"/"research" or

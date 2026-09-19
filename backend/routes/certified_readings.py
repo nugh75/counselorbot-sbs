@@ -1,6 +1,6 @@
-"""Catalogo delle letture certificate: CRUD admin, verifica e certificazione.
+"""Catalogo delle letture certificate: gestione editoriale, verifica e pubblicazione.
 
-Le voci nascono in bozza. Entrano nella chat dello studente solo quando un admin
+Le voci nascono in bozza. Entrano nella chat dello studente quando un docente, ricercatore o amministratore
 le porta a `certified`, e la certificazione e' bloccata finche' mancano i dati
 minimi: un tema del vocabolario, il motivo della raccomandazione e, per il
 materiale sensibile, l'avvertenza da riportare.
@@ -15,6 +15,7 @@ from ..reading_themes import READING_THEMES
 from ..reading_verification import verify_reading
 from .. import web_lookup
 from ..content_versions_seed import derive_reading_versions
+from ..content_version_service import publish_catalog_source
 
 router = APIRouter()
 get_db = database.get_db
@@ -61,7 +62,7 @@ def _guard_certification(row: models.CertifiedReading) -> None:
 
 @router.get("/admin/certified-readings", response_model=List[schemas.CertifiedReadingResponse])
 async def list_certified_readings(
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     return (
@@ -73,7 +74,7 @@ async def list_certified_readings(
 
 @router.get("/admin/reading-themes")
 async def list_reading_themes(
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
 ):
     """Vocabolario controllato dei temi, per popolare il pannello."""
     return [
@@ -85,7 +86,7 @@ async def list_reading_themes(
 @router.post("/admin/certified-readings", response_model=schemas.CertifiedReadingResponse)
 async def create_certified_reading(
     payload: schemas.CertifiedReadingCreate,
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     slug = (payload.slug or "").strip()
@@ -101,6 +102,8 @@ async def create_certified_reading(
     db.commit()
     db.refresh(row)
     derive_reading_versions(db)
+    if row.status == "certified":
+        publish_catalog_source(db, "certified_reading", row, current_user["username"])
     return row
 
 
@@ -108,28 +111,32 @@ async def create_certified_reading(
 async def update_certified_reading(
     reading_id: int,
     payload: schemas.CertifiedReadingUpdate,
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     row = _fetch(db, reading_id)
+    was_published = row.status == "certified"
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(row, field, value)
     _validate(row)
     _guard_certification(row)
     db.commit()
     db.refresh(row)
+    if row.status == "certified" and not was_published:
+        derive_reading_versions(db)
+        publish_catalog_source(db, "certified_reading", row, current_user["username"])
     return row
 
 
 @router.post("/admin/certified-readings/{reading_id}/verify", response_model=schemas.CertifiedReadingResponse)
 async def verify_certified_reading(
     reading_id: int,
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     """Controlla titolo, anno e autori su OpenAlex e salva l'esito.
 
-    Non cambia lo stato: la certificazione resta una decisione dell'admin.
+    Non cambia lo stato: la pubblicazione resta una decisione editoriale.
     """
     row = _fetch(db, reading_id)
     row.verification = verify_reading({
@@ -145,7 +152,7 @@ async def verify_certified_reading(
 async def draft_certified_reading_synopsis(
     reading_id: int,
     lang: str = "it",
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     """Propone una sinossi presa da una fonte pubblica, senza salvarla.
@@ -169,7 +176,7 @@ async def draft_certified_reading_synopsis(
 @router.delete("/admin/certified-readings/{reading_id}")
 async def delete_certified_reading(
     reading_id: int,
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     row = _fetch(db, reading_id)

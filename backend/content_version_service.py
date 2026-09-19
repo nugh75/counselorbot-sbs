@@ -9,11 +9,34 @@ from sqlalchemy.orm import Session
 from . import models
 from .content_versions import (
     APP_LOCALES,
+    CATALOG_CONTENT_TYPES,
     ContentVersionError,
     assert_transition,
     is_served,
     statuses_for,
 )
+from .i18n_fields import merged_i18n
+
+
+def publish_catalog_source(db: Session, content_type: str, content, approved_by: str) -> None:
+    """Pubblicare una bozza rende disponibile anche la lingua sorgente.
+
+    Le altre traduzioni mantengono il proprio stato: la pubblicazione di una
+    voce non approva automaticamente testi generati in altre lingue.
+    """
+    if content_type not in CATALOG_CONTENT_TYPES:
+        raise ContentVersionError("Pubblicazione riservata ai cataloghi didattici")
+    fields = ("name", "description", "recommended_when") if content_type == "certified_strategy" else ("why", "summary", "synopsis")
+    texts = [merged_i18n(content, field) for field in fields]
+    required = [values for values in texts if any(str(value or "").strip() for value in values.values())]
+    if not required:
+        return
+    source_locale = next((locale for locale in APP_LOCALES if all(
+        str(values.get(locale) or "").strip() for values in required
+    )), None)
+    if source_locale:
+        upsert_version(db, content_type, content.slug, source_locale,
+                       status="certified", source="editor", approved_by=approved_by)
 
 
 def _validate(content_type: str, locale: str, status: Optional[str] = None) -> None:

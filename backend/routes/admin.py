@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas, auth, database, pii, pii_ner
 from .. import content_version_service
 from .. import prompt_revisions
-from ..content_versions import CONTENT_TYPES, ContentVersionError
+from ..content_versions import CATALOG_CONTENT_TYPES, CONTENT_TYPES, ContentVersionError
 from ..ai_service import AIService
 from ..api_secrets import (
     API_KEY_ENV_MAP,
@@ -1576,7 +1576,7 @@ async def admin_export_training_jsonl(
 # --- Admin Instruments / Factors / Items CRUD (catalogo editabile) ---
 
 @router.get("/admin/instruments", response_model=List[schemas.InstrumentResponse])
-async def admin_list_instruments(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+async def admin_list_instruments(current_user: models.User = Depends(auth.get_current_catalog_editor), db: Session = Depends(get_db)):
     return db.query(models.Instrument).order_by(models.Instrument.code).all()
 
 
@@ -1650,7 +1650,7 @@ async def admin_update_instrument(code: str, update: schemas.InstrumentUpdate, c
 
 
 @router.get("/admin/instruments/{code}/factors", response_model=List[schemas.FactorResponse])
-async def admin_list_factors(code: str, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+async def admin_list_factors(code: str, current_user: models.User = Depends(auth.get_current_catalog_editor), db: Session = Depends(get_db)):
     return db.query(models.Factor).filter(models.Factor.instrument_code == code).order_by(models.Factor.sort_order).all()
 
 
@@ -1758,11 +1758,13 @@ async def admin_list_content_versions(
     content_type: Optional[str] = Query(None),
     content_key: Optional[str] = Query(None),
     locale: Optional[str] = Query(None),
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     """Stato di certificazione per (contenuto, lingua), filtrabile."""
     q = db.query(models.ContentLanguageVersion)
+    if not (current_user.get("is_admin") or current_user.get("is_researcher")):
+        q = q.filter(models.ContentLanguageVersion.content_type.in_(CATALOG_CONTENT_TYPES))
     if content_type:
         q = q.filter(models.ContentLanguageVersion.content_type == content_type)
     if content_key:
@@ -1778,10 +1780,11 @@ async def admin_list_content_versions(
 
 @router.get("/admin/content-versions/ladders")
 async def admin_content_version_ladders(
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
 ):
     """I vocabolari di stato, cosi' il pannello non ne tiene una copia propria."""
-    return {content_type: list(ladder) for content_type, ladder in CONTENT_TYPES.items()}
+    return {content_type: list(ladder) for content_type, ladder in CONTENT_TYPES.items()
+            if current_user.get("is_admin") or current_user.get("is_researcher") or content_type in CATALOG_CONTENT_TYPES}
 
 
 @router.post(
@@ -1791,7 +1794,7 @@ async def admin_content_version_ladders(
 async def admin_promote_content_version(
     version_id: int,
     payload: schemas.ContentVersionPromoteRequest,
-    current_user: models.User = Depends(auth.get_current_active_admin),
+    current_user: models.User = Depends(auth.get_current_catalog_editor),
     db: Session = Depends(get_db),
 ):
     """Transizione di stato. Rifiuta i salti che nasconderebbero un passo del protocollo."""
@@ -1800,6 +1803,8 @@ async def admin_promote_content_version(
     ).first()
     if not row:
         raise HTTPException(status_code=404, detail="Versione linguistica non trovata")
+    if not (current_user.get("is_admin") or current_user.get("is_researcher")) and row.content_type not in CATALOG_CONTENT_TYPES:
+        raise HTTPException(status_code=403, detail="Puoi pubblicare solo strategie, letture e materiali")
     approved_by = (
         current_user.get("username")
         if isinstance(current_user, dict)
