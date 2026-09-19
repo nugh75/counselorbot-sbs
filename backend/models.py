@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, DateTime, JSON, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, DateTime, JSON, UniqueConstraint, ForeignKey
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -462,6 +462,50 @@ class PqblAttempt(Base):
     correct = Column(Boolean, nullable=False)
     first_try = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class GoalCatalogEntry(Base):
+    """Versioned proposals. Personal adoption keeps a snapshot of this version."""
+    __tablename__ = "goal_catalog"
+    id = Column(Integer, primary_key=True)
+    slug = Column(String, unique=True, nullable=True)
+    author_username = Column(String, nullable=False, index=True)
+    group_id = Column(Integer, nullable=True, index=True)
+    status = Column(String, nullable=False, default="draft", index=True)
+    version = Column(Integer, nullable=False, default=1)
+    data = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class PersonalGoal(Base):
+    __tablename__ = "personal_goals"
+    __table_args__ = (UniqueConstraint("username", "request_id", name="uq_personal_goal_request"),)
+    request_id = Column(String, nullable=True)
+    id = Column(Integer, primary_key=True)
+    username = Column(String, nullable=False, index=True)
+    catalog_id = Column(Integer, nullable=True, index=True)
+    catalog_snapshot = Column(JSON, nullable=False, default=dict)
+    title = Column(String, nullable=False)
+    motivation = Column(Text, nullable=False, default="")
+    criteria = Column(Text, nullable=False, default="")
+    reflection = Column(Text, nullable=False, default="")
+    status = Column(String, nullable=False, default="active")
+    priority = Column(Integer, nullable=False, default=2)
+    review_date = Column(String, nullable=True)
+    shared_group_id = Column(Integer, nullable=True, index=True)
+    revision = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class GoalResourceLink(Base):
+    __tablename__ = "goal_resource_links"
+    __table_args__ = (UniqueConstraint("goal_id", "kind", "target_id", name="uq_goal_resource"),)
+    id = Column(Integer, primary_key=True)
+    goal_id = Column(Integer, ForeignKey("personal_goals.id", ondelete="CASCADE"), nullable=False, index=True)
+    kind = Column(String, nullable=False)
+    target_id = Column(String, nullable=False)
 
 
 class LearnerProfileRevision(Base):

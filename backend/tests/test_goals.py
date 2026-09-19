@@ -1,0 +1,193 @@
+"""Goal workflow on isolated Postgres: scope, ownership, versioning and coordination."""
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from backend import auth, database, models
+from backend.goals import goals_context, seed_goals
+from backend.routes.goals import router
+from backend.routes.visual_tools import router as visual_router
+from backend.tests.artifact_database import artifact_session
+
+
+@pytest.fixture
+def setup():
+    with artifact_session() as db:
+        identity = dict(username='alice', authenticated=True, is_admin=False, groups=['studenti'])
+        app = FastAPI(); app.include_router(router); app.include_router(visual_router)
+        app.dependency_overrides[database.get_db] = lambda: db
+        app.dependency_overrides[auth.get_current_user] = lambda: identity
+        group = models.StudentGroup(name='Class A', code='GR-TESTGOALS', owner_username='teacher', is_active=True)
+        db.add(group); db.flush()
+        db.add(models.GroupMembership(group_id=group.id, username='alice')); db.commit()
+        with TestClient(app) as client:
+            yield db, client, identity, group.id
+
+
+def teacher(identity, admin=False):
+    identity.update(username='teacher', is_admin=admin, groups=['docenti'])
+
+
+def student(identity, username='alice'):
+    identity.update(username=username, is_admin=False, groups=['studenti'])
+
+
+def proposal(**kwargs):
+    return dict(data=dict(title='Organizzare lo studio', criteria='Una settimana di prova'), **kwargs)
+
+
+def goal(client, **kwargs):
+    response = client.post('/user/goals', json=dict(title='Il mio obiettivo', **kwargs))
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def edit_payload(row, **kwargs):
+    return {**{k: row[k] for k in ('title', 'motivation', 'criteria', 'reflection', 'status', 'priority', 'review_date', 'shared_group_id', 'revision')}, **kwargs}
+
+
+def test_catalog_scope_roles_and_common_review(setup):
+    db, c, who, group_id = setup
+    assert c.post('/teacher/goal-catalog', json=proposal()).status_code == 403
+    teacher(who)
+    assert c.post('/teacher/goal-catalog', json=proposal(status='published')).status_code == 403
+    pending = c.post('/teacher/goal-catalog', json=proposal(status='pending')).json()
+    scoped = c.post('/teacher/goal-catalog', json=proposal(group_id=group_id, status='published')).json()
+    assert c.post('/teacher/goal-catalog', json=proposal(group_id=987654, status='published')).status_code == 404
+    student(who)
+    assert [r['id'] for r in c.get('/user/goal-catalog').json()] == [scoped['id']]
+    student(who, 'bob')
+    assert c.get('/user/goal-catalog').json() == []
+    assert c.post('/user/goals', json=dict(title='x', catalog_id=scoped['id'], catalog_version=1)).status_code == 404
+    teacher(who, admin=True)
+    published = c.put(f"/teacher/goal-catalog/{pending['id']}", json=proposal(status='published', version=1))
+    assert published.status_code == 200
+    student(who, 'bob')
+    assert len(c.get('/user/goal-catalog').json()) == 1
+
+
+def test_catalog_version_snapshot_and_stale_adoption(setup):
+    db, c, who, group_id = setup
+    teacher(who)
+    entry = c.post('/teacher/goal-catalog', json=proposal(group_id=group_id, status='published')).json()
+    student(who)
+    chosen = goal(c, catalog_id=entry['id'], catalog_version=1)
+    teacher(who)
+    change = proposal(group_id=group_id, status='published', version=1)
+    change['data']['title'] = 'Nuova formulazione'
+    assert c.put(f"/teacher/goal-catalog/{entry['id']}", json=change).status_code == 200
+    assert c.put(f"/teacher/goal-catalog/{entry['id']}", json=change).status_code == 409
+    student(who)
+    assert c.get('/user/goals').json()[0]['catalog_snapshot']['data']['title'] == 'Organizzare lo studio'
+    assert c.post('/user/goals', json=dict(title='old', catalog_id=entry['id'], catalog_version=1)).status_code == 409
+    assert chosen['catalog_snapshot']['version'] == 1
+
+
+def test_personal_ownership_and_revision(setup):
+    db, c, who, group_id = setup
+    row = goal(c)
+    student(who, 'bob')
+    assert c.get('/user/goals').json() == []
+    assert c.put(f"/user/goals/{row['id']}", json=edit_payload(row)).status_code == 404
+    assert c.delete(f"/user/goals/{row['id']}?revision=1").status_code == 404
+    student(who)
+    assert c.put(f"/user/goals/{row['id']}", json=edit_payload(row, review_date='2026-02-30')).status_code == 422
+    updated = c.put(f"/user/goals/{row['id']}", json=edit_payload(row, status='paused')).json()
+    assert updated['revision'] == 2
+    assert c.put(f"/user/goals/{row['id']}", json=edit_payload(row)).status_code == 409
+    assert c.delete(f"/user/goals/{row['id']}?revision=1").status_code == 409
+
+
+def test_link_ownership_live_resolution_unavailable_and_cascade(setup):
+    db, c, who, group_id = setup
+    own = models.PortfolioItem(username='alice', title='Originale')
+    other = models.PortfolioItem(username='bob', title='Privato')
+    db.add_all([own, other]); db.commit()
+    row = goal(c)
+    url = f"/user/goals/{row['id']}/links"
+    assert c.post(url, json=dict(kind='portfolio', target_id=str(other.id), revision=1)).status_code == 404
+    linked = c.post(url, json=dict(kind='portfolio', target_id=str(own.id), revision=1)).json()
+    assert linked['links'][0]['title'] == 'Originale'
+    own.title = 'Aggiornato'; db.commit()
+    assert c.get('/user/goals').json()[0]['links'][0]['title'] == 'Aggiornato'
+    db.delete(own); db.commit()
+    missing = c.get('/user/goals').json()[0]['links'][0]
+    assert missing['available'] is False and missing['href'] is None and missing['title'] == ''
+    assert c.delete(f"/user/goals/{row['id']}?revision=2").status_code == 200
+    assert db.query(models.GoalResourceLink).count() == 0
+
+
+def test_activity_is_shared_with_calendar_and_does_not_complete_goal(setup):
+    db, c, who, group_id = setup
+    row = goal(c)
+    payload = dict(title='Provare una strategia', date='2026-10-02', request_id='test-action-123', revision=1)
+    response = c.post(f"/user/goals/{row['id']}/actions", json=payload)
+    assert response.status_code == 200, response.text
+    assert c.post(f"/user/goals/{row['id']}/actions", json=payload).status_code == 200
+    state = c.get('/user/timeline').json()
+    assert len(state['workspace']['actions']) == 1
+    assert state['workspace']['timeline']['events'][0]['action_ids'] == [state['workspace']['actions'][0]['id']]
+    state['workspace']['actions'][0]['stage'] = 'done'
+    assert c.put('/user/timeline', json={k: state[k] for k in ('revision', 'workspace')}).status_code == 200
+    row = c.get('/user/goals').json()[0]
+    assert row['status'] == 'active'
+    assert row['links'][0]['stage'] == 'done'
+    assert c.post(f"/user/goals/{row['id']}/actions", json={**payload, 'request_id':'another-action'}).status_code == 409
+    assert len(c.get('/user/timeline').json()['workspace']['actions']) == 1
+
+
+def test_sharing_is_voluntary_revocable_and_scoped(setup):
+    db, c, who, group_id = setup
+    private = goal(c, motivation='Private motivation')
+    shared = goal(c, shared_group_id=group_id, reflection='Summary shared by choice')
+    teacher(who)
+    result = c.get(f'/teacher/groups/{group_id}/goals').json()
+    assert len(result) == 1 and result[0]['id'] == shared['id']
+    assert 'motivation' not in result[0] and 'links' not in result[0]
+    who['username'] = 'another-teacher'
+    assert c.get(f'/teacher/groups/{group_id}/goals').status_code == 404
+    student(who)
+    assert c.put(f"/user/goals/{shared['id']}", json=edit_payload(shared, shared_group_id=None)).status_code == 200
+    teacher(who)
+    assert c.get(f'/teacher/groups/{group_id}/goals').json() == []
+    student(who, 'bob')
+    assert c.post('/user/goals', json=dict(title='x', shared_group_id=group_id)).status_code == 404
+
+
+def test_context_seed_and_withdrawn_membership(setup):
+    db, c, who, group_id = setup
+    seed_goals(db); seed_goals(db)
+    assert db.query(models.GoalCatalogEntry).count() == 6
+    assert goals_context(db, 'alice') == ''
+    row = goal(c, shared_group_id=group_id, criteria='Una prova concreta')
+    assert 'Una prova concreta' in goals_context(db, 'alice')
+    assert goals_context(db, 'bob') == ''
+    db.query(models.GroupMembership).filter_by(group_id=group_id, username='alice').delete(); db.commit()
+    teacher(who)
+    assert c.get(f'/teacher/groups/{group_id}/goals').json() == []
+    student(who)
+    # Revoking an old share remains possible even after leaving the group.
+    assert c.put(f"/user/goals/{row['id']}", json=edit_payload(row, shared_group_id=None)).status_code == 200
+
+
+def test_retry_adoption_is_idempotent_and_personal_goals_stay_multiple(setup):
+    db, c, who, group_id = setup
+    first = goal(c, request_id='adoption-request-1')
+    retry = goal(c, request_id='adoption-request-1')
+    second = goal(c, request_id='adoption-request-2')
+    assert first['id'] == retry['id'] != second['id']
+    assert len(c.get('/user/goals').json()) == 2
+    assert c.get('/user/goal-groups').json() == [{'id': group_id, 'name': 'Class A'}]
+
+
+def test_tavolo_context_uses_only_explicitly_linked_owned_goals(setup):
+    from datetime import datetime, timezone
+    db, c, who, _ = setup
+    row = goal(c, motivation='Coordinate this table')
+    goal(c, motivation='Different private project')
+    table = models.Tavolo(id='goal-table', username='alice', title='Progetto', saved_at=datetime.now(timezone.utc))
+    db.add(table); db.commit()
+    assert goals_context(db, 'alice', tavolo_id=table.id) == ''
+    assert c.post(f"/user/goals/{row['id']}/links", json=dict(kind='tavolo', target_id=table.id, revision=1)).status_code == 200
+    context = goals_context(db, 'alice', tavolo_id=table.id)
+    assert 'Coordinate this table' in context and 'Different private project' not in context
+    assert goals_context(db, 'bob', tavolo_id=table.id) == ''
