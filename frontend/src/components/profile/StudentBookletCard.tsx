@@ -179,8 +179,10 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                 const list: BookletSummary[] = res.ok ? await res.json() : [];
                 setBooklets(list);
                 if (list.length > 0) {
-                    setCurrentId(list[0].id);
-                    setForm(toBookletData(list[0].data));
+                    const requested = Number(new URLSearchParams(window.location.search).get('booklet'));
+                    const selected = list.find(row => row.id === requested) || list[0];
+                    setCurrentId(selected.id);
+                    setForm(toBookletData(selected.data));
                 }
             })
             .catch(() => { if (active) setBooklets([]); })

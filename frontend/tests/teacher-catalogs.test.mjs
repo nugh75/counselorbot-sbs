@@ -57,6 +57,7 @@ for (const scenario of [{ width: 1440, height: 1000, dark: false }, { width: 390
             const page = await context.newPage();
             const { writes, errors } = await prepare(page, scenario);
             await page.getByRole('heading', { name: 'Area docenti', exact: true }).waitFor();
+            assert.equal(await page.getByRole('heading', { name: 'Catalogo obiettivi', exact: true }).isVisible(), true);
             assert.equal(await page.locator('a[href="/admin"]').count(), 0, 'catalog access does not show the admin console');
             const strategies = page.locator('details').filter({ has: page.locator('summary').filter({ hasText: /^Strategie$/ }) });
             await strategies.locator('summary').click();

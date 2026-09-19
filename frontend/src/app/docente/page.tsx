@@ -7,6 +7,7 @@ import { getIdentity, type Identity } from '@/lib/auth';
 import { canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlansPanel';
+import { GoalCatalogEditor } from '@/components/goals/GoalCatalogEditor';
 import { GroupsPanel } from '@/components/admin/GroupsPanel';
 import { TeacherCatalogs } from '@/components/teacher/TeacherCatalogs';
 
@@ -96,6 +97,7 @@ export default function TeacherPage() {
             <section className="page-wide px-4 py-8">
                 <h1 className="text-2xl font-bold text-slate-800">{texts.title}</h1>
                 <p className="mt-1 text-sm text-slate-500">{texts.subtitle}</p>
+                <div className="mt-6"><GoalCatalogEditor /></div>
                 <div className="mt-6">
                     <GroupsPanel />
                 </div>

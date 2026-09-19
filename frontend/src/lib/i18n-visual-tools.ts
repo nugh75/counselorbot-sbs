@@ -33,7 +33,7 @@ const labels: Record<string, Record<string, string>> = {
         "addDeadline": "Aggiungi scadenza",
         "orientation": "Orientamento",
         "snapshotTitle": "Titolo del lavoro",
-        "actionKind": "Tipo di obiettivo",
+        "actionKind": "Tipo di attività",
         "activity": "Attività",
         "book": "Libro da leggere",
         "article": "Articolo da studiare",
