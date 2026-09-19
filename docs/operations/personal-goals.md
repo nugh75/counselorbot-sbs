@@ -29,6 +29,9 @@ accessi diretti, mantenendo il workspace personale già esistente.
   Non concede accesso a motivazione, Taccuino o materiali privati collegati.
   Uscita dal gruppo, disattivazione e rimozione della gestione revocano l'accesso.
 
+Le assegnazioni esplicite di obiettivi e materiali da parte dei docenti sono
+distinte dagli obiettivi personali: vedi [Cataloghi e assegnazioni](catalog-assignments.md).
+
 ## Dati e coerenza
 
 Nuove tabelle PostgreSQL: `goal_catalog`, `personal_goals`, `goal_resource_links`.
@@ -87,7 +90,9 @@ gestore già usato per gruppi/piani, più verifiche puntuali di proprietà e amb
 - Browser: avviare `backend.tests.goals_browser_server` in un container di prova,
   esponendo `127.0.0.1:18096:8096`, e il frontend di produzione su porta 3107.
   Dal frontend eseguire `npm run test:goals`. `GOALS_BASE_URL` e `GOALS_API_URL`
-  permettono porte alternative. La fixture browser sovrascrive l'identità solo
+  permettono porte alternative. Per l’avvio diretto della fixture,
+  `GOALS_TEST_HOST` e `GOALS_TEST_PORT` configurano il bind (default `0.0.0.0:8096`).
+  La fixture browser sovrascrive l'identità solo
   nell'app di test, usa uno schema isolato e lo annulla alla chiusura; le API degli
   obiettivi e del calendario sono reali. Gli altri servizi sono simulati.
   Non includere questa app nel server di produzione.

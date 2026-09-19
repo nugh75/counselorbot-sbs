@@ -83,7 +83,7 @@ for (const scenario of [{ width: 1440, teacher: true }, { width: 390, teacher: t
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             if (scenario.teacher) {
                 await management.click();
-                await page.getByRole('heading', { name: 'Catalogo obiettivi', exact: true }).waitFor();
+                await page.locator('summary').filter({ hasText: /^Catalogo obiettivi$/ }).waitFor();
                 await page.getByRole('heading', { name: 'Gruppi e classi che gestisco', exact: true }).waitFor();
                 await page.getByRole('button', { name: 'Nuovo gruppo o classe', exact: true }).click();
                 await page.getByPlaceholder('Nome (es. 3B, universitari, formazione adulti)').waitFor();
@@ -104,7 +104,7 @@ for (const scenario of [{ width: 1440, height: 1000, dark: false }, { width: 390
             const page = await context.newPage();
             const { writes, errors } = await prepare(page, scenario);
             await page.getByRole('heading', { name: 'Area docenti', exact: true }).waitFor();
-            assert.equal(await page.getByRole('heading', { name: 'Catalogo obiettivi', exact: true }).isVisible(), true);
+            assert.equal(await page.locator('summary').filter({ hasText: /^Catalogo obiettivi$/ }).isVisible(), true);
             assert.equal(await page.locator('a[href="/admin"]').count(), 0, 'catalog access does not show the admin console');
             const strategies = page.locator('details').filter({ has: page.locator('summary').filter({ hasText: /^Strategie$/ }) });
             await strategies.locator('summary').click();

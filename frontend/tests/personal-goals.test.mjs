@@ -70,6 +70,7 @@ test('teacher publishes group content and submits common proposals for review', 
     const { page, context, errors } = await fixture({ username: 'teacher-browser' });
     try {
         await page.goto(`${origin}/docente`);
+        await page.locator('summary').filter({ hasText: /^Catalogo obiettivi$/ }).click();
         await page.screenshot({ path: '/tmp/personal-goals-teacher-loading.png', fullPage: true });
         await page.getByRole('button', { name: 'Nuova proposta', exact: true }).click();
         await page.getByLabel('Obiettivo', { exact: true }).fill('Preparare una presentazione insieme');
@@ -137,6 +138,7 @@ test('administrator can publish a common proposal from the review queue', async 
     const { page, context, errors } = await fixture({ username: 'admin-browser' });
     try {
         await page.goto(`${origin}/docente`);
+        await page.locator('summary').filter({ hasText: /^Catalogo obiettivi$/ }).click();
         const pending = page.getByRole('article').filter({ hasText: 'In revisione · Catalogo comune' });
         await pending.getByRole('button', { name: 'Modifica', exact: true }).click();
         await page.getByLabel('Obiettivo', { exact: true }).fill('Proposta comune approvata');

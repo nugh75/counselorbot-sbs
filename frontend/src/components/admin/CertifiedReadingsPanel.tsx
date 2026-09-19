@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, BadgeCheck, AlertTriangle, Search } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { AssignmentButton } from '@/components/teacher/AssignmentButton';
 import { ContentLanguageStatus } from './ContentLanguageStatus';
 
 type Lang = 'it' | 'en' | 'es' | 'fr' | 'de' | 'sv';
@@ -522,7 +523,8 @@ export function CertifiedReadingsPanel() {
                                         </div>
                                         <div className="mt-1">{verificationBadge(row)}</div>
                                     </div>
-                                    <div className="flex shrink-0 gap-1">
+                                    <div className="flex shrink-0 flex-wrap gap-1">
+                                        {row.status === 'certified' && row.is_active && <AssignmentButton kind="reading" id={row.id} title={row.title} />}
                                         <button type="button" onClick={() => void verify(row.id)} disabled={verifyingId === row.id}
                                             title={t('admin.readings.verify')} aria-label={t('admin.readings.verify')}
                                             className="rounded-md border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50 disabled:opacity-50">

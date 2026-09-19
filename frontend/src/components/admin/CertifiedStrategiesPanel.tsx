@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, Languages } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { AssignmentButton } from '@/components/teacher/AssignmentButton';
 import { ContentLanguageStatus } from './ContentLanguageStatus';
 
 // Le sei lingue dell'app: i testi vivono in campi JSON, non in colonne fisse.
@@ -376,6 +377,7 @@ export function CertifiedStrategiesPanel() {
                                     <td className="px-3 py-2">{s.is_active ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-slate-500" />}</td>
                                     <td className="px-3 py-2">
                                         <div className="flex justify-end gap-1">
+                                            {s.status === 'certified' && s.is_active && <AssignmentButton kind="strategy" id={s.id} title={s.name_it || s.slug} />}
                                             <button type="button" onClick={() => startEdit(s)} className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Pencil className="h-4 w-4" /></button>
                                             <button type="button" onClick={() => void remove(s.id)} className="rounded p-1.5 text-red-500 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
                                         </div>

@@ -4,14 +4,16 @@ import { useState, type ReactNode } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { CertifiedStrategiesPanel } from '@/components/admin/CertifiedStrategiesPanel';
 import { CertifiedReadingsPanel } from '@/components/admin/CertifiedReadingsPanel';
+import { GoalCatalogEditor } from '@/components/goals/GoalCatalogEditor';
+import { goalText } from '@/lib/i18n-goals';
 
 const TEXTS = {
-    it: { title: 'Cataloghi', description: 'Aggiungi strategie e materiali al catalogo comune. Puoi salvare una bozza o pubblicare direttamente: i contenuti pubblicati possono essere consigliati agli studenti.', strategies: 'Strategie', readings: 'Libri, film e altri materiali' },
-    en: { title: 'Catalogs', description: 'Add strategies and resources to the shared catalog. Save a draft or publish directly: published content can be recommended to students.', strategies: 'Strategies', readings: 'Books, films and other resources' },
-    es: { title: 'Catálogos', description: 'Añade estrategias y materiales al catálogo común. Puedes guardar un borrador o publicar directamente: el contenido publicado puede recomendarse al alumnado.', strategies: 'Estrategias', readings: 'Libros, películas y otros materiales' },
-    fr: { title: 'Catalogues', description: 'Ajoutez des stratégies et des ressources au catalogue commun. Enregistrez un brouillon ou publiez directement : les contenus publiés peuvent être recommandés aux étudiants.', strategies: 'Stratégies', readings: 'Livres, films et autres ressources' },
-    de: { title: 'Kataloge', description: 'Ergänzen Sie den gemeinsamen Katalog um Strategien und Materialien. Speichern Sie einen Entwurf oder veröffentlichen Sie direkt: veröffentlichte Inhalte können Lernenden empfohlen werden.', strategies: 'Strategien', readings: 'Bücher, Filme und weitere Materialien' },
-    sv: { title: 'Kataloger', description: 'Lägg till strategier och material i den gemensamma katalogen. Spara ett utkast eller publicera direkt: publicerat innehåll kan rekommenderas till studenter.', strategies: 'Strategier', readings: 'Böcker, filmer och annat material' },
+    it: { title: 'Cataloghi', description: 'Crea e aggiorna obiettivi, strategie e materiali. Dai contenuti pubblicati scegli cosa assegnare a una persona, un gruppo o una classe.', strategies: 'Strategie', readings: 'Libri, film e altri materiali' },
+    en: { title: 'Catalogs', description: 'Create and update goals, strategies and resources. Assign published content to a person, group or class.', strategies: 'Strategies', readings: 'Books, films and other resources' },
+    es: { title: 'Catálogos', description: 'Crea y actualiza objetivos, estrategias y materiales. Asigna contenidos publicados a una persona, un grupo o una clase.', strategies: 'Estrategias', readings: 'Libros, películas y otros materiales' },
+    fr: { title: 'Catalogues', description: 'Créez et mettez à jour des objectifs, des stratégies et des ressources. Attribuez les contenus publiés à une personne, un groupe ou une classe.', strategies: 'Stratégies', readings: 'Livres, films et autres ressources' },
+    de: { title: 'Kataloge', description: 'Erstellen und bearbeiten Sie Ziele, Strategien und Materialien. Weisen Sie veröffentlichte Inhalte einer Person, Gruppe oder Klasse zu.', strategies: 'Strategien', readings: 'Bücher, Filme und weitere Materialien' },
+    sv: { title: 'Kataloger', description: 'Skapa och uppdatera mål, strategier och material. Tilldela publicerat innehåll till en person, grupp eller klass.', strategies: 'Strategier', readings: 'Böcker, filmer och annat material' },
 };
 
 function CatalogSection({ title, children }: { title: string; children: ReactNode }) {
@@ -36,6 +38,7 @@ export function TeacherCatalogs() {
                 <h2 id="teacher-catalogs-title" className="text-xl font-bold text-slate-800">{texts.title}</h2>
                 <p className="mt-1 text-sm text-slate-600">{texts.description}</p>
             </div>
+            <CatalogSection title={goalText(lang, 'catalog')}><GoalCatalogEditor /></CatalogSection>
             <CatalogSection title={texts.strategies}><CertifiedStrategiesPanel /></CatalogSection>
             <CatalogSection title={texts.readings}><CertifiedReadingsPanel /></CatalogSection>
         </section>

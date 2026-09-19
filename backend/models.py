@@ -478,6 +478,34 @@ class GoalCatalogEntry(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class TeacherAssignment(Base):
+    """An explicit delivery of a catalog snapshot, separate from personal goals."""
+    __tablename__ = "teacher_assignments"
+    __table_args__ = (UniqueConstraint("author_username", "request_id", name="uq_teacher_assignment_request"),)
+    id = Column(Integer, primary_key=True)
+    author_username = Column(String, nullable=False, index=True)
+    author_name = Column(String, nullable=False)
+    group_id = Column(Integer, nullable=False, index=True)
+    group_name = Column(String, nullable=False)
+    recipient_username = Column(String, nullable=True)
+    source_kind = Column(String, nullable=False)
+    source_id = Column(Integer, nullable=False)
+    snapshot = Column(JSON, nullable=False)
+    instructions = Column(Text, nullable=False, default="")
+    request_id = Column(String, nullable=False)
+    request_hash = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class AssignmentRecipient(Base):
+    __tablename__ = "assignment_recipients"
+    __table_args__ = (UniqueConstraint("assignment_id", "username", name="uq_assignment_recipient"),)
+    id = Column(Integer, primary_key=True)
+    assignment_id = Column(Integer, ForeignKey("teacher_assignments.id", ondelete="CASCADE"), nullable=False, index=True)
+    username = Column(String, nullable=False, index=True)
+
+
 class PersonalGoal(Base):
     __tablename__ = "personal_goals"
     __table_args__ = (UniqueConstraint("username", "request_id", name="uq_personal_goal_request"),)
