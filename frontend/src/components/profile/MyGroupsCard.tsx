@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/auth';
+import { learningText } from '@/lib/i18n-assignment-work';
 import { Users, LogOut } from 'lucide-react';
 
 interface MyGroup {
@@ -116,6 +117,7 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                     {texts.manage}
                 </Link>
             )}
+            <p className="text-sm text-slate-600">{learningText(lang, 'groupVisibility')}</p>
             <ul className="space-y-2">
                 {groups.map((group) => (
                     <li key={group.membership_id} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-700">

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Check, Link2, Plus, Share2, Trash2, UserMinus, UserPlus, Users, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { learningText } from '@/lib/i18n-assignment-work';
 import { apiFetch } from '@/lib/auth';
 import { fetchInstitutions, type Institution } from '@/lib/referrals-api';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
@@ -50,7 +51,6 @@ const TEXTS = {
         activate: 'Riattiva',
         deleteGroup: 'Elimina',
         empty: "Non gestisci ancora gruppi o classi. Creane uno e condividi il link con i partecipanti.",
-        privacy: "Chi si iscrive vede l’informativa: i docenti e ricercatori che gestiscono il gruppo o la classe possono vedere risultati e conversazioni.",
         error: 'Operazione non riuscita.',
         shareTitle: 'Condivisa con',
         shareBtn: 'Aggiungi selezionati',
@@ -90,7 +90,6 @@ const TEXTS = {
         activate: 'Reactivate',
         deleteGroup: 'Delete',
         empty: "You do not manage any groups or classes yet. Create one and share the link with participants.",
-        privacy: "Joining participants see the notice: teachers and researchers managing the group or class can view results and conversations.",
         error: 'Operation failed.',
         shareTitle: 'Shared with',
         shareBtn: 'Add selected',
@@ -114,7 +113,6 @@ const TEXTS = {
         create: 'Crear', cancel: 'Cancelar', members: 'miembros', inactive: 'inactiva', webLink: 'Enlace de invitación',
         telegramLink: 'Enlace de Telegram', code: "Código de invitación", students: "Participantes", deactivate: 'Desactivar',
         activate: 'Reactivar', deleteGroup: 'Eliminar', empty: "Aún no gestionas grupos ni clases. Crea uno y comparte el enlace con los participantes.",
-        privacy: "Quienes se inscriben ven el aviso: los docentes e investigadores que gestionan el grupo o la clase pueden consultar los resultados y las conversaciones.",
         error: 'La operación ha fallado.', shareTitle: 'Compartida con', shareBtn: 'Añadir seleccionados', sharedWith: 'Compartida con',
         removeShare: 'Quitar', noShares: 'No compartida con nadie.', shareError: 'No se pudo compartir.',
         shareSelectUsers: 'Selecciona usuarios para añadir', shareAlreadyShared: 'ya compartida', shareNoUsers: 'No hay usuarios disponibles.',
@@ -131,7 +129,6 @@ const TEXTS = {
         create: 'Créer', cancel: 'Annuler', members: 'membres', inactive: 'inactive', webLink: 'Lien d’invitation',
         telegramLink: 'Lien Telegram', code: "Code d’invitation", students: "Participants", deactivate: 'Désactiver',
         activate: 'Réactiver', deleteGroup: 'Supprimer', empty: "Vous ne gérez pas encore de groupes ou de classes. Créez-en un et partagez le lien avec les participants.",
-        privacy: "Les participants voient l’avis : les enseignants et chercheurs qui gèrent le groupe ou la classe peuvent consulter les résultats et les conversations.",
         error: 'L’opération a échoué.', shareTitle: 'Partagée avec', shareBtn: 'Ajouter la sélection', sharedWith: 'Partagée avec',
         removeShare: 'Retirer', noShares: 'Partagée avec personne.', shareError: 'Échec du partage.',
         shareSelectUsers: 'Sélectionnez les utilisateurs à ajouter', shareAlreadyShared: 'déjà partagée', shareNoUsers: 'Aucun utilisateur disponible.',
@@ -148,7 +145,6 @@ const TEXTS = {
         create: 'Erstellen', cancel: 'Abbrechen', members: 'Mitglieder', inactive: 'inaktiv', webLink: 'Einladungslink',
         telegramLink: 'Telegram-Link', code: "Einladungscode", students: "Teilnehmende", deactivate: 'Deaktivieren',
         activate: 'Reaktivieren', deleteGroup: 'Löschen', empty: "Sie verwalten noch keine Gruppen oder Klassen. Erstellen Sie eine und teilen Sie den Link mit den Teilnehmenden.",
-        privacy: "Beitretende sehen den Hinweis: Lehrkräfte und Forschende, die die Gruppe oder Klasse verwalten, können Ergebnisse und Unterhaltungen einsehen.",
         error: 'Der Vorgang ist fehlgeschlagen.', shareTitle: 'Geteilt mit', shareBtn: 'Ausgewählte hinzufügen', sharedWith: 'Geteilt mit',
         removeShare: 'Entfernen', noShares: 'Mit niemandem geteilt.', shareError: 'Teilen fehlgeschlagen.',
         shareSelectUsers: 'Hinzuzufügende Benutzer auswählen', shareAlreadyShared: 'bereits geteilt', shareNoUsers: 'Keine Benutzer verfügbar.',
@@ -165,7 +161,6 @@ const TEXTS = {
         create: 'Skapa', cancel: 'Avbryt', members: 'medlemmar', inactive: 'inaktiv', webLink: 'Inbjudningslänk',
         telegramLink: 'Telegram-länk', code: "Inbjudningskod", students: "Deltagare", deactivate: 'Inaktivera',
         activate: 'Återaktivera', deleteGroup: 'Ta bort', empty: "Du hanterar inga grupper eller klasser ännu. Skapa en och dela länken med deltagarna.",
-        privacy: "Deltagare som går med ser informationen: lärare och forskare som hanterar gruppen eller klassen kan se resultat och samtal.",
         error: 'Åtgärden misslyckades.', shareTitle: 'Delad med', shareBtn: 'Lägg till valda', sharedWith: 'Delad med',
         removeShare: 'Ta bort', noShares: 'Inte delad med någon.', shareError: 'Delningen misslyckades.',
         shareSelectUsers: 'Välj användare att lägga till', shareAlreadyShared: 'redan delad', shareNoUsers: 'Inga användare tillgängliga.',
@@ -563,7 +558,7 @@ export function GroupsPanel() {
                                 </button>
                             </div>
                         )}
-                        <p className="mt-2 text-xs text-slate-500">{texts.privacy}</p>
+                        <p className="mt-2 text-xs text-slate-500">{learningText(lang, 'groupVisibility')}</p>
 
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                             <button

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
+import { learningText } from '@/lib/i18n-assignment-work';
 import { Users } from 'lucide-react';
 
 // Local copy is complete for every supported interface language.
@@ -18,7 +19,6 @@ const TEXTS = {
         goProfile: 'Vai al tuo profilo',
         invalid: 'Invito non valido o scaduto. Chiedi al docente un nuovo link.',
         missing: 'Link senza codice gruppo.',
-        privacy: "Nota: il docente/ricercatore del gruppo puo' vedere i tuoi risultati e le conversazioni con il counselor AI.",
     },
     en: {
         title: 'Group invitation',
@@ -29,31 +29,26 @@ const TEXTS = {
         goProfile: 'Go to your profile',
         invalid: 'Invalid or expired invitation. Ask your teacher for a new link.',
         missing: 'The link has no group code.',
-        privacy: 'Note: the group teacher/researcher can see your results and your conversations with the AI counselor.',
     },
     es: {
         title: 'Invitación al grupo', joining: 'Uniéndote al grupo...', joined: 'Te has unido al grupo',
         instrument: 'Instrumento del grupo', goTools: 'Ir a los instrumentos', goProfile: 'Ir a tu perfil',
         invalid: 'Invitación no válida o caducada. Pide un nuevo enlace a tu docente.', missing: 'El enlace no contiene el código del grupo.',
-        privacy: 'Nota: el docente o investigador del grupo puede ver tus resultados y tus conversaciones con el orientador de IA.',
     },
     fr: {
         title: 'Invitation au groupe', joining: 'Inscription au groupe...', joined: 'Vous avez rejoint le groupe',
         instrument: 'Outil du groupe', goTools: 'Accéder aux outils', goProfile: 'Accéder à votre profil',
         invalid: 'Invitation non valide ou expirée. Demandez un nouveau lien à votre enseignant.', missing: 'Le lien ne contient aucun code de groupe.',
-        privacy: 'Remarque : l’enseignant ou le chercheur du groupe peut consulter vos résultats et vos conversations avec le conseiller IA.',
     },
     de: {
         title: 'Gruppeneinladung', joining: 'Beitritt zur Gruppe...', joined: 'Sie sind der Gruppe beigetreten',
         instrument: 'Instrument der Gruppe', goTools: 'Zu den Instrumenten', goProfile: 'Zu Ihrem Profil',
         invalid: 'Ungültige oder abgelaufene Einladung. Bitten Sie Ihre Lehrkraft um einen neuen Link.', missing: 'Der Link enthält keinen Gruppencode.',
-        privacy: 'Hinweis: Die Lehrkraft oder Forschungsperson der Gruppe kann Ihre Ergebnisse und Unterhaltungen mit dem KI-Counselor einsehen.',
     },
     sv: {
         title: 'Gruppinbjudan', joining: 'Går med i gruppen...', joined: 'Du har gått med i gruppen',
         instrument: 'Gruppens instrument', goTools: 'Gå till instrumenten', goProfile: 'Gå till din profil',
         invalid: 'Ogiltig eller utgången inbjudan. Be din lärare om en ny länk.', missing: 'Länken saknar gruppkod.',
-        privacy: 'Obs! Gruppens lärare eller forskare kan se dina resultat och dina samtal med AI-vägledaren.',
     },
 };
 
@@ -98,7 +93,7 @@ function GroupJoinInner() {
                     <p className="text-lg font-semibold text-slate-700">
                         {texts.joined}: {group.name}
                     </p>
-                    <p className="max-w-sm text-xs text-slate-500">{texts.privacy}</p>
+                    <p className="max-w-sm text-xs text-slate-500">{learningText(lang, 'groupVisibility')}</p>
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <Link
                             href="/strumenti"
