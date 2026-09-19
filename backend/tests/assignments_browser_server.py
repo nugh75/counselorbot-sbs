@@ -3,7 +3,7 @@ import asyncio
 from fastapi import FastAPI, Request
 import uvicorn
 from backend import auth, database, models
-from backend.routes import assignments, goals, certified_strategies, certified_readings
+from backend.routes import assignments, goals, groups, certified_strategies, certified_readings
 from backend.tests.artifact_database import artifact_session
 
 
@@ -11,7 +11,9 @@ def main():
     with artifact_session() as db:
         school = models.StudentGroup(name='Classe 3B', code='GR-CLASS', owner_username='teacher')
         adults = models.StudentGroup(name='Gruppo adulti', code='GR-ADULTS', owner_username='teacher')
-        db.add_all([school, adults]); db.flush()
+        empty_classes = [models.StudentGroup(name=f'Classe vuota {width}', code=f'GR-EMPTY-{width}',
+                                             owner_username='teacher') for width in [1440, 390]]
+        db.add_all([school, adults, *empty_classes]); db.flush()
         for group, usernames in [(school, ['alice', 'bob']), (adults, ['alice', 'eve'])]:
             for username in usernames:
                 db.add(models.GroupMembership(group_id=group.id, username=username))
@@ -23,7 +25,7 @@ def main():
                                     why_i18n={'it': 'Confronta le scelte dei protagonisti'}, where_to_find='Biblioteca'),
         ]); db.commit()
         app = FastAPI()
-        for module in [assignments, goals, certified_strategies, certified_readings]:
+        for module in [assignments, goals, groups, certified_strategies, certified_readings]:
             app.include_router(module.router)
         def identity(request: Request):
             username = request.headers.get('x-test-user', 'alice')
@@ -37,9 +39,6 @@ def main():
             # The rolled-back fixture shares one connection across browser requests.
             async with lock:
                 return await call_next(request)
-        @app.get('/admin/groups')
-        def groups():
-            return [dict(id=g.id, name=g.name, code=g.code, is_active=True, members_count=2) for g in [school, adults]]
         uvicorn.run(app, host='127.0.0.1', port=18099, log_level='warning')
 
 

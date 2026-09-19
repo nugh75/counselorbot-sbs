@@ -116,13 +116,14 @@ def test_publication_and_group_scope(setup):
     assert db.query(models.TeacherAssignment).count() == 0
 
 
-def test_membership_changes_and_group_deactivation(setup):
+@pytest.mark.parametrize('individual', [False, True])
+def test_membership_changes_and_group_deactivation(setup, individual):
     db, c, who, group, other, sources = setup
-    assert c.post('/teacher/assignments', json=body(group, sources['goal'])).status_code == 201
+    assert c.post('/teacher/assignments', json=body(group, sources['goal'], recipient_username='bob' if individual else None)).status_code == 201
     db.add(models.GroupMembership(group_id=group.id, username='late'))
     db.query(models.GroupMembership).filter_by(group_id=group.id, username='alice').delete(); db.commit()
     as_student(who, 'late')
-    assert c.get('/user/assignments').json() == []
+    assert len(c.get('/user/assignments').json()) == (0 if individual else 1)
     as_student(who)
     assert c.get('/user/assignments').json() == []
     as_student(who, 'bob')
@@ -131,6 +132,46 @@ def test_membership_changes_and_group_deactivation(setup):
     assert c.get('/user/assignments').json() == []
     who.update(username='teacher', groups=['docenti'])
     assert c.post('/teacher/assignments', json=body(group, sources['goal'], request_id='another-request')).status_code == 404
+
+
+@pytest.mark.parametrize('kind', ['goal', 'strategy', 'reading'])
+def test_empty_class_assignment_reaches_later_members_until_revoked(setup, kind):
+    db, c, who, group, other, sources = setup
+    db.query(models.GroupMembership).filter_by(group_id=group.id).delete(); db.commit()
+    assert c.get('/teacher/assignment-targets').json() == [dict(id=group.id, name=group.name, participants=[])]
+    payload = body(group, sources[kind], kind, instructions='Preparato prima delle iscrizioni')
+    response = c.post('/teacher/assignments', json=payload)
+    assert response.status_code == 201, response.text
+    first = response.json()
+    assert first['recipient_count'] == 0
+    assert c.get('/teacher/assignments').json()[0]['id'] == first['id']
+    assert c.post('/teacher/assignments', json=payload).json()['id'] == first['id']
+    assert c.post('/teacher/assignments', json=body(group, sources[kind], kind,
+        recipient_username='alice', request_id='individual-empty')).status_code == 422
+    assert db.query(models.AssignmentRecipient).count() == 0
+    as_student(who, 'late')
+    assert c.get('/user/assignments').json() == []
+    db.add(models.GroupMembership(group_id=group.id, username='late')); db.commit()
+    delivered = c.get('/user/assignments').json()
+    assert len(delivered) == 1
+    assert delivered[0]['snapshot'] == first['snapshot']
+    assert delivered[0]['instructions'] == payload['instructions']
+    assert 'recipient_count' not in delivered[0] and 'recipient_username' not in delivered[0]
+    assert db.query(models.PersonalGoal).count() == 0
+    db.query(models.GroupMembership).filter_by(group_id=group.id, username='late').delete(); db.commit()
+    assert c.get('/user/assignments').json() == []
+    db.add(models.GroupMembership(group_id=group.id, username='late')); db.commit()
+    assert len(c.get('/user/assignments').json()) == 1
+    who.update(username='teacher', groups=['docenti'])
+    assert c.get('/teacher/assignments').json()[0]['recipient_count'] == 1
+    retry = c.post('/teacher/assignments', json=payload).json()
+    assert retry['id'] == first['id'] and retry['recipient_count'] == 1
+    assert db.query(models.TeacherAssignment).count() == 1
+    assert c.delete(f"/teacher/assignments/{first['id']}").status_code == 200
+    db.add(models.GroupMembership(group_id=group.id, username='after-revocation')); db.commit()
+    for username in ['late', 'after-revocation', 'eve']:
+        as_student(who, username)
+        assert c.get('/user/assignments').json() == []
 
 
 def test_shared_management_and_revoked_access(setup):
