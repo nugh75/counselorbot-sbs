@@ -107,3 +107,61 @@ for (const [lang, heading] of [['en', 'Received assignments'], ['es', 'Asignacio
         } finally { await context.close(); }
     });
 }
+
+for (const width of [1440, 390]) {
+    test(`assign strategies and films to an empty class before a student joins at ${width}px`, async () => {
+        const { page, context, errors } = await pageFor('teacher', width);
+        const marker = `Classe vuota ${width} ${Date.now()}`;
+        const username = `late-${width}`;
+        try {
+            await page.goto(`${origin}/docente`);
+            const catalogs = page.getByRole('region', { name: 'Cataloghi', exact: true });
+            for (const sectionName of ['Strategie', 'Libri, film e altri materiali']) {
+                const section = catalogs.locator('details').filter({ has: page.locator('summary').filter({ hasText: new RegExp(`^${sectionName}$`) }) });
+                await section.locator('summary').click();
+                await section.getByRole('button', { name: 'Assegna', exact: true }).click();
+                const dialog = page.getByRole('dialog');
+                await dialog.getByLabel('Gruppo o classe', { exact: true }).selectOption({ label: `Classe vuota ${width}` });
+                const recipient = dialog.getByLabel('Destinatario', { exact: true });
+                assert.deepEqual(await recipient.locator('option').allTextContents(), ['Intero gruppo o classe (0)']);
+                await dialog.getByText(/anche per chi si iscriverà in seguito/).waitFor();
+                await dialog.getByLabel('Indicazioni del docente (facoltative)').fill(marker);
+                assert.ok(await dialog.getByRole('button', { name: 'Conferma assegnazione' }).isEnabled());
+                assert.ok(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth));
+                await dialog.getByRole('button', { name: 'Conferma assegnazione' }).click();
+                await dialog.waitFor({ state: 'detached' });
+                await section.getByRole('status').filter({ hasText: 'Assegnazione inviata.' }).waitFor();
+                await section.locator('summary').click();
+            }
+            const sent = page.getByRole('region', { name: 'Assegnazioni effettuate', exact: true });
+            const deliveries = sent.locator('article').filter({ hasText: marker });
+            await deliveries.nth(1).waitFor();
+            assert.equal(await deliveries.getByText('Destinatari: Intero gruppo o classe (0)', { exact: true }).count(), 2);
+            assert.deepEqual(await received(username), []);
+            const join = await fetch(`${api}/groups/join`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'x-test-user': username },
+                body: JSON.stringify({ code: `GR-EMPTY-${width}` }),
+            });
+            assert.equal(join.status, 200, await join.text());
+            const receivedAfterJoin = await received(username);
+            assert.deepEqual(receivedAfterJoin.map(row => row.source_kind).sort(), ['reading', 'strategy']);
+            assert.ok(receivedAfterJoin.every(row => row.instructions === marker));
+            const learner = await pageFor(username, width);
+            try {
+                await learner.page.goto(`${origin}/profilo/assegnazioni`);
+                await learner.page.getByRole('heading', { name: 'Film per riflettere', exact: true }).waitFor();
+                await learner.page.getByRole('heading', { name: 'Ripasso distribuito', exact: true }).waitFor();
+                assert.deepEqual(learner.errors, []);
+            } finally { await learner.context.close(); }
+            await page.reload();
+            await deliveries.nth(1).waitFor();
+            assert.equal(await deliveries.getByText('Destinatari: Intero gruppo o classe (1)', { exact: true }).count(), 2);
+            const film = deliveries.filter({ has: page.getByRole('heading', { name: 'Film per riflettere' }) });
+            page.once('dialog', dialog => dialog.accept());
+            await film.getByRole('button', { name: 'Revoca assegnazione' }).click();
+            await film.getByText('Revocata', { exact: true }).waitFor();
+            assert.deepEqual((await received(username)).map(row => row.source_kind), ['strategy']);
+            assert.deepEqual(errors, []);
+        } finally { await context.close(); }
+    });
+}

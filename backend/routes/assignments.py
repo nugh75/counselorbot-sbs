@@ -1,4 +1,4 @@
-"""Explicit teacher assignments of published catalog entries to current members."""
+"""Published catalog entries assigned to a group or an individual member."""
 import hashlib
 import json
 from datetime import datetime, timezone
@@ -6,7 +6,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import Field
-from sqlalchemy import text
+from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
@@ -74,6 +74,12 @@ def _managed_group(db, user, group_id):
     return group
 
 
+def _recipient_count(db, row):
+    if row.recipient_username is None:
+        return db.query(models.GroupMembership).filter_by(group_id=row.group_id).count()
+    return db.query(models.AssignmentRecipient).filter_by(assignment_id=row.id).count()
+
+
 @router.get('/teacher/assignment-targets')
 def targets(db: Session = Depends(database.get_db), user=Depends(auth.get_current_plan_manager)):
     groups = _visible_group_query(db, user).filter(models.StudentGroup.is_active.is_(True)).order_by(models.StudentGroup.name).all()
@@ -96,13 +102,12 @@ def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), use
     if existing:
         if existing.request_hash != digest:
             raise HTTPException(409, 'Request changed: use a new request id')
-        count = db.query(models.AssignmentRecipient).filter_by(assignment_id=existing.id).count()
-        return _record(existing, count)
+        return _record(existing, _recipient_count(db, existing))
     members = db.query(models.GroupMembership.username).filter_by(group_id=group.id)
     if payload.recipient_username is not None:
         members = members.filter_by(username=payload.recipient_username)
     recipients = {name for name, in members.all()}
-    if not recipients:
+    if payload.recipient_username is not None and not recipients:
         raise HTTPException(422, 'No eligible recipients in this group')
     snapshot = _snapshot(db, payload)
     row = models.TeacherAssignment(author_username=user['username'], author_name=user.get('name') or user['username'],
@@ -120,7 +125,7 @@ def sent(db: Session = Depends(database.get_db), user=Depends(auth.get_current_p
     visible = _visible_group_query(db, user).filter(models.StudentGroup.is_active.is_(True)).with_entities(models.StudentGroup.id)
     rows = db.query(models.TeacherAssignment).filter(models.TeacherAssignment.author_username == user['username'],
         models.TeacherAssignment.group_id.in_(visible)).order_by(models.TeacherAssignment.id.desc()).all()
-    return [_record(row, db.query(models.AssignmentRecipient).filter_by(assignment_id=row.id).count()) for row in rows]
+    return [_record(row, _recipient_count(db, row)) for row in rows]
 
 
 @router.delete('/teacher/assignments/{assignment_id}')
@@ -136,8 +141,12 @@ def revoke(assignment_id: int, db: Session = Depends(database.get_db), user=Depe
 
 @router.get('/user/assignments')
 def received(db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
-    rows = db.query(models.TeacherAssignment).join(models.AssignmentRecipient).filter(
+    individual_delivery = db.query(models.AssignmentRecipient.id).filter(
+        models.AssignmentRecipient.assignment_id == models.TeacherAssignment.id,
         models.AssignmentRecipient.username == user['username'],
+    ).exists()
+    rows = db.query(models.TeacherAssignment).filter(
+        or_(models.TeacherAssignment.recipient_username.is_(None), individual_delivery),
         models.TeacherAssignment.revoked_at.is_(None),
         models.TeacherAssignment.group_id.in_(membership_ids(db, user['username'])),
     ).order_by(models.TeacherAssignment.id.desc()).all()

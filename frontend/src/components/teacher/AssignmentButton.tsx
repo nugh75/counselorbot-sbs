@@ -23,7 +23,7 @@ function AssignmentDialog({ source, close, saved }: { source: Source; close: () 
             const res = await apiFetch('/api/teacher/assignment-targets');
             if (!res.ok) throw new Error('targets unavailable');
             const rows: Group[] = await res.json();
-            setGroups(rows.filter(row => row.participants.length && (!source.groupId || row.id === source.groupId)));
+            setGroups(rows.filter(row => !source.groupId || row.id === source.groupId));
         } catch { setFailed(true); } finally { setLoading(false); }
     }, [source.groupId]);
     useEffect(() => { dialog.current?.showModal(); void load(); }, [load]);
@@ -49,7 +49,7 @@ function AssignmentDialog({ source, close, saved }: { source: Source; close: () 
                 <label className="block text-sm font-medium">{l('group')}<select aria-label={l('group')} autoFocus required className={input} value={groupId} onChange={e => { setGroupId(e.target.value); setRecipient(''); }}><option value="">{l('choose')}</option>{groups.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
                 {group && <>
                     <label className="block text-sm font-medium">{l('recipient')}<select aria-label={l('recipient')} className={input} value={recipient} onChange={e => setRecipient(e.target.value)}><option value="">{l('all')} ({group.participants.length})</option>{group.participants.map(person => <option key={person.username} value={person.username}>{person.name} ({person.username})</option>)}</select></label>
-                    <p className="text-sm text-slate-600">{l('recipients')}: {recipient ? 1 : group.participants.length}. {l('current')}</p>
+                    <p className="text-sm text-slate-600">{l('recipients')}: {recipient ? 1 : group.participants.length}. {!recipient && l('current')}</p>
                 </>}
                 <label className="block text-sm font-medium">{l('instructions')}<textarea rows={3} maxLength={3000} className={input} value={instructions} onChange={e => setInstructions(e.target.value)} /></label>
                 <div className="flex flex-wrap gap-3">
