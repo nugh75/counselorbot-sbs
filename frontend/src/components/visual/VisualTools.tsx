@@ -303,7 +303,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 }}><ArrowRight className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                             </details>
                         </section>}
-                        {tab === 'timeline' && !personal && <a className="block min-h-11 text-indigo-700 underline" href="/profilo/timeline">{l('openPersonalTimeline')}</a>}
+                        {tab === 'timeline' && !personal && <Link className="block min-h-11 text-indigo-700 underline" href="/profilo/timeline">{l('openPersonalTimeline')}</Link>}
                         {tab === 'timeline' && personal && <TimelineTools personal sessionId={sessionId} locale={locale} work={work} edit={edit} save={save} selected={timelineSelection} select={setTimelineSelection} focusEvent={focusEvent || request?.eventId} />}
                         {tab === 'board' && <>
                             <details open={!work.actions.length || Boolean(draftTitle)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addAction')}</summary>

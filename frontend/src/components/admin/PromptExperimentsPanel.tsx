@@ -1,10 +1,11 @@
 'use client';
 
 import { cloneElement, isValidElement, useCallback, useEffect, useId, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
-import { ArrowLeft, Check, Play, Plus, RefreshCw, Save, Square, X } from 'lucide-react';
+import { Check, Play, Plus, RefreshCw, Save, Square, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
+import { BackButton } from '@/components/ui/BackButton';
 import { Callout } from '@/components/ui/Callout';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { cn } from '@/lib/utils';
@@ -1080,10 +1081,8 @@ export function PromptExperimentsPanel() {
                 <div className="rounded-lg border border-slate-200 bg-white p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
-                            <button type="button" onClick={back} className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700">
-                                <ArrowLeft className="h-4 w-4" />{C.back}
-                            </button>
-                            <h3 className="mt-1 text-lg font-bold text-slate-900">{exp.title}</h3>
+                            <BackButton variant="labelled" onClick={back} label={C.back} />
+                            <h3 className="mt-2 text-lg font-bold text-slate-900">{exp.title}</h3>
                             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
                                 <StateBadge value={exp.state} map={C.states} kind="state" />
                                 <span>{C.purposes[exp.purpose] ?? exp.purpose}</span>

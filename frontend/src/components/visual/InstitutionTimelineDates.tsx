@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { apiFetch } from '@/lib/auth';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import type { OrientationDirectory } from '@/lib/referrals-api';
@@ -25,7 +26,7 @@ export function InstitutionTimelineDates({ locale, work, edit }: { locale: strin
     return <details className="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
         <summary className="min-h-11 cursor-pointer font-medium">{l('institutionDates')}{data?.institution ? ` · ${data.institution.name}` : ''}</summary>
         {failed ? <p role="alert">{l('loadError')} <Button type="button" variant="secondary" onClick={() => setAttempt(n => n + 1)}>{l('retry')}</Button></p> : !data ? <p role="status">{l('loading')}</p> : <div className="space-y-3">
-            {!data.institution && <a href="/profilo/taccuino" className="block text-indigo-700 underline">{l('chooseInstitution')}</a>}
+            {!data.institution && <Link href="/profilo/taccuino" className="block text-indigo-700 underline">{l('chooseInstitution')}</Link>}
             {!data.events.length && <p>{l('noInstitutionDates')}</p>}
             {data.events.map(event => <article key={event.id} className="space-y-2 rounded-lg bg-white p-3">
                 <h3 className="font-medium">{event.title}</h3>

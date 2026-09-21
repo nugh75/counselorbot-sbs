@@ -11,7 +11,6 @@ import personalToolsImage from '../../../public/guide/strumenti-annotazioni.png'
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, MoreVertical, RotateCcw, BookOpen, Send, Snowflake, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { useI18n } from '@/lib/i18n-context';
 import { counselorHelp } from '@/lib/i18n-counselor-help';
 
@@ -129,10 +128,7 @@ function GuideContent() {
 
     return (
         <div className="page-narrow scroll-smooth space-y-8">
-            <div className="flex flex-wrap items-center gap-4">
-                <PreviousPageButton fallbackHref="/?view=questionnaires" />
-                <PageHeader title={t('guide.title')} subtitle={t('guide.subtitle')} />
-            </div>
+            <PageHeader title={t('guide.title')} subtitle={t('guide.subtitle')} backHref="/" />
 
             <div className="space-y-3">
                 <nav aria-label={l('audience')} className="flex flex-wrap gap-2">
