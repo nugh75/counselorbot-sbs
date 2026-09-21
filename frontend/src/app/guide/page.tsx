@@ -15,7 +15,7 @@ import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { useI18n } from '@/lib/i18n-context';
 import { counselorHelp } from '@/lib/i18n-counselor-help';
 
-const SECTION_COUNT = 9;
+const SECTION_COUNT = 15;
 
 export default function GuidePage() {
     const { t, lang } = useI18n();

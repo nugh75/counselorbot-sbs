@@ -7,8 +7,8 @@ strategic competences (for that, consult the "Strategic Competences" knowledge b
 ## Teacher catalogs
 
 The teacher area (`/docente`) includes **Catalogs**, with separate expandable
-sections for **Strategies** and **Books, films and other resources**. Teachers,
-researchers, and administrators curate the same shared catalogs: they can add,
+sections for **Goals**, **Strategies** and **Books, films and other resources**. Teachers,
+researchers, and administrators curate the same shared strategy and reading/media catalogs: they can add,
 edit, publish, deactivate, or delete entries. Teachers publish directly, without
 administrator approval. This editorial permission does not grant access to
 technical settings or modification/validation of psychometric questionnaires.
@@ -22,13 +22,66 @@ existing language versions retain their individual review status, which teachers
 can manage from the same editor. Closing a catalog section keeps an unsaved form
 while the page remains open.
 
+## Goal proposals, groups and assignments
+
+Teachers publish goal proposals for their managed groups; common goal proposals
+require administrator review. Students explicitly adopt and personalize a proposal
+at `/profilo/obiettivi`; later catalog changes do not rewrite adopted goals.
+A teacher never adopts, concludes or shares a personal goal on a student's behalf.
+
+Groups/classes are independent of questionnaire administrations. `/docente` is the
+management area; `/profilo/classi` lists the user's memberships as a participant,
+including for someone who is also a teacher. Management and participation differ.
+
+Published goal proposals, strategies, readings, films and other resources can be
+assigned to one current participant or an entire managed group, including an empty
+group. Later members see active group assignments. A delivery preserves the chosen
+content and teacher instructions. Mark it as a proposal to explore or an activity
+with an expected response; optionally set a deadline. A deadline neither completes
+personal work nor prevents a later response. Teachers can revoke their own deliveries.
+
+## From an assignment to a shared response
+
+The student opens `/profilo/assegnazioni` and **Work on this assignment**, which
+expands an editor in the assignment itself. They plan an activity and diary entry,
+with or without a date, optionally link a personal goal, and reflect. This uses
+the same data as Calendar and diary; opening the editor does not navigate there.
+They prepare a separate response, review its preview and explicitly share it with
+the assigning teacher. A Portfolio attachment includes only title and description,
+not images or private links. The assigning teacher opens shared responses and adds
+feedback. This flow does not expose private drafts, planning dates, linked goals
+or unshared diary reflections. Editing personal work does not update a shared copy.
+
+Withdrawing a response removes it and its feedback from the flow while keeping
+activities, diary and Portfolio work. Revoking a delivery likewise does not delete
+personal work. Voluntary sharing of a goal summary with group teachers is separate.
+Existing group permissions still let group managers consult the Notebook,
+questionnaire results and related conversations; do not promise blanket privacy.
+
+## Significant-event tools for study and professional practice
+
+**EVENTO_STUDIO — Evento significativo di studio / Significant study event**
+revisits one study episode, such as a lesson, exam or group project.
+**EVENTO_PROFESSIONALE — Evento significativo professionale / Significant
+professional event** revisits one work or placement episode: a task, meeting,
+interaction with a colleague, or a lesson taught. The latter also supports adults,
+trainees and teachers reflecting on their practice. An episode may be positive or
+difficult; significance comes from the person's choice, not its dramatic nature.
+
+Both are conversation tools within CounselorBot, without questionnaires, scores
+or diagnoses. Six steps cover the episode, facts, what worked, what did not, a
+second look and what to try next time, followed by a final summary. The person
+reviews, edits and explicitly saves the resulting Booklet draft. This is distinct
+from adding an event to the personal calendar or sharing a teacher-assignment response.
+
 ## Administration console
 
-Users with administrator or researcher roles (groups containing "ricerc"/"research" or
-members of configured `ADMIN_GROUPS`) can access a console with collapsible sections:
+Administrators configure technical features in the administration console.
+Researchers use the research and administration-plan features allowed by their role.
+Teacher catalog permissions do not grant technical configuration. Features include:
 
 - **AI configuration** — prompts, interface texts, active provider and model,
-  temperature, max tokens, API keys; environment variables override with an `ENV` badge.
+  temperature and max tokens; API keys are managed centrally in ai4educ Console.
 - **Model presets** — reusable provider/model combinations with reasoning budget,
   assignable to counselors and benchmarks.
 - **Counselors** — creation and management of AI counselors (persona, preset, supported
@@ -69,7 +122,8 @@ A researcher can generate codes and links (with QR and PDF card) to hand out to
 students for administration, and organize administrations via **administration plans**
 that link researchers, instrument, locale, and scheduled session. The separation between
 data collection for research and individual counseling use is maintained at the flow and
-logging level. Item-level test administrations run in **Swedish, English, and Spanish**;
+logging level. Experimental item-level administrations run in **English, Spanish, French, German and Swedish**;
+these versions are not yet validated, and
 the guided chat works in all six interface languages once a profile is entered. For
 Italian-language administration, refer students to
 [competenzestrategiche.it](https://competenzestrategiche.it).
@@ -84,7 +138,7 @@ the guided chat.
 
 ## The informational assistant
 
-The assistant (`/assistente`) answers based on two separately selectable knowledge bases:
+The assistant (`/assistente`) answers based on the selected knowledge base. In particular:
 
 - **Strategic Competences** — materials from the competenzestrategiche.it project
   (theory, instruments, validation, guides), with hybrid vector + knowledge-graph
