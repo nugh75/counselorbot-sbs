@@ -1129,6 +1129,23 @@ def _booklet_text_list(data: dict, key: str) -> list[str]:
     return [text] if text else []
 
 
+def _booklet_biography_events(data: dict) -> list[dict]:
+    raw = data.get("bio_events")
+    if isinstance(raw, list):
+        events = [item for item in raw if isinstance(item, dict) and any(
+            str(item.get(key) or "").strip() for key in ("date", "context", "discovery", "keywords")
+        )]
+        if events:
+            return events
+    legacy = {
+        "date": data.get("bio_date"),
+        "context": data.get("bio_context"),
+        "discovery": data.get("bio_discovery"),
+        "keywords": data.get("bio_keywords"),
+    }
+    return [legacy] if any(str(value or "").strip() for value in legacy.values()) else []
+
+
 def _booklet_field(pdf: FPDF, label: str, value: str, content_w: float) -> None:
     pdf.set_font("Helvetica", "B", 9)
     pdf.set_text_color(70, 70, 80)
@@ -1262,8 +1279,17 @@ def generate_student_booklet_pdf(
         _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
 
     _booklet_section(pdf, "5. Biografia di apprendimento", content_w)
-    for key in ("bio_date", "bio_context", "bio_discovery", "bio_keywords"):
-        _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
+    biography = _booklet_biography_events(data)
+    if not biography:
+        biography = [{}]
+    for index, event in enumerate(biography, start=1):
+        if len(biography) > 1:
+            pdf.set_font("Helvetica", "B", 10)
+            pdf.set_text_color(49, 46, 129)
+            pdf.multi_cell(content_w, 6, _latin1(f"Evento {index}"), new_x="LMARGIN", new_y="NEXT")
+        for key, event_key in (("bio_date", "date"), ("bio_context", "context"),
+                               ("bio_discovery", "discovery"), ("bio_keywords", "keywords")):
+            _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(event, event_key), content_w)
 
     _booklet_section(pdf, "6. Note e valutazione finale", content_w)
     for key in ("student_notes", "final_satisfaction", "final_observations"):

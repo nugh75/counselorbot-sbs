@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { useI18n } from '@/lib/i18n-context';
-import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage, canUseTeacherAssistant } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
@@ -428,25 +428,16 @@ export default function ProfilePage() {
 
     return (
         <div className="page-wide px-4 py-8 space-y-8">
-            {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    {activeArea && ActiveAreaIcon && (
-                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
-                            <ActiveAreaIcon className="h-5 w-5" aria-hidden />
-                        </span>
-                    )}
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">
-                            {activeArea?.title ?? t('profile.title')}
-                        </h1>
-                        <p className="mt-1 max-w-2xl text-sm text-slate-500">
-                            {activeArea?.description ?? t('profile.subtitle')}
-                        </p>
-                    </div>
-                </div>
-                <PreviousPageButton fallbackHref={activeArea ? '/profilo' : '/'} />
-            </div>
+            <PageHeader
+                backHref={activeArea ? '/profilo' : '/'}
+                title={activeArea?.title ?? t('profile.title')}
+                subtitle={activeArea?.description ?? t('profile.subtitle')}
+                icon={activeArea && ActiveAreaIcon ? (
+                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
+                        <ActiveAreaIcon className="h-5 w-5" aria-hidden />
+                    </span>
+                ) : undefined}
+            />
 
             {!activeArea && (
                 <>
