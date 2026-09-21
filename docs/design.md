@@ -213,12 +213,17 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   conserva anche l’accesso alla presentazione iniziale. La Bussola resta accanto
   al titolo del catalogo.
 - **Presentazione iniziale**: titolo e breve descrizione precedono tre schede:
-  Questionari e profili, Percorsi guidati, Allenamento. Le illustrazioni PNG
+  Analisi dei risultati dei questionari, Percorsi guidati, Allenamento. Le illustrazioni PNG
   trasparenti in `public/images/intro/` sono decorative; titoli e descrizioni
   restano testo localizzato. Su mobile le immagini affiancano il testo, su
-  desktop lo precedono. «Inizia» segue le schede; supporti e istruzioni sui
-  questionari sono in due `details` chiusi inizialmente. Prompt e provenienza
-  delle immagini sono nel README della cartella.
+  desktop lo precedono. «Inizia» segue le schede; quattro `details` chiusi
+  inizialmente presentano da dove iniziare, il lavoro personale, risorse e
+  accompagnamento, uso dei questionari. Il link «Dati e riservatezza» apre
+  `/guide/dati-riservatezza`, che distingue elaborazione locale, filtro per
+  fornitori esterni e accessi ai contenuti. Il ritorno `/?view=intro` apre
+  la presentazione anche per chi ha già uno storico. I testi seguono la
+  presentazione PEF del 21 settembre 2026, incluse le note del relatore.
+  Prompt e provenienza delle immagini sono nel README della cartella.
 - **Movimento**: le variabili `--animate-*` vanno in `@theme`, non in `:root`
   — Tailwind v4 genera le utility `animate-*` solo da lì, e tenute in `:root`
   esistono le variabili ma non le classi. Solo `fade-in-up` all'ingresso e la barra indeterminata di

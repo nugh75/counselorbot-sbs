@@ -223,19 +223,22 @@ for (const width of [390, 1440]) {
             await start.waitFor();
             assert.equal(await start.count(), 1);
             const intro = page.getByTestId('intro-screen');
-            assert.deepEqual(await intro.locator('h2').allTextContents(), ['Questionari e profili', 'Percorsi guidati', 'Allenamento']);
+            assert.deepEqual(await intro.locator('h2').allTextContents(), ['Analisi dei risultati dei questionari', 'Percorsi guidati', 'Allenamento']);
             const images = intro.locator('img');
             assert.equal(await images.count(), 3);
             await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
             assert.ok(await start.evaluate(el => el.getBoundingClientRect().bottom <= innerHeight), 'Start is available in the initial viewport');
             assert.equal(await intro.locator('details[open]').count(), 0);
-            const support = intro.locator('details').nth(0);
+            assert.equal(await intro.locator('details').count(), 4);
+            const support = intro.locator('details[data-section=personal]');
             await support.locator('summary').focus();
             await page.keyboard.press('Enter');
             assert.equal(await support.getAttribute('open'), '');
-            assert.equal(await support.getByRole('heading', { name: 'Il taccuino', exact: true }).isVisible(), true);
+            assert.equal(await support.getByText(/Nell’Area personale/).isVisible(), true);
+            assert.match(await support.innerText(), /Portfolio/);
+            assert.match(await support.innerText(), /Tavolo/);
             await page.keyboard.press('Enter');
-            const questionnaires = intro.locator('details').nth(1);
+            const questionnaires = intro.locator('details[data-section=questionnaires]');
             await questionnaires.locator('summary').click();
             assert.equal(await questionnaires.getByRole('link', { name: 'competenzestrategiche.it' }).getAttribute('href'), 'https://www.competenzestrategiche.it/');
             await questionnaires.locator('summary').click();
@@ -277,7 +280,7 @@ test('instrument details return to the actual catalog rather than the home scree
     } finally { await context.close(); }
 });
 
-for (const [locale, width, dark, title] of [['de', 320, true, 'Fragebögen und Profile'], ['sv', 768, false, 'Frågeformulär och profiler']]) {
+for (const [locale, width, dark, title] of [['de', 320, true, 'Analyse der Fragebogenergebnisse'], ['sv', 768, false, 'Analys av frågeformulärens resultat']]) {
     test(`illustrated introduction remains readable in ${locale} at ${width}px, dark=${dark}`, async () => {
         const { page, context, errors } = await fixture({ width, locale, dark, noHistory: true, prefs: { counselor_id: null, counselor_ready: false, notebook_ready: false, setup_completed: false } });
         try {
@@ -287,6 +290,7 @@ for (const [locale, width, dark, title] of [['de', 320, true, 'Fragebögen und P
             assert.equal(await intro.locator('h2').count(), 3);
             assert.equal(await intro.locator('details[open]').count(), 0);
             assert.equal((await intro.innerText()).includes('app.intro.'), false);
+            assert.ok(await intro.evaluate(el => [...el.querySelectorAll('article')].every(card => card.getBoundingClientRect().right <= el.getBoundingClientRect().right + 1)), 'long translated titles stay within the page');
             await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             await page.waitForFunction(() => {
@@ -302,3 +306,21 @@ for (const [locale, width, dark, title] of [['de', 320, true, 'Fragebögen und P
         } finally { await context.close(); }
     });
 }
+
+
+test('data and privacy explains conditional protection and returns to the introduction for returning users', async () => {
+    const { page, context, errors, writes } = await fixture();
+    try {
+        await page.goto(`${origin}/?view=intro`);
+        await page.getByTestId('intro-screen').waitFor();
+        await page.getByRole('link', { name: 'Dati e riservatezza', exact: true }).click();
+        await page.getByRole('heading', { name: 'Dati e riservatezza', exact: true }).waitFor();
+        assert.match(await page.locator('main').innerText(), /non garantisce l’anonimato/);
+        assert.match(await page.locator('main').innerText(), /revocabili/);
+        await page.getByRole('link', { name: 'Torna alla presentazione', exact: true }).click();
+        await page.getByTestId('intro-screen').waitFor();
+        assert.equal(await page.getByRole('heading', { name: 'Analisi dei risultati dei questionari', exact: true }).isVisible(), true);
+        assert.deepEqual(writes, []);
+        assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+});
