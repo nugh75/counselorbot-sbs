@@ -366,7 +366,7 @@ test('il tavolo si ingrandisce e si allarga', async () => {
 test('a directly opened table offers a safe return to its list', async () => {
     const { page, context } = await fixture({ composeOpen: false });
     await page.locator('main header').getByRole('button', { name: 'Indietro', exact: true }).click();
-    await page.waitForURL(`${origin}/tavolo`);
+    await page.waitForURL(`${origin}/profilo/tavolo`);
     await context.close();
 });
 
@@ -609,33 +609,6 @@ test('light and dark table controls fit the desktop viewport', async () => {
         await context.close();
     }
 });
-
-for (const width of [390, 1440]) {
-test(`embedded table returns to the same tools panel with browser and screen Back at ${width}px`, async () => {
-    const { page, context } = await fixture({ composeOpen: false, width });
-    await page.route('**/api/user/timeline*', route => route.fulfill({ json: {
-        revision: 1, workspace: { actions: [], cards: [], comparison: { options: [], criteria: [], cells: [], chosen: null, reason: '' }, timeline: { title: '', events: [] } },
-    } }));
-    await page.route('**/api/orientation-directory*', route => route.fulfill({ json: { institution: null, events: [], referrals: [] } }));
-    await page.goto(`${origin}/profilo/timeline`);
-    const tools = page.getByRole('dialog');
-    await tools.locator('summary').click();
-    await tools.getByRole('tab', { name: 'Tavolo di lavoro', exact: true }).click();
-    for (const method of ['screen', 'browser', 'escape']) {
-        await page.getByRole('dialog').getByRole('link').filter({ hasText: 'Tavolo di prova' }).click();
-        await page.getByRole('dialog').getByRole('heading', { level: 1 }).waitFor();
-        assert.equal(new URL(page.url()).pathname, '/profilo/timeline');
-        if (method === 'screen') await page.getByRole('dialog').getByRole('button', { name: 'Indietro', exact: true }).click();
-        else if (method === 'browser') await page.goBack();
-        else await page.keyboard.press('Escape');
-        const returned = page.getByRole('dialog');
-        await returned.getByRole('link').filter({ hasText: 'Tavolo di prova' }).waitFor();
-        assert.equal(await returned.getByRole('tab', { name: 'Tavolo di lavoro', exact: true }).getAttribute('aria-selected'), 'true');
-    }
-    await context.close();
-});
-
-}
 
 test('guide opened from a table returns to that table', async () => {
     const { page, context } = await fixture({ composeOpen: false });

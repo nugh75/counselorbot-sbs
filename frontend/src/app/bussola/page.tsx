@@ -18,7 +18,6 @@ import remarkGfm from 'remark-gfm';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import { CompassMark } from '@/components/ui/CompassMark';
-import { NotebookBookletPanel, NotebookBookletTriggers, type DeskTab } from '@/components/profile/NotebookBookletPanel';
 import { useI18n } from '@/lib/i18n-context';
 import {
     completeOrientation,
@@ -63,7 +62,6 @@ export default function BussolaPage() {
     const [voiceOptionsContainer, setVoiceOptionsContainer] = useState<HTMLDivElement | null>(null);
     const [completing, setCompleting] = useState(false);
     const [input, setInput] = useState('');
-    const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
     const [error, setError] = useState('');
     const [nextHref, setNextHref] = useState<string | null>(null);
     const [atFork, setAtFork] = useState(false);
@@ -331,12 +329,6 @@ export default function BussolaPage() {
                                         </div>
                                     </details>
                                 )}
-                                <div className="mb-2 flex flex-wrap items-center gap-1">
-                                    <NotebookBookletTriggers
-                                        buttonClassName="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
-                                        onOpen={setDeskTab}
-                                    />
-                                </div>
                                 <div className="flex items-end gap-2">
                                     <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <>
                                         <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={sending} />
@@ -394,7 +386,6 @@ export default function BussolaPage() {
             )}
 
             {!session && errorNote}
-            <NotebookBookletPanel tab={deskTab} onSelectTab={setDeskTab} onClose={() => setDeskTab(null)} lang={lang} />
         </div>
     );
 }

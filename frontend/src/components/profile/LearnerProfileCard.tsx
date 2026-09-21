@@ -47,6 +47,10 @@ const FIELDS: {
     { key: 'weaknesses', labelKey: 'lp.field.weaknesses', multiline: true },
     { key: 'notes', labelKey: 'lp.field.notes', multiline: true },
 ];
+// `goal` resta nello storico per non perdere le revisioni precedenti, ma non è
+// più una seconda casella da compilare nel Taccuino: gli obiettivi correnti
+// vivono nella tabella dedicata dell'Area personale.
+const CURRENT_FIELDS = FIELDS.filter((field) => field.key !== 'goal');
 
 interface Props {
     variant: Variant;
@@ -214,7 +218,9 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
 
     const useSuggestion = () => {
         if (suggestion?.status !== 'ready') return;
-        changeForm({ ...form, ...suggestion.data });
+        const notebookSuggestion = { ...suggestion.data };
+        delete notebookSuggestion.goal;
+        changeForm({ ...form, ...notebookSuggestion });
         setEditing(true);
         setSuggestionHandled(true);
     };
@@ -233,7 +239,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
         : variant === 'review' ? (isIntake ? 'intake' : 'session_start')
         : (isIntake ? 'intake' : 'manual');
 
-    const filledEntries = FIELDS
+    const filledEntries = CURRENT_FIELDS
         .map((f) => {
             const raw = (profile?.data?.[f.key] || '').trim();
             if (f.key !== 'institution_slug') return { ...f, value: raw };
@@ -247,7 +253,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     const formUi = (
         <div className="space-y-4">
             <div className="space-y-3">
-                {FIELDS.map((f) => (
+                {CURRENT_FIELDS.map((f) => (
                     <label key={f.key} className="block">
                         <span className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">{t(f.labelKey)}</span>
                         {f.type === 'select' ? (
@@ -410,10 +416,9 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                             <h4 className="font-display text-base font-semibold text-slate-900">{t('lp.suggestion.title')}</h4>
                             <p className="mt-1 text-sm leading-relaxed text-slate-600">{t('lp.suggestion.intro')}</p>
                             <dl className="mt-3 space-y-2">
-                                {(['goal', 'main_difficulty', 'notes'] as const).map((key) => {
+                                {(['main_difficulty', 'notes'] as const).map((key) => {
                                     const value = suggestion.data[key]?.trim();
-                                    const labelKey = key === 'goal' ? 'lp.field.goal'
-                                        : key === 'main_difficulty' ? 'lp.field.difficulty'
+                                    const labelKey = key === 'main_difficulty' ? 'lp.field.difficulty'
                                         : 'lp.field.notes';
                                     return value ? (
                                         <div key={key}>

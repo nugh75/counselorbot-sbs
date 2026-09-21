@@ -136,7 +136,9 @@ def resources(db, username):
         add('tavolo', row.id, row.title or 'Tavolo', f'/tavolo/{row.id}')
     notebook = db.query(models.LearnerProfileRevision).filter_by(username=username).order_by(models.LearnerProfileRevision.id.desc()).first()
     if notebook:
-        add('notebook', 'current', str(notebook.data.get('goal') or notebook.data.get('context') or 'Taccuino'), '/profilo/taccuino')
+        # Il Taccuino non contiene più una seconda casella obiettivo: il legame
+        # con un obiettivo è espresso solo da GoalResourceLink.
+        add('notebook', 'current', 'Taccuino', '/profilo/taccuino')
     return result
 
 

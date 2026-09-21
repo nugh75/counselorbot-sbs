@@ -19,7 +19,6 @@ import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
 import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
-import { asBookletType } from '@/components/profile/NotebookBookletPanel';
 import { acceptsAgreement, advanceButtons, advanceLabelKey, autoAdvancesOnGenerate, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from '@/lib/interview-path';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
@@ -1973,7 +1972,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             </>}
         </ChatWorkspace>
         <VisualTools hideTrigger sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}
-                        questionnaireType={asBookletType(questionnaireType)}
                         onDiscuss={currentPhase === FIXED_CONCLUSION_ID ? undefined : text => {
                             setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
                             window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());

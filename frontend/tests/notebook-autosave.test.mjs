@@ -38,10 +38,13 @@ for (const width of [390, 1440]) {
         try {
             await page.goto(`${origin}/profilo/taccuino`);
             await page.getByRole('button', { name: 'Modifica', exact: true }).click();
-            const field = page.getByLabel(/Il tuo obiettivo in questo momento/i);
+            assert.equal(await page.getByLabel(/Il tuo obiettivo in questo momento/i).count(), 0);
+            const goalsLink = page.getByRole('link', { name: 'Gestisci obiettivi e collegamenti', exact: true });
+            assert.equal(await goalsLink.getAttribute('href'), '/profilo/obiettivi');
+            const field = page.getByLabel(/Altro che vuoi aggiungere/i);
             await field.fill('Voglio organizzare meglio lo studio');
             await page.getByText('Taccuino aggiornato', { exact: true }).waitFor();
-            assert.equal(state.revision.data.goal, 'Voglio organizzare meglio lo studio');
+            assert.equal(state.revision.data.notes, 'Voglio organizzare meglio lo studio');
             assert.equal(await field.inputValue(), 'Voglio organizzare meglio lo studio');
             await field.fill('Ultime parole prima del cambio pagina');
             await page.goto(`${origin}/profilo`);
@@ -58,17 +61,17 @@ test('failed save survives reload, retries online, and never advances intake aut
     try {
         state.fail = true;
         await page.goto(`${origin}/inizia`);
-        const field = page.getByLabel(/Il tuo obiettivo in questo momento/i);
+        const field = page.getByLabel(/Parlaci del luogo dove studi/i);
         await field.fill('La mia bozza da conservare');
-        await page.getByText('Salvataggio non riuscito. Riprova.', { exact: true }).waitFor();
+        await page.getByLabel('Salvataggio non riuscito. Riprova.', { exact: true }).waitFor();
         await page.reload();
         await field.waitFor();
         assert.equal(await field.inputValue(), 'La mia bozza da conservare');
-        await page.getByText('Salvataggio non riuscito. Riprova.', { exact: true }).waitFor();
+        await page.getByLabel('Salvataggio non riuscito. Riprova.', { exact: true }).waitFor();
         state.fail = false;
         await page.evaluate(() => window.dispatchEvent(new Event('online')));
         await page.getByText('Taccuino aggiornato', { exact: true }).waitFor();
-        assert.equal(state.revision.data.goal, 'La mia bozza da conservare');
+        assert.equal(state.revision.data.context, 'La mia bozza da conservare');
         assert.equal(new URL(page.url()).pathname, '/inizia');
         assert.equal(await field.inputValue(), 'La mia bozza da conservare');
         assert.deepEqual(state.errors, []);
