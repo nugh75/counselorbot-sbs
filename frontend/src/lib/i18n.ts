@@ -23,6 +23,21 @@ export const LANG_STORAGE_KEY = 'cb_lang';
 type Dict = Record<string, string>;
 
 const it: Dict = {
+    // Compact introduction
+    'app.intro.compact.about': "Un ambiente di counseling formativo sviluppato dall’Università Roma Tre.",
+    'app.intro.compact.profiles.title': "Questionari e profili",
+    'app.intro.compact.profiles.body': "Comprendi i tuoi risultati e individua su cosa lavorare.",
+    'app.intro.compact.paths.title': "Percorsi guidati",
+    'app.intro.compact.paths.body': "Esplora esperienze, idee e scelte attraverso il dialogo.",
+    'app.intro.compact.practice.title': "Allenamento",
+    'app.intro.compact.practice.body': "Allenati su un PDF di studio con domande e feedback.",
+    'app.intro.compact.pace': "Scegli un’attività alla volta, segui il tuo ritmo e riprendi quando vuoi.",
+    'app.intro.compact.limits': "Il counselor AI sostiene la riflessione: non formula diagnosi né valutazioni.",
+    'app.intro.compact.support': "Scopri gli strumenti di supporto",
+    'app.intro.compact.questionnaires': "Come usare i questionari",
+    'app.intro.compact.results': "Per interpretare un questionario puoi usare i risultati salvati, inserirli a mano o caricare un profilo PDF, dove previsto.",
+    'app.intro.compact.contact': "Informazioni e collaborazioni",
+
     'setup.title': "Prepara il tuo spazio",
     'setup.body': "Al primo accesso scegli il counselor e compila il Taccuino. Le impostazioni vengono salvate nel tuo account: potrai cambiare counselor dalla navigazione e modificare il Taccuino nell’Area personale.",
     'setup.counselor': "Scegli il counselor",
@@ -1244,6 +1259,21 @@ const it: Dict = {
 };
 
 const en: Dict = {
+    // Compact introduction
+    'app.intro.compact.about': "An educational counseling environment developed by Roma Tre University.",
+    'app.intro.compact.profiles.title': "Questionnaires and profiles",
+    'app.intro.compact.profiles.body': "Understand your results and identify what to work on.",
+    'app.intro.compact.paths.title': "Guided paths",
+    'app.intro.compact.paths.body': "Explore experiences, ideas and choices through dialogue.",
+    'app.intro.compact.practice.title': "Practice",
+    'app.intro.compact.practice.body': "Practice with questions and feedback on a study PDF.",
+    'app.intro.compact.pace': "Choose one activity at a time, go at your own pace and resume whenever you like.",
+    'app.intro.compact.limits': "The AI counselor supports reflection: it does not provide diagnoses or assessments.",
+    'app.intro.compact.support': "Explore the support tools",
+    'app.intro.compact.questionnaires': "How to use questionnaires",
+    'app.intro.compact.results': "To interpret a questionnaire, use saved results, enter them manually or upload a profile PDF where supported.",
+    'app.intro.compact.contact': "Information and collaboration",
+
     'setup.title': "Set up your space",
     'setup.body': "On your first visit, choose a counselor and complete your notebook. Your account keeps these settings: change the counselor from navigation and edit the notebook in your Personal area.",
     'setup.counselor': "Choose your counselor",
@@ -2446,6 +2476,21 @@ const en: Dict = {
 };
 
 const es: Dict = {
+    // Compact introduction
+    'app.intro.compact.about': "Un entorno de orientación formativa desarrollado por la Universidad Roma Tre.",
+    'app.intro.compact.profiles.title': "Cuestionarios y perfiles",
+    'app.intro.compact.profiles.body': "Comprende tus resultados e identifica qué trabajar.",
+    'app.intro.compact.paths.title': "Recorridos guiados",
+    'app.intro.compact.paths.body': "Explora experiencias, ideas y decisiones a través del diálogo.",
+    'app.intro.compact.practice.title': "Práctica",
+    'app.intro.compact.practice.body': "Practica con preguntas y comentarios sobre un PDF de estudio.",
+    'app.intro.compact.pace': "Elige una actividad cada vez, sigue tu ritmo y retómala cuando quieras.",
+    'app.intro.compact.limits': "El orientador de IA apoya la reflexión: no realiza diagnósticos ni evaluaciones.",
+    'app.intro.compact.support': "Descubre las herramientas de apoyo",
+    'app.intro.compact.questionnaires': "Cómo usar los cuestionarios",
+    'app.intro.compact.results': "Para interpretar un cuestionario puedes usar resultados guardados, introducirlos manualmente o cargar un perfil en PDF, cuando esté disponible.",
+    'app.intro.compact.contact': "Información y colaboración",
+
     'setup.title': "Prepara tu espacio",
     'setup.body': "En tu primera visita, elige un counselor y completa tu cuaderno. Tu cuenta guarda estos ajustes: cambia el counselor desde la navegación y edita el cuaderno en tu Área personal.",
     'setup.counselor': "Elige tu counselor",
@@ -3647,6 +3692,21 @@ const es: Dict = {
 };
 
 const fr: Dict = {
+    // Compact introduction
+    'app.intro.compact.about': "Un environnement d’accompagnement formatif développé par l’Université Roma Tre.",
+    'app.intro.compact.profiles.title': "Questionnaires et profils",
+    'app.intro.compact.profiles.body': "Comprenez vos résultats et identifiez les points à travailler.",
+    'app.intro.compact.paths.title': "Parcours guidés",
+    'app.intro.compact.paths.body': "Explorez vos expériences, idées et choix par le dialogue.",
+    'app.intro.compact.practice.title': "Entraînement",
+    'app.intro.compact.practice.body': "Entraînez-vous avec des questions et des retours sur un PDF d’étude.",
+    'app.intro.compact.pace': "Choisissez une activité à la fois, avancez à votre rythme et reprenez quand vous le souhaitez.",
+    'app.intro.compact.limits': "Le conseiller IA soutient la réflexion : il ne pose pas de diagnostic et ne fournit pas d’évaluation.",
+    'app.intro.compact.support': "Découvrir les outils de soutien",
+    'app.intro.compact.questionnaires': "Comment utiliser les questionnaires",
+    'app.intro.compact.results': "Pour interpréter un questionnaire, utilisez des résultats enregistrés, saisissez-les manuellement ou importez un profil PDF lorsque cette option est disponible.",
+    'app.intro.compact.contact': "Informations et collaborations",
+
     'setup.title': "Préparez votre espace",
     'setup.body': "Lors de votre première visite, choisissez un counselor et remplissez votre carnet. Votre compte conserve ces réglages : changez de counselor depuis la navigation et modifiez le carnet dans votre Espace personnel.",
     'setup.counselor': "Choisissez votre counselor",
@@ -4848,6 +4908,21 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    // Compact introduction
+    'app.intro.compact.about': "Eine Umgebung für formative Beratung, entwickelt von der Universität Roma Tre.",
+    'app.intro.compact.profiles.title': "Fragebögen und Profile",
+    'app.intro.compact.profiles.body': "Verstehe deine Ergebnisse und erkenne, woran du arbeiten kannst.",
+    'app.intro.compact.paths.title': "Begleitete Wege",
+    'app.intro.compact.paths.body': "Erkunde Erfahrungen, Ideen und Entscheidungen im Dialog.",
+    'app.intro.compact.practice.title': "Übung",
+    'app.intro.compact.practice.body': "Übe mit Fragen und Feedback zu einem Lern-PDF.",
+    'app.intro.compact.pace': "Wähle jeweils eine Aktivität, bestimme dein Tempo und mache weiter, wann du möchtest.",
+    'app.intro.compact.limits': "Der KI-Berater unterstützt die Reflexion: Er stellt keine Diagnosen und gibt keine Bewertungen ab.",
+    'app.intro.compact.support': "Unterstützende Werkzeuge entdecken",
+    'app.intro.compact.questionnaires': "So nutzt du die Fragebögen",
+    'app.intro.compact.results': "Um einen Fragebogen zu interpretieren, nutze gespeicherte Ergebnisse, gib sie manuell ein oder lade, sofern unterstützt, ein Profil als PDF hoch.",
+    'app.intro.compact.contact': "Informationen und Zusammenarbeit",
+
     'setup.title': "Richte deinen Bereich ein",
     'setup.body': "Wähle beim ersten Besuch einen Counselor und fülle dein Notizbuch aus. Dein Konto speichert diese Einstellungen: Ändere den Counselor über die Navigation und das Notizbuch im persönlichen Bereich.",
     'setup.counselor': "Wähle deinen Counselor",
@@ -6049,6 +6124,21 @@ const de: Dict = {
 };
 
 const sv: Dict = {
+    // Compact introduction
+    'app.intro.compact.about': "En miljö för formativ vägledning utvecklad av universitetet Roma Tre.",
+    'app.intro.compact.profiles.title': "Frågeformulär och profiler",
+    'app.intro.compact.profiles.body': "Förstå dina resultat och identifiera vad du vill arbeta med.",
+    'app.intro.compact.paths.title': "Vägledda samtal",
+    'app.intro.compact.paths.body': "Utforska erfarenheter, idéer och val genom dialog.",
+    'app.intro.compact.practice.title': "Träning",
+    'app.intro.compact.practice.body': "Träna med frågor och återkoppling utifrån en studie-PDF.",
+    'app.intro.compact.pace': "Välj en aktivitet i taget, följ din egen takt och fortsätt när du vill.",
+    'app.intro.compact.limits': "AI-vägledaren stöder reflektion: den ställer inga diagnoser och gör inga bedömningar.",
+    'app.intro.compact.support': "Upptäck stödverktygen",
+    'app.intro.compact.questionnaires': "Så använder du frågeformulären",
+    'app.intro.compact.results': "För att tolka ett frågeformulär kan du använda sparade resultat, ange dem manuellt eller ladda upp en profil som PDF där det stöds.",
+    'app.intro.compact.contact': "Information och samarbete",
+
     'setup.title': "Förbered ditt utrymme",
     'setup.body': "Vid ditt första besök väljer du counselor och fyller i anteckningsboken. Kontot sparar inställningarna: byt counselor via navigeringen och redigera anteckningsboken i ditt Personliga område.",
     'setup.counselor': "Välj din counselor",
