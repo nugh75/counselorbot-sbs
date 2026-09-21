@@ -1,25 +1,57 @@
 'use client';
 
-// Guida all'interfaccia: una pagina statica e tradotta che spiega, sezione per
-// sezione, le schermate principali di CounselorBot. I testi vivono in i18n
-// (chiavi `guide.*`) nelle sei lingue.
+// Public, localized guide. The audience query selects documentation, not permissions.
 
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import Image, { type StaticImageData } from 'next/image';
 import chatOverview from '../../../public/guide/chat-guidata.png';
 import chatControlsImage from '../../../public/guide/controlli-chat.png';
 import personalToolsImage from '../../../public/guide/strumenti-annotazioni.png';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, MoreVertical, RotateCcw, BookOpen, Send, Snowflake, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { useI18n } from '@/lib/i18n-context';
 import { counselorHelp } from '@/lib/i18n-counselor-help';
 
-const SECTION_COUNT = 15;
+import { guideAudienceText, type GuideAudienceKey } from '@/lib/i18n-guide-audiences';
+import { guideImages } from '@/lib/guide-images';
+
+const TEACHER_ROUTES = ['/docente', '/docente', '/docente', '/docente', '/docente', '/docente', '/bussola'];
 
 export default function GuidePage() {
+    return <Suspense><GuideContent /></Suspense>;
+}
+
+function GuideContent() {
     const { t, lang } = useI18n();
-    const sections = Array.from({ length: SECTION_COUNT }, (_, i) => i + 1);
+    const params = useSearchParams();
+    const teacher = params.get('audience') === 'teacher';
+    const l = (key: GuideAudienceKey) => guideAudienceText(lang, key);
+    const sections = Array.from({ length: teacher ? 7 : 15 }, (_, i) => i + 1);
+    const sectionId = (n: number) => `guide-${teacher ? 'teacher-' : ''}section-${n}`;
+    const sectionTitle = (n: number) => teacher ? l(`teacher${n}Title` as GuideAudienceKey) : t(`guide.section${n}.title`);
+    const sectionBody = (n: number) => teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`);
+    const images = guideImages[lang];
+    const sectionImages: Record<number, { image: StaticImageData; caption: string }[]> = teacher ? {
+        1: [{ image: images['teacher-area'], caption: l('teacher1Title') }],
+        2: [{ image: images['teacher-groups'], caption: l('teacher2Title') }],
+        3: [{ image: images['teacher-catalog'], caption: l('teacher3Title') }],
+        4: [{ image: images['teacher-assignment'], caption: l('teacher4Title') }],
+        5: [{ image: images['teacher-feedback'], caption: l('teacher5Title') }],
+        7: [
+            { image: images['study-event'], caption: t('guide.section10.title') },
+            { image: images['professional-event'], caption: t('guide.section11.title') },
+        ],
+    } : {
+        10: [{ image: images['study-event'], caption: t('guide.section10.title') }],
+        11: [{ image: images['professional-event'], caption: t('guide.section11.title') }],
+        12: [
+            { image: images['personal-area'], caption: t('guide.section12.title') },
+            { image: images['personal-goals'], caption: t('guide.section12.title') },
+        ],
+    };
     const chatControls = [
         { key: 'options', icon: <MoreVertical className="h-4 w-4" aria-hidden="true" /> },
         { key: 'freeze', icon: <Snowflake className="h-4 w-4" aria-hidden="true" /> },
@@ -76,7 +108,7 @@ export default function GuidePage() {
             <button
                 type="button"
                 onClick={(event) => openZoom(image.src, alt, event.currentTarget)}
-                aria-label={t('guide.zoomHint')}
+                aria-label={`${t('guide.zoomHint')}: ${alt}`}
                 className="block w-full cursor-zoom-in rounded-lg text-left"
             >
                 <span className="block overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
@@ -102,6 +134,20 @@ export default function GuidePage() {
                 <PageHeader title={t('guide.title')} subtitle={t('guide.subtitle')} />
             </div>
 
+            <div className="space-y-3">
+                <nav aria-label={l('audience')} className="flex flex-wrap gap-2">
+                    {(['student', 'teacher'] as const).map(audience => (
+                        <a key={audience} href={`/guide?audience=${audience}`}
+                            aria-current={teacher === (audience === 'teacher') ? 'page' : undefined}
+                            className={`inline-flex min-h-11 items-center rounded-lg border px-4 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${teacher === (audience === 'teacher') ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`}>
+                            {l(audience)}
+                        </a>
+                    ))}
+                </nav>
+                <p className="text-sm leading-relaxed text-slate-700">{l(teacher ? 'teacherIntro' : 'studentIntro')}</p>
+                <p className="text-xs leading-relaxed text-slate-500">{l('screenshots')}</p>
+            </div>
+
             {/* Indice con ancore (GUA-03): ogni sezione è raggiungibile senza
                 attraversare l'intero documento. */}
             <nav aria-label={t('guide.indexTitle')} className="glass-panel p-5">
@@ -110,15 +156,15 @@ export default function GuidePage() {
                     {sections.map((n) => (
                         <li key={n}>
                             <a
-                                href={`#guide-section-${n}`}
+                                href={`#${sectionId(n)}`}
                                 className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
                             >
                                 <span className="font-mono text-xs font-semibold text-ochre-600 dark:text-ochre-200">
                                     {String(n).padStart(2, '0')}
                                 </span>
-                                <span className="truncate">{t(`guide.section${n}.title`)}</span>
+                                <span className="min-w-0">{sectionTitle(n)}</span>
                             </a>
-                            {n === 7 && (
+                            {!teacher && n === 7 && (
                                 <a
                                     href="#guide-chat-controls"
                                     className="ml-8 flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-700"
@@ -133,20 +179,28 @@ export default function GuidePage() {
 
             <ol className="space-y-4">
                 {sections.map((n) => (
-                    <li key={n} id={`guide-section-${n}`} className="glass-panel scroll-mt-24 p-5 text-left">
+                    <li key={n} id={sectionId(n)} className="glass-panel scroll-mt-24 p-5 text-left">
                         <div className="flex gap-4">
                             <span className="font-mono text-sm font-semibold text-ochre-600 shrink-0 pt-0.5">
                                 {String(n).padStart(2, '0')}
                             </span>
                             <div className="min-w-0">
-                                <h2 className="font-bold text-slate-900">{t(`guide.section${n}.title`)}</h2>
+                                <h2 className="font-bold text-slate-900">{sectionTitle(n)}</h2>
                                 <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-slate-600">
-                                    {t(`guide.section${n}.body`)}
+                                    {sectionBody(n)}
                                 </p>
                             </div>
                         </div>
 
-                        {n === 4 && (
+                        {teacher && (
+                            <Link href={TEACHER_ROUTES[n - 1]} className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{l('open')}</Link>
+                        )}
+                        {sectionImages[n] && (
+                            <div className="mt-6 space-y-6">
+                                {sectionImages[n].map(({ image, caption }) => <div key={image.src}>{renderFigure(image, caption, caption)}</div>)}
+                            </div>
+                        )}
+                        {!teacher && n === 4 && (
                             <div className="mt-4 space-y-2 text-sm leading-relaxed text-slate-600">
                                 <h3 className="font-semibold text-slate-900">{counselorHelp(lang).title}</h3>
                                 <p>{counselorHelp(lang).local}</p>
@@ -154,7 +208,7 @@ export default function GuidePage() {
                                 <p>{counselorHelp(lang).tools}</p>
                             </div>
                         )}
-                        {n === 7 && (
+                        {!teacher && n === 7 && (
                             <div className="mt-6 space-y-6 border-t border-slate-100 pt-6">
                                 {renderFigure(chatOverview, t('guide.chat.overviewAlt'), t('guide.chat.overviewCaption'))}
 
@@ -207,11 +261,11 @@ export default function GuidePage() {
                         ref={zoomCloseRef}
                         onClick={closeZoom}
                         aria-label={t('guide.zoomClose')}
-                        className="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                        className="absolute z-10 right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
                     >
                         <X className="h-5 w-5" />
                     </button>
-                    <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-12">
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 sm:p-12">
                         <div className="relative h-full w-full">
                             <Image src={zoom.src} alt={zoom.alt} fill sizes="100vw" className="object-contain" />
                         </div>
