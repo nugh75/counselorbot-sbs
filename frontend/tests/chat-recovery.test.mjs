@@ -26,6 +26,7 @@ async function fixture(width = 390, { initialError = false, experience = 'standa
         if (!url.pathname.startsWith('/api/')) return request.method() === 'GET' ? route.continue() : route.abort();
         let data = [];
         if (url.pathname === '/api/auth/me') data = { authenticated: true, is_admin: false, username: 'recovery-test', name: 'Prova', groups: ['studenti'] };
+        else if (url.pathname === '/api/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
         else if (url.pathname === '/api/orientation/status') data = { required: false };
         else if (url.pathname === '/api/counselors') data = [{ id: 1, slug: 'fixture', name: 'Counselor di prova', language: ['it'], suitable: true, is_active: true }];
         else if (url.pathname === '/api/user/cross-synthesis/availability') data = { available: false, min_instruments: 2, instruments: [] };
