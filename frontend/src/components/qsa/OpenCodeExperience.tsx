@@ -21,6 +21,9 @@ import { createTerminalSession, TerminalSession } from '@/lib/opencode-terminal'
 import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, shouldAutoFreeze } from '@/lib/auto-freeze';
 import { freezeSession, type FrozenSessionSnapshot } from '@/lib/frozen-session';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
+import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
+import { useResponseFormat } from '@/lib/use-response-format';
+import type { ResponseFormat } from '@/lib/chat-preferences';
 import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
@@ -40,6 +43,7 @@ interface OpenCodeExperienceProps {
     // Lunghezza risposta scelta nella schermata di modalità; regola direttiva
     // e limite parole del turno OpenCode.
     responseLength?: ResponseLength;
+    initialResponseFormat?: ResponseFormat;
     // Trascrizione dello snapshot congelato, usata solo se il workspace non ha
     // più la propria (vedi `startOpenCode`).
     restoredMessages?: { role: string; content: string }[];
@@ -63,8 +67,12 @@ export function OpenCodeExperience({
     locale,
     onComplete,
     responseLength = 'medium',
+    initialResponseFormat = 'standard',
     restoredMessages,
 }: OpenCodeExperienceProps) {
+    const [responseFormat, setResponseFormat] = useResponseFormat(`opencode:${sessionId}`, initialResponseFormat);
+    const responsePrefs = useRef({ responseLength, responseFormat });
+    useEffect(() => { responsePrefs.current = { responseLength, responseFormat }; }, [responseLength, responseFormat]);
     const { streamChat, ...continuation } = useChatContinuation();
     const { t, tf } = useI18n();
     const terminalRef = useRef<TerminalSession | null>(null);
@@ -191,7 +199,7 @@ export function OpenCodeExperience({
 
         try {
             const result = await streamChat(
-                { session_id: targetSessionId, message: userMessage, seed, response_length: responseLength },
+                { session_id: targetSessionId, message: userMessage, seed, response_format: responsePrefs.current.responseFormat, response_length: responsePrefs.current.responseLength },
                 updateLast,
                 controller.signal,
                 undefined,
@@ -217,7 +225,7 @@ export function OpenCodeExperience({
             streamingRef.current = false;
             setStreaming(false);
         }
-    }, [t, streamChat, responseLength]);
+    }, [t, streamChat]);
 
     const startOpenCode = useCallback(async () => {
         setBusy(true);
@@ -374,7 +382,7 @@ export function OpenCodeExperience({
             isLoading: streaming || busy,
             completed: completedRef.current,
         })) return;
-        const signature = autoFreezeSignature({ messages, currentPhase: '', responseLength });
+        const signature = autoFreezeSignature({ messages, currentPhase: '', responseLength, responseFormat });
         if (signature === savedSignatureRef.current) return;
         pendingSnapshotRef.current = {
             snapshot: {
@@ -386,6 +394,7 @@ export function OpenCodeExperience({
                 counselor_id: counselorId,
                 experience: 'opencode',
                 locale,
+                response_format: responseFormat,
                 response_length: responseLength,
                 label: `${questionnaire.id} — ${t('guided.mode.sandbox')}`,
                 pdf_token: pdfToken || null,
@@ -394,7 +403,7 @@ export function OpenCodeExperience({
         };
         const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
         return () => window.clearTimeout(timer);
-    }, [messages, streaming, busy, sessionId, counselorId, questionnaire.id, scores, locale, pdfToken, t, flushAutoFreeze, responseLength]);
+    }, [messages, streaming, busy, sessionId, counselorId, questionnaire.id, scores, locale, pdfToken, t, flushAutoFreeze, responseLength, responseFormat]);
 
     useEffect(() => {
         const onPageHide = () => { void flushAutoFreeze({ keepalive: true }); };
@@ -700,6 +709,7 @@ export function OpenCodeExperience({
                         </div>
                         <ChatContinuation locale={locale} {...continuation} />
                         <form onSubmit={submit} className="border-t border-slate-200 bg-white p-3 sm:p-4">
+                            <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={busy || streaming} />
                             {error && messages.length > 0 && (
                                 <p className="text-xs text-rose-600 mb-2">{error}</p>
                             )}

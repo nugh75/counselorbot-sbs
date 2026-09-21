@@ -830,7 +830,7 @@ def _final_step_summary(
         .filter(
             models.Log.action == "chat_message",
             models.Log.session_id == result.session_id,
-            models.Log.phase == final_step.id,
+            models.Log.phase.in_([final_step.id, "qsa-essential-summary"] if result.questionnaire_type == "QSA" else [final_step.id]),
         )
         .order_by(models.Log.timestamp.desc(), models.Log.id.desc())
         .first()

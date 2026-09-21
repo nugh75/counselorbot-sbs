@@ -4,6 +4,7 @@ from typing import Literal, Optional
 from pydantic import Field
 
 from . import schemas
+from .chat_preferences import ResponseFormat
 
 
 class ChatRequest(schemas.BaseModel):
@@ -19,10 +20,12 @@ class ChatRequest(schemas.BaseModel):
     language: Optional[str] = None  # 'it' (default), 'en', 'es', 'fr', 'de', 'sv'
     max_tokens: Optional[int] = None
     response_length: Optional[Literal["short", "medium", "long"]] = None
+    response_format: ResponseFormat = "standard"
     reasoning_effort: Optional[Literal["off", "standard", "deep"]] = None  # spazio di ragionamento scelto dallo studente
     memory_message: Optional[str] = None  # Solo testo reale dell'utente, senza istruzioni interne
     internal_message: bool = False  # Istruzione tecnica: non mostrarla come input studente nei log/PDF
     counselor_id: Optional[int] = None  # se valorizzato: persona + provider/model dal counselor
+    guided_path: Literal["complete", "essential"] = "complete"
     idea_variant: Optional[str] = None  # Idea: student-path|student-open|research|concept
     idea_budget: Optional[int] = None   # scambi previsti per la sessione; 0/None = senza limite
 
@@ -36,6 +39,7 @@ class SiteChatRequest(schemas.BaseModel):
     conversation_id: Optional[str] = None
     max_tokens: Optional[int] = None
     response_length: Optional[Literal["short", "medium", "long"]] = None
+    response_format: ResponseFormat = "standard"
     language: Optional[str] = "it"  # lingua della risposta (it|en|es|fr|de|sv)
     collection: str = "competenzestrategiche"  # base di conoscenza: builtin o collezione dinamica (slug)
     counselor_id: Optional[int] = None  # counselor AI opzionale per la persona nel system prompt
@@ -102,3 +106,4 @@ class OpencodeChatRequest(schemas.BaseModel):
     message: str = ""
     seed: bool = False
     response_length: Optional[Literal["short", "medium", "long"]] = None
+    response_format: ResponseFormat = "standard"

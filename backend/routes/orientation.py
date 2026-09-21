@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 
 from .. import auth, models
+from ..chat_preferences import ResponseFormat
 from ..database import get_db
 from ..orientation import analyze_turn, normalize_language
 from ..student_context import latest_learner_profile
@@ -35,6 +36,7 @@ class StartRequest(BaseModel):
 
 
 class MessageRequest(BaseModel):
+    response_format: ResponseFormat = "standard"
     message: str = Field(min_length=1, max_length=MAX_MESSAGE_CHARS)
     language: str = "it"
 
@@ -244,7 +246,7 @@ def orientation_message(
         raise HTTPException(status_code=409, detail="Orientation session already completed")
     history = list(row.messages or [])
     analysis = analyze_turn(db, payload.message, payload.language, history, row.counselor_id, row.username,
-                            current_recommendations=list(row.recommendations or []))
+                            current_recommendations=list(row.recommendations or []), response_format=payload.response_format)
     messages = (history + [
         {"role": "user", "content": payload.message},
         {"role": "assistant", "content": analysis.reply},

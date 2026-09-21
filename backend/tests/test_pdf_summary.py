@@ -126,3 +126,17 @@ def test_long_card_does_not_overflow_or_lose_content():
     assert 'ULTIMA_FRASE' in ''.join(pages)
     first = next(page for page in pages if 'Sintesi e consigli' in page)
     assert 'Una frase da conservare' in first
+
+
+def test_essential_summary_is_reused_but_voluntary_followup_is_not_a_summary(monkeypatch, db, result):
+    db.add(models.GuidedStep(id='sl-synthesis', questionnaire_type='QSA', sort_order=1, label='Sintesi', prompt='Summarize.', system_prompt_mode='qsa-summary'))
+    db.add(models.Log(action='chat_message', session_id=result.session_id, phase='qsa-essential-summary', details={'language': 'it', 'bot_response': 'Un tema esplorato e una azione concordata.', 'journey_coverage': 'complete'}))
+    db.commit()
+    monkeypatch.setattr(survey, '_generate_summary', lambda *args, **kwargs: 'Sintesi aggiornata con la modifica.')
+    messages = [{'role': 'counselor', 'text': 'Un tema esplorato e una azione concordata.'}]
+    args = dict(result=result, scores={}, messages=messages, recommendations={}, lang='it')
+    assert survey.canonical_summary(db, **args)[0] == messages[0]['text']
+    db.add(models.Log(action='chat_message', session_id=result.session_id, phase='qsa-essential-followup', details={'user_input': 'Modifico la durata.', 'bot_response': 'Va bene.'}))
+    db.commit()
+    messages.append({'role': 'student', 'text': 'Modifico la durata.'})
+    assert survey.canonical_summary(db, **args)[0] == 'Sintesi aggiornata con la modifica.'

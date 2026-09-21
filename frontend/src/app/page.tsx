@@ -481,7 +481,7 @@ export default function Home() {
                 setFrozenSnapshot(snapshot);
                 setStep('interaction');
                 setReady(true);
-            })();
+            })().catch(() => { toast.error(t('toast.error')); setReady(true); });
             return;
         }
 
@@ -502,8 +502,19 @@ export default function Home() {
                 setSessionId(r.sessionId);
                 setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
                 setExperience(r.experience);
-                setStep('interaction');
-                claimEntry();
+                // Prefer the owned server snapshot: it retains the essential path and format.
+                entryClaimed.current = true;
+                void getFrozenSession(r.sessionId).then(snapshot => {
+                    if (snapshot) {
+                        setFrozenSnapshot(snapshot);
+                        setScores(snapshot.scores || {});
+                        setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
+                        if (snapshot.response_length) setResponseLength(snapshot.response_length);
+                        if (snapshot.reasoning_effort) setReasoningEffort(snapshot.reasoning_effort);
+                    }
+                    setStep('interaction');
+                    setReady(true);
+                }).catch(() => { toast.error(t('toast.error')); setReady(true); });
                 return;
             }
         }
@@ -938,6 +949,7 @@ export default function Home() {
                                     sessionId={sessionId}
                                     locale={lang}
                                     onComplete={handleInteractionComplete}
+                                    initialResponseFormat={frozenSnapshot?.response_format}
                                     responseLength={responseLength}
                                     restoredMessages={
                                         frozenSnapshot?.session_id === sessionId
