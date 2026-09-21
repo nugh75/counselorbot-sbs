@@ -100,3 +100,68 @@ per svuotare le copie dell’indice eventualmente già caricate nei worker.
   il primo tentativo con chiamata bloccante aveva raggiunto il timeout.
 - Ulteriore prova live dopo la precisazione delle fonti: l’Assistente indica
   correttamente l’editor nella stessa pagina dell’assegnazione e la data facoltativa.
+
+## Guida per uso personale e docente
+
+La pagina pubblica `/guide` offre un selettore fra due percorsi, consultabili
+anche prima del login:
+
+- `/guide?audience=student`: uso personale/studente, 15 sezioni;
+- `/guide?audience=teacher`: docente, 7 sezioni dedicate ad accesso, gruppi,
+  cataloghi, assegnazioni, restituzioni/riscontri, condivisione e strumenti.
+
+Il parametro seleziona soltanto la documentazione, non assegna ruoli. Gli URL
+senza parametro o con valore sconosciuto aprono il percorso personale. Le ancore
+personali `#guide-section-N` restano valide; quelle docente usano
+`#guide-teacher-section-N`. I testi aggiuntivi sono in
+`frontend/src/lib/i18n-guide-audiences.ts`, con sei traduzioni obbligatorie.
+
+Le immagini sono catture della UI reale con API simulate e dati sintetici:
+nessun account reale, nessuna chiamata di scrittura al backend. Le nove nuove
+viste (Area personale, obiettivi, due eventi, Area docenti, gruppi, catalogo,
+assegnazione e riscontro) sono acquisite in tutte le sei lingue. Le tre viste
+chat preesistenti sono state riacquisite in italiano, come dichiara la guida.
+Il registro `frontend/src/lib/guide-images.ts` usa import statici per produrre
+asset con hash; ogni percorso mostra sette immagini, ingrandibili anche da
+tastiera. La nota dimostrativa riguarda anche codici d’invito, nomi e contenuti.
+
+Per rigenerare, da `frontend/`, contro un frontend aggiornato:
+
+```bash
+node --experimental-strip-types scripts/capture-guide.mjs
+UPDATE_GUIDE_SCREENSHOTS=1 node --test --experimental-strip-types \
+  --test-name-pattern='capture current guide screenshots' tests/visual-tools.test.mjs
+```
+
+`GUIDE_BASE_URL` cambia l’URL per le nuove viste; `VISUAL_TOOLS_BASE_URL` per le
+viste chat. Ispezionare le immagini e ricostruire l’immagine Docker frontend
+**dopo** la cattura, così le nuove risorse entrano nel bundle distribuito.
+
+Verifiche browser aggiuntive:
+
+```bash
+node --test --experimental-strip-types tests/guide-audiences.test.mjs
+node --test --experimental-strip-types \
+  --test-name-pattern='updated guide' tests/visual-tools.test.mjs
+```
+
+Le prove coprono entrambe le versioni nelle sei lingue, accesso pubblico,
+collegamenti diretti, ricarica e cronologia, ancore, decodifica delle immagini,
+zoom/chiusura e ritorno del focus, tastiera, temi chiaro/scuro e larghezze
+320/390/1440 px. Le chiamate della guida non devono modificare dati.
+
+### Verifica dei due percorsi — 21 settembre 2026
+
+- 12 prove browser superate (6 per percorso) nelle sei lingue, con larghezze
+  320/390/1440 px, tema scuro e tastiera. Verificato anche il ritorno al percorso
+  docente dopo ancore interne, cambio percorso, ricarica e Indietro: il selettore
+  usa navigazione documentale per ripristinare insieme URL e contenuto.
+- i18n (2.789 chiavi), ESLint dei file modificati, TypeScript e build Docker
+  frontend superati. Container frontend ricreato e avviato; backend invariato.
+- 57 PNG distribuiti confrontati con i sorgenti tramite SHA-256: tutti coincidenti.
+  Controllo visivo delle catture e delle due guide su desktop e telefono.
+- Prova locale senza API simulate: entrambe le versioni rispondono HTTP 200 a
+  390 e 1440 px, con 15/7 sezioni e nessun overflow orizzontale. Il dominio
+  pubblico restituisce HTTP 302 verso SSO: la prova locale non costituisce
+  verifica di una sessione pubblica autenticata. La guida non impone login
+  applicativo, ma resta soggetta all’eventuale controllo SSO del dominio.
