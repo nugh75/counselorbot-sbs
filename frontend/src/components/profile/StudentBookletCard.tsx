@@ -7,7 +7,14 @@ import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { Button } from '@/components/ui/Button';
 import { EVENT_ROLES } from '@/lib/event-booklet';
+import {
+    biographyEventsFromBooklet,
+    bookletWithBiographyEvents,
+    emptyBiographyEvent,
+    type BiographyEvent,
+} from '@/lib/booklet-biography';
 
 // Libretti narrativi senza dimensioni (fattori): eventi significativi.
 export const EVENT_BOOKLET_TYPES = ['EVENTO_STUDIO', 'EVENTO_PROFESSIONALE'] as const;
@@ -57,6 +64,7 @@ type BookletData = {
     bio_context: string;
     bio_discovery: string;
     bio_keywords: string;
+    bio_events: BiographyEvent[];
     event_role: string;
     student_notes: string;
     final_satisfaction: string;
@@ -92,6 +100,7 @@ const EMPTY_BOOKLET: BookletData = {
     bio_context: '',
     bio_discovery: '',
     bio_keywords: '',
+    bio_events: [],
     event_role: '',
     student_notes: '',
     final_satisfaction: '',
@@ -109,8 +118,9 @@ function toStringArray(value: unknown): string[] {
 
 function toBookletData(raw: unknown): BookletData {
     const source = typeof raw === 'object' && raw !== null ? raw as Record<string, unknown> : {};
-    const next = { ...EMPTY_BOOKLET, strength: [...EMPTY_BOOKLET.strength], growth_area: [...EMPTY_BOOKLET.growth_area] };
+    const next: BookletData = { ...EMPTY_BOOKLET, strength: [...EMPTY_BOOKLET.strength], growth_area: [...EMPTY_BOOKLET.growth_area], bio_events: [] };
     for (const key of Object.keys(next) as (keyof BookletData)[]) {
+        if (key === 'bio_events') continue;
         if ((ARRAY_KEYS as readonly string[]).includes(key)) {
             (next[key] as string[]) = toStringArray(source[key]);
         } else {
@@ -118,6 +128,8 @@ function toBookletData(raw: unknown): BookletData {
             (next[key] as string) = value == null ? '' : String(value);
         }
     }
+    next.bio_events = biographyEventsFromBooklet(source);
+    if (next.bio_events.length === 0) next.bio_events = [emptyBiographyEvent('draft-1')];
     return next;
 }
 
@@ -131,7 +143,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
     const { t, tf } = useI18n();
     const [booklets, setBooklets] = useState<BookletSummary[]>([]);
     const [currentId, setCurrentId] = useState<number | null>(null);
-    const [form, setForm] = useState<BookletData>(EMPTY_BOOKLET);
+    const [form, setForm] = useState<BookletData>(() => toBookletData({}));
     const [strategies, setStrategies] = useState<CertifiedStrategy[]>([]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -168,7 +180,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
         let active = true;
         setLoading(true);
         setCurrentId(null);
-        setForm(EMPTY_BOOKLET);
+        setForm(toBookletData({}));
         fetch(`/api/user/certified-strategies?questionnaire_type=${encodeURIComponent(questionnaireType)}&lang=${lang}`)
             .then((res) => (res.ok ? res.json() : []))
             .then((data) => { if (active) setStrategies(Array.isArray(data) ? data : []); })
@@ -215,6 +227,27 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
         setForm((prev) => ({ ...prev, [key]: [...prev[key], ''] }));
     };
 
+    const setBiographyEvent = (id: string, key: keyof Omit<BiographyEvent, 'id'>, value: string) => {
+        setForm((previous) => ({
+            ...previous,
+            bio_events: previous.bio_events.map((event) => event.id === id ? { ...event, [key]: value } : event),
+        }));
+    };
+
+    const addBiographyEvent = () => {
+        setForm((previous) => ({
+            ...previous,
+            bio_events: [...previous.bio_events, emptyBiographyEvent(crypto.randomUUID())],
+        }));
+    };
+
+    const removeBiographyEvent = (id: string) => {
+        setForm((previous) => {
+            const remaining = previous.bio_events.filter((event) => event.id !== id);
+            return { ...previous, bio_events: remaining.length ? remaining : [emptyBiographyEvent(crypto.randomUUID())] };
+        });
+    };
+
     const removeArrayItem = (key: 'strength' | 'growth_area', index: number) => {
         setForm((prev) => {
             const arr = prev[key].filter((_, i) => i !== index);
@@ -242,7 +275,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
             const res = await apiFetch(url, {
                 method: isUpdate ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: form }),
+                body: JSON.stringify({ data: bookletWithBiographyEvents(form, form.bio_events) }),
             });
             if (!res.ok) throw new Error('Save failed');
             const data = await res.json();
@@ -267,7 +300,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
             const res = await apiFetch(`/api/user/student-booklets/instrument/${encodeURIComponent(questionnaireType)}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: { ...EMPTY_BOOKLET, title } }),
+                body: JSON.stringify({ data: bookletWithBiographyEvents({ ...EMPTY_BOOKLET, title }, []) }),
             });
             if (!res.ok) throw new Error('Create failed');
             const data = await res.json();
@@ -294,7 +327,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                 await loadBooklet(remaining[0].id);
             } else {
                 setCurrentId(null);
-                setForm(EMPTY_BOOKLET);
+                setForm(toBookletData({}));
             }
             toast.success(t('booklet.deleted'));
         } catch (e) {
@@ -403,7 +436,7 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
 
     return (
         <section className="glass-panel p-5 space-y-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
                 <div>
                     <h2 className="text-lg font-bold text-slate-800">
                         {t('booklet.title')} · {isQuestionnaireType(questionnaireType) ? questionnaireType : t(`booklet.type.${questionnaireType}`)}
@@ -411,26 +444,6 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                     <p className="mt-1 text-sm text-slate-500">
                         {t('booklet.subtitle')}
                     </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    <button
-                        type="button"
-                        onClick={() => void persist()}
-                        disabled={saving || loading}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                    >
-                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                        {t('booklet.save')}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => void downloadPdf()}
-                        disabled={downloading || loading}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                    >
-                        {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                        {t('booklet.downloadPdf')}
-                    </button>
                 </div>
             </div>
 
@@ -559,18 +572,68 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                         {textField('discovery', t('booklet.field.discovery'), 3)}
                     </div>
 
-                    <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-                        <h3 className="text-sm font-bold text-slate-800">{t('booklet.bio.title')}</h3>
-                        <div className="grid gap-3 md:grid-cols-4">
-                            {simpleInput('bio_date', t('booklet.bio.date'), 'date')}
-                            {simpleInput('bio_context', t('booklet.bio.context'))}
-                            {simpleInput('bio_discovery', t('booklet.bio.discovery'))}
-                            {simpleInput('bio_keywords', t('booklet.bio.keywords'))}
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-4">
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-800">{t('booklet.bio.title')}</h3>
+                            <p className="mt-1 text-sm text-slate-500">{t('booklet.bio.timelineHelp')}</p>
                         </div>
+                        <div className="space-y-3">
+                            {form.bio_events.map((event, index) => (
+                                <section key={event.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3" aria-labelledby={`biography-event-${event.id}`}>
+                                    <div className="mb-3 flex items-center justify-between gap-3">
+                                        <h4 id={`biography-event-${event.id}`} className="font-semibold text-slate-700">
+                                            {t('booklet.bio.event', { n: index + 1 })}
+                                        </h4>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            className="h-11 w-11 p-0 text-slate-500 hover:text-red-700"
+                                            onClick={() => removeBiographyEvent(event.id)}
+                                            aria-label={t('booklet.bio.removeEvent', { n: index + 1 })}
+                                            title={t('booklet.bio.removeEvent', { n: index + 1 })}
+                                        >
+                                            <Trash2 className="h-4 w-4" aria-hidden />
+                                        </Button>
+                                    </div>
+                                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                        <label className="block">
+                                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('booklet.bio.date')}</span>
+                                            <input type="date" value={event.date} onChange={(change) => setBiographyEvent(event.id, 'date', change.target.value)} className={inputClass} />
+                                        </label>
+                                        <label className="block">
+                                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('booklet.bio.context')}</span>
+                                            <input maxLength={160} value={event.context} onChange={(change) => setBiographyEvent(event.id, 'context', change.target.value)} className={inputClass} />
+                                        </label>
+                                        <label className="block">
+                                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('booklet.bio.discovery')}</span>
+                                            <textarea maxLength={1000} rows={2} value={event.discovery} onChange={(change) => setBiographyEvent(event.id, 'discovery', change.target.value)} className={`${inputClass} resize-y`} />
+                                        </label>
+                                        <label className="block">
+                                            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('booklet.bio.keywords')}</span>
+                                            <input maxLength={300} value={event.keywords} onChange={(change) => setBiographyEvent(event.id, 'keywords', change.target.value)} className={inputClass} />
+                                        </label>
+                                    </div>
+                                </section>
+                            ))}
+                        </div>
+                        <Button type="button" variant="secondary" onClick={addBiographyEvent}>
+                            <Plus className="h-4 w-4" aria-hidden /> {t('booklet.bio.addEvent')}
+                        </Button>
                     </div>
 
                     {textField('student_notes', t('booklet.field.studentNotes'), 4)}
                     {textField('final_observations', t('booklet.field.finalObservations'), 3)}
+
+                    <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4">
+                        <Button type="button" variant="secondary" onClick={() => void downloadPdf()} disabled={downloading || loading}>
+                            {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" aria-hidden />}
+                            {t('booklet.downloadPdf')}
+                        </Button>
+                        <Button type="button" onClick={() => void persist()} disabled={saving || loading}>
+                            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" aria-hidden />}
+                            {t('booklet.save')}
+                        </Button>
+                    </div>
                 </div>
             )}
         </section>

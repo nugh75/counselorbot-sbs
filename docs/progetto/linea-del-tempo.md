@@ -14,8 +14,16 @@ L’ordine usa la data di inizio, oppure quella di fine quando l’inizio non è
 
 Nei dettagli restano disponibili attività, collegamenti al Portfolio e agli strumenti personali. **Altri strumenti personali** apre le schede già disponibili. Le date istituzionali rimangono gestite dall’istituto. La copia nel Portfolio richiede anteprima e conferma ed è indipendente dalle modifiche successive del diario. PDF e testo esportano sia programma sia diario.
 
+## Eventi dalla biografia di apprendimento
+
+Nel **Libretto**, la sezione **Biografia di apprendimento** accetta più eventi con **Aggiungi evento**. Ogni evento contiene data, occasione, scoperta e parole chiave. Il salvataggio della scheda inserisce o aggiorna le corrispondenti tappe nella Linea del tempo personale con identificatori stabili e il collegamento al Libretto. Rimuovere un evento dalla scheda, oppure eliminare la scheda, rimuove anche le sole tappe derivate da quella scheda; le altre tappe personali non vengono toccate.
+
+Il PDF del Libretto riporta tutti gli eventi. I dati precedenti con i quattro campi singoli `bio_date`, `bio_context`, `bio_discovery` e `bio_keywords` vengono letti come primo evento e restano disponibili per compatibilità.
+
 ## Contratto e verifica
 
 Gli endpoint `/user/timeline` mantengono il contratto di revisione e proprietà esistente. Ogni tappa può ora contenere `date_mode` (`point`, `period` o `null` per il formato precedente), `start_date`, `end_date` (date ISO `YYYY-MM-DD`) e `planned` (massimo 1000 caratteri). `reflection` conserva il diario esistente. `period` rimane compatibile con le vecchie tappe ed è ricavato dal server per quelle datate. Nessuna migrazione di schema: il contenuto resta nel workspace personale già versionato.
 
-Copertura: `backend/tests/test_personal_timeline.py`, `backend/tests/test_timeline.py`, `frontend/src/lib/timeline-dates.test.ts` e i casi calendar/timeline di `frontend/tests/visual-tools.test.mjs`. Le prove browser usano fixture isolate; il caso `TIMELINE_LIVE=1` usa il server API di test dedicato.
+Le schede del Libretto memorizzano i nuovi elementi in `data.bio_events`, una lista di oggetti `{id, date, context, discovery, keywords}`. Il backend sincronizza la lista nello stesso commit della scheda e usa il normale controllo di revisione del workspace personale.
+
+Copertura: `backend/tests/test_personal_timeline.py`, `backend/tests/test_timeline.py`, il caso Libretto/timeline in `backend/tests/test_smoke.py`, `frontend/src/lib/timeline-dates.test.ts`, `frontend/src/lib/booklet-biography.test.ts`, `frontend/tests/personal-area-booklet.test.mjs` e i casi calendar/timeline di `frontend/tests/visual-tools.test.mjs`. Le prove browser usano fixture isolate; il caso `TIMELINE_LIVE=1` usa il server API di test dedicato.

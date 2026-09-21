@@ -13,26 +13,30 @@ interface PageHeaderProps {
     backHref?: string;
     onBack?: () => void;
     backLabel?: string;
+    icon?: ReactNode;
     actions?: ReactNode;
     forward?: ReactNode;
 }
 
-export function PageHeader({ title, subtitle, backHref, onBack, backLabel, actions, forward }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, backHref, onBack, backLabel, icon, actions, forward }: PageHeaderProps) {
     return (
         <div className="flex flex-wrap items-center gap-4">
             {(backHref || onBack) && (
                 <div className="flex items-center gap-3">
                     {onBack ? (
-                        <BackButton onClick={onBack} label={backLabel ?? 'Indietro'} />
+                        <BackButton variant="labelled" onClick={onBack} label={backLabel ?? 'Indietro'} />
                     ) : backHref ? (
-                        <PreviousPageButton fallbackHref={backHref} label={backLabel} />
+                        <PreviousPageButton variant="labelled" fallbackHref={backHref} label={backLabel} />
                     ) : null}
                     {forward}
                 </div>
             )}
-            <div className="min-w-0">
-                <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-                {subtitle && <p className="text-slate-500 mt-1">{subtitle}</p>}
+            <div className="flex min-w-0 items-center gap-3">
+                {icon}
+                <div className="min-w-0">
+                    <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+                    {subtitle && <p className="text-slate-500 mt-1">{subtitle}</p>}
+                </div>
             </div>
             {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
         </div>
