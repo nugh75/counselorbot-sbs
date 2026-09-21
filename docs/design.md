@@ -212,6 +212,13 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   secondarie; counselor e preferenze stanno in un pannello espandibile, che
   conserva anche l’accesso alla presentazione iniziale. La Bussola resta accanto
   al titolo del catalogo.
+- **Presentazione iniziale**: titolo e breve descrizione precedono tre schede:
+  Questionari e profili, Percorsi guidati, Allenamento. Le illustrazioni PNG
+  trasparenti in `public/images/intro/` sono decorative; titoli e descrizioni
+  restano testo localizzato. Su mobile le immagini affiancano il testo, su
+  desktop lo precedono. «Inizia» segue le schede; supporti e istruzioni sui
+  questionari sono in due `details` chiusi inizialmente. Prompt e provenienza
+  delle immagini sono nel README della cartella.
 - **Movimento**: le variabili `--animate-*` vanno in `@theme`, non in `:root`
   — Tailwind v4 genera le utility `animate-*` solo da lì, e tenute in `:root`
   esistono le variabili ma non le classi. Solo `fade-in-up` all'ingresso e la barra indeterminata di
@@ -241,7 +248,7 @@ aggiunge alla primitiva.
 | `ForwardButton` | il primario del percorso: petrol pieno, etichetta visibile, 44px |
 | `FlowStepper` | il passo attivo è ocra, i fatti sono petrol, i futuri slate |
 | `Toast`, `Tooltip`, `Skeleton`, `StickyActions` | stati transitori |
-| `CompassMark` | il mark, statico nell'header e animato nell'intro |
+| `CompassMark` | il mark, statico nell'header |
 
 ---
 
