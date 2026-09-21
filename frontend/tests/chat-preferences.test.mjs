@@ -153,6 +153,8 @@ test('Compass sends the preference and renders a table on mobile', async () => {
         await page.goto(`${origin}/bussola`);
         await page.getByRole('button', { name: 'Inizia un nuovo orientamento', exact: true }).click();
         await page.locator('#bussola-composer').waitFor();
+        assert.equal(await page.getByRole('button', { name: 'Il tuo taccuino', exact: true }).count(), 0);
+        assert.equal(await page.getByRole('button', { name: 'Libretto dello studente', exact: true }).count(), 0);
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
         await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('table'); await page.keyboard.press('Escape');
         await page.locator('#bussola-composer').fill('Cosa posso fare?'); await page.locator('#bussola-composer').press('Enter');
@@ -167,6 +169,8 @@ test('Assistant uses the selected format for subsequent replies', async () => {
     const { context, page, state } = await fixture(390);
     try {
         await page.goto(`${origin}/assistente`);
+        assert.equal(await page.getByRole('button', { name: 'Il tuo taccuino', exact: true }).count(), 0);
+        assert.equal(await page.getByRole('button', { name: 'Libretto dello studente', exact: true }).count(), 0);
         await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('table');
         const input = page.locator('main textarea').last();
         await input.fill('Come funziona il QSA?'); await input.press('Enter');

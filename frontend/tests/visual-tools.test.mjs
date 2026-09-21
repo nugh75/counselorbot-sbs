@@ -636,85 +636,23 @@ test('invalid saved panel preferences do not prevent reopening the chat', async 
 });
 
 for (const width of [320, 1440]) {
-    test(`personal transfers require selection, preserve notes and import explicitly at ${width}px`, async () => {
+    test(`chat tools do not expose personal-area tools at ${width}px`, async () => {
         const { page, context, control } = await fixture(width);
         const l = key => visualLabel('it', key);
         try {
-            control.visual.workspace.cards.push({ id: 'card1', text: 'Gli esempi aiutano', bucket: 'yes', source: '' });
             await openVisual(page, l('open'));
             const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
-            control.failPersonal = true;
-            await dialog.getByRole('button', { name: l('personalLinks'), exact: true }).click();
-            await dialog.getByRole('button', { name: l('reloadPersonal'), exact: true }).waitFor();
-            control.failPersonal = false;
-            await dialog.getByRole('button', { name: l('reloadPersonal'), exact: true }).click();
-            const help = dialog.locator('details').filter({ has: page.getByText(l('personalHelp'), { exact: true }) });
-            assert.equal(await help.getByText(l('personalHelp'), { exact: true }).isVisible(), false);
-            await help.locator('summary').click();
-            assert.ok(await help.getByText(l('personalHelp'), { exact: true }).isVisible());
-            await help.locator('summary').click();
-            await dialog.getByLabel(l('chooseContent'), { exact: true }).selectOption('cards:card1');
-            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Testo scelto e rivisto');
-            assert.equal(control.requests.filter(r => r.path.endsWith('/personal') && r.method === 'POST').length, 0);
-            assert.match(await dialog.locator('details').filter({ has: page.getByText(l('resultPreview'), { exact: true }) }).innerText(), /Annotazione originale/);
-            control.personal.notebook.notes = 'Annotazione originale aggiornata';
-            await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).click();
-            await dialog.getByText(l('personalConflict'), { exact: false }).waitFor();
-            await dialog.getByRole('button', { name: l('reloadPersonal'), exact: true }).click();
-            await dialog.getByText('Annotazione originale aggiornata', { exact: false }).waitFor();
-            assert.equal(await dialog.getByLabel(l('reviewTransfer'), { exact: true }).inputValue(), 'Testo scelto e rivisto');
-            await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).click();
-            await dialog.getByText(l('personalSaved'), { exact: true }).waitFor();
-            assert.match(control.personal.notebook.notes, /^Annotazione originale aggiornata\n\nTesto scelto e rivisto/);
-            await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).click();
-            await dialog.getByText(l('personalDuplicate'), { exact: true }).waitFor();
-            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('x'.repeat(601));
-            assert.equal(await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).isEnabled(), false);
-            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Un impegno');
-            await dialog.getByLabel(l('destination'), { exact: true }).selectOption('booklet');
-            await dialog.getByLabel(l('bookletSheet'), { exact: true }).selectOption('7');
-            await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).click();
-            await dialog.getByText(l('personalSaved'), { exact: true }).waitFor();
-            assert.match(control.personal.booklets[0].data.student_notes, /^Nota esistente\n\nUn impegno/);
-            await dialog.getByLabel(l('bookletSheet'), { exact: true }).selectOption('');
-            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Nuova riflessione');
-            await dialog.getByRole('button', { name: l('savePersonal'), exact: true }).click();
-            await dialog.getByText(l('personalSaved'), { exact: true }).waitFor();
-            assert.equal(control.personal.booklets.length, 2);
-            await dialog.getByLabel(l('transferDirection'), { exact: true }).selectOption('in');
-            await dialog.getByLabel(l('chooseContent'), { exact: true }).selectOption('notebook_goal');
-            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Organizzare una prova');
-            control.failSave = true;
-            await dialog.getByRole('button', { name: l('saveVisual'), exact: true }).click();
-            await dialog.getByText(l('personalSaveError'), { exact: true }).waitFor();
-            assert.equal(await dialog.getByLabel(l('reviewTransfer'), { exact: true }).inputValue(), 'Organizzare una prova');
-            control.failSave = false;
-            await dialog.getByRole('button', { name: l('saveVisual'), exact: true }).click();
-            await dialog.getByText(l('personalImported'), { exact: true }).waitFor();
-            assert.equal(control.visual.workspace.cards.at(-1).text, 'Organizzare una prova');
-            assert.match(control.visual.workspace.cards.at(-1).source, /Taccuino/);
-            await dialog.getByRole('button', { name: l('saveVisual'), exact: true }).click();
-            await dialog.getByText(l('personalDuplicate'), { exact: true }).waitFor();
-            assert.equal(control.visual.workspace.cards.length, 2);
-            await dialog.getByLabel(l('chooseContent'), { exact: true }).selectOption('booklet_7_student_notes');
-            await dialog.getByLabel(l('destination'), { exact: true }).selectOption('actions');
-            await dialog.getByLabel(l('titleField'), { exact: true }).fill('Provare una strategia');
-            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Parto dalla riflessione nel libretto');
-            await dialog.getByRole('button', { name: l('saveVisual'), exact: true }).click();
-            await dialog.getByText(l('personalImported'), { exact: true }).waitFor();
-            assert.equal(control.visual.workspace.actions[0].stage, 'todo');
-            assert.match(control.visual.workspace.actions[0].source, /Libretto/);
-            await dialog.getByLabel(l('destination'), { exact: true }).selectOption('comparison');
-            await dialog.getByLabel(l('reviewTransfer'), { exact: true }).fill('Una possibile alternativa');
-            await dialog.getByRole('button', { name: l('saveVisual'), exact: true }).click();
-            await dialog.getByText(l('personalImported'), { exact: true }).waitFor();
-            assert.equal(control.visual.workspace.comparison.options[0].title, 'Una possibile alternativa');
-            assert.equal(control.visual.workspace.comparison.chosen, null);
-            await dialog.getByRole('heading', { name: l('personalLinks'), exact: true }).scrollIntoViewIfNeeded();
-            assert.equal(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth), true);
-            await page.screenshot({ path: `/tmp/visual-personal-${width}.png`, fullPage: true });
+            assert.equal(await dialog.getByRole('tab').count(), 4);
+            for (const hidden of ['notebook', 'booklet']) {
+                assert.equal(await dialog.getByRole('tab', { name: l(hidden), exact: true }).count(), 0);
+            }
+            assert.equal(await dialog.getByRole('button', { name: l('personalLinks'), exact: true }).count(), 0);
+            await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
+            assert.equal(await dialog.getByRole('link').filter({ hasText: l('openPersonalTimeline') }).count(), 0);
+            assert.equal(control.requests.filter(r => r.path.endsWith('/personal')).length, 0);
+            assert.ok(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth));
             assert.deepEqual(control.errors, []);
-        } catch (error) { await page.screenshot({ path: `/tmp/visual-personal-failure-${width}.png` }); console.error(await page.getByRole('dialog').innerText()); throw error; } finally { await context.close(); }
+        } finally { await context.close(); }
     });
 }
 
@@ -788,10 +726,7 @@ test('capture current guide screenshots', { skip: process.env.UPDATE_GUIDE_SCREE
         await page.screenshot({ path: 'public/guide/controlli-chat.png' });
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.getByRole('button', { name: visualLabel('it', 'open'), exact: true }).click();
-        const dialog = page.getByRole('dialog', { name: visualLabel('it', 'title'), exact: true });
-        await dialog.getByRole('button', { name: visualLabel('it', 'personalLinks'), exact: true }).click();
-        await dialog.getByLabel(visualLabel('it', 'transferDirection'), { exact: true }).selectOption('in');
-        await dialog.getByLabel(visualLabel('it', 'chooseContent'), { exact: true }).selectOption('notebook_goal');
+        await page.getByRole('dialog', { name: visualLabel('it', 'title'), exact: true }).waitFor();
         // Angolo libero: sopra la X il puntatore lascerebbe il tooltip nello scatto.
         await page.mouse.move(720, 60);
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -873,7 +808,8 @@ for (const [locale, width] of [['it', 390], ['en', 1440], ['de', 320], ['es', 39
             assert.equal(control.copies.size, 1);
             await page.screenshot({ path: `/tmp/timeline-${locale}-${width}.png` });
             assert.equal(await dialog.evaluate(el => el.scrollWidth > el.clientWidth), false);
-            await dialog.getByRole('button', { name: l('close'), exact: true }).click();
+            await dialog.locator('.workspace-page-back').click();
+            await page.waitForURL('**/profilo');
             await page.goto(`${origin}/profilo/timeline`);
 
             await dialog.getByRole('button', { name: `${l('eventDetails')}: Presentazione`, exact: true }).filter({ visible: true }).click();

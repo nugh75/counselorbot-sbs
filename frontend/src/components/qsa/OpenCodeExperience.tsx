@@ -28,7 +28,6 @@ import type { ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
-import { asBookletType } from '@/components/profile/NotebookBookletPanel';
 import { VisualTools } from '@/components/visual/VisualTools';
 import '@xterm/xterm/css/xterm.css';
 
@@ -576,7 +575,6 @@ export function OpenCodeExperience({
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
                         {viewMode === 'chat' && <VisualTools compact sessionId={sessionId} locale={locale}
-                            questionnaireType={asBookletType(questionnaire.id)}
                             onDiscuss={text => {
                                 setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
                                 window.requestAnimationFrame(() => document.getElementById('opencode-composer')?.focus());
