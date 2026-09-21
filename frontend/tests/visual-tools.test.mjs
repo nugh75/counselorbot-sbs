@@ -799,11 +799,22 @@ test('capture current guide screenshots', { skip: process.env.UPDATE_GUIDE_SCREE
     } finally { await context.close(); }
 });
 
-for (const options of [{ width: 320, locale: 'de' }, { width: 390, locale: 'it', dark: true }, { width: 1440, locale: 'en' }]) {
+for (const options of [{ width: 320, locale: 'de' }, { width: 390, locale: 'it', dark: true }, { width: 1440, locale: 'en' }, { width: 390, locale: 'es' }, { width: 1440, locale: 'fr' }, { width: 390, locale: 'sv' }]) {
     test(`updated guide loads and enlarges all screenshots at ${options.width}px in ${options.locale}`, async () => {
         const { page, context, control } = await fixture(options.width, 'intro', options);
         try {
             await page.goto(`${origin}/guide`, { waitUntil: 'networkidle' });
+            const sections = page.locator('li[id^="guide-section-"]');
+            assert.equal(await sections.count(), 15);
+            for (let n = 10; n <= 15; n++) {
+                const link = page.locator(`a[href="#guide-section-${n}"]`);
+                const section = page.locator(`#guide-section-${n}`);
+                assert.ok((await link.innerText()).includes(await section.locator('h2').innerText()));
+                assert.ok((await section.locator('p').innerText()).length > 100);
+                await link.click();
+                assert.equal(new URL(page.url()).hash, `#guide-section-${n}`);
+            }
+            assert.doesNotMatch(await page.locator('main').innerText(), /guide\.(section|chat)\w*/);
             const figures = page.locator('figure');
             assert.equal(await figures.count(), 3);
             for (const figure of await figures.all()) {
