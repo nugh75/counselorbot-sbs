@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { BackButton } from '@/components/ui/BackButton';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { visualLabel } from '@/lib/i18n-visual-tools';
@@ -96,7 +96,7 @@ export function VisualPersonalTransfer({ sessionId, locale, work, saveWorkspace,
     return <section className="mx-auto w-full max-w-3xl space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 ref={heading} tabIndex={-1} className="text-lg font-semibold text-slate-900">{l('personalLinks')}</h3>
-            <Button type="button" variant="ghost" className="min-h-[44px]" onClick={onClose} disabled={busy}><ArrowLeft className="h-4 w-4" />{l('backTools')}</Button>
+            <BackButton variant="labelled" onClick={onClose} label={l('backTools')} disabled={busy} />
         </div>
         <details className="text-sm text-slate-600"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('howTo')}</summary><p>{l('personalHelp')}</p></details>
         {issue && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">

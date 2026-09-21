@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo } from 'react';
 import Link from 'next/link';
-import { BackButton } from '@/components/ui/BackButton';
+import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { useSearchParams } from 'next/navigation';
 import { JourneyOverview } from '@/components/goals/JourneyOverview';
 import { VisualTools } from '@/components/visual/VisualTools';
@@ -17,11 +17,13 @@ function TimelinePage() {
     const tab: 'board' | 'cards' | 'comparison' | 'timeline' = requestedTab === 'board' || requestedTab === 'cards' || requestedTab === 'comparison' ? requestedTab : 'timeline';
     const request = useMemo(() => ({ tab, nonce: 1, eventId }), [eventId, tab]);
     return <main className="page-narrow space-y-4 p-4">
-        <div className="flex items-center gap-2">
-            <BackButton href="/profilo" label={t('profile.nav')} />
-            <h1 className="text-2xl font-bold">{visualLabel(lang, tab)}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h1 className="text-2xl font-bold text-slate-900">{visualLabel(lang, tab)}</h1>
+                <p className="mt-1 text-sm text-slate-500">{visualLabel(lang, tab === 'timeline' ? 'personalTimelineHelp' : `${tab}Purpose`)}</p>
+            </div>
+            <PreviousPageButton fallbackHref="/profilo" />
         </div>
-        <p>{visualLabel(lang, tab === 'timeline' ? 'personalTimelineHelp' : `${tab}Purpose`)}</p>
         <nav className="flex flex-wrap gap-4">
             <Link className="text-indigo-700 underline" href="/profilo/portfolio">{visualLabel(lang, 'openPortfolio')}</Link>
             <Link className="text-indigo-700 underline" href="/profilo/orientamento">{t('referrals.area.title')}</Link>

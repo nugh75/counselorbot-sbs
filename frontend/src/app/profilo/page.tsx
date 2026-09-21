@@ -445,7 +445,7 @@ export default function ProfilePage() {
                         </p>
                     </div>
                 </div>
-                <PreviousPageButton fallbackHref={activeArea ? '/profilo' : '/?view=questionnaires'} />
+                <PreviousPageButton fallbackHref={activeArea ? '/profilo' : '/'} />
             </div>
 
             {!activeArea && (

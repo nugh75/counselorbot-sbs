@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { User, ShieldAlert } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { BackButton } from '@/components/ui/BackButton';
+import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage } from '@/lib/roles';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -79,7 +79,7 @@ export default function ProfileChangesPage() {
         <div className="page-wide px-4 py-8 space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold text-slate-900">{t('profileChanges.title')}</h1>
-                <BackButton href="/profilo" label={t('profile.nav')} />
+                <PreviousPageButton fallbackHref="/profilo/taccuino" />
             </div>
             <ProfileChangeReflection lang={lang} />
         </div>
