@@ -1,3 +1,4 @@
+from .chat_preferences import ResponseFormat
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict, Any, Union, Literal
 from datetime import datetime
@@ -105,6 +106,8 @@ class PromptAuditRequest(BaseModel):
     counselor_id: Optional[int] = None
     max_tokens: Optional[int] = None
     response_length: Optional[Literal["short", "medium", "long"]] = None
+    response_format: ResponseFormat = "standard"
+    guided_path: Literal["complete", "essential"] = "complete"
     conversation_id: Optional[str] = None
     idea_variant: Optional[str] = None
     idea_budget: Optional[int] = None
@@ -867,6 +870,9 @@ class FrozenSessionCreate(BaseModel):
     experience: Optional[str] = None
     locale: Optional[str] = Field(default=None, max_length=16)
     response_length: Optional[str] = None
+    response_format: ResponseFormat = "standard"
+    guided_path: Literal["complete", "essential"] = "complete"
+    conversation_id: Optional[str] = None
     reasoning_effort: Optional[str] = None
     label: Optional[str] = Field(default=None, max_length=200)
     pdf_token: Optional[str] = None
@@ -916,6 +922,9 @@ class FrozenSessionDetail(FrozenSessionSummary):
     counselor_id: Optional[int] = None
     locale: Optional[str] = None
     response_length: Optional[str] = None
+    response_format: ResponseFormat = "standard"
+    guided_path: Literal["complete", "essential"] = "complete"
+    conversation_id: Optional[str] = None
     reasoning_effort: Optional[str] = None
     pdf_token: Optional[str] = None
 

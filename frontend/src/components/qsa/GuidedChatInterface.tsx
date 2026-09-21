@@ -60,6 +60,9 @@ import { AUTO_FREEZE_DELAY_MS, autoFreezeSignature, phasesAlreadyOpened, shouldA
 import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-content';
 import { EMPTY_RECOMMENDATIONS, normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 
+import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
+import { chatPreferenceLabel, essentialSteps, nextEssentialPhase, ESSENTIAL_PHASES, type ResponseFormat, type GuidedPath } from '@/lib/chat-preferences';
+
 // --- Types ---
 
 interface StepDef {
@@ -433,6 +436,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const { streamChat, ...continuation } = useChatContinuation();
+    const [guidedPath, setGuidedPath] = useState<GuidedPath>(questionnaireType === 'QSA' ? frozenSnapshot?.guided_path ?? 'complete' : 'complete');
+    const [pathStarted, setPathStarted] = useState(questionnaireType !== 'QSA' || Boolean(frozenSnapshot?.session_id === sessionId));
+    const essential = questionnaireType === 'QSA' && guidedPath === 'essential';
+    const [responseFormat, setResponseFormat] = useState<ResponseFormat>(frozenSnapshot?.response_format ?? 'standard');
     const [steps, setSteps] = useState<StepDef[]>([]);
     const [phases, setPhases] = useState<string[]>([]);
     // Strumento Idea: la variante decide di che materia si parla, la versione
@@ -683,17 +690,18 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     useEffect(() => {
         let isMounted = true;
 
+        if (!pathStarted) { setInitialLoading(false); return; }
         const loadData = async () => {
             try {
-                const res = await fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}&lang=${activeLocale}`);
-                if (!res.ok) return;
+                const res = essential ? null : await fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}&lang=${activeLocale}`);
+                if (res && !res.ok) throw new Error("Unable to load guided steps");
 
-                const data = await res.json();
+                const data = res ? await res.json() : { guided_steps: essentialSteps(activeLocale) };
                 if (!isMounted) return;
 
                 // The API label is already localized. Static translations are used only
                 // for the offline fallback paths.
-                const loadedSteps: StepDef[] = data.guided_steps || [];
+                const loadedSteps: StepDef[] = essential ? essentialSteps(activeLocale) : data.guided_steps || [];
                 const normalized = normalizeLoadedSteps(questionnaireType, loadedSteps);
                 const normalizedSteps = normalized.steps.map((s) => ({
                     ...s,
@@ -705,8 +713,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
                 const phaseOrder = [
                     ...normalizedSteps.map((s: StepDef) => s.id),
-                    FIXED_QUESTIONS_ID,
-                    FIXED_CONCLUSION_ID,
+                    ...(essential ? [] : [FIXED_QUESTIONS_ID, FIXED_CONCLUSION_ID]),
                 ];
                 setPhases(phaseOrder);
                 const sessionScope = `${questionnaireType}:${sessionId}`;
@@ -717,6 +724,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     const restoredMessages = frozenSnapshot.messages as ChatMessage[];
                     setCurrentPhase(frozenSnapshot.current_phase);
                     setMessages(restoredMessages);
+                    setResponseFormat(frozenSnapshot.response_format ?? "standard");
+                    setConversationId(frozenSnapshot.conversation_id ?? undefined);
+                    if (essential) processedPhases.current.add(frozenSnapshot.current_phase);
                     if (frozenSnapshot.response_length) {
                         setResponseLength(frozenSnapshot.response_length);
                     }
@@ -781,7 +791,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 setQuestionsIntro(data.text_guided_questions_intro || t('guided.questionsIntro'));
                 setConclusionText(data.text_guided_conclusion || t('guided.conclusionText'));
             } catch {
-                if (questionnaireType === 'SAVICKAS') {
+                if (essential) {
+                    setSteps(essentialSteps(activeLocale));
+                    setPhases([...ESSENTIAL_PHASES]);
+                    setCurrentPhase(ESSENTIAL_PHASES[0]);
+                } else if (questionnaireType === 'SAVICKAS') {
                     setSteps(SAVICKAS_FALLBACK_STEPS.map((s) => ({ ...s, label: stepLabel(activeLocale, s.id, s.label) })));
                     const fallbackOrder = [...SAVICKAS_FALLBACK_STEPS.map((s) => s.id), FIXED_CONCLUSION_ID];
                     setPhases(fallbackOrder);
@@ -798,7 +812,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
         loadData();
         return () => { isMounted = false; };
-    }, [questionnaireType, sessionId, activeLocale, t, frozenSnapshot]);
+    }, [questionnaireType, sessionId, activeLocale, t, frozenSnapshot, pathStarted, essential]);
 
     // Helpers for current phase
     const getStepDef = (phaseId: string): StepDef | undefined => steps.find(s => s.id === phaseId);
@@ -865,7 +879,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
     // Phase change handler
     useEffect(() => {
-        if (!currentPhase || initialLoading) return;
+        if (!currentPhase || initialLoading || !pathStarted) return;
         // Genera l'intro dello step solo alla PRIMA visita: tornando a uno step già
         // visitato (pulsante "Step precedente") si cambia solo il contesto attivo,
         // senza rigenerare messaggi o duplicare il banner.
@@ -940,6 +954,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 language: activeLocale,
                 max_tokens: 500,
                 response_length: responseLength,
+                response_format: responseFormat,
+                guided_path: guidedPath,
                 reasoning_effort: effortForPhase(FIXED_QUESTIONS_ID),
                 counselor_id: counselorId,
                 idea_variant: isIdea ? ideaVariant : undefined,
@@ -983,6 +999,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         language: activeLocale,
                         max_tokens: 700,
                         response_length: responseLength,
+                        response_format: responseFormat,
+                        guided_path: guidedPath,
                         reasoning_effort: reasoningEffort,
                         counselor_id: counselorId,
                         idea_variant: isIdea ? ideaVariant : undefined,
@@ -991,6 +1009,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 }
                 return {
                     message: '',
+                    internal_message: essential,
+                    memory_message: essential ? '' : undefined,
                     mode: step.system_prompt_mode,
                     phase: step.id,
                     use_phase_prompt: true,
@@ -1001,6 +1021,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     language: activeLocale,
                     max_tokens: 700,
                     response_length: responseLength,
+                    response_format: responseFormat,
+                    guided_path: guidedPath,
                     reasoning_effort: reasoningEffort,
                     counselor_id: counselorId,
                     idea_variant: isIdea ? ideaVariant : undefined,
@@ -1049,7 +1071,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 // Percorsi a intervista e QPCS: l'utente decide quando cambiare step.
                 // Non avanzare automaticamente sulla generazione dello step (nei
                 // percorsi a intervista resta valida solo la sintesi).
-                if (shouldAdvance && autoAdvancesOnGenerate(questionnaireType, step.id)) {
+                if (!essential && shouldAdvance && autoAdvancesOnGenerate(questionnaireType, step.id)) {
                     await advancePhase();
                 }
             } else if (streamOk) {
@@ -1138,6 +1160,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const handleSend = async (e: { preventDefault: () => void }, overrideText?: string, audioReady = false, onPartial?: (reply: string) => void) => {
         e.preventDefault();
         const userMessage = (overrideText ?? input).trim();
+        const responsePhase = essential ? nextEssentialPhase(currentPhase) : currentPhase;
         if (!userMessage || isLoading || currentPhase === FIXED_CONCLUSION_ID || (audioBusy && !audioReady)) return;
 
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
@@ -1185,20 +1208,22 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 message: effectiveMessage,
                 memory_message: userMessage,
                 mode: resolveInteractiveMode(),
-                phase: isAnalysisStep(currentPhase) ? currentPhase : undefined,
+                phase: essential ? (currentPhase === ESSENTIAL_PHASES[3] ? "qsa-essential-followup" : responsePhase) : isAnalysisStep(currentPhase) ? currentPhase : undefined,
                 session_id: sessionId,
                 conversation_id: conversationId,
                 questionnaire_type: questionnaireType,
                 language: activeLocale,
                 max_tokens: 900,
                 response_length: responseLength,
+                response_format: responseFormat,
+                guided_path: guidedPath,
                 reasoning_effort: effortForPhase(currentPhase),
                 counselor_id: counselorId,
                 idea_variant: isIdea ? ideaVariant : undefined,
                 idea_budget: isIdea ? ideaBudget : undefined,
             };
-            if (scoresContextOverride) {
-                chatPayload.scores_context = scoresContextOverride;
+            if (scoresContextOverride || essential) {
+                chatPayload.scores_context = scoresContextOverride ?? formatScoresForPrompt(scores);
             }
             const result = await streamChat(
                 chatPayload,
@@ -1221,7 +1246,12 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             } else {
                 dropLast();
             }
-            if (shouldAdvance) {
+            if (essential && cleanText) {
+                processedPhases.current.add(responsePhase);
+                setCurrentPhase(responsePhase);
+                void recordMemoryEvent(responsePhase, responsePhase === ESSENTIAL_PHASES[3], userMessage);
+            }
+            if (!essential && shouldAdvance) {
                 // Percorsi a intervista e QPCS: l'utente decide quando cambiare step.
                 // Non avanzare automaticamente sul marker [[AVANZA_STEP]]; mostra il
                 // suggerimento e lascia che sia l'utente a usare il pulsante "prossimo step".
@@ -1294,8 +1324,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         scores,
         counselor_id: counselorId,
         experience: 'standard',
+        conversation_id: conversationId,
         locale: activeLocale,
         response_length: responseLength,
+        response_format: responseFormat,
+        guided_path: guidedPath,
         reasoning_effort: reasoningEffort,
         label: `${questionnaireType} — ${getPhaseLabel(currentPhase)}`,
     });
@@ -1323,7 +1356,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             const snapshot = buildSnapshot();
             await freezeSession(snapshot);
             pendingSnapshotRef.current = null;
-            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength });
+            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath });
             toast.success(t('frozen.frozen'));
             onFrozen?.();
         } catch {
@@ -1348,7 +1381,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             isLoading,
             completed: completedRef.current,
         })) return;
-        const signature = autoFreezeSignature({ messages, currentPhase, responseLength });
+        const signature = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath });
         if (signature === savedSignatureRef.current) return;
         pendingSnapshotRef.current = { snapshot: buildSnapshot(), signature };
         const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
@@ -1356,7 +1389,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         // buildSnapshot legge lo stato corrente a ogni render: le dipendenze qui
         // sono quello che rende lo snapshot diverso dal precedente.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [messages, currentPhase, responseLength, isLoading, sessionId]);
+    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, isLoading, sessionId]);
 
     // Uscita dallo strumento con un turno ancora in attesa: `pagehide` copre tab
     // chiusa, ricarica e link che lasciano la pagina (il logo dell'header è un
@@ -1369,6 +1402,20 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             void flushAutoFreeze();
         };
     }, [flushAutoFreeze]);
+
+    if (!pathStarted) return <div className="mx-auto w-full max-w-md space-y-4 p-4">
+        {onBack && <button type="button" onClick={onBack} className="min-h-11 text-sm text-slate-600">{t('nav.back')}</button>}
+        <fieldset className="glass-panel space-y-3 p-5">
+            <legend className="px-1 font-semibold text-slate-800">{chatPreferenceLabel(activeLocale, 'choose')}</legend>
+            {(['complete', 'essential'] as const).map(path => <label key={path} className="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3">
+                <input type="radio" name="qsa-path" value={path} checked={guidedPath === path} onChange={() => setGuidedPath(path)} className="mt-1" />
+                <span><span className="block font-medium">{chatPreferenceLabel(activeLocale, path)}</span>
+                    <span className="text-sm text-slate-600">{chatPreferenceLabel(activeLocale, path === 'essential' ? 'essentialHelp' : 'completeHelp')}</span></span>
+            </label>)}
+            <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} />
+            <Button onClick={() => { setInitialLoading(true); setPathStarted(true); }} className="w-full">{chatPreferenceLabel(activeLocale, 'start')}</Button>
+        </fieldset>
+    </div>;
 
     // Loading state
     if (initialLoading) {
@@ -1413,14 +1460,15 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const inputPlaceholder = isAgreementPhase
         ? t('guided.input.pattoPlaceholder')
         : t('guided.input.placeholder');
-    const showPreviousStep = currentPhase !== FIXED_CONCLUSION_ID && phases.indexOf(currentPhase) > 0;
-    const { standard: showStandardAdvance, interview: showInterviewAdvance } = advanceButtons(
+    const showPreviousStep = !essential && currentPhase !== FIXED_CONCLUSION_ID && phases.indexOf(currentPhase) > 0;
+    const { standard: showStandardAdvance, interview: showInterviewAdvance } = essential ? { standard: false, interview: false } : advanceButtons(
         questionnaireType,
         currentPhase,
         getStepDef(currentPhase)?.system_prompt_mode,
         { conclusion: currentPhase === FIXED_CONCLUSION_ID, suggestion: showAdvanceSuggestion, userMessages: userMessagesInPhase },
     );
     const showRepeatStep = currentPhase !== FIXED_CONCLUSION_ID;
+    const essentialSummary = essential && currentPhase === ESSENTIAL_PHASES[3];
     const hasStepNavigation = showPreviousStep || showStandardAdvance || showInterviewAdvance || showRepeatStep;
 
     const nextStepLabel = t(advanceLabelKey(questionnaireType, currentPhase));
@@ -1428,6 +1476,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const messageActionClass = 'chat-action-item flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
     const renderStepNavigation = () => (
         <div className="flex shrink-0 items-center gap-1">
+            {essentialSummary && <Button type="button" variant="secondary" disabled={isLoading} onClick={handleComplete}>{chatPreferenceLabel(activeLocale, "finish")}</Button>}
             {showPreviousStep && <Tooltip content={t('guided.prevStep')} side="top">
                 <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.prevStep')} disabled={isLoading} onClick={goToPreviousStep}>
                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -1478,6 +1527,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'tools')}
                 </button></Tooltip>
                 {currentPhase !== FIXED_CONCLUSION_ID && <>
+                    <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={isLoading} />
                     <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
                     <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
                     {!voiceMode && <button type="button" className={messageActionClass} disabled={isLoading || audioBusy} onClick={() => { close(); setVoiceMode(true); }}>
@@ -1769,6 +1819,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     </div>
                 ) : (
                     <form onSubmit={handleSend} className="border-t border-slate-100 bg-white">
+                        {essentialSummary && <p className="px-3 pt-2 text-sm text-slate-600">{chatPreferenceLabel(activeLocale, "followup")}</p>}
                         {isIdea && sessionId && (
                             <IdeaBranchBar
                                 sessionId={sessionId}

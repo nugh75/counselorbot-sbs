@@ -31,6 +31,7 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisco
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
+from ..chat_preferences import apply_response_format
 from .. import auth, database, models, pii
 from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService
@@ -944,6 +945,7 @@ async def chat_opencode(
                     )
                     if request.response_length:
                         system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
+                    system_prompt = apply_response_format(system_prompt, request.response_format)
                     body = {
                         "model": {
                             "providerID": "ollama",

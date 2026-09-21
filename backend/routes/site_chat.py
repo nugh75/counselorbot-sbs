@@ -18,6 +18,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
+from ..chat_preferences import apply_response_format
 from .. import auth, database, models, model_pricing
 from ..chat_continuation import continuation_message
 from ..prompt_contract import persona_context
@@ -344,6 +345,7 @@ async def site_chat_stream(
     if c_persona:
         system_prompt = f"{persona_context(c_persona, c_name)}\n\n{system_prompt}"
     system_prompt = _apply_response_length_directive(system_prompt, request.response_length)
+    system_prompt = apply_response_format(system_prompt, request.response_format)
     max_tokens = _response_length_max_tokens(request.response_length, request.max_tokens)
     top_k = _top_k(ai_service)
     question = (request.message or "").strip()

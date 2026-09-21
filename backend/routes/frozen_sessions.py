@@ -36,6 +36,9 @@ def _detail(row: models.FrozenSession) -> schemas.FrozenSessionDetail:
         counselor_id=data.get("counselor_id"),
         locale=data.get("locale"),
         response_length=data.get("response_length"),
+        response_format=data.get("response_format") or "standard",
+        guided_path=data.get("guided_path") or "complete",
+        conversation_id=data.get("conversation_id"),
         reasoning_effort=data.get("reasoning_effort"),
         pdf_token=data.get("pdf_token"),
     )
@@ -69,6 +72,8 @@ async def freeze_session(
     Qui si collassano eventuali righe duplicate sulla prima: la corsa si
     autocorregge al freeze successivo invece di lasciare righe orfane.
     """
+    from ..qsa_essential import validate_path
+    validate_path(payload.questionnaire_type, payload.guided_path, payload.current_phase)
     username = current_user["username"]
     data = payload.model_dump(exclude={"session_id", "questionnaire_type"})
     rows = (

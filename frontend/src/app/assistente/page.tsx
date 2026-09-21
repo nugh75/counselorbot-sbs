@@ -12,6 +12,8 @@ import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchAssistantQuestions, type AssistantQuestionsByTopic } from '@/lib/assistant-questions';
 import { fetchCounselors, getSelectedCounselorId } from '@/lib/counselor';
+import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
+import { useResponseFormat } from '@/lib/use-response-format';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { ChatBubble } from '@/components/ui/ChatBubble';
 import { NotebookBookletPanel, NotebookBookletTriggers, type DeskTab } from '@/components/profile/NotebookBookletPanel';
@@ -126,6 +128,7 @@ export default function AssistentePage() {
     const [messages, setMessages] = useState<Msg[]>([]);
     const [input, setInput] = useState('');
     const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
+    const [responseFormat, setResponseFormat] = useResponseFormat('assistant');
     const [responseLength, setResponseLength] = useState<ResponseLength>('medium');
     const [loading, setLoading] = useState(false);
     const [sessionId, setSessionId] = useState<string | undefined>(undefined);
@@ -270,7 +273,7 @@ export default function AssistentePage() {
 
         try {
             const result = await streamChat(
-                { message: question, audience, session_id: sessionId, conversation_id: conversationId, language: lang, collection, counselor_id: counselorId ?? undefined, response_length: responseLength },
+                { message: question, audience, session_id: sessionId, conversation_id: conversationId, language: lang, collection, counselor_id: counselorId ?? undefined, response_length: responseLength, response_format: responseFormat },
                 (full) => updateLast(full),
                 controller.signal,
                 undefined,
@@ -562,6 +565,7 @@ export default function AssistentePage() {
                                 onOpen={setDeskTab}
                             />
                         </div>
+                        <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={loading} />
                         <ResponseLengthSelector
                             value={responseLength}
                             onChange={setResponseLength}

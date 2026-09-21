@@ -1,3 +1,4 @@
+import type { ResponseFormat } from './chat-preferences';
 import { apiFetch } from './auth';
 import type { Lang } from './i18n';
 
@@ -53,11 +54,11 @@ export async function fetchOrientationSession(sessionId: string): Promise<Orient
     return readJson(await apiFetch(`/api/orientation/sessions/${encodeURIComponent(sessionId)}`));
 }
 
-export async function sendOrientationMessage(sessionId: string, message: string, language: Lang): Promise<OrientationSession> {
+export async function sendOrientationMessage(sessionId: string, message: string, language: Lang, responseFormat: ResponseFormat = 'standard'): Promise<OrientationSession> {
     return readJson(await apiFetch(`/api/orientation/sessions/${encodeURIComponent(sessionId)}/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, language }),
+        body: JSON.stringify({ message, language, response_format: responseFormat }),
     }));
 }
 
