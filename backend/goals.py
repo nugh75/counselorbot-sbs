@@ -120,14 +120,14 @@ def resources(db, username):
         result.append(dict(kind=kind, target_id=str(target_id), title=title, href=href, available=True, **extra))
     work = load_workspace(db, None, username)['workspace']
     for action in work['actions']:
-        add('action', action['id'], action['title'], '/profilo/timeline?tab=board', stage=action['stage'])
+        add('action', action['id'], action['title'], '/profilo/azioni', stage=action['stage'])
     for event in work['timeline']['events']:
         if event.get('institution_available', True):
             add('event', event['id'], event['title'], f"/profilo/timeline?event={event['id']}", date=event.get('start_date') or event.get('end_date'))
     for card in work['cards']:
-        add('card', card['id'], card['text'], '/profilo/timeline?tab=cards')
+        add('card', card['id'], card['text'], '/profilo/carte')
     if work['comparison']['options']:
-        add('comparison', 'personal', ' / '.join(o['title'] for o in work['comparison']['options']), '/profilo/timeline?tab=comparison')
+        add('comparison', 'personal', ' / '.join(o['title'] for o in work['comparison']['options']), '/profilo/confronto')
     for row in db.query(models.PortfolioItem).filter_by(username=username).order_by(models.PortfolioItem.id.desc()).all():
         add('portfolio', row.id, row.title, f'/profilo/portfolio#portfolio-{row.id}')
     for row in db.query(models.StudentBooklet).filter_by(username=username).order_by(models.StudentBooklet.id.desc()).all():

@@ -159,7 +159,9 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   conversazione e della scrittura e contiene il nome del passo; su mobile segue
   la scrittura. I comandi dei passi sono icone da 44px con etichette accessibili.
   Un solo menu a tre punti verticali (kebab), accanto alla scrittura, raccoglie
-  percorso e risorse, Strumenti visivi, lunghezza della risposta e congelamento.
+  pannello, formato, lunghezza, voce, lingua e congelamento. I gruppi sono
+  separati da divisori e le scelte di formato, lunghezza e ragionamento usano
+  icone con etichette accessibili, così il menu resta corto e leggibile.
   Include anche Conversazione vocale: solo il pulsante principale sostituisce
   la casella di scrittura, mentre tutta la chat resta visibile. Stato, istruzioni,
   pausa, ripresa, riascolto e ritorno alla scrittura restano nei tre puntini.
@@ -170,19 +172,19 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   Sotto ogni risposta, su desktop e mobile, Diagramma e Ascolta sono icone
   dirette; le icone di valutazione restano visibili sulle risposte valutabili.
   Non ci sono menu nei messaggi. I diagrammi restano collegati alla loro risposta.
-  Strumenti visivi si apre solo dal menu della conversazione, anche a percorso
-  concluso, parte da Azioni e occupa tutto il viewport. Le carte si creano nella
-  scheda Carte. Il campo vuoto parte da una riga e cresce con il testo.
-  La scheda Linea del tempo usa una sequenza verticale di tappe con periodi
+  Bacheca delle azioni, Carte, Confronto e Linea del tempo appartengono solo
+  all’Area personale. Ciascuno ha una route e una schermata autonoma; non esiste
+  un selettore interno per passare da uno all’altro. Il campo vuoto parte da una
+  riga e cresce con il testo. La Linea del tempo usa una sequenza verticale di tappe con periodi
   anche indicativi, frecce accessibili per l’ordine e collegamenti espliciti
-  ad azioni e Portfolio. Condivide salvataggio, annullamento ed esportazione
-  dei Tools; la copia nel Portfolio ha un’anteprima dedicata.
+  ad azioni e Portfolio. Le quattro schermate condividono salvataggio,
+  annullamento ed esportazione; la copia nel Portfolio ha un’anteprima dedicata.
   Durante la conversazione, su desktop e mobile, la navbar generale resta
   visibile in alto; solo la panoramica superiore delle tappe viene nascosta.
   Le fasi del percorso usano toni slate uniformi: numero, grassetto e segno di
   completamento distinguono il passo corrente dai precedenti e dai successivi.
-  I comandi di Strumenti visivi e Diagramma sono icone da 44px, con etichette
-  accessibili e tooltip localizzati, anche nelle barre interne alle finestre.
+  I comandi di Diagramma sono icone da 44px, con etichette accessibili e tooltip
+  localizzati, anche nelle barre interne alle finestre.
   Nei diagrammi i comandi principali stanno su una sola riga, scorrevole
   orizzontalmente se necessario; menu e chiusura restano sempre raggiungibili.
   Zoom, esportazione, animazioni e aiuto si aprono in un menu sovrapposto,

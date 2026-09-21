@@ -72,9 +72,8 @@ for (const width of [390, 1440]) {
             await page.goto(`${origin}/?frozen=prefs`); await page.locator('#guided-composer').waitFor();
             assert.equal(state.streams.length, 4, 'resume does not generate another opening');
             await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
-            const format = page.getByRole('combobox', { name: 'Formato', exact: true });
-            assert.equal(await format.inputValue(), 'bullets');
-            await format.selectOption('table'); await page.keyboard.press('Escape');
+            assert.equal(await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).getAttribute('aria-checked'), 'true');
+            await page.getByRole('radio', { name: 'Formato: Tabella', exact: true }).click(); await page.keyboard.press('Escape');
             await page.locator('#guided-composer').fill('Approfondiamo'); await page.locator('#guided-composer').press('Enter');
             await page.getByRole('table').waitFor();
             assert.equal(state.streams.at(-1).phase, 'qsa-essential-followup');
@@ -90,7 +89,7 @@ test('QSAr keeps its original path and receives the format choice', async () => 
         await page.goto(`${origin}/?resume=1`); await page.locator('#guided-composer').waitFor();
         assert.equal(await page.getByRole('radio', { name: /Percorso essenziale/ }).count(), 0);
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
-        await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('table'); await page.keyboard.press('Escape');
+        await page.getByRole('radio', { name: 'Formato: Tabella', exact: true }).click(); await page.keyboard.press('Escape');
         await page.locator('#guided-composer').fill('Un confronto'); await page.locator('#guided-composer').press('Enter');
         await page.getByRole('table').waitFor();
         assert.equal(state.streams.at(-1).guided_path, 'complete'); assert.equal(state.streams.at(-1).response_format, 'table');

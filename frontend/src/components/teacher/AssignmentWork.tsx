@@ -91,7 +91,7 @@ function WorkEditor({ assignmentId }: { assignmentId: number }) {
                 {work.action && <p className="text-sm font-medium text-indigo-700">{work.action.title} · {visualLabel(lang, work.action.stage)}</p>}
                 {(!work.action || !work.event) && <p className="text-sm text-amber-700">{l('missing')}</p>}
                 <nav className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-indigo-700">
-                    {work.action && <Link className="py-2 underline" href="/profilo/timeline?tab=board">{l('openActivities')}</Link>}
+                    {work.action && <Link className="py-2 underline" href="/profilo/azioni">{l('openActivities')}</Link>}
                     {work.event && <Link className="py-2 underline" href={`/profilo/timeline?event=${encodeURIComponent(work.event.id)}`}>{l('openTimeline')}</Link>}
                     <Link className="py-2 underline" href="/profilo/portfolio">{l('openPortfolio')}</Link>
                 </nav>
