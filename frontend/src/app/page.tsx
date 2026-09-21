@@ -383,14 +383,14 @@ export default function Home() {
         // deve trovare il catalogo di chi torna, non la presentazione, anche se
         // è la prima volta e non ha ancora compilato nulla.
         const view = params.get('view') || (!params.get('start') && !params.get('session_id')
-            ? ({ 'questionnaire-select': 'questionnaires', base: 'home' } as Record<string, string>)[window.history.state?.cbPageStep] : null);
-        if (view === 'questionnaires' || view === 'home') {
+            ? ({ 'questionnaire-select': 'questionnaires', base: 'home', intro: 'intro' } as Record<string, string>)[window.history.state?.cbPageStep] : null);
+        if (view === 'questionnaires' || view === 'home' || view === 'intro') {
             setSelectedQuestionnaire(null);
             setScores(null);
             setPdfToken(undefined);
             setSessionId('');
             setExperience(null);
-            setStep(view === 'home' ? 'base' : 'questionnaire-select');
+            setStep(view === 'intro' ? 'intro' : view === 'home' ? 'base' : 'questionnaire-select');
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             claimEntry();
             return;

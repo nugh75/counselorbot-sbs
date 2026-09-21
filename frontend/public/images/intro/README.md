@@ -2,7 +2,7 @@
 
 Generated with the built-in image_gen tool on 2026-09-21. The original PNGs retain their transparent alpha channel; Next Image delivers appropriately sized variants. They are decorative (`alt=""`): each adjacent localized heading and description carries the meaning.
 
-Assets: `profiles.png` (Questionari e profili), `paths.png` (Percorsi guidati), `practice.png` (Allenamento).
+Assets: `profiles.png` (Analisi dei risultati dei questionari), `paths.png` (Percorsi guidati), `practice.png` (Allenamento).
 
 ## Prompts
 
