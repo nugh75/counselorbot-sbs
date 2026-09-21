@@ -27,6 +27,7 @@ type Props = {
     catalog?: RecommendationCatalog;
     onDiscuss?: (text: string) => void;
     request?: VisualToolsRequest | null;
+    fixedTab?: WorkTab;
     pageBackHref?: string;
     onWorkTabChange?: (tab: WorkTab) => void;
 };
@@ -44,13 +45,13 @@ export function VisualTools(props: Props) {
     return <WorkspaceView key={props.personal ? 'personal' : props.sessionId} {...props} />;
 }
 
-function WorkspaceView({ sessionId = '', personal = false, legacySession, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, request, pageBackHref, onWorkTabChange }: Props) {
+function WorkspaceView({ sessionId = '', personal = false, legacySession, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, request, fixedTab, pageBackHref, onWorkTabChange }: Props) {
     const l = (key: string) => visualLabel(locale, personal ? ({ save: 'personalSave', saved: 'timelineSaved', saveHelp: 'personalSaveHelp', openHelp: 'personalTimelineHelp', working: 'personalTimelineHelp' } as Record<string, string>)[key] || key : key);
     const endpoint = personal ? '/api/user/timeline' : `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
     const [focusEvent, setFocusEvent] = useState<string | undefined>();
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(Boolean(fixedTab));
     const [toolsExpanded, setToolsExpanded] = useState(!personal);
-    const [tab, setTab] = useState<Tab>(personal ? 'timeline' : 'board');
+    const [tab, setTab] = useState<Tab>(fixedTab ?? (personal ? 'timeline' : 'board'));
     const [helpOpen, setHelpOpen] = useState<Record<WorkTab, boolean>>({ board: false, comparison: false, cards: false, timeline: false });
     const [saved, setSaved] = useState<SavedWorkspace>({ revision: 0, workspace: emptyWorkspace() });
     const [work, setWork] = useState<VisualWorkspace>(emptyWorkspace);
@@ -70,7 +71,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [optionSource, setOptionSource] = useState('');
     // Questa schermata contiene un solo insieme coerente di strumenti. Taccuino,
     // Libretto e Tavolo hanno pagine proprie nell'Area personale.
-    const tabs: Tab[] = workTabs;
+    const tabs: Tab[] = fixedTab ? [fixedTab] : workTabs;
     const tabLabel = (key: Tab) => l(key);
     const dialog = useRef<HTMLElement>(null);
     const loadGeneration = useRef(0);
@@ -119,8 +120,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     useEffect(() => {
         if (!request) return;
         opener.current = document.activeElement as HTMLElement;
-        setTab(request.tab); setOpen(true);
-    }, [request]);
+        setTab(fixedTab ?? request.tab); setOpen(true);
+    }, [fixedTab, request]);
     useEffect(() => {
         if (!open || !pageBackHref) return;
         window.requestAnimationFrame(() => dialog.current?.querySelector<HTMLButtonElement>('.workspace-page-back')?.focus({ preventScroll: true }));
@@ -229,7 +230,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                         <div className="min-w-0 flex-1"><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{personal ? tabLabel(tab) : l('title')}</h2></div>
                         {!pageBackHref && <Tooltip content={l('close')}><Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button></Tooltip>}
                     </div>
-                    <details open={Boolean(pageBackHref) || toolsExpanded} onToggle={(event) => { if (!pageBackHref) setToolsExpanded(event.currentTarget.open); }}>
+                    {!fixedTab && <details open={Boolean(pageBackHref) || toolsExpanded} onToggle={(event) => { if (!pageBackHref) setToolsExpanded(event.currentTarget.open); }}>
                     <summary hidden={!personal || Boolean(pageBackHref)} className="min-h-11 cursor-pointer py-2 text-sm text-indigo-700">{l('otherTools')}</summary>
                     <div role="tablist" aria-label={l('title')} className="mt-3 flex flex-wrap gap-1">
                         {tabs.map((key, index) => { const Icon = tabIcons[key]; return <Tooltip key={key} content={tabLabel(key)}><Button type="button" role="tab" aria-label={tabLabel(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
@@ -240,9 +241,9 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 selectTab(tabs[next]); document.getElementById(`${id}-${tabs[next]}`)?.focus();
                             }}><Icon className="h-4 w-4 shrink-0" aria-hidden="true" /></Button></Tooltip>; })}
                     </div>
-                    </details>
+                    </details>}
                 </header>
-                <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4" id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-${tab}`}>
+                <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4" id={`${id}-panel`} role={fixedTab ? 'region' : 'tabpanel'} aria-labelledby={fixedTab ? `${id}-title` : `${id}-${tab}`}>
                     {issue && <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                         <p>{l(issue)}</p>
                         <div className="mt-2 flex flex-wrap gap-2">

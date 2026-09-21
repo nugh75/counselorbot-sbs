@@ -7,9 +7,8 @@ import { useSearchParams } from 'next/navigation';
 import Image, { type StaticImageData } from 'next/image';
 import chatOverview from '../../../public/guide/chat-guidata.png';
 import chatControlsImage from '../../../public/guide/controlli-chat.png';
-import personalToolsImage from '../../../public/guide/strumenti-annotazioni.png';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, MoreVertical, RotateCcw, BookOpen, Send, Snowflake, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreVertical, RotateCcw, Send, Snowflake, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useI18n } from '@/lib/i18n-context';
 import { counselorHelp } from '@/lib/i18n-counselor-help';
@@ -66,7 +65,6 @@ function GuideContent() {
         },
         { key: 'message', icon: <Send className="h-4 w-4" aria-hidden="true" /> },
         { key: 'navigation', icon: <span className="flex" aria-hidden="true"><ChevronLeft className="h-4 w-4" /><RotateCcw className="h-4 w-4" /><ChevronRight className="h-4 w-4" /></span> },
-        { key: 'tools', icon: <BookOpen className="h-4 w-4" aria-hidden="true" /> },
         { key: 'feedback', icon: <span className="flex gap-1" aria-hidden="true"><Volume2 className="h-4 w-4" /><ThumbsUp className="h-4 w-4" /><ThumbsDown className="h-4 w-4" /></span> },
     ];
 
@@ -230,8 +228,6 @@ function GuideContent() {
                                         </div>
                                     ))}
                                 </dl>
-
-                                {renderFigure(personalToolsImage, t('guide.chat.toolsAlt'), t('guide.chat.toolsCaption'))}
 
                                 <p className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs leading-relaxed text-indigo-900">
                                     {t('guide.chat.keyboardHint')}

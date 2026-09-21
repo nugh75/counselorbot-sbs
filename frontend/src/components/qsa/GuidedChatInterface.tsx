@@ -2,7 +2,7 @@
 
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, LayoutList, BookOpen, Mic } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, AlignLeft, Rows3, Brain } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
@@ -39,11 +39,9 @@ import { useIsDesktop } from '@/lib/use-desktop';
 import { RecommendationsPanel } from '@/components/qsa/RecommendationsPanel';
 import { ChatWorkspace } from '@/components/qsa/ChatWorkspace';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
-import { VisualTools, type VisualToolsRequest } from '@/components/visual/VisualTools';
 import { EventBookletCard } from '@/components/qsa/EventBookletCard';
 import { isEventInstrument, type EventBookletDraft } from '@/lib/event-booklet';
 import { Button } from '@/components/ui/Button';
-import { visualLabel } from '@/lib/i18n-visual-tools';
 import {
     deleteIdeaReference,
     fetchIdeaNextStep,
@@ -524,8 +522,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [eventBookletDraft, setEventBookletDraft] = useState<EventBookletDraft | null>(null);
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
     const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
-    const [visualRequest, setVisualRequest] = useState<VisualToolsRequest | null>(null);
-    // Taccuino e libretto richiamabili dal menu della chat.
     const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
     // Indici dei messaggi con il box "Ragionamento" collassato (toggle per nasconderlo).
     const [hiddenReasoning, setHiddenReasoning] = useState<Set<number>>(new Set());
@@ -1504,10 +1500,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
     const renderConversationOptions = (openPanel: (panel?: 'path' | 'scores' | 'resources') => void) => (
         <ChatActionsPopover label={chatLayoutLabel(activeLocale, 'options')}>
-            {close => <div className="space-y-2">
-                <div ref={setVoiceOptionsContainer} />
+            {close => <div className="divide-y divide-slate-200">
+                <div className="space-y-1 pb-2">
                 <button type="button" className={`${messageActionClass} hidden lg:flex`} onClick={() => { close(); openPanel(); }}>
-                    <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{chatLayoutLabel(activeLocale, 'panelTitle')}
+                    <PanelLeft className="h-4 w-4 shrink-0" aria-hidden="true" />{chatLayoutLabel(activeLocale, 'panel')}
                     {recommendations.reading.length + recommendations.strategy.length > 0 && <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>}
                 </button>
                 <div className="lg:hidden">
@@ -1522,25 +1518,36 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         <span className="ml-auto text-xs">{recommendations.reading.length + recommendations.strategy.length}</span>
                     </button>}
                 </div>
-                <Tooltip content={visualLabel(activeLocale, 'open')}><button type="button" className={messageActionClass} aria-label={visualLabel(activeLocale, 'open')} onClick={() => { close(); setVisualRequest({ tab: 'board', nonce: Date.now() }); }}>
-                    <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{visualLabel(activeLocale, 'tools')}
-                </button></Tooltip>
+                </div>
                 {currentPhase !== FIXED_CONCLUSION_ID && <>
-                    <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={isLoading} />
-                    <p className="px-2 text-sm font-semibold text-slate-700">{t('responseLength.label')}</p>
-                    <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
-                    {!voiceMode && <button type="button" className={messageActionClass} disabled={isLoading || audioBusy} onClick={() => { close(); setVoiceMode(true); }}>
-                        <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
-                    </button>}
-                    {!voiceMode && <AudioSendOption />}
-                    <AudioLanguageOption />
-                    {reasoningCapable && <>
-                        <p className="px-2 text-sm font-semibold text-slate-700">{t('reasoning.label')}</p>
-                        <ReasoningSelector value={reasoningEffort} onChange={setReasoningEffort} disabled={isLoading} />
-                    </>}
-                    <button type="button" onClick={() => { close(); void handleFreeze(); }} disabled={isLoading || !sessionId} className={messageActionClass}>
+                    <div className="space-y-1 py-2">
+                        <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
+                            <AlignLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            <span className="min-w-0 flex-1">{chatPreferenceLabel(activeLocale, 'format')}</span>
+                            <ResponseFormatSelector compact value={responseFormat} onChange={setResponseFormat} disabled={isLoading} />
+                        </div>
+                        <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
+                            <Rows3 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            <span className="min-w-0 flex-1">{t('responseLength.shortLabel')}</span>
+                            <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
+                        </div>
+                        {reasoningCapable && <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
+                            <Brain className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            <span className="min-w-0 flex-1">{t('reasoning.shortLabel')}</span>
+                            <ReasoningSelector value={reasoningEffort} onChange={setReasoningEffort} disabled={isLoading} />
+                        </div>}
+                    </div>
+                    <div className="space-y-1 py-2">
+                        <div ref={setVoiceOptionsContainer} />
+                        {!voiceMode && <button type="button" className={messageActionClass} disabled={isLoading || audioBusy} onClick={() => { close(); setVoiceMode(true); }}>
+                            <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
+                        </button>}
+                        {!voiceMode && <AudioSendOption compact />}
+                        <AudioLanguageOption compact />
+                    </div>
+                    <div className="pt-2"><button type="button" onClick={() => { close(); void handleFreeze(); }} disabled={isLoading || !sessionId} className={messageActionClass}>
                         <Snowflake className="h-4 w-4" aria-hidden="true" />{t('frozen.freeze')}
-                    </button>
+                    </button></div>
                 </>}
             </div>}
         </ChatActionsPopover>
@@ -1971,12 +1978,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 {stepNavigation && <div className="border-t border-slate-200 lg:hidden">{stepNavigation}</div>}
             </>}
         </ChatWorkspace>
-        <VisualTools hideTrigger sessionId={sessionId} locale={activeLocale} catalog={recommendations} request={visualRequest}
-                        onDiscuss={currentPhase === FIXED_CONCLUSION_ID ? undefined : text => {
-                            setInput(previous => previous.trim() ? `${previous}\n\n${text}` : text);
-                            window.requestAnimationFrame(() => document.getElementById('guided-composer')?.focus());
-                        }} />
-
         {/* Le fonti restano sotto la conversazione e larghe quanto la pagina:
             una ricerca produce righe di testo lungo, in una colonna stretta
             sarebbero illeggibili. */}

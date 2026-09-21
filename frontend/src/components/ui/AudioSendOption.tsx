@@ -18,7 +18,7 @@ export function useAudioAutoSend() {
     return useSyncExternalStore(subscribe, read, () => false);
 }
 
-export function AudioSendOption() {
+export function AudioSendOption({ compact = false }: { compact?: boolean }) {
     const { t } = useI18n();
     const enabled = useAudioAutoSend();
     return <label className="flex min-h-[44px] cursor-pointer items-start gap-2 rounded-md px-2 py-2 text-sm text-slate-600 hover:bg-slate-50">
@@ -27,6 +27,6 @@ export function AudioSendOption() {
             try { localStorage.setItem(key, String(sessionValue)); } catch { /* Retain this visit's choice. */ }
             window.dispatchEvent(new Event(event));
         }} />
-        <span>{t('audio.autoSend')}<span className="mt-1 block text-xs text-slate-500">{t('audio.autoSendHelp')}</span></span>
+        <span>{t(compact ? 'audio.autoSendShort' : 'audio.autoSend')}{!compact && <span className="mt-1 block text-xs text-slate-500">{t('audio.autoSendHelp')}</span>}</span>
     </label>;
 }

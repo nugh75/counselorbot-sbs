@@ -1,4 +1,5 @@
 import { chatLayoutLabel } from '../src/lib/i18n-chat-layout.ts';
+import { chatPreferenceLabel } from '../src/lib/chat-preferences.ts';
 import { visualLabel } from '../src/lib/i18n-visual-tools.ts';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -125,158 +126,6 @@ async function fixture(width, phase = 'intro', options = {}) {
     return { page, context, control };
 }
 
-async function openVisual(page, label) {
-    if (await page.locator('#guided-chat-title').count()) {
-        const locale = await page.evaluate(() => localStorage.getItem('cb_lang'));
-        await page.getByRole('button', { name: chatLayoutLabel(locale, 'options'), exact: true }).click();
-    }
-    await page.getByRole('button', { name: label, exact: true }).click();
-}
-
-for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, locale: 'de', dark: true }, { width: 1440, locale: 'en' }]) {
-    test(`visual workspace completes and restores work at ${options.width}px in ${options.locale}`, async () => {
-        const { page, context, control } = await fixture(options.width, 'intro', options);
-        const l = key => visualLabel(options.locale, key);
-        try {
-            await openVisual(page, l('open'));
-            const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
-            await dialog.getByText(l('emptyBoard'), { exact: true }).waitFor();
-            const bounds = await dialog.boundingBox();
-            assert.deepEqual({ x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }, { x: 0, y: 0, width: options.width, height: 844 }, 'visual tools fill the viewport');
-            for (const button of await dialog.locator('button:visible').all()) {
-                assert.equal((await button.innerText()).trim(), '', 'visual controls use icons');
-                assert.equal((await button.boundingBox()).width, 44);
-                assert.ok(await button.getAttribute('aria-label'));
-            }
-            await dialog.getByLabel(l('titleField'), { exact: true }).fill('Studiare un capitolo');
-            await dialog.getByLabel(l('detail'), { exact: true }).fill('Venti minuti e poi richiamo libero');
-            await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
-            await dialog.getByRole('combobox', { name: `${l('move')}: Studiare un capitolo` }).selectOption('doing');
-            const action = dialog.getByRole('region', { name: l('doing'), exact: true }).locator('article');
-            await action.locator('summary').click();
-            await action.getByLabel(l('reflection'), { exact: true }).fill('Ho ricordato tre concetti');
-            await dialog.getByRole('tab', { name: l('comparison'), exact: true }).click();
-            for (const title of ['Corso serale', 'Corso diurno']) {
-                const creation = dialog.locator('details').filter({ has: page.locator('summary').filter({ hasText: l('addOption') }) });
-                if (!(await creation.getAttribute('open') !== null)) await creation.locator('summary').click();
-                await dialog.locator('form').filter({ has: page.getByRole('button', { name: l('addOption'), exact: true }) }).getByRole('textbox').fill(title);
-                await dialog.getByRole('button', { name: l('addOption'), exact: true }).click();
-            }
-            const criteria = dialog.getByRole('region', { name: l('criteria'), exact: true });
-            await criteria.locator('form input').fill('Tempo disponibile');
-            await criteria.getByRole('button', { name: l('addCriterion'), exact: true }).click();
-            const option = dialog.locator('article').first();
-            await option.getByRole('textbox', { name: 'Tempo disponibile' }).fill('Compatibile con il lavoro');
-            await option.getByRole('radio').check();
-            await dialog.getByLabel(l('reason'), { exact: true }).fill('Posso frequentarlo');
-            await dialog.getByRole('tab', { name: l('cards'), exact: true }).click();
-            await dialog.getByLabel(l('cardText'), { exact: true }).fill('Preferisco esempi concreti');
-            await dialog.getByRole('button', { name: l('addCard'), exact: true }).click();
-            await dialog.locator('article select').selectOption('yes');
-            await dialog.getByRole('button', { name: l('undo'), exact: true }).click();
-            assert.equal(await dialog.locator('article select').inputValue(), 'unsorted');
-            await dialog.locator('article select').selectOption('explore');
-            await page.waitForFunction(() => document.activeElement?.tagName === 'SELECT' && document.activeElement.value === 'explore');
-            await dialog.getByRole('button', { name: l('save'), exact: true }).click();
-            await dialog.getByRole('status').filter({ hasText: l('saved') }).waitFor();
-            assert.equal(control.visual.workspace.actions[0].stage, 'doing');
-            assert.equal(control.visual.workspace.cards[0].bucket, 'explore');
-            assert.equal(control.visual.workspace.comparison.cells[0].note, 'Compatibile con il lavoro');
-            for (const button of await dialog.locator('button:visible').all()) {
-                const box = await button.boundingBox();
-                assert.ok(box.height >= 44 && box.x >= 0 && box.x + box.width <= options.width, `control fits: ${await button.textContent()}`);
-            }
-            assert.equal(await dialog.evaluate(e => e.scrollWidth <= e.clientWidth), true);
-            await dialog.getByRole('tab', { name: l('cards'), exact: true }).focus();
-            await page.keyboard.press('ArrowLeft');
-            assert.equal(await dialog.getByRole('tab', { name: l('comparison'), exact: true }).getAttribute('aria-selected'), 'true');
-            await dialog.locator('button:visible').last().focus(); await page.keyboard.press('Tab');
-            assert.equal(await page.evaluate(() => !!document.activeElement.closest('[role="dialog"]')), true);
-            const download = page.waitForEvent('download');
-            await dialog.getByRole('button', { name: l('export'), exact: true }).click();
-            assert.equal((await download).suggestedFilename(), 'counselorbot_visual_tools.pdf');
-            await dialog.getByRole('button', { name: l('discuss'), exact: true }).click();
-            await dialog.waitFor({ state: 'detached' });
-            assert.match(await page.locator('#guided-composer').inputValue(), /Posso frequentarlo/);
-            assert.equal(control.requests.some(r => r.path === '/api/chat/stream'), false);
-            await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });
-            await openVisual(page, l('open'));
-            await dialog.getByLabel(l('titleField'), { exact: true }).nth(1).waitFor();
-            assert.equal(await dialog.getByLabel(l('titleField'), { exact: true }).nth(1).inputValue(), 'Studiare un capitolo');
-            assert.deepEqual(control.errors, []);
-        } finally { await context.close(); }
-    });
-}
-
-test('failed writes and revision conflicts retain the local draft', async () => {
-    const { page, context, control } = await fixture(390);
-    const l = key => visualLabel('it', key);
-    try {
-        control.failLoad = true;
-        await openVisual(page, l('open'));
-        const dialog = page.getByRole('dialog');
-        await dialog.getByRole('alert').waitFor();
-        assert.ok(await dialog.getByRole('button', { name: l('save'), exact: true }).isDisabled());
-        control.failLoad = false;
-        await dialog.getByRole('button', { name: l('retry'), exact: true }).click();
-        await dialog.getByLabel(l('titleField'), { exact: true }).fill('La mia attività');
-        await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
-        control.failSave = true;
-        await dialog.getByRole('button', { name: l('save'), exact: true }).click();
-        await dialog.getByRole('alert').waitFor();
-        assert.equal(await dialog.getByLabel(l('titleField'), { exact: true }).nth(1).inputValue(), 'La mia attività');
-        assert.equal(control.visual.revision, 0);
-        control.failSave = false;
-        control.visual.revision = 4;
-        await dialog.getByRole('button', { name: l('retry'), exact: true }).click();
-        await dialog.getByText(l('conflict'), { exact: true }).waitFor();
-        const download = page.waitForEvent('download');
-        await dialog.getByRole('button', { name: l('copyDownload'), exact: true }).click();
-        assert.equal((await download).suggestedFilename(), 'counselorbot_visual_draft.txt');
-        assert.equal(control.visual.workspace.actions.length, 0);
-        page.once('dialog', d => d.accept());
-        await dialog.getByRole('button', { name: l('reload'), exact: true }).click();
-        await dialog.getByText(l('emptyBoard'), { exact: true }).waitFor();
-        assert.deepEqual(control.errors, []);
-    } finally { await context.close(); }
-});
-
-test('the single conversation kebab opens full-page visual tools on Actions and preserves drafts', async () => {
-    const { page, context, control } = await fixture(1440);
-    const l = key => visualLabel('it', key);
-    try {
-        assert.equal(await page.getByRole('button', { name: l('organize'), exact: true }).count(), 0);
-        assert.equal(await page.getByRole('button', { name: 'Diagramma', exact: true }).count(), 1);
-        const trigger = page.getByRole('button', { name: chatLayoutLabel('it', 'options'), exact: true });
-        // Audio input has its own popover; count the conversation menu only.
-        assert.equal(await trigger.count(), 1);
-        const menu = page.getByRole('group', { name: chatLayoutLabel('it', 'options'), exact: true });
-        await trigger.click();
-        const dots = await trigger.locator('svg circle').evaluateAll(elements => elements.map(el => [el.getAttribute('cx'), el.getAttribute('cy')]));
-        assert.equal(dots.length, 3);
-        assert.equal(new Set(dots.map(dot => dot[0])).size, 1);
-        assert.equal(new Set(dots.map(dot => dot[1])).size, 3);
-        await menu.getByRole('button', { name: l('open'), exact: true }).click();
-        const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
-        await dialog.getByLabel(l('titleField'), { exact: true }).fill('Una bozza ancora da completare');
-        assert.equal(await dialog.getByRole('tab', { name: l('board'), exact: true }).getAttribute('aria-selected'), 'true');
-        assert.equal(await menu.isVisible(), false);
-        await dialog.getByRole('tab', { name: l('cards'), exact: true }).click();
-        await dialog.getByRole('button', { name: l('close'), exact: true }).click();
-        await dialog.waitFor({ state: 'detached' });
-        assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
-        await trigger.click();
-        await menu.getByRole('button', { name: l('open'), exact: true }).click();
-        await dialog.getByLabel(l('titleField'), { exact: true }).waitFor();
-        assert.equal(await dialog.getByRole('tab', { name: l('board'), exact: true }).getAttribute('aria-selected'), 'true');
-        assert.equal(await dialog.getByLabel(l('titleField'), { exact: true }).inputValue(), 'Una bozza ancora da completare');
-        const bounds = await dialog.boundingBox();
-        assert.deepEqual(bounds, { x: 0, y: 0, width: 1440, height: 844 });
-        assert.equal(control.requests.some(r => r.method !== 'GET' && r.path !== '/api/session/freeze'), false);
-        assert.deepEqual(control.errors, []);
-    } finally { await context.close(); }
-});
-
 for (const width of [320, 1440]) {
     test(`one kebab and direct per-response audio and feedback at ${width}px`, async () => {
         const { page, context, control } = await fixture(width, 'intro', { feedback: true, longConversation: true });
@@ -316,176 +165,8 @@ for (const width of [320, 1440]) {
     });
 }
 
-test('the shared visual workspace creates and saves an editable card without sending it', async () => {
-    const { page, context, control } = await fixture(390);
-    const l = key => visualLabel('it', key);
-    try {
-        await openVisual(page, l('open'));
-        await page.getByRole('tab', { name: l('cards'), exact: true }).click();
-        const dialog = page.getByRole('dialog');
-        await dialog.getByRole('textbox', { name: l('cardText'), exact: true }).waitFor();
-        assert.equal(await dialog.getByRole('textbox', { name: l('cardText'), exact: true }).inputValue(), '');
-        await dialog.getByRole('textbox', { name: l('cardText'), exact: true }).fill('Voglio verificare ciò che ricordo');
-        await dialog.getByRole('button', { name: l('addCard'), exact: true }).click();
-        await dialog.getByRole('button', { name: l('save'), exact: true }).click();
-        await dialog.getByRole('status').filter({ hasText: l('saved') }).waitFor();
-        assert.equal(control.visual.workspace.cards[0].text, 'Voglio verificare ciò che ricordo');
-        assert.equal(control.visual.workspace.cards[0].bucket, 'unsorted');
-        assert.equal(control.requests.some(r => r.path === '/api/chat/stream' || r.path === '/api/diagram/from-message'), false);
-        assert.deepEqual(control.errors, []);
-    } finally { await context.close(); }
-});
-
-test('suggested material can seed a plan without changing recommendation state, and PDF retry works', async () => {
-    const { page, context, control } = await fixture(390);
-    const l = key => visualLabel('it', key);
-    try {
-        await openVisual(page, l('open'));
-        const dialog = page.getByRole('dialog');
-        await dialog.getByRole('combobox', { name: l('fromCatalog'), exact: true }).selectOption('strategy:test-strategy');
-        assert.equal(await dialog.getByLabel(l('titleField'), { exact: true }).inputValue(), 'Recupero attivo');
-        await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
-        await dialog.getByRole('button', { name: l('close'), exact: true }).click();
-        await openVisual(page, l('open'));
-        assert.equal(await dialog.getByLabel(l('titleField'), { exact: true }).nth(1).inputValue(), 'Recupero attivo');
-        control.failPdf = true;
-        await dialog.getByRole('button', { name: l('export'), exact: true }).click();
-        await dialog.getByText(l('exportError'), { exact: true }).waitFor();
-        control.failPdf = false;
-        const download = page.waitForEvent('download');
-        await dialog.getByRole('button', { name: l('retry'), exact: true }).click();
-        assert.equal((await download).suggestedFilename(), 'counselorbot_visual_tools.pdf');
-        await dialog.getByRole('alert').waitFor({ state: 'detached' });
-        assert.equal(control.requests.some(r => r.method === 'PATCH'), false);
-        assert.equal(control.visual.workspace.actions[0].source, 'Recupero attivo');
-        assert.deepEqual(control.errors, []);
-    } finally { await context.close(); }
-});
-
-test('OpenCode graphical chat restores the same session workspace and accepts its handoff', async () => {
-    const { page, context, control } = await fixture(390, 'intro', { experience: 'opencode' });
-    const l = key => visualLabel('it', key);
-    try {
-        control.visual.workspace.cards = [{ id: 'card-opencode', text: 'La mia riflessione', source: '', bucket: 'yes' }];
-        await openVisual(page, l('open'));
-        const dialog = page.getByRole('dialog');
-        await dialog.getByRole('tab', { name: l('cards'), exact: true }).click();
-        await dialog.locator('article textarea').waitFor();
-        assert.equal(await dialog.locator('article textarea').inputValue(), 'La mia riflessione');
-        await dialog.getByRole('button', { name: l('discuss'), exact: true }).click();
-        await dialog.waitFor({ state: 'detached' });
-        assert.match(await page.locator('#opencode-composer').inputValue(), /La mia riflessione/);
-        assert.equal(control.requests.some(r => r.path.includes('/message') && r.method === 'POST'), false);
-        assert.deepEqual(control.errors, []);
-    } finally { await context.close(); }
-});
-
-test('completed sessions keep visual export available without offering a missing composer', async () => {
-    const { page, context, control } = await fixture(390, 'conclusion');
-    const l = key => visualLabel('it', key);
-    try {
-        await openVisual(page, l('open'));
-        const dialog = page.getByRole('dialog');
-        await dialog.getByText(l('emptyBoard'), { exact: true }).waitFor();
-        assert.equal(await dialog.getByRole('button', { name: l('discuss'), exact: true }).count(), 0);
-        assert.equal(await dialog.getByRole('button', { name: l('export'), exact: true }).count(), 1);
-        assert.deepEqual(control.errors, []);
-    } finally { await context.close(); }
-});
-
-test('a delayed earlier load cannot replace edits made after reopening the panel', async () => {
-    const { page, context, control } = await fixture(390);
-    const l = key => visualLabel('it', key);
-    let release;
-    const pending = new Promise(resolve => { release = resolve; });
-    let started;
-    const firstRead = new Promise(resolve => { started = resolve; });
-    control.deferRead = () => { started(); return pending; };
-    try {
-        await openVisual(page, l('open'));
-        await firstRead;
-        const dialog = page.getByRole('dialog');
-        await dialog.getByRole('button', { name: l('close'), exact: true }).click();
-        await openVisual(page, l('open'));
-        await dialog.getByLabel(l('titleField'), { exact: true }).fill('Conserva questa bozza');
-        await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
-        const response = page.waitForResponse(r => r.url().endsWith('/visual-tools') && r.request().method() === 'GET');
-        release(); await response;
-        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-        assert.equal(await dialog.locator('article input').count(), 1);
-        assert.equal(await dialog.locator('article input').inputValue(), 'Conserva questa bozza');
-        assert.deepEqual(control.errors, []);
-    } finally { release(); await context.close(); }
-});
-
-for (const locale of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
-    test(`visual tools explain purpose, steps and examples on touch in ${locale}`, async () => {
-        const { page, context, control } = await fixture(320, 'intro', { locale, touch: true, dark: locale === 'de' });
-        const l = key => visualLabel(locale, key);
-        try {
-            await openVisual(page, l('open'));
-            const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
-            assert.equal(l('title'), 'Tools');
-            assert.equal(l('tools'), 'Tools');
-            const help = dialog.getByRole('region', { name: l('howTo'), exact: true });
-            for (const tab of ['board', 'comparison', 'cards']) {
-                await dialog.getByRole('tab', { name: l(tab), exact: true }).click();
-                assert.equal(await help.getByText(l(`${tab}Purpose`), { exact: true }).isVisible(), false);
-                await help.locator('summary').tap();
-                await help.getByText(l(`${tab}Purpose`), { exact: true }).waitFor();
-                assert.equal(await help.locator('li').count(), 3);
-                for (const key of [`${tab}Step1`, `${tab}Step2`, `${tab}Step3`, `${tab}Example`, 'saveHelp', 'discussHelp', 'exportHelp', 'undoHelp']) {
-                    assert.notEqual(l(key), key, `translated ${locale}:${key}`);
-                    assert.ok(await help.getByText(l(key), { exact: key !== `${tab}Example` }).isVisible());
-                }
-                await help.locator('summary').tap();
-                assert.equal(await help.getByText(l(`${tab}Purpose`), { exact: true }).isVisible(), false);
-                assert.equal(await help.locator('li').first().isVisible(), false);
-                await help.locator('summary').tap();
-                assert.ok(await help.locator('li').first().isVisible());
-                await help.getByRole('button', { name: l('startWorking'), exact: true }).tap();
-                await page.waitForFunction(() => document.activeElement === document.querySelector('[role="dialog"] form')?.closest('details')?.querySelector('summary'));
-                assert.equal(await dialog.evaluate(e => e.scrollWidth <= e.clientWidth), true);
-                const box = await help.locator('summary').boundingBox();
-                assert.ok(box.height >= 44 && box.x >= 0 && box.x + box.width <= 320);
-            }
-            // Each tab retains its own collapsed help while the workspace stays open.
-            await dialog.getByRole('tab', { name: l('board'), exact: true }).click();
-            assert.equal(await help.locator('li').first().isVisible(), false);
-            // The chat may auto-freeze while the help is read; the tools must not write.
-            assert.equal(control.requests.some(r => r.method !== 'GET' && r.path !== '/api/session/freeze'), false);
-            assert.deepEqual(control.errors, []);
-        } finally { await context.close(); }
-    });
-}
-
-test('keyboard tooltips explain actions and Escape dismisses help before the workspace', async () => {
-    const { page, context, control } = await fixture(1440);
-    const l = key => visualLabel('it', key);
-    try {
-        await openVisual(page, l('open'));
-        const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
-        await dialog.getByLabel(l('titleField'), { exact: true }).fill('Una piccola prova');
-        await dialog.getByRole('button', { name: l('addAction'), exact: true }).click();
-        for (const key of ['save', 'undo', 'export', 'discuss']) {
-            await dialog.getByRole('button', { name: l(key), exact: true }).focus();
-            const tooltip = page.getByRole('tooltip');
-            await tooltip.waitFor();
-            assert.equal(await tooltip.textContent(), l(`${key}Help`));
-            await page.keyboard.press('Escape');
-            await tooltip.waitFor({ state: 'detached' });
-            assert.ok(await dialog.isVisible());
-        }
-        await page.keyboard.press('Escape');
-        await dialog.waitFor({ state: 'detached' });
-        // The chat may auto-freeze while the help is read; the tools must not write.
-        assert.equal(control.requests.some(r => r.method !== 'GET' && r.path !== '/api/session/freeze'), false);
-        assert.deepEqual(control.errors, []);
-    } finally { await context.close(); }
-});
-
 for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, locale: 'de', touch: true, dark: true }, { width: 1024, locale: 'sv' }, { width: 1440, locale: 'en' }]) {
-    test(`chat keeps secondary tools with resources at ${options.width}px`, async () => {
+    test(`chat keeps resources but no personal workspaces at ${options.width}px`, async () => {
         const { page, context, control } = await fixture(options.width, 'intro', { ...options, openResources: false });
         const l = key => chatLayoutLabel(options.locale, key);
         try {
@@ -495,16 +176,18 @@ for (const options of [{ width: 320, locale: 'it', touch: true }, { width: 390, 
             assert.equal(await header.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).count(), 0);
             assert.equal(await header.getByRole('button', { name: l('hide'), exact: true }).count(), 0);
             await page.locator('#guided-composer').fill('Una bozza da conservare');
+            const trigger = page.getByRole('button', { name: l('options'), exact: true });
+            await trigger.click();
+            const menu = page.locator('.chat-options:visible');
+            await menu.waitFor();
+            assert.equal(await page.getByText('Tools', { exact: true }).count(), 0);
+            await page.getByRole('radio', { name: new RegExp(chatPreferenceLabel(options.locale, 'format')) }).first().waitFor();
+            const compactChoices = await page.getByRole('radio').count();
+            assert.equal(compactChoices >= 6, true, `format and length use compact icon choices: ${compactChoices}`);
+            await page.keyboard.press('Escape');
             if (options.width < 1024) {
                 assert.equal(await panel.count(), 0, 'resources do not occupy space below the chat');
-                await openVisual(page, visualLabel(options.locale, 'open'));
-                const dialog = page.getByRole('dialog', { name: visualLabel(options.locale, 'title'), exact: true });
-                await dialog.getByRole('button', { name: visualLabel(options.locale, 'close'), exact: true }).click();
-                await dialog.waitFor({ state: 'detached' });
-                const trigger = page.getByRole('button', { name: l('options'), exact: true });
-                assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
             } else {
-                assert.equal(await panel.getByRole('button', { name: visualLabel(options.locale, 'open'), exact: true }).count(), 0, 'visual tools are absent from the sidebar');
                 const original = await chat.boundingBox();
                 await panel.getByRole('button', { name: l('hide'), exact: true }).click();
                 assert.equal(await panel.isVisible(), false);
@@ -528,7 +211,9 @@ test('the conversation menu toggles the desktop sidebar and remembers its visibi
         const composer = page.locator('#guided-composer');
         const togglePanel = async () => {
             await trigger.click();
-            await page.locator('[popover]:popover-open').getByRole('button', { name: new RegExp(`^${l('panelTitle')}`) }).click();
+            const menu = page.locator('.chat-options:visible');
+            await menu.waitFor();
+            await menu.getByRole('button', { name: l('panel'), exact: true }).click();
         };
         await panel.waitFor();
         const original = await chat.boundingBox();
@@ -636,53 +321,6 @@ test('invalid saved panel preferences do not prevent reopening the chat', async 
 });
 
 for (const width of [320, 1440]) {
-    test(`chat tools do not expose personal-area tools at ${width}px`, async () => {
-        const { page, context, control } = await fixture(width);
-        const l = key => visualLabel('it', key);
-        try {
-            await openVisual(page, l('open'));
-            const dialog = page.getByRole('dialog', { name: l('title'), exact: true });
-            assert.equal(await dialog.getByRole('tab').count(), 4);
-            for (const hidden of ['notebook', 'booklet']) {
-                assert.equal(await dialog.getByRole('tab', { name: l(hidden), exact: true }).count(), 0);
-            }
-            assert.equal(await dialog.getByRole('button', { name: l('personalLinks'), exact: true }).count(), 0);
-            await dialog.getByRole('tab', { name: l('timeline'), exact: true }).click();
-            assert.equal(await dialog.getByRole('link').filter({ hasText: l('openPersonalTimeline') }).count(), 0);
-            assert.equal(control.requests.filter(r => r.path.endsWith('/personal')).length, 0);
-            assert.ok(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth));
-            assert.deepEqual(control.errors, []);
-        } finally { await context.close(); }
-    });
-}
-
-for (const width of [320, 1440]) {
-    test(`chat menu labels tools and paints its tooltip above the native popover at ${width}px`, async () => {
-        const { page, context } = await fixture(width);
-        try {
-            await page.getByRole('button', { name: chatLayoutLabel('it', 'options'), exact: true }).click();
-            const menu = page.locator('.chat-options:popover-open');
-            const tools = menu.getByRole('button', { name: visualLabel('it', 'open'), exact: true });
-            assert.equal((await tools.innerText()).trim(), 'Tools');
-            assert.ok((await menu.locator('button').first().getAttribute('class')).startsWith(await tools.getAttribute('class')), 'same row styling as adjacent menu entries');
-            await tools.focus();
-            const tooltip = page.locator('[data-radix-popper-content-wrapper]').filter({ has: page.getByRole('tooltip', { name: visualLabel('it', 'open'), exact: true }) });
-            await tooltip.waitFor({ state: 'visible' });
-            // Popper can become visible before its final screen position is applied.
-            await page.waitForFunction(el => {
-                if (!el) return false;
-                const r = el.getBoundingClientRect();
-                const front = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-                return el.contains(front);
-            }, await tooltip.elementHandle());
-            await page.screenshot({ path: `/tmp/chat-menu-tooltip-${width}.png` });
-            await tools.click();
-            await page.getByRole('dialog', { name: visualLabel('it', 'title'), exact: true }).waitFor();
-        } finally { await context.close(); }
-    });
-}
-
-for (const width of [320, 1440]) {
     test(`repeat step remains available without a detected error at ${width}px`, async () => {
         const { page, context, control } = await fixture(width);
         try {
@@ -724,13 +362,6 @@ test('capture current guide screenshots', { skip: process.env.UPDATE_GUIDE_SCREE
         await page.mouse.move(380, 20);
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
         await page.screenshot({ path: 'public/guide/controlli-chat.png' });
-        await page.setViewportSize({ width: 1440, height: 900 });
-        await page.getByRole('button', { name: visualLabel('it', 'open'), exact: true }).click();
-        await page.getByRole('dialog', { name: visualLabel('it', 'title'), exact: true }).waitFor();
-        // Angolo libero: sopra la X il puntatore lascerebbe il tooltip nello scatto.
-        await page.mouse.move(720, 60);
-        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-        await page.screenshot({ path: 'public/guide/strumenti-annotazioni.png' });
     } finally { await context.close(); }
 });
 
@@ -751,7 +382,7 @@ for (const options of [{ width: 320, locale: 'de' }, { width: 390, locale: 'it',
             }
             assert.doesNotMatch(await page.locator('main').innerText(), /guide\.(section|chat)\w*/);
             const figures = page.locator('figure');
-            assert.equal(await figures.count(), 7);
+            assert.equal(await figures.count(), 6);
             for (const figure of await figures.all()) {
                 const thumbnail = figure.locator('img');
                 await thumbnail.scrollIntoViewIfNeeded();
