@@ -709,6 +709,24 @@ const it: Dict = {
     'admin.config.label.text_obbstudio_conclusion': 'Messaggio Conclusione (Obiettivo di apprendimento)',
     'admin.config.label.text_obbdocenza_questions_intro': 'Messaggio Intro Fase Domande (Obiettivi per la mia classe)',
     'admin.config.label.text_obbdocenza_conclusion': 'Messaggio Conclusione (Obiettivi per la mia classe)',
+    'admin.tavoloImages.title': 'Immagini del tavolo',
+    'admin.tavoloImages.subtitle': 'Il set d\'immagini che chi lavora su un tavolo può scegliere per i suoi pezzi. Il caricamento è massivo: le immagini e il file CSV che dice per ognuna il nome e l\'utilizzo.',
+    'admin.tavoloImages.imagesLabel': 'Immagini (una o più)',
+    'admin.tavoloImages.csvLabel': 'File CSV con nome e utilizzo',
+    'admin.tavoloImages.csvHint': 'Una riga per immagine: colonne nome_file, nome, utilizzo. Il separatore può essere ; (Excel italiano) o ,. Un\'immagine senza riga nel CSV entra comunque, col nome del file e l\'utilizzo da completare qui sotto.',
+    'admin.tavoloImages.upload': 'Carica',
+    'admin.tavoloImages.loading': 'Apro il catalogo…',
+    'admin.tavoloImages.empty': 'Nessuna immagine nel catalogo.',
+    'admin.tavoloImages.created': 'Caricate {n} immagini.',
+    'admin.tavoloImages.unlisted': 'Immagini senza riga nel CSV — completa nome e utilizzo: {names}',
+    'admin.tavoloImages.error.load': 'Non è stato possibile aprire il catalogo. Riprova.',
+    'admin.tavoloImages.error.upload': 'Caricamento non riuscito. Controlla i file e riprova.',
+    'admin.tavoloImages.field.name': 'Nome',
+    'admin.tavoloImages.field.usage': 'Utilizzo',
+    'admin.tavoloImages.field.file': 'File',
+    'admin.tavoloImages.save': 'Salva',
+    'admin.tavoloImages.saved': 'Salvata',
+    'admin.tavoloImages.delete': 'Elimina',
 };
 
 const en: Dict = {
@@ -1408,6 +1426,24 @@ const en: Dict = {
     'admin.config.label.text_obbstudio_conclusion': 'Conclusion message (Learning objective)',
     'admin.config.label.text_obbdocenza_questions_intro': 'Questions intro message (Class objectives)',
     'admin.config.label.text_obbdocenza_conclusion': 'Conclusion message (Class objectives)',
+    'admin.tavoloImages.title': 'Table images',
+    'admin.tavoloImages.subtitle': 'The image set people can choose for their pieces on a table. Uploads are bulk: the images plus the CSV file that gives each one a name and a usage note.',
+    'admin.tavoloImages.imagesLabel': 'Images (one or more)',
+    'admin.tavoloImages.csvLabel': 'CSV file with name and usage',
+    'admin.tavoloImages.csvHint': 'One row per image: columns nome_file, nome, utilizzo. The separator may be ; (Italian Excel) or ,. An image with no CSV row is still accepted, taking the file name as its name and an empty usage to complete below.',
+    'admin.tavoloImages.upload': 'Upload',
+    'admin.tavoloImages.loading': 'Opening the catalog…',
+    'admin.tavoloImages.empty': 'No images in the catalog.',
+    'admin.tavoloImages.created': 'Uploaded {n} images.',
+    'admin.tavoloImages.unlisted': 'Images with no CSV row — complete name and usage: {names}',
+    'admin.tavoloImages.error.load': 'Could not open the catalog. Retry.',
+    'admin.tavoloImages.error.upload': 'Upload failed. Check the files and retry.',
+    'admin.tavoloImages.field.name': 'Name',
+    'admin.tavoloImages.field.usage': 'Usage',
+    'admin.tavoloImages.field.file': 'File',
+    'admin.tavoloImages.save': 'Save',
+    'admin.tavoloImages.saved': 'Saved',
+    'admin.tavoloImages.delete': 'Delete',
 };
 
 const es: Dict = {
@@ -1974,6 +2010,24 @@ const es: Dict = {
     'admin.config.label.text_obbstudio_conclusion': 'Mensaje de conclusión (Mi objetivo de aprendizaje)',
     'admin.config.label.text_obbdocenza_questions_intro': 'Mensaje intro fase preguntas (Objetivos para mi clase)',
     'admin.config.label.text_obbdocenza_conclusion': 'Mensaje de conclusión (Objetivos para mi clase)',
+    'admin.tavoloImages.title': 'Imágenes del tablero',
+    'admin.tavoloImages.subtitle': 'El conjunto de imágenes que quien trabaja en un tablero puede elegir para sus piezas. La carga es masiva: las imágenes y el archivo CSV que indica para cada una el nombre y el uso.',
+    'admin.tavoloImages.imagesLabel': 'Imágenes (una o más)',
+    'admin.tavoloImages.csvLabel': 'Archivo CSV con nombre y uso',
+    'admin.tavoloImages.csvHint': 'Una fila por imagen: columnas nombre_archivo, nombre, uso. El separador puede ser ; (Excel en italiano) o ,. Una imagen sin fila en el CSV entra igual, con el nombre del archivo y el uso por completar abajo.',
+    'admin.tavoloImages.upload': 'Cargar',
+    'admin.tavoloImages.loading': 'Abriendo el catálogo…',
+    'admin.tavoloImages.empty': 'No hay imágenes en el catálogo.',
+    'admin.tavoloImages.created': 'Se cargaron {n} imágenes.',
+    'admin.tavoloImages.unlisted': 'Imágenes sin fila en el CSV — completa nombre y uso: {names}',
+    'admin.tavoloImages.error.load': 'No se pudo abrir el catálogo. Reintenta.',
+    'admin.tavoloImages.error.upload': 'La carga falló. Revisa los archivos y reintenta.',
+    'admin.tavoloImages.field.name': 'Nombre',
+    'admin.tavoloImages.field.usage': 'Uso',
+    'admin.tavoloImages.field.file': 'Archivo',
+    'admin.tavoloImages.save': 'Guardar',
+    'admin.tavoloImages.saved': 'Guardada',
+    'admin.tavoloImages.delete': 'Eliminar',
 };
 
 const fr: Dict = {
@@ -2540,6 +2594,24 @@ const fr: Dict = {
     'admin.config.label.text_obbstudio_conclusion': 'Message de conclusion (Mon objectif d’apprentissage)',
     'admin.config.label.text_obbdocenza_questions_intro': 'Message d’intro phase questions (Objectifs pour ma classe)',
     'admin.config.label.text_obbdocenza_conclusion': 'Message de conclusion (Objectifs pour ma classe)',
+    'admin.tavoloImages.title': 'Images du tableau',
+    'admin.tavoloImages.subtitle': 'Le jeu d’images que celui qui travaille sur un tableau peut choisir pour ses pièces. Le chargement est groupé : les images et le fichier CSV qui donne à chacune un nom et un usage.',
+    'admin.tavoloImages.imagesLabel': 'Images (une ou plusieurs)',
+    'admin.tavoloImages.csvLabel': 'Fichier CSV avec nom et usage',
+    'admin.tavoloImages.csvHint': 'Une ligne par image : colonnes nom_fichier, nom, utilisation. Le séparateur peut être ; (Excel italien) ou ,. Une image sans ligne dans le CSV entre quand même, avec le nom du fichier et un usage à compléter ci-dessous.',
+    'admin.tavoloImages.upload': 'Charger',
+    'admin.tavoloImages.loading': 'Ouverture du catalogue…',
+    'admin.tavoloImages.empty': 'Aucune image dans le catalogue.',
+    'admin.tavoloImages.created': '{n} images chargées.',
+    'admin.tavoloImages.unlisted': 'Images sans ligne dans le CSV — complétez nom et usage : {names}',
+    'admin.tavoloImages.error.load': 'Impossible d’ouvrir le catalogue. Réessayez.',
+    'admin.tavoloImages.error.upload': 'Chargement échoué. Vérifiez les fichiers et réessayez.',
+    'admin.tavoloImages.field.name': 'Nom',
+    'admin.tavoloImages.field.usage': 'Usage',
+    'admin.tavoloImages.field.file': 'Fichier',
+    'admin.tavoloImages.save': 'Enregistrer',
+    'admin.tavoloImages.saved': 'Enregistrée',
+    'admin.tavoloImages.delete': 'Supprimer',
 };
 
 const de: Dict = {
@@ -3106,6 +3178,24 @@ const de: Dict = {
     'admin.config.label.text_obbstudio_conclusion': 'Abschlussnachricht (Mein Lernziel)',
     'admin.config.label.text_obbdocenza_questions_intro': 'Einführungsnachricht Fragenphase (Ziele für meine Klasse)',
     'admin.config.label.text_obbdocenza_conclusion': 'Abschlussnachricht (Ziele für meine Klasse)',
+    'admin.tavoloImages.title': 'Tabellenbilder',
+    'admin.tavoloImages.subtitle': 'Der Bildersatz, den alle wählen können, die am Tisch ihre Teile gestalten. Das Hochladen geschieht als Satz: die Bilder und die CSV-Datei, die für jedes Bild Name und Verwendung nennt.',
+    'admin.tavoloImages.imagesLabel': 'Bilder (eines oder mehrere)',
+    'admin.tavoloImages.csvLabel': 'CSV-Datei mit Name und Verwendung',
+    'admin.tavoloImages.csvHint': 'Eine Zeile pro Bild: Spalten dateiname, name, verwendung. Trennzeichen ; (italienisches Excel) oder ,. Ein Bild ohne CSV-Zeile kommt trotzdem hinein, mit dem Dateinamen als Name und einer unten zu vervollständigenden Verwendung.',
+    'admin.tavoloImages.upload': 'Hochladen',
+    'admin.tavoloImages.loading': 'Katalog wird geöffnet…',
+    'admin.tavoloImages.empty': 'Kein Bild im Katalog.',
+    'admin.tavoloImages.created': '{n} Bilder hochgeladen.',
+    'admin.tavoloImages.unlisted': 'Bilder ohne CSV-Zeile — Name und Verwendung vervollständigen: {names}',
+    'admin.tavoloImages.error.load': 'Katalog konnte nicht geöffnet werden. Bitte erneut versuchen.',
+    'admin.tavoloImages.error.upload': 'Hochladen fehlgeschlagen. Dateien prüfen und erneut versuchen.',
+    'admin.tavoloImages.field.name': 'Name',
+    'admin.tavoloImages.field.usage': 'Verwendung',
+    'admin.tavoloImages.field.file': 'Datei',
+    'admin.tavoloImages.save': 'Speichern',
+    'admin.tavoloImages.saved': 'Gespeichert',
+    'admin.tavoloImages.delete': 'Löschen',
 };
 
 const sv: Dict = {
@@ -3672,6 +3762,24 @@ const sv: Dict = {
     'admin.config.label.text_obbstudio_conclusion': 'Avslutande meddelande (Mitt inlärningsmål)',
     'admin.config.label.text_obbdocenza_questions_intro': 'Intro-meddelande frågefas (Mål för min klass)',
     'admin.config.label.text_obbdocenza_conclusion': 'Avslutande meddelande (Mål för min klass)',
+    'admin.tavoloImages.title': 'Tavlabilder',
+    'admin.tavoloImages.subtitle': 'Bilduppsättningen som den som arbetar vid ett tavla kan välja för sina bitar. Uppladdningen sker i bulk: bilderna och CSV-filen som anger namn och användning för var och en.',
+    'admin.tavoloImages.imagesLabel': 'Bilder (en eller flera)',
+    'admin.tavoloImages.csvLabel': 'CSV-fil med namn och användning',
+    'admin.tavoloImages.csvHint': 'En rad per bild: kolumner filnamn, namn, användning. Avgränsaren kan vara ; (italiensk Excel) eller ,. En bild utan rad i CSV-filen tas ändå emot, med filnamnet som namn och en användning att komplettera nedan.',
+    'admin.tavoloImages.upload': 'Ladda upp',
+    'admin.tavoloImages.loading': 'Öppnar katalogen…',
+    'admin.tavoloImages.empty': 'Ingen bild i katalogen.',
+    'admin.tavoloImages.created': 'Laddade upp {n} bilder.',
+    'admin.tavoloImages.unlisted': 'Bilder utan rad i CSV — komplettera namn och användning: {names}',
+    'admin.tavoloImages.error.load': 'Det gick inte att öppna katalogen. Försök igen.',
+    'admin.tavoloImages.error.upload': 'Uppladdningen misslyckades. Kontrollera filerna och försök igen.',
+    'admin.tavoloImages.field.name': 'Namn',
+    'admin.tavoloImages.field.usage': 'Användning',
+    'admin.tavoloImages.field.file': 'Fil',
+    'admin.tavoloImages.save': 'Spara',
+    'admin.tavoloImages.saved': 'Sparad',
+    'admin.tavoloImages.delete': 'Ta bort',
 };
 
 const trainingIt: Dict = {
@@ -5690,6 +5798,7 @@ const assistantAdminSv: Dict = {
 
 const ragDocsIt: Dict = {
     'admin.tab.ragDocs': 'Documenti RAG',
+    'admin.tab.tavoloImages': 'Immagini del tavolo',
     'admin.rag.title': 'Basi di conoscenza RAG',
     'admin.rag.subtitle': 'Gestisci i documenti (.md/.pdf) delle collezioni usate dall\'assistente. Puoi creare nuove collezioni, caricare o eliminare documenti e reindicizzare.',
     'admin.rag.newCollection': 'Nuova collezione',
@@ -5741,6 +5850,7 @@ const ragDocsIt: Dict = {
 
 const ragDocsEn: Dict = {
     'admin.tab.ragDocs': 'RAG documents',
+    'admin.tab.tavoloImages': 'Table images',
     'admin.rag.title': 'RAG knowledge bases',
     'admin.rag.subtitle': 'Manage the documents (.md/.pdf) of the collections used by the assistant. You can create new collections, upload or delete documents and reindex.',
     'admin.rag.newCollection': 'New collection',
@@ -5792,6 +5902,7 @@ const ragDocsEn: Dict = {
 
 const ragDocsEs: Dict = {
     'admin.tab.ragDocs': 'Documentos RAG',
+    'admin.tab.tavoloImages': 'Imágenes del tablero',
     'admin.rag.title': 'Bases de conocimiento RAG',
     'admin.rag.subtitle': 'Gestiona los documentos (.md/.pdf) de las colecciones que usa el asistente. Puedes crear nuevas colecciones, subir o eliminar documentos y reindexar.',
     'admin.rag.newCollection': 'Nueva colección',
@@ -5843,6 +5954,7 @@ const ragDocsEs: Dict = {
 
 const ragDocsFr: Dict = {
     'admin.tab.ragDocs': 'Documents RAG',
+    'admin.tab.tavoloImages': 'Images du tableau',
     'admin.rag.title': 'Bases de connaissances RAG',
     'admin.rag.subtitle': 'Gère les documents (.md/.pdf) des collections utilisées par l’assistant. Tu peux créer de nouvelles collections, téléverser ou supprimer des documents et réindexer.',
     'admin.rag.newCollection': 'Nouvelle collection',
@@ -5894,6 +6006,7 @@ const ragDocsFr: Dict = {
 
 const ragDocsDe: Dict = {
     'admin.tab.ragDocs': 'RAG-Dokumente',
+    'admin.tab.tavoloImages': 'Tabellenbilder',
     'admin.rag.title': 'RAG-Wissensbasen',
     'admin.rag.subtitle': 'Verwalte die Dokumente (.md/.pdf) der Sammlungen, die der Assistent nutzt. Du kannst neue Sammlungen anlegen, Dokumente hochladen oder löschen und neu indexieren.',
     'admin.rag.newCollection': 'Neue Sammlung',
@@ -5945,6 +6058,7 @@ const ragDocsDe: Dict = {
 
 const ragDocsSv: Dict = {
     'admin.tab.ragDocs': 'RAG-dokument',
+    'admin.tab.tavoloImages': 'Tavlabilder',
     'admin.rag.title': 'RAG-kunskapsbaser',
     'admin.rag.subtitle': 'Hantera dokumenten (.md/.pdf) i samlingarna som assistenten använder. Du kan skapa nya samlingar, ladda upp eller ta bort dokument och indexera om.',
     'admin.rag.newCollection': 'Ny samling',

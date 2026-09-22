@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, Compass, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, Wand2, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot, Download, Mic } from 'lucide-react';
+import { BookOpen, Compass, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, Wand2, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot, Download, Mic, Image as ImageIcon } from 'lucide-react';
 import { ConfigForm } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
@@ -30,6 +30,7 @@ import { AssistantQuestionsPanel } from '@/components/admin/AssistantQuestionsPa
 import { AssistantAdminPanel } from '@/components/admin/AssistantAdminPanel';
 import { RolePreviewPanel } from '@/components/admin/RolePreviewPanel';
 import { RagDocsPanel } from '@/components/admin/RagDocsPanel';
+import { TavoloImagesPanel } from '@/components/admin/TavoloImagesPanel';
 import { GuidedStepQuestionsPanel } from '@/components/admin/GuidedStepQuestionsPanel';
 import { PromptExportPanel } from '@/components/admin/PromptExportPanel';
 import { UsersSummaryPanel } from '@/components/admin/UsersSummaryPanel';
@@ -41,7 +42,7 @@ import { canUseResearchConsole } from '@/lib/roles';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'promptExperiments' | 'counselors' | 'approvedStrategies' | 'toolBriefs' | 'threadGuard' | 'certifiedStrategies' | 'certifiedReadings' | 'orientationReferrals' | 'skills' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'audio' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
+type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'promptExperiments' | 'counselors' | 'approvedStrategies' | 'toolBriefs' | 'threadGuard' | 'certifiedStrategies' | 'certifiedReadings' | 'orientationReferrals' | 'skills' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'tavoloImages' | 'audio' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
@@ -71,6 +72,7 @@ export default function AdminPage() {
                 { id: 'guidedStepQuestions', label: t('admin.tab.guidedStepQuestions'), icon: MessageCircleQuestion },
                 { id: 'promptExport', label: t('admin.tab.promptExport'), icon: Download },
                 { id: 'ragDocs', label: t('admin.tab.ragDocs'), icon: FolderOpen },
+                { id: 'tavoloImages', label: t('admin.tab.tavoloImages'), icon: ImageIcon },
             ],
         },
         {
@@ -271,6 +273,7 @@ export default function AdminPage() {
                         {activeTab === 'guidedStepQuestions' && <GuidedStepQuestionsPanel />}
                         {activeTab === 'promptExport' && <PromptExportPanel />}
                         {activeTab === 'ragDocs' && <RagDocsPanel />}
+                        {activeTab === 'tavoloImages' && <TavoloImagesPanel />}
                         {activeTab === 'audio' && <AudioModelsPanel />}
                         {activeTab === 'surveys' && <SurveyViewer />}
                         {activeTab === 'results' && <QuestionnaireResultsViewer />}

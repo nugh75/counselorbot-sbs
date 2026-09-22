@@ -12,6 +12,8 @@ import { chromium } from 'playwright';
 
 const origin = new URL(process.env.ARTIFACTS_BASE_URL || 'http://127.0.0.1:3000').origin;
 const ID = 'prova-tavolo';
+// Un PNG di un pixel: basta al selettore d'immagini per mostrare la miniatura.
+const PNG_PIXEL = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
 const graph = {
     title: 'Perche rimando',
@@ -148,6 +150,15 @@ async function fixture({ composeOpen = true, width = 1440, dark = false } = {}) 
         contentType: 'image/svg+xml',
         body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><circle cx="12" cy="12" r="9" fill="#ff00ff"/></svg>',
     }));
+    // Il catalogo d'immagini caricato dall'amministrazione: la lista e il file
+    // sono due rotte a parte, registrate dopo la generica cosi' vincono su di lei.
+    await page.route('**/api/tavolo-images', (route) => route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ images: [{ id: 'studio', name: 'Studio', usage: 'Quando si parla di abitudini di studio' }] }),
+    }));
+    await page.route('**/api/tavolo-images/studio/file', (route) => route.fulfill({
+        contentType: 'image/png', body: Buffer.from(PNG_PIXEL, 'base64'),
+    }));
     await page.goto(`${origin}/tavolo/${ID}`, { waitUntil: 'networkidle' });
     if (width >= 1024) {
         await page.waitForSelector('.react-flow__node', { timeout: 20000 });
@@ -170,7 +181,8 @@ test('i pezzi si vedono, non solo esistono nel DOM', async () => {
 
 test('le quattro forme restano quattro forme distinte', async () => {
     const { page, context } = await fixture();
-    const shapes = await page.locator('.react-flow__node > div').evaluateAll((elements) =>
+    // Il guscio esterno porta il bidone; la forma sta nel figlio dentro.
+    const shapes = await page.locator('.react-flow__node > div > div').evaluateAll((elements) =>
         elements.map((element) => {
             const style = getComputedStyle(element);
             return `${style.borderRadius}|${style.clipPath}`;
@@ -283,7 +295,7 @@ test('la parola sull arco si puo scrivere a mano', async () => {
 
 test('il punto e uno solo, e si vede', async () => {
     const { page, context } = await fixture();
-    const fill = (id) => page.locator(`.react-flow__node[data-id="${id}"] > div`)
+    const fill = (id) => page.locator(`.react-flow__node[data-id="${id}"] > div > div`)
         .evaluate((element) => getComputedStyle(element).backgroundColor);
     const point = async (id) => {
         await page.locator(`.react-flow__node[data-id="${id}"]`).click();
@@ -320,7 +332,7 @@ test('un legame puo valere nei due sensi', async () => {
 
 test('il colore raggruppa i pezzi senza toccarne lo stato', async () => {
     const { page, context } = await fixture();
-    const fill = (id) => page.locator(`.react-flow__node[data-id="${id}"] > div`)
+    const fill = (id) => page.locator(`.react-flow__node[data-id="${id}"] > div > div`)
         .evaluate((element) => getComputedStyle(element).backgroundColor);
     const plain = await fill('a');
 
@@ -380,7 +392,7 @@ test('the prompt box offers the genres and the example prompts', async () => {
 
 test('a composed schema arrives dashed and nothing is live before it is kept', async () => {
     const { page, context, calls } = await fixture();
-    const before = await page.locator('.react-flow__node > div.border-dashed').count();
+    const before = await page.locator('.react-flow__node > div > div.border-dashed').count();
     await page.getByLabel('Scrivi uno schema').fill('i fattori del QSA');
     const composed = page.waitForResponse((response) => response.url().includes('/compose'));
     await page.getByRole('button', { name: 'Componi' }).click();
@@ -394,10 +406,10 @@ test('a composed schema arrives dashed and nothing is live before it is kept', a
     // Non basta che la richiesta sia partita bene: il pezzo che la risposta
     // porta deve arrivare sulla tela, tratteggiato come ogni proposta.
     await page.waitForFunction(
-        (previous) => document.querySelectorAll('.react-flow__node > div.border-dashed').length > previous,
+        (previous) => document.querySelectorAll('.react-flow__node > div > div.border-dashed').length > previous,
         before,
     );
-    const after = await page.locator('.react-flow__node > div.border-dashed').count();
+    const after = await page.locator('.react-flow__node > div > div.border-dashed').count();
     assert.ok(after > before, `i pezzi tratteggiati crescono dopo compose (${before} -> ${after})`);
     await context.close();
 });
@@ -621,4 +633,59 @@ test('guide opened from a table returns to that table', async () => {
         await page.locator('.react-flow__node').first().waitFor();
         assert.equal(new URL(page.url()).pathname, `/tavolo/${ID}`);
     } finally { await context.close(); }
+});
+
+// --- scrivere dentro il pezzo, il bidone, le immagini del catalogo ---
+
+test('un pezzo si scrive dentro se stesso con un doppio clic', async () => {
+    const { page, context, calls } = await fixture({ composeOpen: false });
+    const piece = page.locator('.react-flow__node[data-id="a"]');
+    await piece.dblclick();
+    const inside = piece.getByRole('textbox');
+    await inside.waitFor();
+    await inside.fill('Compito pesante');
+    await inside.press('Enter');
+    const written = responseFor(page, 'PUT', `/${ID}`);
+    await page.getByRole('button', { name: 'Salva modifiche', exact: true }).click();
+    await written;
+    const write = calls.filter(call => call.method === 'PUT').at(-1).body;
+    assert.equal(write.graph.nodes[0].label, 'Compito pesante');
+    await context.close();
+});
+
+test('il bidone sul pezzo lo toglie con tutti i fili collegati', async () => {
+    const { page, context, calls } = await fixture({ composeOpen: false });
+    await page.locator('.react-flow__node[data-id="a"]').click();
+    const bin = page.locator('.react-flow__node[data-id="a"]')
+        .getByRole('button', { name: 'Togli dal tavolo', exact: true });
+    await bin.waitFor();
+    await bin.click();
+    // Togliere non lascia selezione: vale l'autosalvataggio, non il pannello.
+    const written = responseFor(page, 'PUT', `/${ID}`);
+    await written;
+    const graph = calls.filter(call => call.method === 'PUT').at(-1).body.graph;
+    assert.ok(!graph.nodes.some(node => node.id === 'a'), 'il pezzo se ne va');
+    assert.ok(!graph.edges.some(edge => edge.from === 'a' || edge.to === 'a'), 'i fili collegati se ne vanno con lui');
+    assert.ok(graph.edges.some(edge => edge.from === 'b' && edge.to === 'c'), 'gli altri fili restano');
+    assert.ok(graph.nodes.some(node => node.id === 'b'), 'gli altri pezzi restano');
+    await context.close();
+});
+
+test('le immagini del catalogo entrano nel pezzo e tolgono l\'icona', async () => {
+    const { page, context, calls } = await fixture({ composeOpen: false });
+    // Il pezzo b ha un'icona: scegliere un'immagine la sostituisce, cosi' il
+    // pezzo ha un solo volto invece di due.
+    await page.locator('.react-flow__node[data-id="b"]').click();
+    await page.getByRole('button', { name: 'Studio', exact: true }).click();
+    const written = responseFor(page, 'PUT', `/${ID}`);
+    await page.getByRole('button', { name: 'Salva modifiche', exact: true }).click();
+    await written;
+    const node = calls.filter(call => call.method === 'PUT').at(-1).body.graph.nodes
+        .find(node => node.id === 'b');
+    assert.equal(node.image, 'studio');
+    assert.equal(node.icon, null, "l'icona lascia il posto all'immagine");
+    const shown = page.locator('.react-flow__node[data-id="b"] img').first();
+    await shown.waitFor();
+    assert.ok((await shown.getAttribute('src')).includes('/tavolo-images/studio/file'), "l'immagine si vede sul pezzo");
+    await context.close();
 });

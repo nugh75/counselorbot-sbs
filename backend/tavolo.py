@@ -26,6 +26,10 @@ from .diagram_render import DEFAULT_FORM, FORM_FROM_ROLE, NODE_FORMS
 
 FEATURE_KEY = "feature_tavolo"
 
+# Il tavolo ha una forma in piu' rispetto ai diagrammi: la card d'immagine,
+# dove il file del catalogo e' quasi tutto il pezzo e il nome sta sotto.
+TAVOLO_FORMS = frozenset(NODE_FORMS) | {"image"}
+
 # Un tavolo non e' un'illustrazione: cresce per un'ora di lavoro, non per un
 # messaggio. I tetti sono quelli oltre i quali smette di essere leggibile.
 MAX_NODES = 40
@@ -218,6 +222,11 @@ class TavoloNode(BaseModel):
     label: str = Field(min_length=1, max_length=MAX_LABEL)
     form: str = DEFAULT_FORM
     icon: str | None = Field(default=None, max_length=24)
+    # Un'immagine del catalogo caricato dall'amministrazione. Non sostituisce
+    # il nome: lo affianca, o la diventa quasi tutta quando il pezzo e' una
+    # card d'immagine. Un id fuori catalogo si perde alla scrittura, non qui:
+    # il catalogo vive nel DB e il validatore non lo vede.
+    image: str | None = Field(default=None, max_length=64)
     # Il raggruppamento della persona: nessun significato condiviso, solo il
     # suo. Un colore inventato si ignora, come una forma inventata.
     color: str | None = None
@@ -236,7 +245,7 @@ class TavoloNode(BaseModel):
     @field_validator("form", mode="before")
     @classmethod
     def _known_form(cls, value):
-        return value if value in NODE_FORMS else DEFAULT_FORM
+        return value if value in TAVOLO_FORMS else DEFAULT_FORM
 
     @field_validator("icon", mode="before")
     @classmethod
