@@ -6,13 +6,16 @@ let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser.close(); });
 const ready = () => ({ counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true });
-async function fixture({ prefs = ready(), width = 1440, required = false, incompatible = false, noHistory = false } = {}) {
+async function fixture({ prefs = ready(), width = 1440, required = false, incompatible = false, noHistory = false, locale = 'it', dark = false } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
     const page = await context.newPage();
     page.setDefaultTimeout(15000);
     const errors = [], writes = [];
     page.on('pageerror', e => errors.push(e.message));
-    await page.addInitScript(() => localStorage.setItem('cb_lang', 'it'));
+    await page.addInitScript(({ locale, dark }) => {
+        localStorage.setItem('cb_lang', locale);
+        localStorage.setItem('cb_theme', dark ? 'dark' : 'light');
+    }, { locale, dark });
     const revision = { id: 1, data: { goal: 'Organizzare lo studio' }, created_at: '2026-09-08T10:00:00Z', source: 'intake' };
     const session = { session_id: 'account-fixture', status: 'completed', counselor_id: 2, language: 'it', messages: [{ role: 'assistant', content: 'Possiamo esplorare il QSA.' }], recommendations: [{ id: 'QSA', reason: 'Riflettere sullo studio' }] };
     await page.route('**/api/**', route => {
@@ -45,7 +48,7 @@ for (const width of [390, 1440]) {
             await page.getByRole('button', { name: /Counselor 1/ }).click();
             assert.equal(writes.length, 0, 'selection is a draft until confirmation');
             await page.getByRole('button', { name: 'Continua', exact: true }).click();
-            await page.getByLabel('Il tuo obiettivo in questo momento').fill('Organizzare lo studio');
+            await page.getByLabel('Parlaci del luogo dove studi / lavori').fill('Studio all’università');
             await page.getByRole('button', { name: 'Salva taccuino', exact: true }).click();
             await page.getByRole('heading', { name: 'Da dove vuoi cominciare?', exact: true }).waitFor();
             assert.deepEqual(prefs, ready());
@@ -212,20 +215,36 @@ test('counselor selection preserves manual score entry before a session exists',
 });
 
 for (const width of [390, 1440]) {
-    test(`new user reads the introduction before the final Start button at ${width}px`, async () => {
+    test(`compact illustrated introduction and optional details at ${width}px`, async () => {
         const { page, context, errors } = await fixture({ width, noHistory: true, prefs: { counselor_id: null, counselor_ready: false, notebook_ready: false, setup_completed: false } });
         try {
             await page.goto(`${origin}/`);
             const start = page.getByRole('button', { name: 'Inizia', exact: true });
             await start.waitFor();
             assert.equal(await start.count(), 1);
-            const pace = page.getByText(/^Procedi con uno strumento alla volta:/);
-            await pace.waitFor();
-            assert.ok(await start.evaluate(el => el.getBoundingClientRect().top >= innerHeight), 'Start is below the initial viewport');
-            assert.ok(await start.evaluate(el => Boolean(document.querySelector('main footer').compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)), 'Start follows every instruction and the contact footer');
+            const intro = page.getByTestId('intro-screen');
+            assert.deepEqual(await intro.locator('h2').allTextContents(), ['Analisi dei risultati dei questionari', 'Percorsi guidati', 'Allenamento']);
+            const images = intro.locator('img');
+            assert.equal(await images.count(), 3);
+            await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
+            assert.ok(await start.evaluate(el => el.getBoundingClientRect().bottom <= innerHeight), 'Start is available in the initial viewport');
+            assert.equal(await intro.locator('details[open]').count(), 0);
+            assert.equal(await intro.locator('details').count(), 4);
+            const support = intro.locator('details[data-section=personal]');
+            await support.locator('summary').focus();
+            await page.keyboard.press('Enter');
+            assert.equal(await support.getAttribute('open'), '');
+            assert.equal(await support.getByText(/Nell’Area personale/).isVisible(), true);
+            assert.match(await support.innerText(), /Portfolio/);
+            assert.match(await support.innerText(), /Tavolo/);
+            await page.keyboard.press('Enter');
+            const questionnaires = intro.locator('details[data-section=questionnaires]');
+            await questionnaires.locator('summary').click();
+            assert.equal(await questionnaires.getByRole('link', { name: 'competenzestrategiche.it' }).getAttribute('href'), 'https://www.competenzestrategiche.it/');
+            await questionnaires.locator('summary').click();
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-            await start.scrollIntoViewIfNeeded();
-            await page.screenshot({ path: `/tmp/intro-pace-${width}.png` });
+            await page.evaluate(() => window.scrollTo(0, 0));
+            await page.screenshot({ path: `/tmp/intro-illustrated-${width}.png`, fullPage: true });
             await start.click();
             await page.getByRole('heading', { name: 'Prepara il tuo spazio', exact: true }).waitFor();
             assert.deepEqual(errors, []);
@@ -258,5 +277,50 @@ test('instrument details return to the actual catalog rather than the home scree
         await page.getByRole('button', { name: 'Indietro', exact: true }).click();
         await page.getByRole('heading', { name: 'QSA', exact: true }).waitFor();
         assert.equal(await page.getByRole('button', { name: 'Continua', exact: true }).count(), 1);
+    } finally { await context.close(); }
+});
+
+for (const [locale, width, dark, title] of [['de', 320, true, 'Analyse der Fragebogenergebnisse'], ['sv', 768, false, 'Analys av frågeformulärens resultat']]) {
+    test(`illustrated introduction remains readable in ${locale} at ${width}px, dark=${dark}`, async () => {
+        const { page, context, errors } = await fixture({ width, locale, dark, noHistory: true, prefs: { counselor_id: null, counselor_ready: false, notebook_ready: false, setup_completed: false } });
+        try {
+            await page.goto(`${origin}/`);
+            const intro = page.getByTestId('intro-screen');
+            await intro.getByRole('heading', { name: title, exact: true }).waitFor();
+            assert.equal(await intro.locator('h2').count(), 3);
+            assert.equal(await intro.locator('details[open]').count(), 0);
+            assert.equal((await intro.innerText()).includes('app.intro.'), false);
+            assert.ok(await intro.evaluate(el => [...el.querySelectorAll('article')].every(card => card.getBoundingClientRect().right <= el.getBoundingClientRect().right + 1)), 'long translated titles stay within the page');
+            await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+            await page.waitForFunction(() => {
+                let element = document.querySelector('[data-testid="intro-screen"]');
+                while (element) {
+                    if (Number(getComputedStyle(element).opacity) < 0.99) return false;
+                    element = element.parentElement;
+                }
+                return true;
+            });
+            await page.screenshot({ path: `/tmp/intro-illustrated-${locale}-${width}.png`, fullPage: true });
+            assert.deepEqual(errors, []);
+        } finally { await context.close(); }
+    });
+}
+
+
+test('data and privacy explains conditional protection and returns to the introduction for returning users', async () => {
+    const { page, context, errors, writes } = await fixture();
+    try {
+        await page.goto(`${origin}/?view=intro`);
+        await page.getByTestId('intro-screen').waitFor();
+        await page.getByRole('link', { name: 'Dati e riservatezza', exact: true }).click();
+        await page.getByRole('heading', { name: 'Dati e riservatezza', exact: true }).waitFor();
+        assert.match(await page.locator('main').innerText(), /non garantisce l’anonimato/);
+        assert.match(await page.locator('main').innerText(), /revocabili/);
+        await page.getByRole('link', { name: 'Torna alla presentazione', exact: true }).click();
+        await page.getByTestId('intro-screen').waitFor();
+        assert.equal(await page.getByRole('heading', { name: 'Analisi dei risultati dei questionari', exact: true }).isVisible(), true);
+        assert.deepEqual(writes, []);
+        assert.deepEqual(errors, []);
     } finally { await context.close(); }
 });

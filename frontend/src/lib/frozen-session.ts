@@ -2,6 +2,8 @@
 // lo riprende da qualsiasi dispositivo (lo stato vive sul server, non in
 // localStorage come il punto di ripresa di `lib/resume.ts`).
 
+import type { ResponseFormat, GuidedPath } from './chat-preferences';
+
 import { apiFetch } from '@/lib/auth';
 
 export interface FrozenSessionMessage {
@@ -28,6 +30,9 @@ export interface FrozenSessionDetail extends FrozenSessionSummary {
     scores: Record<string, number>;
     counselor_id?: number | null;
     locale?: string | null;
+    response_format?: ResponseFormat;
+    guided_path?: GuidedPath;
+    conversation_id?: string | null;
     response_length?: 'short' | 'medium' | 'long' | null;
     reasoning_effort?: 'off' | 'standard' | 'deep' | null;
     pdf_token?: string | null;
@@ -42,6 +47,9 @@ export interface FrozenSessionSnapshot {
     counselor_id: number | null;
     experience: 'standard' | 'opencode';
     locale: string;
+    response_format?: ResponseFormat;
+    guided_path?: GuidedPath;
+    conversation_id?: string;
     response_length: 'short' | 'medium' | 'long';
     // Solo la chat guidata: la sandbox OpenCode parla con il proprio agente e
     // non ha una leva sul ragionamento.
@@ -94,7 +102,8 @@ export async function listFrozenSessions(): Promise<FrozenSessionSummary[]> {
 
 export async function getFrozenSession(sessionId: string): Promise<FrozenSessionDetail | null> {
     const res = await apiFetch(`/api/session/frozen/${encodeURIComponent(sessionId)}`);
-    if (!res.ok) return null;
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`Frozen session unavailable (${res.status})`);
     return (await res.json()) as FrozenSessionDetail;
 }
 

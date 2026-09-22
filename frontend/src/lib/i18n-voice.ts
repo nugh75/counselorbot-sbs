@@ -2,6 +2,7 @@ import type { Lang } from './i18n';
 
 const it: Record<string, string> = {
     "audio.language": "Lingua del parlato",
+    "audio.languageShort": "Lingua",
     "audio.languageAuto": "Riconoscimento automatico",
     "audio.languageHelp": "Vale per microfono e file audio. Con il riconoscimento automatico non serve cambiarla quando parli in un'altra lingua. La scelta resta in questo browser.",
     "admin.tab.audio": "Trascrizione audio",
@@ -30,6 +31,7 @@ const it: Record<string, string> = {
     "audio.waiting": "Il counselor sta rispondendo…",
     "audio.error.reply": "Non è arrivata una risposta completa. Controlla la chat prima di riprovare.",
     "audio.autoSend": "Invia subito dopo la trascrizione",
+    "audio.autoSendShort": "Invio automatico",
     "audio.autoSendHelp": "Vale per microfono e file audio. Include il testo già presente nella casella. La scelta viene ricordata in questo browser.",
     "audio.helpAuto": "Registra o carica un audio: massimo 3 minuti e 10 MB. Viene trascritto sul server di CounselorBot e inviato subito insieme alla bozza.",
     "audio.add": "Inserisci audio",
@@ -112,6 +114,7 @@ const it: Record<string, string> = {
 
 const en: Record<string, string> = {
     "audio.language": "Spoken language",
+    "audio.languageShort": "Language",
     "audio.languageAuto": "Detect automatically",
     "audio.languageHelp": "Applies to the microphone and to uploaded files. With automatic detection you need not change it when you speak another language. The choice stays in this browser.",
     "admin.tab.audio": "Audio transcription",
@@ -140,6 +143,7 @@ const en: Record<string, string> = {
     "audio.waiting": "The counselor is replying…",
     "audio.error.reply": "No complete reply arrived. Check the chat before trying again.",
     "audio.autoSend": "Send immediately after transcription",
+    "audio.autoSendShort": "Auto-send",
     "audio.autoSendHelp": "Applies to recordings and audio files. Includes any text already in the message box. This browser remembers your choice.",
     "audio.helpAuto": "Record or upload audio: up to 3 minutes and 10 MB. It is transcribed on the CounselorBot server and sent immediately with your draft.",
     "audio.add": "Add audio",
@@ -222,6 +226,7 @@ const en: Record<string, string> = {
 
 const es: Record<string, string> = {
     "audio.language": "Lengua hablada",
+    "audio.languageShort": "Idioma",
     "audio.languageAuto": "Detección automática",
     "audio.languageHelp": "Se aplica al micrófono y a los archivos subidos. Con la detección automática no hace falta cambiarla al hablar en otra lengua. La elección se guarda en este navegador.",
     "admin.tab.audio": "Transcripción de audio",
@@ -250,6 +255,7 @@ const es: Record<string, string> = {
     "audio.waiting": "El orientador está respondiendo…",
     "audio.error.reply": "No ha llegado una respuesta completa. Revisa el chat antes de reintentar.",
     "audio.autoSend": "Enviar justo después de transcribir",
+    "audio.autoSendShort": "Envío automático",
     "audio.autoSendHelp": "Se aplica al micrófono y a los archivos de audio. Incluye el texto que ya está en la casilla. Este navegador recuerda tu elección.",
     "audio.helpAuto": "Graba o sube un audio de hasta 3 minutos y 10 MB. Se transcribe en el servidor de CounselorBot y se envía inmediatamente con el borrador.",
     "audio.add": "Añadir audio",
@@ -332,6 +338,7 @@ const es: Record<string, string> = {
 
 const fr: Record<string, string> = {
     "audio.language": "Langue parlée",
+    "audio.languageShort": "Langue",
     "audio.languageAuto": "Détection automatique",
     "audio.languageHelp": "Vaut pour le micro et les fichiers importés. Avec la détection automatique, inutile de la changer quand vous parlez une autre langue. Le choix reste dans ce navigateur.",
     "admin.tab.audio": "Transcription audio",
@@ -360,6 +367,7 @@ const fr: Record<string, string> = {
     "audio.waiting": "Le conseiller répond…",
     "audio.error.reply": "Aucune réponse complète reçue. Vérifiez le chat avant de réessayer.",
     "audio.autoSend": "Envoyer dès la transcription terminée",
+    "audio.autoSendShort": "Envoi automatique",
     "audio.autoSendHelp": "Pour le microphone et les fichiers audio. Inclut le texte déjà présent dans le message. Ce navigateur mémorise votre choix.",
     "audio.helpAuto": "Enregistrez ou importez un audio de 3 minutes et 10 Mo maximum. Il est transcrit sur le serveur de CounselorBot et envoyé immédiatement avec le brouillon.",
     "audio.add": "Ajouter un audio",
@@ -442,6 +450,7 @@ const fr: Record<string, string> = {
 
 const de: Record<string, string> = {
     "audio.language": "Gesprochene Sprache",
+    "audio.languageShort": "Sprache",
     "audio.languageAuto": "Automatisch erkennen",
     "audio.languageHelp": "Gilt für Mikrofon und hochgeladene Dateien. Mit automatischer Erkennung muss sie beim Sprachwechsel nicht geändert werden. Die Wahl bleibt in diesem Browser.",
     "admin.tab.audio": "Audiotranskription",
@@ -470,6 +479,7 @@ const de: Record<string, string> = {
     "audio.waiting": "Der Counselor antwortet…",
     "audio.error.reply": "Keine vollständige Antwort erhalten. Prüfe den Chat, bevor du es erneut versuchst.",
     "audio.autoSend": "Nach der Transkription sofort senden",
+    "audio.autoSendShort": "Automatisch senden",
     "audio.autoSendHelp": "Gilt für Mikrofonaufnahmen und Audiodateien. Text im Nachrichtenfeld wird mitgesendet. Dieser Browser merkt sich deine Auswahl.",
     "audio.helpAuto": "Audio aufnehmen oder hochladen: höchstens 3 Minuten und 10 MB. Es wird auf dem CounselorBot-Server transkribiert und sofort mit deinem Entwurf gesendet.",
     "audio.add": "Audio hinzufügen",
@@ -552,6 +562,7 @@ const de: Record<string, string> = {
 
 const sv: Record<string, string> = {
     "audio.language": "Talat språk",
+    "audio.languageShort": "Språk",
     "audio.languageAuto": "Upptäck automatiskt",
     "audio.languageHelp": "Gäller mikrofon och uppladdade filer. Med automatisk igenkänning behöver du inte ändra den när du talar ett annat språk. Valet stannar i den här webbläsaren.",
     "admin.tab.audio": "Ljudtranskription",
@@ -580,6 +591,7 @@ const sv: Record<string, string> = {
     "audio.waiting": "Vägledaren svarar…",
     "audio.error.reply": "Inget fullständigt svar kom fram. Kontrollera chatten innan du försöker igen.",
     "audio.autoSend": "Skicka direkt efter transkriptionen",
+    "audio.autoSendShort": "Skicka automatiskt",
     "audio.autoSendHelp": "Gäller mikrofoninspelningar och ljudfiler. Text som redan finns i meddelandefältet följer med. Webbläsaren kommer ihåg ditt val.",
     "audio.helpAuto": "Spela in eller ladda upp ljud: högst 3 minuter och 10 MB. Det transkriberas på CounselorBots server och skickas direkt tillsammans med utkastet.",
     "audio.add": "Lägg till ljud",

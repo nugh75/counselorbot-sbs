@@ -17,6 +17,8 @@ from ..pdf_generator import generate_questionnaire_pdf, generate_student_booklet
 from ..diagram_blocks import strip_for_speech
 from ..message_diagrams import attach_message_diagrams
 from ..visual_tools import load_workspace
+from ..personal_timeline import ensure_personal_timeline
+from ..booklet_timeline import sync_booklet_biography
 from ..ai_service import AIService
 from .. import scoring_service, recommendation_service
 from .. import content_version_service, i18n_fields
@@ -437,6 +439,7 @@ async def save_student_booklet_for_instrument(
     """Crea o aggiorna il libretto compilabile legato a uno strumento."""
     code = _normalize_booklet_type(questionnaire_type)
     username = current_user["username"]
+    ensure_personal_timeline(db, username)
     booklet = _student_booklet_for_type(db, username, code)
     if booklet is None:
         booklet = models.StudentBooklet(
@@ -450,6 +453,8 @@ async def save_student_booklet_for_instrument(
         booklet.session_id = None
         booklet.questionnaire_type = code
         booklet.data = payload.data
+    db.flush()
+    sync_booklet_biography(db, booklet)
     db.commit()
     db.refresh(booklet)
     return booklet
@@ -525,6 +530,7 @@ async def create_student_booklet_for_instrument(
 ):
     """Crea una nuova scheda del libretto per uno strumento."""
     code = _normalize_booklet_type(questionnaire_type)
+    ensure_personal_timeline(db, current_user["username"])
     booklet = models.StudentBooklet(
         username=current_user["username"],
         session_id=None,
@@ -532,6 +538,8 @@ async def create_student_booklet_for_instrument(
         data=payload.data,
     )
     db.add(booklet)
+    db.flush()
+    sync_booklet_biography(db, booklet)
     db.commit()
     db.refresh(booklet)
     return booklet
@@ -556,7 +564,10 @@ async def update_student_booklet_by_id(
 ):
     """Aggiorna una scheda del libretto per id."""
     booklet = _owned_booklet(db, booklet_id, current_user)
+    ensure_personal_timeline(db, booklet.username)
     booklet.data = payload.data
+    db.flush()
+    sync_booklet_biography(db, booklet)
     db.commit()
     db.refresh(booklet)
     return booklet
@@ -570,6 +581,8 @@ async def delete_student_booklet_by_id(
 ):
     """Elimina una scheda del libretto per id."""
     booklet = _owned_booklet(db, booklet_id, current_user)
+    ensure_personal_timeline(db, booklet.username)
+    sync_booklet_biography(db, booklet, delete=True)
     db.delete(booklet)
     db.commit()
     return {"ok": True, "deleted": booklet_id}
@@ -830,7 +843,7 @@ def _final_step_summary(
         .filter(
             models.Log.action == "chat_message",
             models.Log.session_id == result.session_id,
-            models.Log.phase == final_step.id,
+            models.Log.phase.in_([final_step.id, "qsa-essential-summary"] if result.questionnaire_type == "QSA" else [final_step.id]),
         )
         .order_by(models.Log.timestamp.desc(), models.Log.id.desc())
         .first()

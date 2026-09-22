@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { BookOpen, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
@@ -95,9 +94,7 @@ export function EventBookletCard({ questionnaireType, draft }: { questionnaireTy
             </div>
             <div className="flex flex-wrap items-center gap-3">
                 {saved ? (
-                    <Link href="/profilo/libretto" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-indigo-700 hover:underline">
-                        <BookOpen className="h-4 w-4" aria-hidden="true" />{t('eventBooklet.open')}
-                    </Link>
+                    <p role="status" className="text-sm font-semibold text-emerald-700">{t('eventBooklet.saved')}</p>
                 ) : (
                     <Button type="button" onClick={() => void save()} disabled={saving}>
                         <Save className="h-4 w-4" aria-hidden="true" />{saving ? t('eventBooklet.saving') : t('eventBooklet.save')}

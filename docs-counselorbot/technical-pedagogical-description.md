@@ -28,9 +28,9 @@ CounselorBot embodies key principles of educational psychology and career guidan
 - **Narrative career construction** — The Savickas Career Construction Interview helps
   students build a coherent narrative of their vocational identity, starting from
   open-ended questions about role models, interests, and life themes.
-- **Open learner model** — CounselorBot maintains a student profile model (explicit,
-  revisable, with revision history and change reflections) that evolves across chat
-  sessions and is used to personalize the AI counselor's responses.
+- **Open learner model** — the Notebook contains the person's explicit self-description,
+  edited by them with revision history and change reflections. It informs counselor
+  responses. The AI does not automatically rewrite it; "profile" means questionnaire scores.
 - **Conversational scaffolding** — The guided chat is structured in steps (guided
   steps), each with a prompt and a system mode, to support students without
   overwhelming them, offering a gradual reflection path. Steps are DB-driven rows per
@@ -111,15 +111,16 @@ budget can be configured with a fallback model (`qwen3.5:9b`).
 
 ### The user journey
 
-1. **Questionnaire selection** — The student picks from QSA, QSAr, ZTPI, Savickas,
-   QPCS, QPCC, QAP. Each instrument explores a different aspect of the learning and
-   career profile.
+1. **Tool selection** — Six questionnaires (QSA, QSAr, ZTPI, QPCS, QPCC, QAP)
+   produce score profiles. Four conversation tools (SAVICKAS, IDEA, EVENTO_STUDIO,
+   EVENTO_PROFESSIONALE) require no scores. pQBL offers practice from a PDF.
+   The Compass helps choose a route; the catalog also permits direct selection.
 2. **Counselor selection** — The student selects an AI counselor (persona, style,
    language). Each counselor has a distinct tone and AI model, configurable by
    administrators.
 3. **Profile entry** — For numeric questionnaires: manual input (stanine scores 1-9)
-   or PDF/photo upload with automatic OCR score extraction. For Savickas (agent-only):
-   direct entry into the chat.
+   or PDF/photo upload with automatic OCR score extraction. For the four conversation tools:
+   direct entry into the chat, without a factor-score dashboard.
 4. **Visual dashboard** — Radar/bar chart with colored bands (green = strength, yellow
    = moderate area, red = growth area), corrected for inverted factors.
 5. **Guided chat** — The counselor walks the student through step by step: explains
@@ -131,6 +132,23 @@ budget can be configured with a fallback model (`qwen3.5:9b`).
    (also `EVENTO_STUDIO` and `EVENTO_PROFESSIONALE` narratives), analyze another
    questionnaire, or launch a **combined analysis** (when QSA/QSAr + ZTPI + Savickas
    are all completed).
+
+### Significant events and the personal journey
+
+EVENTO_STUDIO (Significant study event) revisits one study episode; EVENTO_PROFESSIONALE
+(Significant professional event) revisits one work or placement episode, including
+a teacher's practice. Both follow six steps (event, facts, what worked, what did not,
+a second look, next time) and a final summary. They require no questionnaire or
+scores. The summary is a Booklet draft, reviewed and explicitly saved by the person.
+These conversation tools are distinct from personal calendar events.
+
+The Personal area starts with My journey, goals, next activities and assignments.
+`/profilo/obiettivi` coordinates student-owned goals and links to activities, diary,
+cards, comparisons, Notebook, Booklet, saved Tavoli and Portfolio. Completing an
+activity never automatically achieves a goal. `/profilo/timeline` holds the shared
+personal activity/calendar/diary workspace. `/profilo/assegnazioni` connects teacher
+deliveries to planning, private reflection, explicit response sharing and feedback.
+Goal adoption and sharing remain explicit; the AI cannot perform them for the person.
 
 ### Alternative experience — OpenCode
 
@@ -148,9 +166,9 @@ with formative feedback per alternative. Question banks exist per document (hash
 provider + language); `learning` and `final_test` modes are supported; answers are
 verified server-side.
 
-### Profile, booklet, and portfolio
+### Personal area, Notebook, Booklet and Portfolio
 
-- **Open learner model** (`/profilo`): profile with append-only **revision history** and
+- **Notebook** in the Personal area (`/profilo`): self-description edited by the person, with **revision history** and
   **change-reflection notes** (`/profilo/cambiamenti`) linking two consecutive revisions.
 - **Student booklet**: per-instrument editable booklet exportable as PDF, plus
   `EVENTO_STUDIO` and `EVENTO_PROFESSIONALE` narrative types.
@@ -172,7 +190,7 @@ verified server-side.
   indicates a growth area (e.g. basic anxiety, disorientation). The chart and the
   counselor's language make this explicit.
 - **Multilingual**: the guided chat works in it/en/es/fr/de/sv; item-level test
-  administrations are restricted to en/es/sv. Italian-language questionnaires are
+  administrations are experimental in en/es/fr/de/sv and not yet validated. Italian-language questionnaires are
   administered via [competenzestrategiche.it](https://competenzestrategiche.it).
 - **Historical profile**: the student can return to `/profilo` to review past results,
   resume interrupted chats, delete sessions, and read/edit the learner model history.
@@ -183,14 +201,15 @@ verified server-side.
 
 ### Administration console
 
-Accessible to users in `admins` groups or with "ricerc"/"research"/"researcher" in
-the group name. The console has collapsible sections grouped into AI configuration,
-content, research, monitoring, and training:
+Technical configuration belongs to administrators; research and group features
+are available according to role and scope. Teacher catalog access does not grant
+technical administration. The console groups configuration, content, research,
+monitoring and training:
 
 #### AI configuration and prompts
 - **ConfigForm**: live-edit all system prompts, interface texts, active provider and
-  model, temperature, max tokens, API keys. Each value is a DB row; environment
-  variables override (with a visible `ENV` badge).
+  model, temperature and max tokens. API keys are read-only here and managed
+  centrally in ai4educ Console; environment overrides show an `ENV` badge.
 - **PresetsPanel**: create reusable model presets (provider + model + temperature +
   reasoning budget), assignable to counselors and benchmarks. `provider_configured`
   shows whether an external provider has an API key set.
@@ -245,22 +264,22 @@ content, research, monitoring, and training:
   `ricercatore.demo`, `docente.demo`) via `RolePreviewPanel` to see the platform from
   another perspective.
 
-### What teachers/researchers can do
+### What teachers and researchers can do
 
-- **Administer questionnaires** in educational or research contexts, generating codes,
-  links, QR, PDF cards (research contacts) and **administration plans** with linked
-  researchers.
-- **Use the informational assistant** (`/assistente`): a RAG-based chatbot that answers
-  based on the competenzestrategiche.it project content and the platform itself, with
-  two separately selectable knowledge bases (hybrid vector + graph for the project;
-  plain vector for the platform).
-- **Export data** for statistical and psychometric analysis.
-- **Configure the tone and content** of the student experience without touching code,
-  by editing prompts, counselors, and certified strategies from the admin panel.
-- **Monitor usage and costs** through logs, dashboards, and benchmarks; enforce a
-  monthly budget with a safe fallback model.
-- **Train and audit**: generate and approve training examples, run in-app benchmarks,
-  and inspect prompt envelopes via the prompt audit.
+Teachers manage groups and administration plans in `/docente`, publish strategies
+and reading/media resources directly, and propose goals for their groups. The
+common goal catalog requires administrator review. They assign published content
+to current participants or whole groups, including empty groups for later members.
+Students receive it at `/profilo/assegnazioni`, plan personal work and explicitly
+share a reviewed response; the assigning teacher can give feedback. Withdrawal
+removes the response and feedback without deleting personal work. Private drafts
+and linked goals are not disclosed through this flow. Existing group access to
+Notebook, results and related conversations remains separately applicable.
+
+Researchers additionally use research contacts and the research operations allowed
+by their role. The informational Assistant answers the selected knowledge base.
+AI providers, prompts, counselors, technical monitoring and instrument validation
+remain administrative capabilities, not permissions granted by catalog editing.
 
 ### Pedagogy for teachers
 

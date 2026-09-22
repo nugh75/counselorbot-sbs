@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { useI18n } from '@/lib/i18n-context';
-import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage, canUseTeacherAssistant } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
@@ -29,7 +29,7 @@ import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
     ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
-    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2,
+    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, LayoutList, Layers, Columns3,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -116,6 +116,11 @@ const PERSONAL_AREAS = [
 ] as const;
 
 const ICON_BADGE_CLASS = 'bg-indigo-50 text-indigo-600';
+const PERSONAL_WORKSPACES = [
+    { tab: 'board', href: '/profilo/azioni', icon: LayoutList },
+    { tab: 'cards', href: '/profilo/carte', icon: Layers },
+    { tab: 'comparison', href: '/profilo/confronto', icon: Columns3 },
+] as const;
 
 function personalSectionFromPath(pathname: string): PersonalSection | null {
     const slug = pathname.split('/').filter(Boolean)[1];
@@ -428,25 +433,16 @@ export default function ProfilePage() {
 
     return (
         <div className="page-wide px-4 py-8 space-y-8">
-            {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    {activeArea && ActiveAreaIcon && (
-                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
-                            <ActiveAreaIcon className="h-5 w-5" aria-hidden />
-                        </span>
-                    )}
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">
-                            {activeArea?.title ?? t('profile.title')}
-                        </h1>
-                        <p className="mt-1 max-w-2xl text-sm text-slate-500">
-                            {activeArea?.description ?? t('profile.subtitle')}
-                        </p>
-                    </div>
-                </div>
-                <PreviousPageButton fallbackHref={activeArea ? '/profilo' : '/?view=questionnaires'} />
-            </div>
+            <PageHeader
+                backHref={activeArea ? '/profilo' : '/'}
+                title={activeArea?.title ?? t('profile.title')}
+                subtitle={activeArea?.description ?? t('profile.subtitle')}
+                icon={activeArea && ActiveAreaIcon ? (
+                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
+                        <ActiveAreaIcon className="h-5 w-5" aria-hidden />
+                    </span>
+                ) : undefined}
+            />
 
             {!activeArea && (
                 <>
@@ -503,7 +499,11 @@ export default function ProfilePage() {
                                 </Link>
                             );
                         })}
-                        {group === 'explore' && (['board', 'cards', 'comparison'] as const).map(tab => <Link key={tab} href={`/profilo/timeline?tab=${tab}`} className="glass-panel min-h-28 p-5 hover:border-indigo-300"><span className="block font-bold text-slate-900">{visualLabel(lang, tab)}</span><span className="mt-1 block text-sm text-slate-500">{visualLabel(lang, `${tab}Purpose`)}</span></Link>)}
+                        {group === 'explore' && PERSONAL_WORKSPACES.map(({ tab, href, icon: Icon }) => <Link key={tab} href={href} className="glass-panel group flex min-h-28 p-5 transition-colors hover:border-indigo-300 hover:bg-white">
+                            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}><Icon className="h-5 w-5" aria-hidden /></span>
+                            <span className="ml-4 min-w-0 flex-1"><span className="block font-bold text-slate-900">{visualLabel(lang, tab)}</span><span className="mt-1 block text-sm text-slate-500">{visualLabel(lang, `${tab}Purpose`)}</span></span>
+                            <ArrowRight className="ml-3 h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-600" aria-hidden />
+                        </Link>)}
                     </nav>
                     </section>)}
                 </>

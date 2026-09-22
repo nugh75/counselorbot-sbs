@@ -5,6 +5,7 @@
 // bisogni: è un elenco, e deve mostrare tutto ciò che riguarda il proprio istituto.
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { CalendarDays, ExternalLink, MapPin, Users } from 'lucide-react';
 
 import { useI18n } from '@/lib/i18n-context';
@@ -81,18 +82,18 @@ export default function OrientationDirectoryCard() {
                                 {t('referrals.institution.page')} <ExternalLink className="h-3 w-3" />
                             </a>
                         )}
-                        <a href="/profilo/taccuino" className="text-sm text-slate-500 hover:underline">
+                        <Link href="/profilo/taccuino" className="text-sm text-slate-500 hover:underline">
                             {t('referrals.institution.change')}
-                        </a>
+                        </Link>
                     </div>
                 ) : (
                     // Vuoto parlante: senza istituto la pagina dice cosa fare,
                     // invece di restare muta.
                     <p className="mt-1 text-sm text-slate-600">
                         {t('referrals.institution.missing')}{' '}
-                        <a href="/profilo/taccuino" className="text-indigo-600 hover:underline">
+                        <Link href="/profilo/taccuino" className="text-indigo-600 hover:underline">
                             {t('referrals.institution.change')}
-                        </a>
+                        </Link>
                     </p>
                 )}
             </div>

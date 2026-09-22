@@ -803,7 +803,7 @@ def test_current_cards_are_passed_to_the_same_model_call(monkeypatch):
     assert 'Il tuo metodo di studio' in prompt
     assert 'untrusted conversation data' in prompt
     assert 'QUESTIONNAIRES' in prompt and 'competenzestrategiche.it' in prompt
-    assert 'Guide at /guide' in prompt and 'Assistant for platform questions' in prompt
+    assert 'Guide at /guide' in prompt and 'Assistant at /assistente for platform questions' in prompt
 
 
 def test_orientation_paces_tools_and_time_in_the_effective_prompt(monkeypatch):

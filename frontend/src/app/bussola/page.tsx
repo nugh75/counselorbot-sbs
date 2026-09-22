@@ -7,14 +7,17 @@ import { ArrowDown, ArrowRight, Check, Compass, Loader2, Mic, Send, Sparkles } f
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
+import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
+import { useResponseFormat } from '@/lib/use-response-format';
 import { ChatActionsPopover } from '@/components/ui/ChatActionsPopover';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
 import { Button } from '@/components/ui/Button';
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import { CompassMark } from '@/components/ui/CompassMark';
-import { NotebookBookletPanel, NotebookBookletTriggers, type DeskTab } from '@/components/profile/NotebookBookletPanel';
 import { useI18n } from '@/lib/i18n-context';
 import {
     completeOrientation,
@@ -49,6 +52,7 @@ export default function BussolaPage() {
     const { t, lang } = useI18n();
     const router = useRouter();
     const [session, setSession] = useState<OrientationSession | null>(null);
+    const [responseFormat, setResponseFormat] = useResponseFormat(`compass:${session?.session_id ?? 'new'}`);
     const [latestSessionId, setLatestSessionId] = useState<string | null>(null);
     const [orientationRequired, setOrientationRequired] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -58,7 +62,6 @@ export default function BussolaPage() {
     const [voiceOptionsContainer, setVoiceOptionsContainer] = useState<HTMLDivElement | null>(null);
     const [completing, setCompleting] = useState(false);
     const [input, setInput] = useState('');
-    const [deskTab, setDeskTab] = useState<DeskTab | null>(null);
     const [error, setError] = useState('');
     const [nextHref, setNextHref] = useState<string | null>(null);
     const [atFork, setAtFork] = useState(false);
@@ -156,7 +159,7 @@ export default function BussolaPage() {
         setSending(true);
         setError('');
         try {
-            const row = await sendOrientationMessage(session.session_id, message, lang);
+            const row = await sendOrientationMessage(session.session_id, message, lang, responseFormat);
             setSession(row);
             return row.messages.at(-1)?.role === 'assistant' ? row.messages.at(-1)?.content : undefined;
         } catch {
@@ -280,9 +283,9 @@ export default function BussolaPage() {
                         >
                             {session.messages.map((message, index) => (
                                 <div key={`${message.role}-${index}`} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                    <ChatBubble role={message.role === 'user' ? 'user' : 'assistant'} className="max-w-[88%] whitespace-pre-line sm:max-w-2xl">
+                                    <ChatBubble role={message.role === 'user' ? 'user' : 'assistant'} className="max-w-[88%] sm:max-w-2xl">
                                         <div data-voice-source={message.role === 'assistant' ? `bussola-${session.session_id}-${index}` : undefined}
-                                            data-voice-language={session.language || lang} data-voice-counselor={session.counselor_id ?? undefined}>{message.content}</div>
+                                            data-voice-language={session.language || lang} data-voice-counselor={session.counselor_id ?? undefined} className="prose prose-sm max-w-none overflow-x-auto text-inherit">{message.role === "assistant" ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown> : <span className="whitespace-pre-line">{message.content}</span>}</div>
                                         {message.role === 'assistant' && <div className="mt-2" data-voice-ignore>
                                             <ListenButton id={`bussola-${session.session_id}-${index}`} text={message.content} language={session.language as typeof lang || lang} counselorId={session.counselor_id} className="min-h-[44px] min-w-[44px] px-2" />
                                         </div>}
@@ -326,14 +329,9 @@ export default function BussolaPage() {
                                         </div>
                                     </details>
                                 )}
-                                <div className="mb-2 flex flex-wrap items-center gap-1">
-                                    <NotebookBookletTriggers
-                                        buttonClassName="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
-                                        onOpen={setDeskTab}
-                                    />
-                                </div>
                                 <div className="flex items-end gap-2">
                                     <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <>
+                                        <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={sending} />
                                         <div ref={setVoiceOptionsContainer} />
                                         {!voiceMode && <button type="button" disabled={sending || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
                                             <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}
@@ -388,7 +386,6 @@ export default function BussolaPage() {
             )}
 
             {!session && errorNote}
-            <NotebookBookletPanel tab={deskTab} onSelectTab={setDeskTab} onClose={() => setDeskTab(null)} lang={lang} />
         </div>
     );
 }

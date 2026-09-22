@@ -30,12 +30,16 @@ export function autoFreezeSignature(input: {
     messages: { content: string }[];
     currentPhase: string;
     responseLength: string;
+    responseFormat?: string;
+    guidedPath?: string;
 }): string {
     const last = input.messages[input.messages.length - 1];
     return [
         input.messages.length,
         input.currentPhase,
         input.responseLength,
+        input.responseFormat ?? "standard",
+        input.guidedPath ?? "complete",
         last ? last.content.length : 0,
     ].join('|');
 }

@@ -17,6 +17,7 @@ from .ai_service import AIError, AIService
 from .anonymous_codes import code_for_identity
 from .api_models import ChatRequest
 from .chat_preparation import prepare_chat_turn
+from .qsa_essential import validate_path
 from .chat_logic import (
     _annotate_qsa_factor_codes,
     _ensure_required_qsa_factor_codes,
@@ -148,6 +149,8 @@ def _apply_counselor_overrides(ai_service: AIService, disable_thinking: bool | N
 
 
 def _resolve_effective_message(request: ChatRequest, db: Session, warnings: list[dict[str, str]]) -> tuple[str, str | None, models.GuidedStep | None]:
+    if validate_path(request.questionnaire_type, request.guided_path, request.phase):
+        return request.message or "", None, None
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
     if request.phase and not step:
         warnings.append({"code": "missing_step", "message": f"Guided step '{request.phase}' was not found."})
@@ -267,7 +270,7 @@ def build_prompt_audit(
     # Retain input validation warnings; preparation itself is shared with /chat.
     _message, _phase_key, audit_step = _resolve_effective_message(request, db, warnings)
     runtime_valid = True
-    if request.use_phase_prompt and not request.message.strip() and (not request.phase or not audit_step):
+    if request.guided_path != "essential" and request.use_phase_prompt and not request.message.strip() and (not request.phase or not audit_step):
         if allow_retrieval:
             raise HTTPException(status_code=400, detail="A valid phase is required when use_phase_prompt=true.")
         runtime_valid = False
@@ -370,6 +373,8 @@ def build_prompt_audit(
             "language": request.language,
             "max_tokens": max_tokens,
             "response_length": request.response_length,
+            "response_format": request.response_format,
+            "guided_path": request.guided_path,
             "runtime_valid": runtime_valid,
             "context_budget": context_report,
         },

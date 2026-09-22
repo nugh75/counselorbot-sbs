@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Languages } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { Callout } from '@/components/ui/Callout';
 import {
     fetchInstruments,
@@ -28,6 +29,7 @@ export default function TestAdministrationsPage() {
 
     return (
         <div className="page-narrow space-y-6">
+            <PreviousPageButton fallbackHref={QUESTIONNAIRE_SELECTION_HREF} />
             <header className="glass-panel p-6 sm:p-8 space-y-3">
                 <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-indigo-700">
                     <Languages className="w-4 h-4" />
@@ -100,9 +102,11 @@ export default function TestAdministrationsPage() {
                 })}
             </div>
 
-            <Link href={QUESTIONNAIRE_SELECTION_HREF} className="inline-flex text-sm font-semibold text-indigo-700 hover:text-indigo-900">
-                {t('admin.run.index.back')}
-            </Link>
+            <PreviousPageButton
+                variant="labelled"
+                fallbackHref={QUESTIONNAIRE_SELECTION_HREF}
+                label={t('admin.run.index.back')}
+            />
         </div>
     );
 }

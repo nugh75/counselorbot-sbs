@@ -159,7 +159,9 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   conversazione e della scrittura e contiene il nome del passo; su mobile segue
   la scrittura. I comandi dei passi sono icone da 44px con etichette accessibili.
   Un solo menu a tre punti verticali (kebab), accanto alla scrittura, raccoglie
-  percorso e risorse, Strumenti visivi, lunghezza della risposta e congelamento.
+  pannello, formato, lunghezza, voce, lingua e congelamento. I gruppi sono
+  separati da divisori e le scelte di formato, lunghezza e ragionamento usano
+  icone con etichette accessibili, così il menu resta corto e leggibile.
   Include anche Conversazione vocale: solo il pulsante principale sostituisce
   la casella di scrittura, mentre tutta la chat resta visibile. Stato, istruzioni,
   pausa, ripresa, riascolto e ritorno alla scrittura restano nei tre puntini.
@@ -170,19 +172,19 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   Sotto ogni risposta, su desktop e mobile, Diagramma e Ascolta sono icone
   dirette; le icone di valutazione restano visibili sulle risposte valutabili.
   Non ci sono menu nei messaggi. I diagrammi restano collegati alla loro risposta.
-  Strumenti visivi si apre solo dal menu della conversazione, anche a percorso
-  concluso, parte da Azioni e occupa tutto il viewport. Le carte si creano nella
-  scheda Carte. Il campo vuoto parte da una riga e cresce con il testo.
-  La scheda Linea del tempo usa una sequenza verticale di tappe con periodi
+  Bacheca delle azioni, Carte, Confronto e Linea del tempo appartengono solo
+  all’Area personale. Ciascuno ha una route e una schermata autonoma; non esiste
+  un selettore interno per passare da uno all’altro. Il campo vuoto parte da una
+  riga e cresce con il testo. La Linea del tempo usa una sequenza verticale di tappe con periodi
   anche indicativi, frecce accessibili per l’ordine e collegamenti espliciti
-  ad azioni e Portfolio. Condivide salvataggio, annullamento ed esportazione
-  dei Tools; la copia nel Portfolio ha un’anteprima dedicata.
+  ad azioni e Portfolio. Le quattro schermate condividono salvataggio,
+  annullamento ed esportazione; la copia nel Portfolio ha un’anteprima dedicata.
   Durante la conversazione, su desktop e mobile, la navbar generale resta
   visibile in alto; solo la panoramica superiore delle tappe viene nascosta.
   Le fasi del percorso usano toni slate uniformi: numero, grassetto e segno di
   completamento distinguono il passo corrente dai precedenti e dai successivi.
-  I comandi di Strumenti visivi e Diagramma sono icone da 44px, con etichette
-  accessibili e tooltip localizzati, anche nelle barre interne alle finestre.
+  I comandi di Diagramma sono icone da 44px, con etichette accessibili e tooltip
+  localizzati, anche nelle barre interne alle finestre.
   Nei diagrammi i comandi principali stanno su una sola riga, scorrevole
   orizzontalmente se necessario; menu e chiusura restano sempre raggiungibili.
   Zoom, esportazione, animazioni e aiuto si aprono in un menu sovrapposto,
@@ -212,6 +214,18 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   secondarie; counselor e preferenze stanno in un pannello espandibile, che
   conserva anche l’accesso alla presentazione iniziale. La Bussola resta accanto
   al titolo del catalogo.
+- **Presentazione iniziale**: titolo e breve descrizione precedono tre schede:
+  Analisi dei risultati dei questionari, Percorsi guidati, Allenamento. Le illustrazioni PNG
+  trasparenti in `public/images/intro/` sono decorative; titoli e descrizioni
+  restano testo localizzato. Su mobile le immagini affiancano il testo, su
+  desktop lo precedono. «Inizia» segue le schede; quattro `details` chiusi
+  inizialmente presentano da dove iniziare, il lavoro personale, risorse e
+  accompagnamento, uso dei questionari. Il link «Dati e riservatezza» apre
+  `/guide/dati-riservatezza`, che distingue elaborazione locale, filtro per
+  fornitori esterni e accessi ai contenuti. Il ritorno `/?view=intro` apre
+  la presentazione anche per chi ha già uno storico. I testi seguono la
+  presentazione PEF del 21 settembre 2026, incluse le note del relatore.
+  Prompt e provenienza delle immagini sono nel README della cartella.
 - **Movimento**: le variabili `--animate-*` vanno in `@theme`, non in `:root`
   — Tailwind v4 genera le utility `animate-*` solo da lì, e tenute in `:root`
   esistono le variabili ma non le classi. Solo `fade-in-up` all'ingresso e la barra indeterminata di
@@ -241,7 +255,7 @@ aggiunge alla primitiva.
 | `ForwardButton` | il primario del percorso: petrol pieno, etichetta visibile, 44px |
 | `FlowStepper` | il passo attivo è ocra, i fatti sono petrol, i futuri slate |
 | `Toast`, `Tooltip`, `Skeleton`, `StickyActions` | stati transitori |
-| `CompassMark` | il mark, statico nell'header e animato nell'intro |
+| `CompassMark` | il mark, statico nell'header |
 
 ---
 

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Bot, Loader2, RefreshCw, Save, Send } from 'lucide-react';
+import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
+import { useResponseFormat } from '@/lib/use-response-format';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
@@ -151,6 +153,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
     const [saving, setSaving] = useState(false);
     const [assistantOpen, setAssistantOpen] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [responseFormat, setResponseFormat] = useResponseFormat('profile-reflection');
     const [chatInput, setChatInput] = useState('');
     const [chatSessionId, setChatSessionId] = useState<string | undefined>(undefined);
     const [chatConversationId, setChatConversationId] = useState<string | undefined>(undefined);
@@ -304,6 +307,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
             const result = await streamChat(
                 {
                     message: question,
+                    response_format: responseFormat,
                     audience: 'studente',
                     collection: 'counselorbot',
                     language: lang,
@@ -566,6 +570,7 @@ export function ProfileChangeReflection({ lang }: { lang: string }) {
                         ))}
                     </div>
                     <ChatContinuation locale={lang} {...continuation} />
+                    <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={chatLoading} />
                     <div className="flex gap-2">
                         <textarea
                             value={chatInput}

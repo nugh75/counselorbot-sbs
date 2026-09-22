@@ -218,7 +218,7 @@ for (const width of [320, 390]) {
             assert.ok((await next.boundingBox()).width <= 48, 'next step is an icon');
             assert.equal((await next.innerText()).trim(), '');
             assert.equal(await page.getByRole('button', { name: 'Crea una carta', exact: true }).count(), 0);
-            assert.equal(await page.locator('button[popovertarget]').count(), 1, 'the conversation has only one kebab');
+            assert.equal(await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).count(), 1, 'the conversation has only one kebab');
             const actions = page.getByRole('group', { name: 'Azioni del messaggio', exact: true }).last();
             await actions.getByRole('button', { name: 'Diagramma', exact: true }).click();
             await page.locator('input[maxlength="400"]').waitFor();
