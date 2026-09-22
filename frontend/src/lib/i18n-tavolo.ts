@@ -166,6 +166,9 @@ const uiIt = {
     icon: 'Icona',
     noIcon: 'Nessuna icona',
     iconSearch: 'Cerca un\'icona',
+    image: 'Immagine',
+    noImage: 'Nessuna immagine',
+    imageSearch: "Cerca un'immagine",
 };
 type UiKey = keyof typeof uiIt;
 
@@ -277,6 +280,9 @@ const UI: Record<Lang, Record<UiKey, string>> = {
         icon: 'Icon',
         noIcon: 'No icon',
         iconSearch: 'Search an icon',
+        image: 'Image',
+        noImage: 'No image',
+        imageSearch: 'Search an image',
     },
     es: {
         saveChanges: "Guardar cambios",
@@ -384,6 +390,9 @@ const UI: Record<Lang, Record<UiKey, string>> = {
         icon: 'Icono',
         noIcon: 'Sin icono',
         iconSearch: 'Buscar un icono',
+        image: 'Imagen',
+        noImage: 'Ninguna imagen',
+        imageSearch: 'Busca una imagen',
     },
     fr: {
         saveChanges: "Enregistrer les modifications",
@@ -491,6 +500,9 @@ const UI: Record<Lang, Record<UiKey, string>> = {
         icon: 'Icône',
         noIcon: 'Aucune icône',
         iconSearch: 'Chercher une icône',
+        image: 'Image',
+        noImage: 'Aucune image',
+        imageSearch: 'Chercher une image',
     },
     de: {
         saveChanges: "Änderungen speichern",
@@ -598,6 +610,9 @@ const UI: Record<Lang, Record<UiKey, string>> = {
         icon: 'Symbol',
         noIcon: 'Kein Symbol',
         iconSearch: 'Symbol suchen',
+        image: 'Bild',
+        noImage: 'Kein Bild',
+        imageSearch: 'Bild suchen',
     },
     sv: {
         saveChanges: "Spara ändringar",
@@ -705,6 +720,9 @@ const UI: Record<Lang, Record<UiKey, string>> = {
         icon: 'Ikon',
         noIcon: 'Ingen ikon',
         iconSearch: 'Sök en ikon',
+        image: 'Bild',
+        noImage: 'Ingen bild',
+        imageSearch: 'Sök en bild',
     },
 };
 

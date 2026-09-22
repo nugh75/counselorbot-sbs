@@ -41,12 +41,15 @@ import {
 } from '@/lib/tavolo';
 import { familyLabel, relLabel, tavoloLabel } from '@/lib/i18n-tavolo';
 import { fetchIcons, iconUrl, matchIcons, type IconEntry } from '@/lib/tavolo-icons';
+import {
+    fetchTavoloImages, matchTavoloImages, tavoloImageUrl, type TavoloImageEntry,
+} from '@/lib/tavolo-images';
 import { TavoloPieceNode, type PieceData } from './TavoloPieceNode';
 import { TavoloLinkEdge, type LinkData } from './TavoloLinkEdge';
 
 const nodeTypes = { piece: TavoloPieceNode };
 const edgeTypes = { link: TavoloLinkEdge };
-const FORMS: TavoloForm[] = ['concept', 'action', 'decision', 'outcome'];
+const FORMS: TavoloForm[] = ['concept', 'action', 'decision', 'outcome', 'image'];
 // Le pastiglie della tavolozza: le stesse tinte dei pezzi, in piccolo.
 const SWATCH: Record<string, string> = {
     none: 'border-indigo-400 bg-indigo-50',
@@ -98,6 +101,9 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
     const surface = useRef<HTMLDivElement>(null);
     const nodesReady = useNodesInitialized();
     const [connecting, setConnecting] = useState(false);
+    // Il pezzo che si scrive dentro se stesso: un doppio clic lo apre, Enter o
+    // un clic fuori lo chiudono. Uno per volta, come la selezione.
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [fromId, setFromId] = useState('');
     const [toId, setToId] = useState('');
     const [words, setWords] = useState('');
@@ -116,6 +122,16 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
         fetchIcons(locale).then((next) => { if (alive) setIcons(next); }).catch(() => undefined);
         return () => { alive = false; };
     }, [locale]);
+
+    // Le immagini del catalogo caricato dall'amministrazione: una volta per
+    // tela, e il selettore le filtra a video sul nome e sull'utilizzo.
+    const [images, setImages] = useState<TavoloImageEntry[]>([]);
+    const [imageQuery, setImageQuery] = useState('');
+    useEffect(() => {
+        let alive = true;
+        fetchTavoloImages().then((next) => { if (alive) setImages(next); }).catch(() => undefined);
+        return () => { alive = false; };
+    }, []);
 
     // Position incoming proposals without moving pieces already arranged by the person.
     const known = useRef<Set<string> | null>(null);
@@ -158,10 +174,21 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                     type: 'piece',
                     position: { x: node.x, y: node.y },
                     selected: selected?.kind === 'node' && selected.id === node.id,
-                    data: { label: node.label, form: node.form, state: node.state, byModel: node.by === 'model', accent: Boolean(node.accent), color: node.color ?? null, icon: node.icon ?? null },
+                    data: {
+                        label: node.label, form: node.form, state: node.state,
+                        byModel: node.by === 'model', accent: Boolean(node.accent),
+                        color: node.color ?? null, icon: node.icon ?? null,
+                        image: node.image ?? null, locale,
+                        editing: editingId === node.id,
+                        onCommitLabel: (label: string) => { patchNode(node.id, { label }); setEditingId(null); },
+                        onCancelEdit: () => setEditingId(null),
+                        onDelete: () => removePiece(node.id),
+                        deleteLabel: label('deleteNode'),
+                    },
                 }));
         });
-    }, [graph.nodes, selected, setNodes]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- i callback del pannello leggono il grafo corrente a ogni render
+    }, [graph.nodes, selected, editingId, setNodes, locale]);
 
     const edges: Edge<LinkData>[] = useMemo(() => graph.edges
         .filter((edge) => edge.state !== 'dropped')
@@ -228,21 +255,25 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
         setSelected({ kind: 'node', id });
     };
 
-    const removeSelected = () => {
-        if (!selected) return;
-        if (selected.kind === 'node') {
-            onChange({
-                ...graph,
-                nodes: graph.nodes.filter((node) => node.id !== selected.id),
-                edges: graph.edges.filter((edge) => edge.from !== selected.id && edge.to !== selected.id),
-            });
-        } else {
-            onChange({ ...graph, edges: graph.edges.filter((edge) => edgeKey(edge) !== selected.id) });
-        }
+    const removePiece = (id: string) => {
+        onChange({
+            ...graph,
+            nodes: graph.nodes.filter((node) => node.id !== id),
+            edges: graph.edges.filter((edge) => edge.from !== id && edge.to !== id),
+        });
         setSelected(null);
     };
 
-    const patchNode = (id: string, change: Partial<{ label: string; form: TavoloForm; color: TavoloColor | null; icon: string | null }>) =>
+    const removeSelected = () => {
+        if (!selected) return;
+        if (selected.kind === 'node') removePiece(selected.id);
+        else {
+            onChange({ ...graph, edges: graph.edges.filter((edge) => edgeKey(edge) !== selected.id) });
+            setSelected(null);
+        }
+    };
+
+    const patchNode = (id: string, change: Partial<{ label: string; form: TavoloForm; color: TavoloColor | null; icon: string | null; image: string | null }>) =>
         onChange({
             ...graph,
             nodes: graph.nodes.map((node) => (node.id === id ? { ...node, ...change } : node)),
@@ -278,6 +309,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                     onConnect={onConnect}
                     onNodeClick={(_event, clicked) => { setSelected({ kind: 'node', id: clicked.id }); setPanelOpen(true); }}
                     onEdgeClick={(_event, clicked) => { setSelected({ kind: 'edge', id: clicked.id }); setPanelOpen(true); }}
+                    onNodeDoubleClick={(_event, clicked) => setEditingId(clicked.id)}
                     onPaneClick={() => setSelected(null)}
                     // Permissiva: con quattro agganci tutti sorgenti, e' questa
                     // modalita' a farli valere anche come bersagli.
@@ -391,7 +423,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                 placeholder={label('iconSearch')} aria-label={label('iconSearch')}
                                 className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800" />
                             <div className="mt-1 grid max-h-48 grid-cols-6 gap-1 overflow-y-auto">
-                                <button type="button" onClick={() => patchNode(node.id, { icon: null })}
+                                <button type="button" onClick={() => patchNode(node.id, { icon: null, image: null })}
                                     aria-label={label('noIcon')} title={label('noIcon')}
                                     aria-pressed={!node.icon}
                                     className={`flex h-11 w-11 items-center justify-center rounded-lg border text-xs ${!node.icon
@@ -399,13 +431,40 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
                                     —
                                 </button>
                                 {matchIcons(icons, iconQuery).map((icon) => (
-                                    <button key={icon.id} type="button" onClick={() => patchNode(node.id, { icon: icon.id })}
+                                    <button key={icon.id} type="button" onClick={() => patchNode(node.id, { icon: icon.id, image: null })}
                                         aria-label={icon.label} title={icon.label}
                                         aria-pressed={node.icon === icon.id}
                                         className={`flex h-11 w-11 items-center justify-center rounded-lg border ${node.icon === icon.id
                                             ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img src={iconUrl(icon.id)} alt="" width={20} height={20} className="h-5 w-5" />
+                                    </button>
+                                ))}
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <legend className="text-xs font-medium text-slate-500">{label('image')}</legend>
+                            <input value={imageQuery} onChange={(event) => setImageQuery(event.target.value)}
+                                placeholder={label('imageSearch')} aria-label={label('imageSearch')}
+                                className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-2 text-sm text-slate-800" />
+                            <div className="mt-1 grid max-h-48 grid-cols-6 gap-1 overflow-y-auto">
+                                <button type="button" onClick={() => patchNode(node.id, { image: null })}
+                                    aria-label={label('noImage')} title={label('noImage')}
+                                    aria-pressed={!node.image}
+                                    className={`flex h-11 w-11 items-center justify-center rounded-lg border text-xs ${!node.image
+                                        ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                    —
+                                </button>
+                                {matchTavoloImages(images, imageQuery).map((image) => (
+                                    <button key={image.id} type="button" onClick={() => patchNode(node.id, { image: image.id, icon: null })}
+                                        aria-label={image.name}
+                                        title={image.usage ? `${image.name} — ${image.usage}` : image.name}
+                                        aria-pressed={node.image === image.id}
+                                        className={`flex h-11 w-11 items-center justify-center rounded-lg border ${node.image === image.id
+                                            ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={tavoloImageUrl(image.id)} alt="" loading="lazy"
+                                            className="h-8 w-8 rounded object-cover" />
                                     </button>
                                 ))}
                             </div>

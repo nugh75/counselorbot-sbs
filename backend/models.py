@@ -1415,3 +1415,24 @@ class TavoloRevision(Base):
     author = Column(String, nullable=False)  # person|model
     kind = Column(String, nullable=False)  # seed|edit|proposal|accept|reject
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class TavoloImage(Base):
+    """Un'immagine del catalogo del tavolo, caricata dall'amministrazione.
+
+    Le immagini arrivano in blocco insieme al file CSV che le accompagna: una
+    riga per file, con il nome e l'utilizzo. Un'immagine che il CSV non
+    menziona entra lo stesso, col nome del file e l'utilizzo da completare:
+    il caricamento massivo non si perde per una riga dimenticata.
+    """
+
+    __tablename__ = "tavolo_images"
+
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    usage = Column(Text, nullable=False, default="")
+    storage_path = Column(String, nullable=False)
+    original_name = Column(String, nullable=False)
+    content_type = Column(String, nullable=False)
+    created_by = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

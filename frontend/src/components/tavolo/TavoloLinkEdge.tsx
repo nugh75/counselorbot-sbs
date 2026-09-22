@@ -43,6 +43,8 @@ const NORM: Record<TavoloForm, (x: number, y: number) => number> = {
     action: (x, y) => Math.max(Math.abs(x), Math.abs(y)),
     decision: (x, y) => Math.abs(x) + Math.abs(y),
     outcome: (x, y) => Math.hypot(x, y),
+    // La card d'immagine e' un rettangolo arrotondato come il concetto.
+    image: (x, y) => Math.max(Math.abs(x), Math.abs(y)),
 };
 
 type Piece = InternalNode<Node<PieceData>>;

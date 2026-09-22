@@ -498,6 +498,19 @@ def read_tavolo(
     return _view(tavolo, _current(db, tavolo_id))
 
 
+def _prune_images(db: Session, graph) -> object:
+    """Le immagini del tavolo sono catalogo dell'amministrazione: un id fuori
+    elenco perde l'immagine, non il tavolo — stessa regola delle icone."""
+    wanted = {node.image for node in graph.nodes if node.image}
+    if not wanted:
+        return graph
+    known = {row for row, in db.query(models.TavoloImage.id).filter(models.TavoloImage.id.in_(wanted))}
+    for node in graph.nodes:
+        if node.image and node.image not in known:
+            node.image = None
+    return graph
+
+
 @router.put("/tavolo/{tavolo_id}")
 def write_tavolo(
     tavolo_id: str,
@@ -514,6 +527,7 @@ def write_tavolo(
         graph = parse_graph(request.graph)
     except TavoloError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    graph = _prune_images(db, graph)
     written = _write(db, tavolo, revision, graph, author="person", kind="edit")
     return _view(tavolo, written)
 

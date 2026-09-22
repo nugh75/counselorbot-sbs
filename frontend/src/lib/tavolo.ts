@@ -11,7 +11,9 @@ export type TavoloRel =
     | 'causes' | 'hinders' | 'feeds-back'
     | 'then' | 'blocks' | 'if'
     | 'part-of' | 'example-of';
-export type TavoloForm = 'concept' | 'action' | 'decision' | 'outcome';
+// La forma d'immagine e' solo del tavolo: la card dove il file del catalogo
+// e' quasi tutto il pezzo. Il server la conosce (backend/tavolo.py).
+export type TavoloForm = 'concept' | 'action' | 'decision' | 'outcome' | 'image';
 // Il raggruppamento della persona. Non e' un canale condiviso come la famiglia
 // dell'arco: vale quello che lei ci mette, e resta chiuso perche' una tavolozza
 // libera su quaranta pezzi smette di raggruppare.
@@ -107,6 +109,9 @@ export interface TavoloNodeData {
     label: string;
     form: TavoloForm;
     icon?: string | null;
+    // Un'immagine del catalogo caricato dall'amministrazione: affianca il nome
+    // nel pezzo, o lo diventa quasi tutto nella card d'immagine.
+    image?: string | null;
     color?: TavoloColor | null;
     // Il pezzo che conta: uno solo per tavolo, come nei diagrammi.
     accent?: boolean;
