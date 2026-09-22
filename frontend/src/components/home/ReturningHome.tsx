@@ -6,6 +6,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { BookOpen, ChevronDown, RotateCcw } from 'lucide-react';
@@ -99,9 +100,26 @@ export function ReturningHome({
                     </div>
                 )}
                 <div className="mt-6 space-y-8">
-                    {TOOL_CATEGORIES.map((group) => (
+                    {TOOL_CATEGORIES.map((group) => {
+                        const categoryImage = group.id === 'assessment'
+                            ? '/images/platform/compilazioni.png'
+                            : group.id === 'guided'
+                            ? '/images/platform/tavolo.png'
+                            : '/images/platform/bacheca-azioni.png';
+                        return (
                         <section key={group.id} id={`tools-${group.id}`} className="scroll-mt-24">
-                            <h2 className="text-base font-bold text-slate-800">{t(`base.category.${group.id}`)}</h2>
+                            <div className="flex items-center gap-3">
+                                <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-xs">
+                                    <Image
+                                        src={categoryImage}
+                                        alt=""
+                                        width={40}
+                                        height={40}
+                                        className="h-full w-full object-contain"
+                                    />
+                                </span>
+                                <h2 className="text-base font-bold text-slate-800">{t(`base.category.${group.id}`)}</h2>
+                            </div>
                             <div className="mt-3 grid gap-3 md:grid-cols-2">
                                 {group.questionnaireIds.map((id) => instrumentById.get(id)).filter((q): q is QuestionnaireConfig => Boolean(q)).map((q) => {
                                     const done = lastCompiledAt[q.id];
@@ -147,7 +165,8 @@ export function ReturningHome({
                                 )}
                             </div>
                         </section>
-                    ))}
+                        );
+                    })}
                 </div>
             </section>
             <div className="order-2 space-y-5">
