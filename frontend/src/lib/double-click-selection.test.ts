@@ -47,9 +47,8 @@ test('IntroScreen cards support both single-click selection and double-click adv
     assert.match(src, /anchor: 'tools-learning'/);
     assert.match(src, /onClick=\{\(\) => setSelectedKey\(activity\.key\)\}/);
     assert.match(src, /onOpenTools\?\.\(activity\.anchor\)/);
-    // Schede azione (Bussola/Strumenti)
-    assert.match(src, /onClick=\{\(\) => setSelectedKey\(action\.key\)\}/);
-    assert.match(src, /onDoubleClick=\{\(\) => \{\s*setSelectedKey\(action\.key\);\s*action\.onAdvance\?\.\(\);\s*\}\}/);
+    // Schede azione (Bussola/Strumenti): un solo clic seleziona e avanza
+    assert.match(src, /onClick=\{\(\) => \{\s*setSelectedKey\(action\.key\);\s*action\.onAdvance\?\.\(\);\s*\}\}/);
     assert.match(src, /images\/intro\/compass\.png/);
     assert.match(src, /images\/intro\/tools\.png/);
 });
