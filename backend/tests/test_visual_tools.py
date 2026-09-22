@@ -10,7 +10,7 @@ from backend import auth, database, models
 from backend.pdf_generator import generate_questionnaire_pdf
 from backend.routes.visual_tools import router
 from backend.tests.artifact_database import artifact_session
-from backend.visual_tools import SaveWorkspace, Workspace, load_workspace, save_workspace
+from backend.visual_tools import SaveWorkspace, Workspace, load_workspace, save_workspace, workspace_sections
 
 
 @pytest.fixture
@@ -49,6 +49,9 @@ def test_roundtrip_scope_and_stale_write(db):
 @pytest.mark.parametrize('change', [
     {'actions': [{'id': 'a', 'title': ''}]},
     {'cards': [{'id': 'a', 'text': 'x', 'bucket': 'scored'}]},
+    {'card_columns': [{'id': 'extra'}]},
+    {'card_columns': [{'id': 'unsorted'}, {'id': 'unsorted'}]},
+    {'cards': [{'id': 'a', 'text': 'x', 'bucket': 'card_todo'}]},
     {'cards': [{'id': 'a', 'text': 'x'}] * 31},
     {'actions': [{'id': 'a', 'title': 'One'}, {'id': 'a', 'title': 'Two'}]},
     {'comparison': {'chosen': 'missing'}},
@@ -58,6 +61,22 @@ def test_roundtrip_scope_and_stale_write(db):
 def test_reject_invalid_or_unbounded_work(change):
     with pytest.raises(ValidationError):
         Workspace.model_validate(change)
+
+
+def test_custom_card_columns_roundtrip_and_pdf(db):
+    custom = Workspace.model_validate({
+        'cards': [{'id': 'c1', 'text': 'Da rileggere', 'bucket': 'later'}, {'id': 'c2', 'text': 'In discussione', 'bucket': 'card_done'}],
+        'card_columns': [{'id': 'later', 'label': 'Da rileggere dopo'}, {'id': 'card_done'}]})
+    saved = save_workspace(db, 'visual-a', 'alice', SaveWorkspace(revision=0, workspace=custom))
+    db.expire_all()
+    assert load_workspace(db, 'visual-a', 'alice') == saved
+    assert saved['workspace']['card_columns'][0]['label'] == 'Da rileggere dopo'
+    sections = dict(workspace_sections(saved['workspace'], 'it'))
+    assert 'Da rileggere dopo: Da rileggere' in sections['Carte']
+    assert 'Fatto: In discussione' in sections['Carte']
+    # The default set keeps the historic localized labels without stored labels.
+    default = Workspace.model_validate({'cards': [{'id': 'c', 'text': 'x', 'bucket': 'yes'}]})
+    assert dict(workspace_sections(default.model_dump(), 'en'))['Cards'] == ['Fits me: x']
 
 
 def test_endpoints_enforce_ownership_and_restore_after_retry(db):
