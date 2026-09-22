@@ -13,6 +13,7 @@ import { ProfileVisualization } from '@/components/qsa/ProfileVisualization';
 import { ChatViewport } from '@/components/qsa/ChatViewport';
 import { cn } from '@/lib/utils';
 import { GuidedChatInterface } from '@/components/qsa/GuidedChatInterface';
+import { ChatSettingsCard } from '@/components/qsa/ChatSettingsCard';
 import { SessionReport } from '@/components/qsa/SessionReport';
 import { ReturningHome } from '@/components/home/ReturningHome';
 import dynamic from 'next/dynamic';
@@ -31,6 +32,7 @@ import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker
 import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, setActiveSessionCounselorId } from '@/lib/counselor';
 import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, getReasoningPref, getResponseLengthPref, setExperiencePref, setInputMethodPref, setReasoningPref, setResponseLengthPref } from '@/lib/session-prefs';
+import type { ResponseFormat } from '@/lib/chat-preferences';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
 import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
@@ -43,7 +45,7 @@ import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
 import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-history';
 
 
-type Step = 'intro' | 'base' | 'questionnaire-select' | 'counselor-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'interaction' | 'completed' | 'farewell';
+type Step = 'intro' | 'base' | 'questionnaire-select' | 'counselor-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'chat-settings' | 'interaction' | 'completed' | 'farewell';
 
 // Compilazioni già salvate: servono a sapere se c'è qualcosa da riusare prima
 // di saltare la scelta del metodo di inserimento.
@@ -101,6 +103,9 @@ export default function Home() {
     const [experience, setExperience] = useState<'standard' | 'opencode' | null>(null);
     const [responseLength, setResponseLength] = useState<ResponseLength>(() => getResponseLengthPref());
     const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() => getReasoningPref());
+    // Formato delle risposte: scelto nella pagina Impostazioni e consegnato
+    // alla chat come valore iniziale; in chat resta regolabile dal menu.
+    const [responseFormat, setResponseFormat] = useState<ResponseFormat>('standard');
     // Il selettore del ragionamento non farebbe nulla sui modelli noti come
     // non-reasoning: si chiede al server se quello del counselor ragiona.
     const [reasoningCapable, setReasoningCapable] = useState(true);
@@ -530,8 +535,10 @@ export default function Home() {
     };
 
     useEffect(() => {
-        if (step !== 'interaction') return;
-        const counselorId = sessionCounselorId;
+        if (step !== 'interaction' && step !== 'chat-settings') return;
+        // Nella pagina Impostazioni la sessione non è ancora iniziata: il counselor
+        // selezionato viene dal pannello di preferenza, non dallo stato.
+        const counselorId = sessionCounselorId ?? getSelectedCounselorId();
         if (counselorId == null) return;
         let cancelled = false;
         void fetchCounselors(lang).then((rows) => {
@@ -602,6 +609,7 @@ export default function Home() {
         else if (step === 'method-select' || step === 'counselor-select') setStep('questionnaire-select');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
         else if (step === 'dashboard') setStep('method-select');
+        else if (step === 'chat-settings') setStep('dashboard');
         else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'questionnaire-select' : 'dashboard');
         else if (step === 'completed') setStep('dashboard');
         else if (step === 'farewell') setStep('completed');
@@ -662,11 +670,11 @@ export default function Home() {
     }, {});
     const completedTypes = Object.keys(lastCompiledAt) as QuestionnaireType[];
 
-    const flowStages = ['CounselorBot', t('flow.select'), t('flow.input'), t('flow.profile'), t('flow.chat'), t('flow.done')];
+    const flowStages = ['CounselorBot', t('flow.select'), t('flow.input'), t('flow.profile'), t('flow.settings'), t('flow.chat'), t('flow.done')];
     const stageIndex = step === 'intro' ? 0
         : step === 'questionnaire-select' || step === 'counselor-select' ? 1
         : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 2
-        : step === 'dashboard' ? 3 : step === 'interaction' ? 4 : 5;
+        : step === 'dashboard' ? 3 : step === 'chat-settings' ? 4 : step === 'interaction' ? 5 : 6;
 
     return (
         <div className={cn("page-wide", step === 'interaction' ? "space-y-4" : "space-y-8")}>
@@ -749,10 +757,28 @@ export default function Home() {
                         <div className="space-y-4 animate-fade-in-up">
                             <div className="flex items-center gap-3">
                                 <BackButton onClick={goBack} label={t('nav.back')} />
-                                <ForwardButton onClick={startInteraction} label={t('dashboard.ready.btn')} disabled={starting} />
+                                <ForwardButton onClick={() => setStep('chat-settings')} label={t('dashboard.ready.btn')} disabled={starting} />
                             </div>
                             <ProfileVisualization scores={scores} questionnaire={selectedQuestionnaire} />
                         </div>
+                    )}
+
+                    {/* Step: Impostazioni conversazione. Una pagina sola, prima di
+                        entrare in chat; chi riprende una sessione congelata la
+                        salta, perché la sua conversazione ha già le sue regole. */}
+                    {step === 'chat-settings' && scores && selectedQuestionnaire && (
+                        <ChatSettingsCard
+                            reasoningCapable={reasoningCapable}
+                            starting={starting}
+                            responseFormat={responseFormat}
+                            onResponseFormatChange={setResponseFormat}
+                            responseLength={responseLength}
+                            onResponseLengthChange={handleResponseLengthChange}
+                            reasoningEffort={reasoningEffort}
+                            onReasoningChange={handleReasoningChange}
+                            onBack={goBack}
+                            onStart={startInteraction}
+                        />
                     )}
 
                     {/* Step: Guided Chat Interaction */}
@@ -801,6 +827,7 @@ export default function Home() {
                                     frozenSnapshot={frozenSnapshot}
                                     initialResponseLength={responseLength}
                                     initialReasoningEffort={reasoningEffort}
+                                    initialResponseFormat={responseFormat}
                                     reasoningCapable={reasoningCapable}
                                     onFrozen={() => {
                                         setResume(null);
