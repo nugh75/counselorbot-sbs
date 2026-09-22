@@ -106,8 +106,7 @@ export function IntroScreen({
                                 role="button"
                                 tabIndex={0}
                                 aria-pressed={isSelected}
-                                onClick={() => setSelectedKey(action.key)}
-                                onDoubleClick={() => {
+                                onClick={() => {
                                     setSelectedKey(action.key);
                                     action.onAdvance?.();
                                 }}
