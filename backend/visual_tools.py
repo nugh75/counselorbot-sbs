@@ -34,7 +34,14 @@ class Action(Item):
 
 class Card(Item):
     text: str = Field(min_length=1, max_length=600)
-    bucket: Literal['unsorted', 'yes', 'explore', 'no'] = 'unsorted'
+    bucket: str = Field(default='unsorted', max_length=64, pattern=r'^[a-zA-Z0-9_-]+$')
+
+
+class CardColumn(StrictModel):
+    # A column reusing a preset id keeps its localized label; a custom id needs
+    # the student's own text.
+    id: str = Field(min_length=1, max_length=64, pattern=r'^[a-zA-Z0-9_-]+$')
+    label: str = Field(default='', max_length=100)
 
 
 class Option(Item):
@@ -131,6 +138,7 @@ class Timeline(StrictModel):
 class Workspace(StrictModel):
     actions: list[Action] = Field(default_factory=list, max_length=30)
     cards: list[Card] = Field(default_factory=list, max_length=30)
+    card_columns: list[CardColumn] = Field(default_factory=list, max_length=8)
     comparison: Comparison = Field(default_factory=Comparison)
     timeline: Timeline = Field(default_factory=Timeline)
 
@@ -139,6 +147,17 @@ class Workspace(StrictModel):
         for items in (self.actions, self.cards):
             if len({item.id for item in items}) != len(items):
                 raise ValueError('Duplicate identifiers')
+        if len({column.id for column in self.card_columns}) != len(self.card_columns):
+            raise ValueError('Duplicate card columns')
+        # Empty card_columns means the default set (localized preset labels).
+        # Custom columns must carry the student's own label.
+        for column in self.card_columns:
+            if not column.label and column.id not in CARD_COLUMN_LABELS['en']:
+                raise ValueError('Custom card columns need a label')
+        columns = self.card_columns or DEFAULT_CARD_COLUMNS
+        for card in self.cards:
+            if card.bucket not in {column.id for column in columns}:
+                raise ValueError('Unknown card column')
         return self
 
 
@@ -238,6 +257,16 @@ def save_workspace(db: Session, session_id: str, username: str, update: SaveWork
     return {'revision': row.id, 'workspace': clean}
 
 
+# Preset card columns: the default set and the alternative layouts the student
+# can pick. Labels are localized in CARD_COLUMN_LABELS; student-defined columns
+# carry their own text in Workspace.card_columns.
+CARD_SET_COLUMNS = {
+    'sort': ['unsorted', 'yes', 'explore', 'no'],
+    'kanban': ['card_todo', 'card_doing', 'card_done'],
+    'explore': ['to_explore', 'explored', 'reflecting'],
+}
+DEFAULT_CARD_COLUMNS = [CardColumn(id=value) for value in CARD_SET_COLUMNS['sort']]
+
 # Shared by the standalone export and the final session PDF.
 LABELS = {
     'it': ['Tools', 'Piano personale', 'Da provare', 'In corso', 'Provata', 'Riflessione', 'Carte', 'Da ordinare', 'Mi rappresenta', 'Da approfondire', 'Non mi rappresenta', 'Confronto', 'Scelta', 'Motivazione', 'Fonte'],
@@ -246,6 +275,28 @@ LABELS = {
     'fr': ['Tools', 'Plan personnel', 'À essayer', 'En cours', 'Essayée', 'Réflexion', 'Cartes', 'À classer', 'Me correspond', 'À approfondir', 'Ne me correspond pas', 'Comparaison', 'Choix', 'Motif', 'Source'],
     'de': ['Tools', 'Persönlicher Plan', 'Ausprobieren', 'In Arbeit', 'Ausprobiert', 'Reflexion', 'Karten', 'Unsortiert', 'Passt zu mir', 'Weiter erkunden', 'Passt nicht zu mir', 'Vergleich', 'Wahl', 'Begründung', 'Quelle'],
     'sv': ['Tools', 'Personlig plan', 'Att prova', 'Pågår', 'Provad', 'Reflektion', 'Kort', 'Osorterat', 'Stämmer för mig', 'Utforska vidare', 'Stämmer inte för mig', 'Jämförelse', 'Val', 'Motivering', 'Källa'],
+}
+
+# Card column labels for the preset ids (mirrors frontend i18n-visual-tools).
+CARD_COLUMN_LABELS = {
+    'it': {'unsorted': 'Da ordinare', 'yes': 'Mi rappresenta', 'explore': 'Da approfondire', 'no': 'Non mi rappresenta',
+        'card_todo': 'Da fare', 'card_doing': 'In corso', 'card_done': 'Fatto',
+        'to_explore': 'Da esplorare', 'explored': 'Esplorato', 'reflecting': 'In riflessione'},
+    'en': {'unsorted': 'Unsorted', 'yes': 'Fits me', 'explore': 'Explore further', 'no': 'Does not fit me',
+        'card_todo': 'To do', 'card_doing': 'In progress', 'card_done': 'Done',
+        'to_explore': 'To explore', 'explored': 'Explored', 'reflecting': 'Reflecting'},
+    'es': {'unsorted': 'Sin ordenar', 'yes': 'Me representa', 'explore': 'Por explorar', 'no': 'No me representa',
+        'card_todo': 'Por hacer', 'card_doing': 'En curso', 'card_done': 'Hecho',
+        'to_explore': 'Por explorar', 'explored': 'Explorada', 'reflecting': 'En reflexión'},
+    'fr': {'unsorted': 'À classer', 'yes': 'Me correspond', 'explore': 'À approfondir', 'no': 'Ne me correspond pas',
+        'card_todo': 'À faire', 'card_doing': 'En cours', 'card_done': 'Fait',
+        'to_explore': 'À explorer', 'explored': 'Explorée', 'reflecting': 'En réflexion'},
+    'de': {'unsorted': 'Unsortiert', 'yes': 'Passt zu mir', 'explore': 'Weiter erkunden', 'no': 'Passt nicht zu mir',
+        'card_todo': 'Zu erledigen', 'card_doing': 'In Arbeit', 'card_done': 'Erledigt',
+        'to_explore': 'Zu erkunden', 'explored': 'Erkundet', 'reflecting': 'In Reflexion'},
+    'sv': {'unsorted': 'Osorterat', 'yes': 'Stämmer för mig', 'explore': 'Utforska vidare', 'no': 'Stämmer inte för mig',
+        'card_todo': 'Att göra', 'card_doing': 'Pågår', 'card_done': 'Klar',
+        'to_explore': 'Att utforska', 'explored': 'Utforskad', 'reflecting': 'I reflektion'},
 }
 
 
@@ -259,7 +310,9 @@ def workspace_sections(workspace: dict, language: str) -> list[tuple[str, list[s
                 a.detail, f'{labels[5]}: {a.reflection}' if a.reflection else '', f'{labels[14]}: {a.source}' if a.source else '']))
             for a in w.actions]))
     if w.cards:
-        sections.append((labels[6], [f'{labels[7 + ["unsorted", "yes", "explore", "no"].index(c.bucket)]}: {c.text}'
+        card_labels = CARD_COLUMN_LABELS.get((language or 'en')[:2], CARD_COLUMN_LABELS['en'])
+        column_labels = {column.id: column.label for column in w.card_columns}
+        sections.append((labels[6], [f'{column_labels.get(c.bucket) or card_labels.get(c.bucket, c.bucket)}: {c.text}'
             + (f'\n{labels[14]}: {c.source}' if c.source else '') for c in w.cards]))
     if w.comparison.options:
         c = w.comparison
