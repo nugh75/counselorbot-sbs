@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Compass, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -14,7 +14,13 @@ const sections = [
     { id: 'questionnaires', title: 'questionnaires', paragraphs: ['questionnaires.p1', 'questionnaires.p2', 'questionnaires.p3'] },
 ] as const;
 
-export function IntroScreen({ onStart }: { onStart: () => void }) {
+export function IntroScreen({
+    onStart,
+    onOpenTools,
+}: {
+    onStart: () => void;
+    onOpenTools?: () => void;
+}) {
     const { t } = useI18n();
 
     return (
@@ -42,11 +48,70 @@ export function IntroScreen({ onStart }: { onStart: () => void }) {
                 ))}
             </section>
 
-            <div className="space-y-3 text-center">
-                <Button type="button" variant="accent" size="lg" onClick={onStart}>{t('app.home.cta')}</Button>
-                <p className="text-sm text-slate-600">{t('app.intro.compact.pace')}</p>
-                <p className="text-sm text-slate-500">{t('app.intro.compact.limits')}</p>
-            </div>
+            <section aria-label={t('app.intro.actions.label')} className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 text-left transition-colors hover:border-indigo-300">
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
+                                    <Compass className="h-5 w-5" aria-hidden="true" />
+                                </div>
+                                <h3 className="font-display text-lg font-bold text-slate-900">
+                                    {t('app.intro.action.compass.label')}
+                                </h3>
+                            </div>
+                            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                                {t('app.intro.action.compass.desc')}
+                            </p>
+                        </div>
+                        <div className="mt-5 pt-1">
+                            <Button
+                                type="button"
+                                variant="accent"
+                                size="lg"
+                                onClick={onStart}
+                                className="w-full justify-center gap-2 sm:w-auto"
+                            >
+                                <Compass className="h-4 w-4" aria-hidden="true" />
+                                <span>{t('app.intro.action.compass.label')}</span>
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 text-left transition-colors hover:border-indigo-300">
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
+                                    <LayoutGrid className="h-5 w-5" aria-hidden="true" />
+                                </div>
+                                <h3 className="font-display text-lg font-bold text-slate-900">
+                                    {t('app.intro.action.tools.label')}
+                                </h3>
+                            </div>
+                            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                                {t('app.intro.action.tools.desc')}
+                            </p>
+                        </div>
+                        <div className="mt-5 pt-1">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="lg"
+                                onClick={onOpenTools}
+                                className="w-full justify-center gap-2 sm:w-auto"
+                            >
+                                <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+                                <span>{t('app.intro.action.tools.label')}</span>
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-1.5 text-center">
+                    <p className="text-sm text-slate-600">{t('app.intro.compact.pace')}</p>
+                    <p className="text-sm text-slate-500">{t('app.intro.compact.limits')}</p>
+                </div>
+            </section>
 
             <div className="divide-y divide-slate-200 border-y border-slate-200">
                 {sections.map((section) => (

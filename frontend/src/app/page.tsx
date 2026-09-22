@@ -211,14 +211,14 @@ export default function Home() {
         hasCompletedQuestionnaires || notebookUpdatedAt ? 'base' : 'intro'
     );
 
-    // Nessun link diretto: chi ha già un percorso alle spalle entra dal
-    // percorso, chi arriva per la prima volta dalla presentazione.
+    // Nessun link diretto: la presentazione iniziale è l'unica landing page
+    // per tutti gli accessi; la schermata strumenti non viene più usata come
+    // porta d'ingresso automatica per i secondi utilizzi.
     useEffect(() => {
         if (ready || entryClaimed.current) return;
         if (!identity?.authenticated) return;
         if (savedResults === null || notebookUpdatedAt === undefined) return;
-        // Choose the entry screen after the external profile requests resolve.
-        setStep(savedResults.length > 0 || notebookUpdatedAt ? 'base' : 'intro');
+        setStep('intro');
         setReady(true);
     }, [ready, identity, savedResults, notebookUpdatedAt]);
 
@@ -677,7 +677,7 @@ export default function Home() {
                 >
                     {/* Step: Intro */}
                     {step === 'intro' && (
-                        <IntroScreen onStart={startFromIntro} />
+                        <IntroScreen onStart={startFromIntro} onOpenTools={() => setStep('base')} />
                     )}
 
                     {/* Step: percorso — schermata iniziale di chi è già passato di qui */}
