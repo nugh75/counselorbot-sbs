@@ -32,12 +32,29 @@ function GuideContent() {
     const sectionTitle = (n: number) => teacher ? l(`teacher${n}Title` as GuideAudienceKey) : t(`guide.section${n}.title`);
     const sectionBody = (n: number) => teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`);
     const images = guideImages[lang];
-    const spotIllustrations: Record<number, string> = teacher ? {} : {
+    const spotIllustrations: Record<number, string> = teacher ? {
+        1: '/images/platform/feedback-docente.png',
+        2: '/images/platform/classi.png',
+        3: '/images/platform/idea.png',
+        4: '/images/platform/assegnazioni.png',
+        5: '/images/platform/chat-guidata.png',
+        7: '/images/platform/bussola.png',
+    } : {
+        1: '/images/platform/bussola.png',
+        2: '/images/platform/idea.png',
         3: '/images/platform/compilazioni.png',
+        4: '/images/platform/counselor.png',
+        5: '/images/platform/tavolo.png',
         6: '/images/platform/su-di-me.png',
+        7: '/images/platform/chat-guidata.png',
+        8: '/images/platform/voce.png',
+        9: '/images/platform/carte-ordinare.png',
+        10: '/images/platform/eventi.png',
+        11: '/images/platform/bacheca-azioni.png',
         12: '/images/platform/libretto.png',
         13: '/images/platform/linea-del-tempo.png',
         14: '/images/platform/assegnazioni.png',
+        15: '/images/platform/classi.png',
     };
     const sectionImages: Record<number, { image: StaticImageData; caption: string }[]> = teacher ? {
         1: [{ image: images['teacher-area'], caption: l('teacher1Title') }],
