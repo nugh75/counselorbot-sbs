@@ -2142,12 +2142,12 @@ DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS: List[Dict] = _evento_guided_steps("EV
 _OBIETTIVO_STEP_REPLACEMENTS = {
     "OBIETTIVO_STUDIO": {
         "who": "you",
-        "context": "their notebook, a recent result, a course or a task they find hard",
+        "context": "their notebook, the context of their class when present, a recent result, a course or a task they find hard",
         "domain": "learning",
     },
     "OBIETTIVO_DOCENZA": {
         "who": "your students",
-        "context": "the class, the curriculum, a recent activity or a topic the class finds hard",
+        "context": "the teacher's notebook (disciplines, methodologies, experience), the class context provided for this conversation, a recent activity or a topic the class finds hard",
         "domain": "teaching",
     },
 }

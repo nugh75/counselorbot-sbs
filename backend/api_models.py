@@ -28,6 +28,10 @@ class ChatRequest(schemas.BaseModel):
     guided_path: Literal["complete", "essential"] = "complete"
     idea_variant: Optional[str] = None  # Idea: student-path|student-open|research|concept
     idea_budget: Optional[int] = None   # scambi previsti per la sessione; 0/None = senza limite
+    # Chat docenza: classi scelte dal docente (una o piu') per questa
+    # conversazione. Il server riverifica l'accesso a ogni turno e ignora il
+    # campo per qualsiasi altro strumento.
+    group_ids: Optional[list[int]] = None
 
 
 class SiteChatRequest(schemas.BaseModel):
