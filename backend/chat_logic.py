@@ -865,8 +865,8 @@ def _phase_factor_codes(db, phase: Optional[str]) -> set[str]:
 # di navigazione quando la richiesta arriva con guided_path="essential".
 _ESSENTIAL_PATH_DESCRIPTIONS = {
     "QSA": "Essential QSA path: choose a focus, give one example, agree or adapt one action, receive a summary. Exactly three student replies; further discussion is optional.",
-    "OBIETTIVO_STUDIO": "Essential learning-objective path: choose the area and Bloom level, run one quick SMART check, agree the first steps with one if-then plan and a proof, receive a summary. Exactly three student replies; further discussion is optional.",
-    "OBIETTIVO_DOCENZA": "Essential didactic-objective path: choose the area and Bloom level for the class, run one quick SMART check, align one activity and the assessment, receive a summary. Exactly three student replies; further discussion is optional.",
+    "OBIETTIVO_STUDIO": "Essential learning-objective path: choose the area and Bloom level with an observable verb, run one quick SMART check, agree the first steps with one if-then plan and a proof, receive the objective restated in its complete well-written form (who + observable verb + what + condition + criterion). Exactly three student replies; further discussion is optional.",
+    "OBIETTIVO_DOCENZA": "Essential didactic-objective path: choose the area and Bloom level for the class with an observable verb, run one quick SMART check, align one activity and the assessment, receive the objective in its complete ABCD form (audience + observable verb + what + lesson condition + criterion tied to the assessment). Exactly three student replies; further discussion is optional.",
 }
 
 
