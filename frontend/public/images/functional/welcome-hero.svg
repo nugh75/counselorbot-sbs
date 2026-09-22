@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%" fill="none">
+  <!-- Sfondo pulito -->
+  <rect width="800" height="450" fill="#ffffff" />
+
+  <!-- Griglia e assi prospettici funzionali -->
+  <g stroke="#e2e8f0" stroke-width="1.5">
+    <line x1="80" y1="225" x2="720" y2="225" stroke-dasharray="6 6" />
+    <line x1="400" y1="50" x2="400" y2="400" stroke-dasharray="6 6" />
+    <!-- Linee di fuga delicate -->
+    <line x1="120" y1="360" x2="680" y2="360" stroke="#f1f5f9" stroke-width="2" />
+    <line x1="180" y1="310" x2="620" y2="310" stroke="#f1f5f9" stroke-width="2" />
+  </g>
+
+  <!-- Cerchi concentrici del quadrante di orientamento -->
+  <circle cx="400" cy="225" r="140" stroke="#e9f2f2" stroke-width="24" />
+  <circle cx="400" cy="225" r="120" stroke="#155e63" stroke-width="2.5" opacity="0.8" />
+  <circle cx="400" cy="225" r="95" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4 4" />
+  <circle cx="400" cy="225" r="65" stroke="#e2e8f0" stroke-width="1.5" />
+
+  <!-- Tacche cardinali (registro strumento misurato) -->
+  <g stroke="#155e63" stroke-width="2.5" stroke-linecap="round">
+    <line x1="400" y1="95" x2="400" y2="115" />
+    <line x1="400" y1="335" x2="400" y2="355" />
+    <line x1="270" y1="225" x2="290" y2="225" />
+    <line x1="510" y1="225" x2="530" y2="225" />
+  </g>
+  <g stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round">
+    <line x1="311" y1="136" x2="325" y2="150" />
+    <line x1="489" y1="136" x2="475" y2="150" />
+    <line x1="311" y1="314" x2="325" y2="300" />
+    <line x1="489" y1="314" x2="475" y2="300" />
+  </g>
+
+  <!-- Ago della bussola: nord-est in ocra, sud-ovest in petrolio -->
+  <g>
+    <!-- Ombra morbida dell'ago -->
+    <polygon points="400,225 488,143 394,220" fill="#000000" opacity="0.06" />
+    <!-- Ago Nord-Est (direzione propria - Ocra) -->
+    <polygon points="400,225 485,140 415,210" fill="#c9711f" />
+    <polygon points="400,225 485,140 395,225" fill="#b15f17" />
+    <!-- Coda Sud-Ovest (origine - Petrolio) -->
+    <polygon points="400,225 315,310 385,240" fill="#155e63" />
+    <polygon points="400,225 315,310 405,225" fill="#124e52" />
+    <!-- Perno centrale -->
+    <circle cx="400" cy="225" r="9" fill="#0e3539" />
+    <circle cx="400" cy="225" r="4" fill="#ffffff" />
+  </g>
+
+  <!-- Card funzionale satellite 1: Scheda questionario (in alto a sinistra) -->
+  <g transform="translate(130, 90)">
+    <rect width="130" height="90" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" filter="drop-shadow(0 4px 12px rgba(15, 23, 42, 0.05))" />
+    <!-- Clip -->
+    <rect x="45" y="-5" width="40" height="10" rx="4" fill="#155e63" />
+    <!-- Righe con pallini/spunte -->
+    <circle cx="26" cy="30" r="5" fill="#155e63" />
+    <rect x="40" y="27" width="68" height="6" rx="3" fill="#cbd5e1" />
+    <circle cx="26" cy="48" r="5" fill="#c9711f" />
+    <rect x="40" y="45" width="52" height="6" rx="3" fill="#cbd5e1" />
+    <circle cx="26" cy="66" r="5" fill="#e2e8f0" />
+    <rect x="40" y="63" width="60" height="6" rx="3" fill="#e2e8f0" />
+  </g>
+
+  <!-- Card funzionale satellite 2: Dialogo e Insight (in alto a destra) -->
+  <g transform="translate(540, 80)">
+    <rect width="140" height="100" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" filter="drop-shadow(0 4px 12px rgba(15, 23, 42, 0.05))" />
+    <!-- Fumetto utente -->
+    <rect x="50" y="18" width="72" height="24" rx="8" fill="#155e63" />
+    <rect x="62" y="28" width="48" height="4" rx="2" fill="#e9f2f2" />
+    <!-- Risposta counselor con badge ocra -->
+    <rect x="18" y="52" width="104" height="34" rx="8" fill="#f8fafc" stroke="#e2e8f0" />
+    <circle cx="34" cy="69" r="6" fill="#c9711f" />
+    <rect x="48" y="64" width="62" height="4" rx="2" fill="#94a3b8" />
+    <rect x="48" y="72" width="42" height="4" rx="2" fill="#cbd5e1" />
+  </g>
+
+  <!-- Card funzionale satellite 3: Obiettivo e Milestone (in basso a destra) -->
+  <g transform="translate(530, 260)">
+    <rect width="140" height="95" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" filter="drop-shadow(0 4px 12px rgba(15, 23, 42, 0.05))" />
+    <!-- Mini gradini / milestone -->
+    <path d="M 25 72 L 55 72 L 55 52 L 85 52 L 85 32 L 115 32" stroke="#155e63" stroke-width="3" fill="none" stroke-linejoin="round" />
+    <!-- Nodi spuntati -->
+    <circle cx="25" cy="72" r="5" fill="#155e63" />
+    <circle cx="55" cy="52" r="5" fill="#155e63" />
+    <circle cx="85" cy="32" r="5" fill="#155e63" />
+    <!-- Bandierina ocra sul traguardo -->
+    <line x1="115" y1="32" x2="115" y2="16" stroke="#c9711f" stroke-width="2.5" />
+    <polygon points="115,16 130,22 115,28" fill="#c9711f" />
+  </g>
+
+  <!-- Card funzionale satellite 4: Radar sintetico (in basso a sinistra) -->
+  <g transform="translate(130, 255)">
+    <rect width="130" height="95" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" filter="drop-shadow(0 4px 12px rgba(15, 23, 42, 0.05))" />
+    <!-- Radar pentagono stilizzato -->
+    <polygon points="65,22 98,42 86,76 44,76 32,42" fill="none" stroke="#e2e8f0" stroke-width="1.5" />
+    <polygon points="65,34 88,48 78,70 52,70 42,48" fill="#e9f2f2" stroke="#155e63" stroke-width="2" opacity="0.9" />
+    <circle cx="65" cy="34" r="4" fill="#c9711f" />
+    <circle cx="88" cy="48" r="3" fill="#155e63" />
+    <circle cx="78" cy="70" r="3" fill="#155e63" />
+    <circle cx="52" cy="70" r="3" fill="#155e63" />
+    <circle cx="42" cy="48" r="3" fill="#155e63" />
+  </g>
+</svg>
