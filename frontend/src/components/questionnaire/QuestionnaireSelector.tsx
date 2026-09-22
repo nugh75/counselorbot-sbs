@@ -9,7 +9,7 @@ import { AlertTriangle, BookOpen, Check, ChevronDown, ExternalLink } from 'lucid
 import { useI18n } from '@/lib/i18n-context';
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { STRATEGIC_COMPETENCES_URLS } from '@/lib/questionnaire-sources';
-import { ACTIVE_QUESTIONNAIRE_IDS, TOOL_CATEGORIES } from '@/lib/tool-catalog';
+import { ACTIVE_QUESTIONNAIRE_IDS, TEACHER_AREA_INSTRUMENT_IDS, TOOL_CATEGORIES } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
@@ -38,8 +38,10 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
     const csQuestionnaires = active.filter((q) => !q.agentOnly);
     // Idea non e' un'intervista e non ha un questionario dietro: sta per conto
     // suo, e resta disponibile anche nelle lingue in cui i questionari non ci sono.
+    // Gli strumenti dell'area docenti non stanno nel catalogo studente: si
+    // raggiungono da /docente, il deep link resta valido.
     const focusTools = active.filter((q) => q.id === 'IDEA');
-    const interviews = active.filter((q) => q.agentOnly && q.id !== 'IDEA');
+    const interviews = active.filter((q) => q.agentOnly && q.id !== 'IDEA' && !(TEACHER_AREA_INSTRUMENT_IDS as readonly string[]).includes(q.id));
     const hasPqbl = TOOL_CATEGORIES.some((group) => group.standaloneIds.includes('pqbl'));
     const isItalian = lang === 'it';
     const isAdministrationLang = instrumentCatalog?.some((row) => row.available_locales.includes(lang)) ?? false;

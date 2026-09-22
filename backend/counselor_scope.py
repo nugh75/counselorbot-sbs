@@ -20,6 +20,8 @@ RESTRICTED_CONFIG_KEY = "counselor_restricted_instruments"
 DEFAULT_RESTRICTED = ("IDEA",)
 EVENT_PATHS_MARKER = "counselor_scope_event_paths_v1"
 EVENT_INSTRUMENTS = ("EVENTO_STUDIO", "EVENTO_PROFESSIONALE")
+OBIETTIVO_PATHS_MARKER = "counselor_scope_obiettivi_v1"
+OBIETTIVO_INSTRUMENTS = ("OBIETTIVO_STUDIO", "OBIETTIVO_DOCENZA")
 
 
 def restricted_instruments(db) -> set[str]:
@@ -96,6 +98,36 @@ def extend_interview_counselors(db) -> bool:
         key=EVENT_PATHS_MARKER,
         value="applied",
         description="Migrazione una tantum: i counselor che servono SAVICKAS servono anche i due Evento significativo.",
+    ))
+    db.commit()
+    return updated
+
+
+def extend_obiettivo_counselors(db) -> bool:
+    """Chi serve SAVICKAS serve anche i due percorsi Obiettivo, una volta sola.
+
+    Stessa logica degli Evento significativo: sono conversazioni guidate con
+    intervista, quindi chi è stato scelto per l'intervista narrativa è adatto
+    anche a queste. Il marker impedisce di rimetterli se l'admin li toglie.
+    """
+    from . import models
+
+    if db.query(models.Config).filter(models.Config.key == OBIETTIVO_PATHS_MARKER).first() is not None:
+        return False
+    updated = False
+    for counselor in db.query(models.Counselor).all():
+        declared = list(counselor.questionnaire_types or [])
+        codes = {str(item).upper() for item in declared}
+        if "SAVICKAS" not in codes:
+            continue
+        missing = [code for code in OBIETTIVO_INSTRUMENTS if code not in codes]
+        if missing:
+            counselor.questionnaire_types = declared + missing
+            updated = True
+    db.add(models.Config(
+        key=OBIETTIVO_PATHS_MARKER,
+        value="applied",
+        description="Migrazione una tantum: i counselor che servono SAVICKAS servono anche i due percorsi Obiettivo.",
     ))
     db.commit()
     return updated

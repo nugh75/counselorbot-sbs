@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%" fill="none">
+  <!-- Sfondo pulito -->
+  <rect width="400" height="400" fill="#ffffff" />
+
+  <!-- Finestra di chat funzionale -->
+  <g filter="drop-shadow(0 8px 24px rgba(15, 23, 42, 0.08))">
+    <rect x="45" y="40" width="310" height="325" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+
+    <!-- Barra superiore della chat: avatar counselor e stato -->
+    <rect x="45" y="40" width="310" height="48" rx="16" fill="#f8fafc" />
+    <path d="M 45 72 L 45 88 L 355 88 L 355 72" fill="#f8fafc" />
+    <line x1="45" y1="88" x2="355" y2="88" stroke="#e2e8f0" stroke-width="1.5" />
+    <!-- Avatar Counselor -->
+    <circle cx="75" cy="64" r="14" fill="#155e63" />
+    <circle cx="85" cy="74" r="4" fill="#10b981" stroke="#ffffff" stroke-width="1.5" />
+    <!-- Righe identificative counselor (placeholder senza testo) -->
+    <rect x="98" y="56" width="90" height="7" rx="3.5" fill="#334155" />
+    <rect x="98" y="68" width="55" height="5" rx="2.5" fill="#94a3b8" />
+
+    <!-- Messaggio utente (allineato a destra) -->
+    <g transform="translate(145, 105)">
+      <rect x="0" y="0" width="185" height="44" rx="14" fill="#155e63" />
+      <!-- Linee placeholder bianche -->
+      <rect x="16" y="14" width="145" height="6" rx="3" fill="#ffffff" opacity="0.95" />
+      <rect x="16" y="25" width="100" height="6" rx="3" fill="#ffffff" opacity="0.75" />
+    </g>
+
+    <!-- Risposta del Counselor (strutturata a blocchi semantici funzionali) -->
+    <g transform="translate(70, 162)">
+      <!-- Riquadro messaggio -->
+      <rect x="0" y="0" width="235" height="122" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5" />
+
+      <!-- Blocco 1: Badge del fattore analizzato -->
+      <rect x="16" y="14" width="70" height="18" rx="5" fill="#e9f2f2" stroke="#155e63" stroke-width="1" />
+      <circle cx="26" cy="23" r="3.5" fill="#155e63" />
+      <rect x="34" y="20.5" width="44" height="5" rx="2.5" fill="#155e63" />
+
+      <!-- Blocco 2: Insight / Suggerimento con icona ocra -->
+      <g transform="translate(16, 40)">
+        <polygon points="6,2 8,7 13,8 9,12 10,17 6,14 2,17 3,12 -1,8 4,7" fill="#c9711f" />
+        <rect x="22" y="5" width="175" height="5" rx="2.5" fill="#475569" />
+        <rect x="22" y="14" width="140" height="5" rx="2.5" fill="#64748b" />
+      </g>
+
+      <!-- Blocco 3: Punti elenco operativi (Action Items) -->
+      <g transform="translate(16, 72)">
+        <circle cx="4" cy="5" r="3" fill="#155e63" />
+        <rect x="14" y="2.5" width="165" height="5" rx="2.5" fill="#64748b" />
+
+        <circle cx="4" cy="18" r="3" fill="#155e63" />
+        <rect x="14" y="15.5" width="145" height="5" rx="2.5" fill="#64748b" />
+
+        <circle cx="4" cy="31" r="3" fill="#c9711f" />
+        <rect x="14" y="28.5" width="125" height="5" rx="2.5" fill="#c9711f" opacity="0.9" />
+      </g>
+    </g>
+
+    <!-- Barra inferiore di input scrittura -->
+    <g transform="translate(70, 305)">
+      <rect x="0" y="0" width="200" height="38" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+      <rect x="14" y="16" width="110" height="6" rx="3" fill="#94a3b8" opacity="0.6" />
+      <!-- Pulsante invio -->
+      <rect x="210" y="0" width="38" height="38" rx="8" fill="#155e63" />
+      <path d="M 224 14 L 234 19 L 224 24" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+  </g>
+</svg>

@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 STUDENT_BOOKLET_TYPES = (
     "QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA",
     "EVENTO_STUDIO", "EVENTO_PROFESSIONALE",
+    # I percorsi Obiettivo non hanno libretto: la sintesi precompila gli
+    # obiettivi personali, non il libretto. Restano fuori da questa lista.
 )
 
 

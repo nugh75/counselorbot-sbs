@@ -14,6 +14,8 @@ const INTERVIEW_PATHS: Readonly<Record<string, InterviewPath>> = {
     QAP: { agreementStepId: 'qap-intro', finalStepId: 'qap-sintesi' },
     EVENTO_STUDIO: { agreementStepId: 'evstudio-patto', finalStepId: 'evstudio-final' },
     EVENTO_PROFESSIONALE: { agreementStepId: 'evprof-patto', finalStepId: 'evprof-final' },
+    OBIETTIVO_STUDIO: { agreementStepId: 'obbstudio-patto', finalStepId: 'obbstudio-final' },
+    OBIETTIVO_DOCENZA: { agreementStepId: 'obbdocenza-patto', finalStepId: 'obbdocenza-final' },
 };
 
 const QUESTIONS_PHASE_ID = 'questions';

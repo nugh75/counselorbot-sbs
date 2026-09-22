@@ -58,7 +58,9 @@ import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-cont
 import { EMPTY_RECOMMENDATIONS, normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 
 import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
-import { chatPreferenceLabel, essentialSteps, nextEssentialPhase, ESSENTIAL_PHASES, type ResponseFormat, type GuidedPath } from '@/lib/chat-preferences';
+import { chatPreferenceLabel, essentialSteps, nextEssentialPhase, essentialPhasesFor, isEssentialInstrument, isEssentialSummaryPhase, type ResponseFormat, type GuidedPath } from '@/lib/chat-preferences';
+import { isGoalInstrument, type GoalDraft } from '@/lib/goal-draft';
+import { GoalDraftCard } from '@/components/qsa/GoalDraftCard';
 
 // --- Types ---
 
@@ -433,9 +435,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const { streamChat, ...continuation } = useChatContinuation();
-    const [guidedPath, setGuidedPath] = useState<GuidedPath>(questionnaireType === 'QSA' ? frozenSnapshot?.guided_path ?? 'complete' : 'complete');
-    const [pathStarted, setPathStarted] = useState(questionnaireType !== 'QSA' || Boolean(frozenSnapshot?.session_id === sessionId));
-    const essential = questionnaireType === 'QSA' && guidedPath === 'essential';
+    const pathChoiceAvailable = isEssentialInstrument(questionnaireType);
+    const [guidedPath, setGuidedPath] = useState<GuidedPath>(pathChoiceAvailable ? frozenSnapshot?.guided_path ?? 'complete' : 'complete');
+    const [pathStarted, setPathStarted] = useState(!pathChoiceAvailable || Boolean(frozenSnapshot?.session_id === sessionId));
+    const essential = pathChoiceAvailable && guidedPath === 'essential';
     const [responseFormat, setResponseFormat] = useState<ResponseFormat>(frozenSnapshot?.response_format ?? 'standard');
     const [steps, setSteps] = useState<StepDef[]>([]);
     const [phases, setPhases] = useState<string[]>([]);
@@ -520,6 +523,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [showAdvanceSuggestion, setShowAdvanceSuggestion] = useState(false);
     // Bozza del libretto dalla sintesi dell'Evento significativo.
     const [eventBookletDraft, setEventBookletDraft] = useState<EventBookletDraft | null>(null);
+    const [goalDraftValue, setGoalDraftValue] = useState<GoalDraft | null>(null);
     const [userMessagesInPhase, setUserMessagesInPhase] = useState(0);
     const [recommendations, setRecommendations] = useState<RecommendationCatalog>(EMPTY_RECOMMENDATIONS);
     const [savedDiagrams, setSavedDiagrams] = useState<Record<string, SavedMessageDiagram>>({});
@@ -691,12 +695,12 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 const res = essential ? null : await fetch(`/api/qsa/guided-ui-texts?questionnaire_type=${questionnaireType}&lang=${activeLocale}`);
                 if (res && !res.ok) throw new Error("Unable to load guided steps");
 
-                const data = res ? await res.json() : { guided_steps: essentialSteps(activeLocale) };
+                const data = res ? await res.json() : { guided_steps: essentialSteps(questionnaireType, activeLocale) };
                 if (!isMounted) return;
 
                 // The API label is already localized. Static translations are used only
                 // for the offline fallback paths.
-                const loadedSteps: StepDef[] = essential ? essentialSteps(activeLocale) : data.guided_steps || [];
+                const loadedSteps: StepDef[] = essential ? essentialSteps(questionnaireType, activeLocale) : data.guided_steps || [];
                 const normalized = normalizeLoadedSteps(questionnaireType, loadedSteps);
                 const normalizedSteps = normalized.steps.map((s) => ({
                     ...s,
@@ -787,9 +791,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 setConclusionText(data.text_guided_conclusion || t('guided.conclusionText'));
             } catch {
                 if (essential) {
-                    setSteps(essentialSteps(activeLocale));
-                    setPhases([...ESSENTIAL_PHASES]);
-                    setCurrentPhase(ESSENTIAL_PHASES[0]);
+                    const phases = essentialPhasesFor(questionnaireType);
+                    setSteps(essentialSteps(questionnaireType, activeLocale));
+                    setPhases([...phases]);
+                    setCurrentPhase(phases[0]);
                 } else if (questionnaireType === 'SAVICKAS') {
                     setSteps(SAVICKAS_FALLBACK_STEPS.map((s) => ({ ...s, label: stepLabel(activeLocale, s.id, s.label) })));
                     const fallbackOrder = [...SAVICKAS_FALLBACK_STEPS.map((s) => s.id), FIXED_CONCLUSION_ID];
@@ -1050,10 +1055,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 if (result.conversation_id) setConversationId(result.conversation_id);
                 adoptRecommendations(result.recommendations);
                 if (result.event_booklet) setEventBookletDraft(result.event_booklet);
+                if (result.goal_draft) setGoalDraftValue(result.goal_draft);
                 setLastFeedbackTargets(result.strategy_ids, result.response_id);
                 refreshIdeaWorkspace(result.idea_revision_id);
                 if (isIdea) setIdeaDrew(result.idea_revision_id != null);
-            if (isIdea) setIdeaDrew(result.idea_revision_id != null);
                 streamOk = true;
             } catch {
                 if (controller.signal.aborted) return;
@@ -1203,7 +1208,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 message: effectiveMessage,
                 memory_message: userMessage,
                 mode: resolveInteractiveMode(),
-                phase: essential ? (currentPhase === ESSENTIAL_PHASES[3] ? "qsa-essential-followup" : responsePhase) : isAnalysisStep(currentPhase) ? currentPhase : undefined,
+                phase: essential ? (questionnaireType === 'QSA' && isEssentialSummaryPhase(currentPhase) ? "qsa-essential-followup" : responsePhase) : isAnalysisStep(currentPhase) ? currentPhase : undefined,
                 session_id: sessionId,
                 conversation_id: conversationId,
                 questionnaire_type: questionnaireType,
@@ -1230,6 +1235,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             if (result.conversation_id) setConversationId(result.conversation_id);
             adoptRecommendations(result.recommendations);
             if (result.event_booklet) setEventBookletDraft(result.event_booklet);
+            if (result.goal_draft) setGoalDraftValue(result.goal_draft);
             setLastFeedbackTargets(result.strategy_ids, result.response_id);
             refreshIdeaWorkspace(result.idea_revision_id);
             if (isIdea) setIdeaDrew(result.idea_revision_id != null);
@@ -1244,7 +1250,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             if (essential && cleanText) {
                 processedPhases.current.add(responsePhase);
                 setCurrentPhase(responsePhase);
-                void recordMemoryEvent(responsePhase, responsePhase === ESSENTIAL_PHASES[3], userMessage);
+                void recordMemoryEvent(responsePhase, isEssentialSummaryPhase(responsePhase), userMessage);
             }
             if (!essential && shouldAdvance) {
                 // Percorsi a intervista e QPCS: l'utente decide quando cambiare step.
@@ -1401,7 +1407,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     if (!pathStarted) return <div className="mx-auto w-full max-w-md space-y-4 p-4">
         {onBack && <button type="button" onClick={onBack} className="min-h-11 text-sm text-slate-600">{t('nav.back')}</button>}
         <fieldset className="glass-panel space-y-3 p-5">
-            <legend className="px-1 font-semibold text-slate-800">{chatPreferenceLabel(activeLocale, 'choose')}</legend>
+            <legend className="px-1 font-semibold text-slate-800">{chatPreferenceLabel(activeLocale, questionnaireType === 'QSA' ? 'choose' : 'choosePath')}</legend>
+            {/* Solo gli strumenti con versione essenziale mostrano la scelta; il QSA mantiene la domanda sul profilo. */}
             {(['complete', 'essential'] as const).map(path => <label key={path} className="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3">
                 <input type="radio" name="qsa-path" value={path} checked={guidedPath === path} onChange={() => setGuidedPath(path)} className="mt-1" />
                 <span><span className="block font-medium">{chatPreferenceLabel(activeLocale, path)}</span>
@@ -1463,7 +1470,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         { conclusion: currentPhase === FIXED_CONCLUSION_ID, suggestion: showAdvanceSuggestion, userMessages: userMessagesInPhase },
     );
     const showRepeatStep = currentPhase !== FIXED_CONCLUSION_ID;
-    const essentialSummary = essential && currentPhase === ESSENTIAL_PHASES[3];
+    const essentialSummary = essential && isEssentialSummaryPhase(currentPhase);
     const hasStepNavigation = showPreviousStep || showStandardAdvance || showInterviewAdvance || showRepeatStep;
 
     const nextStepLabel = t(advanceLabelKey(questionnaireType, currentPhase));
@@ -1812,6 +1819,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 {/* Input Area */}
                 {currentPhase === FIXED_CONCLUSION_ID && !voiceMode && isEventInstrument(questionnaireType) && (
                     <EventBookletCard questionnaireType={questionnaireType} draft={eventBookletDraft} />
+                )}
+                {(currentPhase === FIXED_CONCLUSION_ID || essentialSummary) && !voiceMode && isGoalInstrument(questionnaireType) && (
+                    <GoalDraftCard questionnaireType={questionnaireType} sessionId={sessionId} draft={goalDraftValue} onChange={setGoalDraftValue} />
                 )}
                 {currentPhase === FIXED_CONCLUSION_ID && !voiceMode ? (
                     <div className="flex items-center justify-center gap-2 border-t border-slate-100 bg-slate-50 p-3 sm:p-4">

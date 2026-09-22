@@ -159,6 +159,38 @@ TOOL_BRIEFS: dict[str, str] = {
         "whole career story (that is SAVICKAS), and it does not assess anyone else involved: other "
         "people are named by role only."
     ),
+    "OBIETTIVO_STUDIO": (
+        "WHAT IT LOOKS AT — One learning objective the student wants to set for themselves, in any "
+        "area of study or work: from a vague wish ('get better at writing') to a specific, "
+        "challenging, measurable goal with a small plan and a proof of success.\n"
+        "WHAT YOU GET — A guided conversation in seven steps: the starting area, the level with "
+        "Bloom's taxonomy, the SMART check, a challenge and learning-orientation check, first steps "
+        "with an if-then plan, and one proof with a check date. At the end the objective can be "
+        "saved in the personal goals area. No score, no questionnaire.\n"
+        "WHEN IT IS THE RIGHT MOMENT — When the student says they want to learn or improve something "
+        "but cannot say what exactly would count as success; after a profile result they want to "
+        "turn into action; before planning a study period.\n"
+        "WHAT IT DOES NOT DO — It does not choose the objective for the person, does not treat it "
+        "as a grade or an assessment, and does not retell a past event (that is EVENTO_STUDIO). The "
+        "teacher designing objectives for a class needs OBIETTIVO_DOCENZA instead."
+    ),
+    "OBIETTIVO_DOCENZA": (
+        "WHAT IT LOOKS AT — One didactic objective a teacher wants to set for a class or group: "
+        "what students should be able to do by the end, at which level, and with which activities "
+        "and assessment.\n"
+        "WHAT YOU GET — A guided conversation in seven steps: the class and starting area, the level "
+        "with Bloom's taxonomy, the SMART check, a challenge and learning-orientation check, then "
+        "alignment (constructive alignment by Biggs, backward design by Wiggins and McTighe): "
+        "activities that practise what the objective asks and an assessment planned before teaching. "
+        "At the end the objective can be saved among the teacher's own goals, published in their "
+        "goal catalog or assigned to a group, all on explicit confirmation. No score, no questionnaire.\n"
+        "WHEN IT IS THE RIGHT MOMENT — When a teacher is planning a unit or a course and wants "
+        "objectives that hold together with activities and assessment, or when objectives are stated "
+        "in vague terms ('understand', 'know about') and need a real level.\n"
+        "WHAT IT DOES NOT DO — It does not design the lesson plan for the teacher, does not grade "
+        "anyone, and does not set the teacher's own personal learning objective (that is "
+        "OBIETTIVO_STUDIO)."
+    ),
     "IDEA": (
         "WHAT IT LOOKS AT — One idea, decision or project the student already carries, and works to "
         "bring it into focus: what it actually is, what it depends on, what is missing, what the "
