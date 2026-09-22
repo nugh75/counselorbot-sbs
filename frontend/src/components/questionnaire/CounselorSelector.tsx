@@ -74,6 +74,11 @@ export function CounselorSelector({ onContinue, onBack, questionnaireName, quest
                 key={c.id}
                 type="button"
                 onClick={() => choose(c)}
+                onDoubleClick={() => {
+                    if (disabled || busy) return;
+                    choose(c);
+                    if (onContinue) onContinue(c.id);
+                }}
                 disabled={disabled}
                 className={`relative rounded-lg border p-4 text-left transition-colors ${
                     disabled

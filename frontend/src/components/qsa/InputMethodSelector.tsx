@@ -118,6 +118,15 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
                     role="button"
                     tabIndex={0}
                     onClick={() => setSelected(opt.key)}
+                    onDoubleClick={() => {
+                        setSelected(opt.key);
+                        if (chosenResultId !== null) {
+                            const result = savedResults.find((r) => r.id === chosenResultId);
+                            if (result && result.scores) {
+                                onSelect('resume', { sessionId: result.session_id, scores: result.scores });
+                            }
+                        }
+                    }}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(opt.key); } }}
                     aria-pressed={isSelected}
                     className={cardClass}
@@ -150,6 +159,10 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
                 key={opt.key}
                 type="button"
                 onClick={() => setSelected(opt.key)}
+                onDoubleClick={() => {
+                    setSelected(opt.key);
+                    onSelect(opt.key);
+                }}
                 aria-pressed={isSelected}
                 className={cardClass}
             >
