@@ -36,11 +36,12 @@ test('the landing shows before the gate, and its only way forward is the compass
     // I collegamenti che entrano dritti nel percorso restano al di qua.
     assert.equal(orientationGateBypass('/', '?view=questionnaires'), false);
     assert.equal(orientationGateBypass('/', '?start=IDEA'), false);
-    // E il tasto della presentazione porta alla Bussola, o passare di qui
-    // sarebbe saltarla.
+    // E il tasto della presentazione porta sempre alla Bussola: mai al
+    // catalogo vecchio (questionnaire-select), che rimane solo per i salti
+    // espliciti dalla Bussola stessa e dagli strumenti.
     const source = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
     const handler = source.slice(source.indexOf('const startFromIntro'), source.indexOf('const homeStep'));
-    assert.match(handler, /status\.required/);
+    assert.doesNotMatch(handler, /questionnaire-select/);
     assert.match(handler, /router\.push\('\/bussola'\)/);
     assert.match(source, /<IntroScreen onStart=\{startFromIntro\}/);
 });
