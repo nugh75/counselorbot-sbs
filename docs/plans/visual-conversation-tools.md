@@ -145,6 +145,30 @@ consegnate sopra.
   **Chiusura:** verifiche equivalenti agli strumenti precedenti, ordine delle
   scene incluso, prova d'uso e consegna completata nel perimetro autorizzato.
 
+- [x] **8. Colonne delle carte scelte dallo studente (2026-09-08).**
+  Lo studente sceglie le colonne del pannello Carte invece di trovare quattro
+  stati fissi. Tre set predefiniti riempiono le colonne: Riflessione (le quattro
+  storiche: Da ordinare, Mi rappresenta, Da approfondire, Non mi rappresenta),
+  Kanban (Da fare, In corso, Fatto) ed Esplorazione (Da esplorare, Esplorato,
+  In riflessione). Ogni colonna è poi rinominabile e rimovibile, e se ne possono
+  aggiungere fino a otto con etichetta libera (opzioni B e C autorizzate,
+  solo per le carte; azioni e confronto restano come sono).
+  Modello: `Workspace.card_columns` (lista esplicita `{id, label}`, vuota = set
+  predefinito con etichette localizzate, nessuna migrazione dei dati esistenti);
+  `Card.bucket` diventa l'identificativo di colonna e il backend rifiuta i
+  riferimenti a colonne inesistenti. Cambiare set sposta le carte fuori dalle
+  nuove colonne nella prima colonna; l'Annulla copre la scelta sbagliata, senza
+  conferma modale. Le etichette dei preset restano tradotte in sei lingue;
+  le colonne personalizzate usano il testo dello studente, redatto come gli
+  altri campi e riportato in PDF e ripresa in chat.
+  **Chiusura:** 14 test backend (validazione, roundtrip, PDF con colonne
+  personalizzate e predefinite) nel container PostgreSQL; 198 test frontend
+  unitari con nuovi casi per set, rinomina, rimozione e testo di handoff;
+  TypeScript, controllo i18n a sei lingue ed ESLint senza nuovi errori;
+  ricostruzione Docker di backend e frontend verificata. Limiti espliciti:
+  massimo 8 colonne, 30 carte; non si possono eliminare tutte le colonne;
+  l'ultima colonna resta.  Vedere la verifica dettagliata sotto.
+
 ### Linea del tempo: piano rivisto (2026-09-08)
 
 **Stato (2026-09-08):** implementata e verificata sul branch
