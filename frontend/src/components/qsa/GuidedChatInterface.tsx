@@ -87,6 +87,9 @@ interface GuidedChatInterfaceProps {
     frozenSnapshot?: FrozenSessionDetail | null;
     initialResponseLength?: ResponseLength;
     initialReasoningEffort?: ReasoningEffort;
+    // Formato scelto nella pagina Impostazioni: lo porta la chat come valore di
+    // partenza, al posto del default fisso.
+    initialResponseFormat?: ResponseFormat;
     // Falso solo quando il modello del counselor e' noto come non-reasoning:
     // il selettore non avrebbe effetto e non va mostrato.
     reasoningCapable?: boolean;
@@ -431,7 +434,7 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 // suo per non portarsela dietro negli altri strumenti.
 const IDEA_PANEL_BOUNDS = { min: 360, max: 720, initial: 480 };
 
-export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, reasoningCapable = true }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const { streamChat, ...continuation } = useChatContinuation();
@@ -439,7 +442,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const [guidedPath, setGuidedPath] = useState<GuidedPath>(pathChoiceAvailable ? frozenSnapshot?.guided_path ?? 'complete' : 'complete');
     const [pathStarted, setPathStarted] = useState(!pathChoiceAvailable || Boolean(frozenSnapshot?.session_id === sessionId));
     const essential = pathChoiceAvailable && guidedPath === 'essential';
-    const [responseFormat, setResponseFormat] = useState<ResponseFormat>(frozenSnapshot?.response_format ?? 'standard');
+    const [responseFormat, setResponseFormat] = useState<ResponseFormat>(frozenSnapshot?.response_format ?? initialResponseFormat ?? 'standard');
     const [steps, setSteps] = useState<StepDef[]>([]);
     const [phases, setPhases] = useState<string[]>([]);
     // Strumento Idea: la variante decide di che materia si parla, la versione
@@ -1414,7 +1417,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 <span><span className="block font-medium">{chatPreferenceLabel(activeLocale, path)}</span>
                     <span className="text-sm text-slate-600">{chatPreferenceLabel(activeLocale, path === 'essential' ? 'essentialHelp' : 'completeHelp')}</span></span>
             </label>)}
-            <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} />
+            {/* Il formato è scelto nella pagina Impostazioni del flusso: qui
+                resta solo il bivio del percorso, per non chiederlo due volte. */}
             <Button onClick={() => { setInitialLoading(true); setPathStarted(true); }} className="w-full">{chatPreferenceLabel(activeLocale, 'start')}</Button>
         </fieldset>
     </div>;
