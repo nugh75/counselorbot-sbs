@@ -2122,24 +2122,32 @@ _OBIETTIVO_STEP_REPLACEMENTS = {
     },
 }
 
-_OBIETTIVO_STEP_FILE_SUFFIXES = {
+_OBIETTIVO_STEP_FILE_NAMES = {
+    "intro": "obiettivo_intro_step_prompt",
+    "patto": "obiettivo_step_patto",
+    "partenza": "obiettivo_step_partenza",
+    "livello": "obiettivo_step_livello",
+    "smart": "obiettivo_step_smart",
+    "sfida": "obiettivo_step_sfida",
+}
+
+_OBIETTIVO_STEP_VARIANTS = {
     "OBIETTIVO_STUDIO": {
-        "piano": "piano_studio",
-        "verifica": "verifica_studio",
-        "final": "final_studio",
+        "piano": "obiettivo_step_piano_studio",
+        "verifica": "obiettivo_step_verifica_studio",
+        "final": "obiettivo_step_final_studio",
     },
     "OBIETTIVO_DOCENZA": {
-        "piano": "piano_docenza",
-        "verifica": "verifica_docenza",
-        "final": "final_docenza",
+        "piano": "obiettivo_step_piano_docenza",
+        "verifica": "obiettivo_step_verifica_docenza",
+        "final": "obiettivo_step_final_docenza",
     },
 }
 
 
 def _obiettivo_step_text(questionnaire_type: str, suffix: str) -> str:
     """Testo dello step: file condiviso con sostituzioni, o variante per strumento."""
-    variant = _OBIETTIVO_STEP_FILE_SUFFIXES[questionnaire_type].get(suffix)
-    name = f"obiettivo_step_{variant or suffix}"
+    name = _OBIETTIVO_STEP_VARIANTS[questionnaire_type].get(suffix) or _OBIETTIVO_STEP_FILE_NAMES[suffix]
     text = _text(name)
     for placeholder, value in _OBIETTIVO_STEP_REPLACEMENTS[questionnaire_type].items():
         text = text.replace("{" + placeholder + "}", value)
