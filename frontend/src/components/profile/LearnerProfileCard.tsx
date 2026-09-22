@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getIdentity, withViewAsHeaders } from '@/lib/auth';
-import { notebookAutosave, type NotebookAutosave, type NotebookData, type NotebookRevision, type SaveStatus } from '@/lib/notebook-autosave';
+import { notebookAutosave, type NotebookAutosave, type NotebookData, type NotebookRevision, type SaveMode, type SaveStatus } from '@/lib/notebook-autosave';
 import { AlertCircle, Check, History, LoaderCircle, Pencil, Trash2, X } from 'lucide-react';
 import { PencilButton } from '@/components/ui/PencilButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
@@ -80,6 +80,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     const [saved, setSaved] = useState(false);
     const autosave = useRef<NotebookAutosave | null>(null);
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+    const [lastSavedMode, setLastSavedMode] = useState<SaveMode | null>(null);
     const [dismissed, setDismissed] = useState(false);
     const [history, setHistory] = useState<Revision[] | null>(null);
     const [showHistory, setShowHistory] = useState(false);
@@ -116,7 +117,12 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     const response = await fetch('/api/user/learner-profile', {
                         method: 'POST', keepalive: true,
                         headers: saveHeaders,
-                        body: JSON.stringify({ ...payload.data, source: payload.source, session_id: payload.session_id }),
+                        body: JSON.stringify({
+                            ...payload.data,
+                            source: payload.source,
+                            session_id: payload.session_id,
+                            save_mode: payload.save_mode,
+                        }),
                     });
                     if (!response.ok) throw new Error('Notebook save failed');
                     return await response.json() as Revision;
@@ -130,8 +136,9 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                 unsubscribe = queue.subscribe(() => {
                     if (!active) return;
                     setSaveStatus(current.status);
+                    setLastSavedMode(current.lastSavedMode);
                     setSaving(current.status === 'saving');
-                    setSaved(current.status === 'saved');
+                    setSaved(current.status === 'saved' && current.lastSavedMode === 'manual');
                     setProfile(current.revision);
                     setHistory(null);
                 });
@@ -181,8 +188,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
         setValidationError('');
         const queue = autosave.current;
         if (!queue) return;
-        queue.update(form, source, sessionId);
-        if (!await queue.flush()) return;
+        if (!await queue.commit(form, source, sessionId)) return;
         setEditing(false);
         if (variant !== 'edit') setTimeout(() => setDismissed(true), 1200);
         onDone?.();
@@ -383,7 +389,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     </span>
                 )}
                 {saveStatus === 'saved' && (
-                    <span className="inline-flex" title={t('lp.saved')} aria-label={t('lp.saved')}>
+                    <span className="inline-flex" title={t(lastSavedMode === 'manual' ? 'lp.saved' : 'lp.autosaved')} aria-label={t(lastSavedMode === 'manual' ? 'lp.saved' : 'lp.autosaved')}>
                         <Check className="h-4 w-4 text-emerald-600" aria-hidden="true" />
                     </span>
                 )}

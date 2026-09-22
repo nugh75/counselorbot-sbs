@@ -22,8 +22,8 @@ async function fixture(width, intake = false) {
         else if (path === '/api/user/learner-profile') {
             if (req.method() === 'POST') {
                 if (state.fail) return route.fulfill({ status: 503, json: {} });
-                const { source, session_id, ...fields } = req.postDataJSON();
-                state.writes.push(fields);
+                const { source, session_id, save_mode, ...fields } = req.postDataJSON();
+                state.writes.push({ data: fields, save_mode });
                 state.revision = { id: (state.revision?.id ?? 0) + 1, data: fields, source, session_id, created_at: '2026-09-09' };
             }
             data = state.revision;
@@ -43,9 +43,14 @@ for (const width of [390, 1440]) {
             assert.equal(await goalsLink.getAttribute('href'), '/profilo/obiettivi');
             const field = page.getByLabel(/Altro che vuoi aggiungere/i);
             await field.fill('Voglio organizzare meglio lo studio');
-            await page.getByText('Taccuino aggiornato', { exact: true }).waitFor();
+            await page.getByLabel('Bozza recuperabile aggiornata', { exact: true }).waitFor();
             assert.equal(state.revision.data.notes, 'Voglio organizzare meglio lo studio');
+            assert.equal(state.writes.at(-1).save_mode, 'autosave');
             assert.equal(await field.inputValue(), 'Voglio organizzare meglio lo studio');
+            await page.getByRole('button', { name: 'Salva versione', exact: true }).click();
+            await page.getByText('Versione salvata nella cronologia', { exact: true }).first().waitFor();
+            assert.equal(state.writes.at(-1).save_mode, 'manual');
+            await page.getByRole('button', { name: 'Modifica', exact: true }).click();
             await field.fill('Ultime parole prima del cambio pagina');
             await page.goto(`${origin}/profilo`);
             await page.goto(`${origin}/profilo/taccuino`);
@@ -70,8 +75,9 @@ test('failed save survives reload, retries online, and never advances intake aut
         await page.getByLabel('Salvataggio non riuscito. Riprova.', { exact: true }).waitFor();
         state.fail = false;
         await page.evaluate(() => window.dispatchEvent(new Event('online')));
-        await page.getByText('Taccuino aggiornato', { exact: true }).waitFor();
+        await page.getByLabel('Bozza recuperabile aggiornata', { exact: true }).waitFor();
         assert.equal(state.revision.data.context, 'La mia bozza da conservare');
+        assert.equal(state.writes.at(-1).save_mode, 'autosave');
         assert.equal(new URL(page.url()).pathname, '/inizia');
         assert.equal(await field.inputValue(), 'La mia bozza da conservare');
         assert.deepEqual(state.errors, []);

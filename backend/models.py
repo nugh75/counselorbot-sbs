@@ -562,11 +562,11 @@ class GoalResourceLink(Base):
 
 
 class LearnerProfileRevision(Base):
-    """Modello del discente auto-dichiarato, append-only.
+    """Modello del discente auto-dichiarato con revisioni e bozza corrente.
 
-    Ogni salvataggio crea una nuova revisione: il profilo corrente è la riga
-    più recente per username, lo storico del cambiamento sono le righe
-    precedenti. Cancellare il profilo = cancellare tutte le revisioni.
+    I salvataggi espliciti sono append-only. L'autosalvataggio usa al massimo
+    una riga con source="autosave", aggiornata in-place e nascosta dallo
+    storico. Cancellare il profilo elimina sia revisioni sia bozza.
     """
 
     __tablename__ = "learner_profile_revisions"
@@ -574,7 +574,7 @@ class LearnerProfileRevision(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, nullable=False, index=True)
     data = Column(JSON, nullable=False)
-    source = Column(String, nullable=False, default="manual")  # intake|session_start|session_end|orientation|manual
+    source = Column(String, nullable=False, default="manual")  # autosave|intake|session_start|session_end|orientation|manual
     session_id = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

@@ -646,7 +646,7 @@ LEARNER_PROFILE_MAX_FIELD_CHARS = 600
 
 
 class LearnerProfileSave(BaseModel):
-    """Salvataggio = nuova revisione. Solo i campi noti, ognuno con cap caratteri."""
+    """Bozza automatica o revisione esplicita, con soli campi noti e limitati."""
     context: Optional[str] = None
     goal: Optional[str] = None
     main_difficulty: Optional[str] = None
@@ -663,6 +663,7 @@ class LearnerProfileSave(BaseModel):
     institution_slug: Optional[str] = None
     source: str = "manual"  # intake|session_start|session_end|orientation|manual
     session_id: Optional[str] = None
+    save_mode: Literal["autosave", "manual"] = "manual"
 
     @validator("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year", "institution_slug", pre=True)
     def _trim_and_cap(cls, v):

@@ -8,7 +8,8 @@ export interface NotebookRevision {
     session_id?: string | null;
     created_at: string;
 }
-type Payload = { data: NotebookData; source: string; session_id: string | null };
+export type SaveMode = 'autosave' | 'manual';
+type Payload = { data: NotebookData; source: string; session_id: string | null; save_mode: SaveMode };
 type Storage = Pick<globalThis.Storage, 'getItem' | 'setItem' | 'removeItem'>;
 export type SaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error';
 
@@ -33,6 +34,7 @@ export class NotebookAutosave {
     status: SaveStatus = 'idle';
     pending: Payload | null = null;
     running: Promise<boolean> | null = null;
+    lastSavedMode: SaveMode | null = null;
     private timer: ReturnType<typeof setTimeout> | undefined;
     private listeners = new Set<() => void>();
     private key: string;
@@ -51,7 +53,14 @@ export class NotebookAutosave {
             if (saved?.data && typeof saved.data === 'object' && !Array.isArray(saved.data)
                 && Object.values(saved.data).every(value => typeof value === 'string')
                 && typeof saved.source === 'string') {
-                this.pending = saved;
+                this.pending = {
+                    data: saved.data,
+                    source: saved.source,
+                    session_id: typeof saved.session_id === 'string' ? saved.session_id : null,
+                    // Le bozze v1 non distinguevano il tipo: al recupero devono
+                    // restare bozze, non trasformarsi in versioni storiche.
+                    save_mode: saved.save_mode === 'manual' ? 'manual' : 'autosave',
+                };
                 this.data = saved.data;
                 this.status = 'pending';
             }
@@ -66,13 +75,23 @@ export class NotebookAutosave {
 
     update(data: NotebookData, source: string, sessionId?: string) {
         this.data = { ...data };
-        this.pending = { data: this.data, source, session_id: sessionId || null };
+        this.pending = { data: this.data, source, session_id: sessionId || null, save_mode: 'autosave' };
         // Synchronous draft persistence closes the debounce/navigation loss window.
         try { this.storage.setItem(this.key, JSON.stringify(this.pending)); } catch { /* Server still saves. */ }
         this.status = 'pending';
         this.notify();
         clearTimeout(this.timer);
         this.timer = setTimeout(() => { void this.flush(); }, 600);
+    }
+
+    commit(data: NotebookData, source: string, sessionId?: string): Promise<boolean> {
+        clearTimeout(this.timer);
+        this.data = { ...data };
+        this.pending = { data: this.data, source, session_id: sessionId || null, save_mode: 'manual' };
+        try { this.storage.setItem(this.key, JSON.stringify(this.pending)); } catch { /* Server still saves. */ }
+        this.status = 'pending';
+        this.notify();
+        return this.flush();
     }
 
     flush(): Promise<boolean> {
@@ -89,6 +108,7 @@ export class NotebookAutosave {
             this.notify();
             try {
                 this.revision = await this.send(sent);
+                this.lastSavedMode = sent.save_mode;
                 if (this.pending === sent) {
                     this.pending = null;
                     try {
@@ -112,6 +132,7 @@ export class NotebookAutosave {
         this.pending = null;
         this.data = {};
         this.revision = null;
+        this.lastSavedMode = null;
         this.status = 'idle';
         try { this.storage.removeItem(this.key); } catch { /* Storage may be disabled. */ }
         this.notify();
