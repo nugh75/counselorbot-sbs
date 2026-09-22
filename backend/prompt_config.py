@@ -602,7 +602,10 @@ DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_DOCENTE = (
     "Answer about how the platform works: administering the questionnaires, the guided AI chat, the AI "
     "counselors, the Notebook, Booklet and Portfolio, personal goals, activities and diary, "
     "teacher catalogs, groups, assignments, explicit sharing and feedback. Explain both significant-event "
-    "tools (EVENTO_STUDIO and EVENTO_PROFESSIONALE) as narrative paths without scores. Distinguish "
+    "tools (EVENTO_STUDIO and EVENTO_PROFESSIONALE) as narrative paths without scores, and the two "
+    "objective-setting paths (OBIETTIVO_STUDIO for one's own learning objective, OBIETTIVO_DOCENZA for a "
+    "class's didactic objective, reachable from the teacher area) as guided conversations grounded in the "
+    "goal-setting literature. Distinguish "
     "pedagogical catalog permissions from technical administration.\n"
     "Stay on the PLATFORM: do not explain the strategic-competences theory of competenzestrategiche.it.\n\n"
     + _SITE_CHAT_COMMON_RULES
@@ -614,6 +617,9 @@ DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_STUDENTE = (
     "works, how to read a questionnaire profile, and how to use the Notebook, Booklet, Portfolio, "
     "personal goals, activities and diary. Explain EVENTO_STUDIO and EVENTO_PROFESSIONALE as "
     "separate narrative tools without questionnaires or scores, with a Booklet draft to review and save. "
+    "Explain OBIETTIVO_STUDIO (one's own learning objective, complete or essential version) as a guided "
+    "conversation that ends with a personal-goal draft to review and save, never an automatically created "
+    "goal. "
     "Explain received assignments, voluntary sharing and teacher feedback without claiming to perform "
     "actions for the person. Respect explicit choices and keep next steps manageable.\n"
     "Avoid technical jargon: use common words and examples. Friendly and encouraging tone.\n\n"
@@ -1109,6 +1115,30 @@ GUIDED_STATIC_TEXT_DEFINITIONS: List[Dict[str, str]] = [
         "label": "Evento significativo professionale - Messaggio Conclusione",
         "description": "Messaggio statico finale della guided chat EVENTO_PROFESSIONALE",
         "default": DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_CONCLUSION,
+    },
+    {
+        "key": "text_obbstudio_questions_intro",
+        "label": "Obiettivo di apprendimento - Messaggio intro fase Domande",
+        "description": "Messaggio introduttivo della fase domande per OBIETTIVO_STUDIO",
+        "default": DEFAULT_GUIDED_TEXT_OBBSTUDIO_QUESTIONS_INTRO,
+    },
+    {
+        "key": "text_obbstudio_conclusion",
+        "label": "Obiettivo di apprendimento - Messaggio Conclusione",
+        "description": "Messaggio statico finale della guided chat OBIETTIVO_STUDIO",
+        "default": DEFAULT_GUIDED_TEXT_OBBSTUDIO_CONCLUSION,
+    },
+    {
+        "key": "text_obbdocenza_questions_intro",
+        "label": "Obiettivi per la mia classe - Messaggio intro fase Domande",
+        "description": "Messaggio introduttivo della fase domande per OBIETTIVO_DOCENZA",
+        "default": DEFAULT_GUIDED_TEXT_OBBDOCENZA_QUESTIONS_INTRO,
+    },
+    {
+        "key": "text_obbdocenza_conclusion",
+        "label": "Obiettivi per la mia classe - Messaggio Conclusione",
+        "description": "Messaggio statico finale della guided chat OBIETTIVO_DOCENZA",
+        "default": DEFAULT_GUIDED_TEXT_OBBDOCENZA_CONCLUSION,
     },
     {
         "key": "text_qpcs_questions_intro",

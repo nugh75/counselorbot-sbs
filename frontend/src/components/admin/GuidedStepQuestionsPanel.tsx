@@ -12,6 +12,8 @@ const STEPS_BY_QUESTIONNAIRE: Record<string, string[]> = {
     SAVICKAS: ['savickas-intro', 'savickas-patto', 'savickas-q1', 'savickas-q2', 'savickas-q3', 'savickas-q4', 'savickas-q5', 'savickas-final', 'questions'],
     EVENTO_STUDIO: ['evstudio-intro', 'evstudio-patto', 'evstudio-evento', 'evstudio-fatto', 'evstudio-funzionato', 'evstudio-criticita', 'evstudio-rilettura', 'evstudio-prossima', 'evstudio-final', 'questions'],
     EVENTO_PROFESSIONALE: ['evprof-intro', 'evprof-patto', 'evprof-evento', 'evprof-fatto', 'evprof-funzionato', 'evprof-criticita', 'evprof-rilettura', 'evprof-prossima', 'evprof-final', 'questions'],
+    OBIETTIVO_STUDIO: ['obbstudio-intro', 'obbstudio-patto', 'obbstudio-partenza', 'obbstudio-livello', 'obbstudio-smart', 'obbstudio-sfida', 'obbstudio-piano', 'obbstudio-verifica', 'obbstudio-final', 'questions'],
+    OBIETTIVO_DOCENZA: ['obbdocenza-intro', 'obbdocenza-patto', 'obbdocenza-partenza', 'obbdocenza-livello', 'obbdocenza-smart', 'obbdocenza-sfida', 'obbdocenza-piano', 'obbdocenza-verifica', 'obbdocenza-final', 'questions'],
     QPCS: ['qpcs-intro', 'qpcs-welcome', 'qpcs-factors', 'qpcs-emozioni', 'qpcs-comunicazione', 'qpcs-volizione', 'qpcs-apprendimento', 'qpcs-fiducia', 'qpcs-sintesi', 'questions'],
     QPCC: ['qpcc-intro', 'qpcc-welcome', 'qpcc-factors', 'qpcc-comunicazione', 'qpcc-controllo', 'qpcc-volizione', 'qpcc-elaborazione', 'qpcc-convinzioni', 'qpcc-sintesi', 'questions'],
     QAP: ['qap-intro', 'qap-welcome', 'qap-factors', 'qap-preoccupazione', 'qap-controllo', 'qap-curiosita', 'qap-fiducia', 'qap-sintesi', 'questions'],

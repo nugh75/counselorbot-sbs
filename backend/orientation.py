@@ -37,7 +37,7 @@ TOOL_GROUPS = (
     ),
     (
         "GUIDED CONVERSATIONS - no items, no score, run entirely inside CounselorBot",
-        ("SAVICKAS", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE", "IDEA"),
+        ("SAVICKAS", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE", "OBIETTIVO_STUDIO", "OBIETTIVO_DOCENZA", "IDEA"),
     ),
     (
         "ACTIVE LEARNING - built from the student's own study material",
@@ -56,6 +56,8 @@ TOOL_DESCRIPTIONS = {
     "SAVICKAS": "narrative career-construction interview",
     "EVENTO_STUDIO": "guided look back at one significant study event: the facts, what worked, what did not, a second look and what to try next time",
     "EVENTO_PROFESSIONALE": "guided look back at one significant work event: the facts, what worked, what did not, a second look and what to try next time",
+    "OBIETTIVO_STUDIO": "guided path to set one learning objective: starting area, Bloom level, SMART check, challenge, plan and proof",
+    "OBIETTIVO_DOCENZA": "guided path to set one didactic objective for a class: Bloom level, SMART check, alignment with activities and assessment",
     "IDEA": "open conversation for a specific idea, decision or project the student already brings; not for students who do not yet know what they want",
     "pqbl": "active learning and questions generated from a study PDF",
 }
@@ -70,6 +72,8 @@ _KEYWORDS = {
     "SAVICKAS": ("storia", "story", "raccont", "biograf", "geschichte", "historia", "beratt"),
     "EVENTO_STUDIO": ("episod", "evento", "event", "lezion", "lesson", "tirocin", "internship", "stage", "praktik", "hande"),
     "EVENTO_PROFESSIONALE": ("episod", "evento", "event", "riunion", "meeting", "colloqu", "tirocin", "internship", "praktik", "hande"),
+    "OBIETTIVO_STUDIO": ("obiettiv", "goal", "objetivo", "objectif", "ziel", "mal", "bloom", "smart", "imparar", "imparare", "learn"),
+    "OBIETTIVO_DOCENZA": ("obiettiv", "goal", "objetivo", "objectif", "ziel", "docent", "teach", "classe", "class", "klasse", "lehr"),
     "IDEA": ("idea", "progett", "project", "decision", "scelta", "choice", "choix", "projekt", "beslut"),
     "pqbl": ("pdf", "document", "testo", "text", "articol", "paper", "dokumen"),
 }
@@ -104,10 +108,12 @@ _PLATFORM_HELP = {
         '• SAVICKAS: svolgere un’intervista narrativa sulla tua storia e sul progetto professionale.\n'
         '• EVENTO_STUDIO — Evento significativo di studio: rileggi un episodio di studio.\n'
         '• EVENTO_PROFESSIONALE — Evento significativo professionale: rileggi un episodio di lavoro o tirocinio.\n'
+        '• OBIETTIVO_STUDIO — Il mio obiettivo di apprendimento: imposta un obiettivo di apprendimento con Bloom, SMART e un piano.\n'
+        '• OBIETTIVO_DOCENZA — Obiettivi per la mia classe: imposta un obiettivo didattico allineato ad attività e valutazione.\n'
         '• IDEA: mettere a fuoco un’idea, una decisione o un progetto con una conversazione e una mappa.\n'
         'Apprendimento attivo:\n'
         '• pQBL: studiare un PDF attraverso domande e feedback.\n'
-        'I questionari non si compilano qui in italiano: in italiano li compili su competenzestrategiche.it e qui lavoriamo sui risultati. In inglese, spagnolo, francese, tedesco e svedese puoi compilarli anche qui, ma quelle versioni non sono ancora validate. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, IDEA e pQBL non sono questionari: funzionano qui in tutte le lingue.\n'
+        'I questionari non si compilano qui in italiano: in italiano li compili su competenzestrategiche.it e qui lavoriamo sui risultati. In inglese, spagnolo, francese, tedesco e svedese puoi compilarli anche qui, ma quelle versioni non sono ancora validate. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA e pQBL non sono questionari: funzionano qui in tutte le lingue.\n'
         'Inoltre, il Taccuino raccoglie ciò che emerge trasversalmente, il Libretto conserva il lavoro relativo a ogni strumento e il Portfolio documenta i tuoi elaborati. Puoi dirmi quale area ti interessa — per esempio studio e caratteristiche professionali — e ti aiuto a scegliere da dove iniziare.\n'
         'Nell’Area personale trovi anche obiettivi, attività, calendario e diario, carte, confronto e Tavolo. Le assegnazioni ricevute dai docenti possono diventare attività personali: scegli tu che cosa condividere come restituzione e puoi leggere il riscontro del docente.'
     ),
@@ -122,10 +128,12 @@ _PLATFORM_HELP = {
         '• SAVICKAS: take a narrative interview about your story and career project.\n'
         '• EVENTO_STUDIO — Significant study event: revisit one study episode.\n'
         '• EVENTO_PROFESSIONALE — Significant professional event: revisit one work or placement episode.\n'
+        '• OBIETTIVO_STUDIO — My learning objective: set a learning objective with Bloom, SMART and a plan.\n'
+        '• OBIETTIVO_DOCENZA — Objectives for my class: set a didactic objective aligned with activities and assessment.\n'
         '• IDEA: bring an idea, decision or project into focus through conversation and a map.\n'
         'Active learning:\n'
         '• pQBL: study a PDF through questions and feedback.\n'
-        'The questionnaires are not filled in here in Italian: in Italian you take them on competenzestrategiche.it and we work on the results here. In English, Spanish, French, German and Swedish you can also fill them in here, but those versions are not yet validated. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, IDEA and pQBL are not questionnaires: they work here in every language.\n'
+        'The questionnaires are not filled in here in Italian: in Italian you take them on competenzestrategiche.it and we work on the results here. In English, Spanish, French, German and Swedish you can also fill them in here, but those versions are not yet validated. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA and pQBL are not questionnaires: they work here in every language.\n'
         'The Notebook collects insights across paths, the Booklet keeps work for each tool, and the Portfolio documents your work. Tell me which area interests you and I will help you choose where to begin.\n'
         'The Personal area also contains goals, activities, calendar and diary, cards, comparison and Tavolo. Received teacher assignments can become personal activities: choose what to share as a response and read the teacher’s feedback.'
     ),
@@ -140,10 +148,12 @@ _PLATFORM_HELP = {
         '• SAVICKAS: realizar una entrevista narrativa sobre tu historia y proyecto profesional.\n'
         '• EVENTO_STUDIO — Evento significativo de estudio: revisa un episodio de estudio.\n'
         '• EVENTO_PROFESSIONALE — Evento significativo profesional: revisa un episodio de trabajo o prácticas.\n'
+        '• OBIETTIVO_STUDIO — Mi objetivo de aprendizaje: fija un objetivo de aprendizaje con Bloom, SMART y un plan.\n'
+        '• OBIETTIVO_DOCENZA — Objetivos para mi clase: fija un objetivo didáctico alineado con actividades y evaluación.\n'
         '• IDEA: enfocar una idea, decisión o proyecto mediante conversación y mapa.\n'
         'Aprendizaje activo:\n'
         '• pQBL: estudiar un PDF con preguntas y retroalimentación.\n'
-        'Los cuestionarios no se completan aquí en italiano: en italiano se completan en competenzestrategiche.it y aquí trabajamos sobre los resultados. En inglés, español, francés, alemán y sueco también puedes completarlos aquí, pero esas versiones aún no están validadas. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, IDEA y pQBL no son cuestionarios: funcionan aquí en todos los idiomas.\n'
+        'Los cuestionarios no se completan aquí en italiano: en italiano se completan en competenzestrategiche.it y aquí trabajamos sobre los resultados. En inglés, español, francés, alemán y sueco también puedes completarlos aquí, pero esas versiones aún no están validadas. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA y pQBL no son cuestionarios: funcionan aquí en todos los idiomas.\n'
         'El Cuaderno reúne lo que emerge entre recorridos, el Cuadernillo conserva el trabajo de cada herramienta y el Portfolio documenta tus producciones. Dime qué área te interesa y te ayudaré a elegir por dónde empezar.\n'
         'El Área personal también reúne objetivos, actividades, calendario y diario, tarjetas, comparación y Tavolo. Las asignaciones docentes pueden convertirse en actividades personales: tú eliges qué compartir como respuesta y puedes leer los comentarios del docente.'
     ),
@@ -158,10 +168,12 @@ _PLATFORM_HELP = {
         '• SAVICKAS : mener un entretien narratif sur votre histoire et votre projet professionnel.\n'
         '• EVENTO_STUDIO — Événement d’étude significatif : revenez sur un épisode d’étude.\n'
         '• EVENTO_PROFESSIONALE — Événement professionnel significatif : revenez sur un épisode de travail ou de stage.\n'
+        '• OBIETTIVO_STUDIO — Mon objectif d’apprentissage : fixez un objectif d’apprentissage avec Bloom, SMART et un plan.\n'
+        '• OBIETTIVO_DOCENZA — Objectifs pour ma classe : fixez un objectif didactique aligné sur les activités et l’évaluation.\n'
         '• IDEA : préciser une idée, une décision ou un projet par la conversation et une carte.\n'
         'Apprentissage actif :\n'
         '• pQBL : étudier un PDF à l’aide de questions et de retours.\n'
-        'Les questionnaires ne se remplissent pas ici en italien : en italien, on les remplit sur competenzestrategiche.it et nous travaillons ici sur les résultats. En anglais, espagnol, français, allemand et suédois, vous pouvez aussi les remplir ici, mais ces versions ne sont pas encore validées. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, IDEA et pQBL ne sont pas des questionnaires : ils fonctionnent ici dans toutes les langues.\n'
+        'Les questionnaires ne se remplissent pas ici en italien : en italien, on les remplit sur competenzestrategiche.it et nous travaillons ici sur les résultats. En anglais, espagnol, français, allemand et suédois, vous pouvez aussi les remplir ici, mais ces versions ne sont pas encore validées. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA et pQBL ne sont pas des questionnaires : ils fonctionnent ici dans toutes les langues.\n'
         'Le Carnet rassemble les éléments transversaux, le Livret conserve le travail de chaque outil et le Portfolio documente vos productions. Dites-moi quel domaine vous intéresse et je vous aiderai à choisir un point de départ.\n'
         'L’Espace personnel regroupe aussi objectifs, activités, calendrier et journal, cartes, comparaison et Tavolo. Les activités proposées par les enseignants peuvent devenir des activités personnelles : vous choisissez la réponse à partager et pouvez lire le retour de l’enseignant.'
     ),
@@ -176,10 +188,12 @@ _PLATFORM_HELP = {
         '• SAVICKAS: ein narratives Interview über deine Geschichte und dein berufliches Projekt führen.\n'
         '• EVENTO_STUDIO — Bedeutsames Lernereignis: blicke auf eine Lernsituation zurück.\n'
         '• EVENTO_PROFESSIONALE — Bedeutsames berufliches Ereignis: blicke auf eine Arbeits- oder Praktikumssituation zurück.\n'
+        '• OBIETTIVO_STUDIO — Mein Lernziel: lege ein Lernziel mit Bloom, SMART und einem Plan fest.\n'
+        '• OBIETTIVO_DOCENZA — Ziele für meine Klasse: lege ein Unterrichtsziel fest, das zu Aktivitäten und Bewertung passt.\n'
         '• IDEA: eine Idee, Entscheidung oder ein Projekt im Gespräch und mit einer Karte klären.\n'
         'Aktives Lernen:\n'
         '• pQBL: ein PDF durch Fragen und Feedback lernen.\n'
-        'Die Fragebögen werden hier nicht auf Italienisch ausgefüllt: Auf Italienisch füllst du sie auf competenzestrategiche.it aus, und hier arbeiten wir mit den Ergebnissen. Auf Englisch, Spanisch, Französisch, Deutsch und Schwedisch kannst du sie auch hier ausfüllen, diese Fassungen sind aber noch nicht validiert. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, IDEA und pQBL sind keine Fragebögen: Sie funktionieren hier in allen Sprachen.\n'
+        'Die Fragebögen werden hier nicht auf Italienisch ausgefüllt: Auf Italienisch füllst du sie auf competenzestrategiche.it aus, und hier arbeiten wir mit den Ergebnissen. Auf Englisch, Spanisch, Französisch, Deutsch und Schwedisch kannst du sie auch hier ausfüllen, diese Fassungen sind aber noch nicht validiert. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA und pQBL sind keine Fragebögen: Sie funktionieren hier in allen Sprachen.\n'
         'Das Notizbuch sammelt übergreifende Erkenntnisse, das Arbeitsheft bewahrt die Arbeit zu jedem Werkzeug und das Portfolio dokumentiert deine Ergebnisse. Sag mir, welcher Bereich dich interessiert, dann helfe ich dir beim Einstieg.\n'
         'Im persönlichen Bereich findest du auch Ziele, Aktivitäten, Kalender und Tagebuch, Karten, Vergleich und Tavolo. Zuweisungen von Lehrkräften können zu persönlichen Aktivitäten werden: Du entscheidest, welche Rückmeldung du teilst, und kannst das Feedback der Lehrkraft lesen.'
     ),
@@ -194,10 +208,12 @@ _PLATFORM_HELP = {
         '• SAVICKAS: genomföra en narrativ intervju om din historia och ditt yrkesprojekt.\n'
         '• EVENTO_STUDIO — Betydelsefull studiehändelse: se tillbaka på en studiesituation.\n'
         '• EVENTO_PROFESSIONALE — Betydelsefull professionell händelse: se tillbaka på en arbets- eller praktiksituation.\n'
+        '• OBIETTIVO_STUDIO — Mitt inlärningsmål: sätt ett inlärningsmål med Bloom, SMART och en plan.\n'
+        '• OBIETTIVO_DOCENZA — Mål för min klass: sätt ett undervisningsmål som stämmer med aktiviteter och bedömning.\n'
         '• IDEA: tydliggöra en idé, ett beslut eller ett projekt genom samtal och en karta.\n'
         'Aktivt lärande:\n'
         '• pQBL: studera en PDF med frågor och återkoppling.\n'
-        'Frågeformulären fylls inte i här på italienska: på italienska fyller du i dem på competenzestrategiche.it och här arbetar vi med resultaten. På engelska, spanska, franska, tyska och svenska kan du också fylla i dem här, men de versionerna är ännu inte validerade. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, IDEA och pQBL är inte frågeformulär: de fungerar här på alla språk.\n'
+        'Frågeformulären fylls inte i här på italienska: på italienska fyller du i dem på competenzestrategiche.it och här arbetar vi med resultaten. På engelska, spanska, franska, tyska och svenska kan du också fylla i dem här, men de versionerna är ännu inte validerade. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA och pQBL är inte frågeformulär: de fungerar här på alla språk.\n'
         'Anteckningsboken samlar sådant som gäller flera vägar, arbetshäftet bevarar arbetet för varje verktyg och Portfolio dokumenterar dina arbeten. Berätta vilket område som intresserar dig så hjälper jag dig att välja var du ska börja.\n'
         'Det personliga området innehåller också mål, aktiviteter, kalender och dagbok, kort, jämförelse och Tavolo. Tilldelningar från lärare kan bli personliga aktiviteter: du väljer vilket svar du delar och kan läsa lärarens återkoppling.'
     ),

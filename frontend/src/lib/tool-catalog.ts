@@ -20,6 +20,8 @@ export const ACTIVE_QUESTIONNAIRE_IDS: readonly QuestionnaireType[] = [
     'SAVICKAS',
     'EVENTO_STUDIO',
     'EVENTO_PROFESSIONALE',
+    'OBIETTIVO_STUDIO',
+    'OBIETTIVO_DOCENZA',
     'IDEA',
 ];
 
@@ -31,7 +33,7 @@ export const TOOL_CATEGORIES: readonly ToolCategoryDefinition[] = [
     },
     {
         id: 'guided',
-        questionnaireIds: ['SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'IDEA'],
+        questionnaireIds: ['SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'IDEA'],
         standaloneIds: [],
     },
     {
@@ -40,6 +42,12 @@ export const TOOL_CATEGORIES: readonly ToolCategoryDefinition[] = [
         standaloneIds: ['pqbl'],
     },
 ];
+
+// Attivi ma fuori dalle categorie della home: OBIETTIVO_DOCENZA è lo
+// strumento del docente, si raggiunge dall'area docenti e il deep link
+// `/?start=` resta valido. Chiunque aggiunga uno strumento a questa lista
+// deve avere un motivo esplicito come questo.
+export const TEACHER_AREA_INSTRUMENT_IDS: readonly QuestionnaireType[] = ['OBIETTIVO_DOCENZA'];
 
 export function isStartableQuestionnaireId(value: string): value is QuestionnaireType {
     return ACTIVE_QUESTIONNAIRE_IDS.includes(value as QuestionnaireType);

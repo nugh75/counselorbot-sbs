@@ -47,7 +47,7 @@ const PROVENIENZA_MAP: Record<string, string[]> = {
     'Germania': ['Nord', 'West', 'Süd', 'Ost', 'Ausland'],
     'Altro': ['Northern region', 'Central region', 'Southern region', 'Abroad'],
 };
-const TOOL_OPTIONS = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
+const TOOL_OPTIONS = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 
 const QUESTIONS = [
     { key: 'q_utile', label: 'Il chatbot mi è stato utile' },

@@ -1,7 +1,7 @@
 // Questionnaire Configuration
 // This file defines all available questionnaires and their configurations
 
-export type QuestionnaireType = 'QSA' | 'QSAr' | 'QPCS' | 'QPCC' | 'ZTPI' | 'QAP' | 'SAVICKAS' | 'EVENTO_STUDIO' | 'EVENTO_PROFESSIONALE' | 'IDEA';
+export type QuestionnaireType = 'QSA' | 'QSAr' | 'QPCS' | 'QPCC' | 'ZTPI' | 'QAP' | 'SAVICKAS' | 'EVENTO_STUDIO' | 'EVENTO_PROFESSIONALE' | 'OBIETTIVO_STUDIO' | 'OBIETTIVO_DOCENZA' | 'IDEA';
 
 export interface QuestionnaireConfig {
     id: QuestionnaireType;
@@ -184,6 +184,30 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         invertedFactors: [],
         color: 'bg-cyan-600',
         icon: 'briefcase',
+        agentOnly: true,
+    },
+    OBIETTIVO_STUDIO: {
+        id: 'OBIETTIVO_STUDIO',
+        name: 'Il mio obiettivo di apprendimento',
+        fullName: 'Il mio obiettivo di apprendimento',
+        description: 'Percorso guidato che trasforma un desiderio vago in un obiettivo di apprendimento specifico e sfidante: livello con la tassonomia di Bloom, prova SMART, piano e prova di successo',
+        factorPrefix: [],
+        factors: [],
+        invertedFactors: [],
+        color: 'bg-indigo-500',
+        icon: 'target',
+        agentOnly: true,
+    },
+    OBIETTIVO_DOCENZA: {
+        id: 'OBIETTIVO_DOCENZA',
+        name: 'Obiettivi per la mia classe',
+        fullName: 'Obiettivi per la mia classe',
+        description: 'Percorso guidato per docenti che imposta un obiettivo didattico per la classe e lo allinea ad attività e valutazione (allineamento costruttivo)',
+        factorPrefix: [],
+        factors: [],
+        invertedFactors: [],
+        color: 'bg-indigo-600',
+        icon: 'target',
         agentOnly: true,
     },
     IDEA: {
