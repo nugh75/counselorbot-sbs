@@ -18,6 +18,13 @@ from backend import prompt_config
 PROMPTS_DIR = Path(prompt_config.__file__).parent / "prompts"
 SOURCE = Path(prompt_config.__file__).read_text(encoding="utf-8")
 REFERENCED = set(re.findall(r'_text\("([a-z0-9_]+)"\)', SOURCE))
+# I file del percorso Obiettivo sono referenziati per nome in dizionari
+# (`_OBIETTIVO_STEP_FILE_NAMES`, `_OBIETTIVO_STEP_VARIANTS`), non con una
+# chiamata letterale a `_text`: nessuno di quei nomi deve risultare orfano.
+for _name in getattr(prompt_config, "_OBIETTIVO_STEP_FILE_NAMES", {}).values():
+    REFERENCED.add(_name)
+for _mapping in getattr(prompt_config, "_OBIETTIVO_STEP_VARIANTS", {}).values():
+    REFERENCED.update(_mapping.values())
 
 
 def test_every_referenced_prompt_file_exists():
@@ -61,6 +68,8 @@ def test_every_guided_step_has_a_prompt():
         prompt_config.DEFAULT_QPCS_GUIDED_STEPS,
         prompt_config.DEFAULT_QPCC_GUIDED_STEPS,
         prompt_config.DEFAULT_QAP_GUIDED_STEPS,
+        prompt_config.DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS,
+        prompt_config.DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS,
     )
     for steps in step_lists:
         for step in steps:

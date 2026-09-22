@@ -37,9 +37,11 @@ DIRECTIVE = (
     '{"title": "", "motivation": "", "criteria": "", "reflection": "", '
     '"review_date": ""}\n'
     "```\n"
-    "Keys: title = the objective in one sentence as the person agreed it ('I want to be able "
-    "to...'), at most 160 characters; motivation = the starting area and why the objective "
-    "matters to the person; criteria = how success is seen and measured, including the proof "
+    "Keys: title = the objective as finally agreed, in its well-written form (Mager): who + one "
+    "observable verb at the agreed Bloom level + what + the condition when given ('Given X, I "
+    "will be able to Y...'), at most 160 characters, never a bare mental-state verb; motivation = "
+    "the starting area and why the objective matters to the person; criteria = how success is "
+    "seen and measured (the Mager criterion: how much, how well, by when), including the proof "
     "they chose; reflection = the first steps and the if-then plan as agreed; review_date = "
     "YYYY-MM-DD only if the person gave a day, otherwise empty. Write the values in the "
     "language of the conversation. Leave a value empty when the person did not say it. Never "
