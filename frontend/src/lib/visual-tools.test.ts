@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn } from './visual-tools.ts';
+import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, DEFAULT_DECK_ID } from './visual-tools.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
 import { visualLabel } from './i18n-visual-tools.ts';
 
@@ -99,3 +99,56 @@ test('removing an unsaved action unlinks it without deleting its milestone or Po
     assert.equal(next.timeline?.events[0].portfolio[0].title, 'Notes');
     assert.deepEqual(w.timeline.events[0].action_ids, ['new']);
 });
+
+test('card decks support creation, switching, renaming, deletion and card migration', () => {
+    let w = emptyWorkspace();
+    // Default fallback deck when no decks exist
+    assert.equal(cardDecksOf(w, 'Mazzo principale')[0].id, DEFAULT_DECK_ID);
+    assert.equal(activeDeckIdOf(w), DEFAULT_DECK_ID);
+
+    // Adding cards without deck_id places them in DEFAULT_DECK_ID
+    w.cards = [{ id: 'c1', text: 'Card 1', bucket: 'unsorted', source: '' }];
+    assert.deepEqual(cardsInDeck(w, DEFAULT_DECK_ID).map(c => c.id), ['c1']);
+
+    // Add a new deck
+    w = addCardDeck(w, 'Preparazione esami', 'Mazzo principale');
+    assert.equal(w.card_decks?.length, 2);
+    const newDeckId = w.active_deck_id!;
+    assert.equal(w.card_decks?.find(d => d.id === newDeckId)?.title, 'Preparazione esami');
+    assert.equal(activeDeckIdOf(w), newDeckId);
+
+    // Cards in new deck should currently be empty
+    assert.equal(cardsInDeck(w, newDeckId).length, 0);
+
+    // Move c1 to new deck
+    w = moveCardToDeck(w, 'c1', newDeckId);
+    assert.equal(cardsInDeck(w, newDeckId).length, 1);
+    assert.equal(cardsInDeck(w, DEFAULT_DECK_ID).length, 0);
+
+    // Rename deck
+    w = renameCardDeck(w, newDeckId, 'Esami sessione estiva', 'Mazzo principale');
+    assert.equal(w.card_decks?.find(d => d.id === newDeckId)?.title, 'Esami sessione estiva');
+
+    // Switch active deck back to default
+    w = setActiveCardDeck(w, DEFAULT_DECK_ID);
+    assert.equal(activeDeckIdOf(w), DEFAULT_DECK_ID);
+
+    // Remove the new deck: card c1 should safely migrate back to default deck
+    w = removeCardDeck(w, newDeckId, 'Mazzo principale');
+    assert.equal(w.card_decks?.length, 1);
+    assert.equal(cardsInDeck(w, DEFAULT_DECK_ID).length, 1);
+    assert.equal(w.cards[0].deck_id, DEFAULT_DECK_ID);
+
+    // Add deck with initialCards preset
+    w = addCardDeck(w, 'Mazzo Illustrato', 'Mazzo principale', [
+        { text: 'Riflessione iniziale', image: 'card:focus_goal' },
+        { text: 'Pausa attiva', image: 'card:recharge_pause' }
+    ]);
+    const presetDeckId = w.active_deck_id!;
+    const deckCards = cardsInDeck(w, presetDeckId);
+    assert.equal(deckCards.length, 2);
+    assert.equal(deckCards[0].image, 'card:focus_goal');
+    assert.equal(deckCards[0].text, 'Riflessione iniziale');
+    assert.equal(deckCards[1].image, 'card:recharge_pause');
+});
+

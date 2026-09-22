@@ -35,6 +35,13 @@ class Action(Item):
 class Card(Item):
     text: str = Field(min_length=1, max_length=600)
     bucket: str = Field(default='unsorted', max_length=64, pattern=r'^[a-zA-Z0-9_-]+$')
+    image: str | None = Field(default=None, max_length=120)
+    deck_id: str | None = Field(default=None, max_length=64, pattern=r'^[a-zA-Z0-9_-]+$')
+
+
+class CardDeck(StrictModel):
+    id: Identifier
+    title: str = Field(min_length=1, max_length=100)
 
 
 class CardColumn(StrictModel):
@@ -139,6 +146,8 @@ class Workspace(StrictModel):
     actions: list[Action] = Field(default_factory=list, max_length=30)
     cards: list[Card] = Field(default_factory=list, max_length=30)
     card_columns: list[CardColumn] = Field(default_factory=list, max_length=8)
+    card_decks: list[CardDeck] = Field(default_factory=list, max_length=20)
+    active_deck_id: str | None = Field(default=None, max_length=64, pattern=r'^[a-zA-Z0-9_-]+$')
     comparison: Comparison = Field(default_factory=Comparison)
     timeline: Timeline = Field(default_factory=Timeline)
 
@@ -149,6 +158,8 @@ class Workspace(StrictModel):
                 raise ValueError('Duplicate identifiers')
         if len({column.id for column in self.card_columns}) != len(self.card_columns):
             raise ValueError('Duplicate card columns')
+        if len({deck.id for deck in self.card_decks}) != len(self.card_decks):
+            raise ValueError('Duplicate card decks')
         # Empty card_columns means the default set (localized preset labels).
         # Custom columns must carry the student's own label.
         for column in self.card_columns:
@@ -158,6 +169,13 @@ class Workspace(StrictModel):
         for card in self.cards:
             if card.bucket not in {column.id for column in columns}:
                 raise ValueError('Unknown card column')
+        if self.card_decks:
+            deck_ids = {d.id for d in self.card_decks}
+            if self.active_deck_id is not None and self.active_deck_id not in deck_ids:
+                raise ValueError('Unknown active deck')
+            for card in self.cards:
+                if card.deck_id is not None and card.deck_id not in deck_ids:
+                    raise ValueError('Unknown card deck')
         return self
 
 

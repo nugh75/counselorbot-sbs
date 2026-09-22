@@ -3,15 +3,16 @@ import { AssignmentSource } from '@/components/teacher/AssignmentSource';
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, GitCommitHorizontal, Columns3, Download, LayoutList, Layers, MessageSquare, Pencil, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
+import { ArrowRight, GitCommitHorizontal, Columns3, Download, Folder, FolderPlus, Image as ImageIcon, LayoutList, Layers, MessageSquare, Pencil, Plus, RotateCcw, Save, Sparkles, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
 import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 import { visualLabel } from '@/lib/i18n-visual-tools';
-import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, type ActionStage, type CardColumn, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
+import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, type ActionStage, type CardColumn, type CardDeck, type SavedWorkspace, type VisualWorkspace, DEFAULT_DECK_ID } from '@/lib/visual-tools';
 import { validTimelineDates } from '@/lib/timeline-dates';
+import { BUILTIN_CARD_IMAGES, tavoloImageUrl } from '@/lib/tavolo-images';
 import { TimelineTools } from './TimelineTools';
 
 export type WorkTab = 'board' | 'comparison' | 'cards' | 'timeline';
@@ -69,6 +70,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [draftSource, setDraftSource] = useState('');
     const [draftCard, setDraftCard] = useState('');
     const [cardSource, setCardSource] = useState('');
+    const [draftCardImage, setDraftCardImage] = useState('');
+    const [pickingImageCardId, setPickingImageCardId] = useState<string | null>(null);
     const [criterion, setCriterion] = useState('');
     const [option, setOption] = useState('');
     const [optionSource, setOptionSource] = useState('');
@@ -313,7 +316,111 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 </article>; })}</div>
                             </section>)}</div>
                         </>}
-                        {tab === 'cards' && <>
+                        {tab === 'cards' && (() => {
+                            const decks = cardDecksOf(work, l('mainDeck'));
+                            const activeDeckId = activeDeckIdOf(work);
+                            const activeDeckCards = cardsInDeck(work, activeDeckId);
+                            const currentDeckObj = decks.find(d => d.id === activeDeckId) || decks[0];
+
+                            return <>
+                            {/* Deck selector and manager bar */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 to-slate-50 p-3 shadow-sm">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-900/80">
+                                        <Folder className="h-4 w-4 text-indigo-600" aria-hidden="true" />
+                                        {l('cardDecks')}:
+                                    </span>
+                                    <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={l('cardDecks')}>
+                                        {decks.map(deck => {
+                                            const isSelected = deck.id === activeDeckId;
+                                            const count = cardsInDeck(work, deck.id).length;
+                                            return (
+                                                <button
+                                                    key={deck.id}
+                                                    type="button"
+                                                    role="tab"
+                                                    aria-selected={isSelected}
+                                                    onClick={() => edit(setActiveCardDeck(work, deck.id))}
+                                                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                                                        isSelected
+                                                            ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-600/20'
+                                                            : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 hover:text-slate-900'
+                                                    }`}
+                                                >
+                                                    <span className="truncate max-w-[140px] sm:max-w-[200px]">{deck.title}</span>
+                                                    <span className={`rounded-full px-1.5 py-0.2 text-xs font-mono ${
+                                                        isSelected ? 'bg-indigo-700/60 text-white' : 'bg-slate-100 text-slate-600'
+                                                    }`}>
+                                                        {count}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Tooltip content={l('newDeck')}>
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            className={`${buttonClass} bg-white`}
+                                            aria-label={l('newDeck')}
+                                            disabled={decks.length >= 20}
+                                            onClick={() => {
+                                                const title = window.prompt(l('deckName'));
+                                                if (title?.trim()) {
+                                                    const populate = window.confirm(`${l('deckWithCards')}?\n(${BUILTIN_CARD_IMAGES.length} carte con illustrazioni e spunti)`);
+                                                    if (populate) {
+                                                        const initial = BUILTIN_CARD_IMAGES.map(img => ({
+                                                            text: `${img.name}: ${img.usage}`,
+                                                            image: img.id,
+                                                        }));
+                                                        edit(addCardDeck(work, title.trim(), l('mainDeck'), initial));
+                                                    } else {
+                                                        edit(addCardDeck(work, title.trim(), l('mainDeck')));
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            <FolderPlus className="h-4 w-4 text-indigo-700" aria-hidden="true" />
+                                        </Button>
+                                    </Tooltip>
+                                    <Tooltip content={`${l('renameDeck')}: ${currentDeckObj.title}`}>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            className={buttonClass}
+                                            aria-label={`${l('renameDeck')}: ${currentDeckObj.title}`}
+                                            onClick={() => {
+                                                const name = window.prompt(l('renameDeck'), currentDeckObj.title);
+                                                if (name?.trim()) {
+                                                    edit(renameCardDeck(work, currentDeckObj.id, name.trim(), l('mainDeck')));
+                                                }
+                                            }}
+                                        >
+                                            <Pencil className="h-4 w-4" aria-hidden="true" />
+                                        </Button>
+                                    </Tooltip>
+                                    {decks.length > 1 && (
+                                        <Tooltip content={`${l('deleteDeck')}: ${currentDeckObj.title}`}>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                className={buttonClass}
+                                                aria-label={`${l('deleteDeck')}: ${currentDeckObj.title}`}
+                                                onClick={() => {
+                                                    if (window.confirm(`${l('deleteDeck')}: "${currentDeckObj.title}"?`)) {
+                                                        edit(removeCardDeck(work, currentDeckObj.id, l('mainDeck')));
+                                                    }
+                                                }}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" />
+                                            </Button>
+                                        </Tooltip>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
                                 <label className="text-sm">{l('cardColumns')}<select aria-label={l('cardColumns')} value={cardColumnPresets.some(p => columnsMatch(work, p.columns)) ? cardColumnPresets.find(p => columnsMatch(work, p.columns))!.key : 'custom'} className={`${inputClass} mt-1 min-h-[44px] max-w-56`} onChange={e => {
                                     const preset = cardColumnPresets.find(p => p.key === e.target.value);
@@ -328,18 +435,50 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 </form>
                                 {columns.length >= 8 && <p role="status" className="text-sm text-slate-600">{l('limit')}</p>}
                             </div>
-                            <details open={!work.cards.length || Boolean(draftCard)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addCard')}</summary>
+                            <details open={!activeDeckCards.length || Boolean(draftCard)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addCard')}</summary>
                             <form className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!draftCard.trim() || draftCard.length > 600 || work.cards.length >= 30) return;
-                                edit({ ...work, cards: [...work.cards, { id: crypto.randomUUID(), text: draftCard.trim(), bucket: columns[0].id, source: cardSource }] }); setDraftCard(''); setCardSource(''); }}>
+                                edit({ ...work, cards: [...work.cards, { id: crypto.randomUUID(), text: draftCard.trim(), bucket: columns[0].id, source: cardSource, image: draftCardImage || null, deck_id: activeDeckId }] }); setDraftCard(''); setCardSource(''); setDraftCardImage(''); }}>
                                 <label className="block text-sm font-medium">{l('cardText')}<textarea required maxLength={600} rows={3} value={draftCard} onChange={e => setDraftCard(e.target.value)} className={`${inputClass} mt-1`} /></label>
+                                <div className="block text-sm font-medium text-slate-700">
+                                    <span className="mb-1 block">{l('cardImage') || 'Illustrazione (opzionale)'}</span>
+                                    {draftCardImage ? (
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setPickingImageCardId('draft')}
+                                                className="flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-1 hover:border-indigo-400 hover:bg-indigo-50/30"
+                                                title={l('changeImage')}
+                                            >
+                                                <img src={tavoloImageUrl(draftCardImage)} alt="" className="max-h-full max-w-full object-contain" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setDraftCardImage('')}
+                                                className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50 hover:text-red-600"
+                                            >
+                                                <X className="h-3.5 w-3.5" aria-hidden="true" />
+                                                {l('removeImage')}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => setPickingImageCardId('draft')}
+                                            className="inline-flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:border-indigo-400 hover:text-indigo-700"
+                                        >
+                                            <ImageIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                                            + {l('addImage')}
+                                        </button>
+                                    )}
+                                </div>
                                 <p className="text-xs text-slate-600">{draftCard.length}/600 · {l('source')}: {cardSource || l('personal')}</p>
                                 <Tooltip content={l('addCard')}><Button aria-label={l('addCard')} type="submit" className={buttonClass} disabled={draftCard.length > 600 || work.cards.length >= 30}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                 {(draftCard.length > 600 || work.cards.length >= 30) && <p role="status">{l('limit')}</p>}
                             </form></details>
-                            {!work.cards.length && <p className="py-5 text-center text-slate-600">{l('emptyCards')}</p>}
-                            <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, 240px), 1fr))` }}>{columns.map(column => { const columnTitle = cardColumnLabel(work, column, l); return <section key={column.id} aria-label={columnTitle} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            {!activeDeckCards.length && <p className="py-5 text-center text-slate-600">{l('emptyCards')}</p>}
+                            <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, 240px), 1fr))` }}>{columns.map(column => { const columnTitle = cardColumnLabel(work, column, l); const colCards = activeDeckCards.filter(c => c.bucket === column.id); return <section key={column.id} aria-label={columnTitle} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
                                 <div className="mb-3 flex items-start justify-between gap-1">
-                                    <h3 className="min-w-0 break-words font-semibold">{columnTitle} <span className="font-mono text-sm text-slate-500">{work.cards.filter(c => c.bucket === column.id).length}</span></h3>
+                                    <h3 className="min-w-0 break-words font-semibold">{columnTitle} <span className="font-mono text-sm text-slate-500">{colCards.length}</span></h3>
                                     <div className="flex shrink-0">
                                         <Tooltip content={l('renameColumn')}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('renameColumn')}: ${columnTitle}`} onClick={() => {
                                             const name = window.prompt(l('renameColumn'), column.label || undefined);
@@ -348,14 +487,82 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                         {columns.length > 1 && removeButton(columnTitle, () => edit(removeCardColumn(work, column.id)))}
                                     </div>
                                 </div>
-                                <div className="space-y-3">{work.cards.filter(c => c.bucket === column.id).map(card => <article key={card.id} className="rounded-lg border border-indigo-200 bg-white p-3">
-                                    <textarea aria-label={l('cardText')} data-workspace-field required maxLength={600} rows={4} value={card.text} className={inputClass} onChange={e => edit({ ...work, cards: work.cards.map(c => c.id === card.id ? { ...c, text: e.target.value } : c) })} />
-                                    <label className="mt-2 block text-sm">{l('move')}<select id={`${id}-card-${card.id}`} value={card.bucket} className={`${inputClass} mt-1 min-h-[44px]`} onChange={e => { edit({ ...work, cards: work.cards.map(c => c.id === card.id ? { ...c, bucket: e.target.value } : c) }); focusMoved(`${id}-card-${card.id}`); }}>{columns.map(b => <option key={b.id} value={b.id}>{cardColumnLabel(work, b, l)}</option>)}</select></label>
-                                    <p className="mt-2 break-words text-xs text-slate-500">{l('source')}: {card.source || l('personal')}</p>
-                                    {removeButton(card.text, () => edit({ ...work, cards: work.cards.filter(c => c.id !== card.id) }))}
+                                <div className="space-y-3">{colCards.map(card => <article key={card.id} className="group/card flex flex-col overflow-hidden rounded-xl border border-indigo-200/90 bg-white shadow-sm transition-shadow hover:shadow-md">
+                                    {card.image ? (
+                                        <div
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => setPickingImageCardId(card.id)}
+                                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPickingImageCardId(card.id); } }}
+                                            className="relative flex h-44 w-full cursor-pointer items-center justify-center border-b border-slate-100 bg-slate-50/80 p-3 transition-colors hover:bg-indigo-50/40"
+                                            aria-label={l('changeImage')}
+                                            title={l('changeImage')}
+                                        >
+                                            <img
+                                                src={tavoloImageUrl(card.image)}
+                                                alt=""
+                                                className="max-h-full max-w-full object-contain drop-shadow-sm transition-transform group-hover/card:scale-105"
+                                            />
+                                            <div className="absolute right-2 top-2 rounded-full bg-white/90 p-1.5 text-slate-600 shadow-sm opacity-0 transition-opacity group-hover/card:opacity-100 hover:bg-white hover:text-indigo-700">
+                                                <ImageIcon className="h-4 w-4" aria-hidden="true" />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => setPickingImageCardId(card.id)}
+                                            className="flex h-20 w-full items-center justify-center gap-2 border-b border-dashed border-slate-200 bg-slate-50/60 p-3 text-xs font-medium text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-700"
+                                            aria-label={l('addImage')}
+                                        >
+                                            <ImageIcon className="h-4 w-4 shrink-0 text-slate-400 group-hover/card:text-indigo-600" aria-hidden="true" />
+                                            <span>+ {l('addImage')}</span>
+                                        </button>
+                                    )}
+
+                                    <div className="flex flex-1 flex-col p-3">
+                                        <textarea
+                                            aria-label={l('cardText')}
+                                            data-workspace-field
+                                            required
+                                            maxLength={600}
+                                            rows={3}
+                                            value={card.text}
+                                            placeholder="..."
+                                            className="w-full resize-y rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[14px] leading-relaxed text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                            onChange={e => edit({ ...work, cards: work.cards.map(c => c.id === card.id ? { ...c, text: e.target.value } : c) })}
+                                        />
+
+                                        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-1.5 border-t border-slate-100 pt-2 text-xs">
+                                            <div className="flex flex-1 flex-wrap items-center gap-1.5">
+                                                <select
+                                                    id={`${id}-card-${card.id}`}
+                                                    aria-label={l('move')}
+                                                    value={card.bucket}
+                                                    className="h-8 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700 hover:bg-white"
+                                                    onChange={e => { edit({ ...work, cards: work.cards.map(c => c.id === card.id ? { ...c, bucket: e.target.value } : c) }); focusMoved(`${id}-card-${card.id}`); }}
+                                                >
+                                                    {columns.map(b => <option key={b.id} value={b.id}>{cardColumnLabel(work, b, l)}</option>)}
+                                                </select>
+                                                {decks.length > 1 && (
+                                                    <select
+                                                        aria-label={l('moveToDeck')}
+                                                        value={card.deck_id || DEFAULT_DECK_ID}
+                                                        className="h-8 max-w-[130px] truncate rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700 hover:bg-white"
+                                                        onChange={e => edit(moveCardToDeck(work, card.id, e.target.value))}
+                                                    >
+                                                        {decks.map(d => <option key={d.id} value={d.id}>{d.title}</option>)}
+                                                    </select>
+                                                )}
+                                            </div>
+                                            <div className="flex shrink-0 items-center">
+                                                {removeButton(card.text, () => edit({ ...work, cards: work.cards.filter(c => c.id !== card.id) }))}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </article>)}</div>
                             </section>; })}</div>
-                        </>}
+                        </>;
+                        })()}
                         {tab === 'comparison' && <>
                             <details open={!work.comparison.options.length || Boolean(option)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addOption')}</summary>
                             <form className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!option.trim() || option.length > 160 || work.comparison.options.length >= 3) return;
@@ -400,5 +607,96 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                 </footer>}
             </section>
         </div>, document.body)}
+
+        {/* Modal picker for card illustrations */}
+        {pickingImageCardId && createPortal(
+            <div className="fixed inset-0 z-[95] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="card-image-picker-title"
+                    className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl overflow-hidden"
+                >
+                    <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                        <h3 id="card-image-picker-title" className="text-base font-semibold text-slate-900">
+                            {l('selectImage')}
+                        </h3>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-9 w-9 p-0 text-slate-500 hover:text-slate-800"
+                            onClick={() => setPickingImageCardId(null)}
+                            aria-label={l('close')}
+                        >
+                            <X className="h-5 w-5" aria-hidden="true" />
+                        </Button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-5">
+                        <div className="mb-4">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (pickingImageCardId === 'draft') {
+                                        setDraftCardImage('');
+                                    } else {
+                                        edit({ ...work, cards: work.cards.map(c => c.id === pickingImageCardId ? { ...c, image: null } : c) });
+                                    }
+                                    setPickingImageCardId(null);
+                                }}
+                                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                            >
+                                <Trash2 className="h-3.5 w-3.5 text-red-500" aria-hidden="true" />
+                                {l('removeImage')}
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                            {BUILTIN_CARD_IMAGES.map(img => {
+                                const currentImage = pickingImageCardId === 'draft'
+                                    ? draftCardImage
+                                    : work.cards.find(c => c.id === pickingImageCardId)?.image;
+                                const isSelected = currentImage === img.id;
+
+                                return (
+                                    <button
+                                        key={img.id}
+                                        type="button"
+                                        onClick={() => {
+                                            if (pickingImageCardId === 'draft') {
+                                                setDraftCardImage(img.id);
+                                            } else {
+                                                edit({ ...work, cards: work.cards.map(c => c.id === pickingImageCardId ? { ...c, image: img.id } : c) });
+                                            }
+                                            setPickingImageCardId(null);
+                                        }}
+                                        className={`group flex flex-col items-center rounded-xl border p-2.5 text-left transition-all hover:shadow-md ${
+                                            isSelected
+                                                ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-600/30'
+                                                : 'border-slate-200 bg-slate-50/40 hover:border-indigo-300 hover:bg-white'
+                                        }`}
+                                    >
+                                        <div className="flex h-24 w-full items-center justify-center p-1">
+                                            <img
+                                                src={tavoloImageUrl(img.id)}
+                                                alt=""
+                                                className="max-h-full max-w-full object-contain transition-transform group-hover:scale-105"
+                                            />
+                                        </div>
+                                        <span className="mt-2 line-clamp-1 text-xs font-semibold text-slate-800">
+                                            {img.name}
+                                        </span>
+                                        <span className="line-clamp-2 text-[11px] leading-tight text-slate-500">
+                                            {img.usage}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </div>,
+            document.body
+        )}
     </>;
 }
