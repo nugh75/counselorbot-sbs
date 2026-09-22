@@ -32,6 +32,13 @@ function GuideContent() {
     const sectionTitle = (n: number) => teacher ? l(`teacher${n}Title` as GuideAudienceKey) : t(`guide.section${n}.title`);
     const sectionBody = (n: number) => teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`);
     const images = guideImages[lang];
+    const spotIllustrations: Record<number, string> = teacher ? {} : {
+        3: '/images/platform/compilazioni.png',
+        6: '/images/platform/su-di-me.png',
+        12: '/images/platform/libretto.png',
+        13: '/images/platform/linea-del-tempo.png',
+        14: '/images/platform/assegnazioni.png',
+    };
     const sectionImages: Record<number, { image: StaticImageData; caption: string }[]> = teacher ? {
         1: [{ image: images['teacher-area'], caption: l('teacher1Title') }],
         2: [{ image: images['teacher-groups'], caption: l('teacher2Title') }],
@@ -174,16 +181,29 @@ function GuideContent() {
             <ol className="space-y-4">
                 {sections.map((n) => (
                     <li key={n} id={sectionId(n)} className="glass-panel scroll-mt-24 p-5 text-left">
-                        <div className="flex gap-4">
-                            <span className="font-mono text-sm font-semibold text-ochre-600 shrink-0 pt-0.5">
-                                {String(n).padStart(2, '0')}
-                            </span>
-                            <div className="min-w-0">
-                                <h2 className="font-bold text-slate-900">{sectionTitle(n)}</h2>
-                                <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-slate-600">
-                                    {sectionBody(n)}
-                                </p>
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex gap-4">
+                                <span className="font-mono text-sm font-semibold text-ochre-600 shrink-0 pt-0.5">
+                                    {String(n).padStart(2, '0')}
+                                </span>
+                                <div className="min-w-0">
+                                    <h2 className="font-bold text-slate-900">{sectionTitle(n)}</h2>
+                                    <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-slate-600">
+                                        {sectionBody(n)}
+                                    </p>
+                                </div>
                             </div>
+                            {spotIllustrations[n] && (
+                                <div className="hidden sm:block shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xs">
+                                    <Image
+                                        src={spotIllustrations[n]}
+                                        alt=""
+                                        width={56}
+                                        height={56}
+                                        className="h-14 w-14 object-contain"
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {teacher && (

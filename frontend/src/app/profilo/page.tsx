@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { useI18n } from '@/lib/i18n-context';
@@ -49,11 +50,12 @@ interface QuestionnaireResult {
 type PersonalSection = 'assignments' | 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo';
 
 const PERSONAL_AREAS = [
-    { id: 'assignments', slug: 'assegnazioni', icon: ClipboardList, titleKey: 'received', descriptionKey: 'intro' },
+    { id: 'assignments', slug: 'assegnazioni', icon: ClipboardList, image: '/images/platform/assegnazioni.png', titleKey: 'received', descriptionKey: 'intro' },
     {
         id: 'notebook',
         slug: 'taccuino',
         icon: NotebookPen,
+        image: '/images/platform/su-di-me.png',
         titleKey: 'profile.about.title',
         descriptionKey: 'profile.about.subtitle',
     },
@@ -61,6 +63,7 @@ const PERSONAL_AREAS = [
         id: 'booklet',
         slug: 'libretto',
         icon: BookText,
+        image: '/images/platform/libretto.png',
         titleKey: 'profile.bookletSection.title',
         descriptionKey: 'profile.bookletSection.subtitle',
     },
@@ -68,6 +71,7 @@ const PERSONAL_AREAS = [
         id: 'orientation',
         slug: 'orientamento',
         icon: Compass,
+        image: null,
         titleKey: 'referrals.area.title',
         descriptionKey: 'referrals.area.description',
     },
@@ -75,6 +79,7 @@ const PERSONAL_AREAS = [
         id: 'groups',
         slug: 'classi',
         icon: UsersRound,
+        image: null,
         titleKey: 'profile.area.classes.title',
         descriptionKey: 'profile.area.classes.description',
     },
@@ -82,6 +87,7 @@ const PERSONAL_AREAS = [
         id: 'telegram',
         slug: 'telegram',
         icon: Send,
+        image: null,
         titleKey: 'profile.area.telegram.title',
         descriptionKey: 'profile.area.telegram.description',
     },
@@ -89,6 +95,7 @@ const PERSONAL_AREAS = [
         id: 'portfolio',
         slug: 'portfolio',
         icon: FolderOpen,
+        image: '/images/platform/portfolio.png',
         titleKey: 'profile.portfolioSection.title',
         descriptionKey: 'profile.portfolioSection.subtitle',
     },
@@ -96,6 +103,7 @@ const PERSONAL_AREAS = [
         id: 'timeline',
         slug: 'timeline',
         icon: Route,
+        image: '/images/platform/linea-del-tempo.png',
         titleKey: 'timeline',
         descriptionKey: 'timelinePurpose',
     },
@@ -103,6 +111,7 @@ const PERSONAL_AREAS = [
         id: 'sessions',
         slug: 'compilazioni',
         icon: ClipboardList,
+        image: '/images/platform/compilazioni.png',
         titleKey: 'profile.myCompilations',
         descriptionKey: 'profile.sessions.subtitle',
     },
@@ -110,17 +119,24 @@ const PERSONAL_AREAS = [
         id: 'tavolo',
         slug: 'tavolo',
         icon: Table2,
+        image: '/images/platform/tavolo.png',
         titleKey: 'profile.tavolo.title',
         descriptionKey: 'profile.tavolo.subtitle',
     },
 ] as const;
 
 const ICON_BADGE_CLASS = 'bg-indigo-50 text-indigo-600';
-const PERSONAL_WORKSPACES = [
-    { tab: 'board', href: '/profilo/azioni', icon: LayoutList },
-    { tab: 'cards', href: '/profilo/carte', icon: Layers },
-    { tab: 'comparison', href: '/profilo/confronto', icon: Columns3 },
-] as const;
+interface PersonalWorkspace {
+    tab: 'board' | 'cards' | 'comparison';
+    href: string;
+    icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+    image?: string;
+}
+const PERSONAL_WORKSPACES: readonly PersonalWorkspace[] = [
+    { tab: 'board', href: '/profilo/azioni', icon: LayoutList, image: '/images/platform/bacheca-azioni.png' },
+    { tab: 'cards', href: '/profilo/carte', icon: Layers, image: '/images/platform/carte-ordinare.png' },
+    { tab: 'comparison', href: '/profilo/confronto', icon: Columns3, image: '/images/platform/confronto.png' },
+];
 
 function personalSectionFromPath(pathname: string): PersonalSection | null {
     const slug = pathname.split('/').filter(Boolean)[1];
@@ -437,10 +453,22 @@ export default function ProfilePage() {
                 backHref={activeArea ? '/profilo' : '/'}
                 title={activeArea?.title ?? t('profile.title')}
                 subtitle={activeArea?.description ?? t('profile.subtitle')}
-                icon={activeArea && ActiveAreaIcon ? (
-                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
-                        <ActiveAreaIcon className="h-5 w-5" aria-hidden />
-                    </span>
+                icon={activeArea ? (
+                    activeArea.image ? (
+                        <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xs">
+                            <Image
+                                src={activeArea.image}
+                                alt=""
+                                width={48}
+                                height={48}
+                                className="h-full w-full object-contain"
+                            />
+                        </span>
+                    ) : ActiveAreaIcon ? (
+                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
+                            <ActiveAreaIcon className="h-5 w-5" aria-hidden />
+                        </span>
+                    ) : undefined
                 ) : undefined}
             />
 
@@ -488,9 +516,21 @@ export default function ProfilePage() {
                                     href={area.href}
                                     className="glass-panel group relative flex min-h-36 overflow-hidden p-5 transition-colors hover:border-indigo-300 hover:bg-white"
                                 >
-                                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
-                                        <Icon className="h-5 w-5" aria-hidden />
-                                    </span>
+                                    {area.image ? (
+                                        <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xs transition-transform group-hover:scale-105">
+                                            <Image
+                                                src={area.image}
+                                                alt=""
+                                                width={48}
+                                                height={48}
+                                                className="h-full w-full object-contain"
+                                            />
+                                        </span>
+                                    ) : (
+                                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
+                                            <Icon className="h-5 w-5" aria-hidden />
+                                        </span>
+                                    )}
                                     <span className="ml-4 min-w-0 flex-1">
                                         <span className="block font-bold text-slate-900">{area.title}</span>
                                         <span className="mt-1 block text-sm leading-relaxed text-slate-500">{area.description}</span>
@@ -499,11 +539,25 @@ export default function ProfilePage() {
                                 </Link>
                             );
                         })}
-                        {group === 'explore' && PERSONAL_WORKSPACES.map(({ tab, href, icon: Icon }) => <Link key={tab} href={href} className="glass-panel group flex min-h-28 p-5 transition-colors hover:border-indigo-300 hover:bg-white">
-                            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}><Icon className="h-5 w-5" aria-hidden /></span>
-                            <span className="ml-4 min-w-0 flex-1"><span className="block font-bold text-slate-900">{visualLabel(lang, tab)}</span><span className="mt-1 block text-sm text-slate-500">{visualLabel(lang, `${tab}Purpose`)}</span></span>
-                            <ArrowRight className="ml-3 h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-600" aria-hidden />
-                        </Link>)}
+                        {group === 'explore' && PERSONAL_WORKSPACES.map(({ tab, href, icon: Icon, image }) => (
+                            <Link key={tab} href={href} className="glass-panel group flex min-h-28 p-5 transition-colors hover:border-indigo-300 hover:bg-white">
+                                {image ? (
+                                    <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xs transition-transform group-hover:scale-105">
+                                        <Image
+                                            src={image}
+                                            alt=""
+                                            width={48}
+                                            height={48}
+                                            className="h-full w-full object-contain"
+                                        />
+                                    </span>
+                                ) : (
+                                    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}><Icon className="h-5 w-5" aria-hidden /></span>
+                                )}
+                                <span className="ml-4 min-w-0 flex-1"><span className="block font-bold text-slate-900">{visualLabel(lang, tab)}</span><span className="mt-1 block text-sm text-slate-500">{visualLabel(lang, `${tab}Purpose`)}</span></span>
+                                <ArrowRight className="ml-3 h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-600" aria-hidden />
+                            </Link>
+                        ))}
                     </nav>
                     </section>)}
                 </>
