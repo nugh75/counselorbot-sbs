@@ -49,7 +49,7 @@ for (const width of [390, 1440]) {
             assert.equal(writes.length, 0, 'selection is a draft until confirmation');
             await page.getByRole('button', { name: 'Continua', exact: true }).click();
             await page.getByLabel('Parlaci del luogo dove studi / lavori').fill('Studio all’università');
-            await page.getByRole('button', { name: 'Salva taccuino', exact: true }).click();
+            await page.getByRole('button', { name: 'Salva versione', exact: true }).click();
             await page.getByRole('heading', { name: 'Da dove vuoi cominciare?', exact: true }).waitFor();
             assert.deepEqual(prefs, ready());
             await page.getByRole('button', { name: 'Vai direttamente agli strumenti', exact: true }).click();
