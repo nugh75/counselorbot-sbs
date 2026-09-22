@@ -15,6 +15,9 @@ interface StudentGroup {
     school: string | null;
     school_level: string | null;
     institution_id: number | null;
+    description: string | null;
+    methodologies: string | null;
+    context_visible_to_students: boolean;
     owner_username: string;
     is_active: boolean;
     members_count: number;
@@ -39,6 +42,15 @@ const TEXTS = {
         institutionLabel: 'Istituto',
         institutionNone: 'Nessun istituto',
         institutionHint: "Alimenta il fallback per i partecipanti che non scelgono l'istituto nel taccuino.",
+        contextTitle: 'Contesto classe',
+        contextHint: 'Descrizione e metodologie della classe: con la condivisione attiva entrano nella chat guidata degli studenti iscritti e nella tua conversazione sugli obiettivi didattici.',
+        descriptionLabel: 'Descrizione della classe',
+        descriptionPlaceholder: 'Programma, progetti, convenzioni del gruppo (opzionale)',
+        methodologyLabel: 'Metodologie con questa classe',
+        methodologyPlaceholder: 'Come lavori di solito con loro (opzionale)',
+        shareContextLabel: 'Condividi il contesto con gli studenti iscritti',
+        save: 'Salva',
+        saved: 'Salvato',
         create: 'Crea',
         cancel: 'Annulla',
         members: 'iscritti',
@@ -78,6 +90,15 @@ const TEXTS = {
         institutionLabel: 'Institution',
         institutionNone: 'No institution',
         institutionHint: 'Feeds the fallback for participants who never choose an institution in their notebook.',
+        contextTitle: 'Class context',
+        contextHint: 'Class description and methodologies: when sharing is on they enter the guided chat of enrolled students and your didactic-objective conversation.',
+        descriptionLabel: 'Class description',
+        descriptionPlaceholder: 'Curriculum, projects, group conventions (optional)',
+        methodologyLabel: 'Methodologies with this class',
+        methodologyPlaceholder: 'How you usually work with them (optional)',
+        shareContextLabel: 'Share the context with enrolled students',
+        save: 'Save',
+        saved: 'Saved',
         create: 'Create',
         cancel: 'Cancel',
         members: 'members',
@@ -110,6 +131,15 @@ const TEXTS = {
         levelHint: 'Filtra las lecturas recomendadas: sin un nivel, el bot pregunta al participante en qué etapa de sus estudios se encuentra.',
         institutionLabel: 'Institución', institutionNone: 'Sin institución',
         institutionHint: 'Alimenta el resguardo para los participantes que nunca eligen una institución en su cuaderno.',
+        contextTitle: 'Contexto de la clase',
+        contextHint: 'Descripción y metodologías de la clase: con el uso compartido entran en el chat guiado de los estudiantes inscritos y en tu conversación sobre objetivos didácticos.',
+        descriptionLabel: 'Descripción de la clase',
+        descriptionPlaceholder: 'Programa, proyectos, convenciones del grupo (opcional)',
+        methodologyLabel: 'Metodologías con esta clase',
+        methodologyPlaceholder: 'Cómo sueles trabajar con ellos (opcional)',
+        shareContextLabel: 'Compartir el contexto con los estudiantes inscritos',
+        save: 'Guardar',
+        saved: 'Guardado',
         create: 'Crear', cancel: 'Cancelar', members: 'miembros', inactive: 'inactiva', webLink: 'Enlace de invitación',
         telegramLink: 'Enlace de Telegram', code: "Código de invitación", students: "Participantes", deactivate: 'Desactivar',
         activate: 'Reactivar', deleteGroup: 'Eliminar', empty: "Aún no gestionas grupos ni clases. Crea uno y comparte el enlace con los participantes.",
@@ -126,6 +156,15 @@ const TEXTS = {
         levelHint: 'Filtre les lectures recommandées : sans niveau, le bot demande au participant où il en est dans ses études.',
         institutionLabel: 'Établissement', institutionNone: 'Aucun établissement',
         institutionHint: "Alimente le repli pour les participants qui ne choisissent jamais d'établissement dans leur carnet.",
+        contextTitle: 'Contexte de la classe',
+        contextHint: 'Description et méthodologies de la classe : quand le partage est activé, elles entrent dans la conversation guidée des étudiants inscrits et dans votre échange sur les objectifs didactiques.',
+        descriptionLabel: 'Description de la classe',
+        descriptionPlaceholder: 'Programme, projets, conventions du groupe (facultatif)',
+        methodologyLabel: 'Méthodologies avec cette classe',
+        methodologyPlaceholder: 'Comment vous travaillez habituellement avec eux (facultatif)',
+        shareContextLabel: 'Partager le contexte avec les étudiants inscrits',
+        save: 'Enregistrer',
+        saved: 'Enregistré',
         create: 'Créer', cancel: 'Annuler', members: 'membres', inactive: 'inactive', webLink: 'Lien d’invitation',
         telegramLink: 'Lien Telegram', code: "Code d’invitation", students: "Participants", deactivate: 'Désactiver',
         activate: 'Réactiver', deleteGroup: 'Supprimer', empty: "Vous ne gérez pas encore de groupes ou de classes. Créez-en un et partagez le lien avec les participants.",
@@ -142,6 +181,15 @@ const TEXTS = {
         levelHint: 'Filtert empfohlene Lektüren: Ohne Stufe fragt der Bot die Teilnehmenden nach ihrem Ausbildungsstand.',
         institutionLabel: 'Einrichtung', institutionNone: 'Keine Einrichtung',
         institutionHint: 'Speist den Fallback für Teilnehmende, die im Lernheft nie eine Einrichtung wählen.',
+        contextTitle: 'Klassenkontext',
+        contextHint: 'Beschreibung und Methoden der Klasse: Bei freigegebenem Kontext fließen sie in den geführten Chat der eingeschriebenen Teilnehmenden und in Ihr Gespräch über Unterrichtsziele ein.',
+        descriptionLabel: 'Beschreibung der Klasse',
+        descriptionPlaceholder: 'Lehrplan, Projekte, Absprachen der Gruppe (optional)',
+        methodologyLabel: 'Methoden mit dieser Klasse',
+        methodologyPlaceholder: 'Wie Sie üblicherweise mit ihnen arbeiten (optional)',
+        shareContextLabel: 'Kontext mit den eingeschriebenen Teilnehmenden teilen',
+        save: 'Speichern',
+        saved: 'Gespeichert',
         create: 'Erstellen', cancel: 'Abbrechen', members: 'Mitglieder', inactive: 'inaktiv', webLink: 'Einladungslink',
         telegramLink: 'Telegram-Link', code: "Einladungscode", students: "Teilnehmende", deactivate: 'Deaktivieren',
         activate: 'Reaktivieren', deleteGroup: 'Löschen', empty: "Sie verwalten noch keine Gruppen oder Klassen. Erstellen Sie eine und teilen Sie den Link mit den Teilnehmenden.",
@@ -158,6 +206,15 @@ const TEXTS = {
         levelHint: 'Filtrerar rekommenderad läsning: utan nivå frågar boten deltagaren var i utbildningen hen befinner sig.',
         institutionLabel: 'Institution', institutionNone: 'Ingen institution',
         institutionHint: 'Förser reservvärdet för deltagare som aldrig väljer en institution i sin anteckningsbok.',
+        contextTitle: 'Klasskontext',
+        contextHint: 'Klassbeskrivning och arbetssätt: när delning är på kommer de in i den vägledde chatten för inskrivna deltagare och i din samtals om undervisningsmål.',
+        descriptionLabel: 'Klassbeskrivning',
+        descriptionPlaceholder: 'Kursplan, projekt, gruppens överenskommelser (valfritt)',
+        methodologyLabel: 'Arbetssätt med den här klassen',
+        methodologyPlaceholder: 'Hur du vanligtvis arbetar med dem (valfritt)',
+        shareContextLabel: 'Dela kontexten med inskrivna deltagare',
+        save: 'Spara',
+        saved: 'Sparat',
         create: 'Skapa', cancel: 'Avbryt', members: 'medlemmar', inactive: 'inaktiv', webLink: 'Inbjudningslänk',
         telegramLink: 'Telegram-länk', code: "Inbjudningskod", students: "Deltagare", deactivate: 'Inaktivera',
         activate: 'Återaktivera', deleteGroup: 'Ta bort', empty: "Du hanterar inga grupper eller klasser ännu. Skapa en och dela länken med deltagarna.",
@@ -187,6 +244,9 @@ export function GroupsPanel() {
     const [allUsers, setAllUsers] = useState<{ username: string; display_name: string; in_plans: boolean; in_groups: boolean; in_notes: boolean; in_research_contacts: boolean; research_contact_id: number | null }[]>([]);
     const [selectedShares, setSelectedShares] = useState<Record<number, Set<string>>>({});
     const [shareOpen, setShareOpen] = useState<number | null>(null);
+    // Contesto classe in modifica: bozza per gruppo, salvataggio esplicito.
+    const [classCtx, setClassCtx] = useState<Record<number, { description: string; methodologies: string; visible: boolean }>>({});
+    const [savedCtxId, setSavedCtxId] = useState<number | null>(null);
 
     useEffect(() => { setOrigin(window.location.origin); }, []);
     useEffect(() => {
@@ -209,6 +269,58 @@ export function GroupsPanel() {
     }, []);
 
     useEffect(() => { load(); }, [load]);
+
+    // Bozze del contesto classe allineate ai gruppi caricati (creazione inclusa).
+    useEffect(() => {
+        if (!groups) return;
+        setClassCtx((prev) => {
+            const next: typeof prev = {};
+            for (const group of groups) {
+                const draft = prev[group.id];
+                next[group.id] = draft && draft.description === (group.description ?? '') && draft.methodologies === (group.methodologies ?? '')
+                    ? draft
+                    : {
+                        description: group.description ?? '',
+                        methodologies: group.methodologies ?? '',
+                        visible: group.context_visible_to_students,
+                    };
+            }
+            return next;
+        });
+    }, [groups]);
+
+    const setCtxField = (groupId: number, patch: Partial<{ description: string; methodologies: string; visible: boolean }>) => {
+        setClassCtx((prev) => {
+            const current = prev[groupId] || { description: '', methodologies: '', visible: false };
+            return { ...prev, [groupId]: { ...current, ...patch } };
+        });
+    };
+
+    const updateClassCtx = async (groupId: number) => {
+        const draft = classCtx[groupId];
+        if (!draft) return;
+        setBusy(true);
+        setMessage('');
+        try {
+            const res = await apiFetch(`/api/admin/groups/${groupId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    description: draft.description.trim() || null,
+                    methodologies: draft.methodologies.trim() || null,
+                    context_visible_to_students: draft.visible,
+                }),
+            });
+            if (!res.ok) throw new Error('update failed');
+            setSavedCtxId(groupId);
+            setTimeout(() => setSavedCtxId((id) => (id === groupId ? null : id)), 1500);
+            load();
+        } catch {
+            setMessage(texts.error);
+        } finally {
+            setBusy(false);
+        }
+    };
 
     const loadShares = useCallback(async (groupId: number) => {
         const res = await apiFetch(`/api/admin/groups/${groupId}/shares`);
@@ -545,6 +657,52 @@ export function GroupsPanel() {
                                 </button>
                             </div>
                         )}
+
+                        <details className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+                            <summary className="cursor-pointer text-xs font-semibold text-slate-600">{texts.contextTitle}</summary>
+                            <p className="mt-2 text-2xs text-slate-500">{texts.contextHint}</p>
+                            <div className="mt-2 space-y-2">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-600" htmlFor={`group-desc-${group.id}`}>{texts.descriptionLabel}</label>
+                                    <textarea
+                                        id={`group-desc-${group.id}`}
+                                        value={classCtx[group.id]?.description ?? ''}
+                                        onChange={(event) => setCtxField(group.id, { description: event.target.value })}
+                                        placeholder={texts.descriptionPlaceholder}
+                                        rows={2}
+                                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-600" htmlFor={`group-method-${group.id}`}>{texts.methodologyLabel}</label>
+                                    <textarea
+                                        id={`group-method-${group.id}`}
+                                        value={classCtx[group.id]?.methodologies ?? ''}
+                                        onChange={(event) => setCtxField(group.id, { methodologies: event.target.value })}
+                                        placeholder={texts.methodologyPlaceholder}
+                                        rows={2}
+                                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                    />
+                                </div>
+                                <label className="flex items-center gap-2 text-xs text-slate-700">
+                                    <input
+                                        type="checkbox"
+                                        checked={classCtx[group.id]?.visible ?? group.context_visible_to_students}
+                                        onChange={(event) => setCtxField(group.id, { visible: event.target.checked })}
+                                        className="accent-indigo-600"
+                                    />
+                                    {texts.shareContextLabel}
+                                </label>
+                                <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => void updateClassCtx(group.id)}
+                                    className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                                >
+                                    {savedCtxId === group.id ? texts.saved : texts.save}
+                                </button>
+                            </div>
+                        </details>
                         {botUsername && (
                             <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                                 <input readOnly value={telegramLink(group)} className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700" />

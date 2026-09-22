@@ -61,6 +61,7 @@ import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
 import { chatPreferenceLabel, essentialSteps, nextEssentialPhase, essentialPhasesFor, isEssentialInstrument, isEssentialSummaryPhase, type ResponseFormat, type GuidedPath } from '@/lib/chat-preferences';
 import { isGoalInstrument, type GoalDraft } from '@/lib/goal-draft';
 import { GoalDraftCard } from '@/components/qsa/GoalDraftCard';
+import { DocenzaClassBar, readStoredDocenzaGroupIds } from '@/components/qsa/DocenzaClassBar';
 
 // --- Types ---
 
@@ -448,6 +449,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // Strumento Idea: la variante decide di che materia si parla, la versione
     // dice al pannello che la mappa e' cambiata.
     const isIdea = questionnaireType === 'IDEA';
+    // Chat docenza: classi scelte per la conversazione. La selezione resta nel
+    // browser e viene rispedita a ogni turno; il server la riverifica sempre.
+    const isDocenza = questionnaireType === 'OBIETTIVO_DOCENZA';
+    const [docenzaGroupIds, setDocenzaGroupIds] = useState<number[]>(readStoredDocenzaGroupIds);
     const desktop = useIsDesktop();
     // Se l'ultimo turno ha disegnato. Null prima del primo: una mappa che non
     // c'e' ancora non e' una mappa rimasta ferma.
@@ -962,6 +967,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 reasoning_effort: effortForPhase(FIXED_QUESTIONS_ID),
                 counselor_id: counselorId,
                 idea_variant: isIdea ? ideaVariant : undefined,
+                group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
                 idea_budget: isIdea ? ideaBudget : undefined,
             }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
             if (result.conversation_id) setConversationId(result.conversation_id);
@@ -1007,6 +1013,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         reasoning_effort: reasoningEffort,
                         counselor_id: counselorId,
                         idea_variant: isIdea ? ideaVariant : undefined,
+                group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
                         idea_budget: isIdea ? ideaBudget : undefined,
                     };
                 }
@@ -1029,6 +1036,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     reasoning_effort: reasoningEffort,
                     counselor_id: counselorId,
                     idea_variant: isIdea ? ideaVariant : undefined,
+                group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
                     idea_budget: isIdea ? ideaBudget : undefined,
                 };
             };
@@ -1223,6 +1231,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 reasoning_effort: effortForPhase(currentPhase),
                 counselor_id: counselorId,
                 idea_variant: isIdea ? ideaVariant : undefined,
+                group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
                 idea_budget: isIdea ? ideaBudget : undefined,
             };
             if (scoresContextOverride || essential) {
@@ -1912,6 +1921,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                     </button>
                                 ))}
                             </div>
+                        )}
+                        {isDocenza && (
+                            <DocenzaClassBar selected={docenzaGroupIds} onChange={setDocenzaGroupIds} />
                         )}
                         {isIdea && ideaReference && (
                             <div className="mb-2 flex min-w-0 items-center gap-2 rounded-md border border-teal-100 bg-teal-50 px-2.5 py-2 text-xs text-teal-900">
