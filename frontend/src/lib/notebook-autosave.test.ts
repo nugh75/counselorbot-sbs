@@ -77,3 +77,20 @@ test('debounce saves without a button and unchanged loading never writes', async
     queue.reset();
     assert.deepEqual(queue.data, {});
 });
+
+test('autosave and explicit save carry distinct persistence modes', async () => {
+    const writes: Array<{ data: NotebookData; source: string; save_mode: string }> = [];
+    const queue = new NotebookAutosave('alice', revision({ notes: 'Old version' }), async payload => {
+        writes.push(payload);
+        return revision(payload.data, writes.length + 1);
+    }, storage());
+
+    queue.update({ notes: 'Working draft' }, 'manual');
+    await queue.flush();
+    assert.equal(writes[0].save_mode, 'autosave');
+    assert.equal(queue.lastSavedMode, 'autosave');
+
+    await queue.commit({ notes: 'Chosen version' }, 'manual');
+    assert.equal(writes[1].save_mode, 'manual');
+    assert.equal(queue.lastSavedMode, 'manual');
+});

@@ -1,12 +1,13 @@
 """Taccuino dello studente: modello del discente auto-dichiarato (open learner model).
 
 Nella UI si chiama "taccuino" (da non confondere con il "profilo", che è
-l'esito a fattori dei questionari). Append-only: ogni POST crea una
-revisione; il taccuino corrente è l'ultima.
+l'esito a fattori dei questionari). I salvataggi manuali sono append-only;
+l'autosalvataggio aggiorna una sola bozza recuperabile e non entra nello storico.
 Lo studente vede, modifica e cancella il proprio modello (trasparenza).
 """
 
 import logging
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 MAX_HISTORY_REVISIONS = 50
+AUTOSAVE_SOURCE = "autosave"
 
 
 def _latest_revision(db: Session, username: str) -> Optional[models.LearnerProfileRevision]:
@@ -33,6 +35,27 @@ def _latest_revision(db: Session, username: str) -> Optional[models.LearnerProfi
     )
 
 
+def _draft_revisions(db: Session, username: str):
+    return (
+        db.query(models.LearnerProfileRevision)
+        .filter(
+            models.LearnerProfileRevision.username == username,
+            models.LearnerProfileRevision.source == AUTOSAVE_SOURCE,
+        )
+        .order_by(models.LearnerProfileRevision.created_at.desc(), models.LearnerProfileRevision.id.desc())
+    )
+
+
+def _delete_drafts(db: Session, username: str, *, keep_id: Optional[int] = None) -> int:
+    query = db.query(models.LearnerProfileRevision).filter(
+        models.LearnerProfileRevision.username == username,
+        models.LearnerProfileRevision.source == AUTOSAVE_SOURCE,
+    )
+    if keep_id is not None:
+        query = query.filter(models.LearnerProfileRevision.id != keep_id)
+    return query.delete(synchronize_session=False)
+
+
 def _ensure_revision_owner(db: Session, username: str, revision_id: Optional[int]) -> None:
     if revision_id is None:
         return
@@ -41,6 +64,7 @@ def _ensure_revision_owner(db: Session, username: str, revision_id: Optional[int
         .filter(
             models.LearnerProfileRevision.id == revision_id,
             models.LearnerProfileRevision.username == username,
+            models.LearnerProfileRevision.source != AUTOSAVE_SOURCE,
         )
         .first()
     )
@@ -83,18 +107,67 @@ async def save_learner_profile(
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Crea una nuova revisione. Se i dati sono identici all'ultima (es. lo
-    studente conferma senza modifiche) non duplica: ritorna la revisione esistente."""
+    """Aggiorna la bozza automatica oppure crea una revisione esplicita.
+
+    Esiste al massimo una bozza per utente e lo storico non la espone. Un
+    salvataggio manuale promuove la bozza corrente, conservando le precedenti
+    revisioni manuali. Contenuti identici non generano duplicati.
+    """
+    username = current_user["username"]
     data = {
         key: value
         for key in schemas.LEARNER_PROFILE_FIELDS
         if (value := getattr(payload, key)) is not None
     }
-    latest = _latest_revision(db, current_user["username"])
+    latest = _latest_revision(db, username)
+
+    if payload.save_mode == "autosave":
+        if latest is not None and latest.data == data:
+            if latest.source != AUTOSAVE_SOURCE:
+                removed = _delete_drafts(db, username)
+                if removed:
+                    db.commit()
+            return latest
+        drafts = _draft_revisions(db, username).all()
+        if drafts:
+            revision = drafts[0]
+            for duplicate in drafts[1:]:
+                db.delete(duplicate)
+            revision.data = data
+            revision.session_id = payload.session_id
+            # created_at determina il taccuino corrente in tutto il backend.
+            revision.created_at = datetime.now(timezone.utc)
+        else:
+            revision = models.LearnerProfileRevision(
+                username=username,
+                data=data,
+                source=AUTOSAVE_SOURCE,
+                session_id=payload.session_id,
+            )
+        db.add(revision)
+        db.commit()
+        db.refresh(revision)
+        return revision
+
     if latest is not None and latest.data == data:
+        if latest.source == AUTOSAVE_SOURCE:
+            # La bozza diventa la versione scelta esplicitamente dall'utente.
+            _delete_drafts(db, username, keep_id=latest.id)
+            latest.source = payload.source
+            latest.session_id = payload.session_id
+            latest.created_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(latest)
+        else:
+            removed = _delete_drafts(db, username)
+            if removed:
+                db.commit()
         return latest
+
+    # Una versione esplicita sostituisce l'eventuale bozza, non le revisioni.
+    _delete_drafts(db, username)
     revision = models.LearnerProfileRevision(
-        username=current_user["username"],
+        username=username,
         data=data,
         source=payload.source,
         session_id=payload.session_id,
@@ -110,10 +183,13 @@ async def get_learner_profile_history(
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Storico del cambiamento: revisioni dalla più recente."""
+    """Versioni esplicite dalla più recente; la bozza automatica resta fuori."""
     return (
         db.query(models.LearnerProfileRevision)
-        .filter(models.LearnerProfileRevision.username == current_user["username"])
+        .filter(
+            models.LearnerProfileRevision.username == current_user["username"],
+            models.LearnerProfileRevision.source != AUTOSAVE_SOURCE,
+        )
         .order_by(models.LearnerProfileRevision.created_at.desc(), models.LearnerProfileRevision.id.desc())
         .limit(MAX_HISTORY_REVISIONS)
         .all()

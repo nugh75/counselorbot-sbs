@@ -4438,7 +4438,7 @@ def test_qpcs_summary_ignores_a_later_legacy_step():
 
 
 def test_learner_profile_revisions_and_history():
-    """Profilo del discente: salvataggio append-only, dedup, storico, delete."""
+    """Autosave aggiorna una bozza; solo il salvataggio esplicito fa storia."""
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:
         r = client.get("/user/learner-profile")
@@ -4463,14 +4463,38 @@ def test_learner_profile_revisions_and_history():
         })
         assert r.json()["id"] == first_id
 
-        # Modifica -> nuova revisione, storico = 2
+        # Due autosalvataggi aggiornano la stessa bozza e non affollano lo storico.
+        r = client.post("/user/learner-profile", json={
+            "goal": "Superare l'esame di analisi",
+            "main_difficulty": "Ansia",
+            "source": "session_end",
+            "save_mode": "autosave",
+        })
+        draft_id = r.json()["id"]
+        assert draft_id != first_id
+        assert r.json()["source"] == "autosave"
         r = client.post("/user/learner-profile", json={
             "goal": "Superare l'esame di analisi",
             "main_difficulty": "Ansia prima dell'esame",
             "source": "session_end",
+            "save_mode": "autosave",
+        })
+        assert r.json()["id"] == draft_id
+        assert r.json()["data"]["main_difficulty"] == "Ansia prima dell'esame"
+        r = client.get("/user/learner-profile/history")
+        assert r.status_code == 200 and len(r.json()) == 1
+        assert r.json()[0]["id"] == first_id
+
+        # Il salvataggio esplicito promuove la bozza a versione storica.
+        r = client.post("/user/learner-profile", json={
+            "goal": "Superare l'esame di analisi",
+            "main_difficulty": "Ansia prima dell'esame",
+            "source": "session_end",
+            "save_mode": "manual",
         })
         second_id = r.json()["id"]
-        assert second_id != first_id
+        assert second_id == draft_id
+        assert r.json()["source"] == "session_end"
         r = client.get("/user/learner-profile/history")
         assert r.status_code == 200 and len(r.json()) == 2
 
