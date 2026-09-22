@@ -10,6 +10,7 @@ const labels = {
         "bullets": "Per punti",
         "table": "Tabella",
         "choose": "Come vuoi affrontare il tuo profilo?",
+        "choosePath": "Come vuoi affrontare il percorso?",
         "complete": "Percorso completo",
         "completeHelp": "Esplora le diverse dimensioni.",
         "essential": "Percorso essenziale",
@@ -20,7 +21,10 @@ const labels = {
         "action": "Un primo passo",
         "summary": "Sintesi",
         "finish": "Concludi",
-        "followup": "Puoi concludere oppure approfondire scrivendo qui."
+        "followup": "Puoi concludere oppure approfondire scrivendo qui.",
+        "areaLevel": "Area e livello",
+        "smartCheck": "Verifica SMART",
+        "planProof": "Piano e prova"
     },
     "en": {
         "format": "Format",
@@ -28,6 +32,7 @@ const labels = {
         "bullets": "Bullet points",
         "table": "Table",
         "choose": "How would you like to explore your profile?",
+        "choosePath": "How would you like to approach this path?",
         "complete": "Complete path",
         "completeHelp": "Explore the different dimensions.",
         "essential": "Essential path",
@@ -38,7 +43,10 @@ const labels = {
         "action": "A first step",
         "summary": "Summary",
         "finish": "Finish",
-        "followup": "You can finish or write here to explore further."
+        "followup": "You can finish or write here to explore further.",
+        "areaLevel": "Area and level",
+        "smartCheck": "SMART check",
+        "planProof": "Plan and proof"
     },
     "es": {
         "format": "Formato",
@@ -46,6 +54,7 @@ const labels = {
         "bullets": "Por puntos",
         "table": "Tabla",
         "choose": "¿Cómo quieres explorar tu perfil?",
+        "choosePath": "¿Cómo quieres afrontar el recorrido?",
         "complete": "Recorrido completo",
         "completeHelp": "Explora las distintas dimensiones.",
         "essential": "Recorrido esencial",
@@ -56,7 +65,10 @@ const labels = {
         "action": "Un primer paso",
         "summary": "Síntesis",
         "finish": "Concluir",
-        "followup": "Puedes concluir o escribir aquí para profundizar."
+        "followup": "Puedes concluir o escribir aquí para profundizar.",
+        "areaLevel": "Área y nivel",
+        "smartCheck": "Prueba SMART",
+        "planProof": "Plan y prueba"
     },
     "fr": {
         "format": "Format",
@@ -64,6 +76,7 @@ const labels = {
         "bullets": "Liste",
         "table": "Tableau",
         "choose": "Comment souhaitez-vous explorer votre profil ?",
+        "choosePath": "Comment souhaitez-vous aborder ce parcours ?",
         "complete": "Parcours complet",
         "completeHelp": "Explorez les différentes dimensions.",
         "essential": "Parcours essentiel",
@@ -74,7 +87,10 @@ const labels = {
         "action": "Un premier pas",
         "summary": "Synthèse",
         "finish": "Terminer",
-        "followup": "Vous pouvez terminer ou écrire ici pour approfondir."
+        "followup": "Vous pouvez terminer ou écrire ici pour approfondir.",
+        "areaLevel": "Domaine et niveau",
+        "smartCheck": "Épreuve SMART",
+        "planProof": "Plan et preuve"
     },
     "de": {
         "format": "Format",
@@ -82,6 +98,7 @@ const labels = {
         "bullets": "Stichpunkte",
         "table": "Tabelle",
         "choose": "Wie möchtest du dein Profil erkunden?",
+        "choosePath": "Wie möchtest du diesen Weg angehen?",
         "complete": "Vollständiger Weg",
         "completeHelp": "Erkunde die verschiedenen Dimensionen.",
         "essential": "Kompakter Weg",
@@ -92,7 +109,10 @@ const labels = {
         "action": "Ein erster Schritt",
         "summary": "Zusammenfassung",
         "finish": "Abschließen",
-        "followup": "Du kannst abschließen oder hier zur Vertiefung schreiben."
+        "followup": "Du kannst abschließen oder hier zur Vertiefung schreiben.",
+        "areaLevel": "Bereich und Stufe",
+        "smartCheck": "SMART-Test",
+        "planProof": "Plan und Nachweis"
     },
     "sv": {
         "format": "Format",
@@ -100,6 +120,7 @@ const labels = {
         "bullets": "Punktlista",
         "table": "Tabell",
         "choose": "Hur vill du utforska din profil?",
+        "choosePath": "Hur vill du lägga upp arbetet?",
         "complete": "Fullständig väg",
         "completeHelp": "Utforska de olika dimensionerna.",
         "essential": "Kort väg",
@@ -110,7 +131,10 @@ const labels = {
         "action": "Ett första steg",
         "summary": "Sammanfattning",
         "finish": "Avsluta",
-        "followup": "Du kan avsluta eller skriva här för att fördjupa samtalet."
+        "followup": "Du kan avsluta eller skriva här för att fördjupa samtalet.",
+        "areaLevel": "Område och nivå",
+        "smartCheck": "SMART-test",
+        "planProof": "Plan och bevis"
     }
 };
 
@@ -118,14 +142,50 @@ export function chatPreferenceLabel(lang: Lang, key: keyof typeof labels.it): st
     return (labels[lang] || labels.en)[key];
 }
 
-export const ESSENTIAL_PHASES = ['qsa-essential-focus', 'qsa-essential-experience', 'qsa-essential-action', 'qsa-essential-summary'] as const;
+// Percorsi con versione essenziale: il QSA è stato il primo; i due percorsi
+// Obiettivo riusano lo stesso meccanismo (fasi virtuali fuori dalla tabella
+// degli step, il client avanza dopo ogni risposta completata).
+export const ESSENTIAL_INSTRUMENTS = ['QSA', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA'] as const;
+export type EssentialInstrument = (typeof ESSENTIAL_INSTRUMENTS)[number];
 
-export function nextEssentialPhase(phase: string): string {
-    const index = ESSENTIAL_PHASES.indexOf(phase as typeof ESSENTIAL_PHASES[number]);
-    return ESSENTIAL_PHASES[Math.min(Math.max(index + 1, 0), ESSENTIAL_PHASES.length - 1)];
+export function isEssentialInstrument(type: string): type is EssentialInstrument {
+    return (ESSENTIAL_INSTRUMENTS as readonly string[]).includes(type);
 }
 
-export function essentialSteps(lang: Lang) {
-    const names = ['focus', 'experience', 'action', 'summary'] as const;
-    return ESSENTIAL_PHASES.map((id, index) => ({ id, sort_order: index, label: chatPreferenceLabel(lang, names[index]), system_prompt_mode: 'generic', color_theme: 'indigo' }));
+export const ESSENTIAL_PHASES = ['qsa-essential-focus', 'qsa-essential-experience', 'qsa-essential-action', 'qsa-essential-summary'] as const;
+
+const OBBSTUDIO_ESSENTIAL_PHASES = ['obbstudio-essential-focus', 'obbstudio-essential-smart', 'obbstudio-essential-plan', 'obbstudio-essential-summary'] as const;
+const OBBDOCENZA_ESSENTIAL_PHASES = ['obbdocenza-essential-focus', 'obbdocenza-essential-smart', 'obbdocenza-essential-plan', 'obbdocenza-essential-summary'] as const;
+
+// Ogni fase ha un prefisso per strumento: il percorso si riconosce dalla fase,
+// quindi l'avanzamento non ha bisogno del tipo della richiesta.
+const ESSENTIAL_PHASES_BY_PREFIX: ReadonlyArray<readonly string[]> = [
+    ESSENTIAL_PHASES,
+    OBBSTUDIO_ESSENTIAL_PHASES,
+    OBBDOCENZA_ESSENTIAL_PHASES,
+];
+
+export function essentialPhasesFor(type: string): readonly string[] {
+    if (type === 'OBIETTIVO_STUDIO') return OBBSTUDIO_ESSENTIAL_PHASES;
+    if (type === 'OBIETTIVO_DOCENZA') return OBBDOCENZA_ESSENTIAL_PHASES;
+    if (type === 'QSA') return ESSENTIAL_PHASES;
+    throw new Error(`Unsupported essential instrument: ${type}`);
+}
+
+export function nextEssentialPhase(phase: string): string {
+    const phases = ESSENTIAL_PHASES_BY_PREFIX.find((candidates) => candidates.includes(phase)) ?? ESSENTIAL_PHASES;
+    const index = phases.indexOf(phase);
+    return phases[Math.min(Math.max(index + 1, 0), phases.length - 1)];
+}
+
+export function isEssentialSummaryPhase(phase: string): boolean {
+    return phase.endsWith('-essential-summary');
+}
+
+export function essentialSteps(type: string, lang: Lang) {
+    const phases = essentialPhasesFor(type);
+    const names: readonly string[] = type === 'QSA'
+        ? ['focus', 'experience', 'action', 'summary']
+        : ['areaLevel', 'smartCheck', 'planProof', 'summary'];
+    return phases.map((id, index) => ({ id, sort_order: index, label: chatPreferenceLabel(lang, names[index] as keyof typeof labels.it), system_prompt_mode: type === 'QSA' ? 'generic' : 'obiettivo-interview', color_theme: 'indigo' }));
 }

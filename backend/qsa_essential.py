@@ -1,7 +1,7 @@
 """Le conversazioni essenziali hanno tre turni della persona; lo strumento non cambia.
 
 Il percorso essenziale QSA è nato per primo; i due percorsi Obiettivo di
-apprendimento riustano lo stesso meccanismo (fasi virtuali fuori dalla tabella
+apprendimento riutilizzano lo stesso meccanismo (fasi virtuali fuori dalla tabella
 `guided_steps`, il client avanza dopo ogni risposta). Il registro tiene le fasi
 e le istruzioni per strumento; `validate_path` resta il portone: una
 combinazione strumento/fase non valida è un 422, mai un percorso improvvisato.
@@ -35,13 +35,13 @@ def validate_path(questionnaire_type: str | None, path: str | None, phase: str |
         followup = _FOLLOWUP_PHASES.get((questionnaire_type or "").upper())
         if not phases or (phase not in (*phases, followup) if followup else phase not in phases):
             raise HTTPException(422, "The essential path is available only for a supported instrument with a valid essential phase")
-    elif (phase or "").startswith("qsa-essential-"):
-        raise HTTPException(422, "An essential phase requires the essential QSA path")
+    elif is_essential_phase(phase):
+        raise HTTPException(422, "An essential phase requires the essential path")
     return essential
 
 
 def is_essential_phase(phase: str | None) -> bool:
-    return bool(phase) and ("qsa-essential-" in phase or "obbstudio-essential-" in phase or "obbdocenza-essential-" in phase)
+    return (phase or "").startswith(("qsa-essential-", "obbstudio-essential-", "obbdocenza-essential-"))
 
 
 def is_essential_summary(phase: str | None) -> bool:
@@ -78,7 +78,7 @@ def directive(phase: str) -> str:
         return ""
     path_name = "QSA" if phase in QSA_PHASES else ("learning objective" if phase in OBBSTUDIO_PHASES else "didactic objective")
     return (
-        "\n\n[ESSENTIAL PATH - CURRENT TURN]\n"
+        ("\n\n[QSA ESSENTIAL PATH - CURRENT TURN]\n" if phase in QSA_PHASES else "\n\n[ESSENTIAL PATH - CURRENT TURN]\n") +
         f"This is the essential {path_name} conversation, not the complete guided path. "
         "The application controls progression: the application moves to the next step after each completed reply. "
         "Do not add an introduction, agreement turn, questionnaire, reflection battery or mandatory follow-up. "

@@ -15,13 +15,13 @@ from __future__ import annotations
 import json
 import logging
 import re
+from datetime import date
 
 logger = logging.getLogger(__name__)
 
 GOAL_INSTRUMENTS = ("OBIETTIVO_STUDIO", "OBIETTIVO_DOCENZA")
 MAX_TEXT = 1500
 MAX_TITLE = 160
-MAX_ITEMS = 6
 
 _BLOCK_NAME = "goal"
 _BLOCK_RE = re.compile(r"```goal[ \t]*\r?\n(.*?)```", re.DOTALL | re.IGNORECASE)
@@ -91,13 +91,18 @@ def extract(text: str) -> tuple[str, dict | None]:
 
 
 def _draft(data: dict) -> dict:
-    date = _text(data.get("review_date"))
+    review_date = _text(data.get("review_date"))
+    try:
+        if not _DATE_RE.fullmatch(review_date) or date.fromisoformat(review_date).isoformat() != review_date:
+            review_date = ""
+    except ValueError:
+        review_date = ""
     return {
         "title": _text(data.get("title"), MAX_TITLE),
         "motivation": _text(data.get("motivation")),
         "criteria": _text(data.get("criteria")),
         "reflection": _text(data.get("reflection")),
-        "review_date": date if _DATE_RE.match(date) else "",
+        "review_date": review_date,
     }
 
 

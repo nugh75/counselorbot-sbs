@@ -1633,6 +1633,36 @@ export function ConfigForm() {
             ],
         },
         {
+            id: 'obiettivo-studio',
+            questionnaireType: 'OBIETTIVO_STUDIO',
+            title: t('q.OBIETTIVO_STUDIO.fullName'),
+            color: 'indigo' as const,
+            systemPrompts: [
+                { key: 'prompt_obbstudio_intro', label: 'Prompt Presentazione' },
+                { key: 'prompt_obiettivo_interview', label: 'Prompt Conversazione' },
+                { key: 'prompt_obiettivo_summary', label: 'Prompt Sintesi Finale' },
+            ],
+            texts: [
+                { key: 'text_obbstudio_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
+                { key: 'text_obbstudio_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
+            ],
+        },
+        {
+            id: 'obiettivo-docenza',
+            questionnaireType: 'OBIETTIVO_DOCENZA',
+            title: t('q.OBIETTIVO_DOCENZA.fullName'),
+            color: 'indigo' as const,
+            systemPrompts: [
+                { key: 'prompt_obbdocenza_intro', label: 'Prompt Presentazione' },
+                { key: 'prompt_obiettivo_interview', label: 'Prompt Conversazione' },
+                { key: 'prompt_obiettivo_summary', label: 'Prompt Sintesi Finale' },
+            ],
+            texts: [
+                { key: 'text_obbdocenza_questions_intro', label: 'Messaggio Intro Fase Domande', type: 'textarea' as const },
+                { key: 'text_obbdocenza_conclusion', label: 'Messaggio Conclusione', type: 'textarea' as const },
+            ],
+        },
+        {
             id: 'qpcs',
             questionnaireType: 'QPCS',
             title: `QPCS — ${t('q.QPCS.fullName')}`,

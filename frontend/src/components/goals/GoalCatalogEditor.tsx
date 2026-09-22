@@ -10,12 +10,12 @@ import { AssignmentButton } from '@/components/teacher/AssignmentButton';
 
 type SharedGoal = { id: number; username: string; title: string; status: string; criteria: string; reflection: string; review_date: string | null };
 const emptyData = (language: string): CatalogData => ({ title: '', description: '', area: '', audience: '', criteria: '', suggestions: '', language });
-export function GoalCatalogEditor() {
+export function GoalCatalogEditor({ initialData }: { initialData?: CatalogData } = {}) {
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
     const [rows, setRows] = useState<CatalogEntry[]>([]); const [groups, setGroups] = useState<GoalGroup[]>([]);
     const [admin, setAdmin] = useState(false); const [username, setUsername] = useState(''); const [editing, setEditing] = useState<CatalogEntry | null>(null);
-    const [data, setData] = useState<CatalogData>(() => emptyData(lang)); const [groupId, setGroupId] = useState<number | null>(null);
-    const [status, setStatus] = useState('draft'); const [formOpen, setFormOpen] = useState(false);
+    const [data, setData] = useState<CatalogData>(() => initialData ?? emptyData(lang)); const [groupId, setGroupId] = useState<number | null>(null);
+    const [status, setStatus] = useState('draft'); const [formOpen, setFormOpen] = useState(Boolean(initialData));
     const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(false); const [error, setError] = useState<unknown>(null);
     const [saved, setSaved] = useState(false); const [sharedGroup, setSharedGroup] = useState('');
     const [shared, setShared] = useState<SharedGoal[]>([]); const [sharedError, setSharedError] = useState<unknown>(null); const [sharedLoading, setSharedLoading] = useState(false);

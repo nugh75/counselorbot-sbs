@@ -5,7 +5,7 @@ Writing session memory and recording model output remain endpoint responsibiliti
 """
 from dataclasses import dataclass
 from .chat_preferences import apply_response_format
-from .qsa_essential import validate_path, directive as essential_directive, PHASES as ESSENTIAL_PHASES
+from .qsa_essential import validate_path, directive as essential_directive, is_essential_summary
 from .prompt_contract import turn_contract
 from .journey_context import SYNTHESIS_STEPS, journey_context, session_evidence
 from . import models, recommendation_blocks, session_ledger, thread_guard
@@ -351,7 +351,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     # ledger is deliberately not injected there.
     guard_notes = thread_guard.pending(db, session_id=session_id) if include_history else []
     is_synthesis = request.phase in SYNTHESIS_STEPS or (step and step.system_prompt_mode.endswith("-summary"))
-    is_synthesis = is_synthesis or (essential and request.phase == ESSENTIAL_PHASES[-1])
+    is_synthesis = is_synthesis or (essential and is_essential_summary(request.phase))
     if is_synthesis:
         if journey_override is not None:
             evidence, coverage = journey_override, "supplied"

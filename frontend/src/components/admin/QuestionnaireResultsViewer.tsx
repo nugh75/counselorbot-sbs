@@ -37,9 +37,9 @@ interface TypeStats {
     factors: FactorStats[];
 }
 
-const QUESTIONNAIRE_TYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'QPCS', 'QPCC', 'QAP'];
+const QUESTIONNAIRE_TYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'QPCS', 'QPCC', 'QAP'];
 // Percorsi narrativi: nessun punteggio da mostrare.
-const QUALITATIVE_TYPES = new Set(['SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE']);
+const QUALITATIVE_TYPES = new Set(['SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA']);
 
 type TranslateFallback = (key: string, fallback: string) => string;
 

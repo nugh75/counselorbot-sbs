@@ -2339,6 +2339,496 @@
           "När är det meningsfullt att återvända till den här händelsen?"
         ]
       }
+    },
+    "OBIETTIVO_STUDIO": {
+      "obbstudio-intro": {
+        "en": [
+          "How does this path work?",
+          "How long does it take?",
+          "Where will the objective end up?"
+        ],
+        "es": [
+          "¿Cómo funciona este recorrido?",
+          "¿Cuánto tiempo me llevará?",
+          "¿Dónde acabará el objetivo?"
+        ],
+        "fr": [
+          "Comment fonctionne ce parcours ?",
+          "Combien de temps faut-il ?",
+          "Où l’objectif finira-t-il ?"
+        ],
+        "de": [
+          "Wie funktioniert dieser Weg?",
+          "Wie viel Zeit brauche ich?",
+          "Wo landet das Ziel?"
+        ],
+        "sv": [
+          "Hur fungerar den här vägen?",
+          "Hur lång tid tar det?",
+          "Var hamnar målet?"
+        ]
+      },
+      "obbstudio-patto": {
+        "en": [
+          "I agree, let's start",
+          "What will you actually ask me?",
+          "Can I change objective halfway through?"
+        ],
+        "es": [
+          "Acepto, empecemos",
+          "¿Qué me preguntarás en concreto?",
+          "¿Puedo cambiar de objetivo a mitad de camino?"
+        ],
+        "fr": [
+          "J’accepte, commençons",
+          "Que me demanderez-vous concrètement ?",
+          "Puis-je changer d’objectif en cours de route ?"
+        ],
+        "de": [
+          "Einverstanden, fangen wir an",
+          "Was wirst du mich konkret fragen?",
+          "Kann ich das Ziel unterwegs wechseln?"
+        ],
+        "sv": [
+          "Jag håller med, vi börjar",
+          "Vad kommer du att fråga mig?",
+          "Kan jag byta mål halvväges?"
+        ]
+      },
+      "obbstudio-partenza": {
+        "en": [
+          "The area that matters most to me is…",
+          "Help me understand where to start",
+          "Which context should I start from?"
+        ],
+        "es": [
+          "El área que más me importa es…",
+          "Ayúdame a entender desde dónde partir",
+          "¿Desde qué contexto conviene partir?"
+        ],
+        "fr": [
+          "Le domaine qui compte le plus pour moi, c’est…",
+          "Aidez-moi à comprendre par où commencer",
+          "De quel contexte vaut-il mieux partir ?"
+        ],
+        "de": [
+          "Der Bereich, der mir am wichtigsten ist, ist…",
+          "Hilf mir zu verstehen, wo ich ansetzen soll",
+          "Von welchem Kontext aus ist der Start am besten?"
+        ],
+        "sv": [
+          "Området som betyder mest för mig är…",
+          "Hjälp mig förstå var jag ska börja",
+          "Från vilken kontext är det bäst att utgå?"
+        ]
+      },
+      "obbstudio-livello": {
+        "en": [
+          "I want to be able to…",
+          "Which level is right for me?",
+          "I want to reach applying, not just remembering"
+        ],
+        "es": [
+          "Quiero ser capaz de…",
+          "¿Cuál es el nivel adecuado para mí?",
+          "Quiero llegar a aplicar, no solo recordar"
+        ],
+        "fr": [
+          "Je veux être capable de…",
+          "Quel niveau me convient ?",
+          "Je veux arriver à appliquer, pas seulement me souvenir"
+        ],
+        "de": [
+          "Ich will in der Lage sein zu…",
+          "Welche Stufe passt zu mir?",
+          "Ich will bis zum Anwenden kommen, nicht nur beim Erinnern bleiben"
+        ],
+        "sv": [
+          "Jag vill kunna…",
+          "Vilken nivå passar mig?",
+          "Jag vill komma till att tillämpa, inte bara minnas"
+        ]
+      },
+      "obbstudio-smart": {
+        "en": [
+          "My objective so far is…",
+          "How do I make it measurable?",
+          "By when is it realistic?"
+        ],
+        "es": [
+          "Mi objetivo hasta ahora es…",
+          "¿Cómo lo hago medible?",
+          "¿Para cuándo es realista?"
+        ],
+        "fr": [
+          "Mon objectif pour l’instant est…",
+          "Comment le rendre mesurable ?",
+          "Pour quand est-ce réaliste ?"
+        ],
+        "de": [
+          "Mein Ziel ist bisher…",
+          "Wie mache ich es messbar?",
+          "Bis wann ist es realistisch?"
+        ],
+        "sv": [
+          "Mitt mål hittills är…",
+          "Hur gör jag det mätbart?",
+          "När är det realistiskt?"
+        ]
+      },
+      "obbstudio-sfida": {
+        "en": [
+          "Is it too easy or too ambitious?",
+          "Is it a learning or a performance objective?",
+          "Help me make it more challenging"
+        ],
+        "es": [
+          "¿Es demasiado fácil o demasiado ambicioso?",
+          "¿Es un objetivo de aprendizaje o de rendimiento?",
+          "Ayúdame a hacerlo más exigente"
+        ],
+        "fr": [
+          "Est-il trop facile ou trop ambitieux ?",
+          "Est-ce un objectif d’apprentissage ou de performance ?",
+          "Aidez-moi à le rendre plus exigeant"
+        ],
+        "de": [
+          "Ist es zu leicht oder zu ambitioniert?",
+          "Ist es ein Lern- oder ein Leistungsziel?",
+          "Hilf mir, es fordernder zu machen"
+        ],
+        "sv": [
+          "Är det för lätt eller för ambitiöst?",
+          "Är det ett inlärningsmål eller ett prestationsmål?",
+          "Hjälp mig att göra det mer utmanande"
+        ]
+      },
+      "obbstudio-piano": {
+        "en": [
+          "The first steps could be…",
+          "If I get stuck, then I…",
+          "What usually throws me off track?"
+        ],
+        "es": [
+          "Los primeros pasos podrían ser…",
+          "Si me bloqueo, entonces…",
+          "¿Qué suele descarrilarme?"
+        ],
+        "fr": [
+          "Les premiers pas pourraient être…",
+          "Si je bloque, alors…",
+          "Qu’est-ce qui me fait habituellement dévier ?"
+        ],
+        "de": [
+          "Die ersten Schritte könnten sein…",
+          "Wenn ich festhänge, dann…",
+          "Was bringt mich normalerweise vom Weg ab?"
+        ],
+        "sv": [
+          "De första stegen kan vara…",
+          "Om jag kör fast, så…",
+          "Vad spårar det mig vanligtvis ur?"
+        ]
+      },
+      "obbstudio-verifica": {
+        "en": [
+          "How will I know I made it?",
+          "Which concrete proof can I show?",
+          "When do we check on it together?"
+        ],
+        "es": [
+          "¿Cómo sabré que lo logré?",
+          "¿Qué prueba concreta puedo mostrar?",
+          "¿Cuándo lo repasamos juntos?"
+        ],
+        "fr": [
+          "Comment saurai-je que j’y suis arrivé ?",
+          "Quelle preuve concrète puis-je montrer ?",
+          "Quand y revenons-nous ensemble ?"
+        ],
+        "de": [
+          "Woran erkenne ich, dass ich es geschafft habe?",
+          "Welchen konkreten Nachweis kann ich zeigen?",
+          "Wann sehen wir es uns zusammen an?"
+        ],
+        "sv": [
+          "Hur vet jag att jag lyckats?",
+          "Vilket konkret bevis kan jag visa?",
+          "När går vi igenom det tillsammans?"
+        ]
+      },
+      "obbstudio-final": {
+        "en": [
+          "What do I do with this objective?",
+          "How do I save it among my goals?",
+          "When does it make sense to review it?"
+        ],
+        "es": [
+          "¿Qué hago con este objetivo?",
+          "¿Cómo lo guardo entre mis objetivos?",
+          "¿Cuándo tiene sentido revisarlo?"
+        ],
+        "fr": [
+          "Que fais-je de cet objectif ?",
+          "Comment l’enregistrer parmi mes objectifs ?",
+          "Quand est-il utile de le réviser ?"
+        ],
+        "de": [
+          "Was mache ich mit diesem Ziel?",
+          "Wie speichere ich es unter meinen Zielen?",
+          "Wann lohnt es sich, es zu überprüfen?"
+        ],
+        "sv": [
+          "Vad gör jag med det här målet?",
+          "Hur sparar jag det bland mina mål?",
+          "När är det läge att se över det?"
+        ]
+      }
+    },
+    "OBIETTIVO_DOCENZA": {
+      "obbdocenza-intro": {
+        "en": [
+          "How does this path work?",
+          "How long does it take?",
+          "Where will the objective end up?"
+        ],
+        "es": [
+          "¿Cómo funciona este recorrido?",
+          "¿Cuánto tiempo me llevará?",
+          "¿Dónde acabará el objetivo?"
+        ],
+        "fr": [
+          "Comment fonctionne ce parcours ?",
+          "Combien de temps faut-il ?",
+          "Où l’objectif finira-t-il ?"
+        ],
+        "de": [
+          "Wie funktioniert dieser Weg?",
+          "Wie viel Zeit brauche ich?",
+          "Wo landet das Ziel?"
+        ],
+        "sv": [
+          "Hur fungerar den här vägen?",
+          "Hur lång tid tar det?",
+          "Var hamnar målet?"
+        ]
+      },
+      "obbdocenza-patto": {
+        "en": [
+          "I agree, let's start",
+          "What will you actually ask me?",
+          "Can I change objective halfway through?"
+        ],
+        "es": [
+          "Acepto, empecemos",
+          "¿Qué me preguntarás en concreto?",
+          "¿Puedo cambiar de objetivo a mitad de camino?"
+        ],
+        "fr": [
+          "J’accepte, commençons",
+          "Que me demanderez-vous concrètement ?",
+          "Puis-je changer d’objectif en cours de route ?"
+        ],
+        "de": [
+          "Einverstanden, fangen wir an",
+          "Was wirst du mich konkret fragen?",
+          "Kann ich das Ziel unterwegs wechseln?"
+        ],
+        "sv": [
+          "Jag håller med, vi börjar",
+          "Vad kommer du att fråga mig?",
+          "Kan jag byta mål halvväges?"
+        ]
+      },
+      "obbdocenza-partenza": {
+        "en": [
+          "The area that matters most to me is…",
+          "Help me understand where to start",
+          "Which context should I start from?"
+        ],
+        "es": [
+          "El área que más me importa es…",
+          "Ayúdame a entender desde dónde partir",
+          "¿Desde qué contexto conviene partir?"
+        ],
+        "fr": [
+          "Le domaine qui compte le plus pour moi, c’est…",
+          "Aidez-moi à comprendre par où commencer",
+          "De quel contexte vaut-il mieux partir ?"
+        ],
+        "de": [
+          "Der Bereich, der mir am wichtigsten ist, ist…",
+          "Hilf mir zu verstehen, wo ich ansetzen soll",
+          "Von welchem Kontext aus ist der Start am besten?"
+        ],
+        "sv": [
+          "Området som betyder mest för mig är…",
+          "Hjälp mig förstå var jag ska börja",
+          "Från vilken kontext är det bäst att utgå?"
+        ]
+      },
+      "obbdocenza-livello": {
+        "en": [
+          "I want to be able to…",
+          "Which level is right for me?",
+          "I want to reach applying, not just remembering"
+        ],
+        "es": [
+          "Quiero ser capaz de…",
+          "¿Cuál es el nivel adecuado para mí?",
+          "Quiero llegar a aplicar, no solo recordar"
+        ],
+        "fr": [
+          "Je veux être capable de…",
+          "Quel niveau me convient ?",
+          "Je veux arriver à appliquer, pas seulement me souvenir"
+        ],
+        "de": [
+          "Ich will in der Lage sein zu…",
+          "Welche Stufe passt zu mir?",
+          "Ich will bis zum Anwenden kommen, nicht nur beim Erinnern bleiben"
+        ],
+        "sv": [
+          "Jag vill kunna…",
+          "Vilken nivå passar mig?",
+          "Jag vill komma till att tillämpa, inte bara minnas"
+        ]
+      },
+      "obbdocenza-smart": {
+        "en": [
+          "My objective so far is…",
+          "How do I make it measurable?",
+          "By when is it realistic?"
+        ],
+        "es": [
+          "Mi objetivo hasta ahora es…",
+          "¿Cómo lo hago medible?",
+          "¿Para cuándo es realista?"
+        ],
+        "fr": [
+          "Mon objectif pour l’instant est…",
+          "Comment le rendre mesurable ?",
+          "Pour quand est-ce réaliste ?"
+        ],
+        "de": [
+          "Mein Ziel ist bisher…",
+          "Wie mache ich es messbar?",
+          "Bis wann ist es realistisch?"
+        ],
+        "sv": [
+          "Mitt mål hittills är…",
+          "Hur gör jag det mätbart?",
+          "När är det realistiskt?"
+        ]
+      },
+      "obbdocenza-sfida": {
+        "en": [
+          "Is it too easy or too ambitious?",
+          "Is it a learning or a performance objective?",
+          "Help me make it more challenging"
+        ],
+        "es": [
+          "¿Es demasiado fácil o demasiado ambicioso?",
+          "¿Es un objetivo de aprendizaje o de rendimiento?",
+          "Ayúdame a hacerlo más exigente"
+        ],
+        "fr": [
+          "Est-il trop facile ou trop ambitieux ?",
+          "Est-ce un objectif d’apprentissage ou de performance ?",
+          "Aidez-moi à le rendre plus exigeant"
+        ],
+        "de": [
+          "Ist es zu leicht oder zu ambitioniert?",
+          "Ist es ein Lern- oder ein Leistungsziel?",
+          "Hilf mir, es fordernder zu machen"
+        ],
+        "sv": [
+          "Är det för lätt eller för ambitiöst?",
+          "Är det ett inlärningsmål eller ett prestationsmål?",
+          "Hjälp mig att göra det mer utmanande"
+        ]
+      },
+      "obbdocenza-piano": {
+        "en": [
+          "The first steps could be…",
+          "If I get stuck, then I…",
+          "What usually throws me off track?"
+        ],
+        "es": [
+          "Los primeros pasos podrían ser…",
+          "Si me bloqueo, entonces…",
+          "¿Qué suele descarrilarme?"
+        ],
+        "fr": [
+          "Les premiers pas pourraient être…",
+          "Si je bloque, alors…",
+          "Qu’est-ce qui me fait habituellement dévier ?"
+        ],
+        "de": [
+          "Die ersten Schritte könnten sein…",
+          "Wenn ich festhänge, dann…",
+          "Was bringt mich normalerweise vom Weg ab?"
+        ],
+        "sv": [
+          "De första stegen kan vara…",
+          "Om jag kör fast, så…",
+          "Vad spårar det mig vanligtvis ur?"
+        ]
+      },
+      "obbdocenza-verifica": {
+        "en": [
+          "How will I know I made it?",
+          "Which concrete proof can I show?",
+          "When do we check on it together?"
+        ],
+        "es": [
+          "¿Cómo sabré que lo logré?",
+          "¿Qué prueba concreta puedo mostrar?",
+          "¿Cuándo lo repasamos juntos?"
+        ],
+        "fr": [
+          "Comment saurai-je que j’y suis arrivé ?",
+          "Quelle preuve concrète puis-je montrer ?",
+          "Quand y revenons-nous ensemble ?"
+        ],
+        "de": [
+          "Woran erkenne ich, dass ich es geschafft habe?",
+          "Welchen konkreten Nachweis kann ich zeigen?",
+          "Wann sehen wir es uns zusammen an?"
+        ],
+        "sv": [
+          "Hur vet jag att jag lyckats?",
+          "Vilket konkret bevis kan jag visa?",
+          "När går vi igenom det tillsammans?"
+        ]
+      },
+      "obbdocenza-final": {
+        "en": [
+          "What do I do with this objective?",
+          "How do I save it among my goals?",
+          "When does it make sense to review it?"
+        ],
+        "es": [
+          "¿Qué hago con este objetivo?",
+          "¿Cómo lo guardo entre mis objetivos?",
+          "¿Cuándo tiene sentido revisarlo?"
+        ],
+        "fr": [
+          "Que fais-je de cet objectif ?",
+          "Comment l’enregistrer parmi mes objectifs ?",
+          "Quand est-il utile de le réviser ?"
+        ],
+        "de": [
+          "Was mache ich mit diesem Ziel?",
+          "Wie speichere ich es unter meinen Zielen?",
+          "Wann lohnt es sich, es zu überprüfen?"
+        ],
+        "sv": [
+          "Vad gör jag med det här målet?",
+          "Hur sparar jag det bland mina mål?",
+          "När är det läge att se över det?"
+        ]
+      }
     }
   },
   "assistant_questions": {

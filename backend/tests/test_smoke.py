@@ -7306,6 +7306,80 @@ def test_every_gate_that_would_silently_exclude_idea_lets_it_through():
         db.close()
 
 
+def test_every_gate_that_would_silently_exclude_obiettivo_lets_it_through():
+    """Stessa rete del test Idea, per i due percorsi Obiettivo.
+
+    Aggiungere uno strumento tocca liste sparse su entrambi i lati: qui si
+    verifica che nessuno dei cancelli silenziosi lo lasci fuori.
+    """
+    from backend.chat_logic import _ensure_questionnaire_guided_steps  # noqa: F401
+    from backend.prompt_config import (
+        DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS,
+        DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS,
+        MODE_TO_SYSTEM_PROMPT_KEY,
+    )
+    from backend.goal_draft import GOAL_INSTRUMENTS, extract as extract_goal
+    from backend.qsa_essential import validate_path
+    from backend.routes.memory import MEMORY_QUESTIONNAIRE_TYPES
+    from backend.schemas import FROZEN_SESSION_TYPES
+    from backend.skills_seed import ENGINE_INSTRUMENTS, SEEDED_INSTRUMENTS
+
+    for code in GOAL_INSTRUMENTS:
+        assert code in MEMORY_QUESTIONNAIRE_TYPES, f"la memoria di sessione scarterebbe i turni di {code}"
+        assert code in FROZEN_SESSION_TYPES, f"congelare una sessione {code} fallirebbe"
+        assert code in ENGINE_INSTRUMENTS, f"il motore di skill non servirebbe {code}"
+        assert code not in SEEDED_INSTRUMENTS, f"{code} non riceve il materiale certificato degli altri"
+
+    assert MODE_TO_SYSTEM_PROMPT_KEY["obiettivo-interview"] == "prompt_obiettivo_interview"
+    assert MODE_TO_SYSTEM_PROMPT_KEY["obiettivo-summary"] == "prompt_obiettivo_summary"
+    assert len(DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS) == 9
+    assert len(DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS) == 9
+    # Le varianti docenza portano il contenuto progettuale (allineamento), non
+    # il piano personale dello studente.
+    docenza_piano = next(step for step in DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS if step["id"] == "obbdocenza-piano")
+    studio_piano = next(step for step in DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS if step["id"] == "obbstudio-piano")
+    assert "alignment" in docenza_piano["prompt"]
+    assert "if-then" in studio_piano["prompt"]
+    assert "{who}" not in docenza_piano["prompt"] and "{context}" not in studio_piano["prompt"]
+
+    _ensure_guided_steps("OBIETTIVO_STUDIO")
+    _ensure_guided_steps("OBIETTIVO_DOCENZA")
+    db = _TestSession()
+    try:
+        for code, prefix in (("OBIETTIVO_STUDIO", "obbstudio"), ("OBIETTIVO_DOCENZA", "obbdocenza")):
+            steps = (
+                db.query(models.GuidedStep)
+                .filter(models.GuidedStep.questionnaire_type == code)
+                .all()
+            )
+            assert len(steps) == 9, f"gli step di {code} non sono stati seminati"
+            for step in steps:
+                assert (step.label_i18n or {}).get("sv"), f"{step.id} senza traduzioni"
+    finally:
+        db.close()
+
+    # La versione essenziale accetta le fasi giuste e rifiuta le altre con 422.
+    assert validate_path("OBIETTIVO_STUDIO", "essential", "obbstudio-essential-focus") is True
+    assert validate_path("OBIETTIVO_DOCENZA", "essential", "obbdocenza-essential-summary") is True
+    try:
+        validate_path("OBIETTIVO_STUDIO", "essential", "qsa-essential-focus")
+        assert False, "una fase QSA sul percorso Obiettivo non deve passare"
+    except Exception:
+        pass
+
+    # Il blocco goal privato esce dalla risposta e produce una bozza pulita.
+    cleaned, draft = extract_goal(
+        "Riepilogo visibile.\n```goal\n{\"title\": \"Voglio saper spiegare la fotosintesi\", "
+        "\"motivation\": \"partenza: scienze\", \"criteria\": \"spiego a un compagno senza appunti\", "
+        "\"reflection\": \"passo 1, se-allora\", \"review_date\": \"2026-03-01\"}\n```\n[[AVANZA_STEP]]"
+    )
+    assert "goal" not in cleaned and "fotosintesi" not in cleaned
+    assert draft is not None and draft["title"] == "Voglio saper spiegare la fotosintesi"
+    assert draft["review_date"] == "2026-03-01"
+    cleaned, draft = extract_goal("Risposta senza blocco.")
+    assert draft is None
+
+
 def test_idea_never_carries_a_scores_line_into_the_prompt():
     """Una riga di servizio sui punteggi diventa un nodo della mappa.
 

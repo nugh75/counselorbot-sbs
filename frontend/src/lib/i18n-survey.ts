@@ -86,6 +86,8 @@ const it: Dict = {
     'survey.paese.Germania': 'Germania', 'survey.paese.Altro': 'Altro',
     'survey.tool.EVENTO_STUDIO': 'Evento significativo di studio',
     'survey.tool.EVENTO_PROFESSIONALE': 'Evento significativo professionale',
+    'survey.tool.OBIETTIVO_STUDIO': 'Il mio obiettivo di apprendimento',
+    'survey.tool.OBIETTIVO_DOCENZA': 'Obiettivi per la mia classe',
 };
 
 const en: Dict = {
@@ -168,6 +170,8 @@ const en: Dict = {
     'survey.paese.Germania': 'Germany', 'survey.paese.Altro': 'Other',
     'survey.tool.EVENTO_STUDIO': 'Significant study event',
     'survey.tool.EVENTO_PROFESSIONALE': 'Significant professional event',
+    'survey.tool.OBIETTIVO_STUDIO': 'My learning objective',
+    'survey.tool.OBIETTIVO_DOCENZA': 'Objectives for my class',
 };
 
 const es: Dict = {
@@ -250,6 +254,8 @@ const es: Dict = {
     'survey.paese.Germania': 'Alemania', 'survey.paese.Altro': 'Otro',
     'survey.tool.EVENTO_STUDIO': 'Evento significativo de estudio',
     'survey.tool.EVENTO_PROFESSIONALE': 'Evento significativo profesional',
+    'survey.tool.OBIETTIVO_STUDIO': 'Mi objetivo de aprendizaje',
+    'survey.tool.OBIETTIVO_DOCENZA': 'Objetivos para mi clase',
 };
 
 const fr: Dict = {
@@ -332,6 +338,8 @@ const fr: Dict = {
     'survey.paese.Germania': 'Allemagne', 'survey.paese.Altro': 'Autre',
     'survey.tool.EVENTO_STUDIO': 'Événement d’étude significatif',
     'survey.tool.EVENTO_PROFESSIONALE': 'Événement professionnel significatif',
+    'survey.tool.OBIETTIVO_STUDIO': 'Mon objectif d’apprentissage',
+    'survey.tool.OBIETTIVO_DOCENZA': 'Objectifs pour ma classe',
 };
 
 const de: Dict = {
@@ -414,6 +422,8 @@ const de: Dict = {
     'survey.paese.Germania': 'Deutschland', 'survey.paese.Altro': 'Sonstiges',
     'survey.tool.EVENTO_STUDIO': 'Bedeutsames Lernereignis',
     'survey.tool.EVENTO_PROFESSIONALE': 'Bedeutsames berufliches Ereignis',
+    'survey.tool.OBIETTIVO_STUDIO': 'Mein Lernziel',
+    'survey.tool.OBIETTIVO_DOCENZA': 'Ziele für meine Klasse',
 };
 
 const sv: Dict = {
@@ -496,6 +506,8 @@ const sv: Dict = {
     'survey.paese.Germania': 'Tyskland', 'survey.paese.Altro': 'Annat',
     'survey.tool.EVENTO_STUDIO': 'Betydelsefull studiehändelse',
     'survey.tool.EVENTO_PROFESSIONALE': 'Betydelsefull professionell händelse',
+    'survey.tool.OBIETTIVO_STUDIO': 'Mitt inlärningsmål',
+    'survey.tool.OBIETTIVO_DOCENZA': 'Mål för min klass',
 };
 
 export const SURVEY_DICTS: Record<Lang, Dict> = { it, en, es, fr, de, sv };

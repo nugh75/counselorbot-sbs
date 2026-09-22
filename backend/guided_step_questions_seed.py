@@ -419,6 +419,60 @@ for _questionnaire_type, _prefix in (("EVENTO_STUDIO", "evstudio"), ("EVENTO_PRO
         f"{_prefix}-{_suffix}": list(_questions) for _suffix, _questions in _EVENTO_STEP_QUESTIONS.items()
     }
 
+
+# --- Obiettivo di apprendimento: domande suggerite per step ---
+_OBIETTIVO_STEP_QUESTIONS = {
+    "intro": [
+        "Come funziona questo percorso?",
+        "Quanto tempo mi serve?",
+        "Dove finirà il mio obiettivo?",
+    ],
+    "patto": [
+        "Accetto, cominciamo",
+        "Cosa mi chiederai in pratica?",
+        "Posso cambiare obiettivo a metà percorso?",
+    ],
+    "partenza": [
+        "L'area che mi sta più a cuore è…",
+        "Mi aiuti a capire da dove partire?",
+        "Da quale contesto conviene partire?",
+    ],
+    "livello": [
+        "Voglio saper fare…",
+        "Qual è il livello giusto per me?",
+        "Vorrei arrivare ad applicare, non solo ricordare",
+    ],
+    "smart": [
+        "Il mio obiettivo finora è…",
+        "Come lo rendo misurabile?",
+        "Entro quando è realistico?",
+    ],
+    "sfida": [
+        "È troppo facile o troppo ambizioso?",
+        "È un obiettivo di apprendimento o di prestazione?",
+        "Mi aiuti a renderlo più sfidante?",
+    ],
+    "piano": [
+        "I primi passi potrebbero essere…",
+        "Se poi mi blocco, allora…",
+        "Cosa di solito mi fa deviare?",
+    ],
+    "verifica": [
+        "Come saprò di esserci riuscito?",
+        "Quale prova concreta posso mostrare?",
+        "Quando ci ritorniamo insieme?",
+    ],
+    "final": [
+        "Cosa faccio di questo obiettivo?",
+        "Come lo salvo tra gli obiettivi?",
+        "Quando ha senso rivederlo?",
+    ],
+}
+for _questionnaire_type, _prefix in (("OBIETTIVO_STUDIO", "obbstudio"), ("OBIETTIVO_DOCENZA", "obbdocenza")):
+    DEFAULT_GUIDED_STEP_QUESTIONS[_questionnaire_type] = {
+        f"{_prefix}-{_suffix}": list(_questions) for _suffix, _questions in _OBIETTIVO_STEP_QUESTIONS.items()
+    }
+
 def seed_guided_step_questions(db, models) -> None:
     """Inserisce le domande di default mancanti per questionario/step/lingua."""
 
