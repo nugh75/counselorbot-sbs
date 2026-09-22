@@ -38,11 +38,18 @@ test('InputMethodSelector supports both single-click selection and double-click 
     assert.match(src, /onDoubleClick=\{\(\) => \{\s*setSelected\(opt\.key\);\s*if \(chosenResultId !== null\) \{/);
 });
 
-test('IntroScreen action cards support both single-click selection and double-click advance without buttons', () => {
+test('IntroScreen cards support both single-click selection and double-click advance without buttons', () => {
     const src = introScreen();
     assert.doesNotMatch(src, /<Button/);
-    assert.match(src, /onClick=\{\(\) => setSelectedAction\(action\.key\)\}/);
-    assert.match(src, /onDoubleClick=\{\(\) => \{\s*setSelectedAction\(action\.key\);\s*action\.onAdvance\?\.\(\);\s*\}\}/);
+    // Schede attività: doppio clic → catalogo strumenti sulla sezione corrispondente
+    assert.match(src, /anchor: 'tools-assessment'/);
+    assert.match(src, /anchor: 'tools-guided'/);
+    assert.match(src, /anchor: 'tools-learning'/);
+    assert.match(src, /onClick=\{\(\) => setSelectedKey\(activity\.key\)\}/);
+    assert.match(src, /onOpenTools\?\.\(activity\.anchor\)/);
+    // Schede azione (Bussola/Strumenti)
+    assert.match(src, /onClick=\{\(\) => setSelectedKey\(action\.key\)\}/);
+    assert.match(src, /onDoubleClick=\{\(\) => \{\s*setSelectedKey\(action\.key\);\s*action\.onAdvance\?\.\(\);\s*\}\}/);
     assert.match(src, /images\/intro\/compass\.png/);
     assert.match(src, /images\/intro\/tools\.png/);
 });
