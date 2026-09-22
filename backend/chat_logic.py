@@ -14,6 +14,7 @@ from fastapi import HTTPException
 
 from . import models
 from .student_context import LEARNER_PROFILE_LABELS
+from .teacher_context import class_context_for_student, teacher_groups_context, teacher_notebook_context
 from . import database
 from . import prompt_config
 from .anonymous_codes import code_for_identity
@@ -2798,9 +2799,26 @@ def build_context_envelope(
     # --- [PROFILE] modello discente (auto-dichiarato) + PUNTEGGI (riferimento) ---
     username_for_context = identity.get("username", "") if identity else ""
     from .goals import goals_context
-    goal_context = goals_context(db, username_for_context) if include_profile else ""
-    profile_context = _learner_profile_context(db, username_for_context) if include_profile else ""
-    portfolio_context = _portfolio_context(db, username_for_context) if include_profile else ""
+    is_docenza_chat = questionnaire_type == "OBIETTIVO_DOCENZA"
+    if is_docenza_chat:
+        # Chat docenza: niente taccuino/portfolio/obiettivi dello studente
+        # (che per il docente sono di un'altra persona, se esistono). Al loro
+        # posto taccuino del docente e classi scelte per la conversazione.
+        goal_context = ""
+        profile_context = ""
+        portfolio_context = ""
+        class_context = ""
+    else:
+        goal_context = goals_context(db, username_for_context) if include_profile else ""
+        profile_context = _learner_profile_context(db, username_for_context) if include_profile else ""
+        portfolio_context = _portfolio_context(db, username_for_context) if include_profile else ""
+        # Contesto classe: testo approvato dal docente, condiviso solo dove
+        # lui l'ha attivato. Fuori da Idea, che costruisce il proprio contesto.
+        class_context = (
+            class_context_for_student(db, username_for_context)
+            if include_profile and questionnaire_type != IDEA_INSTRUMENT
+            else ""
+        )
     # Punteggi: nel turno di analisi arrivano nel messaggio utente, nei follow-up
     # si recuperano da quelli persistiti e si scope-ano alla sezione corrente.
     persisted_scores = (
@@ -2817,6 +2835,17 @@ def build_context_envelope(
     else:
         system_prompt_scores = ""
     profile_block = "\n\n".join(s for s in (profile_context, portfolio_context, goal_context, system_prompt_scores) if s)
+    if is_docenza_chat:
+        # Sostituzione del blocco discente con quello docente, al posto giusto
+        # dell'envelope: stesso slot [PROFILE], punteggi e portfolio restano
+        # fuori di proposito. group_ids e' riverificato a ogni turno: una
+        # condivisione revocata esce dal contesto senza rifare la selezione.
+        profile_block = "\n\n".join(
+            s for s in (
+                teacher_notebook_context(db, username_for_context),
+                teacher_groups_context(db, username_for_context, getattr(request, "group_ids", None)),
+            ) if s
+        )
     if components is not None:
         components["profile"] = profile_block
         components["cognitive_factors"] = filter_scores_by_components(message_scores_context, questionnaire_type, {"cognitive_factors": True, "affective_factors": False})
@@ -2824,8 +2853,10 @@ def build_context_envelope(
         components["other_scores"] = "" if _is_strategy_questionnaire(questionnaire_type) else message_scores_context
     if profile_block:
         parts_system.append("[PROFILE]\n" + profile_block)
+    if class_context:
+        parts_system.append("[CONTESTO CLASSE]\n" + class_context)
 
-    booklet_context = _student_booklet_context(db, username_for_context, questionnaire_type, session_id) if _component_enabled(component_flags, "student_booklet") else ""
+    booklet_context = _student_booklet_context(db, username_for_context, questionnaire_type, session_id) if _component_enabled(component_flags, "student_booklet") and not is_docenza_chat else ""
     if components is not None:
         components["student_booklet"] = booklet_context
     if booklet_context:

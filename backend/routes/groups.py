@@ -91,6 +91,9 @@ def _serialize_group(db: Session, group: models.StudentGroup) -> dict:
         "school": group.school,
         "school_level": group.school_level,
         "institution_id": group.institution_id,
+        "description": group.description,
+        "methodologies": group.methodologies,
+        "context_visible_to_students": bool(group.context_visible_to_students),
         "owner_username": group.owner_username,
         "is_active": group.is_active,
         "members_count": _members_count(db, group.id),
@@ -172,6 +175,9 @@ async def create_group(
     level = _valid_level(payload.school_level)
     group = models.StudentGroup(code=code, name=name, school=school, school_level=level,
                                 institution_id=payload.institution_id,
+                                description=(payload.description or "").strip() or None,
+                                methodologies=(payload.methodologies or "").strip() or None,
+                                context_visible_to_students=bool(payload.context_visible_to_students),
                                 owner_username=_username(current_user) or "")
     db.add(group)
     db.commit()
@@ -202,6 +208,12 @@ async def update_group(
     if "institution_id" in updates:
         value = updates["institution_id"]
         group.institution_id = int(value) if value else None
+    if "description" in updates:
+        group.description = (updates["description"] or "").strip() or None
+    if "methodologies" in updates:
+        group.methodologies = (updates["methodologies"] or "").strip() or None
+    if "context_visible_to_students" in updates:
+        group.context_visible_to_students = bool(updates["context_visible_to_students"])
     db.commit()
     db.refresh(group)
     return _serialize_group(db, group)

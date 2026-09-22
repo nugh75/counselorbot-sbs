@@ -65,6 +65,7 @@ from .routes import audio_input as audio_input_routes
 from .routes import memory as memory_routes
 from .routes import site_chat as site_chat_routes
 from .routes import learner_profile as learner_profile_routes
+from .routes import teacher_profile as teacher_profile_routes
 from .routes import orientation as orientation_routes
 from .routes import cross_synthesis as cross_synthesis_routes
 from .routes import goals as goals_routes
@@ -414,6 +415,11 @@ def _run_seed_and_migrations():
             # eta' quando lo studente non ha compilato il taccuino.
             ("student_groups", "ADD COLUMN school_level VARCHAR"),
             ("student_groups", "ADD COLUMN institution_id INTEGER"),
+            # Contesto classe: descrizione e metodologie per la chat guidata,
+            # condivisibili con gli studenti iscritti a scelta del docente.
+            ("student_groups", "ADD COLUMN description TEXT"),
+            ("student_groups", "ADD COLUMN methodologies TEXT"),
+            ("student_groups", "ADD COLUMN context_visible_to_students BOOLEAN NOT NULL DEFAULT false"),
             ("administration_plans", "ADD COLUMN school_level VARCHAR"),
             # Sessione pQBL in corso sul bot Telegram.
             ("telegram_conversation_states", "ADD COLUMN pqbl_state JSON"),
@@ -1838,6 +1844,7 @@ app.include_router(audio_input_routes.router)
 app.include_router(memory_routes.router)
 app.include_router(site_chat_routes.router)
 app.include_router(learner_profile_routes.router)
+app.include_router(teacher_profile_routes.router)
 app.include_router(orientation_routes.router)
 app.include_router(cross_synthesis_routes.router)
 app.include_router(portfolio_routes.router)

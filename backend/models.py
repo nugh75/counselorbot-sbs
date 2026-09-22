@@ -561,6 +561,24 @@ class GoalResourceLink(Base):
     target_id = Column(String, nullable=False)
 
 
+class TeacherProfileRevision(Base):
+    """Taccuino del docente: auto-descrizione del suo ruolo professionale.
+
+    A differenza dello studente, non parla di se come persona che studia ma di
+    se come docente: discipline, metodologie, esperienze, interessi di
+    formazione. I salvataggi sono append-only, come `LearnerProfileRevision`,
+    e il contesto entra solo nelle chat guidate del percorso docenza.
+    """
+
+    __tablename__ = "teacher_profile_revisions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, nullable=False, index=True)
+    data = Column(JSON, nullable=False)
+    source = Column(String, nullable=False, default="manual")  # manual|orientation
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class LearnerProfileRevision(Base):
     """Modello del discente auto-dichiarato con revisioni e bozza corrente.
 
@@ -1032,6 +1050,12 @@ class StudentGroup(Base):
     # taccuino. Nessuna FK dichiarata, come per le altre relazioni del modulo.
     institution_id = Column(Integer, index=True, nullable=True)
     owner_username = Column(String, index=True, nullable=False)  # docente/ricercatore
+    # Contesto classe: descrizione e metodologie scritte dal docente. Con
+    # context_visible_to_students il docente condivide il blocco con gli
+    # studenti iscritti, che lo ricevono accanto al proprio taccuino.
+    description = Column(Text, nullable=True)
+    methodologies = Column(Text, nullable=True)
+    context_visible_to_students = Column(Boolean, nullable=False, default=False)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

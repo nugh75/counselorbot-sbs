@@ -688,6 +688,44 @@ class LearnerProfileResponse(BaseModel):
         from_attributes = True
 
 
+# --- Taccuino del docente (auto-descrizione del ruolo) ---
+
+TEACHER_PROFILE_FIELDS = (
+    "subjects", "experience", "methodologies", "classes_overview",
+    "formation_interests", "notes",
+)
+TEACHER_PROFILE_MAX_FIELD_CHARS = 600
+
+
+class TeacherProfileSave(BaseModel):
+    """Taccuino del docente: soli campi noti e limitati.
+
+    Semplificato rispetto a LearnerProfileSave: nessun autosalvataggio, il
+    salvataggio e' sempre esplicito e append-only."""
+    subjects: Optional[str] = None          # discipline insegnate
+    experience: Optional[str] = None        # anni di esperienza, percorsi
+    methodologies: Optional[str] = None     # metodologie d'aula abituali
+    classes_overview: Optional[str] = None  # classi e istituti di riferimento
+    formation_interests: Optional[str] = None
+    notes: Optional[str] = None
+
+    @validator("subjects", "experience", "methodologies", "classes_overview", "formation_interests", "notes", pre=True)
+    def _trim_and_cap(cls, v):
+        if v is None:
+            return None
+        return str(v).strip()[:TEACHER_PROFILE_MAX_FIELD_CHARS]
+
+
+class TeacherProfileResponse(BaseModel):
+    id: int
+    data: Dict[str, Any]
+    source: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 LEARNER_REFLECTION_MAX_CHARS = 2000
 BOOKLET_MAX_FIELD_CHARS = 2000
 
@@ -1285,6 +1323,10 @@ class StudentGroupCreate(BaseModel):
     school: Optional[str] = None
     school_level: Optional[str] = None
     institution_id: Optional[int] = None
+    # Contesto classe per la chat guidata (vedi StudentGroup nel modello).
+    description: Optional[str] = None
+    methodologies: Optional[str] = None
+    context_visible_to_students: Optional[bool] = None
 
 
 class StudentGroupUpdate(BaseModel):
@@ -1293,6 +1335,9 @@ class StudentGroupUpdate(BaseModel):
     school: Optional[str] = None
     school_level: Optional[str] = None
     institution_id: Optional[int] = None
+    description: Optional[str] = None
+    methodologies: Optional[str] = None
+    context_visible_to_students: Optional[bool] = None
 
 
 class GroupShareCreate(BaseModel):
