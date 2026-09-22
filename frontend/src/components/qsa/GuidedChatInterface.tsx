@@ -1508,8 +1508,21 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         </div>
     );
     const stepNavigation = !isIdea && hasStepNavigation ? <nav aria-label={chatLayoutLabel(activeLocale, 'navigation')} className="flex shrink-0 items-center justify-between gap-2 bg-slate-50 px-2 py-1 lg:rounded-lg lg:border lg:border-slate-200 lg:px-3">
-        <div className="min-w-0 text-xs font-medium text-slate-600">
-            <span>{chatLayoutLabel(activeLocale, 'step')} {currentStepIndex}/{totalSteps}</span>
+        <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-slate-600">
+            {/* Il congelamento sta nella barra di avanzamento, a sinistra del
+                contatore di passo: un gesto deliberato, fuori dal menu. */}
+            {currentPhase !== FIXED_CONCLUSION_ID && <Tooltip content={t('frozen.freeze')} side="top">
+                <button
+                    type="button"
+                    onClick={() => void handleFreeze()}
+                    disabled={isLoading || !sessionId}
+                    aria-label={t('frozen.freeze')}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    <Snowflake className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+            </Tooltip>}
+            <span className="min-w-0">{chatLayoutLabel(activeLocale, 'step')} {currentStepIndex}/{totalSteps}</span>
             <span className="ml-2 hidden font-semibold text-slate-800 lg:inline">{getPhaseLabel(currentPhase)}</span>
             {targetPhaseLabel && <>
                 <span className="mx-1 text-slate-400" aria-hidden="true">→</span>
@@ -1947,19 +1960,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                 </>
                             )}
                             {renderConversationOptions(openPanel)}
-                            {/* Il congelamento è un gesto deliberato: resta fuori dal
-                                menu dei tre puntini, sempre a portata di barra. */}
-                            {!voiceMode && currentPhase !== FIXED_CONCLUSION_ID && <Tooltip content={t('frozen.freeze')} side="top">
-                                <button
-                                    type="button"
-                                    onClick={() => void handleFreeze()}
-                                    disabled={isLoading || !sessionId}
-                                    aria-label={t('frozen.freeze')}
-                                    className="tap-icon rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    <Snowflake className="h-4 w-4" aria-hidden="true" />
-                                </button>
-                            </Tooltip>}
                             <AutoGrowTextarea
                                 id="guided-composer"
                                 hidden={voiceMode}
