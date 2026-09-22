@@ -1,32 +1,98 @@
-"""The optional QSA conversation has three student turns; the questionnaire is unchanged."""
+"""Le conversazioni essenziali hanno tre turni della persona; lo strumento non cambia.
+
+Il percorso essenziale QSA è nato per primo; i due percorsi Obiettivo di
+apprendimento riustano lo stesso meccanismo (fasi virtuali fuori dalla tabella
+`guided_steps`, il client avanza dopo ogni risposta). Il registro tiene le fasi
+e le istruzioni per strumento; `validate_path` resta il portone: una
+combinazione strumento/fase non valida è un 422, mai un percorso improvvisato.
+"""
 from fastapi import HTTPException
 
-PHASES = ("qsa-essential-focus", "qsa-essential-experience", "qsa-essential-action", "qsa-essential-summary")
+QSA_PHASES = ("qsa-essential-focus", "qsa-essential-experience", "qsa-essential-action", "qsa-essential-summary")
+OBBSTUDIO_PHASES = ("obbstudio-essential-focus", "obbstudio-essential-smart", "obbstudio-essential-plan", "obbstudio-essential-summary")
+OBBDOCENZA_PHASES = ("obbdocenza-essential-focus", "obbdocenza-essential-smart", "obbdocenza-essential-plan", "obbdocenza-essential-summary")
+
+# alias storico: i moduli che importano PHASES parlano del percorso QSA
+PHASES = QSA_PHASES
+
+# Le fasi hanno un prefisso per strumento: l'ultima di ogni percorso è la sintesi.
+SUMMARY_PHASES = {phases[-1] for phases in (QSA_PHASES, OBBSTUDIO_PHASES, OBBDOCENZA_PHASES)}
+
+_ESSENTIAL_PATHS = {
+    "QSA": QSA_PHASES,
+    "OBIETTIVO_STUDIO": OBBSTUDIO_PHASES,
+    "OBIETTIVO_DOCENZA": OBBDOCENZA_PHASES,
+}
+
+# Solo il QSA essenziale prevede l'approfondimento volontario dopo la sintesi.
+_FOLLOWUP_PHASES = {"QSA": "qsa-essential-followup"}
 
 
 def validate_path(questionnaire_type: str | None, path: str | None, phase: str | None) -> bool:
     essential = path == "essential"
-    if essential and (questionnaire_type != "QSA" or phase not in (*PHASES, "qsa-essential-followup")):
-        raise HTTPException(422, "The essential path is available only for QSA with a valid essential phase")
-    if not essential and (phase or "").startswith("qsa-essential-"):
+    if essential:
+        phases = _ESSENTIAL_PATHS.get((questionnaire_type or "").upper())
+        followup = _FOLLOWUP_PHASES.get((questionnaire_type or "").upper())
+        if not phases or (phase not in (*phases, followup) if followup else phase not in phases):
+            raise HTTPException(422, "The essential path is available only for a supported instrument with a valid essential phase")
+    elif (phase or "").startswith("qsa-essential-"):
         raise HTTPException(422, "An essential phase requires the essential QSA path")
     return essential
+
+
+def is_essential_phase(phase: str | None) -> bool:
+    return bool(phase) and ("qsa-essential-" in phase or "obbstudio-essential-" in phase or "obbdocenza-essential-" in phase)
+
+
+def is_essential_summary(phase: str | None) -> bool:
+    return (phase or "") in SUMMARY_PHASES
+
+
+_QSA_TASKS = {
+    QSA_PHASES[0]: "Briefly read the available QSA profile, identify one resource and suggest at most two possible priorities with a reason. Ask the person to choose one or name another. Respect each factor's direction; never assume every high or low score is a difficulty. If scores do not justify priorities, offer a neutral choice without inventing results.",
+    QSA_PHASES[1]: "Acknowledge the priority the person has just chosen (including a different priority). Do not repeat the score analysis. End with exactly ONE short interrogative sentence asking for a concrete situation related to the chosen priority. Do not add example questions, alternative questions, or a list of things to report. Stop the visible answer immediately after that question.",
+    QSA_PHASES[2]: "Use the person's example to propose ONE small feasible action connected to the chosen priority. Give a brief tentative rationale, without inferring habits, motivation or causal mechanisms that the person has not reported. End with ONE short question asking whether to keep or adapt the action; no parenthetical list of alternatives or further requests. Do not prescribe a goal or claim the action is already adopted.",
+    QSA_PHASES[3]: "Conclude now: summarize the chosen priority, an evidenced resource, the concrete situation and the action as confirmed or modified by the person. Distinguish a proposal from an agreed action. State that only the selected topic was explored, not the full profile. Do not ask another question. Further discussion is optional and initiated by the person.",
+}
+
+_OBBSTUDIO_TASKS = {
+    OBBSTUDIO_PHASES[0]: "Help the person choose the AREA of their learning objective and the right level (Bloom's taxonomy, in plain words: remember, understand, apply, analyse, evaluate, create), grounded in what they said or in the notebook context you have. End with exactly ONE short question asking them to confirm area and level, or to adjust them. Do not write the objective for them.",
+    OBBSTUDIO_PHASES[1]: "Run ONE quick SMART check on the objective: name the letter or letters that still fail (specific, measurable, achievable, relevant, time-bound) and ask ONE question to fix the most important one. Do not list all five letters. End with that one question.",
+    OBBSTUDIO_PHASES[2]: "Help the person name the FIRST small steps and ONE if-then plan (if [obstacle or situation], then I [action]), plus ONE concrete proof of success and when to check it. Ask at most two short questions. Do not build the plan for them; proposals are options they can turn down.",
+    OBBSTUDIO_PHASES[3]: "Conclude now: restate the objective in its final form ('I want to be able to...'), the first steps, the if-then plan and the proof with its date, in the person's words. Distinguish proposals from commitments. Say that the objective can be saved in their personal goals and reviewed there. Do not ask another question.",
+}
+
+_OBBDOCENZA_TASKS = {
+    OBBDOCENZA_PHASES[0]: "Help the teacher choose the AREA and the right Bloom level for the class's learning objective (in plain words: remember, understand, apply, analyse, evaluate, create), grounded in what they said about the class or the curriculum. End with exactly ONE short question asking them to confirm area and level, or to adjust them. Do not write the objective for them.",
+    OBBDOCENZA_PHASES[1]: "Run ONE quick SMART check on the didactic objective: name the letter or letters that still fail (specific, measurable, achievable, relevant, time-bound) and ask ONE question to fix the most important one. Do not list all five letters. End with that one question.",
+    OBBDOCENZA_PHASES[2]: "Help the teacher name ONE or TWO class activities aligned with the verb and level of the objective, and ONE assessment that asks the same kind of performance (constructive alignment). Ask at most two short questions. Do not design for them; proposals are options they can turn down.",
+    OBBDOCENZA_PHASES[3]: "Conclude now: restate the didactic objective in its final form, the aligned activities and assessment, and the proof with its date, in the teacher's words. Distinguish proposals from commitments. Say that the objective can be saved among their own goals, published in their goal catalog for the groups they manage, or assigned to a group or a participant: all three are explicit choices. Do not ask another question.",
+}
 
 
 def directive(phase: str) -> str:
     if phase == "qsa-essential-followup":
         return "\n\n[QSA ESSENTIAL FOLLOW-UP] The essential path is complete. Answer only this voluntary follow-up about the explored topic; do not restart the path or add mandatory questions. Keep unexamined factors distinct from the explored topic."
-    task = {
-        PHASES[0]: "Briefly read the available QSA profile, identify one resource and suggest at most two possible priorities with a reason. Ask the person to choose one or name another. Respect each factor's direction; never assume every high or low score is a difficulty. If scores do not justify priorities, offer a neutral choice without inventing results.",
-        PHASES[1]: "Acknowledge the priority the person has just chosen (including a different priority). Do not repeat the score analysis. End with exactly ONE short interrogative sentence asking for a concrete situation related to the chosen priority. Do not add example questions, alternative questions, or a list of things to report. Stop the visible answer immediately after that question.",
-        PHASES[2]: "Use the person's example to propose ONE small feasible action connected to the chosen priority. Give a brief tentative rationale, without inferring habits, motivation or causal mechanisms that the person has not reported. End with ONE short question asking whether to keep or adapt the action; no parenthetical list of alternatives or further requests. Do not prescribe a goal or claim the action is already adopted.",
-        PHASES[3]: "Conclude now: summarize the chosen priority, an evidenced resource, the concrete situation and the action as confirmed or modified by the person. Distinguish a proposal from an agreed action. State that only the selected topic was explored, not the full profile. Do not ask another question. Further discussion is optional and initiated by the person.",
-    }[phase]
+    task = _phase_task(phase)
+    if task is None:
+        return ""
+    path_name = "QSA" if phase in QSA_PHASES else ("learning objective" if phase in OBBSTUDIO_PHASES else "didactic objective")
     return (
-        "\n\n[QSA ESSENTIAL PATH - CURRENT TURN]\n"
-        "This is the essential QSA conversation, not the complete factor-by-factor interview. "
-        "The application controls progression: focus, example, action, summary. "
+        "\n\n[ESSENTIAL PATH - CURRENT TURN]\n"
+        f"This is the essential {path_name} conversation, not the complete guided path. "
+        "The application controls progression: the application moves to the next step after each completed reply. "
         "Do not add an introduction, agreement turn, questionnaire, reflection battery or mandatory follow-up. "
         "Do not emit [[AVANZA_STEP]]. Never answer on behalf of the person. "
-        "Current-turn instructions override generic requests to cover all factors or ask further questions. " + task
+        "Current-turn instructions override generic requests to cover every aspect or ask further questions. " + task
     )
+
+
+def _phase_task(phase: str):
+    for phases, tasks in (
+        (QSA_PHASES, _QSA_TASKS),
+        (OBBSTUDIO_PHASES, _OBBSTUDIO_TASKS),
+        (OBBDOCENZA_PHASES, _OBBDOCENZA_TASKS),
+    ):
+        if phase in phases:
+            return tasks[phase]
+    return None
