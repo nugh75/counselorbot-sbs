@@ -194,13 +194,13 @@ function GuideContent() {
                                 </div>
                             </div>
                             {spotIllustrations[n] && (
-                                <div className="hidden sm:block shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xs">
+                                <div className="hidden sm:block shrink-0">
                                     <Image
                                         src={spotIllustrations[n]}
                                         alt=""
-                                        width={56}
-                                        height={56}
-                                        className="h-14 w-14 object-contain"
+                                        width={80}
+                                        height={80}
+                                        className="h-20 w-20 object-contain"
                                     />
                                 </div>
                             )}
