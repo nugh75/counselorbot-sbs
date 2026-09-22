@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText } from './visual-tools.ts';
+import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn } from './visual-tools.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
 import { visualLabel } from './i18n-visual-tools.ts';
 
@@ -58,6 +58,33 @@ test('timeline order preserves uncertain periods and selected handoff follows li
     const removed = { ...w, actions: [] };
     assert.match(timelineText(removed, label), /Unavailable/);
     assert.match(workspaceText(w, label), /Around June/);
+});
+
+test('card columns follow presets and student text, and cards outside them return to the first column', () => {
+    const l = (key: string) => visualLabel('it', key);
+    const w = emptyWorkspace();
+    assert.deepEqual(cardColumnsOf(w).map(c => c.id), ['unsorted', 'yes', 'explore', 'no']);
+    assert.equal(cardColumnLabel(w, cardColumnsOf(w)[1], l), 'Mi rappresenta');
+    // Kanban preset moves stray cards to the first column.
+    const sorted = { ...emptyWorkspace(), cards: [{ id: 'c', text: 'Idea', bucket: 'yes', source: '' }] };
+    const kanban = setCardColumns(sorted, [{ id: 'card_todo' }, { id: 'card_doing' }, { id: 'card_done' }]);
+    assert.equal(kanban.cards[0].bucket, 'card_todo');
+    assert.deepEqual(cardColumnsOf(kanban).map(c => c.id), ['card_todo', 'card_doing', 'card_done']);
+    assert.equal(cardColumnLabel(kanban, cardColumnsOf(kanban)[2], l), 'Fatto');
+    // Custom columns carry the student label and win in the handoff text.
+    const custom = addCardColumn(kanban, 'Rileggere');
+    assert.equal(custom.card_columns!.length, 4);
+    const inCustom = { ...custom, cards: [...custom.cards, { id: 'n', text: 'Da rivedere', bucket: custom.card_columns![3].id, source: '' }] };
+    assert.match(workspaceText(inCustom, l), /Rileggere: Da rivedere/);
+    const renamed = renameCardColumn(inCustom, custom.card_columns![3].id, 'Da riprendere');
+    assert.match(workspaceText(renamed, l), /Da riprendere: Da rivedere/);
+    // Removing a column moves its cards back to the first remaining column.
+    const removed = removeCardColumn(renamed, custom.card_columns![3].id);
+    assert.deepEqual(cardColumnsOf(removed).map(c => c.id), ['card_todo', 'card_doing', 'card_done']);
+    assert.equal(removed.cards[1].bucket, 'card_todo');
+    // The last column cannot be removed.
+    const single = setCardColumns(emptyWorkspace(), [{ id: 'solo', label: 'Tutto' }]);
+    assert.equal(removeCardColumn(single, 'solo'), single);
 });
 
 test('removing an unsaved action unlinks it without deleting its milestone or Portfolio work', async () => {

@@ -3,14 +3,14 @@ import { AssignmentSource } from '@/components/teacher/AssignmentSource';
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, GitCommitHorizontal, Columns3, Download, LayoutList, Layers, MessageSquare, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
+import { ArrowRight, GitCommitHorizontal, Columns3, Download, LayoutList, Layers, MessageSquare, Pencil, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
 import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 import { visualLabel } from '@/lib/i18n-visual-tools';
-import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, type ActionStage, type CardBucket, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
+import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, type ActionStage, type CardColumn, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
 import { validTimelineDates } from '@/lib/timeline-dates';
 import { TimelineTools } from './TimelineTools';
 
@@ -34,12 +34,15 @@ type Props = {
 const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
 const buttonClass = 'h-[44px] w-[44px] shrink-0 p-0';
 const stages: ActionStage[] = ['todo', 'doing', 'done'];
-const buckets: CardBucket[] = ['unsorted', 'yes', 'explore', 'no'];
 const workTabs: WorkTab[] = ['board', 'comparison', 'cards', 'timeline'];
 const tabIcons: Record<Tab, typeof LayoutList> = {
     board: LayoutList, comparison: Columns3, cards: Layers, timeline: GitCommitHorizontal,
 };
 const isWorkTab = (tab: Tab): tab is WorkTab => workTabs.includes(tab as WorkTab);
+const columnsMatch = (w: VisualWorkspace, preset: CardColumn[]): boolean => {
+    const columns = cardColumnsOf(w);
+    return columns.length === preset.length && columns.every((column, index) => column.id === preset[index].id);
+};
 
 export function VisualTools(props: Props) {
     return <WorkspaceView key={props.personal ? 'personal' : props.sessionId} {...props} />;
@@ -69,9 +72,11 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [criterion, setCriterion] = useState('');
     const [option, setOption] = useState('');
     const [optionSource, setOptionSource] = useState('');
+    const [columnName, setColumnName] = useState('');
     // Questa schermata contiene un solo insieme coerente di strumenti. Taccuino,
     // Libretto e Tavolo hanno pagine proprie nell'Area personale.
     const tabs: Tab[] = fixedTab ? [fixedTab] : workTabs;
+    const columns = cardColumnsOf(work);
     const tabLabel = (key: Tab) => l(key);
     const dialog = useRef<HTMLElement>(null);
     const loadGeneration = useRef(0);
@@ -309,24 +314,47 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             </section>)}</div>
                         </>}
                         {tab === 'cards' && <>
+                            <div className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                <label className="text-sm">{l('cardColumns')}<select aria-label={l('cardColumns')} value={cardColumnPresets.some(p => columnsMatch(work, p.columns)) ? cardColumnPresets.find(p => columnsMatch(work, p.columns))!.key : 'custom'} className={`${inputClass} mt-1 min-h-[44px] max-w-56`} onChange={e => {
+                                    const preset = cardColumnPresets.find(p => p.key === e.target.value);
+                                    if (preset) edit(setCardColumns(work, preset.columns.map(c => ({ id: c.id }))));
+                                }}>
+                                    {cardColumnPresets.map(p => <option key={p.key} value={p.key}>{l(p.key)}</option>)}
+                                    <option value="custom" disabled>{l('cardColumnsCustom')}</option>
+                                </select></label>
+                                <form className="flex items-end gap-2" onSubmit={event => { event.preventDefault(); if (!columnName.trim() || columnName.length > 100) return; edit(addCardColumn(work, columnName.trim())); setColumnName(''); }}>
+                                    <label className="text-sm">{l('columnName')}<input required maxLength={100} value={columnName} className={`${inputClass} mt-1 max-w-52`} onChange={e => setColumnName(e.target.value)} /></label>
+                                    <Tooltip content={l('addColumn')}><Button aria-label={l('addColumn')} type="submit" className={buttonClass} disabled={columns.length >= 8}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                </form>
+                                {columns.length >= 8 && <p role="status" className="text-sm text-slate-600">{l('limit')}</p>}
+                            </div>
                             <details open={!work.cards.length || Boolean(draftCard)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addCard')}</summary>
                             <form className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!draftCard.trim() || draftCard.length > 600 || work.cards.length >= 30) return;
-                                edit({ ...work, cards: [...work.cards, { id: crypto.randomUUID(), text: draftCard.trim(), bucket: 'unsorted', source: cardSource }] }); setDraftCard(''); setCardSource(''); }}>
+                                edit({ ...work, cards: [...work.cards, { id: crypto.randomUUID(), text: draftCard.trim(), bucket: columns[0].id, source: cardSource }] }); setDraftCard(''); setCardSource(''); }}>
                                 <label className="block text-sm font-medium">{l('cardText')}<textarea required maxLength={600} rows={3} value={draftCard} onChange={e => setDraftCard(e.target.value)} className={`${inputClass} mt-1`} /></label>
                                 <p className="text-xs text-slate-600">{draftCard.length}/600 · {l('source')}: {cardSource || l('personal')}</p>
                                 <Tooltip content={l('addCard')}><Button aria-label={l('addCard')} type="submit" className={buttonClass} disabled={draftCard.length > 600 || work.cards.length >= 30}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                 {(draftCard.length > 600 || work.cards.length >= 30) && <p role="status">{l('limit')}</p>}
                             </form></details>
                             {!work.cards.length && <p className="py-5 text-center text-slate-600">{l('emptyCards')}</p>}
-                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{buckets.map(bucket => <section key={bucket} aria-label={l(bucket)} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                                <h3 className="mb-3 font-semibold">{l(bucket)} <span className="font-mono text-sm text-slate-500">{work.cards.filter(c => c.bucket === bucket).length}</span></h3>
-                                <div className="space-y-3">{work.cards.filter(c => c.bucket === bucket).map(card => <article key={card.id} className="rounded-lg border border-indigo-200 bg-white p-3">
+                            <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, 240px), 1fr))` }}>{columns.map(column => { const columnTitle = cardColumnLabel(work, column, l); return <section key={column.id} aria-label={columnTitle} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                <div className="mb-3 flex items-start justify-between gap-1">
+                                    <h3 className="min-w-0 break-words font-semibold">{columnTitle} <span className="font-mono text-sm text-slate-500">{work.cards.filter(c => c.bucket === column.id).length}</span></h3>
+                                    <div className="flex shrink-0">
+                                        <Tooltip content={l('renameColumn')}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('renameColumn')}: ${columnTitle}`} onClick={() => {
+                                            const name = window.prompt(l('renameColumn'), column.label || undefined);
+                                            if (name?.trim()) edit(renameCardColumn(work, column.id, name.trim().slice(0, 100)));
+                                        }}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                        {columns.length > 1 && removeButton(columnTitle, () => edit(removeCardColumn(work, column.id)))}
+                                    </div>
+                                </div>
+                                <div className="space-y-3">{work.cards.filter(c => c.bucket === column.id).map(card => <article key={card.id} className="rounded-lg border border-indigo-200 bg-white p-3">
                                     <textarea aria-label={l('cardText')} data-workspace-field required maxLength={600} rows={4} value={card.text} className={inputClass} onChange={e => edit({ ...work, cards: work.cards.map(c => c.id === card.id ? { ...c, text: e.target.value } : c) })} />
-                                    <label className="mt-2 block text-sm">{l('move')}<select id={`${id}-card-${card.id}`} value={card.bucket} className={`${inputClass} mt-1 min-h-[44px]`} onChange={e => { edit({ ...work, cards: work.cards.map(c => c.id === card.id ? { ...c, bucket: e.target.value as CardBucket } : c) }); focusMoved(`${id}-card-${card.id}`); }}>{buckets.map(b => <option key={b} value={b}>{l(b)}</option>)}</select></label>
+                                    <label className="mt-2 block text-sm">{l('move')}<select id={`${id}-card-${card.id}`} value={card.bucket} className={`${inputClass} mt-1 min-h-[44px]`} onChange={e => { edit({ ...work, cards: work.cards.map(c => c.id === card.id ? { ...c, bucket: e.target.value } : c) }); focusMoved(`${id}-card-${card.id}`); }}>{columns.map(b => <option key={b.id} value={b.id}>{cardColumnLabel(work, b, l)}</option>)}</select></label>
                                     <p className="mt-2 break-words text-xs text-slate-500">{l('source')}: {card.source || l('personal')}</p>
                                     {removeButton(card.text, () => edit({ ...work, cards: work.cards.filter(c => c.id !== card.id) }))}
                                 </article>)}</div>
-                            </section>)}</div>
+                            </section>; })}</div>
                         </>}
                         {tab === 'comparison' && <>
                             <details open={!work.comparison.options.length || Boolean(option)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addOption')}</summary>

@@ -1,5 +1,5 @@
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { emptyWorkspace, workspaceText, type VisualWorkspace } from './visual-tools.ts';
+import { emptyWorkspace, workspaceText, cardColumnsOf, type VisualWorkspace } from './visual-tools.ts';
 
 export const notebookFields: Record<string, string> = {
     context: 'lp.field.context', goal: 'lp.field.goal', main_difficulty: 'lp.field.difficulty',
@@ -53,7 +53,7 @@ export function importAnnotation(work: VisualWorkspace, entry: TransferEntry, ta
     if (!text.trim() || text.length > (target === 'actions' ? 1000 : target === 'cards' ? 600 : 160)
         || (target === 'actions' && (!title.trim() || title.length > 160))) throw new Error('personalLength');
     const source = entry.source;
-    if (target === 'cards') return { ...work, cards: [...work.cards, { id, text: text.trim(), bucket: 'unsorted', source }] };
+    if (target === 'cards') return { ...work, cards: [...work.cards, { id, text: text.trim(), bucket: cardColumnsOf(work)[0].id, source }] };
     if (target === 'actions') return { ...work, actions: [...work.actions, { id, title: title.trim(), detail: text.trim(), stage: 'todo', reflection: '', source }] };
     return { ...work, comparison: { ...work.comparison, options: [...work.comparison.options, { id, title: text.trim(), source }] } };
 }
