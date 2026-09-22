@@ -25,6 +25,8 @@ CounselorBot is an AI-powered web app that helps students analyze learning/caree
 | EVENTO_STUDIO | Significant study event: guided interview on one episode (6 steps + summary, booklet draft) | — |
 | EVENTO_PROFESSIONALE | Significant professional event: same path on a work or placement episode | — |
 | IDEA | Free chat that brings one idea into focus, building a cumulative map (no questionnaire, no scores) | — |
+| OBIETTIVO_STUDIO | Guided path that turns a vague wish into ONE learning objective: Bloom level, SMART check, challenge (Locke & Latham, Dweck), if-then plan (Gollwitzer/Zimmerman), proof and check date; essential version in three turns; summary emits a private ```goal block that pre-fills a personal goal, saved only on explicit confirmation | — |
+| OBIETTIVO_DOCENZA | Teacher variant: ONE didactic objective for a class, plan step becomes constructive alignment (Biggs/backward design); reached from /docente (`/?start=OBIETTIVO_DOCENZA`), not in the student catalog; can publish to the teacher goal catalog or assign to a group on explicit confirmation | — |
 
 ### Glossary (student-facing terminology — use consistently)
 - **Profilo (profile)**: the outcome of a questionnaire from the Competenze Strategiche site — a set of factor scores (`QuestionnaireResult`). "Profilo" refers ONLY to this.

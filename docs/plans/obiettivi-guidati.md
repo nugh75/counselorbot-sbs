@@ -1,7 +1,18 @@
 # Percorsi guidati «Obiettivi di apprendimento» — piano di implementazione
 
-Stato: proposta approvata (decisioni del 2026-02, vedi sotto). Branch previsto:
-`feature/obiettivi-guidati`. Nessuna modifica al codice finché il piano non è confermato.
+Stato: **implementato** su `feature/obiettivi-guidati` (2026-02). Due strumenti
+(`OBIETTIVO_STUDIO` / `OBIETTIVO_DOCENZA`), percorso completo a 9 step + versione
+essenziale a 4 fasi per entrambi, accesso docente da `/docente`, sintesi con bozza
+```goal``` che precompila gli obiettivi personali (studente) o la pubblicazione nel
+catalogo (docente). Verifiche: smoke backend 224 + 115 test correlati superati,
+193 test lib frontend, TypeScript/ESLint/i18n-check puliti, prova live end-to-end
+con qwen3.8 locale completata su percorso essenziale (bozza obiettivo popolata e
+nessuna perdita del blocco nel testo visibile).
+
+Nota operativa: i default di fabbrica di `default_counselorbot_chat_context.md` e
+`default_site_chat_knowledge_card.md` citano i due strumenti, ma le installazioni
+esistenti tengono il valore nel DB: l'aggiornamento va applicato dal pannello
+admin o con `backend.prompt_updates`, come per gli altri prompt condivisi.
 
 ## Decisioni prese
 
