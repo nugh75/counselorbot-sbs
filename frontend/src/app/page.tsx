@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchOrientationStatus } from '@/lib/orientation-api';
 import { QUESTIONNAIRES, QuestionnaireConfig, QuestionnaireType, supportsProfileUpload } from '@/lib/questionnaires';
 import { QuestionnaireSelector } from '@/components/questionnaire/QuestionnaireSelector';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
@@ -196,8 +195,8 @@ export default function Home() {
     }, []);
 
     // Il tasto della presentazione. Il primo passo del percorso è la Bussola,
-    // non uno strumento: chi la deve ancora fare ci va da qui, invece di
-    // scoprirla come un rimbalzo del cancello alla prima pagina che apre.
+    // non uno strumento: la scheda apre sempre la chat di orientamento, anche
+    // per chi l'ha già completata (dove resta disponibile come colloquio).
     // Lo stato lo si chiede al momento del clic: chiederlo al montaggio
     // costerebbe una domanda al server a ogni visita, e serve solo a chi preme.
     const startFromIntro = () => {
@@ -208,16 +207,11 @@ export default function Home() {
                     router.push('/inizia?next=%2Fbussola');
                     return;
                 }
-                const status = await fetchOrientationStatus();
-                if (status.required) {
-                    router.push('/bussola');
-                    return;
-                }
+                router.push('/bussola');
             } catch {
                 toast.error(t('setup.error'));
                 return;
             }
-            setStep('questionnaire-select');
         })();
     };
 
