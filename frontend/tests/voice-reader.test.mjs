@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
 
@@ -263,52 +264,12 @@ for (const width of [390, 1440]) {
     });
 }
 
-test('double click starts at the selected word across inline markup and later paragraphs', async () => {
-    const f = await fixture({ guest: true });
-    try {
-        const { page, requests } = f;
-        await page.goto(`${origin}/guide`);
-        await page.locator('main').evaluate(el => {
-            el.innerHTML = '<h1>Titolo precedente</h1><p>Prima <strong>seconda</strong> terza parola.</p><p>Segue il prossimo paragrafo.</p><textarea>BOZZA PRIVATA</textarea><p hidden>TESTO NASCOSTO</p>';
-        });
-        const original = await page.locator('main').textContent();
-        await page.locator('main strong').dblclick();
-        await page.locator('[data-voice-active]').waitFor();
-        const first = requests.filter(r => r.path === '/api/tts/stream').at(-1).body;
-        assert.equal(first.text, 'seconda terza parola.\n\nSegue il prossimo paragrafo.');
-        assert.equal(first.plain_text, true);
-        assert.equal(await page.locator('main').textContent(), original);
-        assert.ok(await page.evaluate(() => CSS.highlights.get('voice-reading')?.size > 0));
-        const firstAudio = await page.evaluate(() => window.__audios.length);
-        await page.locator('main strong').dblclick();
-        await page.waitForFunction(count => window.__audios.length > count, firstAudio);
-        assert.equal(await page.evaluate(() => window.__audios[0].src), '', 'seeking cancels the old audio');
-        await page.locator('main textarea').dblclick();
-        assert.equal(requests.filter(r => r.path === '/api/tts/stream').length, 2, 'draft selection never becomes speech');
-        assert.deepEqual(f.errors, []);
-    } finally { await f.context.close(); }
-});
-
-test('double click inside a Bussola response reads only the selected message', async () => {
-    const f = await fixture();
-    try {
-        const { page, requests } = f;
-        await page.goto(`${origin}/bussola`);
-        await page.getByRole('button', { name: 'Inizia un nuovo orientamento', exact: true }).click();
-        const source = page.locator('[data-voice-source]').first();
-        const position = await source.evaluate(el => {
-            const node = el.firstChild, start = node.textContent.indexOf('riflettere');
-            const range = document.createRange(); range.setStart(node, start); range.setEnd(node, start + 'riflettere'.length);
-            const rect = range.getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
-        });
-        await page.mouse.dblclick(position.x, position.y);
-        await page.getByRole('complementary').getByRole('status').filter({ hasText: 'In lettura' }).waitFor();
-        const body = requests.find(r => r.path === '/api/tts/stream').body;
-        assert.equal(body.text, 'riflettere sul tuo modo di studiare. Quale difficoltà vorresti affrontare?');
-        assert.equal(body.counselor_id, 1);
-        assert.equal(body.language, 'it');
-        assert.deepEqual(f.errors, []);
-    } finally { await f.context.close(); }
+test('the reader never starts from page clicks: only the top bar and explicit buttons activate it', () => {
+    const source = readFileSync(new URL('../src/components/voice-reader/VoiceReader.tsx', import.meta.url), 'utf8');
+    // Il doppio clic sulla pagina è un gesto di navigazione (schede, selettori):
+    // non deve mai avviare la lettura.
+    assert.doesNotMatch(source, /dblclick/);
+    assert.match(source, /VoiceReaderTrigger/);
 });
 
 test('page reading follows the selected counselor and separates personal voice choices', async () => {

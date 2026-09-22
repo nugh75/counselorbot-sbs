@@ -72,25 +72,9 @@ export function VoiceReaderProvider({ children }: { children: React.ReactNode })
         void controller.start(speechInput(next));
     }, [controller, open]);
     const release = useCallback((id: string) => { if (source.current === id) close(); }, [close]);
-    useEffect(() => {
-        const startAtSelection = (event: MouseEvent) => {
-            const element = event.target instanceof Element ? event.target : null;
-            const main = document.getElementById('contenuto');
-            const selection = window.getSelection();
-            if (!main || !element || !main.contains(element) || element.closest(`${VOICE_EXCLUDED}, a`) || !selection?.rangeCount || selection.isCollapsed) return;
-            const root = element.closest<HTMLElement>('[data-voice-source]') ?? main;
-            if (root === main && element.closest('[role="log"]')) return;
-            const range = selection.getRangeAt(0).cloneRange();
-            if (!root.contains(range.startContainer)) return;
-            const snapshot = pageReadingSource(root, range);
-            if (!snapshot.text) return;
-            read({ id: root.dataset.voiceSource || 'page', ...snapshot,
-                language: (root.dataset.voiceLanguage as Lang) || lang,
-                counselorId: Number(root.dataset.voiceCounselor) || getDisplayedCounselorId() });
-        };
-        document.addEventListener('dblclick', startAtSelection);
-        return () => document.removeEventListener('dblclick', startAtSelection);
-    }, [lang, read]);
+    // Il lettore si attiva solo intenzionalmente: icona cuffie nella barra in
+    // alto o pulsanti "Ascolta" espliciti. Nessun avvio da clic sulla pagina:
+    // il doppio clic è un gesto di navigazione delle schede, non un comando.
     return <Context.Provider value={{ read, release, openSettings: () => {
         setOpener(document.activeElement as HTMLElement);
         setExpanded(true);
