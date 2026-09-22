@@ -170,18 +170,19 @@ export default function BussolaPage() {
         }
     };
 
+    // Concludere la Bussola porta subito agli strumenti: niente pannello
+    // intermedio con un altro tasto da premere. Se il cancello aveva indicato
+    // una destinazione (`?next=`), quella ha la precedenza.
     const finish = async () => {
         if (!session) return;
         setCompleting(true);
         setError('');
         try {
-            const row = await completeOrientation(session.session_id);
-            setSession(row);
-            setLatestSessionId(row.session_id);
-            setOrientationRequired(false);
+            await completeOrientation(session.session_id);
+            skipOrientationThisVisit();
+            router.push(nextHref || '/?view=home');
         } catch {
             setError(t('orientation.error'));
-        } finally {
             setCompleting(false);
         }
     };
@@ -364,7 +365,6 @@ export default function BussolaPage() {
                             </Button>
                         </div>
                     )}
-
                     {session.status === 'completed' && (
                         <section className="glass-panel space-y-5 border-teal-200 p-5 sm:p-6">
                             <div className="flex gap-3"><Sparkles className="mt-0.5 h-6 w-6 shrink-0 text-teal-600" /><div><h2 className="font-display text-xl font-bold text-slate-900">{t('orientation.completed.title')}</h2><p className="mt-1 text-sm leading-relaxed text-slate-600">{t('orientation.completed.body')}</p></div></div>
