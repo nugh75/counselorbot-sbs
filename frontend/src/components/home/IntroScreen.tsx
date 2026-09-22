@@ -7,7 +7,11 @@ import { Check, ChevronDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
 
-const activities = ['profiles', 'paths', 'practice'] as const;
+const activities = [
+    { key: 'profiles', anchor: 'tools-assessment' },
+    { key: 'paths', anchor: 'tools-guided' },
+    { key: 'practice', anchor: 'tools-learning' },
+] as const;
 const sections = [
     { id: 'start', title: 'start.title', paragraphs: ['start.p1', 'start.p2'] },
     { id: 'personal', title: 'personal.title', paragraphs: ['personal.p1', 'personal.p2', 'personal.p3'] },
@@ -20,10 +24,10 @@ export function IntroScreen({
     onOpenTools,
 }: {
     onStart: () => void;
-    onOpenTools?: () => void;
+    onOpenTools?: (anchor?: string) => void;
 }) {
     const { t } = useI18n();
-    const [selectedAction, setSelectedAction] = useState<'compass' | 'tools' | null>(null);
+    const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
     const actions = [
         {
@@ -38,7 +42,7 @@ export function IntroScreen({
             image: '/images/intro/tools.png',
             label: 'app.intro.action.tools.label',
             desc: 'app.intro.action.tools.desc',
-            onAdvance: onOpenTools,
+            onAdvance: () => onOpenTools?.(),
         },
     ];
 
@@ -52,7 +56,32 @@ export function IntroScreen({
 
             <section aria-label={t('app.home.contains')} className="grid gap-3 sm:grid-cols-3 sm:gap-5">
                 {activities.map((activity) => (
-                    <article key={activity} className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-x-4 rounded-xl border border-slate-200 bg-white p-4 sm:flex sm:flex-col sm:items-start sm:p-5">
+                    <article
+                        key={activity.key}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={selectedKey === activity.key}
+                        onClick={() => setSelectedKey(activity.key)}
+                        onDoubleClick={() => {
+                            setSelectedKey(activity.key);
+                            onOpenTools?.(activity.anchor);
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setSelectedKey(activity.key);
+                            }
+                        }}
+                        className={cn(
+                            'relative grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-x-4 rounded-xl border bg-white p-4 cursor-pointer text-left transition-colors sm:flex sm:flex-col sm:items-start sm:p-5',
+                            selectedKey === activity.key ? 'border-indigo-300 ring-2 ring-indigo-400' : 'border-slate-200 hover:border-indigo-300',
+                        )}
+                    >
+                        {selectedKey === activity.key && (
+                            <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
+                                <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                            </div>
+                        )}
                         <Image
                             src={`/images/intro/${activity}.png`}
                             alt=""
@@ -61,8 +90,8 @@ export function IntroScreen({
                             sizes="(min-width: 640px) 128px, 72px"
                             className="row-span-2 h-18 w-18 object-contain sm:mb-3 sm:h-32 sm:w-32 sm:self-center"
                         />
-                        <h2 className="font-display w-full break-words text-lg font-semibold text-slate-900">{t(`app.intro.compact.${activity}.title`)}</h2>
-                        <p className="mt-1 text-sm leading-relaxed text-slate-600">{t(`app.intro.compact.${activity}.body`)}</p>
+                        <h2 className="font-display w-full break-words text-lg font-semibold text-slate-900">{t(`app.intro.compact.${activity.key}.title`)}</h2>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-600">{t(`app.intro.compact.${activity.key}.body`)}</p>
                     </article>
                 ))}
             </section>
@@ -70,22 +99,22 @@ export function IntroScreen({
             <section aria-label={t('app.intro.actions.label')} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                     {actions.map((action) => {
-                        const isSelected = selectedAction === action.key;
+                        const isSelected = selectedKey === action.key;
                         return (
                             <article
                                 key={action.key}
                                 role="button"
                                 tabIndex={0}
                                 aria-pressed={isSelected}
-                                onClick={() => setSelectedAction(action.key)}
+                                onClick={() => setSelectedKey(action.key)}
                                 onDoubleClick={() => {
-                                    setSelectedAction(action.key);
+                                    setSelectedKey(action.key);
                                     action.onAdvance?.();
                                 }}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
                                         e.preventDefault();
-                                        setSelectedAction(action.key);
+                                        setSelectedKey(action.key);
                                     }
                                 }}
                                 className={cn(

@@ -2,7 +2,7 @@
 
 Generated with the built-in image_gen tool on 2026-09-21. The original PNGs retain their transparent alpha channel; Next Image delivers appropriately sized variants. They are decorative (`alt=""`): each adjacent localized heading and description carries the meaning.
 
-Assets: `profiles.png` (Analisi dei risultati dei questionari), `paths.png` (Percorsi guidati), `practice.png` (Allenamento), `compass.png` (Bussola, da `docs/stock images/counselorbot_grafiche_varianti/counselorbot_nuove_illustrazioni/01_bussola_orientamento.png`), `tools.png` (Strumenti, copia di `platform/tavolo.png`).
+Assets: `profiles.png` (Analisi dei risultati dei questionari), `paths.png` (Percorsi guidati), `practice.png` (Allenamento), `compass.png` (Bussola, da `docs/stock images/counselorbot_grafiche_varianti/counselorbot_extra_icons/01_bussola.png`), `tools.png` (Strumenti, da `counselorbot_extra_icons/02_strumenti.png`).
 
 ## Prompts
 

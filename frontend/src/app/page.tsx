@@ -76,6 +76,22 @@ export default function Home() {
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
     const router = useRouter();
     const [step, setStep] = useState<Step>('intro');
+    const [toolsAnchor, setToolsAnchor] = useState<string | null>(null);
+
+    // Il catalogo strumenti (step 'base') viene aperto anche dalla presentazione:
+    // se è richiesta una sezione specifica, scorri all'anchor dopo il render.
+    const openTools = (anchor?: string) => {
+        setStep('base');
+        setToolsAnchor(anchor ?? null);
+    };
+    useEffect(() => {
+        if (step !== 'base' || !toolsAnchor) return;
+        const timer = window.setTimeout(() => {
+            document.getElementById(toolsAnchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setToolsAnchor(null);
+        }, 60);
+        return () => window.clearTimeout(timer);
+    }, [step, toolsAnchor]);
     const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
     const [counselorRequest, setCounselorRequest] = useState<{
         questionnaire: QuestionnaireConfig; scores: Record<string, number> | null; resumeSid?: string; previousId: number | null;
@@ -677,7 +693,7 @@ export default function Home() {
                 >
                     {/* Step: Intro */}
                     {step === 'intro' && (
-                        <IntroScreen onStart={startFromIntro} onOpenTools={() => setStep('base')} />
+                        <IntroScreen onStart={startFromIntro} onOpenTools={openTools} />
                     )}
 
                     {/* Step: percorso — schermata iniziale di chi è già passato di qui */}
