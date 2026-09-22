@@ -1474,6 +1474,12 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const hasStepNavigation = showPreviousStep || showStandardAdvance || showInterviewAdvance || showRepeatStep;
 
     const nextStepLabel = t(advanceLabelKey(questionnaireType, currentPhase));
+    // Nella barra in fondo: fase in cui si è e fase a cui si punta. Se il
+    // prossimo avanzamento non è disponibile, il traguardo non viene promesso.
+    const targetPhase = (showStandardAdvance || showInterviewAdvance)
+        ? phases[phases.indexOf(currentPhase) + 1]
+        : undefined;
+    const targetPhaseLabel = targetPhase ? getPhaseLabel(targetPhase) : null;
     const stepButtonClass = 'h-[44px] w-[44px] shrink-0 p-0';
     const messageActionClass = 'chat-action-item flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
     const renderStepNavigation = () => (
@@ -1501,6 +1507,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         <div className="min-w-0 text-xs font-medium text-slate-600">
             <span>{chatLayoutLabel(activeLocale, 'step')} {currentStepIndex}/{totalSteps}</span>
             <span className="ml-2 hidden font-semibold text-slate-800 lg:inline">{getPhaseLabel(currentPhase)}</span>
+            {targetPhaseLabel && <>
+                <span className="mx-1 text-slate-400" aria-hidden="true">→</span>
+                <span className="hidden font-medium text-slate-500 lg:inline">{targetPhaseLabel}</span>
+            </>}
         </div>
         {renderStepNavigation()}
     </nav> : null;
@@ -1552,9 +1562,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         {!voiceMode && <AudioSendOption compact />}
                         <AudioLanguageOption compact />
                     </div>
-                    <div className="pt-2"><button type="button" onClick={() => { close(); void handleFreeze(); }} disabled={isLoading || !sessionId} className={messageActionClass}>
-                        <Snowflake className="h-4 w-4" aria-hidden="true" />{t('frozen.freeze')}
-                    </button></div>
                 </>}
             </div>}
         </ChatActionsPopover>
@@ -1936,6 +1943,19 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                 </>
                             )}
                             {renderConversationOptions(openPanel)}
+                            {/* Il congelamento è un gesto deliberato: resta fuori dal
+                                menu dei tre puntini, sempre a portata di barra. */}
+                            {!voiceMode && currentPhase !== FIXED_CONCLUSION_ID && <Tooltip content={t('frozen.freeze')} side="top">
+                                <button
+                                    type="button"
+                                    onClick={() => void handleFreeze()}
+                                    disabled={isLoading || !sessionId}
+                                    aria-label={t('frozen.freeze')}
+                                    className="tap-icon rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    <Snowflake className="h-4 w-4" aria-hidden="true" />
+                                </button>
+                            </Tooltip>}
                             <AutoGrowTextarea
                                 id="guided-composer"
                                 hidden={voiceMode}

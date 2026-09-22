@@ -268,10 +268,14 @@ for (const width of [320, 1440]) {
             await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
             await page.getByRole('radio', { name: 'Lunghezza risposta: Breve', exact: true }).click();
             assert.equal(await page.getByRole('radio', { name: 'Lunghezza risposta: Breve', exact: true }).getAttribute('aria-checked'), 'true');
-            const freeze = await options.getByRole('button', { name: 'Congela sessione', exact: true }).boundingBox();
-            assert.ok(freeze.x >= 0 && freeze.y >= 0 && freeze.x + freeze.width <= width && freeze.y + freeze.height <= 844);
+            // Il congelamento non sta nel menu dei tre puntini: è un pulsante
+            // dedicato della barra, raggiungibile senza aprire il popover.
             await page.keyboard.press('Escape');
             assert.equal(await options.isVisible(), false);
+            const freeze = await page.getByRole('button', { name: 'Congela sessione', exact: true }).boundingBox();
+            assert.ok(freeze, 'the freeze button is reachable in the composer bar');
+            assert.ok(freeze.x >= 0 && freeze.y >= 0 && freeze.x + freeze.width <= width && freeze.y + freeze.height <= 844);
+            assert.equal(await options.getByRole('button', { name: 'Congela sessione', exact: true }).count(), 0);
             assert.equal(await composer.inputValue(), 'Conservo la mia domanda.');
         } finally { await context.close(); }
     });
