@@ -45,6 +45,8 @@ from .prompt_config import (
     DEFAULT_IDEA_GUIDED_STEPS,
     DEFAULT_EVENTO_STUDIO_GUIDED_STEPS,
     DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS,
+    DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS,
+    DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS,
     GUIDED_PHASE_ALIASES,
     GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS,
     WELCOME_PHASE_IDS,
@@ -190,6 +192,8 @@ def _ensure_questionnaire_guided_steps(db, questionnaire_type: str) -> None:
         "IDEA": DEFAULT_IDEA_GUIDED_STEPS,
         "EVENTO_STUDIO": DEFAULT_EVENTO_STUDIO_GUIDED_STEPS,
         "EVENTO_PROFESSIONALE": DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS,
+        "OBIETTIVO_STUDIO": DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS,
+        "OBIETTIVO_DOCENZA": DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS,
     }
 
     if questionnaire_type not in defaults_by_type:
@@ -856,6 +860,15 @@ def _phase_factor_codes(db, phase: Optional[str]) -> set[str]:
     return _extract_factor_codes(step.prompt)
 
 
+# Descrizioni del percorso essenziale per strumento: sostituiscono il contesto
+# di navigazione quando la richiesta arriva con guided_path="essential".
+_ESSENTIAL_PATH_DESCRIPTIONS = {
+    "QSA": "Essential QSA path: choose a focus, give one example, agree or adapt one action, receive a summary. Exactly three student replies; further discussion is optional.",
+    "OBIETTIVO_STUDIO": "Essential learning-objective path: choose the area and Bloom level, run one quick SMART check, agree the first steps with one if-then plan and a proof, receive a summary. Exactly three student replies; further discussion is optional.",
+    "OBIETTIVO_DOCENZA": "Essential didactic-objective path: choose the area and Bloom level for the class, run one quick SMART check, align one activity and the assessment, receive a summary. Exactly three student replies; further discussion is optional.",
+}
+
+
 def _guided_path_context(db, questionnaire_type: str, current_step_id: str | None, language: str,
                          full: bool = False) -> str:
     """Navigazione del percorso guidato.
@@ -977,7 +990,7 @@ _ADVICE_PROMPT_MODES = {
     # esplicitamente un piano pratico, quindi deve poter attingere al catalogo
     # certificato invece di far improvvisare il modello. Gli step di analisi e
     # intervista restano interpretativi, come `factor` nel QSA.
-    "qpcs-summary", "qpcc-summary", "qap-summary", "savickas-summary",
+    "qpcs-summary", "qpcc-summary", "qap-summary", "savickas-summary", "obiettivo-summary",
 }
 
 _NO_NEW_ADVICE_STEP_IDS = {"sl-synthesis", "qsar-synthesis", "questions"}
@@ -2770,8 +2783,8 @@ def build_context_envelope(
         db.query(models.GuidedStep).filter(models.GuidedStep.id == (step_id or request.phase)).first()
         if (step_id or request.phase) else None
     )
-    if questionnaire_type == "QSA" and getattr(request, "guided_path", "complete") == "essential":
-        guided_path = "Essential QSA path: choose a focus, give one example, agree or adapt one action, receive a summary. Exactly three student replies; further discussion is optional."
+    if getattr(request, "guided_path", "complete") == "essential" and questionnaire_type in _ESSENTIAL_PATH_DESCRIPTIONS:
+        guided_path = _ESSENTIAL_PATH_DESCRIPTIONS[questionnaire_type]
     else:
         guided_path = _guided_path_context(
             db, questionnaire_type, step_id or request.phase, language,

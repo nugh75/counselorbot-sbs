@@ -2,12 +2,18 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { ACTIVE_QUESTIONNAIRE_IDS, TOOL_CATEGORIES, isStartableQuestionnaireId, orientationSkippedThisVisit, skipOrientationThisVisit } from './tool-catalog.ts';
+import { ACTIVE_QUESTIONNAIRE_IDS, TEACHER_AREA_INSTRUMENT_IDS, TOOL_CATEGORIES, isStartableQuestionnaireId, orientationSkippedThisVisit, skipOrientationThisVisit } from './tool-catalog.ts';
 
-test('every active questionnaire appears in exactly one home category', () => {
+test('every active questionnaire appears in exactly one home category, or is the declared teacher-area exception', () => {
     const categorized = TOOL_CATEGORIES.flatMap((group) => group.questionnaireIds);
-    assert.deepEqual([...categorized].sort(), [...ACTIVE_QUESTIONNAIRE_IDS].sort());
+    const accounted = [...categorized, ...TEACHER_AREA_INSTRUMENT_IDS];
+    assert.deepEqual([...accounted].sort(), [...ACTIVE_QUESTIONNAIRE_IDS].sort());
     assert.equal(new Set(categorized).size, categorized.length);
+    // L'eccezione è dell'area docenti: lo strumento non può stare anche in
+    // una categoria studente.
+    for (const id of TEACHER_AREA_INSTRUMENT_IDS) {
+        assert.equal(categorized.includes(id), false);
+    }
 });
 
 test('pQBL is part of the shared standalone catalog', () => {

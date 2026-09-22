@@ -36,6 +36,7 @@ from ..chat_preparation import prepare_chat_turn
 from ..strategy_memory import shared_response_memory
 from .. import recommendation_blocks
 from .. import event_booklet
+from .. import goal_draft
 from .. import thread_guard
 from .. import recommendation_service as _recommendation_service
 from ..certified_reading_service import certified_reading_memory
@@ -60,6 +61,10 @@ from ..prompt_config import (
     DEFAULT_GUIDED_TEXT_EVENTO_STUDIO_CONCLUSION,
     DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_QUESTIONS_INTRO,
     DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_OBBSTUDIO_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_OBBSTUDIO_CONCLUSION,
+    DEFAULT_GUIDED_TEXT_OBBDOCENZA_QUESTIONS_INTRO,
+    DEFAULT_GUIDED_TEXT_OBBDOCENZA_CONCLUSION,
     DEFAULT_GUIDED_TEXT_QPCS_QUESTIONS_INTRO,
     DEFAULT_GUIDED_TEXT_QPCS_CONCLUSION,
     DEFAULT_GUIDED_TEXT_QPCC_QUESTIONS_INTRO,
@@ -249,6 +254,28 @@ _EVENT_GUIDED_TEXTS = {
                              "text_evento_professionale_conclusion", DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_CONCLUSION),
 }
 
+# Obiettivo di apprendimento: stesso schema dei percorsi a intervista.
+_OBIETTIVO_GUIDED_TEXTS = {
+    "OBIETTIVO_STUDIO": ("text_obbstudio_questions_intro", DEFAULT_GUIDED_TEXT_OBBSTUDIO_QUESTIONS_INTRO,
+                         "text_obbstudio_conclusion", DEFAULT_GUIDED_TEXT_OBBSTUDIO_CONCLUSION),
+    "OBIETTIVO_DOCENZA": ("text_obbdocenza_questions_intro", DEFAULT_GUIDED_TEXT_OBBDOCENZA_QUESTIONS_INTRO,
+                          "text_obbdocenza_conclusion", DEFAULT_GUIDED_TEXT_OBBDOCENZA_CONCLUSION),
+}
+
+
+def _draft_module(questionnaire_type: str | None):
+    """Il modulo del blocco privato di questo strumento, se ne ha uno.
+
+    Entrambi espongono la stessa interfaccia (is_*_instrument,
+    strip_for_display, extract): la sintesi del percorso chiude il turno con
+    un blocco JSON privato che il client riceve come bozza da confermare.
+    """
+    if event_booklet.is_event_instrument(questionnaire_type):
+        return event_booklet
+    if goal_draft.is_goal_instrument(questionnaire_type):
+        return goal_draft
+    return None
+
 _REFLECTION_FIXED_QUESTIONS = {
     "it": [
         "Quale risultato o tema ti fa riflettere di piu'?",
@@ -380,6 +407,12 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
         )
     elif questionnaire_type in _EVENT_GUIDED_TEXTS:
         intro_key, intro_default, concl_key, concl_default = _EVENT_GUIDED_TEXTS[questionnaire_type]
+        result["label_guided_questions"] = qlabel
+        result["text_guided_questions_phase_banner"] = f"--- {phase_word} 8: {qlabel} ---"
+        result["text_guided_questions_intro"] = resolve_text(cfg_get, intro_key, lang, intro_default)
+        result["text_guided_conclusion"] = resolve_text(cfg_get, concl_key, lang, concl_default)
+    elif questionnaire_type in _OBIETTIVO_GUIDED_TEXTS:
+        intro_key, intro_default, concl_key, concl_default = _OBIETTIVO_GUIDED_TEXTS[questionnaire_type]
         result["label_guided_questions"] = qlabel
         result["text_guided_questions_phase_banner"] = f"--- {phase_word} 8: {qlabel} ---"
         result["text_guided_questions_intro"] = resolve_text(cfg_get, intro_key, lang, intro_default)
@@ -582,8 +615,12 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     # I blocchi privati escono subito: non devono raggiungere lo studente, il
     # transcript, il log o il PDF.
     booklet_draft = None
-    if event_booklet.is_event_instrument(questionnaire_type):
+    goal_draft_value = None
+    draft_mod = _draft_module(questionnaire_type)
+    if draft_mod is event_booklet:
         response_content, booklet_draft = event_booklet.extract(response_content)
+    elif draft_mod is goal_draft:
+        response_content, goal_draft_value = goal_draft.extract(response_content)
     raw_recommendations = response_content
     response_content, recommended = recommendation_blocks.extract(
         response_content, readings=reading_candidates, strategies=strategy_candidates,
@@ -731,6 +768,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "idea_revision_id": idea_revision_id,
         "recommendations": recommendations_for_response,
         "event_booklet": booklet_draft,
+        "goal_draft": goal_draft_value,
     }
 
 
@@ -884,8 +922,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         chunks = [request.partial_response]
         usage_info = None
         previous_display = ""
-        is_event_path = event_booklet.is_event_instrument(questionnaire_type)
+        draft_mod = _draft_module(questionnaire_type)
         booklet_draft = None
+        goal_draft_value = None
         try:
             for item in ai_service.stream_response(
                 full_message, system_prompt_final, request.mode,
@@ -912,8 +951,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 if questionnaire_type == IDEA_INSTRUMENT:
                     display_response = strip_patch_for_display(display_response)
                 display_response = recommendation_blocks.strip_for_display(display_response)
-                if is_event_path:
-                    display_response = event_booklet.strip_for_display(display_response)
+                if draft_mod is not None:
+                    display_response = draft_mod.strip_for_display(display_response)
                 display_response, truncated = _limit_visible_words(display_response, effective_response_length)
                 event = {"display": display_response}
                 if effective_response_length is None:
@@ -926,7 +965,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 # Stesso motivo per il blocco delle raccomandazioni: senza, il
                 # turno non sa che cosa e' stato davvero proposto.
                 # E per la bozza del libretto, che la sintesi dell'Evento scrive in coda.
-                if truncated and questionnaire_type != IDEA_INSTRUMENT and not has_recommendation_candidates and not is_event_path:
+                if truncated and questionnaire_type != IDEA_INSTRUMENT and not has_recommendation_candidates and draft_mod is None:
                     break
 
             raw_response = "".join(chunks)
@@ -934,8 +973,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 raise AIError("The provider returned no continuation.")
             # I blocchi privati escono prima di ogni altra elaborazione: non devono
             # raggiungere lo studente, il transcript, il log o il PDF.
-            if is_event_path:
+            if draft_mod is event_booklet:
                 raw_response, booklet_draft = event_booklet.extract(raw_response)
+            elif draft_mod is goal_draft:
+                raw_response, goal_draft_value = goal_draft.extract(raw_response)
             raw_recommendations = raw_response
             raw_response, recommended = recommendation_blocks.extract(
                 raw_response, readings=reading_candidates, strategies=strategy_candidates,
@@ -984,8 +1025,10 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     full_message, system_prompt_final, request.mode,
                     max_tokens=max_tokens, provider=c_provider, model=c_model, history=history,
                 )
-                if is_event_path:
+                if draft_mod is event_booklet:
                     retry, booklet_draft = event_booklet.extract(retry)
+                elif draft_mod is goal_draft:
+                    retry, goal_draft_value = goal_draft.extract(retry)
                 raw_recommendations = retry
                 retry, retry_recommended = recommendation_blocks.extract(
                     retry, readings=reading_candidates, strategies=strategy_candidates,
@@ -1015,7 +1058,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 yield f"data: {_json.dumps({'display': response_content})}\n\n"
 
             if truncated and questionnaire_type != IDEA_INSTRUMENT:
-                yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft})}\n\n"
+                yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value})}\n\n"
                 return
 
             # Transcript verbatim role-tagged per la sessione (Fase 2).
@@ -1070,7 +1113,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             finally:
                 recommendation_db.close()
 
-            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': recommended['strategy'], 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response, 'event_booklet': booklet_draft})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': recommended['strategy'], 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value})}\n\n"
         except Exception as e:
             logger.error(f"Errore stream chat session {session_id}: {e}")
             try:

@@ -701,6 +701,14 @@ const it: Dict = {
     'admin.config.label.text_evento_studio_conclusion': 'Messaggio Conclusione',
     'admin.config.label.text_evento_professionale_questions_intro': 'Messaggio Intro Fase Domande',
     'admin.config.label.text_evento_professionale_conclusion': 'Messaggio Conclusione',
+    'admin.config.label.prompt_obbstudio_intro': 'Prompt Presentazione Obiettivo di apprendimento',
+    'admin.config.label.prompt_obbdocenza_intro': 'Prompt Presentazione Obiettivi per la mia classe',
+    'admin.config.label.prompt_obiettivo_interview': 'Prompt Obiettivo Conversazione',
+    'admin.config.label.prompt_obiettivo_summary': 'Prompt Obiettivo Sintesi Finale',
+    'admin.config.label.text_obbstudio_questions_intro': 'Messaggio Intro Fase Domande (Obiettivo di apprendimento)',
+    'admin.config.label.text_obbstudio_conclusion': 'Messaggio Conclusione (Obiettivo di apprendimento)',
+    'admin.config.label.text_obbdocenza_questions_intro': 'Messaggio Intro Fase Domande (Obiettivi per la mia classe)',
+    'admin.config.label.text_obbdocenza_conclusion': 'Messaggio Conclusione (Obiettivi per la mia classe)',
 };
 
 const en: Dict = {
@@ -1392,6 +1400,14 @@ const en: Dict = {
     'admin.config.label.text_evento_studio_conclusion': 'Conclusion Message',
     'admin.config.label.text_evento_professionale_questions_intro': 'Questions Phase Intro Message',
     'admin.config.label.text_evento_professionale_conclusion': 'Conclusion Message',
+    'admin.config.label.prompt_obbstudio_intro': 'Learning objective Presentation prompt',
+    'admin.config.label.prompt_obbdocenza_intro': 'Class objectives Presentation prompt',
+    'admin.config.label.prompt_obiettivo_interview': 'Objective Conversation prompt',
+    'admin.config.label.prompt_obiettivo_summary': 'Objective Final summary prompt',
+    'admin.config.label.text_obbstudio_questions_intro': 'Questions intro message (Learning objective)',
+    'admin.config.label.text_obbstudio_conclusion': 'Conclusion message (Learning objective)',
+    'admin.config.label.text_obbdocenza_questions_intro': 'Questions intro message (Class objectives)',
+    'admin.config.label.text_obbdocenza_conclusion': 'Conclusion message (Class objectives)',
 };
 
 const es: Dict = {
@@ -1950,6 +1966,14 @@ const es: Dict = {
     'admin.config.label.text_evento_studio_conclusion': 'Mensaje de conclusión',
     'admin.config.label.text_evento_professionale_questions_intro': 'Mensaje inicial de la fase de preguntas',
     'admin.config.label.text_evento_professionale_conclusion': 'Mensaje de conclusión',
+    'admin.config.label.prompt_obbstudio_intro': 'Prompt Presentación Mi objetivo de aprendizaje',
+    'admin.config.label.prompt_obbdocenza_intro': 'Prompt Presentación Objetivos para mi clase',
+    'admin.config.label.prompt_obiettivo_interview': 'Prompt Objetivo Conversación',
+    'admin.config.label.prompt_obiettivo_summary': 'Prompt Objetivo Síntesis final',
+    'admin.config.label.text_obbstudio_questions_intro': 'Mensaje intro fase preguntas (Mi objetivo de aprendizaje)',
+    'admin.config.label.text_obbstudio_conclusion': 'Mensaje de conclusión (Mi objetivo de aprendizaje)',
+    'admin.config.label.text_obbdocenza_questions_intro': 'Mensaje intro fase preguntas (Objetivos para mi clase)',
+    'admin.config.label.text_obbdocenza_conclusion': 'Mensaje de conclusión (Objetivos para mi clase)',
 };
 
 const fr: Dict = {
@@ -2508,6 +2532,14 @@ const fr: Dict = {
     'admin.config.label.text_evento_studio_conclusion': 'Message de conclusion',
     'admin.config.label.text_evento_professionale_questions_intro': 'Message d’introduction de la phase Questions',
     'admin.config.label.text_evento_professionale_conclusion': 'Message de conclusion',
+    'admin.config.label.prompt_obbstudio_intro': 'Prompt Présentation Mon objectif d’apprentissage',
+    'admin.config.label.prompt_obbdocenza_intro': 'Prompt Présentation Objectifs pour ma classe',
+    'admin.config.label.prompt_obiettivo_interview': 'Prompt Objectif Conversation',
+    'admin.config.label.prompt_obiettivo_summary': 'Prompt Objectif Synthèse finale',
+    'admin.config.label.text_obbstudio_questions_intro': 'Message d’intro phase questions (Mon objectif d’apprentissage)',
+    'admin.config.label.text_obbstudio_conclusion': 'Message de conclusion (Mon objectif d’apprentissage)',
+    'admin.config.label.text_obbdocenza_questions_intro': 'Message d’intro phase questions (Objectifs pour ma classe)',
+    'admin.config.label.text_obbdocenza_conclusion': 'Message de conclusion (Objectifs pour ma classe)',
 };
 
 const de: Dict = {
@@ -3066,6 +3098,14 @@ const de: Dict = {
     'admin.config.label.text_evento_studio_conclusion': 'Abschlussnachricht',
     'admin.config.label.text_evento_professionale_questions_intro': 'Einleitung der Fragenphase',
     'admin.config.label.text_evento_professionale_conclusion': 'Abschlussnachricht',
+    'admin.config.label.prompt_obbstudio_intro': 'Prompt Vorstellung Mein Lernziel',
+    'admin.config.label.prompt_obbdocenza_intro': 'Prompt Vorstellung Ziele für meine Klasse',
+    'admin.config.label.prompt_obiettivo_interview': 'Prompt Ziel Gespräch',
+    'admin.config.label.prompt_obiettivo_summary': 'Prompt Ziel Abschlusszusammenfassung',
+    'admin.config.label.text_obbstudio_questions_intro': 'Einführungsnachricht Fragenphase (Mein Lernziel)',
+    'admin.config.label.text_obbstudio_conclusion': 'Abschlussnachricht (Mein Lernziel)',
+    'admin.config.label.text_obbdocenza_questions_intro': 'Einführungsnachricht Fragenphase (Ziele für meine Klasse)',
+    'admin.config.label.text_obbdocenza_conclusion': 'Abschlussnachricht (Ziele für meine Klasse)',
 };
 
 const sv: Dict = {
@@ -3624,6 +3664,14 @@ const sv: Dict = {
     'admin.config.label.text_evento_studio_conclusion': 'Avslutande meddelande',
     'admin.config.label.text_evento_professionale_questions_intro': 'Inledande meddelande för frågefasen',
     'admin.config.label.text_evento_professionale_conclusion': 'Avslutande meddelande',
+    'admin.config.label.prompt_obbstudio_intro': 'Prompt Presentation Mitt inlärningsmål',
+    'admin.config.label.prompt_obbdocenza_intro': 'Prompt Presentation Mål för min klass',
+    'admin.config.label.prompt_obiettivo_interview': 'Prompt Mål Samtal',
+    'admin.config.label.prompt_obiettivo_summary': 'Prompt Mål Slutlig sammanfattning',
+    'admin.config.label.text_obbstudio_questions_intro': 'Intro-meddelande frågefas (Mitt inlärningsmål)',
+    'admin.config.label.text_obbstudio_conclusion': 'Avslutande meddelande (Mitt inlärningsmål)',
+    'admin.config.label.text_obbdocenza_questions_intro': 'Intro-meddelande frågefas (Mål för min klass)',
+    'admin.config.label.text_obbdocenza_conclusion': 'Avslutande meddelande (Mål för min klass)',
 };
 
 const trainingIt: Dict = {

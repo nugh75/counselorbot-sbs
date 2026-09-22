@@ -1365,7 +1365,7 @@ async def admin_reorder_guided_steps(items: List[schemas.ReorderItem], current_u
 
 
 # Ordine di presentazione degli strumenti nell'export (gli altri seguono in coda).
-_EXPORT_INSTRUMENT_ORDER = ["QSA", "QSAr", "ZTPI", "SAVICKAS", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE", "QPCS", "QPCC", "QAP", "IDEA"]
+_EXPORT_INSTRUMENT_ORDER = ["QSA", "QSAr", "ZTPI", "SAVICKAS", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE", "OBIETTIVO_STUDIO", "OBIETTIVO_DOCENZA", "QPCS", "QPCC", "QAP", "IDEA"]
 
 
 @router.get("/admin/guided-steps/export")
