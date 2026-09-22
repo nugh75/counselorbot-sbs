@@ -83,7 +83,7 @@ export function IntroScreen({
                             </div>
                         )}
                         <Image
-                            src={`/images/intro/${activity}.png`}
+                            src={`/images/intro/${activity.key}.png`}
                             alt=""
                             width={144}
                             height={144}
