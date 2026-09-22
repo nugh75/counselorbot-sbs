@@ -11,6 +11,7 @@ import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlans
 import { AssignmentsPanel } from '@/components/teacher/AssignmentsPanel';
 import { GroupsPanel } from '@/components/admin/GroupsPanel';
 import { TeacherCatalogs } from '@/components/teacher/TeacherCatalogs';
+import { TeacherNotebook } from '@/components/teacher/TeacherNotebook';
 
 // Local copy is complete for every supported interface language.
 const TEXTS = {
@@ -22,6 +23,7 @@ const TEXTS = {
         forbidden: 'Pagina riservata a docenti, ricercatori e amministratori.',
         back: 'Torna a CounselorBot',
         loading: 'Verifica in corso...',
+        notebookNote: 'Il taccuino qui sotto parla del tuo ruolo di docente: entra nella chat degli obiettivi didattici. Il tuo eventuale taccuino da studente resta nell’area personale e non entra in questa conversazione.',
     },
     en: {
         title: 'Teacher area',
@@ -31,6 +33,7 @@ const TEXTS = {
         forbidden: 'This page is reserved for teachers, researchers and administrators.',
         back: 'Back to CounselorBot',
         loading: 'Checking access...',
+        notebookNote: 'The notebook below is about your role as a teacher: it feeds the didactic-objective chat. Your student notebook, if any, stays in the personal area and never enters this conversation.',
     },
     es: {
         title: 'Área docente',
@@ -40,6 +43,7 @@ const TEXTS = {
         forbidden: 'Esta página está reservada a docentes, investigadores y administradores.',
         back: 'Volver a CounselorBot',
         loading: 'Comprobando el acceso...',
+        notebookNote: 'El cuaderno de abajo habla de tu rol docente: entra en la chat de objetivos didácticos. Tu cuaderno de estudiante, si lo tienes, queda en el área personal y no entra en esta conversación.',
     },
     fr: {
         title: 'Espace enseignant',
@@ -49,6 +53,7 @@ const TEXTS = {
         forbidden: 'Cette page est réservée aux enseignants, chercheurs et administrateurs.',
         back: 'Retour à CounselorBot',
         loading: 'Vérification de l’accès...',
+        notebookNote: 'Le carnet ci-dessous parle de votre rôle d’enseignant : il alimente la conversation sur les objectifs didactiques. Votre carnet d’étudiant, s’il existe, reste dans l’espace personnel et n’y entre pas.',
     },
     de: {
         title: 'Lehrkräftebereich',
@@ -58,6 +63,7 @@ const TEXTS = {
         forbidden: 'Diese Seite ist Lehrkräften, Forschenden und Administratoren vorbehalten.',
         back: 'Zurück zu CounselorBot',
         loading: 'Zugriff wird geprüft...',
+        notebookNote: 'Das Notizbuch unten betrifft Ihre Rolle als Lehrkraft: es fließt in den Chat über Unterrichtsziele ein. Ihr Studierenden-Notizbuch bleibt im persönlichen Bereich und kommt hier nicht hinein.',
     },
     sv: {
         title: 'Lärarområde',
@@ -67,6 +73,7 @@ const TEXTS = {
         forbidden: 'Den här sidan är endast för lärare, forskare och administratörer.',
         back: 'Tillbaka till CounselorBot',
         loading: 'Kontrollerar åtkomst...',
+        notebookNote: 'Anteckningsboken nedan handlar om din roll som lärare: den matar målchatten. Din eventuella studentanteckningsbok finns kvar i den personliga vyn och kommer inte in i det här samtalet.',
     },
 };
 
@@ -121,6 +128,8 @@ export default function TeacherPage() {
                     </span>
                 </Link>
                 <TeacherCatalogs />
+                <p className="mt-6 max-w-2xl text-sm text-slate-500">{texts.notebookNote}</p>
+                <div className="mt-2"><TeacherNotebook /></div>
                 <div className="mt-10"><AssignmentsPanel teacher /></div>
                 <div className="mt-6">
                     <GroupsPanel />
