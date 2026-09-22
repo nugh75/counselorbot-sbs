@@ -285,6 +285,41 @@ DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_CONCLUSION = (
 )
 
 
+# --- Obiettivo di apprendimento (OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA) ---
+# Due strumenti con lo stesso percorso: cambia solo se l'obiettivo è quello di
+# apprendimento della persona o un obiettivo didattico per la sua classe. I
+# testi di fabbrica vivono una volta sola in backend/prompts/, con il
+# segnaposto {domain}.
+OBIETTIVO_DOMAINS = {"OBIETTIVO_STUDIO": "learning", "OBIETTIVO_DOCENZA": "teaching"}
+OBIETTIVO_STEP_PREFIXES = {"OBIETTIVO_STUDIO": "obbstudio", "OBIETTIVO_DOCENZA": "obbdocenza"}
+
+DEFAULT_SYSTEM_PROMPT_OBIETTIVO_INTERVIEW = _text("default_system_prompt_obiettivo_interview")
+
+DEFAULT_SYSTEM_PROMPT_OBIETTIVO_SUMMARY = _text("default_system_prompt_obiettivo_summary")
+
+DEFAULT_GUIDED_TEXT_OBBSTUDIO_QUESTIONS_INTRO = (
+    "Abbiamo impostato insieme il tuo obiettivo di apprendimento. "
+    "Ora puoi chiedere chiarimenti sull'obiettivo o approfondire i passi che hai scelto."
+)
+
+DEFAULT_GUIDED_TEXT_OBBSTUDIO_CONCLUSION = (
+    "Hai completato il percorso sul tuo obiettivo di apprendimento. "
+    "Puoi salvare l'obiettivo tra i tuoi obiettivi personali e riprenderlo alla data che hai scelto. "
+    "Continua per scegliere il prossimo passaggio."
+)
+
+DEFAULT_GUIDED_TEXT_OBBDOCENZA_QUESTIONS_INTRO = (
+    "Abbiamo impostato insieme l'obiettivo didattico per la tua classe. "
+    "Ora puoi chiedere chiarimenti sull'obiettivo o approfondire le attività allineate che hai scelto."
+)
+
+DEFAULT_GUIDED_TEXT_OBBDOCENZA_CONCLUSION = (
+    "Hai completato il percorso sull'obiettivo didattico. "
+    "Puoi salvare l'obiettivo tra i tuoi obiettivi, pubblicarlo nel tuo catalogo o assegnarlo a un gruppo. "
+    "Continua per scegliere il prossimo passaggio."
+)
+
+
 # --- Questionari basati su punteggi di fattore (QPCS, QPCC, QAP) ---
 # Come il QSA: lo studente inserisce i valori dei fattori (scala 1-9) e l'AI
 # produce un'analisi guidata. Tutti i fattori sono diretti (alto = forza).
@@ -471,6 +506,18 @@ SYSTEM_PROMPT_DEFINITIONS: List[Dict[str, str]] = [
         "label": "Prompt Evento significativo Sintesi Finale",
         "description": "Prompt di sistema per la sintesi finale dei percorsi Evento significativo",
         "default": DEFAULT_SYSTEM_PROMPT_EVENTO_SUMMARY,
+    },
+    {
+        "key": "prompt_obiettivo_interview",
+        "label": "Prompt Obiettivo di apprendimento Conversazione",
+        "description": "Prompt di sistema per la conduzione dei percorsi Obiettivo di apprendimento (studio e docenza)",
+        "default": DEFAULT_SYSTEM_PROMPT_OBIETTIVO_INTERVIEW,
+    },
+    {
+        "key": "prompt_obiettivo_summary",
+        "label": "Prompt Obiettivo di apprendimento Sintesi Finale",
+        "description": "Prompt di sistema per la sintesi finale dei percorsi Obiettivo di apprendimento",
+        "default": DEFAULT_SYSTEM_PROMPT_OBIETTIVO_SUMMARY,
     },
     {
         "key": "prompt_qpcs_factor",
@@ -816,6 +863,20 @@ DEFAULT_SYSTEM_PROMPT_SAVICKAS_INTRO = (
 
 _EVENTO_INTRO_FLOW = _text("evento_intro_flow") + '\n'
 
+_OBIETTIVO_INTRO_FLOW = _text("obiettivo_intro_flow") + '\n'
+
+
+def _obiettivo_intro_system_prompt(domain: str) -> str:
+    return (
+        "You are introducing yourself to the person at the start of the learning-objective "
+        f"path on their {domain} objective.\n\n"
+        "In this turn:\n"
+        + _OBIETTIVO_INTRO_FLOW
+        + "\n"
+        "Do NOT yet: ask about the objective or analyse anything. This is only the "
+        "welcome, not the conversation."
+    ) + INTRO_ALLOWED_QUESTIONS
+
 
 def _evento_intro_system_prompt(domain: str) -> str:
     return (
@@ -832,6 +893,10 @@ def _evento_intro_system_prompt(domain: str) -> str:
 DEFAULT_SYSTEM_PROMPT_EVSTUDIO_INTRO = _evento_intro_system_prompt("study")
 
 DEFAULT_SYSTEM_PROMPT_EVPROF_INTRO = _evento_intro_system_prompt("work")
+
+DEFAULT_SYSTEM_PROMPT_OBBSTUDIO_INTRO = _obiettivo_intro_system_prompt("learning")
+
+DEFAULT_SYSTEM_PROMPT_OBBDOCENZA_INTRO = _obiettivo_intro_system_prompt("teaching")
 
 DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
     "You are introducing yourself to the student at the start of the QPCS "
@@ -883,6 +948,7 @@ GUIDED_PHASE_ALIASES: Dict[str, str] = {
 WELCOME_PHASE_IDS = frozenset({
     "intro", "qsar-intro", "ztpi-intro", "savickas-intro",
     "evstudio-intro", "evprof-intro",
+    "obbstudio-intro", "obbdocenza-intro",
     "qpcs-intro", "qpcc-intro", "qap-intro",
     *GUIDED_PHASE_ALIASES,
 })
@@ -930,6 +996,18 @@ GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS: Dict[str, Dict[str, str]] = {
         "label": "Guided - 0. Presentazione Evento significativo professionale (system)",
         "description": "Prompt di sistema per lo step intro EVENTO_PROFESSIONALE",
         "default": DEFAULT_SYSTEM_PROMPT_EVPROF_INTRO,
+    },
+    "obbstudio-intro": {
+        "key": "prompt_obbstudio_intro",
+        "label": "Guided - 0. Presentazione Obiettivo di apprendimento (system)",
+        "description": "Prompt di sistema per lo step intro OBIETTIVO_STUDIO",
+        "default": DEFAULT_SYSTEM_PROMPT_OBBSTUDIO_INTRO,
+    },
+    "obbdocenza-intro": {
+        "key": "prompt_obbdocenza_intro",
+        "label": "Guided - 0. Presentazione Obiettivi per la mia classe (system)",
+        "description": "Prompt di sistema per lo step intro OBIETTIVO_DOCENZA",
+        "default": DEFAULT_SYSTEM_PROMPT_OBBDOCENZA_INTRO,
     },
     "qpcs-intro": {
         "key": "prompt_qpcs_welcome",
@@ -1105,6 +1183,8 @@ MODE_TO_SYSTEM_PROMPT_KEY: Dict[str, str] = {
     "qpcs-factor": "prompt_qpcs_factor",
     "evento-interview": "prompt_evento_interview",
     "evento-summary": "prompt_evento_summary",
+    "obiettivo-interview": "prompt_obiettivo_interview",
+    "obiettivo-summary": "prompt_obiettivo_summary",
     "qpcc-factor": "prompt_qpcc_factor",
     "qap-factor": "prompt_qap_factor",
     # Keep compatibility with detailed guided paths already configured in existing databases.
@@ -2021,6 +2101,56 @@ def _evento_guided_steps(questionnaire_type: str) -> List[Dict]:
 DEFAULT_EVENTO_STUDIO_GUIDED_STEPS: List[Dict] = _evento_guided_steps("EVENTO_STUDIO")
 
 DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS: List[Dict] = _evento_guided_steps("EVENTO_PROFESSIONALE")
+
+
+# --- Default Obiettivo di apprendimento guided steps (seeded into guided_steps table) ---
+# Stesso percorso per i due strumenti: presentazione, patto, sette passi,
+# sintesi. I testi contengono il segnaposto {domain}.
+_OBIETTIVO_STEP_TEXTS = {
+    "intro": _text("obiettivo_intro_step_prompt"),
+    "patto": _text("obiettivo_step_patto"),
+    "partenza": _text("obiettivo_step_partenza"),
+    "livello": _text("obiettivo_step_livello"),
+    "smart": _text("obiettivo_step_smart"),
+    "sfida": _text("obiettivo_step_sfida"),
+    "piano": _text("obiettivo_step_piano"),
+    "verifica": _text("obiettivo_step_verifica"),
+    "final": _text("obiettivo_step_final"),
+}
+
+# (suffisso id, ordine, etichetta, modo, colore)
+_OBIETTIVO_STEP_SPECS = (
+    ("intro", -1, "0. Presentazione", "intro", "teal"),
+    ("patto", 0, "0. Patto di Collaborazione", "obiettivo-interview", "cyan"),
+    ("partenza", 1, "1. Da dove parto", "obiettivo-interview", "blue"),
+    ("livello", 2, "2. Il livello (Bloom)", "obiettivo-interview", "indigo"),
+    ("smart", 3, "3. Alla prova SMART", "obiettivo-interview", "green"),
+    ("sfida", 4, "4. Specifico e sfidante", "obiettivo-interview", "amber"),
+    ("piano", 5, "5. Come ci arrivo", "obiettivo-interview", "purple"),
+    ("verifica", 6, "6. Come saprò di esserci riuscito", "obiettivo-interview", "rose"),
+    ("final", 7, "7. Sintesi dell'obiettivo", "obiettivo-summary", "purple"),
+)
+
+
+def _obiettivo_guided_steps(questionnaire_type: str) -> List[Dict]:
+    prefix = OBIETTIVO_STEP_PREFIXES[questionnaire_type]
+    return [
+        {
+            "id": f"{prefix}-{suffix}",
+            "sort_order": sort_order,
+            "label": label,
+            "prompt": _OBIETTIVO_STEP_TEXTS[suffix],
+            "system_prompt_mode": mode,
+            "color_theme": color,
+            "questionnaire_type": questionnaire_type,
+        }
+        for suffix, sort_order, label, mode, color in _OBIETTIVO_STEP_SPECS
+    ]
+
+
+DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS: List[Dict] = _obiettivo_guided_steps("OBIETTIVO_STUDIO")
+
+DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS: List[Dict] = _obiettivo_guided_steps("OBIETTIVO_DOCENZA")
 
 
 # --- Default QPCS guided steps (guided analysis of self-assessment results, 5 areas + summary) ---
