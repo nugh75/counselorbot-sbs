@@ -219,9 +219,12 @@ for (const width of [390, 1440]) {
         const { page, context, errors } = await fixture({ width, noHistory: true, prefs: { counselor_id: null, counselor_ready: false, notebook_ready: false, setup_completed: false } });
         try {
             await page.goto(`${origin}/`);
-            const start = page.getByRole('button', { name: 'Inizia', exact: true });
+            const start = page.getByRole('button', { name: 'Bussola', exact: true });
             await start.waitFor();
             assert.equal(await start.count(), 1);
+            const tools = page.getByRole('button', { name: 'Strumenti', exact: true });
+            await tools.waitFor();
+            assert.equal(await tools.count(), 1);
             const intro = page.getByTestId('intro-screen');
             assert.deepEqual(await intro.locator('h2').allTextContents(), ['Analisi dei risultati dei questionari', 'Percorsi guidati', 'Allenamento']);
             const images = intro.locator('img');

@@ -9,7 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { BookOpen, ChevronDown, RotateCcw } from 'lucide-react';
+import { ArrowLeft, BookOpen, ChevronDown, RotateCcw } from 'lucide-react';
 import { QUESTIONNAIRE_LIST, QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
@@ -75,7 +75,17 @@ export function ReturningHome({
         <div className="flex flex-col gap-5 py-2">
             <section className="order-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h1 className="font-display text-3xl font-bold text-slate-900">{t('base.instruments.title')}</h1>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={onOpenIntro}
+                            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            <span>{t('base.backToIntro')}</span>
+                        </button>
+                        <h1 className="font-display text-3xl font-bold text-slate-900">{t('base.instruments.title')}</h1>
+                    </div>
                 </div>
                 <nav className="mt-4 flex flex-wrap gap-2" aria-label={t('base.categories.label')}>
                     {TOOL_CATEGORIES.map((group) => (
@@ -102,10 +112,10 @@ export function ReturningHome({
                 <div className="mt-6 space-y-8">
                     {TOOL_CATEGORIES.map((group) => {
                         const categoryImage = group.id === 'assessment'
-                            ? '/images/platform/compilazioni.png'
+                            ? '/images/intro/profiles.png'
                             : group.id === 'guided'
-                            ? '/images/platform/tavolo.png'
-                            : '/images/platform/bacheca-azioni.png';
+                            ? '/images/intro/paths.png'
+                            : '/images/intro/practice.png';
                         return (
                         <section key={group.id} id={`tools-${group.id}`} className="scroll-mt-24">
                             <div className="flex items-center gap-3.5">
