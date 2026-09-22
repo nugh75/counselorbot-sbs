@@ -84,6 +84,10 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                 tabIndex={0}
                 aria-pressed={isSelected}
                 onClick={() => setSelectedKey(q.id)}
+                onDoubleClick={() => {
+                    setSelectedKey(q.id);
+                    onSelect(q);
+                }}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
@@ -275,6 +279,10 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                     tabIndex={0}
                     aria-pressed={selectedKey === 'pqbl'}
                     onClick={() => setSelectedKey('pqbl')}
+                    onDoubleClick={() => {
+                        setSelectedKey('pqbl');
+                        router.push('/pqbl');
+                    }}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
