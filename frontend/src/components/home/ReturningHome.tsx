@@ -108,17 +108,19 @@ export function ReturningHome({
                             : '/images/platform/bacheca-azioni.png';
                         return (
                         <section key={group.id} id={`tools-${group.id}`} className="scroll-mt-24">
-                            <div className="flex items-center gap-3">
-                                <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-xs">
+                            <div className="flex items-center gap-3.5">
+                                <div className="relative h-14 w-14 shrink-0">
                                     <Image
                                         src={categoryImage}
                                         alt=""
-                                        width={40}
-                                        height={40}
+                                        width={56}
+                                        height={56}
                                         className="h-full w-full object-contain"
                                     />
-                                </span>
-                                <h2 className="text-base font-bold text-slate-800">{t(`base.category.${group.id}`)}</h2>
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-900">{t(`base.category.${group.id}`)}</h2>
+                                </div>
                             </div>
                             <div className="mt-3 grid gap-3 md:grid-cols-2">
                                 {group.questionnaireIds.map((id) => instrumentById.get(id)).filter((q): q is QuestionnaireConfig => Boolean(q)).map((q) => {
