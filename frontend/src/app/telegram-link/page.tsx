@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
-import { Send } from 'lucide-react';
+import Image from 'next/image';
 
 // Local copy is complete for every supported interface language.
 const TEXTS = {
@@ -90,7 +90,14 @@ function TelegramLinkInner() {
 
     return (
         <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 p-6 text-center">
-            <Send className="h-10 w-10 text-slate-500" aria-hidden />
+            <Image
+                src="/images/platform/telegram.png"
+                alt=""
+                width={144}
+                height={144}
+                sizes="96px"
+                className="h-24 w-24 object-contain"
+            />
             <h1 className="text-2xl font-bold text-slate-800">{texts.title}</h1>
             {error && <p className="text-sm text-red-600">{texts.error}</p>}
             {!error && !code && <p className="text-sm text-slate-500">{texts.loading}</p>}
