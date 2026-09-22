@@ -12,11 +12,12 @@
 // leggibile da qualunque parte si trascinino i pezzi, e non c'e' niente in piu'
 // da salvare.
 
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import {
     BaseEdge, EdgeLabelRenderer, Position, getBezierPath, useInternalNode,
     type EdgeProps, type InternalNode, type Node,
 } from '@xyflow/react';
+import { Trash2 } from 'lucide-react';
 import { FAMILY_STROKE, familyOf, type TavoloForm, type TavoloRel, type TavoloState } from '@/lib/tavolo';
 import { relLabel } from '@/lib/i18n-tavolo';
 import type { PieceData } from './TavoloPieceNode';
@@ -29,6 +30,8 @@ export interface LinkData extends Record<string, unknown> {
     state: TavoloState;
     locale: string;
     onSelect: () => void;
+    onDelete?: () => void;
+    deleteLabel?: string;
 }
 
 const WIDTH: Record<number, number> = { 1: 1, 2: 1.8, 3: 3 };
@@ -72,9 +75,10 @@ const side = (dx: number, dy: number) => (Math.abs(dx) > Math.abs(dy)
     ? (dx > 0 ? Position.Right : Position.Left)
     : (dy > 0 ? Position.Bottom : Position.Top));
 
-function Link({ id, source, target, data, markerStart, markerEnd }: EdgeProps & { data: LinkData }) {
+function Link({ id, source, target, data, markerStart, markerEnd, selected }: EdgeProps & { data: LinkData }) {
     const from = useInternalNode<Node<PieceData>>(source);
     const to = useInternalNode<Node<PieceData>>(target);
+    const [hovered, setHovered] = useState(false);
     if (!from || !to) return null;
 
     const start = border(from, centre(to));
@@ -88,6 +92,7 @@ function Link({ id, source, target, data, markerStart, markerEnd }: EdgeProps & 
     const pending = data.state === 'pending';
     const colour = pending ? 'var(--color-ochre-400)' : FAMILY_STROKE[familyOf(data.rel)];
     const word = data.label?.trim() || relLabel(data.rel, data.locale);
+    const showBin = Boolean(data.onDelete && (selected || hovered));
 
     return (
         <>
@@ -106,14 +111,38 @@ function Link({ id, source, target, data, markerStart, markerEnd }: EdgeProps & 
                 }}
             />
             <EdgeLabelRenderer>
-                <button type="button" onClick={data.onSelect}
-                    // La pastiglia opaca sotto il testo e' la stessa cura dei diagrammi
-                    // Graphviz: senza, la linea taglia la parola.
-                    className="nodrag nopan pointer-events-auto absolute cursor-pointer rounded bg-white px-1.5 py-0.5 text-[11px] leading-tight text-slate-600"
+                <div
+                    onMouseEnter={() => setHovered(true)}
+                    onMouseLeave={() => setHovered(false)}
+                    className="nodrag nopan pointer-events-auto absolute flex items-center gap-1 group/edge"
                     style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
                 >
-                    {word}
-                </button>
+                    <button
+                        type="button"
+                        onClick={data.onSelect}
+                        // La pastiglia opaca sotto il testo e' la stessa cura dei diagrammi
+                        // Graphviz: senza, la linea taglia la parola.
+                        className={`cursor-pointer rounded bg-white px-1.5 py-0.5 text-[11px] leading-tight text-slate-600 shadow-sm border ${
+                            selected ? 'border-indigo-500 ring-1 ring-indigo-500 font-medium' : 'border-slate-200 hover:border-indigo-300'
+                        }`}
+                    >
+                        {word}
+                    </button>
+                    {showBin && (
+                        <button
+                            type="button"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                data.onDelete?.();
+                            }}
+                            aria-label={data.deleteLabel || 'Togli dal tavolo'}
+                            title={data.deleteLabel || 'Togli dal tavolo'}
+                            className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-500 shadow-sm hover:bg-rose-50 hover:text-rose-600 transition-opacity"
+                        >
+                            <Trash2 className="h-3 w-3" aria-hidden="true" />
+                        </button>
+                    )}
+                </div>
             </EdgeLabelRenderer>
         </>
     );

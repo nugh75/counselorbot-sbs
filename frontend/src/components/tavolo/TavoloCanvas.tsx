@@ -190,29 +190,41 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
         // eslint-disable-next-line react-hooks/exhaustive-deps -- i callback del pannello leggono il grafo corrente a ogni render
     }, [graph.nodes, selected, editingId, setNodes, locale]);
 
+    const removeEdge = useCallback((key: string) => {
+        onChange({ ...graph, edges: graph.edges.filter((edge) => edgeKey(edge) !== key) });
+        if (selected?.kind === 'edge' && selected.id === key) {
+            setSelected(null);
+        }
+    }, [graph, onChange, selected]);
+
     const edges: Edge<LinkData>[] = useMemo(() => graph.edges
         .filter((edge) => edge.state !== 'dropped')
-        .map((edge) => ({
-            id: edgeKey(edge),
-            source: edge.from,
-            target: edge.to,
-            type: 'link',
-            selected: selected?.kind === 'edge' && selected.id === edgeKey(edge),
-            markerEnd: familyOf(edge.rel) === 'part'
-                ? undefined
-                : { type: MarkerType.ArrowClosed, width: 16, height: 16 },
-            // La punta all'altro capo dice che il verbo si legge anche
-            // all'incontrario. L'appartenenza non ne ha nessuna: un contenuto
-            // non contiene chi lo contiene.
-            markerStart: edge.reciprocal && familyOf(edge.rel) !== 'part'
-                ? { type: MarkerType.ArrowClosed, width: 16, height: 16 }
-                : undefined,
-            data: {
-                rel: edge.rel, label: edge.label, strength: edge.strength,
-                hypothesis: edge.hypothesis, state: edge.state, locale,
-                onSelect: () => { setSelected({ kind: 'edge', id: edgeKey(edge) }); setPanelOpen(true); },
-            },
-        })), [graph.edges, selected, locale]);
+        .map((edge) => {
+            const key = edgeKey(edge);
+            return {
+                id: key,
+                source: edge.from,
+                target: edge.to,
+                type: 'link',
+                selected: selected?.kind === 'edge' && selected.id === key,
+                markerEnd: familyOf(edge.rel) === 'part'
+                    ? undefined
+                    : { type: MarkerType.ArrowClosed, width: 16, height: 16 },
+                // La punta all'altro capo dice che il verbo si legge anche
+                // all'incontrario. L'appartenenza non ne ha nessuna: un contenuto
+                // non contiene chi lo contiene.
+                markerStart: edge.reciprocal && familyOf(edge.rel) !== 'part'
+                    ? { type: MarkerType.ArrowClosed, width: 16, height: 16 }
+                    : undefined,
+                data: {
+                    rel: edge.rel, label: edge.label, strength: edge.strength,
+                    hypothesis: edge.hypothesis, state: edge.state, locale,
+                    onSelect: () => { setSelected({ kind: 'edge', id: key }); setPanelOpen(true); },
+                    onDelete: () => removeEdge(key),
+                    deleteLabel: label('deleteEdge'),
+                },
+            };
+        }), [graph.edges, selected, locale, label, removeEdge]);
 
     // Solo la fine del trascinamento esce di qui. Ogni fotogramma di un
     // trascinamento e' un cambio di posizione, e mandarli tutti al grafo
@@ -267,10 +279,7 @@ function Canvas({ graph, locale, onChange, onSave, busy = false, focusIds }: {
     const removeSelected = () => {
         if (!selected) return;
         if (selected.kind === 'node') removePiece(selected.id);
-        else {
-            onChange({ ...graph, edges: graph.edges.filter((edge) => edgeKey(edge) !== selected.id) });
-            setSelected(null);
-        }
+        else removeEdge(selected.id);
     };
 
     const patchNode = (id: string, change: Partial<{ label: string; form: TavoloForm; color: TavoloColor | null; icon: string | null; image: string | null }>) =>
