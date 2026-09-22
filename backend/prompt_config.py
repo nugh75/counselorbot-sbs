@@ -2105,18 +2105,46 @@ DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS: List[Dict] = _evento_guided_steps("EV
 
 # --- Default Obiettivo di apprendimento guided steps (seeded into guided_steps table) ---
 # Stesso percorso per i due strumenti: presentazione, patto, sette passi,
-# sintesi. I testi contengono il segnaposto {domain}.
-_OBIETTIVO_STEP_TEXTS = {
-    "intro": _text("obiettivo_intro_step_prompt"),
-    "patto": _text("obiettivo_step_patto"),
-    "partenza": _text("obiettivo_step_partenza"),
-    "livello": _text("obiettivo_step_livello"),
-    "smart": _text("obiettivo_step_smart"),
-    "sfida": _text("obiettivo_step_sfida"),
-    "piano": _text("obiettivo_step_piano"),
-    "verifica": _text("obiettivo_step_verifica"),
-    "final": _text("obiettivo_step_final"),
+# sintesi. Gli step condivisi portano i segnaposto {who} (chi apprende:
+# "you" / "your students"), {context} (da dove parte l'obiettivo) e {domain}
+# (learning / teaching); piano, verifica e sintesi hanno un testo per
+# strumento, perché il contenuto cambia davvero.
+_OBIETTIVO_STEP_REPLACEMENTS = {
+    "OBIETTIVO_STUDIO": {
+        "who": "you",
+        "context": "their notebook, a recent result, a course or a task they find hard",
+        "domain": "learning",
+    },
+    "OBIETTIVO_DOCENZA": {
+        "who": "your students",
+        "context": "the class, the curriculum, a recent activity or a topic the class finds hard",
+        "domain": "teaching",
+    },
 }
+
+_OBIETTIVO_STEP_FILE_SUFFIXES = {
+    "OBIETTIVO_STUDIO": {
+        "piano": "piano_studio",
+        "verifica": "verifica_studio",
+        "final": "final_studio",
+    },
+    "OBIETTIVO_DOCENZA": {
+        "piano": "piano_docenza",
+        "verifica": "verifica_docenza",
+        "final": "final_docenza",
+    },
+}
+
+
+def _obiettivo_step_text(questionnaire_type: str, suffix: str) -> str:
+    """Testo dello step: file condiviso con sostituzioni, o variante per strumento."""
+    variant = _OBIETTIVO_STEP_FILE_SUFFIXES[questionnaire_type].get(suffix)
+    name = f"obiettivo_step_{variant or suffix}"
+    text = _text(name)
+    for placeholder, value in _OBIETTIVO_STEP_REPLACEMENTS[questionnaire_type].items():
+        text = text.replace("{" + placeholder + "}", value)
+    return text
+
 
 # (suffisso id, ordine, etichetta, modo, colore)
 _OBIETTIVO_STEP_SPECS = (
@@ -2139,7 +2167,7 @@ def _obiettivo_guided_steps(questionnaire_type: str) -> List[Dict]:
             "id": f"{prefix}-{suffix}",
             "sort_order": sort_order,
             "label": label,
-            "prompt": _OBIETTIVO_STEP_TEXTS[suffix],
+            "prompt": _obiettivo_step_text(questionnaire_type, suffix),
             "system_prompt_mode": mode,
             "color_theme": color,
             "questionnaire_type": questionnaire_type,
