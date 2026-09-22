@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils';
 import { fetchCounselors, getSelectedCounselorId, subscribeToCounselor } from '@/lib/counselor';
 import { clearFlowPrefs, getExperiencePref, getInputMethodPref, subscribeToFlowPrefs } from '@/lib/session-prefs';
 import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
-import { CompassMark } from '@/components/ui/CompassMark';
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { TOOL_CATEGORIES } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
@@ -249,7 +248,7 @@ export function ReturningHome({
                     </div>
                 </div>
                 <button type="button" onClick={onOpenIntro} className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700">
-                    <CompassMark className="h-5 w-5" />{t('base.about')}
+                    <Image src="/images/platform/bussola.png" alt="" width={20} height={20} className="h-5 w-5 object-contain" />{t('base.about')}
                 </button>
             </details>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { BookOpen, Bot, ClipboardList, Compass, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, Users, type LucideIcon } from 'lucide-react';
@@ -14,7 +15,6 @@ import { ThemeToggle } from './ThemeToggle';
 import { VoiceReaderTrigger } from '@/components/voice-reader/VoiceReader';
 import { FlagIcon } from './FlagIcon';
 import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
-import { CompassMark } from '@/components/ui/CompassMark';
 import { LANGUAGES } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
@@ -92,7 +92,7 @@ export function Header() {
             <header className="console-header fixed top-0 left-0 right-0 z-50">
                 <div className="page-wide h-full flex items-center gap-3 px-3 sm:gap-4 sm:px-6">
                     <div className="flex shrink-0 items-center gap-3 min-w-0">
-                        <CompassMark className="h-8 w-8 shrink-0" />
+                        <Image src="/images/platform/bussola.png" alt="" width={32} height={32} className="h-8 w-8 shrink-0 object-contain" />
                         {/* CounselorBot e' il brand principale: titolo grande -> home. */}
                         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                         <a href="/" className="font-display block -m-2 p-2 text-lg sm:text-2xl font-bold text-slate-900 whitespace-nowrap hover:opacity-80 transition-opacity leading-none" aria-label={t('nav.homeAria')}>

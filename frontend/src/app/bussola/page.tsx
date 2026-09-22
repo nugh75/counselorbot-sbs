@@ -17,7 +17,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
 import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
-import { CompassMark } from '@/components/ui/CompassMark';
+import Image from 'next/image';
 import { useI18n } from '@/lib/i18n-context';
 import {
     completeOrientation,
@@ -236,7 +236,7 @@ export default function BussolaPage() {
                 <div className="pointer-events-none absolute -right-5 top-8 h-28 w-28 rounded-full border border-ochre-100" aria-hidden="true" />
                 <div className="relative max-w-3xl">
                     <div className="flex items-center gap-3">
-                        <CompassMark className="h-12 w-12 shrink-0" animated />
+                        <Image src="/images/platform/bussola.png" alt="" width={48} height={48} priority className="h-12 w-12 shrink-0 object-contain" />
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ochre-600">{t('orientation.eyebrow')}</p>
                             <h1 className="font-display text-3xl font-bold text-slate-900 sm:text-4xl">{t('orientation.title')}</h1>
