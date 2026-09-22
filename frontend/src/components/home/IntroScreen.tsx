@@ -1,10 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronDown, Compass, LayoutGrid } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Check, ChevronDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { cn } from '@/lib/utils';
 
 const activities = ['profiles', 'paths', 'practice'] as const;
 const sections = [
@@ -22,6 +23,24 @@ export function IntroScreen({
     onOpenTools?: () => void;
 }) {
     const { t } = useI18n();
+    const [selectedAction, setSelectedAction] = useState<'compass' | 'tools' | null>(null);
+
+    const actions = [
+        {
+            key: 'compass' as const,
+            image: '/images/intro/compass.png',
+            label: 'app.intro.action.compass.label',
+            desc: 'app.intro.action.compass.desc',
+            onAdvance: onStart,
+        },
+        {
+            key: 'tools' as const,
+            image: '/images/intro/tools.png',
+            label: 'app.intro.action.tools.label',
+            desc: 'app.intro.action.tools.desc',
+            onAdvance: onOpenTools,
+        },
+    ];
 
     return (
         <div className="mx-auto max-w-4xl space-y-7 py-4" data-testid="intro-screen">
@@ -50,61 +69,50 @@ export function IntroScreen({
 
             <section aria-label={t('app.intro.actions.label')} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 text-left transition-colors hover:border-indigo-300">
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
-                                    <Compass className="h-5 w-5" aria-hidden="true" />
-                                </div>
-                                <h3 className="font-display text-lg font-bold text-slate-900">
-                                    {t('app.intro.action.compass.label')}
-                                </h3>
-                            </div>
-                            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                                {t('app.intro.action.compass.desc')}
-                            </p>
-                        </div>
-                        <div className="mt-5 pt-1">
-                            <Button
-                                type="button"
-                                variant="accent"
-                                size="lg"
-                                onClick={onStart}
-                                className="w-full justify-center gap-2 sm:w-auto"
+                    {actions.map((action) => {
+                        const isSelected = selectedAction === action.key;
+                        return (
+                            <article
+                                key={action.key}
+                                role="button"
+                                tabIndex={0}
+                                aria-pressed={isSelected}
+                                onClick={() => setSelectedAction(action.key)}
+                                onDoubleClick={() => {
+                                    setSelectedAction(action.key);
+                                    action.onAdvance?.();
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        setSelectedAction(action.key);
+                                    }
+                                }}
+                                className={cn(
+                                    'relative flex cursor-pointer flex-col gap-4 rounded-xl border bg-white p-5 text-left transition-colors sm:flex-row sm:items-center',
+                                    isSelected ? 'border-indigo-300 ring-2 ring-indigo-400' : 'border-slate-200 hover:border-indigo-300',
+                                )}
                             >
-                                <Compass className="h-4 w-4" aria-hidden="true" />
-                                <span>{t('app.intro.action.compass.label')}</span>
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 text-left transition-colors hover:border-indigo-300">
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
-                                    <LayoutGrid className="h-5 w-5" aria-hidden="true" />
+                                {isSelected && (
+                                    <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
+                                        <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                                    </div>
+                                )}
+                                <Image
+                                    src={action.image}
+                                    alt=""
+                                    width={144}
+                                    height={144}
+                                    sizes="96px"
+                                    className="h-18 w-18 shrink-0 self-center object-contain sm:h-24 sm:w-24"
+                                />
+                                <div>
+                                    <h3 className="font-display text-lg font-bold text-slate-900">{t(action.label)}</h3>
+                                    <p className="mt-1 text-sm leading-relaxed text-slate-600">{t(action.desc)}</p>
                                 </div>
-                                <h3 className="font-display text-lg font-bold text-slate-900">
-                                    {t('app.intro.action.tools.label')}
-                                </h3>
-                            </div>
-                            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                                {t('app.intro.action.tools.desc')}
-                            </p>
-                        </div>
-                        <div className="mt-5 pt-1">
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="lg"
-                                onClick={onOpenTools}
-                                className="w-full justify-center gap-2 sm:w-auto"
-                            >
-                                <LayoutGrid className="h-4 w-4" aria-hidden="true" />
-                                <span>{t('app.intro.action.tools.label')}</span>
-                            </Button>
-                        </div>
-                    </div>
+                            </article>
+                        );
+                    })}
                 </div>
 
                 <div className="space-y-1.5 text-center">

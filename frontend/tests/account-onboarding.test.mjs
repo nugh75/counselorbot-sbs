@@ -219,16 +219,16 @@ for (const width of [390, 1440]) {
         const { page, context, errors } = await fixture({ width, noHistory: true, prefs: { counselor_id: null, counselor_ready: false, notebook_ready: false, setup_completed: false } });
         try {
             await page.goto(`${origin}/`);
-            const start = page.getByRole('button', { name: 'Bussola', exact: true });
+            const start = page.getByRole('button', { name: /^Bussola/ });
             await start.waitFor();
             assert.equal(await start.count(), 1);
-            const tools = page.getByRole('button', { name: 'Strumenti', exact: true });
+            const tools = page.getByRole('button', { name: /^Strumenti/ });
             await tools.waitFor();
             assert.equal(await tools.count(), 1);
             const intro = page.getByTestId('intro-screen');
             assert.deepEqual(await intro.locator('h2').allTextContents(), ['Analisi dei risultati dei questionari', 'Percorsi guidati', 'Allenamento']);
             const images = intro.locator('img');
-            assert.equal(await images.count(), 3);
+            assert.equal(await images.count(), 5);
             await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
             assert.ok(await start.evaluate(el => el.getBoundingClientRect().bottom <= innerHeight), 'Start is available in the initial viewport');
             assert.equal(await intro.locator('details[open]').count(), 0);
@@ -248,7 +248,7 @@ for (const width of [390, 1440]) {
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             await page.evaluate(() => window.scrollTo(0, 0));
             await page.screenshot({ path: `/tmp/intro-illustrated-${width}.png`, fullPage: true });
-            await start.click();
+            await start.dblclick();
             await page.getByRole('heading', { name: 'Prepara il tuo spazio', exact: true }).waitFor();
             assert.deepEqual(errors, []);
         } finally { await context.close(); }
