@@ -2,31 +2,20 @@
 import { AssignmentSource } from '@/components/teacher/AssignmentSource';
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import Link from 'next/link';
 import { createPortal } from 'react-dom';
-import { ArrowRight, GitCommitHorizontal, BookMarked, BookOpen, Columns3, Download, LayoutList, Layers, MessageSquare, NotebookPen, Plus, RotateCcw, Save, Table2, Trash2, Undo2, X } from 'lucide-react';
+import { ArrowRight, GitCommitHorizontal, Columns3, Download, LayoutList, Layers, MessageSquare, Plus, RotateCcw, Save, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
 import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 import { visualLabel } from '@/lib/i18n-visual-tools';
-import { NotebookBookletContent, type DeskTab } from '@/components/profile/NotebookBookletPanel';
-import type { BookletType } from '@/components/profile/StudentBookletCard';
 import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, type ActionStage, type CardBucket, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
-import { TavoloList } from '@/components/tavolo/TavoloList';
-import { TavoloWorkspace } from '@/components/tavolo/TavoloWorkspace';
-import { tavoloEnabled } from '@/lib/tavolo';
-import { tavoloLabel } from '@/lib/i18n-tavolo';
-import { VisualPersonalTransfer } from './VisualPersonalTransfer';
 import { validTimelineDates } from '@/lib/timeline-dates';
 import { TimelineTools } from './TimelineTools';
 
-// Le schede di lavoro salvano il workspace; taccuino, libretto e tavolo si
-// salvano da soli, quindi stanno nella stessa fila ma senza barra di
-// salvataggio. Il tavolo, in piu', si apre a tutta finestra: la scheda ne
-// elenca i salvati e ne apre uno nuovo, il disegno si fa altrove.
-type WorkTab = 'board' | 'comparison' | 'cards' | 'timeline';
-type Tab = WorkTab | DeskTab | 'tavolo';
+export type WorkTab = 'board' | 'comparison' | 'cards' | 'timeline';
+type Tab = WorkTab;
 export type VisualToolsRequest = { tab: WorkTab; nonce: number; eventId?: string };
 type Props = {
     sessionId?: string;
@@ -37,33 +26,32 @@ type Props = {
     hideTrigger?: boolean;
     catalog?: RecommendationCatalog;
     onDiscuss?: (text: string) => void;
-    questionnaireType?: BookletType;
     request?: VisualToolsRequest | null;
+    fixedTab?: WorkTab;
+    pageBackHref?: string;
+    onWorkTabChange?: (tab: WorkTab) => void;
 };
 const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
 const buttonClass = 'h-[44px] w-[44px] shrink-0 p-0';
 const stages: ActionStage[] = ['todo', 'doing', 'done'];
 const buckets: CardBucket[] = ['unsorted', 'yes', 'explore', 'no'];
-const baseTabs: Tab[] = ['board', 'comparison', 'cards', 'timeline', 'notebook', 'booklet'];
+const workTabs: WorkTab[] = ['board', 'comparison', 'cards', 'timeline'];
 const tabIcons: Record<Tab, typeof LayoutList> = {
     board: LayoutList, comparison: Columns3, cards: Layers, timeline: GitCommitHorizontal,
-    notebook: NotebookPen, booklet: BookMarked, tavolo: Table2,
 };
-const isDeskTab = (tab: Tab): tab is DeskTab => tab === 'notebook' || tab === 'booklet';
+const isWorkTab = (tab: Tab): tab is WorkTab => workTabs.includes(tab as WorkTab);
 
 export function VisualTools(props: Props) {
     return <WorkspaceView key={props.personal ? 'personal' : props.sessionId} {...props} />;
 }
 
-function WorkspaceView({ sessionId = '', personal = false, legacySession, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, questionnaireType, request }: Props) {
+function WorkspaceView({ sessionId = '', personal = false, legacySession, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, request, fixedTab, pageBackHref, onWorkTabChange }: Props) {
     const l = (key: string) => visualLabel(locale, personal ? ({ save: 'personalSave', saved: 'timelineSaved', saveHelp: 'personalSaveHelp', openHelp: 'personalTimelineHelp', working: 'personalTimelineHelp' } as Record<string, string>)[key] || key : key);
     const endpoint = personal ? '/api/user/timeline' : `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
     const [focusEvent, setFocusEvent] = useState<string | undefined>();
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(Boolean(fixedTab));
     const [toolsExpanded, setToolsExpanded] = useState(!personal);
-    const [table, setTable] = useState<{ id: string; counselorId?: number } | null>(null);
-    const [personalOpen, setPersonalOpen] = useState(false);
-    const [tab, setTab] = useState<Tab>(personal ? 'timeline' : 'board');
+    const [tab, setTab] = useState<Tab>(fixedTab ?? (personal ? 'timeline' : 'board'));
     const [helpOpen, setHelpOpen] = useState<Record<WorkTab, boolean>>({ board: false, comparison: false, cards: false, timeline: false });
     const [saved, setSaved] = useState<SavedWorkspace>({ revision: 0, workspace: emptyWorkspace() });
     const [work, setWork] = useState<VisualWorkspace>(emptyWorkspace);
@@ -71,9 +59,6 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [history, setHistory] = useState<VisualWorkspace[]>([]);
     const [loaded, setLoaded] = useState(false);
     const [busy, setBusy] = useState(false);
-    // Con la funzione spenta la scheda del tavolo sparisce: una scheda che
-    // apre un 404 e' peggio che non esserci.
-    const [tavoloOn, setTavoloOn] = useState(false);
     const [issue, setIssue] = useState('');
     const [catalog, setCatalog] = useState<RecommendationCatalog>({ reading: [], strategy: [], advice: [] });
     const [draftTitle, setDraftTitle] = useState('');
@@ -84,8 +69,10 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [criterion, setCriterion] = useState('');
     const [option, setOption] = useState('');
     const [optionSource, setOptionSource] = useState('');
-    const tabs = tavoloOn ? [...baseTabs, 'tavolo' as Tab] : baseTabs;
-    const tabLabel = (key: Tab) => key === 'tavolo' ? tavoloLabel('title', locale) : l(key);
+    // Questa schermata contiene un solo insieme coerente di strumenti. Taccuino,
+    // Libretto e Tavolo hanno pagine proprie nell'Area personale.
+    const tabs: Tab[] = fixedTab ? [fixedTab] : workTabs;
+    const tabLabel = (key: Tab) => l(key);
     const dialog = useRef<HTMLElement>(null);
     const loadGeneration = useRef(0);
     const opener = useRef<HTMLElement | null>(null);
@@ -98,6 +85,10 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
         ...currentCatalog.reading.map(item => ({ title: item.title || item.slug, detail: item.why || '', key: `reading:${item.slug}` })),
     ];
     const edit = (next: VisualWorkspace) => { setHistory(previous => [...previous.slice(-29), work]); setWork(next); };
+    const selectTab = (next: Tab) => {
+        setTab(next);
+        if (isWorkTab(next)) onWorkTabChange?.(next);
+    };
     const focusMoved = (itemId: string) => window.requestAnimationFrame(() => {
         const element = document.getElementById(itemId);
         element?.focus({ preventScroll: true }); element?.scrollIntoView({ block: 'nearest' });
@@ -119,12 +110,6 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
 
     useEffect(() => { if (open && !loaded) void load(); }, [open, loaded, load]);
     useEffect(() => {
-        if (!open) return;
-        let cancelled = false;
-        void tavoloEnabled().then(value => { if (!cancelled) setTavoloOn(value); });
-        return () => { cancelled = true; };
-    }, [open]);
-    useEffect(() => {
         if (!open || providedCatalog || personal) return;
         const controller = new AbortController();
         void apiFetch(`/api/session/${encodeURIComponent(sessionId)}/recommendations?lang=${locale}`, { signal: controller.signal })
@@ -135,8 +120,12 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     useEffect(() => {
         if (!request) return;
         opener.current = document.activeElement as HTMLElement;
-        setTab(request.tab); setOpen(true);
-    }, [request]);
+        setTab(fixedTab ?? request.tab); setOpen(true);
+    }, [fixedTab, request]);
+    useEffect(() => {
+        if (!open || !pageBackHref) return;
+        window.requestAnimationFrame(() => dialog.current?.querySelector<HTMLButtonElement>('.workspace-page-back')?.focus({ preventScroll: true }));
+    }, [open, pageBackHref]);
     useEffect(() => {
         if (!dirty) return;
         const prevent = (event: BeforeUnloadEvent) => { event.preventDefault(); };
@@ -152,7 +141,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                 // Let the tooltip dismiss first; a second Escape closes the workspace.
                 if (event.defaultPrevented || document.querySelector('[role="tooltip"]')) return;
                 event.preventDefault();
-                if (table) dialog.current?.querySelector<HTMLButtonElement>('.tavolo-back')?.click();
+                if (pageBackHref) dialog.current?.querySelector<HTMLButtonElement>('.workspace-page-back')?.click();
                 else setOpen(false);
             }
             if (event.key !== 'Tab') return;
@@ -166,25 +155,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
         };
         document.addEventListener('keydown', keyboard);
         return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', keyboard); opener.current?.focus({ preventScroll: true }); };
-    }, [open, table]);
-
-    useEffect(() => {
-        if (!table) return;
-        const onPopState = (event: PopStateEvent) => {
-            if (event.state?.cbTavolo !== table.id) setTable(null);
-        };
-        window.addEventListener('popstate', onPopState);
-        return () => window.removeEventListener('popstate', onPopState);
-    }, [table]);
-
-    const openTable = (id: string, counselorId?: number) => {
-        window.history.pushState({ ...window.history.state, cbTavolo: id }, '');
-        setTable({ id, counselorId });
-    };
-    const returnFromTable = () => {
-        if (window.history.state?.cbTavolo) window.history.back();
-        else setTable(null);
-    };
+    }, [open, pageBackHref]);
 
     const save = async (next = work): Promise<SavedWorkspace | null> => {
         if (!loaded || busy) return null;
@@ -245,29 +216,34 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
             </Button>
         </Tooltip>}
         {open && createPortal(<div className="fixed inset-0 z-[85] flex bg-white">
-            {table ? <section ref={dialog} role="dialog" aria-modal="true" aria-label={tavoloLabel('title', locale)} className="h-full w-full">
-                <TavoloWorkspace key={table.id} id={table.id} initialCounselorId={table.counselorId} onReturn={returnFromTable} />
-            </section> : <>
             <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
-                    <div className="flex items-start justify-between gap-2">
-                        <div><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{l(personal ? 'timeline' : 'title')}</h2></div>
-                        <Tooltip content={l('close')}><Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button></Tooltip>
+                    <div className="flex items-start gap-3">
+                        {pageBackHref && <PreviousPageButton
+                            fallbackHref={pageBackHref}
+                            variant="labelled"
+                            className="workspace-page-back"
+                            beforeBack={async () => {
+                                if (dirty && !window.confirm(l('leaveConfirm'))) throw new Error('navigation cancelled');
+                            }}
+                        />}
+                        <div className="min-w-0 flex-1"><h2 id={`${id}-title`} className="text-lg font-semibold text-slate-800">{personal ? tabLabel(tab) : l('title')}</h2></div>
+                        {!pageBackHref && <Tooltip content={l('close')}><Button type="button" variant="ghost" className={buttonClass} autoFocus aria-label={l('close')} onClick={() => setOpen(false)}><X className="h-5 w-5" aria-hidden="true" /></Button></Tooltip>}
                     </div>
-                    <details open={toolsExpanded} onToggle={(event) => setToolsExpanded(event.currentTarget.open)}>
-                    <summary hidden={!personal} className="min-h-11 cursor-pointer py-2 text-sm text-indigo-700">{l('otherTools')}</summary>
+                    {!fixedTab && <details open={Boolean(pageBackHref) || toolsExpanded} onToggle={(event) => { if (!pageBackHref) setToolsExpanded(event.currentTarget.open); }}>
+                    <summary hidden={!personal || Boolean(pageBackHref)} className="min-h-11 cursor-pointer py-2 text-sm text-indigo-700">{l('otherTools')}</summary>
                     <div role="tablist" aria-label={l('title')} className="mt-3 flex flex-wrap gap-1">
                         {tabs.map((key, index) => { const Icon = tabIcons[key]; return <Tooltip key={key} content={tabLabel(key)}><Button type="button" role="tab" aria-label={tabLabel(key)} id={`${id}-${key}`} aria-controls={`${id}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1}
-                            variant={tab === key ? 'primary' : 'secondary'} className={buttonClass} onClick={() => { setPersonalOpen(false); setTab(key); }} onKeyDown={event => {
+                            variant={tab === key ? 'primary' : 'secondary'} className={buttonClass} onClick={() => selectTab(key)} onKeyDown={event => {
                                 if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                                 event.preventDefault();
                                 const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowLeft' ? tabs.length - 1 : 1)) % tabs.length;
-                                setPersonalOpen(false); setTab(tabs[next]); document.getElementById(`${id}-${tabs[next]}`)?.focus();
+                                selectTab(tabs[next]); document.getElementById(`${id}-${tabs[next]}`)?.focus();
                             }}><Icon className="h-4 w-4 shrink-0" aria-hidden="true" /></Button></Tooltip>; })}
                     </div>
-                    </details>
+                    </details>}
                 </header>
-                <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4" id={`${id}-panel`} role={personalOpen ? "region" : "tabpanel"} aria-label={personalOpen ? l('personalLinks') : undefined} aria-labelledby={personalOpen ? undefined : `${id}-${tab}`}>
+                <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4" id={`${id}-panel`} role={fixedTab ? 'region' : 'tabpanel'} aria-labelledby={fixedTab ? `${id}-title` : `${id}-${tab}`}>
                     {issue && <div role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                         <p>{l(issue)}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
@@ -275,7 +251,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             {loaded && <Tooltip content={l('copyDownload')}><Button aria-label={l('copyDownload')} type="button" variant="secondary" className={buttonClass} onClick={() => download(new Blob([workspaceText(work, l)], { type: 'text/plain;charset=utf-8' }), 'counselorbot_visual_draft.txt')}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                         </div>
                     </div>}
-                    {personalOpen && loaded ? <VisualPersonalTransfer sessionId={sessionId} locale={locale} work={work} saveWorkspace={save} onClose={() => { setPersonalOpen(false); window.requestAnimationFrame(() => document.getElementById(`${id}-personal`)?.focus()); }} /> : tab === 'tavolo' ? <TavoloList showCompose={false} onOpen={openTable} /> : isDeskTab(tab) ? <NotebookBookletContent tab={tab} lang={locale} questionnaireType={questionnaireType} /> : !loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
+                    {!loaded ? <p role="status" className="text-slate-600">{l(busy ? 'loading' : 'loadError')}</p> : <fieldset disabled={busy} className="min-w-0 space-y-4">
                         {!(personal && tab === 'timeline') && <section aria-label={l('howTo')} className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-sm leading-relaxed text-slate-800">
                             <h3 className="font-semibold">{l(tab)}</h3>
                             <details key={tab} open={helpOpen[tab]} onToggle={event => {
@@ -303,7 +279,6 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 }}><ArrowRight className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                             </details>
                         </section>}
-                        {tab === 'timeline' && !personal && <a className="block min-h-11 text-indigo-700 underline" href="/profilo/timeline">{l('openPersonalTimeline')}</a>}
                         {tab === 'timeline' && personal && <TimelineTools personal sessionId={sessionId} locale={locale} work={work} edit={edit} save={save} selected={timelineSelection} select={setTimelineSelection} focusEvent={focusEvent || request?.eventId} />}
                         {tab === 'board' && <>
                             <details open={!work.actions.length || Boolean(draftTitle)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addAction')}</summary>
@@ -326,8 +301,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     <details className="mt-2"><summary className="min-h-[44px] cursor-pointer py-3 text-sm font-medium text-indigo-700">{l('detail')} · {l('reflection')}</summary>
                                         <label className="block text-sm">{l('actionKind')}<select className={`${inputClass} mt-1`} value={action.kind || 'activity'} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, kind: e.target.value as 'activity' | 'book' | 'article' | 'film' } : a) })}>{['activity', 'book', 'article', 'film'].map(kind => <option key={kind} value={kind}>{l(kind)}</option>)}</select></label>
                                         <label className="block text-sm">{l('detail')}<textarea value={action.detail} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, detail: e.target.value } : a) })} /></label>
-                                        {diary ? <Link className="mt-2 block py-2 text-sm text-indigo-700 underline" href={`/profilo/timeline?event=${encodeURIComponent(diary.id)}`}>{l('reflection')} · {l('timeline')}</Link> : <label className="mt-2 block text-sm">{l('reflection')}<textarea value={action.reflection} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>}
-                                        <p className="mt-2 break-words text-xs text-slate-500">{l('source')}: <AssignmentSource source={action.source || l('personal')} lang={locale} /></p>
+                                        {diary ? <p className="mt-2 py-2 text-sm text-slate-600">{l('reflection')} · {l('timeline')}</p> : <label className="mt-2 block text-sm">{l('reflection')}<textarea value={action.reflection} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>}
+                                        <p className="mt-2 break-words text-xs text-slate-500">{l('source')}: <AssignmentSource source={action.source || l('personal')} lang={locale} linked={personal} /></p>
                                         {removeButton(action.title, () => edit(removeAction(work, action.id)))}
                                     </details>
                                 </article>; })}</div>
@@ -386,18 +361,16 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                         </>}
                     </fieldset>}
                 </div>
-                {!isDeskTab(tab) && tab !== 'tavolo' && (personal || tab !== 'timeline') && <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
+                {(personal || tab !== 'timeline') && <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
                     <p role="status" className="text-sm text-slate-600">{l(busy ? 'saving' : dirty ? 'unsaved' : loaded ? 'saved' : 'loading')}</p>
                     <div className="flex flex-wrap gap-2">
-                        {!personal && <Tooltip content={l('personalLinks')} side="top"><Button id={`${id}-personal`} aria-label={l('personalLinks')} aria-expanded={personalOpen} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy} onClick={() => setPersonalOpen(value => !value)}><BookOpen className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
-                        {!personalOpen && <><Tooltip content={l('saveHelp')} side="top"><Button aria-label={l('save')} type="button" className={personal ? 'min-h-11 px-4' : buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}><Save className="h-4 w-4" aria-hidden="true" />{personal && l('save')}</Button></Tooltip>
+                        <Tooltip content={l('saveHelp')} side="top"><Button aria-label={l('save')} type="button" className={personal ? 'min-h-11 px-4' : buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}><Save className="h-4 w-4" aria-hidden="true" />{personal && l('save')}</Button></Tooltip>
                         <Tooltip content={l('undoHelp')} side="top"><Button type="button" variant="secondary" aria-label={l('undo')} className={buttonClass} disabled={busy || !history.length} onClick={() => { const previous = history[history.length - 1]; if (previous) { setWork(previous); setHistory(history.slice(0, -1)); } }}><Undo2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         <Tooltip content={l('exportHelp')} side="top"><Button aria-label={l('export')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void exportPdf()}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                        {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button aria-label={l('discuss')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork || (tab === 'timeline' && !(work.timeline?.events.some(e => timelineSelection === null || timelineSelection.includes(e.id))))} onClick={() => void discuss()}><MessageSquare className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}</>}
+                        {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button aria-label={l('discuss')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork || (tab === 'timeline' && !(work.timeline?.events.some(e => timelineSelection === null || timelineSelection.includes(e.id))))} onClick={() => void discuss()}><MessageSquare className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
                     </div>
                 </footer>}
             </section>
-            </>}
         </div>, document.body)}
     </>;
 }

@@ -12,8 +12,10 @@ export default function TavoliPage() {
     const { lang } = useI18n();
     return (
         <main className="mx-auto max-w-3xl space-y-4 p-4">
-            <PreviousPageButton fallbackHref="/profilo" />
-            <h1 className="text-lg font-semibold text-slate-800">{tavoloLabel('all', lang)}</h1>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <h1 className="text-2xl font-bold text-slate-900">{tavoloLabel('all', lang)}</h1>
+                <PreviousPageButton fallbackHref="/profilo/tavolo" />
+            </div>
             <TavoloList />
         </main>
     );

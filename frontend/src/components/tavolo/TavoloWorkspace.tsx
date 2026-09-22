@@ -278,7 +278,7 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
 
     const back = onReturn
         ? <BackButton className="tavolo-back" label={t('nav.back')} onClick={() => void flush().then(onReturn).catch(() => undefined)} />
-        : <PreviousPageButton fallbackHref="/tavolo" beforeBack={flush} />;
+        : <PreviousPageButton fallbackHref="/profilo/tavolo" beforeBack={flush} />;
 
     if (status === 'loading') {
         return <p className="flex min-h-dvh items-center justify-center gap-2 text-sm text-slate-600" role="status">

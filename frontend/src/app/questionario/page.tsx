@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle, Send } from 'lucide-react';
-import Link from 'next/link';
+import { CheckCircle, Send } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { BackButton } from '@/components/ui/BackButton';
+import { ForwardButton } from '@/components/ui/ForwardButton';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { AGE_BANDS } from '@/lib/age-bands';
 import { surveyCountries } from '@/lib/survey-countries';
@@ -270,13 +271,11 @@ export default function QuestionarioPage() {
                     <p className="text-slate-500">
                         {t('survey.thanks.body')}
                     </p>
-                    <Link
+                    <BackButton
+                        variant="labelled"
                         href="/"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md transition-colors"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        {t('survey.backHome')}
-                    </Link>
+                        label={t('survey.backHome')}
+                    />
                 </motion.div>
             </div>
         );
@@ -482,27 +481,23 @@ export default function QuestionarioPage() {
                     <StickyActions>
                         {error && <p className="text-red-600 text-sm mb-2 text-center">{error}</p>}
                         <div className="flex items-center gap-3">
-                            <button
-                                type="button"
-                                onClick={() => { setError(null); setWizardStep((s) => Math.max(0, s - 1)); }}
+                            <BackButton
+                                variant="labelled"
                                 disabled={wizardStep === 0}
-                                className="px-5 py-2.5 rounded-md border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                            >
-                                {t('survey.wizard.back')}
-                            </button>
+                                onClick={() => { setError(null); setWizardStep((s) => Math.max(0, s - 1)); }}
+                                label={t('survey.wizard.back')}
+                            />
                             {wizardStep < TOTAL_STEPS - 1 ? (
-                                <button
-                                    type="button"
+                                <ForwardButton
+                                    className="ml-auto"
                                     onClick={() => { setError(null); setWizardStep((s) => Math.min(TOTAL_STEPS - 1, s + 1)); }}
-                                    className="ml-auto inline-flex items-center px-6 py-2.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-md shadow-indigo-600/20"
-                                >
-                                    {t('survey.wizard.next')}
-                                </button>
+                                    label={t('survey.wizard.next')}
+                                />
                             ) : (
                                 <button
                                     type="submit"
                                     disabled={isSubmitting || !consent}
-                                    className="ml-auto inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors shadow-md shadow-indigo-600/20"
+                                    className="ml-auto inline-flex min-h-[44px] items-center gap-2 px-6 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-md transition-colors shadow-md shadow-indigo-600/20"
                                 >
                                     {isSubmitting ? t('survey.submitting') : (<><Send className="w-4 h-4" /> {t('survey.submit')}</>)}
                                 </button>

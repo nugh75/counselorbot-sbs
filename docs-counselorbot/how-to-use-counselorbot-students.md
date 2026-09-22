@@ -1,86 +1,131 @@
-# How to use CounselorBot (students)
+# How to use CounselorBot: your personal journey
 
-This guide explains in simple terms how to use the CounselorBot platform.
+CounselorBot supports students and adults reflecting on learning, work and choices.
+The interface and guided conversations work in Italian, English, Spanish, French,
+German and Swedish. Choose one activity at a time and return later when useful.
 
-## 1. Access
+## Start, choose a counselor, or ask for help
 
-Log in to the platform with your credentials. If prompted, choose the language you
-prefer for reading and responding. The interface works in Italian, English, Spanish,
-French, German, and Swedish.
+Sign in with your ai4educ account. At first access choose an AI counselor and fill
+in your **Notebook** with the context, goals and difficulties you want to describe.
+The Notebook is your self-description; a questionnaire **profile** is its factor
+scores. They are different things, and you edit your Notebook yourself.
 
-## 2. Choose a questionnaire
+The **Compass** (`/bussola`) helps you choose a starting tool. When you ask where
+to start, it proposes QSA first, or QSAr if you explicitly want the shorter version.
+You can also choose a specific tool directly. The **Assistant** (`/assistente`)
+explains the selected knowledge base; choose CounselorBot for platform questions.
+The illustrated **Guide** (`/guide`) is available even before signing in.
 
-From the main page, choose the questionnaire you want to take (for example QSA, QSAr,
-ZTPI, Savickas, QPCS, QPCC, or QAP). Each questionnaire has a different purpose: some
-relate to your study strategies, others to how you experience time, others to your
-career path.
+## Questionnaires and conversations
 
-**Important**: item-level questionnaires on CounselorBot are currently in **test mode**
-and available only in **Swedish, English, and Spanish**. If you are an Italian speaker,
-the official validated questionnaires are available at
-[competenzestrategiche.it](https://competenzestrategiche.it). The **guided chat** works
-in all six interface languages once you have entered or uploaded your profile.
+Six questionnaires produce factor profiles: **QSA, QSAr, ZTPI, QPCS, QPCC, QAP**.
+Complete Italian questionnaires on competenzestrategiche.it, then enter or upload
+your results in the selected tool. Experimental item-level versions are available
+in English, Spanish, French, German and Swedish; they are not yet validated.
+The guided chat explores your results step by step. It is separate from the Compass.
 
-## 3. Complete or upload your profile
+Four conversation tools work directly in CounselorBot **without scores or a
+questionnaire**:
 
-You can complete the questionnaire directly on the platform, enter your stanine scores
-manually, or upload a PDF/photo and let the platform extract your scores via OCR. The
-Savickas interview is different: it has no scores, and you go straight into the chat.
-There are no right or wrong answers: respond honestly.
+- **SAVICKAS**: a narrative interview on your story and career project.
+- **IDEA**: develop a concrete idea, decision or project through a conversation and
+  a cumulative map. A finished map can become a Portfolio work.
+- **Evento significativo di studio / Significant study event (EVENTO_STUDIO)**:
+  revisit one study episode, such as a lesson, exam or group project.
+- **Evento significativo professionale / Significant professional event
+  (EVENTO_PROFESSIONALE)**: revisit one work or placement episode, such as a task,
+  meeting, interaction with a colleague, or a lesson you taught.
 
-## 4. Use the guided chat
+## The two significant-event tools
 
-After the questionnaire, the **guided chat** begins: an AI counselor analyses your
-results step by step. In score-based paths, you can move forward with the next-step
-button whenever you are ready, and write to the counselor when you want a clarification.
-Interview paths, such as Savickas, are different because the counselor asks open
-narrative questions. The counselor remembers what you talked about to give continuity to
-the conversation. You can also use the alternative **OpenCode** experience
-(`/opencode`): a workspace with a terminal and working documents to explore your
-analysis on your own.
+Choose one episode that matters to you: it may have gone well or been difficult;
+it need not have been dramatic. Both tools follow six steps: identify the event,
+describe the facts, consider what worked, what did not, take a second look, and
+choose what to try next time. A final summary follows. The professional path is
+also suitable for adults, trainees and teachers reflecting on their practice.
 
-## 5. Read your profile
+There is no score or diagnosis. At the end you can review and edit a **Booklet
+draft**, then explicitly save it. The AI does not save the reflection for you.
+These guided conversations are different from adding a dated event to your calendar.
 
-As you progress, the platform builds a **profile** that summarizes your results and the
-reflections that emerge. You can review it on `/profilo`, browse its history, note how
-it changed over time (`/profilo/cambiamenti`), and use it as a starting point to
-understand your strengths and the areas to work on.
+## Inside the guided chat
 
-## 6. Booklet and portfolio
+Write a question when needed. The bar below the chat goes back, repeats the current
+step or moves forward. The three-dot menu beside the composer contains tools,
+response length and Freeze session. Replies can be read aloud and their message
+controls can request a diagram. Sessions with conversation progress save after
+replies; resume them from the home page or navigation. Freeze saves and closes.
 
-Under `/profilo` you can keep a **student booklet** (editable, exportable as PDF, also
-for a study or professional event) and a **portfolio** of your works (with title,
-description, category, date, link, and images). The portfolio helps the assistant and
-the counselor tailor their answers to you.
+The tools include activities, cards for thoughts, comparison of alternatives,
+Notebook and Booklet. Transfers between notes and tools require choosing the
+content and destination, reviewing it and confirming. They are not automatic.
 
-## 7. pQBL (pure Question-Based Learning)
+## Personal area and goals
 
-If your teacher enables it, you can upload a PDF and the platform will turn it into
-quiz-style multiple-choice questions with feedback on every answer, to help you study
-actively.
+Open **Personal area** (`/profilo`). **My journey** brings together active goals,
+next activities, received assignments and teacher feedback. The other resources
+are grouped by purpose: understanding your situation, exploring and acting,
+documenting your experience, and finding support.
 
-## 8. Combined analysis
+At **Goals** (`/profilo/obiettivi`), write your own goal or choose and personalize
+a catalog proposal. Set a reason, a criterion for progress and a review date if
+useful. Link existing activities, calendar events, cards, comparisons, Notebook,
+Booklet, saved Tavoli and Portfolio works. You decide when to pause or conclude
+a goal; completing an activity does not automatically mean achieving it.
 
-When you have completed QSA or QSAr **plus** ZTPI **plus** Savickas, you can launch a
-**combined analysis** that integrates the three perspectives into a single reading of
-your profile.
+**Tavolo** in the Personal area is a workspace for ideas and materials. **Cards**
+collect thoughts; **Comparison** helps examine alternatives with criteria you
+choose. A **Booklet** stores instrument-specific reflections, including the event
+tools. The **Portfolio** documents your works. Linking them to a goal does not
+copy, synchronize or share their contents automatically.
 
-## Frequently asked questions
+## Activities, calendar and diary
 
-- **Are the results a judgment of me?** No. They are a mirror for reflection, not an
-  evaluation or a diagnosis.
-- **Can I use multiple questionnaires?** Yes. Different instruments illuminate
-  different aspects of how you learn and plan your future.
-- **What language can I use it in?** The interface and the guided chat work in Italian,
-  English, Spanish, French, German, and Swedish once your profile is entered. Item-level
-  test administrations are available in English, Spanish, French, German, and Swedish;
-  those versions are not validated yet.
-- **I speak Italian — can I use the questionnaires?** Item-level questionnaires on
-  CounselorBot are not available in Italian yet. Please use
-  [competenzestrategiche.it](https://competenzestrategiche.it) for Italian-language
-  questionnaires. The guided chat, however, works in Italian if you enter or upload your
-  profile.
-- **What is OpenCode?** An alternative, workspace-based experience with a terminal and
-  working documents to conduct your self-analysis in a more autonomous way.
-- **What is pQBL?** A study mode that turns a PDF you upload into formative
-  multiple-choice questions with feedback.
+Open **Calendar and diary** (`/profilo/timeline`) to plan an activity or an event
+on a date or over a period, then record what happened and your reflection.
+Activities created from goals or assignments use this same personal workspace.
+The planned activity and the later diary reflection remain distinct. Reaching a
+date does not mark an activity complete. Save your changes explicitly.
+
+## Received assignments and teacher feedback
+
+At **Received assignments** (`/profilo/assegnazioni`) you find a teacher's proposed
+goal, strategy, reading, film or other resource, with instructions. A delivery is
+labelled as a proposal to explore or an activity with an expected response; it may
+have a deadline. Receiving it does not create or share a personal goal.
+
+Choose **Work on this assignment**: an editor opens within the received assignment
+on the same page; it does not automatically navigate to the calendar. Plan an
+activity and diary entry, with an optional date (you can leave it empty), optionally
+link one of your goals, and save a reflection. The activity and reflection are also
+available from Calendar and diary because both views use the same personal workspace. Prepare a separate response, check
+the preview and explicitly share it with the teacher who assigned the activity.
+You may include the title and description of one of your Portfolio works; this
+does not attach its images or private links. The teacher can send feedback.
+
+Your private edits do not update the shared copy. You can withdraw the response,
+which also removes its feedback from this flow while keeping your personal work.
+A teacher revoking an assignment likewise does not delete your activities or diary.
+
+## Groups and what teachers can see
+
+**My groups/classes** (`/profilo/classi`) lists the groups you have joined. An
+invitation code lets you join a group; membership is separate from managing one.
+Existing group permissions let group managers consult your Notebook, questionnaire
+results and related conversations, as stated when joining.
+
+Sharing a goal summary with a group's teachers is a separate, voluntary and
+revocable choice. Assignment responses are shared only after confirmation with
+the assigning teacher. Private drafts and linked goals are not exposed through
+that assignment flow. Do not assume everything in the Personal area is either
+shared or hidden: these permissions apply to different content.
+
+## Practise from a PDF and keep your work
+
+**pQBL** (`/pqbl`) generates practice questions and formative feedback from a study
+PDF. It is separate from the questionnaires and event conversations. Session
+reports and Booklets can be exported as PDF. The combined analysis becomes
+available with QSA or QSAr plus ZTPI plus SAVICKAS results. An optional OpenCode
+workspace offers another conversation experience. The AI supports reflection;
+it does not make decisions, adopt goals or submit work on your behalf.

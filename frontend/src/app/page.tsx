@@ -25,7 +25,7 @@ const OpenCodeExperience = dynamic(
 import { MessageSquare, Terminal, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { FlowStepper } from '@/components/ui/FlowStepper';
-import { CompassMark } from '@/components/ui/CompassMark';
+import { IntroScreen } from '@/components/home/IntroScreen';
 import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
@@ -69,146 +69,6 @@ function generateUUID() {
         const v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
-}
-
-// Intro: presenta le attività e le indicazioni, poi invita a iniziare. Hero centrato (bussola,
-// animata) → "che cos'è" → "come funziona" per attività → "cosa trovi"
-// a 3 voci con micro-marcatore petrol → "cosa aspettarti"
-// (onestà su natura AI e limiti). Senza icone né card pesanti.
-function IntroScreen({ onStart }: { onStart: () => void }) {
-    const { t } = useI18n();
-    const modes = [
-        { title: t('app.overview.questionnaires.title'), body: t('app.overview.questionnaires.body') },
-        { title: t('app.overview.savickas.title'), body: t('app.overview.savickas.body') },
-        { title: t('app.overview.pqbl.title'), body: t('app.overview.pqbl.body') },
-    ];
-    const activities = [
-        { title: t('app.intro.how.s1.title'), body: t('app.intro.how.s1.body') },
-        { title: t('app.intro.how.s2.title'), body: t('app.intro.how.s2.body') },
-        { title: t('app.intro.how.s3.title'), body: t('app.intro.how.s3.body') },
-        { title: t('app.intro.how.s4.title'), body: t('app.intro.how.s4.body') },
-    ];
-
-    return (
-        <div className="space-y-12 py-4">
-            <div className="flex flex-col items-center pt-4 text-center">
-                <CompassMark className="h-16 w-16" animated />
-                <h1 className="font-display mt-6 text-4xl font-bold text-slate-900 sm:text-5xl">CounselorBot</h1>
-                <p className="mt-4 max-w-xl text-lg leading-relaxed text-slate-600">
-                    {t('app.intro.subtitle')}
-                </p>
-            </div>
-
-            <section className="mx-auto max-w-2xl text-center">
-                <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    {t('app.intro.what.title')}
-                </h2>
-                <p className="mt-4 text-base leading-relaxed text-slate-600">
-                    {t('app.intro.what.body')}
-                </p>
-            </section>
-
-            <section className="mx-auto max-w-4xl">
-                <h2 className="text-center text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    {t('app.home.contains')}
-                </h2>
-                <div className="mt-6 grid gap-8 sm:grid-cols-3">
-                    {modes.map((m) => (
-                        <div key={m.title}>
-                            <span className="block h-0.5 w-10 rounded-full bg-indigo-500" />
-                            <h3 className="mt-3 text-base font-bold text-slate-900">{m.title}</h3>
-                            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{m.body}</p>
-                        </div>
-                    ))}
-                </div>
-                <p className="mx-auto mt-8 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
-                    {t('app.intro.langs.pre')}
-                    <a
-                        href="https://www.competenzestrategiche.it/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-indigo-700 hover:underline"
-                    >
-                        competenzestrategiche.it
-                    </a>
-                    {t('app.intro.langs.post')}
-                </p>
-            </section>
-
-            <section className="mx-auto max-w-4xl">
-                <h2 className="text-center text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    {t('app.intro.how.title')}
-                </h2>
-                <div className="mt-6 grid gap-8 sm:grid-cols-4">
-                    {activities.map((s) => (
-                        <div key={s.title}>
-                            <span className="block h-0.5 w-10 rounded-full bg-indigo-500" />
-                            <h3 className="mt-2 text-base font-bold text-slate-900">{s.title}</h3>
-                            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{s.body}</p>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            <section className="mx-auto max-w-4xl">
-                <h2 className="text-center text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    {t('app.tools.title')}
-                </h2>
-                <div className="mt-6 grid gap-8 sm:grid-cols-2">
-                    <div>
-                        <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
-                        <h3 className="mt-3 text-base font-bold text-slate-900">{t('app.tools.notebook.title')}</h3>
-                        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t('app.tools.notebook.body')}</p>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-500">{t('app.tools.notebook.access')}</p>
-                    </div>
-                    <div>
-                        <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
-                        <h3 className="mt-3 text-base font-bold text-slate-900">{t('app.tools.assistant.title')}</h3>
-                        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t('app.tools.assistant.body')}</p>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-500">{t('app.tools.assistant.access')}</p>
-                    </div>
-                    <div>
-                        <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
-                        <h3 className="mt-3 text-base font-bold text-slate-900">{t('app.tools.readings.title')}</h3>
-                        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t('app.tools.readings.body')}</p>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-500">{t('app.tools.readings.access')}</p>
-                    </div>
-                    <div>
-                        <span className="block h-0.5 w-10 rounded-full bg-teal-500" />
-                        <h3 className="mt-3 text-base font-bold text-slate-900">{t('app.tools.diagrams.title')}</h3>
-                        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{t('app.tools.diagrams.body')}</p>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-500">{t('app.tools.diagrams.access')}</p>
-                    </div>
-                </div>
-            </section>
-
-            <section className="mx-auto max-w-2xl text-center">
-                <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    {t('app.intro.expect.title')}
-                </h2>
-                <p className="mt-4 text-base leading-relaxed text-slate-600">
-                    {t('app.intro.expect.body')}
-                </p>
-                <p className="mt-4 text-base leading-relaxed text-slate-600">{t('app.intro.pace.body')}</p>
-            </section>
-
-            <footer className="mx-auto max-w-xl border-t border-slate-100 pt-8 text-center">
-                <p className="text-sm leading-relaxed text-slate-500">{t('app.intro.contact')}</p>
-                <p className="mt-2 text-sm font-semibold text-slate-700">Daniele Dragoni</p>
-                <a
-                    href="mailto:daniele.dragoni@uniroma3.it"
-                    className="text-sm font-medium text-indigo-700 hover:underline"
-                >
-                    daniele.dragoni@uniroma3.it
-                </a>
-            </footer>
-            <div className="text-center">
-                <Button type="button" variant="accent" size="lg" onClick={onStart}>
-                    {t('app.home.cta')}
-                </Button>
-            </div>
-        </div>
-    );
 }
 
 export default function Home() {
@@ -481,7 +341,7 @@ export default function Home() {
                 setFrozenSnapshot(snapshot);
                 setStep('interaction');
                 setReady(true);
-            })();
+            })().catch(() => { toast.error(t('toast.error')); setReady(true); });
             return;
         }
 
@@ -502,8 +362,19 @@ export default function Home() {
                 setSessionId(r.sessionId);
                 setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
                 setExperience(r.experience);
-                setStep('interaction');
-                claimEntry();
+                // Prefer the owned server snapshot: it retains the essential path and format.
+                entryClaimed.current = true;
+                void getFrozenSession(r.sessionId).then(snapshot => {
+                    if (snapshot) {
+                        setFrozenSnapshot(snapshot);
+                        setScores(snapshot.scores || {});
+                        setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
+                        if (snapshot.response_length) setResponseLength(snapshot.response_length);
+                        if (snapshot.reasoning_effort) setReasoningEffort(snapshot.reasoning_effort);
+                    }
+                    setStep('interaction');
+                    setReady(true);
+                }).catch(() => { toast.error(t('toast.error')); setReady(true); });
                 return;
             }
         }
@@ -512,14 +383,14 @@ export default function Home() {
         // deve trovare il catalogo di chi torna, non la presentazione, anche se
         // è la prima volta e non ha ancora compilato nulla.
         const view = params.get('view') || (!params.get('start') && !params.get('session_id')
-            ? ({ 'questionnaire-select': 'questionnaires', base: 'home' } as Record<string, string>)[window.history.state?.cbPageStep] : null);
-        if (view === 'questionnaires' || view === 'home') {
+            ? ({ 'questionnaire-select': 'questionnaires', base: 'home', intro: 'intro' } as Record<string, string>)[window.history.state?.cbPageStep] : null);
+        if (view === 'questionnaires' || view === 'home' || view === 'intro') {
             setSelectedQuestionnaire(null);
             setScores(null);
             setPdfToken(undefined);
             setSessionId('');
             setExperience(null);
-            setStep(view === 'home' ? 'base' : 'questionnaire-select');
+            setStep(view === 'intro' ? 'intro' : view === 'home' ? 'base' : 'questionnaire-select');
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             claimEntry();
             return;
@@ -938,6 +809,7 @@ export default function Home() {
                                     sessionId={sessionId}
                                     locale={lang}
                                     onComplete={handleInteractionComplete}
+                                    initialResponseFormat={frozenSnapshot?.response_format}
                                     responseLength={responseLength}
                                     restoredMessages={
                                         frozenSnapshot?.session_id === sessionId

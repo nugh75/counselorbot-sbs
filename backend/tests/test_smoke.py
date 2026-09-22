@@ -4438,7 +4438,7 @@ def test_qpcs_summary_ignores_a_later_legacy_step():
 
 
 def test_learner_profile_revisions_and_history():
-    """Profilo del discente: salvataggio append-only, dedup, storico, delete."""
+    """Autosave aggiorna una bozza; solo il salvataggio esplicito fa storia."""
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:
         r = client.get("/user/learner-profile")
@@ -4463,14 +4463,38 @@ def test_learner_profile_revisions_and_history():
         })
         assert r.json()["id"] == first_id
 
-        # Modifica -> nuova revisione, storico = 2
+        # Due autosalvataggi aggiornano la stessa bozza e non affollano lo storico.
+        r = client.post("/user/learner-profile", json={
+            "goal": "Superare l'esame di analisi",
+            "main_difficulty": "Ansia",
+            "source": "session_end",
+            "save_mode": "autosave",
+        })
+        draft_id = r.json()["id"]
+        assert draft_id != first_id
+        assert r.json()["source"] == "autosave"
         r = client.post("/user/learner-profile", json={
             "goal": "Superare l'esame di analisi",
             "main_difficulty": "Ansia prima dell'esame",
             "source": "session_end",
+            "save_mode": "autosave",
+        })
+        assert r.json()["id"] == draft_id
+        assert r.json()["data"]["main_difficulty"] == "Ansia prima dell'esame"
+        r = client.get("/user/learner-profile/history")
+        assert r.status_code == 200 and len(r.json()) == 1
+        assert r.json()[0]["id"] == first_id
+
+        # Il salvataggio esplicito promuove la bozza a versione storica.
+        r = client.post("/user/learner-profile", json={
+            "goal": "Superare l'esame di analisi",
+            "main_difficulty": "Ansia prima dell'esame",
+            "source": "session_end",
+            "save_mode": "manual",
         })
         second_id = r.json()["id"]
-        assert second_id != first_id
+        assert second_id == draft_id
+        assert r.json()["source"] == "session_end"
         r = client.get("/user/learner-profile/history")
         assert r.status_code == 200 and len(r.json()) == 2
 
@@ -4695,6 +4719,61 @@ def test_student_booklet_can_create_idea_entry():
         assert response.status_code == 200, response.text
         assert response.json()["questionnaire_type"] == "IDEA"
     finally:
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
+def test_student_booklet_biography_events_sync_personal_timeline():
+    """Ogni evento biografico salvato compare una volta nella linea del tempo."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    booklet_id = None
+    try:
+        response = client.post("/user/student-booklets/instrument/QSA", json={
+            "data": {
+                "title": "Percorso autunnale",
+                "bio_events": [
+                    {"id": "laboratorio", "date": "2026-09-20", "context": "Laboratorio",
+                     "discovery": "So chiedere aiuto", "keywords": "collaborazione"},
+                    {"id": "tirocinio", "date": "2026-09-21", "context": "Tirocinio",
+                     "discovery": "So osservare", "keywords": "ascolto"},
+                ],
+            },
+        })
+        assert response.status_code == 200, response.text
+        booklet_id = response.json()["id"]
+
+        timeline = client.get("/user/timeline")
+        assert timeline.status_code == 200, timeline.text
+        events = [event for event in timeline.json()["workspace"]["timeline"]["events"]
+                  if event["id"].startswith(f"booklet-{booklet_id}-")]
+        assert [(event["title"], event["start_date"]) for event in events] == [
+            ("Laboratorio", "2026-09-20"), ("Tirocinio", "2026-09-21")]
+        assert all("booklet" in event["personal_links"] for event in events)
+
+        response = client.put(f"/user/student-booklets/id/{booklet_id}", json={
+            "data": {
+                "title": "Percorso autunnale",
+                "bio_events": [
+                    {"id": "tirocinio", "date": "2026-09-22", "context": "Tirocinio aggiornato",
+                     "discovery": "So osservare", "keywords": "ascolto"},
+                ],
+            },
+        })
+        assert response.status_code == 200, response.text
+        events = [event for event in client.get("/user/timeline").json()["workspace"]["timeline"]["events"]
+                  if event["id"].startswith(f"booklet-{booklet_id}-")]
+        assert len(events) == 1
+        assert events[0]["title"] == "Tirocinio aggiornato"
+        assert events[0]["start_date"] == "2026-09-22"
+
+        deleted_id = booklet_id
+        assert client.delete(f"/user/student-booklets/id/{deleted_id}").status_code == 200
+        booklet_id = None
+        events = [event for event in client.get("/user/timeline").json()["workspace"]["timeline"]["events"]
+                  if event["id"].startswith("booklet-")]
+        assert all(not event["id"].startswith(f"booklet-{deleted_id}-") for event in events)
+    finally:
+        if booklet_id is not None:
+            client.delete(f"/user/student-booklets/id/{booklet_id}")
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 

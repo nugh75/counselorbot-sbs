@@ -832,6 +832,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 "language": request.language or "it",
                 "streamed": True,
                 "response_length": request.response_length,
+                "response_format": request.response_format,
+                "guided_path": request.guided_path,
                 "usage": usage,
                 "cost_usd": cost_usd,
             }, "user_input", "effective_user_input", "bot_response")

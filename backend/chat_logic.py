@@ -2770,10 +2770,13 @@ def build_context_envelope(
         db.query(models.GuidedStep).filter(models.GuidedStep.id == (step_id or request.phase)).first()
         if (step_id or request.phase) else None
     )
-    guided_path = _guided_path_context(
-        db, questionnaire_type, step_id or request.phase, language,
-        full=_is_intro_step_mode(current_step.system_prompt_mode) if current_step else False,
-    )
+    if questionnaire_type == "QSA" and getattr(request, "guided_path", "complete") == "essential":
+        guided_path = "Essential QSA path: choose a focus, give one example, agree or adapt one action, receive a summary. Exactly three student replies; further discussion is optional."
+    else:
+        guided_path = _guided_path_context(
+            db, questionnaire_type, step_id or request.phase, language,
+            full=_is_intro_step_mode(current_step.system_prompt_mode) if current_step else False,
+        )
     if components is not None:
         components["guided_path"] = guided_path if _component_enabled(component_flags, "metadata") else ""
     if guided_path and _component_enabled(component_flags, "metadata"):
