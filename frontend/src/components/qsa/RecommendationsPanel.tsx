@@ -422,7 +422,6 @@ function AdviceCard({ item, canAct, pending, failed, onRetry, onPatch, onDiscuss
                     {rec(open ? 'question.close' : 'question.reopen')}
                 </button>
             ) : null}
-            {question ? <p role="status" className="text-xs text-slate-500">{pending ? rec('saving') : ''}</p> : null}
             {question && failed ? <p role="alert" className="text-xs text-red-700">{rec('error')} <button type="button" onClick={onRetry} className="min-h-9 underline">{rec('retry')}</button></p> : null}
             <CardActions pending={pending} failed={question ? undefined : failed} onRetry={onRetry} status={item.status}
                 canAct={canAct && !question} onPatch={onPatch} selectLabel={rec('advice.select')} triedLabel={rec('advice.tried')}
@@ -501,11 +500,6 @@ function CardActions({
 
             {children}
 
-            {/* La regione live esiste anche a riposo, altrimenti l'attesa non
-                verrebbe annunciata; da ferma non occupa spazio. */}
-            <p role="status" className={cn('text-2xs text-slate-500', !pending && 'sr-only')}>
-                {pending ? rec('saving') : ''}
-            </p>
             {failed ? (
                 <p className="flex flex-wrap items-center gap-2 text-2xs text-red-700" role="alert">
                     {rec('error')}

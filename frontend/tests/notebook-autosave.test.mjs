@@ -42,8 +42,27 @@ for (const width of [390, 1440]) {
             const goalsLink = page.getByRole('link', { name: 'Gestisci obiettivi e collegamenti', exact: true });
             assert.equal(await goalsLink.getAttribute('href'), '/profilo/obiettivi');
             const field = page.getByLabel(/Altro che vuoi aggiungere/i);
+            await field.scrollIntoViewIfNeeded();
+            const before = await field.boundingBox();
+            let release;
+            const blocked = new Promise(resolve => { release = resolve; });
+            await page.route('**/api/user/learner-profile', async route => {
+                if (route.request().method() === 'POST') await blocked;
+                return route.fallback();
+            });
+            const saving = page.waitForRequest(request => request.url().endsWith('/api/user/learner-profile') && request.method() === 'POST');
+            const saved = page.waitForResponse(response => response.url().endsWith('/api/user/learner-profile') && response.request().method() === 'POST');
             await field.fill('Voglio organizzare meglio lo studio');
-            await page.getByLabel('Bozza recuperabile aggiornata', { exact: true }).waitFor();
+            assert.equal(await page.getByTestId('notebook-autosave-status').count(), 0);
+            await saving;
+            try {
+                assert.equal(await page.getByTestId('notebook-autosave-status').count(), 0);
+                assert.deepEqual(await field.boundingBox(), before);
+            } finally { release(); }
+            await saved;
+            await page.waitForFunction(() => [...document.querySelectorAll('button')].some(button => button.textContent.trim() === 'Salva versione' && !button.disabled));
+            assert.equal(await page.getByTestId('notebook-autosave-status').count(), 0);
+            assert.deepEqual(await field.boundingBox(), before);
             assert.equal(state.revision.data.notes, 'Voglio organizzare meglio lo studio');
             assert.equal(state.writes.at(-1).save_mode, 'autosave');
             assert.equal(await field.inputValue(), 'Voglio organizzare meglio lo studio');
@@ -74,8 +93,10 @@ test('failed save survives reload, retries online, and never advances intake aut
         assert.equal(await field.inputValue(), 'La mia bozza da conservare');
         await page.getByLabel('Salvataggio non riuscito. Riprova.', { exact: true }).waitFor();
         state.fail = false;
+        const saved = page.waitForResponse(response => response.url().endsWith('/api/user/learner-profile') && response.request().method() === 'POST' && response.ok());
         await page.evaluate(() => window.dispatchEvent(new Event('online')));
-        await page.getByLabel('Bozza recuperabile aggiornata', { exact: true }).waitFor();
+        await saved;
+        await page.getByTestId('notebook-autosave-status').waitFor({ state: 'detached' });
         assert.equal(state.revision.data.context, 'La mia bozza da conservare');
         assert.equal(state.writes.at(-1).save_mode, 'autosave');
         assert.equal(new URL(page.url()).pathname, '/inizia');

@@ -226,6 +226,10 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   la presentazione anche per chi ha già uno storico. I testi seguono la
   presentazione PEF del 21 settembre 2026, incluse le note del relatore.
   Prompt e provenienza delle immagini sono nel README della cartella.
+- **Salvataggio automatico**: lavora in background, senza spinner, messaggi di
+  attesa o conferme che cambiano l'ingombro della pagina. Gli errori restano
+  visibili con i controlli di recupero; i salvataggi espliciti mantengono la
+  propria conferma.
 - **Movimento**: le variabili `--animate-*` vanno in `@theme`, non in `:root`
   — Tailwind v4 genera le utility `animate-*` solo da lì, e tenute in `:root`
   esistono le variabili ma non le classi. Solo `fade-in-up` all'ingresso e la barra indeterminata di

@@ -25,7 +25,6 @@ export function FlashcardsPage() {
     const [saved, setSaved] = useState<SavedFlashcards>({ revision: 0, workspace: emptyFlashcards() });
     const [work, setWork] = useState<FlashcardWorkspace>(emptyFlashcards);
     const [loaded, setLoaded] = useState(false);
-    const [busy, setBusy] = useState(false);
     const [issue, setIssue] = useState('');
     const [view, setView] = useState<'list' | 'deck'>('list');
     const [openDeckId, setOpenDeckId] = useState<string | null>(null);
@@ -46,21 +45,20 @@ export function FlashcardsPage() {
     useEffect(() => { document.title = `${flashcardLabel(lang, 'title')} - CounselorBot`; }, [lang]);
 
     const load = useCallback(async () => {
-        setBusy(true); setIssue('');
+        setIssue('');
         try {
             const response = await apiFetch('/api/user/flashcards', { signal: AbortSignal.timeout(15000) });
             if (!response.ok) throw new Error();
             const state: SavedFlashcards = await response.json();
             setSaved(state); setWork(state.workspace); setLoaded(true);
         } catch { setIssue('loadError'); }
-        finally { setBusy(false); }
     }, []);
     useEffect(() => { void load(); }, [load]);
 
     const doSave = useCallback(async () => {
         const payload = workRef.current;
         if (JSON.stringify(payload) === JSON.stringify(savedRef.current.workspace)) return;
-        setBusy(true); setIssue('');
+        setIssue('');
         try {
             const response = await apiFetch('/api/user/flashcards', {
                 method: 'PUT',
@@ -72,7 +70,6 @@ export function FlashcardsPage() {
             const state: SavedFlashcards = await response.json();
             setSaved(state);
         } catch { setIssue('saveError'); }
-        finally { setBusy(false); }
     }, []);
     // Auto-save: edits persist on their own about a second after the last
     // change; saves are serialized so a stale revision never races itself.
@@ -138,7 +135,6 @@ export function FlashcardsPage() {
             <p>{l(issue)}</p>
             {issue === 'conflict' && <Button type="button" variant="secondary" className="mt-2 min-h-11 px-4" onClick={() => void load()}><RotateCcw className="mr-1 inline h-4 w-4" aria-hidden="true" />{l('reload')}</Button>}
         </div>}
-        <p role="status" className="text-sm text-slate-600">{busy ? l('saving') : dirty ? l('unsaved') : loaded ? l('saved') : ''}</p>
 
         {view === 'list' && <section aria-label={l('myDecks')} className="space-y-3">
             <div className="flex items-center justify-between gap-3">

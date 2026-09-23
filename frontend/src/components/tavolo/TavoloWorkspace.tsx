@@ -343,9 +343,9 @@ export function TavoloWorkspace({ id, initialCounselorId, onReturn }: {
 
             <div className="shrink-0 border-b border-slate-200 bg-white px-4 py-2">
                 <TavoloCounselor initialId={initialCounselorId} busy={busy} onChange={counselorChanged} />
-                {writeStatus !== 'idle' && <p role="status" className="mt-1 text-xs text-slate-600">
-                    {label(writeStatus === 'pending' ? 'pendingChanges' : writeStatus === 'saving' ? 'savingChanges' : writeStatus === 'saved' ? 'changesSaved' : 'changesFailed')}
-                    {writeStatus === 'failed' && <button type="button" onClick={() => void flush().catch(() => undefined)} className="ml-2 min-h-11 text-indigo-700 underline">{label('retry')}</button>}
+                {writeStatus === 'failed' && <p role="alert" className="mt-1 text-xs text-slate-600">
+                    {label('changesFailed')}
+                    <button type="button" onClick={() => void flush().catch(() => undefined)} className="ml-2 min-h-11 text-indigo-700 underline">{label('retry')}</button>
                 </p>}
             </div>
 
