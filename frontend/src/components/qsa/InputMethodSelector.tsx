@@ -8,6 +8,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { QuestionnaireLink } from '@/components/ui/QuestionnaireLink';
 import { cn } from '@/lib/utils';
+import { getInputMethodPref } from '@/lib/session-prefs';
 import { apiFetch } from '@/lib/auth';
 
 // Selezione del metodo di inserimento per il questionario.
@@ -26,7 +27,7 @@ interface SavedResult {
 }
 
 interface InputMethodSelectorProps {
-    onSelect: (method: Method, resumeData?: { sessionId: string; scores: Record<string, number> }) => void;
+    onSelect: (method: Method, resumeData?: { sessionId: string; scores: Record<string, number> }, remember?: boolean) => void;
     onBack?: () => void;
     questionnaire?: QuestionnaireConfig;
 }
@@ -44,6 +45,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
     const manualDescription = questionnaire
         ? t('method.manual.descTpl', { name: questionnaire.name, codes: questionnaire.factors.map(f => f.code).join(', ') })
         : t('method.manual.descNoQ');
+    const [remember, setRemember] = useState(() => getInputMethodPref() !== null);
     const [selected, setSelected] = useState<Method | null>(null);
     const [savedResults, setSavedResults] = useState<SavedResult[]>([]);
     const [chosenResultId, setChosenResultId] = useState<number | null>(null);
@@ -161,7 +163,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
                 onClick={() => setSelected(opt.key)}
                 onDoubleClick={() => {
                     setSelected(opt.key);
-                    onSelect(opt.key);
+                    onSelect(opt.key, undefined, remember);
                 }}
                 aria-pressed={isSelected}
                 className={cardClass}
@@ -185,7 +187,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
                 onSelect('resume', { sessionId: result.session_id, scores: result.scores });
             }
         } else {
-            onSelect(selected);
+            onSelect(selected, undefined, remember);
         }
     };
 
@@ -209,6 +211,12 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
                     </div>
                 ))}
             </div>
+            {selected !== 'resume' && (
+                <label className="flex min-h-11 items-center gap-3 text-sm text-slate-600">
+                    <input type="checkbox" checked={remember} onChange={event => setRemember(event.target.checked)} className="h-4 w-4 accent-indigo-600" />
+                    {t('method.remember')}
+                </label>
+            )}
         </section>
     );
 }

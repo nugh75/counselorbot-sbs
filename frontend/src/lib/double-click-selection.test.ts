@@ -28,7 +28,7 @@ test('InputMethodSelector supports both single-click selection and double-click 
     const src = inputMethodSelector();
     // Metodi standard (manual, upload)
     assert.match(src, /onClick=\{\(\) => setSelected\(opt\.key\)\}/);
-    assert.match(src, /onDoubleClick=\{\(\) => \{\s*setSelected\(opt\.key\);\s*onSelect\(opt\.key\);\s*\}\}/);
+    assert.match(src, /onDoubleClick=\{\(\) => \{\s*setSelected\(opt\.key\);\s*onSelect\(opt\.key, undefined, remember\);\s*\}\}/);
 
     // Metodo resume (con salvataggi)
     assert.match(src, /onDoubleClick=\{\(\) => \{\s*setSelected\(opt\.key\);\s*if \(chosenResultId !== null\) \{/);

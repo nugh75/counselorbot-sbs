@@ -130,15 +130,18 @@ for (const width of [768, 1024, 1280, 1440]) {
     });
 }
 
-test('returning home shows the catalog and personal tools before preferences and resume', async () => {
+test('activity catalog starts with Compass and ends with resume', async () => {
     const { page, context } = await fixture();
     try {
         await page.goto(`${origin}/?view=home`, { waitUntil: 'networkidle' });
-        const catalog = await page.getByRole('heading', { name: 'Strumenti', exact: true }).boundingBox();
+        const catalog = await page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).boundingBox();
         const personal = await page.getByTestId('personal-area-entry').boundingBox();
-        const preferences = await page.locator('main summary').boundingBox();
+        const compass = await page.getByTestId('compass-entry').boundingBox();
+        const assessment = await page.locator('#tools-assessment').boundingBox();
         const resume = await page.getByTestId('home-resume').boundingBox();
-        assert.ok(catalog.y < personal.y && personal.y < preferences.y && preferences.y < resume.y);
+        assert.ok(catalog.y < compass.y && compass.y < assessment.y && assessment.y < personal.y && personal.y < resume.y);
+        assert.equal(await page.locator('main details').count(), 0);
+        assert.equal(await page.getByText('Rivedi la presentazione iniziale', { exact: true }).count(), 0);
         assert.equal(await page.locator('main article').count(), 11);
         assert.equal(await page.getByRole('heading', { name: 'Allenamento', exact: true }).count(), 0);
         await page.getByRole('button', { name: 'Torna alla presentazione', exact: true }).click();

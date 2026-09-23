@@ -18,6 +18,7 @@ import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
 import { LANGUAGES } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
+import { resumeLabel } from '@/lib/resume-label';
 import { useI18n } from '@/lib/i18n-context';
 import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
@@ -238,7 +239,7 @@ function HeaderMenu({
     servicesHref?: string;
     servicesLabel: string;
 }) {
-    const { lang, setLang, t } = useI18n();
+    const { lang, setLang, t, tf } = useI18n();
     const dark = useDarkMode();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -337,7 +338,7 @@ function HeaderMenu({
                             </div>
                             <ResumeLoadError entries={resumeEntries} />
                             {frozen.map((row) => (
-                                <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={row.label || row.questionnaire_type}>
+                                <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
                                     <Link
                                         href={resumeHref(row)}
                                         className={itemClass}
@@ -348,12 +349,12 @@ function HeaderMenu({
                                         }}
                                     >
                                         <RotateCcw className="h-4 w-4 shrink-0" />
-                                        <span className="truncate">{row.label || row.questionnaire_type}</span>
+                                        <span className="truncate">{resumeLabel(row.questionnaire_type, row.label, tf)}</span>
                                     </Link>
                                 </ResumeEntry>
                             ))}
                             {localResume && (
-                                <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${localResume.instrument}`}>
+                                <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${resumeLabel(localResume.instrument, null, tf)}`}>
                                     <Link
                                         href={LOCAL_RESUME_HREF}
                                         className={itemClass}
@@ -364,7 +365,7 @@ function HeaderMenu({
                                         }}
                                     >
                                         <RotateCcw className="h-4 w-4 shrink-0" />
-                                        <span className="truncate">{t('header.resume')} · {localResume.instrument}</span>
+                                        <span className="truncate">{t('header.resume')} · {resumeLabel(localResume.instrument, null, tf)}</span>
                                     </Link>
                                 </ResumeEntry>
                             )}

@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { CompassEntry } from '@/components/home/CompassEntry';
 import { ChevronDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -25,23 +26,6 @@ export function IntroScreen({
     onOpenTools?: (anchor?: string) => void;
 }) {
     const { t } = useI18n();
-
-    const actions = [
-        {
-            key: 'compass' as const,
-            image: '/images/intro/compass.png',
-            label: 'app.intro.action.compass.label',
-            desc: 'app.intro.action.compass.desc',
-            onAdvance: onStart,
-        },
-        {
-            key: 'tools' as const,
-            image: '/images/intro/tools.png',
-            label: 'app.intro.action.tools.label',
-            desc: 'app.intro.action.tools.desc',
-            onAdvance: () => onOpenTools?.(),
-        },
-    ];
 
     return (
         <div className="mx-auto max-w-4xl space-y-7 py-4" data-testid="intro-screen">
@@ -78,29 +62,18 @@ export function IntroScreen({
 
             <section aria-label={t('app.intro.actions.label')} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                    {actions.map((action) => {
-                        return (
-                            <button
-                                key={action.key}
-                                type="button"
-                                onClick={action.onAdvance}
-                                className="relative flex cursor-pointer flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 text-left transition-colors hover:border-indigo-300 sm:flex-row sm:items-center"
-                            >
-                                <Image
-                                    src={action.image}
-                                    alt=""
-                                    width={144}
-                                    height={144}
-                                    sizes="96px"
-                                    className="h-18 w-18 shrink-0 self-center object-contain sm:h-24 sm:w-24"
-                                />
-                                <div>
-                                    <h3 className="font-display text-lg font-bold text-slate-900">{t(action.label)}</h3>
-                                    <p className="mt-1 text-sm leading-relaxed text-slate-600">{t(action.desc)}</p>
-                                </div>
-                            </button>
-                        );
-                    })}
+                    <CompassEntry onOpen={onStart} />
+                    <button
+                        type="button"
+                        onClick={() => onOpenTools?.()}
+                        className="relative flex cursor-pointer flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 text-left transition-colors hover:border-indigo-300 sm:flex-row sm:items-center"
+                    >
+                        <Image src="/images/intro/tools.png" alt="" width={144} height={144} sizes="96px" className="h-18 w-18 shrink-0 self-center object-contain sm:h-24 sm:w-24" />
+                        <div>
+                            <h3 className="font-display text-lg font-bold text-slate-900">{t('app.intro.action.tools.label')}</h3>
+                            <p className="mt-1 text-sm leading-relaxed text-slate-600">{t('app.intro.action.tools.desc')}</p>
+                        </div>
+                    </button>
                 </div>
 
                 <div className="space-y-1.5 text-center">

@@ -47,8 +47,9 @@ for (const width of [390, 1440]) {
             const resume = page.getByTestId('home-resume');
             await resume.waitFor();
             assert.equal(await page.getByRole('heading', { name: 'Allenamento', exact: true }).count(), 0);
-            const positions = await Promise.all([page.locator('#tools-guided'), personal, page.locator('main details'), resume].map(locator => locator.boundingBox()));
+            const positions = await Promise.all([page.getByTestId('compass-entry'), page.locator('#tools-assessment'), page.locator('#tools-guided'), personal, resume].map(locator => locator.boundingBox()));
             assert.ok(positions.every((box, i) => i === 0 || box.y >= positions[i - 1].y + positions[i - 1].height));
+            await page.getByTestId('compass-entry').locator('img').evaluate(img => img.decode());
             await page.screenshot({ path: `/tmp/personal-home-${width}.png`, fullPage: true });
             const resumeLink = resume.getByRole('link', { name: /Studiare da un PDF/ });
             assert.equal(await resumeLink.getAttribute('href'), '/profilo/pqbl');
