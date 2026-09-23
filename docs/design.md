@@ -210,7 +210,7 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   di scrittura. Le risposte funzionali all’intervista Savickas restano disponibili.
 - **Selezione strumento**: la barra con nome selezionato e Continua resta
   visibile sotto l’intestazione durante lo scorrimento.
-- **Home di ritorno**: «Attività e percorsi» apre con lo stesso box Bussola della presentazione,
+- **Home di ritorno**: «Attività e percorsi» apre con il box illustrato della Bussola,
   seguito da questionari, percorsi e «Area personale e strumenti».
   Le preferenze sono contestuali alle scelte di inserimento e modalità chat; «Riprendi» resta in fondo
   alla pagina e presente solo con attività riprendibili o errori da recuperare.
@@ -218,14 +218,15 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   in «Studiare, esplorare e agire». `/pqbl` reindirizza alla nuova pagina;
   ripresa e progresso locale restano disponibili. «Allenamento» non è una
   categoria della home né del selettore strumenti.
-- **Presentazione iniziale**: titolo e breve descrizione precedono tre schede:
-  Analisi dei risultati dei questionari, Percorsi guidati, Area personale. Le illustrazioni PNG
-  trasparenti in `public/images/intro/` sono decorative; titoli e descrizioni
-  restano testo localizzato. Su mobile le immagini affiancano il testo, su
-  desktop lo precedono. Le schede hanno accessi espliciti al catalogo o
-  all’Area personale; Bussola ed «Esplora attività e percorsi» seguono le schede. Quattro `details` chiusi
-  inizialmente presentano da dove iniziare, il lavoro personale, risorse e
-  accompagnamento, uso dei questionari. Il link «Dati e riservatezza» apre
+- **Presentazione iniziale**: una frase sullo scopo dell’ambiente e l’attribuzione
+  all’Università Roma Tre precedono «Da dove vuoi iniziare?». Quattro schede,
+  su due colonne desktop e una mobile: Bussola, Analisi questionari, Percorsi
+  guidati, Area personale e strumenti. Le immagini decorative sono sopra il
+  titolo su desktop e accanto su mobile. Ogni scheda ha un’azione esplicita;
+  il catalogo completo è un collegamento secondario sotto la griglia.
+  Non c’è un ordine obbligatorio. «Per saperne di più» raccoglie tre `details`
+  chiusi: uso dei questionari, Area personale, risorse e accompagnamento.
+  Seguono i collegamenti alla Guida e a «Dati e riservatezza»:
   `/guide/dati-riservatezza`, che distingue elaborazione locale, filtro per
   fornitori esterni e accessi ai contenuti. Il ritorno `/?view=intro` apre
   la presentazione anche per chi ha già uno storico. I testi seguono la

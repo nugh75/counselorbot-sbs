@@ -82,7 +82,7 @@ for (const [locale, title] of [['it', 'Studiare da un PDF'], ['en', 'Study from 
             await page.goto(`${origin}/?view=intro`);
             const intro = page.getByTestId('intro-screen');
             await intro.waitFor();
-            assert.equal(await intro.locator('h2').count(), 3);
+            assert.equal(await intro.locator('article').count(), 4);
             const entry = intro.locator('a[href="/profilo"]');
             await entry.click();
             await page.locator('a[href="/profilo/pqbl"]').click();
