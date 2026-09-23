@@ -90,6 +90,12 @@ export function FlashcardsPage() {
 
     const edit = useCallback((next: FlashcardWorkspace) => setWork(next), []);
     const openDeck = (deck: FlashcardDeck) => { setOpenDeckId(deck.id); setView('deck'); setStudy(null); };
+    // Opening a deck goes straight into study mode: the full card list (with
+    // the backs) stays hidden behind the explicit “Edit” action.
+    const openDeckForStudy = (deck: FlashcardDeck) => {
+        if (!deck.cards.length) { openDeck(deck); return; }
+        openDeck(deck); startStudy(deck);
+    };
     const currentDeck = work.decks.find(d => d.id === openDeckId) ?? null;
     const openDeckObj = work.decks.find(d => d.id === openDeckId);
     const startStudy = (deck: FlashcardDeck, onlyReview = false) => {
@@ -144,7 +150,7 @@ export function FlashcardsPage() {
                     {work.decks.map(deck => {
                         const progress = deckProgress(deck);
                         return <article key={deck.id} className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-                            <button type="button" className="min-h-11 text-left" aria-label={`${l('editDeck')}: ${deck.title}`} onClick={() => openDeck(deck)}>
+                            <button type="button" className="min-h-11 text-left" aria-label={`${l('study')}: ${deck.title}`} onClick={() => openDeckForStudy(deck)}>
                                 <h3 className="break-words font-semibold text-slate-900">{deck.title} <span className="font-mono text-sm text-slate-500">{deck.cards.length}</span></h3>
                                 <p className="mt-1 text-xs text-slate-500"><span className="text-emerald-600">✔ {progress.known}</span> · <span className="text-amber-600">↻ {progress.review}</span> · {progress.fresh}</p>
                             </button>
