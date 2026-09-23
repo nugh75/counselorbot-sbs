@@ -1,6 +1,6 @@
 # Area personale: audit dell'interazione e piano di modifica
 
-**Data:** 23 settembre 2026. **Stato:** punto 0.1 (nomi e raggruppamento) approvato; schemi e interventi successivi da validare. Nessuna modifica applicativa implementata nell'ambito di questo piano.
+**Data:** 23 settembre 2026. **Stato:** punti 0.1 (nomi e raggruppamento) e 0.2 (ingresso desktop/mobile, con immagini esistenti) approvati; schemi e interventi successivi da validare. Nessuna modifica applicativa implementata nell'ambito di questo piano.
 **Base del codice esaminato:** `edddddc`. Ambito: le 18 rotte dell'Area personale, i componenti condivisi e i passaggi verso gli strumenti esterni all'area.
 
 ## 1. Esito e priorità
@@ -35,7 +35,7 @@ Legenda: **B** = comportamento osservato nel browser con fixture; **C** = riscon
 - Il Taccuino distingue salvataggio automatico di sicurezza e **Salva versione** nella cronologia. Non trasformare ogni battitura in una versione.
 - Gli strumenti visuali dispongono già di controlli a pulsante/selettore: non introdurre interazioni utilizzabili solo trascinando.
 - Portfolio dispone già di apertura immagini a schermo intero; diverse operazioni hanno conferme e protezioni dai conflitti. Correggere le lacune senza rimuovere queste protezioni.
-- Conservare l'identità di `docs/design.md`: petrol, ocra e neutri, icone riconoscibili, animazioni contenute. Non assegnare un nuovo colore a ogni strumento.
+- Conservare l'identità di `docs/design.md`: petrol, ocra e neutri, immagini degli strumenti già disponibili, animazioni contenute. Non assegnare un nuovo colore a ogni strumento.
 
 ## 2. Inventario e funzione delle pagine
 
@@ -188,7 +188,7 @@ Decisioni di nomenclatura e raggruppamento:
 - **Portfolio resta nel gruppo autonomo «I miei lavori»**, anche se è l'unica voce: la raccolta degli elaborati si distingue dalla pianificazione delle attività.
 - Conservare i nomi caratteristici **Taccuino, Libretto e Tavolo**, chiarendone la funzione attraverso la descrizione.
 
-Usare sempre icona **e nome** nella navigazione. Le icone sole restano adatte alle azioni convenzionali e secondarie, con nome accessibile e area di tocco sufficiente.
+Usare le **immagini già disponibili e il nome** per riconoscere gli strumenti, come approvato in 0.2. Le icone restano adatte alle azioni convenzionali e secondarie, con nome accessibile e area di tocco sufficiente; non sostituiscono le immagini degli strumenti.
 
 ### Testata comune
 
@@ -197,7 +197,7 @@ Usare sempre icona **e nome** nella navigazione. Le icone sole restano adatte al
 | CounselorBot                                  Account / opzioni   |
 +------------------------------------------------------------------+
 | Area personale > Nome pagina                       [Vai a... v]  |
-| [icona] Nome pagina                          [Azione principale]  |
+| [immagine] Nome pagina                       [Azione principale]  |
 | Una frase: a cosa serve questo spazio.                            |
 | Visibilita effettiva [?]     Obiettivi collegati: 2 [Mostra]        |
 +------------------------------------------------------------------+
@@ -243,15 +243,15 @@ Il redesign non deve cambiare queste autorizzazioni attraverso una semplice modi
 
 ## 5. Schemi ASCII delle pagine
 
-Tutti gli schemi rappresentano **proposte**, non schermate già realizzate. Dati, date e nomi sono esempi. Le righe `>` indicano sezioni apribili; `[ ]` pulsanti o campi. Le versioni mobile conservano l'ordine semantico, senza affiancare colonne troppo strette.
+Gli schemi rappresentano il progetto dell’interfaccia, non schermate già realizzate. Lo stato di approvazione è indicato per ciascun punto; gli altri schemi restano proposte da validare. Dati, date e nomi sono esempi. Le righe `>` indicano sezioni apribili; `[ ]` pulsanti o campi. Le versioni mobile conservano l'ordine semantico, senza affiancare colonne troppo strette.
 
 I nomi approvati al punto 0.1 (§4) sono il riferimento per gli schemi. L’ingresso (§5.1) li riporta integralmente, incluso l’accesso autonomo a Cambiamenti. Eventuali abbreviazioni negli altri schemi non sono etichette definitive.
 
 ### 5.1 Ingresso — `/profilo`
 
-**Punto 0.2 — proposta pronta per la validazione.** Obiettivo: scegliere uno strumento o ritrovare un lavoro dall'ingresso, mantenendo riconoscibili i cinque gruppi approvati. La testata globale, il ritorno e il selettore «Vai a…» saranno definiti al punto 0.3: qui si progetta il contenuto dell'ingresso.
+**Punto 0.2 — approvato il 23 settembre 2026, con immagini esistenti al posto delle icone degli strumenti.** Obiettivo: scegliere uno strumento o ritrovare un lavoro dall'ingresso, mantenendo riconoscibili i cinque gruppi approvati. La testata globale, il ritorno e il selettore «Vai a…» saranno definiti al punto 0.3: qui si progetta il contenuto dell'ingresso.
 
-#### Gerarchia proposta
+#### Gerarchia approvata
 
 1. **Titolo e una frase di orientamento:** «Area personale» e «Ritrova il tuo lavoro e scegli come proseguire».
 2. **Riepilogo “Da riprendere”, quando utile:** massimo tre elementi pertinenti con tipo, titolo, eventuale scadenza e collegamento al contenuto preciso. Due elementi fittizi compaiono negli schemi; non sono dati verificati dell'utente.
@@ -273,44 +273,44 @@ La scelta di sezioni orizzontali evita di affiancare un gruppo molto lungo a uno
 | Assegnazione: Lettura proposta - 2 ott                                   [Apri assegnazione]                  |
 +---------------------------------------------------------------------------------------------------------------+
 | IL MIO PERCORSO                                                                                               |
-| [i] Obiettivi ->                                      | [i] Attività ->                                       |
+| [img] Obiettivi ->                                    | [img] Attività ->                                     |
 |     Scegli che cosa vuoi raggiungere e il prossimo    |     Organizza quello che vuoi fare, stai facendo o    |
 |     passo.                                            |     hai provato.                                      |
 |                                                                                                               |
-| [i] Calendario e diario ->                            |                                                       |
+| [img] Calendario e diario ->                          |                                                       |
 |     Pianifica le tappe e racconta le esperienze.      |                                                       |
 +---------------------------------------------------------------------------------------------------------------+
 | CONOSCERMI E RIFLETTERE                                                                                       |
-| [i] Taccuino ->                                       | [i] Libretto ->                                       |
+| [img] Taccuino ->                                     | [img] Libretto ->                                     |
 |     Racconta il tuo contesto, gli interessi e il modo |     Prepara una prova e rifletti su come è andata.    |
 |     di apprendere.                                    |                                                       |
 |                                                                                                               |
-| [i] Cambiamenti ->                                    | [i] Risultati e conversazioni ->                      |
+| [img] Cambiamenti ->                                  | [img] Risultati e conversazioni ->                    |
 |     Confronta ciò che hai scritto e rifletti sui      |     Ritrova i risultati dei questionari e i dialoghi  |
 |     cambiamenti.                                      |     collegati.                                        |
 +---------------------------------------------------------------------------------------------------------------+
 | STUDIARE E RAGIONARE                                                                                          |
-| [i] Studiare da un PDF ->                             | [i] Flashcard ->                                      |
+| [img] Studiare da un PDF ->                           | [img] Flashcard ->                                    |
 |     Lavora sul tuo materiale attraverso domande e     |     Memorizza e ripassa con carte domanda e risposta. |
 |     feedback.                                         |                                                       |
 |                                                                                                               |
-| [i] Carte da ordinare ->                              | [i] Confrontare alternative ->                        |
+| [img] Carte da ordinare ->                            | [img] Confrontare alternative ->                      |
 |     Raggruppa idee e riflessioni.                     |     Valuta possibilità diverse secondo i tuoi         |
 |                                                       |     criteri.                                          |
 |                                                                                                               |
-| [i] Tavolo ->                                         |                                                       |
+| [img] Tavolo ->                                       |                                                       |
 |     Costruisci e rivedi diagrammi di lavoro.          |                                                       |
 +---------------------------------------------------------------------------------------------------------------+
 | I MIEI LAVORI                                                                                                 |
-| [i] Portfolio ->                                      |                                                       |
+| [img] Portfolio ->                                    |                                                       |
 |     Conserva e ritrova i tuoi lavori.                 |                                                       |
 +---------------------------------------------------------------------------------------------------------------+
 | PERSONE E SUPPORTO                                                                                            |
-| [i] Assegnazioni ->                                   | [i] Gruppi e classi ->                                |
+| [img] Assegnazioni ->                                 | [img] Gruppi e classi ->                              |
 |     Ritrova le attività dei docenti, prepara le       |     Gestisci le iscrizioni e leggi i messaggi dei     |
 |     restituzioni e leggi i feedback.                  |     docenti.                                          |
 |                                                                                                               |
-| [i] Orientamento ->                                   | [i] Telegram ->                                       |
+| [img] Orientamento ->                                 | [img] Telegram ->                                     |
 |     Trova contatti e appuntamenti del tuo istituto.   |     Collega il tuo account per usare anche questo     |
 |                                                       |     canale.                                           |
 +---------------------------------------------------------------------------------------------------------------+
@@ -331,84 +331,111 @@ La scelta di sezioni orizzontali evita di affiancare un gruppo molto lungo a uno
 | 2 ott             [Apri assegnazione]    |
 +------------------------------------------+
 | IL MIO PERCORSO                          |
-| [i] Obiettivi ->                         |
+| [img] Obiettivi ->                       |
 |     Scegli che cosa vuoi raggiungere e   |
 |     il prossimo passo.                   |
 |                                          |
-| [i] Attività ->                          |
+| [img] Attività ->                        |
 |     Organizza quello che vuoi fare, stai |
 |     facendo o hai provato.               |
 |                                          |
-| [i] Calendario e diario ->               |
+| [img] Calendario e diario ->             |
 |     Pianifica le tappe e racconta le     |
 |     esperienze.                          |
 +------------------------------------------+
 | CONOSCERMI E RIFLETTERE                  |
-| [i] Taccuino ->                          |
+| [img] Taccuino ->                        |
 |     Racconta il tuo contesto, gli        |
 |     interessi e il modo di apprendere.   |
 |                                          |
-| [i] Libretto ->                          |
+| [img] Libretto ->                        |
 |     Prepara una prova e rifletti su come |
 |     è andata.                            |
 |                                          |
-| [i] Cambiamenti ->                       |
+| [img] Cambiamenti ->                     |
 |     Confronta ciò che hai scritto e      |
 |     rifletti sui cambiamenti.            |
 |                                          |
-| [i] Risultati e conversazioni ->         |
+| [img] Risultati e conversazioni ->       |
 |     Ritrova i risultati dei questionari  |
 |     e i dialoghi collegati.              |
 +------------------------------------------+
 | STUDIARE E RAGIONARE                     |
-| [i] Studiare da un PDF ->                |
+| [img] Studiare da un PDF ->              |
 |     Lavora sul tuo materiale attraverso  |
 |     domande e feedback.                  |
 |                                          |
-| [i] Flashcard ->                         |
+| [img] Flashcard ->                       |
 |     Memorizza e ripassa con carte        |
 |     domanda e risposta.                  |
 |                                          |
-| [i] Carte da ordinare ->                 |
+| [img] Carte da ordinare ->               |
 |     Raggruppa idee e riflessioni.        |
 |                                          |
-| [i] Confrontare alternative ->           |
+| [img] Confrontare alternative ->         |
 |     Valuta possibilità diverse secondo i |
 |     tuoi criteri.                        |
 |                                          |
-| [i] Tavolo ->                            |
+| [img] Tavolo ->                          |
 |     Costruisci e rivedi diagrammi di     |
 |     lavoro.                              |
 +------------------------------------------+
 | I MIEI LAVORI                            |
-| [i] Portfolio ->                         |
+| [img] Portfolio ->                       |
 |     Conserva e ritrova i tuoi lavori.    |
 +------------------------------------------+
 | PERSONE E SUPPORTO                       |
-| [i] Assegnazioni ->                      |
+| [img] Assegnazioni ->                    |
 |     Ritrova le attività dei docenti,     |
 |     prepara le restituzioni e leggi i    |
 |     feedback.                            |
 |                                          |
-| [i] Gruppi e classi ->                   |
+| [img] Gruppi e classi ->                 |
 |     Gestisci le iscrizioni e leggi i     |
 |     messaggi dei docenti.                |
 |                                          |
-| [i] Orientamento ->                      |
+| [img] Orientamento ->                    |
 |     Trova contatti e appuntamenti del    |
 |     tuo istituto.                        |
 |                                          |
-| [i] Telegram ->                          |
+| [img] Telegram ->                        |
 |     Collega il tuo account per usare     |
 |     anche questo canale.                 |
 +------------------------------------------+
 ```
 
-Gli schemi mostrano l'intera pagina, non la sola prima schermata. `[i]` rappresenta un'icona riconoscibile; `->` è un indicatore di apertura, non un comando distinto. Le cornici ASCII delimitano le sezioni: non prescrivono card con bordi o sfondi. Le righe reali vanno a capo liberamente, senza troncare nomi o descrizioni. Anche a 320 px rimane una sola colonna; la resa effettiva va verificata durante l'implementazione.
+Gli schemi mostrano l'intera pagina, non la sola prima schermata. `[img]` rappresenta una delle immagini già disponibili nel progetto; `->` è un indicatore di apertura, non un comando distinto. Le cornici ASCII delimitano le sezioni: non prescrivono card con bordi o sfondi. Le righe reali vanno a capo liberamente, senza troncare nomi o descrizioni. Anche a 320 px rimane una sola colonna; la resa effettiva va verificata durante l'implementazione.
+
+#### Immagini esistenti da riutilizzare
+
+L'utente ha approvato la struttura chiedendo espressamente **le immagini già presenti, non icone** per rappresentare gli strumenti. Le miniature sono accanto al testo, sia su desktop sia su mobile, in uno spazio regolare; conservano proporzioni e trasparenza senza ritagli. Non si generano nuove immagini e non si sostituiscono le illustrazioni con simboli generici. Il nome resta sempre visibile. Le icone delle azioni, come chiusura o ritorno, non sono oggetto di questa sostituzione.
+
+Mappatura verificata il 23 settembre 2026 nei file disponibili sotto `frontend/public` e negli abbinamenti di `frontend/src/app/profilo/page.tsx`:
+
+| Destinazione | Immagine esistente | Riscontro |
+| --- | --- | --- |
+| Attività | `/images/platform/bacheca-azioni.png` | Già abbinata nell'ingresso attuale. |
+| Calendario e diario | `/images/platform/linea-del-tempo.png` | Già abbinata nell'ingresso attuale. |
+| Taccuino | `/images/platform/su-di-me.png` | Già abbinata nell'ingresso attuale. |
+| Libretto | `/images/platform/libretto.png` | Già abbinata nell'ingresso attuale. |
+| Risultati e conversazioni | `/images/platform/compilazioni.png` | Già abbinata nell'ingresso attuale. |
+| Studiare da un PDF | `/images/intro/practice.png` | Già abbinata nell'ingresso attuale. |
+| Carte da ordinare | `/images/platform/carte-ordinare.png` | Già abbinata nell'ingresso attuale. |
+| Confrontare alternative | `/images/platform/confronto.png` | Già abbinata nell'ingresso attuale. |
+| Tavolo | `/images/platform/tavolo.png` | Già abbinata nell'ingresso attuale. |
+| Portfolio | `/images/platform/portfolio.png` | Già abbinata nell'ingresso attuale. |
+| Assegnazioni | `/images/platform/assegnazioni.png` | Già abbinata nell'ingresso attuale. |
+| Gruppi e classi | `/images/platform/classi.png` | Già abbinata nell'ingresso attuale. |
+| Orientamento | `/images/platform/bussola.png` | Già abbinata nell'ingresso attuale. |
+| Telegram | `/images/platform/telegram.png` | File presente; la voce attuale usa ancora `image: null`. |
+
+**Abbinamenti ancora da definire prima dell'implementazione:** Obiettivi, Cambiamenti e Flashcard. Per queste tre destinazioni non risulta un'immagine dedicata già abbinata nell'ingresso esaminato. La scelta va completata tra le immagini esistenti, verificandone pertinenza e coerenza visiva; non si assume che abbiano già un'immagine dedicata e non si introduce automaticamente un'icona sostitutiva. Questo dettaglio non riapre la struttura approvata in 0.2.
+
+La verifica svolta accerta percorsi e abbinamenti, non la resa delle miniature: leggibilità, dimensioni, trasparenza e tema scuro andranno verificati nel prototipo o nell'interfaccia implementata.
 
 #### Interazioni e stati
 
-- **Aprire uno strumento:** icona, nome e descrizione formano un unico collegamento. Nessun secondo pulsante «Apri» ripetuto nelle 17 voci. Tutte le destinazioni sono disponibili anche senza questionari, obiettivi o contenuti personali già salvati, nel rispetto degli accessi esistenti.
+- **Aprire uno strumento:** immagine, nome e descrizione formano un unico collegamento. Nessun secondo pulsante «Apri» ripetuto nelle 17 voci. Tutte le destinazioni sono disponibili anche senza questionari, obiettivi o contenuti personali già salvati, nel rispetto degli accessi esistenti.
 - **Riprendere un lavoro:** il riepilogo precede i gruppi e resta breve. Tipo e titolo rendono distinguibili attività e assegnazioni. Il collegamento porta al contenuto preciso; niente classifiche AI, stato «non letto» o elenco di contenuti «recenti» senza una fonte affidabile. Le regole di selezione e ordinamento saranno definite nell'intervento sul riepilogo (lotto 2, F11), verificando i dati disponibili.
 - **Primo accesso o nessun elemento da riprendere:** omettere il riepilogo; il titolo e la frase di orientamento conducono subito agli strumenti. Nessun grande pannello vuoto e nessun invito obbligatorio a creare un obiettivo.
 - **Riepilogo in caricamento:** i collegamenti agli strumenti restano utilizzabili. Riservare al riepilogo uno spazio compatto per ridurre gli spostamenti durante il caricamento; nessun blocco a tutta pagina.
@@ -418,13 +445,13 @@ Gli schemi mostrano l'intera pagina, non la sola prima schermata. `[i]` rapprese
 
 #### Regole visive e criteri di validazione
 
-- Riutilizzare la larghezza `page-wide`, la tipografia Bricolage Grotesque per il titolo e Inter per il testo, i token petrol e i neutri di `docs/design.md`. Nessun nuovo colore per ciascun gruppo o strumento; le icone aiutano il riconoscimento insieme ai nomi. Nessuna nuova animazione decorativa.
+- Riutilizzare la larghezza `page-wide`, la tipografia Bricolage Grotesque per il titolo e Inter per il testo, i token petrol e i neutri di `docs/design.md`. Nessun nuovo colore per ciascun gruppo o strumento; le immagini esistenti aiutano il riconoscimento insieme ai nomi. Nessuna nuova animazione decorativa.
 - Un solo titolo principale; i cinque titoli di gruppo sono intestazioni di sezione. Separazione attraverso spazio e divisori discreti; nessuna grande illustrazione prima degli accessi operativi.
-- Tutta la riga è attivabile, con area di tocco almeno 44 px in altezza e focus visibile. Ordine di lettura e tastiera uguale all'ordine visivo. Icone decorative escluse dal nome accessibile quando il nome dello strumento è già presente.
+- Tutta la riga è attivabile, con area di tocco almeno 44 px in altezza e focus visibile. Ordine di lettura e tastiera uguale all'ordine visivo. Immagini decorative con testo alternativo vuoto quando il nome dello strumento è già presente nello stesso collegamento.
 - Il riepilogo contiene al massimo tre elementi sia su desktop sia su mobile. Su mobile si accetta lo scorrimento della pagina; non si aggiungono caroselli, scorrimenti interni o sezioni chiuse per nascondere destinazioni.
 - Verificare dopo l'implementazione: 17 destinazioni uniche, tutte le descrizioni approvate, Cambiamenti autonomo, Portfolio nel proprio gruppo, primo accesso senza dati, ritorno con riepilogo, errore locale con riprova, tastiera, temi chiaro/scuro, zoom e sei lingue. La riduzione di altezza rispetto all'audit è un obiettivo da misurare, non un risultato già dimostrato.
 
-**Decisione da validare per chiudere 0.2:** riepilogo breve prima dei cinque gruppi sempre aperti; gruppi a larghezza intera con collegamenti su due colonne desktop e una mobile. Gli schemi non autorizzano ancora la generazione del codice UI.
+**Decisione approvata per chiudere 0.2:** riepilogo breve prima dei cinque gruppi sempre aperti; gruppi a larghezza intera con collegamenti su due colonne desktop e una mobile. Ogni voce usa un'immagine esistente accanto al nome e alla descrizione. L'approvazione chiude la progettazione dell'ingresso; l'implementazione applicativa resta un intervento successivo.
 
 ### 5.2 Obiettivi — `/profilo/obiettivi`
 
@@ -761,8 +788,8 @@ Si affronta un solo intervento alla volta. La chiusura di un punto di pianificaz
 | Punto | Decisione | Stato | Criterio di chiusura |
 | --- | --- | --- | --- |
 | 0.1 | Nomi e raggruppamento degli strumenti | **Approvato e registrato — 23 settembre 2026** | Cinque gruppi, 17 destinazioni oltre all'ingresso, nomi e descrizioni definiti in §4; Portfolio autonomo e Cambiamenti allo stesso livello di Taccuino e Libretto |
-| 0.2 | Schema ASCII dell'ingresso | **Proposta pronta — da validare (§5.1)** | Schema desktop/mobile coerente con 0.1, con gerarchia e accesso a tutti gli strumenti validati |
-| 0.3 | Schema della testata e navigazione comune | Da discutere dopo 0.2 | Titolo, azione principale, ritorno e accesso alle altre pagine validati |
+| 0.2 | Schema ASCII dell'ingresso | **Approvato e registrato — 23 settembre 2026 (§5.1)** | Riepilogo breve, cinque gruppi aperti, due colonne desktop e una mobile; immagini esistenti accanto a nome e descrizione. Tre abbinamenti immagini da completare prima dell’implementazione |
+| 0.3 | Schema della testata e navigazione comune | **Prossimo da discutere** | Titolo, azione principale, ritorno e accesso alle altre pagine validati |
 
 Gli schemi specifici di Libretto, Assegnazioni e delle altre pagine saranno validati prima dei rispettivi interventi. Nessuno schema successivo è approvato per effetto della chiusura di 0.1.
 
