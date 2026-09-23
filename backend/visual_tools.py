@@ -42,6 +42,7 @@ class Card(Item):
 class CardDeck(StrictModel):
     id: Identifier
     title: str = Field(min_length=1, max_length=100)
+    card_columns: list[CardColumn] = Field(default_factory=list, max_length=8)
 
 
 class CardColumn(StrictModel):
@@ -160,14 +161,27 @@ class Workspace(StrictModel):
             raise ValueError('Duplicate card columns')
         if len({deck.id for deck in self.card_decks}) != len(self.card_decks):
             raise ValueError('Duplicate card decks')
+        # Validate deck-level columns
+        deck_columns_map = {}
+        for deck in self.card_decks:
+            if len({column.id for column in deck.card_columns}) != len(deck.card_columns):
+                raise ValueError('Duplicate card columns in deck')
+            for column in deck.card_columns:
+                if not column.label and column.id not in CARD_COLUMN_LABELS['en']:
+                    raise ValueError('Custom card columns need a label')
+            if deck.card_columns:
+                deck_columns_map[deck.id] = deck.card_columns
+
         # Empty card_columns means the default set (localized preset labels).
         # Custom columns must carry the student's own label.
         for column in self.card_columns:
             if not column.label and column.id not in CARD_COLUMN_LABELS['en']:
                 raise ValueError('Custom card columns need a label')
-        columns = self.card_columns or DEFAULT_CARD_COLUMNS
+        default_columns = self.card_columns or DEFAULT_CARD_COLUMNS
         for card in self.cards:
-            if card.bucket not in {column.id for column in columns}:
+            deck_cols = deck_columns_map.get(card.deck_id) if card.deck_id else None
+            valid_cols = deck_cols if deck_cols is not None else default_columns
+            if card.bucket not in {column.id for column in valid_cols}:
                 raise ValueError('Unknown card column')
         if self.card_decks:
             deck_ids = {d.id for d in self.card_decks}
@@ -330,6 +344,10 @@ def workspace_sections(workspace: dict, language: str) -> list[tuple[str, list[s
     if w.cards:
         card_labels = CARD_COLUMN_LABELS.get((language or 'en')[:2], CARD_COLUMN_LABELS['en'])
         column_labels = {column.id: column.label for column in w.card_columns}
+        for deck in w.card_decks:
+            for column in deck.card_columns:
+                if column.id not in column_labels or column.label:
+                    column_labels[column.id] = column.label
         sections.append((labels[6], [f'{column_labels.get(c.bucket) or card_labels.get(c.bucket, c.bucket)}: {c.text}'
             + (f'\n{labels[14]}: {c.source}' if c.source else '') for c in w.cards]))
     if w.comparison.options:

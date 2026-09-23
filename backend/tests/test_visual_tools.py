@@ -79,6 +79,23 @@ def test_custom_card_columns_roundtrip_and_pdf(db):
     assert dict(workspace_sections(default.model_dump(), 'en'))['Cards'] == ['Fits me: x']
 
 
+def test_deck_specific_card_columns_and_pdf(db):
+    custom_deck = Workspace.model_validate({
+        'card_decks': [
+            {'id': 'deck_custom', 'title': 'Mazzo Obiettivi', 'card_columns': [{'id': 'col_1', 'label': 'Obiettivo'}, {'id': 'col_2', 'label': 'Azione'}]}
+        ],
+        'cards': [
+            {'id': 'c1', 'text': 'Superare esame', 'bucket': 'col_1', 'deck_id': 'deck_custom'}
+        ]
+    })
+    saved = save_workspace(db, 'visual-a', 'alice', SaveWorkspace(revision=0, workspace=custom_deck))
+    db.expire_all()
+    assert load_workspace(db, 'visual-a', 'alice') == saved
+    sections = dict(workspace_sections(saved['workspace'], 'it'))
+    assert 'Obiettivo: Superare esame' in sections['Carte']
+
+
+
 def test_endpoints_enforce_ownership_and_restore_after_retry(db):
     app = FastAPI()
     app.include_router(router)
