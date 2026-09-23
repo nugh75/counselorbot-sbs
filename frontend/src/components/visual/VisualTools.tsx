@@ -10,6 +10,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
 import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 import { visualLabel } from '@/lib/i18n-visual-tools';
+import { NewDeckDialog } from './NewDeckDialog';
 import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, type ActionStage, type CardColumn, type CardDeck, type SavedWorkspace, type VisualWorkspace, DEFAULT_DECK_ID } from '@/lib/visual-tools';
 import { validTimelineDates } from '@/lib/timeline-dates';
 import { BUILTIN_CARD_IMAGES, tavoloImageUrl } from '@/lib/tavolo-images';
@@ -72,6 +73,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [cardSource, setCardSource] = useState('');
     const [draftCardImage, setDraftCardImage] = useState('');
     const [pickingImageCardId, setPickingImageCardId] = useState<string | null>(null);
+    const [deckDialogOpen, setDeckDialogOpen] = useState(false);
     const [criterion, setCriterion] = useState('');
     const [option, setOption] = useState('');
     const [optionSource, setOptionSource] = useState('');
@@ -366,12 +368,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                             className={`${buttonClass} bg-white`}
                                             aria-label={l('newDeck')}
                                             disabled={decks.length >= 20}
-                                            onClick={() => {
-                                                const title = window.prompt(l('deckName'));
-                                                if (title?.trim()) {
-                                                    edit(addCardDeck(work, title.trim(), l('mainDeck')));
-                                                }
-                                            }}
+                                            onClick={() => setDeckDialogOpen(true)}
                                         >
                                             <FolderPlus className="h-4 w-4 text-indigo-700" aria-hidden="true" />
                                         </Button>
@@ -602,6 +599,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                     </div>
                 </footer>}
             </section>
+            <NewDeckDialog open={deckDialogOpen} locale={locale} onCancel={() => setDeckDialogOpen(false)} onCreate={(title, columns) => { edit(addCardDeck(work, title, l('mainDeck'), [], columns)); setDeckDialogOpen(false); }} />
         </div>, document.body)}
 
         {/* Modal picker for card illustrations */}

@@ -95,6 +95,27 @@ def test_deck_specific_card_columns_and_pdf(db):
     assert 'Obiettivo: Superare esame' in sections['Carte']
 
 
+def test_flashcard_deck_keeps_localized_labels(db):
+    # The creation dialog sends empty labels for the fixed flashcard columns:
+    # they resolve through CARD_COLUMN_LABELS in every language.
+    flash = Workspace.model_validate({
+        'card_decks': [
+            {'id': 'deck_flash', 'title': 'Vocabolario', 'card_columns': [{'id': 'fronte'}, {'id': 'retro'}]}
+        ],
+        'cards': [
+            {'id': 'c1', 'text': 'maison', 'bucket': 'fronte', 'deck_id': 'deck_flash'},
+            {'id': 'c2', 'text': 'casa', 'bucket': 'retro', 'deck_id': 'deck_flash'}
+        ]
+    })
+    saved = save_workspace(db, 'visual-a', 'alice', SaveWorkspace(revision=0, workspace=flash))
+    db.expire_all()
+    assert load_workspace(db, 'visual-a', 'alice') == saved
+    sections = dict(workspace_sections(saved['workspace'], 'it'))
+    assert 'Fronte: maison' in sections['Carte']
+    assert 'Retro: casa' in sections['Carte']
+    assert 'Front: maison' in dict(workspace_sections(saved['workspace'], 'en'))['Cards']
+
+
 
 def test_endpoints_enforce_ownership_and_restore_after_retry(db):
     app = FastAPI()

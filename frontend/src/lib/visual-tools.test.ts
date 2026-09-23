@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, DEFAULT_DECK_ID } from './visual-tools.ts';
+import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, deckColumnsForType, DEFAULT_DECK_ID } from './visual-tools.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
 import { visualLabel } from './i18n-visual-tools.ts';
 
@@ -189,3 +189,30 @@ test('deck-specific card columns and customizable blank preset', () => {
     assert.equal(cardColumnsOf(w, DEFAULT_DECK_ID).length, 4);
 });
 
+
+test('deckColumnsForType builds the columns implied by the chosen deck type', () => {
+    // Flashcard: always the two fixed columns, localized when the name is empty
+    const flash = deckColumnsForType('flashcard', 5, ['', '']);
+    assert.deepEqual(flash.map(c => c.id), ['fronte', 'retro']);
+    assert.equal(flash[0].label, '');
+    assert.equal(flash[1].label, '');
+
+    // Kanban: the three preset stages, custom labels only when renamed
+    const kanban = deckColumnsForType('kanban', 4, ['Da fare', '', 'Finito']);
+    assert.deepEqual(kanban.map(c => c.id), ['card_todo', 'card_doing', 'card_done']);
+    assert.equal(kanban[0].label, 'Da fare');
+    assert.equal(kanban[1].label, '');
+    assert.equal(kanban[2].label, 'Finito');
+
+    // Table: the requested count (clamped to 2–8) with the student's names
+    const table = deckColumnsForType('table', 3, ['Fonte', 'Autore', 'Esito']);
+    assert.deepEqual(table.map(c => c.id), ['col_1', 'col_2', 'col_3']);
+    assert.equal(table[0].label, 'Fonte');
+
+    // Count is clamped: below 2 becomes 2, above 8 becomes 8
+    assert.equal(deckColumnsForType('table', 1, []).length, 2);
+    assert.equal(deckColumnsForType('table', 20, []).length, 8);
+    // Ids stay unique within the deck
+    const clamped = deckColumnsForType('table', 8, []);
+    assert.equal(new Set(clamped.map(c => c.id)).size, 8);
+});
