@@ -40,8 +40,8 @@ const tabIcons: Record<Tab, typeof LayoutList> = {
     board: LayoutList, comparison: Columns3, cards: Layers, timeline: GitCommitHorizontal,
 };
 const isWorkTab = (tab: Tab): tab is WorkTab => workTabs.includes(tab as WorkTab);
-const columnsMatch = (w: VisualWorkspace, preset: CardColumn[]): boolean => {
-    const columns = cardColumnsOf(w);
+const columnsMatch = (w: VisualWorkspace, preset: CardColumn[], deckId?: string | null): boolean => {
+    const columns = cardColumnsOf(w, deckId);
     return columns.length === preset.length && columns.every((column, index) => column.id === preset[index].id);
 };
 
@@ -369,16 +369,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                             onClick={() => {
                                                 const title = window.prompt(l('deckName'));
                                                 if (title?.trim()) {
-                                                    const populate = window.confirm(`${l('deckWithCards')}?\n(${BUILTIN_CARD_IMAGES.length} carte con illustrazioni e spunti)`);
-                                                    if (populate) {
-                                                        const initial = BUILTIN_CARD_IMAGES.map(img => ({
-                                                            text: `${img.name}: ${img.usage}`,
-                                                            image: img.id,
-                                                        }));
-                                                        edit(addCardDeck(work, title.trim(), l('mainDeck'), initial));
-                                                    } else {
-                                                        edit(addCardDeck(work, title.trim(), l('mainDeck')));
-                                                    }
+                                                    edit(addCardDeck(work, title.trim(), l('mainDeck')));
                                                 }
                                             }}
                                         >
@@ -421,73 +412,76 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                                <label className="text-sm">{l('cardColumns')}<select aria-label={l('cardColumns')} value={cardColumnPresets.some(p => columnsMatch(work, p.columns)) ? cardColumnPresets.find(p => columnsMatch(work, p.columns))!.key : 'custom'} className={`${inputClass} mt-1 min-h-[44px] max-w-56`} onChange={e => {
-                                    const preset = cardColumnPresets.find(p => p.key === e.target.value);
-                                    if (preset) edit(setCardColumns(work, preset.columns.map(c => ({ id: c.id }))));
-                                }}>
-                                    {cardColumnPresets.map(p => <option key={p.key} value={p.key}>{l(p.key)}</option>)}
-                                    <option value="custom" disabled>{l('cardColumnsCustom')}</option>
-                                </select></label>
-                                <form className="flex items-end gap-2" onSubmit={event => { event.preventDefault(); if (!columnName.trim() || columnName.length > 100) return; edit(addCardColumn(work, columnName.trim())); setColumnName(''); }}>
-                                    <label className="text-sm">{l('columnName')}<input required maxLength={100} value={columnName} className={`${inputClass} mt-1 max-w-52`} onChange={e => setColumnName(e.target.value)} /></label>
-                                    <Tooltip content={l('addColumn')}><Button aria-label={l('addColumn')} type="submit" className={buttonClass} disabled={columns.length >= 8}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                                </form>
-                                {columns.length >= 8 && <p role="status" className="text-sm text-slate-600">{l('limit')}</p>}
-                            </div>
-                            <details open={!activeDeckCards.length || Boolean(draftCard)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addCard')}</summary>
-                            <form className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!draftCard.trim() || draftCard.length > 600 || work.cards.length >= 30) return;
-                                edit({ ...work, cards: [...work.cards, { id: crypto.randomUUID(), text: draftCard.trim(), bucket: columns[0].id, source: cardSource, image: draftCardImage || null, deck_id: activeDeckId }] }); setDraftCard(''); setCardSource(''); setDraftCardImage(''); }}>
-                                <label className="block text-sm font-medium">{l('cardText')}<textarea required maxLength={600} rows={3} value={draftCard} onChange={e => setDraftCard(e.target.value)} className={`${inputClass} mt-1`} /></label>
-                                <div className="block text-sm font-medium text-slate-700">
-                                    <span className="mb-1 block">{l('cardImage') || 'Illustrazione (opzionale)'}</span>
-                                    {draftCardImage ? (
-                                        <div className="flex items-center gap-3">
+                            {(() => {
+                                const currentDeckCols = cardColumnsOf(work, activeDeckId);
+                                return <>
+                                <div className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                    <label className="text-sm">{l('cardColumns')}<select aria-label={l('cardColumns')} value={cardColumnPresets.some(p => columnsMatch(work, p.columns, activeDeckId)) ? cardColumnPresets.find(p => columnsMatch(work, p.columns, activeDeckId))!.key : 'custom'} className={`${inputClass} mt-1 min-h-[44px] max-w-56`} onChange={e => {
+                                        const preset = cardColumnPresets.find(p => p.key === e.target.value);
+                                        if (preset) edit(setCardColumns(work, preset.columns.map(c => ({ id: c.id, label: c.label })), activeDeckId));
+                                    }}>
+                                        {cardColumnPresets.map(p => <option key={p.key} value={p.key}>{l(p.key)}</option>)}
+                                        <option value="custom" disabled>{l('cardColumnsCustom')}</option>
+                                    </select></label>
+                                    <form className="flex items-end gap-2" onSubmit={event => { event.preventDefault(); if (!columnName.trim() || columnName.length > 100) return; edit(addCardColumn(work, columnName.trim(), activeDeckId)); setColumnName(''); }}>
+                                        <label className="text-sm">{l('columnName')}<input required maxLength={100} value={columnName} className={`${inputClass} mt-1 max-w-52`} onChange={e => setColumnName(e.target.value)} /></label>
+                                        <Tooltip content={l('addColumn')}><Button aria-label={l('addColumn')} type="submit" className={buttonClass} disabled={currentDeckCols.length >= 8}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                    </form>
+                                    {currentDeckCols.length >= 8 && <p role="status" className="text-sm text-slate-600">{l('limit')}</p>}
+                                </div>
+                                <details open={!activeDeckCards.length || Boolean(draftCard)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addCard')}</summary>
+                                <form className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!draftCard.trim() || draftCard.length > 600 || work.cards.length >= 30) return;
+                                    edit({ ...work, cards: [...work.cards, { id: crypto.randomUUID(), text: draftCard.trim(), bucket: currentDeckCols[0].id, source: cardSource, image: draftCardImage || null, deck_id: activeDeckId }] }); setDraftCard(''); setCardSource(''); setDraftCardImage(''); }}>
+                                    <label className="block text-sm font-medium">{l('cardText')}<textarea required maxLength={600} rows={3} value={draftCard} onChange={e => setDraftCard(e.target.value)} className={`${inputClass} mt-1`} /></label>
+                                    <div className="block text-sm font-medium text-slate-700">
+                                        <span className="mb-1 block">{l('cardImage') || 'Illustrazione (opzionale)'}</span>
+                                        {draftCardImage ? (
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPickingImageCardId('draft')}
+                                                    className="flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-1 hover:border-indigo-400 hover:bg-indigo-50/30"
+                                                    title={l('changeImage')}
+                                                >
+                                                    <img src={tavoloImageUrl(draftCardImage)} alt="" className="max-h-full max-w-full object-contain" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDraftCardImage('')}
+                                                    className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50 hover:text-red-600"
+                                                >
+                                                    <X className="h-3.5 w-3.5" aria-hidden="true" />
+                                                    {l('removeImage')}
+                                                </button>
+                                            </div>
+                                        ) : (
                                             <button
                                                 type="button"
                                                 onClick={() => setPickingImageCardId('draft')}
-                                                className="flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-1 hover:border-indigo-400 hover:bg-indigo-50/30"
-                                                title={l('changeImage')}
+                                                className="inline-flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:border-indigo-400 hover:text-indigo-700"
                                             >
-                                                <img src={tavoloImageUrl(draftCardImage)} alt="" className="max-h-full max-w-full object-contain" />
+                                                <ImageIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                                                + {l('addImage')}
                                             </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setDraftCardImage('')}
-                                                className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50 hover:text-red-600"
-                                            >
-                                                <X className="h-3.5 w-3.5" aria-hidden="true" />
-                                                {l('removeImage')}
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() => setPickingImageCardId('draft')}
-                                            className="inline-flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:border-indigo-400 hover:text-indigo-700"
-                                        >
-                                            <ImageIcon className="h-4 w-4 text-slate-400" aria-hidden="true" />
-                                            + {l('addImage')}
-                                        </button>
-                                    )}
-                                </div>
-                                <p className="text-xs text-slate-600">{draftCard.length}/600 · {l('source')}: {cardSource || l('personal')}</p>
-                                <Tooltip content={l('addCard')}><Button aria-label={l('addCard')} type="submit" className={buttonClass} disabled={draftCard.length > 600 || work.cards.length >= 30}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                                {(draftCard.length > 600 || work.cards.length >= 30) && <p role="status">{l('limit')}</p>}
-                            </form></details>
-                            {!activeDeckCards.length && <p className="py-5 text-center text-slate-600">{l('emptyCards')}</p>}
-                            <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, 240px), 1fr))` }}>{columns.map(column => { const columnTitle = cardColumnLabel(work, column, l); const colCards = activeDeckCards.filter(c => c.bucket === column.id); return <section key={column.id} aria-label={columnTitle} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                                <div className="mb-3 flex items-start justify-between gap-1">
-                                    <h3 className="min-w-0 break-words font-semibold">{columnTitle} <span className="font-mono text-sm text-slate-500">{colCards.length}</span></h3>
-                                    <div className="flex shrink-0">
-                                        <Tooltip content={l('renameColumn')}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('renameColumn')}: ${columnTitle}`} onClick={() => {
-                                            const name = window.prompt(l('renameColumn'), column.label || undefined);
-                                            if (name?.trim()) edit(renameCardColumn(work, column.id, name.trim().slice(0, 100)));
-                                        }}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                                        {columns.length > 1 && removeButton(columnTitle, () => edit(removeCardColumn(work, column.id)))}
+                                        )}
                                     </div>
-                                </div>
-                                <div className="space-y-3">{colCards.map(card => <article key={card.id} className="group/card flex flex-col overflow-hidden rounded-xl border border-indigo-200/90 bg-white shadow-sm transition-shadow hover:shadow-md">
+                                    <p className="text-xs text-slate-600">{draftCard.length}/600 · {l('source')}: {cardSource || l('personal')}</p>
+                                    <Tooltip content={l('addCard')}><Button aria-label={l('addCard')} type="submit" className={buttonClass} disabled={draftCard.length > 600 || work.cards.length >= 30}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                    {(draftCard.length > 600 || work.cards.length >= 30) && <p role="status">{l('limit')}</p>}
+                                </form></details>
+                                {!activeDeckCards.length && <p className="py-5 text-center text-slate-600">{l('emptyCards')}</p>}
+                                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, 240px), 1fr))` }}>{currentDeckCols.map(column => { const columnTitle = cardColumnLabel(work, column, l); const colCards = activeDeckCards.filter(c => c.bucket === column.id); return <section key={column.id} aria-label={columnTitle} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                    <div className="mb-3 flex items-start justify-between gap-1">
+                                        <h3 className="min-w-0 break-words font-semibold">{columnTitle} <span className="font-mono text-sm text-slate-500">{colCards.length}</span></h3>
+                                        <div className="flex shrink-0">
+                                            <Tooltip content={l('renameColumn')}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('renameColumn')}: ${columnTitle}`} onClick={() => {
+                                                const name = window.prompt(l('renameColumn'), column.label || undefined);
+                                                if (name?.trim()) edit(renameCardColumn(work, column.id, name.trim().slice(0, 100), activeDeckId));
+                                            }}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                            {currentDeckCols.length > 1 && removeButton(columnTitle, () => edit(removeCardColumn(work, column.id, activeDeckId)))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">{colCards.map(card => <article key={card.id} className="group/card flex flex-col overflow-hidden rounded-xl border border-indigo-200/90 bg-white shadow-sm transition-shadow hover:shadow-md">
                                     {card.image ? (
                                         <div
                                             role="button"
@@ -541,7 +535,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                                     className="h-8 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700 hover:bg-white"
                                                     onChange={e => { edit({ ...work, cards: work.cards.map(c => c.id === card.id ? { ...c, bucket: e.target.value } : c) }); focusMoved(`${id}-card-${card.id}`); }}
                                                 >
-                                                    {columns.map(b => <option key={b.id} value={b.id}>{cardColumnLabel(work, b, l)}</option>)}
+                                                    {currentDeckCols.map(b => <option key={b.id} value={b.id}>{cardColumnLabel(work, b, l)}</option>)}
                                                 </select>
                                                 {decks.length > 1 && (
                                                     <select
@@ -561,6 +555,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     </div>
                                 </article>)}</div>
                             </section>; })}</div>
+                            </>;
+                            })()}
                         </>;
                         })()}
                         {tab === 'comparison' && <>

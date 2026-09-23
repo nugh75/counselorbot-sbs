@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, DEFAULT_DECK_ID } from './visual-tools.ts';
+import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, DEFAULT_DECK_ID } from './visual-tools.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
 import { visualLabel } from './i18n-visual-tools.ts';
 
@@ -150,5 +149,43 @@ test('card decks support creation, switching, renaming, deletion and card migrat
     assert.equal(deckCards[0].image, 'card:focus_goal');
     assert.equal(deckCards[0].text, 'Riflessione iniziale');
     assert.equal(deckCards[1].image, 'card:recharge_pause');
+});
+
+test('deck-specific card columns and customizable blank preset', () => {
+    let w = emptyWorkspace();
+    // Default columns preset
+    const defaultCols = cardColumnsOf(w);
+    assert.equal(defaultCols.length, 4);
+
+    // Create a deck
+    w = addCardDeck(w, 'Mazzo Metodo');
+    const deckId = w.active_deck_id!;
+    assert.deepEqual(cardColumnsOf(w, deckId), defaultCols);
+
+    // Set custom columns for this deck using cardPresetBlank
+    const blankPreset = cardColumnPresets.find(p => p.key === 'cardPresetBlank')!;
+    assert.ok(blankPreset);
+    assert.equal(blankPreset.columns.length, 3);
+    assert.equal(blankPreset.columns[0].label, 'Colonna 1');
+
+    w = setCardColumns(w, blankPreset.columns, deckId);
+    assert.equal(cardColumnsOf(w, deckId).length, 3);
+    assert.equal(cardColumnsOf(w, deckId)[0].label, 'Colonna 1');
+
+    // Renaming a column in this deck
+    w = renameCardColumn(w, 'col_1', 'Punti di forza', deckId);
+    assert.equal(cardColumnsOf(w, deckId)[0].label, 'Punti di forza');
+
+    // Adding a column to this deck
+    w = addCardColumn(w, 'Prossimi passi', deckId);
+    assert.equal(cardColumnsOf(w, deckId).length, 4);
+    assert.equal(cardColumnsOf(w, deckId)[3].label, 'Prossimi passi');
+
+    // Removing a column from this deck
+    w = removeCardColumn(w, 'col_2', deckId);
+    assert.equal(cardColumnsOf(w, deckId).length, 3);
+
+    // Other deck (default) remains unaffected
+    assert.equal(cardColumnsOf(w, DEFAULT_DECK_ID).length, 4);
 });
 
