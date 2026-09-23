@@ -191,7 +191,6 @@ test('deck-specific card columns and customizable blank preset', () => {
 test('each deck type preset fixes its column ids and keeps labels localizable', () => {
     // Every preset carries preset-style ids, so empty labels resolve through
     // the localized column dictionary in every language.
-    assert.deepEqual(deckTypeColumns.flashcard.map(c => c.id), ['fronte', 'retro']);
     assert.deepEqual(deckTypeColumns.kanban.map(c => c.id), ['card_todo', 'card_doing', 'card_done']);
     assert.deepEqual(deckTypeColumns.reflection.map(c => c.id), ['unsorted', 'yes', 'explore', 'no']);
     assert.deepEqual(deckTypeColumns.exploration.map(c => c.id), ['to_explore', 'explored', 'reflecting']);

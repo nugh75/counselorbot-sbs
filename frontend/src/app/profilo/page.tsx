@@ -30,7 +30,7 @@ import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
     ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
-    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, LayoutList, Layers, Columns3,
+    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, LayoutList, Layers, Columns3, GraduationCap,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -47,7 +47,7 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-type PersonalSection = 'assignments' | 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo';
+type PersonalSection = 'assignments' | 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo' | 'flashcards';
 
 const PERSONAL_AREAS = [
     { id: 'assignments', slug: 'assegnazioni', icon: ClipboardList, image: '/images/platform/assegnazioni.png', titleKey: 'received', descriptionKey: 'intro' },
@@ -106,6 +106,14 @@ const PERSONAL_AREAS = [
         image: '/images/platform/linea-del-tempo.png',
         titleKey: 'timeline',
         descriptionKey: 'timelinePurpose',
+    },
+    {
+        id: 'flashcards',
+        slug: 'flashcard',
+        icon: GraduationCap,
+        image: null,
+        titleKey: 'profile.area.flashcards.title',
+        descriptionKey: 'profile.area.flashcards.description',
     },
     {
         id: 'sessions',
@@ -502,7 +510,7 @@ export default function ProfilePage() {
                     <JourneyOverview />
                     {([
                         ['understand', ['notebook', 'booklet', 'sessions']],
-                        ['explore', ['tavolo']],
+                        ['explore', ['tavolo', 'flashcards']],
                         ['document', ['timeline', 'portfolio']],
                         ['support', ['assignments', 'groups', 'orientation', 'telegram']],
                     ] as [GoalTextKey, string[]][]).map(([group, ids]) => <section key={group} className="space-y-3">

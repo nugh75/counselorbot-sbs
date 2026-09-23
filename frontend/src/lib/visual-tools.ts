@@ -37,11 +37,11 @@ export const emptyWorkspace = (): VisualWorkspace => ({ actions: [], cards: [], 
 export const DEFAULT_DECK_ID = 'default';
 
 /** Deck presets offered by the creation dialog; each fixes its column set
-    (empty labels keep the localized preset name, renamable after creation). */
-export type DeckType = 'flashcard' | 'kanban' | 'reflection' | 'exploration' | 'prosCons' | 'questions';
+    (empty labels keep the localized preset name, renamable after creation).
+    Flashcards moved to their own dedicated tool (/profilo/flashcard). */
+export type DeckType = 'kanban' | 'reflection' | 'exploration' | 'prosCons' | 'questions';
 
 export const deckTypeColumns: Record<DeckType, CardColumn[]> = {
-    flashcard: [{ id: 'fronte' }, { id: 'retro' }],
     kanban: [{ id: 'card_todo' }, { id: 'card_doing' }, { id: 'card_done' }],
     reflection: [{ id: 'unsorted' }, { id: 'yes' }, { id: 'explore' }, { id: 'no' }],
     exploration: [{ id: 'to_explore' }, { id: 'explored' }, { id: 'reflecting' }],

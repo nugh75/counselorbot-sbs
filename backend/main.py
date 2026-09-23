@@ -95,6 +95,7 @@ from .routes import diagram as diagram_routes
 from .routes import tavolo as tavolo_routes
 from .routes import tavolo_images as tavolo_images_routes
 from .routes import visual_tools as visual_tools_routes
+from .routes import flashcards as flashcards_routes
 from .routes import institutions as institutions_routes
 from .routes import orientation_referrals as orientation_referrals_routes
 
@@ -1865,6 +1866,7 @@ app.include_router(diagram_routes.router)
 app.include_router(tavolo_routes.router)
 app.include_router(tavolo_images_routes.router)
 app.include_router(visual_tools_routes.router)
+app.include_router(flashcards_routes.router)
 app.include_router(administration_plans_routes.router)
 app.include_router(assistant_questions_routes.router)
 app.include_router(rag_docs_routes.router)

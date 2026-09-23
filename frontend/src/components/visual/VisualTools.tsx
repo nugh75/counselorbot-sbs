@@ -226,7 +226,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
             </Button>
         </Tooltip>}
         {open && createPortal(<div className={embedded ? 'page-narrow flex flex-col p-4 pt-0' : 'fixed inset-0 z-[85] flex bg-white'}>
-            <section ref={dialog} role={embedded ? 'region' : 'dialog'} aria-modal={embedded ? undefined : true} aria-labelledby={`${id}-title`} className={embedded ? 'flex w-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm' : 'flex h-full w-full min-w-0 flex-col overflow-hidden bg-white'}>
+            <section ref={dialog} role="dialog" aria-modal={embedded ? undefined : true} aria-labelledby={`${id}-title`} className={embedded ? 'flex w-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm' : 'flex h-full w-full min-w-0 flex-col overflow-hidden bg-white'}>
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
                     <div className="flex items-start gap-3">
                         {pageBackHref && <PreviousPageButton

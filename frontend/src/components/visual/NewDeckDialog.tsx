@@ -1,21 +1,19 @@
 'use client';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Columns3, Compass, Layers, MessageCircleQuestion, Scale, SquareKanban, X } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Columns3, Compass, Layers, MessageCircleQuestion, Scale, SquareKanban, X } from 'lucide-react';import { Button } from '@/components/ui/Button';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { deckTypeColumns, type CardColumn, type DeckType } from '@/lib/visual-tools';
 
 const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
 const typeIcons: Record<DeckType, typeof Layers> = {
-    flashcard: Layers,
     kanban: SquareKanban,
     reflection: Columns3,
     exploration: Compass,
     prosCons: Scale,
     questions: MessageCircleQuestion,
 };
-const deckTypes: DeckType[] = ['flashcard', 'kanban', 'reflection', 'exploration', 'prosCons', 'questions'];
+const deckTypes: DeckType[] = ['kanban', 'reflection', 'exploration', 'prosCons', 'questions'];
 
 type Props = {
     open: boolean;
@@ -31,12 +29,12 @@ export function NewDeckDialog({ open, locale, onCancel, onCreate }: Props) {
     const id = useId();
     const nameRef = useRef<HTMLInputElement>(null);
     const [name, setName] = useState('');
-    const [type, setType] = useState<DeckType>('flashcard');
+    const [type, setType] = useState<DeckType>('reflection');
 
     useEffect(() => {
         if (!open) return;
         setName('');
-        setType('flashcard');
+        setType('reflection');
         nameRef.current?.focus();
         const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onCancel(); };
         window.addEventListener('keydown', onKey);
