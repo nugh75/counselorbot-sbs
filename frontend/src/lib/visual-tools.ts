@@ -123,20 +123,6 @@ export function setActiveCardDeck(w: VisualWorkspace, id: string): VisualWorkspa
     return { ...w, active_deck_id: id };
 }
 
-/** Moves a single card to another deck. */
-export function moveCardToDeck(w: VisualWorkspace, cardId: string, deckId: string): VisualWorkspace {
-    const targetCols = cardColumnsOf(w, deckId);
-    const fallbackCol = targetCols[0]?.id || 'unsorted';
-    return {
-        ...w,
-        cards: w.cards.map(c => {
-            if (c.id !== cardId) return c;
-            const validBucket = targetCols.some(col => col.id === c.bucket) ? c.bucket : fallbackCol;
-            return { ...c, deck_id: deckId, bucket: validBucket };
-        }),
-    };
-}
-
 /** Returns cards belonging to a given deck (cards with no deck_id belong to DEFAULT_DECK_ID). */
 export function cardsInDeck(w: VisualWorkspace, deckId: string): ReflectionCard[] {
     return w.cards.filter(c => (c.deck_id || DEFAULT_DECK_ID) === deckId);

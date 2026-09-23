@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, deckTypeColumns, DEFAULT_DECK_ID } from './visual-tools.ts';
+import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, cardsInDeck, deckTypeColumns, DEFAULT_DECK_ID } from './visual-tools.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
 import { visualLabel } from './i18n-visual-tools.ts';
 
@@ -119,10 +119,8 @@ test('card decks support creation, switching, renaming, deletion and card migrat
     // Cards in new deck should currently be empty
     assert.equal(cardsInDeck(w, newDeckId).length, 0);
 
-    // Move c1 to new deck
-    w = moveCardToDeck(w, 'c1', newDeckId);
-    assert.equal(cardsInDeck(w, newDeckId).length, 1);
-    assert.equal(cardsInDeck(w, DEFAULT_DECK_ID).length, 0);
+    // Cards never move between decks; the card stays in its own deck
+    assert.deepEqual(cardsInDeck(w, DEFAULT_DECK_ID).map(c => c.id), ['c1']);
 
     // Rename deck
     w = renameCardDeck(w, newDeckId, 'Esami sessione estiva', 'Mazzo principale');
@@ -132,11 +130,11 @@ test('card decks support creation, switching, renaming, deletion and card migrat
     w = setActiveCardDeck(w, DEFAULT_DECK_ID);
     assert.equal(activeDeckIdOf(w), DEFAULT_DECK_ID);
 
-    // Remove the new deck: card c1 should safely migrate back to default deck
+    // Remove the new deck: it disappears while the default deck keeps its card
     w = removeCardDeck(w, newDeckId, 'Mazzo principale');
     assert.equal(w.card_decks?.length, 1);
     assert.equal(cardsInDeck(w, DEFAULT_DECK_ID).length, 1);
-    assert.equal(w.cards[0].deck_id, DEFAULT_DECK_ID);
+    assert.notEqual(w.cards[0].deck_id, newDeckId);
 
     // Add deck with initialCards preset
     w = addCardDeck(w, 'Mazzo Illustrato', 'Mazzo principale', [
