@@ -403,6 +403,111 @@ appuntamenti e mostrarle come filtri nella pagina Orientamento degli studenti.
 Questo evita di pubblicare categorie scollegate dai contenuti durante il lavoro
 sul configuratore. Nessuna modifica applicativa è inclusa in questa proposta.
 
+#### 0.3.2.3 — Proposta: categorie dei contenuti e filtri studenti
+
+**Stato: proposta operativa; struttura da validare prima del codice.**
+Il punto 0.3.2.2 è completato. Questo intervento collega il suo elenco ai
+contenuti già presenti, con due superfici coordinate e una sola consegna.
+
+##### A. Assegnazione da parte dei docenti
+
+Nella stessa pagina `/docente/orientamento`, sotto l’elenco delle categorie,
+aggiungere **Contatti e appuntamenti**, con due sezioni richiudibili.
+Mostrare i contenuti attivi e certificati dell’istituto selezionato; per gli
+appuntamenti escludere quelli già conclusi. Nessun accesso alle bozze tramite
+questa nuova funzione. Il docente assegna zero, una o più categorie del proprio
+istituto; titolo, recapiti, date e certificazione restano gestiti come oggi.
+
+```text
+← Area docente
+[immagine Bussola] Orientamento dell’istituto
+Istituto: nome / selettore già presente
+
+Categorie                         [+ Nuova categoria]
+... elenco già realizzato ...
+
+Contatti e appuntamenti
+▸ Contatti (3)
+▾ Appuntamenti (2)
+  Titolo dell’appuntamento                    [⋯]
+  Data · categorie assegnate / Nessuna categoria
+
+  Categorie dell’appuntamento
+  [✓] Nome scelto dall’istituto
+  [ ] Altro nome scelto dall’istituto
+                            [Annulla] [Salva]
+```
+
+Il menu a tre punti offre **Assegna categorie**. Un solo modulo di modifica
+aperto nell’intera pagina; cambio contenuto, istituto o uscita conservano la
+protezione delle bozze. Salvataggio esplicito, errore con selezione conservata,
+conflitto con ricarica prima del nuovo tentativo. Se non ci sono categorie
+attive, spiegare che vanno create nell’elenco sopra, senza comandi inutili.
+Le associazioni archiviate restano registrate ma non selezionabili; un
+salvataggio delle categorie attive non deve cancellarle implicitamente.
+
+##### B. Consultazione da parte degli studenti
+
+Sostituire i filtri basati su `needs` in `OrientationDirectoryCard` con le
+categorie attive associate ai contenuti effettivamente visibili. Restano i
+controlli attuali su certificazione, stato, pubblico, lingua e scadenza.
+
+```text
+← Area personale
+[immagine esistente] Orientamento
+
+Istituto: nome dell’istituto
+[Tutti] [Categoria A] [Categoria B]
+
+Appuntamenti
+... contenuti corrispondenti ...
+Contatti
+... contenuti corrispondenti ...
+
+Risorse nazionali
+... contatti e appuntamenti nazionali disponibili ...
+```
+
+- Le etichette A/B sono segnaposto, non nuove categorie predefinite.
+- Una categoria filtra insieme contatti e appuntamenti; **Tutti** include anche
+  i contenuti senza categoria. Senza categorie pertinenti il filtro non appare.
+- Con più istituti risolti per lo studente, mostrare blocchi distinti con nome e
+  filtri propri. Categorie omonime di istituti diversi restano separate.
+- Le risorse nazionali sono mostrate una sola volta, fuori dai filtri locali;
+  non vengono assegnate arbitrariamente a categorie di un istituto.
+- Rinominare aggiorna l’etichetta senza perdere collegamenti. Archiviare nasconde
+  il filtro, non il contenuto; ripristinare rende nuovamente utilizzabili i
+  collegamenti preservati. Un filtro divenuto non disponibile torna a **Tutti**.
+
+##### C. Dati, permessi e verifica
+
+Aggiungere associazioni persistenti tramite ID, con vincoli contro duplicati e
+riferimenti inesistenti. Ogni richiesta verifica sul server ruolo, associazione
+attiva, istituto del contenuto e istituto delle categorie. Rifiutare richieste
+tra istituti, contenuti nazionali e tentativi di modificare campi estranei alla
+classificazione. Le categorie archiviate non possono essere aggiunte ex novo.
+
+Le revisioni devono coprire anche le assegnazioni: un riordino/archivio o una
+classificazione concorrente non deve essere sovrascritto. Se l’amministratore
+sposta un contenuto tra istituti, nessuna vecchia categoria deve diventare
+visibile o modificabile nel nuovo istituto. Ricontrollare lo stato del contenuto
+al salvataggio e alla lettura. I bisogni globali e il retrieval in chat restano
+separati; nessuna riclassificazione automatica dei dati già presenti.
+
+Verificare isolamento, revoca durante la modifica, conflitti, assegnazione
+multipla/rimozione, archivio/ripristino, contenuti senza categorie, risorse
+nazionali, più istituti, visibilità e date. Controllare tastiera, sei lingue,
+320/390/1440 px e tema scuro. Aggiornare documentazione, guida e catture;
+ricostruire le immagini Docker e provarle in isolamento, mantenendo la modalità
+di anteprima concordata. Nessuna distribuzione in produzione in questo passo.
+
+Sorgenti verificati: `OrientationDirectoryCard.tsx`, `lib/referrals-api.ts`,
+`backend/routes/orientation_referrals.py`, `backend/schemas.py`,
+`backend/referral_scope.py` e i modelli dei contenuti. La risposta corrente
+espone un solo istituto di intestazione: la lettura per più istituti richiede
+una rappresentazione esplicita, non il semplice riuso di quel nome per tutte
+le righe.
+
 #### Problema verificato nel codice corrente
 
 `PageHeader.backHref` passa una destinazione di ripiego a `PreviousPageButton`: se esiste una pagina precedente nella cronologia interna, il pulsante esegue `router.back()`. Per questo rinominarlo «Area personale» senza cambiarne il comportamento non garantirebbe quella destinazione. Le pagine visuali aggiungono inoltre una testata interna e un grande riepilogo degli obiettivi; Obiettivi, Cambiamenti, PDF e Flashcard hanno ingressi separati da `ProfilePage`.
