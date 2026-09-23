@@ -8,6 +8,10 @@ import it5 from '../../public/guide/it/teacher-groups.png';
 import it6 from '../../public/guide/it/teacher-catalog.png';
 import it7 from '../../public/guide/it/teacher-assignment.png';
 import it8 from '../../public/guide/it/teacher-feedback.png';
+import it9 from '../../public/guide/it/introduction.png';
+import it10 from '../../public/guide/it/activities.png';
+import it11 from '../../public/guide/it/pdf-study.png';
+import it12 from '../../public/guide/it/flashcards.png';
 import en0 from '../../public/guide/en/personal-area.png';
 import en1 from '../../public/guide/en/personal-goals.png';
 import en2 from '../../public/guide/en/study-event.png';
@@ -17,6 +21,10 @@ import en5 from '../../public/guide/en/teacher-groups.png';
 import en6 from '../../public/guide/en/teacher-catalog.png';
 import en7 from '../../public/guide/en/teacher-assignment.png';
 import en8 from '../../public/guide/en/teacher-feedback.png';
+import en9 from '../../public/guide/en/introduction.png';
+import en10 from '../../public/guide/en/activities.png';
+import en11 from '../../public/guide/en/pdf-study.png';
+import en12 from '../../public/guide/en/flashcards.png';
 import es0 from '../../public/guide/es/personal-area.png';
 import es1 from '../../public/guide/es/personal-goals.png';
 import es2 from '../../public/guide/es/study-event.png';
@@ -26,6 +34,10 @@ import es5 from '../../public/guide/es/teacher-groups.png';
 import es6 from '../../public/guide/es/teacher-catalog.png';
 import es7 from '../../public/guide/es/teacher-assignment.png';
 import es8 from '../../public/guide/es/teacher-feedback.png';
+import es9 from '../../public/guide/es/introduction.png';
+import es10 from '../../public/guide/es/activities.png';
+import es11 from '../../public/guide/es/pdf-study.png';
+import es12 from '../../public/guide/es/flashcards.png';
 import fr0 from '../../public/guide/fr/personal-area.png';
 import fr1 from '../../public/guide/fr/personal-goals.png';
 import fr2 from '../../public/guide/fr/study-event.png';
@@ -35,6 +47,10 @@ import fr5 from '../../public/guide/fr/teacher-groups.png';
 import fr6 from '../../public/guide/fr/teacher-catalog.png';
 import fr7 from '../../public/guide/fr/teacher-assignment.png';
 import fr8 from '../../public/guide/fr/teacher-feedback.png';
+import fr9 from '../../public/guide/fr/introduction.png';
+import fr10 from '../../public/guide/fr/activities.png';
+import fr11 from '../../public/guide/fr/pdf-study.png';
+import fr12 from '../../public/guide/fr/flashcards.png';
 import de0 from '../../public/guide/de/personal-area.png';
 import de1 from '../../public/guide/de/personal-goals.png';
 import de2 from '../../public/guide/de/study-event.png';
@@ -44,6 +60,10 @@ import de5 from '../../public/guide/de/teacher-groups.png';
 import de6 from '../../public/guide/de/teacher-catalog.png';
 import de7 from '../../public/guide/de/teacher-assignment.png';
 import de8 from '../../public/guide/de/teacher-feedback.png';
+import de9 from '../../public/guide/de/introduction.png';
+import de10 from '../../public/guide/de/activities.png';
+import de11 from '../../public/guide/de/pdf-study.png';
+import de12 from '../../public/guide/de/flashcards.png';
 import sv0 from '../../public/guide/sv/personal-area.png';
 import sv1 from '../../public/guide/sv/personal-goals.png';
 import sv2 from '../../public/guide/sv/study-event.png';
@@ -53,12 +73,16 @@ import sv5 from '../../public/guide/sv/teacher-groups.png';
 import sv6 from '../../public/guide/sv/teacher-catalog.png';
 import sv7 from '../../public/guide/sv/teacher-assignment.png';
 import sv8 from '../../public/guide/sv/teacher-feedback.png';
+import sv9 from '../../public/guide/sv/introduction.png';
+import sv10 from '../../public/guide/sv/activities.png';
+import sv11 from '../../public/guide/sv/pdf-study.png';
+import sv12 from '../../public/guide/sv/flashcards.png';
 
 export const guideImages = {
-    it: { 'personal-area': it0, 'personal-goals': it1, 'study-event': it2, 'professional-event': it3, 'teacher-area': it4, 'teacher-groups': it5, 'teacher-catalog': it6, 'teacher-assignment': it7, 'teacher-feedback': it8 },
-    en: { 'personal-area': en0, 'personal-goals': en1, 'study-event': en2, 'professional-event': en3, 'teacher-area': en4, 'teacher-groups': en5, 'teacher-catalog': en6, 'teacher-assignment': en7, 'teacher-feedback': en8 },
-    es: { 'personal-area': es0, 'personal-goals': es1, 'study-event': es2, 'professional-event': es3, 'teacher-area': es4, 'teacher-groups': es5, 'teacher-catalog': es6, 'teacher-assignment': es7, 'teacher-feedback': es8 },
-    fr: { 'personal-area': fr0, 'personal-goals': fr1, 'study-event': fr2, 'professional-event': fr3, 'teacher-area': fr4, 'teacher-groups': fr5, 'teacher-catalog': fr6, 'teacher-assignment': fr7, 'teacher-feedback': fr8 },
-    de: { 'personal-area': de0, 'personal-goals': de1, 'study-event': de2, 'professional-event': de3, 'teacher-area': de4, 'teacher-groups': de5, 'teacher-catalog': de6, 'teacher-assignment': de7, 'teacher-feedback': de8 },
-    sv: { 'personal-area': sv0, 'personal-goals': sv1, 'study-event': sv2, 'professional-event': sv3, 'teacher-area': sv4, 'teacher-groups': sv5, 'teacher-catalog': sv6, 'teacher-assignment': sv7, 'teacher-feedback': sv8 },
+    it: { 'personal-area': it0, 'personal-goals': it1, 'study-event': it2, 'professional-event': it3, 'teacher-area': it4, 'teacher-groups': it5, 'teacher-catalog': it6, 'teacher-assignment': it7, 'teacher-feedback': it8, 'introduction': it9, 'activities': it10, 'pdf-study': it11, 'flashcards': it12 },
+    en: { 'personal-area': en0, 'personal-goals': en1, 'study-event': en2, 'professional-event': en3, 'teacher-area': en4, 'teacher-groups': en5, 'teacher-catalog': en6, 'teacher-assignment': en7, 'teacher-feedback': en8, 'introduction': en9, 'activities': en10, 'pdf-study': en11, 'flashcards': en12 },
+    es: { 'personal-area': es0, 'personal-goals': es1, 'study-event': es2, 'professional-event': es3, 'teacher-area': es4, 'teacher-groups': es5, 'teacher-catalog': es6, 'teacher-assignment': es7, 'teacher-feedback': es8, 'introduction': es9, 'activities': es10, 'pdf-study': es11, 'flashcards': es12 },
+    fr: { 'personal-area': fr0, 'personal-goals': fr1, 'study-event': fr2, 'professional-event': fr3, 'teacher-area': fr4, 'teacher-groups': fr5, 'teacher-catalog': fr6, 'teacher-assignment': fr7, 'teacher-feedback': fr8, 'introduction': fr9, 'activities': fr10, 'pdf-study': fr11, 'flashcards': fr12 },
+    de: { 'personal-area': de0, 'personal-goals': de1, 'study-event': de2, 'professional-event': de3, 'teacher-area': de4, 'teacher-groups': de5, 'teacher-catalog': de6, 'teacher-assignment': de7, 'teacher-feedback': de8, 'introduction': de9, 'activities': de10, 'pdf-study': de11, 'flashcards': de12 },
+    sv: { 'personal-area': sv0, 'personal-goals': sv1, 'study-event': sv2, 'professional-event': sv3, 'teacher-area': sv4, 'teacher-groups': sv5, 'teacher-catalog': sv6, 'teacher-assignment': sv7, 'teacher-feedback': sv8, 'introduction': sv9, 'activities': sv10, 'pdf-study': sv11, 'flashcards': sv12 },
 };

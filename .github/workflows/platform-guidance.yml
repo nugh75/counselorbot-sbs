@@ -1,0 +1,23 @@
+name: Platform guidance
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m unittest discover -s scripts/tests -p 'test_platform_guidance_check.py'
+      - run: python3 scripts/check-platform-guidance.py --check
+      - name: Require documentation in the change
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -n "$BASE" ] && [ "$BASE" != "0000000000000000000000000000000000000000" ]; then
+            python3 scripts/check-platform-guidance.py --check --base "$BASE"
+          fi

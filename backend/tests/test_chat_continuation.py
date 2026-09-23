@@ -154,7 +154,7 @@ def test_site_continuation_uses_original_question_for_retrieval_and_saves_comple
     monkeypatch.setattr(site_chat, "_top_k", lambda ai: 3)
     monkeypatch.setattr(site_chat, "_retrieval_params", lambda ai: ({}, {}, 2, 0))
     monkeypatch.setattr(site_chat, "_filter_single_instrument_results", lambda q, rows: rows)
-    monkeypatch.setattr(site_chat, "build_context", lambda rows: ("Materials", ["test"]))
+    monkeypatch.setattr(site_chat, "build_context", lambda rows, **kwargs: ("Materials", ["test"]))
     memory = MagicMock()
     memory.get_relevant_context.return_value = ""
     monkeypatch.setattr(site_chat, "session_memory", memory)

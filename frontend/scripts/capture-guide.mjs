@@ -17,7 +17,7 @@ const samples = {
     de: ['Mein Lernen organisieren', 'Lernwerkstatt', 'Probiere zwei kurze Wiederholungen aus.', 'Beschreibe, was funktioniert hat und was du ändern würdest.', 'Ich habe das Wiederholen auf zwei Tage verteilt.', 'Vergleiche beim nächsten Mal auch, woran du dich ohne Notizen erinnerst.'],
     sv: ['Planera mina studier', 'Studieverkstad', 'Prova två korta repetitionspass.', 'Beskriv vad som fungerade och vad du skulle ändra.', 'Jag fördelade repetitionen över två dagar.', 'Jämför nästa gång också vad du minns utan anteckningar.'],
 };
-const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback'];
+const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards'];
 const browser = await chromium.launch({ headless: true });
 try {
     for (const lang of locales) {
@@ -48,6 +48,8 @@ try {
             else if (path === '/orientation-directory') data = { institution: null, events: [], referrals: [] };
             else if (path === '/tavolo/enabled') data = { enabled: false };
             else if (path === '/telegram/bot-info') data = {};
+            else if (path === '/user/flashcards') data = { revision: 0, workspace: { decks: [{ id: 'demo', title, cards: [{ id: 'demo-card', front: responsePrompt, back: instructions }] }] } };
+            else if (path === '/session/frozen') data = [{ session_id: 'demo-resume', questionnaire_type: 'QSA', label: 'QSA', current_phase: 'intro', counselor_id: 1, experience: 'standard', frozen_at: '2026-09-23T08:00:00Z' }];
             else if (path === '/user/goals') data = [goal];
             else if (path === '/user/goal-catalog' || path === '/teacher/goal-catalog') data = catalog;
             else if (path === '/user/goal-groups' || path === '/admin/groups') data = [group];
@@ -65,9 +67,13 @@ try {
             await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
             assert.deepEqual(errors, []);
             assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
-            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png` });
+            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(name === 'activities' ? { fullPage: true } : {}) });
             console.log(`${lang}/${name}`);
         }
+        await go('/'); await capture('introduction');
+        await go('/?view=home'); await capture('activities');
+        await go('/profilo/pqbl'); await capture('pdf-study');
+        await go('/profilo/flashcard'); await capture('flashcards');
         await go('/profilo'); await page.getByRole('link', { name: goalText(lang, 'goals'), exact: true }).waitFor(); await capture('personal-area');
         await go('/profilo/obiettivi?goal=1'); await page.getByLabel(goalText(lang, 'motivation'), { exact: true }).waitFor(); await capture('personal-goals');
         await go('/strumenti/EVENTO_STUDIO'); await capture('study-event');

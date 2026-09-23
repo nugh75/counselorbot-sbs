@@ -1,5 +1,13 @@
 # CounselorBot — technical and pedagogical description
 
+Current interface reference: [CounselorBot functions](funzionalita-counselorbot.md),
+maintained alongside product changes and read live by the CounselorBot Assistant
+and Compass. The introduction offers Compass, Questionnaire analysis, Guided paths,
+and Personal area and tools. The full activity catalog starts with Compass and
+ends with Resume activities. PDF study and Flashcards are in the Personal area;
+there is no separate Training category.
+
+
 This document describes **what CounselorBot does** from a technical and pedagogical
 perspective, and is intended for two audiences: students using the platform and
 administrators/teachers/researchers who configure, monitor, and integrate it into
@@ -311,3 +319,16 @@ remain administrative capabilities, not permissions granted by catalog editing.
   PTY is accessible only over an authenticated WebSocket keyed by workspace.
 - **Data on PostgreSQL**: no SQLite in production; tests run against a dedicated
   `counselorbot_test` database to ensure dialect fidelity.
+## Current personal tools and saving
+
+PDF study is at `/profilo/pqbl`, beside Flashcards (`/profilo/flashcard`).
+Flashcards support editable decks and study sessions with answer reveal and self-assessment.
+Cards (`/profilo/carte`) organize thoughts in multiple decks with templates, columns
+and drag-and-drop; they are distinct from study Flashcards. Comparison, the action
+board and Tavolo (when enabled) support exploring alternatives and organizing work.
+Notebook autosave protects a recoverable draft silently in the background; only
+manual saving creates a meaningful history revision. Errors remain visible.
+Input and conversation-mode preferences are saved only through their explicit
+checkboxes; Idea asks for its mode each time. Response format (conversation, bullets,
+table) is independent of response length. QSA offers its own essential path of
+three replies and a summary; do not extend this to other scored questionnaires.

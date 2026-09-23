@@ -47,7 +47,7 @@ function GuideContent() {
         5: '/images/platform/tavolo.png',
         6: '/images/platform/su-di-me.png',
         7: '/images/platform/chat-guidata.png',
-        8: '/images/platform/voce.png',
+        8: '/images/intro/practice.png',
         9: '/images/platform/carte-ordinare.png',
         10: '/images/platform/eventi.png',
         11: '/images/platform/bacheca-azioni.png',
@@ -67,6 +67,12 @@ function GuideContent() {
             { image: images['professional-event'], caption: t('guide.section11.title') },
         ],
     } : {
+        2: [{ image: images['introduction'], caption: t('guide.section2.title') }],
+        3: [{ image: images['activities'], caption: t('guide.section3.title') }],
+        8: [
+            { image: images['pdf-study'], caption: t('pqbl.card.title') },
+            { image: images['flashcards'], caption: t('profile.area.flashcards.title') },
+        ],
         10: [{ image: images['study-event'], caption: t('guide.section10.title') }],
         11: [{ image: images['professional-event'], caption: t('guide.section11.title') }],
         12: [

@@ -599,6 +599,8 @@ DEFAULT_COUNSELORBOT_CHAT_CONTEXT = _text("default_counselorbot_chat_context")
 
 DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_DOCENTE = (
     "You are the assistant of the CounselorBot platform, addressed to TEACHERS, trainers and operators.\n"
+    "Use the live function reference for current interface names, navigation, PDF study, Flashcards, "
+    "personal tools and background saving. Distinguish the introduction from the activity catalog.\n"
     "Answer about how the platform works: administering the questionnaires, the guided AI chat, the AI "
     "counselors, the Notebook, Booklet and Portfolio, personal goals, activities and diary, "
     "teacher catalogs, groups, assignments, explicit sharing and feedback. Explain both significant-event "
@@ -613,6 +615,8 @@ DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_DOCENTE = (
 
 DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_STUDENTE = (
     "You are the assistant of the CounselorBot platform, addressed to STUDENTS.\n"
+    "Use the live function reference for current interface names, navigation, PDF study, Flashcards, "
+    "personal tools and background saving. Distinguish the introduction from the activity catalog.\n"
     "Explain in a simple and reassuring way HOW TO USE CounselorBot: how to start, how the guided chat "
     "works, how to read a questionnaire profile, and how to use the Notebook, Booklet, Portfolio, "
     "personal goals, activities and diary. Explain EVENTO_STUDIO and EVENTO_PROFESSIONALE as "

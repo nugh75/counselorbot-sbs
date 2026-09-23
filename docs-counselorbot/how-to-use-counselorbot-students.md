@@ -1,5 +1,13 @@
 # How to use CounselorBot: your personal journey
 
+Current interface reference: [CounselorBot functions](funzionalita-counselorbot.md),
+maintained alongside product changes and read live by the CounselorBot Assistant
+and Compass. The introduction offers Compass, Questionnaire analysis, Guided paths,
+and Personal area and tools. The full activity catalog starts with Compass and
+ends with Resume activities. PDF study and Flashcards are in the Personal area;
+there is no separate Training category.
+
+
 CounselorBot supports students and adults reflecting on learning, work and choices.
 The interface and guided conversations work in Italian, English, Spanish, French,
 German and Swedish. Choose one activity at a time and return later when useful.
@@ -123,9 +131,23 @@ shared or hidden: these permissions apply to different content.
 
 ## Practise from a PDF and keep your work
 
-**pQBL** (`/pqbl`) generates practice questions and formative feedback from a study
+**pQBL** (`/profilo/pqbl`) generates practice questions and formative feedback from a study
 PDF. It is separate from the questionnaires and event conversations. Session
 reports and Booklets can be exported as PDF. The combined analysis becomes
 available with QSA or QSAr plus ZTPI plus SAVICKAS results. An optional OpenCode
 workspace offers another conversation experience. The AI supports reflection;
 it does not make decisions, adopt goals or submit work on your behalf.
+
+## Current personal tools and saving
+
+PDF study is at `/profilo/pqbl`, beside Flashcards (`/profilo/flashcard`).
+Flashcards support editable decks and study sessions with answer reveal and self-assessment.
+Cards (`/profilo/carte`) organize thoughts in multiple decks with templates, columns
+and drag-and-drop; they are distinct from study Flashcards. Comparison, the action
+board and Tavolo (when enabled) support exploring alternatives and organizing work.
+Notebook autosave protects a recoverable draft silently in the background; only
+manual saving creates a meaningful history revision. Errors remain visible.
+Input and conversation-mode preferences are saved only through their explicit
+checkboxes; Idea asks for its mode each time. Response format (conversation, bullets,
+table) is independent of response length. QSA offers its own essential path of
+three replies and a summary; do not extend this to other scored questionnaires.

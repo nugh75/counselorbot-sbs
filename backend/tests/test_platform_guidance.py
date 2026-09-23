@@ -70,3 +70,76 @@ def test_assistant_resolves_current_db_guidance_and_keeps_collections_separate(a
         service.config['counselorbot_chat_context'] = 'Reviewed custom platform context'
         assert 'Reviewed custom platform context' in _resolve_site_prompt(service, audience, 'counselorbot')
         assert 'Reviewed custom platform context' not in _resolve_site_prompt(service, audience, 'competenze')
+
+
+def test_live_reference_changes_between_requests_and_is_collection_scoped(tmp_path, monkeypatch):
+    from backend.platform_guidance import GUIDE_FILENAME, platform_guidance_context
+    monkeypatch.setenv('COUNSELORBOT_DOCS_DIR', str(tmp_path))
+    path = tmp_path / GUIDE_FILENAME
+    path.write_text('# CounselorBot\nFeature version one')
+    service = SimpleNamespace(config={'counselorbot_chat_context': 'Custom behavior preserved'})
+    assert 'Feature version one' in _resolve_site_prompt(service, 'studente', 'counselorbot')
+    path.write_text('# CounselorBot\nFeature version two')
+    for audience in ['studente', 'docente']:
+        prompt = _resolve_site_prompt(service, audience, 'counselorbot')
+        assert 'Feature version two' in prompt and 'Feature version one' not in prompt
+        assert 'Custom behavior preserved' in prompt
+    assert 'Feature version two' in platform_guidance_context()
+    for collection in ['competenze', 'questionari', 'framework', 'custom']:
+        assert 'Feature version two' not in _resolve_site_prompt(service, 'studente', collection)
+    path.unlink()
+    with pytest.raises(FileNotFoundError):
+        _resolve_site_prompt(service, 'studente', 'counselorbot')
+    # Other collections do not depend on the CounselorBot documentation mount.
+    _resolve_site_prompt(service, 'studente', 'competenze')
+
+
+def test_reference_personal_routes_are_real_and_cover_the_personal_area():
+    import re
+    from pathlib import Path
+    from backend.platform_guidance import read_platform_guide
+    root = Path(__file__).resolve().parents[2]
+    reference = read_platform_guide()
+    documented = set(re.findall(r'`(/profilo(?:/[a-z-]+)?)`', reference))
+    actual = {'/' + str(path.parent.relative_to(root / 'frontend/src/app'))
+              for path in (root / 'frontend/src/app/profilo').rglob('page.tsx')}
+    assert documented == actual
+    assert '/profilo/pqbl' in reference and '/profilo/flashcard' in reference
+    assert 'Riprendi un’attività' in reference and 'background' in reference
+
+
+@pytest.mark.parametrize('collection', ['counselorbot', 'competenze'])
+@pytest.mark.parametrize('failure', [False, True])
+def test_live_reference_grounds_stream_even_without_embeddings(monkeypatch, collection, failure):
+    import asyncio
+    from unittest.mock import MagicMock
+    from backend.routes import site_chat
+    from backend.ai_service import AIError
+    from backend.api_models import SiteChatRequest
+    from backend.platform_guidance import GUIDE_FILENAME
+    ai = SimpleNamespace(config={}, stream_response=MagicMock(return_value=iter(['Apri Area personale.'])))
+    search = MagicMock(side_effect=AIError('Embeddings unavailable')) if failure else MagicMock(return_value=[])
+    monkeypatch.setattr(site_chat, 'AIService', lambda db: ai)
+    monkeypatch.setattr(site_chat, 'get_index', lambda collection: SimpleNamespace(search=search))
+    monkeypatch.setattr(site_chat, '_apply_language_directive', lambda text, *a, **kw: text)
+    monkeypatch.setattr(site_chat, '_resolve_counselor', lambda *a: (None, None))
+    monkeypatch.setattr(site_chat, '_portfolio_context', lambda *a: '')
+    monkeypatch.setattr(site_chat, 'log_error', MagicMock())
+    memory = MagicMock()
+    memory.get_relevant_context.return_value = ''
+    monkeypatch.setattr(site_chat, 'session_memory', memory)
+    monkeypatch.setattr(site_chat.database, 'SessionLocal', MagicMock())
+
+    async def run():
+        response = await site_chat.site_chat_stream(SiteChatRequest(message='Dove sono le Flashcard?',
+            collection=collection), current_user={}, db=MagicMock())
+        return [json.loads(chunk.removeprefix('data: ').strip()) async for chunk in response.body_iterator]
+    output = asyncio.run(run())
+    if collection == 'counselorbot':
+        assert output[-1]['response'] == 'Apri Area personale.'
+        assert GUIDE_FILENAME in output[-1]['sources']
+        message, prompt = ai.stream_response.call_args.args[:2]
+        assert '/profilo/flashcard' in message and '/profilo/pqbl' in prompt
+    else:
+        ai.stream_response.assert_not_called()
+        assert ('error' in output[-1]) == failure
