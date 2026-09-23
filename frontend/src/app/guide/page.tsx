@@ -62,23 +62,32 @@ function GuideContent() {
         3: [{ image: images['teacher-catalog'], caption: l('teacher3Title') }],
         4: [{ image: images['teacher-assignment'], caption: l('teacher4Title') }],
         5: [{ image: images['teacher-feedback'], caption: l('teacher5Title') }],
+        6: [{ image: images['goal-sharing'], caption: l('teacher6Title') }],
         7: [
             { image: images['study-event'], caption: t('guide.section10.title') },
             { image: images['professional-event'], caption: t('guide.section11.title') },
         ],
     } : {
+        1: [{ image: images['access'], caption: t('guide.section1.title') }],
         2: [{ image: images['introduction'], caption: t('guide.section2.title') }],
         3: [{ image: images['activities'], caption: t('guide.section3.title') }],
+        4: [{ image: images['counselors'], caption: t('guide.section4.title') }],
+        5: [{ image: images['tool-selection'], caption: t('guide.section5.title') }],
+        6: [{ image: images['notebook'], caption: t('guide.section6.title') }],
         8: [
             { image: images['pdf-study'], caption: t('pqbl.card.title') },
             { image: images['flashcards'], caption: t('profile.area.flashcards.title') },
         ],
+        9: [{ image: images['cards'], caption: t('guide.section9.title') }],
         10: [{ image: images['study-event'], caption: t('guide.section10.title') }],
         11: [{ image: images['professional-event'], caption: t('guide.section11.title') }],
         12: [
             { image: images['personal-area'], caption: t('guide.section12.title') },
             { image: images['personal-goals'], caption: t('guide.section12.title') },
         ],
+        13: [{ image: images['calendar'], caption: t('guide.section13.title') }],
+        14: [{ image: images['received-assignments'], caption: t('guide.section14.title') }],
+        15: [{ image: images['personal-groups'], caption: t('guide.section15.title') }],
     };
     const chatControls = [
         { key: 'options', icon: <MoreVertical className="h-4 w-4" aria-hidden="true" /> },

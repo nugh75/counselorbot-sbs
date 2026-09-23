@@ -12,6 +12,15 @@ import it9 from '../../public/guide/it/introduction.png';
 import it10 from '../../public/guide/it/activities.png';
 import it11 from '../../public/guide/it/pdf-study.png';
 import it12 from '../../public/guide/it/flashcards.png';
+import it13 from '../../public/guide/it/access.png';
+import it14 from '../../public/guide/it/counselors.png';
+import it15 from '../../public/guide/it/tool-selection.png';
+import it16 from '../../public/guide/it/notebook.png';
+import it17 from '../../public/guide/it/cards.png';
+import it18 from '../../public/guide/it/calendar.png';
+import it19 from '../../public/guide/it/received-assignments.png';
+import it20 from '../../public/guide/it/personal-groups.png';
+import it21 from '../../public/guide/it/goal-sharing.png';
 import en0 from '../../public/guide/en/personal-area.png';
 import en1 from '../../public/guide/en/personal-goals.png';
 import en2 from '../../public/guide/en/study-event.png';
@@ -25,6 +34,15 @@ import en9 from '../../public/guide/en/introduction.png';
 import en10 from '../../public/guide/en/activities.png';
 import en11 from '../../public/guide/en/pdf-study.png';
 import en12 from '../../public/guide/en/flashcards.png';
+import en13 from '../../public/guide/en/access.png';
+import en14 from '../../public/guide/en/counselors.png';
+import en15 from '../../public/guide/en/tool-selection.png';
+import en16 from '../../public/guide/en/notebook.png';
+import en17 from '../../public/guide/en/cards.png';
+import en18 from '../../public/guide/en/calendar.png';
+import en19 from '../../public/guide/en/received-assignments.png';
+import en20 from '../../public/guide/en/personal-groups.png';
+import en21 from '../../public/guide/en/goal-sharing.png';
 import es0 from '../../public/guide/es/personal-area.png';
 import es1 from '../../public/guide/es/personal-goals.png';
 import es2 from '../../public/guide/es/study-event.png';
@@ -38,6 +56,15 @@ import es9 from '../../public/guide/es/introduction.png';
 import es10 from '../../public/guide/es/activities.png';
 import es11 from '../../public/guide/es/pdf-study.png';
 import es12 from '../../public/guide/es/flashcards.png';
+import es13 from '../../public/guide/es/access.png';
+import es14 from '../../public/guide/es/counselors.png';
+import es15 from '../../public/guide/es/tool-selection.png';
+import es16 from '../../public/guide/es/notebook.png';
+import es17 from '../../public/guide/es/cards.png';
+import es18 from '../../public/guide/es/calendar.png';
+import es19 from '../../public/guide/es/received-assignments.png';
+import es20 from '../../public/guide/es/personal-groups.png';
+import es21 from '../../public/guide/es/goal-sharing.png';
 import fr0 from '../../public/guide/fr/personal-area.png';
 import fr1 from '../../public/guide/fr/personal-goals.png';
 import fr2 from '../../public/guide/fr/study-event.png';
@@ -51,6 +78,15 @@ import fr9 from '../../public/guide/fr/introduction.png';
 import fr10 from '../../public/guide/fr/activities.png';
 import fr11 from '../../public/guide/fr/pdf-study.png';
 import fr12 from '../../public/guide/fr/flashcards.png';
+import fr13 from '../../public/guide/fr/access.png';
+import fr14 from '../../public/guide/fr/counselors.png';
+import fr15 from '../../public/guide/fr/tool-selection.png';
+import fr16 from '../../public/guide/fr/notebook.png';
+import fr17 from '../../public/guide/fr/cards.png';
+import fr18 from '../../public/guide/fr/calendar.png';
+import fr19 from '../../public/guide/fr/received-assignments.png';
+import fr20 from '../../public/guide/fr/personal-groups.png';
+import fr21 from '../../public/guide/fr/goal-sharing.png';
 import de0 from '../../public/guide/de/personal-area.png';
 import de1 from '../../public/guide/de/personal-goals.png';
 import de2 from '../../public/guide/de/study-event.png';
@@ -64,6 +100,15 @@ import de9 from '../../public/guide/de/introduction.png';
 import de10 from '../../public/guide/de/activities.png';
 import de11 from '../../public/guide/de/pdf-study.png';
 import de12 from '../../public/guide/de/flashcards.png';
+import de13 from '../../public/guide/de/access.png';
+import de14 from '../../public/guide/de/counselors.png';
+import de15 from '../../public/guide/de/tool-selection.png';
+import de16 from '../../public/guide/de/notebook.png';
+import de17 from '../../public/guide/de/cards.png';
+import de18 from '../../public/guide/de/calendar.png';
+import de19 from '../../public/guide/de/received-assignments.png';
+import de20 from '../../public/guide/de/personal-groups.png';
+import de21 from '../../public/guide/de/goal-sharing.png';
 import sv0 from '../../public/guide/sv/personal-area.png';
 import sv1 from '../../public/guide/sv/personal-goals.png';
 import sv2 from '../../public/guide/sv/study-event.png';
@@ -77,12 +122,21 @@ import sv9 from '../../public/guide/sv/introduction.png';
 import sv10 from '../../public/guide/sv/activities.png';
 import sv11 from '../../public/guide/sv/pdf-study.png';
 import sv12 from '../../public/guide/sv/flashcards.png';
+import sv13 from '../../public/guide/sv/access.png';
+import sv14 from '../../public/guide/sv/counselors.png';
+import sv15 from '../../public/guide/sv/tool-selection.png';
+import sv16 from '../../public/guide/sv/notebook.png';
+import sv17 from '../../public/guide/sv/cards.png';
+import sv18 from '../../public/guide/sv/calendar.png';
+import sv19 from '../../public/guide/sv/received-assignments.png';
+import sv20 from '../../public/guide/sv/personal-groups.png';
+import sv21 from '../../public/guide/sv/goal-sharing.png';
 
 export const guideImages = {
-    it: { 'personal-area': it0, 'personal-goals': it1, 'study-event': it2, 'professional-event': it3, 'teacher-area': it4, 'teacher-groups': it5, 'teacher-catalog': it6, 'teacher-assignment': it7, 'teacher-feedback': it8, 'introduction': it9, 'activities': it10, 'pdf-study': it11, 'flashcards': it12 },
-    en: { 'personal-area': en0, 'personal-goals': en1, 'study-event': en2, 'professional-event': en3, 'teacher-area': en4, 'teacher-groups': en5, 'teacher-catalog': en6, 'teacher-assignment': en7, 'teacher-feedback': en8, 'introduction': en9, 'activities': en10, 'pdf-study': en11, 'flashcards': en12 },
-    es: { 'personal-area': es0, 'personal-goals': es1, 'study-event': es2, 'professional-event': es3, 'teacher-area': es4, 'teacher-groups': es5, 'teacher-catalog': es6, 'teacher-assignment': es7, 'teacher-feedback': es8, 'introduction': es9, 'activities': es10, 'pdf-study': es11, 'flashcards': es12 },
-    fr: { 'personal-area': fr0, 'personal-goals': fr1, 'study-event': fr2, 'professional-event': fr3, 'teacher-area': fr4, 'teacher-groups': fr5, 'teacher-catalog': fr6, 'teacher-assignment': fr7, 'teacher-feedback': fr8, 'introduction': fr9, 'activities': fr10, 'pdf-study': fr11, 'flashcards': fr12 },
-    de: { 'personal-area': de0, 'personal-goals': de1, 'study-event': de2, 'professional-event': de3, 'teacher-area': de4, 'teacher-groups': de5, 'teacher-catalog': de6, 'teacher-assignment': de7, 'teacher-feedback': de8, 'introduction': de9, 'activities': de10, 'pdf-study': de11, 'flashcards': de12 },
-    sv: { 'personal-area': sv0, 'personal-goals': sv1, 'study-event': sv2, 'professional-event': sv3, 'teacher-area': sv4, 'teacher-groups': sv5, 'teacher-catalog': sv6, 'teacher-assignment': sv7, 'teacher-feedback': sv8, 'introduction': sv9, 'activities': sv10, 'pdf-study': sv11, 'flashcards': sv12 },
+    it: { 'personal-area': it0, 'personal-goals': it1, 'study-event': it2, 'professional-event': it3, 'teacher-area': it4, 'teacher-groups': it5, 'teacher-catalog': it6, 'teacher-assignment': it7, 'teacher-feedback': it8, 'introduction': it9, 'activities': it10, 'pdf-study': it11, 'flashcards': it12, 'access': it13, 'counselors': it14, 'tool-selection': it15, 'notebook': it16, 'cards': it17, 'calendar': it18, 'received-assignments': it19, 'personal-groups': it20, 'goal-sharing': it21 },
+    en: { 'personal-area': en0, 'personal-goals': en1, 'study-event': en2, 'professional-event': en3, 'teacher-area': en4, 'teacher-groups': en5, 'teacher-catalog': en6, 'teacher-assignment': en7, 'teacher-feedback': en8, 'introduction': en9, 'activities': en10, 'pdf-study': en11, 'flashcards': en12, 'access': en13, 'counselors': en14, 'tool-selection': en15, 'notebook': en16, 'cards': en17, 'calendar': en18, 'received-assignments': en19, 'personal-groups': en20, 'goal-sharing': en21 },
+    es: { 'personal-area': es0, 'personal-goals': es1, 'study-event': es2, 'professional-event': es3, 'teacher-area': es4, 'teacher-groups': es5, 'teacher-catalog': es6, 'teacher-assignment': es7, 'teacher-feedback': es8, 'introduction': es9, 'activities': es10, 'pdf-study': es11, 'flashcards': es12, 'access': es13, 'counselors': es14, 'tool-selection': es15, 'notebook': es16, 'cards': es17, 'calendar': es18, 'received-assignments': es19, 'personal-groups': es20, 'goal-sharing': es21 },
+    fr: { 'personal-area': fr0, 'personal-goals': fr1, 'study-event': fr2, 'professional-event': fr3, 'teacher-area': fr4, 'teacher-groups': fr5, 'teacher-catalog': fr6, 'teacher-assignment': fr7, 'teacher-feedback': fr8, 'introduction': fr9, 'activities': fr10, 'pdf-study': fr11, 'flashcards': fr12, 'access': fr13, 'counselors': fr14, 'tool-selection': fr15, 'notebook': fr16, 'cards': fr17, 'calendar': fr18, 'received-assignments': fr19, 'personal-groups': fr20, 'goal-sharing': fr21 },
+    de: { 'personal-area': de0, 'personal-goals': de1, 'study-event': de2, 'professional-event': de3, 'teacher-area': de4, 'teacher-groups': de5, 'teacher-catalog': de6, 'teacher-assignment': de7, 'teacher-feedback': de8, 'introduction': de9, 'activities': de10, 'pdf-study': de11, 'flashcards': de12, 'access': de13, 'counselors': de14, 'tool-selection': de15, 'notebook': de16, 'cards': de17, 'calendar': de18, 'received-assignments': de19, 'personal-groups': de20, 'goal-sharing': de21 },
+    sv: { 'personal-area': sv0, 'personal-goals': sv1, 'study-event': sv2, 'professional-event': sv3, 'teacher-area': sv4, 'teacher-groups': sv5, 'teacher-catalog': sv6, 'teacher-assignment': sv7, 'teacher-feedback': sv8, 'introduction': sv9, 'activities': sv10, 'pdf-study': sv11, 'flashcards': sv12, 'access': sv13, 'counselors': sv14, 'tool-selection': sv15, 'notebook': sv16, 'cards': sv17, 'calendar': sv18, 'received-assignments': sv19, 'personal-groups': sv20, 'goal-sharing': sv21 },
 };

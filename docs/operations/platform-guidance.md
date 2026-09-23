@@ -122,8 +122,8 @@ viste (Area personale, obiettivi, due eventi, Area docenti, gruppi, catalogo,
 assegnazione e riscontro) sono acquisite in tutte le sei lingue. Le due viste
 chat correnti sono state riacquisite in italiano, come dichiara la guida.
 Il registro `frontend/src/lib/guide-images.ts` usa import statici per produrre
-asset con hash; il percorso personale mostra dieci immagini e quello docente
-sette, tutte ingrandibili anche da tastiera. La nota dimostrativa riguarda anche codici d’invito, nomi e contenuti.
+asset con hash; il percorso personale mostra diciotto immagini e quello docente
+otto, tutte ingrandibili anche da tastiera. La nota dimostrativa riguarda anche codici d’invito, nomi e contenuti.
 
 Per rigenerare, da `frontend/`, contro un frontend aggiornato:
 
@@ -236,3 +236,22 @@ personali. Il catalogo è distinto dalla presentazione e la ripresa resta in fon
 - Backend e frontend ricostruiti e avviati; pagina locale `/guide` HTTP 200.
   I test browser usano API simulate, mentre la prova del modello usa il servizio
   AI attivo: non equivalgono a una verifica di login SSO pubblico.
+
+
+## Copertura completa degli screenshot
+
+Ogni sezione numerata della Guida include almeno una schermata pertinente:
+15 sezioni personali e 7 per docenti, con 18 e 8 figure rispettivamente.
+Il generatore comprende accesso, scelta counselor/strumento, Taccuino, Carte,
+calendario/diario, assegnazioni ricevute, gruppi e condivisione degli obiettivi.
+Le schermate sono acquisite dall’applicazione con dati sintetici e senza scritture
+alle API. I test browser verificano la presenza di figure in **ogni** sezione,
+oltre a caricamento, ingrandimento, tastiera e assenza di overflow.
+`GUIDE_LANGUAGES=it` consente una verifica parziale del generatore; prima della
+build devono esistere tutte le immagini nelle sei lingue referenziate dal registro.
+
+Verifica della copertura: 132 risorse localizzate presenti (22 viste per sei
+lingue), 12 test browser superati a 320/390/1440 px, inclusi zoom, tastiera e
+controllo sezione per sezione. i18n, ESLint mirato e build Docker frontend con
+TypeScript superati. Markdown delle funzionalità aggiornato; indice CounselorBot
+ricostruito (288 passaggi, 17 fonti) e worker riavviati. Guida locale HTTP 200.

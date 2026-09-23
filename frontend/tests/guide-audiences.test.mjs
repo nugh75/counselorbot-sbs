@@ -36,11 +36,12 @@ for (const [lang, width, dark] of [['it', 1440, false], ['en', 390, false], ['es
             for (let n = 1; n <= 7; n++) {
                 const section = page.locator(`#guide-teacher-section-${n}`);
                 assert.ok((await section.locator('p').innerText()).length > 100);
+                assert.ok(await section.locator('figure').count() > 0, `Missing screenshot: teacher section ${n}`);
                 await page.locator(`a[href="#guide-teacher-section-${n}"]`).click();
                 assert.equal(new URL(page.url()).hash, `#guide-teacher-section-${n}`);
             }
             const figures = page.locator('figure');
-            assert.equal(await figures.count(), 7);
+            assert.equal(await figures.count(), 8);
             for (const figure of await figures.all()) {
                 const thumbnail = figure.locator('img');
                 await thumbnail.scrollIntoViewIfNeeded();
