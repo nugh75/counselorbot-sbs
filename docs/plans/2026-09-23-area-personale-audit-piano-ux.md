@@ -190,26 +190,115 @@ Decisioni di nomenclatura e raggruppamento:
 
 Usare le **immagini già disponibili e il nome** per riconoscere gli strumenti, come approvato in 0.2. Le icone restano adatte alle azioni convenzionali e secondarie, con nome accessibile e area di tocco sufficiente; non sostituiscono le immagini degli strumenti.
 
-### Testata comune
+### Testata e navigazione comune — punto 0.3
+
+**Stato: proposta pronta da validare, non implementata.** La struttura si applica alle sottopagine dell’Area personale. L’ingresso `/profilo`, appena approvato e pubblicato, conserva i cinque gruppi e non riceve un secondo elenco di navigazione. La testata globale con account, lingua e altre azioni conserva le funzioni attuali.
+
+#### Problema verificato nel codice corrente
+
+`PageHeader.backHref` passa una destinazione di ripiego a `PreviousPageButton`: se esiste una pagina precedente nella cronologia interna, il pulsante esegue `router.back()`. Per questo rinominarlo «Area personale» senza cambiarne il comportamento non garantirebbe quella destinazione. Le pagine visuali aggiungono inoltre una testata interna e un grande riepilogo degli obiettivi; Obiettivi, Cambiamenti, PDF e Flashcard hanno ingressi separati da `ProfilePage`.
+
+Sorgenti verificati: `PageHeader.tsx`, `PreviousPageButton.tsx`, `PersonalVisualWorkspacePage.tsx`, le pagine `/profilo/obiettivi`, `/profilo/cambiamenti`, `/profilo/pqbl` e `FlashcardsPage.tsx`. La proposta riguarda la cornice delle pagine personali; il comportamento di `PageHeader` nelle chat e negli altri ambienti non va cambiato globalmente.
+
+#### Desktop — schema di riferimento
 
 ```text
-+------------------------------------------------------------------+
-| CounselorBot                                  Account / opzioni   |
-+------------------------------------------------------------------+
-| Area personale > Nome pagina                       [Vai a... v]  |
-| [immagine] Nome pagina                       [Azione principale]  |
-| Una frase: a cosa serve questo spazio.                            |
-| Visibilita effettiva [?]     Obiettivi collegati: 2 [Mostra]        |
-+------------------------------------------------------------------+
-| Contenuto operativo: elenco, scheda o editor                       |
-+------------------------------------------------------------------+
-| Stato [icona in spazio fisso]     [Annulla] [Salva, se necessario]  |
-+------------------------------------------------------------------+
++------------------------------------------------------------------------+
+| CounselorBot                                    Account / opzioni      |
++------------------------------------------------------------------------+
+
+  [< Area personale]                                      [Vai a... v]
+
+  [immagine] Nome della pagina                     [Azione principale*]
+             Descrizione approvata: a cosa serve questo strumento.
+
+  Obiettivi collegati: 2 [Mostra]                         (se pertinente)
+  --------------------------------------------------------------------
+  Contenuto operativo: elenco, scheda oppure editor
+
+  Stato delle modifiche e salvataggio: vicino al contenuto che si modifica
 ```
 
-«Area personale» è un link alla radice; l'eventuale «Indietro» usa la cronologia. Non etichettare una navigazione storica con una destinazione che non garantisce. Il selettore «Vai a…» è un'alternativa compatta: evitare una sidebar permanente con 18 voci.
+#### Mobile — stesso ordine, senza elementi sovrapposti
 
-Su mobile: titolo e azione principale possono andare su due righe; gruppi della navigazione in un pannello apribile con chiusura e ritorno del focus. Una barra di salvataggio persistente si usa solo durante l'editing e non copre l'ultimo campo, la tastiera o le azioni del browser. Nei visuali eliminare il falso dialogo della pagina incorporata e usare semantica di pagina/sezione; mantenere dialoghi reali per operazioni modali.
+```text
++----------------------------------------+
+| CounselorBot             Menu account  |
++----------------------------------------+
+
+  [< Area personale]        [Vai a... v]
+
+  [immagine] Nome della pagina
+             Anche su due righe
+
+  Descrizione approvata dello strumento.
+
+  [Azione principale*]       (se esiste)
+
+  Obiettivi collegati: 2 [Mostra]
+  ------------------------------------
+  Contenuto operativo
+```
+
+`*` L’azione principale è facoltativa e corrisponde a un’azione già disponibile nella pagina. Per esempio, «Nuovo lavoro» nel Portfolio o «Modifica» nel Taccuino in lettura; la posizione definitiva dell’azione va adattata alla singola pagina. Se un’azione compare nella testata, non deve essere ripetuta nel contenuto. Non si aggiunge un pulsante generico per riempire lo spazio e non si spostano qui i comandi di salvataggio dei singoli moduli.
+
+Le immagini sono quelle già scelte per l’ingresso, conservando proporzioni e nome visibile. L’immagine accompagna il titolo e non è un pulsante distinto. Su mobile la descrizione passa sotto la coppia immagine/titolo per avere larghezza sufficiente. La testata personale scorre con la pagina: non si aggiunge una seconda barra fissa sotto quella globale.
+
+#### Destinazioni e comportamento
+
+| Elemento | Comportamento previsto |
+| --- | --- |
+| «Area personale» | Collegamento a `/profilo`, anche se si arriva da un link diretto o da un’altra sottopagina. Eventuali bozze passano prima dalle protezioni di uscita. |
+| «Indietro» del browser | Conserva la cronologia reale; non è sostituito dal collegamento alla radice. |
+| «Indietro» interno a un compito | Resta solo se serve a tornare a un passaggio o a un elenco nello stesso strumento. Non duplica il ritorno all’Area personale nella testata. |
+| «Vai a…» | Apre un pannello con le 17 destinazioni, raggruppate come nell’ingresso. Aprire o chiudere il pannello non cambia pagina, selezione o bozza. |
+| Collegamento a un altro strumento | Apre direttamente la rotta scelta, attraversando le protezioni di uscita. Non salva e non condivide nulla automaticamente. |
+| Voce della pagina corrente | È riconoscibile come «Pagina attuale» e non avvia una navigazione che azzererebbe parametri o selezioni. |
+| Obiettivi collegati | Riga secondaria espandibile quando pertinente; il contenuto operativo resta prioritario. Non sostituisce il riepilogo generale dell’ingresso. |
+| Visibilità dei contenuti | Spiegazione vicino alla lettura, modifica o condivisione interessata. Non aggiungere una generica etichetta «Solo io» a tutte le testate. |
+
+#### Pannello «Vai a…»
+
+```text
++-----------------------------------------+
+| Vai a...                       [Chiudi] |
+|                                         |
+| IL MIO PERCORSO                         |
+| [immagine] Obiettivi                    |
+| [immagine] Attività                     |
+| [immagine] Calendario e diario          |
+|                                         |
+| CONOSCERMI E RIFLETTERE                 |
+| [immagine] Taccuino  · Pagina attuale   |
+| [immagine] Libretto                     |
+| [immagine] Cambiamenti                  |
+| [immagine] Risultati e conversazioni    |
+|                                         |
+| Seguono gli altri tre gruppi approvati. |
++-----------------------------------------+
+```
+
+Lo schema mostra un estratto, non una selezione ridotta: nella versione reale ci sono tutti e cinque i gruppi e tutte le 17 voci. Nel pannello bastano immagine e nome; le descrizioni complete restano nell’ingresso e nelle pagine. Non occorre una ricerca per questo elenco.
+
+- Desktop: pannello ancorato al pulsante; mobile: pannello adattato alla larghezza disponibile, con margini laterali. Si apre in sovrapposizione senza spostare il contenuto sottostante; l’altezza segue lo spazio disponibile e l’elenco può scorrere al suo interno.
+- È una navigazione con collegamenti, non un menu applicativo che richiede frecce direzionali. Il pulsante dichiara lo stato aperto/chiuso; Tab percorre chiusura e collegamenti nell’ordine dei gruppi.
+- All’apertura il focus entra nel pannello. Escape e «Chiudi» lo richiudono e riportano il focus a «Vai a…». Il click esterno e l’uscita del focus chiudono il pannello senza attivare una destinazione; non si impone un blocco del focus da finestra modale.
+- Una voce si attiva solo con click o conferma da tastiera. Spostare il focus non cambia pagina. Dopo la navigazione si annuncia il titolo della nuova pagina, compatibilmente con la gestione del focus già prevista per un eventuale contenuto preciso.
+- Nomi completi anche quando vanno a capo, righe attivabili alte almeno 44 px, tema chiaro/scuro e sei lingue. La miniatura non sostituisce l’etichetta testuale.
+
+#### Protezioni e integrazione per passi
+
+La navigazione aggiuntiva deve rispettare le bozze. Prima di estenderla alle pagine con moduli modificabili, verificare le guardie esistenti e risolvere le lacune F01/F02/F06 dei lotti 1A: il nuovo collegamento non deve aggirare una conferma o un recupero già disponibili. Il punto 0.3 definisce la struttura, non dichiara risolta la protezione del lavoro.
+
+Dopo la validazione, procedere con un solo intervento applicativo alla volta:
+
+1. **Pagina pilota: Orientamento.** Applicare la testata e il pannello a una pagina senza bozze di scrittura, verificando ritorno certo, link diretti e uso con tastiera su desktop/mobile.
+2. **Pagine successive.** Estendere lo stesso componente una pagina per volta, verificando prima le sue protezioni di uscita. Per le pagine visuali consolidare le testate duplicate e la semantica della pagina senza modificare i moduli di lavoro.
+3. **Azioni e contenuti accessori.** Ricollocare soltanto quelli della pagina in esame, preservando i contratti di salvataggio, le versioni e le autorizzazioni.
+
+Criteri di chiusura per ciascuna pagina: un solo titolo principale con il nome approvato; immagine coerente con l’ingresso; «Area personale» sempre diretto a `/profilo`; pannello con tutte le destinazioni; nessuna perdita di bozza o condivisione implicita; parametri e ancore dei link al contenuto preservati; focus comprensibile; nessun overflow a 320/390/1440 px. Le verifiche funzionali restano distinte dalla validazione dello schema.
+
+**Decisione da validare per chiudere 0.3:** collegamento stabile «Area personale» a sinistra e pannello «Vai a…» a destra; sotto, un’unica testata con immagine esistente, nome, descrizione e azione principale solo quando utile.
 
 ### Salvataggio, errore e uscita
 
@@ -789,7 +878,7 @@ Si affronta un solo intervento alla volta. La chiusura di un punto di pianificaz
 | --- | --- | --- | --- |
 | 0.1 | Nomi e raggruppamento degli strumenti | **Approvato e registrato — 23 settembre 2026** | Cinque gruppi, 17 destinazioni oltre all'ingresso, nomi e descrizioni definiti in §4; Portfolio autonomo e Cambiamenti allo stesso livello di Taccuino e Libretto |
 | 0.2 | Schema ASCII dell'ingresso | **Approvato e registrato — 23 settembre 2026 (§5.1)** | Riepilogo breve, cinque gruppi aperti, due colonne desktop e una mobile; immagini esistenti accanto a nome e descrizione. Applicato all’ingresso; abbinamenti immagini completati |
-| 0.3 | Schema della testata e navigazione comune | **Prossimo da discutere** | Titolo, azione principale, ritorno e accesso alle altre pagine validati |
+| 0.3 | Schema della testata e navigazione comune | **Proposta pronta — da validare (§4)** | Titolo, azione principale, ritorno e accesso alle altre pagine validati |
 
 Gli schemi specifici di Libretto, Assegnazioni e delle altre pagine saranno validati prima dei rispettivi interventi. Nessuno schema successivo è approvato per effetto della chiusura di 0.1.
 
