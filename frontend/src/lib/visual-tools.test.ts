@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, deckColumnsForType, DEFAULT_DECK_ID } from './visual-tools.ts';
+import { emptyWorkspace, removeOption, removeCriterion, setCell, workspaceText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, deckTypeColumns, DEFAULT_DECK_ID } from './visual-tools.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
 import { visualLabel } from './i18n-visual-tools.ts';
 
@@ -190,29 +190,20 @@ test('deck-specific card columns and customizable blank preset', () => {
 });
 
 
-test('deckColumnsForType builds the columns implied by the chosen deck type', () => {
-    // Flashcard: always the two fixed columns, localized when the name is empty
-    const flash = deckColumnsForType('flashcard', 5, ['', '']);
-    assert.deepEqual(flash.map(c => c.id), ['fronte', 'retro']);
-    assert.equal(flash[0].label, '');
-    assert.equal(flash[1].label, '');
-
-    // Kanban: the three preset stages, custom labels only when renamed
-    const kanban = deckColumnsForType('kanban', 4, ['Da fare', '', 'Finito']);
-    assert.deepEqual(kanban.map(c => c.id), ['card_todo', 'card_doing', 'card_done']);
-    assert.equal(kanban[0].label, 'Da fare');
-    assert.equal(kanban[1].label, '');
-    assert.equal(kanban[2].label, 'Finito');
-
-    // Table: the requested count (clamped to 2–8) with the student's names
-    const table = deckColumnsForType('table', 3, ['Fonte', 'Autore', 'Esito']);
-    assert.deepEqual(table.map(c => c.id), ['col_1', 'col_2', 'col_3']);
-    assert.equal(table[0].label, 'Fonte');
-
-    // Count is clamped: below 2 becomes 2, above 8 becomes 8
-    assert.equal(deckColumnsForType('table', 1, []).length, 2);
-    assert.equal(deckColumnsForType('table', 20, []).length, 8);
-    // Ids stay unique within the deck
-    const clamped = deckColumnsForType('table', 8, []);
-    assert.equal(new Set(clamped.map(c => c.id)).size, 8);
+test('each deck type preset fixes its column ids and keeps labels localizable', () => {
+    // Every preset carries preset-style ids, so empty labels resolve through
+    // the localized column dictionary in every language.
+    assert.deepEqual(deckTypeColumns.flashcard.map(c => c.id), ['fronte', 'retro']);
+    assert.deepEqual(deckTypeColumns.kanban.map(c => c.id), ['card_todo', 'card_doing', 'card_done']);
+    assert.deepEqual(deckTypeColumns.reflection.map(c => c.id), ['unsorted', 'yes', 'explore', 'no']);
+    assert.deepEqual(deckTypeColumns.exploration.map(c => c.id), ['to_explore', 'explored', 'reflecting']);
+    assert.deepEqual(deckTypeColumns.prosCons.map(c => c.id), ['pro', 'con']);
+    assert.deepEqual(deckTypeColumns.questions.map(c => c.id), ['question', 'answer']);
+    // Every preset column has an empty label, so the localized name wins.
+    assert.ok(Object.values(deckTypeColumns).every(columns => columns.every(c => !c.label)));
+    // Creating a deck from a preset stores the columns on the deck.
+    const w = addCardDeck(emptyWorkspace(), 'Tesi: fonti', 'Mazzo principale', [], deckTypeColumns.prosCons.map(c => ({ ...c })));
+    const deck = w.card_decks?.find(d => d.id === w.active_deck_id);
+    assert.deepEqual(deck?.card_columns?.map(c => c.id), ['pro', 'con']);
+    assert.deepEqual(cardColumnsOf(w, w.active_deck_id).map(c => c.id), ['pro', 'con']);
 });

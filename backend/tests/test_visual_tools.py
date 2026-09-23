@@ -116,6 +116,27 @@ def test_flashcard_deck_keeps_localized_labels(db):
     assert 'Front: maison' in dict(workspace_sections(saved['workspace'], 'en'))['Cards']
 
 
+def test_pros_cons_deck_keeps_localized_labels(db):
+    # The pros/cons preset also resolves its empty labels through
+    # CARD_COLUMN_LABELS in every language.
+    pros_cons = Workspace.model_validate({
+        'card_decks': [
+            {'id': 'deck_pc', 'title': 'Erasmus: scegliere', 'card_columns': [{'id': 'pro'}, {'id': 'con'}]}
+        ],
+        'cards': [
+            {'id': 'c1', 'text': 'Vivere lontano da casa', 'bucket': 'pro', 'deck_id': 'deck_pc'},
+            {'id': 'c2', 'text': 'Lontano dagli amici', 'bucket': 'con', 'deck_id': 'deck_pc'}
+        ]
+    })
+    saved = save_workspace(db, 'visual-a', 'alice', SaveWorkspace(revision=0, workspace=pros_cons))
+    db.expire_all()
+    assert load_workspace(db, 'visual-a', 'alice') == saved
+    sections = dict(workspace_sections(saved['workspace'], 'it'))
+    assert 'Vantaggi: Vivere lontano da casa' in sections['Carte']
+    assert 'Svantaggi: Lontano dagli amici' in sections['Carte']
+    assert 'Pros: Vivere lontano da casa' in dict(workspace_sections(saved['workspace'], 'en'))['Cards']
+
+
 
 def test_endpoints_enforce_ownership_and_restore_after_retry(db):
     app = FastAPI()
