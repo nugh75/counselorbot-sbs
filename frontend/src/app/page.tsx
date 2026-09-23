@@ -80,19 +80,12 @@ export default function Home() {
     const [toolsAnchor, setToolsAnchor] = useState<string | null>(null);
 
     // Il catalogo strumenti (step 'base') viene aperto anche dalla presentazione:
-    // se è richiesta una sezione specifica, scorri all'anchor dopo il render.
+    // La sezione richiesta viene raggiunta al termine della transizione:
+    // AnimatePresence può ritardare il montaggio del catalogo.
     const openTools = (anchor?: string) => {
         setStep('base');
         setToolsAnchor(anchor ?? null);
     };
-    useEffect(() => {
-        if (step !== 'base' || !toolsAnchor) return;
-        const timer = window.setTimeout(() => {
-            document.getElementById(toolsAnchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            setToolsAnchor(null);
-        }, 60);
-        return () => window.clearTimeout(timer);
-    }, [step, toolsAnchor]);
     const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
     const [counselorRequest, setCounselorRequest] = useState<{
         questionnaire: QuestionnaireConfig; scores: Record<string, number> | null; resumeSid?: string; previousId: number | null;
@@ -693,6 +686,16 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
+                    onAnimationComplete={() => {
+                        if (step !== 'base' || !toolsAnchor) return;
+                        const target = document.getElementById(toolsAnchor);
+                        if (!target) return;
+                        target.scrollIntoView({
+                            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                            block: 'start',
+                        });
+                        setToolsAnchor(null);
+                    }}
                 >
                     {/* Step: Intro */}
                     {step === 'intro' && (

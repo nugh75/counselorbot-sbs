@@ -219,20 +219,33 @@ for (const width of [390, 1440]) {
         const { page, context, errors } = await fixture({ width, noHistory: true, prefs: { counselor_id: null, counselor_ready: false, notebook_ready: false, setup_completed: false } });
         try {
             await page.goto(`${origin}/`);
-            const start = page.getByRole('button', { name: /^Bussola/ });
+            const start = page.getByRole('button', { name: 'Apri Bussola', exact: true });
             await start.waitFor();
             assert.equal(await start.count(), 1);
-            const tools = page.getByRole('button', { name: /^Esplora attività e percorsi/ });
+            const tools = page.getByRole('button', { name: 'Vedi tutte le attività e i percorsi', exact: true });
             await tools.waitFor();
             assert.equal(await tools.count(), 1);
             const intro = page.getByTestId('intro-screen');
-            assert.deepEqual(await intro.locator('h2').allTextContents(), ['Analisi dei risultati dei questionari', 'Percorsi guidati', 'Area personale e strumenti']);
+            assert.deepEqual(await intro.locator('article h3').allTextContents(), ['Bussola', 'Analisi questionari', 'Percorsi guidati', 'Area personale e strumenti']);
             const images = intro.locator('img');
-            assert.equal(await images.count(), 5);
+            assert.equal(await images.count(), 4);
             await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
             assert.equal(await intro.getByRole('link', { name: 'Apri Area personale', exact: true }).getAttribute('href'), '/profilo');
             assert.equal(await intro.locator('details[open]').count(), 0);
-            assert.equal(await intro.locator('details').count(), 4);
+            assert.equal(await intro.locator('details').count(), 3);
+            assert.equal(await intro.locator('details[data-section=start]').count(), 0);
+            assert.equal(await intro.getByRole('link', { name: 'Guida all’uso', exact: true }).getAttribute('href'), '/guide');
+            const cards = await intro.locator('article').evaluateAll(items => items.map(item => {
+                const { x, y } = item.getBoundingClientRect();
+                return { x, y };
+            }));
+            if (width >= 640) {
+                assert.equal(cards[0].y, cards[1].y);
+                assert.equal(cards[2].y, cards[3].y);
+                assert.ok(cards[1].x > cards[0].x && cards[2].y > cards[0].y);
+            } else {
+                assert.ok(cards.every((card, i) => i === 0 || card.y > cards[i - 1].y));
+            }
             const support = intro.locator('details[data-section=personal]');
             await support.locator('summary').focus();
             await page.keyboard.press('Enter');
@@ -283,14 +296,14 @@ test('instrument details return to the actual catalog rather than the home scree
     } finally { await context.close(); }
 });
 
-for (const [locale, width, dark, title] of [['de', 320, true, 'Analyse der Fragebogenergebnisse'], ['sv', 768, false, 'Analys av frågeformulärens resultat']]) {
+for (const [locale, width, dark, title] of [['de', 320, true, 'Fragebogenanalyse'], ['sv', 768, false, 'Analys av frågeformulär']]) {
     test(`illustrated introduction remains readable in ${locale} at ${width}px, dark=${dark}`, async () => {
         const { page, context, errors } = await fixture({ width, locale, dark, noHistory: true, prefs: { counselor_id: null, counselor_ready: false, notebook_ready: false, setup_completed: false } });
         try {
             await page.goto(`${origin}/`);
             const intro = page.getByTestId('intro-screen');
             await intro.getByRole('heading', { name: title, exact: true }).waitFor();
-            assert.equal(await intro.locator('h2').count(), 3);
+            assert.equal(await intro.locator('article').count(), 4);
             assert.equal(await intro.locator('details[open]').count(), 0);
             assert.equal((await intro.innerText()).includes('app.intro.'), false);
             assert.ok(await intro.evaluate(el => [...el.querySelectorAll('article')].every(card => card.getBoundingClientRect().right <= el.getBoundingClientRect().right + 1)), 'long translated titles stay within the page');
@@ -322,7 +335,7 @@ test('data and privacy explains conditional protection and returns to the introd
         assert.match(await page.locator('main').innerText(), /revocabili/);
         await page.getByRole('link', { name: 'Torna alla presentazione', exact: true }).click();
         await page.getByTestId('intro-screen').waitFor();
-        assert.equal(await page.getByRole('heading', { name: 'Analisi dei risultati dei questionari', exact: true }).isVisible(), true);
+        assert.equal(await page.getByRole('heading', { name: 'Analisi questionari', exact: true }).isVisible(), true);
         assert.deepEqual(writes, []);
         assert.deepEqual(errors, []);
     } finally { await context.close(); }
@@ -358,6 +371,30 @@ for (const remember of [false, true]) {
             await checkbox.setChecked(remember);
             await page.getByRole('button', { name: 'Chat Guidata', exact: true }).click();
             assert.equal(await page.evaluate(() => localStorage.getItem('counselorbot_experience')), remember ? 'standard' : null);
+        } finally { await context.close(); }
+    });
+}
+
+for (const width of [390, 1440]) {
+    test(`introduction entries reach their category or the complete catalog at ${width}px`, async () => {
+        const { page, context, errors } = await fixture({ width });
+        try {
+            await page.emulateMedia({ reducedMotion: width >= 640 ? 'no-preference' : 'reduce' });
+            for (const [label, target] of [['Esplora le analisi', 'tools-assessment'], ['Esplora i percorsi', 'tools-guided']]) {
+                await page.goto(`${origin}/?view=intro`);
+                await page.getByTestId('intro-screen').getByRole('button', { name: label, exact: true }).click();
+                await page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
+                await page.waitForFunction(id => {
+                    const box = document.getElementById(id)?.getBoundingClientRect();
+                    return box && box.top >= 0 && box.top < innerHeight / 2;
+                }, target);
+                await page.getByRole('button', { name: 'Torna alla presentazione', exact: true }).click();
+                await page.getByTestId('intro-screen').waitFor();
+            }
+            await page.getByTestId('intro-screen').getByRole('button', { name: 'Vedi tutte le attività e i percorsi', exact: true }).click();
+            await page.getByRole('heading', { name: 'Attività e percorsi', exact: true }).waitFor();
+            assert.equal(await page.locator('main article').count(), 11);
+            assert.deepEqual(errors, []);
         } finally { await context.close(); }
     });
 }
