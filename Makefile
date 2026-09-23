@@ -122,3 +122,10 @@ telegram-send-test: ## Messaggio di prova: make telegram-send-test CHAT_ID=<id>
 
 telegram-logs: ## Log del backend (webhook incluso)
 	docker compose logs -f backend
+
+# Dopo modifiche al prodotto: aggiornare il Markdown e la Guida, poi registrare.
+.PHONY: guidance-check guidance-refresh
+guidance-check:
+	python3 scripts/check-platform-guidance.py --check
+guidance-refresh:
+	python3 scripts/check-platform-guidance.py --refresh

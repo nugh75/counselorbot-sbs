@@ -1,5 +1,13 @@
 # CounselorBot — platform, tools and personal journey
 
+Current interface reference: [CounselorBot functions](funzionalita-counselorbot.md),
+maintained alongside product changes and read live by the CounselorBot Assistant
+and Compass. The introduction offers Compass, Questionnaire analysis, Guided paths,
+and Personal area and tools. The full activity catalog starts with Compass and
+ends with Resume activities. PDF study and Flashcards are in the Personal area;
+there is no separate Training category.
+
+
 CounselorBot is an AI-assisted environment for reflecting on learning, work and
 choices. It supports students, adults, trainees and teachers reflecting on their
 practice. It complements educational support; it does not diagnose or decide for
@@ -33,7 +41,7 @@ not, a second look, and what to try next time. A final summary becomes a **Bookl
 draft**: the person reviews, edits and explicitly saves it. There is no automatic
 score, diagnosis or saving. These conversations are distinct from calendar events.
 
-**pQBL** (`/pqbl`) is another activity: practice questions and formative feedback
+**pQBL** (`/profilo/pqbl`) is another activity: practice questions and formative feedback
 generated from a study PDF. It is not a scored self-report questionnaire.
 
 ## Entry points and the guided chat
@@ -49,7 +57,7 @@ base. The illustrated **Guide** (`/guide`) is public and explains the interface,
 significant-event tools, goals, personal work and teacher assignments.
 
 In guided chat, the step bar goes back, repeats or advances. The three-dot menu
-beside the composer contains tools, response length and Freeze session. Message
+beside the composer contains tools, response format, independent response length and Freeze session. Message
 controls offer listening and diagrams. Sessions with conversation progress save
 after replies; the home page and navigation provide Resume. Freeze saves and closes.
 An optional OpenCode workspace provides an alternative conversation experience.
@@ -132,3 +140,17 @@ QSA or QSAr plus ZTPI plus SAVICKAS results. Administrators manage prompt versio
 guided steps, AI model presets, catalogs, monitoring, benchmarks and training data.
 Authentication uses ai4auth; server-side permissions govern access. The AI explains
 and suggests: it does not adopt goals, edit notes, share or submit work for the person.
+
+## Current personal tools and saving
+
+PDF study is at `/profilo/pqbl`, beside Flashcards (`/profilo/flashcard`).
+Flashcards support editable decks and study sessions with answer reveal and self-assessment.
+Cards (`/profilo/carte`) organize thoughts in multiple decks with templates, columns
+and drag-and-drop; they are distinct from study Flashcards. Comparison, the action
+board and Tavolo (when enabled) support exploring alternatives and organizing work.
+Notebook autosave protects a recoverable draft silently in the background; only
+manual saving creates a meaningful history revision. Errors remain visible.
+Input and conversation-mode preferences are saved only through their explicit
+checkboxes; Idea asks for its mode each time. Response format (conversation, bullets,
+table) is independent of response length. QSA offers its own essential path of
+three replies and a summary; do not extend this to other scored questionnaires.

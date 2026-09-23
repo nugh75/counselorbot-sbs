@@ -382,7 +382,7 @@ for (const options of [{ width: 320, locale: 'de' }, { width: 390, locale: 'it',
             }
             assert.doesNotMatch(await page.locator('main').innerText(), /guide\.(section|chat)\w*/);
             const figures = page.locator('figure');
-            assert.equal(await figures.count(), 6);
+            assert.equal(await figures.count(), 10);
             for (const figure of await figures.all()) {
                 const thumbnail = figure.locator('img');
                 await thumbnail.scrollIntoViewIfNeeded();

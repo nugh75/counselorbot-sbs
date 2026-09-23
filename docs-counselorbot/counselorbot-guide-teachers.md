@@ -1,5 +1,13 @@
 # CounselorBot for teachers and researchers
 
+Current interface reference: [CounselorBot functions](funzionalita-counselorbot.md),
+maintained alongside product changes and read live by the CounselorBot Assistant
+and Compass. The introduction offers Compass, Questionnaire analysis, Guided paths,
+and Personal area and tools. The full activity catalog starts with Compass and
+ends with Resume activities. PDF study and Flashcards are in the Personal area;
+there is no separate Training category.
+
+
 This guide describes how teachers, researchers, and administrators use the
 CounselorBot platform. It covers the **platform's operation**, not the theory of
 strategic competences (for that, consult the "Strategic Competences" knowledge base).
@@ -171,3 +179,16 @@ monitoring and research with PII redaction, configurable retention, and GDPR-com
 session deletion. Production data lives on PostgreSQL 15; tests run against a dedicated
 `counselorbot_test` database. The OpenCode workspace sandbox denies bash and webfetch
 and exposes the PTY only over an authenticated WebSocket.
+## Current personal tools and saving
+
+PDF study is at `/profilo/pqbl`, beside Flashcards (`/profilo/flashcard`).
+Flashcards support editable decks and study sessions with answer reveal and self-assessment.
+Cards (`/profilo/carte`) organize thoughts in multiple decks with templates, columns
+and drag-and-drop; they are distinct from study Flashcards. Comparison, the action
+board and Tavolo (when enabled) support exploring alternatives and organizing work.
+Notebook autosave protects a recoverable draft silently in the background; only
+manual saving creates a meaningful history revision. Errors remain visible.
+Input and conversation-mode preferences are saved only through their explicit
+checkboxes; Idea asks for its mode each time. Response format (conversation, bullets,
+table) is independent of response length. QSA offers its own essential path of
+three replies and a summary; do not extend this to other scored questionnaires.

@@ -19,6 +19,7 @@ from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from ..chat_preferences import apply_response_format
+from ..platform_guidance import GUIDE_DIRECTIVE, GUIDE_FILENAME, read_platform_guide
 from .. import auth, database, models, model_pricing
 from ..chat_continuation import continuation_message
 from ..prompt_contract import persona_context
@@ -194,7 +195,8 @@ def _filter_single_instrument_results(question: str, results: list[dict]) -> lis
     ]
 
 
-def _resolve_site_prompt(ai_service: AIService, audience: str, collection: str = COLLECTION_COMPETENZE) -> str:
+def _resolve_site_prompt(ai_service: AIService, audience: str, collection: str = COLLECTION_COMPETENZE,
+                         platform_reference: str | None = None) -> str:
     audience = audience if audience in SITE_CHAT_MODE_TO_PROMPT_KEY else "studente"
     if collection == COLLECTION_COUNSELORBOT:
         key = COUNSELORBOT_CHAT_MODE_TO_PROMPT_KEY[audience]
@@ -226,6 +228,9 @@ def _resolve_site_prompt(ai_service: AIService, audience: str, collection: str =
     preamble = "\n\n".join(p.strip() for p in (ctx, card) if p and p.strip())
     if preamble:
         prompt = f"{preamble}\n\n{prompt}"
+    if collection == COLLECTION_COUNSELORBOT:
+        reference = read_platform_guide() if platform_reference is None else platform_reference
+        prompt = f"{prompt}\n\n{GUIDE_DIRECTIVE}{reference}"
     return prompt
 
 
@@ -337,8 +342,9 @@ async def site_chat_stream(
     collection = _normalize_collection(request.collection)
     index = get_index(collection)
     ai_service = AIService(db)
+    platform_reference = read_platform_guide() if collection == COLLECTION_COUNSELORBOT else None
     system_prompt = _apply_language_directive(
-        _resolve_site_prompt(ai_service, request.audience, collection), request.language, db=db
+        _resolve_site_prompt(ai_service, request.audience, collection, platform_reference), request.language, db=db
     )
     # Counselor AI: anteponi la persona al system prompt, se selezionato.
     c_persona, c_name = _resolve_counselor(db, request.counselor_id)
@@ -381,6 +387,16 @@ async def site_chat_stream(
     else:
         retrieval_error = None
         results = _filter_single_instrument_results(question, results)
+
+    if platform_reference is not None:
+        # The live document is sufficient grounding for platform help even when
+        # the embedding service is unavailable. Other collections retain their
+        # existing failure behavior. Drop old indexed copies of this same file.
+        results = [{"source": GUIDE_FILENAME, "title": "CounselorBot: funzionalità attuali",
+                    "text": platform_reference}] + [
+            result for result in (results or []) if result["source"] != GUIDE_FILENAME
+        ]
+        retrieval_error = None
 
     def _log_and_persist(answer: str, sources: list[str], usage: dict | None = None) -> str | None:
         """Logga l'interazione, aggiorna la memoria conversazionale e crea il
@@ -461,7 +477,7 @@ async def site_chat_stream(
             yield f"data: {_json.dumps({'done': True, 'response': no_material, 'session_id': session_id, 'conversation_id': conversation_id, 'sources': []})}\n\n"
             return
 
-        context, sources = build_context(results)
+        context, sources = build_context(results, max_chars=10000 + len(platform_reference or ""))
         memory_block = (
             f"PREVIOUS CONVERSATION (for continuity only, NOT a source):\n{prior_memory}\n\n---\n\n"
             if prior_memory else ""
