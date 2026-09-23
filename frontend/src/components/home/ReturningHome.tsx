@@ -145,9 +145,12 @@ export function ReturningHome({
             <PersonalAreaEntry />
             {(resumeCount > 0 || resumeEntries.error) && (
                 <section data-testid="home-resume">
-                    <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                        {t('frozen.resumeTitle')}
-                    </h2>
+                    <div className="flex items-center gap-3.5">
+                        <div className="relative h-14 w-14 shrink-0">
+                            <Image src="/images/cards/fresh_start.png" alt="" width={56} height={56} className="h-full w-full object-contain" />
+                        </div>
+                        <h2 className="text-lg font-bold text-slate-900">{t('frozen.resumeTitle')}</h2>
+                    </div>
                     <ResumeLoadError entries={resumeEntries} />
                     <div className="mt-3 space-y-2">
                         {frozen.map((row) => (
