@@ -232,6 +232,14 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   la presentazione anche per chi ha già uno storico. I testi seguono la
   presentazione PEF del 21 settembre 2026, incluse le note del relatore.
   Prompt e provenienza delle immagini sono nel README della cartella.
+- **Ingresso Area personale**: `/profilo` mostra un riepilogo «Da riprendere» di
+  massimo tre lavori, quando presenti, seguito da cinque sezioni sempre aperte:
+  Il mio percorso, Conoscermi e riflettere, Studiare e ragionare, I miei lavori,
+  Persone e supporto. Ogni sezione ha righe illustrate con nome e descrizione;
+  due colonne da `md`, una su mobile. Si riutilizzano le immagini esistenti,
+  con proporzioni conservate, a sinistra del testo. Portfolio ha la propria
+  sezione; Cambiamenti è una voce autonoma. Il riepilogo gestisce localmente
+  caricamento ed errore, senza bloccare gli accessi.
 - **Salvataggio automatico**: lavora in background, senza spinner, messaggi di
   attesa o conferme che cambiano l'ingombro della pagina. Gli errori restano
   visibili con i controlli di recupero; i salvataggi espliciti mantengono la

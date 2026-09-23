@@ -102,10 +102,19 @@ lavori. Il progresso PDF, invece, è locale al browser.
 
 ## Area personale e strumenti
 
-L’Area personale (`/profilo`) inizia con **Il mio percorso**: obiettivi attivi,
-prossime attività, assegnazioni e riscontri. Seguono le risorse raggruppate per scopo.
-Gli accessi sono illustrati e organizzati per finalità, come nella presentazione
-e nel catalogo delle attività.
+L’Area personale (`/profilo`) apre con **Da riprendere**, solo quando ci sono
+lavori pertinenti: al massimo tre attività collegate a obiettivi attivi, obiettivi
+senza attività aperte o assegnazioni. Le date disponibili precedono gli elementi
+senza data; un feedback è indicato come disponibile, non come non letto.
+Il riepilogo porta al lavoro preciso, conserva i dati precedenti in caso di errore
+e offre Riprova; il caricamento non blocca i collegamenti agli strumenti.
+
+Seguono cinque gruppi sempre aperti: **Il mio percorso**, **Conoscermi e riflettere**,
+**Studiare e ragionare**, **I miei lavori**, **Persone e supporto**. Le 17 destinazioni
+hanno immagini già presenti, nome e descrizione, su due colonne desktop e una mobile.
+Cambiamenti è autonomo accanto a Taccuino e Libretto; Portfolio resta nel gruppo
+I miei lavori. Anche senza questionari o obiettivi si può aprire ciascuno strumento.
+I dati account restano nel menu della testata, senza un riquadro nell’ingresso.
 
 | Funzione | Dove | Che cosa permette |
 | --- | --- | --- |
@@ -114,16 +123,16 @@ e nel catalogo delle attività.
 | Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. |
 | Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
 | Tavolo | `/profilo/tavolo` | Lavorare con materiali, idee e counselor; riaprire Tavoli salvati quando la funzione è abilitata. |
-| Carte | `/profilo/carte` | Raccogliere e ordinare pensieri in più mazzi, usando colonne, modelli e trascinamento. Non sono le Flashcard per il ripasso. |
-| Confronto | `/profilo/confronto` | Confrontare alternative con criteri personali. |
-| Bacheca azioni | `/profilo/azioni` | Organizzare le azioni del proprio piano personale. |
+| Carte da ordinare | `/profilo/carte` | Raccogliere e ordinare pensieri in più mazzi, usando colonne, modelli e trascinamento. Non sono le Flashcard per il ripasso. |
+| Confrontare alternative | `/profilo/confronto` | Confrontare alternative con criteri personali. |
+| Attività | `/profilo/azioni` | Organizzare le azioni del proprio piano personale. |
 | Taccuino | `/profilo/taccuino` | Scrivere contesto, difficoltà e risorse personali; conservare revisioni esplicite. |
-| Cambiamenti | `/profilo/cambiamenti` | Riflettere sulle differenze fra revisioni del Taccuino. |
+| Cambiamenti | `/profilo/cambiamenti` | Riflettere sulle differenze fra revisioni del Taccuino e sulle prove del Libretto. |
 | Libretto | `/profilo/libretto` | Raccogliere e modificare riflessioni per strumento, con esportazione PDF. |
 | Portfolio | `/profilo/portfolio` | Documentare lavori con titolo, descrizione, categoria, data, collegamenti e immagini. |
-| Sessioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account. |
-| Assegnazioni ricevute | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. |
-| I miei gruppi/classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito. |
+| Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account. |
+| Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. |
+| Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot. |
 

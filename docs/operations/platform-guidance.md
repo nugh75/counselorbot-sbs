@@ -255,3 +255,16 @@ lingue), 12 test browser superati a 320/390/1440 px, inclusi zoom, tastiera e
 controllo sezione per sezione. i18n, ESLint mirato e build Docker frontend con
 TypeScript superati. Markdown delle funzionalità aggiornato; indice CounselorBot
 ricostruito (288 passaggi, 17 fonti) e worker riavviati. Guida locale HTTP 200.
+
+
+### Cattura mirata dell’ingresso personale
+
+Per aggiornare solo la schermata dell’ingresso nelle sei lingue:
+
+```bash
+cd frontend
+GUIDE_SCREENS=personal-area node --experimental-strip-types scripts/capture-guide.mjs
+```
+
+`GUIDE_BASE_URL` può puntare al frontend locale di verifica. La cattura include
+l’intera pagina e attende le immagini; gli altri screenshot restano invariati.

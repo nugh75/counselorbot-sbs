@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { visualLabel } from '@/lib/i18n-visual-tools';
 import { useI18n } from '@/lib/i18n-context';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
@@ -18,19 +17,19 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import { JourneyOverview } from '@/components/goals/JourneyOverview';
-import { goalText, type GoalTextKey } from '@/lib/i18n-goals';
+import { PersonalAreaHome } from '@/components/profile/PersonalAreaHome';
+import { personalAreaText, personalAreaName, personalAreaDescription } from '@/lib/i18n-personal-area';
 import { TavoloList } from '@/components/tavolo/TavoloList';
 import { CrossSynthesisCard } from '@/components/profile/CrossSynthesisCard';
 import { TelegramLinkCard } from '@/components/profile/TelegramLinkCard';
 import { TeacherNotesCard } from '@/components/profile/TeacherNotesCard';
 import { AssignmentsPanel } from '@/components/teacher/AssignmentsPanel';
-import { assignmentText } from '@/lib/i18n-assignments';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
-    ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
-    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, LayoutList, Layers, Columns3, GraduationCap, BookOpen,
+    Trash2, Download, MessageSquare, ShieldAlert, Search,
+    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, GraduationCap, BookOpen,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -87,7 +86,7 @@ const PERSONAL_AREAS = [
         id: 'telegram',
         slug: 'telegram',
         icon: Send,
-        image: null,
+        image: '/images/platform/telegram.png',
         titleKey: 'profile.area.telegram.title',
         descriptionKey: 'profile.area.telegram.description',
     },
@@ -119,7 +118,7 @@ const PERSONAL_AREAS = [
         id: 'flashcards',
         slug: 'flashcard',
         icon: GraduationCap,
-        image: null,
+        image: '/images/cards/feedback_loop.png',
         titleKey: 'profile.area.flashcards.title',
         descriptionKey: 'profile.area.flashcards.description',
     },
@@ -142,18 +141,6 @@ const PERSONAL_AREAS = [
 ] as const;
 
 const ICON_BADGE_CLASS = 'bg-indigo-50 text-indigo-600';
-interface PersonalWorkspace {
-    tab: 'board' | 'cards' | 'comparison';
-    href: string;
-    icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-    image?: string;
-}
-const PERSONAL_WORKSPACES: readonly PersonalWorkspace[] = [
-    { tab: 'cards', href: '/profilo/carte', icon: Layers, image: '/images/platform/carte-ordinare.png' },
-    { tab: 'comparison', href: '/profilo/confronto', icon: Columns3, image: '/images/platform/confronto.png' },
-    { tab: 'board', href: '/profilo/azioni', icon: LayoutList, image: '/images/platform/bacheca-azioni.png' },
-];
-
 function personalSectionFromPath(pathname: string): PersonalSection | null {
     const slug = pathname.split('/').filter(Boolean)[1];
     return PERSONAL_AREAS.find((area) => area.slug === slug)?.id ?? null;
@@ -179,8 +166,8 @@ export default function ProfilePage() {
     const personalAreas = PERSONAL_AREAS.map((area) => ({
         ...area,
         href: `/profilo/${area.slug}`,
-        title: area.id === 'assignments' ? assignmentText(lang, 'received') : area.id === 'timeline' ? visualLabel(lang, area.titleKey) : t(area.titleKey),
-        description: area.id === 'assignments' ? assignmentText(lang, 'intro') : area.id === 'timeline' ? visualLabel(lang, area.descriptionKey) : t(area.descriptionKey),
+        title: personalAreaName(lang, area.slug),
+        description: personalAreaDescription(lang, area.slug),
     }));
     const activeArea = personalAreas.find((area) => area.id === activeSection) ?? null;
     const ActiveAreaIcon = activeArea?.icon;
@@ -203,6 +190,7 @@ export default function ProfilePage() {
             const id = await getIdentity();
             if (id?.authenticated) {
                 setIdentity(id);
+                if (!activeSection) return;
                 const res = await apiFetch('/api/user/questionnaire-results');
                 if (res.ok) {
                     const payload: unknown = await res.json();
@@ -240,7 +228,7 @@ export default function ProfilePage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [activeSection]);
 
     useEffect(() => {
         const requested = new URLSearchParams(window.location.search).get('instrument');
@@ -467,8 +455,8 @@ export default function ProfilePage() {
         <div className="page-wide px-4 py-8 space-y-8">
             <PageHeader
                 backHref={activeArea ? '/profilo' : '/'}
-                title={activeArea?.title ?? t('profile.title')}
-                subtitle={activeArea?.description ?? t('profile.subtitle')}
+                title={activeArea?.title ?? personalAreaText(lang, 'title')}
+                subtitle={activeArea?.description ?? personalAreaText(lang, 'intro')}
                 icon={activeArea ? (
                     activeArea.image ? (
                         <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden">
@@ -488,111 +476,7 @@ export default function ProfilePage() {
                 ) : undefined}
             />
 
-            {!activeArea && (
-                <>
-                    {/* Account Info Details Card */}
-                    <section className="glass-panel flex flex-wrap items-center justify-between gap-6 p-6">
-                        <div className="flex items-center gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-lg font-bold text-slate-600">
-                                {identity.username?.slice(0, 2).toUpperCase() || 'U'}
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-800">{identity.name || identity.username}</h2>
-                                <p className="text-xs text-slate-500">{identity.email || t('profile.noEmail')}</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-4 border-l border-slate-100 pl-6 text-sm">
-                            <div>
-                                <span className="block text-xs font-semibold uppercase text-slate-500">{t('profile.username')}</span>
-                                <span className="font-medium text-slate-700">{identity.username}</span>
-                            </div>
-                            <div>
-                                <span className="block text-xs font-semibold uppercase text-slate-500">{t('profile.groups')}</span>
-                                <span className="font-medium capitalize text-slate-700">
-                                    {identity.groups?.join(', ') || 'user'}
-                                </span>
-                            </div>
-                        </div>
-                    </section>
-
-                    <JourneyOverview />
-                    {([
-                        ['understand', ['notebook', 'booklet', 'sessions']],
-                        ['explore', ['pqbl', 'flashcards', 'tavolo']],
-                        ['document', ['timeline', 'portfolio']],
-                        ['support', ['assignments', 'groups', 'orientation', 'telegram']],
-                    ] as [GoalTextKey, string[]][]).map(([group, ids]) => <section key={group} className="space-y-3">
-                    <h2 className="text-lg font-bold text-slate-800">{goalText(lang, group)}</h2>
-                    <nav className={`grid gap-4 sm:grid-cols-2 ${group === 'explore' ? '' : 'lg:grid-cols-3'}`} aria-label={goalText(lang, group)}>
-                        {personalAreas.filter(area => ids.includes(area.id)).map((area) => {
-                            const Icon = area.icon;
-                            return (
-                                <Link
-                                    key={area.id}
-                                    href={area.href}
-                                    className="glass-panel group relative flex min-h-40 flex-col justify-between overflow-hidden p-5 transition-all hover:border-indigo-300 hover:bg-white hover:shadow-sm"
-                                >
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="min-w-0 flex-1">
-                                            <span className="block font-bold text-slate-900">{area.title}</span>
-                                            <span className="mt-1 block text-sm leading-relaxed text-slate-500">{area.description}</span>
-                                        </div>
-                                        {area.image ? (
-                                            <div className="relative h-20 w-20 shrink-0 transition-transform group-hover:scale-105">
-                                                <Image
-                                                    src={area.image}
-                                                    alt=""
-                                                    width={80}
-                                                    height={80}
-                                                    className="h-full w-full object-contain"
-                                                />
-                                            </div>
-                                        ) : (
-                                            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
-                                                <Icon className="h-5 w-5" aria-hidden />
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="mt-3 flex items-center justify-end">
-                                        <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-indigo-600" aria-hidden />
-                                    </div>
-                                </Link>
-                            );
-                        })}
-                        {group === 'explore' && PERSONAL_WORKSPACES.map(({ tab, href, icon: Icon, image }) => (
-                            <Link
-                                key={tab}
-                                href={href}
-                                className="glass-panel group relative flex min-h-40 flex-col justify-between overflow-hidden p-5 transition-all hover:border-indigo-300 hover:bg-white hover:shadow-sm"
-                            >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="min-w-0 flex-1">
-                                        <span className="block font-bold text-slate-900">{visualLabel(lang, tab)}</span>
-                                        <span className="mt-1 block text-sm text-slate-500">{visualLabel(lang, `${tab}Purpose`)}</span>
-                                    </div>
-                                    {image ? (
-                                        <div className="relative h-20 w-20 shrink-0 transition-transform group-hover:scale-105">
-                                            <Image
-                                                src={image}
-                                                alt=""
-                                                width={80}
-                                                height={80}
-                                                className="h-full w-full object-contain"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}><Icon className="h-5 w-5" aria-hidden /></span>
-                                    )}
-                                </div>
-                                <div className="mt-3 flex items-center justify-end">
-                                    <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-indigo-600" aria-hidden />
-                                </div>
-                            </Link>
-                        ))}
-                    </nav>
-                    </section>)}
-                </>
-            )}
+            {!activeArea && <PersonalAreaHome />}
 
             {activeSection && ['notebook', 'booklet', 'portfolio', 'tavolo'].includes(activeSection) && <JourneyOverview kind={activeSection as 'notebook' | 'booklet' | 'portfolio' | 'tavolo'} />}
             {activeSection && ['notebook', 'sessions'].includes(activeSection) && <p className="rounded-lg border border-slate-200 p-3 text-sm text-slate-600">{learningText(lang, 'groupVisibility')}</p>}

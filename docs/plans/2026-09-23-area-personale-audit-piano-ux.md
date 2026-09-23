@@ -1,6 +1,6 @@
 # Area personale: audit dell'interazione e piano di modifica
 
-**Data:** 23 settembre 2026. **Stato:** punti 0.1 (nomi e raggruppamento) e 0.2 (ingresso desktop/mobile, con immagini esistenti) approvati; schemi e interventi successivi da validare. Nessuna modifica applicativa implementata nell'ambito di questo piano.
+**Data:** 23 settembre 2026. **Stato:** punti 0.1 e 0.2 approvati e applicati all’ingresso dell’Area personale il 23 settembre 2026, su richiesta dell’utente di vedere le modifiche dopo rebuild Docker. Punto 0.3 e altri interventi restano da affrontare. Le evidenze dell’audit originario si riferiscono alla base sotto indicata.
 **Base del codice esaminato:** `edddddc`. Ambito: le 18 rotte dell'Area personale, i componenti condivisi e i passaggi verso gli strumenti esterni all'area.
 
 ## 1. Esito e priorità
@@ -429,9 +429,9 @@ Mappatura verificata il 23 settembre 2026 nei file disponibili sotto `frontend/p
 | Orientamento | `/images/platform/bussola.png` | Già abbinata nell'ingresso attuale. |
 | Telegram | `/images/platform/telegram.png` | File presente; la voce attuale usa ancora `image: null`. |
 
-**Abbinamenti ancora da definire prima dell'implementazione:** Obiettivi, Cambiamenti e Flashcard. Per queste tre destinazioni non risulta un'immagine dedicata già abbinata nell'ingresso esaminato. La scelta va completata tra le immagini esistenti, verificandone pertinenza e coerenza visiva; non si assume che abbiano già un'immagine dedicata e non si introduce automaticamente un'icona sostitutiva. Questo dettaglio non riapre la struttura approvata in 0.2.
+**Abbinamenti completati nell’implementazione:** Obiettivi usa `/images/cards/focus_goal.png`, Cambiamenti usa `/images/cards/self_reflection.png`, Flashcard usa `/images/cards/feedback_loop.png`. Tutte e tre sono immagini preesistenti, ispezionate prima della scelta; non sono stati generati nuovi asset. Telegram usa ora l’immagine già disponibile. La mappa eseguita dell’ingresso è `frontend/src/lib/personal-area.ts`.
 
-La verifica svolta accerta percorsi e abbinamenti, non la resa delle miniature: leggibilità, dimensioni, trasparenza e tema scuro andranno verificati nel prototipo o nell'interfaccia implementata.
+Gli abbinamenti sono stati verificati anche nel browser durante l’implementazione: nomi e immagini nelle sei lingue, desktop/mobile e tema scuro.
 
 #### Interazioni e stati
 
@@ -451,7 +451,7 @@ La verifica svolta accerta percorsi e abbinamenti, non la resa delle miniature: 
 - Il riepilogo contiene al massimo tre elementi sia su desktop sia su mobile. Su mobile si accetta lo scorrimento della pagina; non si aggiungono caroselli, scorrimenti interni o sezioni chiuse per nascondere destinazioni.
 - Verificare dopo l'implementazione: 17 destinazioni uniche, tutte le descrizioni approvate, Cambiamenti autonomo, Portfolio nel proprio gruppo, primo accesso senza dati, ritorno con riepilogo, errore locale con riprova, tastiera, temi chiaro/scuro, zoom e sei lingue. La riduzione di altezza rispetto all'audit è un obiettivo da misurare, non un risultato già dimostrato.
 
-**Decisione approvata per chiudere 0.2:** riepilogo breve prima dei cinque gruppi sempre aperti; gruppi a larghezza intera con collegamenti su due colonne desktop e una mobile. Ogni voce usa un'immagine esistente accanto al nome e alla descrizione. L'approvazione chiude la progettazione dell'ingresso; l'implementazione applicativa resta un intervento successivo.
+**Decisione approvata per chiudere 0.2:** riepilogo breve prima dei cinque gruppi sempre aperti; gruppi a larghezza intera con collegamenti su due colonne desktop e una mobile. Ogni voce usa un'immagine esistente accanto al nome e alla descrizione. L’implementazione dell’ingresso è stata successivamente autorizzata e applicata; il punto 0.3 resta separato.
 
 ### 5.2 Obiettivi — `/profilo/obiettivi`
 
@@ -788,7 +788,7 @@ Si affronta un solo intervento alla volta. La chiusura di un punto di pianificaz
 | Punto | Decisione | Stato | Criterio di chiusura |
 | --- | --- | --- | --- |
 | 0.1 | Nomi e raggruppamento degli strumenti | **Approvato e registrato — 23 settembre 2026** | Cinque gruppi, 17 destinazioni oltre all'ingresso, nomi e descrizioni definiti in §4; Portfolio autonomo e Cambiamenti allo stesso livello di Taccuino e Libretto |
-| 0.2 | Schema ASCII dell'ingresso | **Approvato e registrato — 23 settembre 2026 (§5.1)** | Riepilogo breve, cinque gruppi aperti, due colonne desktop e una mobile; immagini esistenti accanto a nome e descrizione. Tre abbinamenti immagini da completare prima dell’implementazione |
+| 0.2 | Schema ASCII dell'ingresso | **Approvato e registrato — 23 settembre 2026 (§5.1)** | Riepilogo breve, cinque gruppi aperti, due colonne desktop e una mobile; immagini esistenti accanto a nome e descrizione. Applicato all’ingresso; abbinamenti immagini completati |
 | 0.3 | Schema della testata e navigazione comune | **Prossimo da discutere** | Titolo, azione principale, ritorno e accesso alle altre pagine validati |
 
 Gli schemi specifici di Libretto, Assegnazioni e delle altre pagine saranno validati prima dei rispettivi interventi. Nessuno schema successivo è approvato per effetto della chiusura di 0.1.
@@ -896,4 +896,44 @@ I numeri di riga si riferiscono alla base esaminata; simboli e nomi dei file res
 | S16 | [PageHeader](../../frontend/src/components/ui/PageHeader.tsx), [PreviousPageButton](../../frontend/src/components/ui/PreviousPageButton.tsx) |
 | S17 | [OrientationDirectoryCard](../../frontend/src/components/profile/OrientationDirectoryCard.tsx): caricamento, filtri e stati 40–66 |
 
-**Perimetro della consegna:** solo questo documento. Nessun componente applicativo, dato, API, autorizzazione o container modificato. Le modifiche descritte richiedono una successiva implementazione autorizzata; la validazione degli schemi ASCII precede la generazione del codice UI.
+**Perimetro della consegna dell’audit originario:** solo questo documento. Nessun componente applicativo, dato, API, autorizzazione o container modificato. Le modifiche descritte richiedono una successiva implementazione autorizzata, salvo l’ingresso successivamente applicato e documentato in §9; la validazione degli schemi ASCII precede la generazione del codice UI.
+
+
+## 9. Applicazione dell’ingresso approvato — 23 settembre 2026
+
+L’utente ha chiesto di vedere le modifiche con un rebuild Docker. Applicati i punti
+0.1 e 0.2 a `/profilo`, senza avviare il redesign delle pagine interne o la nuova
+navigazione comune 0.3. Le testate già gestite da `ProfilePage` riprendono i nomi
+approvati; l’unico adeguamento operativo interno è l’ancora dell’attività per
+aprire il contenuto preciso dal riepilogo.
+
+- `PersonalAreaHome.tsx`: cinque gruppi aperti, 17 collegamenti illustrati, due
+  colonne desktop/una mobile; rimosso il riquadro account dall’ingresso.
+- `personal-area.ts`: immagini preesistenti e riepilogo unico di massimo tre
+  elementi, con deduplicazione delle attività, date disponibili prima degli
+  elementi senza data, feedback indicato come disponibile.
+- `i18n-personal-area.ts`: nomi, descrizioni e stati nelle sei lingue.
+- Il caricamento del riepilogo è indipendente; errori con Riprova conservano i
+  dati già ottenuti. L’ingresso non richiede più i risultati dei questionari.
+- Guida nelle sei lingue e relative schermate dell’ingresso aggiornate;
+  documentazione viva per Bussola e Assistente allineata.
+
+Verifiche concluse:
+
+- 207 test unitari frontend superati, compresi deduplicazione e limite del riepilogo.
+- TypeScript e controllo i18n superati. ESLint senza errori; nel componente visuale
+  restano cinque warning preesistenti (due simboli inutilizzati e tre immagini).
+- Otto test browser dell’ingresso superati anche sul container ricostruito, con
+  API simulate: sei lingue, 320/390/1440 px, immagini decodificate, tema scuro,
+  tastiera, errore parziale/riprova, caricamento lento e attività aperta con focus.
+- Tre test della navigazione visuale superati; sei test della Guida superati.
+- Build `docker compose build frontend` completata; container ricreato con
+  `docker compose up -d --no-deps frontend`, avvio regolare e `/profilo` locale 200.
+- Hash delle sei nuove schermate della Guida nel container uguali ai sorgenti.
+- Dominio pubblico: 302 verso SSO; il test browser locale con fixture non è una
+  verifica di sessione pubblica autenticata. Nessuna scrittura ai dati reali.
+
+Le tre incompatibilità TypeScript preesistenti negli import dei test sono state
+allineate alla convenzione già usata dal progetto (`@ts-expect-error` per gli
+import `.ts` eseguiti da Node). Backend e altri servizi non richiedono rebuild
+per questo intervento; nessun volume o dato persistente è stato modificato.

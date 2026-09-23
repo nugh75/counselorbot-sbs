@@ -35,7 +35,7 @@ for (const width of [1440, 390]) {
         try {
             await page.goto(`${origin}/profilo`);
             await page.getByRole('heading', { name: 'Il mio percorso', exact: true }).waitFor();
-            await page.getByRole('link', { name: 'I miei obiettivi', exact: true }).click();
+            await page.getByRole('link', { name: 'Obiettivi', exact: true }).click();
             await page.getByRole('button', { name: 'Scegli dal catalogo', exact: true }).click();
             await page.getByLabel('Cerca nel catalogo').fill('Organizzare meglio');
             await page.getByRole('button', { name: 'Personalizza e scegli', exact: true }).click();

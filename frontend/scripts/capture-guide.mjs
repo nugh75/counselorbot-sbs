@@ -3,6 +3,7 @@
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
+import { personalAreaName } from '../src/lib/i18n-personal-area.ts';
 import { goalText } from '../src/lib/i18n-goals.ts';
 import { assignmentText } from '../src/lib/i18n-assignments.ts';
 import { learningText } from '../src/lib/i18n-assignment-work.ts';
@@ -77,12 +78,28 @@ try {
         async function go(path) { await page.goto(`${origin}${path}`, { waitUntil: 'networkidle' }); await page.locator('main h1, main h2').first().waitFor(); }
         async function capture(name, locator) {
             await page.mouse.move(1430, 10);
+            if (name === 'personal-area') {
+                await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
+                for (const image of await page.locator('[data-personal-area-home] img').all()) {
+                    await image.scrollIntoViewIfNeeded();
+                    await image.evaluate(element => element.decode());
+                }
+                await page.evaluate(() => window.scrollTo(0, 0));
+            }
             await page.evaluate(() => document.fonts.ready);
             await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
             assert.deepEqual(errors, []);
             assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
-            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(name === 'activities' ? { fullPage: true } : {}) });
+            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area'].includes(name) ? { fullPage: true } : {}) });
             console.log(`${lang}/${name}`);
+        }
+        if (process.env.GUIDE_SCREENS === 'personal-area') {
+            authenticated = true;
+            await go('/profilo');
+            await page.getByRole('link', { name: personalAreaName(lang, 'obiettivi'), exact: true }).waitFor();
+            await capture('personal-area');
+            await context.close();
+            continue;
         }
         await go('/'); await capture('access');
         authenticated = true;
@@ -99,7 +116,7 @@ try {
         await go('/?view=home'); await capture('activities');
         await go('/profilo/pqbl'); await capture('pdf-study');
         await go('/profilo/flashcard'); await capture('flashcards');
-        await go('/profilo'); await page.getByRole('link', { name: goalText(lang, 'goals'), exact: true }).waitFor(); await capture('personal-area');
+        await go('/profilo'); await page.getByRole('link', { name: personalAreaName(lang, 'obiettivi'), exact: true }).waitFor(); await capture('personal-area');
         await go('/profilo/obiettivi?goal=1'); await page.getByLabel(goalText(lang, 'motivation'), { exact: true }).waitFor(); await capture('personal-goals');
         const sharingForm = page.locator('form').filter({ has: page.getByLabel(goalText(lang, 'share'), { exact: true }) });
         await capture('goal-sharing', sharingForm);
