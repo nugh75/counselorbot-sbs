@@ -39,17 +39,17 @@ class Card(Item):
     deck_id: str | None = Field(default=None, max_length=64, pattern=r'^[a-zA-Z0-9_-]+$')
 
 
-class CardDeck(StrictModel):
-    id: Identifier
-    title: str = Field(min_length=1, max_length=100)
-    card_columns: list[CardColumn] = Field(default_factory=list, max_length=8)
-
-
 class CardColumn(StrictModel):
     # A column reusing a preset id keeps its localized label; a custom id needs
     # the student's own text.
     id: str = Field(min_length=1, max_length=64, pattern=r'^[a-zA-Z0-9_-]+$')
     label: str = Field(default='', max_length=100)
+
+
+class CardDeck(StrictModel):
+    id: Identifier
+    title: str = Field(min_length=1, max_length=100)
+    card_columns: list[CardColumn] = Field(default_factory=list, max_length=8)
 
 
 class Option(Item):
