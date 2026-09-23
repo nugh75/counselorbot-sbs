@@ -372,17 +372,18 @@ for (const options of [{ width: 320, locale: 'de' }, { width: 390, locale: 'it',
             await page.goto(`${origin}/guide`, { waitUntil: 'networkidle' });
             const sections = page.locator('li[id^="guide-section-"]');
             assert.equal(await sections.count(), 15);
-            for (let n = 10; n <= 15; n++) {
+            for (let n = 1; n <= 15; n++) {
                 const link = page.locator(`a[href="#guide-section-${n}"]`);
                 const section = page.locator(`#guide-section-${n}`);
                 assert.ok((await link.innerText()).includes(await section.locator('h2').innerText()));
-                assert.ok((await section.locator('p').innerText()).length > 100);
+                assert.ok((await section.locator('p').first().innerText()).length > 100);
+                assert.ok(await section.locator('figure').count() > 0, `Missing screenshot: personal section ${n}`);
                 await link.click();
                 assert.equal(new URL(page.url()).hash, `#guide-section-${n}`);
             }
             assert.doesNotMatch(await page.locator('main').innerText(), /guide\.(section|chat)\w*/);
             const figures = page.locator('figure');
-            assert.equal(await figures.count(), 10);
+            assert.equal(await figures.count(), 18);
             for (const figure of await figures.all()) {
                 const thumbnail = figure.locator('img');
                 await thumbnail.scrollIntoViewIfNeeded();
