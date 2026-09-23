@@ -87,6 +87,21 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const dirty = JSON.stringify(work) !== JSON.stringify(saved.workspace);
     const hasWork = Boolean(work.actions.length || work.cards.length || work.comparison.options.length || work.timeline?.events.length);
     const currentCatalog = providedCatalog ?? catalog;
+    useEffect(() => {
+        if (!personal || tab !== 'board' || !loaded) return;
+        const focusAction = () => {
+            const hash = window.location.hash;
+            if (!hash.startsWith('#action-')) return;
+            let target: string;
+            try { target = decodeURIComponent(hash.slice(1)); } catch { return; }
+            const element = document.getElementById(target);
+            element?.scrollIntoView({ block: 'center' });
+            element?.focus({ preventScroll: true });
+        };
+        const frame = requestAnimationFrame(focusAction);
+        window.addEventListener('hashchange', focusAction);
+        return () => { cancelAnimationFrame(frame); window.removeEventListener('hashchange', focusAction); };
+    }, [personal, tab, loaded]);
     const sources = [
         ...currentCatalog.strategy.map(item => ({ title: item.name || item.slug, detail: item.description || '', key: `strategy:${item.slug}` })),
         ...currentCatalog.reading.map(item => ({ title: item.title || item.slug, detail: item.why || '', key: `reading:${item.slug}` })),
@@ -305,7 +320,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 <h3 className="mb-3 font-semibold text-slate-700">{l(stage)} <span className="font-mono text-sm text-slate-500">{work.actions.filter(a => a.stage === stage).length}</span></h3>
                                 <div className="space-y-3">{work.actions.filter(a => a.stage === stage).map(action => {
                                     const diary = /^\/profilo\/assegnazioni#assignment-\d+$/.test(action.source || '') ? work.timeline?.events.find(event => event.action_ids.includes(action.id)) : undefined;
-                                    return <article key={action.id} className="rounded-lg border border-slate-200 bg-white p-3">
+                                    return <article key={action.id} id={personal ? `action-${action.id}` : undefined} tabIndex={personal ? -1 : undefined} className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-3">
                                     <label className="block text-sm">{l('titleField')}<input data-workspace-field required maxLength={160} value={action.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, title: e.target.value } : a) })} /></label>
                                     <label className="mt-3 block text-sm">{l('move')}<select id={`${id}-action-${action.id}`} aria-label={`${l('move')}: ${action.title}`} value={action.stage} className={`${inputClass} mt-1 min-h-[44px]`} onChange={e => { edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, stage: e.target.value as ActionStage } : a) }); focusMoved(`${id}-action-${action.id}`); }}>{stages.map(s => <option key={s} value={s}>{l(s)}</option>)}</select></label>
                                     <details className="mt-2"><summary className="min-h-[44px] cursor-pointer py-3 text-sm font-medium text-indigo-700">{l('detail')} · {l('reflection')}</summary>
