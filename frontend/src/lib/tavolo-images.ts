@@ -23,6 +23,19 @@ export const BUILTIN_CARD_IMAGES: TavoloImageEntry[] = [
     { id: 'card:critical_puzzle', name: 'Pensiero Critico e Sintesi', usage: 'Puzzle con tessera chiave per problem solving' },
     { id: 'card:feedback_loop', name: 'Feedback e Revisione', usage: 'Frecce cicliche attorno al foglio per miglioramento' },
     { id: 'card:curiosity_explore', name: 'Esplorazione e Orizzonti', usage: 'Cannocchiale puntato verso una stella' },
+    { id: 'card:motivation_spark', name: 'Motivazione e Spinta', usage: 'Torcia e fiamma calda lungo il sentiero per motivazione e perseveranza' },
+    { id: 'card:exam_confidence', name: 'Sicurezza ed Esami', usage: 'Scudo e foglio d\'esame con spunta per gestire ansia da esame' },
+    { id: 'card:mind_mapping', name: 'Mappe e Schemi Mentali', usage: 'Rete radiale di nodi e rami per organizzazione concettuale' },
+    { id: 'card:dialogue_counselor', name: 'Dialogo e Ascolto', usage: 'Profili in dialogo empatico con ponte di ascolto' },
+    { id: 'card:self_reflection', name: 'Autovalutazione e Specchio', usage: 'Lente con riflesso sereno per introspezione e consapevolezza' },
+    { id: 'card:resilience_growth', name: 'Resilienza e Crescita', usage: 'Germoglio che spunta tra le pietre per costanza e superamento ostacoli' },
+    { id: 'card:career_compass', name: 'Vocazione e Futuro', usage: 'Faro e bussola per orientamento e sbocchi professionali' },
+    { id: 'card:workspace_order', name: 'Spazio di Studio', usage: 'Lampada e scrivania per ambiente di studio ordinato e senza distrazioni' },
+    { id: 'card:ask_support', name: 'Chiedere Aiuto e Rete', usage: 'Mani accoglienti per supporto tra pari, tutor e docenti' },
+    { id: 'card:priorities_matrix', name: 'Priorità e Selezione', usage: 'Imbuto e matrice di selezione per focalizzarsi sull\'essenziale' },
+    { id: 'card:fresh_start', name: 'Ripartenza e Nuovo Inizio', usage: 'Spirale verso l\'alba per superare battute d\'arresto' },
+    { id: 'card:deep_writing', name: 'Tesi e Scrittura Accademica', usage: 'Penna stilografica e manoscritto per stesura testi e tesi' },
+    { id: 'card:energy_battery', name: 'Gestione delle Energie', usage: 'Indicatore di carica e ritmo per prevenire sovraccarico cognitivo' },
 ];
 
 export const tavoloImageUrl = (id: string): string => {
