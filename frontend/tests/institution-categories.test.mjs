@@ -18,6 +18,7 @@ async function fixture(lang = 'it', options = {}) {
     const errors = []; const writes = [];
     const row = (id, name) => ({ id, name, description: 'Descrizione scelta dai docenti', position: Number(id), is_active: true, updated_by: 'docente.demo', updated_at: '2026-09-23T10:00:00Z' });
     const stores = { 1: { revision: 1, categories: options.empty ? [] : [row('1', 'Risorse'), row('2', 'Esperienze')] }, 2: { revision: 0, categories: [] } };
+    if (options.contents) stores[1].contents = [{ id: 10, kind: 'referral', title: 'Sportello studenti', updated_at: '2026-09-23T10:00:00Z', category_ids: [] }, { id: 11, kind: 'event', title: 'Laboratorio di orientamento', starts_at: '2026-11-10T10:00:00Z', updated_at: '2026-09-23T10:00:00Z', category_ids: ['1'] }];
     let fail = false; let denied = false; let failRead = false;
     page.on('pageerror', error => errors.push(error.message));
     await page.route('**/api/**', async route => {
@@ -28,7 +29,7 @@ async function fixture(lang = 'it', options = {}) {
         else if (path === '/api/orientation/status') data = { required: false, completed: true };
         else if (path === '/api/tavolo/enabled') data = { enabled: false };
         else if (path === '/api/teacher/institutions') data = options.unassigned ? [] : [1, ...(options.multiple ? [2] : [])].map(id => ({ id, name: `Istituto ${id}`, slug: `demo-${id}`, kind: 'school' }));
-        const match = path.match(/^\/api\/teacher\/institutions\/(\d+)\/orientation-categories$/);
+        const match = path.match(/^\/api\/teacher\/institutions\/(\d+)\/orientation-(?:categories|contents)(?:\/(referral|event)\/(\d+)\/categories)?$/);
         if (match) {
             if (denied) return route.fulfill({ status: 403, json: {} });
             const store = stores[match[1]];
@@ -36,6 +37,12 @@ async function fixture(lang = 'it', options = {}) {
                 const body = request.postDataJSON(); writes.push(body);
                 if (fail) return route.fulfill({ status: 503, json: {} });
                 if (body.revision !== store.revision) return route.fulfill({ status: 409, json: { detail: { code: 'conflict' } } });
+                if (match[2]) {
+                    const content = store.contents.find(item => item.kind === match[2] && item.id === Number(match[3]));
+                    if (!content) return route.fulfill({ status: 404, json: {} });
+                    content.category_ids = body.category_ids; store.revision++;
+                    return route.fulfill({ json: store });
+                }
                 let target = store.categories.find(item => item.id === body.category_id);
                 if (body.action === 'create' || body.action === 'edit') {
                     if (store.categories.some(item => item.id !== target?.id && item.name.toLowerCase() === body.name.toLowerCase())) return route.fulfill({ status: 409, json: { detail: { code: 'duplicate' } } });
@@ -184,5 +191,78 @@ for (const noNavigation of [false, true]) test(`confirmed back exits and cancell
         await page.waitForURL(`${origin}/docente`);
         assert.equal(f.writes.length, 0);
         assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+
+for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) test(`content assignments share one editor and preserve failed selections (${lang})`, async () => {
+    const f = await fixture(lang, { contents: true, multiple: true }); const { page, l } = f;
+    let discard = false;
+    page.on('dialog', dialog => discard ? dialog.accept() : dialog.dismiss());
+    try {
+        await f.open();
+        await page.locator('summary').filter({ hasText: l('contacts') }).click();
+        await f.actions('Sportello studenti'); await page.getByRole('button', { name: l('assign'), exact: true }).click();
+        await page.getByRole('checkbox', { name: 'Risorse', exact: true }).check();
+        await page.getByRole('checkbox', { name: 'Esperienze', exact: true }).check();
+        await page.getByRole('button', { name: l('new'), exact: true }).click();
+        assert.equal(await page.getByRole('checkbox').count(), 2, 'declining keeps the assignment editor');
+        await page.getByRole('combobox').selectOption('2');
+        assert.equal(await page.getByRole('combobox').inputValue(), '1');
+        f.stores[1].revision++;
+        await page.getByRole('button', { name: l('save'), exact: true }).click();
+        await page.getByText(l('assignmentConflict'), { exact: true }).waitFor();
+        assert.ok(await page.getByRole('checkbox', { name: 'Risorse', exact: true }).isChecked());
+        await page.getByRole('button', { name: l('retry'), exact: true }).click();
+        await page.getByRole('button', { name: l('save'), exact: true }).waitFor({ state: 'visible' });
+        f.fail(true);
+        await page.getByRole('button', { name: l('save'), exact: true }).click();
+        await page.getByText(l('saveError'), { exact: true }).waitFor();
+        assert.ok(await page.getByRole('checkbox', { name: 'Esperienze', exact: true }).isChecked());
+        f.fail(false);
+        await page.getByRole('button', { name: l('save'), exact: true }).click();
+        await page.getByText('Risorse · Esperienze', { exact: true }).waitFor();
+        assert.equal(await page.locator('form').count(), 0);
+        await page.locator('summary').filter({ hasText: l('events') }).click();
+        await f.actions('Laboratorio di orientamento'); await page.getByRole('button', { name: l('assign'), exact: true }).click();
+        await page.getByRole('checkbox', { name: 'Risorse', exact: true }).uncheck();
+        await page.getByRole('button', { name: l('save'), exact: true }).click();
+        await page.getByText(l('uncategorized'), { exact: true }).waitFor();
+        await f.actions('Sportello studenti'); await page.getByRole('button', { name: l('assign'), exact: true }).click();
+        await page.getByRole('checkbox', { name: 'Risorse', exact: true }).uncheck();
+        discard = true;
+        await page.getByRole('button', { name: l('new'), exact: true }).click();
+        assert.equal(await page.locator('form').count(), 1);
+        assert.equal(await page.getByRole('checkbox').count(), 0);
+        await page.getByRole('button', { name: l('cancel'), exact: true }).click();
+        for (const width of [320, 390, 1440]) {
+            await page.setViewportSize({ width, height: 1000 });
+            assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+            if (lang === 'it') { await page.addStyleTag({ content: 'nextjs-portal {display:none}' }); await page.screenshot({ path: `/tmp/institution-content-assignments-${width}.png`, fullPage: true }); }
+        }
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('removed content and archived selections remain reviewable after reload', async () => {
+    const f = await fixture('it', { contents: true }); const { page, l } = f;
+    try {
+        await f.open(); await page.locator('summary').filter({ hasText: l('contacts') }).click();
+        await f.actions('Sportello studenti'); await page.getByRole('button', { name: l('assign'), exact: true }).click();
+        await page.getByRole('checkbox', { name: 'Risorse', exact: true }).check();
+        f.stores[1].categories[0].is_active = false; f.stores[1].revision++;
+        await page.getByRole('button', { name: l('save'), exact: true }).click();
+        await page.getByRole('button', { name: l('retry'), exact: true }).click();
+        const archived = page.getByRole('checkbox', { name: 'Risorse (archiviata)', exact: true });
+        await archived.waitFor(); assert.ok(await archived.isChecked());
+        assert.ok(await page.getByRole('button', { name: l('save'), exact: true }).isDisabled());
+        await archived.click();
+        await archived.waitFor({ state: 'detached' });
+        f.stores[1].contents = []; f.stores[1].revision++;
+        await page.getByRole('button', { name: l('save'), exact: true }).click();
+        await page.getByRole('button', { name: l('retry'), exact: true }).click();
+        await page.getByText(l('contentUnavailable'), { exact: true }).waitFor();
+        assert.equal(await page.locator('form').count(), 1);
+        assert.ok(await page.getByRole('button', { name: l('save'), exact: true }).isDisabled());
     } finally { await f.context.close(); }
 });

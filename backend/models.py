@@ -1282,6 +1282,22 @@ class InstitutionOrientationCategory(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class InstitutionReferralCategory(Base):
+    __tablename__ = "institution_referral_categories"
+    category_id = Column(String(36), ForeignKey("institution_orientation_categories.id", ondelete="CASCADE"), primary_key=True)
+    content_id = Column(Integer, ForeignKey("orientation_referrals.id", ondelete="CASCADE"), primary_key=True)
+    updated_by = Column(String, nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class InstitutionEventCategory(Base):
+    __tablename__ = "institution_event_categories"
+    category_id = Column(String(36), ForeignKey("institution_orientation_categories.id", ondelete="CASCADE"), primary_key=True)
+    content_id = Column(Integer, ForeignKey("orientation_events.id", ondelete="CASCADE"), primary_key=True)
+    updated_by = Column(String, nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class OrientationReferral(Base):
     """Figura o ufficio a cui uno studente puo' rivolgersi.
 

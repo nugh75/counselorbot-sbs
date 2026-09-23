@@ -53,9 +53,11 @@ righe e le rimuove alla fine. Copre amministratore, docente associato, docente
 estraneo, studente, ricercatore, anonimo, revoca, riattivazione, istituto inattivo,
 tentativi tra istituti e dati di ingresso invalidi. Undici test superati.
 
-## Passi successivi
+## Stato del percorso
 
-1. Associazione delle categorie ai contenuti e filtri della directory studente (0.3.2.3).
+I passi 0.3.2.1–0.3.2.3 sono distribuiti in produzione dal 23 settembre 2026,
+su richiesta esplicita dell’utente. Le note di sola anteprima sotto descrivono
+le verifiche precedenti al rilascio.
 
 Le categorie editoriali dell’istituto resteranno distinte dal vocabolario globale
 dei bisogni usato per recuperare contatti in chat. Le modifiche non devono
@@ -123,3 +125,81 @@ Le verifiche browser usano fixture; non attestano l’accesso SSO pubblico reale
 Immagini backend/frontend ricostruite con successo; i 13 test del configuratore
 sono passati anche sul frontend Docker compilato, avviato temporaneamente su
 `127.0.0.1:3110` e poi rimosso. Container di produzione non sostituiti.
+
+
+## Terzo passo: assegnazione e directory studente
+
+Nella pagina docente, Contatti e Appuntamenti sono sezioni richiudibili. Il menu
+a tre punti di ogni contenuto offre **Assegna categorie**: zero, una o più
+categorie attive, con salvataggio esplicito. Un solo modulo può essere aperto,
+anche rispetto all’editor delle categorie. Le bozze sopravvivono a errori e
+ricariche per conflitto; un contenuto scomparso lascia il modulo visibile e
+impedisce il salvataggio. Una selezione archiviata nel frattempo va rimossa
+esplicitamente prima di salvare.
+
+| API | Contratto |
+| --- | --- |
+| `GET /teacher/institutions/{id}/orientation-contents?lang=it` | Revisione, categorie e contenuti attivi/certificati del solo istituto; appuntamenti non conclusi. Non espone bozze. |
+| `POST /teacher/institutions/{id}/orientation-contents/{kind}/{content_id}/categories?lang=it` | `kind`: `referral` o `event`; corpo `revision`, `category_ids`, `content_updated_at`; restituisce lo snapshot aggiornato. |
+| `GET /orientation-directory` | Aggiunge `institution_groups`: istituto, categorie pertinenti, contatti/appuntamenti con `category_ids`. Conserva `institution`, `referrals`, `events` per i client esistenti. |
+
+Ogni assegnazione verifica ruolo e associazione docente, istituto attivo e
+appartenenza del contenuto e delle categorie. Rifiuta categorie archiviate,
+contenuti nazionali, bozze, contenuti inattivi e appuntamenti conclusi. Campi
+estranei al contratto sono rifiutati: nessun permesso implicito di modifica o
+certificazione. Le risposte sono `403` per accesso negato, `404` per contenuto
+non disponibile, `409` per revisione/data/categorie non più valide, `422` per
+corpi non validi. Nessun errore incrementa la revisione.
+
+Le tabelle nuove `institution_referral_categories` e `institution_event_categories`
+hanno chiavi composte categoria/contenuto e riferimenti con cancellazione a
+cascata. Registrano autore e data della creazione del collegamento. Sono create
+da `metadata.create_all`, senza riclassificare dati. Il salvataggio sostituisce
+solo i collegamenti a categorie attive dell’istituto, preservando gli archiviati.
+La revisione comune serializza anche le modifiche delle categorie. Un lock sulla
+riga del contenuto e il confronto di `updated_at` proteggono dalle modifiche
+amministrative. Dopo uno spostamento tra istituti i vecchi collegamenti non
+compaiono nel nuovo istituto.
+
+La directory riusa i controlli esistenti di certificazione, pubblico, lingua,
+stato e scadenza. Offre filtri solo per categorie attive con contenuti visibili,
+ell’ordine deciso dai docenti. I gruppi sono identificati dall’istituto e gli
+ID distinguono nomi uguali. **Tutti** include i contenuti non classificati;
+le risorse nazionali restano fuori dai filtri locali e compaiono una sola volta.
+I bisogni della chat e il suo retrieval non vengono modificati.
+
+```bash
+docker compose run --rm --no-deps backend python -m unittest backend.tests.test_institution_category_assignments backend.tests.test_institution_categories backend.tests.test_institution_teachers
+docker compose run --rm --no-deps backend python -m backend.tests.test_orientation_referrals
+cd frontend
+node --test --experimental-strip-types tests/institution-categories.test.mjs tests/institution-directory.test.mjs
+GUIDE_BASE_URL=http://127.0.0.1:3108 node --test --experimental-strip-types tests/guide-audiences.test.mjs
+```
+
+Durante la prima esecuzione della suite preesistente `test_orientation_referrals`,
+l’import di `backend.main` ha creato le due tabelle nuove anche nel database
+configurato del servizio: verificate entrambe vuote. Il test è stato corretto
+per indirizzare anche il `create_all` dell’import al database di test. Nessun
+contenuto o associazione reale è stato inserito. I container di produzione
+restano alla versione precedente.
+
+
+## Rilascio del 23 settembre 2026
+
+Su richiesta esplicita dell’utente sono stati sostituiti i container backend e
+frontend usando le immagini appena ricostruite. Nessun volume o database rimosso.
+Verifiche: 33 test PostgreSQL per associazioni/categorie/assegnazioni, 28 test
+del retrieval, 34 test browser (20 editor, 8 directory, 6 guida) sulla build
+Docker, TypeScript, lint mirato e parità delle sei lingue. I test browser usano
+API simulate; la verifica del login SSO con un account reale resta distinta.
+
+Verifica dopo il rilascio: pagine locali `/profilo/orientamento`,
+`/docente/orientamento` e `/guide?audience=teacher` HTTP 200; OpenAPI espone le
+nuove rotte; API riservate senza identità HTTP 401. Quattro worker backend
+avviati, nessun traceback e zero restart dei due container. Le due prove browser
+italiane di assegnazione e filtro sono passate anche sul frontend di produzione
+locale, sempre con fixture API. Il browser pubblico raggiunge correttamente
+`auth.ai4educ.org/login`; accesso SSO autenticato non verificato. Le richieste
+Python senza browser ricevono Cloudflare 1010, non un errore applicativo.
+Indice CounselorBot ricostruito dopo l’aggiornamento del Markdown: 292 passaggi,
+19 fonti, controllo di aggiornamento positivo.

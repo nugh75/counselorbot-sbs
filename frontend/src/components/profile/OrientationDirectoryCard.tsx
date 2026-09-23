@@ -1,19 +1,19 @@
 'use client';
 
-// Directory dell'orientamento: le figure a cui lo studente può rivolgersi e gli
-// appuntamenti del suo istituto. A differenza della chat, qui non c'è filtro sui
-// bisogni: è un elenco, e deve mostrare tutto ciò che riguarda il proprio istituto.
+// Institution-defined filters are separate from the needs used in chat.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CalendarDays, ExternalLink, MapPin, Users } from 'lucide-react';
 
+import { categoryText } from '@/lib/i18n-institution-categories';
 import { useI18n } from '@/lib/i18n-context';
 import {
     fetchOrientationDirectory,
     type DirectoryEvent,
     type DirectoryReferral,
-    type Institution,
+    type InstitutionDirectory,
+    type OrientationDirectory,
 } from '@/lib/referrals-api';
 
 function formatDate(value: string, lang: string): string {
@@ -25,112 +25,66 @@ function formatDate(value: string, lang: string): string {
 
 export default function OrientationDirectoryCard() {
     const { t, lang } = useI18n();
-    const [institution, setInstitution] = useState<Institution | null>(null);
-    const [referrals, setReferrals] = useState<DirectoryReferral[]>([]);
-    const [events, setEvents] = useState<DirectoryEvent[]>([]);
-    const [need, setNeed] = useState<string>('');
+    const [data, setData] = useState<OrientationDirectory | null>(null);
     const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
-
+    const [attempt, setAttempt] = useState(0);
     useEffect(() => {
         let alive = true;
-        // Falso positivo della regola: al cambio di lingua la directory si
-        // ricarica, e tornare a `loading` e' lo stato voluto, non una cascata.
+        // Loading hides stale filters while language/context is reloaded.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setState('loading');
-        fetchOrientationDirectory(lang)
-            .then((data) => {
-                if (!alive) return;
-                setInstitution(data.institution);
-                setReferrals(data.referrals);
-                setEvents(data.events);
-                setState('ready');
-            })
-            .catch(() => { if (alive) setState('error'); });
+        fetchOrientationDirectory(lang).then(result => {
+            if (alive) { setData(result); setState('ready'); }
+        }).catch(() => { if (alive) setState('error'); });
         return () => { alive = false; };
-    }, [lang]);
+    }, [lang, attempt]);
+    if (state === 'loading') return <p role="status" className="text-sm text-slate-500">{t('referrals.loading')}</p>;
+    if (state === 'error' || !data) return <div role="alert"><p>{t('referrals.error')}</p><button type="button" className="min-h-[44px] underline" onClick={() => setAttempt(value => value + 1)}>{categoryText(lang, 'retry')}</button></div>;
+    // Compatibility with an older backend during a staged frontend rollout.
+    const groups = data.institution_groups ?? (data.institution ? [{ institution: data.institution, categories: [], referrals: data.referrals.filter(row => row.institution_id === data.institution!.id || row.institution_id === undefined), events: data.events.filter(row => row.institution_id === data.institution!.id || row.institution_id === undefined) }] : []);
+    const nationalReferrals = data.referrals.filter(row => row.institution_id === null || (!data.institution && row.institution_id === undefined));
+    const nationalEvents = data.events.filter(row => row.institution_id === null || (!data.institution && row.institution_id === undefined));
+    return <div className="space-y-8" data-orientation-directory>
+        {groups.length === 0 && <p className="text-sm text-slate-600 dark:text-slate-400">{t('referrals.institution.missing')} <Link href="/profilo/taccuino" className="underline">{t('referrals.institution.change')}</Link></p>}
+        {groups.map(group => <InstitutionContents key={group.institution.id} group={group} />)}
+        {(nationalReferrals.length > 0 || nationalEvents.length > 0) && <section aria-label={categoryText(lang, 'national')} className="space-y-4 border-t border-slate-200 pt-6 dark:border-slate-700"><h2 className="text-lg font-semibold">{categoryText(lang, 'national')}</h2><DirectoryContents referrals={nationalReferrals} events={nationalEvents} /></section>}
+    </div>;
+}
 
-    // I filtri offerti sono solo i bisogni realmente presenti: una chip che non
-    // filtra niente è una promessa vuota.
-    const needs = useMemo(() => {
-        const found = new Set<string>();
-        [...referrals, ...events].forEach((row) => row.needs.forEach((n) => found.add(n)));
-        return Array.from(found).sort();
-    }, [referrals, events]);
-
-    const shownReferrals = need ? referrals.filter((r) => r.needs.includes(need)) : referrals;
-    const shownEvents = need ? events.filter((e) => e.needs.includes(need)) : events;
-
-    if (state === 'loading') return <p className="text-sm text-slate-500">{t('referrals.loading')}</p>;
-    if (state === 'error') return <p className="text-sm text-rose-600">{t('referrals.error')}</p>;
-
-    return (
-        <div className="space-y-6">
-            <div className="rounded-lg border border-slate-200 bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">
-                    {t('referrals.institution.label')}
-                </p>
-                {institution ? (
-                    <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        <span className="text-base font-semibold text-slate-800">{institution.name}</span>
-                        {institution.orientation_page_url && (
-                            <a
-                                href={institution.orientation_page_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline"
-                            >
-                                {t('referrals.institution.page')} <ExternalLink className="h-3 w-3" />
-                            </a>
-                        )}
-                        <Link href="/profilo/taccuino" className="text-sm text-slate-500 hover:underline">
-                            {t('referrals.institution.change')}
-                        </Link>
-                    </div>
-                ) : (
-                    // Vuoto parlante: senza istituto la pagina dice cosa fare,
-                    // invece di restare muta.
-                    <p className="mt-1 text-sm text-slate-600">
-                        {t('referrals.institution.missing')}{' '}
-                        <Link href="/profilo/taccuino" className="text-indigo-600 hover:underline">
-                            {t('referrals.institution.change')}
-                        </Link>
-                    </p>
-                )}
+function InstitutionContents({ group }: { group: InstitutionDirectory }) {
+    const { t, lang } = useI18n();
+    const [selected, setSelected] = useState('');
+    const category = group.categories.some(item => item.id === selected) ? selected : '';
+    const institution = group.institution;
+    return <section aria-label={institution.name} className="space-y-4">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+            <p className="text-xs font-semibold text-slate-500">{t('referrals.institution.label')}</p>
+            <div className="mt-1 flex flex-wrap items-baseline gap-3"><h2 className="text-base font-semibold">{institution.name}</h2>
+                {institution.orientation_page_url && <a href={institution.orientation_page_url} target="_blank" rel="noreferrer" className="text-sm text-indigo-600 underline dark:text-indigo-300">{t('referrals.institution.page')}</a>}
+                <Link href="/profilo/taccuino" className="text-sm underline">{t('referrals.institution.change')}</Link>
             </div>
+        </div>
+        {group.categories.length > 0 && <div role="group" aria-label={categoryText(lang, 'categories')} className="flex flex-wrap gap-2">
+            {[{ id: '', name: t('referrals.filter.all'), description: '' }, ...group.categories].map(item => <button key={item.id} type="button" aria-pressed={category === item.id} title={item.description || undefined} onClick={() => setSelected(item.id)} className={`min-h-[44px] max-w-full break-words rounded-full border px-3 py-2 text-sm ${category === item.id ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 text-slate-700 dark:border-slate-600 dark:text-slate-200'}`}>{item.name}</button>)}
+        </div>}
+        <DirectoryContents referrals={category ? group.referrals.filter(row => row.category_ids?.includes(category)) : group.referrals} events={category ? group.events.filter(row => row.category_ids?.includes(category)) : group.events} />
+    </section>;
+}
 
-            {needs.length > 1 && (
-                <div className="flex flex-wrap gap-2">
-                    <button
-                        type="button"
-                        onClick={() => setNeed('')}
-                        className={`rounded-full px-3 py-1 text-xs ${need === '' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}
-                    >
-                        {t('referrals.filter.all')}
-                    </button>
-                    {needs.map((code) => (
-                        <button
-                            key={code}
-                            type="button"
-                            onClick={() => setNeed(code)}
-                            className={`rounded-full px-3 py-1 text-xs ${need === code ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}`}
-                        >
-                            {t(`referrals.need.${code}`)}
-                        </button>
-                    ))}
-                </div>
-            )}
-
+function DirectoryContents({ referrals, events }: { referrals: DirectoryReferral[]; events: DirectoryEvent[] }) {
+    const { t, lang } = useI18n();
+    return <div className="space-y-6">
             <section className="space-y-3">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
                     <CalendarDays className="h-4 w-4" /> {t('referrals.events.title')}
                 </h3>
-                {shownEvents.length === 0 ? (
+                {events.length === 0 ? (
                     <p className="text-sm text-slate-500">{t('referrals.events.empty')}</p>
-                ) : shownEvents.map((event) => (
-                    <article key={event.id} className="rounded-lg border border-slate-200 bg-white p-4">
-                        <p className="text-sm font-semibold text-slate-800">{event.title}</p>
+                ) : events.map((event) => (
+                    <article key={event.id} className="min-w-0 break-words rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{event.title}</p>
                         <p className="text-xs text-slate-500">{formatDate(event.starts_at, lang)}</p>
-                        {event.summary && <p className="mt-1 text-sm text-slate-600">{event.summary}</p>}
+                        {event.summary && <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{event.summary}</p>}
                         {(event.is_online || event.location) && (
                             <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
                                 <MapPin className="h-3 w-3" />
@@ -147,7 +101,7 @@ export default function OrientationDirectoryCard() {
                                 href={event.page_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline"
+                                className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline dark:text-indigo-300"
                             >
                                 {t('referrals.events.page')} <ExternalLink className="h-3 w-3" />
                             </a>
@@ -157,24 +111,24 @@ export default function OrientationDirectoryCard() {
             </section>
 
             <section className="space-y-3">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
                     <Users className="h-4 w-4" /> {t('referrals.people.title')}
                 </h3>
-                {shownReferrals.length === 0 ? (
+                {referrals.length === 0 ? (
                     <p className="text-sm text-slate-500">{t('referrals.people.empty')}</p>
-                ) : shownReferrals.map((referral) => (
-                    <article key={referral.id} className="rounded-lg border border-slate-200 bg-white p-4">
-                        <p className="text-sm font-semibold text-slate-800">
+                ) : referrals.map((referral) => (
+                    <article key={referral.id} className="min-w-0 break-words rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                             {referral.role}{referral.person ? ` — ${referral.person}` : ''}
                         </p>
                         {referral.what_for && (
-                            <p className="mt-1 text-sm text-slate-600">
+                            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                                 <span className="text-slate-500">{t('referrals.people.whatFor')}: </span>
                                 {referral.what_for}
                             </p>
                         )}
                         {referral.how_to_reach && (
-                            <p className="mt-1 text-sm text-slate-600">
+                            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                                 <span className="text-slate-500">{t('referrals.people.howTo')}: </span>
                                 {referral.how_to_reach}
                             </p>
@@ -189,7 +143,7 @@ export default function OrientationDirectoryCard() {
                                 href={referral.page_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline"
+                                className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline dark:text-indigo-300"
                             >
                                 {t('referrals.institution.page')} <ExternalLink className="h-3 w-3" />
                             </a>
@@ -197,6 +151,5 @@ export default function OrientationDirectoryCard() {
                     </article>
                 ))}
             </section>
-        </div>
-    );
+    </div>;
 }

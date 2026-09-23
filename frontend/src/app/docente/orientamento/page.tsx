@@ -11,7 +11,9 @@ import { useCategoryDraftGuard } from '@/lib/use-category-draft-guard';
 import type { Institution } from '@/lib/referrals-api';
 
 type Category = { id: string; name: string; description: string; is_active: boolean; position: number; updated_by: string; updated_at: string };
-type Snapshot = { revision: number; categories: Category[] };
+type Content = { id: number; kind: 'referral' | 'event'; title: string; starts_at: string | null; updated_at: string; category_ids: string[] };
+type AssignmentDraft = { content: Content; selected: string[]; original: string[] };
+type Snapshot = { revision: number; categories: Category[]; contents?: Content[] };
 type Draft = { id?: string; name: string; description: string; originalName: string; originalDescription: string };
 type Action = 'create' | 'edit' | 'archive' | 'restore' | 'move_up' | 'move_down';
 const control = 'min-h-[44px] rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-50 dark:border-slate-600';
@@ -56,6 +58,8 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
     const l = (key: CategoryTextKey) => categoryText(lang, key);
     const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
     const [draft, setDraft] = useState<Draft | null>(null);
+    const [assignment, setAssignment] = useState<AssignmentDraft | null>(null);
+    const assignmentRef = useRef<HTMLFieldSetElement>(null);
     const [errorKey, setErrorKey] = useState<CategoryTextKey | null>(null);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState(false);
@@ -65,15 +69,17 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
     const nameRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLHeadingElement>(null);
     const triggers = useRef(new Map<string, HTMLButtonElement>());
-    const dirty = draft !== null && (draft.name !== draft.originalName || draft.description !== draft.originalDescription);
+    const dirty = Boolean(draft && (draft.name !== draft.originalName || draft.description !== draft.originalDescription)) || Boolean(assignment && [...assignment.selected].sort().join() !== [...assignment.original].sort().join());
     useCategoryDraftGuard(dirty || busy, l('leave'));
-    const path = `/api/teacher/institutions/${institutionId}/orientation-categories`;
+    const base = `/api/teacher/institutions/${institutionId}`;
+    const path = `${base}/orientation-categories`;
+    const contentsPath = `${base}/orientation-contents?lang=${lang}`;
     const institution = institutions.find(item => item.id === institutionId)!;
     const draftId = draft?.id ?? (draft ? 'new' : null);
 
     useEffect(() => {
         const controller = new AbortController();
-        void apiFetch(path, { signal: controller.signal }).then(async response => {
+        void apiFetch(contentsPath, { signal: controller.signal }).then(async response => {
             if (!response.ok) throw new Error([401, 403].includes(response.status) ? 'denied' : 'loadError');
             const data: Snapshot = await response.json();
             if (!Array.isArray(data.categories) || !Number.isInteger(data.revision)) throw new Error('loadError');
@@ -81,7 +87,9 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
         }).catch(error => { if (!controller.signal.aborted) setErrorKey(error.message === 'denied' ? 'denied' : 'loadError'); })
             .finally(() => { if (!controller.signal.aborted) setLoading(false); });
         return () => controller.abort();
-    }, [path, attempt]);
+    }, [contentsPath, attempt]);
+    const assignmentKey = assignment ? `${assignment.content.kind}-${assignment.content.id}` : '';
+    useEffect(() => { if (assignmentKey) assignmentRef.current?.focus(); }, [assignmentKey]);
     useEffect(() => { if (draftId) nameRef.current?.focus(); }, [draftId]);
     useEffect(() => {
         if (!menu) return;
@@ -99,12 +107,12 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
     const mayDiscard = () => !dirty || window.confirm(l('leave'));
     const openEditor = (category?: Category) => {
         if (busy || !mayDiscard()) return;
-        setMenu(null);
+        setMenu(null); setAssignment(null);
         setDraft({ id: category?.id, name: category?.name ?? '', description: category?.description ?? '', originalName: category?.name ?? '', originalDescription: category?.description ?? '' });
         nameRef.current?.focus();
     };
     const unavailableDraft = Boolean(draft?.id && snapshot && !snapshot.categories.some(item => item.id === draft.id && item.is_active));
-    const blocked = busy || loading || !snapshot || ['conflict', 'denied', 'loadError'].includes(errorKey ?? '');
+    const blocked = busy || loading || !snapshot || ['conflict', 'denied', 'loadError', 'assignmentConflict', 'contentUnavailable'].includes(errorKey ?? '');
     const change = async (action: Action, categoryId?: string) => {
         if (blocked || !snapshot) return;
         setBusy(true); setMenu(null); setErrorKey(null);
@@ -117,7 +125,7 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
                 return;
             }
             const data: Snapshot = await response.json();
-            setSnapshot(data);
+            setSnapshot(previous => ({ ...data, contents: data.contents ?? previous?.contents }));
             if (action === 'create' || action === 'edit') setDraft(null);
             listRef.current?.focus({ preventScroll: true });
         } catch { setErrorKey('saveError'); }
@@ -125,6 +133,28 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
     };
     const active = snapshot?.categories.filter(item => item.is_active) ?? [];
     const archived = snapshot?.categories.filter(item => !item.is_active) ?? [];
+    const contents = snapshot?.contents ?? [];
+    const currentContent = assignment && contents.find(item => item.kind === assignment.content.kind && item.id === assignment.content.id);
+    const invalidSelections = assignment?.selected.some(id => !active.some(category => category.id === id));
+    const openAssignment = (content: Content) => {
+        if (blocked || !mayDiscard()) return;
+        const selected = content.category_ids.filter(id => active.some(category => category.id === id));
+        setDraft(null); setMenu(null); setAssignment({ content, selected, original: [...selected] });
+        assignmentRef.current?.focus();
+    };
+    const saveAssignment = async () => {
+        if (blocked || !assignment || !currentContent || invalidSelections || !snapshot) return;
+        setBusy(true); setErrorKey(null);
+        try {
+            const response = await apiFetch(`${base}/orientation-contents/${currentContent.kind}/${currentContent.id}/categories?lang=${lang}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ revision: snapshot.revision, category_ids: assignment.selected, content_updated_at: currentContent.updated_at }) });
+            if (!response.ok) {
+                setErrorKey([401, 403].includes(response.status) ? 'denied' : response.status === 409 ? 'assignmentConflict' : response.status === 404 ? 'contentUnavailable' : 'saveError');
+                return;
+            }
+            setSnapshot(await response.json()); setAssignment(null); listRef.current?.focus({ preventScroll: true });
+        } catch { setErrorKey('saveError'); }
+        finally { setBusy(false); }
+    };
     const reload = () => { if (!busy) { setLoading(true); setMenu(null); setAttempt(value => value + 1); } };
     return <div className="page-wide space-y-6 px-4 py-8" data-institution-categories>
         <Heading />
@@ -147,13 +177,39 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
                 <div className="relative shrink-0"><button ref={node => { if (node) triggers.current.set(category.id, node); else triggers.current.delete(category.id); }} type="button" aria-label={`${l('actions')}: ${category.name}`} aria-expanded={menu === category.id} aria-controls={`category-actions-${category.id}`} disabled={blocked} className={control} onClick={() => setMenu(menu === category.id ? null : category.id)}><MoreHorizontal className="h-4 w-4" aria-hidden /></button>
                     {menu === category.id && <div ref={menuRef} id={`category-actions-${category.id}`} className="absolute right-0 top-full z-20 mt-1 w-48 max-w-[calc(100vw-3rem)] space-y-1 rounded-lg border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900" onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget) && !triggers.current.get(category.id)?.contains(event.relatedTarget)) setMenu(null); }}>
                         <button type="button" className={`${control} w-full text-left`} onClick={() => openEditor(category)}>{l('edit')}</button>
-                        <button type="button" disabled={index === 0 || Boolean(draft)} className={`${control} w-full text-left`} onClick={() => void change('move_up', category.id)}>{l('up')}</button>
-                        <button type="button" disabled={index === active.length - 1 || Boolean(draft)} className={`${control} w-full text-left`} onClick={() => void change('move_down', category.id)}>{l('down')}</button>
-                        <button type="button" disabled={Boolean(draft)} className={`${control} w-full text-left`} onClick={() => void change('archive', category.id)}>{l('archive')}</button>
+                        <button type="button" disabled={index === 0 || Boolean(draft || assignment)} className={`${control} w-full text-left`} onClick={() => void change('move_up', category.id)}>{l('up')}</button>
+                        <button type="button" disabled={index === active.length - 1 || Boolean(draft || assignment)} className={`${control} w-full text-left`} onClick={() => void change('move_down', category.id)}>{l('down')}</button>
+                        <button type="button" disabled={Boolean(draft || assignment)} className={`${control} w-full text-left`} onClick={() => void change('archive', category.id)}>{l('archive')}</button>
                     </div>}
                 </div>
             </li>)}
         </ul>
-        {archived.length > 0 && <details><summary className="cursor-pointer py-3 text-sm">{l('archived')} ({archived.length})</summary><ul className="space-y-2">{archived.map(category => <li key={category.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"><span className="min-w-0 break-words">{category.name}</span><button type="button" disabled={blocked || Boolean(draft)} className={`${control} shrink-0`} onClick={() => void change('restore', category.id)}>{l('restore')}</button></li>)}</ul></details>}
+        {archived.length > 0 && <details><summary className="cursor-pointer py-3 text-sm">{l('archived')} ({archived.length})</summary><ul className="space-y-2">{archived.map(category => <li key={category.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"><span className="min-w-0 break-words">{category.name}</span><button type="button" disabled={blocked || Boolean(draft || assignment)} className={`${control} shrink-0`} onClick={() => void change('restore', category.id)}>{l('restore')}</button></li>)}</ul></details>}
+        <section className="space-y-3 border-t border-slate-200 pt-6 dark:border-slate-700" aria-label={l('contents')}>
+            <h2 className="text-lg font-semibold">{l('contents')}</h2>
+            {active.length === 0 && <p className="text-sm">{l('createFirst')}</p>}
+            {assignment && <form className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900" onSubmit={event => { event.preventDefault(); void saveAssignment(); }}>
+                <fieldset ref={assignmentRef} tabIndex={-1} disabled={busy} className="space-y-2">
+                    <legend className="mb-2 break-words font-semibold">{l('assign')}: {assignment.content.title}</legend>
+                    {!currentContent && <p role="alert">{l('contentUnavailable')}</p>}
+                    {invalidSelections && <p role="alert">{l('assignmentConflict')}</p>}
+                    {snapshot?.categories.filter(category => category.is_active || assignment.selected.includes(category.id)).map(category => <label key={category.id} className="flex min-h-[44px] items-center gap-3 text-sm"><input type="checkbox" checked={assignment.selected.includes(category.id)} onChange={event => setAssignment({ ...assignment, selected: event.target.checked ? [...assignment.selected, category.id] : assignment.selected.filter(id => id !== category.id) })} /><span className="min-w-0 break-words">{category.name}{!category.is_active && ` (${l('archivedTag')})`}</span></label>)}
+                </fieldset>
+                <div className="flex justify-end gap-2"><button type="button" disabled={busy} className={control} onClick={() => { if (mayDiscard()) { setAssignment(null); listRef.current?.focus(); } }}>{l('cancel')}</button><button type="submit" disabled={blocked || !currentContent || invalidSelections} className={`${control} bg-cyan-800 text-white`}>{l('save')}</button></div>
+            </form>}
+            {(['referral', 'event'] as const).map(kind => <details key={kind} className="rounded-lg border border-slate-200 px-3 dark:border-slate-700">
+                <summary className="cursor-pointer py-3 font-medium">{l(kind === 'referral' ? 'contacts' : 'events')} ({contents.filter(item => item.kind === kind).length})</summary>
+                {contents.filter(item => item.kind === kind).length === 0 && <p className="pb-3 text-sm">{l('noContents')}</p>}
+                <ul>{contents.filter(item => item.kind === kind).map(content => {
+                    const key = `content-${kind}-${content.id}`;
+                    return <li key={key} className="flex items-start gap-3 border-t border-slate-200 py-3 dark:border-slate-700">
+                        <div className="min-w-0 flex-1"><h3 className="break-words font-medium">{content.title}</h3>{content.starts_at && <p className="text-sm text-slate-500">{new Date(content.starts_at).toLocaleDateString(lang)}</p>}<p className="mt-1 break-words text-sm text-slate-600 dark:text-slate-400">{active.filter(category => content.category_ids.includes(category.id)).map(category => category.name).join(' · ') || l('uncategorized')}</p></div>
+                        {active.length > 0 && <div className="relative shrink-0"><button ref={node => { if (node) triggers.current.set(key, node); else triggers.current.delete(key); }} type="button" disabled={blocked} aria-label={`${l('actions')}: ${content.title}`} aria-expanded={menu === key} aria-controls={`actions-${key}`} className={control} onClick={() => setMenu(menu === key ? null : key)}><MoreHorizontal className="h-4 w-4" aria-hidden /></button>
+                            {menu === key && <div ref={menuRef} id={`actions-${key}`} className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-900" onBlur={event => { if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget) && !triggers.current.get(key)?.contains(event.relatedTarget)) setMenu(null); }}><button type="button" className={`${control} w-full text-left`} onClick={() => openAssignment(content)}>{l('assign')}</button></div>}
+                        </div>}
+                    </li>;
+                })}</ul>
+            </details>)}
+        </section>
     </div>;
 }

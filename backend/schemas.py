@@ -1567,8 +1567,16 @@ class OrientationEventResponse(OrientationEventBase):
         from_attributes = True
 
 
+class OrientationInstitutionDirectory(BaseModel):
+    institution: InstitutionPublic
+    categories: List[Dict[str, Any]] = Field(default_factory=list)
+    referrals: List[Dict[str, Any]] = Field(default_factory=list)
+    events: List[Dict[str, Any]] = Field(default_factory=list)
+
+
 class OrientationDirectoryResponse(BaseModel):
     """Quel che la pagina dell'area personale mostra allo studente."""
+    institution_groups: List[OrientationInstitutionDirectory] = Field(default_factory=list)
     institution: Optional[InstitutionPublic] = None
     referrals: List[Dict[str, Any]] = Field(default_factory=list)
     events: List[Dict[str, Any]] = Field(default_factory=list)

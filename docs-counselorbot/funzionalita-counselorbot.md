@@ -102,26 +102,33 @@ lavori. Il progresso PDF, invece, è locale al browser.
 
 ## Area personale e strumenti
 
-**Anteprima di sviluppo, non ancora distribuita nel frontend di produzione:**
+**Interfaccia aggiornata in produzione il 23 settembre 2026:**
 nella pagina **Orientamento**, la nuova testata mantiene a sinistra il collegamento
 **Area personale**, sempre diretto all’ingresso. Sotto compaiono l’immagine
 esistente, il titolo e la descrizione. Il pannello «Vai a…» è stato rimosso
 su richiesta dell’utente. Le altre sottopagine saranno riviste separatamente.
 
-**Categorie dell’istituto — anteprima di sviluppo:** ogni istituto definisce le
+**Categorie dell’istituto — disponibili in produzione:** ogni istituto definisce le
 proprie categorie di Orientamento tramite i suoi docenti. L’amministratore
 associa e può revocare i docenti dell’istituto; dichiarare una scuola nel
-Taccuino o in una classe non concede questo permesso. In sviluppo sono
+Taccuino o in una classe non concede questo permesso. Sono
 disponibili le API e la scheda amministrativa delle associazioni, in **Referenti ed eventi → Istituti → Docenti dell’istituto**:
 account docente, «Associa», elenco e «Revoca». Occorre indicare lo username
-esatto di un account che abbia già il ruolo docente. Questa modifica non è
-ancora distribuita in produzione. Nell’Area docente, **Orientamento dell’istituto**
+esatto di un account che abbia già il ruolo docente. Nell’Area docente, **Orientamento dell’istituto**
 apre l’elenco condiviso: i docenti abilitati possono creare, descrivere, modificare,
 riordinare, archiviare e ripristinare le categorie. Nessun nome è imposto. Con più
 istituti si sceglie quello su cui lavorare; senza associazioni si vede una spiegazione.
 Il salvataggio è esplicito; errori e conflitti conservano il testo inserito, mentre
-l’uscita con modifiche non salvate richiede conferma. Il collegamento delle categorie a contatti e
-appuntamenti, con i relativi filtri studenti, sarà realizzato nel passo successivo.
+l’uscita con modifiche non salvate richiede conferma. Nella sezione **Contatti e
+appuntamenti**, il menu a tre punti offre **Assegna categorie**: si possono
+selezionare più categorie per un contenuto pubblicato del proprio istituto.
+Recapiti, date e certificazione mantengono la gestione attuale. La pagina studente
+usa le categorie dell’istituto come filtri comuni a contatti e appuntamenti;
+**Tutti** include quelli senza categoria. Con più istituti, ciascuno ha i propri
+filtri: categorie con lo stesso nome restano distinte tra istituti. Ogni contenuto
+è presentato nel contesto del proprio istituto. Le risorse nazionali compaiono separatamente. Archiviare una categoria
+nasconde il filtro senza cancellare i contenuti o i collegamenti; ripristinarla
+rende nuovamente disponibili le associazioni. Queste funzioni sono state distribuite in produzione il 23 settembre 2026.
 
 L’Area personale (`/profilo`) apre con **Da riprendere**, solo quando ci sono
 lavori pertinenti: al massimo tre attività collegate a obiettivi attivi, obiettivi
