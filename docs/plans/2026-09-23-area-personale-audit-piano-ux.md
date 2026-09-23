@@ -299,6 +299,110 @@ rilevati; lettura senza categorie e con più istituti; interfaccia nelle sei
 lingue e a 320/390/1440 px. Le categorie scritte dall’istituto restano contenuti
 autoriali: eventuali traduzioni devono essere esplicite, non nomi inventati.
 
+#### 0.3.2.2 — Proposta: gestione delle categorie da parte dei docenti
+
+**Stato: proposta richiesta dall’utente; da validare, non implementata.**
+
+**Obiettivo del prossimo intervento:** permettere ai docenti già associati a un
+istituto di definire insieme il suo elenco di categorie. Le categorie sono
+scelte dall’istituto: nessun elenco precompilato obbligatorio, nessuna attribuzione
+automatica dei nomi a Pellerey o Savickas. La descrizione permette ai docenti di
+esplicitare il significato educativo condiviso di ogni categoria.
+
+##### A. Ingresso e istituto
+
+Nell’Area docente, vicino alla gestione dei gruppi e delle classi, aggiungere
+un collegamento compatto **Orientamento dell’istituto**, accompagnato dalla
+stessa immagine Bussola già disponibile. Apre `/docente/orientamento`, una pagina
+dedicata, per mantenere leggibile la pagina docente già ricca di sezioni.
+
+- Un solo istituto abilitato: mostrarne il nome, senza selettore inutile.
+- Più istituti abilitati: selettore con i soli istituti restituiti dalle API
+  delle associazioni; nessuna ricerca nell’anagrafica completa.
+- Nessun istituto: «Non sei ancora associato a un istituto. L’amministratore
+  può abilitarti.» Nessun comando per autoassegnarsi un istituto.
+
+##### B. Elenco e comandi
+
+```text
+← Area docente
+
+[immagine] Orientamento dell’istituto
+           Categorie condivise dai docenti dell’istituto
+
+Istituto: nome dell’istituto
+          [selettore solo se più di uno]
+
+Categorie                                  [+ Nuova categoria]
+
+Nome scelto dai docenti                                     [⋯]
+Breve descrizione, se presente
+
+Un’altra categoria                                         [⋯]
+Breve descrizione, se presente
+
+[Mostra archiviate (2)]
+```
+
+Una riga per categoria, ordine uguale per tutti i docenti. Il menu a tre punti
+raccoglie **Modifica**, **Sposta sopra**, **Sposta sotto**, **Archivia**. Le azioni
+di spostamento non disponibili alla prima/ultima posizione sono disabilitate.
+Le archiviate sono raccolte in una sezione richiudibile e offrono **Ripristina**.
+Non introdurre trascinamento come unico modo per riordinare.
+
+L’elenco inizialmente vuoto spiega: «Non avete ancora definito le categorie
+dell’istituto. Aggiungete la prima categoria.» Il pulsante di creazione resta
+unico. Nessun dato dimostrativo viene salvato automaticamente.
+
+##### C. Creazione e modifica
+
+Aprire un solo modulo alla volta nella stessa pagina, sopra l’elenco:
+
+```text
+Nuova categoria / Modifica categoria
+
+Nome *                [________________________________]
+Descrizione           [________________________________]
+                      [________________________________]
+                      facoltativa
+
+                                      [Annulla] [Salva]
+```
+
+- Nome obbligatorio, descrizione facoltativa; nessuna selezione da una tassonomia
+  centrale. I nomi devono essere distinguibili nello stesso istituto anche
+  dopo aver ignorato differenze di maiuscole e spazi esterni.
+- Salvataggio esplicito. Errore di rete: mantenere il testo e offrire la riprova.
+- Modifica di una categoria archiviata: ripristinarla esplicitamente, senza
+  creare una seconda categoria con lo stesso nome.
+- Archivio senza cancellazione definitiva: preservare identità e futuri
+  collegamenti a contatti e appuntamenti. Ripristino in fondo all’elenco attivo.
+- Con testo non salvato, cambio istituto, apertura di un’altra modifica o uscita
+  chiedono se restare oppure scartare. Il ritorno «Area docente» usa la stessa
+  protezione. Nessun salvataggio implicito al cambio di pagina.
+- Tutti i docenti abilitati dello stesso istituto lavorano sul medesimo elenco;
+  nessuna nuova approvazione amministrativa per le singole categorie.
+- Una modifica intervenuta da un altro docente non viene sovrascritta: avvisare,
+  conservare il testo locale e consentire di ricaricare i dati prima di riprovare.
+  Registrare autore e data dell’ultimo aggiornamento.
+- I controlli sono tradotti nelle sei lingue. Nomi e descrizioni scelti dai docenti
+  conservano la lingua in cui sono stati scritti; niente traduzioni automatiche
+  presentate come decisioni dell’istituto.
+
+##### D. Chiusura dell’intervento
+
+Il passo 0.3.2.2 è completato quando due docenti abilitati possono gestire lo
+stesso elenco, mentre docenti estranei e studenti non possono modificarlo;
+revoche e istituti disattivati sono rispettati anche durante una pagina aperta.
+Verificare creazione, duplicati, modifica, riordino, archivio/ripristino,
+conflitti, errori con testo conservato e protezione delle modifiche non salvate;
+controllare 320/390/1440 px, tastiera e sei lingue.
+
+Il passo **0.3.2.3** resta successivo: associare le categorie ai contatti e agli
+appuntamenti e mostrarle come filtri nella pagina Orientamento degli studenti.
+Questo evita di pubblicare categorie scollegate dai contenuti durante il lavoro
+sul configuratore. Nessuna modifica applicativa è inclusa in questa proposta.
+
 #### Problema verificato nel codice corrente
 
 `PageHeader.backHref` passa una destinazione di ripiego a `PreviousPageButton`: se esiste una pagina precedente nella cronologia interna, il pulsante esegue `router.back()`. Per questo rinominarlo «Area personale» senza cambiarne il comportamento non garantirebbe quella destinazione. Le pagine visuali aggiungono inoltre una testata interna e un grande riepilogo degli obiettivi; Obiettivi, Cambiamenti, PDF e Flashcard hanno ingressi separati da `ProfilePage`.
