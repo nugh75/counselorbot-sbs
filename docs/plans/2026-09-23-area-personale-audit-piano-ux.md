@@ -1,6 +1,6 @@
 # Area personale: audit dell'interazione e piano di modifica
 
-**Data:** 23 settembre 2026. **Stato:** punti 0.1 e 0.2 approvati e applicati all’ingresso dell’Area personale il 23 settembre 2026, su richiesta dell’utente di vedere le modifiche dopo rebuild Docker. Punto 0.3 e altri interventi restano da affrontare. Le evidenze dell’audit originario si riferiscono alla base sotto indicata.
+**Data:** 23 settembre 2026. **Stato:** punti 0.1 e 0.2 approvati e applicati all’ingresso dell’Area personale il 23 settembre 2026, su richiesta dell’utente di vedere le modifiche dopo rebuild Docker. Pilota 0.3 Orientamento e passi 0.3.2.1–0.3.2.3 distribuiti il 23 settembre 2026; estensione della testata alle altre pagine e lotti successivi ancora aperti. Le evidenze dell’audit originario si riferiscono alla base sotto indicata.
 **Base del codice esaminato:** `edddddc`. Ambito: le 18 rotte dell'Area personale, i componenti condivisi e i passaggi verso gli strumenti esterni all'area.
 
 ## 1. Esito e priorità
@@ -210,11 +210,11 @@ scelto dall’istituto. La nuova gestione è descritta nel punto 0.3.2 seguente.
            Descrizione della pagina
 ```
 
-**Stato: struttura approvata; implementazione pilota in Orientamento, in anteprima di sviluppo.** La struttura si applica alle sottopagine dell’Area personale. L’ingresso `/profilo`, appena approvato e pubblicato, conserva i cinque gruppi e non riceve un secondo elenco di navigazione. La testata globale con account, lingua e altre azioni conserva le funzioni attuali.
+**Stato: struttura approvata; implementazione pilota in Orientamento, distribuita in produzione il 23 settembre 2026.** La struttura si applica alle sottopagine dell’Area personale. L’ingresso `/profilo`, appena approvato e pubblicato, conserva i cinque gruppi e non riceve un secondo elenco di navigazione. La testata globale con account, lingua e altre azioni conserva le funzioni attuali.
 
 #### 0.3.2 — Categorie dell’istituto gestite dai suoi docenti
 
-**Stato: requisito approvato; l’amministratore associa i docenti all’istituto. Primo passo 0.3.2.1 implementato: API, controlli e scheda amministrativa approvata. Gestione delle categorie 0.3.2.2 implementata in sviluppo; associazioni ai contenuti e filtri studenti restano al passo 0.3.2.3.**
+**Stato: requisito approvato; l’amministratore associa i docenti all’istituto. Primo passo 0.3.2.1 implementato: API, controlli e scheda amministrativa approvata. Passi 0.3.2.2 e 0.3.2.3 distribuiti in produzione: categorie, associazioni ai contenuti e filtri studenti.**
 
 Obiettivo: l’istituto stabilisce le categorie con cui presentare i propri contatti
 e appuntamenti di Orientamento. I suoi docenti possono crearle, rinominarle,
@@ -301,7 +301,7 @@ autoriali: eventuali traduzioni devono essere esplicite, non nomi inventati.
 
 #### 0.3.2.2 — Gestione delle categorie da parte dei docenti
 
-**Stato: proposta approvata dall’utente; implementata in sviluppo.**
+**Stato: proposta approvata dall’utente; distribuita in produzione il 23 settembre 2026.**
 
 **Obiettivo dell’intervento:** permettere ai docenti già associati a un
 istituto di definire insieme il suo elenco di categorie. Le categorie sono
@@ -398,14 +398,12 @@ Verificare creazione, duplicati, modifica, riordino, archivio/ripristino,
 conflitti, errori con testo conservato e protezione delle modifiche non salvate;
 controllare 320/390/1440 px, tastiera e sei lingue.
 
-Il passo **0.3.2.3** resta successivo: associare le categorie ai contatti e agli
-appuntamenti e mostrarle come filtri nella pagina Orientamento degli studenti.
-Questo evita di pubblicare categorie scollegate dai contenuti durante il lavoro
-sul configuratore. Nessuna modifica applicativa è inclusa in questa proposta.
+Il passo **0.3.2.3**, inizialmente successivo, è ora implementato: collega le
+categorie ai contatti e agli appuntamenti e le mostra come filtri studenti.
 
-#### 0.3.2.3 — Proposta: categorie dei contenuti e filtri studenti
+#### 0.3.2.3 — Categorie dei contenuti e filtri studenti
 
-**Stato: proposta operativa; struttura da validare prima del codice.**
+**Stato: struttura confermata dall’utente; distribuita in produzione il 23 settembre 2026.**
 Il punto 0.3.2.2 è completato. Questo intervento collega il suo elenco ai
 contenuti già presenti, con due superfici coordinate e una sola consegna.
 
@@ -499,7 +497,8 @@ multipla/rimozione, archivio/ripristino, contenuti senza categorie, risorse
 nazionali, più istituti, visibilità e date. Controllare tastiera, sei lingue,
 320/390/1440 px e tema scuro. Aggiornare documentazione, guida e catture;
 ricostruire le immagini Docker e provarle in isolamento, mantenendo la modalità
-di anteprima concordata. Nessuna distribuzione in produzione in questo passo.
+di anteprima concordata inizialmente. La successiva richiesta esplicita
+dell’utente ha autorizzato la distribuzione in produzione, eseguita il 23 settembre.
 
 Sorgenti verificati: `OrientationDirectoryCard.tsx`, `lib/referrals-api.ts`,
 `backend/routes/orientation_referrals.py`, `backend/schemas.py`,
@@ -1414,4 +1413,32 @@ Verifica completata: 22 test backend, 13 del configuratore (anche sulla build
 Docker) e 6 della guida; TypeScript, lint mirato e parità lingue superati.
 Immagini backend/frontend ricostruite. Comandi riproducibili e limiti in
 `docs/operations/institution-orientation-categories.md`.
-Il prossimo intervento resta **0.3.2.3**, da progettare separatamente.
+Il successivo intervento **0.3.2.3** è stato approvato e implementato come riportato sotto.
+
+
+### 0.3.2.3 — Assegnazioni ai contenuti e filtri degli studenti
+
+Realizzata la struttura approvata: sezioni richiudibili Contatti/Appuntamenti,
+menu a tre punti e unico modulo per assegnare più categorie. Permessi verificati
+a ogni chiamata; bozze e selezioni conservate in caso di errore/conflitto.
+Le revisioni dell’istituto coprono categorie e assegnazioni; il contenuto è
+bloccato durante il salvataggio e la sua data di modifica viene confrontata.
+
+La directory studente usa gruppi distinti per istituto e categorie associate ai
+soli contenuti visibili. Le risorse nazionali sono fuori dai filtri locali.
+I campi piatti della risposta restano disponibili per il calendario esistente.
+Nessuna categoria imposta, nessuna modifica del retrieval della chat.
+Guida docente/studente e 12 catture aggiornate nelle sei lingue.
+Dettagli di verifica e stato del rilascio in
+`docs/operations/institution-orientation-categories.md`.
+
+
+### Rilascio richiesto dall’utente — 23 settembre 2026
+
+Dopo la conferma del punto 0.3.2.3, l’utente ha richiesto di mettere in produzione
+le modifiche realizzate e preparare l’handoff. Immagini backend/frontend
+ricostruite, 61 test backend e 34 prove browser passati (queste ultime sulla
+build Docker con API simulate). Eseguito `docker compose up -d --no-deps backend frontend`.
+Il precedente vincolo di sola anteprima è superato per le modifiche già realizzate.
+Il lavoro UI restante non è autorizzato in blocco: riprendere un intervento alla
+volta da `area-personale-handoff.md`.

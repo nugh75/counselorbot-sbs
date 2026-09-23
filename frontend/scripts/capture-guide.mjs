@@ -40,6 +40,10 @@ try {
         const goal = { id: 1, title, motivation: instructions, criteria: responsePrompt, reflection: '', status: 'active', priority: 2, review_date: '2026-10-15', shared_group_id: null, revision: 1, catalog_id: null, catalog_snapshot: {}, links: [] };
         const assignment = { id: 1, author_name: 'Alex · Demo', group_name: groupName, source_kind: 'goal', recipient_username: null, recipient_count: 2, instructions, created_at: '2026-09-21T08:00:00Z', revoked_at: null, snapshot: { title, description: '', details: '' }, intent: 'requested', due_date: '2026-10-15', response_prompt: responsePrompt };
         const catalog = [{ id: 1, author_username: 'teacher.demo', group_id: 91, status: 'published', version: 1, data: { title, description: instructions, criteria: responsePrompt, suggestions: '', area: '', audience: '', language: lang } }];
+        const demoInstitution = { id: 1, name: groupName, slug: 'demo', kind: 'school' };
+        const demoCategory = { id: 'demo-category', name: title, description: instructions, position: 0, is_active: true, updated_by: 'teacher.demo', updated_at: '2026-09-23T08:00:00Z' };
+        const demoReferral = { id: 'demo-contact', institution_id: 1, category_ids: ['demo-category'], role: `${categoryText(lang, 'contacts')} · Demo`, person: '', needs: ['metodo-studio'], what_for: instructions, how_to_reach: '', email: '', hours: '', location: '', page_url: '' };
+        const demoEvent = { id: 'demo-event', institution_id: 1, category_ids: ['demo-category'], title: `${categoryText(lang, 'events')} · Demo`, starts_at: '2026-11-10T10:00:00Z', needs: ['metodo-studio'], summary: instructions, page_url: '', location: '', is_online: true };
         const workspace = {
             ...emptyWorkspace(),
             card_decks: [{ id: 'default', title }], active_deck_id: 'default',
@@ -61,9 +65,9 @@ try {
             else if (path === '/user/account') data = { setup_complete: true, notebook_completed: true };
             else if (path === '/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
             else if (path === '/orientation/status') data = { required: false, completed: true };
-            else if (path === '/orientation-directory') data = { institution: null, events: [], referrals: [] };
+            else if (path === '/orientation-directory') data = { institution: demoInstitution, institution_groups: [{ institution: demoInstitution, categories: [demoCategory], referrals: [demoReferral], events: [demoEvent] }], events: [demoEvent], referrals: [demoReferral] };
             else if (path === '/teacher/institutions') data = [{ id: 1, name: groupName, slug: 'demo', kind: 'school' }];
-            else if (path === '/teacher/institutions/1/orientation-categories') data = { revision: 1, categories: [{ id: 'demo-category', name: title, description: instructions, position: 0, is_active: true, updated_by: 'teacher.demo', updated_at: '2026-09-23T08:00:00Z' }] };
+            else if (path === '/teacher/institutions/1/orientation-contents') data = { revision: 1, categories: [demoCategory], contents: [{ id: 1, kind: 'referral', title: demoReferral.role, category_ids: ['demo-category'], updated_at: demoCategory.updated_at }, { id: 2, kind: 'event', title: demoEvent.title, starts_at: demoEvent.starts_at, category_ids: ['demo-category'], updated_at: demoCategory.updated_at }] };
             else if (path === '/tavolo/enabled') data = { enabled: false };
             else if (path === '/telegram/bot-info') data = {};
             else if (path === '/user/flashcards') data = { revision: 0, workspace: { decks: [{ id: 'demo', title, cards: [{ id: 'demo-card', front: responsePrompt, back: instructions }] }] } };
@@ -84,6 +88,9 @@ try {
             if (name === 'institution-categories') {
                 await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
                 await page.locator('[data-institution-categories] img').evaluate(element => element.decode());
+                await page.locator('summary').filter({ hasText: categoryText(lang, 'contacts') }).evaluate(el => { el.parentElement.open = true; });
+                await page.locator('summary').filter({ hasText: categoryText(lang, 'events') }).evaluate(el => { el.parentElement.open = true; });
+                await page.evaluate(() => window.scrollTo(0, 0));
             }
             if (name === 'personal-area') {
                 await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
@@ -97,7 +104,8 @@ try {
             await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
             assert.deepEqual(errors, []);
             assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
-            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area'].includes(name) ? { fullPage: true } : {}) });
+            if (name === 'orientation') await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
+            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
             console.log(`${lang}/${name}`);
         }
         if (process.env.GUIDE_SCREENS === 'teacher-area') {

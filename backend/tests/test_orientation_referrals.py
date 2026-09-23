@@ -11,6 +11,7 @@ os.environ.setdefault("COUNSELOR_TRANSLATE_DISABLED", "1")
 os.environ.setdefault("ADMIN_SYNC_DISABLED", "1")
 
 import uuid
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlsplit, urlunsplit
 
@@ -498,7 +499,9 @@ def test_the_directory_route_is_mounted_for_students():
     # app.routes non e' affidabile qui: su FastAPI 0.141.1 restituisce wrapper
     # _IncludedRouter pigri e non elenca i path dei router inclusi. openapi()
     # riflette invece cio' che e' davvero servito.
-    from backend.main import app
+    # main creates tables at import time: keep that side effect in the test DB.
+    with patch.object(database, "engine", _engine):
+        from backend.main import app
 
     assert "/orientation-directory" in app.openapi()["paths"]
 
@@ -515,7 +518,9 @@ def test_the_directory_route_returns_everything_for_the_students_institution():
     directory e' un elenco (tutto cio' che riguarda il proprio istituto) o un
     filtro come la chat: se qualcuno la cambia, questo test deve accorgersene.
     """
-    from backend.main import app
+    # main creates tables at import time: keep that side effect in the test DB.
+    with patch.object(database, "engine", _engine):
+        from backend.main import app
 
     db = _TestSession()
     username = f"{PREFIX}-studente"

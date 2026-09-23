@@ -14,6 +14,8 @@ export interface Institution {
 }
 
 export interface DirectoryReferral {
+    institution_id?: number | null;
+    category_ids?: string[];
     id: string;
     role: string;
     person: string;
@@ -27,6 +29,8 @@ export interface DirectoryReferral {
 }
 
 export interface DirectoryEvent {
+    institution_id?: number | null;
+    category_ids?: string[];
     id: string;
     kind: string;
     title: string;
@@ -40,7 +44,15 @@ export interface DirectoryEvent {
     is_online: boolean;
 }
 
+export interface InstitutionDirectory {
+    institution: Institution;
+    categories: { id: string; name: string; description: string }[];
+    referrals: DirectoryReferral[];
+    events: DirectoryEvent[];
+}
+
 export interface OrientationDirectory {
+    institution_groups?: InstitutionDirectory[];
     institution: Institution | null;
     referrals: DirectoryReferral[];
     events: DirectoryEvent[];

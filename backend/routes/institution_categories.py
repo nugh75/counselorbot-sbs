@@ -1,8 +1,9 @@
 """Teacher-owned institutional categories, separate from chat retrieval needs."""
 import uuid
 from typing import Literal, Optional
+from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import func
@@ -10,6 +11,8 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, models
 from ..institution_access import require_institution_teacher
+from ..institution_category_service import content_models, content_rows, linked_categories
+from ..orientation_referral_service import _i18n
 
 router = APIRouter()
 
@@ -38,6 +41,18 @@ class CategoryCommand(BaseModel):
         return self
 
 
+def _advance_revision(db, institution_id, revision):
+    # One compare-and-swap covers categories, order and content assignments.
+    changed = db.query(models.InstitutionCategoryCollection).filter_by(
+        institution_id=institution_id, revision=revision,
+    ).update({"revision": revision + 1}, synchronize_session=False)
+    if not changed:
+        if revision != 0 or db.get(models.InstitutionCategoryCollection, institution_id):
+            raise HTTPException(409, detail={"code": "conflict"})
+        db.add(models.InstitutionCategoryCollection(institution_id=institution_id, revision=1))
+        db.flush()
+
+
 def _snapshot(db, institution_id):
     collection = db.get(models.InstitutionCategoryCollection, institution_id)
     rows = db.query(models.InstitutionOrientationCategory).filter_by(institution_id=institution_id).order_by(
@@ -63,15 +78,7 @@ async def list_categories(institution_id: int, current_user=Depends(auth.get_cur
 async def change_categories(institution_id: int, payload: CategoryCommand, current_user=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     require_institution_teacher(db, current_user, institution_id)
     try:
-        # One compare-and-swap protects edits AND the order shared by all teachers.
-        changed = db.query(models.InstitutionCategoryCollection).filter_by(
-            institution_id=institution_id, revision=payload.revision,
-        ).update({"revision": payload.revision + 1}, synchronize_session=False)
-        if not changed:
-            if payload.revision != 0 or db.get(models.InstitutionCategoryCollection, institution_id):
-                raise HTTPException(409, detail={"code": "conflict"})
-            db.add(models.InstitutionCategoryCollection(institution_id=institution_id, revision=1))
-            db.flush()  # Concurrent first creation is rejected by the primary key.
+        _advance_revision(db, institution_id, payload.revision)
 
         rows = db.query(models.InstitutionOrientationCategory).filter_by(institution_id=institution_id).order_by(
             models.InstitutionOrientationCategory.position, models.InstitutionOrientationCategory.id,
@@ -122,6 +129,79 @@ async def change_categories(institution_id: int, payload: CategoryCommand, curre
                 row.updated_at = func.now()
         db.commit()
         return _snapshot(db, institution_id)
+    except HTTPException:
+        db.rollback()
+        raise
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, detail={"code": "conflict"})
+
+
+class ContentCategoriesCommand(BaseModel):
+    revision: int = Field(ge=0)
+    category_ids: list[str] = Field(max_length=500)
+    content_updated_at: datetime
+    model_config = {"extra": "forbid"}
+
+    @field_validator("category_ids")
+    @classmethod
+    def unique_ids(cls, ids):
+        if len(set(ids)) != len(ids) or any(not value or len(value) > 36 for value in ids):
+            raise ValueError("Categorie non valide")
+        return ids
+
+
+def _content_snapshot(db, institution_id, language):
+    result = _snapshot(db, institution_id)
+    result["contents"] = []
+    for kind in ("referral", "event"):
+        rows = content_rows(db, kind, institution_id).all()
+        links = linked_categories(db, kind, [row.id for row in rows], institution_id, active_only=False)
+        for row in rows:
+            result["contents"].append({
+                "id": row.id, "kind": kind,
+                "title": _i18n(row.role_label_i18n if kind == "referral" else row.title_i18n, language),
+                "starts_at": row.starts_at if kind == "event" else None,
+                "updated_at": row.updated_at,
+                "category_ids": links.get(row.id, []),
+            })
+    return result
+
+
+@router.get("/teacher/institutions/{institution_id}/orientation-contents")
+async def list_contents(institution_id: int, lang: str = Query("it"), current_user=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    require_institution_teacher(db, current_user, institution_id)
+    return _content_snapshot(db, institution_id, lang)
+
+
+@router.post("/teacher/institutions/{institution_id}/orientation-contents/{kind}/{content_id}/categories")
+async def assign_categories(institution_id: int, kind: Literal["referral", "event"], content_id: int, payload: ContentCategoriesCommand, lang: str = Query("it"), current_user=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    require_institution_teacher(db, current_user, institution_id)
+    try:
+        _advance_revision(db, institution_id, payload.revision)
+        model, link_model = content_models(kind)
+        # Serialize against administrative edits/moves as well as teacher changes.
+        row = content_rows(db, kind, institution_id).filter(model.id == content_id).populate_existing().with_for_update().first()
+        if row is None:
+            raise HTTPException(404, detail={"code": "missing"})
+        if row.updated_at != payload.content_updated_at:
+            raise HTTPException(409, detail={"code": "conflict"})
+        categories = db.query(models.InstitutionOrientationCategory).filter_by(institution_id=institution_id, is_active=True).all()
+        active_ids = {category.id for category in categories}
+        requested = set(payload.category_ids)
+        if not requested <= active_ids:
+            raise HTTPException(409, detail={"code": "conflict"})
+        # Only replace active assignments. Archived links survive until restored.
+        existing = db.query(link_model).filter(link_model.content_id == content_id, link_model.category_id.in_(active_ids)).all()
+        existing_ids = {link.category_id for link in existing}
+        for link in existing:
+            if link.category_id not in requested:
+                db.delete(link)
+        actor = current_user["username"].strip()
+        for category_id in requested - existing_ids:
+            db.add(link_model(content_id=content_id, category_id=category_id, updated_by=actor))
+        db.commit()
+        return _content_snapshot(db, institution_id, lang)
     except HTTPException:
         db.rollback()
         raise

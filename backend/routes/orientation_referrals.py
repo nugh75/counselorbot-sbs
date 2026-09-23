@@ -15,6 +15,7 @@ from ..orientation_referral_service import orientation_referral_memory
 from ..reading_audience import resolve_audience_band
 from ..referral_needs import REFERRAL_NEEDS
 from ..referral_scope import institution_for, institution_ids_for
+from ..institution_category_service import directory_groups
 
 router = APIRouter()
 get_db = database.get_db
@@ -268,12 +269,14 @@ async def orientation_directory(
     username = current_user["username"]
     institution_ids = institution_ids_for(db, username)
     band = resolve_audience_band(db, username)
+    referrals = orientation_referral_memory.retrieve_referrals(
+        db, needs=set(), institution_ids=institution_ids,
+        audience_band=band, language=lang, limit=DIRECTORY_LIMIT)
+    events = orientation_referral_memory.retrieve_events(
+        db, needs=set(), institution_ids=institution_ids,
+        audience_band=band, language=lang, limit=DIRECTORY_LIMIT)
     return schemas.OrientationDirectoryResponse(
         institution=institution_for(db, username),
-        referrals=orientation_referral_memory.retrieve_referrals(
-            db, needs=set(), institution_ids=institution_ids,
-            audience_band=band, language=lang, limit=DIRECTORY_LIMIT),
-        events=orientation_referral_memory.retrieve_events(
-            db, needs=set(), institution_ids=institution_ids,
-            audience_band=band, language=lang, limit=DIRECTORY_LIMIT),
+        referrals=referrals, events=events,
+        institution_groups=directory_groups(db, institution_ids, referrals, events),
     )
