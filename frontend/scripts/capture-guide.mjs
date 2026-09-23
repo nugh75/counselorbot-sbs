@@ -3,7 +3,7 @@
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
-import { personalAreaName } from '../src/lib/i18n-personal-area.ts';
+import { personalAreaName, personalAreaText } from '../src/lib/i18n-personal-area.ts';
 import { goalText } from '../src/lib/i18n-goals.ts';
 import { assignmentText } from '../src/lib/i18n-assignments.ts';
 import { learningText } from '../src/lib/i18n-assignment-work.ts';
@@ -22,7 +22,7 @@ const samples = {
     de: ['Mein Lernen organisieren', 'Lernwerkstatt', 'Probiere zwei kurze Wiederholungen aus.', 'Beschreibe, was funktioniert hat und was du ändern würdest.', 'Ich habe das Wiederholen auf zwei Tage verteilt.', 'Vergleiche beim nächsten Mal auch, woran du dich ohne Notizen erinnerst.'],
     sv: ['Planera mina studier', 'Studieverkstad', 'Prova två korta repetitionspass.', 'Beskriv vad som fungerade och vad du skulle ändra.', 'Jag fördelade repetitionen över två dagar.', 'Jämför nästa gång också vad du minns utan anteckningar.'],
 };
-const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing'];
+const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation'];
 const browser = await chromium.launch({ headless: true });
 try {
     for (const lang of captureLocales) {
@@ -93,6 +93,17 @@ try {
             await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area'].includes(name) ? { fullPage: true } : {}) });
             console.log(`${lang}/${name}`);
         }
+        if (process.env.GUIDE_SCREENS === 'orientation') {
+            authenticated = true;
+            await go('/profilo/orientamento');
+            await page.getByRole('button', { name: personalAreaText(lang, 'goTo'), exact: true }).click();
+            await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
+            for (const image of await page.locator('[data-personal-area-header] img').all()) { await image.scrollIntoViewIfNeeded(); await image.evaluate(el => el.decode()); }
+            await page.locator('[data-personal-area-header] nav').evaluate(el => { el.scrollTop = 0; });
+            await capture('orientation');
+            await context.close();
+            continue;
+        }
         if (process.env.GUIDE_SCREENS === 'personal-area') {
             authenticated = true;
             await go('/profilo');
@@ -117,6 +128,7 @@ try {
         await go('/profilo/pqbl'); await capture('pdf-study');
         await go('/profilo/flashcard'); await capture('flashcards');
         await go('/profilo'); await page.getByRole('link', { name: personalAreaName(lang, 'obiettivi'), exact: true }).waitFor(); await capture('personal-area');
+        await go('/profilo/orientamento'); await page.getByRole('button', { name: personalAreaText(lang, 'goTo'), exact: true }).click(); await capture('orientation');
         await go('/profilo/obiettivi?goal=1'); await page.getByLabel(goalText(lang, 'motivation'), { exact: true }).waitFor(); await capture('personal-goals');
         const sharingForm = page.locator('form').filter({ has: page.getByLabel(goalText(lang, 'share'), { exact: true }) });
         await capture('goal-sharing', sharingForm);

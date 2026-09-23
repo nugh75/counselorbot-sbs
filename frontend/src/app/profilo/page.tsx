@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useI18n } from '@/lib/i18n-context';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { apiFetch, getIdentity, type Identity } from '@/lib/auth';
 import { canUsePersonalPage, canUseTeacherAssistant } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
@@ -453,7 +454,7 @@ export default function ProfilePage() {
 
     return (
         <div className="page-wide px-4 py-8 space-y-8">
-            <PageHeader
+            {activeSection === 'orientation' ? <PersonalAreaHeader slug="orientamento" /> : <PageHeader
                 backHref={activeArea ? '/profilo' : '/'}
                 title={activeArea?.title ?? personalAreaText(lang, 'title')}
                 subtitle={activeArea?.description ?? personalAreaText(lang, 'intro')}
@@ -474,7 +475,7 @@ export default function ProfilePage() {
                         </span>
                     ) : undefined
                 ) : undefined}
-            />
+            />}
 
             {!activeArea && <PersonalAreaHome />}
 

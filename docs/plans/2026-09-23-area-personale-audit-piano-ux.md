@@ -192,7 +192,7 @@ Usare le **immagini già disponibili e il nome** per riconoscere gli strumenti, 
 
 ### Testata e navigazione comune — punto 0.3
 
-**Stato: proposta pronta da validare, non implementata.** La struttura si applica alle sottopagine dell’Area personale. L’ingresso `/profilo`, appena approvato e pubblicato, conserva i cinque gruppi e non riceve un secondo elenco di navigazione. La testata globale con account, lingua e altre azioni conserva le funzioni attuali.
+**Stato: struttura approvata; implementazione pilota in Orientamento, in anteprima di sviluppo.** La struttura si applica alle sottopagine dell’Area personale. L’ingresso `/profilo`, appena approvato e pubblicato, conserva i cinque gruppi e non riceve un secondo elenco di navigazione. La testata globale con account, lingua e altre azioni conserva le funzioni attuali.
 
 #### Problema verificato nel codice corrente
 
@@ -290,7 +290,7 @@ Lo schema mostra un estratto, non una selezione ridotta: nella versione reale ci
 
 La navigazione aggiuntiva deve rispettare le bozze. Prima di estenderla alle pagine con moduli modificabili, verificare le guardie esistenti e risolvere le lacune F01/F02/F06 dei lotti 1A: il nuovo collegamento non deve aggirare una conferma o un recupero già disponibili. Il punto 0.3 definisce la struttura, non dichiara risolta la protezione del lavoro.
 
-Dopo la validazione, procedere con un solo intervento applicativo alla volta:
+Struttura validata: procedere con un solo intervento applicativo alla volta:
 
 1. **Pagina pilota: Orientamento.** Applicare la testata e il pannello a una pagina senza bozze di scrittura, verificando ritorno certo, link diretti e uso con tastiera su desktop/mobile.
 2. **Pagine successive.** Estendere lo stesso componente una pagina per volta, verificando prima le sue protezioni di uscita. Per le pagine visuali consolidare le testate duplicate e la semantica della pagina senza modificare i moduli di lavoro.
@@ -298,7 +298,7 @@ Dopo la validazione, procedere con un solo intervento applicativo alla volta:
 
 Criteri di chiusura per ciascuna pagina: un solo titolo principale con il nome approvato; immagine coerente con l’ingresso; «Area personale» sempre diretto a `/profilo`; pannello con tutte le destinazioni; nessuna perdita di bozza o condivisione implicita; parametri e ancore dei link al contenuto preservati; focus comprensibile; nessun overflow a 320/390/1440 px. Le verifiche funzionali restano distinte dalla validazione dello schema.
 
-**Decisione da validare per chiudere 0.3:** collegamento stabile «Area personale» a sinistra e pannello «Vai a…» a destra; sotto, un’unica testata con immagine esistente, nome, descrizione e azione principale solo quando utile.
+**Decisione approvata per 0.3:** collegamento stabile «Area personale» a sinistra e pannello «Vai a…» a destra; sotto, un’unica testata con immagine esistente, nome, descrizione e azione principale solo quando utile.
 
 ### Salvataggio, errore e uscita
 
@@ -878,7 +878,7 @@ Si affronta un solo intervento alla volta. La chiusura di un punto di pianificaz
 | --- | --- | --- | --- |
 | 0.1 | Nomi e raggruppamento degli strumenti | **Approvato e registrato — 23 settembre 2026** | Cinque gruppi, 17 destinazioni oltre all'ingresso, nomi e descrizioni definiti in §4; Portfolio autonomo e Cambiamenti allo stesso livello di Taccuino e Libretto |
 | 0.2 | Schema ASCII dell'ingresso | **Approvato e registrato — 23 settembre 2026 (§5.1)** | Riepilogo breve, cinque gruppi aperti, due colonne desktop e una mobile; immagini esistenti accanto a nome e descrizione. Applicato all’ingresso; abbinamenti immagini completati |
-| 0.3 | Schema della testata e navigazione comune | **Proposta pronta — da validare (§4)** | Titolo, azione principale, ritorno e accesso alle altre pagine validati |
+| 0.3 | Schema della testata e navigazione comune | **Schema approvato; pilota Orientamento implementato (§4)** | Titolo, azione principale, ritorno e accesso alle altre pagine validati |
 
 Gli schemi specifici di Libretto, Assegnazioni e delle altre pagine saranno validati prima dei rispettivi interventi. Nessuno schema successivo è approvato per effetto della chiusura di 0.1.
 
@@ -1026,3 +1026,32 @@ Le tre incompatibilità TypeScript preesistenti negli import dei test sono state
 allineate alla convenzione già usata dal progetto (`@ts-expect-error` per gli
 import `.ts` eseguiti da Node). Backend e altri servizi non richiedono rebuild
 per questo intervento; nessun volume o dato persistente è stato modificato.
+
+### 0.3 — Pilota Orientamento e anteprima di sviluppo
+
+Struttura approvata dall’utente e applicata soltanto a `/profilo/orientamento`.
+`PersonalAreaHeader` riusa nomi, gruppi e immagini dell’ingresso: ritorno diretto
+alla radice, pannello con 17 destinazioni (16 collegamenti e pagina attuale),
+titolo unico e descrizione. Apertura/chiusura conserva filtri e URL; tastiera,
+focus e scorrimento interno sono verificati anche su mobile orizzontale.
+L’estensione alle altre pagine resta un intervento successivo, una alla volta.
+
+La preview usa Next su loopback e un proxy con fixture dimostrative; il tunnel
+Cloudflare ha una configurazione isolata da quella di produzione. Sono esposti
+l’ingresso, Orientamento e la guida. Le altre destinazioni mostrano un avviso;
+le API non previste e ogni scrittura sono bloccate. Avvio e arresto documentati
+in `docs/operations/personal-area-dev-preview.md`.
+
+Verifiche:
+
+- 207 test unitari superati; TypeScript, i18n (sei lingue) ed ESLint superati.
+- 21 test browser superati: sette del pilota/proxy, otto dell’ingresso e sei
+  della guida. I sette del pilota sono stati ripetuti dopo gli ultimi ritocchi
+  a focus e altezza disponibile, tutti superati.
+- Browser reale sul tunnel: pagina Orientamento visibile, pannello con 16 link,
+  nessun errore JavaScript. HTTP pubblico 200. Dati esclusivamente dimostrativi.
+- Guida aggiornata nelle sei lingue e sei schermate aggiunte; manifest di
+  allineamento rigenerato e `make guidance-check` superato.
+- Immagine frontend Docker ricostruita. Il container di produzione resta alla
+  versione precedente durante la revisione della preview; stato del container
+  verificato attivo. Nessuna modifica a volumi o dati persistenti.
