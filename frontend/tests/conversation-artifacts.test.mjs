@@ -183,7 +183,21 @@ test('recommendation actions save per item, retry, and hand a prompt to the comp
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
         await page.getByRole('button', { name: 'Per te', exact: true }).click();
         await panel.getByRole('tab', { name: /Strategie/ }).click();
+        let release;
+        const blocked = new Promise(resolve => { release = resolve; });
+        await page.route('**/api/session/fixture/recommendations/**', async route => {
+            await blocked;
+            return route.fallback();
+        });
+        const card = panel.locator('article').filter({ has: page.getByRole('button', { name: 'Voglio provarla', exact: true }) });
+        const before = await card.boundingBox();
+        const saving = page.waitForRequest(request => request.method() === 'PATCH');
         await panel.getByRole('button', { name: 'Voglio provarla', exact: true }).click();
+        await saving;
+        try {
+            assert.equal(await card.getByRole('status').count(), 0);
+            assert.deepEqual(await card.boundingBox(), before);
+        } finally { release(); }
         await panel.getByRole('button', { name: 'Provata', exact: true }).click();
         await panel.getByRole('button', { name: 'Sì, mi è servita', exact: true }).click();
         await page.goto(`${origin}/?frozen=fixture`, { waitUntil: 'networkidle' });

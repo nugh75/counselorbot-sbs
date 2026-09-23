@@ -7,8 +7,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getIdentity, withViewAsHeaders } from '@/lib/auth';
-import { notebookAutosave, type NotebookAutosave, type NotebookData, type NotebookRevision, type SaveMode, type SaveStatus } from '@/lib/notebook-autosave';
-import { AlertCircle, Check, History, LoaderCircle, Pencil, Trash2, X } from 'lucide-react';
+import { notebookAutosave, type NotebookAutosave, type NotebookData, type NotebookRevision, type SaveStatus } from '@/lib/notebook-autosave';
+import { AlertCircle, History, Pencil, Trash2, X } from 'lucide-react';
 import { PencilButton } from '@/components/ui/PencilButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { BackButton } from '@/components/ui/BackButton';
@@ -80,7 +80,6 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     const [saved, setSaved] = useState(false);
     const autosave = useRef<NotebookAutosave | null>(null);
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
-    const [lastSavedMode, setLastSavedMode] = useState<SaveMode | null>(null);
     const [dismissed, setDismissed] = useState(false);
     const [history, setHistory] = useState<Revision[] | null>(null);
     const [showHistory, setShowHistory] = useState(false);
@@ -136,7 +135,6 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                 unsubscribe = queue.subscribe(() => {
                     if (!active) return;
                     setSaveStatus(current.status);
-                    setLastSavedMode(current.lastSavedMode);
                     setSaving(current.status === 'saving');
                     setSaved(current.status === 'saved' && current.lastSavedMode === 'manual');
                     setProfile(current.revision);
@@ -382,26 +380,16 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
                 </div>
             )}
-            <div role="status" aria-live="polite" className="flex h-5 items-center" data-testid="notebook-autosave-status">
-                {(saveStatus === 'pending' || saveStatus === 'saving') && (
-                    <span className="inline-flex" title={t('lp.autosaving')} aria-label={t('lp.autosaving')}>
-                        <LoaderCircle className="h-4 w-4 animate-spin text-slate-500" aria-hidden="true" />
-                    </span>
-                )}
-                {saveStatus === 'saved' && (
-                    <span className="inline-flex" title={t(lastSavedMode === 'manual' ? 'lp.saved' : 'lp.autosaved')} aria-label={t(lastSavedMode === 'manual' ? 'lp.saved' : 'lp.autosaved')}>
-                        <Check className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-                    </span>
-                )}
-                {saveStatus === 'error' && (
+            {saveStatus === 'error' && (
+                <div role="alert" data-testid="notebook-autosave-status">
                     <span className="inline-flex items-center gap-2">
                         <span className="inline-flex" title={t('lp.autosaveError')} aria-label={t('lp.autosaveError')}>
                             <AlertCircle className="h-4 w-4 text-red-600" aria-hidden="true" />
                         </span>
                         <Button size="sm" onClick={() => void autosave.current?.flush()}>{t('setup.retry')}</Button>
                     </span>
-                )}
-            </div>
+                </div>
+            )}
             <Card className="p-5 space-y-4">
             {variant !== 'edit' && !suggestionOnly && (
                 <div className="flex items-center gap-2">
