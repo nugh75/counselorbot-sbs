@@ -226,11 +226,11 @@ for (const width of [390, 1440]) {
             await tools.waitFor();
             assert.equal(await tools.count(), 1);
             const intro = page.getByTestId('intro-screen');
-            assert.deepEqual(await intro.locator('h2').allTextContents(), ['Analisi dei risultati dei questionari', 'Percorsi guidati', 'Allenamento']);
+            assert.deepEqual(await intro.locator('h2').allTextContents(), ['Analisi dei risultati dei questionari', 'Percorsi guidati', 'Area personale']);
             const images = intro.locator('img');
             assert.equal(await images.count(), 5);
             await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
-            assert.ok(await start.evaluate(el => el.getBoundingClientRect().bottom <= innerHeight), 'Start is available in the initial viewport');
+            assert.equal(await intro.getByRole('link', { name: 'Apri Area personale', exact: true }).getAttribute('href'), '/profilo');
             assert.equal(await intro.locator('details[open]').count(), 0);
             assert.equal(await intro.locator('details').count(), 4);
             const support = intro.locator('details[data-section=personal]');
@@ -248,7 +248,7 @@ for (const width of [390, 1440]) {
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             await page.evaluate(() => window.scrollTo(0, 0));
             await page.screenshot({ path: `/tmp/intro-illustrated-${width}.png`, fullPage: true });
-            await start.dblclick();
+            await start.click();
             await page.getByRole('heading', { name: 'Prepara il tuo spazio', exact: true }).waitFor();
             assert.deepEqual(errors, []);
         } finally { await context.close(); }

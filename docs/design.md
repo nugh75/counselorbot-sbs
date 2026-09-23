@@ -210,15 +210,19 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   di scrittura. Le risposte funzionali all’intervista Savickas restano disponibili.
 - **Selezione strumento**: la barra con nome selezionato e Continua resta
   visibile sotto l’intestazione durante lo scorrimento.
-- **Home di ritorno**: ripresa e catalogo completo precedono le attività
-  secondarie; counselor e preferenze stanno in un pannello espandibile, che
-  conserva anche l’accesso alla presentazione iniziale. La Bussola resta accanto
-  al titolo del catalogo.
+- **Home di ritorno**: catalogo di questionari e percorsi guidati, accesso
+  all’Area personale, Bussola e preferenze precedono «Riprendi», in fondo
+  alla pagina e presente solo con attività riprendibili o errori da recuperare.
+  «Studiare da un PDF» (pQBL) vive in `/profilo/pqbl`, accanto alle Flashcard
+  in «Studiare, esplorare e agire». `/pqbl` reindirizza alla nuova pagina;
+  ripresa e progresso locale restano disponibili. «Allenamento» non è una
+  categoria della home né del selettore strumenti.
 - **Presentazione iniziale**: titolo e breve descrizione precedono tre schede:
-  Analisi dei risultati dei questionari, Percorsi guidati, Allenamento. Le illustrazioni PNG
+  Analisi dei risultati dei questionari, Percorsi guidati, Area personale. Le illustrazioni PNG
   trasparenti in `public/images/intro/` sono decorative; titoli e descrizioni
   restano testo localizzato. Su mobile le immagini affiancano il testo, su
-  desktop lo precedono. «Inizia» segue le schede; quattro `details` chiusi
+  desktop lo precedono. Le schede hanno accessi espliciti al catalogo o
+  all’Area personale; Bussola e Strumenti seguono le schede. Quattro `details` chiusi
   inizialmente presentano da dove iniziare, il lavoro personale, risorse e
   accompagnamento, uso dei questionari. Il link «Dati e riservatezza» apre
   `/guide/dati-riservatezza`, che distingue elaborazione locale, filtro per

@@ -8,7 +8,7 @@ import { orientationGateBypass, orientationToolHref, safeOrientationNext } from 
 test('Bussola links only to tools in the shared catalog', () => {
     assert.equal(orientationToolHref('QSA'), '/?start=QSA');
     assert.equal(orientationToolHref('IDEA'), '/?start=IDEA');
-    assert.equal(orientationToolHref('pqbl'), '/pqbl');
+    assert.equal(orientationToolHref('pqbl'), '/profilo/pqbl');
     assert.equal(orientationToolHref('unknown'), '/?view=questionnaires');
 });
 
@@ -25,6 +25,8 @@ test('required orientation does not interrupt recovery links', () => {
     assert.equal(orientationGateBypass('/', '?session_id=session-2&instrument=QSA'), true);
     assert.equal(orientationGateBypass('/', '?start=QSA'), false);
     assert.equal(orientationGateBypass('/bussola'), true);
+    assert.equal(orientationGateBypass('/pqbl'), true);
+    assert.equal(orientationGateBypass('/profilo/pqbl'), true);
 });
 
 test('the landing shows before the gate, and its only way forward is the compass', () => {

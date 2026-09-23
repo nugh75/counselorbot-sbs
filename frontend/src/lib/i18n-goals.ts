@@ -73,7 +73,7 @@ const text = {
     selectGroup: ['Scegli un gruppo', 'Choose a group', 'Elige un grupo', 'Choisir un groupe', 'Gruppe wählen', 'Välj en grupp'],
     noShared: ['Nessun riepilogo condiviso con questo gruppo.', 'No summaries shared with this group.', 'No hay resúmenes compartidos con este grupo.', 'Aucun bilan partagé avec ce groupe.', 'Keine Zusammenfassungen mit dieser Gruppe geteilt.', 'Inga sammanfattningar delas med gruppen.'],
     understand: ['Conoscermi e riflettere', 'Understand myself and reflect', 'Conocerme y reflexionar', 'Me connaître et réfléchir', 'Mich kennenlernen und reflektieren', 'Lära känna mig själv och reflektera'],
-    explore: ['Esplorare e agire', 'Explore and act', 'Explorar y actuar', 'Explorer et agir', 'Erkunden und handeln', 'Utforska och agera'],
+    explore: ['Studiare, esplorare e agire', 'Study, explore and act', 'Estudiar, explorar y actuar', 'Étudier, explorer et agir', 'Lernen, erkunden und handeln', 'Studera, utforska och agera'],
     document: ['Documentare il percorso', 'Document my journey', 'Documentar el recorrido', 'Documenter le parcours', 'Meinen Weg dokumentieren', 'Dokumentera min väg'],
     support: ['Persone e supporto', 'People and support', 'Personas y apoyo', 'Personnes et soutien', 'Menschen und Unterstützung', 'Människor och stöd'],
     related: ['Obiettivi collegati', 'Related goals', 'Objetivos vinculados', 'Objectifs liés', 'Verknüpfte Ziele', 'Länkade mål'],

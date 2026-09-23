@@ -16,10 +16,6 @@ test('every active questionnaire appears in exactly one home category, or is the
     }
 });
 
-test('pQBL is part of the shared standalone catalog', () => {
-    assert.equal(TOOL_CATEGORIES.some((group) => group.standaloneIds.includes('pqbl')), true);
-});
-
 test('deep-link validation uses the shared active catalog', () => {
     assert.equal(isStartableQuestionnaireId('QSA'), true);
     assert.equal(isStartableQuestionnaireId('UNKNOWN'), false);

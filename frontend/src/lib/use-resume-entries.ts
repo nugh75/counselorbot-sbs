@@ -28,7 +28,7 @@ export function useResumeEntries(enabled = true): ResumeEntries {
         () => (getResume() ? '1' : null),
         () => null,
     );
-    // Il progresso pQBL cambia dentro /pqbl, da cui si esce con una navigazione
+    // Il progresso pQBL cambia dentro /profilo/pqbl, da cui si esce con una navigazione
     // che rimonta l'header: qui basta leggerlo, come per il resume locale.
     const pqbl = useSyncExternalStore(
         subscribeToPqblProgress,
@@ -83,4 +83,4 @@ export function resumeHref(entry: { session_id: string }): string {
 
 export const LOCAL_RESUME_HREF = '/?resume=1';
 
-export const PQBL_RESUME_HREF = '/pqbl';
+export const PQBL_RESUME_HREF = '/profilo/pqbl';

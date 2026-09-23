@@ -30,7 +30,7 @@ import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
     ArrowRight, Trash2, Download, MessageSquare, ShieldAlert, Search,
-    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, LayoutList, Layers, Columns3, GraduationCap,
+    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, LayoutList, Layers, Columns3, GraduationCap, BookOpen,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -47,7 +47,7 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-type PersonalSection = 'assignments' | 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo' | 'flashcards';
+type PersonalSection = 'assignments' | 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo' | 'flashcards' | 'pqbl';
 
 const PERSONAL_AREAS = [
     { id: 'assignments', slug: 'assegnazioni', icon: ClipboardList, image: '/images/platform/assegnazioni.png', titleKey: 'received', descriptionKey: 'intro' },
@@ -108,6 +108,14 @@ const PERSONAL_AREAS = [
         descriptionKey: 'timelinePurpose',
     },
     {
+        id: 'pqbl',
+        slug: 'pqbl',
+        icon: BookOpen,
+        image: '/images/intro/practice.png',
+        titleKey: 'pqbl.card.title',
+        descriptionKey: 'pqbl.card.desc',
+    },
+    {
         id: 'flashcards',
         slug: 'flashcard',
         icon: GraduationCap,
@@ -141,9 +149,9 @@ interface PersonalWorkspace {
     image?: string;
 }
 const PERSONAL_WORKSPACES: readonly PersonalWorkspace[] = [
-    { tab: 'board', href: '/profilo/azioni', icon: LayoutList, image: '/images/platform/bacheca-azioni.png' },
     { tab: 'cards', href: '/profilo/carte', icon: Layers, image: '/images/platform/carte-ordinare.png' },
     { tab: 'comparison', href: '/profilo/confronto', icon: Columns3, image: '/images/platform/confronto.png' },
+    { tab: 'board', href: '/profilo/azioni', icon: LayoutList, image: '/images/platform/bacheca-azioni.png' },
 ];
 
 function personalSectionFromPath(pathname: string): PersonalSection | null {
@@ -510,12 +518,12 @@ export default function ProfilePage() {
                     <JourneyOverview />
                     {([
                         ['understand', ['notebook', 'booklet', 'sessions']],
-                        ['explore', ['tavolo', 'flashcards']],
+                        ['explore', ['pqbl', 'flashcards', 'tavolo']],
                         ['document', ['timeline', 'portfolio']],
                         ['support', ['assignments', 'groups', 'orientation', 'telegram']],
                     ] as [GoalTextKey, string[]][]).map(([group, ids]) => <section key={group} className="space-y-3">
                     <h2 className="text-lg font-bold text-slate-800">{goalText(lang, group)}</h2>
-                    <nav className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label={goalText(lang, group)}>
+                    <nav className={`grid gap-4 sm:grid-cols-2 ${group === 'explore' ? '' : 'lg:grid-cols-3'}`} aria-label={goalText(lang, group)}>
                         {personalAreas.filter(area => ids.includes(area.id)).map((area) => {
                             const Icon = area.icon;
                             return (

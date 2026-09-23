@@ -1,16 +1,14 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Check, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { cn } from '@/lib/utils';
 
 const activities = [
     { key: 'profiles', anchor: 'tools-assessment' },
     { key: 'paths', anchor: 'tools-guided' },
-    { key: 'practice', anchor: 'tools-learning' },
+    { key: 'workspace', anchor: null },
 ] as const;
 const sections = [
     { id: 'start', title: 'start.title', paragraphs: ['start.p1', 'start.p2'] },
@@ -27,7 +25,6 @@ export function IntroScreen({
     onOpenTools?: (anchor?: string) => void;
 }) {
     const { t } = useI18n();
-    const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
     const actions = [
         {
@@ -58,32 +55,10 @@ export function IntroScreen({
                 {activities.map((activity) => (
                     <article
                         key={activity.key}
-                        role="button"
-                        tabIndex={0}
-                        aria-pressed={selectedKey === activity.key}
-                        onClick={() => setSelectedKey(activity.key)}
-                        onDoubleClick={() => {
-                            setSelectedKey(activity.key);
-                            onOpenTools?.(activity.anchor);
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                setSelectedKey(activity.key);
-                            }
-                        }}
-                        className={cn(
-                            'relative grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-x-4 rounded-xl border bg-white p-4 cursor-pointer text-left transition-colors sm:flex sm:flex-col sm:items-start sm:p-5',
-                            selectedKey === activity.key ? 'border-indigo-300 ring-2 ring-indigo-400' : 'border-slate-200 hover:border-indigo-300',
-                        )}
+                        className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-x-4 rounded-xl border border-slate-200 bg-white p-4 text-left sm:flex sm:flex-col sm:items-start sm:p-5"
                     >
-                        {selectedKey === activity.key && (
-                            <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
-                                <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                            </div>
-                        )}
                         <Image
-                            src={`/images/intro/${activity.key}.png`}
+                            src={activity.key === 'workspace' ? '/images/intro/tools.png' : `/images/intro/${activity.key}.png`}
                             alt=""
                             width={144}
                             height={144}
@@ -91,7 +66,12 @@ export function IntroScreen({
                             className="row-span-2 h-18 w-18 object-contain sm:mb-3 sm:h-32 sm:w-32 sm:self-center"
                         />
                         <h2 className="font-display w-full break-words text-lg font-semibold text-slate-900">{t(`app.intro.compact.${activity.key}.title`)}</h2>
-                        <p className="mt-1 text-sm leading-relaxed text-slate-600">{t(`app.intro.compact.${activity.key}.body`)}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-600 sm:grow">{t(`app.intro.compact.${activity.key}.body`)}</p>
+                        {activity.key === 'workspace' ? (
+                            <Link href="/profilo" className="col-start-2 mt-3 inline-flex min-h-11 items-center font-semibold text-indigo-700 hover:underline">{t('app.intro.compact.workspace.open')}</Link>
+                        ) : (
+                            <button type="button" onClick={() => onOpenTools?.(activity.anchor)} className="col-start-2 mt-3 inline-flex min-h-11 items-center text-left font-semibold text-indigo-700 hover:underline">{t('app.intro.compact.explore')}</button>
+                        )}
                     </article>
                 ))}
             </section>
@@ -99,33 +79,13 @@ export function IntroScreen({
             <section aria-label={t('app.intro.actions.label')} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                     {actions.map((action) => {
-                        const isSelected = selectedKey === action.key;
                         return (
-                            <article
+                            <button
                                 key={action.key}
-                                role="button"
-                                tabIndex={0}
-                                aria-pressed={isSelected}
-                                onClick={() => {
-                                    setSelectedKey(action.key);
-                                    action.onAdvance?.();
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        e.preventDefault();
-                                        setSelectedKey(action.key);
-                                    }
-                                }}
-                                className={cn(
-                                    'relative flex cursor-pointer flex-col gap-4 rounded-xl border bg-white p-5 text-left transition-colors sm:flex-row sm:items-center',
-                                    isSelected ? 'border-indigo-300 ring-2 ring-indigo-400' : 'border-slate-200 hover:border-indigo-300',
-                                )}
+                                type="button"
+                                onClick={action.onAdvance}
+                                className="relative flex cursor-pointer flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 text-left transition-colors hover:border-indigo-300 sm:flex-row sm:items-center"
                             >
-                                {isSelected && (
-                                    <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
-                                        <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                                    </div>
-                                )}
                                 <Image
                                     src={action.image}
                                     alt=""
@@ -138,7 +98,7 @@ export function IntroScreen({
                                     <h3 className="font-display text-lg font-bold text-slate-900">{t(action.label)}</h3>
                                     <p className="mt-1 text-sm leading-relaxed text-slate-600">{t(action.desc)}</p>
                                 </div>
-                            </article>
+                            </button>
                         );
                     })}
                 </div>

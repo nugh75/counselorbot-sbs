@@ -91,14 +91,14 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
                         </ResumeEntry>
                     )}
                     {pqbl && (
-                        <ResumeEntry menuItem target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.badge')}`}>
+                        <ResumeEntry menuItem target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
                             <Link
                                 role="menuitem"
                                 href={PQBL_RESUME_HREF}
                                 onClick={() => setOpen(false)}
                                 className="block truncate border-t border-slate-100 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                             >
-                                {t('header.resume')} · {t('pqbl.card.badge')}
+                                {t('header.resume')} · {t('pqbl.card.title')}
                             </Link>
                         </ResumeEntry>
                     )}

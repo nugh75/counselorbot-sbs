@@ -369,10 +369,10 @@ function HeaderMenu({
                                 </ResumeEntry>
                             )}
                             {pqblResume && (
-                                <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.badge')}`}>
+                                <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
                                     <Link href={PQBL_RESUME_HREF} className={itemClass} onClick={close}>
                                         <RotateCcw className="h-4 w-4 shrink-0" />
-                                        <span className="truncate">{t('header.resume')} · {t('pqbl.card.badge')}</span>
+                                        <span className="truncate">{t('header.resume')} · {t('pqbl.card.title')}</span>
                                     </Link>
                                 </ResumeEntry>
                             )}

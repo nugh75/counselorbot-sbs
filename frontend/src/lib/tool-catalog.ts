@@ -1,14 +1,11 @@
 import type { QuestionnaireType } from './questionnaires';
 
-export type ToolCategory = 'assessment' | 'guided' | 'learning';
+export type ToolCategory = 'assessment' | 'guided';
 
 export interface ToolCategoryDefinition {
     id: ToolCategory;
     questionnaireIds: readonly QuestionnaireType[];
-    standaloneIds: readonly StandaloneToolId[];
 }
-
-export type StandaloneToolId = 'pqbl';
 
 export const ACTIVE_QUESTIONNAIRE_IDS: readonly QuestionnaireType[] = [
     'QSA',
@@ -29,17 +26,10 @@ export const TOOL_CATEGORIES: readonly ToolCategoryDefinition[] = [
     {
         id: 'assessment',
         questionnaireIds: ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'],
-        standaloneIds: [],
     },
     {
         id: 'guided',
         questionnaireIds: ['SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'IDEA'],
-        standaloneIds: [],
-    },
-    {
-        id: 'learning',
-        questionnaireIds: [],
-        standaloneIds: ['pqbl'],
     },
 ];
 
@@ -55,7 +45,7 @@ export function isStartableQuestionnaireId(value: string): value is Questionnair
 
 export function orientationToolHref(id: string): string {
     if (isStartableQuestionnaireId(id)) return `/?start=${encodeURIComponent(id)}`;
-    if (id === 'pqbl') return '/pqbl';
+    if (id === 'pqbl') return '/profilo/pqbl';
     return '/?view=questionnaires';
 }
 
@@ -82,7 +72,7 @@ export function orientationSkippedThisVisit(): boolean {
 }
 
 export function orientationGateBypass(pathname: string, search = ''): boolean {
-    const exemptPaths = ['/inizia', '/counselor', '/profilo', '/bussola', '/login', '/register', '/guide', '/telegram-link', '/questionario'];
+    const exemptPaths = ['/inizia', '/counselor', '/profilo', '/pqbl', '/bussola', '/login', '/register', '/guide', '/telegram-link', '/questionario'];
     if (exemptPaths.some((path) => pathname.startsWith(path))) return true;
     if (pathname !== '/') return false;
     const params = new URLSearchParams(search);
