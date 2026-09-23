@@ -108,15 +108,20 @@ nella pagina **Orientamento**, la nuova testata mantiene a sinistra il collegame
 esistente, il titolo e la descrizione. Il pannello «Vai a…» è stato rimosso
 su richiesta dell’utente. Le altre sottopagine saranno riviste separatamente.
 
-**Categorie dell’istituto — sviluppo in corso:** ogni istituto definirà le
+**Categorie dell’istituto — anteprima di sviluppo:** ogni istituto definisce le
 proprie categorie di Orientamento tramite i suoi docenti. L’amministratore
 associa e può revocare i docenti dell’istituto; dichiarare una scuola nel
 Taccuino o in una classe non concede questo permesso. In sviluppo sono
 disponibili le API e la scheda amministrativa delle associazioni, in **Referenti ed eventi → Istituti → Docenti dell’istituto**:
 account docente, «Associa», elenco e «Revoca». Occorre indicare lo username
 esatto di un account che abbia già il ruolo docente. Questa modifica non è
-ancora distribuita in produzione; il configuratore delle categorie è il passo
-successivo, non ancora disponibile.
+ancora distribuita in produzione. Nell’Area docente, **Orientamento dell’istituto**
+apre l’elenco condiviso: i docenti abilitati possono creare, descrivere, modificare,
+riordinare, archiviare e ripristinare le categorie. Nessun nome è imposto. Con più
+istituti si sceglie quello su cui lavorare; senza associazioni si vede una spiegazione.
+Il salvataggio è esplicito; errori e conflitti conservano il testo inserito, mentre
+l’uscita con modifiche non salvate richiede conferma. Il collegamento delle categorie a contatti e
+appuntamenti, con i relativi filtri studenti, sarà realizzato nel passo successivo.
 
 L’Area personale (`/profilo`) apre con **Da riprendere**, solo quando ci sono
 lavori pertinenti: al massimo tre attività collegate a obiettivi attivi, obiettivi

@@ -97,6 +97,7 @@ from .routes import tavolo_images as tavolo_images_routes
 from .routes import visual_tools as visual_tools_routes
 from .routes import flashcards as flashcards_routes
 from .routes import institutions as institutions_routes
+from .routes import institution_categories as institution_categories_routes
 from .routes import orientation_referrals as orientation_referrals_routes
 
 
@@ -1878,5 +1879,6 @@ app.include_router(assignment_work_routes.router)
 app.include_router(frozen_sessions_routes.router)
 app.include_router(idea_map_routes.router)
 app.include_router(institutions_routes.router)
+app.include_router(institution_categories_routes.router)
 app.include_router(orientation_referrals_routes.router)
 app.include_router(prompt_experiments_routes.router)
