@@ -3,6 +3,7 @@
 import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { JourneyOverview } from '@/components/goals/JourneyOverview';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { VisualTools, type WorkTab } from '@/components/visual/VisualTools';
 import { useI18n } from '@/lib/i18n-context';
 import { visualLabel } from '@/lib/i18n-visual-tools';
@@ -25,6 +26,7 @@ export function PersonalVisualWorkspacePage({ tab }: { tab: WorkTab }) {
     }, [lang, tab]);
 
     return <main className="page-narrow space-y-4 p-4">
+        <PageHeader title={visualLabel(lang, tab)} />
         <JourneyOverview kind={GOAL_KIND[tab]} />
         <VisualTools
             personal

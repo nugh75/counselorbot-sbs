@@ -3,7 +3,7 @@ import { AssignmentSource } from '@/components/teacher/AssignmentSource';
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, GitCommitHorizontal, Columns3, Download, Folder, FolderPlus, Image as ImageIcon, LayoutList, Layers, MessageSquare, Pencil, Plus, RotateCcw, Save, Sparkles, Trash2, Undo2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, GitCommitHorizontal, Columns3, Download, Folder, FolderPlus, Image as ImageIcon, LayoutList, Layers, MessageSquare, Pencil, Plus, RotateCcw, Save, Sparkles, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -11,7 +11,7 @@ import { apiFetch } from '@/lib/auth';
 import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { NewDeckDialog } from './NewDeckDialog';
-import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, cardColumnsOf, cardColumnLabel, renameCardColumn, removeCardColumn, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, type ActionStage, type CardDeck, type SavedWorkspace, type VisualWorkspace, DEFAULT_DECK_ID } from '@/lib/visual-tools';
+import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, cardColumnsOf, cardColumnLabel, renameCardColumn, removeCardColumn, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, cardsInDeck, type ActionStage, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
 import { validTimelineDates } from '@/lib/timeline-dates';
 import { BUILTIN_CARD_IMAGES, tavoloImageUrl } from '@/lib/tavolo-images';
 import { TimelineTools } from './TimelineTools';
@@ -69,6 +69,9 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [draftCardImage, setDraftCardImage] = useState('');
     const [pickingImageCardId, setPickingImageCardId] = useState<string | null>(null);
     const [deckDialogOpen, setDeckDialogOpen] = useState(false);
+    const [deckListOpen, setDeckListOpen] = useState(true);
+    const [dragCardId, setDragCardId] = useState<string | null>(null);
+    const [dragOverCol, setDragOverCol] = useState<string | null>(null);
     const [criterion, setCriterion] = useState('');
     const [option, setOption] = useState('');
     const [optionSource, setOptionSource] = useState('');
@@ -319,87 +322,46 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             const currentDeckObj = decks.find(d => d.id === activeDeckId) || decks[0];
 
                             return <>
-                            {/* Deck selector and manager bar */}
-                            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 to-slate-50 p-3 shadow-sm">
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-900/80">
-                                        <Folder className="h-4 w-4 text-indigo-600" aria-hidden="true" />
-                                        {l('cardDecks')}:
-                                    </span>
-                                    <div className="flex flex-wrap gap-1.5" role="tablist" aria-label={l('cardDecks')}>
-                                        {decks.map(deck => {
-                                            const isSelected = deck.id === activeDeckId;
-                                            const count = cardsInDeck(work, deck.id).length;
-                                            return (
-                                                <button
-                                                    key={deck.id}
-                                                    type="button"
-                                                    role="tab"
-                                                    aria-selected={isSelected}
-                                                    onClick={() => edit(setActiveCardDeck(work, deck.id))}
-                                                    className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
-                                                        isSelected
-                                                            ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-600/20'
-                                                            : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 hover:text-slate-900'
-                                                    }`}
-                                                >
-                                                    <span className="truncate max-w-[140px] sm:max-w-[200px]">{deck.title}</span>
-                                                    <span className={`rounded-full px-1.5 py-0.2 text-xs font-mono ${
-                                                        isSelected ? 'bg-indigo-700/60 text-white' : 'bg-slate-100 text-slate-600'
-                                                    }`}>
-                                                        {count}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
+                            {deckListOpen ? (
+                            <section aria-label={l('cardDecks')}>
+                                <div className="mb-3 flex items-center justify-between gap-3">
+                                    <h3 className="flex items-center gap-1.5 font-semibold text-slate-800"><Folder className="h-4 w-4 text-indigo-600" aria-hidden="true" />{l('cardDecks')}</h3>
+                                    <Tooltip content={l('newDeck')}><Button type="button" variant="secondary" className="min-h-11 gap-2 px-3" aria-label={l('newDeck')} disabled={decks.length >= 20} onClick={() => setDeckDialogOpen(true)}><FolderPlus className="h-4 w-4" aria-hidden="true" />{l('newDeck')}</Button></Tooltip>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <Tooltip content={l('newDeck')}>
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            className={`${buttonClass} bg-white`}
-                                            aria-label={l('newDeck')}
-                                            disabled={decks.length >= 20}
-                                            onClick={() => setDeckDialogOpen(true)}
-                                        >
-                                            <FolderPlus className="h-4 w-4 text-indigo-700" aria-hidden="true" />
-                                        </Button>
-                                    </Tooltip>
-                                    <Tooltip content={`${l('renameDeck')}: ${currentDeckObj.title}`}>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            className={buttonClass}
-                                            aria-label={`${l('renameDeck')}: ${currentDeckObj.title}`}
-                                            onClick={() => {
-                                                const name = window.prompt(l('renameDeck'), currentDeckObj.title);
-                                                if (name?.trim()) {
-                                                    edit(renameCardDeck(work, currentDeckObj.id, name.trim(), l('mainDeck')));
-                                                }
-                                            }}
-                                        >
-                                            <Pencil className="h-4 w-4" aria-hidden="true" />
-                                        </Button>
-                                    </Tooltip>
-                                    {decks.length > 1 && (
-                                        <Tooltip content={`${l('deleteDeck')}: ${currentDeckObj.title}`}>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                className={buttonClass}
-                                                aria-label={`${l('deleteDeck')}: ${currentDeckObj.title}`}
-                                                onClick={() => {
-                                                    if (window.confirm(`${l('deleteDeck')}: "${currentDeckObj.title}"?`)) {
-                                                        edit(removeCardDeck(work, currentDeckObj.id, l('mainDeck')));
-                                                    }
-                                                }}
-                                            >
-                                                <Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" />
-                                            </Button>
-                                        </Tooltip>
-                                    )}
+                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {decks.map(deck => {
+                                        const deckCards = cardsInDeck(work, deck.id);
+                                        const deckCols = deck.card_columns?.length ? deck.card_columns : cardColumnsOf(work, deck.id);
+                                        return <article key={deck.id} className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+                                            <button type="button" className="min-h-11 flex-1 text-left" aria-label={`${l('cardDecks')}: ${deck.title}`} onClick={() => { edit(setActiveCardDeck(work, deck.id)); setDeckListOpen(false); }}>
+                                                <h4 className="break-words font-semibold text-slate-900">{deck.title} <span className="font-mono text-sm text-slate-500">{deckCards.length}</span></h4>
+                                                <p className="mt-1 break-words text-xs text-slate-500">{deckCols.map(c => cardColumnLabel(work, c, l)).join(' · ')}</p>
+                                            </button>
+                                            <div className="mt-2 flex items-center gap-1 self-end">
+                                                <Tooltip content={`${l('renameDeck')}: ${deck.title}`}><Button type="button" variant="ghost" className="h-8 w-8 p-0" aria-label={`${l('renameDeck')}: ${deck.title}`} onClick={() => {
+                                                    const name = window.prompt(l('renameDeck'), deck.title);
+                                                    if (name?.trim()) edit(renameCardDeck(work, deck.id, name.trim(), l('mainDeck')));
+                                                }}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                                {decks.length > 1 && <Tooltip content={`${l('deleteDeck')}: ${deck.title}`}><Button type="button" variant="ghost" className="h-8 w-8 p-0" aria-label={`${l('deleteDeck')}: ${deck.title}`} onClick={() => {
+                                                    if (window.confirm(`${l('deleteDeck')}: "${deck.title}"?`)) edit(removeCardDeck(work, deck.id, l('mainDeck')));
+                                                }}><Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" /></Button></Tooltip>}
+                                            </div>
+                                        </article>;
+                                    })}
+                                </div>
+                            </section>
+                            ) : (<>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Tooltip content={l('backToDecks')}><Button type="button" variant="secondary" className={buttonClass} aria-label={l('backToDecks')} onClick={() => setDeckListOpen(true)}><ArrowLeft className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                <h3 className="min-w-0 break-words font-semibold text-slate-900">{currentDeckObj.title} <span className="font-mono text-sm text-slate-500">{activeDeckCards.length}</span></h3>
+                                <div className="ml-auto flex items-center gap-1">
+                                    <Tooltip content={`${l('renameDeck')}: ${currentDeckObj.title}`}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('renameDeck')}: ${currentDeckObj.title}`} onClick={() => {
+                                        const name = window.prompt(l('renameDeck'), currentDeckObj.title);
+                                        if (name?.trim()) edit(renameCardDeck(work, currentDeckObj.id, name.trim(), l('mainDeck')));
+                                    }}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                    {decks.length > 1 && <Tooltip content={`${l('deleteDeck')}: ${currentDeckObj.title}`}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('deleteDeck')}: ${currentDeckObj.title}`} onClick={() => {
+                                        if (window.confirm(`${l('deleteDeck')}: "${currentDeckObj.title}"?`)) edit(removeCardDeck(work, currentDeckObj.id, l('mainDeck')));
+                                    }}><Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" /></Button></Tooltip>}
                                 </div>
                             </div>
 
@@ -447,7 +409,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     {(draftCard.length > 600 || work.cards.length >= 30) && <p role="status">{l('limit')}</p>}
                                 </form></details>
                                 {!activeDeckCards.length && <p className="py-5 text-center text-slate-600">{l('emptyCards')}</p>}
-                                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, 240px), 1fr))` }}>{currentDeckCols.map(column => { const columnTitle = cardColumnLabel(work, column, l); const colCards = activeDeckCards.filter(c => c.bucket === column.id); return <section key={column.id} aria-label={columnTitle} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, 240px), 1fr))` }}>{currentDeckCols.map(column => { const columnTitle = cardColumnLabel(work, column, l); const colCards = activeDeckCards.filter(c => c.bucket === column.id); return <section key={column.id} aria-label={columnTitle} onDragOver={event => { if (!dragCardId) return; event.preventDefault(); setDragOverCol(column.id); }} onDragLeave={event => { if (event.currentTarget.contains(event.relatedTarget as Node)) return; setDragOverCol(previous => previous === column.id ? null : previous); }} onDrop={event => { event.preventDefault(); const droppedId = dragCardId || event.dataTransfer.getData('text/plain'); if (droppedId) edit({ ...work, cards: work.cards.map(c => c.id === droppedId ? { ...c, bucket: column.id } : c) }); setDragCardId(null); setDragOverCol(null); }} className={`min-w-0 rounded-xl border bg-slate-50 p-3 transition-colors ${dragOverCol === column.id && dragCardId ? 'border-indigo-500 bg-indigo-50/70' : 'border-slate-200'}`}>
                                     <div className="mb-3 flex items-start justify-between gap-1">
                                         <h3 className="min-w-0 break-words font-semibold">{columnTitle} <span className="font-mono text-sm text-slate-500">{colCards.length}</span></h3>
                                         <div className="flex shrink-0">
@@ -458,7 +420,15 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                             {currentDeckCols.length > 1 && removeButton(columnTitle, () => edit(removeCardColumn(work, column.id, activeDeckId)))}
                                         </div>
                                     </div>
-                                    <div className="space-y-3">{colCards.map(card => <article key={card.id} className="group/card flex flex-col overflow-hidden rounded-xl border border-indigo-200/90 bg-white shadow-sm transition-shadow hover:shadow-md">
+                                    <div className="space-y-3">{colCards.map(card => <article key={card.id} draggable={!busy}
+                                    onDragStart={event => {
+                                        if ((event.target as HTMLElement).closest('textarea, input, select, button')) { event.preventDefault(); return; }
+                                        event.dataTransfer.effectAllowed = 'move';
+                                        event.dataTransfer.setData('text/plain', card.id);
+                                        setDragCardId(card.id);
+                                    }}
+                                    onDragEnd={() => { setDragCardId(null); setDragOverCol(null); }}
+                                    className={`group/card flex flex-col overflow-hidden rounded-xl border border-indigo-200/90 bg-white shadow-sm transition-shadow hover:shadow-md ${dragCardId === card.id ? 'opacity-50 ring-2 ring-indigo-400' : ''}`}>
                                     {card.image ? (
                                         <div
                                             role="button"
@@ -514,16 +484,6 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                                 >
                                                     {currentDeckCols.map(b => <option key={b.id} value={b.id}>{cardColumnLabel(work, b, l)}</option>)}
                                                 </select>
-                                                {decks.length > 1 && (
-                                                    <select
-                                                        aria-label={l('moveToDeck')}
-                                                        value={card.deck_id || DEFAULT_DECK_ID}
-                                                        className="h-8 max-w-[130px] truncate rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700 hover:bg-white"
-                                                        onChange={e => edit(moveCardToDeck(work, card.id, e.target.value))}
-                                                    >
-                                                        {decks.map(d => <option key={d.id} value={d.id}>{d.title}</option>)}
-                                                    </select>
-                                                )}
                                             </div>
                                             <div className="flex shrink-0 items-center">
                                                 {removeButton(card.text, () => edit({ ...work, cards: work.cards.filter(c => c.id !== card.id) }))}
@@ -534,6 +494,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             </section>; })}</div>
                             </>;
                             })()}
+                        </>)}
                         </>;
                         })()}
                         {tab === 'comparison' && <>
