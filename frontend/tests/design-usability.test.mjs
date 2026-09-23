@@ -33,6 +33,7 @@ async function fixture({ width = 390, height = 844, touch = true, locale = 'it',
         if (!url.pathname.startsWith('/api/')) return request.method() === 'GET' ? route.continue() : route.abort();
         let data = [];
         if (url.pathname === '/api/auth/me') data = { authenticated: true, is_admin: admin, username: 'design-fixture', name: 'Studente con un nome molto lungo per la prova', groups: [admin ? 'admins' : 'studenti'] };
+        else if (url.pathname === '/api/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
         else if (url.pathname === '/api/counselors') data = [{ id: 1, name: 'Counselor di prova con nome lungo', slug: 'fixture', language: ['it'], questionnaire_types: ['QSA', 'SAVICKAS'], suitable: true, is_active: true }];
         else if (url.pathname === '/api/user/learner-profile') data = { created_at: '2026-09-05T08:00:00Z', profile: {} };
         else if (url.pathname === '/api/orientation/status') data = { required: false };
@@ -129,21 +130,19 @@ for (const width of [768, 1024, 1280, 1440]) {
     });
 }
 
-test('returning home exposes resume and the complete catalog before optional preferences', async () => {
+test('returning home shows the catalog and personal tools before preferences and resume', async () => {
     const { page, context } = await fixture();
     try {
-        await page.goto(origin, { waitUntil: 'networkidle' });
-        const resume = await page.getByRole('link', { name: 'QSA · Organizzare lo studio' }).boundingBox();
+        await page.goto(`${origin}/?view=home`, { waitUntil: 'networkidle' });
         const catalog = await page.getByRole('heading', { name: 'Strumenti', exact: true }).boundingBox();
-        assert.ok(resume.y < catalog.y && catalog.y < 600);
-        assert.equal(await page.locator('main article').count(), 9);
-        await page.locator('summary').click();
-        await page.getByRole('button', { name: 'Cambia counselor predefinito' }).click();
-        await page.getByRole('button', { name: 'Indietro', exact: true }).click();
-        await page.getByRole('heading', { name: 'Il tuo percorso', exact: true }).waitFor();
-        await page.locator('summary').click();
-        await page.getByRole('button', { name: 'Rivedi la presentazione iniziale' }).click();
-        await page.getByRole('heading', { name: 'CounselorBot', exact: true }).waitFor();
+        const personal = await page.getByTestId('personal-area-entry').boundingBox();
+        const preferences = await page.locator('main summary').boundingBox();
+        const resume = await page.getByTestId('home-resume').boundingBox();
+        assert.ok(catalog.y < personal.y && personal.y < preferences.y && preferences.y < resume.y);
+        assert.equal(await page.locator('main article').count(), 11);
+        assert.equal(await page.getByRole('heading', { name: 'Allenamento', exact: true }).count(), 0);
+        await page.getByRole('button', { name: 'Torna alla presentazione', exact: true }).click();
+        await page.getByTestId('intro-screen').waitFor();
     } finally { await context.close(); }
 });
 

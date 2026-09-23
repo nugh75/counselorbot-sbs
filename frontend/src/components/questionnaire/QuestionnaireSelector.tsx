@@ -2,16 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
 import { AlertTriangle, BookOpen, Check, ChevronDown, ExternalLink } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { STRATEGIC_COMPETENCES_URLS } from '@/lib/questionnaire-sources';
-import { ACTIVE_QUESTIONNAIRE_IDS, TEACHER_AREA_INSTRUMENT_IDS, TOOL_CATEGORIES } from '@/lib/tool-catalog';
+import { ACTIVE_QUESTIONNAIRE_IDS, TEACHER_AREA_INSTRUMENT_IDS } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
 import { BackButton } from '@/components/ui/BackButton';
+import { PersonalAreaEntry } from '@/components/home/PersonalAreaEntry';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 
 interface QuestionnaireSelectorProps {
@@ -24,12 +24,9 @@ interface QuestionnaireSelectorProps {
 
 export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: QuestionnaireSelectorProps) {
     const { t, tf, lang, setLang } = useI18n();
-    const router = useRouter();
     const [expanded, setExpanded] = useState<string | null>(null);
     // Selezione come nel CounselorSelector: si clicca la card per evidenziarla,
     // poi si avanza con la freccia in alto (nessuna azione "vai" per card).
-    // La chiave è l'id strumento per i questionari, oppure 'pqbl' per la pagina
-    // di allenamento da PDF.
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
     const active = ACTIVE_QUESTIONNAIRE_IDS.map((id) => QUESTIONNAIRE_LIST.find((q) => q.id === id)).filter((q): q is QuestionnaireConfig => Boolean(q));
@@ -42,14 +39,12 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
     // raggiungono da /docente, il deep link resta valido.
     const focusTools = active.filter((q) => q.id === 'IDEA');
     const interviews = active.filter((q) => q.agentOnly && q.id !== 'IDEA' && !(TEACHER_AREA_INSTRUMENT_IDS as readonly string[]).includes(q.id));
-    const hasPqbl = TOOL_CATEGORIES.some((group) => group.standaloneIds.includes('pqbl'));
     const isItalian = lang === 'it';
     const isAdministrationLang = instrumentCatalog?.some((row) => row.available_locales.includes(lang)) ?? false;
     const isUnavailableQuestionnaireLang = !isItalian && instrumentCatalog !== null && !isAdministrationLang;
 
     const handleContinue = () => {
         if (!selectedKey) return;
-        if (selectedKey === 'pqbl') { router.push('/pqbl'); return; }
         const q = active.find((item) => item.id === selectedKey);
         if (q) onSelect(q);
     };
@@ -207,7 +202,7 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
             <div className="sticky top-20 z-20 flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
                 <p className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700" aria-live="polite">
-                    {selectedKey === 'pqbl' ? t('pqbl.card.title') : (() => { const q = active.find((item) => item.id === selectedKey); return q ? tf(`q.${q.id}.name`, q.name) : t('flow.select'); })()}
+                    {(() => { const q = active.find((item) => item.id === selectedKey); return q ? tf(`q.${q.id}.name`, q.name) : t('flow.select'); })()}
                 </p>
                 <ForwardButton onClick={handleContinue} disabled={!selectedKey} label={t('counselor.continue')} />
             </div>
@@ -271,45 +266,7 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                 </section>
             )}
 
-            {/* 3. Strumenti attivi (pQBL da PDF) */}
-            {hasPqbl && <section className="space-y-4">
-                <h2 className="text-xl font-bold text-slate-900">{t('selector.section.active')}</h2>
-                <div
-                    role="button"
-                    tabIndex={0}
-                    aria-pressed={selectedKey === 'pqbl'}
-                    onClick={() => setSelectedKey('pqbl')}
-                    onDoubleClick={() => {
-                        setSelectedKey('pqbl');
-                        router.push('/pqbl');
-                    }}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            setSelectedKey('pqbl');
-                        }
-                    }}
-                    className={cn(
-                        'glass-panel p-5 flex flex-col sm:flex-row sm:items-center gap-4 relative cursor-pointer transition-colors',
-                        selectedKey === 'pqbl' ? 'ring-2 ring-indigo-400 border-indigo-300' : 'border border-indigo-100 hover:border-indigo-200',
-                    )}
-                >
-                    {selectedKey === 'pqbl' && (
-                        <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
-                            <Check className="h-3.5 w-3.5" />
-                        </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-slate-800">{t('pqbl.card.title')}</h3>
-                            <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-2xs font-bold rounded-full">
-                                {t('pqbl.card.badge')}
-                            </span>
-                        </div>
-                        <p className="text-sm text-slate-500 mt-1 leading-relaxed">{t('pqbl.card.desc')}</p>
-                    </div>
-                </div>
-            </section>}
+            <PersonalAreaEntry />
 
             {/* 4. In arrivo */}
             {!isUnavailableQuestionnaireLang && (
