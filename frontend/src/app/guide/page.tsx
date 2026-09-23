@@ -84,6 +84,7 @@ function GuideContent() {
         12: [
             { image: images['personal-area'], caption: t('guide.section12.title') },
             { image: images['personal-goals'], caption: t('guide.section12.title') },
+            { image: images['orientation'], caption: t('referrals.area.title') },
         ],
         13: [{ image: images['calendar'], caption: t('guide.section13.title') }],
         14: [{ image: images['received-assignments'], caption: t('guide.section14.title') }],

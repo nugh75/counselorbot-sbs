@@ -240,6 +240,12 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   con proporzioni conservate, a sinistra del testo. Portfolio ha la propria
   sezione; Cambiamenti è una voce autonoma. Il riepilogo gestisce localmente
   caricamento ed errore, senza bloccare gli accessi.
+- **Testata personale (pilota Orientamento)**: collegamento esplicito a `/profilo`,
+  pulsante «Vai a…» con pannello sovrapposto a cinque gruppi e 17 immagini/nomi;
+  pagina corrente non navigabile. Focus iniziale sulla chiusura, Escape con
+  ritorno al pulsante, chiusura all’uscita del focus e al click esterno.
+  Titolo con immagine esistente; descrizione sotto su mobile. Le pagine con
+  bozze richiedono verifica delle guardie di uscita prima dell’adozione.
 - **Salvataggio automatico**: lavora in background, senza spinner, messaggi di
   attesa o conferme che cambiano l'ingombro della pagina. Gli errori restano
   visibili con i controlli di recupero; i salvataggi espliciti mantengono la

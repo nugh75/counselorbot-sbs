@@ -55,7 +55,7 @@ CounselorBot is an AI-powered web app that helps students analyze learning/caree
 
 ### Core Concepts
 
-- **Personal-area entry**: `/profilo` has five always-open groups and 17 illustrated links, with two columns on desktop and one on mobile (`PersonalAreaHome`, `personal-area.ts`, six-language `i18n-personal-area.ts`). The independent overview lists at most three existing goals/activities/assignments and retains data with retry on partial failure; it does not load questionnaire results. Activity links use `/profilo/azioni#action-ID` and focus the matching activity after loading. Internal-page redesign remains a separate step.
+- **Personal-area entry**: `/profilo` has five always-open groups and 17 illustrated links, with two columns on desktop and one on mobile (`PersonalAreaHome`, `personal-area.ts`, six-language `i18n-personal-area.ts`). The independent overview lists at most three existing goals/activities/assignments and retains data with retry on partial failure; it does not load questionnaire results. Activity links use `/profilo/azioni#action-ID` and focus the matching activity after loading. The Orientamento pilot uses `PersonalAreaHeader`: a real `/profilo` link and a grouped illustrated navigation panel; other subpages retain their headers until their exit guards are reviewed.
 
 - **Chat format and essential QSA**: all web chat surfaces offer conversational, bullet or table presentation independently of response length. Only QSA guided chat offers a three-reply essential path (focus, example, action, summary); QSAr and other instruments keep their existing paths. Format and path survive frozen-session resume. See `docs/operations/chat-format-essential-qsa.md` for API contracts, persistence and verification.
 
