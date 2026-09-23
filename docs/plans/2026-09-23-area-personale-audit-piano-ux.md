@@ -1,6 +1,6 @@
 # Area personale: audit dell'interazione e piano di modifica
 
-**Data:** 23 settembre 2026. **Stato:** proposta da validare, non implementata.
+**Data:** 23 settembre 2026. **Stato:** punto 0.1 (nomi e raggruppamento) approvato; schemi e interventi successivi da validare. Nessuna modifica applicativa implementata nell'ambito di questo piano.
 **Base del codice esaminato:** `edddddc`. Ambito: le 18 rotte dell'Area personale, i componenti condivisi e i passaggi verso gli strumenti esterni all'area.
 
 ## 1. Esito e priorità
@@ -122,6 +122,8 @@ Priorità: **P0** protezione del lavoro e rappresentazione corretta degli errori
 
 ### Navigazione: mantenere le rotte, ridurre l'ingombro
 
+**Punto 0.1 — approvato il 23 settembre 2026.** La struttura, i nomi e le descrizioni seguenti registrano la decisione concordata con l'utente. L'approvazione riguarda la nomenclatura e il raggruppamento, non il layout o l'implementazione dell'interfaccia.
+
 La pagina d'ingresso continua a dare accesso a tutti gli strumenti. Le categorie sono titoli di raggruppamento, **non nuove pagine obbligatorie**. Conservare gli URL esistenti e i link con identificativi, anche se cambia il nome visibile.
 
 ```text
@@ -134,15 +136,15 @@ Area personale
 |
 +-- Conoscermi e riflettere
 |   +-- Taccuino
-|   |   +-- Versioni e cambiamenti
 |   +-- Libretto
+|   +-- Cambiamenti
 |   +-- Risultati e conversazioni
 |
 +-- Studiare e ragionare
 |   +-- Studiare da un PDF
 |   +-- Flashcard
 |   +-- Carte da ordinare
-|   +-- Confronta alternative
+|   +-- Confrontare alternative
 |   +-- Tavolo
 |
 +-- I miei lavori
@@ -154,6 +156,37 @@ Area personale
     +-- Orientamento
     +-- Telegram
 ```
+
+#### Nomi e descrizioni approvati
+
+I nomi sono gli stessi nell'ingresso, nelle testate e nel futuro selettore di navigazione. Le descrizioni accompagnano i nomi nell'ingresso. Gli identificativi tecnici e le rotte restano invariati.
+
+| Gruppo | Nome | Descrizione nell'ingresso | Rotta esistente |
+| --- | --- | --- | --- |
+| Il mio percorso | Obiettivi | Scegli che cosa vuoi raggiungere e il prossimo passo. | `/profilo/obiettivi` |
+| Il mio percorso | Attività | Organizza quello che vuoi fare, stai facendo o hai provato. | `/profilo/azioni` |
+| Il mio percorso | Calendario e diario | Pianifica le tappe e racconta le esperienze. | `/profilo/timeline` |
+| Conoscermi e riflettere | Taccuino | Racconta il tuo contesto, gli interessi e il modo di apprendere. | `/profilo/taccuino` |
+| Conoscermi e riflettere | Libretto | Prepara una prova e rifletti su come è andata. | `/profilo/libretto` |
+| Conoscermi e riflettere | Cambiamenti | Confronta ciò che hai scritto e rifletti sui cambiamenti. | `/profilo/cambiamenti` |
+| Conoscermi e riflettere | Risultati e conversazioni | Ritrova i risultati dei questionari e i dialoghi collegati. | `/profilo/compilazioni` |
+| Studiare e ragionare | Studiare da un PDF | Lavora sul tuo materiale attraverso domande e feedback. | `/profilo/pqbl` |
+| Studiare e ragionare | Flashcard | Memorizza e ripassa con carte domanda e risposta. | `/profilo/flashcard` |
+| Studiare e ragionare | Carte da ordinare | Raggruppa idee e riflessioni. | `/profilo/carte` |
+| Studiare e ragionare | Confrontare alternative | Valuta possibilità diverse secondo i tuoi criteri. | `/profilo/confronto` |
+| Studiare e ragionare | Tavolo | Costruisci e rivedi diagrammi di lavoro. | `/profilo/tavolo` |
+| I miei lavori | Portfolio | Conserva e ritrova i tuoi lavori. | `/profilo/portfolio` |
+| Persone e supporto | Assegnazioni | Ritrova le attività dei docenti, prepara le restituzioni e leggi i feedback. | `/profilo/assegnazioni` |
+| Persone e supporto | Gruppi e classi | Gestisci le iscrizioni e leggi i messaggi dei docenti. | `/profilo/classi` |
+| Persone e supporto | Orientamento | Trova contatti e appuntamenti del tuo istituto. | `/profilo/orientamento` |
+| Persone e supporto | Telegram | Collega il tuo account per usare anche questo canale. | `/profilo/telegram` |
+
+Decisioni di nomenclatura e raggruppamento:
+
+- **Compilazioni → Risultati e conversazioni:** il nome esplicita i contenuti disponibili.
+- **Cambiamenti è una voce autonoma** dentro «Conoscermi e riflettere», allo stesso livello di Taccuino e Libretto: riguarda entrambe le sorgenti. I collegamenti contestuali dalle versioni del Taccuino restano utili.
+- **Portfolio resta nel gruppo autonomo «I miei lavori»**, anche se è l'unica voce: la raccolta degli elaborati si distingue dalla pianificazione delle attività.
+- Conservare i nomi caratteristici **Taccuino, Libretto e Tavolo**, chiarendone la funzione attraverso la descrizione.
 
 Usare sempre icona **e nome** nella navigazione. Le icone sole restano adatte alle azioni convenzionali e secondarie, con nome accessibile e area di tocco sufficiente.
 
@@ -211,6 +244,8 @@ Il redesign non deve cambiare queste autorizzazioni attraverso una semplice modi
 ## 5. Schemi ASCII delle pagine
 
 Tutti gli schemi rappresentano **proposte**, non schermate già realizzate. Dati, date e nomi sono esempi. Le righe `>` indicano sezioni apribili; `[ ]` pulsanti o campi. Le versioni mobile conservano l'ordine semantico, senza affiancare colonne troppo strette.
+
+I nomi approvati al punto 0.1 (§4) sono il riferimento per la revisione degli schemi: le abbreviazioni ancora presenti, come «PDF», «Carte» e «Risultati», non sono etichette definitive. Lo schema d'ingresso va aggiornato e validato al punto 0.2, includendo l'accesso autonomo a Cambiamenti.
 
 ### 5.1 Ingresso — `/profilo`
 
@@ -288,7 +323,7 @@ Bozza recuperabile [?]                      [Chiudi] [Salva versione]
 ### 5.4 Cambiamenti — `/profilo/cambiamenti`
 
 ```text
-Taccuino > Versioni e cambiamenti
+Area personale > Cambiamenti
 Confronto [Taccuino v]     Prima [18 set v]   Dopo [23 set v]
 +-------------------------------+----------------------------------+
 | PRIMA                         | DOPO                             |
@@ -415,7 +450,7 @@ Colonne dell'esempio indicative: rispettare quelle del mazzo. Mobile: filtro per
 ### 5.11 Confronto — `/profilo/confronto`
 
 ```text
-Area personale > Confronta alternative
+Area personale > Confrontare alternative
 [1 Alternative] [2 Criteri] [3 Confronto] [4 La mia scelta]
 +------------------------------------------------------------------+
 | Quali possibilita stai valutando?                                 |
@@ -566,6 +601,20 @@ ERRORE: Stato non verificabile                         [Riprova]
 Non mostrare «Non collegato» finché la verifica non è riuscita. Prima scelta il deep link, codice manuale come alternativa; nessun messaggio reale inviato automaticamente dal frontend. Scollegamento con esito visibile e aggiornamento dello stato.
 
 ## 6. Piano di implementazione per lotti
+
+### Avanzamento delle decisioni preliminari
+
+Si affronta un solo intervento alla volta. La chiusura di un punto di pianificazione registra una decisione, non l'avvenuta implementazione. Ogni successiva modifica UI richiede prima la validazione del relativo schema ASCII, poi implementazione e verifiche circoscritte.
+
+| Punto | Decisione | Stato | Criterio di chiusura |
+| --- | --- | --- | --- |
+| 0.1 | Nomi e raggruppamento degli strumenti | **Approvato e registrato — 23 settembre 2026** | Cinque gruppi, 17 destinazioni oltre all'ingresso, nomi e descrizioni definiti in §4; Portfolio autonomo e Cambiamenti allo stesso livello di Taccuino e Libretto |
+| 0.2 | Schema ASCII dell'ingresso | **Prossimo da discutere** | Schema desktop/mobile coerente con 0.1, con gerarchia e accesso a tutti gli strumenti validati |
+| 0.3 | Schema della testata e navigazione comune | Da discutere dopo 0.2 | Titolo, azione principale, ritorno e accesso alle altre pagine validati |
+
+Gli schemi specifici di Libretto, Assegnazioni e delle altre pagine saranno validati prima dei rispettivi interventi. Nessuno schema successivo è approvato per effetto della chiusura di 0.1.
+
+### Lotti applicativi di riferimento
 
 Ogni lotto deve produrre un risultato verificabile e una revisione delle schermate prima di procedere al successivo. Le dimensioni sono relative: **S** = modifica circoscritta, **M** = più componenti, **L** = flusso con contratti frontend/backend. Non sono stime di giorni.
 
