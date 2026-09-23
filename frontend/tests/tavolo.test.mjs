@@ -217,7 +217,7 @@ test('il pannello sceglie prima la famiglia, poi il verbo', async () => {
     const { page, context } = await fixture();
     await page.locator('.react-flow__node[data-id="a"]').click();
     assert.equal(await page.locator('aside input').first().inputValue(), 'Compito difficile');
-    assert.equal(await page.getByRole('button', { name: 'Bivio' }).count(), 1);
+    assert.equal(await page.locator('aside').getByRole('button', { name: 'Bivio', exact: true }).count(), 1);
 
     await page.locator('.react-flow__edge').first().click({ force: true });
     const panel = await page.locator('aside').innerText();
@@ -535,9 +535,11 @@ test('connect pieces offers linking words and clicking the words reopens their e
     await page.getByRole('button', { name: 'Allarga il tavolo', exact: true }).click();
     await arrow.click();
     assert.equal(await page.getByLabel('Parole-legame', { exact: true }).inputValue(), 'mi fa rimandare');
+    const written = responseFor(page, 'PUT', `/${ID}`);
     await page.getByLabel('Parole-legame', { exact: true }).fill('contribuisce a');
     await page.getByRole('button', { name: 'Salva modifiche', exact: true }).click();
-    await page.getByText('Modifiche salvate', { exact: true }).waitFor();
+    await written;
+    assert.equal(await page.getByText('Modifiche salvate', { exact: true }).count(), 0);
     await page.reload();
     await page.locator('.react-flow__edgelabel-renderer').getByRole('button', { name: 'contribuisce a', exact: true }).waitFor();
     await context.close();
