@@ -36,18 +36,18 @@ export const emptyWorkspace = (): VisualWorkspace => ({ actions: [], cards: [], 
 
 export const DEFAULT_DECK_ID = 'default';
 
-/** Deck presets offered by the creation dialog. */
-export type DeckType = 'flashcard' | 'table' | 'kanban';
+/** Deck presets offered by the creation dialog; each fixes its column set
+    (empty labels keep the localized preset name, renamable after creation). */
+export type DeckType = 'flashcard' | 'kanban' | 'reflection' | 'exploration' | 'prosCons' | 'questions';
 
-/** Columns implied by the chosen deck type: flashcard fixes front/back and
-    kanban fixes the three stages (empty labels keep the localized preset name),
-    while a table takes 2–8 columns named by the student. */
-export function deckColumnsForType(type: DeckType, count: number, names: string[]): CardColumn[] {
-    if (type === 'flashcard') return [{ id: 'fronte', label: names[0]?.trim() || '' }, { id: 'retro', label: names[1]?.trim() || '' }];
-    if (type === 'kanban') return [{ id: 'card_todo', label: names[0]?.trim() || '' }, { id: 'card_doing', label: names[1]?.trim() || '' }, { id: 'card_done', label: names[2]?.trim() || '' }];
-    const columns = Math.min(8, Math.max(2, count));
-    return Array.from({ length: columns }, (_, i) => ({ id: `col_${i + 1}`, label: names[i]?.trim() || '' }));
-}
+export const deckTypeColumns: Record<DeckType, CardColumn[]> = {
+    flashcard: [{ id: 'fronte' }, { id: 'retro' }],
+    kanban: [{ id: 'card_todo' }, { id: 'card_doing' }, { id: 'card_done' }],
+    reflection: [{ id: 'unsorted' }, { id: 'yes' }, { id: 'explore' }, { id: 'no' }],
+    exploration: [{ id: 'to_explore' }, { id: 'explored' }, { id: 'reflecting' }],
+    prosCons: [{ id: 'pro' }, { id: 'con' }],
+    questions: [{ id: 'question' }, { id: 'answer' }],
+};
 
 /** Returns all decks in the workspace. If no decks are explicitly saved, returns a default deck. */
 export function cardDecksOf(w: VisualWorkspace, defaultTitle: string = 'Mazzo principale'): CardDeck[] {
