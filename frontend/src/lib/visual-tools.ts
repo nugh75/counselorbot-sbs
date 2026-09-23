@@ -2,12 +2,13 @@ export type ActionStage = 'todo' | 'doing' | 'done';
 export type CardBucket = 'unsorted' | 'yes' | 'explore' | 'no';
 export type ActionKind = 'activity' | 'book' | 'article' | 'film';
 export type CardColumn = { id: string; label?: string };
-export type CardDeck = { id: string; title: string };
+export type CardDeck = { id: string; title: string; card_columns?: CardColumn[] };
 /** Empty card_columns means the default set; preset ids stay localized. */
 export const cardColumnPresets: { key: string; columns: CardColumn[] }[] = [
     { key: 'cardPresetSort', columns: [{ id: 'unsorted' }, { id: 'yes' }, { id: 'explore' }, { id: 'no' }] },
     { key: 'cardPresetKanban', columns: [{ id: 'card_todo' }, { id: 'card_doing' }, { id: 'card_done' }] },
     { key: 'cardPresetExplore', columns: [{ id: 'to_explore' }, { id: 'explored' }, { id: 'reflecting' }] },
+    { key: 'cardPresetBlank', columns: [{ id: 'col_1', label: 'Colonna 1' }, { id: 'col_2', label: 'Colonna 2' }, { id: 'col_3', label: 'Colonna 3' }] },
 ];
 const defaultCardColumns = cardColumnPresets[0].columns;
 export type VisualAction = { kind?: ActionKind; id: string; title: string; detail: string; stage: ActionStage; reflection: string; source: string };
@@ -38,7 +39,7 @@ export const DEFAULT_DECK_ID = 'default';
 /** Returns all decks in the workspace. If no decks are explicitly saved, returns a default deck. */
 export function cardDecksOf(w: VisualWorkspace, defaultTitle: string = 'Mazzo principale'): CardDeck[] {
     if (w.card_decks && w.card_decks.length > 0) return w.card_decks;
-    return [{ id: DEFAULT_DECK_ID, title: defaultTitle }];
+    return [{ id: DEFAULT_DECK_ID, title: defaultTitle, card_columns: w.card_columns }];
 }
 
 /** Returns the active deck ID, defaulting to the first available deck. */
@@ -50,12 +51,16 @@ export function activeDeckIdOf(w: VisualWorkspace): string {
     return decks[0].id;
 }
 
-/** Adds a new card deck, optionally populated with initial cards. If migrating from no decks, includes the default deck too. */
-export function addCardDeck(w: VisualWorkspace, title: string, defaultTitle: string = 'Mazzo principale', initialCards?: { text: string; image?: string | null; bucket?: string }[]): VisualWorkspace {
+/** Adds a new card deck. If migrating from no decks, includes the default deck too. */
+export function addCardDeck(w: VisualWorkspace, title: string, defaultTitle: string = 'Mazzo principale', initialCards?: { text: string; image?: string | null; bucket?: string }[], initialColumns?: CardColumn[]): VisualWorkspace {
     const currentDecks = cardDecksOf(w, defaultTitle);
     if (currentDecks.length >= 20) return w;
-    const newDeck: CardDeck = { id: crypto.randomUUID(), title: title.trim().slice(0, 100) };
-    const columns = cardColumnsOf(w);
+    const newDeck: CardDeck = {
+        id: crypto.randomUUID(),
+        title: title.trim().slice(0, 100),
+        card_columns: initialColumns,
+    };
+    const columns = initialColumns?.length ? initialColumns : cardColumnsOf(w);
     const defaultCol = columns[0]?.id || 'unsorted';
     const newCards: ReflectionCard[] = (initialCards || []).map(c => ({
         id: crypto.randomUUID(),
@@ -107,9 +112,15 @@ export function setActiveCardDeck(w: VisualWorkspace, id: string): VisualWorkspa
 
 /** Moves a single card to another deck. */
 export function moveCardToDeck(w: VisualWorkspace, cardId: string, deckId: string): VisualWorkspace {
+    const targetCols = cardColumnsOf(w, deckId);
+    const fallbackCol = targetCols[0]?.id || 'unsorted';
     return {
         ...w,
-        cards: w.cards.map(c => c.id === cardId ? { ...c, deck_id: deckId } : c),
+        cards: w.cards.map(c => {
+            if (c.id !== cardId) return c;
+            const validBucket = targetCols.some(col => col.id === c.bucket) ? c.bucket : fallbackCol;
+            return { ...c, deck_id: deckId, bucket: validBucket };
+        }),
     };
 }
 
@@ -118,30 +129,66 @@ export function cardsInDeck(w: VisualWorkspace, deckId: string): ReflectionCard[
     return w.cards.filter(c => (c.deck_id || DEFAULT_DECK_ID) === deckId);
 }
 
-/** Effective card columns: the stored list, or the default set when empty. */
-export function cardColumnsOf(w: VisualWorkspace): CardColumn[] {
+/** Effective card columns for a deck (or active deck): deck-specific if present, otherwise workspace-level or default. */
+export function cardColumnsOf(w: VisualWorkspace, deckId?: string | null): CardColumn[] {
+    const targetDeckId = deckId !== undefined ? deckId : activeDeckIdOf(w);
+    if (targetDeckId) {
+        const deck = w.card_decks?.find(d => d.id === targetDeckId);
+        if (deck?.card_columns?.length) return deck.card_columns;
+        if (targetDeckId === DEFAULT_DECK_ID && w.card_columns?.length) return w.card_columns;
+    }
     return w.card_columns?.length ? w.card_columns : defaultCardColumns;
 }
 /** Student text wins over the localized preset label. */
 export function cardColumnLabel(w: VisualWorkspace, column: CardColumn, label: (key: string) => string): string {
     return column.label || label(column.id);
 }
-/** Replaces the column set; cards outside it return to the first column. */
-export function setCardColumns(w: VisualWorkspace, columns: CardColumn[]): VisualWorkspace {
+/** Replaces the column set for a deck (or active deck); cards in that deck outside it return to the first column. */
+export function setCardColumns(w: VisualWorkspace, columns: CardColumn[], deckId?: string | null): VisualWorkspace {
+    const targetDeckId = deckId !== undefined ? deckId : activeDeckIdOf(w);
     const ids = new Set(columns.map(c => c.id));
-    return { ...w, card_columns: columns, cards: w.cards.map(c => ids.has(c.bucket) ? c : { ...c, bucket: columns[0].id }) };
+    const firstColId = columns[0]?.id || 'unsorted';
+
+    // If deck-specific decks are used:
+    if (w.card_decks && w.card_decks.length > 0 && targetDeckId) {
+        const updatedDecks = w.card_decks.map(d => d.id === targetDeckId ? { ...d, card_columns: columns } : d);
+        return {
+            ...w,
+            card_decks: updatedDecks,
+            cards: w.cards.map(c => {
+                const cardDeckId = c.deck_id || DEFAULT_DECK_ID;
+                if (cardDeckId === targetDeckId && !ids.has(c.bucket)) {
+                    return { ...c, bucket: firstColId };
+                }
+                return c;
+            }),
+        };
+    }
+
+    // Default / single-deck fallback
+    return {
+        ...w,
+        card_columns: columns,
+        cards: w.cards.map(c => ids.has(c.bucket) ? c : { ...c, bucket: firstColId }),
+    };
 }
-export function renameCardColumn(w: VisualWorkspace, id: string, name: string): VisualWorkspace {
-    return { ...w, card_columns: cardColumnsOf(w).map(c => c.id === id ? { ...c, label: name } : c) };
+export function renameCardColumn(w: VisualWorkspace, id: string, name: string, deckId?: string | null): VisualWorkspace {
+    const targetDeckId = deckId !== undefined ? deckId : activeDeckIdOf(w);
+    const updated = cardColumnsOf(w, targetDeckId).map(c => c.id === id ? { ...c, label: name } : c);
+    return setCardColumns(w, updated, targetDeckId);
 }
-export function removeCardColumn(w: VisualWorkspace, id: string): VisualWorkspace {
-    if (cardColumnsOf(w).length <= 1) return w;
-    const remaining = cardColumnsOf(w).filter(c => c.id !== id);
-    return setCardColumns(w, remaining);
+export function removeCardColumn(w: VisualWorkspace, id: string, deckId?: string | null): VisualWorkspace {
+    const targetDeckId = deckId !== undefined ? deckId : activeDeckIdOf(w);
+    const current = cardColumnsOf(w, targetDeckId);
+    if (current.length <= 1) return w;
+    const remaining = current.filter(c => c.id !== id);
+    return setCardColumns(w, remaining, targetDeckId);
 }
-export function addCardColumn(w: VisualWorkspace, name: string): VisualWorkspace {
-    if (cardColumnsOf(w).length >= 8) return w;
-    return setCardColumns(w, [...cardColumnsOf(w), { id: crypto.randomUUID(), label: name }]);
+export function addCardColumn(w: VisualWorkspace, name: string, deckId?: string | null): VisualWorkspace {
+    const targetDeckId = deckId !== undefined ? deckId : activeDeckIdOf(w);
+    const current = cardColumnsOf(w, targetDeckId);
+    if (current.length >= 8) return w;
+    return setCardColumns(w, [...current, { id: crypto.randomUUID(), label: name }], targetDeckId);
 }
 
 export function removeAction(w: VisualWorkspace, id: string): VisualWorkspace {
@@ -189,7 +236,8 @@ export function workspaceText(w: VisualWorkspace, label: (key: string) => string
     if (w.actions.length) parts.push(label('board'), ...w.actions.map(a =>
         [a.title + ' — ' + label(a.stage), a.detail, a.reflection && label('reflection') + ': ' + a.reflection, a.source && label('source') + ': ' + a.source].filter(Boolean).join('\n')));
     if (w.cards.length) parts.push(label('cards'), ...w.cards.map(c => {
-        const column = w.card_columns?.find(item => item.id === c.bucket);
+        const deckCols = cardColumnsOf(w, c.deck_id);
+        const column = deckCols.find(item => item.id === c.bucket);
         return (column?.label || label(c.bucket)) + ': ' + c.text + (c.source ? '\n' + label('source') + ': ' + c.source : '');
     }));
     if (w.comparison.options.length) {
