@@ -92,6 +92,9 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
         ...currentCatalog.reading.map(item => ({ title: item.title || item.slug, detail: item.why || '', key: `reading:${item.slug}` })),
     ];
     const edit = (next: VisualWorkspace) => { setHistory(previous => [...previous.slice(-29), work]); setWork(next); };
+    // Embedded pages (personal fixed-tab) render the workspace inline in the
+    // page flow, so the app header and the rest of the page stay visible.
+    const embedded = Boolean(personal && fixedTab && pageBackHref);
     const selectTab = (next: Tab) => {
         setTab(next);
         if (isWorkTab(next)) onWorkTabChange?.(next);
@@ -142,7 +145,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     useEffect(() => {
         if (!open) return;
         const previous = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
+        if (!embedded) document.body.style.overflow = 'hidden';
         const keyboard = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 // Let the tooltip dismiss first; a second Escape closes the workspace.
@@ -161,8 +164,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
             }
         };
         document.addEventListener('keydown', keyboard);
-        return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', keyboard); opener.current?.focus({ preventScroll: true }); };
-    }, [open, pageBackHref]);
+        return () => { if (!embedded) { document.body.style.overflow = previous; opener.current?.focus({ preventScroll: true }); } document.removeEventListener('keydown', keyboard); };
+    }, [open, pageBackHref, embedded]);
 
     const save = async (next = work): Promise<SavedWorkspace | null> => {
         if (!loaded || busy) return null;
@@ -222,8 +225,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                 <LayoutList className="h-4 w-4 shrink-0" aria-hidden="true" />{dirty && <span aria-label={l('unsaved')}>•</span>}
             </Button>
         </Tooltip>}
-        {open && createPortal(<div className="fixed inset-0 z-[85] flex bg-white">
-            <section ref={dialog} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
+        {open && createPortal(<div className={embedded ? 'page-narrow flex flex-col p-4 pt-0' : 'fixed inset-0 z-[85] flex bg-white'}>
+            <section ref={dialog} role={embedded ? 'region' : 'dialog'} aria-modal={embedded ? undefined : true} aria-labelledby={`${id}-title`} className={embedded ? 'flex w-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm' : 'flex h-full w-full min-w-0 flex-col overflow-hidden bg-white'}>
                 <header className="shrink-0 border-b border-slate-200 p-3 sm:p-4">
                     <div className="flex items-start gap-3">
                         {pageBackHref && <PreviousPageButton
