@@ -41,7 +41,7 @@ for (const [lang, width, dark] of [['it', 1440, false], ['en', 390, false], ['es
                 assert.equal(new URL(page.url()).hash, `#guide-teacher-section-${n}`);
             }
             const figures = page.locator('figure');
-            assert.equal(await figures.count(), 8);
+            assert.equal(await figures.count(), 9);
             for (const figure of await figures.all()) {
                 const thumbnail = figure.locator('img');
                 await thumbnail.scrollIntoViewIfNeeded();

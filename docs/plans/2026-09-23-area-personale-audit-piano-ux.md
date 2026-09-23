@@ -214,7 +214,7 @@ scelto dall’istituto. La nuova gestione è descritta nel punto 0.3.2 seguente.
 
 #### 0.3.2 — Categorie dell’istituto gestite dai suoi docenti
 
-**Stato: requisito approvato; l’amministratore associa i docenti all’istituto. Primo passo 0.3.2.1 implementato: API, controlli e scheda amministrativa approvata. Gestione delle categorie e filtri studenti restano passi successivi.**
+**Stato: requisito approvato; l’amministratore associa i docenti all’istituto. Primo passo 0.3.2.1 implementato: API, controlli e scheda amministrativa approvata. Gestione delle categorie 0.3.2.2 implementata in sviluppo; associazioni ai contenuti e filtri studenti restano al passo 0.3.2.3.**
 
 Obiettivo: l’istituto stabilisce le categorie con cui presentare i propri contatti
 e appuntamenti di Orientamento. I suoi docenti possono crearle, rinominarle,
@@ -299,11 +299,11 @@ rilevati; lettura senza categorie e con più istituti; interfaccia nelle sei
 lingue e a 320/390/1440 px. Le categorie scritte dall’istituto restano contenuti
 autoriali: eventuali traduzioni devono essere esplicite, non nomi inventati.
 
-#### 0.3.2.2 — Proposta: gestione delle categorie da parte dei docenti
+#### 0.3.2.2 — Gestione delle categorie da parte dei docenti
 
-**Stato: proposta richiesta dall’utente; da validare, non implementata.**
+**Stato: proposta approvata dall’utente; implementata in sviluppo.**
 
-**Obiettivo del prossimo intervento:** permettere ai docenti già associati a un
+**Obiettivo dell’intervento:** permettere ai docenti già associati a un
 istituto di definire insieme il suo elenco di categorie. Le categorie sono
 scelte dall’istituto: nessun elenco precompilato obbligatorio, nessuna attribuzione
 automatica dei nomi a Pellerey o Savickas. La descrizione permette ai docenti di
@@ -1289,4 +1289,24 @@ immagine; sette test browser con dati simulati nelle sei lingue, compresi
 320/390/1440 px, errori e accesso del ricercatore. TypeScript, ESLint, i18n e
 allineamento documentazione superati. Immagini backend e frontend ricostruite;
 container di produzione lasciati alla versione precedente durante la revisione.
-Il configuratore delle categorie (0.3.2.2) resta il prossimo intervento.
+Il configuratore delle categorie (0.3.2.2), inizialmente successivo, è ora implementato come documentato sotto.
+
+
+### 0.3.2.2 — Categorie condivise tra docenti
+
+Implementata la struttura approvata in `/docente/orientamento`: immagine Bussola
+esistente, istituto fisso o selettore, unico modulo esplicito, menu a tre punti
+per modifica/ordine/archivio, archiviate richiudibili con ripristino in coda.
+Controlli in sei lingue; contenuti scritti dall’istituto senza traduzioni automatiche.
+
+API protette da ruolo e associazione verificata a ogni richiesta; revisione
+dell’elenco e scrittura atomica per i conflitti, ID stabili, nomi unici anche
+nell’archivio. Nessuna tassonomia precaricata e nessuna modifica dei filtri studenti.
+La guida docente include descrizione e sei nuove catture sintetiche.
+Le immagini Docker vengono ricostruite senza sostituire i container di produzione.
+
+Verifica completata: 22 test backend, 13 del configuratore (anche sulla build
+Docker) e 6 della guida; TypeScript, lint mirato e parità lingue superati.
+Immagini backend/frontend ricostruite. Comandi riproducibili e limiti in
+`docs/operations/institution-orientation-categories.md`.
+Il prossimo intervento resta **0.3.2.3**, da progettare separatamente.

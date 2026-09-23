@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { personalAreaName } from '../src/lib/i18n-personal-area.ts';
+import { categoryText } from '../src/lib/i18n-institution-categories.ts';
 import { goalText } from '../src/lib/i18n-goals.ts';
 import { assignmentText } from '../src/lib/i18n-assignments.ts';
 import { learningText } from '../src/lib/i18n-assignment-work.ts';
@@ -22,7 +23,7 @@ const samples = {
     de: ['Mein Lernen organisieren', 'Lernwerkstatt', 'Probiere zwei kurze Wiederholungen aus.', 'Beschreibe, was funktioniert hat und was du ändern würdest.', 'Ich habe das Wiederholen auf zwei Tage verteilt.', 'Vergleiche beim nächsten Mal auch, woran du dich ohne Notizen erinnerst.'],
     sv: ['Planera mina studier', 'Studieverkstad', 'Prova två korta repetitionspass.', 'Beskriv vad som fungerade och vad du skulle ändra.', 'Jag fördelade repetitionen över två dagar.', 'Jämför nästa gång också vad du minns utan anteckningar.'],
 };
-const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation'];
+const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories'];
 const browser = await chromium.launch({ headless: true });
 try {
     for (const lang of captureLocales) {
@@ -61,6 +62,8 @@ try {
             else if (path === '/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
             else if (path === '/orientation/status') data = { required: false, completed: true };
             else if (path === '/orientation-directory') data = { institution: null, events: [], referrals: [] };
+            else if (path === '/teacher/institutions') data = [{ id: 1, name: groupName, slug: 'demo', kind: 'school' }];
+            else if (path === '/teacher/institutions/1/orientation-categories') data = { revision: 1, categories: [{ id: 'demo-category', name: title, description: instructions, position: 0, is_active: true, updated_by: 'teacher.demo', updated_at: '2026-09-23T08:00:00Z' }] };
             else if (path === '/tavolo/enabled') data = { enabled: false };
             else if (path === '/telegram/bot-info') data = {};
             else if (path === '/user/flashcards') data = { revision: 0, workspace: { decks: [{ id: 'demo', title, cards: [{ id: 'demo-card', front: responsePrompt, back: instructions }] }] } };
@@ -78,6 +81,10 @@ try {
         async function go(path) { await page.goto(`${origin}${path}`, { waitUntil: 'networkidle' }); await page.locator('main h1, main h2').first().waitFor(); }
         async function capture(name, locator) {
             await page.mouse.move(1430, 10);
+            if (name === 'institution-categories') {
+                await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
+                await page.locator('[data-institution-categories] img').evaluate(element => element.decode());
+            }
             if (name === 'personal-area') {
                 await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
                 for (const image of await page.locator('[data-personal-area-home] img').all()) {
@@ -92,6 +99,24 @@ try {
             assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
             await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area'].includes(name) ? { fullPage: true } : {}) });
             console.log(`${lang}/${name}`);
+        }
+        if (process.env.GUIDE_SCREENS === 'teacher-area') {
+            authenticated = true; teacher = true;
+            await go('/docente');
+            await page.getByRole('link', { name: categoryText(lang, 'title'), exact: true }).waitFor();
+            await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
+            await capture('teacher-area');
+            await context.close();
+            continue;
+        }
+        if (process.env.GUIDE_SCREENS === 'institution-categories') {
+            authenticated = true; teacher = true;
+            await go('/docente/orientamento');
+            await page.getByRole('button', { name: categoryText(lang, 'new'), exact: true }).waitFor();
+            await page.getByRole('heading', { name: title, exact: true }).waitFor();
+            await capture('institution-categories');
+            await context.close();
+            continue;
         }
         if (process.env.GUIDE_SCREENS === 'orientation') {
             authenticated = true;
@@ -133,6 +158,7 @@ try {
         await go('/strumenti/EVENTO_STUDIO'); await capture('study-event');
         await go('/strumenti/EVENTO_PROFESSIONALE'); await capture('professional-event');
         teacher = true;
+        await go('/docente/orientamento'); await page.getByRole('heading', { name: title, exact: true }).waitFor(); await capture('institution-categories');
         await go('/docente'); await page.locator('#teacher-catalogs-title').waitFor(); await capture('teacher-area');
         const groupCard = page.locator('section').filter({ has: page.getByRole('heading', { name: groupName, exact: true }) }).last();
         await capture('teacher-groups', groupCard.locator('..').locator('..'));

@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { useI18n } from '@/lib/i18n-context';
 import { counselorHelp } from '@/lib/i18n-counselor-help';
 
+import { categoryText } from '@/lib/i18n-institution-categories';
 import { guideAudienceText, type GuideAudienceKey } from '@/lib/i18n-guide-audiences';
 import { guideImages } from '@/lib/guide-images';
 
@@ -58,7 +59,7 @@ function GuideContent() {
     };
     const sectionImages: Record<number, { image: StaticImageData; caption: string }[]> = teacher ? {
         1: [{ image: images['teacher-area'], caption: l('teacher1Title') }],
-        2: [{ image: images['teacher-groups'], caption: l('teacher2Title') }],
+        2: [{ image: images['teacher-groups'], caption: l('teacher2Title') }, { image: images['institution-categories'], caption: categoryText(lang, 'title') }],
         3: [{ image: images['teacher-catalog'], caption: l('teacher3Title') }],
         4: [{ image: images['teacher-assignment'], caption: l('teacher4Title') }],
         5: [{ image: images['teacher-feedback'], caption: l('teacher5Title') }],

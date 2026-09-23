@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ShieldAlert, Target } from 'lucide-react';
 import { getIdentity, type Identity } from '@/lib/auth';
-import { canUseTeacherAssistant } from '@/lib/roles';
+import { canUseTeacherAssistant, isTeacher } from '@/lib/roles';
+import { categoryText } from '@/lib/i18n-institution-categories';
 import { useI18n } from '@/lib/i18n-context';
 import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlansPanel';
 import { AssignmentsPanel } from '@/components/teacher/AssignmentsPanel';
@@ -82,10 +84,12 @@ export default function TeacherPage() {
     const { lang } = useI18n();
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [authState, setAuthState] = useState<'loading' | 'ok' | 'forbidden'>('loading');
+    const [teacher, setTeacher] = useState(false);
 
     useEffect(() => {
         getIdentity().then((identity: Identity | null) => {
             setAuthState(canUseTeacherAssistant(identity) ? 'ok' : 'forbidden');
+            setTeacher(isTeacher(identity));
         });
     }, []);
 
@@ -134,6 +138,10 @@ export default function TeacherPage() {
                 <div className="mt-6">
                     <GroupsPanel />
                 </div>
+                {teacher && <Link href="/docente/orientamento" className="mt-4 flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
+                    <Image src="/images/platform/bussola.png" width={48} height={48} alt="" className="h-12 w-12 object-contain" />
+                    <span className="text-sm font-medium">{categoryText(lang, 'title')}</span>
+                </Link>}
                 <div className="mt-10">
                     <AdministrationPlansPanel />
                 </div>

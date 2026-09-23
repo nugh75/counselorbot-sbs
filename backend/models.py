@@ -1262,6 +1262,26 @@ class InstitutionTeacher(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class InstitutionCategoryCollection(Base):
+    __tablename__ = "institution_category_collections"
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), primary_key=True)
+    revision = Column(Integer, nullable=False, default=0)
+
+
+class InstitutionOrientationCategory(Base):
+    __tablename__ = "institution_orientation_categories"
+    __table_args__ = (UniqueConstraint("institution_id", "normalized_name", name="uq_institution_category_name"),)
+    id = Column(String(36), primary_key=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(120), nullable=False)
+    normalized_name = Column(String(360), nullable=False)
+    description = Column(Text, nullable=False, default="")
+    position = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, nullable=False, default=True)
+    updated_by = Column(String, nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class OrientationReferral(Base):
     """Figura o ufficio a cui uno studente puo' rivolgersi.
 
