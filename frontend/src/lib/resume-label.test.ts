@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { resumeLabel } from './resume-label.ts';
 
 const translate = (key: string, fallback: string) => ({

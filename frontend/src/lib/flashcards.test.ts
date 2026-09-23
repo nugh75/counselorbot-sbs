@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+// @ts-expect-error -- Node runs TypeScript files directly.
 import { emptyFlashcards, addDeck, renameDeck, removeDeck, addCard, updateCard, removeCard, resetDeckProgress, setCardStatus, deckProgress, shuffleCards, DECK_LIMIT, CARD_LIMIT } from './flashcards.ts';
 
 test('deck progress separates known, review and fresh cards', () => {
