@@ -11,7 +11,7 @@ import { apiFetch } from '@/lib/auth';
 import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { NewDeckDialog } from './NewDeckDialog';
-import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, cardColumnsOf, cardColumnLabel, setCardColumns, renameCardColumn, removeCardColumn, addCardColumn, cardColumnPresets, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, type ActionStage, type CardColumn, type CardDeck, type SavedWorkspace, type VisualWorkspace, DEFAULT_DECK_ID } from '@/lib/visual-tools';
+import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, cardColumnsOf, cardColumnLabel, renameCardColumn, removeCardColumn, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, moveCardToDeck, cardsInDeck, type ActionStage, type CardDeck, type SavedWorkspace, type VisualWorkspace, DEFAULT_DECK_ID } from '@/lib/visual-tools';
 import { validTimelineDates } from '@/lib/timeline-dates';
 import { BUILTIN_CARD_IMAGES, tavoloImageUrl } from '@/lib/tavolo-images';
 import { TimelineTools } from './TimelineTools';
@@ -41,11 +41,6 @@ const tabIcons: Record<Tab, typeof LayoutList> = {
     board: LayoutList, comparison: Columns3, cards: Layers, timeline: GitCommitHorizontal,
 };
 const isWorkTab = (tab: Tab): tab is WorkTab => workTabs.includes(tab as WorkTab);
-const columnsMatch = (w: VisualWorkspace, preset: CardColumn[], deckId?: string | null): boolean => {
-    const columns = cardColumnsOf(w, deckId);
-    return columns.length === preset.length && columns.every((column, index) => column.id === preset[index].id);
-};
-
 export function VisualTools(props: Props) {
     return <WorkspaceView key={props.personal ? 'personal' : props.sessionId} {...props} />;
 }
@@ -77,7 +72,6 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [criterion, setCriterion] = useState('');
     const [option, setOption] = useState('');
     const [optionSource, setOptionSource] = useState('');
-    const [columnName, setColumnName] = useState('');
     // Questa schermata contiene un solo insieme coerente di strumenti. Taccuino,
     // Libretto e Tavolo hanno pagine proprie nell'Area personale.
     const tabs: Tab[] = fixedTab ? [fixedTab] : workTabs;
@@ -412,20 +406,6 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             {(() => {
                                 const currentDeckCols = cardColumnsOf(work, activeDeckId);
                                 return <>
-                                <div className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                                    <label className="text-sm">{l('cardColumns')}<select aria-label={l('cardColumns')} value={cardColumnPresets.some(p => columnsMatch(work, p.columns, activeDeckId)) ? cardColumnPresets.find(p => columnsMatch(work, p.columns, activeDeckId))!.key : 'custom'} className={`${inputClass} mt-1 min-h-[44px] max-w-56`} onChange={e => {
-                                        const preset = cardColumnPresets.find(p => p.key === e.target.value);
-                                        if (preset) edit(setCardColumns(work, preset.columns.map(c => ({ id: c.id, label: c.label })), activeDeckId));
-                                    }}>
-                                        {cardColumnPresets.map(p => <option key={p.key} value={p.key}>{l(p.key)}</option>)}
-                                        <option value="custom" disabled>{l('cardColumnsCustom')}</option>
-                                    </select></label>
-                                    <form className="flex items-end gap-2" onSubmit={event => { event.preventDefault(); if (!columnName.trim() || columnName.length > 100) return; edit(addCardColumn(work, columnName.trim(), activeDeckId)); setColumnName(''); }}>
-                                        <label className="text-sm">{l('columnName')}<input required maxLength={100} value={columnName} className={`${inputClass} mt-1 max-w-52`} onChange={e => setColumnName(e.target.value)} /></label>
-                                        <Tooltip content={l('addColumn')}><Button aria-label={l('addColumn')} type="submit" className={buttonClass} disabled={currentDeckCols.length >= 8}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                                    </form>
-                                    {currentDeckCols.length >= 8 && <p role="status" className="text-sm text-slate-600">{l('limit')}</p>}
-                                </div>
                                 <details open={!activeDeckCards.length || Boolean(draftCard)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addCard')}</summary>
                                 <form className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!draftCard.trim() || draftCard.length > 600 || work.cards.length >= 30) return;
                                     edit({ ...work, cards: [...work.cards, { id: crypto.randomUUID(), text: draftCard.trim(), bucket: currentDeckCols[0].id, source: cardSource, image: draftCardImage || null, deck_id: activeDeckId }] }); setDraftCard(''); setCardSource(''); setDraftCardImage(''); }}>
