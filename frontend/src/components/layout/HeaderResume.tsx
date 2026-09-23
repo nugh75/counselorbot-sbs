@@ -6,6 +6,7 @@ import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { useEffect, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, type ResumeEntries } from '@/lib/use-resume-entries';
+import { resumeLabel } from '@/lib/resume-label';
 import { useI18n } from '@/lib/i18n-context';
 import { Tooltip } from '@/components/ui/Tooltip';
 
@@ -13,7 +14,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 // sul server (ripresa da qualsiasi dispositivo) o una chat interrotta salvata
 // localmente. Le voci arrivano dall'header, che le condivide col menu mobile.
 export function HeaderResume({ entries }: { entries: ResumeEntries }) {
-    const { t } = useI18n();
+    const { t, tf } = useI18n();
     const { frozen, localResume, pqbl, count } = entries;
     const [open, setOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -59,7 +60,7 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
                     </div>
                     <ResumeLoadError entries={entries} />
                     {frozen.map((row) => (
-                        <ResumeEntry key={row.session_id} menuItem target={{ kind: 'session', sessionId: row.session_id }} label={row.label || row.questionnaire_type}>
+                        <ResumeEntry key={row.session_id} menuItem target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
                             <Link
                                 role="menuitem"
                                 href={resumeHref(row)}
@@ -70,12 +71,12 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
                                 }}
                                 className="block truncate px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                             >
-                                {row.label || row.questionnaire_type}
+                                {resumeLabel(row.questionnaire_type, row.label, tf)}
                             </Link>
                         </ResumeEntry>
                     ))}
                     {localResume && (
-                        <ResumeEntry menuItem target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${localResume.instrument}`}>
+                        <ResumeEntry menuItem target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${resumeLabel(localResume.instrument, null, tf)}`}>
                             <Link
                                 role="menuitem"
                                 href={LOCAL_RESUME_HREF}
@@ -86,7 +87,7 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
                                 }}
                                 className="block truncate border-t border-slate-100 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                             >
-                                {t('header.resume')} · {localResume.instrument}
+                                {t('header.resume')} · {resumeLabel(localResume.instrument, null, tf)}
                             </Link>
                         </ResumeEntry>
                     )}

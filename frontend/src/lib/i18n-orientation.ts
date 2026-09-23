@@ -10,7 +10,7 @@ const it: Dict = {
     'orientation.landing.latest': 'Rivedi l’ultimo orientamento',
     'orientation.landing.open': 'Apri la Bussola',
     'orientation.landing.new': 'Inizia un nuovo orientamento',
-    'orientation.landing.skip': 'Vai direttamente agli strumenti',
+    'orientation.landing.skip': "Esplora attività e percorsi",
     'orientation.fork.title': 'Da dove vuoi cominciare?',
     'orientation.fork.body': "Puoi parlare con la Bussola per orientarti oppure aprire direttamente gli strumenti.",
     'orientation.counselor.step': 'Prima scelta',
@@ -33,14 +33,14 @@ const it: Dict = {
     'orientation.completed.title': 'La rotta è pronta',
     'orientation.completed.body': "Puoi aprire uno degli strumenti proposti. La Bussola resterà sempre disponibile.",
     'orientation.continue': 'Continua da dove eri diretto',
-    'orientation.completed.allTools': 'Vai alla home, dove trovi tutti gli strumenti',
+    'orientation.completed.allTools': "Esplora tutte le attività e i percorsi",
     'orientation.error': 'Non riesco a completare questa azione. Riprova.',
 };
 
 const en: Dict = {
     'nav.orientation': 'Compass', 'orientation.eyebrow': 'Initial orientation', 'orientation.title': 'CounselorBot Compass',
     'orientation.subtitle': "Describe what you want to address: the Compass suggests one tool to start with and helps you consider time and effort. Take one question at a time, over several turns and, if needed, several visits: you do not need to do every tool.",
-    'orientation.landing.latest': 'Review the latest orientation', 'orientation.landing.open': 'Open the Compass', 'orientation.landing.new': 'Start a new orientation', 'orientation.landing.skip': 'Go straight to the tools',
+    'orientation.landing.latest': 'Review the latest orientation', 'orientation.landing.open': 'Open the Compass', 'orientation.landing.new': 'Start a new orientation', 'orientation.landing.skip': "Explore activities and paths",
     'orientation.fork.title': 'Where do you want to start?',
     'orientation.fork.body': "Talk to the Compass for guidance or go straight to the tools.",
     'orientation.counselor.step': 'First choice', 'orientation.counselor.title': 'Which counselor would you like to talk to?', 'orientation.counselor.body': 'First choose the voice and approach that will accompany you. The choice stays with this Compass conversation.',
@@ -56,13 +56,13 @@ const en: Dict = {
 'orientation.recommendations.jump': 'Go to the suggested tools ({count})',
     'orientation.recommendation.start': 'Explore this tool', 'orientation.complete': 'Complete orientation', 'orientation.completed.title': 'Your route is ready',
     'orientation.completed.body': "You can open one of the suggested tools. The Compass remains available.",
-    'orientation.continue': 'Continue to your previous destination', 'orientation.completed.allTools': 'Go to the home page, where you’ll find all the tools', 'orientation.error': 'This action could not be completed. Try again.',
+    'orientation.continue': 'Continue to your previous destination', 'orientation.completed.allTools': "Explore all activities and paths", 'orientation.error': 'This action could not be completed. Try again.',
 };
 
 const es: Dict = {
     'nav.orientation': 'Brújula', 'orientation.eyebrow': 'Orientación inicial', 'orientation.title': 'Brújula CounselorBot',
     'orientation.subtitle': "Cuenta qué quieres abordar: la Brújula te recomienda una herramienta para empezar y te ayuda a valorar el tiempo y el esfuerzo. Avanza una pregunta a la vez, en varios turnos y, si hace falta, varios encuentros: no necesitas hacer todas las herramientas.",
-    'orientation.landing.latest': 'Revisar la última orientación', 'orientation.landing.open': 'Abrir la Brújula', 'orientation.landing.new': 'Iniciar una nueva orientación', 'orientation.landing.skip': 'Ir directamente a las herramientas',
+    'orientation.landing.latest': 'Revisar la última orientación', 'orientation.landing.open': 'Abrir la Brújula', 'orientation.landing.new': 'Iniciar una nueva orientación', 'orientation.landing.skip': "Explora actividades y recorridos",
     'orientation.fork.title': '¿Por dónde quieres empezar?',
     'orientation.fork.body': "Habla con la Brújula para orientarte o accede directamente a las herramientas.",
     'orientation.counselor.step': 'Primera elección', 'orientation.counselor.title': '¿Con qué counselor quieres hablar?', 'orientation.counselor.body': 'Elige primero la voz y el enfoque que te acompañarán. La elección quedará vinculada a esta conversación de la Brújula.',
@@ -78,13 +78,13 @@ const es: Dict = {
 'orientation.recommendations.jump': 'Ir a las herramientas propuestas ({count})',
     'orientation.recommendation.start': 'Explorar esta herramienta', 'orientation.complete': 'Concluir la orientación', 'orientation.completed.title': 'La ruta está lista',
     'orientation.completed.body': "Puedes abrir una de las herramientas propuestas. La Brújula sigue disponible.",
-    'orientation.continue': 'Continuar al destino anterior', 'orientation.completed.allTools': 'Ir al inicio, donde encontrarás todas las herramientas', 'orientation.error': 'No se pudo completar esta acción. Inténtalo de nuevo.',
+    'orientation.continue': 'Continuar al destino anterior', 'orientation.completed.allTools': "Explora todas las actividades y recorridos", 'orientation.error': 'No se pudo completar esta acción. Inténtalo de nuevo.',
 };
 
 const fr: Dict = {
     'nav.orientation': 'Boussole', 'orientation.eyebrow': 'Orientation initiale', 'orientation.title': 'Boussole CounselorBot',
     'orientation.subtitle': "Expliquez ce que vous souhaitez aborder : la Boussole conseille un outil pour commencer et vous aide à évaluer le temps et l’effort. Avancez une question à la fois, sur plusieurs tours et, si nécessaire, plusieurs rencontres : il n’est pas nécessaire de faire tous les outils.",
-    'orientation.landing.latest': 'Revoir la dernière orientation', 'orientation.landing.open': 'Ouvrir la Boussole', 'orientation.landing.new': 'Commencer une nouvelle orientation', 'orientation.landing.skip': 'Aller directement aux outils',
+    'orientation.landing.latest': 'Revoir la dernière orientation', 'orientation.landing.open': 'Ouvrir la Boussole', 'orientation.landing.new': 'Commencer une nouvelle orientation', 'orientation.landing.skip': "Explorer les activités et parcours",
     'orientation.fork.title': 'Par où veux-tu commencer ?',
     'orientation.fork.body': "Parlez avec la Boussole pour vous orienter ou accédez directement aux outils.",
     'orientation.counselor.step': 'Premier choix', 'orientation.counselor.title': 'Avec quel counselor souhaitez-vous parler ?', 'orientation.counselor.body': 'Choisissez d’abord la voix et l’approche qui vous accompagneront. Ce choix restera lié à cette conversation de la Boussole.',
@@ -100,13 +100,13 @@ const fr: Dict = {
 'orientation.recommendations.jump': 'Aller aux outils proposés ({count})',
     'orientation.recommendation.start': 'Explorer cet outil', 'orientation.complete': 'Terminer l’orientation', 'orientation.completed.title': 'La route est prête',
     'orientation.completed.body': "Vous pouvez ouvrir un des outils proposés. La Boussole reste disponible.",
-    'orientation.continue': 'Continuer vers la destination précédente', 'orientation.completed.allTools': 'Aller à l’accueil, où vous trouverez tous les outils', 'orientation.error': 'Impossible de terminer cette action. Réessayez.',
+    'orientation.continue': 'Continuer vers la destination précédente', 'orientation.completed.allTools': "Explorer toutes les activités et parcours", 'orientation.error': 'Impossible de terminer cette action. Réessayez.',
 };
 
 const de: Dict = {
     'nav.orientation': 'Kompass', 'orientation.eyebrow': 'Erste Orientierung', 'orientation.title': 'CounselorBot-Kompass',
     'orientation.subtitle': "Beschreibe dein Anliegen: Der Kompass empfiehlt ein Werkzeug für den Einstieg und hilft dir, Zeit und Aufwand einzuschätzen. Gehe eine Frage nach der anderen an, in mehreren Dialogschritten und bei Bedarf mehreren Treffen: Du musst nicht alle Werkzeuge nutzen.",
-    'orientation.landing.latest': 'Letzte Orientierung ansehen', 'orientation.landing.open': 'Kompass öffnen', 'orientation.landing.new': 'Neue Orientierung beginnen', 'orientation.landing.skip': 'Direkt zu den Werkzeugen',
+    'orientation.landing.latest': 'Letzte Orientierung ansehen', 'orientation.landing.open': 'Kompass öffnen', 'orientation.landing.new': 'Neue Orientierung beginnen', 'orientation.landing.skip': "Aktivitäten und Wege entdecken",
     'orientation.fork.title': 'Womit möchtest du beginnen?',
     'orientation.fork.body': "Sprich mit dem Kompass zur Orientierung oder öffne direkt die Werkzeuge.",
     'orientation.counselor.step': 'Erste Wahl', 'orientation.counselor.title': 'Mit welchem Counselor möchtest du sprechen?', 'orientation.counselor.body': 'Wähle zuerst die Stimme und den Ansatz, die dich begleiten. Die Wahl bleibt mit diesem Kompass-Gespräch verbunden.',
@@ -122,13 +122,13 @@ const de: Dict = {
 'orientation.recommendations.jump': 'Zu den vorgeschlagenen Werkzeugen ({count})',
     'orientation.recommendation.start': 'Dieses Werkzeug erkunden', 'orientation.complete': 'Orientierung abschließen', 'orientation.completed.title': 'Die Route ist bereit',
     'orientation.completed.body': "Du kannst eines der vorgeschlagenen Werkzeuge öffnen. Der Kompass bleibt verfügbar.",
-    'orientation.continue': 'Zum vorherigen Ziel weitergehen', 'orientation.completed.allTools': 'Zur Startseite, wo du alle Werkzeuge findest', 'orientation.error': 'Diese Aktion konnte nicht abgeschlossen werden. Versuche es erneut.',
+    'orientation.continue': 'Zum vorherigen Ziel weitergehen', 'orientation.completed.allTools': "Alle Aktivitäten und Wege entdecken", 'orientation.error': 'Diese Aktion konnte nicht abgeschlossen werden. Versuche es erneut.',
 };
 
 const sv: Dict = {
     'nav.orientation': 'Kompass', 'orientation.eyebrow': 'Inledande orientering', 'orientation.title': 'CounselorBot-kompassen',
     'orientation.subtitle': "Berätta vad du vill arbeta med: Kompassen föreslår ett verktyg att börja med och hjälper dig bedöma tid och arbetsinsats. Ta en fråga i taget, över flera turer och vid behov flera tillfällen: du behöver inte använda alla verktyg.",
-    'orientation.landing.latest': 'Granska senaste orienteringen', 'orientation.landing.open': 'Öppna Kompassen', 'orientation.landing.new': 'Starta en ny orientering', 'orientation.landing.skip': 'Gå direkt till verktygen',
+    'orientation.landing.latest': 'Granska senaste orienteringen', 'orientation.landing.open': 'Öppna Kompassen', 'orientation.landing.new': 'Starta en ny orientering', 'orientation.landing.skip': "Utforska aktiviteter och vägledningar",
     'orientation.fork.title': 'Var vill du börja?',
     'orientation.fork.body': "Prata med Kompassen för vägledning eller gå direkt till verktygen.",
     'orientation.counselor.step': 'Första valet', 'orientation.counselor.title': 'Vilken counselor vill du prata med?', 'orientation.counselor.body': 'Välj först den röst och det arbetssätt som ska följa dig. Valet kopplas till det här samtalet i Kompassen.',
@@ -144,7 +144,7 @@ const sv: Dict = {
 'orientation.recommendations.jump': 'Till de föreslagna verktygen ({count})',
     'orientation.recommendation.start': 'Utforska verktyget', 'orientation.complete': 'Avsluta orienteringen', 'orientation.completed.title': 'Vägen är klar',
     'orientation.completed.body': "Du kan öppna ett av de föreslagna verktygen. Kompassen finns kvar.",
-    'orientation.continue': 'Fortsätt till föregående mål', 'orientation.completed.allTools': 'Gå till startsidan, där du hittar alla verktyg', 'orientation.error': 'Åtgärden kunde inte slutföras. Försök igen.',
+    'orientation.continue': 'Fortsätt till föregående mål', 'orientation.completed.allTools': "Utforska alla aktiviteter och vägledningar", 'orientation.error': 'Åtgärden kunde inte slutföras. Försök igen.',
 };
 
 export const ORIENTATION_DICTS: Record<Lang, Dict> = {

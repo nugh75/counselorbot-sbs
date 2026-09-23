@@ -98,7 +98,7 @@ for (const initialError of [false, true]) {
                 control.frozenError = true;
                 await page.evaluate(() => dispatchEvent(new Event('frozen-sessions-change')));
             }
-            await page.getByRole('button', { name: 'Riprendi una sessione', exact: true }).click();
+            await page.getByRole('button', { name: 'Riprendi un’attività', exact: true }).click();
             await page.getByText('Impossibile aggiornare le sessioni da riprendere.').waitFor();
             if (!initialError) assert.equal(await page.getByRole('menuitem', { name: 'Sessione da ritrovare', exact: true }).count(), 1);
             control.frozenError = false;
@@ -159,7 +159,7 @@ for (const surface of ['desktop', 'mobile', 'home']) {
     test(`resume deletion confirms, handles errors and updates all entries on ${surface}`, async () => {
         const { page, context, control } = await fixture(surface === 'mobile' ? 390 : 1440);
         try {
-            await page.goto(`${origin}${surface === 'home' ? '/' : '/profilo/taccuino'}`, { waitUntil: 'networkidle' });
+            await page.goto(`${origin}${surface === 'home' ? '/?view=home' : '/profilo/taccuino'}`, { waitUntil: 'networkidle' });
             await page.evaluate(() => {
                 localStorage.setItem('counselorbot_resume', JSON.stringify({ instrument: 'QSA', sessionId: 'recovery', experience: 'standard', counselorId: 1 }));
                 localStorage.setItem('counselorbot_pqbl_progress_v1', JSON.stringify({ phase: 'activity' }));
@@ -167,12 +167,12 @@ for (const surface of ['desktop', 'mobile', 'home']) {
             });
             let list;
             if (surface === 'desktop') {
-                await page.getByRole('button', { name: 'Riprendi una sessione', exact: true }).click();
+                await page.getByRole('button', { name: 'Riprendi un’attività', exact: true }).click();
                 list = page.getByRole('menu');
             } else if (surface === 'mobile') {
                 await page.locator('button[aria-controls="mobile-menu"]').click();
                 list = page.locator('#mobile-menu');
-            } else list = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Riprendi una sessione', exact: true }) });
+            } else list = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Riprendi un’attività', exact: true }) });
             const remove = list.getByLabel('Elimina sessione: Sessione da ritrovare', { exact: true });
             const box = await remove.boundingBox();
             assert.ok(box.width >= 44 && box.height >= 44);
@@ -203,7 +203,7 @@ for (const surface of ['desktop', 'mobile', 'home']) {
             assert.equal(await page.evaluate(() => localStorage.getItem('counselorbot_pqbl_progress_v1')), null);
             assert.equal(control.deletions.length, 2, 'local pQBL deletion does not call the server');
             await page.reload({ waitUntil: 'networkidle' });
-            assert.equal(await page.getByRole('button', { name: 'Riprendi una sessione', exact: true }).count(), 0);
+            assert.equal(await page.getByRole('button', { name: 'Riprendi un’attività', exact: true }).count(), 0);
             assert.deepEqual(control.errors, []);
         } finally { await context.close(); }
     });
@@ -217,7 +217,7 @@ test('a local-only resume point can be deleted when no server snapshot exists', 
             localStorage.setItem('counselorbot_resume', JSON.stringify({ instrument: 'QAP', sessionId: 'local-only', experience: 'standard', counselorId: 1 }));
             dispatchEvent(new Event('counselorbot-resume-change'));
         });
-        await page.getByRole('button', { name: 'Riprendi una sessione', exact: true }).click();
+        await page.getByRole('button', { name: 'Riprendi un’attività', exact: true }).click();
         const menu = page.getByRole('menu');
         const remove = menu.locator('button[aria-label^="Elimina sessione:"]').last();
         page.once('dialog', dialog => dialog.accept());

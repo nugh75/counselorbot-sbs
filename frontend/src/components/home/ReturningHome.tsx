@@ -3,18 +3,17 @@
 // Catalogo e strumenti personali precedono le attività da riprendere.
 // Le aree personali restano nella pagina personale, non in questa home.
 
-import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { CompassEntry } from '@/components/home/CompassEntry';
+import { resumeLabel } from '@/lib/resume-label';
 import { PersonalAreaEntry } from '@/components/home/PersonalAreaEntry';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { ArrowLeft, BookOpen, ChevronDown, RotateCcw } from 'lucide-react';
+import { ArrowLeft, BookOpen, RotateCcw } from 'lucide-react';
 import { QUESTIONNAIRE_LIST, QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
-import { fetchCounselors, getSelectedCounselorId, subscribeToCounselor } from '@/lib/counselor';
-import { clearFlowPrefs, getExperiencePref, getInputMethodPref, subscribeToFlowPrefs } from '@/lib/session-prefs';
 import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { TOOL_CATEGORIES } from '@/lib/tool-catalog';
@@ -35,41 +34,9 @@ export function ReturningHome({
     const { t, tf, lang } = useI18n();
     const resumeEntries = useResumeEntries();
     const { frozen, localResume, pqbl: pqblResume, count: resumeCount } = resumeEntries;
-    const [counselorInfo, setCounselorInfo] = useState<{ id: number; name: string } | null>(null);
     const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
-    const counselorId = useSyncExternalStore(
-        subscribeToCounselor,
-        () => getSelectedCounselorId(),
-        () => null,
-    );
-    const prefsVersion = useSyncExternalStore(
-        subscribeToFlowPrefs,
-        () => `${getInputMethodPref() ?? ''}|${getExperiencePref() ?? ''}`,
-        () => '|',
-    );
-    const [method, experience] = prefsVersion.split('|');
-
-    useEffect(() => {
-        if (counselorId == null) return;
-        let alive = true;
-        fetchCounselors(lang)
-            .then((rows) => {
-                if (!alive) return;
-                const name = rows.find((c) => c.id === counselorId)?.name;
-                if (name) setCounselorInfo({ id: counselorId, name });
-            })
-            .catch(() => {});
-        return () => { alive = false; };
-    }, [counselorId, lang]);
-
-    const counselorName = counselorInfo?.id === counselorId ? counselorInfo.name : null;
     const formatDate = (iso: string) => new Date(iso).toLocaleDateString(lang);
     const instrumentById = new Map(QUESTIONNAIRE_LIST.map((q) => [q.id, q]));
-    const prefsSummary = [
-        method === 'manual' ? t('method.manual.title') : method === 'upload' ? t('method.upload.title') : null,
-        experience === 'standard' ? t('guided.mode.guided') : experience === 'opencode' ? t('guided.mode.sandbox') : null,
-    ].filter(Boolean).join(' · ');
-
     return (
         <div className="flex flex-col gap-5 py-2">
             <section className="order-1">
@@ -86,6 +53,7 @@ export function ReturningHome({
                         <h1 className="font-display text-3xl font-bold text-slate-900">{t('base.instruments.title')}</h1>
                     </div>
                 </div>
+                <div className="mt-5"><CompassEntry /></div>
                 <nav className="mt-4 flex flex-wrap gap-2" aria-label={t('base.categories.label')}>
                     {TOOL_CATEGORIES.map((group) => (
                         <a
@@ -96,7 +64,7 @@ export function ReturningHome({
                             {t(`base.category.${group.id}`)}
                         </a>
                     ))}
-                    <Link href="/profilo" className="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700">{t('profile.nav')}</Link>
+                    <Link href="/profilo" className="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-700">{t('app.intro.compact.workspace.title')}</Link>
                 </nav>
                 {lang !== 'it' && catalogLoading && (
                     <p className="mt-3 text-sm text-slate-500" role="status">{t('base.catalog.loading')}</p>
@@ -175,33 +143,6 @@ export function ReturningHome({
             </section>
             <div className="order-2 space-y-5">
             <PersonalAreaEntry />
-            <Link href="/bussola" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-indigo-700 hover:underline">
-                <Image src="/images/platform/bussola.png" alt="" width={20} height={20} />{t('app.intro.action.compass.label')}
-            </Link>
-
-
-            <details className="group glass-panel p-3">
-                <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 rounded-md text-sm font-semibold text-slate-700">
-                    <span>{t('base.counselor.title')} · {t('base.prefs.title')}</span>
-                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
-                </summary>
-                <div className="mt-3 grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2">
-                    <div>
-                        <h2 className="text-sm font-bold text-slate-900">{t('base.counselor.title')}</h2>
-                        <p className="mt-1 text-sm text-slate-600">{counselorName ?? t('base.counselor.none')}</p>
-
-                    </div>
-                    <div>
-                        <h2 className="text-sm font-bold text-slate-900">{t('base.prefs.title')}</h2>
-                        <p className="mt-1 text-sm text-slate-600">{prefsSummary || t('base.prefs.none')}</p>
-                        {prefsSummary && <button type="button" onClick={clearFlowPrefs} className="mt-1 inline-flex min-h-[44px] items-center rounded-md text-sm font-medium text-indigo-700 hover:underline">{t('base.prefs.reset')}</button>}
-                    </div>
-                </div>
-                <button type="button" onClick={onOpenIntro} className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-700">
-                    <Image src="/images/platform/bussola.png" alt="" width={20} height={20} className="h-5 w-5 object-contain" />{t('base.about')}
-                </button>
-            </details>
-
             {(resumeCount > 0 || resumeEntries.error) && (
                 <section data-testid="home-resume">
                     <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
@@ -210,24 +151,24 @@ export function ReturningHome({
                     <ResumeLoadError entries={resumeEntries} />
                     <div className="mt-3 space-y-2">
                         {frozen.map((row) => (
-                            <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={row.label || row.questionnaire_type}>
+                            <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
                                 <a
                                     href={resumeHref(row)}
                                     className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
                                 >
                                     <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
-                                    <span className="truncate">{row.label || row.questionnaire_type}</span>
+                                    <span className="truncate">{resumeLabel(row.questionnaire_type, row.label, tf)}</span>
                                 </a>
                             </ResumeEntry>
                         ))}
                         {localResume && (
-                            <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${localResume.instrument}`}>
+                            <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${resumeLabel(localResume.instrument, null, tf)}`}>
                                 <a
                                     href={LOCAL_RESUME_HREF}
                                     className="glass-panel flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-indigo-300"
                                 >
                                     <RotateCcw className="h-4 w-4 shrink-0 text-indigo-600" />
-                                    <span className="truncate">{t('header.resume')} · {localResume.instrument}</span>
+                                    <span className="truncate">{t('header.resume')} · {resumeLabel(localResume.instrument, null, tf)}</span>
                                 </a>
                             </ResumeEntry>
                         )}

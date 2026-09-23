@@ -52,7 +52,7 @@ for (const width of [390, 1440]) {
             await page.getByRole('button', { name: 'Salva versione', exact: true }).click();
             await page.getByRole('heading', { name: 'Da dove vuoi cominciare?', exact: true }).waitFor();
             assert.deepEqual(prefs, ready());
-            await page.getByRole('button', { name: 'Vai direttamente agli strumenti', exact: true }).click();
+            await page.getByRole('button', { name: 'Esplora attività e percorsi', exact: true }).click();
             await page.getByRole('button', { name: 'Analizza i risultati', exact: true }).first().click();
             await page.getByText('Inserimento Manuale', { exact: true }).waitFor();
             assert.equal(await page.getByRole('button', { name: 'È ancora così', exact: true }).count(), 0);
@@ -222,11 +222,11 @@ for (const width of [390, 1440]) {
             const start = page.getByRole('button', { name: /^Bussola/ });
             await start.waitFor();
             assert.equal(await start.count(), 1);
-            const tools = page.getByRole('button', { name: /^Strumenti/ });
+            const tools = page.getByRole('button', { name: /^Esplora attività e percorsi/ });
             await tools.waitFor();
             assert.equal(await tools.count(), 1);
             const intro = page.getByTestId('intro-screen');
-            assert.deepEqual(await intro.locator('h2').allTextContents(), ['Analisi dei risultati dei questionari', 'Percorsi guidati', 'Area personale']);
+            assert.deepEqual(await intro.locator('h2').allTextContents(), ['Analisi dei risultati dei questionari', 'Percorsi guidati', 'Area personale e strumenti']);
             const images = intro.locator('img');
             assert.equal(await images.count(), 5);
             await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
@@ -327,3 +327,37 @@ test('data and privacy explains conditional protection and returns to the introd
         assert.deepEqual(errors, []);
     } finally { await context.close(); }
 });
+
+for (const remember of [false, true]) {
+    test(`input method is remembered only by choice: ${remember}`, async () => {
+        const { page, context } = await fixture();
+        try {
+            await page.goto(`${origin}/?start=QSA`);
+            const checkbox = page.getByRole('checkbox', { name: 'Ricorda questa scelta per i prossimi questionari', exact: true });
+            await checkbox.waitFor();
+            assert.equal(await checkbox.isChecked(), false);
+            await checkbox.setChecked(remember);
+            await page.getByRole('button', { name: /^Inserimento Manuale/ }).dblclick();
+            assert.equal(await page.evaluate(() => localStorage.getItem('counselorbot_input_method')), remember ? 'manual' : null);
+            await page.getByRole('button', { name: 'Indietro', exact: true }).click();
+            await checkbox.waitFor();
+            assert.equal(await checkbox.isChecked(), remember);
+            await checkbox.uncheck();
+            await page.getByRole('button', { name: /^Inserimento Manuale/ }).click();
+            await page.getByRole('button', { name: 'Continua', exact: true }).click();
+            assert.equal(await page.evaluate(() => localStorage.getItem('counselorbot_input_method')), null);
+        } finally { await context.close(); }
+    });
+    test(`chat mode is remembered only by choice: ${remember}`, async () => {
+        const { page, context } = await fixture();
+        try {
+            await page.goto(`${origin}/?start=SAVICKAS`);
+            const checkbox = page.getByRole('checkbox', { name: 'Ricorda questa modalità per le prossime attività', exact: true });
+            await checkbox.waitFor();
+            assert.equal(await checkbox.isChecked(), false);
+            await checkbox.setChecked(remember);
+            await page.getByRole('button', { name: 'Chat Guidata', exact: true }).click();
+            assert.equal(await page.evaluate(() => localStorage.getItem('counselorbot_experience')), remember ? 'standard' : null);
+        } finally { await context.close(); }
+    });
+}

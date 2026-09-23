@@ -101,6 +101,7 @@ export default function Home() {
     const [sessionId, setSessionId] = useState<string>('');
     const [pdfToken, setPdfToken] = useState<string | undefined>(undefined);
     const [experience, setExperience] = useState<'standard' | 'opencode' | null>(null);
+    const [rememberExperience, setRememberExperience] = useState(() => getExperiencePref() !== null);
     const [responseLength, setResponseLength] = useState<ResponseLength>(() => getResponseLengthPref());
     const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() => getReasoningPref());
     // Formato delle risposte: scelto nella pagina Impostazioni e consegnato
@@ -457,7 +458,7 @@ export default function Home() {
         void prepareInstrument(questionnaire, null);
     };
 
-    const handleMethodSelect = (method: 'manual' | 'upload' | 'resume', resumeData?: { sessionId: string; scores: Record<string, number> }) => {
+    const handleMethodSelect = (method: 'manual' | 'upload' | 'resume', resumeData?: { sessionId: string; scores: Record<string, number> }, remember = false) => {
         if (method === 'resume') {
             if (!resumeData) return;
             setScores(resumeData.scores);
@@ -465,7 +466,7 @@ export default function Home() {
             setStep('dashboard');
             return;
         }
-        setInputMethodPref(method);
+        setInputMethodPref(remember ? method : null);
         setStep(method === 'manual' ? 'manual-input' : 'upload-input');
     };
 
@@ -568,11 +569,11 @@ export default function Home() {
         setReasoningPref(value);
     };
 
-    // Scelta modalità chat: apre la chat, la ricorda per i prossimi strumenti e
+    // Scelta modalità chat: apre la chat, la ricorda se richiesto e
     // registra il punto di ripresa (header "Riprendi").
     const chooseExperience = (exp: 'standard' | 'opencode') => {
         setExperience(exp);
-        setExperiencePref(exp);
+        if (selectedQuestionnaire?.id !== 'IDEA') setExperiencePref(rememberExperience ? exp : null);
         if (selectedQuestionnaire) {
             setResume({ instrument: selectedQuestionnaire.id, sessionId, experience: exp, counselorId: sessionCounselorId });
         }
@@ -793,6 +794,10 @@ export default function Home() {
                                             <h3 className="text-base font-semibold text-slate-800">{t('experience.choose.title')}</h3>
                                             <p className="text-sm text-slate-500 mt-1">{t('experience.choose.sub')}</p>
                                         </div>
+                                        {selectedQuestionnaire.id !== 'IDEA' && <label className="flex min-h-11 items-center gap-3 text-left text-sm text-slate-600">
+                                            <input type="checkbox" checked={rememberExperience} onChange={event => setRememberExperience(event.target.checked)} className="h-4 w-4 accent-indigo-600" />
+                                            {t('experience.remember')}
+                                        </label>}
                                         <div className="grid sm:grid-cols-2 gap-2.5">
                                             <Button onClick={() => chooseExperience('standard')} className="w-full">
                                                 <MessageSquare className="w-4 h-4" />
