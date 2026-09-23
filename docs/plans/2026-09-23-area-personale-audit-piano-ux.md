@@ -195,12 +195,13 @@ Usare le **immagini già disponibili e il nome** per riconoscere gli strumenti, 
 **Revisione successiva alla prova nel tunnel:** l’utente richiede di eliminare
 «Vai a…» a destra e mantenere soltanto «Area personale» a sinistra. Questa
 indicazione sostituisce il pannello descritto nello schema storico qui sotto.
-La nuova testata conserva immagine, titolo e descrizione. L’utente conferma «Metodo di studio» e richiede di sostituire «Scelta del
-percorso» con categorie coerenti con il riferimento a Pellerey e Savickas.
-Proposta in esame: Metodo di studio; Conoscere le mie risorse; Rileggere le mie
-esperienze; Esplorare possibilità; Progettare i prossimi passi. Resta da chiarire
-se saranno filtri della rubrica di contatti/appuntamenti oppure sezioni operative
-del percorso personale. La tassonomia non è stata modificata nell’attesa.
+La nuova testata conserva immagine, titolo e descrizione.
+
+**Decisione successiva dell’utente:** le categorie non sono fissate centralmente.
+Ogni istituto decide le proprie categorie e i docenti di quell’istituto le
+amministrano. Le cinque etichette ipotizzate in precedenza non sono una tassonomia
+approvata e non vanno inserite automaticamente. «Metodo di studio» può essere
+scelto dall’istituto. La nuova gestione è descritta nel punto 0.3.2 seguente.
 
 ```text
 ← Area personale
@@ -210,6 +211,93 @@ del percorso personale. La tassonomia non è stata modificata nell’attesa.
 ```
 
 **Stato: struttura approvata; implementazione pilota in Orientamento, in anteprima di sviluppo.** La struttura si applica alle sottopagine dell’Area personale. L’ingresso `/profilo`, appena approvato e pubblicato, conserva i cinque gruppi e non riceve un secondo elenco di navigazione. La testata globale con account, lingua e altre azioni conserva le funzioni attuali.
+
+#### 0.3.2 — Categorie dell’istituto gestite dai suoi docenti
+
+**Stato: requisito approvato; l’amministratore associa i docenti all’istituto. Primo passo 0.3.2.1 implementato: API, controlli e scheda amministrativa approvata. Gestione delle categorie e filtri studenti restano passi successivi.**
+
+Obiettivo: l’istituto stabilisce le categorie con cui presentare i propri contatti
+e appuntamenti di Orientamento. I suoi docenti possono crearle, rinominarle,
+ordinarle e archiviarle. Gli studenti le consultano nella pagina Orientamento.
+Non si trasformano automaticamente in nuove attività o strumenti personali.
+
+Riscontro tecnico:
+
+- `backend/referral_needs.py` contiene oggi un vocabolario globale. Serve anche
+  alla selezione dei contatti nella conversazione; cambiarlo in etichette libere
+  altererebbe quel comportamento senza una corrispondenza definita.
+- `backend/routes/orientation_referrals.py` gestisce contatti e appuntamenti
+  tramite permessi amministrativi. La directory dello studente usa l’istituto
+  risolto dal taccuino o dalle classi (`referral_scope.py`).
+- `get_current_plan_manager` riconosce il ruolo docente, non l’appartenenza a un
+  istituto. `StudentGroup.institution_id` è modificabile dal docente che gestisce
+  la classe: non può diventare da solo un’autorizzazione sull’intero istituto.
+
+Gerarchia degli interventi, da chiudere uno alla volta:
+
+1. **0.3.2.1 — Appartenenza docente–istituto.** Registrare un’associazione esplicita
+   e revocabile. Ogni richiesta di gestione verifica sul server ruolo docente,
+   istituto attivo e associazione valida. La scelta dell’istituto nel taccuino,
+   la creazione di una classe o il nome della scuola non conferiscono permessi.
+   Decisione dell’utente: l’associazione e la revoca spettano all’amministratore.
+   La gestione non viene delegata a un referente.
+2. **0.3.2.2 — Gestione delle categorie.** Nell’Area docente, mostrare soltanto gli
+   istituti per cui il docente è abilitato. Per ogni istituto, elenco condiviso
+   con nome, descrizione facoltativa, ordine e stato attivo/archiviato. Nomi
+   distinti nello stesso istituto; identificativi stabili per rinominare senza
+   perdere i collegamenti. Salvataggio esplicito, autore e data della modifica;
+   controllo delle revisioni per non sovrascrivere il lavoro di un altro docente.
+3. **0.3.2.3 — Associazione ai contenuti e lettura studente.** Consentire ai docenti
+   abilitati di associare le categorie ai contatti/appuntamenti del proprio
+   istituto, senza estendere implicitamente la modifica o certificazione dei
+   contenuti. Le categorie pubbliche appartengono all’istituto dei contenuti;
+   eventuali più istituti restano riconoscibili. Il filtro studente usa le
+   categorie configurate, senza riproporre «Scelta del percorso» come etichetta
+   obbligatoria. Le categorie senza contenuti non producono filtri inutili.
+
+Le categorie dell’istituto sono un’entità distinta dai bisogni globali usati dal
+retrieval in chat. Non cancellare i bisogni o riclassificare automaticamente dati
+esistenti; la gestione delle categorie non modifica autonomamente i prompt.
+Gli eventuali contenuti nazionali restano consultabili senza attribuirli
+artificialmente a una categoria di un istituto. Senza categorie configurate,
+mostrare i contenuti senza filtro e spiegare ai docenti come aggiungerle.
+
+Schema proposto per la gestione:
+
+```text
+AREA DOCENTE
+  Orientamento dell’istituto
+  Istituto: [solo istituti per cui sono abilitato v]
+
+  Categorie                         [+ Nuova categoria]
+  Nome scelto dai docenti            [Modifica] [Altre azioni]
+  Un’altra categoria                [Modifica] [Altre azioni]
+
+  Modifica categoria
+  Nome          [________________________________]
+  Descrizione   [________________________________]
+                         [Annulla] [Salva]
+```
+
+Schema della lettura studente:
+
+```text
+← Area personale
+[immagine] Orientamento
+           Descrizione
+
+Istituto: nome dell’istituto
+[Tutti] [Categoria dell’istituto] [Altra categoria]
+Contatti e appuntamenti pertinenti
+```
+
+Verifiche richieste: docente abilitato ammesso; docente di altro istituto,
+studente e docente con associazione revocata respinti; isolamento tra istituti
+anche nelle associazioni categoria–contenuto; rinomina senza perdita dei
+collegamenti; archivio senza cancellazione dei contenuti; conflitti tra docenti
+rilevati; lettura senza categorie e con più istituti; interfaccia nelle sei
+lingue e a 320/390/1440 px. Le categorie scritte dall’istituto restano contenuti
+autoriali: eventuali traduzioni devono essere esplicite, non nomi inventati.
 
 #### Problema verificato nel codice corrente
 
@@ -1081,5 +1169,20 @@ Guida e sei schermate aggiornate. Sette test browser superati nelle sei lingue,
 a 320/390/1440 px e in orizzontale; TypeScript, i18n, ESLint e controllo della
 documentazione superati. Verifica pubblica nel tunnel: un solo collegamento
 nella testata e nessun pulsante. Immagine Docker ricostruita; produzione ancora
-alla versione precedente. La nuova articolazione delle categorie è in attesa
-della distinzione funzionale riportata nel punto 0.3.
+alla versione precedente. La successiva decisione sulle categorie configurabili per istituto è registrata
+nel punto 0.3.2.
+
+### 0.3.2.1 — Associazioni docente–istituto
+
+Completato il primo intervento della nuova gestione, dopo la scelta e la
+validazione dell’utente: solo l’amministratore associa e revoca i docenti.
+Aggiunti modello persistente, API, controlli riutilizzabili per le categorie e
+scheda in Amministrazione → Referenti ed eventi → Istituti. Nessuna associazione
+reale creata e nessuna categoria imposta agli istituti.
+
+Verifiche: undici test backend su PostgreSQL dedicato, ripetuti dalla nuova
+immagine; sette test browser con dati simulati nelle sei lingue, compresi
+320/390/1440 px, errori e accesso del ricercatore. TypeScript, ESLint, i18n e
+allineamento documentazione superati. Immagini backend e frontend ricostruite;
+container di produzione lasciati alla versione precedente durante la revisione.
+Il configuratore delle categorie (0.3.2.2) resta il prossimo intervento.

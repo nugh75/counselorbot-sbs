@@ -1246,6 +1246,22 @@ class Institution(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class InstitutionTeacher(Base):
+    """Admin-granted membership; a self-declared school never grants access."""
+
+    __tablename__ = "institution_teachers"
+    __table_args__ = (UniqueConstraint("institution_id", "username", name="uq_institution_teacher"),)
+
+    id = Column(Integer, primary_key=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    username = Column(String(255), nullable=False, index=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_by = Column(String, nullable=False)
+    updated_by = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class OrientationReferral(Base):
     """Figura o ufficio a cui uno studente puo' rivolgersi.
 

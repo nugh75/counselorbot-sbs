@@ -6,6 +6,7 @@ import { AlertTriangle, BadgeCheck, Plus, Trash2 } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { type Institution } from '@/lib/referrals-api';
+import { InstitutionTeachers } from '@/components/admin/InstitutionTeachers';
 
 type Lang = 'it' | 'en' | 'es' | 'fr' | 'de' | 'sv';
 const LANGS: Lang[] = ['it', 'en', 'es', 'fr', 'de', 'sv'];
@@ -278,6 +279,7 @@ function InstitutionList({ institutions, onSave, onDeactivate }: {
                                 {t('admin.referrals.deactivate')}
                             </button>
                         )}
+                        <InstitutionTeachers institutionId={row.id} active={row.is_active} />
                     </div>
                 ))}
             </div>
