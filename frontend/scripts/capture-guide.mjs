@@ -3,7 +3,7 @@
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
-import { personalAreaName, personalAreaText } from '../src/lib/i18n-personal-area.ts';
+import { personalAreaName } from '../src/lib/i18n-personal-area.ts';
 import { goalText } from '../src/lib/i18n-goals.ts';
 import { assignmentText } from '../src/lib/i18n-assignments.ts';
 import { learningText } from '../src/lib/i18n-assignment-work.ts';
@@ -96,10 +96,8 @@ try {
         if (process.env.GUIDE_SCREENS === 'orientation') {
             authenticated = true;
             await go('/profilo/orientamento');
-            await page.getByRole('button', { name: personalAreaText(lang, 'goTo'), exact: true }).click();
             await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
             for (const image of await page.locator('[data-personal-area-header] img').all()) { await image.scrollIntoViewIfNeeded(); await image.evaluate(el => el.decode()); }
-            await page.locator('[data-personal-area-header] nav').evaluate(el => { el.scrollTop = 0; });
             await capture('orientation');
             await context.close();
             continue;
@@ -128,7 +126,7 @@ try {
         await go('/profilo/pqbl'); await capture('pdf-study');
         await go('/profilo/flashcard'); await capture('flashcards');
         await go('/profilo'); await page.getByRole('link', { name: personalAreaName(lang, 'obiettivi'), exact: true }).waitFor(); await capture('personal-area');
-        await go('/profilo/orientamento'); await page.getByRole('button', { name: personalAreaText(lang, 'goTo'), exact: true }).click(); await capture('orientation');
+        await go('/profilo/orientamento'); await capture('orientation');
         await go('/profilo/obiettivi?goal=1'); await page.getByLabel(goalText(lang, 'motivation'), { exact: true }).waitFor(); await capture('personal-goals');
         const sharingForm = page.locator('form').filter({ has: page.getByLabel(goalText(lang, 'share'), { exact: true }) });
         await capture('goal-sharing', sharingForm);

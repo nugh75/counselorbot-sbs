@@ -37,6 +37,6 @@ GUIDE_BASE_URL=http://127.0.0.1:3108 GUIDE_SCREENS=orientation node --experiment
 ```
 
 I test coprono le sei lingue, 320/390/1440 px, mobile orizzontale, temi chiaro/scuro,
-focus e tastiera, destinazioni, filtri, parametri URL e isolamento delle API.
+ritorno a sinistra, assenza del pannello di navigazione, parametri URL e isolamento delle API.
 Il rebuild dell’immagine Docker può essere eseguito senza sostituire il container
 di produzione durante la revisione della preview: `docker compose build frontend`.

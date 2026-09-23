@@ -192,6 +192,23 @@ Usare le **immagini già disponibili e il nome** per riconoscere gli strumenti, 
 
 ### Testata e navigazione comune — punto 0.3
 
+**Revisione successiva alla prova nel tunnel:** l’utente richiede di eliminare
+«Vai a…» a destra e mantenere soltanto «Area personale» a sinistra. Questa
+indicazione sostituisce il pannello descritto nello schema storico qui sotto.
+La nuova testata conserva immagine, titolo e descrizione. L’utente conferma «Metodo di studio» e richiede di sostituire «Scelta del
+percorso» con categorie coerenti con il riferimento a Pellerey e Savickas.
+Proposta in esame: Metodo di studio; Conoscere le mie risorse; Rileggere le mie
+esperienze; Esplorare possibilità; Progettare i prossimi passi. Resta da chiarire
+se saranno filtri della rubrica di contatti/appuntamenti oppure sezioni operative
+del percorso personale. La tassonomia non è stata modificata nell’attesa.
+
+```text
+← Area personale
+
+[immagine] Orientamento
+           Descrizione della pagina
+```
+
 **Stato: struttura approvata; implementazione pilota in Orientamento, in anteprima di sviluppo.** La struttura si applica alle sottopagine dell’Area personale. L’ingresso `/profilo`, appena approvato e pubblicato, conserva i cinque gruppi e non riceve un secondo elenco di navigazione. La testata globale con account, lingua e altre azioni conserva le funzioni attuali.
 
 #### Problema verificato nel codice corrente
@@ -1055,3 +1072,14 @@ Verifiche:
 - Immagine frontend Docker ricostruita. Il container di produzione resta alla
   versione precedente durante la revisione della preview; stato del container
   verificato attivo. Nessuna modifica a volumi o dati persistenti.
+
+### Revisione del pilota dopo il riscontro dell’utente
+
+Rimosso «Vai a…» con relativo pannello e traduzioni non più usate. Resta il
+collegamento a sinistra all’Area personale, con area attivabile di almeno 44 px.
+Guida e sei schermate aggiornate. Sette test browser superati nelle sei lingue,
+a 320/390/1440 px e in orizzontale; TypeScript, i18n, ESLint e controllo della
+documentazione superati. Verifica pubblica nel tunnel: un solo collegamento
+nella testata e nessun pulsante. Immagine Docker ricostruita; produzione ancora
+alla versione precedente. La nuova articolazione delle categorie è in attesa
+della distinzione funzionale riportata nel punto 0.3.
