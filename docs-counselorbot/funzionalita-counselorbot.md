@@ -103,12 +103,10 @@ lavori. Il progresso PDF, invece, è locale al browser.
 ## Area personale e strumenti
 
 **Anteprima di sviluppo, non ancora distribuita nel frontend di produzione:**
-nella pagina **Orientamento**, la nuova testata offre un collegamento **Area personale**
-sempre diretto all’ingresso e un pannello **Vai a…** con i cinque gruppi e tutti
-i 17 strumenti, riconoscibili dalle immagini esistenti e dai nomi. La pagina
-attuale è segnalata e non viene riaperta. Chiudere il pannello conserva i filtri;
-Escape riporta il focus al pulsante. Questa testata è per ora applicata soltanto
-a Orientamento; le altre sottopagine saranno riviste separatamente.
+nella pagina **Orientamento**, la nuova testata mantiene a sinistra il collegamento
+**Area personale**, sempre diretto all’ingresso. Sotto compaiono l’immagine
+esistente, il titolo e la descrizione. Il pannello «Vai a…» è stato rimosso
+su richiesta dell’utente. Le altre sottopagine saranno riviste separatamente.
 
 L’Area personale (`/profilo`) apre con **Da riprendere**, solo quando ci sono
 lavori pertinenti: al massimo tre attività collegate a obiettivi attivi, obiettivi
