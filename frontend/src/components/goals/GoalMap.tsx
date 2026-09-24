@@ -46,7 +46,7 @@ export function GoalMap({ goals, all, onOpen }: { goals: PersonalGoal[]; all: Pe
     }, [goals, all, lang, onOpen]);
     return <section aria-label={l('mapLabel')} className="hidden h-[70vh] overflow-hidden rounded-xl border border-slate-200 bg-slate-50 lg:block">
         <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.2 }}
-            nodesDraggable={false} nodesConnectable={false} edgesFocusable={false} proOptions={{ hideAttribution: true }}>
+            nodesDraggable={false} nodesConnectable={false} nodesFocusable={false} edgesFocusable={false} proOptions={{ hideAttribution: true }}>
             <Background /><Controls showInteractive={false} />
         </ReactFlow>
     </section>;
