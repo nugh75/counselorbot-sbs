@@ -51,9 +51,18 @@ il precedente `HANDOFF.md`, non tracciato, riguarda un altro lavoro ed è preser
   decisioni separate; non implementarle come conseguenza delle approvazioni passate.
 - [ ] Verifica con persone/scenari reali del piano §7, dopo ciascun intervento.
 
-**Ripresa consigliata:** verificare il rilascio con l’utente, poi riprendere 0.3
-su una sola pagina (proposta: Obiettivi), presentando lo schema ASCII aggiornato.
-La scelta della prossima pagina non è ancora approvata. Non ripartire dalle categorie.
+- [x] 24/09: la sessione successiva (redesign /assistente, commit `57aee4f`→`af24ce2`)
+  è completata; vedi `assistente-ui-handoff.md`. Nessun lavoro nuovo su questa linea.
+- [ ] 24/09: 0.3 lotto 2 ripreso su **Obiettivi**, pagina scelta dall’utente.
+  Schema ASCII presentato in chat, **in attesa di approvazione dello schema**.
+  Prima/di pari passo con la testata va chiusa F06 su questa pagina (la sotto-form
+  di azione dentro GoalDetail non entra nella guardia bozza: testo perso senza
+  conferma cliccando «Area personale»).
+
+**Ripresa consigliata:** dopo l’approvazione dello schema ASCII di `/profilo/obiettivi`,
+implementare `PersonalAreaHeader slug="obiettivi"` + guardia F06, una pagina alla
+volta come nel pilota Orientamento. Non ripartire dalle categorie. Il «Vai a…» resta
+rimosso (decisione utente del 23/09, pilota Orientamento).
 
 ## Problems Encountered
 Nessun blocco tecnico aperto sul rilascio. Le richieste Python al dominio pubblico
