@@ -10,7 +10,7 @@ Palette:
 - Slate Gray: `#64748b`
 - Warm Ochre Accent: `#c9711f`
 
-## Assets (26 Illustrations)
+## Assets (39 Illustrations)
 
 | File | Subject & Meaning | Suggested Card Prompt | Suggested Tavolo Role |
 |------|-------------------|----------------------|-----------------------|
@@ -40,3 +40,17 @@ Palette:
 | `fresh_start.png` | Fresh Start & Recovery (Spiral arc rising toward dawn crescent) | "Come posso ricominciare con una prospettiva nuova?" | Nodo Transizione / Ripartenza |
 | `deep_writing.png` | Thesis & Deep Writing (Fountain pen and bound manuscript) | "Come sto strutturando la stesura della tesi o elaborato?" | Nodo Azione / Scrittura |
 | `energy_battery.png` | Energy Management & Pace (Pulse energy gauge for cognitive stamina) | "Qual è il mio livello di energia e carico cognitivo?" | Nodo Risorsa / Ritmo |
+| `bicycle_commute.png` | Bicycle & Active Commute (Urban bicycle with front basket and bell) | "Come gestisco i miei spostamenti quotidiani e l'attività fisica?" | Nodo Azione / Mobilità |
+| `car_travel.png` | Car & Road Travel (Compact automobile with headlight accent) | "Come organizzo gli spostamenti lunghi e l'autonomia?" | Nodo Risorsa / Trasporti |
+| `home_living.png` | Home & Living Space (Cozy house with illuminated window and door) | "Com'è il mio ambiente di vita domestica o da fuori sede?" | Nodo Risorsa / Alloggio |
+| `train_transit.png` | Train & Public Transit (Modern train on railway line) | "Come vivo il pendolarismo universitario o i viaggi?" | Nodo Transizione / Mobilità |
+| `laptop_work.png` | Laptop & Digital Workspace (Open laptop with clean app UI and cursor) | "Come uso gli strumenti digitali e il computer per studiare?" | Nodo Risorsa / Tecnologia |
+| `workplace_job.png` | Workplace & Profession (Professional briefcase and folder) | "Qual è il mio rapporto con il lavoro o il tirocinio?" | Nodo Contesto / Lavoro |
+| `job_interview.png` | Job Interview & Agreement (Handshake across meeting table with resume) | "Come mi preparo al colloquio di lavoro o selezione?" | Nodo Transizione / Carriera |
+| `finance_budget.png` | Budget & Financial Balance (Piggy bank and expense balance sheet) | "Come gestisco il budget economico, affitto e spese?" | Nodo Vincolo / Finanze |
+| `daily_errands.png` | Daily Errands & Household (Grocery tote bag with ingredients and list) | "Come bilancio le incombenze quotidiane e la spesa?" | Nodo Azione / Vita Quotidiana |
+| `healthy_living.png` | Health & Physical Well-being (Running shoe and water bottle with pulse) | "Mi prendo cura del mio corpo, sonno e alimentazione?" | Nodo Risorsa / Benessere |
+| `campus_university.png` | University Campus & Faculty (Classic academic facade with columns) | "Come vivo il senso di appartenenza alla mia facoltà?" | Nodo Contesto / Ateneo |
+| `library_hall.png` | Library & Silent Study Hall (Bookshelf and reading desk lamp) | "Frequento biblioteche e aule studio per concentrarmi?" | Nodo Risorsa / Studio |
+| `graduation_cap.png` | Graduation & Degree Milestone (Mortarboard cap with diploma parchment scroll) | "Qual è il traguardo accademico finale che voglio raggiungere?" | Nodo Visione / Traguardo |
+
