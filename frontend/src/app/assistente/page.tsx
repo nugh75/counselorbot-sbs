@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { LucideIcon } from 'lucide-react';
-import { Send, Square, GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users } from 'lucide-react';
+import { Send, Square, GraduationCap, BookOpen, Loader2, FileText, ThumbsUp, ThumbsDown, X, ExternalLink, ShieldAlert, LogIn, ClipboardList, Library, Search, Award, Eye, Users, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { ai4authLoginUrl, getIdentity, getViewAsAccount, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
@@ -148,6 +148,15 @@ export default function AssistentePage() {
     const [availableCollections, setAvailableCollections] = useState<CollectionInfo[]>(
         BUILTIN_COLLECTIONS.map((id) => ({ id, label: id, builtin: true })),
     );
+    // Sidebar (base di conoscenza + argomenti) nascosta di default: la scelta
+    // persiste nel browser così ognuno trova la disposizione che preferisce.
+    const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+        try { return localStorage.getItem('cb_assistente_sidebar') === '1'; } catch { return false; }
+    });
+    const toggleSidebar = () => setSidebarOpen((open) => {
+        try { localStorage.setItem('cb_assistente_sidebar', open ? '0' : '1'); } catch { /* resta in memoria */ }
+        return !open;
+    });
 
     const topicIds = topicsFor(collection, audience);
     const topics = topicIds.map((id) => ({
@@ -417,14 +426,10 @@ export default function AssistentePage() {
         <div className="flex flex-col lg:h-[calc(var(--chat-h)_+_1.5rem)] lg:-mb-12">
             {/* Layout a due colonne: quadrati a sinistra, chat a destra */}
             <div className="flex flex-1 flex-col gap-4 lg:h-full lg:flex-row lg:gap-6 lg:overflow-hidden">
-                {/* Colonna sinistra: quadrati/topic e info topic selezionato - scrollabile */}
-                <div className="w-full lg:w-96 shrink-0 flex flex-col gap-4 lg:overflow-y-auto lg:pr-1">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{t('assistant.title')}</h1>
-                    </div>
-
-                    {/* Badge profilo di prova: visibile solo quando admin impersona un ruolo.
-                        Indica il nome del profilo demo in uso. */}
+                {/* Colonna sinistra (sidebar): nascosta di default, richiamabile
+                    dal pulsante nella testata della chat. */}
+                {sidebarOpen && (
+                <div id="assistente-sidebar" className="w-full lg:w-96 shrink-0 flex flex-col gap-4 lg:overflow-y-auto lg:pr-1">
                     {viewAs && (
                         <div className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 ${
                             audience === 'studente'
@@ -514,6 +519,7 @@ export default function AssistentePage() {
                         </div>
                     </div>
                 </div>
+                )}
 
                 {/* Colonna destra: chat - prende tutto lo spazio rimanente */}
                 {/* Sotto lg la colonna non clippa: il composer ancorato in fondo
@@ -521,6 +527,22 @@ export default function AssistentePage() {
                     Da lg l'altezza è fissa (h-chat) e overflow-hidden resta. */}
                 <div className="flex min-h-chat flex-1 min-w-0 flex-col gap-3 lg:overflow-hidden lg:min-h-0 lg:gap-4">
                     <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
+
+                    {/* Testata della chat: toggle sidebar + titolo. Il titolo resta
+                        visibile anche a sidebar chiusa, che è lo stato predefinito. */}
+                    <div className="flex shrink-0 items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={toggleSidebar}
+                            aria-expanded={sidebarOpen}
+                            aria-controls="assistente-sidebar"
+                            title={sidebarOpen ? t('assistant.sidebar.hide') : t('assistant.sidebar.show')}
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:border-indigo-300 hover:text-indigo-600"
+                        >
+                            {sidebarOpen ? <PanelLeftClose className="h-4.5 w-4.5" aria-hidden="true" /> : <PanelLeftOpen className="h-4.5 w-4.5" aria-hidden="true" />}
+                        </button>
+                        <h1 className="text-2xl font-bold text-slate-900">{t('assistant.title')}</h1>
+                    </div>
 
                     <div ref={scrollRef} role="log" aria-label={t('assistant.title')} className="glass-panel min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
                         {messages.length === 0 && (
