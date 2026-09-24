@@ -18,11 +18,13 @@ function subscribe(onChange: () => void) {
 export function useResponseFormat(sessionKey: string, initial: ResponseFormat = 'standard') {
     const key = `chat-format:${sessionKey}`;
     const snapshot = useCallback((): ResponseFormat => {
-        try {
-            const saved = sessionStorage.getItem(key);
-            if (saved === 'standard' || saved === 'bullets' || saved === 'table') return saved;
-        } catch { /* storage can be disabled */ }
-        return fallback.get(key) ?? initial;
+        // 'table' salvato in passato viene riportato a 'standard': l'opzione
+        // non è più offerta dal selettore e non dovebbe restare selezionata.
+        const saved = (() => { try { return sessionStorage.getItem(key); } catch { return null; } })();
+        if (saved === 'table') return 'standard';
+        if (saved === 'standard' || saved === 'bullets') return saved;
+        const stored = fallback.get(key);
+        return stored === 'table' ? 'standard' : (stored ?? initial);
     }, [key, initial]);
     const value = useSyncExternalStore(subscribe, snapshot, () => initial);
     const change = (next: ResponseFormat) => {
