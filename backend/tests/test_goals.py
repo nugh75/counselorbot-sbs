@@ -203,3 +203,45 @@ def test_create_subgoal_under_owned_parent(setup):
     assert c.post('/user/goals', json=dict(title='x', parent_id=parent['id'])).status_code == 404
     student(who)
     assert c.post('/user/goals', json=dict(title='x', parent_id=987654)).status_code == 404
+
+
+def test_parents_add_remove_revision_and_idempotence(setup):
+    db, c, who, group_id = setup
+    a, b, child = goal(c, title='A'), goal(c, title='B'), goal(c, title='C')
+    url = f"/user/goals/{child['id']}/parents"
+    added = c.post(url, json=dict(parent_id=a['id'], revision=1)).json()
+    assert added['parent_ids'] == [a['id']] and added['revision'] == 2
+    assert c.post(url, json=dict(parent_id=b['id'], revision=1)).status_code == 409
+    both = c.post(url, json=dict(parent_id=b['id'], revision=2)).json()
+    assert both['parent_ids'] == sorted([a['id'], b['id']])
+    same = c.post(url, json=dict(parent_id=b['id'], revision=3)).json()
+    assert same['revision'] == 3
+    removed = c.delete(f"{url}/{a['id']}?revision=3").json()
+    assert removed['parent_ids'] == [b['id']] and removed['revision'] == 4
+    assert c.delete(f"{url}/{a['id']}?revision=4").status_code == 404
+    student(who, 'bob')
+    assert c.post(url, json=dict(parent_id=a['id'], revision=4)).status_code == 404
+
+
+def test_parents_reject_cycles_and_foreign_parent(setup):
+    db, c, who, group_id = setup
+    a = goal(c, title='A'); b = goal(c, title='B', parent_id=a['id']); d = goal(c, title='D', parent_id=b['id'])
+    assert c.post(f"/user/goals/{a['id']}/parents", json=dict(parent_id=a['id'], revision=1)).status_code == 422
+    assert c.post(f"/user/goals/{a['id']}/parents", json=dict(parent_id=d['id'], revision=1)).status_code == 422
+    student(who, 'bob')
+    foreign = goal(c, title='Bob')
+    student(who)
+    assert c.post(f"/user/goals/{a['id']}/parents", json=dict(parent_id=foreign['id'], revision=1)).status_code == 404
+
+
+def test_deleting_parent_breaks_branch_and_keeps_children(setup):
+    db, c, who, group_id = setup
+    a = goal(c, title='A'); other = goal(c, title='Other')
+    child = goal(c, title='Child', parent_id=a['id'])
+    both = c.post(f"/user/goals/{child['id']}/parents", json=dict(parent_id=other['id'], revision=1)).json()
+    orphan = goal(c, title='Orphan', parent_id=a['id'])
+    assert c.delete(f"/user/goals/{a['id']}?revision=1").status_code == 200
+    rows = {r['title']: r for r in c.get('/user/goals').json()}
+    assert rows['Child']['parent_ids'] == [other['id']] and rows['Child']['revision'] == both['revision'] + 1
+    assert rows['Orphan']['parent_ids'] == [] and rows['Orphan']['revision'] == orphan['revision'] + 1
+    assert db.query(models.GoalEdge).filter_by(parent_id=a['id']).count() == 0
