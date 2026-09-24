@@ -2,13 +2,14 @@
 
 import { useI18n } from '@/lib/i18n-context';
 import { chatPreferenceLabel, type ResponseFormat } from '@/lib/chat-preferences';
-import { AlignLeft, List, Table2 } from 'lucide-react';
+import { AlignLeft, List } from 'lucide-react';
 import { Tooltip } from '@/components/ui/Tooltip';
 
+// Solo discorsivo e puntato: la variante tabella non era rispettata in modo
+// affidabile dal modello e allungava il selettore senza beneficio.
 const COMPACT_OPTIONS = [
     { value: 'standard', Icon: AlignLeft },
     { value: 'bullets', Icon: List },
-    { value: 'table', Icon: Table2 },
 ] as const;
 
 export function ResponseFormatSelector({ value, onChange, disabled = false, compact = false }: {
@@ -33,7 +34,7 @@ export function ResponseFormatSelector({ value, onChange, disabled = false, comp
         <select aria-label={chatPreferenceLabel(lang, 'format')} value={value} disabled={disabled}
             onChange={event => onChange(event.target.value as ResponseFormat)}
             className="min-h-11 max-w-full rounded-md border border-slate-300 bg-white px-2 text-slate-800 disabled:opacity-50">
-            {(['standard', 'bullets', 'table'] as const).map(option => <option key={option} value={option}>{chatPreferenceLabel(lang, option)}</option>)}
+            {(['standard', 'bullets'] as const).map(option => <option key={option} value={option}>{chatPreferenceLabel(lang, option)}</option>)}
         </select>
     </label>;
 }

@@ -414,7 +414,7 @@ export default function AssistentePage() {
             : '';
 
     return (
-        <div className="flex flex-col lg:h-chat">
+        <div className="flex flex-col lg:h-[calc(var(--chat-h)-2rem)]">
             {/* Layout a due colonne: quadrati a sinistra, chat a destra */}
             <div className="flex flex-1 flex-col gap-4 lg:h-full lg:flex-row lg:gap-6 lg:overflow-hidden">
                 {/* Colonna sinistra: quadrati/topic e info topic selezionato - scrollabile */}
@@ -562,7 +562,7 @@ export default function AssistentePage() {
                         della vista anche mentre la colonna sinistra scorre: su
                         finestre strette il taglio in basso nascondeva l'input.
                         Il -mx-4/px-4 estende lo sfondo per coprire i px-4 del main. */}
-                    <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
+                    <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
                     <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
                         <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={loading} />
                         <ResponseLengthSelector
