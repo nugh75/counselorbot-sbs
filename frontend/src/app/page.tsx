@@ -236,7 +236,9 @@ export default function Home() {
     const beginInteraction = useCallback((sid: string, instrument: string) => {
         setSessionCounselorId(getSelectedCounselorId());
         const pref = experiencePrefForInstrument(instrument, getExperiencePref());
-        setExperience(pref);
+        // Se la preferenza non è memorizzata resta la scelta fatta nella scheda
+        // Impostazioni; null solo se nessuna delle due parla (retrocompatibilità).
+        setExperience((current) => pref ?? current);
         if (pref) setResume({ instrument, sessionId: sid, experience: pref, counselorId: getSelectedCounselorId() });
         setStep('interaction');
     }, []);
@@ -562,14 +564,26 @@ export default function Home() {
         setReasoningPref(value);
     };
 
-    // Scelta modalità chat: apre la chat, la ricorda se richiesto e
-    // registra il punto di ripresa (header "Riprendi").
+    // Scelta modalità chat: registra la preferenza, ricorda se richiesto e
+    // registra il punto di ripresa (header "Riprendi"). La scheda Impostazioni
+    // chiama questa prima di avviare, così la scelta fatta lì vale come qui.
     const chooseExperience = (exp: 'standard' | 'opencode') => {
         setExperience(exp);
         if (selectedQuestionnaire?.id !== 'IDEA') setExperiencePref(rememberExperience ? exp : null);
         if (selectedQuestionnaire) {
             setResume({ instrument: selectedQuestionnaire.id, sessionId, experience: exp, counselorId: sessionCounselorId });
         }
+    };
+
+    // Avvio dalla scheda Impostazioni: la scelta della modalità (se la sezione
+    // era visibile, cioè la preferenza non era già memorizzata) passa dalla
+    // stessa funzione della vecchia schermata dedicata; il guard evita che una
+    // modalità in memoria da una sessione precedente sovrascriva la preferenza.
+    const handleStartInteraction = () => {
+        if (experience && selectedQuestionnaire && experiencePrefForInstrument(selectedQuestionnaire.id, getExperiencePref()) === null) {
+            chooseExperience(experience);
+        }
+        startInteraction();
     };
 
     const handleInteractionComplete = () => {
@@ -768,8 +782,10 @@ export default function Home() {
                     )}
 
                     {/* Step: Impostazioni conversazione. Una pagina sola, prima di
-                        entrare in chat; chi riprende una sessione congelata la
-                        salta, perché la sua conversazione ha già le sue regole. */}
+                        entrare in chat: include la scelta della modalità (guidata
+                        vs chat libera), prima in una schermata a parte. Chi riprende
+                        una sessione congelata la salta, perché la sua conversazione
+                        ha già le sue regole. */}
                     {step === 'chat-settings' && scores && selectedQuestionnaire && (
                         <ChatSettingsCard
                             reasoningCapable={reasoningCapable}
@@ -781,7 +797,12 @@ export default function Home() {
                             reasoningEffort={reasoningEffort}
                             onReasoningChange={handleReasoningChange}
                             onBack={goBack}
-                            onStart={startInteraction}
+                            onStart={handleStartInteraction}
+                            showModeChoice={experiencePrefForInstrument(selectedQuestionnaire.id, getExperiencePref()) === null}
+                            experience={experience}
+                            onExperienceChange={setExperience}
+                            rememberExperience={rememberExperience}
+                            onRememberChange={selectedQuestionnaire.id !== 'IDEA' ? setRememberExperience : undefined}
                         />
                     )}
 
@@ -790,7 +811,10 @@ export default function Home() {
                         <div className="space-y-3">
                             {experience !== 'standard' && <BackButton onClick={goBack} label={t('nav.back')} />}
                             {experience === null ? (
-                                /* Scelta modalità, compatta (tasti piccoli, affiancati). */
+                                /* Solo per gli strumenti agent-only (SAVICKAS, Eventi,
+                                    Obiettivi): entrano in interazione senza passare dalla
+                                    scheda Impostazioni, quindi mantengono la scelta compatta.
+                                    La logica è la stessa chooseExperience del flusso standard. */
                                 <div className="max-w-md mx-auto">
                                     <div className="glass-panel p-6 text-center space-y-4">
                                         <div>
