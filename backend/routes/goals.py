@@ -230,7 +230,16 @@ def shared_goals(group_id: int, db: Session = Depends(database.get_db), user=Dep
     if not group.is_active:
         raise HTTPException(404, 'Group unavailable')
     members = db.query(models.GroupMembership.username).filter_by(group_id=group_id)
-    rows = db.query(models.PersonalGoal).filter(models.PersonalGoal.shared_group_id == group_id,
+    seeds = [i for (i,) in db.query(models.PersonalGoal.id).filter(
+        models.PersonalGoal.shared_group_id == group_id, models.PersonalGoal.username.in_(members))]
+    # Sharing a goal shares its whole branch below it, never the ancestors above it.
+    visible = set(seeds) | descendant_ids(db, seeds)
+    rows = db.query(models.PersonalGoal).filter(models.PersonalGoal.id.in_(visible),
         models.PersonalGoal.username.in_(members)).order_by(models.PersonalGoal.username, models.PersonalGoal.id).all()
+    edges = {}
+    for parent, child in db.query(models.GoalEdge.parent_id, models.GoalEdge.child_id).filter(
+            models.GoalEdge.child_id.in_(visible), models.GoalEdge.parent_id.in_(visible)).order_by(models.GoalEdge.parent_id):
+        edges.setdefault(child, []).append(parent)
     # Explicit sharing covers this summary only, never linked notebooks or private artifacts.
-    return [{key: getattr(row, key) for key in ('id', 'username', 'title', 'status', 'criteria', 'reflection', 'review_date')} for row in rows]
+    return [{**{key: getattr(row, key) for key in ('id', 'username', 'title', 'status', 'criteria', 'reflection', 'review_date')},
+             'parent_ids': edges.get(row.id, [])} for row in rows]

@@ -199,8 +199,11 @@ def goals_context(db, username, *, tavolo_id=None):
     content = []
     for row in rows:
         goal = goal_dict(db, row, resource_map)
+        part_of = [title[:120] for (title,) in db.query(models.PersonalGoal.title).join(
+            models.GoalEdge, models.GoalEdge.parent_id == models.PersonalGoal.id).filter(
+            models.GoalEdge.child_id == row.id).order_by(models.PersonalGoal.id).limit(3)]
         content.append(dict(title=row.title, motivation=row.motivation[:400], criteria=row.criteria[:400],
-                            review_date=row.review_date, reflection=row.reflection[:400],
+                            review_date=row.review_date, reflection=row.reflection[:400], part_of=part_of,
                             resources=[{k: (str(link[k])[:180] if k == 'title' else link[k]) for k in ('kind', 'title', 'stage', 'date') if k in link}
                                        for link in goal['links'] if link['available']][:8]))
     encoded = json.dumps(content, ensure_ascii=False)
