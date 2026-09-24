@@ -38,6 +38,7 @@ export function GoalsPanel() {
         });
     }, [load]);
     const open = (next: DialogTarget) => { setSaved(false); setTarget(next); };
+    const openGoal = useCallback((id: number) => { setSaved(false); setTarget({ kind: 'edit', id }); }, []);
     const forest = useMemo(() => buildForest(goals, showClosed), [goals, showClosed]);
     const shown = useMemo(() => visibleGoals(goals, showClosed), [goals, showClosed]);
     const viewButton = (value: 'list' | 'map', icon: ReactNode, key: GoalTextKey) => <Button type="button" variant={view === value ? 'primary' : 'secondary'} aria-pressed={view === value} onClick={() => chooseView(value)}>{icon}{l(key)}</Button>;
@@ -51,8 +52,8 @@ export function GoalsPanel() {
         <GoalIssue error={error} lang={lang} retry={() => void load()} />
         {loading ? <p role="status">{l('loading')}</p> : <>
             {!goals.length && !error && <p className="py-3">{l('empty')}</p>}
-            <div className={view === 'map' ? 'lg:hidden' : ''}><GoalTree goals={goals} forest={forest} groups={groups} onOpen={id => open({ kind: 'edit', id })} onAddChild={id => open({ kind: 'create', parentId: id })} /></div>
-            {view === 'map' && goals.length > 0 && <GoalMap goals={shown} all={goals} onOpen={id => open({ kind: 'edit', id })} />}
+            <div className={view === 'map' ? 'lg:hidden' : ''}><GoalTree goals={goals} forest={forest} groups={groups} onOpen={openGoal} onAddChild={id => open({ kind: 'create', parentId: id })} /></div>
+            {view === 'map' && goals.length > 0 && <GoalMap goals={shown} all={goals} onOpen={openGoal} />}
             <Link className="block py-3 text-sm text-indigo-700 underline" href="/bussola">{l('unsure')}</Link>
         </>}
         {catalogOpen && <GoalCatalogDialog catalog={catalog} onClose={() => setCatalogOpen(false)} onPick={entry => { setCatalogOpen(false); open({ kind: 'create', source: entry }); }} />}
