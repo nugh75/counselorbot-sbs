@@ -86,3 +86,6 @@ export function goalText(lang: string, key: GoalTextKey): string {
     const index = ['it', 'en', 'es', 'fr', 'de', 'sv'].indexOf(lang);
     return text[key][index < 0 ? 1 : index];
 }
+export function goalFormat(lang: string, key: GoalTextKey, values: Record<string, string | number>): string {
+    return goalText(lang, key).replace(/\{(\w+)\}/g, (match, name: string) => name in values ? String(values[name]) : match);
+}
