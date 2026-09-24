@@ -482,7 +482,10 @@ export default function AssistentePage() {
                 </div>
 
                 {/* Colonna destra: chat - prende tutto lo spazio rimanente */}
-                <div className="flex min-h-chat flex-1 min-w-0 flex-col gap-3 overflow-hidden lg:min-h-0 lg:gap-4">
+                {/* Sotto lg la colonna non clippa: il composer ancorato in fondo
+                    (sticky) deve potersi fermare sul bordo del viewport di pagina.
+                    Da lg l'altezza è fissa (h-chat) e overflow-hidden resta. */}
+                <div className="flex min-h-chat flex-1 min-w-0 flex-col gap-3 lg:overflow-hidden lg:min-h-0 lg:gap-4">
                     <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
 
                     <div ref={scrollRef} role="log" aria-label={t('assistant.title')} className="glass-panel min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
@@ -555,7 +558,11 @@ export default function AssistentePage() {
                     </div>
 
                     <ChatContinuation locale={lang} {...continuation} />
-                    {/* Input */}
+                    {/* Sotto lg i controlli e il composer restano ancorati al fondo
+                        della vista anche mentre la colonna sinistra scorre: su
+                        finestre strette il taglio in basso nascondeva l'input.
+                        Il -mx-4/px-4 estende lo sfondo per coprire i px-4 del main. */}
+                    <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
                     <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
                         <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={loading} />
                         <ResponseLengthSelector
@@ -607,6 +614,7 @@ export default function AssistentePage() {
                                 <Send className="w-5 h-5" />
                             </button>
                         )}
+                    </div>
                     </div>
 
                 </div>
