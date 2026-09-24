@@ -36,6 +36,19 @@ export const BUILTIN_CARD_IMAGES: TavoloImageEntry[] = [
     { id: 'card:fresh_start', name: 'Ripartenza e Nuovo Inizio', usage: 'Spirale verso l\'alba per superare battute d\'arresto' },
     { id: 'card:deep_writing', name: 'Tesi e Scrittura Accademica', usage: 'Penna stilografica e manoscritto per stesura testi e tesi' },
     { id: 'card:energy_battery', name: 'Gestione delle Energie', usage: 'Indicatore di carica e ritmo per prevenire sovraccarico cognitivo' },
+    { id: 'card:bicycle_commute', name: 'Bicicletta e Mobilità', usage: 'Bicicletta urbana per spostamenti, mobilità sostenibile e vita quotidiana' },
+    { id: 'card:car_travel', name: 'Automobile e Viaggi', usage: 'Automobile per spostamenti, pendolarismo e autonomia di movimento' },
+    { id: 'card:home_living', name: 'Casa e Alloggio', usage: 'Casa per vita domestica, studenti fuori sede, alloggio e famiglia' },
+    { id: 'card:train_transit', name: 'Treno e Pendolarismo', usage: 'Treno su binari per lunghi tragitti, trasporti pubblici e viaggi' },
+    { id: 'card:laptop_work', name: 'Computer e Lavoro Digitale', usage: 'Computer portatile aperto per studio digitale e smart working' },
+    { id: 'card:workplace_job', name: 'Lavoro e Professione', usage: 'Cartella professionale e ufficio per carriera e occupazione' },
+    { id: 'card:job_interview', name: 'Colloquio e Opportunità', usage: 'Stretta di mano e curriculum per selezioni e accordi professionali' },
+    { id: 'card:finance_budget', name: 'Budget e Spese', usage: 'Salvadanaio e bilancio economico per gestione delle spese e autonomia' },
+    { id: 'card:daily_errands', name: 'Spesa e Vita Quotidiana', usage: 'Borsa della spesa con generi alimentari per la gestione della casa' },
+    { id: 'card:healthy_living', name: 'Salute e Benessere Fisico', usage: 'Scarpa sportiva e borraccia per esercizio fisico e stile di vita sano' },
+    { id: 'card:campus_university', name: 'Ateneo e Campus', usage: 'Facciata universitaria per appartenenza accademica e dipartimento' },
+    { id: 'card:library_hall', name: 'Biblioteca e Aula Studio', usage: 'Scaffale di libri e lampada per concentrazione e studio silenzioso' },
+    { id: 'card:graduation_cap', name: 'Laurea e Traguardo', usage: 'Tocco accademico e pergamena per completamento studi e traguardo finale' },
 ];
 
 export const tavoloImageUrl = (id: string): string => {
