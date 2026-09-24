@@ -41,7 +41,10 @@ Oettingen 2014) riguardano le attività, non questa pagina.
    altera la visibilità è annunciato prima di salvare.
 6. **Pagina senza sidebar:** elenco rientrato a tutta larghezza; popup modale
    (desktop) o foglio a tutto schermo (mobile).
-7. Vista mappa grafica: fuori da questo lavoro.
+7. **Vista mappa solo desktop** (≥1024 px), in alternativa all'elenco; su
+   mobile resta solo l'elenco rientrato.
+8. Guardia bozze generica e condivisa (`useDraftGuard`).
+9. Contesto chat con `part_of` (fino a 3 sopraobiettivi).
 
 ## 4. Modello dati
 
@@ -100,11 +103,28 @@ Tutte sotto le rotte esistenti in `backend/routes/goals.py`.
 | `GoalsPanel.tsx` | Carica dati, barra azioni (+ Nuovo, Catalogo, «Mostra conclusi e archiviati»), gestisce quale popup è aperto, legge `?goal=` per aprire il popup direttamente. |
 | `GoalTree.tsx` | Elenco rientrato accessibile (`role="tree"`/`treeitem`, frecce per navigare, Invio apre). Seconda occorrenza di un obiettivo con più genitori: chiusa, con «⧉ anche sotto: …». Da livello 4 il rientro si ferma e compare «↳ livello n». |
 | `GoalDialog.tsx` | `<dialog>` nativo (`showModal`), foglio a tutto schermo sotto `sm`. Crea/modifica: «Serve a», campi, condivisione (propria + ereditata in sola lettura), «Si raggiunge con», Collegamenti e Crea attività in sezioni chiudibili, barra fissa Elimina/Annulla/Salva. Navigazione ↑/↓ interna al popup. |
+| `GoalMap.tsx` | Vista mappa desktop (vedi sotto). |
 | `GoalCatalogDialog.tsx` | Ricerca + filtro area; «Adotta» passa a `GoalDialog` precompilato. |
 | `GoalForm`, `GoalUI.tsx` | Riusati. |
 
 `app/profilo/obiettivi/page.tsx` usa `PersonalAreaHeader slug="obiettivi"` al
 posto di `PageHeader` (sottotitolo sostituito dalla descrizione dell'Area personale).
+
+### Vista mappa (solo desktop)
+
+- Interruttore «Elenco / Mappa» nella barra azioni, visibile solo da `lg`
+  (1024 px); la scelta è ricordata in `localStorage` (`cb_goals_view`) con
+  try/catch. Sotto `lg` l'interruttore non c'è e si vede sempre l'elenco.
+- `GoalMap.tsx` riusa `@xyflow/react` + `@dagrejs/dagre`, già usati dal Tavolo:
+  layout a livelli dall'alto (perché) al basso (come); ogni obiettivo compare
+  **una sola volta**, con tanti archi entranti quanti genitori.
+- Nodo: titolo, stato, data revisione, n/m, 👥 se condiviso (proprio o ereditato);
+  conclusi e archiviati seguono lo stesso filtro dell'elenco.
+- Sola lettura della struttura: niente trascinamento di nodi né creazione di
+  archi con il mouse. Pan e zoom sì; «Adatta alla vista». Clic o Invio su un
+  nodo apre lo stesso `GoalDialog`; dopo il salvataggio il layout si ricalcola.
+- Accessibilità: i nodi sono focalizzabili in ordine di elenco; la mappa ha
+  un'etichetta che rimanda all'elenco come alternativa equivalente.
 
 ### Guardia bozze (F06)
 
@@ -174,7 +194,9 @@ Browser (`frontend/tests/personal-goals.test.mjs` + `goals_browser_server.py`):
 - F06: testo in «Crea attività» → ✕, Esc, «← Area personale», Indietro chiedono conferma;
 - avviso di visibilità spostando sotto un ramo condiviso;
 - mobile 360 px: foglio a tutto schermo, nessuno scorrimento orizzontale;
-- tastiera: frecce nell'albero, Invio apre, focus torna alla riga alla chiusura.
+- tastiera: frecce nell'albero, Invio apre, focus torna alla riga alla chiusura;
+- mappa: visibile a 1280 px, assente a 360 px; un obiettivo con due genitori
+  compare una volta con due archi; clic sul nodo apre il popup.
 
 ## 9. Documentazione
 
@@ -184,6 +206,6 @@ catture Obiettivi nelle 6 lingue, `make guidance-check`, handoff Area personale
 
 ## 10. Fuori ambito
 
-Vista mappa grafica; trascinamento; intenzioni «se… allora…» nelle attività;
+Mappa su mobile; trascinamento di nodi o archi; intenzioni «se… allora…» nelle attività;
 creare un obiettivo senza compilare il bilancio (lotto 3A); completamento o
 suggerimenti automatici.
