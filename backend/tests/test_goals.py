@@ -245,3 +245,30 @@ def test_deleting_parent_breaks_branch_and_keeps_children(setup):
     assert rows['Child']['parent_ids'] == [other['id']] and rows['Child']['revision'] == both['revision'] + 1
     assert rows['Orphan']['parent_ids'] == [] and rows['Orphan']['revision'] == orphan['revision'] + 1
     assert db.query(models.GoalEdge).filter_by(parent_id=a['id']).count() == 0
+
+
+def test_sharing_follows_the_branch_without_private_ancestors(setup):
+    db, c, who, group_id = setup
+    top = goal(c, title='Privato in alto')
+    branch = goal(c, title='Ramo condiviso', parent_id=top['id'], shared_group_id=group_id)
+    leaf = goal(c, title='Foglia', parent_id=branch['id'])
+    deep = goal(c, title='Profonda', parent_id=leaf['id'])
+    goal(c, title='Altro privato', parent_id=top['id'])
+    teacher(who)
+    rows = {r['title']: r for r in c.get(f'/teacher/groups/{group_id}/goals').json()}
+    assert set(rows) == {'Ramo condiviso', 'Foglia', 'Profonda'}
+    assert rows['Ramo condiviso']['parent_ids'] == []
+    assert rows['Foglia']['parent_ids'] == [branch['id']] and rows['Profonda']['parent_ids'] == [leaf['id']]
+    assert 'motivation' not in rows['Foglia']
+    student(who)
+    assert c.delete(f"/user/goals/{leaf['id']}/parents/{branch['id']}?revision=1").status_code == 200
+    teacher(who)
+    assert {r['title'] for r in c.get(f'/teacher/groups/{group_id}/goals').json()} == {'Ramo condiviso'}
+
+
+def test_context_names_parent_goals(setup):
+    db, c, who, group_id = setup
+    parent = goal(c, title='Erasmus in Spagna')
+    goal(c, title='Migliorare inglese', parent_id=parent['id'])
+    context = goals_context(db, 'alice')
+    assert '"part_of": ["Erasmus in Spagna"]' in context
