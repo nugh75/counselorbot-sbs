@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, DateTime, JSON, UniqueConstraint, ForeignKey
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, DateTime, JSON, UniqueConstraint, ForeignKey, CheckConstraint
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -559,6 +559,23 @@ class GoalResourceLink(Base):
     goal_id = Column(Integer, ForeignKey("personal_goals.id", ondelete="CASCADE"), nullable=False, index=True)
     kind = Column(String, nullable=False)
     target_id = Column(String, nullable=False)
+
+
+class GoalEdge(Base):
+    """Rete degli obiettivi: il figlio serve il genitore; un figlio può avere più genitori.
+
+    L'eliminazione di un obiettivo rimuove i suoi archi (il ramo si spezza, i figli restano).
+    """
+
+    __tablename__ = "goal_edges"
+    __table_args__ = (
+        UniqueConstraint("parent_id", "child_id", name="uq_goal_edge"),
+        CheckConstraint("parent_id <> child_id", name="ck_goal_edge_not_self"),
+    )
+    id = Column(Integer, primary_key=True)
+    parent_id = Column(Integer, ForeignKey("personal_goals.id", ondelete="CASCADE"), nullable=False, index=True)
+    child_id = Column(Integer, ForeignKey("personal_goals.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class TeacherProfileRevision(Base):

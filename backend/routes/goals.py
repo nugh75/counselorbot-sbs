@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from .. import auth, database, models
 from ..goals import (ActionCreate, CatalogWrite, GoalCreate, GoalWrite, LinkWrite,
                      catalog_dict, catalog_visible, goal_dict, membership_ids, owned_goal,
-                     resources, validate_share)
+                     resources, validate_share, lock_network)
 from ..personal_timeline import ensure_personal_timeline
 from ..visual_tools import load_workspace, save_workspace, SavePersonalWorkspace
 from .groups import _require_visible_group, _visible_group_query
@@ -100,6 +100,9 @@ def create_goal(payload: GoalCreate, db: Session = Depends(database.get_db), use
         if existing:
             return goal_dict(db, existing)
     validate_share(db, user['username'], payload.shared_group_id)
+    if payload.parent_id is not None:
+        lock_network(db, user['username'])
+        owned_goal(db, user['username'], payload.parent_id)
     snapshot = {}
     if payload.catalog_id:
         entry = catalog_visible(db, user['username']).filter_by(id=payload.catalog_id).with_for_update().first()
@@ -108,9 +111,12 @@ def create_goal(payload: GoalCreate, db: Session = Depends(database.get_db), use
         if payload.catalog_version != entry.version:
             raise HTTPException(409, 'Catalog entry changed: reload')
         snapshot = dict(version=entry.version, data=entry.data, author_username=entry.author_username)
-    values = payload.model_dump(exclude={'revision', 'catalog_id', 'catalog_version'})
+    values = payload.model_dump(exclude={'revision', 'catalog_id', 'catalog_version', 'parent_id'})
     row = models.PersonalGoal(username=user['username'], catalog_id=payload.catalog_id, catalog_snapshot=snapshot, **values)
-    db.add(row); db.commit(); db.refresh(row)
+    db.add(row); db.flush()
+    if payload.parent_id is not None:
+        db.add(models.GoalEdge(parent_id=payload.parent_id, child_id=row.id))
+    db.commit(); db.refresh(row)
     return goal_dict(db, row)
 
 

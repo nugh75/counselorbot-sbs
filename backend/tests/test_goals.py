@@ -35,8 +35,8 @@ def proposal(**kwargs):
     return dict(data=dict(title='Organizzare lo studio', criteria='Una settimana di prova'), **kwargs)
 
 
-def goal(client, **kwargs):
-    response = client.post('/user/goals', json=dict(title='Il mio obiettivo', **kwargs))
+def goal(client, title='Il mio obiettivo', **kwargs):
+    response = client.post('/user/goals', json=dict(title=title, **kwargs))
     assert response.status_code == 201, response.text
     return response.json()
 
@@ -191,3 +191,15 @@ def test_tavolo_context_uses_only_explicitly_linked_owned_goals(setup):
     context = goals_context(db, 'alice', tavolo_id=table.id)
     assert 'Coordinate this table' in context and 'Different private project' not in context
     assert goals_context(db, 'bob', tavolo_id=table.id) == ''
+
+
+def test_create_subgoal_under_owned_parent(setup):
+    db, c, who, group_id = setup
+    parent = goal(c, title='Erasmus')
+    assert parent['parent_ids'] == []
+    child = goal(c, title='Inglese', parent_id=parent['id'])
+    assert child['parent_ids'] == [parent['id']]
+    student(who, 'bob')
+    assert c.post('/user/goals', json=dict(title='x', parent_id=parent['id'])).status_code == 404
+    student(who)
+    assert c.post('/user/goals', json=dict(title='x', parent_id=987654)).status_code == 404
