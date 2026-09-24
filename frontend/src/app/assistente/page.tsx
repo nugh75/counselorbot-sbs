@@ -621,7 +621,7 @@ export default function AssistentePage() {
                         ~40px dal fondo finestra e -mb-12 sul wrapper annulla il
                         padding-bottom del main, senza lasciare banda morta. */}
                     <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
-                        <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500">
+                        <div className="assistente-composer rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-500">
                             <textarea
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}

@@ -247,6 +247,14 @@
 .chat-viewport form { flex-shrink: 0; }
 .chat-viewport textarea { font-size: 1.066667rem; }
 
+/* Composer dell'assistente: la card esterna è l'indicatore di focus. Firefox
+   tratta i campi di testo come sempre :focus-visible, quindi la regola globale
+   dell'anello di accessibilità disegnava un secondo contorno INSIDE la card,
+   sovrapposto a bordo e ring: qui lo spegniamo sulla sola textarea. */
+.assistente-composer textarea:focus-visible {
+  outline: none;
+}
+
 /* In OpenCode's stacked layout the conversation precedes the score panel. */
 @media (max-width: 1279px) {
   .chat-viewport > .flex > .min-h-chat { order: -1; flex: none; }
