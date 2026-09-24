@@ -414,7 +414,7 @@ export default function AssistentePage() {
             : '';
 
     return (
-        <div className="flex flex-col lg:h-[calc(var(--chat-h)-2rem)]">
+        <div className="flex flex-col lg:h-[calc(var(--chat-h)_+_1.5rem)] lg:-mb-12">
             {/* Layout a due colonne: quadrati a sinistra, chat a destra */}
             <div className="flex flex-1 flex-col gap-4 lg:h-full lg:flex-row lg:gap-6 lg:overflow-hidden">
                 {/* Colonna sinistra: quadrati/topic e info topic selezionato - scrollabile */}
@@ -436,48 +436,82 @@ export default function AssistentePage() {
                         </div>
                     )}
 
-                    {/* Selettore base di conoscenza: collezioni RAG builtin + dinamiche. */}
+                    {/* Selettore base di conoscenza: lista verticale stile radio.
+                        Più leggibile della griglia 2×2: una sola scelta evidente,
+                        tutte le collezioni (builtin + dinamiche) in colonna. */}
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
                             {t('assistant.collection.label')}
                         </p>
-                        <div className="grid grid-cols-2 gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
-                            {availableCollections.map((c) => (
-                                <button
-                                    key={c.id}
-                                    type="button"
-                                    onClick={() => chooseCollection(c.id)}
-                                    className={`rounded-md px-2 py-1.5 text-xs font-semibold transition-colors ${
-                                        collection === c.id
-                                            ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-indigo-200'
-                                            : 'text-slate-500 hover:text-slate-800'
-                                    }`}
-                                >
-                                    {c.builtin ? t(`assistant.collection.${c.id}`) : c.label}
-                                </button>
-                            ))}
+                        <div role="radiogroup" aria-label={t('assistant.collection.label')} className="flex flex-col gap-0.5">
+                            {availableCollections.map((c) => {
+                                const active = collection === c.id;
+                                return (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={active}
+                                        onClick={() => chooseCollection(c.id)}
+                                        className={`flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-colors ${
+                                            active
+                                                ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200'
+                                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        <span
+                                            aria-hidden="true"
+                                            className={`h-2.5 w-2.5 shrink-0 rounded-full border-2 transition-colors ${
+                                                active ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300 bg-white'
+                                            }`}
+                                        />
+                                        <span className="truncate">{c.builtin ? t(`assistant.collection.${c.id}`) : c.label}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-1">
-                        {topics.map((topic) => {
-                            const Icon = topic.icon;
-                            const active = selectedTopic?.id === topic.id;
-                            return (
-                                <button
-                                    key={topic.id}
-                                    type="button"
-                                    onClick={() => chooseTopic(topic.id)}
-                                    className={`rounded-lg border p-3 text-left transition-colors ${
-                                        active ? 'border-indigo-300 bg-indigo-50 ring-1 ring-indigo-200' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    <Icon className={`h-5 w-5 ${active ? 'text-indigo-700' : 'text-slate-500'}`} />
-                                    <h2 className="mt-2 text-sm font-bold text-slate-900">{topic.title}</h2>
-                                    <p className="mt-1 text-xs leading-relaxed text-slate-500 line-clamp-2">{topic.body}</p>
-                                </button>
-                            );
-                        })}
+                    {/* Selettore argomenti: riga compatta per ogni topic; solo il
+                        topic selezionato si espande mostrando la descrizione. Così
+                        la lista resta scansionabile a colpo d'occhio e il dettaglio
+                        è visibile senza occupare spazio per tutti. */}
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1.5">
+                            {t('assistant.topic.label')}
+                        </p>
+                        <div role="radiogroup" aria-label={t('assistant.topic.label')} className="flex flex-col gap-0.5">
+                            {topics.map((topic) => {
+                                const Icon = topic.icon;
+                                const active = selectedTopic?.id === topic.id;
+                                return (
+                                    <button
+                                        key={topic.id}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={active}
+                                        onClick={() => chooseTopic(topic.id)}
+                                        className={`rounded-lg px-2.5 py-2 text-left transition-colors ${
+                                            active
+                                                ? 'bg-indigo-50 ring-1 ring-indigo-200'
+                                                : 'hover:bg-slate-100'
+                                        }`}
+                                    >
+                                        <span className="flex items-center gap-2.5">
+                                            <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-indigo-700' : 'text-slate-500'}`} aria-hidden="true" />
+                                            <span className={`truncate text-sm font-semibold ${active ? 'text-indigo-700' : 'text-slate-800'}`}>
+                                                {topic.title}
+                                            </span>
+                                        </span>
+                                        {active && (
+                                            <span className="mt-1.5 block pl-6.5 text-xs leading-relaxed text-slate-500">
+                                                {topic.body}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 
@@ -558,63 +592,67 @@ export default function AssistentePage() {
                     </div>
 
                     <ChatContinuation locale={lang} {...continuation} />
-                    {/* Sotto lg i controlli e il composer restano ancorati al fondo
-                        della vista anche mentre la colonna sinistra scorre: su
-                        finestre strette il taglio in basso nascondeva l'input.
-                        Il -mx-4/px-4 estende lo sfondo per coprire i px-4 del main. */}
+                    {/* Composer unico: input e controlli dentro la stessa card, cosi'
+                        il bordo e' sempre completo (prima i filetti flottanti davano
+                        l'impressione che la textarea fosse tagliata). Sotto lg la
+                        card resta ancorata al fondo della vista; da lg termina a
+                        ~40px dal fondo finestra e -mb-12 sul wrapper annulla il
+                        padding-bottom del main, senza lasciare banda morta. */}
                     <div className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10 max-lg:-mx-4 max-lg:-mb-12 max-lg:bg-slate-50 max-lg:px-4 max-lg:pb-3 max-lg:pt-1">
-                    <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
-                        <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={loading} />
-                        <ResponseLengthSelector
-                            value={responseLength}
-                            onChange={setResponseLength}
-                            disabled={loading}
-                        />
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={prepareQuestion}
-                            disabled={!selectedTopic}
-                            title={t('assistant.prepareQuestion')}
-                            aria-label={t('assistant.prepareQuestion')}
-                            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-bold text-slate-500 transition-colors hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            <span aria-hidden="true">?</span>
-                        </button>
-                        <textarea
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    send();
-                                }
-                            }}
-                            rows={2}
-                            placeholder={t('assistant.inputPlaceholder')}
-                            className="min-w-0 flex-1 resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                        {loading ? (
-                            <button
-                                onClick={stopGeneration}
-                                aria-label={t('chat.stop')}
-                                title={t('chat.stop')}
-                                className="flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-slate-700 px-0 text-white transition-colors hover:bg-slate-800 sm:w-auto sm:px-5"
-                            >
-                                <Square className="h-5 w-5 fill-current" />
-                            </button>
-                        ) : (
-                            <button
-                                onClick={send}
-                                disabled={!input.trim()}
-                                aria-label={t('chat.send')}
-                                className="flex h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-0 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-5"
-                            >
-                                <Send className="w-5 h-5" />
-                            </button>
-                        )}
-                    </div>
+                        <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500">
+                            <textarea
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        send();
+                                    }
+                                }}
+                                rows={2}
+                                placeholder={t('assistant.inputPlaceholder')}
+                                className="min-w-0 w-full resize-none border-0 bg-transparent px-2 py-1.5 text-sm focus:outline-none focus:ring-0"
+                            />
+                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                                <button
+                                    type="button"
+                                    onClick={prepareQuestion}
+                                    disabled={!selectedTopic}
+                                    title={t('assistant.prepareQuestion')}
+                                    aria-label={t('assistant.prepareQuestion')}
+                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-bold text-slate-500 transition-colors hover:border-indigo-300 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    <span aria-hidden="true">?</span>
+                                </button>
+                                <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                                    <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={loading} />
+                                    <ResponseLengthSelector
+                                        value={responseLength}
+                                        onChange={setResponseLength}
+                                        disabled={loading}
+                                    />
+                                {loading ? (
+                                    <button
+                                        onClick={stopGeneration}
+                                        aria-label={t('chat.stop')}
+                                        title={t('chat.stop')}
+                                        className="flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-slate-700 px-0 text-white transition-colors hover:bg-slate-800 sm:w-auto sm:px-5"
+                                    >
+                                        <Square className="h-5 w-5 fill-current" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={send}
+                                        disabled={!input.trim()}
+                                        aria-label={t('chat.send')}
+                                        className="flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-0 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-5"
+                                    >
+                                        <Send className="w-5 h-5" />
+                                    </button>
+                                )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
