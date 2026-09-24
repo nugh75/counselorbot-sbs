@@ -7,9 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
-from ..goals import (ActionCreate, CatalogWrite, GoalCreate, GoalWrite, LinkWrite,
+from ..goals import (ActionCreate, CatalogWrite, GoalCreate, GoalWrite, LinkWrite, ParentWrite,
                      catalog_dict, catalog_visible, goal_dict, membership_ids, owned_goal,
-                     resources, validate_share, lock_network)
+                     resources, validate_share, lock_network, descendant_ids)
 from ..personal_timeline import ensure_personal_timeline
 from ..visual_tools import load_workspace, save_workspace, SavePersonalWorkspace
 from .groups import _require_visible_group, _visible_group_query
@@ -133,9 +133,40 @@ def update_goal(goal_id: int, payload: GoalWrite, db: Session = Depends(database
 
 @router.delete('/user/goals/{goal_id}')
 def delete_goal(goal_id: int, revision: int = Query(ge=1), db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
+    lock_network(db, user['username'])
     row = owned_goal(db, user['username'], goal_id, revision)
+    # Children lose this parent: the edge belongs to the child, so its revision moves.
+    children = db.query(models.GoalEdge.child_id).filter_by(parent_id=goal_id)
+    db.query(models.PersonalGoal).filter(models.PersonalGoal.id.in_(children)).update(
+        {models.PersonalGoal.revision: models.PersonalGoal.revision + 1}, synchronize_session=False)
     db.delete(row); db.commit()
     return {'deleted': True}
+
+
+@router.post('/user/goals/{goal_id}/parents')
+def add_parent(goal_id: int, payload: ParentWrite, db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
+    lock_network(db, user['username'])
+    row = owned_goal(db, user['username'], goal_id, payload.revision)
+    owned_goal(db, user['username'], payload.parent_id)
+    if payload.parent_id == goal_id or payload.parent_id in descendant_ids(db, [goal_id]):
+        raise HTTPException(422, 'Cycle')
+    if not db.query(models.GoalEdge).filter_by(parent_id=payload.parent_id, child_id=goal_id).first():
+        db.add(models.GoalEdge(parent_id=payload.parent_id, child_id=goal_id))
+        row.revision += 1
+    db.commit(); db.refresh(row)
+    return goal_dict(db, row)
+
+
+@router.delete('/user/goals/{goal_id}/parents/{parent_id}')
+def remove_parent(goal_id: int, parent_id: int, revision: int = Query(ge=1), db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
+    lock_network(db, user['username'])
+    row = owned_goal(db, user['username'], goal_id, revision)
+    edge = db.query(models.GoalEdge).filter_by(parent_id=parent_id, child_id=goal_id).first()
+    if not edge:
+        raise HTTPException(404, 'Parent unavailable')
+    db.delete(edge); row.revision += 1
+    db.commit(); db.refresh(row)
+    return goal_dict(db, row)
 
 
 @router.post('/user/goals/{goal_id}/links')
