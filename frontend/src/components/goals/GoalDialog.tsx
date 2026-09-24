@@ -65,6 +65,9 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     // pending draft (goal form, action, link selection or parent choice) at a time:
     // the others stay disabled so a mutation never silently discards a sibling draft.
     const dirty = fieldsDirty || actionDraft || Boolean(selection || parentChoice);
+    // Once an action/selection/parent draft exists, the goal form itself locks too:
+    // otherwise editing and saving it would remount the body and silently drop that draft.
+    const otherDraft = actionDraft || Boolean(selection) || Boolean(parentChoice);
     useEffect(() => { onDirty(dirty); return () => onDirty(false); }, [dirty, onDirty]);
     useDraftGuard(dirty, l('discard'));
     const loadResources = useCallback(() => { void goalApi<GoalResource[]>('/user/goal-resources').then(rows => { setResources(rows); setResourcesError(null); }).catch(setResourcesError); }, []);
@@ -131,7 +134,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
             {goal && candidates.length > 0 && <div className="flex flex-wrap items-end gap-2"><div className="min-w-0 flex-1"><Field label={l('addParent')}><select className={input} disabled={busy || fieldsDirty || actionDraft || Boolean(selection)} value={parentChoice} onChange={e => setParentChoice(e.target.value)}><option value="">—</option>{candidates.map(row => <option key={row.id} value={row.id}>{row.title.slice(0, 120)}</option>)}</select></Field></div><Button type="button" variant="secondary" disabled={!parentChoice || busy || fieldsDirty || actionDraft || Boolean(selection)} onClick={attach}>{l('attach')}</Button></div>}
             {!goal && parentId && <p className="text-sm text-slate-600">{l('howPrompt')}</p>}
             {goal?.catalog_snapshot.data && <details className="rounded-md bg-slate-50 p-3 text-sm"><summary className="cursor-pointer py-1 font-semibold">{l('source')} · {l('version')} {goal.catalog_snapshot.version}</summary><p className="mt-2">{goal.catalog_snapshot.data.description}</p><p className="mt-2 whitespace-pre-wrap"><strong>{l('suggestions')}: </strong>{goal.catalog_snapshot.data.suggestions}</p></details>}
-            <form id="goal-dialog-form" onSubmit={e => { e.preventDefault(); submit(); }}><fieldset disabled={busy} className="space-y-4">
+            <form id="goal-dialog-form" onSubmit={e => { e.preventDefault(); submit(); }}><fieldset disabled={busy || (Boolean(goal) && otherDraft)} className="space-y-4">
                 <GoalForm form={form} setForm={setForm} groups={groups} />
                 {inherited.map(([group, from]) => <p key={group} className="text-sm text-slate-600">ℹ {goalFormat(lang, 'inheritedShare', { group: groupName(group), goal: from.title })}</p>)}
                 {goal && <p className="text-sm text-slate-600">{l('doneHelp')}</p>}
@@ -165,7 +168,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-white p-4 sm:px-6">
             {goal && <Button type="button" variant="ghost" disabled={busy || dirty} onClick={() => void remove()}>{l('delete')}</Button>}
-            <div className="ml-auto flex gap-2"><Button type="button" variant="secondary" onClick={onRequestClose}>{l('cancel')}</Button><Button type="submit" form="goal-dialog-form" disabled={busy || (goal ? !fieldsDirty : !form.title.trim())}>{l('save')}</Button></div>
+            <div className="ml-auto flex gap-2"><Button type="button" variant="secondary" onClick={onRequestClose}>{l('cancel')}</Button><Button type="submit" form="goal-dialog-form" disabled={busy || (goal ? !fieldsDirty || otherDraft : !form.title.trim())}>{l('save')}</Button></div>
         </div>
     </>;
 }
