@@ -80,5 +80,6 @@ da `57aee4f` fino a `af24ce2` (includono il rilascio dell'Area personale).
 1. Chiedere all'utente conferma visiva dopo hard refresh su Firefox.
 2. Se restano difetti di layout: cattura intera finestra (non ritagliata) e
    confronto con le misure headless in `/tmp/assistente-v*.png`.
-3. Proseguire poi con l'handoff `area-personale-handoff.md` (verifica rilascio
-   SSO reale + ripresa piano 0.3 su Obiettivi con schema ASCII).
+3. Punti 1–2 restano aperti finché l’utente non conferma visivamente.
+   L’handoff `area-personale-handoff.md` è ripreso il 24/09 su Obiettivi
+   (schema ASCII presentato): non duplicare qui quel lavoro.
