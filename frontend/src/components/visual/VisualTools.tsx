@@ -43,6 +43,15 @@ const tabIcons: Record<Tab, typeof LayoutList> = {
     board: LayoutList, comparison: Columns3, cards: Layers, timeline: GitCommitHorizontal,
 };
 const isWorkTab = (tab: Tab): tab is WorkTab => workTabs.includes(tab as WorkTab);
+// A refresh should not reopen the creation form: drop `new` once it has served its purpose.
+const stripNewParam = () => {
+    try {
+        const url = new URL(window.location.href);
+        if (!url.searchParams.has('new')) return;
+        url.searchParams.delete('new');
+        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+    } catch { /* best effort only */ }
+};
 export function VisualTools(props: Props) {
     return <WorkspaceView key={props.personal ? 'personal' : props.sessionId} {...props} />;
 }
@@ -108,6 +117,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     useEffect(() => {
         if (!personal || tab !== 'board' || !loaded || !openCreate) return;
         setCreateOpen(true);
+        stripNewParam();
         const frame = requestAnimationFrame(() => {
             const input = document.getElementById(`${id}-new-action-title`);
             input?.scrollIntoView({ block: 'center' });

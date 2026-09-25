@@ -19,9 +19,9 @@ export function ActionDateFields({ value, onChange, locale }: {
     return <div className="space-y-2">
         <TimelineDateFields value={value} onChange={onChange} locale={locale} />
         {value.date_mode && <Tooltip content={l('removeDate')}>
-            <Button type="button" variant="ghost" size="sm" className="gap-1.5" aria-label={l('removeDate')}
+            <Button type="button" variant="ghost" size="md" className="gap-1.5" aria-label={l('removeDate')}
                 onClick={() => onChange({ date_mode: null, start_date: null, end_date: null })}>
-                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />{l('removeDate')}
+                <Trash2 className="h-4 w-4" aria-hidden="true" />{l('removeDate')}
             </Button>
         </Tooltip>}
     </div>;
