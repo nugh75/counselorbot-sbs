@@ -19,6 +19,7 @@ export function PersonalVisualWorkspacePage({ tab }: { tab: WorkTab }) {
     const params = useSearchParams();
     const { lang } = useI18n();
     const eventId = tab === 'timeline' ? params.get('event') || undefined : undefined;
+    const openCreate = tab === 'board' && params.get('new') === '1';
     const request = useMemo(() => ({ tab, nonce: 1, eventId }), [eventId, tab]);
 
     useEffect(() => {
@@ -36,6 +37,7 @@ export function PersonalVisualWorkspacePage({ tab }: { tab: WorkTab }) {
             locale={lang}
             request={request}
             legacySession={params.get('session') || undefined}
+            openCreate={openCreate}
         />
     </main>;
 }
