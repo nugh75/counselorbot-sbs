@@ -60,33 +60,74 @@ export function Header() {
     const authLabel = isAuthenticated ? t('nav.logout') : t('nav.adminLogin');
     const AuthIcon = isAuthenticated ? LogOut : LogIn;
 
-    // Azioni di navigazione secondarie: in linea da `xl`, raccolte in un menu su mobile.
-    const secondaryItems: SecondaryItem[] = [];
-    // Guida all'interfaccia: disponibile per tutti, anche senza login.
-    secondaryItems.push({ key: 'guide', href: '/guide', icon: BookOpen, label: t('nav.guide') });
+    // Navigazione raggruppata per dominio: strumenti di lavoro prima, account dopo
+    // (stessa struttura nel menu mobile). Guida è in ACCOUNT: utility, non strumento.
+    const workItems: SecondaryItem[] = [];
+    const accountItems: SecondaryItem[] = [];
     if (isAuthenticated) {
-        secondaryItems.push({ key: 'orientation', href: '/bussola', icon: Compass, label: t('orientation.landing.open') });
+        workItems.push({ key: 'orientation', href: '/bussola', icon: Compass, label: t('orientation.landing.open') });
     }
     if (canOpenAssistant) {
-        secondaryItems.push({ key: 'assistant', href: '/assistente', icon: Bot, label: t('assistant.title') });
-    }
-    if (canOpenPersonalPage) {
-        secondaryItems.push({ key: 'profile', href: '/profilo', icon: User, label: t('profile.nav') });
+        workItems.push({ key: 'assistant', href: '/assistente', icon: Bot, label: t('assistant.title') });
     }
     if (canUseTeacherAssistant(identity)) {
         // Docenti, ricercatori e admin: gruppi/classi (piani di somministrazione).
-        secondaryItems.push({
+        workItems.push({
             key: 'teacher-panel',
             href: '/docente',
             icon: Users,
             label: t(canOpenResearchConsole ? 'nav.groupsClasses' : 'nav.teacherPanel'),
         });
     }
-    if (canOpenResearchConsole) {
-        secondaryItems.push({ key: 'admin', href: '/admin', icon: Settings, label: t('nav.admin') });
+    if (canOpenPersonalPage) {
+        accountItems.push({ key: 'profile', href: '/profilo', icon: User, label: t('profile.nav') });
     }
+    // Guida all'interfaccia: disponibile per tutti, anche senza login.
+    accountItems.push({ key: 'guide', href: '/guide', icon: BookOpen, label: t('nav.guide') });
+    if (canOpenResearchConsole) {
+        accountItems.push({ key: 'admin', href: '/admin', icon: Settings, label: t('nav.admin') });
+    }
+    const secondaryItems = [...workItems, ...accountItems];
+    const navGroups = [
+        { key: 'work', label: t('profile.tab.tools'), items: workItems },
+        { key: 'account', label: t('header.account'), items: accountItems },
+    ].filter(group => group.items.length > 0);
 
     const desktopItems = secondaryItems.filter(item => !item.menuOnly);
+    // Strumenti di lavoro in linea da `lg`; il resto resta come oggi.
+    const workInline = (
+        <>
+            {workItems.length > 0 && (
+                <div className="hidden items-center gap-1 lg:flex">
+                    {workItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <Tooltip key={item.key} content={item.label}>
+                                <Link href={item.href} className="console-topbar-icon" aria-label={item.label}>
+                                    <Icon className="w-4 h-4" />
+                                </Link>
+                            </Tooltip>
+                        );
+                    })}
+                </div>
+            )}
+            {workItems.length > 0 && accountItems.length > 0 && <span className={cn(SEPARATOR, 'hidden lg:block')} />}
+            {accountItems.length > 0 && (
+                <div className="hidden items-center gap-1 lg:flex">
+                    {accountItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <Tooltip key={item.key} content={item.label}>
+                                <Link href={item.href} className="console-topbar-icon" aria-label={item.label}>
+                                    <Icon className="w-4 h-4" />
+                                </Link>
+                            </Tooltip>
+                        );
+                    })}
+                </div>
+            )}
+        </>
+    );
 
     return (
         <TooltipProvider delayDuration={300}>
@@ -111,14 +152,14 @@ export function Header() {
 
                         {isLoading ? (
                             // Riserva lo spazio mentre l'identità arriva: niente layout shift.
-                            <div className="hidden items-center gap-1 xl:flex" aria-hidden="true">
+                            <div className="hidden items-center gap-1 lg:flex" aria-hidden="true">
                                 <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></span>
                                 <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></span>
                             </div>
                         ) : (
                             <>
                                 <HeaderMenu
-                                    items={secondaryItems}
+                                    groups={navGroups}
                                     resumeEntries={resumeEntries}
                                     label={t('header.menu')}
                                     accountLabel={accountLabel}
@@ -147,29 +188,11 @@ export function Header() {
                                     </span>
                                 )}
 
-                                {/* Navigazione secondaria: in linea su schermi >= xl; su mobile sta tutta nel menu. */}
-                                {desktopItems.length > 0 && (
-                                    <div className="hidden items-center gap-1 xl:flex">
-                                        {desktopItems.map((item) => {
-                                            const Icon = item.icon;
-                                            return (
-                                                <Tooltip key={item.key} content={item.label}>
-                                                    {item.external ? (
-                                                        <a href={item.href} className="console-topbar-icon" aria-label={item.label}>
-                                                            <Icon className="w-4 h-4" />
-                                                        </a>
-                                                    ) : (
-                                                        <Link href={item.href} className="console-topbar-icon" aria-label={item.label}>
-                                                            <Icon className="w-4 h-4" />
-                                                        </Link>
-                                                    )}
-                                                </Tooltip>
-                                            );
-                                        })}
-                                    </div>
-                                )}
+                                {/* Navigazione inline: strumenti da `lg`, account accanto;
+                                    su schermi più piccoli sta tutta nel menu. */}
+                                {workInline}
 
-                                {desktopItems.length > 0 && <span className={cn(SEPARATOR, 'hidden xl:block')} />}
+                                {desktopItems.length > 0 && <span className={cn(SEPARATOR, 'hidden lg:block')} />}
 
                                 {/* Accedi ad altre risorse: subito prima di Esci. */}
                                 {showServices && (
@@ -219,7 +242,7 @@ export function Header() {
 }
 
 function HeaderMenu({
-    items,
+    groups,
     resumeEntries,
     label,
     accountLabel,
@@ -229,7 +252,7 @@ function HeaderMenu({
     servicesHref,
     servicesLabel,
 }: {
-    items: SecondaryItem[];
+    groups: { key: string; label: string; items: SecondaryItem[] }[];
     resumeEntries: ResumeEntries;
     label: string;
     accountLabel?: string;
@@ -284,7 +307,7 @@ function HeaderMenu({
     const itemClass = 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700';
 
     return (
-        <div ref={ref} className={cn("relative", !items.some(item => item.menuOnly) && "xl:hidden")}>
+        <div ref={ref} className={cn("relative", !groups.some(group => group.items.some(item => item.menuOnly)) && "lg:hidden")}>
             <button
                 type="button"
                 ref={triggerRef}
@@ -310,24 +333,27 @@ function HeaderMenu({
                             </div>
                         </div>
                     )}
-                    {items.map((item) => {
-                        const Icon = item.icon;
-                        const inner = (
-                            <>
-                                <Icon className="w-4 h-4 shrink-0" />
-                                <span className="truncate">{item.label}</span>
-                            </>
-                        );
-                        return item.external ? (
-                            <a key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "xl:hidden")} onClick={close}>
-                                {inner}
-                            </a>
-                        ) : (
-                            <Link key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "xl:hidden")} onClick={close}>
-                                {inner}
-                            </Link>
-                        );
-                    })}
+                    {groups.map(group => <nav key={group.key} aria-label={group.label}>
+                        <div className="border-b border-slate-100 px-3 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">{group.label}</div>
+                        {group.items.map((item) => {
+                            const Icon = item.icon;
+                            const inner = (
+                                <>
+                                    <Icon className="w-4 h-4 shrink-0" />
+                                    <span className="truncate">{item.label}</span>
+                                </>
+                            );
+                            return item.external ? (
+                                <a key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "lg:hidden")} onClick={close}>
+                                    {inner}
+                                </a>
+                            ) : (
+                                <Link key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "lg:hidden")} onClick={close}>
+                                    {inner}
+                                </Link>
+                            );
+                        })}
+                    </nav>)}
                     <div className="xl:hidden">
                     {/* Sessioni congelate + chat locale interrotta: su mobile questa è
                         l'unica porta, l'icona "Riprendi" della topbar non c'è. */}
