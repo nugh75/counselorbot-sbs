@@ -7,6 +7,7 @@ export type TimelineItemKind = 'milestone' | 'action' | 'goal' | 'appointment';
 export type TimelineItem = {
     key: string; kind: TimelineItemKind; title: string; start: string | null; end: string | null;
     href: string | null; editable: boolean; eventId?: string; stage?: string; status?: string;
+    dateMode?: 'point' | 'period'; deadline?: boolean;
 };
 
 const UNDATED = '9999-99-99';
@@ -24,6 +25,7 @@ export function timelineItems(workspace: { actions: Action[]; timeline: { events
             key: `${kind}-${event.id}`, kind, title: event.title,
             start: dates.start_date ?? null, end: dates.end_date ?? null,
             href: null, editable: !event.institution_event, eventId: event.id,
+            dateMode: dates.date_mode ?? undefined, deadline: event.institution_date === 'deadline',
         });
     }
     for (const action of workspace.actions) {
@@ -32,6 +34,7 @@ export function timelineItems(workspace: { actions: Action[]; timeline: { events
             key: `action-${action.id}`, kind: 'action', title: action.title,
             start: action.start_date ?? null, end: action.end_date ?? null,
             href: `/profilo/azioni#action-${action.id}`, editable: false, stage: action.stage,
+            dateMode: action.date_mode ?? undefined,
         });
     }
     for (const goal of goals) {

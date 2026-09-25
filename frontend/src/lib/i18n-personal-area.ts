@@ -25,7 +25,7 @@ const labels = {
 const names = {
     obiettivi: ['Obiettivi', 'Goals', 'Objetivos', 'Objectifs', 'Ziele', 'Mål'],
     azioni: ['Attività', 'Activities', 'Actividades', 'Activités', 'Aktivitäten', 'Aktiviteter'],
-    timeline: ['Calendario e diario', 'Calendar and diary', 'Calendario y diario', 'Calendrier et journal', 'Kalender und Tagebuch', 'Kalender och dagbok'],
+    timeline: ['Linea del tempo', 'Timeline', 'Línea del tiempo', 'Ligne du temps', 'Zeitleiste', 'Tidslinje'],
     taccuino: ['Taccuino', 'Notebook', 'Cuaderno', 'Carnet', 'Notizbuch', 'Anteckningsbok'],
     libretto: ['Libretto', 'Booklet', 'Cuadernillo', 'Livret', 'Arbeitsheft', 'Arbetshäfte'],
     cambiamenti: ['Cambiamenti', 'Changes', 'Cambios', 'Changements', 'Veränderungen', 'Förändringar'],
@@ -45,7 +45,7 @@ const names = {
 const descriptions = {
     obiettivi: ['Scegli che cosa vuoi raggiungere e il prossimo passo.', 'Choose what you want to achieve and your next step.', 'Elige qué quieres alcanzar y tu próximo paso.', 'Choisis ce que tu veux atteindre et ta prochaine étape.', 'Wähle, was du erreichen möchtest und deinen nächsten Schritt.', 'Välj vad du vill uppnå och ditt nästa steg.'],
     azioni: ['Organizza quello che vuoi fare, stai facendo o hai provato.', 'Organize what you want to do, are doing or have tried.', 'Organiza lo que quieres hacer, estás haciendo o has probado.', 'Organise ce que tu veux faire, fais ou as essayé.', 'Ordne, was du tun möchtest, gerade tust oder ausprobiert hast.', 'Ordna det du vill göra, gör eller har provat.'],
-    timeline: ['Pianifica le tappe e racconta le esperienze.', 'Plan milestones and describe your experiences.', 'Planifica etapas y cuenta tus experiencias.', 'Planifie les étapes et raconte tes expériences.', 'Plane Etappen und beschreibe deine Erfahrungen.', 'Planera etapper och berätta om dina erfarenheter.'],
+    timeline: ['Guarda nel tempo tappe, attività, obiettivi e appuntamenti.', 'See milestones, activities, goals and appointments over time.', 'Mira en el tiempo etapas, actividades, objetivos y citas.', 'Regarde dans le temps tes étapes, tes activités, tes objectifs et tes rendez-vous.', 'Siehe Etappen, Aktivitäten, Ziele und Termine im Zeitverlauf.', 'Se etapper, aktiviteter, mål och tider över tid.'],
     taccuino: ['Racconta il tuo contesto, gli interessi e il modo di apprendere.', 'Describe your context, interests and way of learning.', 'Describe tu contexto, tus intereses y tu forma de aprender.', 'Décris ton contexte, tes intérêts et ta façon d’apprendre.', 'Beschreibe deinen Hintergrund, deine Interessen und deine Art zu lernen.', 'Beskriv din situation, dina intressen och hur du lär dig.'],
     libretto: ['Prepara una prova e rifletti su come è andata.', 'Prepare something to try and reflect on how it went.', 'Prepara algo para probar y reflexiona sobre cómo fue.', 'Prépare une mise en pratique et réfléchis à son déroulement.', 'Bereite etwas zum Ausprobieren vor und reflektiere, wie es lief.', 'Förbered något att prova och reflektera över hur det gick.'],
     cambiamenti: ['Confronta ciò che hai scritto e rifletti sui cambiamenti.', 'Compare what you have written and reflect on changes.', 'Compara lo que has escrito y reflexiona sobre los cambios.', 'Compare ce que tu as écrit et réfléchis aux changements.', 'Vergleiche deine Texte und reflektiere über Veränderungen.', 'Jämför det du har skrivit och reflektera över förändringar.'],

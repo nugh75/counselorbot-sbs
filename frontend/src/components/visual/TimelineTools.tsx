@@ -6,7 +6,6 @@ import { ArrowDown, ArrowUp, BriefcaseBusiness, Flag, GraduationCap, Plus, Repea
 import { Button } from '@/components/ui/Button';
 import { AssignmentSource } from '@/components/teacher/AssignmentSource';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { TimelineCalendar } from './TimelineCalendar';
 import { TimelineDateFields } from './TimelineDateFields';
 import { datePeriod, sortedTimeline, validTimelineDates, type TimelineDates } from '@/lib/timeline-dates';
 import { InstitutionTimelineDates } from './InstitutionTimelineDates';
@@ -91,7 +90,7 @@ export function TimelineTools({ personal = false, sessionId, locale, work, edit,
         finally { setPending(false); }
     };
     return <fieldset disabled={pending} className="min-w-0 space-y-4">
-        {personal && <><p className="text-sm leading-relaxed text-slate-600">{l('calendarHelp')}</p><TimelineCalendar events={timeline.events} locale={locale} onOpen={id => { setActiveEvent(id); window.requestAnimationFrame(() => { const element = document.getElementById(`timeline-${id}`); element?.scrollIntoView({ block: 'nearest' }); element?.focus({ preventScroll: true }); }); }} /></>}
+        {personal && <p className="text-sm leading-relaxed text-slate-600">{l('calendarHelp')}</p>}
         {!personal && <label className="block text-sm font-medium">{l('timelineTitle')}<input data-workspace-field required={timeline.events.length > 0} maxLength={160} className={field} value={timeline.title} onChange={e => edit({ ...work, timeline: { ...timeline, title: e.target.value } })} /></label>}
         <details open={!timeline.events.length || Boolean(title)} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addEvent')}</summary>

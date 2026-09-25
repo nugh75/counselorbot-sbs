@@ -16,15 +16,17 @@ import { GoalIssue } from './GoalUI';
 const VIEW_KEY = 'cb_goals_view';
 const readView = (): 'list' | 'map' => { try { return localStorage.getItem(VIEW_KEY) === 'map' ? 'map' : 'list'; } catch { return 'list'; } };
 // A reload must not reopen a closed (or since-deleted) goal: drop `?goal=` once the dialog is
-// done with it, keeping Next's own history state object intact.
-const stripGoalParam = () => {
+// done with it, keeping Next's own history state object intact. Same for `?new=1`, which opens
+// the creation dialog from the timeline bar.
+const stripParam = (name: string) => {
     try {
         const url = new URL(window.location.href);
-        if (!url.searchParams.has('goal')) return;
-        url.searchParams.delete('goal');
+        if (!url.searchParams.has(name)) return;
+        url.searchParams.delete(name);
         window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
     } catch { /* best effort only */ }
 };
+const stripGoalParam = () => stripParam('goal');
 
 export function GoalsPanel() {
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
@@ -44,7 +46,9 @@ export function GoalsPanel() {
     }, []);
     useEffect(() => {
         void load().then(rows => {
-            const requested = Number(new URLSearchParams(window.location.search).get('goal'));
+            const search = new URLSearchParams(window.location.search);
+            if (search.get('new') === '1') { setSaved(false); setTarget({ kind: 'create' }); stripParam('new'); return; }
+            const requested = Number(search.get('goal'));
             if (!requested) return;
             if (rows.some(row => row.id === requested)) setTarget({ kind: 'edit', id: requested });
             else stripGoalParam();

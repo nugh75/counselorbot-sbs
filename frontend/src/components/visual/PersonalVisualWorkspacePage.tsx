@@ -4,6 +4,8 @@ import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { JourneyOverview } from '@/components/goals/JourneyOverview';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
+import { PersonalTimeline } from '@/components/visual/PersonalTimeline';
 import { VisualTools, type WorkTab } from '@/components/visual/VisualTools';
 import { useI18n } from '@/lib/i18n-context';
 import { visualLabel } from '@/lib/i18n-visual-tools';
@@ -25,6 +27,12 @@ export function PersonalVisualWorkspacePage({ tab }: { tab: WorkTab }) {
     useEffect(() => {
         document.title = `${visualLabel(lang, tab)} - CounselorBot`;
     }, [lang, tab]);
+
+    if (tab === 'timeline') return <main className="page-narrow space-y-4 p-4">
+        <PersonalAreaHeader slug="timeline" />
+        <JourneyOverview kind={GOAL_KIND[tab]} />
+        <PersonalTimeline locale={lang} />
+    </main>;
 
     return <main className="page-narrow space-y-4 p-4">
         <PageHeader title={visualLabel(lang, tab)} />
