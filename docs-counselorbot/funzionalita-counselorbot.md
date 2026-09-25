@@ -146,7 +146,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 
 | Funzione | Dove | Che cosa permette |
 | --- | --- | --- |
-| Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; modificarli in un popup; adottare proposte del catalogo; collegare lavori e attività; condividere un ramo con i docenti di un gruppo. Su computer anche vista mappa. |
+| Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; modificarli in un popup; adottare proposte del catalogo; collegare lavori e attività; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
 | Calendario e diario | `/profilo/timeline` | Pianificare attività su una data o un periodo, poi annotare cosa è successo e riflettere. |
 | Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. |
 | Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
