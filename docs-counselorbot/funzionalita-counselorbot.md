@@ -38,7 +38,10 @@ modalità ogni volta e non cambia la preferenza degli altri strumenti.
   richiesta CounselorBot; i documenti di approfondimento sono recuperati dall’indice.
 - **Guida interfaccia** (`/guide`): pubblica anche senza login, con percorsi per
   uso personale e per docenti, immagini ingrandibili e collegamenti alle sezioni.
-  Tutte le 15 sezioni personali e le 7 sezioni per docenti includono almeno uno
+  Senza parametro `audience` il percorso segue il ruolo: docenti, ricercatori e
+  amministratori aprono la versione docente, studenti e visitatori quella
+  studente, e solo chi può usare l’assistente docente vede il selettore dei due
+  percorsi. Tutte le 15 sezioni personali e le 7 sezioni per docenti includono almeno uno
   screenshot pertinente; le schermate della piattaforma sono disponibili nelle
   sei lingue, mentre le due viste della chat sono dimostrazioni in italiano.
 - Interfaccia e conversazioni: italiano, inglese, spagnolo, francese, tedesco e
