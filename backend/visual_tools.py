@@ -44,16 +44,34 @@ class DatedItem(Item):
 
 
 class Action(DatedItem):
-    kind: Literal['activity', 'book', 'article', 'film'] = 'activity'
+    kind: Literal['activity', 'book', 'article', 'film', 'check'] = 'activity'
     title: str = Field(min_length=1, max_length=160)
     detail: str = Field(default='', max_length=1000)
     stage: Literal['todo', 'doing', 'done'] = 'todo'
-    reflection: str = Field(default='', max_length=1000)
+    reflection: str = Field(default='', max_length=1000)  # per un controllo: «Cosa osservo»
+    progress: Literal['on_track', 'slow', 'stuck'] | None = None
+    adjustment: str = Field(default='', max_length=1000)  # per un controllo: «Cosa cambio»
 
     @model_validator(mode='after')
     def valid_dates(self):
         self.check_dates()
+        if self.kind != 'check' and (self.progress or self.adjustment):
+            raise ValueError('Progress belongs to checks only')
+        if self.kind == 'check' and self.stage == 'done' and not self.progress:
+            raise ValueError('A completed check needs its progress')
         return self
+
+
+class EventReview(StrictModel):
+    """Rilettura di una tappa passata (ex scheda evento e biografia del libretto)."""
+    role: Literal['protagonist', 'observer', 'alongside'] | None = None
+    worked: list[Annotated[str, Field(max_length=300)]] = Field(default_factory=list, max_length=10)
+    did_not_work: list[Annotated[str, Field(max_length=300)]] = Field(default_factory=list, max_length=10)
+    reading: str = Field(default='', max_length=1500)
+    discovery: str = Field(default='', max_length=1000)
+    keywords: str = Field(default='', max_length=200)
+    try_next: str = Field(default='', max_length=1000)
+    how_when: str = Field(default='', max_length=1000)
 
 
 class Card(Item):
@@ -123,11 +141,14 @@ class TimelineEvent(DatedItem):
     institution_available: bool = True
     institution_date: Literal['start', 'deadline'] = 'start'
     personal_links: list[Literal['notebook', 'booklet', 'orientation']] = Field(default_factory=list, max_length=3)
+    # 'booklet' is accepted only as legacy data: migration A7 removes it and the
+    # UI no longer offers it.
     title: str = Field(min_length=1, max_length=160)
     period: str = Field(min_length=1, max_length=100)
     tense: Literal['past', 'future'] = 'past'
     symbol: Literal['milestone', 'study', 'work', 'change'] = 'milestone'
     reflection: str = Field(default='', max_length=1000)
+    review: EventReview | None = None
     action_ids: list[Identifier] = Field(default_factory=list, max_length=30)
     portfolio: list[PortfolioLink] = Field(default_factory=list, max_length=20)
 
@@ -138,6 +159,8 @@ class TimelineEvent(DatedItem):
             self.period = self.start_date if self.date_mode == 'point' else f'{self.start_date or "…"} → {self.end_date or "…"}'
         if len(set(self.action_ids)) != len(self.action_ids) or len({p.id for p in self.portfolio}) != len(self.portfolio):
             raise ValueError('Duplicate links')
+        if self.review is not None and self.tense != 'past':
+            raise ValueError('Only past milestones carry a review')
         return self
 
 
