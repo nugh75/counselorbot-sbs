@@ -55,8 +55,10 @@ for (const width of [1440, 390]) {
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             await page.screenshot({ path: `/tmp/personal-goals-${width}.png`, fullPage: true });
             const state = await (await fetch(`${api}/user/timeline`, { headers: { 'x-test-user': username } })).json();
-            assert.equal(state.workspace.actions.length, 1);
-            assert.equal(state.workspace.timeline.events[0].start_date, '2026-10-04');
+            const dated = state.workspace.actions.filter(action => action.title === `Sessione breve ${width}`);
+            assert.equal(dated.length, 1);
+            assert.equal(dated[0].start_date, '2026-10-04');
+            assert.equal(state.workspace.timeline.events.length, 0);
             await page.reload();
             await page.getByRole('button', { name: `Studiare con un piano ${width}`, exact: true }).click();
             await page.getByRole('dialog').getByRole('heading', { name: `Studiare con un piano ${width}`, exact: true }).waitFor();

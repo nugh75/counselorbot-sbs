@@ -16,7 +16,8 @@
     "test:tavolo": "node --test tests/tavolo.test.mjs",
     "i18n:check": "node scripts/check-i18n.mjs",
     "test:visual": "node --test --experimental-strip-types tests/visual-tools.test.mjs",
-    "test:goals": "node --test tests/personal-goals.test.mjs"
+    "test:goals": "node --test tests/personal-goals.test.mjs",
+    "test:timeline": "node --test tests/activities-timeline.test.mjs"
   },
   "dependencies": {
     "@dagrejs/dagre": "^3.1.1",
