@@ -82,3 +82,48 @@ test('filterItems keeps only the requested kinds', () => {
     ];
     assert.deepEqual(filterItems(items, new Set(['milestone', 'goal'])).map(i => i.key), ['a', 'c']);
 });
+
+test('items sharing a start date break the tie by title', () => {
+    const goals = [
+        goal(1, { title: 'Zeta', review_date: '2026-03-01' }),
+        goal(2, { title: 'Alpha', review_date: '2026-03-01' }),
+    ];
+    const items = timelineItems({ actions: [], timeline: { events: [] } }, goals);
+    assert.deepEqual(items.map(i => i.title), ['Alpha', 'Zeta']);
+});
+
+test('a period with only a start date or only an end date is dated and bucketed by the end-or-start rule', () => {
+    const events: TimelineEvent[] = [
+        { ...baseEvent, id: 'evt-open-start', title: 'Open start', date_mode: 'period', start_date: '2026-01-01' },
+        { ...baseEvent, id: 'evt-open-end', title: 'Open end', date_mode: 'period', end_date: '2026-01-31' },
+    ];
+    const items = timelineItems({ actions: [], timeline: { events } }, []);
+
+    const startOnly = items.find(i => i.key === 'milestone-evt-open-start')!;
+    assert.equal(startOnly.start, '2026-01-01');
+    assert.equal(startOnly.end, null);
+    const endOnly = items.find(i => i.key === 'milestone-evt-open-end')!;
+    assert.equal(endOnly.start, null);
+    assert.equal(endOnly.end, '2026-01-31');
+
+    const { past, future } = splitByToday(items, '2026-01-15');
+    assert.deepEqual(past.map(i => i.key), ['milestone-evt-open-start']); // end ?? start = '2026-01-01' < today
+    assert.deepEqual(future.map(i => i.key), ['milestone-evt-open-end']); // end ?? start = '2026-01-31' >= today
+});
+
+test('an item dated exactly today is not past', () => {
+    const items = [{ key: 'today-1', kind: 'milestone' as TimelineItemKind, title: 'Today', start: '2026-01-15', end: null, href: null, editable: true }];
+    const { past, future } = splitByToday(items, '2026-01-15');
+    assert.deepEqual(past, []);
+    assert.deepEqual(future.map(i => i.key), ['today-1']);
+});
+
+test('a legacy event with free-text period and no date_mode is undated', () => {
+    const events: TimelineEvent[] = [{ ...baseEvent, id: 'evt-legacy', title: 'School years', period: 'Durante la scuola superiore' }];
+    const items = timelineItems({ actions: [], timeline: { events } }, []);
+    const legacy = items.find(i => i.key === 'milestone-evt-legacy')!;
+    assert.equal(legacy.start, null);
+    assert.equal(legacy.end, null);
+    const { undated } = splitByToday(items, '2026-01-15');
+    assert.deepEqual(undated.map(i => i.key), ['milestone-evt-legacy']);
+});
