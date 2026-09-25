@@ -10,6 +10,8 @@ import chatControlsImage from '../../../public/guide/controlli-chat.png';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, MoreVertical, RotateCcw, Send, Snowflake, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { getIdentity, type Identity } from '@/lib/auth';
+import { canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
 import { counselorHelp } from '@/lib/i18n-counselor-help';
 
@@ -26,7 +28,29 @@ export default function GuidePage() {
 function GuideContent() {
     const { t, lang } = useI18n();
     const params = useSearchParams();
-    const teacher = params.get('audience') === 'teacher';
+    // Senza parametro esplicito la guida segue il ruolo dell'utente: docenti,
+    // ricercatori e admin aprono la versione docente, tutti gli altri quella
+    // studente. Gli studenti non vedono il selettore né la versione docente.
+    const identityRef = useRef<Identity | null>(null);
+    const [audience, setAudience] = useState<'student' | 'teacher' | null>(() => {
+        const a = params.get('audience');
+        return a === 'teacher' ? 'teacher' : a === 'student' ? 'student' : null;
+    });
+    const [isTeacherUser, setIsTeacherUser] = useState(false);
+    useEffect(() => {
+        let cancelled = false;
+        getIdentity().then((identity) => {
+            if (cancelled || !identity) return;
+            identityRef.current = identity;
+            setIsTeacherUser(canUseTeacherAssistant(identity));
+            if (!params.get('audience')) {
+                setAudience(canUseTeacherAssistant(identity) ? 'teacher' : 'student');
+            }
+        });
+        return () => { cancelled = true; };
+    }, [params]);
+    const teacher = audience === 'teacher';
+    const showAudienceSelector = params.get('audience') !== 'student' && isTeacherUser;
     const l = (key: GuideAudienceKey) => guideAudienceText(lang, key);
     const sections = Array.from({ length: teacher ? 7 : 15 }, (_, i) => i + 1);
     const sectionId = (n: number) => `guide-${teacher ? 'teacher-' : ''}section-${n}`;
@@ -171,11 +195,11 @@ function GuideContent() {
 
             <div className="space-y-3">
                 <nav aria-label={l('audience')} className="flex flex-wrap gap-2">
-                    {(['student', 'teacher'] as const).map(audience => (
-                        <a key={audience} href={`/guide?audience=${audience}`}
-                            aria-current={teacher === (audience === 'teacher') ? 'page' : undefined}
-                            className={`inline-flex min-h-11 items-center rounded-lg border px-4 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${teacher === (audience === 'teacher') ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`}>
-                            {l(audience)}
+                    {showAudienceSelector && (['student', 'teacher'] as const).map(audienceOption => (
+                        <a key={audienceOption} href={`/guide?audience=${audienceOption}`}
+                            aria-current={teacher === (audienceOption === 'teacher') ? 'page' : undefined}
+                            className={`inline-flex min-h-11 items-center rounded-lg border px-4 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${teacher === (audienceOption === 'teacher') ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`}>
+                            {l(audienceOption)}
                         </a>
                     ))}
                 </nav>
