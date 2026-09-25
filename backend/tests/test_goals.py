@@ -1,4 +1,5 @@
 """Goal workflow on isolated Postgres: scope, ownership, versioning and coordination."""
+import json
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -272,3 +273,53 @@ def test_context_names_parent_goals(setup):
     goal(c, title='Migliorare inglese', parent_id=parent['id'])
     context = goals_context(db, 'alice')
     assert '"part_of": ["Erasmus in Spagna"]' in context
+
+
+def test_diamond_visibility_hides_private_parent(setup):
+    """Child with one shared and one private parent: the teacher sees only the shared branch."""
+    db, c, who, group_id = setup
+    shared_parent = goal(c, title='Genitore condiviso', shared_group_id=group_id)
+    private_parent = goal(c, title='Genitore privato')
+    child = goal(c, title='Figlio diamante', parent_id=shared_parent['id'])
+    child = c.post(f"/user/goals/{child['id']}/parents", json=dict(parent_id=private_parent['id'], revision=child['revision'])).json()
+    assert sorted(child['parent_ids']) == sorted([shared_parent['id'], private_parent['id']])
+    teacher(who)
+    rows = {r['title']: r for r in c.get(f'/teacher/groups/{group_id}/goals').json()}
+    assert set(rows) == {'Genitore condiviso', 'Figlio diamante'}
+    assert rows['Figlio diamante']['parent_ids'] == [shared_parent['id']]
+
+
+def test_multi_path_visible_to_multiple_groups(setup):
+    """A goal reachable through two distinct shared ancestors is visible to both groups' teachers."""
+    db, c, who, group_id = setup
+    group2 = models.StudentGroup(name='Class B', code='GR-TESTGOALS2', owner_username='teacher', is_active=True)
+    db.add(group2); db.flush()
+    db.add(models.GroupMembership(group_id=group2.id, username='alice')); db.commit()
+    parent1 = goal(c, title='Genitore gruppo 1', shared_group_id=group_id)
+    parent2 = goal(c, title='Genitore gruppo 2', shared_group_id=group2.id)
+    child = goal(c, title='Figlio multi-percorso', parent_id=parent1['id'])
+    child = c.post(f"/user/goals/{child['id']}/parents", json=dict(parent_id=parent2['id'], revision=child['revision'])).json()
+    teacher(who)
+    titles_group1 = {r['title'] for r in c.get(f'/teacher/groups/{group_id}/goals').json()}
+    titles_group2 = {r['title'] for r in c.get(f'/teacher/groups/{group2.id}/goals').json()}
+    assert 'Figlio multi-percorso' in titles_group1
+    assert 'Figlio multi-percorso' in titles_group2
+
+
+def test_goals_context_respects_budget_with_many_long_parents(setup):
+    """§8: several active goals, each with 3 long parents, stay within the 6500-char budget
+    and every part_of title is truncated to 120 chars."""
+    db, c, who, group_id = setup
+    parents = [goal(c, title=('P' * 150) + str(j)) for j in range(3)]
+    for i in range(5):
+        child = goal(c, title=f'Obiettivo attivo {i}', criteria='Criterio di prova per il budget del contesto ' * 3)
+        for parent in parents:
+            child = c.post(f"/user/goals/{child['id']}/parents", json=dict(parent_id=parent['id'], revision=child['revision'])).json()
+    context = goals_context(db, 'alice')
+    json_part = context.rsplit('\n', 1)[-1]
+    assert len(json_part) <= 6500
+    content = json.loads(json_part)
+    assert content
+    for item in content:
+        for title in item.get('part_of', []):
+            assert len(title) <= 120

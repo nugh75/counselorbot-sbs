@@ -15,6 +15,16 @@ import { GoalIssue } from './GoalUI';
 
 const VIEW_KEY = 'cb_goals_view';
 const readView = (): 'list' | 'map' => { try { return localStorage.getItem(VIEW_KEY) === 'map' ? 'map' : 'list'; } catch { return 'list'; } };
+// A reload must not reopen a closed (or since-deleted) goal: drop `?goal=` once the dialog is
+// done with it, keeping Next's own history state object intact.
+const stripGoalParam = () => {
+    try {
+        const url = new URL(window.location.href);
+        if (!url.searchParams.has('goal')) return;
+        url.searchParams.delete('goal');
+        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+    } catch { /* best effort only */ }
+};
 
 export function GoalsPanel() {
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
@@ -24,20 +34,24 @@ export function GoalsPanel() {
     const [saved, setSaved] = useState(false); const [showClosed, setShowClosed] = useState(false); const [view, setView] = useState<'list' | 'map'>('list');
     useEffect(() => { setView(readView()); }, []);
     const chooseView = (next: 'list' | 'map') => { setView(next); try { localStorage.setItem(VIEW_KEY, next); } catch { /* per-viewer convenience only */ } };
-    const load = useCallback(async () => {
+    const load = useCallback(async (): Promise<PersonalGoal[]> => {
         setLoading(true); setError(null);
         try {
             const [rows, entries, memberships] = await Promise.all([goalApi<PersonalGoal[]>('/user/goals'), goalApi<CatalogEntry[]>('/user/goal-catalog'), goalApi<GoalGroup[]>('/user/goal-groups')]);
             setGoals(rows); setCatalog(entries); setGroups(memberships);
-        } catch (e) { setError(e); } finally { setLoading(false); }
+            return rows;
+        } catch (e) { setError(e); return []; } finally { setLoading(false); }
     }, []);
     useEffect(() => {
-        void load().then(() => {
+        void load().then(rows => {
             const requested = Number(new URLSearchParams(window.location.search).get('goal'));
-            if (requested) setTarget({ kind: 'edit', id: requested });
+            if (!requested) return;
+            if (rows.some(row => row.id === requested)) setTarget({ kind: 'edit', id: requested });
+            else stripGoalParam();
         });
     }, [load]);
     const open = (next: DialogTarget) => { setSaved(false); setTarget(next); };
+    const closeDialog = useCallback(() => { setTarget(null); stripGoalParam(); }, []);
     const openGoal = useCallback((id: number) => { setSaved(false); setTarget({ kind: 'edit', id }); }, []);
     const forest = useMemo(() => buildForest(goals, showClosed), [goals, showClosed]);
     const shown = useMemo(() => visibleGoals(goals, showClosed), [goals, showClosed]);
@@ -58,9 +72,9 @@ export function GoalsPanel() {
         </>}
         {catalogOpen && <GoalCatalogDialog catalog={catalog} onClose={() => setCatalogOpen(false)} onPick={entry => { setCatalogOpen(false); open({ kind: 'create', source: entry }); }} />}
         {target && <GoalDialog target={target} goals={goals} groups={groups} saved={saved}
-            onTarget={next => open(next)} onClose={() => setTarget(null)} onReload={() => void load()}
+            onTarget={next => open(next)} onClose={closeDialog} onReload={() => void load()}
             onSaved={row => { setGoals(previous => previous.map(goal => goal.id === row.id ? row : goal)); setSaved(true); }}
             onCreated={row => { setGoals(previous => [row, ...previous]); setSaved(true); setTarget({ kind: 'edit', id: row.id }); }}
-            onDeleted={() => { setTarget(null); void load(); }} />}
+            onDeleted={() => { closeDialog(); void load(); }} />}
     </div>;
 }
