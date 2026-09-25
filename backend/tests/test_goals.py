@@ -310,6 +310,42 @@ def test_multi_path_visible_to_multiple_groups(setup):
     assert 'Figlio multi-percorso' in titles_group2
 
 
+def reading(db, session_id='s1', username='alice'):
+    db.add(models.ResultReading(username=username, session_id=session_id, questionnaire_type='QSA',
+                                growth_areas=['C3'], note='Mi agito agli esami'))
+    db.commit()
+
+
+def test_goal_created_from_reading_keeps_single_origin(setup):
+    db, c, who, _ = setup
+    reading(db)
+    row = goal(c, origin=dict(kind='reading', target_id='s1'))
+    assert row['origin']['kind'] == 'reading' and row['origin']['role'] == 'origin'
+    assert row['origin']['available'] is True
+    again = c.post(f"/user/goals/{row['id']}/links", json=dict(kind='reading', target_id='s1', role='origin', revision=row['revision']))
+    assert again.status_code == 422
+
+
+def test_origin_must_be_owned(setup):
+    db, c, who, _ = setup
+    reading(db, username='bob')
+    assert c.post('/user/goals', json=dict(title='x', origin=dict(kind='reading', target_id='s1'))).status_code == 404
+
+
+def test_link_role_rules(setup):
+    db, c, who, _ = setup
+    row = goal(c)
+    bad = c.post(f"/user/goals/{row['id']}/links", json=dict(kind='notebook', target_id='current', role='evidence', revision=row['revision']))
+    assert bad.status_code == 422
+
+
+def test_booklet_kind_is_gone(setup):
+    db, c, who, _ = setup
+    row = goal(c)
+    r = c.post(f"/user/goals/{row['id']}/links", json=dict(kind='booklet', target_id='1', revision=row['revision']))
+    assert r.status_code == 422
+
+
 def test_goals_context_respects_budget_with_many_long_parents(setup):
     """§8: several active goals, each with 3 long parents, stay within the 6500-char budget
     and every part_of title is truncated to 120 chars."""
