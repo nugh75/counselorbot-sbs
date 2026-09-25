@@ -1284,6 +1284,19 @@ def _run_seed_and_migrations():
         from .goals import seed_goals
         seed_goals(db)
 
+        # Una tantum per utente, spenta per default: il libretto confluisce in
+        # letture, obiettivi, bilanci, taccuino e linea del tempo (spec § 8).
+        # Accesa in C5 togliendo la condizione su BOOKLET_MIGRATION.
+        from .booklet_migration import migrate_all_booklets
+        if os.getenv('BOOKLET_MIGRATION') == '1':
+            try:
+                migrated = migrate_all_booklets(db)
+                if migrated:
+                    logger.info(f"booklet migration: {migrated} users migrated")
+            except Exception as e:
+                db.rollback()
+                logger.error(f"booklet migration failed: {e}")
+
         from .assistant_questions_seed import seed_assistant_questions
         seed_assistant_questions(db, models)
 
