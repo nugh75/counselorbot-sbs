@@ -107,6 +107,7 @@ def default_role(kind):
 class ActionCreate(Strict):
     title: str = Field(min_length=1, max_length=160)
     detail: str = Field(default='', max_length=1000)
+    kind: Literal['activity', 'check'] = 'activity'
     date: str | None = None
     request_id: str = Field(pattern=r'^[a-zA-Z0-9_-]{8,64}$')
     revision: int = Field(ge=1)
@@ -184,7 +185,9 @@ def resources(db, username):
         result.append(dict(kind=kind, target_id=str(target_id), title=title, href=href, available=True, **extra))
     work = load_workspace(db, None, username)['workspace']
     for action in work['actions']:
-        add('action', action['id'], action['title'], '/profilo/azioni', stage=action['stage'])
+        add('action', action['id'], action['title'], '/profilo/azioni', stage=action['stage'],
+            action_kind=action.get('kind', 'activity'), progress=action.get('progress'),
+            date=action.get('start_date') or action.get('end_date'))
     for event in work['timeline']['events']:
         if event.get('institution_available', True):
             add('event', event['id'], event['title'], f"/profilo/timeline?event={event['id']}", date=event.get('start_date') or event.get('end_date'))

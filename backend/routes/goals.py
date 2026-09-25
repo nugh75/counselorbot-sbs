@@ -226,7 +226,7 @@ def create_action(goal_id: int, payload: ActionCreate, db: Session = Depends(dat
     work = state['workspace']
     if any(a['id'] == action_id for a in work['actions']):
         raise HTTPException(409, 'Activity already exists')
-    work['actions'].append(dict(id=action_id, title=payload.title, detail=payload.detail, stage='todo', kind='activity',
+    work['actions'].append(dict(id=action_id, title=payload.title, detail=payload.detail, stage='todo', kind=payload.kind,
         date_mode='point' if payload.date else None, start_date=payload.date if payload.date else None))
     db.add(models.GoalResourceLink(goal_id=goal_id, kind='action', target_id=action_id, role='means'))
     save_workspace(db, None, user['username'], SavePersonalWorkspace(revision=state['revision'], workspace=work), commit=False)

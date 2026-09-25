@@ -402,3 +402,12 @@ def test_goal_method_update_rejects_unknown_or_foreign_items(setup):
     other = goal(c)
     assert c.put(f"/user/goals/{other['id']}", json=edit_payload(other, method=[dict(kind='own', id=foreign['id'])])).status_code == 404
 
+
+
+def test_goal_can_create_a_check(setup):
+    db, c, who, _ = setup
+    row = goal(c)
+    r = c.post(f"/user/goals/{row['id']}/actions", json=dict(title='Come va?', kind='check', date='2026-10-10',
+               revision=row['revision'], request_id='check-000001'))
+    link = r.json()['links'][0]
+    assert link['action_kind'] == 'check' and link['role'] == 'means'
