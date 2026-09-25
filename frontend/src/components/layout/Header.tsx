@@ -331,6 +331,8 @@ function HeaderMenu({
                                 </Link>
                             );
                     })}
+                    {/* Il lettore segue le voci di navigazione, dopo "Gruppi e classi". */}
+                    <VoiceReaderMenuEntry className={itemClass} onActivate={close} />
                     <div className="xl:hidden">
                     {/* Sessioni congelate + chat locale interrotta: su mobile questa è
                         l'unica porta, l'icona "Riprendi" della topbar non c'è. */}
@@ -386,7 +388,6 @@ function HeaderMenu({
                         <ClipboardList className="h-4 w-4 shrink-0" />
                         <span className="truncate">{t('nav.feedback')}</span>
                     </Link>
-                    <VoiceReaderMenuEntry className={itemClass} onActivate={close} />
                     {servicesHref && (
                         <a href={servicesHref} className={itemClass} onClick={close}>
                             <LayoutGrid className="h-4 w-4 shrink-0" />
