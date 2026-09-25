@@ -11,7 +11,9 @@ from sqlalchemy import or_, text
 from . import models
 from .visual_tools import load_workspace
 
-ResourceKind = Literal['action', 'event', 'portfolio', 'booklet', 'tavolo', 'notebook', 'card', 'comparison']
+ResourceKind = Literal['action', 'event', 'portfolio', 'tavolo', 'notebook', 'card', 'comparison', 'reading', 'session']
+LinkRole = Literal['origin', 'means', 'evidence', 'related']
+OriginKind = Literal['reading', 'notebook', 'event', 'session']
 
 
 class Strict(BaseModel):
@@ -55,17 +57,37 @@ class GoalWrite(Strict):
         return value
 
 
+class OriginWrite(Strict):
+    kind: OriginKind
+    target_id: str = Field(min_length=1, max_length=100)
+
+
 class GoalCreate(GoalWrite):
     request_id: str | None = Field(default=None, pattern=r'^[a-zA-Z0-9_-]{8,64}$')
     catalog_id: int | None = Field(default=None, gt=0)
     catalog_version: int | None = Field(default=None, ge=1)
     parent_id: int | None = Field(default=None, gt=0)
+    origin: OriginWrite | None = None
 
 
 class LinkWrite(Strict):
     kind: ResourceKind
     target_id: str = Field(min_length=1, max_length=100)
+    role: LinkRole | None = None
     revision: int = Field(ge=1)
+
+
+# Spec § 5.2: quali ruoli può avere ogni tipo di collegamento.
+ALLOWED_ROLES = {
+    'reading': {'origin'}, 'session': {'origin'},
+    'notebook': {'origin', 'related'}, 'event': {'origin', 'related'},
+    'action': {'means'}, 'portfolio': {'evidence', 'related'},
+    'tavolo': {'related'}, 'card': {'related'}, 'comparison': {'related'},
+}
+
+
+def default_role(kind):
+    return {'action': 'means', 'reading': 'origin', 'session': 'origin'}.get(kind, 'related')
 
 
 class ActionCreate(Strict):
@@ -158,8 +180,9 @@ def resources(db, username):
         add('comparison', 'personal', ' / '.join(o['title'] for o in work['comparison']['options']), '/profilo/confronto')
     for row in db.query(models.PortfolioItem).filter_by(username=username).order_by(models.PortfolioItem.id.desc()).all():
         add('portfolio', row.id, row.title, f'/profilo/portfolio#portfolio-{row.id}')
-    for row in db.query(models.StudentBooklet).filter_by(username=username).order_by(models.StudentBooklet.id.desc()).all():
-        add('booklet', row.id, row.data.get('title') or row.questionnaire_type, f'/profilo/libretto?booklet={row.id}&instrument={row.questionnaire_type}')
+    for row in db.query(models.ResultReading).filter_by(username=username).order_by(models.ResultReading.id.desc()).all():
+        add('reading', row.session_id, f'{row.questionnaire_type} · {row.created_at:%Y-%m-%d}' if row.created_at else row.questionnaire_type,
+            f'/profilo/compilazioni?session={row.session_id}')
     for row in db.query(models.Tavolo).filter_by(username=username).filter(models.Tavolo.saved_at.isnot(None)).all():
         add('tavolo', row.id, row.title or 'Tavolo', f'/tavolo/{row.id}')
     notebook = db.query(models.LearnerProfileRevision).filter_by(username=username).order_by(models.LearnerProfileRevision.id.desc()).first()
@@ -170,6 +193,23 @@ def resources(db, username):
     return result
 
 
+def session_resource(db, username, session_id):
+    """Origine «chat»: la sessione deve appartenere allo studente; non compare tra le risorse collegabili."""
+    log = db.query(models.Log).filter_by(session_id=session_id, username=username).order_by(models.Log.id).first()
+    if log is None:
+        return None
+    return dict(kind='session', target_id=session_id, title=log.questionnaire_type or 'Chat', href=None, available=True)
+
+
+def validate_origin(db, username, origin):
+    if origin.kind == 'session':
+        found = session_resource(db, username, origin.target_id)
+    else:
+        found = next((r for r in resources(db, username) if (r['kind'], r['target_id']) == (origin.kind, origin.target_id)), None)
+    if found is None:
+        raise HTTPException(404, 'Resource unavailable')
+
+
 def goal_dict(db, row, resource_map=None):
     data = {key: getattr(row, key) for key in (
         'id', 'title', 'motivation', 'criteria', 'reflection', 'status', 'priority', 'review_date',
@@ -178,9 +218,16 @@ def goal_dict(db, row, resource_map=None):
     if resource_map is None:
         resource_map = {(r['kind'], r['target_id']): r for r in resources(db, row.username)}
     data['links'] = []
+    data['origin'] = None
     for link in db.query(models.GoalResourceLink).filter_by(goal_id=row.id).order_by(models.GoalResourceLink.id).all():
         resolved = resource_map.get((link.kind, link.target_id))
-        data['links'].append(dict(resolved or dict(kind=link.kind, target_id=link.target_id, title='', href=None, available=False), id=link.id))
+        if resolved is None and link.kind == 'session':
+            resolved = session_resource(db, row.username, link.target_id)
+        item = dict(resolved or dict(kind=link.kind, target_id=link.target_id, title='', href=None, available=False), id=link.id, role=link.role)
+        if link.role == 'origin':
+            data['origin'] = item
+        else:
+            data['links'].append(item)
     return data
 
 
