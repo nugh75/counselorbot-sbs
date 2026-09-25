@@ -1,43 +1,43 @@
-# Handoff: Libretto nella triade — Lot A (backend)
-Data: 2026-09-26 | Sessione precedente: orchestrazione pi + revisioni Claude (serata 25–26/9)
-Worktree: `/tmp/cb-libretto` (branch dedicato; `~/counselorbot-sbs` resta su `main`)
-Piano: `docs/plans/2026-09-25-libretto-nella-triade-plan.md` (21 task: lotto A backend = A1–A7, poi B, C, D)
+# Handoff: Libretto nella triade — Lotto A completato, si passa al lotto B
+Data: 2026-09-26 (h ~00:55) | Sessione precedente: orchestrazione pi/glm (A6 review + A7 completo)
+Worktree: `/tmp/cb-libretto` (branch `feature/libretto-triade`, pushato; `~/counselorbot-sbs` resta su `main`)
+Piano: `docs/plans/2026-09-25-libretto-nella-triade-plan.md` (21 task: A1–A7 ✅, poi B, C, D)
+Ledger: `/tmp/cb-libretto/.superpowers/sdd/2026-09-25-libretto-nella-triade-plan/` (progress.md = registro cronologico)
 
 ## Objective
-Fondere il «libretto dello studente» nella triade Obiettivi–Azioni–Linea del tempo: lotti A (dati, API, migrazione), B (frontend), C, D. Lotto A completo quando tutti i 7 task sono committati e revisionati su `/tmp/cb-libretto`.
+Fondere il «libretto dello studente» nella triade Obiettivi–Azioni–Linea del tempo. **Lotto A (backend) è COMPLETO**. Prossimo: lotto B (frontend Obiettivi: popup, metodo, bilancio, controlli in bacheca) — task B1–B4 nel piano.
 
-## Progress
-- [x] A1 Modello dati — commit `80de914`, revisionato.
-- [x] A2 Ruoli link obiettivo + origine — `0b55df6`; fix round 1 `609d332` (ruolo «mezzo» su assegnazioni docente e migrazione, normalizzazione DB, test origine «sessione»), revisione confermata.
-- [x] A3 Metodo obiettivo e «Le mie strategie» — `97d0c28`; fix round 1 `c22ceb1` (test update metodo su obiettivo esistente), chiuso. Annotato dettaglio estetico (a-capo) per dopo.
-- [x] A4 Azioni di controllo e rilettura tappe — `c803a1c` (pi caduto per errore API dopo commit; test eseguiti manualmente: 72 PASS). Revisione ok, retrocompatibilità dei dati confermata. Mancava la prova «prima della modifica» annotata nel journal.
-- [x] A5 Bilancio dell'obiettivo — `f49db99` (28 test in test_goals.py, 2 prima falliti poi verdi). Revisione ok; annotata osservazione sulle righe di attribuzione del commit.
-- [x] A6 «La mia lettura» — `91731af` (API readings). **Revisione completata alle 00:40: APPROVED** (via pi/glm: gli agenti Anthropic erano bloccati dal rate limit; i 429 si sono ripresentati). Il report di revisione è in `task-A6-findings.md`: 5 findings, tutti Minor (3 test-coverage, 1 lambda style, 1 race info). Gap test da gestire in un task di consolidamento: `clean()` (scarto vuoti/troncamento 120), GET altro utente → `null`, strumenti senza fattori (SAVICKAS/IDEA), corpo del 409, limiti validazione.
-- [ ] **A7 Migrazione del libretto — NON assegnato/avviato.** È il task più delicato: piano vuole che sia svolto da un agente Claude, NON da pi. Spec § 8 del piano: `backend/booklet_migration.py` + hook in `main.py` dopo `seed_goals`, test `backend/tests/test_booklet_migration.py`, 8 regole (scheda→lettura/obiettivo/strategie/bilancio/tappe, eventi `booklet-{id}-*` → `migrated-`, schede `EVENTO_*`, link `GoalResourceLink` booklet, marker `MIGRATION_ACTION`, seconda esecuzione no-op).
+## Progress (lotto A)
+- [x] A1 Modello dati — `80de914`, revisionato
+- [x] A2 Ruoli link + origine — `0b55df6` + fix `609d332`, revisionato
+- [x] A3 Metodo e strategie proprie — `97d0c28` + fix `c22ceb1`, revisionato
+- [x] A4 Azioni di controllo e rilettura tappe — `c803a1c`, revisionato (1 parked: RED evidence persa per crash pi)
+- [x] A5 Bilancio dell'obiettivo — `f49db99`, revisionato (1 parked: doppio trailer attribuzione)
+- [x] A6 «La mia lettura» — `91731af`, revisione APPROVED (glm): 5 findings Minor (gap test da gestire in consolidation)
+- [x] **A7 Migrazione del libretto — `6045166`, revisione APPROVED (glm)**: 7 test GREEN + 38/15 correlati; prova a secco su copia prod: 8 utenti, 9 letture, 2 nuovi obiettivi, idempotente. Hook spento di default (`BOOKLET_MIGRATION=1`, si accende in C5).
 
 ## Problems Encountered
-- **Limite di sessione Anthropic colpito** (429, reset ore 2:20): la revisione A6 fatta invece da pi/glm (deciso dall'utente: niente subagenti Anthropic finché quota limitata).
-- Pi (GLM 5.3 Flash via opencode-go) a volte si è bloccato o caduto: le contromisure funzionanti sono in Resolutions. Nota tecnica: `--thinking off` è il flag giusto per il fallback del provider opencode-go (l'errore 400 `reasoning_effort` arriva quando il provider passa reasoning nativo); `--no-reasoning` NON esiste.
+- Quota Anthropic esaurita (reset ore 2:20) → **l'utente ha stabilito R7: revisioni ed esecuzione anche via pi/glm, niente subagenti Anthropic finché quota limitata**. Funzionato bene per A6 review e A7 completo (implementazione + revisione severa).
+- Flag pi: `--thinking off` è il flag giusto per l'errore 400 `reasoning_effort` del provider opencode-go; `--no-reasoning` NON esiste.
+- `run-pi.sh` gestisce già retry automatico con thinking off.
+- pi ha cancellato uno stash durante la verifica di A7: recuperato integro (`git stash store` da `48147c0`), stash list verificato = 3 voci. Evitare `git stash`/`checkout` nel worktree nelle future verifiche di pi.
 
 ## Resolutions
-- Il dossier di lavoro del lotto A vive nel worktree `/tmp/cb-libretto`; i commit sono già sul branch (non su main). Verificare con `git log --oneline` e rispettare che `~/counselorbot-sbs` resti su main.
-- Pi bloccato → fermarlo e rilanciarlo in **sessione nuova** con limite ~25'; watchdog su stall >6 min o exit, che punti alla sessione corrente (i watchdog vecchi puntano al file della sessione giusta solo quando creati dopo il rilancio, altrimenti rimangono appesi all'infinito).
-- Errore `reasoning_effort is not allowed` dal provider opencode-go (caduta di A4): il codice/commit erano già salvati; aggiunto tentativo automatico che rilancia pi **senza ragionamento esteso** per i soli passi mancanti (test, commit, report). Pi è risalito.
-- Gap nei test colti in revisione (A3): la revisione mira «che i test coprano le modifiche» ha dato esito utile → mantenerla per ogni task.
-- I test si possono eseguire anche manualmente dal worktree (pytest su `backend/tests/`) se pi cade prima del report.
+- Test backend SEMPRE dal worktree: `cd /tmp/cb-libretto && set -a && . /home/nugh75/counselorbot-sbs/.env && set +a && DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5435/${POSTGRES_DB}" python3 -m pytest <file> -q` (Ruling R5).
+- Reviewer glm: sessione separata dall'implementatore, prompt con checklist di severità massima, unico file scrivibile = findings.md.
+- Smoke failure residuo NOTO: `test_an_older_stage_of_the_map_can_be_drawn_again` (test_smoke.py) — preesistente, riprodotto su `ae1eebc`; da aggiungere alle note del piano.
+- Dispatch pi: `$W/run-pi.sh <TASK_ID>` (timeout 25', stdin </dev/null, retry automatico).
 
 ## Decision Log
-- Back-end direttamente sul worktree `/tmp/cb-libretto`, main non toccato finché lotto A non chiuso — così gli altri agenti lavorano su main in parallelo.
-- Ripartizione dei ruoli: pi scrive codice e test; un agente Claude di revisione approva ogni task prima di passare al successivo — la revisione ha già colto buchi (A2 e A3), costo giustificato.
-- A7 affidato a Claude e non a pi — giudizio del piano: la migrazione tocca 8 regole e dice «Consumes A1–A6», troppo delicata per pi.
-- Data migration idempotente (seconda esecuzione = no-op) — già deciso nel piano spec § 8, non rivisitare.
-- Normalizzazione dei collegamenti già in DB su A2 (ruolo «mezzo») — fatta una volta sola nel fix round 1, non rifare.
-- Etichette note della migrazione in italiano («Cosa ho capito: …») come nel piano — non cambiare lingua.
-- Le due righe di attribuzione nei commit (firma pi) si lasciano: rischiare la riscrittura della cronologia per estetica non ne vale la pena; annotata, non fixata.
-- Dettaglio estetico A3 (a-capo) rimandato a post-lotto per non fermare la catena dei task.
+- Worktree `/tmp/cb-libretto` per tutto il lotto; main non toccato finché lotti non chiusi.
+- pi implementa, glm revisiona in sessione separata (R7 sostituisce R1 per la quota); revisione Claude/opus possibile al reset quota.
+- Migrazione A7 idempotente con marcatore Log; hook spento di default, si accende in C5; ; in C5 aggiungere per-user try/except in `migrate_all_booklets` (finding revisione).
+- Troncamenti silenziosi note>2000/item>12: conformi al piano, da monitorare in C5.
+- Dettagli estetici rimandati: a-capo A3, righe di attribuzione A5, newline personal_strategies.py.
+- gap test A4/A6 da raccogliere in un task di consolidation: RED evidence A4, clean() readings, GET altro utente null, strumenti senza fattori, corpo 409, limiti validazione.
 
 ## Prossimo passo alla ripresa
-1. Verificare `git -C /tmp/cb-libretto log --oneline -10` e confermare che A6 (`88e7ee0` docs handoff) è l'ultimo commit; revisione A6 APPROVED già registrata in `progress.md` e `task-A6-findings.md`.
-2. Dispatchare **A7 (Migrazione del libretto)** a un implementatore, seguendo le 8 regole in spec § 8 del piano (riga ~894). Ruling R1 del ledger: A7 a Claude; se la quota Anthropic fosse ancora esaurita, si può chiedere all'utente se farlo scrivere a pi (il piano lo sconsiglia: 8 regole di migrazione, troppo delicato).
-3. Revisione di A7 quando pronto (quota Anthropic al reset, oppure glm).
-4. Esecuzione TDD come i task precedenti: test che falliscono → implementazione → tutti verdi → commit convenzionale.
+1. `git -C /tmp/cb-libretto log --oneline -3` → ultimo = `6045166` (A7).
+2. Dispatchare **lotto B** con `run-pi.sh B1` (e poi B2–B4 in sequenza). Brief già pronti: `$W/task-B*-brief.md`. Attenzione Ruling R2: traduzioni B1 scritte dall'implementatore, anche in glm.
+3. Alla fine del lotto B: revisione glm come per A6/A7 (checklist severità, sessione separata).
+4. Il piano prevede commit Conventional in inglese + trailer Generated-with: pi (opencode-go/glm-5.3-flash).
