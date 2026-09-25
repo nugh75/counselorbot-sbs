@@ -24,7 +24,7 @@ const labels = {
 
 const names = {
     obiettivi: ['Obiettivi', 'Goals', 'Objetivos', 'Objectifs', 'Ziele', 'Mål'],
-    azioni: ['Attività', 'Activities', 'Actividades', 'Activités', 'Aktivitäten', 'Aktiviteter'],
+    azioni: ['Azioni', 'Actions', 'Acciones', 'Actions', 'Aktionen', 'Åtgärder'],
     timeline: ['Linea del tempo', 'Timeline', 'Línea del tiempo', 'Ligne du temps', 'Zeitleiste', 'Tidslinje'],
     taccuino: ['Taccuino', 'Notebook', 'Cuaderno', 'Carnet', 'Notizbuch', 'Anteckningsbok'],
     libretto: ['Libretto', 'Booklet', 'Cuadernillo', 'Livret', 'Arbeitsheft', 'Arbetshäfte'],
