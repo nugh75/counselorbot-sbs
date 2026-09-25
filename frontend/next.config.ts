@@ -24,7 +24,10 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://backend:8000/:path*", // Proxy to Backend container
+        // Upstream del proxy: in produzione (Docker) resta il nome servizio
+        // Compose `backend:8000`; in sviluppo sull'host si imposta
+        // BACKEND_ORIGIN=http://127.0.0.1:8001 senza toccare il Dockerfile.
+        destination: `${process.env.BACKEND_ORIGIN || "http://backend:8000"}/:path*`,
       },
     ];
   },
