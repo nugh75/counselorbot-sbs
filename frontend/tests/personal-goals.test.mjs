@@ -44,10 +44,10 @@ for (const width of [1440, 390]) {
             await page.getByLabel('Condividi il riepilogo con i docenti di').selectOption({ label: 'Gruppo di prova' });
             await page.getByRole('button', { name: 'Salva', exact: true }).click();
             await page.getByRole('dialog').getByRole('heading', { name: `Studiare con un piano ${width}`, exact: true }).waitFor();
-            await page.getByText('Aggiungi un’attività', { exact: true }).first().click();
+            await page.getByText('Aggiungi un’azione', { exact: true }).first().click();
             await page.getByLabel('Cosa farò').fill(`Sessione breve ${width}`);
             await page.getByLabel('Data facoltativa').fill('2026-10-04');
-            await page.getByRole('button', { name: 'Aggiungi un’attività', exact: true }).click();
+            await page.getByRole('button', { name: 'Aggiungi un’azione', exact: true }).click();
             await page.getByRole('link', { name: `Sessione breve ${width}`, exact: true }).first().waitFor();
             await page.getByLabel('Scegli un contenuto esistente').selectOption({ label: 'Portfolio · Il mio elaborato' });
             await page.getByRole('button', { name: 'Collega', exact: true }).click();
@@ -160,7 +160,7 @@ test('personal tool shortcuts open the selected workspace', async () => {
     const { page, context, errors } = await fixture();
     try {
         await page.goto(`${origin}/profilo`);
-        await page.getByRole('link', { name: 'Attività', exact: true }).click();
+        await page.getByRole('link', { name: 'Azioni', exact: true }).click();
         await page.getByRole('heading', { name: 'Bacheca delle azioni', exact: true, level: 1 }).waitFor();
         await page.locator('input[value="Sessione breve 1440"]').waitFor();
         assert.ok(await page.locator('input').evaluateAll(inputs => inputs.some(input => input.value === 'Sessione breve 1440')));
@@ -236,7 +236,7 @@ test('F06: text in a new activity is protected on every exit from the dialog', a
         await page.goto(`${origin}/profilo`);
         await page.getByRole('link', { name: 'Obiettivi', exact: true }).click();
         await page.getByRole('button', { name: 'Laurea in lingue', exact: true }).first().click();
-        await page.getByText('Aggiungi un’attività', { exact: true }).first().click();
+        await page.getByText('Aggiungi un’azione', { exact: true }).first().click();
         await page.getByLabel('Cosa farò').fill('Frase non ancora salvata');
         // page.goBack() would wait for a "load" navigation that never fires: the SPA back-traversal
         // is same-document and gets cancelled by the draft guard, so history.back() is invoked directly.

@@ -38,11 +38,11 @@ for (const width of [1440, 390]) {
             await page.goto(`${origin}/profilo/azioni`);
             await page.getByRole('heading', { name: 'Bacheca delle azioni', exact: true, level: 1 }).waitFor();
             const titleInput = page.locator('input[id$="-new-action-title"]');
-            const addSummary = page.locator('summary').filter({ hasText: 'Aggiungi attività' });
+            const addSummary = page.locator('summary').filter({ hasText: 'Aggiungi azione' });
             await titleInput.or(addSummary).first().waitFor();
             if (!(await titleInput.isVisible())) await addSummary.click();
             await titleInput.fill(`Sessione di studio ${stamp} ${width}`);
-            await page.getByRole('button', { name: 'Aggiungi attività', exact: true }).click();
+            await page.getByRole('button', { name: 'Aggiungi azione', exact: true }).click();
             await page.locator('input[value="Sessione di studio ' + stamp + ' ' + width + '"]').first().waitFor();
             const card = page.locator('article').filter({ has: page.locator(`input[value="Sessione di studio ${stamp} ${width}"]`) }).first();
             await card.locator('summary').click();
