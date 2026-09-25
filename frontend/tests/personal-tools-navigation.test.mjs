@@ -73,8 +73,8 @@ test('an unsaved action asks before returning to the personal area', async () =>
     try {
         await page.goto(`${origin}/profilo/azioni`, { waitUntil: 'networkidle' });
         const workspace = page.getByRole('dialog', { name: 'Bacheca delle azioni', exact: true });
-        await workspace.getByLabel('Attività', { exact: true }).fill('Attività non salvata');
-        await workspace.getByRole('button', { name: 'Aggiungi attività', exact: true }).click();
+        await workspace.getByLabel('Azione', { exact: true }).fill('Attività non salvata');
+        await workspace.getByRole('button', { name: 'Aggiungi azione', exact: true }).click();
 
         page.once('dialog', dialog => dialog.dismiss());
         await workspace.getByRole('button', { name: 'Indietro', exact: true }).click();
