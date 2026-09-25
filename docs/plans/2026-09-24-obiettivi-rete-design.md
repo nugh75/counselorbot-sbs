@@ -101,7 +101,7 @@ Tutte sotto le rotte esistenti in `backend/routes/goals.py`.
 | --- | --- |
 | `lib/goal-network.ts` | Funzioni pure: `buildForest(goals)`, `descendants(id)`, `ancestors(id)`, `effectiveGroups(id)`, `wouldCycle(child, parent)`, `progress(id)`, ordinamento fratelli (priorità, poi data revisione, poi id). Testate in isolamento. |
 | `GoalsPanel.tsx` | Carica dati, barra azioni (+ Nuovo, Catalogo, «Mostra conclusi e archiviati»), gestisce quale popup è aperto, legge `?goal=` per aprire il popup direttamente. |
-| `GoalTree.tsx` | Elenco rientrato accessibile (`role="tree"`/`treeitem`, frecce per navigare, Invio apre). Seconda occorrenza di un obiettivo con più genitori: chiusa, con «⧉ anche sotto: …». Da livello 4 il rientro si ferma e compare «↳ livello n». |
+| `GoalTree.tsx` | Liste annidate con pulsanti di apertura (`aria-expanded`), Tab tra gli elementi, Invio apre il popup. Seconda occorrenza di un obiettivo con più genitori: chiusa, con «⧉ anche sotto: …». Da livello 4 il rientro si ferma e compare «↳ livello n». |
 | `GoalDialog.tsx` | `<dialog>` nativo (`showModal`), foglio a tutto schermo sotto `sm`. Crea/modifica: «Serve a», campi, condivisione (propria + ereditata in sola lettura), «Si raggiunge con», Collegamenti e Crea attività in sezioni chiudibili, barra fissa Elimina/Annulla/Salva. Navigazione ↑/↓ interna al popup. |
 | `GoalMap.tsx` | Vista mappa desktop (vedi sotto). |
 | `GoalCatalogDialog.tsx` | Ricerca + filtro area; «Adotta» passa a `GoalDialog` precompilato. |
@@ -137,6 +137,9 @@ posto di `PageHeader` (sottotitolo sostituito dalla descrizione dell'Area person
   `use-draft-guard.ts` con export `useDraftGuard` (un solo consumatore oggi:
   `app/docente/orientamento/page.tsx`, da aggiornare). La guardia locale in
   `GoalsPanel` viene eliminata.
+- Regola aggiunta in implementazione: una sola bozza per volta; mentre una
+  parte del popup (campi, nuova attività, collegamento, genitore scelto) ha
+  testo non salvato, gli altri comandi che salvano sono disabilitati.
 
 ### Avvisi di visibilità
 
@@ -194,7 +197,7 @@ Browser (`frontend/tests/personal-goals.test.mjs` + `goals_browser_server.py`):
 - F06: testo in «Crea attività» → ✕, Esc, «← Area personale», Indietro chiedono conferma;
 - avviso di visibilità spostando sotto un ramo condiviso;
 - mobile 360 px: foglio a tutto schermo, nessuno scorrimento orizzontale;
-- tastiera: frecce nell'albero, Invio apre, focus torna alla riga alla chiusura;
+- tastiera: Tab tra righe e pulsanti di apertura, Invio apre, focus torna alla riga alla chiusura;
 - mappa: visibile a 1280 px, assente a 360 px; un obiettivo con due genitori
   compare una volta con due archi; clic sul nodo apre il popup.
 
