@@ -166,6 +166,11 @@ test('personal tool shortcuts open the selected workspace', async () => {
     } finally { await context.close(); }
 });
 
+// The next four tests (network, F06, tree keyboard, map) all use user `student-network` and
+// share its data across the file: each depends on the goals ("Erasmus in Spagna", "Laurea in
+// lingue", "Migliorare l'inglese") created by the network test below. They must run in file
+// order, against a freshly started fixture server (its rolled-back schema is not reset between
+// tests within one run, so state accumulates as later tests expect).
 test('goals form a network with sub-goals, extra parents and inherited sharing', async () => {
     const username = 'student-network';
     const { page, context, errors } = await fixture({ username });
@@ -203,6 +208,15 @@ test('goals form a network with sub-goals, extra parents and inherited sharing',
         assert.match(message, /Ora visibile anche ai docenti di: Gruppo di prova/);
         await page.getByRole('button', { name: 'Chiudi', exact: true }).click();
         await page.getByText(/⧉ anche sotto: /).first().waitFor();
+        const branchToggle = page.getByRole('button', { name: /^(Nascondi|Mostra) sottobiettivi di Erasmus in Spagna$/ });
+        assert.equal(await branchToggle.getAttribute('aria-expanded'), 'true');
+        assert.equal(await page.getByRole('button', { name: 'Migliorare l’inglese', exact: true }).count(), 2);
+        await branchToggle.click();
+        assert.equal(await branchToggle.getAttribute('aria-expanded'), 'false');
+        assert.equal(await page.getByRole('button', { name: 'Migliorare l’inglese', exact: true }).count(), 1);
+        await branchToggle.click();
+        assert.equal(await branchToggle.getAttribute('aria-expanded'), 'true');
+        assert.equal(await page.getByRole('button', { name: 'Migliorare l’inglese', exact: true }).count(), 2);
         const rows = await (await fetch(`${api}/user/goals`, { headers: { 'x-test-user': username } })).json();
         assert.equal(rows.find(r => r.title === 'Migliorare l’inglese').parent_ids.length, 2);
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
@@ -232,6 +246,21 @@ test('F06: text in a new activity is protected on every exit from the dialog', a
         page.once('dialog', dialog => dialog.accept());
         await page.keyboard.press('Escape');
         await page.getByRole('dialog').waitFor({ state: 'detached' });
+        assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+});
+
+test('tree keyboard: Enter opens the goal dialog, Escape returns focus to the row', async () => {
+    const { page, context, errors } = await fixture({ username: 'student-network' });
+    try {
+        await page.goto(`${origin}/profilo/obiettivi`);
+        const row = page.getByRole('button', { name: 'Laurea in lingue', exact: true }).first();
+        await row.focus();
+        await page.keyboard.press('Enter');
+        await page.getByRole('dialog').getByRole('heading', { name: 'Laurea in lingue', exact: true }).waitFor();
+        await page.keyboard.press('Escape');
+        await page.getByRole('dialog').waitFor({ state: 'detached' });
+        assert.equal(await page.evaluate(() => document.activeElement?.textContent?.trim()), 'Laurea in lingue');
         assert.deepEqual(errors, []);
     } finally { await context.close(); }
 });
