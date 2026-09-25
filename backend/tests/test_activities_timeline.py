@@ -85,6 +85,86 @@ def test_migrate_future_event_merges_into_linked_activity():
         assert action['stage'] == 'doing'
 
 
+def test_migrate_appends_portfolio_and_personal_links_as_trace():
+    with artifact_session() as db:
+        item = models.PortfolioItem(username='alice', title='Lavoro salvato', images=[])
+        db.add(item); db.flush()
+        missing_id = item.id + 999
+        seed_personal_workspace(db, 'alice', legacy_workspace([
+            dict(id='iso-future', title='Colloquio', period='2027', tense='future',
+                 date_mode='point', start_date='2027-01-15', planned='Portare il CV',
+                 personal_links=['booklet', 'notebook'], symbol='change',
+                 portfolio=[dict(id=item.id), dict(id=missing_id)]),
+        ]))
+        ensure_personal_timeline(db, 'alice')
+        work = load_workspace(db, None, 'alice')['workspace']
+        assert work['timeline']['events'] == []
+        action = work['actions'][0]
+        assert action['detail'] == (
+            f'Portare il CV\n\nPortfolio: Lavoro salvato, #{missing_id}\nCollegamenti: Taccuino, Libretto')
+
+
+def test_migrate_truncates_detail_but_keeps_trace():
+    with artifact_session() as db:
+        item = models.PortfolioItem(username='alice', title='Titolo lungo di lavoro', images=[])
+        db.add(item); db.flush()
+        seed_personal_workspace(db, 'alice', legacy_workspace([
+            dict(id='iso-future', title='Colloquio', period='2027', tense='future',
+                 date_mode='point', start_date='2027-01-15', planned='x' * 1000,
+                 portfolio=[dict(id=item.id)]),
+        ]))
+        ensure_personal_timeline(db, 'alice')
+        work = load_workspace(db, None, 'alice')['workspace']
+        action = work['actions'][0]
+        trace = '\n\nPortfolio: Titolo lungo di lavoro'
+        assert len(action['detail']) == 1000
+        assert action['detail'].endswith(trace)
+
+
+def test_migrate_two_future_events_on_same_activity_conflicting_dates_split():
+    with artifact_session() as db:
+        seed_personal_workspace(db, 'alice', legacy_workspace(
+            [dict(id='first-future', title='Passo 1', period='2027', tense='future',
+                  date_mode='point', start_date='2027-01-15', planned='Prima nota',
+                  reflection='Prima riflessione', action_ids=['a1']),
+             dict(id='second-future', title='Passo 2', period='2027', tense='future',
+                  date_mode='point', start_date='2027-02-20', planned='Seconda nota',
+                  reflection='Seconda riflessione', action_ids=['a1'])],
+            actions=[dict(id='a1', title='Attività condivisa', stage='doing')]))
+        ensure_personal_timeline(db, 'alice')
+        work = load_workspace(db, None, 'alice')['workspace']
+        assert work['timeline']['events'] == []
+        assert {a['id'] for a in work['actions']} == {'a1', 'm-second-future'}
+        a1 = next(a for a in work['actions'] if a['id'] == 'a1')
+        assert a1['date_mode'] == 'point' and a1['start_date'] == '2027-01-15'
+        assert a1['detail'] == 'Prima nota'
+        assert a1['reflection'] == 'Prima riflessione'
+        m2 = next(a for a in work['actions'] if a['id'] == 'm-second-future')
+        assert m2['date_mode'] == 'point' and m2['start_date'] == '2027-02-20'
+        assert m2['detail'] == 'Seconda nota'
+        assert m2['reflection'] == 'Seconda riflessione'
+
+
+def test_migrate_two_future_events_on_same_activity_matching_dates_merge_and_append():
+    with artifact_session() as db:
+        seed_personal_workspace(db, 'alice', legacy_workspace(
+            [dict(id='first-future', title='Passo 1', period='2027', tense='future',
+                  date_mode='point', start_date='2027-01-15', planned='Prima nota',
+                  reflection='Prima riflessione', action_ids=['a1']),
+             dict(id='second-future', title='Passo 2', period='2027', tense='future',
+                  date_mode='point', start_date='2027-01-15', planned='Seconda nota',
+                  reflection='Seconda riflessione', action_ids=['a1'])],
+            actions=[dict(id='a1', title='Attività condivisa', stage='doing')]))
+        ensure_personal_timeline(db, 'alice')
+        work = load_workspace(db, None, 'alice')['workspace']
+        assert work['timeline']['events'] == []
+        assert [a['id'] for a in work['actions']] == ['a1']
+        a1 = work['actions'][0]
+        assert a1['date_mode'] == 'point' and a1['start_date'] == '2027-01-15'
+        assert a1['detail'] == 'Prima nota\n\nSeconda nota'
+        assert a1['reflection'] == 'Prima riflessione\n\nSeconda riflessione'
+
+
 def test_migrate_updates_goal_links_and_removes_duplicates():
     with artifact_session() as db:
         seed_personal_workspace(db, 'alice', legacy_workspace([
@@ -158,4 +238,4 @@ def test_migration_is_idempotent():
         ensure_personal_timeline(db, 'alice')
         revision_after_second = load_workspace(db, None, 'alice')['revision']
         assert revision_after_first == revision_after_second
-        assert db.query(models.Log).filter_by(username='alice', action=MIGRATION_ACTION).count() == 2
+        assert db.query(models.Log).filter_by(username='alice', action=MIGRATION_ACTION).count() == 1
