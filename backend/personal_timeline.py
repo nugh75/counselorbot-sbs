@@ -9,9 +9,11 @@ from . import models
 from .orientation_referral_service import _i18n, _matches, _scoped
 from .reading_audience import resolve_audience_band
 from .referral_scope import institution_ids_for
-from .visual_tools import ACTION, PERSONAL_ACTION, PersonalWorkspace, Workspace, load_workspace
+from .visual_tools import (ACTION, PERSONAL_ACTION, Action, PersonalWorkspace, SavePersonalWorkspace, Workspace,
+                           load_workspace, save_workspace)
 
 IMPORT_ACTION = 'personal_timeline_import'
+MIGRATION_ACTION = 'activities_timeline_migration'
 
 
 def imported_id(session_id, item_id):
@@ -23,6 +25,11 @@ def ensure_personal_timeline(db, username):
     if db.get_bind().dialect.name == 'postgresql':
         key = int.from_bytes(hashlib.sha256(f'{username}:None'.encode()).digest()[:8], 'big', signed=True)
         db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
+    _import_legacy(db, username)
+    migrate_future_events(db, username)
+
+
+def _import_legacy(db, username):
     if db.query(models.Log.id).filter_by(username=username, action=IMPORT_ACTION).first():
         return
     latest = db.query(func.max(models.Log.id)).filter(models.Log.username == username,
@@ -52,6 +59,68 @@ def ensure_personal_timeline(db, username):
     db.add(models.Log(username=username, session_id=None, action=IMPORT_ACTION,
                       details={'source_revisions': imported}))
     db.commit()
+
+
+def migrate_future_events(db, username):
+    """One-time, idempotent move of personal future milestones into dated activities (spec §5)."""
+    state = load_workspace(db, None, username)
+    work = PersonalWorkspace.model_validate(state['workspace'])
+    to_migrate = [event for event in work.timeline.events if event.tense == 'future' and not event.institution_event]
+    if not to_migrate:
+        db.add(models.Log(username=username, session_id=None, action=MIGRATION_ACTION, details={}))
+        db.commit()
+        return False
+
+    actions_by_id = {action.id: action for action in work.actions}
+    resulting_id = {}
+    for event in to_migrate:
+        existing = [id for id in event.action_ids if id in actions_by_id]
+        if len(existing) == 1:
+            action = actions_by_id[existing[0]]
+            if action.date_mode is None:
+                action.date_mode, action.start_date, action.end_date = event.date_mode, event.start_date, event.end_date
+            if event.planned and event.planned not in action.detail:
+                action.detail = (f'{action.detail}\n\n{event.planned}' if action.detail else event.planned)[:1000]
+            if not action.reflection:
+                action.reflection = event.reflection
+            resulting_id[event.id] = action.id
+        else:
+            new_id = 'm-' + event.id[:60]
+            work.actions.append(Action(id=new_id, title=event.title, detail=event.planned[:1000],
+                reflection=event.reflection, date_mode=event.date_mode, start_date=event.start_date,
+                end_date=event.end_date, stage='todo', source=event.source))
+            resulting_id[event.id] = new_id
+
+    migrated_ids = {event.id for event in to_migrate}
+    work.timeline.events = [event for event in work.timeline.events if event.id not in migrated_ids]
+
+    touched_goals = set()
+    for link in db.query(models.GoalResourceLink).filter(
+            models.GoalResourceLink.kind == 'event', models.GoalResourceLink.target_id.in_(migrated_ids)).all():
+        target = resulting_id[link.target_id]
+        duplicate = db.query(models.GoalResourceLink).filter_by(goal_id=link.goal_id, kind='action', target_id=target).first()
+        if duplicate:
+            db.delete(link)
+        else:
+            link.kind, link.target_id = 'action', target
+        touched_goals.add(link.goal_id)
+    if touched_goals:
+        db.query(models.PersonalGoal).filter(models.PersonalGoal.id.in_(touched_goals)).update(
+            {models.PersonalGoal.revision: models.PersonalGoal.revision + 1}, synchronize_session=False)
+
+    actions_by_id = {action.id: action for action in work.actions}
+    for row in db.query(models.AssignmentWork).filter(models.AssignmentWork.event_id.in_(migrated_ids)).all():
+        event = next(event for event in to_migrate if event.id == row.event_id)
+        row.event_id = None
+        if event.reflection:
+            action = actions_by_id.get(f'assignment-{row.assignment_id}')
+            if action and not action.reflection:
+                action.reflection = event.reflection
+
+    save_workspace(db, None, username, SavePersonalWorkspace(revision=state['revision'], workspace=work), commit=False)
+    db.add(models.Log(username=username, session_id=None, action=MIGRATION_ACTION, details={}))
+    db.commit()
+    return True
 
 
 def eligible_events(db, username):
