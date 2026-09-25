@@ -540,6 +540,14 @@ def _run_seed_and_migrations():
             except Exception as e:
                 logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
 
+        # A2: every action link is a means; normalize rows written before the role existed.
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text("UPDATE goal_resource_links SET role = 'means' WHERE kind = 'action' AND role <> 'means'"))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"goal_resource_links role normalization skipped/failed: {e}")
+
         for idx_clause in [
             "CREATE INDEX IF NOT EXISTS ix_questionnaire_results_administration_plan_id ON questionnaire_results (administration_plan_id)",
             "CREATE INDEX IF NOT EXISTS ix_questionnaire_results_research_contact_id ON questionnaire_results (research_contact_id)",

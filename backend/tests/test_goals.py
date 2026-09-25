@@ -363,3 +363,15 @@ def test_goals_context_respects_budget_with_many_long_parents(setup):
     for item in content:
         for title in item.get('part_of', []):
             assert len(title) <= 120
+
+
+def test_session_origin_must_be_owned(setup):
+    """The 'session' kind goes through session_resource, which must scope by username too."""
+    db, c, who, _ = setup
+    db.add(models.Log(session_id='s-bob', username='bob', action='chat_message', questionnaire_type='QSA'))
+    db.commit()
+    assert c.post('/user/goals', json=dict(title='x', origin=dict(kind='session', target_id='s-bob'))).status_code == 404
+    db.add(models.Log(session_id='s-alice', username='alice', action='chat_message', questionnaire_type='QSA'))
+    db.commit()
+    row = goal(c, origin=dict(kind='session', target_id='s-alice'))
+    assert row['origin']['kind'] == 'session'
