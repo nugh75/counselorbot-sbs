@@ -30,7 +30,8 @@ export function PersonalVisualWorkspacePage({ tab }: { tab: WorkTab }) {
 
     if (tab === 'timeline') return <main className="page-narrow space-y-4 p-4">
         <PersonalAreaHeader slug="timeline" />
-        <JourneyOverview kind={GOAL_KIND[tab]} />
+        {/* Il pannello «Obiettivi collegati» è omesso: l'accesso agli obiettivi
+            è già garantito dalla barra (+ Obiettivo) e dalle voci nell'elenco. */}
         <PersonalTimeline locale={lang} />
     </main>;
 
