@@ -11,14 +11,14 @@ export const cardColumnPresets: { key: string; columns: CardColumn[] }[] = [
     { key: 'cardPresetBlank', columns: [{ id: 'col_1', label: 'Colonna 1' }, { id: 'col_2', label: 'Colonna 2' }, { id: 'col_3', label: 'Colonna 3' }] },
 ];
 const defaultCardColumns = cardColumnPresets[0].columns;
-export type VisualAction = { kind?: ActionKind; id: string; title: string; detail: string; stage: ActionStage; reflection: string; source: string };
+export type Action = { kind?: ActionKind; id: string; title: string; detail: string; stage: ActionStage; reflection: string; source: string; date_mode?: 'point' | 'period' | null; start_date?: string | null; end_date?: string | null };
 export type ReflectionCard = { id: string; text: string; bucket: string; source: string; image?: string | null; deck_id?: string | null };
 export type ComparisonOption = { id: string; title: string; source: string };
 export type TimelineEvent = { date_mode?: 'point' | 'period' | null; start_date?: string | null; end_date?: string | null; planned?: string; institution_event?: string | null; institution_available?: boolean; institution_date?: 'start' | 'deadline'; personal_links?: ('notebook' | 'booklet' | 'orientation')[]; id: string; title: string; period: string; tense: 'past' | 'future'; symbol: 'milestone' | 'study' | 'work' | 'change'; reflection: string; source: string; action_ids: string[]; portfolio: { id: number; title: string }[] };
 export type Timeline = { title: string; events: TimelineEvent[] };
 export type VisualWorkspace = {
     timeline?: Timeline;
-    actions: VisualAction[];
+    actions: Action[];
     cards: ReflectionCard[];
     card_columns?: CardColumn[];
     card_decks?: CardDeck[];
