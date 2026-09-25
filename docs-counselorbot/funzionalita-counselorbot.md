@@ -23,7 +23,7 @@ La testata raggruppa la navigazione per dominio: a sinistra dopo il brand gli
 strumenti di lavoro (**Bussola**, **Assistente**, **Area docente** se il ruolo lo
 consente), separati dalle voci di account (**Profilo**, **Guida**,
 **Amministrazione** se admin) vicine a uscita e preferenze. Su schermi stretti
-tutto sta nel menu a tre punti, con le stesse due sezioni “Strumenti” e “Account”.
+tutto sta nel menu a tre punti, nello stesso ordine.
 
 L’accesso personale usa l’account ai4educ. Quando mancano le impostazioni iniziali,
 si scelgono counselor e Taccuino. La scelta del counselor resta nell’account e può

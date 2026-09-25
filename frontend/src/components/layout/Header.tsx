@@ -88,10 +88,6 @@ export function Header() {
         accountItems.push({ key: 'admin', href: '/admin', icon: Settings, label: t('nav.admin') });
     }
     const secondaryItems = [...workItems, ...accountItems];
-    const navGroups = [
-        { key: 'work', label: t('profile.tab.tools'), items: workItems },
-        { key: 'account', label: t('header.account'), items: accountItems },
-    ].filter(group => group.items.length > 0);
 
     const desktopItems = secondaryItems.filter(item => !item.menuOnly);
     // Strumenti di lavoro in linea da `lg`; il resto resta come oggi.
@@ -159,7 +155,7 @@ export function Header() {
                         ) : (
                             <>
                                 <HeaderMenu
-                                    groups={navGroups}
+                                    items={secondaryItems}
                                     resumeEntries={resumeEntries}
                                     label={t('header.menu')}
                                     accountLabel={accountLabel}
@@ -242,7 +238,7 @@ export function Header() {
 }
 
 function HeaderMenu({
-    groups,
+    items,
     resumeEntries,
     label,
     accountLabel,
@@ -252,7 +248,7 @@ function HeaderMenu({
     servicesHref,
     servicesLabel,
 }: {
-    groups: { key: string; label: string; items: SecondaryItem[] }[];
+    items: SecondaryItem[];
     resumeEntries: ResumeEntries;
     label: string;
     accountLabel?: string;
@@ -307,7 +303,7 @@ function HeaderMenu({
     const itemClass = 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700';
 
     return (
-        <div ref={ref} className={cn("relative", !groups.some(group => group.items.some(item => item.menuOnly)) && "lg:hidden")}>
+        <div ref={ref} className={cn("relative", !items.some(item => item.menuOnly) && "lg:hidden")}>
             <button
                 type="button"
                 ref={triggerRef}
@@ -333,27 +329,24 @@ function HeaderMenu({
                             </div>
                         </div>
                     )}
-                    {groups.map(group => <nav key={group.key} aria-label={group.label}>
-                        <div className="border-b border-slate-100 px-3 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">{group.label}</div>
-                        {group.items.map((item) => {
-                            const Icon = item.icon;
-                            const inner = (
-                                <>
-                                    <Icon className="w-4 h-4 shrink-0" />
-                                    <span className="truncate">{item.label}</span>
-                                </>
-                            );
-                            return item.external ? (
-                                <a key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "lg:hidden")} onClick={close}>
-                                    {inner}
-                                </a>
-                            ) : (
-                                <Link key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "lg:hidden")} onClick={close}>
-                                    {inner}
-                                </Link>
-                            );
-                        })}
-                    </nav>)}
+                    {items.map((item) => {
+                        const Icon = item.icon;
+                        const inner = (
+                            <>
+                                <Icon className="w-4 h-4 shrink-0" />
+                                <span className="truncate">{item.label}</span>
+                            </>
+                        );
+                        return item.external ? (
+                            <a key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "lg:hidden")} onClick={close}>
+                                {inner}
+                            </a>
+                        ) : (
+                            <Link key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "lg:hidden")} onClick={close}>
+                                {inner}
+                            </Link>
+                        );
+                    })}
                     <div className="xl:hidden">
                     {/* Sessioni congelate + chat locale interrotta: su mobile questa è
                         l'unica porta, l'icona "Riprendi" della topbar non c'è. */}
