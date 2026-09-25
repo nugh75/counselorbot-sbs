@@ -5,10 +5,11 @@ import { getIdentity } from '@/lib/auth';
 import { goalApi, type CatalogData, type CatalogEntry, type GoalGroup } from '@/lib/goals';
 import { goalText, type GoalTextKey } from '@/lib/i18n-goals';
 import { useI18n } from '@/lib/i18n-context';
+import { orderBranches } from '@/lib/goal-network';
 import { Field, GoalIssue, input } from './GoalUI';
 import { AssignmentButton } from '@/components/teacher/AssignmentButton';
 
-type SharedGoal = { id: number; username: string; title: string; status: string; criteria: string; reflection: string; review_date: string | null };
+type SharedGoal = { id: number; username: string; title: string; status: string; criteria: string; reflection: string; review_date: string | null; parent_ids: number[] };
 const emptyData = (language: string): CatalogData => ({ title: '', description: '', area: '', audience: '', criteria: '', suggestions: '', language });
 export function GoalCatalogEditor({ initialData }: { initialData?: CatalogData } = {}) {
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
@@ -61,7 +62,7 @@ export function GoalCatalogEditor({ initialData }: { initialData?: CatalogData }
             <div className="divide-y divide-slate-200">{rows.map(row => <article key={row.id} className="flex flex-wrap items-center justify-between gap-3 py-4"><div className="min-w-0 flex-1"><h3 className="break-words font-semibold">{row.data.title}</h3><p className="text-sm text-slate-500">{l(row.status as GoalTextKey)} · {row.group_id ? groups.find(g => g.id === row.group_id)?.name || l('unavailable') : l('common')} · {l('version')} {row.version} · {row.author_username}</p></div><div className="flex flex-wrap gap-2">{row.status === 'published' && <AssignmentButton kind="goal" id={row.id} title={row.data.title} groupId={row.group_id} />}{(admin || row.author_username === username) && <Button type="button" variant="secondary" onClick={() => open(row)}>{l('edit')}</Button>}<Button type="button" variant="ghost" onClick={() => open(row, true)}>{l('duplicate')}</Button></div></article>)}</div>
             <section className="space-y-3 border-t border-slate-200 pt-5" aria-label={l('shared')}><h3 className="font-bold">{l('shared')}</h3><Field label={l('selectGroup')}><select className={input} value={sharedGroup} onChange={e => setSharedGroup(e.target.value)}><option value="">—</option>{groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></Field>
                 <GoalIssue error={sharedError} lang={lang} retry={() => setSharedAttempt(n => n + 1)} />{sharedLoading && <p role="status">{l('loading')}</p>}{sharedGroup && !sharedLoading && !sharedError && !shared.length && <p className="text-sm text-slate-600">{l('noShared')}</p>}
-                {shared.map(row => <article key={row.id} className="space-y-2 rounded-lg bg-slate-50 p-4"><p className="text-sm text-slate-500">{row.username} · {l(row.status as GoalTextKey)}</p><h4 className="font-semibold">{row.title}</h4><p className="whitespace-pre-wrap text-sm">{row.criteria}</p><p className="whitespace-pre-wrap text-sm">{row.reflection}</p>{row.review_date && <p className="text-sm">{l('reviewDate')}: {row.review_date}</p>}</article>)}
+                {orderBranches(shared).map(({ row, depth }) => <article key={row.id} style={{ marginInlineStart: `${Math.min(depth, 3) * 1.5}rem` }} className="space-y-2 rounded-lg bg-slate-50 p-4"><p className="text-sm text-slate-500">{row.username} · {l(row.status as GoalTextKey)}</p><h4 className="font-semibold">{row.title}</h4><p className="whitespace-pre-wrap text-sm">{row.criteria}</p><p className="whitespace-pre-wrap text-sm">{row.reflection}</p>{row.review_date && <p className="text-sm">{l('reviewDate')}: {row.review_date}</p>}</article>)}
             </section>
         </>}
     </section>;

@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useRef } from 'react';
 
-/** Protect this editor's explicit-save draft across links and browser history. */
-export function useCategoryDraftGuard(dirty: boolean, message: string) {
+/** Protect an explicit-save draft across links, browser history and tab closing. */
+export function useDraftGuard(dirty: boolean, message: string) {
     const messageRef = useRef(message);
     useEffect(() => { messageRef.current = message; }, [message]);
     useEffect(() => {
@@ -14,7 +14,7 @@ export function useCategoryDraftGuard(dirty: boolean, message: string) {
         const marker = crypto.randomUUID();
         // A same-page entry prevents the router from unmounting the form before
         // older browsers deliver popstate to this component.
-        if (!navigation) window.history.pushState({ ...currentState, categoryDraftGuard: marker }, '', currentUrl);
+        if (!navigation) window.history.pushState({ ...currentState, draftGuard: marker }, '', currentUrl);
         const leavesPage = (href: string) => {
             const from = new URL(currentUrl); const to = new URL(href, currentUrl);
             return from.origin !== to.origin || from.pathname !== to.pathname || from.search !== to.search;
@@ -43,7 +43,7 @@ export function useCategoryDraftGuard(dirty: boolean, message: string) {
             if (!navigation && !approved && !leavesPage(window.location.href)) {
                 event.stopImmediatePropagation();
                 if (window.confirm(messageRef.current)) { approved = '*'; window.history.back(); }
-                else window.history.pushState({ ...currentState, categoryDraftGuard: marker }, '', currentUrl);
+                else window.history.pushState({ ...currentState, draftGuard: marker }, '', currentUrl);
                 return;
             }
             if (approved === '*' || accept(window.location.href)) return;
@@ -59,7 +59,7 @@ export function useCategoryDraftGuard(dirty: boolean, message: string) {
             window.removeEventListener('beforeunload', unload);
             window.removeEventListener('popstate', pop, true);
             navigation?.removeEventListener('navigate', navigate);
-            if (!navigation && window.history.state?.categoryDraftGuard === marker && window.location.href === currentUrl) window.history.back();
+            if (!navigation && window.history.state?.draftGuard === marker && window.location.href === currentUrl) window.history.back();
         };
     }, [dirty]);
 }

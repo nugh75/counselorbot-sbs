@@ -7,7 +7,7 @@ import { ArrowLeft, MoreHorizontal, Plus } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { categoryText, type CategoryTextKey } from '@/lib/i18n-institution-categories';
-import { useCategoryDraftGuard } from '@/lib/use-category-draft-guard';
+import { useDraftGuard } from '@/lib/use-draft-guard';
 import type { Institution } from '@/lib/referrals-api';
 
 type Category = { id: string; name: string; description: string; is_active: boolean; position: number; updated_by: string; updated_at: string };
@@ -70,7 +70,7 @@ function CategoryEditor({ institutions, institutionId, onSelect }: { institution
     const listRef = useRef<HTMLHeadingElement>(null);
     const triggers = useRef(new Map<string, HTMLButtonElement>());
     const dirty = Boolean(draft && (draft.name !== draft.originalName || draft.description !== draft.originalDescription)) || Boolean(assignment && [...assignment.selected].sort().join() !== [...assignment.original].sort().join());
-    useCategoryDraftGuard(dirty || busy, l('leave'));
+    useDraftGuard(dirty || busy, l('leave'));
     const base = `/api/teacher/institutions/${institutionId}`;
     const path = `${base}/orientation-categories`;
     const contentsPath = `${base}/orientation-contents?lang=${lang}`;
