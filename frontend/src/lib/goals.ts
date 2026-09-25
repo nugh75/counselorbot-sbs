@@ -1,13 +1,23 @@
 import { apiFetch } from './auth';
-export type ResourceKind = 'action' | 'event' | 'portfolio' | 'booklet' | 'tavolo' | 'notebook' | 'card' | 'comparison';
-export type GoalResource = { kind: ResourceKind; target_id: string; title: string; href: string | null; available: boolean; stage?: string; date?: string; id?: number };
+import { methodRefs } from './goal-method';
+export type ResourceKind = 'action' | 'event' | 'portfolio' | 'tavolo' | 'notebook' | 'card' | 'comparison' | 'reading' | 'session';
+export type GoalResource = { kind: ResourceKind; target_id: string; title: string; href: string | null; available: boolean; stage?: string; date?: string; id?: number; role?: LinkRole; action_kind?: string; progress?: 'on_track' | 'slow' | 'stuck' | null };
+export type LinkRole = 'origin' | 'means' | 'evidence' | 'related';
+export type MethodRef = { kind: 'certified'; slug: string } | { kind: 'own'; id: number };
+export type MethodItem = MethodRef & { title: string; available: boolean };
+export type GoalReview = { id: number; commitment: Commitment | null; outcome: Outcome; satisfaction: Satisfaction | null; obstacles: string; change: string; learned: string; next_step: string; created_at: string };
+export type Commitment = 'full' | 'enough' | 'partial' | 'none';
+export type Outcome = 'reached' | 'partial' | 'not_reached' | 'abandoned';
+export type Satisfaction = 'much' | 'enough' | 'little' | 'none';
+export type GoalOrigin = { kind: 'reading' | 'notebook' | 'event' | 'session'; target_id: string };
+export type PersonalStrategy = { id: number; text: string; used_by: number[] };
 export type CatalogData = { title: string; description: string; area: string; audience: string; criteria: string; suggestions: string; language: string };
 export type CatalogEntry = { id: number; author_username: string; group_id: number | null; status: string; version: number; data: CatalogData };
-export type GoalFields = { title: string; motivation: string; criteria: string; reflection: string; status: string; priority: number; review_date: string | null; shared_group_id: number | null; revision: number };
-export type PersonalGoal = GoalFields & { id: number; catalog_id: number | null; catalog_snapshot: { version?: number; data?: CatalogData }; links: GoalResource[]; parent_ids: number[] };
+export type GoalFields = { title: string; motivation: string; criteria: string; reflection: string; status: string; priority: number; review_date: string | null; shared_group_id: number | null; revision: number; method: MethodRef[] };
+export type PersonalGoal = GoalFields & { id: number; catalog_id: number | null; catalog_snapshot: { version?: number; data?: CatalogData }; links: GoalResource[]; parent_ids: number[]; method: MethodItem[]; origin: GoalResource | null; reviews: GoalReview[]; checks: GoalResource[] };
 export type GoalGroup = { id: number; name: string };
-export const blankGoal: GoalFields = { title: '', motivation: '', criteria: '', reflection: '', status: 'active', priority: 2, review_date: null, shared_group_id: null, revision: 0 };
-export const goalFields = (goal: GoalFields): GoalFields => ({ title: goal.title, motivation: goal.motivation, criteria: goal.criteria, reflection: goal.reflection, status: goal.status, priority: goal.priority, review_date: goal.review_date, shared_group_id: goal.shared_group_id, revision: goal.revision });
+export const blankGoal: GoalFields = { title: '', motivation: '', criteria: '', reflection: '', status: 'active', priority: 2, review_date: null, shared_group_id: null, revision: 0, method: [] };
+export const goalFields = (goal: GoalFields): GoalFields => ({ title: goal.title, motivation: goal.motivation, criteria: goal.criteria, reflection: goal.reflection, status: goal.status, priority: goal.priority, review_date: goal.review_date, shared_group_id: goal.shared_group_id, revision: goal.revision, method: 'title' in goal && Array.isArray(goal.method) ? methodRefs(goal.method as MethodItem[]) : [] });
 export class GoalError extends Error { constructor(public status: number) { super(String(status)); } }
 export async function goalApi<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
     const response = await apiFetch(`/api${path}`, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(15000) });

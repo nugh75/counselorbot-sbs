@@ -92,7 +92,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
             // A new sub-goal inherits any effective share of its chosen parent: announce and
             // confirm exactly like an existing goal's visibility change (same helper, same wording).
             if (parentId) {
-                const draft: PersonalGoal = { ...blankGoal, ...form, id: -1, catalog_id: null, catalog_snapshot: {}, links: [], parent_ids: [parentId] };
+                const draft: PersonalGoal = { ...blankGoal, ...form, method: [], id: -1, catalog_id: null, catalog_snapshot: {}, links: [], parent_ids: [parentId], origin: null, reviews: [], checks: [] };
                 if (!confirmVisibility([...goals, draft], [draft.id])) return;
             }
             return void run(() => goalApi<PersonalGoal>('/user/goals', 'POST', { ...form, parent_id: parentId ?? null, catalog_id: source?.id ?? null, catalog_version: source?.version ?? null, request_id: createRequest.current }), onCreated);
