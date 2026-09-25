@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useI18n } from '@/lib/i18n-context';
 import { translate, type Lang } from '@/lib/i18n';
+import { getIdentity } from '@/lib/auth';
 import { getDisplayedCounselorId, subscribeToCounselor } from '@/lib/counselor';
 import { DEFAULT_VOICES, PIPER_VOICES, VOICE_EXCLUDED, pageReadingSource, highlightReadingBlock, type ReadingBlock } from '@/lib/voice-content';
 import { VoiceReaderController, type ReaderInput } from '@/lib/voice-reader';
@@ -143,6 +144,15 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
     const [catalogError, setCatalogError] = useState(false);
     const [retry, setRetry] = useState(0);
     const [catalogEngine, setCatalogEngine] = useState(engine);
+    // Le correzioni della pronuncia sono uno strumento di configurazione: solo
+    // l'amministratore le vede, né il docente né lo studente. L'anteprima ruoli
+    // segue il ruolo mostrato, come nel resto dell'interfaccia.
+    const [isAdmin, setIsAdmin] = useState(false);
+    useEffect(() => {
+        let cancelled = false;
+        getIdentity().then(identity => { if (!cancelled) setIsAdmin(Boolean(identity?.is_admin)); });
+        return () => { cancelled = true; };
+    }, []);
 
     const keepInView = useCallback((left: number, top: number) => {
         const bounds = panel.current?.getBoundingClientRect();
@@ -264,8 +274,8 @@ function ReaderPanel({ controller, target, onRead, onClose, opener, expanded, on
                     </label>
                 </div>
                 <p className="text-xs text-slate-500">{t('voice.saved')}</p>
-                <PronunciationEditor key={language} language={language} onChange={controller.stop}
-                    onPreview={(text, literalPronunciation) => onRead({ id: 'pronunciation-preview', text, language, counselorId, literalPronunciation })} />
+                {isAdmin && <PronunciationEditor key={language} language={language} onChange={controller.stop}
+                    onPreview={(text, literalPronunciation) => onRead({ id: 'pronunciation-preview', text, language, counselorId, literalPronunciation })} />}
                 {catalogError && <div role="alert" className="flex flex-wrap items-center gap-2 text-sm text-red-700">{t('voice.catalogError')}<Button variant="ghost" onClick={() => setRetry(n => n + 1)}>{t('voice.retry')}</Button></div>}
                 <div className="flex flex-wrap gap-2">
                     <Button onClick={readPage}><Headphones className="h-4 w-4" />{t('voice.page')}</Button>
