@@ -5,6 +5,7 @@
 ## Quick Reference
 - **Stack**: Python (FastAPI), Next.js App Router, PostgreSQL, Docker Compose
 - **Entry point**: `docker compose up -d --build` or `uvicorn backend.main:app --reload --port 8000` + `cd frontend && npm run dev`
+- **Sviluppo live (hot reload, senza Docker)**: `docs/operations/live-dev-environment.md` — `scripts/dev-backend.sh` (:8002, DB di test) + `scripts/dev-frontend.sh` (:3107)
 - **Test**: `docker exec counselorbot_backend python -m backend.tests.test_smoke`
 - **Repo**: (github)
 - **Visual identity**: `docs/design.md` — read it before changing layout, colour, typography, or any UI component

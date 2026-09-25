@@ -36,3 +36,8 @@ rag-collections/
 
 # Indice RAG rigenerato in locale (lock + cache di embedding): non versionarlo.
 .rag_index/
+
+# Ambiente sviluppo live (hot reload)
+backend/.venv/
+rag_index_dev/
+session_memory_dev/
