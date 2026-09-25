@@ -1,86 +1,43 @@
-# Handoff: Unica Landing Page, Pulsanti Bussola/Strumenti e Allineamento Icone
+# Handoff: Libretto nella triade — Lot A (backend)
+Data: 2026-09-26 | Sessione precedente: orchestrazione pi + revisioni Claude (serata 25–26/9)
+Worktree: `/tmp/cb-libretto` (branch dedicato; `~/counselorbot-sbs` resta su `main`)
+Piano: `docs/plans/2026-09-25-libretto-nella-triade-plan.md` (21 task: lotto A backend = A1–A7, poi B, C, D)
 
-Data: 22 Settembre 2026  
-Ramo Git: `feature/double-click-selection-advance`
+## Objective
+Fondere il «libretto dello studente» nella triade Obiettivi–Azioni–Linea del tempo: lotti A (dati, API, migrazione), B (frontend), C, D. Lotto A completo quando tutti i 7 task sono committati e revisionati su `/tmp/cb-libretto`.
 
----
+## Progress
+- [x] A1 Modello dati — commit `80de914`, revisionato.
+- [x] A2 Ruoli link obiettivo + origine — `0b55df6`; fix round 1 `609d332` (ruolo «mezzo» su assegnazioni docente e migrazione, normalizzazione DB, test origine «sessione»), revisione confermata.
+- [x] A3 Metodo obiettivo e «Le mie strategie» — `97d0c28`; fix round 1 `c22ceb1` (test update metodo su obiettivo esistente), chiuso. Annotato dettaglio estetico (a-capo) per dopo.
+- [x] A4 Azioni di controllo e rilettura tappe — `c803a1c` (pi caduto per errore API dopo commit; test eseguiti manualmente: 72 PASS). Revisione ok, retrocompatibilità dei dati confermata. Mancava la prova «prima della modifica» annotata nel journal.
+- [x] A5 Bilancio dell'obiettivo — `f49db99` (28 test in test_goals.py, 2 prima falliti poi verdi). Revisione ok; annotata osservazione sulle righe di attribuzione del commit.
+- [x] A6 «La mia lettura» — `91731af` (API readings: GET/PUT/DELETE `/user/readings`, protezione 409 se origine di obiettivo). Commit fatto; **revisione A6 NON completata**.
+- [ ] **A7 Migrazione del libretto — NON assegnato/avviato.** È il task più delicato: piano vuole che sia svolto da un agente Claude, NON da pi. Spec § 8 del piano: `backend/booklet_migration.py` + hook in `main.py` dopo `seed_goals`, test `backend/tests/test_booklet_migration.py`, 8 regole (scheda→lettura/obiettivo/strategie/bilancio/tappe, eventi `booklet-{id}-*` → `migrated-`, schede `EVENTO_*`, link `GoalResourceLink` booklet, marker `MIGRATION_ACTION`, seconda esecuzione no-op).
 
-## 1. Obiettivi del Lavoro
+## Problems Encountered
+- **Limite di sessione colpito** (rate limit 429, reset ore ~2:20): la revisione di A6 è partita ed è fallita prima di dare esito. La prossima sessione deve **rilanciare la revisione di A6** prima di ogni altra cosa.
+- Pi (GLM 5.3 Flash via opencode-go) a volte si è bloccato; le contromisure funzionanti sono nella sezione Resolutions.
 
-1. **Trasparenza immagini tema scuro nella pagina strumenti (`ReturningHome.tsx`)**:
-   - In precedenza venivano usate `compilazioni.png`, `tavolo.png`, `bacheca-azioni.png` che avevano un piedistallo/piastra bianca opaca che nel tema scuro appariva come una macchia chiara.
-2. **Allineamento icone tra pagina accoglienza (`IntroScreen.tsx`) e strumenti (`ReturningHome.tsx`)**:
-   - Utilizzare le stesse identiche illustrazioni trasparenti per i tre pilastri (Analisi questionari, Percorsi guidati, Allenamento e pratica).
-3. **Unica Landing Page**:
-   - La schermata di accoglienza/presentazione (`IntroScreen`) deve essere l'**unica landing page** all'ingresso della piattaforma, anche per chi ha già effettuato accessi precedenti o ha questionari compilati.
-4. **Nuovi pulsanti con spiegazione su `IntroScreen`**:
-   - Il pulsante "Inizia" è sostituito da:
-     - **Bussola**: avvia il percorso guidato di orientamento / questionari (`onStart`).
-     - **Strumenti**: porta alla homepage del secondo utilizzo / catalogo strumenti (`onOpenTools` -> `setStep('base')`).
-     - Entrambi i pulsanti hanno titolo, icona e descrizione esplicativa.
+## Resolutions
+- Il dossier di lavoro del lotto A vive nel worktree `/tmp/cb-libretto`; i commit sono già sul branch (non su main). Verificare con `git log --oneline` e rispettare che `~/counselorbot-sbs` resti su main.
+- Pi bloccato → fermarlo e rilanciarlo in **sessione nuova** con limite ~25'; watchdog su stall >6 min o exit, che punti alla sessione corrente (i watchdog vecchi puntano al file della sessione giusta solo quando creati dopo il rilancio, altrimenti rimangono appesi all'infinito).
+- Errore `reasoning_effort is not allowed` dal provider opencode-go (caduta di A4): il codice/commit erano già salvati; aggiunto tentativo automatico che rilancia pi **senza ragionamento esteso** per i soli passi mancanti (test, commit, report). Pi è risalito.
+- Gap nei test colti in revisione (A3): la revisione mira «che i test coprano le modifiche» ha dato esito utile → mantenerla per ogni task.
+- I test si possono eseguire anche manualmente dal worktree (pytest su `backend/tests/`) se pi cade prima del report.
 
----
+## Decision Log
+- Back-end direttamente sul worktree `/tmp/cb-libretto`, main non toccato finché lotto A non chiuso — così gli altri agenti lavorano su main in parallelo.
+- Ripartizione dei ruoli: pi scrive codice e test; un agente Claude di revisione approva ogni task prima di passare al successivo — la revisione ha già colto buchi (A2 e A3), costo giustificato.
+- A7 affidato a Claude e non a pi — giudizio del piano: la migrazione tocca 8 regole e dice «Consumes A1–A6», troppo delicata per pi.
+- Data migration idempotente (seconda esecuzione = no-op) — già deciso nel piano spec § 8, non rivisitare.
+- Normalizzazione dei collegamenti già in DB su A2 (ruolo «mezzo») — fatta una volta sola nel fix round 1, non rifare.
+- Etichette note della migrazione in italiano («Cosa ho capito: …») come nel piano — non cambiare lingua.
+- Le due righe di attribuzione nei commit (firma pi) si lasciano: rischiare la riscrittura della cronologia per estetica non ne vale la pena; annotata, non fixata.
+- Dettaglio estetico A3 (a-capo) rimandato a post-lotto per non fermare la catena dei task.
 
-## 2. File Modificati e Dettaglio Interventi
-
-### 1. `frontend/src/app/page.tsx`
-- **Unica Landing Page**: nell'`useEffect` iniziale (righe 216-224), `setStep` viene impostato sempre a `'intro'` (non più `'base'` per utenti di ritorno).
-- **Prop `onOpenTools`**: `<IntroScreen onStart={startFromIntro} onOpenTools={() => setStep('base')} />`.
-
-### 2. `frontend/src/components/home/IntroScreen.tsx`
-- Aggiunta prop `onOpenTools?: () => void`.
-- Sostituito il singolo bottone "Inizia" con una sezione a due schede responsive (`Bussola` e `Strumenti`):
-  - **Bussola**: icona Lucide `Compass`, spiegazione dell'orientamento, pulsante principale `Bussola` che chiama `onStart`.
-  - **Strumenti**: icona Lucide `LayoutGrid`, spiegazione del catalogo completo, pulsante secondario `Strumenti` che chiama `onOpenTools`.
-- Mantenuta l'accessibilità e i titoli `<h2>` per le 3 attività per non rompere i test esistenti.
-
-### 3. `frontend/src/components/home/ReturningHome.tsx`
-- **Icone trasparenti**: `categoryImage` ora usa le illustrazioni condivise ad alpha pulito:
-  - `assessment` → `/images/intro/profiles.png`
-  - `guided` → `/images/intro/paths.png`
-  - `learning` → `/images/intro/practice.png`
-- **Pulsante Torna alla presentazione**: aggiunto nella testata in alto accanto al titolo `Strumenti`:
-  - Icona `ArrowLeft`, etichetta `t('base.backToIntro')`, chiama `onOpenIntro`.
-
-### 4. `frontend/src/lib/i18n.ts`
-- Aggiunte le chiavi di traduzione in tutte e 6 le lingue (`it`, `en`, `es`, `fr`, `de`, `sv`):
-  - `app.intro.actions.label`
-  - `app.intro.action.compass.label`
-  - `app.intro.action.compass.desc`
-  - `app.intro.action.tools.label`
-  - `app.intro.action.tools.desc`
-  - `base.backToIntro`
-
-### 5. `frontend/tests/account-onboarding.test.mjs`
-- Aggiornato il test della schermata iniziale:
-  - Cerca il pulsante `Bussola` (invece di `Inizia`).
-  - Verifica la presenza del pulsante `Strumenti`.
-
----
-
-## 3. Stato dei Test & Validazione
-
-- **Test unitari frontend**:
-  ```bash
-  npm test --prefix frontend
-  ```
-  **Risultato**: 196 su 196 test superati (`pass 196, fail 0`).
-
----
-
-## 4. Prossimi Passi Consigliati
-
-1. **Verifica build**:
-   ```bash
-   npm run build --prefix frontend
-   ```
-2. **Aggiornamento container Docker (se necessario)**:
-   ```bash
-   docker compose up -d --build
-   ```
-3. **Commit & Push su GitHub**:
-   ```bash
-   git add frontend/src/app/page.tsx frontend/src/components/home/IntroScreen.tsx frontend/src/components/home/ReturningHome.tsx frontend/src/lib/i18n.ts frontend/tests/account-onboarding.test.mjs
-   git commit -m "feat: set welcome screen as sole landing page with compass and tools actions, align category icons"
-   git push origin feature/double-click-selection-advance
-   ```
+## Prossimo passo alla ripresa
+1. Verificare `git -C /tmp/cb-libretto log --oneline -10` e confermare che A6 (`91731af`) è l'ultimo commit.
+2. Rilanciare la **revisione A6** (agente Claude, spec + qualità, incluso il punto che i dati già salvati si carichino ancora).
+3. Se ok, dispatchare **A7 (Migrazione del libretto)** a un agente Claude, seguendo le 8 regole in spec § 8 del piano (riga ~894).
+4. Esecuzione TDD come i task precedenti: test che falliscono → implementazione → tutti verdi → commit convenzionale.
