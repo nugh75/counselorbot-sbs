@@ -143,7 +143,8 @@ const DEPLOYED_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://counselorbo
 
 export function ai4authLoginUrl(returnPath: string = '/admin'): string {
     const path = returnPath.startsWith('/') && !returnPath.startsWith('//') ? returnPath : '/admin';
-    const origin = typeof window !== 'undefined' && window.location.hostname.endsWith('.ai4educ.org')
+    const origin = typeof window !== 'undefined' && (window.location.hostname.endsWith('.ai4educ.org')
+        || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? window.location.origin
         : DEPLOYED_APP_URL.replace(/\/$/, '');
     return `${AI4AUTH_LOGIN_URL}?rd=${encodeURIComponent(`${origin}${path}`)}`;
