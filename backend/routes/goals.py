@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
-from ..goals import (ActionCreate, CatalogWrite, GoalCreate, GoalWrite, LinkWrite, ParentWrite,
+from ..goals import (ActionCreate, CatalogWrite, GoalCreate, GoalWrite, LinkWrite, ParentWrite, ReviewWrite,
                      catalog_dict, catalog_visible, goal_dict, membership_ids, owned_goal,
                      resources, validate_share, lock_network, descendant_ids,
-                     ALLOWED_ROLES, default_role, validate_origin, validate_method)
+                     add_review_milestone, ALLOWED_ROLES, default_role, validate_origin, validate_method)
 from ..personal_timeline import ensure_personal_timeline
 from ..visual_tools import load_workspace, save_workspace, SavePersonalWorkspace
 from .groups import _require_visible_group, _visible_group_query
@@ -206,6 +206,19 @@ def unlink_resource(goal_id: int, link_id: int, revision: int = Query(ge=1), db:
     if not link:
         raise HTTPException(404, 'Link unavailable')
     db.delete(link); row.revision += 1
+    db.commit(); db.refresh(row)
+    return goal_dict(db, row)
+
+
+@router.post('/user/goals/{goal_id}/reviews')
+def review_goal(goal_id: int, payload: ReviewWrite, db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
+    ensure_personal_timeline(db, user['username'])
+    row = owned_goal(db, user['username'], goal_id, payload.revision)
+    review = models.GoalReview(goal_id=goal_id, **payload.model_dump(exclude={'revision'}))
+    db.add(review); db.flush()
+    row.status = 'archived' if payload.outcome == 'abandoned' else 'completed'
+    row.revision += 1
+    add_review_milestone(db, user['username'], row, review)
     db.commit(); db.refresh(row)
     return goal_dict(db, row)
 

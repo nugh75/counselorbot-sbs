@@ -43,7 +43,8 @@ def goal(client, title='Il mio obiettivo', **kwargs):
 
 
 def edit_payload(row, **kwargs):
-    return {**{k: row[k] for k in ('title', 'motivation', 'criteria', 'reflection', 'status', 'priority', 'review_date', 'shared_group_id', 'revision')}, **kwargs}
+    return {**{k: row[k] for k in ('title', 'motivation', 'criteria', 'reflection', 'status', 'priority', 'review_date', 'shared_group_id', 'revision')},
+            'method': [{k: v for k, v in m.items() if k in ('kind', 'slug', 'id')} for m in row['method']], **kwargs}
 
 
 def test_catalog_scope_roles_and_common_review(setup):
@@ -411,3 +412,28 @@ def test_goal_can_create_a_check(setup):
                revision=row['revision'], request_id='check-000001'))
     link = r.json()['links'][0]
     assert link['action_kind'] == 'check' and link['role'] == 'means'
+
+
+def test_review_closes_goal_and_adds_milestone(setup):
+    db, c, who, _ = setup
+    row = goal(c)
+    r = c.post(f"/user/goals/{row['id']}/reviews", json=dict(commitment='enough', outcome='reached', satisfaction='much',
+               learned='Parlare a voce alta mi aiuta', next_step='Provare con la classe', revision=row['revision']))
+    assert r.status_code == 200, r.text
+    closed = r.json()
+    assert closed['status'] == 'completed' and closed['reviews'][0]['outcome'] == 'reached'
+    events = c.get('/user/timeline').json()['workspace']['timeline']['events']
+    milestone = next(e for e in events if e['id'].startswith('goal-review-'))
+    assert milestone['source'] == f"goal:{row['id']}" and milestone['tense'] == 'past'
+    stale = c.post(f"/user/goals/{row['id']}/reviews", json=dict(outcome='partial', revision=row['revision']))
+    assert stale.status_code == 409
+
+
+def test_abandoned_goal_is_archived_and_reopen_allows_second_review(setup):
+    db, c, who, _ = setup
+    row = goal(c)
+    closed = c.post(f"/user/goals/{row['id']}/reviews", json=dict(outcome='abandoned', revision=row['revision'])).json()
+    assert closed['status'] == 'archived'
+    reopened = c.put(f"/user/goals/{row['id']}", json=edit_payload(closed, status='active')).json()
+    again = c.post(f"/user/goals/{row['id']}/reviews", json=dict(outcome='partial', revision=reopened['revision'])).json()
+    assert [rv['outcome'] for rv in again['reviews']] == ['partial', 'abandoned']
