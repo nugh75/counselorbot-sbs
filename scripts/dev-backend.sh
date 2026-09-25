@@ -23,6 +23,9 @@ export SESSION_MEMORY_DIR="$(dirname "$0")/../session_memory_dev"
 export RAG_DOCS_DIR="$(dirname "$0")/../docs"
 export RAG_INDEX_DIR="$(dirname "$0")/../rag_index_dev"
 export COUNSELORBOT_DOCS_DIR="$(dirname "$0")/../docs-counselorbot"
+# Canale fidato per gli header Remote-* iniettati dal proxy di sviluppo
+# (frontend/src/proxy.ts): stesso valore di DEV_AUTH_SECRET in .env.development.
+export FORWARD_AUTH_SHARED_SECRET="${FORWARD_AUTH_SHARED_SECRET:-dev-local-only}"
 export OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://127.0.0.1:11434}"
 export TESSDATA_PREFIX="$HOME/.local/opt/tessdata"
 export PATH="$HOME/.local/opt/graphviz/usr/bin:$HOME/.local/opt/tesseract/usr/bin:$PATH"
