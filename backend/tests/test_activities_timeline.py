@@ -165,6 +165,28 @@ def test_migrate_two_future_events_on_same_activity_matching_dates_merge_and_app
         assert a1['reflection'] == 'Prima riflessione\n\nSeconda riflessione'
 
 
+def test_migrate_two_future_events_same_date_reflection_overflow_splits_instead_of_raising():
+    # Regression: Action.reflection has max_length=1000; two 600-char reflections
+    # merged would exceed it and previously raised an uncaught ValidationError.
+    with artifact_session() as db:
+        first_reflection = 'a' * 600
+        second_reflection = 'b' * 600
+        seed_personal_workspace(db, 'alice', legacy_workspace(
+            [dict(id='first-future', title='Passo 1', period='2027', tense='future',
+                  date_mode='point', start_date='2027-01-15', reflection=first_reflection, action_ids=['a1']),
+             dict(id='second-future', title='Passo 2', period='2027', tense='future',
+                  date_mode='point', start_date='2027-01-15', reflection=second_reflection, action_ids=['a1'])],
+            actions=[dict(id='a1', title='Attività condivisa', stage='doing')]))
+        ensure_personal_timeline(db, 'alice')
+        work = load_workspace(db, None, 'alice')['workspace']
+        assert work['timeline']['events'] == []
+        assert {a['id'] for a in work['actions']} == {'a1', 'm-second-future'}
+        a1 = next(a for a in work['actions'] if a['id'] == 'a1')
+        m2 = next(a for a in work['actions'] if a['id'] == 'm-second-future')
+        assert a1['reflection'] == first_reflection
+        assert m2['reflection'] == second_reflection
+
+
 def test_migrate_updates_goal_links_and_removes_duplicates():
     with artifact_session() as db:
         seed_personal_workspace(db, 'alice', legacy_workspace([
@@ -210,6 +232,33 @@ def test_migrate_clears_assignment_event_link_and_moves_reflection():
         work = load_workspace(db, None, 'alice')['workspace']
         action = next(a for a in work['actions'] if a['id'] == action_id)
         assert action['reflection'] == 'Mi ha aiutato'
+
+
+def test_migrate_assignment_reflection_carryover_clamps_instead_of_raising():
+    # Regression: the carryover onto an existing assignment-<id> activity cannot
+    # split into a second activity (there is nowhere else for it to go), so an
+    # overflow is clamped to 1000 chars ending with an ellipsis instead of raising.
+    with artifact_session() as db:
+        assignment = models.TeacherAssignment(author_username='teacher', author_name='Teacher', group_id=1,
+            group_name='Class A', source_kind='reading', source_id=1, snapshot={'title': 'Lettura'},
+            request_id='req-9', request_hash='hash-9')
+        db.add(assignment); db.flush()
+        action_id, event_id = f'assignment-{assignment.id}', f'assignment-{assignment.id}-event'
+        existing_reflection = 'x' * 900
+        event_reflection = 'y' * 900
+        seed_personal_workspace(db, 'alice', legacy_workspace(
+            [dict(id=event_id, title='Lettura', period='2027', tense='future',
+                  date_mode='point', start_date='2027-03-01', reflection=event_reflection)],
+            actions=[dict(id=action_id, title='Lettura assegnata', stage='todo', reflection=existing_reflection)]))
+        work_row = models.AssignmentWork(assignment_id=assignment.id, username='alice', action_id=action_id, event_id=event_id)
+        db.add(work_row); db.commit()
+        ensure_personal_timeline(db, 'alice')
+        db.expire_all()
+        assert db.get(models.AssignmentWork, work_row.id).event_id is None
+        work = load_workspace(db, None, 'alice')['workspace']
+        action = next(a for a in work['actions'] if a['id'] == action_id)
+        assert len(action['reflection']) == 1000
+        assert action['reflection'].endswith('…')
 
 
 def test_migrate_leaves_past_and_institution_events_untouched():
