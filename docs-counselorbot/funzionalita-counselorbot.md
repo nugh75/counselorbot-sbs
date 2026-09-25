@@ -19,6 +19,12 @@ personale, accanto alle Flashcard. Il catalogo non contiene più il riquadro
 “Counselor · Come procediamo” né “Rivedi la presentazione iniziale”. Il comando
 indietro e la navigazione permettono di tornare alle pagine precedenti.
 
+La testata raggruppa la navigazione per dominio: a sinistra dopo il brand gli
+strumenti di lavoro (**Bussola**, **Assistente**, **Area docente** se il ruolo lo
+consente), separati dalle voci di account (**Profilo**, **Guida**,
+**Amministrazione** se admin) vicine a uscita e preferenze. Su schermi stretti
+tutto sta nel menu a tre punti, con le stesse due sezioni “Strumenti” e “Account”.
+
 L’accesso personale usa l’account ai4educ. Quando mancano le impostazioni iniziali,
 si scelgono counselor e Taccuino. La scelta del counselor resta nell’account e può
 essere modificata dalla pagina dei counselor. Metodo di inserimento dei risultati
