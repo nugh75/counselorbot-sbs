@@ -38,7 +38,10 @@ modalità ogni volta e non cambia la preferenza degli altri strumenti.
   richiesta CounselorBot; i documenti di approfondimento sono recuperati dall’indice.
 - **Guida interfaccia** (`/guide`): pubblica anche senza login, con percorsi per
   uso personale e per docenti, immagini ingrandibili e collegamenti alle sezioni.
-  Tutte le 15 sezioni personali e le 7 sezioni per docenti includono almeno uno
+  Senza parametro `audience` il percorso segue il ruolo: docenti, ricercatori e
+  amministratori aprono la versione docente, studenti e visitatori quella
+  studente, e solo chi può usare l’assistente docente vede il selettore dei due
+  percorsi. Tutte le 15 sezioni personali e le 7 sezioni per docenti includono almeno uno
   screenshot pertinente; le schermate della piattaforma sono disponibili nelle
   sei lingue, mentre le due viste della chat sono dimostrazioni in italiano.
 - Interfaccia e conversazioni: italiano, inglese, spagnolo, francese, tedesco e
@@ -147,13 +150,13 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Funzione | Dove | Che cosa permette |
 | --- | --- | --- |
 | Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; toccare un obiettivo per modificarlo in una finestra popup, dove si scrive un nuovo obiettivo o si adotta e personalizza una proposta del catalogo; collegare lavori e attività; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
-| Calendario e diario | `/profilo/timeline` | Pianificare attività su una data o un periodo, poi annotare cosa è successo e riflettere. |
+| Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, attività datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario e collegamenti al Portfolio; attività e obiettivi si aprono sulle loro pagine. |
 | Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. |
 | Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
 | Tavolo | `/profilo/tavolo` | Lavorare con materiali, idee e counselor; riaprire Tavoli salvati quando la funzione è abilitata. |
 | Carte da ordinare | `/profilo/carte` | Raccogliere e ordinare pensieri in più mazzi, usando colonne, modelli e trascinamento. Non sono le Flashcard per il ripasso. |
 | Confrontare alternative | `/profilo/confronto` | Confrontare alternative con criteri personali. |
-| Attività | `/profilo/azioni` | Organizzare le azioni del proprio piano personale. |
+| Attività | `/profilo/azioni` | Organizzare le azioni del proprio piano personale; ogni attività può avere una data facoltativa (giorno o periodo) e il collegamento «Vedi sulla linea del tempo». |
 | Taccuino | `/profilo/taccuino` | Scrivere contesto, difficoltà e risorse personali; conservare revisioni esplicite. |
 | Cambiamenti | `/profilo/cambiamenti` | Riflettere sulle differenze fra revisioni del Taccuino e sulle prove del Libretto. |
 | Libretto | `/profilo/libretto` | Raccogliere e modificare riflessioni per strumento, con esportazione PDF. |

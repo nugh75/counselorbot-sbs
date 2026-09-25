@@ -126,11 +126,15 @@ def test_activity_is_shared_with_calendar_and_does_not_complete_goal(setup):
     assert c.post(f"/user/goals/{row['id']}/actions", json=payload).status_code == 200
     state = c.get('/user/timeline').json()
     assert len(state['workspace']['actions']) == 1
-    assert state['workspace']['timeline']['events'][0]['action_ids'] == [state['workspace']['actions'][0]['id']]
+    action = state['workspace']['actions'][0]
+    assert action['date_mode'] == 'point' and action['start_date'] == '2026-10-02'
+    assert state['workspace']['timeline']['events'] == []
     state['workspace']['actions'][0]['stage'] = 'done'
     assert c.put('/user/timeline', json={k: state[k] for k in ('revision', 'workspace')}).status_code == 200
     row = c.get('/user/goals').json()[0]
     assert row['status'] == 'active'
+    assert len(row['links']) == 1
+    assert row['links'][0]['kind'] == 'action'
     assert row['links'][0]['stage'] == 'done'
     assert c.post(f"/user/goals/{row['id']}/actions", json={**payload, 'request_id':'another-action'}).status_code == 409
     assert len(c.get('/user/timeline').json()['workspace']['actions']) == 1
