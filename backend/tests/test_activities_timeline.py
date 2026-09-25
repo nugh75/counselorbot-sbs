@@ -209,6 +209,9 @@ def test_migrate_updates_goal_links_and_removes_duplicates():
             (goal.id, 'action', 'm-iso-future'),
             (other_goal.id, 'action', 'm-iso-future'),
         }
+        # Every migrated event link becomes an action means link.
+        for link in links:
+            assert link.kind == 'action' and link.role == 'means'
         assert db.get(models.PersonalGoal, goal.id).revision == goal_revision + 1
         assert db.get(models.PersonalGoal, other_goal.id).revision == other_revision + 1
 

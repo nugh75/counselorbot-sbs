@@ -181,8 +181,9 @@ def migrate_future_events(db, username):
         duplicate = db.query(models.GoalResourceLink).filter_by(goal_id=link.goal_id, kind='action', target_id=target).first()
         if duplicate:
             db.delete(link)
+            duplicate.role = 'means'
         else:
-            link.kind, link.target_id = 'action', target
+            link.kind, link.target_id, link.role = 'action', target, 'means'
         touched_goals.add(link.goal_id)
     if touched_goals:
         db.query(models.PersonalGoal).filter(models.PersonalGoal.id.in_(touched_goals)).update(
