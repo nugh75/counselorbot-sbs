@@ -26,7 +26,7 @@ const iconButton = 'h-[44px] w-[44px] shrink-0 p-0';
 const FILTER_KEY = 'cb_timeline_filters';
 const KINDS: TimelineItemKind[] = ['milestone', 'action', 'goal', 'appointment'];
 const KIND_ICON: Record<TimelineItemKind, typeof Flag> = { milestone: Flag, action: Activity, goal: Target, appointment: CalendarDays };
-const KIND_LABEL: Record<TimelineItemKind, string> = { milestone: 'milestone', action: 'activity', goal: 'kindGoal', appointment: 'kindAppointment' };
+const KIND_LABEL: Record<TimelineItemKind, string> = { milestone: 'milestone', action: 'kindAction', goal: 'kindGoal', appointment: 'kindAppointment' };
 type Preview = { title: string; description: string; preview_hash: string };
 type SnapshotPayload = { revision: number; event_ids: string[]; title: string; reflection: string; language: string };
 
