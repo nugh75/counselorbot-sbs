@@ -69,6 +69,7 @@ from .routes import teacher_profile as teacher_profile_routes
 from .routes import orientation as orientation_routes
 from .routes import cross_synthesis as cross_synthesis_routes
 from .routes import goals as goals_routes
+from .routes import readings as readings_routes
 from .routes import personal_strategies as personal_strategies_routes
 from .routes import portfolio as portfolio_routes
 from .routes import pqbl as pqbl_routes
@@ -1872,6 +1873,7 @@ app.include_router(orientation_routes.router)
 app.include_router(cross_synthesis_routes.router)
 app.include_router(portfolio_routes.router)
 app.include_router(goals_routes.router)
+app.include_router(readings_routes.router)
 app.include_router(personal_strategies_routes.router)
 app.include_router(pqbl_routes.router)
 app.include_router(opencode_routes.router)
