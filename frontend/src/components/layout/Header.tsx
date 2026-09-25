@@ -12,7 +12,7 @@ import { HeaderInstrument } from './HeaderInstrument';
 import { HeaderResume } from './HeaderResume';
 import { MotionToggle } from './MotionToggle';
 import { ThemeToggle } from './ThemeToggle';
-import { VoiceReaderTrigger } from '@/components/voice-reader/VoiceReader';
+import { VoiceReaderMenuEntry, VoiceReaderTrigger } from '@/components/voice-reader/VoiceReader';
 import { FlagIcon } from './FlagIcon';
 import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
 import { LANGUAGES } from '@/lib/i18n';
@@ -90,45 +90,23 @@ export function Header() {
         menuOnlyItems.push({ key: 'admin', href: '/admin', icon: Settings, label: t('nav.admin'), menuOnly: true });
     }
     const secondaryItems = [...workItems, ...accountItems, ...menuOnlyItems];
-    const navGroups = [
-        { key: 'main', items: [...workItems, ...accountItems] },
-        { key: 'role', items: menuOnlyItems },
-    ].filter(group => group.items.length > 0);
 
     const desktopItems = secondaryItems.filter(item => !item.menuOnly);
-    // Strumenti di lavoro in linea da `lg`; il resto resta come oggi.
+    // I quattro ingressi principali in linea da `lg`; il menu a tre punti segue
+    // subito dopo e contiene le voci di ruolo.
     const workInline = (
-        <>
-            {workItems.length > 0 && (
-                <div className="hidden items-center gap-1 lg:flex">
-                    {workItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <Tooltip key={item.key} content={item.label}>
-                                <Link href={item.href} className="console-topbar-icon" aria-label={item.label}>
-                                    <Icon className="w-4 h-4" />
-                                </Link>
-                            </Tooltip>
-                        );
-                    })}
-                </div>
-            )}
-            {workItems.length > 0 && accountItems.length > 0 && <span className={cn(SEPARATOR, 'hidden lg:block')} />}
-            {accountItems.length > 0 && (
-                <div className="hidden items-center gap-1 lg:flex">
-                    {accountItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <Tooltip key={item.key} content={item.label}>
-                                <Link href={item.href} className="console-topbar-icon" aria-label={item.label}>
-                                    <Icon className="w-4 h-4" />
-                                </Link>
-                            </Tooltip>
-                        );
-                    })}
-                </div>
-            )}
-        </>
+        <div className="hidden items-center gap-1 lg:flex">
+            {desktopItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                    <Tooltip key={item.key} content={item.label}>
+                        <Link href={item.href} className="console-topbar-icon" aria-label={item.label}>
+                            <Icon className="w-4 h-4" />
+                        </Link>
+                    </Tooltip>
+                );
+            })}
+        </div>
     );
 
     return (
@@ -145,7 +123,10 @@ export function Header() {
                     </div>
 
                     <div className="ml-auto flex min-w-0 items-center gap-1">
-                        <VoiceReaderTrigger />
+                        {/* Lettore audio: icona da `lg`, voce di menu sotto `xl`. */}
+                        <div className="hidden lg:block">
+                            <VoiceReaderTrigger />
+                        </div>
                         {/* Strumento e counselor selezionati: badge compatti durante il percorso. */}
                         <div className="hidden shrink-0 items-center gap-1 xl:flex">
                             <HeaderInstrument />
@@ -160,8 +141,11 @@ export function Header() {
                             </div>
                         ) : (
                             <>
+                                {/* I quattro ingressi principali, poi il menu a tre punti. */}
+                                {workInline}
+
                                 <HeaderMenu
-                                    groups={navGroups}
+                                    items={secondaryItems}
                                     resumeEntries={resumeEntries}
                                     label={t('header.menu')}
                                     accountLabel={accountLabel}
@@ -189,12 +173,6 @@ export function Header() {
                                         {accountLabel}
                                     </span>
                                 )}
-
-                                {/* Navigazione inline: strumenti da `lg`, account accanto;
-                                    su schermi più piccoli sta tutta nel menu. */}
-                                {workInline}
-
-                                {desktopItems.length > 0 && <span className={cn(SEPARATOR, 'hidden lg:block')} />}
 
                                 {/* Accedi ad altre risorse: subito prima di Esci. */}
                                 {showServices && (
@@ -244,7 +222,7 @@ export function Header() {
 }
 
 function HeaderMenu({
-    groups,
+    items,
     resumeEntries,
     label,
     accountLabel,
@@ -254,7 +232,7 @@ function HeaderMenu({
     servicesHref,
     servicesLabel,
 }: {
-    groups: { key: string; items: SecondaryItem[] }[];
+    items: SecondaryItem[];
     resumeEntries: ResumeEntries;
     label: string;
     accountLabel?: string;
@@ -309,7 +287,7 @@ function HeaderMenu({
     const itemClass = 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700';
 
     return (
-        <div ref={ref} className={cn("relative", !groups.some(group => group.items.some(item => item.menuOnly)) && "lg:hidden")}>
+        <div ref={ref} className={cn("relative", !items.some(item => item.menuOnly) && "lg:hidden")}>
             <button
                 type="button"
                 ref={triggerRef}
@@ -335,10 +313,8 @@ function HeaderMenu({
                             </div>
                         </div>
                     )}
-                    {groups.map((group, index) => <Fragment key={group.key}>
-                        {index > 0 && <div className="mx-3 my-1 border-t border-slate-100 dark:border-slate-700" aria-hidden="true" />}
-                        {group.items.map((item) => {
-                            const Icon = item.icon;
+                    {items.map((item) => {
+                        const Icon = item.icon;
                             const inner = (
                                 <>
                                     <Icon className="w-4 h-4 shrink-0" />
@@ -354,8 +330,7 @@ function HeaderMenu({
                                     {inner}
                                 </Link>
                             );
-                        })}
-                    </Fragment>)}
+                    })}
                     <div className="xl:hidden">
                     {/* Sessioni congelate + chat locale interrotta: su mobile questa è
                         l'unica porta, l'icona "Riprendi" della topbar non c'è. */}
@@ -411,6 +386,7 @@ function HeaderMenu({
                         <ClipboardList className="h-4 w-4 shrink-0" />
                         <span className="truncate">{t('nav.feedback')}</span>
                     </Link>
+                    <VoiceReaderMenuEntry className={itemClass} onActivate={close} />
                     {servicesHref && (
                         <a href={servicesHref} className={itemClass} onClick={close}>
                             <LayoutGrid className="h-4 w-4 shrink-0" />

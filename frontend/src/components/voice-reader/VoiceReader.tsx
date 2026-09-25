@@ -97,6 +97,18 @@ export function VoiceReaderTrigger() {
         onClick={() => reader?.openSettings()}><Headphones className="h-4 w-4" aria-hidden="true" /></button></Tooltip>;
 }
 
+/** Row inside a menu (top-bar three-dot menu): opens the reader settings and
+    lets the caller close the menu first. */
+export function VoiceReaderMenuEntry({ className, onActivate }: { className: string; onActivate?: () => void }) {
+    const reader = useContext(Context);
+    const { t } = useI18n();
+    return <button type="button" className={className} aria-label={t('voice.title')}
+        onClick={() => { onActivate?.(); reader?.openSettings(); }}>
+        <Headphones className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <span className="truncate">{t('voice.title')}</span>
+    </button>;
+}
+
 export function ListenButton({ id, text, language, counselorId, className }: Target & { className?: string }) {
     const reader = useContext(Context);
     const release = reader?.release;
