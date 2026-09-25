@@ -627,13 +627,13 @@ def _localized_strategy_field(
 
 @router.get("/user/certified-strategies")
 async def list_certified_strategies_for_student(
-    questionnaire_type: str = Query(..., description="Strumento (QSA, QSAr, ...)"),
+    questionnaire_type: Optional[str] = Query(None, description="Strumento (QSA, QSAr, ...); facoltativo dal metodo degli obiettivi"),
     lang: str = Query("it", description="Lingua (it, en, es, fr, de, sv)"),
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Strategie certificate attive, filtrate per strumento, per il libretto."""
-    code = _normalize_booklet_type(questionnaire_type)
+    """Strategie certificate attive, filtrate per strumento (se dato), per libretto e obiettivi."""
+    code = _normalize_booklet_type(questionnaire_type) if questionnaire_type else None
     language = (lang or "it").strip().lower().replace("_", "-").split("-", 1)[0]
     if language not in scoring_service.SUPPORTED_LOCALES:
         language = "it"
@@ -649,7 +649,7 @@ async def list_certified_strategies_for_student(
     result = []
     for row in rows:
         scope = {item.upper() for item in (row.questionnaire_types or [])}
-        if scope and code.upper() not in scope:
+        if code and scope and code.upper() not in scope:
             continue
         name = _localized_strategy_field(db, row, "name", language)
         description = _localized_strategy_field(db, row, "description", language)

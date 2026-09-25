@@ -2,7 +2,7 @@
 import hashlib
 import json
 from datetime import date
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -37,6 +37,24 @@ class CatalogWrite(Strict):
     version: int = Field(default=0, ge=0)
 
 
+class OriginWrite(Strict):
+    kind: OriginKind
+    target_id: str = Field(min_length=1, max_length=100)
+
+
+class CertifiedMethod(Strict):
+    kind: Literal['certified']
+    slug: str = Field(min_length=1, max_length=120)
+
+
+class OwnMethod(Strict):
+    kind: Literal['own']
+    id: int = Field(gt=0)
+
+
+MethodItem = Annotated[CertifiedMethod | OwnMethod, Field(discriminator='kind')]
+
+
 class GoalWrite(Strict):
     title: str = Field(min_length=1, max_length=160)
     motivation: str = Field(default='', max_length=2000)
@@ -47,6 +65,7 @@ class GoalWrite(Strict):
     review_date: str | None = None
     shared_group_id: int | None = Field(default=None, gt=0)
     revision: int = Field(default=0, ge=0)
+    method: list[MethodItem] = Field(default_factory=list, max_length=12)
 
     @field_validator('review_date')
     @classmethod
@@ -55,11 +74,6 @@ class GoalWrite(Strict):
             if date.fromisoformat(value).isoformat() != value:
                 raise ValueError('Use YYYY-MM-DD')
         return value
-
-
-class OriginWrite(Strict):
-    kind: OriginKind
-    target_id: str = Field(min_length=1, max_length=100)
 
 
 class GoalCreate(GoalWrite):
@@ -228,7 +242,38 @@ def goal_dict(db, row, resource_map=None):
             data['origin'] = item
         else:
             data['links'].append(item)
+    data['method'] = method_view(db, row.username, row.method or [])
     return data
+
+
+def validate_method(db, username, items):
+    slugs = {i.slug for i in items if i.kind == 'certified'}
+    ids = {i.id for i in items if i.kind == 'own'}
+    found_slugs = {s for (s,) in db.query(models.CertifiedStrategy.slug).filter(
+        models.CertifiedStrategy.slug.in_(slugs), models.CertifiedStrategy.status == 'certified',
+        models.CertifiedStrategy.is_active.is_(True))} if slugs else set()
+    found_ids = {i for (i,) in db.query(models.PersonalStrategy.id).filter(
+        models.PersonalStrategy.id.in_(ids), models.PersonalStrategy.username == username)} if ids else set()
+    if slugs - found_slugs or ids - found_ids:
+        raise HTTPException(404, 'Strategy unavailable')
+
+
+def method_view(db, username, method, lang='it'):
+    slugs = [m['slug'] for m in method if m.get('kind') == 'certified']
+    ids = [m['id'] for m in method if m.get('kind') == 'own']
+    certified = {r.slug: r for r in db.query(models.CertifiedStrategy).filter(models.CertifiedStrategy.slug.in_(slugs))} if slugs else {}
+    own = {r.id: r for r in db.query(models.PersonalStrategy).filter(models.PersonalStrategy.id.in_(ids),
+           models.PersonalStrategy.username == username)} if ids else {}
+    view = []
+    for item in method:
+        if item.get('kind') == 'certified':
+            row = certified.get(item['slug'])
+            title = ((row.name_i18n or {}).get(lang) or row.name_it or row.slug) if row else ''
+            view.append(dict(kind='certified', slug=item['slug'], title=title, available=bool(row)))
+        else:
+            row = own.get(item['id'])
+            view.append(dict(kind='own', id=item['id'], title=row.text if row else '', available=bool(row)))
+    return view
 
 
 def goals_context(db, username, *, tavolo_id=None):
