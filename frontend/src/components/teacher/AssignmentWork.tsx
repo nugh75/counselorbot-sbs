@@ -12,7 +12,7 @@ const input = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p
 type Submission = { text: string; portfolio?: { title: string; description: string } };
 type Work = {
     revision: number; workspace_revision: number; planned: boolean;
-    action: { id: string; title: string; stage: string } | null;
+    action: { id: string; title: string; stage: string; reflection: string } | null;
     event: { id: string; reflection: string } | null;
     linked_goals: { id: number; title: string }[];
     submission: Submission | null; submitted_at: string | null; feedback: string; feedback_at: string | null;
@@ -54,21 +54,21 @@ function WorkEditor({ assignmentId }: { assignmentId: number }) {
         try {
             const [state, ownGoals, ownPortfolio] = await Promise.all([request<Work>(`${base}/work`), request<PersonalGoal[]>('/user/goals'), request<Portfolio[]>('/user/portfolio')]);
             setWork(state); setGoals(ownGoals); setPortfolio(ownPortfolio);
-            setReflection(state.event?.reflection || ''); setShareText(state.submission?.text || ''); setPortfolioId('');
+            setReflection(state.event?.reflection ?? (state.action?.reflection || '')); setShareText(state.submission?.text || ''); setPortfolioId('');
             setReflectionRevision(state.workspace_revision);
             setShareBaseline(JSON.stringify([state.submission?.text || '', '']));
         } catch (e) { setError(e); } finally { setBusy(false); }
     }, [base]);
     useEffect(() => { void load(); }, [load]);
-    const dirty = Boolean(work && (reflection !== (work.event?.reflection || '') || JSON.stringify([shareText, portfolioId]) !== shareBaseline));
+    const dirty = Boolean(work && (reflection !== (work.event?.reflection ?? (work.action?.reflection || '')) || JSON.stringify([shareText, portfolioId]) !== shareBaseline));
     useDraftGuard(dirty, lang);
     const mutate = async (path: string, method: string, body?: unknown) => {
         setBusy(true); setError(null); setSaved(false);
         try {
             const next = await request<Work>(`${base}/${path}`, method, body);
             setWork(next); setSaved(true);
-            if (path === 'reflection' || path === 'plan' || reflection === (work?.event?.reflection || '')) {
-                setReflection(next.event?.reflection || ''); setReflectionRevision(next.workspace_revision);
+            if (path === 'reflection' || path === 'plan' || reflection === (work?.event?.reflection ?? (work?.action?.reflection || ''))) {
+                setReflection(next.event?.reflection ?? (next.action?.reflection || '')); setReflectionRevision(next.workspace_revision);
             }
             if (path === 'submission') setShareBaseline(JSON.stringify([shareText, portfolioId]));
             window.dispatchEvent(new Event('personal-assignments-changed'));
@@ -89,14 +89,14 @@ function WorkEditor({ assignmentId }: { assignmentId: number }) {
                 <Button type="submit">{l('plan')}</Button>
             </form> : <>
                 {work.action && <p className="text-sm font-medium text-indigo-700">{work.action.title} · {visualLabel(lang, work.action.stage)}</p>}
-                {(!work.action || !work.event) && <p className="text-sm text-amber-700">{l('missing')}</p>}
+                {!work.action && <p className="text-sm text-amber-700">{l('missing')}</p>}
                 <nav className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-indigo-700">
                     {work.action && <Link className="py-2 underline" href="/profilo/azioni">{l('openActivities')}</Link>}
                     {work.event && <Link className="py-2 underline" href={`/profilo/timeline?event=${encodeURIComponent(work.event.id)}`}>{l('openTimeline')}</Link>}
                     <Link className="py-2 underline" href="/profilo/portfolio">{l('openPortfolio')}</Link>
                 </nav>
                 {work.linked_goals.length > 0 && <ul className="space-y-1 text-sm">{work.linked_goals.map(goal => <li key={goal.id}><Link className="inline-block py-2 text-indigo-700 underline" href={`/profilo/obiettivi?goal=${goal.id}`}>{goal.title}</Link></li>)}</ul>}
-                {work.action && work.event && <form className="space-y-2" onSubmit={async event => {
+                {work.action && <form className="space-y-2" onSubmit={async event => {
                     event.preventDefault(); if (!selectedGoal) return;
                     const next = await mutate('goal', 'POST', { revision: work.revision, goal_id: selectedGoal.id, goal_revision: selectedGoal.revision });
                     if (next) { setGoals(rows => rows.map(row => row.id === selectedGoal.id ? { ...row, revision: row.revision + 1 } : row)); setGoalId(''); }
@@ -104,9 +104,9 @@ function WorkEditor({ assignmentId }: { assignmentId: number }) {
                     <label className="block text-sm font-medium">{l('goal')}<select className={input} value={goalId} onChange={e => setGoalId(e.target.value)}><option value="">{l('none')}</option>{goals.map(goal => <option key={goal.id} value={goal.id}>{goal.title}</option>)}</select></label>
                     <Button type="submit" variant="secondary" disabled={!selectedGoal}>{l('linkGoal')}</Button>
                 </form>}
-                {work.event && <form className="space-y-2" onSubmit={event => { event.preventDefault(); void mutate('reflection', 'PUT', { revision: work.revision, workspace_revision: reflectionRevision, reflection }); }}>
+                {work.action && <form className="space-y-2" onSubmit={event => { event.preventDefault(); void mutate('reflection', 'PUT', { revision: work.revision, workspace_revision: reflectionRevision, reflection }); }}>
                     <label className="block text-sm font-medium">{l('reflection')}<textarea className={input} rows={3} maxLength={1000} value={reflection} onChange={e => { setReflection(e.target.value); setSaved(false); }} /></label>
-                    <Button type="submit" variant="secondary" disabled={reflection === work.event.reflection}>{l('saveReflection')}</Button>
+                    <Button type="submit" variant="secondary" disabled={reflection === (work.event?.reflection ?? work.action.reflection)}>{l('saveReflection')}</Button>
                 </form>}
                 {work.submission && <section className="space-y-3 rounded-lg border border-indigo-200 bg-indigo-50 p-3" aria-label={l('shared')}>
                     <h4 className="font-semibold">{l('shared')}</h4><SharedText value={work.submission} />
