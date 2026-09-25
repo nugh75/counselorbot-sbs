@@ -100,12 +100,33 @@ def _apply_planned(detail, event):
     return _with_trace(detail, _migration_trace(event))
 
 
+def _reflection_overflows(current, event):
+    # True only when this call would actually append something new that no
+    # longer fits Action.reflection's max_length=1000 (Field constraint).
+    if not event.reflection or event.reflection in (current or ''):
+        return False
+    combined = f'{current}\n\n{event.reflection}' if current else event.reflection
+    return len(combined) > 1000
+
+
 def _apply_reflection(current, event):
     # Never first-wins: an existing reflection is kept and the new one appended,
-    # never overwritten and never silently dropped.
+    # never overwritten and never silently dropped. Callers that cannot guarantee
+    # the merge fits (i.e. haven't checked _reflection_overflows first) must use
+    # _apply_reflection_with_cap instead, or this can raise on save.
     if event.reflection and event.reflection not in (current or ''):
         return f'{current}\n\n{event.reflection}' if current else event.reflection
     return current
+
+
+def _apply_reflection_with_cap(current, event):
+    # Used where merging cannot be avoided (the assignment/event reflection
+    # carryover, spec Sec.6): clamp instead of raising, since there is no
+    # alternative activity to move the overflow into.
+    if not event.reflection or event.reflection in (current or ''):
+        return current
+    combined = f'{current}\n\n{event.reflection}' if current else event.reflection
+    return combined if len(combined) <= 1000 else combined[:999] + '…'
 
 
 def migrate_future_events(db, username):
@@ -132,7 +153,10 @@ def migrate_future_events(db, username):
         # Two future events pointing at the same activity only merge while the
         # activity has no date of its own, or already carries this same date;
         # a real date conflict gets its own activity instead of overwriting.
-        if action is not None and (action.date_mode is None or _dates_match(action, event)):
+        # Same for a reflection that would no longer fit: split rather than
+        # raise or silently truncate what the student wrote (spec Sec.5).
+        if (action is not None and (action.date_mode is None or _dates_match(action, event))
+                and not _reflection_overflows(action.reflection, event)):
             if action.date_mode is None:
                 action.date_mode, action.start_date, action.end_date = event.date_mode, event.start_date, event.end_date
             action.detail = _apply_planned(action.detail, event)
@@ -169,7 +193,7 @@ def migrate_future_events(db, username):
         row.event_id = None
         action = actions_by_id.get(f'assignment-{row.assignment_id}')
         if action:
-            action.reflection = _apply_reflection(action.reflection, event)
+            action.reflection = _apply_reflection_with_cap(action.reflection, event)
 
     save_workspace(db, None, username, SavePersonalWorkspace(revision=state['revision'], workspace=work), commit=False)
     db.add(models.Log(username=username, session_id=None, action=MIGRATION_ACTION, details={}))
