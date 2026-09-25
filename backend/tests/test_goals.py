@@ -375,3 +375,30 @@ def test_session_origin_must_be_owned(setup):
     db.commit()
     row = goal(c, origin=dict(kind='session', target_id='s-alice'))
     assert row['origin']['kind'] == 'session'
+
+
+def test_goal_method_update_round_trips(setup):
+    db, c, who, _ = setup
+    db.add(models.CertifiedStrategy(slug='self-test', name_it='Autoverifica', status='certified', is_active=True)); db.commit()
+    from backend.routes.personal_strategies import router as strategies_router
+    c.app.include_router(strategies_router)
+    own = c.post('/user/strategies', json=dict(text='Ripeto a voce')).json()
+    row = goal(c, method=[dict(kind='certified', slug='self-test')])
+    assert row['method'] == [dict(kind='certified', slug='self-test', title='Autoverifica', available=True)]
+    updated = c.put(f"/user/goals/{row['id']}", json=edit_payload(row, method=[dict(kind='own', id=own['id'])])).json()
+    assert updated['method'] == [dict(kind='own', id=own['id'], title='Ripeto a voce', available=True)]
+    assert updated['revision'] == row['revision'] + 1
+
+
+def test_goal_method_update_rejects_unknown_or_foreign_items(setup):
+    db, c, who, _ = setup
+    db.add(models.CertifiedStrategy(slug='self-test', name_it='Autoverifica', status='certified', is_active=True)); db.commit()
+    from backend.routes.personal_strategies import router as strategies_router
+    c.app.include_router(strategies_router)
+    row = goal(c, method=[dict(kind='certified', slug='self-test')])
+    assert c.put(f"/user/goals/{row['id']}", json=edit_payload(row, method=[dict(kind='certified', slug='nope')])).status_code == 404
+    foreign = c.post('/user/strategies', json=dict(text='Mia')).json()
+    student(who, 'bob')
+    other = goal(c)
+    assert c.put(f"/user/goals/{other['id']}", json=edit_payload(other, method=[dict(kind='own', id=foreign['id'])])).status_code == 404
+
