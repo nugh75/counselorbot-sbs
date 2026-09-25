@@ -144,7 +144,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
                 <ul className="space-y-1">{children.map(row => goalRow(row, <ArrowDown className="h-4 w-4 shrink-0" aria-hidden />))}</ul>
                 <Button type="button" variant="secondary" disabled={busy} onClick={() => onNavigate({ kind: 'create', parentId: goal.id })}><Plus className="h-4 w-4" aria-hidden />{l('addSubgoal')}</Button>
             </section>}
-            {goal && <details className="rounded-md border border-slate-200 p-3"><summary className="cursor-pointer py-2 font-semibold">{l('links')} · {goal.links.length}</summary>
+            {goal && <details open={goal.links.length > 0} className="rounded-md border border-slate-200 p-3"><summary className="cursor-pointer py-2 font-semibold">{l('links')} · {goal.links.length}</summary>
                 <div className="mt-3 space-y-3">
                     {goal.links.map(link => <div key={link.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 p-3">
                         <div className="min-w-0 flex-1"><p className="text-xs text-slate-500">{resourceLabel(lang, link.kind)}{link.stage && ` · ${link.stage === 'done' ? l('completed') : link.stage === 'doing' ? l('active') : l('next')}`}{link.date && ` · ${link.date}`}</p>{link.available && link.href ? <Link className="break-words font-medium text-indigo-700 underline" href={link.href}>{link.title}</Link> : <span>{l('unavailable')}</span>}</div>
