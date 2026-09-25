@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import or_, text
 
 from . import models
-from .visual_tools import load_workspace
+from .visual_tools import SavePersonalWorkspace, load_workspace, save_workspace
 
 ResourceKind = Literal['action', 'event', 'portfolio', 'tavolo', 'notebook', 'card', 'comparison', 'reading', 'session']
 LinkRole = Literal['origin', 'means', 'evidence', 'related']
@@ -123,6 +123,17 @@ class ParentWrite(Strict):
     revision: int = Field(ge=1)
 
 
+class ReviewWrite(Strict):
+    commitment: Literal['full', 'enough', 'partial', 'none'] | None = None
+    outcome: Literal['reached', 'partial', 'not_reached', 'abandoned']
+    satisfaction: Literal['much', 'enough', 'little', 'none'] | None = None
+    obstacles: str = Field(default='', max_length=1500)
+    change: str = Field(default='', max_length=1500)
+    learned: str = Field(default='', max_length=1500)
+    next_step: str = Field(default='', max_length=1500)
+    revision: int = Field(ge=1)
+
+
 def membership_ids(db, username):
     return db.query(models.GroupMembership.group_id).join(
         models.StudentGroup, models.StudentGroup.id == models.GroupMembership.group_id
@@ -227,6 +238,26 @@ def validate_origin(db, username, origin):
         raise HTTPException(404, 'Resource unavailable')
 
 
+def review_dict(row):
+    return {k: getattr(row, k) for k in ('id', 'commitment', 'outcome', 'satisfaction', 'obstacles',
+                                        'change', 'learned', 'next_step', 'created_at')}
+
+
+def add_review_milestone(db, username, goal, review):
+    """Il bilancio compare come tappa passata; il titolo è quello dell'obiettivo (nessun testo UI salvato)."""
+    state = load_workspace(db, None, username)
+    work = state['workspace']
+    event_id = f'goal-review-{review.id}'
+    if any(e['id'] == event_id for e in work['timeline']['events']):
+        return
+    today = date.today().isoformat()
+    work['timeline']['events'].append(dict(id=event_id, title=goal.title[:160], period=today, tense='past',
+        symbol='milestone', date_mode='point', start_date=today, reflection=(review.learned or '')[:1000],
+        source=f'goal:{goal.id}'))
+    work['timeline']['title'] = work['timeline']['title'] or 'Timeline'
+    save_workspace(db, None, username, SavePersonalWorkspace(revision=state['revision'], workspace=work), commit=False)
+
+
 def goal_dict(db, row, resource_map=None):
     data = {key: getattr(row, key) for key in (
         'id', 'title', 'motivation', 'criteria', 'reflection', 'status', 'priority', 'review_date',
@@ -246,6 +277,8 @@ def goal_dict(db, row, resource_map=None):
         else:
             data['links'].append(item)
     data['method'] = method_view(db, row.username, row.method or [])
+    data['reviews'] = [review_dict(r) for r in db.query(models.GoalReview).filter_by(goal_id=row.id).order_by(models.GoalReview.id.desc())]
+    data['checks'] = [l for l in data['links'] if l['kind'] == 'action' and l.get('action_kind') == 'check']
     return data
 
 
