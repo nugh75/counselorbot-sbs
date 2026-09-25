@@ -60,8 +60,8 @@ export function Header() {
     const authLabel = isAuthenticated ? t('nav.logout') : t('nav.adminLogin');
     const AuthIcon = isAuthenticated ? LogOut : LogIn;
 
-    // Navigazione raggruppata per dominio: strumenti di lavoro prima, account dopo
-    // (stessa struttura nel menu mobile). Guida è in ACCOUNT: utility, non strumento.
+    // Navigazione per dominio: in linea i quattro ingressi principali; le voci
+    // di ruolo (Area docente, Amministrazione) stanno solo nel menu.
     const workItems: SecondaryItem[] = [];
     const accountItems: SecondaryItem[] = [];
     if (isAuthenticated) {
@@ -70,27 +70,29 @@ export function Header() {
     if (canOpenAssistant) {
         workItems.push({ key: 'assistant', href: '/assistente', icon: Bot, label: t('assistant.title') });
     }
+    // Guida all'interfaccia: disponibile per tutti, anche senza login.
+    accountItems.push({ key: 'guide', href: '/guide', icon: BookOpen, label: t('nav.guide') });
+    if (canOpenPersonalPage) {
+        accountItems.push({ key: 'profile', href: '/profilo', icon: User, label: t('profile.nav') });
+    }
+    const menuOnlyItems: SecondaryItem[] = [];
     if (canUseTeacherAssistant(identity)) {
         // Docenti, ricercatori e admin: gruppi/classi (piani di somministrazione).
-        workItems.push({
+        menuOnlyItems.push({
             key: 'teacher-panel',
             href: '/docente',
+            menuOnly: true,
             icon: Users,
             label: t(canOpenResearchConsole ? 'nav.groupsClasses' : 'nav.teacherPanel'),
         });
     }
-    if (canOpenPersonalPage) {
-        accountItems.push({ key: 'profile', href: '/profilo', icon: User, label: t('profile.nav') });
-    }
-    // Guida all'interfaccia: disponibile per tutti, anche senza login.
-    accountItems.push({ key: 'guide', href: '/guide', icon: BookOpen, label: t('nav.guide') });
     if (canOpenResearchConsole) {
-        accountItems.push({ key: 'admin', href: '/admin', icon: Settings, label: t('nav.admin') });
+        menuOnlyItems.push({ key: 'admin', href: '/admin', icon: Settings, label: t('nav.admin'), menuOnly: true });
     }
-    const secondaryItems = [...workItems, ...accountItems];
+    const secondaryItems = [...workItems, ...accountItems, ...menuOnlyItems];
     const navGroups = [
-        { key: 'work', items: workItems },
-        { key: 'account', items: accountItems },
+        { key: 'main', items: [...workItems, ...accountItems] },
+        { key: 'role', items: menuOnlyItems },
     ].filter(group => group.items.length > 0);
 
     const desktopItems = secondaryItems.filter(item => !item.menuOnly);
