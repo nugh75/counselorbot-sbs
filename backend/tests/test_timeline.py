@@ -36,14 +36,20 @@ def save(db, w=None, revision=0):
 
 
 def test_links_live_titles_deletion_and_no_cascade(db):
-    # A future milestone gets migrated out of the personal timeline into a dated
-    # activity (spec Sec.5); keep this event past so the portfolio link stays
-    # traceable through the imported timeline event, which is what this test covers.
-    w = workspace(); w.timeline.events[0].tense = 'past'
-    state = save(db, w)
+    state = save(db)
     assert state['workspace']['timeline']['events'][0]['portfolio'][0]['title'] == 'Le mie slide'
     from backend.personal_timeline import imported_id
-    assert portfolio_timeline_links(db, 'alice', 1)['links'][0]['event_id'] == imported_id('timeline-a', 'e')
+    # The future milestone gets migrated out of the personal timeline into a dated
+    # activity (spec Sec.5): the structured portfolio link is gone from the
+    # timeline, but survives as a readable trace on that activity's detail.
+    assert portfolio_timeline_links(db, 'alice', 1)['links'] == []
+    personal = load_workspace(db, None, 'alice')['workspace']
+    assert [e['id'] for e in personal['timeline']['events']] == [imported_id('timeline-a', 'past')]
+    action = next(a for a in personal['actions'] if a['id'] == imported_id('timeline-a', 'a'))
+    # detail had no text of its own: the trace's leading blank line is trimmed by
+    # StrictModel's str_strip_whitespace on revalidation, leaving clean text.
+    assert action['detail'] == 'Portfolio: Le mie slide'
+    assert action['reflection'] == 'Mi aiuta provare con un compagno'
     db.query(models.PortfolioItem).filter_by(id=1).update({'title': 'Slide aggiornate'})
     db.commit()
     assert load_workspace(db, 'timeline-a', 'alice')['workspace']['timeline']['events'][0]['portfolio'][0]['title'] == 'Slide aggiornate'
