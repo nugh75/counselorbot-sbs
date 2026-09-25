@@ -43,7 +43,7 @@ for (const width of [1440, 390]) {
             await page.getByLabel('Perché conta per me').fill('Voglio distribuire il lavoro.');
             await page.getByLabel('Condividi il riepilogo con i docenti di').selectOption({ label: 'Gruppo di prova' });
             await page.getByRole('button', { name: 'Salva', exact: true }).click();
-            await page.getByRole('heading', { name: `Studiare con un piano ${width}`, exact: true }).waitFor();
+            await page.getByRole('dialog').getByRole('heading', { name: `Studiare con un piano ${width}`, exact: true }).waitFor();
             await page.getByText('Aggiungi un’attività', { exact: true }).first().click();
             await page.getByLabel('Cosa farò').fill(`Sessione breve ${width}`);
             await page.getByLabel('Data facoltativa').fill('2026-10-04');
@@ -58,8 +58,10 @@ for (const width of [1440, 390]) {
             assert.equal(state.workspace.actions.length, 1);
             assert.equal(state.workspace.timeline.events[0].start_date, '2026-10-04');
             await page.reload();
-            await page.getByRole('heading', { name: `Studiare con un piano ${width}`, exact: true }).waitFor();
+            await page.getByRole('button', { name: `Studiare con un piano ${width}`, exact: true }).click();
+            await page.getByRole('dialog').getByRole('heading', { name: `Studiare con un piano ${width}`, exact: true }).waitFor();
             await page.getByLabel('Condividi il riepilogo con i docenti di').selectOption('');
+            page.once('dialog', dialog => dialog.accept());
             await page.getByRole('button', { name: 'Salva', exact: true }).click();
             await page.getByRole('status').filter({ hasText: 'Salvato.' }).waitFor();
             assert.deepEqual(errors, []);
@@ -93,7 +95,7 @@ test('teacher publishes group content and submits common proposals for review', 
         assert.deepEqual(errors, []);
     } finally { await context.close(); }
 });
-for (const [lang, title, choose] of [['en', 'My goals', 'Choose from the catalog'], ['es', 'Mis objetivos', 'Elegir del catálogo'], ['fr', 'Mes objectifs', 'Choisir dans le catalogue'], ['de', 'Meine Ziele', 'Aus dem Katalog wählen'], ['sv', 'Mina mål', 'Välj från katalogen']]) {
+for (const [lang, title, choose] of [['en', 'Goals', 'Choose from the catalog'], ['es', 'Objetivos', 'Elegir del catálogo'], ['fr', 'Objectifs', 'Choisir dans le catalogue'], ['de', 'Ziele', 'Aus dem Katalog wählen'], ['sv', 'Mål', 'Välj från katalogen']]) {
     test(`goals render in ${lang} without overflow`, async () => {
         const { page, context, errors } = await fixture({ lang, username: `student-${lang}`, width: 390 });
         try {
@@ -118,7 +120,7 @@ test('stale edits preserve the draft and navigation requires an explicit choice'
         await page.getByRole('heading', { name: 'Obiettivo da rivedere', exact: true }).waitFor();
         await page.getByLabel('Perché conta per me', { exact: true }).fill('Questa modifica deve restare.');
         page.once('dialog', dialog => dialog.dismiss());
-        await page.getByRole('button', { name: 'Scegli dal catalogo', exact: true }).click();
+        await page.keyboard.press('Escape');
         assert.equal(await page.getByLabel('Perché conta per me', { exact: true }).inputValue(), 'Questa modifica deve restare.');
         const headers = { 'Content-Type': 'application/json', 'x-test-user': username };
         const [row] = await (await fetch(`${api}/user/goals`, { headers })).json();
@@ -156,10 +158,106 @@ test('personal tool shortcuts open the selected workspace', async () => {
     const { page, context, errors } = await fixture();
     try {
         await page.goto(`${origin}/profilo`);
-        await page.getByRole('link', { name: /Bacheca delle azioni/ }).click();
+        await page.getByRole('link', { name: 'Attività', exact: true }).click();
         await page.getByRole('heading', { name: 'Bacheca delle azioni', exact: true, level: 1 }).waitFor();
         await page.locator('input[value="Sessione breve 1440"]').waitFor();
         assert.ok(await page.locator('input').evaluateAll(inputs => inputs.some(input => input.value === 'Sessione breve 1440')));
         assert.deepEqual(errors, []);
     } finally { await context.close(); }
 });
+
+test('goals form a network with sub-goals, extra parents and inherited sharing', async () => {
+    const username = 'student-network';
+    const { page, context, errors } = await fixture({ username });
+    const create = async (title, share) => {
+        await page.getByRole('button', { name: 'Scrivi il tuo obiettivo', exact: true }).click();
+        await page.getByLabel('Obiettivo', { exact: true }).fill(title);
+        if (share) await page.getByLabel('Condividi il riepilogo con i docenti di').selectOption({ label: 'Gruppo di prova' });
+        await page.getByRole('button', { name: 'Salva', exact: true }).click();
+        await page.getByRole('dialog').getByRole('heading', { name: title, exact: true }).waitFor();
+        await page.getByRole('button', { name: 'Chiudi', exact: true }).click();
+    };
+    try {
+        await page.goto(`${origin}/profilo/obiettivi`);
+        await page.getByRole('heading', { name: 'Obiettivi', exact: true, level: 1 }).waitFor();
+        await create('Erasmus in Spagna', true);
+        await create('Laurea in lingue');
+        await page.getByRole('button', { name: 'Aggiungi sottobiettivo: Erasmus in Spagna', exact: true }).click();
+        await page.getByText('Come ci arrivi? Scrivi un passo più concreto.').waitFor();
+        await page.getByText('Visibile ai docenti di Gruppo di prova tramite «Erasmus in Spagna»').waitFor();
+        await page.getByLabel('Obiettivo', { exact: true }).fill('Migliorare l’inglese');
+        await page.getByRole('button', { name: 'Salva', exact: true }).click();
+        await page.getByRole('dialog').getByRole('heading', { name: 'Migliorare l’inglese', exact: true }).waitFor();
+        await page.getByLabel('Aggiungi a un altro obiettivo').selectOption({ label: 'Laurea in lingue' });
+        await page.getByRole('button', { name: 'Aggiungi', exact: true }).click();
+        await page.getByRole('dialog').getByRole('button', { name: 'Laurea in lingue', exact: true }).waitFor();
+        let message = '';
+        page.once('dialog', dialog => { message = dialog.message(); void dialog.accept(); });
+        await page.getByRole('button', { name: 'Stacca da Erasmus in Spagna', exact: true }).click();
+        await page.getByRole('button', { name: 'Stacca da Erasmus in Spagna', exact: true }).waitFor({ state: 'detached' });
+        assert.match(message, /Non più visibile ai docenti di: Gruppo di prova/);
+        await page.getByLabel('Aggiungi a un altro obiettivo').selectOption({ label: 'Erasmus in Spagna' });
+        page.once('dialog', dialog => { message = dialog.message(); void dialog.accept(); });
+        await page.getByRole('button', { name: 'Aggiungi', exact: true }).click();
+        await page.getByRole('button', { name: 'Stacca da Erasmus in Spagna', exact: true }).waitFor();
+        assert.match(message, /Ora visibile anche ai docenti di: Gruppo di prova/);
+        await page.getByRole('button', { name: 'Chiudi', exact: true }).click();
+        await page.getByText(/⧉ anche sotto: /).first().waitFor();
+        const rows = await (await fetch(`${api}/user/goals`, { headers: { 'x-test-user': username } })).json();
+        assert.equal(rows.find(r => r.title === 'Migliorare l’inglese').parent_ids.length, 2);
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        await page.screenshot({ path: '/tmp/personal-goals-network.png', fullPage: true });
+        assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+});
+
+test('F06: text in a new activity is protected on every exit from the dialog', async () => {
+    const { page, context, errors } = await fixture({ username: 'student-network' });
+    try {
+        await page.goto(`${origin}/profilo`);
+        await page.getByRole('link', { name: 'Obiettivi', exact: true }).click();
+        await page.getByRole('button', { name: 'Laurea in lingue', exact: true }).first().click();
+        await page.getByText('Aggiungi un’attività', { exact: true }).first().click();
+        await page.getByLabel('Cosa farò').fill('Frase non ancora salvata');
+        // page.goBack() would wait for a "load" navigation that never fires: the SPA back-traversal
+        // is same-document and gets cancelled by the draft guard, so history.back() is invoked directly.
+        for (const exit of [() => page.keyboard.press('Escape'), () => page.getByRole('button', { name: 'Chiudi', exact: true }).click(), () => page.getByRole('button', { name: 'Annulla', exact: true }).click(), () => page.evaluate(() => window.history.back())]) {
+            page.once('dialog', dialog => dialog.dismiss());
+            await exit();
+            await page.getByLabel('Cosa farò').waitFor();
+            assert.equal(await page.getByLabel('Cosa farò').inputValue(), 'Frase non ancora salvata');
+        }
+        assert.equal(await page.getByLabel('Obiettivo', { exact: true }).isDisabled(), true);
+        assert.equal(await page.getByRole('button', { name: 'Salva', exact: true }).isDisabled(), true);
+        page.once('dialog', dialog => dialog.accept());
+        await page.keyboard.press('Escape');
+        await page.getByRole('dialog').waitFor({ state: 'detached' });
+        assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+});
+
+for (const width of [1280, 390]) {
+    test(`map view is desktop-only at ${width}px`, async () => {
+        const { page, context, errors } = await fixture({ username: 'student-network', width });
+        try {
+            await page.goto(`${origin}/profilo/obiettivi`);
+            await page.getByRole('button', { name: 'Laurea in lingue', exact: true }).first().waitFor();
+            const toggle = page.getByRole('button', { name: 'Mappa', exact: true });
+            if (width < 1024) { assert.equal(await toggle.isVisible(), false); return; }
+            await toggle.click();
+            const map = page.getByRole('region', { name: /Mappa degli obiettivi/ });
+            await map.waitFor();
+            assert.equal(await map.getByRole('button', { name: /Migliorare l’inglese/ }).count(), 1);
+            assert.equal(await map.locator('.react-flow__edge').count(), 2);
+            await map.getByRole('button', { name: /Migliorare l’inglese/ }).click();
+            await page.getByRole('dialog').getByRole('heading', { name: 'Migliorare l’inglese', exact: true }).waitFor();
+            await page.getByRole('button', { name: 'Chiudi', exact: true }).click();
+            await page.getByRole('dialog').waitFor({ state: 'detached' });
+            await map.getByRole('button', { name: /Migliorare l’inglese/ }).focus();
+            await page.keyboard.press('Enter');
+            await page.getByRole('dialog').getByRole('heading', { name: 'Migliorare l’inglese', exact: true }).waitFor();
+            await page.screenshot({ path: '/tmp/personal-goals-map.png' });
+            assert.deepEqual(errors, []);
+        } finally { await context.close(); }
+    });
+}
