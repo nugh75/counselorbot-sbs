@@ -15,6 +15,7 @@ import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, w
 import { validTimelineDates } from '@/lib/timeline-dates';
 import { BUILTIN_CARD_IMAGES, tavoloImageUrl } from '@/lib/tavolo-images';
 import { TimelineTools } from './TimelineTools';
+import { ActionDateFields, ActionDateSummary } from './ActionDates';
 
 export type WorkTab = 'board' | 'comparison' | 'cards' | 'timeline';
 type Tab = WorkTab;
@@ -32,6 +33,7 @@ type Props = {
     fixedTab?: WorkTab;
     pageBackHref?: string;
     onWorkTabChange?: (tab: WorkTab) => void;
+    openCreate?: boolean;
 };
 const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
 const buttonClass = 'h-[44px] w-[44px] shrink-0 p-0';
@@ -41,11 +43,20 @@ const tabIcons: Record<Tab, typeof LayoutList> = {
     board: LayoutList, comparison: Columns3, cards: Layers, timeline: GitCommitHorizontal,
 };
 const isWorkTab = (tab: Tab): tab is WorkTab => workTabs.includes(tab as WorkTab);
+// A refresh should not reopen the creation form: drop `new` once it has served its purpose.
+const stripNewParam = () => {
+    try {
+        const url = new URL(window.location.href);
+        if (!url.searchParams.has('new')) return;
+        url.searchParams.delete('new');
+        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+    } catch { /* best effort only */ }
+};
 export function VisualTools(props: Props) {
     return <WorkspaceView key={props.personal ? 'personal' : props.sessionId} {...props} />;
 }
 
-function WorkspaceView({ sessionId = '', personal = false, legacySession, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, request, fixedTab, pageBackHref, onWorkTabChange }: Props) {
+function WorkspaceView({ sessionId = '', personal = false, legacySession, locale, hideTrigger = false, catalog: providedCatalog, onDiscuss, request, fixedTab, pageBackHref, onWorkTabChange, openCreate = false }: Props) {
     const l = (key: string) => visualLabel(locale, personal ? ({ save: 'personalSave', saved: 'timelineSaved', saveHelp: 'personalSaveHelp', openHelp: 'personalTimelineHelp', working: 'personalTimelineHelp' } as Record<string, string>)[key] || key : key);
     const endpoint = personal ? '/api/user/timeline' : `/api/session/${encodeURIComponent(sessionId)}/visual-tools`;
     const [focusEvent, setFocusEvent] = useState<string | undefined>();
@@ -75,6 +86,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [criterion, setCriterion] = useState('');
     const [option, setOption] = useState('');
     const [optionSource, setOptionSource] = useState('');
+    const [createOpen, setCreateOpen] = useState(false);
     // Questa schermata contiene un solo insieme coerente di strumenti. Taccuino,
     // Libretto e Tavolo hanno pagine proprie nell'Area personale.
     const tabs: Tab[] = fixedTab ? [fixedTab] : workTabs;
@@ -102,6 +114,17 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
         window.addEventListener('hashchange', focusAction);
         return () => { cancelAnimationFrame(frame); window.removeEventListener('hashchange', focusAction); };
     }, [personal, tab, loaded]);
+    useEffect(() => {
+        if (!personal || tab !== 'board' || !loaded || !openCreate) return;
+        setCreateOpen(true);
+        stripNewParam();
+        const frame = requestAnimationFrame(() => {
+            const input = document.getElementById(`${id}-new-action-title`);
+            input?.scrollIntoView({ block: 'center' });
+            input?.focus({ preventScroll: true });
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [personal, tab, loaded, openCreate, id]);
     const sources = [
         ...currentCatalog.strategy.map(item => ({ title: item.name || item.slug, detail: item.description || '', key: `strategy:${item.slug}` })),
         ...currentCatalog.reading.map(item => ({ title: item.title || item.slug, detail: item.why || '', key: `reading:${item.slug}` })),
@@ -184,7 +207,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
 
     const save = async (next = work): Promise<SavedWorkspace | null> => {
         if (!loaded || busy) return null;
-        if (next.timeline?.events.some(event => !validTimelineDates(event))) { setIssue('dateError'); return null; }
+        if (next.timeline?.events.some(event => !validTimelineDates(event)) || next.actions.some(action => !validTimelineDates(action))) { setIssue('dateError'); return null; }
         if (next.actions.some(a => !a.title.trim()) || next.cards.some(c => !c.text.trim()) || next.comparison.options.some(o => !o.title.trim()) || next.comparison.criteria.some(c => !c.label.trim()) || (next.timeline?.events.length && (!next.timeline.title.trim() || next.timeline.events.some(e => !e.title.trim() || !e.period.trim())))) { setIssue('requiredFields'); return null; }
         for (const field of dialog.current?.querySelectorAll<HTMLInputElement>('[data-workspace-field]') ?? []) {
             if (!field.reportValidity()) return null;
@@ -306,11 +329,11 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                         </section>}
                         {tab === 'timeline' && personal && <TimelineTools personal sessionId={sessionId} locale={locale} work={work} edit={edit} save={save} selected={timelineSelection} select={setTimelineSelection} focusEvent={focusEvent || request?.eventId} />}
                         {tab === 'board' && <>
-                            <details open={!work.actions.length || Boolean(draftTitle)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addAction')}</summary>
+                            <details open={!work.actions.length || Boolean(draftTitle) || createOpen} onToggle={event => { if (!event.currentTarget.open) setCreateOpen(false); }} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addAction')}</summary>
                             <form className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!draftTitle.trim() || draftTitle.length > 160 || work.actions.length >= (personal ? Infinity : 30)) return;
                                 edit({ ...work, actions: [...work.actions, { id: crypto.randomUUID(), title: draftTitle.trim(), detail: draftDetail, stage: 'todo', reflection: '', source: draftSource }] }); setDraftTitle(''); setDraftDetail(''); setDraftSource(''); }}>
                                 {sourceSelector('action')}
-                                <label className="block text-sm font-medium">{l('titleField')}<input required maxLength={160} value={draftTitle} onChange={e => setDraftTitle(e.target.value)} className={`${inputClass} mt-1`} /></label>
+                                <label className="block text-sm font-medium">{l('titleField')}<input id={`${id}-new-action-title`} required maxLength={160} value={draftTitle} onChange={e => setDraftTitle(e.target.value)} className={`${inputClass} mt-1`} /></label>
                                 <label className="block text-sm">{l('detail')}<textarea maxLength={1000} rows={2} value={draftDetail} onChange={e => setDraftDetail(e.target.value)} className={`${inputClass} mt-1`} /></label>
                                 <Tooltip content={l('addAction')}><Button aria-label={l('addAction')} type="submit" className={buttonClass} disabled={work.actions.length >= (personal ? Infinity : 30) || draftTitle.length > 160}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                 {work.actions.length >= (personal ? Infinity : 30) && <p role="status">{l('limit')}</p>}
@@ -322,9 +345,11 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     const diary = /^\/profilo\/assegnazioni#assignment-\d+$/.test(action.source || '') ? work.timeline?.events.find(event => event.action_ids.includes(action.id)) : undefined;
                                     return <article key={action.id} id={personal ? `action-${action.id}` : undefined} tabIndex={personal ? -1 : undefined} className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-3">
                                     <label className="block text-sm">{l('titleField')}<input data-workspace-field required maxLength={160} value={action.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, title: e.target.value } : a) })} /></label>
+                                    {personal && <ActionDateSummary action={action} locale={locale} />}
                                     <label className="mt-3 block text-sm">{l('move')}<select id={`${id}-action-${action.id}`} aria-label={`${l('move')}: ${action.title}`} value={action.stage} className={`${inputClass} mt-1 min-h-[44px]`} onChange={e => { edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, stage: e.target.value as ActionStage } : a) }); focusMoved(`${id}-action-${action.id}`); }}>{stages.map(s => <option key={s} value={s}>{l(s)}</option>)}</select></label>
                                     <details className="mt-2"><summary className="min-h-[44px] cursor-pointer py-3 text-sm font-medium text-indigo-700">{l('detail')} · {l('reflection')}</summary>
                                         <label className="block text-sm">{l('actionKind')}<select className={`${inputClass} mt-1`} value={action.kind || 'activity'} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, kind: e.target.value as 'activity' | 'book' | 'article' | 'film' } : a) })}>{['activity', 'book', 'article', 'film'].map(kind => <option key={kind} value={kind}>{l(kind)}</option>)}</select></label>
+                                        {personal && <ActionDateFields value={action} locale={locale} onChange={dates => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, ...dates } : a) })} />}
                                         <label className="block text-sm">{l('detail')}<textarea value={action.detail} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, detail: e.target.value } : a) })} /></label>
                                         {diary ? <p className="mt-2 py-2 text-sm text-slate-600">{l('reflection')} · {l('timeline')}</p> : <label className="mt-2 block text-sm">{l('reflection')}<textarea value={action.reflection} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>}
                                         <p className="mt-2 break-words text-xs text-slate-500">{l('source')}: <AssignmentSource source={action.source || l('personal')} lang={locale} linked={personal} /></p>

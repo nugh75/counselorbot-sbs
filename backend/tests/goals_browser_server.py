@@ -2,6 +2,7 @@
 Run only as a module; no production app import, models, credentials or AI calls.
 """
 import os
+import asyncio
 from fastapi import FastAPI, Request
 import uvicorn
 from backend import auth, database, models
@@ -15,12 +16,19 @@ def main():
     with artifact_session() as db:
         group = models.StudentGroup(name='Gruppo di prova', code='GR-GOALBROWSER', owner_username='teacher-browser', is_active=True)
         db.add(group); db.flush()
-        for username in ['student-browser', 'student-mobile', 'student-en', 'student-es', 'student-fr', 'student-de', 'student-sv', 'student-network']:
+        for username in ['student-browser', 'student-mobile', 'student-en', 'student-es', 'student-fr', 'student-de', 'student-sv', 'student-network', 'student-timeline']:
             db.add(models.GroupMembership(group_id=group.id, username=username))
             db.add(models.PortfolioItem(username=username, title='Il mio elaborato'))
             db.add(models.StudentBooklet(username=username, questionnaire_type='QSA', data={'title': 'La mia riflessione'}))
         db.commit(); seed_goals(db)
         app = FastAPI(); app.include_router(router); app.include_router(visual_router)
+        # One shared session backs every request: serialize them, or concurrent
+        # page loads race on the same transaction (duplicate keys, PendingRollback).
+        lock = asyncio.Lock()
+        @app.middleware('http')
+        async def serialize(request, call_next):
+            async with lock:
+                return await call_next(request)
         def identity(request: Request):
             username = request.headers.get('x-test-user', 'student-browser')
             return dict(username=username, is_admin=username == 'admin-browser', authenticated=True,

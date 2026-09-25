@@ -24,12 +24,36 @@ class Item(StrictModel):
     source: str = Field(default='', max_length=300)
 
 
-class Action(Item):
+class DatedItem(Item):
+    date_mode: Literal['point', 'period'] | None = None
+    start_date: str | None = Field(default=None, pattern=r'^\d{4}-\d{2}-\d{2}$')
+    end_date: str | None = Field(default=None, pattern=r'^\d{4}-\d{2}-\d{2}$')
+
+    def check_dates(self):
+        for value in (self.start_date, self.end_date):
+            if value:
+                date.fromisoformat(value)
+        if self.date_mode == 'point' and (not self.start_date or self.end_date):
+            raise ValueError('A single event requires only a start date')
+        if self.date_mode == 'period' and not (self.start_date or self.end_date):
+            raise ValueError('A period requires a start or end date')
+        if self.date_mode is None and (self.start_date or self.end_date):
+            raise ValueError('Choose an event or a period')
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValueError('End date precedes start date')
+
+
+class Action(DatedItem):
     kind: Literal['activity', 'book', 'article', 'film'] = 'activity'
     title: str = Field(min_length=1, max_length=160)
     detail: str = Field(default='', max_length=1000)
     stage: Literal['todo', 'doing', 'done'] = 'todo'
     reflection: str = Field(default='', max_length=1000)
+
+    @model_validator(mode='after')
+    def valid_dates(self):
+        self.check_dates()
+        return self
 
 
 class Card(Item):
@@ -93,10 +117,7 @@ class PortfolioLink(StrictModel):
     title: str = Field(default='', max_length=200)
 
 
-class TimelineEvent(Item):
-    date_mode: Literal['point', 'period'] | None = None
-    start_date: str | None = Field(default=None, pattern=r'^\d{4}-\d{2}-\d{2}$')
-    end_date: str | None = Field(default=None, pattern=r'^\d{4}-\d{2}-\d{2}$')
+class TimelineEvent(DatedItem):
     planned: str = Field(default='', max_length=1000)
     institution_event: str | None = Field(default=None, max_length=160)
     institution_available: bool = True
@@ -112,17 +133,7 @@ class TimelineEvent(Item):
 
     @model_validator(mode='after')
     def unique_links(self):
-        for value in (self.start_date, self.end_date):
-            if value:
-                date.fromisoformat(value)
-        if self.date_mode == 'point' and (not self.start_date or self.end_date):
-            raise ValueError('A single event requires only a start date')
-        if self.date_mode == 'period' and not (self.start_date or self.end_date):
-            raise ValueError('A period requires a start or end date')
-        if self.date_mode is None and (self.start_date or self.end_date):
-            raise ValueError('Choose an event or a period')
-        if self.start_date and self.end_date and self.end_date < self.start_date:
-            raise ValueError('End date precedes start date')
+        self.check_dates()
         if self.date_mode and not self.institution_event:
             self.period = self.start_date if self.date_mode == 'point' else f'{self.start_date or "…"} → {self.end_date or "…"}'
         if len(set(self.action_ids)) != len(self.action_ids) or len({p.id for p in self.portfolio}) != len(self.portfolio):
@@ -277,6 +288,8 @@ def save_workspace(db: Session, session_id: str, username: str, update: SaveWork
         if {p.id for p in event.portfolio} - owned - {p['id'] for p in old.get('portfolio', [])}:
             raise HTTPException(422, 'Portfolio work is unavailable')
     if session_id is None:
+        if any(e.tense == 'future' and not e.institution_event for e in update.workspace.timeline.events):
+            raise HTTPException(422, 'Future milestones belong to goals or activities')
         from .personal_timeline import validate_institution_links
         validate_institution_links(db, username, update.workspace, previous)
     clean = update.workspace.model_dump()

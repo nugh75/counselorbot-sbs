@@ -27,23 +27,23 @@ def test_plan_uses_existing_workspace_idempotently_without_creating_goals(setup)
     assignment, path, work = assign_and_plan(c, who, group, sources, intent='requested',
         due_date='2026-10-12', response_prompt='Condividi una riflessione')
     assert assignment['intent'] == 'requested' and assignment['due_date'] == '2026-10-12'
-    assert work['event']['start_date'] == '2026-10-10'
-    assert work['event']['action_ids'] == [work['action']['id']]
+    assert work['action']['date_mode'] == 'point' and work['action']['start_date'] == '2026-10-10'
+    assert work['event'] is None
     assert work['action']['source'] == f"/profilo/assegnazioni#assignment-{assignment['id']}"
     assert c.post(path + '/plan', json={'date': '2026-11-11'}).json() == work
     assert db.query(models.AssignmentWork).count() == 1
     assert db.query(models.PersonalGoal).count() == 0
     state = load_workspace(db, None, 'alice')
     assert len(state['workspace']['actions']) == 1
+    assert state['workspace']['timeline']['events'] == []
     state['workspace']['actions'][0]['stage'] = 'done'
-    state['workspace']['timeline']['events'][0]['reflection'] = 'Scritta dal diario'
     save_workspace(db, None, 'alice', SavePersonalWorkspace(**state))
     current = c.get(path + '/work').json()
-    assert current['action']['stage'] == 'done' and current['event']['reflection'] == 'Scritta dal diario'
+    assert current['action']['stage'] == 'done'
     assert c.put(path + '/reflection', json={'revision': work['revision'], 'workspace_revision': work['workspace_revision'], 'reflection': 'Obsoleta'}).status_code == 409
     response = c.put(path + '/reflection', json={'revision': current['revision'], 'workspace_revision': current['workspace_revision'], 'reflection': 'Riflessione personale'})
     assert response.status_code == 200, response.text
-    assert load_workspace(db, None, 'alice')['workspace']['timeline']['events'][0]['reflection'] == 'Riflessione personale'
+    assert load_workspace(db, None, 'alice')['workspace']['actions'][0]['reflection'] == 'Riflessione personale'
     who.update(username='teacher', groups=['docenti'])
     assert c.get(f"/teacher/assignments/{assignment['id']}/submissions").json() == []
 
@@ -59,7 +59,7 @@ def test_optional_goal_link_ownership_and_revisions(setup):
     payload.update(goal_id=goal.id, goal_revision=goal.revision)
     response = c.post(path + '/goal', json=payload)
     assert response.status_code == 200, response.text
-    assert {link.kind for link in db.query(models.GoalResourceLink).filter_by(goal_id=goal.id)} == {'event', 'action'}
+    assert {link.kind for link in db.query(models.GoalResourceLink).filter_by(goal_id=goal.id)} == {'action'}
     assert response.json()['linked_goals'] == [dict(id=goal.id, title=goal.title)]
     assert goal.shared_group_id is None and goal.status == 'active'
     assert c.post(path + '/goal', json=payload).status_code == 409
@@ -91,7 +91,7 @@ def test_explicit_snapshot_feedback_resubmission_and_withdrawal(setup):
     assert not work['feedback']
     assert c.delete(path + f"/submission?revision={work['revision']}").status_code == 200
     work = c.get(path + '/work').json()
-    assert work['submission'] is None and work['event']['reflection'] == 'Altro pensiero privato'
+    assert work['submission'] is None and work['action']['reflection'] == 'Altro pensiero privato'
     who.update(username='teacher', groups=['docenti'])
     assert c.get(teacher_path).json() == []
     assert c.put(teacher_path + '/alice/feedback', json=dict(revision=work['revision'], text='Non deve passare')).status_code == 404
