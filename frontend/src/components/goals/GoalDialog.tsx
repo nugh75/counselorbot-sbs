@@ -88,14 +88,23 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     const base = goal ? `/user/goals/${goal.id}` : '';
 
     const submit = () => {
-        if (!goal) return void run(() => goalApi<PersonalGoal>('/user/goals', 'POST', { ...form, parent_id: parentId ?? null, catalog_id: source?.id ?? null, catalog_version: source?.version ?? null, request_id: createRequest.current }), onCreated);
+        if (!goal) {
+            // A new sub-goal inherits any effective share of its chosen parent: announce and
+            // confirm exactly like an existing goal's visibility change (same helper, same wording).
+            if (parentId) {
+                const draft: PersonalGoal = { ...blankGoal, ...form, id: -1, catalog_id: null, catalog_snapshot: {}, links: [], parent_ids: [parentId] };
+                if (!confirmVisibility([...goals, draft], [draft.id])) return;
+            }
+            return void run(() => goalApi<PersonalGoal>('/user/goals', 'POST', { ...form, parent_id: parentId ?? null, catalog_id: source?.id ?? null, catalog_version: source?.version ?? null, request_id: createRequest.current }), onCreated);
+        }
         if (!confirmVisibility(patched({ shared_group_id: form.shared_group_id }), [goal.id])) return;
         void run(() => goalApi<PersonalGoal>(base, 'PUT', form));
     };
     const attach = () => {
         const id = Number(parentChoice); if (!goal || !id) return;
         if (!confirmVisibility(patched({ parent_ids: [...goal.parent_ids, id] }), [goal.id])) return;
-        void run(async () => { try { return await goalApi<PersonalGoal>(`${base}/parents`, 'POST', { parent_id: id, revision: goal.revision }); } catch (e) { if (e instanceof GoalError && e.status === 422) window.alert(l('cycle')); throw e; } });
+        // A cycle (422) is not a saving failure: show only the dedicated message, never the generic error box.
+        void run(async () => { try { return await goalApi<PersonalGoal>(`${base}/parents`, 'POST', { parent_id: id, revision: goal.revision }); } catch (e) { if (e instanceof GoalError && e.status === 422) { window.alert(l('cycle')); return goal; } throw e; } });
     };
     const detach = (id: number) => {
         if (!goal || !confirmVisibility(patched({ parent_ids: goal.parent_ids.filter(p => p !== id) }), [goal.id])) return;
@@ -106,7 +115,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
         const children = goals.filter(row => row.parent_ids.includes(goal.id));
         const after = goals.filter(row => row.id !== goal.id).map(row => ({ ...row, parent_ids: row.parent_ids.filter(p => p !== goal.id) }));
         const { lost } = visibilityDelta(goals, after, children.map(row => row.id));
-        const message = [l('deleteConfirm'), children.length ? goalFormat(lang, 'deleteKeepsChildren', { n: children.length }) : '', lost.length ? `${l('visibilityLoss')} ${lost.map(groupName).join(', ')}` : ''].filter(Boolean).join('\n');
+        const message = [goalFormat(lang, 'deleteNamed', { title: goal.title }), children.length ? goalFormat(lang, 'deleteKeepsChildren', { n: children.length }) : '', lost.length ? `${l('visibilityLoss')} ${lost.map(groupName).join(', ')}` : ''].filter(Boolean).join('\n');
         if (!window.confirm(message)) return;
         setBusy(true);
         try { await goalApi(`${base}?revision=${goal.revision}`, 'DELETE'); onDirty(false); onDeleted(); } catch (e) { setError(e); } finally { setBusy(false); }

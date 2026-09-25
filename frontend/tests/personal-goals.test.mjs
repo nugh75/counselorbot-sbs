@@ -191,8 +191,11 @@ test('goals form a network with sub-goals, extra parents and inherited sharing',
         await page.getByText('Come ci arrivi? Scrivi un passo più concreto.').waitFor();
         await page.getByText('Visibile ai docenti di Gruppo di prova tramite «Erasmus in Spagna»').waitFor();
         await page.getByLabel('Obiettivo', { exact: true }).fill('Migliorare l’inglese');
+        let subgoalMessage = '';
+        page.once('dialog', dialog => { subgoalMessage = dialog.message(); void dialog.accept(); });
         await page.getByRole('button', { name: 'Salva', exact: true }).click();
         await page.getByRole('dialog').getByRole('heading', { name: 'Migliorare l’inglese', exact: true }).waitFor();
+        assert.match(subgoalMessage, /Ora visibile anche ai docenti di: Gruppo di prova/);
         await page.getByLabel('Aggiungi a un altro obiettivo').selectOption({ label: 'Laurea in lingue' });
         await page.getByRole('button', { name: 'Aggiungi', exact: true }).click();
         await page.getByRole('dialog').getByRole('button', { name: 'Laurea in lingue', exact: true }).waitFor();
