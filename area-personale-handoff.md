@@ -86,20 +86,21 @@ il precedente `HANDOFF.md`, non tracciato, riguarda un altro lavoro ed è preser
     uscite anziché prima; messaggio di conferma sulla revoca condivisione non
     riverificato a 1440/390px; uscita da clic sullo sfondo o chiusura scheda
     non coperte da prova browser.
-  - Guida pubblica e catture: la riga descrittiva di Obiettivi in
-    `docs-counselorbot/funzionalita-counselorbot.md` è aggiornata e
-    `make guidance-check` è verde, ma il testo della sezione «Area personale e
-    obiettivi» in `frontend/src/lib/i18n.ts` e le 6 schermate `personal-goals`
-    in `frontend/public/guide/*/personal-goals.png` restano quelli precedenti
-    alla rete (non fanno parte dei file di questo task). Per rigenerarle serve
-    `frontend/scripts/capture-guide.mjs` contro un frontend in esecuzione
+  - Guida pubblica: la riga descrittiva di Obiettivi in
+    `docs-counselorbot/funzionalita-counselorbot.md` e il testo della sezione
+    «Area personale e obiettivi» in `frontend/src/lib/i18n.ts` (6 lingue) sono
+    stati aggiornati per la rete/popup/mappa/condivisione; `make guidance-check`
+    è verde. Restano da rigenerare le 6 schermate `personal-goals.png` in
+    `frontend/public/guide/*/personal-goals.png` con
+    `frontend/scripts/capture-guide.mjs`
     (`GUIDE_SCREENS=personal-goals node --experimental-strip-types
-    scripts/capture-guide.mjs`), non avviato in questa sessione: lavoro aperto.
+    scripts/capture-guide.mjs` contro un frontend aggiornato), dopo il rebuild
+    Docker: lavoro aperto.
 
 **Ripresa consigliata:** proseguire il lotto 2 su un’altra sottopagina (0.3),
-oppure aprire un task dedicato per aggiornare testo guida e catture di
-Obiettivi nelle sei lingue con il frontend in esecuzione. Non ripartire dalle
-categorie. Il «Vai a…» resta rimosso (decisione utente del 23/09, pilota
+oppure rigenerare le 6 catture `personal-goals.png` di Obiettivi dopo il
+rebuild Docker del frontend. Non ripartire dalle categorie. Il «Vai a…» resta
+rimosso (decisione utente del 23/09, pilota
 Orientamento).
 
 ## Problems Encountered
