@@ -548,6 +548,8 @@ class PersonalGoal(Base):
     review_date = Column(String, nullable=True)
     shared_group_id = Column(Integer, nullable=True, index=True)
     revision = Column(Integer, nullable=False, default=1)
+    # Metodo: strategie certificate {kind:'certified', slug} o proprie {kind:'own', id}.
+    method = Column(JSON, nullable=False, default=list)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -559,6 +561,8 @@ class GoalResourceLink(Base):
     goal_id = Column(Integer, ForeignKey("personal_goals.id", ondelete="CASCADE"), nullable=False, index=True)
     kind = Column(String, nullable=False)
     target_id = Column(String, nullable=False)
+    # origin (da dove nasce) | means (azione) | evidence (prova) | related
+    role = Column(String, nullable=False, default='related', server_default='related')
 
 
 class GoalEdge(Base):
@@ -576,6 +580,46 @@ class GoalEdge(Base):
     parent_id = Column(Integer, ForeignKey("personal_goals.id", ondelete="CASCADE"), nullable=False, index=True)
     child_id = Column(Integer, ForeignKey("personal_goals.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class PersonalStrategy(Base):
+    """Strategia scritta dallo studente, riusabile nel metodo di più obiettivi. Mai certificata."""
+    __tablename__ = "personal_strategies"
+    id = Column(Integer, primary_key=True)
+    username = Column(String, nullable=False, index=True)
+    text = Column(String(300), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class GoalReview(Base):
+    """Bilancio di chiusura di un obiettivo. Append-only: riaprire e richiudere ne aggiunge un altro."""
+    __tablename__ = "goal_reviews"
+    id = Column(Integer, primary_key=True)
+    goal_id = Column(Integer, ForeignKey("personal_goals.id", ondelete="CASCADE"), nullable=False, index=True)
+    commitment = Column(String, nullable=True)    # full|enough|partial|none
+    outcome = Column(String, nullable=False)      # reached|partial|not_reached|abandoned
+    satisfaction = Column(String, nullable=True)  # much|enough|little|none
+    obstacles = Column(Text, nullable=False, default="")
+    change = Column(Text, nullable=False, default="")
+    learned = Column(Text, nullable=False, default="")
+    next_step = Column(Text, nullable=False, default="")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ResultReading(Base):
+    """«La mia lettura» di una compilazione: forza, aree da far crescere, cosa mi dice di me."""
+    __tablename__ = "result_readings"
+    __table_args__ = (UniqueConstraint("username", "session_id", name="uq_result_reading_session"),)
+    id = Column(Integer, primary_key=True)
+    username = Column(String, nullable=False, index=True)
+    session_id = Column(String, nullable=False, index=True)
+    questionnaire_type = Column(String, nullable=False)
+    strengths = Column(JSON, nullable=False, default=list)
+    growth_areas = Column(JSON, nullable=False, default=list)
+    note = Column(Text, nullable=False, default="")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
 class TeacherProfileRevision(Base):
