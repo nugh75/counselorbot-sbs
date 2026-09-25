@@ -529,6 +529,17 @@ def _run_seed_and_migrations():
                 except Exception as e:
                     logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
 
+        for table, clause in [
+            ("personal_goals", "ADD COLUMN IF NOT EXISTS method JSON NOT NULL DEFAULT '[]'"),
+            ("goal_resource_links", "ADD COLUMN IF NOT EXISTS role VARCHAR NOT NULL DEFAULT 'related'"),
+        ]:
+            try:
+                with database.engine.connect() as conn:
+                    conn.execute(sa_text(f"ALTER TABLE {table} {clause}"))
+                    conn.commit()
+            except Exception as e:
+                logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
+
         for idx_clause in [
             "CREATE INDEX IF NOT EXISTS ix_questionnaire_results_administration_plan_id ON questionnaire_results (administration_plan_id)",
             "CREATE INDEX IF NOT EXISTS ix_questionnaire_results_research_contact_id ON questionnaire_results (research_contact_id)",
