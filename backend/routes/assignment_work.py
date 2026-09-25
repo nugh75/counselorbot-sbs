@@ -114,20 +114,16 @@ def plan(assignment_id: int, payload: PlanWrite, db: Session = Depends(database.
         return _state(db, assignment_id, username)  # Safe retry; never recreate deleted work.
     state = load_workspace(db, None, username)
     work = state['workspace']
-    action_id, event_id = f'assignment-{assignment_id}', f'assignment-{assignment_id}-event'
-    if any(a['id'] == action_id for a in work['actions']) or any(e['id'] == event_id for e in work['timeline']['events']):
+    action_id = f'assignment-{assignment_id}'
+    if any(a['id'] == action_id for a in work['actions']):
         raise HTTPException(409, 'Workspace identifiers already exist')
     title = assignment.snapshot['title'][:160]
     source = f'/profilo/assegnazioni#assignment-{assignment_id}'
     work['actions'].append(dict(id=action_id, title=title, detail=assignment.instructions[:1000],
-        stage='todo', kind=assignment.snapshot.get('kind') if assignment.snapshot.get('kind') in ('film', 'book', 'article') else 'activity', source=source))
-    work['timeline']['title'] = work['timeline']['title'] or title
-    work['timeline']['events'].append(dict(id=event_id, title=title, period=payload.date.isoformat() if payload.date else '—',
-        date_mode='point' if payload.date else None, start_date=payload.date.isoformat() if payload.date else None,
-        tense='past' if payload.date and payload.date < Date.today() else 'future',
-        planned=assignment.instructions[:1000], action_ids=[action_id], source=source))
+        stage='todo', kind=assignment.snapshot.get('kind') if assignment.snapshot.get('kind') in ('film', 'book', 'article') else 'activity', source=source,
+        date_mode='point' if payload.date else None, start_date=payload.date.isoformat() if payload.date else None))
     save_workspace(db, None, username, SavePersonalWorkspace(revision=state['revision'], workspace=work), commit=False)
-    row = models.AssignmentWork(assignment_id=assignment_id, username=username, action_id=action_id, event_id=event_id)
+    row = models.AssignmentWork(assignment_id=assignment_id, username=username, action_id=action_id, event_id=None)
     db.add(row); db.commit()
     return _state(db, assignment_id, username)
 
@@ -138,10 +134,16 @@ def reflection(assignment_id: int, payload: ReflectionWrite, db: Session = Depen
     _student_assignment(db, username, assignment_id, lock=True)
     row = _edit(db, assignment_id, username, payload.revision)
     state = load_workspace(db, None, username)
-    event = next((e for e in state['workspace']['timeline']['events'] if e['id'] == row.event_id), None)
-    if event is None:
-        raise HTTPException(404, 'Linked diary entry no longer exists')
-    event['reflection'] = payload.reflection
+    if row.event_id:
+        event = next((e for e in state['workspace']['timeline']['events'] if e['id'] == row.event_id), None)
+        if event is None:
+            raise HTTPException(404, 'Linked diary entry no longer exists')
+        event['reflection'] = payload.reflection
+    else:
+        action = next((a for a in state['workspace']['actions'] if a['id'] == row.action_id), None)
+        if action is None:
+            raise HTTPException(404, 'Linked activity no longer exists')
+        action['reflection'] = payload.reflection
     save_workspace(db, None, username, SavePersonalWorkspace(revision=payload.workspace_revision, workspace=state['workspace']), commit=False)
     row.revision += 1
     db.commit()
@@ -155,11 +157,10 @@ def link_goal(assignment_id: int, payload: GoalLinkWrite, db: Session = Depends(
     row = _edit(db, assignment_id, username, payload.revision)
     goal = owned_goal(db, username, payload.goal_id, payload.goal_revision)
     state = _state(db, assignment_id, username)
-    if not state['action'] or not state['event']:
+    if not state['action']:
         raise HTTPException(404, 'Linked activity no longer exists')
-    for kind, target in [('action', row.action_id), ('event', row.event_id)]:
-        if not db.query(models.GoalResourceLink.id).filter_by(goal_id=goal.id, kind=kind, target_id=target).first():
-            db.add(models.GoalResourceLink(goal_id=goal.id, kind=kind, target_id=target))
+    if not db.query(models.GoalResourceLink.id).filter_by(goal_id=goal.id, kind='action', target_id=row.action_id).first():
+        db.add(models.GoalResourceLink(goal_id=goal.id, kind='action', target_id=row.action_id))
     goal.revision += 1; row.revision += 1
     db.commit()
     return _state(db, assignment_id, username)
