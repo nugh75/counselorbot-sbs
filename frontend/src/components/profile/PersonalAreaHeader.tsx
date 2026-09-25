@@ -8,7 +8,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { personalAreaDescription, personalAreaName, personalAreaText } from '@/lib/i18n-personal-area';
 import { personalAreaImages, type PersonalAreaSlug } from '@/lib/personal-area';
 
-// First used by Orientamento. Editable pages need their exit guards before adoption.
+// Used by Orientamento and Obiettivi. Editable pages need their exit guards before adoption.
 export function PersonalAreaHeader({ slug }: { slug: PersonalAreaSlug }) {
     const { lang } = useI18n();
     const heading = useRef<HTMLHeadingElement>(null);

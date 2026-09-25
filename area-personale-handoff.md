@@ -53,16 +53,55 @@ il precedente `HANDOFF.md`, non tracciato, riguarda un altro lavoro ed è preser
 
 - [x] 24/09: la sessione successiva (redesign /assistente, commit `57aee4f`→`af24ce2`)
   è completata; vedi `assistente-ui-handoff.md`. Nessun lavoro nuovo su questa linea.
-- [ ] 24/09: 0.3 lotto 2 ripreso su **Obiettivi**, pagina scelta dall’utente.
-  Schema ASCII presentato in chat, **in attesa di approvazione dello schema**.
-  Prima/di pari passo con la testata va chiusa F06 su questa pagina (la sotto-form
-  di azione dentro GoalDetail non entra nella guardia bozza: testo perso senza
-  conferma cliccando «Area personale»).
+- [x] 24/09: 0.3 lotto 2 **concluso su Obiettivi** (`/profilo/obiettivi`). Gli
+  obiettivi sono ora una rete (più genitori possibili), mostrata come elenco
+  rientrato con popup di modifica e, da 1024px, vista mappa di sola lettura;
+  condivisione di un ramo con i docenti di un gruppo. `PersonalAreaHeader
+  slug="obiettivi"` in testata. F06 (guardia bozze) chiusa su questa pagina:
+  una sola bozza per volta fra campi, nuova attività, collegamento e genitore
+  scelto, con conferma su ✕/Annulla/Esc/sfondo/navigazione/Indietro/chiusura
+  scheda. Spec: `docs/plans/2026-09-24-obiettivi-rete-design.md`; piano ed
+  esecuzione task per task: `.superpowers/sdd/2026-09-24-obiettivi-rete-plan/`.
+  F06 resta aperta per Libretto, Portfolio, strumenti visuali e calendario
+  (lotto 1A, invariato).
+  - Minori rimandati (dettaglio in `progress.md` del piano): N+1 di
+    `parent_ids` per obiettivo, invariante a singolo studente non filtrato per
+    username in `remove_parent`/`part_of`, guardia col lock consultivo
+    duplicata fra `create_goal` e `lock_network`, nessun test sulla visibilità
+    “a diamante” (un genitore condiviso + uno privato).
+  - `goal-network.ts`: `index()` ricostruito a ogni chiamata di helper (ok
+    alla scala di uno studente, da rivedere se cresce).
+  - `GoalDialog`: titolo con fallback poco chiaro se l’obiettivo da modificare
+    è sparito; `useRef(crypto.randomUUID())` rivalutato a ogni render; dopo un
+    409 il «Ricarica» può scartare una bozza pendente se la revisione è
+    cambiata altrove (comportamento voluto, coperto da test).
+  - `GoalTree`/`GoalCatalogDialog`/`GoalMap`: il fuoco dopo Catalogo→Crea
+    torna al corpo pagina invece che al pulsante che ha aperto il popup;
+    pulsanti di apertura senza `aria-controls`; la mappa deve restare
+    autonoma nel nascondersi sotto 1024px (verificare nel tempo).
+  - Vista mappa/docente: nessun `fitView` automatico dopo un nuovo calcolo del
+    layout; la vista docente appiattisce da livello 3 senza il marcatore di
+    livello; doppio import del CSS di xyflow (innocuo).
+  - Test browser (Task 11): alcuni controlli “disabilitato” verificati dopo le
+    uscite anziché prima; messaggio di conferma sulla revoca condivisione non
+    riverificato a 1440/390px; uscita da clic sullo sfondo o chiusura scheda
+    non coperte da prova browser.
+  - Guida pubblica: la riga descrittiva di Obiettivi in
+    `docs-counselorbot/funzionalita-counselorbot.md` e il testo della sezione
+    «Area personale e obiettivi» in `frontend/src/lib/i18n.ts` (6 lingue) sono
+    stati aggiornati per la rete/popup/mappa/condivisione; `make guidance-check`
+    è verde. Restano da rigenerare le 6 schermate `personal-goals.png` in
+    `frontend/public/guide/*/personal-goals.png` con
+    `frontend/scripts/capture-guide.mjs`
+    (`GUIDE_SCREENS=personal-goals node --experimental-strip-types
+    scripts/capture-guide.mjs` contro un frontend aggiornato), dopo il rebuild
+    Docker: lavoro aperto.
 
-**Ripresa consigliata:** dopo l’approvazione dello schema ASCII di `/profilo/obiettivi`,
-implementare `PersonalAreaHeader slug="obiettivi"` + guardia F06, una pagina alla
-volta come nel pilota Orientamento. Non ripartire dalle categorie. Il «Vai a…» resta
-rimosso (decisione utente del 23/09, pilota Orientamento).
+**Ripresa consigliata:** proseguire il lotto 2 su un’altra sottopagina (0.3),
+oppure rigenerare le 6 catture `personal-goals.png` di Obiettivi dopo il
+rebuild Docker del frontend. Non ripartire dalle categorie. Il «Vai a…» resta
+rimosso (decisione utente del 23/09, pilota
+Orientamento).
 
 ## Problems Encountered
 Nessun blocco tecnico aperto sul rilascio. Le richieste Python al dominio pubblico

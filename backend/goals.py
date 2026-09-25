@@ -1,11 +1,12 @@
 """Personal goals coordinate existing resources without copying private work."""
+import hashlib
 import json
 from datetime import date
 from typing import Literal
 
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import or_
+from sqlalchemy import or_, text
 
 from . import models
 from .visual_tools import load_workspace
@@ -58,6 +59,7 @@ class GoalCreate(GoalWrite):
     request_id: str | None = Field(default=None, pattern=r'^[a-zA-Z0-9_-]{8,64}$')
     catalog_id: int | None = Field(default=None, gt=0)
     catalog_version: int | None = Field(default=None, ge=1)
+    parent_id: int | None = Field(default=None, gt=0)
 
 
 class LinkWrite(Strict):
@@ -77,6 +79,11 @@ class ActionCreate(Strict):
     @classmethod
     def valid_date(cls, value):
         return GoalWrite.valid_date(value)
+
+
+class ParentWrite(Strict):
+    parent_id: int = Field(gt=0)
+    revision: int = Field(ge=1)
 
 
 def membership_ids(db, username):
@@ -113,6 +120,27 @@ def validate_share(db, username, group_id):
         raise HTTPException(404, 'Group unavailable')
 
 
+def lock_network(db, username):
+    """Serialize structure changes per student so concurrent requests cannot close a cycle."""
+    if db.get_bind().dialect.name == 'postgresql':
+        key = int.from_bytes(hashlib.sha256(f'goal-network:{username}'.encode()).digest()[:8], 'big', signed=True)
+        db.execute(text('SELECT pg_advisory_xact_lock(:key)'), {'key': key})
+
+
+def parent_ids(db, goal_id):
+    return [p for (p,) in db.query(models.GoalEdge.parent_id).filter_by(child_id=goal_id).order_by(models.GoalEdge.parent_id)]
+
+
+def descendant_ids(db, ids):
+    """All goals reachable downwards from `ids` (edges only join goals of one student)."""
+    seen, frontier = set(), list(ids)
+    while frontier:
+        children = [c for (c,) in db.query(models.GoalEdge.child_id).filter(models.GoalEdge.parent_id.in_(frontier))]
+        frontier = [c for c in children if c not in seen]
+        seen.update(frontier)
+    return seen
+
+
 def resources(db, username):
     """Resolve labels from owned sources every time; never trust a client title or URL."""
     result = []
@@ -146,6 +174,7 @@ def goal_dict(db, row, resource_map=None):
     data = {key: getattr(row, key) for key in (
         'id', 'title', 'motivation', 'criteria', 'reflection', 'status', 'priority', 'review_date',
         'shared_group_id', 'revision', 'catalog_id', 'catalog_snapshot', 'updated_at')}
+    data['parent_ids'] = parent_ids(db, row.id)
     if resource_map is None:
         resource_map = {(r['kind'], r['target_id']): r for r in resources(db, row.username)}
     data['links'] = []
@@ -170,8 +199,11 @@ def goals_context(db, username, *, tavolo_id=None):
     content = []
     for row in rows:
         goal = goal_dict(db, row, resource_map)
+        part_of = [title[:120] for (title,) in db.query(models.PersonalGoal.title).join(
+            models.GoalEdge, models.GoalEdge.parent_id == models.PersonalGoal.id).filter(
+            models.GoalEdge.child_id == row.id).order_by(models.PersonalGoal.id).limit(3)]
         content.append(dict(title=row.title, motivation=row.motivation[:400], criteria=row.criteria[:400],
-                            review_date=row.review_date, reflection=row.reflection[:400],
+                            review_date=row.review_date, reflection=row.reflection[:400], part_of=part_of,
                             resources=[{k: (str(link[k])[:180] if k == 'title' else link[k]) for k in ('kind', 'title', 'stage', 'date') if k in link}
                                        for link in goal['links'] if link['available']][:8]))
     encoded = json.dumps(content, ensure_ascii=False)

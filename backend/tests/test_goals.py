@@ -1,4 +1,5 @@
 """Goal workflow on isolated Postgres: scope, ownership, versioning and coordination."""
+import json
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -35,8 +36,8 @@ def proposal(**kwargs):
     return dict(data=dict(title='Organizzare lo studio', criteria='Una settimana di prova'), **kwargs)
 
 
-def goal(client, **kwargs):
-    response = client.post('/user/goals', json=dict(title='Il mio obiettivo', **kwargs))
+def goal(client, title='Il mio obiettivo', **kwargs):
+    response = client.post('/user/goals', json=dict(title=title, **kwargs))
     assert response.status_code == 201, response.text
     return response.json()
 
@@ -191,3 +192,134 @@ def test_tavolo_context_uses_only_explicitly_linked_owned_goals(setup):
     context = goals_context(db, 'alice', tavolo_id=table.id)
     assert 'Coordinate this table' in context and 'Different private project' not in context
     assert goals_context(db, 'bob', tavolo_id=table.id) == ''
+
+
+def test_create_subgoal_under_owned_parent(setup):
+    db, c, who, group_id = setup
+    parent = goal(c, title='Erasmus')
+    assert parent['parent_ids'] == []
+    child = goal(c, title='Inglese', parent_id=parent['id'])
+    assert child['parent_ids'] == [parent['id']]
+    student(who, 'bob')
+    assert c.post('/user/goals', json=dict(title='x', parent_id=parent['id'])).status_code == 404
+    student(who)
+    assert c.post('/user/goals', json=dict(title='x', parent_id=987654)).status_code == 404
+
+
+def test_parents_add_remove_revision_and_idempotence(setup):
+    db, c, who, group_id = setup
+    a, b, child = goal(c, title='A'), goal(c, title='B'), goal(c, title='C')
+    url = f"/user/goals/{child['id']}/parents"
+    added = c.post(url, json=dict(parent_id=a['id'], revision=1)).json()
+    assert added['parent_ids'] == [a['id']] and added['revision'] == 2
+    assert c.post(url, json=dict(parent_id=b['id'], revision=1)).status_code == 409
+    both = c.post(url, json=dict(parent_id=b['id'], revision=2)).json()
+    assert both['parent_ids'] == sorted([a['id'], b['id']])
+    same = c.post(url, json=dict(parent_id=b['id'], revision=3)).json()
+    assert same['revision'] == 3
+    removed = c.delete(f"{url}/{a['id']}?revision=3").json()
+    assert removed['parent_ids'] == [b['id']] and removed['revision'] == 4
+    assert c.delete(f"{url}/{a['id']}?revision=4").status_code == 404
+    student(who, 'bob')
+    assert c.post(url, json=dict(parent_id=a['id'], revision=4)).status_code == 404
+
+
+def test_parents_reject_cycles_and_foreign_parent(setup):
+    db, c, who, group_id = setup
+    a = goal(c, title='A'); b = goal(c, title='B', parent_id=a['id']); d = goal(c, title='D', parent_id=b['id'])
+    assert c.post(f"/user/goals/{a['id']}/parents", json=dict(parent_id=a['id'], revision=1)).status_code == 422
+    assert c.post(f"/user/goals/{a['id']}/parents", json=dict(parent_id=d['id'], revision=1)).status_code == 422
+    student(who, 'bob')
+    foreign = goal(c, title='Bob')
+    student(who)
+    assert c.post(f"/user/goals/{a['id']}/parents", json=dict(parent_id=foreign['id'], revision=1)).status_code == 404
+
+
+def test_deleting_parent_breaks_branch_and_keeps_children(setup):
+    db, c, who, group_id = setup
+    a = goal(c, title='A'); other = goal(c, title='Other')
+    child = goal(c, title='Child', parent_id=a['id'])
+    both = c.post(f"/user/goals/{child['id']}/parents", json=dict(parent_id=other['id'], revision=1)).json()
+    orphan = goal(c, title='Orphan', parent_id=a['id'])
+    assert c.delete(f"/user/goals/{a['id']}?revision=1").status_code == 200
+    rows = {r['title']: r for r in c.get('/user/goals').json()}
+    assert rows['Child']['parent_ids'] == [other['id']] and rows['Child']['revision'] == both['revision'] + 1
+    assert rows['Orphan']['parent_ids'] == [] and rows['Orphan']['revision'] == orphan['revision'] + 1
+    assert db.query(models.GoalEdge).filter_by(parent_id=a['id']).count() == 0
+
+
+def test_sharing_follows_the_branch_without_private_ancestors(setup):
+    db, c, who, group_id = setup
+    top = goal(c, title='Privato in alto')
+    branch = goal(c, title='Ramo condiviso', parent_id=top['id'], shared_group_id=group_id)
+    leaf = goal(c, title='Foglia', parent_id=branch['id'])
+    deep = goal(c, title='Profonda', parent_id=leaf['id'])
+    goal(c, title='Altro privato', parent_id=top['id'])
+    teacher(who)
+    rows = {r['title']: r for r in c.get(f'/teacher/groups/{group_id}/goals').json()}
+    assert set(rows) == {'Ramo condiviso', 'Foglia', 'Profonda'}
+    assert rows['Ramo condiviso']['parent_ids'] == []
+    assert rows['Foglia']['parent_ids'] == [branch['id']] and rows['Profonda']['parent_ids'] == [leaf['id']]
+    assert 'motivation' not in rows['Foglia']
+    student(who)
+    assert c.delete(f"/user/goals/{leaf['id']}/parents/{branch['id']}?revision=1").status_code == 200
+    teacher(who)
+    assert {r['title'] for r in c.get(f'/teacher/groups/{group_id}/goals').json()} == {'Ramo condiviso'}
+
+
+def test_context_names_parent_goals(setup):
+    db, c, who, group_id = setup
+    parent = goal(c, title='Erasmus in Spagna')
+    goal(c, title='Migliorare inglese', parent_id=parent['id'])
+    context = goals_context(db, 'alice')
+    assert '"part_of": ["Erasmus in Spagna"]' in context
+
+
+def test_diamond_visibility_hides_private_parent(setup):
+    """Child with one shared and one private parent: the teacher sees only the shared branch."""
+    db, c, who, group_id = setup
+    shared_parent = goal(c, title='Genitore condiviso', shared_group_id=group_id)
+    private_parent = goal(c, title='Genitore privato')
+    child = goal(c, title='Figlio diamante', parent_id=shared_parent['id'])
+    child = c.post(f"/user/goals/{child['id']}/parents", json=dict(parent_id=private_parent['id'], revision=child['revision'])).json()
+    assert sorted(child['parent_ids']) == sorted([shared_parent['id'], private_parent['id']])
+    teacher(who)
+    rows = {r['title']: r for r in c.get(f'/teacher/groups/{group_id}/goals').json()}
+    assert set(rows) == {'Genitore condiviso', 'Figlio diamante'}
+    assert rows['Figlio diamante']['parent_ids'] == [shared_parent['id']]
+
+
+def test_multi_path_visible_to_multiple_groups(setup):
+    """A goal reachable through two distinct shared ancestors is visible to both groups' teachers."""
+    db, c, who, group_id = setup
+    group2 = models.StudentGroup(name='Class B', code='GR-TESTGOALS2', owner_username='teacher', is_active=True)
+    db.add(group2); db.flush()
+    db.add(models.GroupMembership(group_id=group2.id, username='alice')); db.commit()
+    parent1 = goal(c, title='Genitore gruppo 1', shared_group_id=group_id)
+    parent2 = goal(c, title='Genitore gruppo 2', shared_group_id=group2.id)
+    child = goal(c, title='Figlio multi-percorso', parent_id=parent1['id'])
+    child = c.post(f"/user/goals/{child['id']}/parents", json=dict(parent_id=parent2['id'], revision=child['revision'])).json()
+    teacher(who)
+    titles_group1 = {r['title'] for r in c.get(f'/teacher/groups/{group_id}/goals').json()}
+    titles_group2 = {r['title'] for r in c.get(f'/teacher/groups/{group2.id}/goals').json()}
+    assert 'Figlio multi-percorso' in titles_group1
+    assert 'Figlio multi-percorso' in titles_group2
+
+
+def test_goals_context_respects_budget_with_many_long_parents(setup):
+    """§8: several active goals, each with 3 long parents, stay within the 6500-char budget
+    and every part_of title is truncated to 120 chars."""
+    db, c, who, group_id = setup
+    parents = [goal(c, title=('P' * 150) + str(j)) for j in range(3)]
+    for i in range(5):
+        child = goal(c, title=f'Obiettivo attivo {i}', criteria='Criterio di prova per il budget del contesto ' * 3)
+        for parent in parents:
+            child = c.post(f"/user/goals/{child['id']}/parents", json=dict(parent_id=parent['id'], revision=child['revision'])).json()
+    context = goals_context(db, 'alice')
+    json_part = context.rsplit('\n', 1)[-1]
+    assert len(json_part) <= 6500
+    content = json.loads(json_part)
+    assert content
+    for item in content:
+        for title in item.get('part_of', []):
+            assert len(title) <= 120
