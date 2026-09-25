@@ -36,7 +36,11 @@ def save(db, w=None, revision=0):
 
 
 def test_links_live_titles_deletion_and_no_cascade(db):
-    state = save(db)
+    # A future milestone gets migrated out of the personal timeline into a dated
+    # activity (spec Sec.5); keep this event past so the portfolio link stays
+    # traceable through the imported timeline event, which is what this test covers.
+    w = workspace(); w.timeline.events[0].tense = 'past'
+    state = save(db, w)
     assert state['workspace']['timeline']['events'][0]['portfolio'][0]['title'] == 'Le mie slide'
     from backend.personal_timeline import imported_id
     assert portfolio_timeline_links(db, 'alice', 1)['links'][0]['event_id'] == imported_id('timeline-a', 'e')
