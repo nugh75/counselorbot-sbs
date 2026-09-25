@@ -98,7 +98,8 @@ essenziale. L’esperienza OpenCode è un’alternativa quando disponibile.
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
 e feedback quando disponibili. Il lettore nella navigazione legge il testo visibile,
-con impostazioni di voce, motore e pronuncia. La chat guidata e la Bussola accettano
+con impostazioni di voce e motore; la correzione della pronuncia è visibile solo
+all’amministratore. La chat guidata e la Bussola accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
 invio immediato scelto esplicitamente. In conversazione vocale si avvia e si ferma
 la registrazione; il microfono non riparte da solo.
