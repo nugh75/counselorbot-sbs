@@ -39,8 +39,8 @@ for (const width of [390, 1440]) {
             await page.goto(`${origin}/profilo/taccuino`);
             await page.getByRole('button', { name: 'Modifica', exact: true }).click();
             assert.equal(await page.getByLabel(/Il tuo obiettivo in questo momento/i).count(), 0);
-            const goalsLink = page.getByRole('link', { name: 'Gestisci obiettivi e collegamenti', exact: true });
-            assert.equal(await goalsLink.getAttribute('href'), '/profilo/obiettivi');
+            // Il ponte obiettivi è ora il bottone condizionale «→ Rendi obiettivo la
+            // difficoltà» (mostrato solo con una difficoltà compilata): è coperto da test:goals.
             const field = page.getByLabel(/Altro che vuoi aggiungere/i);
             await field.scrollIntoViewIfNeeded();
             const before = await field.boundingBox();
