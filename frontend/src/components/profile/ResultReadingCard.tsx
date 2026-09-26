@@ -166,7 +166,7 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores }: {
                                     <Button
                                         type="button"
                                         variant="secondary"
-                                        onClick={() => { setDialogSaved(false); setTarget({ kind: 'create', origin: { kind: 'reading', target_id: sessionId }, prefill: { motivation: savedReading?.note } }); }}
+                                        onClick={() => { setDialogSaved(false); setTarget({ kind: 'create', origin: { kind: 'reading', target_id: sessionId }, prefill: { title: area.replace(/^\S+ - /, '').slice(0, 160), motivation: savedReading?.note } }); }}
                                     >
                                         {l('toGoal')}
                                     </Button>
