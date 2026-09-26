@@ -175,6 +175,8 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot. |
 
+In Risultati e conversazioni, «Risultato della compilazione» è aperto inizialmente e si può richiudere o riaprire premendo il titolo, anche da tastiera con Invio o Spazio. La chiusura nasconde sintesi, grafici e dettagli; la conversazione resta visibile e i contenuti non vengono cancellati.
+
 Il vecchio indirizzo del libretto, `/profilo/libretto`, porta a Risultati e conversazioni.
 
 Un **Profilo** è l’insieme dei punteggi di un questionario. Il **Taccuino** è
