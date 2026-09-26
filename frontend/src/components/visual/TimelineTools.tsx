@@ -9,6 +9,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { TimelineDateFields } from './TimelineDateFields';
 import { datePeriod, sortedTimeline, validTimelineDates, type TimelineDates } from '@/lib/timeline-dates';
 import { InstitutionTimelineDates } from './InstitutionTimelineDates';
+import { ExperienceReview } from './ExperienceReview';
 import { apiFetch } from '@/lib/auth';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { moveTimelineEvent, type ActionKind, type SavedWorkspace, type TimelineEvent, type VisualWorkspace } from '@/lib/visual-tools';
@@ -134,6 +135,7 @@ export function TimelineTools({ personal = false, sessionId, locale, work, edit,
                 <label className="mt-3 block text-sm">{l(personal ? 'diary' : 'reflection')}<textarea aria-label={l(personal ? 'diary' : 'reflection')} rows={2} maxLength={1000} className={field} value={event.reflection} onChange={e => updateEvent(event.id, { reflection: e.target.value })} /></label>
                 {personal && <div className="my-3 flex flex-wrap gap-4">{(['notebook', 'booklet', 'orientation'] as const).map(key => <label key={key} className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={(event.personal_links || []).includes(key)} onChange={e => updateEvent(event.id, { personal_links: e.target.checked ? [...(event.personal_links || []), key] : (event.personal_links || []).filter(link => link !== key) })} />{l(key)}</label>)}</div>}
                 {(event.personal_links || []).map(key => <Link key={key} className="mr-4 inline-block min-h-11 py-2 text-indigo-700 underline" href={`/profilo/${{ notebook: 'taccuino', booklet: 'libretto', orientation: 'orientamento' }[key]}`}>{l(key)}</Link>)}
+                {personal && event.tense === 'past' && !event.institution_event && <ExperienceReview event={event} locale={locale} onPatch={review => updateEvent(event.id, { review })} />}
                 <div className="mt-3 grid gap-4 lg:grid-cols-2">
                     <section aria-label={l('board')} className="min-w-0 space-y-2">
                         {event.action_ids.map(id => { const action = work.actions.find(a => a.id === id); return <div key={id} className="flex items-center justify-between gap-2 rounded-md bg-slate-50 p-2 text-sm"><span className="min-w-0 break-words">{action ? `${action.kind && action.kind !== 'activity' ? l(action.kind) + ': ' : ''}${action.title} · ${l(action.stage)}` : l('unavailable')}</span>{tool(`${l('unlink')}: ${action?.title || l('unavailable')}`, Unlink, () => updateEvent(event.id, { action_ids: event.action_ids.filter(a => a !== id) }))}</div>; })}
