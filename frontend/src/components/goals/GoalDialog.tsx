@@ -191,7 +191,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
                 {inherited.map(([group, from]) => <p key={group} className="text-sm text-slate-600">ℹ {goalFormat(lang, 'inheritedShare', { group: groupName(group), goal: from.title })}</p>)}
                 {goal && <p className="text-sm text-slate-600">{l('doneHelp')}</p>}
             </fieldset></form>
-            {goal?.reflection && <section className="rounded-md bg-slate-50 p-3 text-sm"><h3 className="font-semibold">{l('legacyNote')}</h3><p className="whitespace-pre-wrap text-slate-700">{goal.reflection}</p></section>}
+            {goal?.reflection && !goal.reviews.length && <section className="rounded-md bg-slate-50 p-3 text-sm"><h3 className="font-semibold">{l('legacyNote')}</h3><p className="whitespace-pre-wrap text-slate-700">{goal.reflection}</p></section>}
             {goal && dirty && <p role="status" className="text-sm text-slate-600">{l('unsaved')}</p>}
             {goal && <section className="space-y-3"><h3 className="font-bold">{l('howIGetThere')}</h3>
                 <MethodPicker value={form.method} items={goal.method} onChange={method => setForm({ ...form, method })} disabled={busy || otherDraft} onPractice={title => setAction({ ...action, title })} />

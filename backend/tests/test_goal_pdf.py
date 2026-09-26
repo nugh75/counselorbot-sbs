@@ -58,6 +58,7 @@ def full_goal(db, c):
 def test_closed_goal_path_has_every_section(setup):
     db, c, who = setup
     row = full_goal(db, c)
+    db.get(models.PersonalGoal, row['id']).reflection = 'Parlare a voce alta mi aiuta'; db.commit()
     c.post(f"/user/goals/{row['id']}/reviews", json=dict(outcome='reached', commitment='enough', satisfaction='much',
            learned='Parlare a voce alta mi aiuta', revision=row['revision']))
     response = c.get(f"/user/goals/{row['id']}/pdf", params={'lang': 'it'})
@@ -68,6 +69,7 @@ def test_closed_goal_path_has_every_section(setup):
                      'Parlare a voce alta mi aiuta', 'Voglio stare calma'):
         assert expected in text, expected
     assert 'in corso' not in text
+    assert text.count('Parlare a voce alta mi aiuta') == 1  # nel bilancio, non ripetuto come «Note»
 
 
 def test_open_goal_is_stamped_in_progress_without_review(setup):
