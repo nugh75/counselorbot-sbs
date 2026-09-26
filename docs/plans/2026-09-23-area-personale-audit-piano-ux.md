@@ -1,6 +1,6 @@
 # Area personale: audit dell'interazione e piano di modifica
 
-**Data:** 23 settembre 2026. **Stato:** punti 0.1 e 0.2 approvati e applicati all’ingresso dell’Area personale il 23 settembre 2026, su richiesta dell’utente di vedere le modifiche dopo rebuild Docker. Pilota 0.3 Orientamento e passi 0.3.2.1–0.3.2.3 distribuiti il 23 settembre 2026; **estensione della testata (0.3) a tutte le pagine dell’area applicata il 26 settembre 2026** (mega-pagina `/profilo/*`, workspace unificati azioni/carte/confronto, flashcard e pQBL; `cambiamenti` resta sub-pagina del taccuino, `libretto` ritirata). **Lotto 3A residuo applicato il 26 settembre 2026** (creazione obiettivo progressiva con «Più dettagli ▾»; ponte «Collega a un obiettivo» dal Portfolio): F12/F13/F16 assorbiti. **Lotto 1B applicato il 26 settembre 2026** (F03 stati di errore con Riprova su Taccuino/Compilazioni/Portfolio/Classi/Telegram; F04 uscita dal gruppo confermata; F25 uploader pQBL solo-PDF). **Lotto 4 avviato il 26 settembre 2026 — strumento Linea del tempo**: campo «Cosa programmo» reintrodotto nell'editor (tappe future o senza date, contratto `planned` invariato) e `TimelineTools.tsx` eliminato come dead code (ramo `personal` irraggiungibile). **F23 applicato il 26 settembre 2026** (rinomina in linea con `InlineRename` al posto dei `window.prompt` nativi, con focus, invio/Escape, nei mazzi e nelle colonne di Carte e nei mazzi di Flashcard). **F24 applicato il 26 settembre 2026** (Confronto progressivo: passo 1 Alternative sempre visibile, Criteri/Confronto/Scelta compaiono solo con almeno un'alternativa, etichette di passo 1–4 in sei lingue). **F21 applicato il 26 settembre 2026** (scheda azione leggibile di default, modifica esplicita per card, stato di salvataggio già visibile nel footer; per il tavolo di sessione resta il comportamento attuale). **F26 applicato il 26 settembre 2026** (Tavoli salvati in cima alla pagina; creazione manuale, compose AI e configurazione counselor dopo l'elenco, con didascalia sul ruolo del modello; rinomina in linea). **Lotto 4 completato.** **Lotto 1A (F02/F06) applicato il 26 settembre 2026 su accordo esplicito** (X del Portfolio con conferma di scarto; i testi delle sotto-form di creazione — azione, carta, criterio, alternativa — attivano le guardie di uscita). **Lotto 5A applicato il 26 settembre 2026** (F27 lista assegnazioni compatta con filtri gruppo/tipo/finalità/stato e un solo dettaglio aperto alla volta; F28 spiegazione che pianificare resta personale; F29 anteprima di restituzione con destinatario esplicito e copia immutabile; F30 collegamenti contestuali Classi↔Assegnazioni e messaggi docente in Classi; F32 Telegram a tre passi con scadenza codice e verifica automatica al ritorno). Resta aperto: 5B (estensioni da decidere: consegna lavoro già svolto, anteprima invito, bozze Tavolo).
+**Data:** 23 settembre 2026. **Stato:** punti 0.1 e 0.2 approvati e applicati all’ingresso dell’Area personale il 23 settembre 2026, su richiesta dell’utente di vedere le modifiche dopo rebuild Docker. Pilota 0.3 Orientamento e passi 0.3.2.1–0.3.2.3 distribuiti il 23 settembre 2026; **estensione della testata (0.3) a tutte le pagine dell’area applicata il 26 settembre 2026** (mega-pagina `/profilo/*`, workspace unificati azioni/carte/confronto, flashcard e pQBL; `cambiamenti` resta sub-pagina del taccuino, `libretto` ritirata). **Lotto 3A residuo applicato il 26 settembre 2026** (creazione obiettivo progressiva con «Più dettagli ▾»; ponte «Collega a un obiettivo» dal Portfolio): F12/F13/F16 assorbiti. **Lotto 1B applicato il 26 settembre 2026** (F03 stati di errore con Riprova su Taccuino/Compilazioni/Portfolio/Classi/Telegram; F04 uscita dal gruppo confermata; F25 uploader pQBL solo-PDF). **Lotto 4 avviato il 26 settembre 2026 — strumento Linea del tempo**: campo «Cosa programmo» reintrodotto nell'editor (tappe future o senza date, contratto `planned` invariato) e `TimelineTools.tsx` eliminato come dead code (ramo `personal` irraggiungibile). **F23 applicato il 26 settembre 2026** (rinomina in linea con `InlineRename` al posto dei `window.prompt` nativi, con focus, invio/Escape, nei mazzi e nelle colonne di Carte e nei mazzi di Flashcard). **F24 applicato il 26 settembre 2026** (Confronto progressivo: passo 1 Alternative sempre visibile, Criteri/Confronto/Scelta compaiono solo con almeno un'alternativa, etichette di passo 1–4 in sei lingue). **F21 applicato il 26 settembre 2026** (scheda azione leggibile di default, modifica esplicita per card, stato di salvataggio già visibile nel footer; per il tavolo di sessione resta il comportamento attuale). **F26 applicato il 26 settembre 2026** (Tavoli salvati in cima alla pagina; creazione manuale, compose AI e configurazione counselor dopo l'elenco, con didascalia sul ruolo del modello; rinomina in linea). **Lotto 4 completato.** **Lotto 1A (F02/F06) applicato il 26 settembre 2026 su accordo esplicito** (X del Portfolio con conferma di scarto; i testi delle sotto-form di creazione — azione, carta, criterio, alternativa — attivano le guardie di uscita). **Lotto 5A applicato il 26 settembre 2026** (F27 lista assegnazioni compatta con filtri gruppo/tipo/finalità/stato e un solo dettaglio aperto alla volta; F28 spiegazione che pianificare resta personale; F29 anteprima di restituzione con destinatario esplicito e copia immutabile; F30 collegamenti contestuali Classi↔Assegnazioni e messaggi docente in Classi; F32 Telegram a tre passi con scadenza codice e verifica automatica al ritorno). **Riordino gruppi e perfezionamenti del 26 settembre 2026:** «Conoscermi e riflettere» precede «Il mio percorso» all'ingresso dell'Area personale; «Analisi combinata dei profili» scorporata da Risultati e conversazioni e resa strumento autonomo (`/profilo/analisi-combinata`) in «Conoscermi e riflettere» (PR #12); in Risultati e conversazioni (`/profilo/compilazioni`), risultato della compilazione e conversazione chat collassabili insieme via disclosure (`#submission-result-content`), con «La mia lettura» immediatamente accessibile sotto il comando di espansione (PR #12, fix defect PR #14). Resta aperto: solo 5B (estensioni da decidere: consegna lavoro già svolto, anteprima invito, bozze Tavolo).
 **Base del codice esaminato:** `edddddc`. Ambito: le 18 rotte dell'Area personale, i componenti condivisi e i passaggi verso gli strumenti esterni all'area.
 
 ## 1. Esito e priorità
@@ -129,16 +129,17 @@ La pagina d'ingresso continua a dare accesso a tutti gli strumenti. Le categorie
 ```text
 Area personale
 |
++-- Conoscermi e riflettere
+|   +-- Taccuino
+|   +-- Libretto                 /profilo/libretto (ridiretto a compilazioni)
+|   +-- Cambiamenti
+|   +-- Risultati e conversazioni
+|   +-- Analisi combinata dei profili /profilo/analisi-combinata
+|
 +-- Il mio percorso
 |   +-- Obiettivi
 |   +-- Attivita                 /profilo/azioni
 |   +-- Calendario e diario      /profilo/timeline
-|
-+-- Conoscermi e riflettere
-|   +-- Taccuino
-|   +-- Libretto
-|   +-- Cambiamenti
-|   +-- Risultati e conversazioni
 |
 +-- Studiare e ragionare
 |   +-- Studiare da un PDF
@@ -163,13 +164,14 @@ I nomi sono gli stessi nell'ingresso, nelle testate e nel futuro selettore di na
 
 | Gruppo | Nome | Descrizione nell'ingresso | Rotta esistente |
 | --- | --- | --- | --- |
-| Il mio percorso | Obiettivi | Scegli che cosa vuoi raggiungere e il prossimo passo. | `/profilo/obiettivi` |
-| Il mio percorso | Attività | Organizza quello che vuoi fare, stai facendo o hai provato. | `/profilo/azioni` |
-| Il mio percorso | Calendario e diario | Pianifica le tappe e racconta le esperienze. | `/profilo/timeline` |
 | Conoscermi e riflettere | Taccuino | Racconta il tuo contesto, gli interessi e il modo di apprendere. | `/profilo/taccuino` |
 | Conoscermi e riflettere | Libretto | Prepara una prova e rifletti su come è andata. | `/profilo/libretto` |
 | Conoscermi e riflettere | Cambiamenti | Confronta ciò che hai scritto e rifletti sui cambiamenti. | `/profilo/cambiamenti` |
 | Conoscermi e riflettere | Risultati e conversazioni | Ritrova i risultati dei questionari e i dialoghi collegati. | `/profilo/compilazioni` |
+| Conoscermi e riflettere | Analisi combinata dei profili | Lettura integrata tra gli strumenti compilati. | `/profilo/analisi-combinata` |
+| Il mio percorso | Obiettivi | Scegli che cosa vuoi raggiungere e il prossimo passo. | `/profilo/obiettivi` |
+| Il mio percorso | Attività | Organizza quello che vuoi fare, stai facendo o hai provato. | `/profilo/azioni` |
+| Il mio percorso | Calendario e diario | Pianifica le tappe e racconta le esperienze. | `/profilo/timeline` |
 | Studiare e ragionare | Studiare da un PDF | Lavora sul tuo materiale attraverso domande e feedback. | `/profilo/pqbl` |
 | Studiare e ragionare | Flashcard | Memorizza e ripassa con carte domanda e risposta. | `/profilo/flashcard` |
 | Studiare e ragionare | Carte da ordinare | Raggruppa idee e riflessioni. | `/profilo/carte` |
@@ -183,7 +185,9 @@ I nomi sono gli stessi nell'ingresso, nelle testate e nel futuro selettore di na
 
 Decisioni di nomenclatura e raggruppamento:
 
+- **Ordinamento dei gruppi (26 settembre 2026):** «Conoscermi e riflettere» è posizionato al primo posto prima de «Il mio percorso» per favorire l'auto-osservazione e la consapevolezza prima della pianificazione attiva.
 - **Compilazioni → Risultati e conversazioni:** il nome esplicita i contenuti disponibili.
+- **Analisi combinata dei profili è una voce autonoma (26 settembre 2026):** all'interno di «Conoscermi e riflettere» (`/profilo/analisi-combinata`), scorporata da Risultati e conversazioni per consentire la sintesi integrata tra questionari (QSA, QSAr, ZTPI) con pagina, testata e percorso dedicati.
 - **Cambiamenti è una voce autonoma** dentro «Conoscermi e riflettere», allo stesso livello di Taccuino e Libretto: riguarda entrambe le sorgenti. I collegamenti contestuali dalle versioni del Taccuino restano utili.
 - **Portfolio resta nel gruppo autonomo «I miei lavori»**, anche se è l'unica voce: la raccolta degli elaborati si distingue dalla pianificazione delle attività.
 - Conservare i nomi caratteristici **Taccuino, Libretto e Tavolo**, chiarendone la funzione attraverso la descrizione.
@@ -947,16 +951,21 @@ Area personale > Risultati e conversazioni
 [Cerca per strumento o data...             ] [Strumento: Tutti v]
 +-------------------------+----------------------------------------+
 | QSA - 21 settembre      | QSA - 21 settembre             [PDF]   |
-| ZTPI - 18 settembre     | [Sintesi] [Risultati] [Conversazione]   |
-| QSA -  5 settembre      |                                        |
-|                         | Sintesi del percorso                    |
-|                         | ...                                    |
-|                         | [Apri il libretto]                     |
+| ZTPI - 18 settembre     | [v Risultato della compilazione      ] |
+| QSA -  5 settembre      |   [Sintesi] [Risultati] [Conversazione] |
+|                         |   ... grafici e fattori ...             |
+|                         |   ... conversazione con counselor ...   |
+|                         | -------------------------------------- |
+|                         | La mia lettura                         |
+|                         | Punti di forza, aree di crescita...    |
 +-------------------------+----------------------------------------+
-> Lettura integrata tra strumenti: spiegazione e avvio facoltativo
 ```
 
 Mobile: prima elenco, poi dettaglio selezionato. Mostrare la data e il nome esteso dello strumento; riportare il codice del fattore insieme al nome nei risultati. Conservare spiegazioni e indicatori testuali già presenti, senza affidarsi solo al colore. Eliminazione fra le azioni secondarie, con conferma riferita alla compilazione precisa. Non cambiare soglie o interpretazioni psicometriche nell'intervento UX.
+
+*Modifiche e rifiniture applicate il 26 settembre 2026:*
+- **Analisi combinata dei profili scorporata (PR #12):** la «Lettura integrata tra strumenti» non compare più in coda a questa pagina, ma è diventata uno strumento autonomo dedicato (`/profilo/analisi-combinata`) all'interno del gruppo «Conoscermi e riflettere», con rotta, pagina e testata proprie.
+- **Collasso unificato di risultati e conversazione (PR #12 e PR #14):** la sezione «Risultato della compilazione» dispone di un controllo disclosure (`#submission-result-content`) che consente di richiudere o espandere l'intero blocco dei dettagli tecnici (sintesi, grafici stanine, schede fattori) e della conversazione con il counselor. Quando il blocco è collassato, la scheda «La mia lettura» resta immediatamente accessibile sotto il comando di espansione, consentendo allo studente di scrivere o consultare le riflessioni personali senza dover scorrere lunghi dialoghi passati. Risolto il difetto per cui la chat restava visibile a blocco collassato.
 
 ### 5.7 Attività — `/profilo/azioni`
 
