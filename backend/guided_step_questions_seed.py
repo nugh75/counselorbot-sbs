@@ -410,7 +410,7 @@ _EVENTO_STEP_QUESTIONS: dict[str, list[str]] = {
     ],
     "final": [
         "Cosa faccio di questa sintesi?",
-        "Come la salvo nel mio libretto?",
+        "Come la salvo come tappa nella Linea del tempo?",
         "Quando ha senso tornare su questo evento?"
     ]
 }
