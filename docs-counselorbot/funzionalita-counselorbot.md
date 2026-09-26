@@ -174,6 +174,8 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot. |
 
+Il vecchio indirizzo del libretto, `/profilo/libretto`, porta a Risultati e conversazioni.
+
 Un **Profilo** è l’insieme dei punteggi di un questionario. Il **Taccuino** è
 l’autodescrizione scritta dalla persona. La **Lettura** è ciò che la
 persona legge in un risultato. Il libretto non c’è più: le sue domande vivono in
