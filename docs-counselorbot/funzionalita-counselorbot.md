@@ -96,9 +96,11 @@ Il percorso essenziale QSA prevede tre risposte e la sintesi; non va esteso a QS
 o agli altri questionari. I due percorsi sugli obiettivi hanno la propria versione
 essenziale. L’esperienza OpenCode è un’alternativa quando disponibile.
 
-Per chi ha ruolo docente, ricercatore o amministratore, lo stesso menu offre
-**Taccuino nel contesto** (predefinito, studente, docente, nessuno): quale taccuino
-entra nel contesto della chat per quello strumento. Il default resta quello storico
+Per chi ha ruolo docente, ricercatore o amministratore, la scelta compare in due
+testi: nella scheda **Impostazioni della conversazione** prima di avviare e nel
+menu Opzioni **dentro** la chat guidata; offre **Taccuino nel contesto**
+(predefinito, studente, docente, nessuno): quale taccuino entra nel contesto della
+chat per quello strumento. Il default resta quello storico
 — Taccuino del docente per Obiettivi per la mia classe, Taccuino dello studente per
 tutti gli altri strumenti — e «predefinito» non invia nulla al server. La scelta
 vale per il solo browser in uso, sopravvive alla chiusura e alla ripresa di una
