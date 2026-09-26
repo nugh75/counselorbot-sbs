@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 // indistinguibili.
 export const metadata: Metadata = {
     title: 'Area personale - CounselorBot',
-    description: 'Compilazioni, taccuino, libretto, portfolio e classi.',
+    description: 'Compilazioni, taccuino, obiettivi, portfolio e classi.',
 };
 
 export default function ProfiloLayout({ children }: { children: React.ReactNode }) {

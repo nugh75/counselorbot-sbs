@@ -1,11 +1,14 @@
 """Una tantum: il libretto confluisce in letture, obiettivi, bilanci, taccuino e linea del tempo (spec § 8)."""
 import hashlib
+import logging
 import re
 from datetime import date
 
 from . import models
 from .personal_timeline import ensure_personal_timeline
 from .visual_tools import SavePersonalWorkspace, load_workspace, save_workspace
+
+logger = logging.getLogger(__name__)
 
 MIGRATION_ACTION = 'booklet_triade_migration'
 _ISO = re.compile(r'^\d{4}-\d{2}-\d{2}$')
@@ -251,6 +254,11 @@ def migrate_all_booklets(db):
     users += [u for (u,) in db.query(models.PersonalGoal.username).filter(models.PersonalGoal.reflection != '').distinct()]
     done = 0
     for username in sorted(set(users)):
-        if migrate_booklets(db, username):
-            done += 1
+        # Un libretto illeggibile non deve fermare gli altri: niente marcatore, si riprova al prossimo avvio.
+        try:
+            if migrate_booklets(db, username):
+                done += 1
+        except Exception:
+            db.rollback()
+            logger.exception('booklet migration failed for %s', username)
     return done

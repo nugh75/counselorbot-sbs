@@ -16,7 +16,7 @@ IMPORT_ACTION = 'personal_timeline_import'
 MIGRATION_ACTION = 'activities_timeline_migration'
 
 # Italian labels for the personal_links trace kept on a migrated activity (spec Sec.5: lossless).
-_PERSONAL_LINK_LABELS_IT = [('notebook', 'Taccuino'), ('booklet', 'Libretto'), ('orientation', 'Orientamento')]
+_PERSONAL_LINK_LABELS_IT = [('notebook', 'Taccuino'), ('orientation', 'Orientamento')]
 
 
 def imported_id(session_id, item_id):

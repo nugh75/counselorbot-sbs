@@ -1,15 +1,25 @@
 """Migrazione una tantum del libretto nelle nuove sedi (spec § 8)."""
-from backend import models
-from backend.booklet_migration import MIGRATION_ACTION, migrate_booklets
+from backend import booklet_migration, models
+from backend.booklet_migration import MIGRATION_ACTION, migrate_all_booklets, migrate_booklets
 from backend.personal_timeline import ensure_personal_timeline
 from backend.tests.artifact_database import artifact_session
-from backend.visual_tools import load_workspace
+from backend.visual_tools import SavePersonalWorkspace, load_workspace, save_workspace
 
 
 def booklet(db, **data):
     qtype = data.pop('questionnaire_type', 'QSA'); session_id = data.pop('session_id', None)
     row = models.StudentBooklet(username='alice', questionnaire_type=qtype, session_id=session_id, data=data)
     db.add(row); db.commit(); return row
+
+
+def legacy_biography_event(db, row, title):
+    """Tappa come la scriveva la sincronizzazione del libretto, rimossa con il libretto."""
+    state = load_workspace(db, None, 'alice')
+    work = state['workspace']
+    work['timeline']['events'].append(dict(id=f'booklet-{row.id}-0123456789abcdef', title=title, period='—',
+                                           tense='past', personal_links=['booklet']))
+    work['timeline']['title'] = 'Timeline'
+    save_workspace(db, None, 'alice', SavePersonalWorkspace(revision=state['revision'], workspace=work))
 
 
 def result(db, session_id='s1', qtype='QSA'):
@@ -62,7 +72,7 @@ def test_booklet_timeline_events_are_renamed_without_booklet_link():
         row = booklet(db, session_id='s1', bio_context='Laboratorio di fisica',
                       bio_discovery='Imparare facendo', bio_keywords='esperimenti')
         ensure_personal_timeline(db, 'alice')
-        sync_booklet_biography(db, row)
+        legacy_biography_event(db, row, 'Laboratorio di fisica')
         migrate_booklets(db, 'alice')
         events = load_workspace(db, None, 'alice')['workspace']['timeline']['events']
         event = next(e for e in events if e['title'] == 'Laboratorio di fisica')
@@ -103,9 +113,6 @@ def test_booklet_links_become_reading_origin_or_are_dropped():
         assert counts['readings'] >= 1
 
 
-from backend.booklet_timeline import sync_booklet_biography
-
-
 def test_migration_is_idempotent():
     with artifact_session() as db:
         result(db)
@@ -113,3 +120,20 @@ def test_migration_is_idempotent():
         migrate_booklets(db, 'alice'); migrate_booklets(db, 'alice')
         assert db.query(models.PersonalGoal).count() == 1
         assert db.query(models.Log).filter_by(username='alice', action=MIGRATION_ACTION).count() == 1
+
+
+def test_one_failing_user_does_not_stop_the_others(monkeypatch):
+    with artifact_session() as db:
+        for user in ('alice', 'bob'):
+            db.add(models.StudentBooklet(username=user, questionnaire_type='QSA', data={'objective': f'Obiettivo di {user}'}))
+        db.commit()
+        real = booklet_migration.migrate_booklets
+
+        def flaky(db, username):
+            if username == 'alice':
+                raise RuntimeError('broken booklet')
+            return real(db, username)
+
+        monkeypatch.setattr(booklet_migration, 'migrate_booklets', flaky)
+        assert migrate_all_booklets(db) == 1
+        assert [g.username for g in db.query(models.PersonalGoal)] == ['bob']
