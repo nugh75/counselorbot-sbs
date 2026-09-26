@@ -37,7 +37,7 @@ try {
         page.on('pageerror', error => errors.push(error.message));
         await page.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); }, lang);
         const group = { id: 91, name: groupName, code: 'DEMO-3B', school: '', school_level: 'secondaria', owner_username: 'teacher.demo', is_active: true, members_count: 2, created_at: '2026-09-21T08:00:00Z' };
-        const goal = { id: 1, title, motivation: instructions, criteria: responsePrompt, reflection: '', status: 'active', priority: 2, review_date: '2026-10-15', shared_group_id: null, revision: 1, catalog_id: null, catalog_snapshot: {}, links: [] };
+        const goal = { id: 1, title, motivation: instructions, criteria: responsePrompt, reflection: '', status: 'active', priority: 2, review_date: '2026-10-15', shared_group_id: null, revision: 1, catalog_id: null, catalog_snapshot: {}, links: [], parent_ids: [], method: [], origin: null, reviews: [], checks: [] };
         const assignment = { id: 1, author_name: 'Alex · Demo', group_name: groupName, source_kind: 'goal', recipient_username: null, recipient_count: 2, instructions, created_at: '2026-09-21T08:00:00Z', revoked_at: null, snapshot: { title, description: '', details: '' }, intent: 'requested', due_date: '2026-10-15', response_prompt: responsePrompt };
         const catalog = [{ id: 1, author_username: 'teacher.demo', group_id: 91, status: 'published', version: 1, data: { title, description: instructions, criteria: responsePrompt, suggestions: '', area: '', audience: '', language: lang } }];
         const demoInstitution = { id: 1, name: groupName, slug: 'demo', kind: 'school' };
@@ -48,7 +48,7 @@ try {
             ...emptyWorkspace(),
             card_decks: [{ id: 'default', title }], active_deck_id: 'default',
             cards: [{ id: 'guide-card', text: instructions, bucket: 'explore', source: '', deck_id: 'default' }],
-            timeline: { title, events: [{ id: 'guide-event', title, period: '', date_mode: 'point', start_date: '2026-09-24', end_date: null, tense: 'future', symbol: 'study', planned: instructions, reflection: response, source: '', action_ids: [], portfolio: [] }] },
+            timeline: { title, events: [{ id: 'guide-event', title, period: '', date_mode: 'point', start_date: '2026-09-24', end_date: null, tense: 'past', symbol: 'study', planned: instructions, reflection: response, source: '', action_ids: [], portfolio: [] }] },
         };
         await page.route('**/*', async route => {
             const request = route.request();
@@ -151,7 +151,7 @@ try {
         await go('/profilo/carte');
         await page.getByRole('button', { name: `${visualLabel(lang, 'cardDecks')}: ${title}`, exact: true }).click();
         await capture('cards');
-        await go('/profilo/timeline?event=guide-event'); await capture('calendar', page.locator('#timeline-guide-event'));
+        await go('/profilo/timeline?event=guide-event'); await capture('calendar', page.locator('#timeline-milestone-guide-event'));
         await go('/profilo/assegnazioni'); await capture('received-assignments');
         await go('/profilo/classi'); await capture('personal-groups');
         await go('/'); await capture('introduction');
