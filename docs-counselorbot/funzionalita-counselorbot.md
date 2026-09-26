@@ -102,8 +102,9 @@ chat per quello strumento. Il default resta quello storico — Taccuino del doce
 per Obiettivi per la mia classe, Taccuino dello studente per tutti gli altri
 strumenti — e «predefinito» non invia nulla al server. La scelta vale per il solo
 browser in uso, sopravvive alla chiusura e alla ripresa di una sessione congelata,
-ed è riverificata a ogni turno: senza il ruolo docente vale sempre il default.
-Con «studente» o «nessuno» le classi della chat docenza restano fuori dal contesto.
+ed è riverificata a ogni turno dal server: se il ruolo docente non è più attivo,
+vale sempre il default. Con «studente» o «nessuno» le classi della chat docenza
+restano fuori dal contesto; con «nessuno» la chat resta valida ma senza taccuini.
 
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
