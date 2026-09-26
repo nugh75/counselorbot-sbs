@@ -2,7 +2,7 @@
 
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 
-import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, AlignLeft, Rows3, Brain } from 'lucide-react';
+import { Send, ChevronRight, ChevronLeft, CheckCircle2, Loader2, BarChart3, Square, ThumbsUp, ThumbsDown, Snowflake, TriangleAlert, FileText, Paperclip, X, RotateCcw, GitBranch, PanelLeft, BookOpen, Mic, AlignLeft, Rows3, Brain, NotebookPen } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
@@ -22,6 +22,10 @@ import type { Lang } from '@/lib/i18n';
 import { acceptsAgreement, advanceButtons, advanceLabelKey, autoAdvancesOnGenerate, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from '@/lib/interview-path';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
+import { NotebookContextSelector } from '@/components/qsa/NotebookContextSelector';
+import { readStoredNotebookContext, storeNotebookContext, type NotebookContextChoice } from '@/lib/notebook-context';
+import { isTeacher } from '@/lib/roles';
+import { getIdentity } from '@/lib/auth';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { toast } from '@/components/ui/Toast';
 import { ChatBubble, ChatPending } from '@/components/ui/ChatBubble';
@@ -453,6 +457,20 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // browser e viene rispedita a ogni turno; il server la riverifica sempre.
     const isDocenza = questionnaireType === 'OBIETTIVO_DOCENZA';
     const [docenzaGroupIds, setDocenzaGroupIds] = useState<number[]>(readStoredDocenzaGroupIds);
+    // Taccuino nel contesto: il docente lo sceglie dal popover Opzioni e la
+    // scelta vive nel browser (stessa filosofia di docenzaGroupIds); il
+    // server riverifica il ruolo a ogni turno. 'default' non viaggia mai.
+    const [notebookContext, setNotebookContext] = useState<NotebookContextChoice>(() => frozenSnapshot?.notebook_context ?? readStoredNotebookContext());
+    const [isTeacherUser, setIsTeacherUser] = useState(false);
+    useEffect(() => {
+        let active = true;
+        getIdentity().then((id) => { if (active) setIsTeacherUser(Boolean(id?.authenticated && isTeacher(id))); });
+        return () => { active = false; };
+    }, []);
+    const changeNotebookContext = (value: NotebookContextChoice) => {
+        setNotebookContext(value);
+        storeNotebookContext(value);
+    };
     const desktop = useIsDesktop();
     // Se l'ultimo turno ha disegnato. Null prima del primo: una mappa che non
     // c'e' ancora non e' una mappa rimasta ferma.
@@ -740,6 +758,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     if (frozenSnapshot.reasoning_effort) {
                         setReasoningEffort(frozenSnapshot.reasoning_effort);
                     }
+                    if (frozenSnapshot.notebook_context) {
+                        setNotebookContext(frozenSnapshot.notebook_context);
+                    }
                     // Le fasi già aperte restano tali: altrimenti l'effetto di cambio
                     // fase rigenera l'intro della fase ripresa e lo studente si
                     // rilegge la presentazione sotto alla conversazione di prima.
@@ -968,6 +989,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 counselor_id: counselorId,
                 idea_variant: isIdea ? ideaVariant : undefined,
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
+                notebook_context: isTeacherUser && notebookContext !== 'default' ? notebookContext : undefined,
                 idea_budget: isIdea ? ideaBudget : undefined,
             }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
             if (result.conversation_id) setConversationId(result.conversation_id);
@@ -1014,6 +1036,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         counselor_id: counselorId,
                         idea_variant: isIdea ? ideaVariant : undefined,
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
+                notebook_context: isTeacherUser && notebookContext !== 'default' ? notebookContext : undefined,
                         idea_budget: isIdea ? ideaBudget : undefined,
                     };
                 }
@@ -1037,6 +1060,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     counselor_id: counselorId,
                     idea_variant: isIdea ? ideaVariant : undefined,
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
+                notebook_context: isTeacherUser && notebookContext !== 'default' ? notebookContext : undefined,
                     idea_budget: isIdea ? ideaBudget : undefined,
                 };
             };
@@ -1232,6 +1256,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 counselor_id: counselorId,
                 idea_variant: isIdea ? ideaVariant : undefined,
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
+                notebook_context: isTeacherUser && notebookContext !== 'default' ? notebookContext : undefined,
                 idea_budget: isIdea ? ideaBudget : undefined,
             };
             if (scoresContextOverride || essential) {
@@ -1343,6 +1368,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         response_format: responseFormat,
         guided_path: guidedPath,
         reasoning_effort: reasoningEffort,
+        notebook_context: notebookContext !== 'default' ? notebookContext : undefined,
         label: `${questionnaireType} — ${getPhaseLabel(currentPhase)}`,
     });
 
@@ -1369,7 +1395,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             const snapshot = buildSnapshot();
             await freezeSession(snapshot);
             pendingSnapshotRef.current = null;
-            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath });
+            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext });
             toast.success(t('frozen.frozen'));
             onFrozen?.();
         } catch {
@@ -1394,7 +1420,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             isLoading,
             completed: completedRef.current,
         })) return;
-        const signature = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath });
+        const signature = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext });
         if (signature === savedSignatureRef.current) return;
         pendingSnapshotRef.current = { snapshot: buildSnapshot(), signature };
         const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
@@ -1402,7 +1428,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         // buildSnapshot legge lo stato corrente a ogni render: le dipendenze qui
         // sono quello che rende lo snapshot diverso dal precedente.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, isLoading, sessionId]);
+    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext, isLoading, sessionId]);
 
     // Uscita dallo strumento con un turno ancora in attesa: `pagehide` copre tab
     // chiusa, ricarica e link che lasciano la pagina (il logo dell'header è un
@@ -1574,6 +1600,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             <span className="min-w-0 flex-1">{t('responseLength.shortLabel')}</span>
                             <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
                         </div>
+                        {isTeacherUser && <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
+                            <NotebookPen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            <span className="min-w-0 flex-1">{t('notebookContext.label')}</span>
+                            <NotebookContextSelector value={notebookContext} onChange={changeNotebookContext} disabled={isLoading} />
+                        </div>}
                         {reasoningCapable && <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
                             <Brain className="h-4 w-4 shrink-0" aria-hidden="true" />
                             <span className="min-w-0 flex-1">{t('reasoning.shortLabel')}</span>
@@ -1923,7 +1954,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             </div>
                         )}
                         {isDocenza && (
-                            <DocenzaClassBar selected={docenzaGroupIds} onChange={setDocenzaGroupIds} />
+                            <DocenzaClassBar selected={docenzaGroupIds} onChange={setDocenzaGroupIds} notebookContext={notebookContext} />
                         )}
                         {isIdea && ideaReference && (
                             <div className="mb-2 flex min-w-0 items-center gap-2 rounded-md border border-teal-100 bg-teal-50 px-2.5 py-2 text-xs text-teal-900">
