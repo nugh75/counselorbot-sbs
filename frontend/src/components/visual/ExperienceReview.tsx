@@ -10,9 +10,16 @@ import { goalText } from '@/lib/i18n-goals';
 import { EVENT_ROLES } from '@/lib/event-booklet';
 import { GoalDialog, type DialogTarget } from '@/components/goals/GoalDialog';
 import { emptyEventReview, type EventReview, type TimelineEvent } from '@/lib/visual-tools';
+import { draftFor, linesOf } from '@/lib/review-lines';
 
 const field = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
-const linesOf = (text: string): string[] => text.split('\n').map(item => item.trim()).filter(Boolean).slice(0, 10);
+
+function LinesField({ label, hint, items, onChange }: { label: string; hint: string; items: string[]; onChange: (items: string[]) => void }) {
+    const [draft, setDraft] = useState(items.join('\n'));
+    const text = draftFor(draft, items);
+    return <label className="block text-sm">{label} <span className="text-xs text-slate-500">({hint})</span>
+        <textarea rows={3} className={field} value={text} onChange={e => { setDraft(e.target.value); onChange(linesOf(e.target.value)); }} /></label>;
+}
 
 /** «Rileggere l'esperienza» (C3): the rilettura of a past milestone (backend `EventReview`,
     ex scheda evento/biografia del libretto). Shared by the session-scoped timeline tool
@@ -50,10 +57,8 @@ export function ExperienceReview({ event, locale, onPatch }: { event: TimelineEv
                 </div>
             </fieldset>
             <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block text-sm">{b('eventBooklet.field.worked')} <span className="text-xs text-slate-500">({b('eventBooklet.itemsHint')})</span>
-                    <textarea rows={3} className={field} value={review.worked.join('\n')} onChange={e => patch({ worked: linesOf(e.target.value) })} /></label>
-                <label className="block text-sm">{b('eventBooklet.field.didNotWork')} <span className="text-xs text-slate-500">({b('eventBooklet.itemsHint')})</span>
-                    <textarea rows={3} className={field} value={review.did_not_work.join('\n')} onChange={e => patch({ did_not_work: linesOf(e.target.value) })} /></label>
+                <LinesField label={b('eventBooklet.field.worked')} hint={b('eventBooklet.itemsHint')} items={review.worked} onChange={worked => patch({ worked })} />
+                <LinesField label={b('eventBooklet.field.didNotWork')} hint={b('eventBooklet.itemsHint')} items={review.did_not_work} onChange={did_not_work => patch({ did_not_work })} />
             </div>
             <label className="block text-sm">{b('eventBooklet.field.reading')}<textarea rows={3} maxLength={1500} className={field} value={review.reading} onChange={e => patch({ reading: e.target.value })} /></label>
             <div className="grid gap-3 sm:grid-cols-2">
