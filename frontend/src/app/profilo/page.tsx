@@ -45,9 +45,17 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-type PersonalSection = 'assignments' | 'notebook' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo' | 'flashcards' | 'pqbl';
+type PersonalSection = 'combined' | 'assignments' | 'notebook' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo' | 'flashcards' | 'pqbl';
 
 const PERSONAL_AREAS = [
+    {
+        id: 'combined',
+        slug: 'analisi-combinata',
+        icon: ClipboardList,
+        image: '/images/intro/profiles.png',
+        titleKey: 'combined.title',
+        descriptionKey: 'combined.desc',
+    },
     { id: 'assignments', slug: 'assegnazioni', icon: ClipboardList, image: '/images/platform/assegnazioni.png', titleKey: 'received', descriptionKey: 'intro' },
     {
         id: 'notebook',
@@ -764,9 +772,10 @@ export default function ProfilePage() {
                 )}
             </section>
 
-            <CrossSynthesisCard />
             </>
             )}
+
+            {activeSection === 'combined' && <CrossSynthesisCard showHeading={false} />}
 
             {activeSection === 'assignments' && <AssignmentsPanel showHeading={false} />}
             {activeSection === 'groups' && <MyGroupsCard lang={lang} showHeading={false} canManageGroups={canUseTeacherAssistant(identity)} />}

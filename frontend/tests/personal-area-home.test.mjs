@@ -41,7 +41,7 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
             const home = f.page.locator('[data-personal-area-home]');
             await home.waitFor();
             assert.equal(await home.getByRole('navigation').count(), 5);
-            assert.equal(await home.getByRole('link').count(), 16);
+            assert.equal(await home.getByRole('link').count(), 17);
             assert.equal(await f.page.getByRole('region', { name: personalAreaText(lang, 'resume'), exact: true }).count(), 0);
             assert.ok(!f.requests.some(([, path]) => path === '/api/user/questionnaire-results'));
             for (const group of personalAreaGroups) {
@@ -89,7 +89,7 @@ test('overview is bounded, handles partial failure and retry, and focuses the li
         await f.page.goto(`${origin}/profilo`, { waitUntil: 'networkidle' });
         const resume = f.page.getByRole('region', { name: 'Da riprendere', exact: true });
         await resume.getByRole('alert').waitFor();
-        assert.equal(await f.page.locator('[data-personal-area-home] nav a').count(), 16);
+        assert.equal(await f.page.locator('[data-personal-area-home] nav a').count(), 17);
         assert.equal(await resume.getByRole('link').count(), 3);
         f.fail(false); await resume.getByRole('button', { name: 'Riprova' }).click();
         await resume.getByRole('alert').waitFor({ state: 'detached' });
@@ -109,7 +109,7 @@ test('a pending overview request never blocks the illustrated navigation', async
     try {
         await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });
         await f.page.locator('[data-personal-area-home] nav').first().waitFor();
-        assert.equal(await f.page.locator('[data-personal-area-home] nav a').count(), 16);
+        assert.equal(await f.page.locator('[data-personal-area-home] nav a').count(), 17);
         await f.page.getByRole('status').filter({ hasText: 'Caricamento del riepilogo' }).waitFor();
         release();
         await f.page.getByRole('region', { name: 'Da riprendere', exact: true }).waitFor({ state: 'detached' });

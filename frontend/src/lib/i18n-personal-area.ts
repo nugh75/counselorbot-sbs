@@ -23,6 +23,7 @@ const labels = {
 } satisfies Record<string, Localized>;
 
 const names = {
+    'analisi-combinata': ["Analisi Combinata dei Profili", "Combined Profile Analysis", "Análisis de Perfil Combinado", "Analyse de Profil Combiné", "Kombinierte Profilanalyse", "Kombinerad profilanalys"],
     obiettivi: ['Obiettivi', 'Goals', 'Objetivos', 'Objectifs', 'Ziele', 'Mål'],
     azioni: ['Azioni', 'Actions', 'Acciones', 'Actions', 'Aktionen', 'Åtgärder'],
     timeline: ['Linea del tempo', 'Timeline', 'Línea del tiempo', 'Ligne du temps', 'Zeitleiste', 'Tidslinje'],
@@ -42,6 +43,7 @@ const names = {
 } satisfies Record<PersonalAreaSlug, Localized>;
 
 const descriptions = {
+    'analisi-combinata': ["Lettura integrata tra gli strumenti compilati (QSA, QSAr, ZTPI)", "Integrated reading across your completed instruments (QSA, QSAr, ZTPI)", "Lectura integrada de los instrumentos completados (QSA, QSAr, ZTPI)", "Lecture intégrée des instruments complétés (QSA, QSAr, ZTPI)", "Integrierte Lesart der ausgefüllten Instrumente (QSA, QSAr, ZTPI)", "Integrerad läsning av dina ifyllda instrument (QSA, QSAr, ZTPI)"],
     obiettivi: ['Scegli che cosa vuoi raggiungere e il prossimo passo.', 'Choose what you want to achieve and your next step.', 'Elige qué quieres alcanzar y tu próximo paso.', 'Choisis ce que tu veux atteindre et ta prochaine étape.', 'Wähle, was du erreichen möchtest und deinen nächsten Schritt.', 'Välj vad du vill uppnå och ditt nästa steg.'],
     azioni: ['Organizza quello che vuoi fare, stai facendo o hai provato.', 'Organize what you want to do, are doing or have tried.', 'Organiza lo que quieres hacer, estás haciendo o has probado.', 'Organise ce que tu veux faire, fais ou as essayé.', 'Ordne, was du tun möchtest, gerade tust oder ausprobiert hast.', 'Ordna det du vill göra, gör eller har provat.'],
     timeline: ['Guarda nel tempo tappe, attività, obiettivi e appuntamenti.', 'See milestones, activities, goals and appointments over time.', 'Mira en el tiempo etapas, actividades, objetivos y citas.', 'Regarde dans le temps tes étapes, tes activités, tes objectifs et tes rendez-vous.', 'Siehe Etappen, Aktivitäten, Ziele und Termine im Zeitverlauf.', 'Se etapper, aktiviteter, mål och tider över tid.'],
