@@ -220,7 +220,10 @@ della persona.
 
 ## Docenti, ricercatori e amministrazione
 
-`/docente` è una panoramica illustrata, come l’Area personale: in alto il percorso
+Nel menu della header la voce verso l'area è «Area docente» con l'icona a berretto
+da laurea, uguale per docenti, ricercatori e amministrazione.
+
+`/docente` è una panoramica illustrata, come l'Area personale: in alto il percorso
 «Obiettivi per la mia classe», poi tre gruppi (**Classe e assegnazioni**,
 **Cataloghi**, **Somministrazioni e ricerca**) con una voce per ogni pagina e, in
 fondo, il Taccuino del docente. Ogni voce apre una pagina dedicata con il ritorno
