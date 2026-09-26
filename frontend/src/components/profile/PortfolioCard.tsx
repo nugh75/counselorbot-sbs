@@ -80,6 +80,8 @@ export function PortfolioCard() {
     // F03 (lotto 1B): il caricamento fallito non è “nessun lavoro”.
     const [loadError, setLoadError] = useState(false);
     const [form, setForm] = useState<EditForm | null>(null);
+    // F02 (lotto 1A): la X non cancella una bozza in silenzio.
+    const [confirmingClose, setConfirmingClose] = useState(false);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
     // Conferma di eliminazione in linea, al posto della finestra nativa.
@@ -319,9 +321,9 @@ export function PortfolioCard() {
                 <div className="rounded-xl border border-indigo-100 bg-white p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold text-slate-800">{form.id ? t('portfolio.editTitle') : t('portfolio.newTitle')}</h3>
-                        <button type="button" onClick={() => setForm(null)} className="text-slate-500 hover:text-slate-600" aria-label={t('common.close')}>
+                        {confirmingClose ? <ConfirmInline question={t('portfolio.discardConfirm')} onConfirm={() => { setConfirmingClose(false); setForm(null); }} onCancel={() => setConfirmingClose(false)} /> : <button type="button" onClick={() => { const original = form.id ? items.find(item => item.id === form.id) : null; const dirty = Boolean(original ? original.title !== form.title || original.description !== form.description || original.category !== form.category || (original.item_date || '') !== form.item_date || original.link !== form.link : form.title.trim() || form.description.trim() || form.category.trim() || form.item_date || form.link); if (dirty) setConfirmingClose(true); else setForm(null); }} className="text-slate-500 hover:text-slate-600" aria-label={t('common.close')}>
                             <X className="h-4 w-4" />
-                        </button>
+                        </button>}
                     </div>
                     <label className="block">
                         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('portfolio.field.title')}</span>
