@@ -103,6 +103,8 @@ const text = {
     collapse: ['Nascondi sottobiettivi di', 'Hide sub-goals of', 'Ocultar subobjetivos de', 'Masquer les sous-objectifs de', 'Unterziele ausblenden von', 'Dölj delmål för'],
     bornFrom: ['Nato da', 'Born from', 'Nacido de', 'Né de', 'Entstanden aus', 'Uppstod ur'],
     method: ['Metodo', 'Method', 'Método', 'Méthode', 'Methode', 'Metod'],
+    // Testo del vecchio campo «riflessione» di un obiettivo aperto: resta leggibile, non si modifica più.
+    legacyNote: ['Note', 'Notes', 'Notas', 'Notes', 'Notizen', 'Anteckningar'],
     pickStrategy: ['Scegli una strategia', 'Choose a strategy', 'Elige una estrategia', 'Choisis une stratégie', 'Wähle eine Strategie', 'Välj en strategi'],
     writeStrategy: ['Scrivi una mia strategia', 'Write one of my strategies', 'Escribe una de mis estrategias', 'Écris une de mes stratégies', 'Schreibe eine meiner Strategien', 'Skriv en av mina strategier'],
     myStrategies: ['Le mie strategie', 'My strategies', 'Mis estrategias', 'Mes stratégies', 'Meine Strategien', 'Mina strategier'],

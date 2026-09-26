@@ -1085,7 +1085,7 @@ def generate_questionnaire_pdf(
 GOAL_PATH_TEXT = {
     "it": {"title": "Percorso dell'obiettivo", "student": "Studente", "period": "Periodo", "status": "Stato",
            "in_progress": "in corso", "origin": "1. Da dove nasce", "born_from": "Nato da",
-           "motivation": "Perché conta per me", "serves_to": "Serve a", "criteria": "2. Come riconoscerò un miglioramento",
+           "motivation": "Perché conta per me", "serves_to": "Serve a", "criteria": "2. Come riconoscerò un miglioramento", "note": "Note",
            "method": "3. Metodo", "certified": "certificata", "own": "mia", "steps": "4. Sottobiettivi e azioni",
            "subgoals": "Sottobiettivi", "actions": "Azioni", "checks": "5. Controlli", "observe": "Cosa osservo",
            "adjust": "Cosa cambio", "evidence": "6. Prove", "review": "7. Bilancio", "past_reviews": "Bilanci precedenti",
@@ -1099,7 +1099,7 @@ GOAL_PATH_TEXT = {
            "full": "del tutto", "enough": "abbastanza", "none": "per niente", "much": "molto", "little": "poco"},
     "en": {"title": "Goal path", "student": "Student", "period": "Period", "status": "Status",
            "in_progress": "in progress", "origin": "1. Where it comes from", "born_from": "Born from",
-           "motivation": "Why it matters to me", "serves_to": "Serves", "criteria": "2. How I will recognize progress",
+           "motivation": "Why it matters to me", "serves_to": "Serves", "criteria": "2. How I will recognize progress", "note": "Notes",
            "method": "3. Method", "certified": "certified", "own": "my own", "steps": "4. Sub-goals and actions",
            "subgoals": "Sub-goals", "actions": "Actions", "checks": "5. Checks", "observe": "What I observe",
            "adjust": "What I change", "evidence": "6. Evidence", "review": "7. Review", "past_reviews": "Past reviews",
@@ -1113,7 +1113,7 @@ GOAL_PATH_TEXT = {
            "full": "completely", "enough": "enough", "none": "not at all", "much": "a lot", "little": "little"},
     "es": {"title": "Recorrido del objetivo", "student": "Estudiante", "period": "Periodo", "status": "Estado",
            "in_progress": "en curso", "origin": "1. De dónde nace", "born_from": "Nacido de",
-           "motivation": "Por qué me importa", "serves_to": "Sirve para", "criteria": "2. Cómo reconoceré una mejora",
+           "motivation": "Por qué me importa", "serves_to": "Sirve para", "criteria": "2. Cómo reconoceré una mejora", "note": "Notas",
            "method": "3. Método", "certified": "certificada", "own": "mía", "steps": "4. Subobjetivos y acciones",
            "subgoals": "Subobjetivos", "actions": "Acciones", "checks": "5. Comprobaciones", "observe": "Qué observo",
            "adjust": "Qué cambio", "evidence": "6. Pruebas", "review": "7. Balance", "past_reviews": "Balances anteriores",
@@ -1127,7 +1127,7 @@ GOAL_PATH_TEXT = {
            "full": "del todo", "enough": "bastante", "none": "para nada", "much": "mucho", "little": "poco"},
     "fr": {"title": "Parcours de l'objectif", "student": "Étudiant", "period": "Période", "status": "État",
            "in_progress": "en cours", "origin": "1. D'où il vient", "born_from": "Né de",
-           "motivation": "Pourquoi cela compte pour moi", "serves_to": "Sert à", "criteria": "2. Comment reconnaître un progrès",
+           "motivation": "Pourquoi cela compte pour moi", "serves_to": "Sert à", "criteria": "2. Comment reconnaître un progrès", "note": "Notes",
            "method": "3. Méthode", "certified": "certifiée", "own": "la mienne", "steps": "4. Sous-objectifs et actions",
            "subgoals": "Sous-objectifs", "actions": "Actions", "checks": "5. Contrôles", "observe": "Ce que j'observe",
            "adjust": "Ce que je change", "evidence": "6. Preuves", "review": "7. Bilan", "past_reviews": "Bilans précédents",
@@ -1141,7 +1141,7 @@ GOAL_PATH_TEXT = {
            "full": "entièrement", "enough": "assez", "none": "pas du tout", "much": "beaucoup", "little": "peu"},
     "de": {"title": "Weg des Ziels", "student": "Lernende Person", "period": "Zeitraum", "status": "Stand",
            "in_progress": "laufend", "origin": "1. Woher es kommt", "born_from": "Entstanden aus",
-           "motivation": "Warum es mir wichtig ist", "serves_to": "Dient zu", "criteria": "2. Woran ich Fortschritte erkenne",
+           "motivation": "Warum es mir wichtig ist", "serves_to": "Dient zu", "criteria": "2. Woran ich Fortschritte erkenne", "note": "Notizen",
            "method": "3. Methode", "certified": "zertifiziert", "own": "meine", "steps": "4. Unterziele und Aktionen",
            "subgoals": "Unterziele", "actions": "Aktionen", "checks": "5. Überprüfungen", "observe": "Was ich beobachte",
            "adjust": "Was ich ändere", "evidence": "6. Belege", "review": "7. Bilanz", "past_reviews": "Frühere Bilanzen",
@@ -1155,7 +1155,7 @@ GOAL_PATH_TEXT = {
            "full": "vollständig", "enough": "genug", "none": "überhaupt nicht", "much": "sehr", "little": "wenig"},
     "sv": {"title": "Målets väg", "student": "Elev", "period": "Period", "status": "Läge",
            "in_progress": "pågår", "origin": "1. Var det kommer ifrån", "born_from": "Uppstod ur",
-           "motivation": "Varför det är viktigt för mig", "serves_to": "Tjänar till", "criteria": "2. Hur jag märker framsteg",
+           "motivation": "Varför det är viktigt för mig", "serves_to": "Tjänar till", "criteria": "2. Hur jag märker framsteg", "note": "Anteckningar",
            "method": "3. Metod", "certified": "certifierad", "own": "min egen", "steps": "4. Delmål och åtgärder",
            "subgoals": "Delmål", "actions": "Åtgärder", "checks": "5. Kontroller", "observe": "Vad jag observerar",
            "adjust": "Vad jag ändrar", "evidence": "6. Bevis", "review": "7. Utvärdering", "past_reviews": "Tidigare utvärderingar",
@@ -1240,6 +1240,8 @@ def generate_goal_path_pdf(goal: dict, parents: list[str], children: list[dict],
 
     _section_heading(pdf, t["criteria"], content_w)
     _path_lines(pdf, [goal["criteria"]] if (goal.get("criteria") or "").strip() else [], content_w)
+    # Il vecchio campo riflessione degli obiettivi aperti (spec § 8.6).
+    _path_field(pdf, t["note"], goal.get("reflection") or "", content_w)
 
     _section_heading(pdf, t["method"], content_w)
     _path_lines(pdf, [f"- {m['title']} ({t['certified'] if m['kind'] == 'certified' else t['own']})"

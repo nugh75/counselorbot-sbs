@@ -73,8 +73,10 @@ def test_closed_goal_path_has_every_section(setup):
 def test_open_goal_is_stamped_in_progress_without_review(setup):
     db, c, who = setup
     row = full_goal(db, c)
+    db.get(models.PersonalGoal, row['id']).reflection = 'Nota di prima del bilancio'; db.commit()
     text = pdf_text(c.get(f"/user/goals/{row['id']}/pdf", params={'lang': 'it'}))
     assert 'in corso' in text and 'Bilancio' not in text
+    assert 'Nota di prima del bilancio' in text
 
 
 def test_pdf_speaks_the_requested_language(setup):
