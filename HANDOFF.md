@@ -36,9 +36,11 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
   pagine dell'area (`/profilo/*` mega-pagina, azioni/carte/confronto, flashcard, pQBL). Piano
   aggiornato. Lot 1A in backlog su accordo esplicito (utenti di prova); da fare prima dell'apertura
   a utenti reali (F02 Portfolio `setForm(null)`, guardia `draftTitle` in VisualTools).
-- Test browser stanti preesistenti (falliscono anche senza queste modifiche):
-  `personal-area-home` 8 (17→16 collegamenti dopo il ritiro libretto), `personal-tools-navigation` 2,
-  `personal-pqbl` 2, `notebook-autosave` 2. Da riallineare in un lotto test dedicato.
+- **Lotto 3A residuo applicato (2026-09-26)**: creazione obiettivo con «Più dettagli ▾» (criteri,
+  priorità, stato, condivisione ripiegati; titolo/motivazione/data in vista) e ponte
+  «→ Collega a un obiettivo» dal Portfolio (inline, un obiettivo per volta, solo obiettivi attivi,
+  endpoint `/user/goals/{id}/links` esistente, 409 → pannello riapribile con dati freschi).
+  F12/F13/F16 così assorbiti; il lotto 3A si considera chiuso.
 - Errore lint preesistente `NewDeckDialog.tsx:36` (setState sincrono in effect) e 14 warning —
   già presenti prima di questo lavoro.
 - Backend: 4 test diagrammi/icone, 2 OCR locali, smoke `test_an_older_stage_of_the_map_can_be_drawn_again`
