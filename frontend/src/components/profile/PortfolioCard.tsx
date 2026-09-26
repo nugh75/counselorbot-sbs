@@ -8,6 +8,7 @@ import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
 import { PortfolioTimelineLinks } from './PortfolioTimelineLinks';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { goalApi, type PersonalGoal } from '@/lib/goals';
 
 // In anteprima le <img> (non passano da fetch) devono puntare all'account di
 // prova: il backend accetta l'impersonazione anche via query param view_as.
@@ -69,6 +70,24 @@ export function PortfolioCard() {
     // Conferma di eliminazione in linea, al posto della finestra nativa.
     const [confirmingDelete, setConfirmingDelete] = useState<number | null>(null);
     const [lightbox, setLightbox] = useState<LightboxImage | null>(null);
+    // Chip «prova di: {titolo}» (C2): un solo /user/goals, mappato per target_id.
+    const [evidenceOf, setEvidenceOf] = useState<Record<string, string[]>>({});
+    useEffect(() => {
+        let active = true;
+        goalApi<PersonalGoal[]>('/user/goals').then((rows) => {
+            if (!active) return;
+            const map: Record<string, string[]> = {};
+            for (const goal of rows) {
+                for (const link of goal.links) {
+                    if (link.kind === 'portfolio' && link.role === 'evidence') {
+                        (map[link.target_id] ??= []).push(goal.title);
+                    }
+                }
+            }
+            setEvidenceOf(map);
+        }).catch(() => { if (active) setEvidenceOf({}); });
+        return () => { active = false; };
+    }, []);
     useEffect(() => {
         if (window.location.hash.startsWith('#portfolio-')) document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ block: 'center' });
     }, [items]);
@@ -405,6 +424,15 @@ export function PortfolioCard() {
                                     {item.category && <span className="rounded-full bg-indigo-50 px-2 py-0.5 font-semibold text-indigo-600">{item.category}</span>}
                                     {item.item_date && <span>{new Date(item.item_date).toLocaleDateString(lang)}</span>}
                                 </div>
+                                {(evidenceOf[String(item.id)] ?? []).length > 0 && (
+                                    <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                        {(evidenceOf[String(item.id)] ?? []).map((title, index) => (
+                                            <span key={index} className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
+                                                {t('portfolio.evidenceOf', { title })}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                                 {item.description && <p className="mt-1 line-clamp-3 text-xs text-slate-500">{item.description}</p>}
                                 <PortfolioTimelineLinks itemId={item.id} description={item.description} locale={lang} />
                                 {item.link && (

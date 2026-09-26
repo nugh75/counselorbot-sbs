@@ -419,7 +419,7 @@ _EVENTO_TEXTS: Dict[str, Dict[str, str]] = {
         ),
         "text_evento_studio_conclusion": (
             "You have completed the look back at your significant study event. "
-            "You can save the summary in your booklet and return to it after trying what you chose. "
+            "You can save the summary as a milestone in your Timeline and return to it after trying what you chose. "
             "Use the button below to choose your next step."
         ),
         "text_evento_professionale_questions_intro": (
@@ -428,7 +428,7 @@ _EVENTO_TEXTS: Dict[str, Dict[str, str]] = {
         ),
         "text_evento_professionale_conclusion": (
             "You have completed the look back at your significant professional event. "
-            "You can save the summary in your booklet and return to it after trying what you chose. "
+            "You can save the summary as a milestone in your Timeline and return to it after trying what you chose. "
             "Use the button below to choose your next step."
         ),
     },
@@ -439,7 +439,7 @@ _EVENTO_TEXTS: Dict[str, Dict[str, str]] = {
         ),
         "text_evento_studio_conclusion": (
             "Has completado la revisión de tu evento significativo de estudio. "
-            "Puedes guardar la síntesis en tu cuadernillo y volver a ella después de probar lo que elegiste. "
+            "Puedes guardar la síntesis como etapa en tu Línea del tiempo y volver a ella después de probar lo que elegiste. "
             "Usa el botón de abajo para elegir el siguiente paso."
         ),
         "text_evento_professionale_questions_intro": (
@@ -448,7 +448,7 @@ _EVENTO_TEXTS: Dict[str, Dict[str, str]] = {
         ),
         "text_evento_professionale_conclusion": (
             "Has completado la revisión de tu evento significativo profesional. "
-            "Puedes guardar la síntesis en tu cuadernillo y volver a ella después de probar lo que elegiste. "
+            "Puedes guardar la síntesis como etapa en tu Línea del tiempo y volver a ella después de probar lo que elegiste. "
             "Usa el botón de abajo para elegir el siguiente paso."
         ),
     },
@@ -459,7 +459,7 @@ _EVENTO_TEXTS: Dict[str, Dict[str, str]] = {
         ),
         "text_evento_studio_conclusion": (
             "Tu as terminé le retour sur ton événement d'étude significatif. "
-            "Tu peux enregistrer la synthèse dans ton livret et y revenir après avoir essayé ce que tu as choisi. "
+            "Tu peux enregistrer la synthèse comme étape dans ta Ligne du temps et y revenir après avoir essayé ce que tu as choisi. "
             "Utilise le bouton ci-dessous pour choisir la prochaine étape."
         ),
         "text_evento_professionale_questions_intro": (
@@ -468,7 +468,7 @@ _EVENTO_TEXTS: Dict[str, Dict[str, str]] = {
         ),
         "text_evento_professionale_conclusion": (
             "Tu as terminé le retour sur ton événement professionnel significatif. "
-            "Tu peux enregistrer la synthèse dans ton livret et y revenir après avoir essayé ce que tu as choisi. "
+            "Tu peux enregistrer la synthèse comme étape dans ta Ligne du temps et y revenir après avoir essayé ce que tu as choisi. "
             "Utilise le bouton ci-dessous pour choisir la prochaine étape."
         ),
     },
@@ -479,7 +479,7 @@ _EVENTO_TEXTS: Dict[str, Dict[str, str]] = {
         ),
         "text_evento_studio_conclusion": (
             "Du hast den Rückblick auf dein bedeutsames Lernereignis abgeschlossen. "
-            "Du kannst die Zusammenfassung in deinem Arbeitsheft speichern und darauf zurückkommen, "
+            "Du kannst die Zusammenfassung als Etappe in deiner Zeitleiste speichern und darauf zurückkommen, "
             "wenn du ausprobiert hast, was du gewählt hast. "
             "Nutze die Schaltfläche unten, um den nächsten Schritt auszuwählen."
         ),
@@ -489,7 +489,7 @@ _EVENTO_TEXTS: Dict[str, Dict[str, str]] = {
         ),
         "text_evento_professionale_conclusion": (
             "Du hast den Rückblick auf dein bedeutsames berufliches Ereignis abgeschlossen. "
-            "Du kannst die Zusammenfassung in deinem Arbeitsheft speichern und darauf zurückkommen, "
+            "Du kannst die Zusammenfassung als Etappe in deiner Zeitleiste speichern und darauf zurückkommen, "
             "wenn du ausprobiert hast, was du gewählt hast. "
             "Nutze die Schaltfläche unten, um den nächsten Schritt auszuwählen."
         ),
@@ -501,7 +501,7 @@ _EVENTO_TEXTS: Dict[str, Dict[str, str]] = {
         ),
         "text_evento_studio_conclusion": (
             "Du har slutfört återblicken på din betydelsefulla studiehändelse. "
-            "Du kan spara sammanfattningen i ditt arbetshäfte och återvända till den när du har provat det du valde. "
+            "Du kan spara sammanfattningen som en etapp på din tidslinje och återvända till den när du har provat det du valde. "
             "Använd knappen nedan för att välja nästa steg."
         ),
         "text_evento_professionale_questions_intro": (
@@ -510,7 +510,7 @@ _EVENTO_TEXTS: Dict[str, Dict[str, str]] = {
         ),
         "text_evento_professionale_conclusion": (
             "Du har slutfört återblicken på din betydelsefulla professionella händelse. "
-            "Du kan spara sammanfattningen i ditt arbetshäfte och återvända till den när du har provat det du valde. "
+            "Du kan spara sammanfattningen som en etapp på din tidslinje och återvända till den när du har provat det du valde. "
             "Använd knappen nedan för att välja nästa steg."
         ),
     },

@@ -43,7 +43,8 @@ def goal(client, title='Il mio obiettivo', **kwargs):
 
 
 def edit_payload(row, **kwargs):
-    return {**{k: row[k] for k in ('title', 'motivation', 'criteria', 'reflection', 'status', 'priority', 'review_date', 'shared_group_id', 'revision')}, **kwargs}
+    return {**{k: row[k] for k in ('title', 'motivation', 'criteria', 'reflection', 'status', 'priority', 'review_date', 'shared_group_id', 'revision')},
+            'method': [{k: v for k, v in m.items() if k in ('kind', 'slug', 'id')} for m in row['method']], **kwargs}
 
 
 def test_catalog_scope_roles_and_common_review(setup):
@@ -310,6 +311,42 @@ def test_multi_path_visible_to_multiple_groups(setup):
     assert 'Figlio multi-percorso' in titles_group2
 
 
+def reading(db, session_id='s1', username='alice'):
+    db.add(models.ResultReading(username=username, session_id=session_id, questionnaire_type='QSA',
+                                growth_areas=['C3'], note='Mi agito agli esami'))
+    db.commit()
+
+
+def test_goal_created_from_reading_keeps_single_origin(setup):
+    db, c, who, _ = setup
+    reading(db)
+    row = goal(c, origin=dict(kind='reading', target_id='s1'))
+    assert row['origin']['kind'] == 'reading' and row['origin']['role'] == 'origin'
+    assert row['origin']['available'] is True
+    again = c.post(f"/user/goals/{row['id']}/links", json=dict(kind='reading', target_id='s1', role='origin', revision=row['revision']))
+    assert again.status_code == 422
+
+
+def test_origin_must_be_owned(setup):
+    db, c, who, _ = setup
+    reading(db, username='bob')
+    assert c.post('/user/goals', json=dict(title='x', origin=dict(kind='reading', target_id='s1'))).status_code == 404
+
+
+def test_link_role_rules(setup):
+    db, c, who, _ = setup
+    row = goal(c)
+    bad = c.post(f"/user/goals/{row['id']}/links", json=dict(kind='notebook', target_id='current', role='evidence', revision=row['revision']))
+    assert bad.status_code == 422
+
+
+def test_booklet_kind_is_gone(setup):
+    db, c, who, _ = setup
+    row = goal(c)
+    r = c.post(f"/user/goals/{row['id']}/links", json=dict(kind='booklet', target_id='1', revision=row['revision']))
+    assert r.status_code == 422
+
+
 def test_goals_context_respects_budget_with_many_long_parents(setup):
     """§8: several active goals, each with 3 long parents, stay within the 6500-char budget
     and every part_of title is truncated to 120 chars."""
@@ -327,3 +364,105 @@ def test_goals_context_respects_budget_with_many_long_parents(setup):
     for item in content:
         for title in item.get('part_of', []):
             assert len(title) <= 120
+
+
+def test_session_origin_must_be_owned(setup):
+    """The 'session' kind goes through session_resource, which must scope by username too."""
+    db, c, who, _ = setup
+    db.add(models.Log(session_id='s-bob', username='bob', action='chat_message', questionnaire_type='QSA'))
+    db.commit()
+    assert c.post('/user/goals', json=dict(title='x', origin=dict(kind='session', target_id='s-bob'))).status_code == 404
+    db.add(models.Log(session_id='s-alice', username='alice', action='chat_message', questionnaire_type='QSA'))
+    db.commit()
+    row = goal(c, origin=dict(kind='session', target_id='s-alice'))
+    assert row['origin']['kind'] == 'session'
+
+
+def test_goal_method_update_round_trips(setup):
+    db, c, who, _ = setup
+    db.add(models.CertifiedStrategy(slug='self-test', name_it='Autoverifica', status='certified', is_active=True)); db.commit()
+    from backend.routes.personal_strategies import router as strategies_router
+    c.app.include_router(strategies_router)
+    own = c.post('/user/strategies', json=dict(text='Ripeto a voce')).json()
+    row = goal(c, method=[dict(kind='certified', slug='self-test')])
+    assert row['method'] == [dict(kind='certified', slug='self-test', title='Autoverifica', available=True)]
+    updated = c.put(f"/user/goals/{row['id']}", json=edit_payload(row, method=[dict(kind='own', id=own['id'])])).json()
+    assert updated['method'] == [dict(kind='own', id=own['id'], title='Ripeto a voce', available=True)]
+    assert updated['revision'] == row['revision'] + 1
+
+
+def test_goal_method_update_rejects_unknown_or_foreign_items(setup):
+    db, c, who, _ = setup
+    db.add(models.CertifiedStrategy(slug='self-test', name_it='Autoverifica', status='certified', is_active=True)); db.commit()
+    from backend.routes.personal_strategies import router as strategies_router
+    c.app.include_router(strategies_router)
+    row = goal(c, method=[dict(kind='certified', slug='self-test')])
+    assert c.put(f"/user/goals/{row['id']}", json=edit_payload(row, method=[dict(kind='certified', slug='nope')])).status_code == 404
+    foreign = c.post('/user/strategies', json=dict(text='Mia')).json()
+    student(who, 'bob')
+    other = goal(c)
+    assert c.put(f"/user/goals/{other['id']}", json=edit_payload(other, method=[dict(kind='own', id=foreign['id'])])).status_code == 404
+
+
+
+def test_goal_can_create_a_check(setup):
+    db, c, who, _ = setup
+    row = goal(c)
+    r = c.post(f"/user/goals/{row['id']}/actions", json=dict(title='Come va?', kind='check', date='2026-10-10',
+               revision=row['revision'], request_id='check-000001'))
+    link = r.json()['links'][0]
+    assert link['action_kind'] == 'check' and link['role'] == 'means'
+
+
+def test_review_closes_goal_and_adds_milestone(setup):
+    db, c, who, _ = setup
+    row = goal(c)
+    r = c.post(f"/user/goals/{row['id']}/reviews", json=dict(commitment='enough', outcome='reached', satisfaction='much',
+               learned='Parlare a voce alta mi aiuta', next_step='Provare con la classe', revision=row['revision']))
+    assert r.status_code == 200, r.text
+    closed = r.json()
+    assert closed['status'] == 'completed' and closed['reviews'][0]['outcome'] == 'reached'
+    events = c.get('/user/timeline').json()['workspace']['timeline']['events']
+    milestone = next(e for e in events if e['id'].startswith('goal-review-'))
+    assert milestone['source'] == f"goal:{row['id']}" and milestone['tense'] == 'past'
+    stale = c.post(f"/user/goals/{row['id']}/reviews", json=dict(outcome='partial', revision=row['revision']))
+    assert stale.status_code == 409
+
+
+def test_abandoned_goal_is_archived_and_reopen_allows_second_review(setup):
+    db, c, who, _ = setup
+    row = goal(c)
+    closed = c.post(f"/user/goals/{row['id']}/reviews", json=dict(outcome='abandoned', revision=row['revision'])).json()
+    assert closed['status'] == 'archived'
+    reopened = c.put(f"/user/goals/{row['id']}", json=edit_payload(closed, status='active')).json()
+    again = c.post(f"/user/goals/{row['id']}/reviews", json=dict(outcome='partial', revision=reopened['revision'])).json()
+    assert [rv['outcome'] for rv in again['reviews']] == ['partial', 'abandoned']
+
+
+def test_context_carries_method_last_check_and_review_within_budget(setup):
+    db, c, who, _ = setup
+    db.add(models.CertifiedStrategy(slug='self-test', name_it='Autoverifica', status='certified', is_active=True)); db.commit()
+    from backend.routes.personal_strategies import router as strategies_router
+    c.app.include_router(strategies_router)
+    own = c.post('/user/strategies', json=dict(text='Ripeto a voce')).json()
+    for i in range(5):
+        row = goal(c, title=f'Obiettivo pieno {i}', motivation='M' * 400, criteria='C' * 400,
+                   method=[dict(kind='certified', slug='self-test'), dict(kind='own', id=own['id'])])
+        c.post(f"/user/goals/{row['id']}/actions", json=dict(title='Come va?', kind='check', date='2026-10-10',
+               revision=row['revision'], request_id=f'chk-00000{i}'))
+    state = c.get('/user/timeline').json()
+    for action in state['workspace']['actions']:
+        action.update(stage='done', progress='slow', adjustment='Studio al mattino')
+    assert c.put('/user/timeline', json={k: state[k] for k in ('revision', 'workspace')}).status_code == 200
+    closed = c.post(f"/user/goals/{row['id']}/reviews", json=dict(outcome='partial', learned='Serve più tempo',
+                    revision=c.get('/user/goals').json()[0]['revision'])).json()
+    c.put(f"/user/goals/{row['id']}", json=edit_payload(closed, status='active'))
+    context = goals_context(db, 'alice')
+    content = json.loads(context.rsplit('\n', 1)[-1])
+    assert len(context.rsplit('\n', 1)[-1]) <= 6500 and content
+    first = next(item for item in content if item['title'] == 'Obiettivo pieno 4')
+    assert first['method'] == ['✦ Autoverifica', '✎ Ripeto a voce']
+    assert first['last_check'] == dict(progress='slow', adjustment='Studio al mattino', date='2026-10-10')
+    assert first['last_review'] == dict(outcome='partial', learned='Serve più tempo')
+    assert 'reflection' not in first
+    assert "Checks are the student's own progress notes; a review closes a goal" in context

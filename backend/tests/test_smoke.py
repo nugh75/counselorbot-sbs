@@ -4526,6 +4526,25 @@ def test_learner_profile_revisions_and_history():
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
+def test_learner_profile_values_field_roundtrip():
+    """«Cosa conta per me» (C2): il taccuino salva e rilegge il campo `values`."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.post("/user/learner-profile", json={
+            "values": "La giustizia",
+            "source": "manual",
+        })
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["values"] == "La giustizia"
+
+        r = client.get("/user/learner-profile")
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["values"] == "La giustizia"
+    finally:
+        client.delete("/user/learner-profile")
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
 def test_learner_profile_suggestion_waits_four_turns_and_remains_stable():
     """La proposta nasce da materiale esplicito e non cambia a ogni turno."""
     sid = "learner-profile-suggestion-test"
@@ -4594,186 +4613,17 @@ def test_learner_profile_suggestion_waits_four_turns_and_remains_stable():
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
-def test_student_booklet_crud_pdf_and_ownership():
+def test_retired_booklet_routes_answer_gone():
+    """Il libretto è confluito in letture, obiettivi e linea del tempo: 410 per chi lo chiede ancora."""
     main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
     try:
-        r = client.post("/questionnaire-result", json={
-            "session_id": "booklet-session",
-            "questionnaire_type": "QSA",
-            "scores": {"C1": 8, "C2": 5, "A6": 3},
-        })
-        assert r.status_code == 200, r.text
-
-        r = client.get("/user/student-booklets/instrument/QSA")
-        assert r.status_code == 200, r.text
-        assert r.json() is None
-
-        r = client.put("/user/student-booklets/instrument/QSA", json={
-            "data": {
-                "strength": "C1 - Strategie elaborative",
-                "growth_area": "A6 - Percezione di competenza",
-                "objective": "Riconoscere un risultato concreto ogni settimana",
-                "student_notes": "Nota personale",
-            }
-        })
-        assert r.status_code == 200, r.text
-        assert r.json()["questionnaire_type"] == "QSA"
-        assert r.json()["session_id"] is None
-        assert r.json()["data"]["student_notes"] == "Nota personale"
-
-        r = client.get("/user/student-booklets/instrument/QSA/pdf")
-        assert r.status_code == 200, r.text
-        assert r.headers["content-type"] == "application/pdf"
-        assert len(r.content) > 100
-
-        r = client.put("/user/student-booklets/instrument/ZTPI", json={
-            "data": {
-                "strength": "T5 - Futuro",
-                "growth_area": "T1 - Passato Negativo",
-                "student_notes": "Nota ZTPI",
-            }
-        })
-        assert r.status_code == 200, r.text
-        assert r.json()["questionnaire_type"] == "ZTPI"
-        r = client.get("/user/student-booklets/instrument/QSA")
-        assert r.status_code == 200, r.text
-        assert r.json()["data"]["student_notes"] == "Nota personale"
-
-        # Compat: la vecchia route per sessione restituisce il libretto dello strumento.
-        r = client.get("/user/student-booklets/booklet-session")
-        assert r.status_code == 200, r.text
-        assert r.json()["questionnaire_type"] == "QSA"
-
-        main.app.dependency_overrides[auth.get_identity] = lambda: _identity(
-            "other", "other@example.test", is_researcher=False
-        )
-        r = client.get("/user/student-booklets/booklet-session")
-        assert r.status_code == 403, r.text
-        r = client.get("/user/student-booklets/instrument/QSA")
-        assert r.status_code == 200, r.text
-        assert r.json() is None
+        for method, path in [("GET", "/user/student-booklets/instrument/QSA"),
+                             ("POST", "/user/student-booklets/instrument/QSA"),
+                             ("GET", "/user/student-booklets/id/1/pdf"),
+                             ("GET", "/user/student-booklets/some-session")]:
+            response = client.request(method, path, json={"data": {}})
+            assert response.status_code == 410, (method, path, response.text)
     finally:
-        main.app.dependency_overrides.pop(auth.get_identity, None)
-
-
-def test_student_booklet_multiple_schede_and_arrays():
-    """Piu' schede per lo stesso strumento + campi forza/area come liste."""
-    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
-    try:
-        # Due schede distinte per QSA.
-        r1 = client.post("/user/student-booklets/instrument/QSA", json={
-            "data": {"title": "Primo trimestre", "strength": ["C1 - Una", "C2 - Due"], "growth_area": ["A6 - Tre"]}
-        })
-        assert r1.status_code == 200, r1.text
-        id1 = r1.json()["id"]
-        assert r1.json()["data"]["strength"] == ["C1 - Una", "C2 - Due"]
-
-        r2 = client.post("/user/student-booklets/instrument/QSA", json={
-            "data": {"title": "Secondo trimestre", "strength": ["A1 - Quattro"]}
-        })
-        assert r2.status_code == 200, r2.text
-        id2 = r2.json()["id"]
-        assert id2 != id1
-
-        # La lista contiene entrambe le schede.
-        r = client.get("/user/student-booklets/instrument/QSA/list")
-        assert r.status_code == 200, r.text
-        ids = {b["id"] for b in r.json()}
-        assert {id1, id2} <= ids
-
-        # Aggiornamento per id e PDF per id.
-        r = client.put(f"/user/student-booklets/id/{id1}", json={
-            "data": {"title": "Primo trimestre", "strength": ["C1 - Una", "C2 - Due", "C3 - Cinque"]}
-        })
-        assert r.status_code == 200, r.text
-        assert r.json()["data"]["strength"] == ["C1 - Una", "C2 - Due", "C3 - Cinque"]
-
-        r = client.get(f"/user/student-booklets/id/{id1}/pdf")
-        assert r.status_code == 200 and r.headers["content-type"] == "application/pdf"
-        assert len(r.content) > 100
-
-        # Ownership: un altro utente non vede/agisce sulla scheda.
-        main.app.dependency_overrides[auth.get_identity] = lambda: _identity(
-            "other", "other@example.test", is_researcher=False
-        )
-        assert client.get(f"/user/student-booklets/id/{id1}").status_code == 403
-        assert client.delete(f"/user/student-booklets/id/{id1}").status_code == 403
-
-        # Il proprietario elimina una scheda.
-        main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
-        assert client.delete(f"/user/student-booklets/id/{id2}").status_code == 200
-        r = client.get("/user/student-booklets/instrument/QSA/list")
-        assert id2 not in {b["id"] for b in r.json()}
-    finally:
-        main.app.dependency_overrides.pop(auth.get_identity, None)
-
-
-def test_student_booklet_can_create_idea_entry():
-    """Idea usa la stessa scheda narrativa degli altri strumenti."""
-    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
-    try:
-        response = client.post("/user/student-booklets/instrument/IDEA", json={
-            "data": {"title": "Nuova idea"},
-        })
-
-        assert response.status_code == 200, response.text
-        assert response.json()["questionnaire_type"] == "IDEA"
-    finally:
-        main.app.dependency_overrides.pop(auth.get_identity, None)
-
-
-def test_student_booklet_biography_events_sync_personal_timeline():
-    """Ogni evento biografico salvato compare una volta nella linea del tempo."""
-    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
-    booklet_id = None
-    try:
-        response = client.post("/user/student-booklets/instrument/QSA", json={
-            "data": {
-                "title": "Percorso autunnale",
-                "bio_events": [
-                    {"id": "laboratorio", "date": "2026-09-20", "context": "Laboratorio",
-                     "discovery": "So chiedere aiuto", "keywords": "collaborazione"},
-                    {"id": "tirocinio", "date": "2026-09-21", "context": "Tirocinio",
-                     "discovery": "So osservare", "keywords": "ascolto"},
-                ],
-            },
-        })
-        assert response.status_code == 200, response.text
-        booklet_id = response.json()["id"]
-
-        timeline = client.get("/user/timeline")
-        assert timeline.status_code == 200, timeline.text
-        events = [event for event in timeline.json()["workspace"]["timeline"]["events"]
-                  if event["id"].startswith(f"booklet-{booklet_id}-")]
-        assert [(event["title"], event["start_date"]) for event in events] == [
-            ("Laboratorio", "2026-09-20"), ("Tirocinio", "2026-09-21")]
-        assert all("booklet" in event["personal_links"] for event in events)
-
-        response = client.put(f"/user/student-booklets/id/{booklet_id}", json={
-            "data": {
-                "title": "Percorso autunnale",
-                "bio_events": [
-                    {"id": "tirocinio", "date": "2026-09-22", "context": "Tirocinio aggiornato",
-                     "discovery": "So osservare", "keywords": "ascolto"},
-                ],
-            },
-        })
-        assert response.status_code == 200, response.text
-        events = [event for event in client.get("/user/timeline").json()["workspace"]["timeline"]["events"]
-                  if event["id"].startswith(f"booklet-{booklet_id}-")]
-        assert len(events) == 1
-        assert events[0]["title"] == "Tirocinio aggiornato"
-        assert events[0]["start_date"] == "2026-09-22"
-
-        deleted_id = booklet_id
-        assert client.delete(f"/user/student-booklets/id/{deleted_id}").status_code == 200
-        booklet_id = None
-        events = [event for event in client.get("/user/timeline").json()["workspace"]["timeline"]["events"]
-                  if event["id"].startswith("booklet-")]
-        assert all(not event["id"].startswith(f"booklet-{deleted_id}-") for event in events)
-    finally:
-        if booklet_id is not None:
-            client.delete(f"/user/student-booklets/id/{booklet_id}")
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 

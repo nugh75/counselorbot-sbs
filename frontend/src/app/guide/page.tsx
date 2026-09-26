@@ -76,7 +76,7 @@ function GuideContent() {
         9: '/images/platform/carte-ordinare.png',
         10: '/images/platform/eventi.png',
         11: '/images/platform/bacheca-azioni.png',
-        12: '/images/platform/libretto.png',
+        12: '/images/cards/focus_goal.png',
         13: '/images/platform/linea-del-tempo.png',
         14: '/images/platform/assegnazioni.png',
         15: '/images/platform/classi.png',

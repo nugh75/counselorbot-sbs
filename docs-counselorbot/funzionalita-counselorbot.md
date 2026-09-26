@@ -70,12 +70,13 @@ alcuni fattori sono invertiti. Non si fanno diagnosi. La scheda di ciascuno stru
 
 - **Savickas**: intervista narrativa sulla costruzione del percorso professionale.
 - **Idea**: esplora un’idea, una decisione, un progetto o un concetto concreto; produce
-  una Mappa cumulativa della sessione, distinta da Profilo, Taccuino e Libretto.
+  una Mappa cumulativa della sessione, distinta da Profilo, Taccuino e Lettura.
 - **Evento significativo di studio** (`EVENTO_STUDIO`) e **Evento significativo
   professionale** (`EVENTO_PROFESSIONALE`): rileggono un solo episodio, anche positivo,
   in sei passi (episodio, fatti, cosa ha funzionato, difficoltà, seconda lettura,
-  prossima volta), seguiti dalla sintesi al passo 7. La sintesi è una bozza del
-  Libretto da rivedere e salvare esplicitamente. Non sono eventi del calendario.
+  prossima volta), seguiti dalla sintesi al passo 7. La sintesi è una bozza di
+  tappa della Linea del tempo da rivedere e salvare esplicitamente; ciò che si
+  proverà la prossima volta può diventare un obiettivo. Non sono eventi del calendario.
 - **Il mio obiettivo di apprendimento** (`OBIETTIVO_STUDIO`): definisce un obiettivo,
   con livello di apprendimento, controllo SMART, difficoltà, piano, prova e data di
   verifica. Offre percorso completo o essenziale; alla fine propone una bozza di
@@ -148,35 +149,37 @@ Il riepilogo porta al lavoro preciso, conserva i dati precedenti in caso di erro
 e offre Riprova; il caricamento non blocca i collegamenti agli strumenti.
 
 Seguono cinque gruppi sempre aperti: **Il mio percorso**, **Conoscermi e riflettere**,
-**Studiare e ragionare**, **I miei lavori**, **Persone e supporto**. Le 17 destinazioni
+**Studiare e ragionare**, **I miei lavori**, **Persone e supporto**. Le 16 destinazioni
 hanno immagini già presenti, nome e descrizione, su due colonne desktop e una mobile.
-Cambiamenti è autonomo accanto a Taccuino e Libretto; Portfolio resta nel gruppo
+Cambiamenti è autonomo accanto a Taccuino e Risultati; Portfolio resta nel gruppo
 I miei lavori. Anche senza questionari o obiettivi si può aprire ciascuno strumento.
 I dati account restano nel menu della testata, senza un riquadro nell’ingresso.
 
 | Funzione | Dove | Che cosa permette |
 | --- | --- | --- |
-| Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; toccare un obiettivo per modificarlo in una finestra popup, dove si scrive un nuovo obiettivo o si adotta e personalizza una proposta del catalogo; collegare lavori e attività; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
-| Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario e collegamenti al Portfolio; azioni e obiettivi si aprono sulle loro pagine. |
+| Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; toccare un obiettivo per modificarlo in una finestra popup, dove si scrive un nuovo obiettivo o si adotta e personalizza una proposta del catalogo; scegliere un metodo (strategie certificate o proprie), pianificare azioni e controlli, collegare prove e lavori; chiudere con un bilancio, che diventa una tappa della Linea del tempo; scaricare il PDF «Percorso dell’obiettivo»; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
+| Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. |
 | Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. |
 | Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
 | Tavolo | `/profilo/tavolo` | Lavorare con materiali, idee e counselor; riaprire Tavoli salvati quando la funzione è abilitata. |
 | Carte da ordinare | `/profilo/carte` | Raccogliere e ordinare pensieri in più mazzi, usando colonne, modelli e trascinamento. Non sono le Flashcard per il ripasso. |
 | Confrontare alternative | `/profilo/confronto` | Confrontare alternative con criteri personali. |
 | Azioni | `/profilo/azioni` | Organizzare le azioni del proprio piano personale; ogni azione può avere una data facoltativa (giorno o periodo) e il collegamento «Vedi sulla linea del tempo». |
-| Taccuino | `/profilo/taccuino` | Scrivere contesto, difficoltà e risorse personali; conservare revisioni esplicite. |
-| Cambiamenti | `/profilo/cambiamenti` | Riflettere sulle differenze fra revisioni del Taccuino e sulle prove del Libretto. |
-| Libretto | `/profilo/libretto` | Raccogliere e modificare riflessioni per strumento, con esportazione PDF. |
+| Taccuino | `/profilo/taccuino` | Scrivere contesto, difficoltà, risorse personali e ciò che conta per sé; conservare revisioni esplicite; trasformare la difficoltà principale in un obiettivo. |
+| Cambiamenti | `/profilo/cambiamenti` | Riflettere sulle differenze fra revisioni del Taccuino. |
 | Portfolio | `/profilo/portfolio` | Documentare lavori con titolo, descrizione, categoria, data, collegamenti e immagini. |
-| Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account. |
+| Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. |
 | Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot. |
 
+Il vecchio indirizzo del libretto, `/profilo/libretto`, porta a Risultati e conversazioni.
+
 Un **Profilo** è l’insieme dei punteggi di un questionario. Il **Taccuino** è
-l’autodescrizione scritta dalla persona. Il **Libretto** contiene riflessioni per
-strumento. Il **Portfolio** raccoglie lavori. La **Mappa** appartiene a una sessione
+l’autodescrizione scritta dalla persona. La **Lettura** è ciò che la
+persona legge in un risultato. Il libretto non c’è più: le sue domande vivono in
+Lettura, Obiettivi (metodo, controlli, bilancio), Taccuino e Linea del tempo. Il **Portfolio** raccoglie lavori. La **Mappa** appartiene a una sessione
 Idea. Questi nomi non sono intercambiabili.
 
 ## Salvataggi, obiettivi e condivisione

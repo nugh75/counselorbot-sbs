@@ -31,6 +31,7 @@ for table in (
     models.OrientationSession.__table__,
     models.PersonalGoal.__table__,
     models.StudentBooklet.__table__,
+    models.ResultReading.__table__,
     # La Bussola legge anche sessioni congelate e portfolio per sapere che cosa
     # lo studente ha gia' fatto (student_context).
     models.FrozenSession.__table__,
@@ -107,6 +108,8 @@ def _reset(username: str) -> None:
         db.query(models.LearnerProfileRevision).filter(models.LearnerProfileRevision.username == username).delete()
         db.query(models.QuestionnaireResult).filter(models.QuestionnaireResult.username == username).delete()
         db.query(models.StudentBooklet).filter(models.StudentBooklet.username == username).delete()
+        db.query(models.ResultReading).filter(models.ResultReading.username == username).delete()
+        db.query(models.PersonalGoal).filter(models.PersonalGoal.username == username).delete()
         db.commit()
     finally:
         db.close()
@@ -543,6 +546,19 @@ def test_new_student_stays_gated_until_one_orientation_is_completed():
         json={"message": "Voglio organizzare meglio lo studio", "language": "it"},
     )
     assert client.get("/orientation/status").json()["required"] is True
+
+
+def test_a_reading_alone_counts_as_earlier_activity():
+    username = "orientation.student"
+    _identity["username"] = username
+    _reset(username)
+    db = _Session()
+    try:
+        db.add(models.ResultReading(username=username, session_id="s-reading", questionnaire_type="QSA", note="Mi agito"))
+        db.commit()
+    finally:
+        db.close()
+    assert client.get("/orientation/status").json()["legacy_exempt"] is True
 
 
 def test_first_orientation_completes_without_touching_the_notebook():

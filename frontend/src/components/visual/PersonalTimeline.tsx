@@ -17,8 +17,10 @@ import { useDraftGuard } from '@/lib/use-draft-guard';
 import { TimelineCalendar } from './TimelineCalendar';
 import { TimelineDateFields } from './TimelineDateFields';
 import { InstitutionTimelineDates } from './InstitutionTimelineDates';
+import { ExperienceReview } from './ExperienceReview';
 import { datePeriod, localToday, validTimelineDates, type TimelineDates } from '@/lib/timeline-dates';
 import { filterItems, splitByToday, timelineItems, type TimelineItem, type TimelineItemKind } from '@/lib/timeline-items';
+import { TIMELINE_GLYPHS, timelineGlyph } from '@/lib/timeline-legend';
 import type { SavedWorkspace, TimelineEvent, VisualWorkspace } from '@/lib/visual-tools';
 
 const field = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
@@ -27,6 +29,9 @@ const FILTER_KEY = 'cb_timeline_filters';
 const KINDS: TimelineItemKind[] = ['milestone', 'action', 'goal', 'appointment'];
 const KIND_ICON: Record<TimelineItemKind, typeof Flag> = { milestone: Flag, action: Activity, goal: Target, appointment: CalendarDays };
 const KIND_LABEL: Record<TimelineItemKind, string> = { milestone: 'milestone', action: 'kindAction', goal: 'kindGoal', appointment: 'kindAppointment' };
+// Legend order mirrors `TIMELINE_GLYPHS`: past milestone, a goal's balance, check action, other action, review date.
+const GLYPH_LABELS = ['glyphMilestone', 'glyphGoalReview', 'glyphActionCheck', 'glyphAction', 'glyphReviewDate'];
+const isGoalReview = (id: string) => id.startsWith('goal-review-');
 type Preview = { title: string; description: string; preview_hash: string };
 type SnapshotPayload = { revision: number; event_ids: string[]; title: string; reflection: string; language: string };
 
@@ -203,6 +208,19 @@ export function PersonalTimeline({ locale }: { locale: string }) {
         const isHighlight = item.key === highlight;
         if (item.kind === 'milestone') {
             const event = timeline.events.find(e => e.id === item.eventId)!;
+            if (isGoalReview(event.id)) {
+                const goalId = event.source.startsWith('goal:') ? event.source.slice(5) : '';
+                return <li key={item.key} id={`timeline-${item.key}`} tabIndex={-1} className={`relative min-w-0 rounded-xl border border-slate-200 bg-white p-3 ${isHighlight ? 'ring-2 ring-ochre-500' : ''}`}>
+                    <span className="flex min-w-0 items-start gap-2">
+                        <span aria-hidden="true" className="mt-0.5 shrink-0 text-ochre-600">{timelineGlyph({ kind: 'event', id: event.id })}</span>
+                        <span className="min-w-0">
+                            <span className="block break-words font-medium">{event.title}</span>
+                            <span className="block text-xs text-slate-600">{kindName('milestone')}</span>
+                            {goalId && <Link href={`/profilo/obiettivi?goal=${goalId}`} className="text-sm text-indigo-700 underline">{l('openGoal')}</Link>}
+                        </span>
+                    </span>
+                </li>;
+            }
             return <MilestoneEditor key={item.key} event={event} locale={locale} open={activeEvent === event.id} onOpen={() => setActiveEvent(previous => previous === event.id ? undefined : event.id)}
                 onPatch={patch => updateEvent(event.id, patch)} onRemove={() => setWork(previous => previous ? { ...previous, timeline: { title: previous.timeline?.title || l('timeline'), events: (previous.timeline?.events ?? []).filter(e => e.id !== event.id) } } : previous)}
                 onSave={() => void save()} portfolio={portfolio} portfolioIssue={portfolioIssue} reloadPortfolio={loadPortfolio}
@@ -247,6 +265,9 @@ export function PersonalTimeline({ locale }: { locale: string }) {
                 </div>
             </details>
         </div>
+        <ul aria-label={l('timelineLegend')} className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+            {TIMELINE_GLYPHS.map((glyph, index) => <li key={glyph} className="flex items-center gap-1"><span aria-hidden="true">{glyph}</span>{l(GLYPH_LABELS[index])}</li>)}
+        </ul>
         {issue && <p role="alert" className="text-sm text-red-800">{l(issue)}{(issue === 'conflict' || issue === 'saveError') && <> <Button type="button" variant="secondary" onClick={() => { if (issue === 'conflict' && window.confirm(l('reloadConfirm'))) void load(); else if (issue === 'saveError') void save(); }}>{l('retry')}</Button></>}</p>}
 
         {activeEvent === 'new' && <details open className="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
@@ -316,6 +337,7 @@ function MilestoneEditor({ event, locale, open, onOpen, onPatch, onRemove, onSav
                 <TimelineDateFields value={event} locale={locale} legacyPeriod={event.period} onChange={value => onPatch({ ...value, period: datePeriod(value) || event.period })} />
                 <label className="block text-sm">{l('symbol')}<select className={field} value={event.symbol} onChange={e => onPatch({ symbol: e.target.value as TimelineEvent['symbol'] })}>{(['milestone', 'study', 'work', 'change'] as const).map(key => <option key={key} value={key}>{l(key)}</option>)}</select></label>
                 <label className="block text-sm">{l('diary')}<textarea aria-label={l('diary')} rows={2} maxLength={1000} className={field} value={event.reflection} onChange={e => onPatch({ reflection: e.target.value })} /></label>
+                {event.tense === 'past' && <ExperienceReview event={event} locale={locale} onPatch={review => onPatch({ review })} />}
                 <div className="flex flex-wrap gap-2">
                     <Tooltip content={l('personalSave')}><Button type="button" variant="secondary" className="min-h-11 px-4" disabled={busy} onClick={onSave}>{l('personalSave')}</Button></Tooltip>
                     <Tooltip content={`${l('remove')}: ${event.title}`}><Button type="button" variant="ghost" size="md" className="gap-1.5" aria-label={`${l('remove')}: ${event.title}`} onClick={onRemove}><Trash2 className="h-4 w-4" aria-hidden="true" />{l('remove')}</Button></Tooltip>

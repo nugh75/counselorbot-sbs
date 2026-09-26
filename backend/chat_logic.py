@@ -2534,7 +2534,7 @@ def _component_enabled(flags: dict[str, bool] | None, name: str) -> bool:
     return bool(flags.get(name, True))
 
 
-MAX_BOOKLET_CONTEXT_CHARS = 1800
+MAX_READING_CONTEXT_CHARS = 1800
 _SCORE_COMPONENT_RE = re.compile(r"\b([A-Z]{1,3}\d{1,2}r?)\b", re.IGNORECASE)
 
 
@@ -2572,21 +2572,6 @@ def _scores_enabled(flags: dict[str, bool] | None, questionnaire_type: str) -> b
     return _component_enabled(flags, "other_scores")
 
 
-def _render_booklet_data(data, prefix: str = "") -> list[str]:
-    if isinstance(data, dict):
-        lines: list[str] = []
-        for key, value in data.items():
-            lines.extend(_render_booklet_data(value, f"{prefix}{key}."))
-        return lines
-    if isinstance(data, list):
-        lines: list[str] = []
-        for idx, item in enumerate(data, start=1):
-            lines.extend(_render_booklet_data(item, f"{prefix}{idx}."))
-        return lines
-    value = str(data or "").strip()
-    return [f"- {prefix[:-1]}: {value}"[:300]] if value else []
-
-
 def _instrument_meta_system_prompt(db, questionnaire_type: str, step_id: str | None = None) -> str:
     if not questionnaire_type:
         return ""
@@ -2604,26 +2589,37 @@ def _instrument_meta_system_prompt(db, questionnaire_type: str, step_id: str | N
         return ""
 
 
-def _student_booklet_context(db, username: str, questionnaire_type: str, session_id: str) -> str:
+def _reading_context(db, username: str, questionnaire_type: str, session_id: str) -> str:
+    """«La mia lettura» di questo strumento: quella della sessione, altrimenti l'ultima dello stesso tipo."""
     if not username or not questionnaire_type:
         return ""
-    q = db.query(models.StudentBooklet).filter(
-        models.StudentBooklet.username == username,
-        models.StudentBooklet.questionnaire_type == questionnaire_type,
-    )
-    rows = q.order_by(
-        (models.StudentBooklet.session_id == session_id).desc(),
-        models.StudentBooklet.updated_at.desc(),
-        models.StudentBooklet.id.desc(),
-    ).limit(3).all()
-    if not rows:
+    row = db.query(models.ResultReading).filter(
+        models.ResultReading.username == username,
+        models.ResultReading.questionnaire_type == questionnaire_type,
+    ).order_by(
+        (models.ResultReading.session_id == session_id).desc(),
+        models.ResultReading.updated_at.desc(),
+        models.ResultReading.id.desc(),
+    ).first()
+    if row is None:
         return ""
-    lines = ["## Libretto dello studente", "Schede più recenti del libretto per questo strumento."]
-    for row in rows:
-        title = str((row.data or {}).get("title") or f"Scheda {row.id}").strip()
-        lines.append(f"### {title}")
-        lines.extend(_render_booklet_data(row.data or {}))
-    return "\n".join(lines)[:MAX_BOOKLET_CONTEXT_CHARS]
+    goals = db.query(models.PersonalGoal.title, models.PersonalGoal.status).join(
+        models.GoalResourceLink, models.GoalResourceLink.goal_id == models.PersonalGoal.id,
+    ).filter(
+        models.PersonalGoal.username == username,
+        models.GoalResourceLink.kind == "reading",
+        models.GoalResourceLink.target_id == row.session_id,
+        models.GoalResourceLink.role == "origin",
+    ).order_by(models.PersonalGoal.id).limit(5).all()
+    lines = ["## La mia lettura dello strumento"]
+    for label, value in (("Punti di forza", ", ".join(row.strengths or [])),
+                         ("Da far crescere", ", ".join(row.growth_areas or [])),
+                         ("Cosa mi dice di me", (row.note or "").strip())):
+        if value:
+            lines.append(f"{label}: {value}")
+    if goals:
+        lines.append("Obiettivi nati da questa lettura: " + "; ".join(f"{title[:120]} ({status})" for title, status in goals))
+    return "\n".join(lines)[:MAX_READING_CONTEXT_CHARS] if len(lines) > 1 else ""
 
 
 def _idea_turns_used(db, session_id: str) -> int:
@@ -2856,11 +2852,11 @@ def build_context_envelope(
     if class_context:
         parts_system.append("[CONTESTO CLASSE]\n" + class_context)
 
-    booklet_context = _student_booklet_context(db, username_for_context, questionnaire_type, session_id) if _component_enabled(component_flags, "student_booklet") and not is_docenza_chat else ""
+    reading_context = _reading_context(db, username_for_context, questionnaire_type, session_id) if _component_enabled(component_flags, "student_booklet") and not is_docenza_chat else ""
     if components is not None:
-        components["student_booklet"] = booklet_context
-    if booklet_context:
-        parts_system.append("[BOOKLET]\n" + booklet_context)
+        components["student_booklet"] = reading_context
+    if reading_context:
+        parts_system.append("[READING]\n" + reading_context)
 
     # --- [IDEA REFERENCE] documento privato scelto per questa sessione ---
     # Precede la mappa: [IDEA MAP] resta l'ultimo blocco operativo prima delle

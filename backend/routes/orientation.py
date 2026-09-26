@@ -126,7 +126,8 @@ def _has_legacy_activity(db: Session, owner: str) -> bool:
             models.LearnerProfileRevision.username == owner,
             models.LearnerProfileRevision.source != "orientation",
         ).first()
-        or db.query(models.StudentBooklet.id).filter(models.StudentBooklet.username == owner).first()
+        or db.query(models.ResultReading.id).filter(models.ResultReading.username == owner).first()
+        or db.query(models.PersonalGoal.id).filter(models.PersonalGoal.username == owner).first()
     )
 
 

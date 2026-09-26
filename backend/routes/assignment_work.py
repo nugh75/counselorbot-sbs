@@ -160,7 +160,7 @@ def link_goal(assignment_id: int, payload: GoalLinkWrite, db: Session = Depends(
     if not state['action']:
         raise HTTPException(404, 'Linked activity no longer exists')
     if not db.query(models.GoalResourceLink.id).filter_by(goal_id=goal.id, kind='action', target_id=row.action_id).first():
-        db.add(models.GoalResourceLink(goal_id=goal.id, kind='action', target_id=row.action_id))
+        db.add(models.GoalResourceLink(goal_id=goal.id, kind='action', target_id=row.action_id, role='means'))
     goal.revision += 1; row.revision += 1
     db.commit()
     return _state(db, assignment_id, username)
