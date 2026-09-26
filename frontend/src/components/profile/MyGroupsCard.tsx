@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/auth';
-import { learningText } from '@/lib/i18n-assignment-work';
+import { learningText, } from '@/lib/i18n-assignment-work';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Users, Loader2 } from 'lucide-react';
 
@@ -205,7 +205,7 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                                         <span className="font-semibold">{group.name}</span>
                                         <span className="ml-2 text-xs text-slate-500">
                                             {texts.via} {group.joined_via === 'telegram' ? 'Telegram' : 'web'}
-                                            {group.joined_at ? ` - ${new Date(group.joined_at).toLocaleDateString()}` : ''}
+                                            {group.joined_at ? ` - ${new Date(group.joined_at).toLocaleDateString(lang)}` : ''}
                                         </span>
                                     </span>
                                     <button
@@ -218,6 +218,10 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                                         {texts.leave}
                                     </button>
                                 </div>
+                                {/* F30 (lotto 5A): dalla classe alle assegnazioni che la riguardano, con il filtro già impostato. */}
+                                <Link href={`/profilo/assegnazioni?group=${encodeURIComponent(group.name)}`} className="mt-1 inline-block text-sm text-indigo-700 underline underline-offset-2">
+                                    {learningText(lang, 'assignmentPage')} — {group.name}
+                                </Link>
                                 {confirmingLeave === group.membership_id && (
                                     <div className="mt-2 space-y-2">
                                         <ConfirmInline

@@ -149,7 +149,7 @@ senza data; un feedback è indicato come disponibile, non come non letto.
 Il riepilogo porta al lavoro preciso, conserva i dati precedenti in caso di errore
 e offre Riprova; il caricamento non blocca i collegamenti agli strumenti.
 
-Seguono cinque gruppi sempre aperti: **Il mio percorso**, **Conoscermi e riflettere**,
+Seguono cinque gruppi sempre aperti: **Conoscermi e riflettere**, **Il mio percorso**,
 **Studiare e ragionare**, **I miei lavori**, **Persone e supporto**. Le 17 destinazioni
 hanno immagini già presenti, nome e descrizione, su due colonne desktop e una mobile.
 Analisi combinata dei profili è uno strumento autonomo in Conoscermi e riflettere,
@@ -172,10 +172,10 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Portfolio | `/profilo/portfolio` | Documentare lavori con titolo, descrizione, categoria, data, collegamenti e immagini; collegare un lavoro a un obiettivo attivo con «Collega a un obiettivo». Chiudere con la X un modulo con modifiche non salvate chiede conferma prima di scartarle. |
 | Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. |
 | Analisi combinata dei profili | `/profilo/analisi-combinata` | Generare una lettura integrata di almeno due strumenti tra QSA, QSAr e ZTPI. Si apre dal gruppo Conoscermi e riflettere e non compare più sotto i singoli risultati. |
-| Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. |
-| Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
+| Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. Lista breve con filtri (gruppo, tipo, finalità richiesta/proposta, stato) e un solo dettaglio aperto alla volta; pianificazione con spiegazione del lavoro personale; anteprima di restituzione con destinatario esplicito e copia fissa. |
+| Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito; collegamenti contestuali alle assegnazioni del gruppo; messaggi generali del docente leggibili direttamente nella pagina; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
-| Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot. |
+| Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
 
 In Risultati e conversazioni, «Risultato della compilazione» è aperto inizialmente e si può richiudere o riaprire premendo il titolo, anche da tastiera con Invio o Spazio. La chiusura nasconde sintesi, grafici e dettagli; la conversazione resta visibile e i contenuti non vengono cancellati.
 
@@ -201,12 +201,14 @@ conservano il progresso nel browser: non promettere una ripresa universale fra
 dispositivi. Nei moduli con Salva o Condividi occorre confermare esplicitamente.
 
 Completare un’attività non conclude automaticamente un obiettivo. I collegamenti
-fra obiettivo e risorse non ne sincronizzano o condividono il contenuto. Le
-assegnazioni possono essere proposte da esplorare oppure attività con restituzione
-attesa e scadenza facoltativa. “Lavora su questa assegnazione” apre l’editor nella
-stessa pagina: piano e diario sono anche nel calendario. Si prepara una restituzione
-separata, si controlla l’anteprima e si condivide con il docente assegnante. Le
-modifiche private successive non cambiano la copia condivisa. Si può ritirare la
+fra obiettivo e risorse non ne sincronizzano o condividono il contenuto. Le assegnazioni possono essere proposte da esplorare oppure attività con restituzione
+attesa e scadenza facoltativa, con filtri per gruppo, tipo, finalità (richiesta o proposta)
+e stato (da esplorare, pianificata, inviata, con riscontro). Nella lista dello studente si
+apre una sola scheda per volta con date localizzate; nella vista docente le schede restano
+sempre espanse. “Lavora su questa assegnazione” apre l’editor nella stessa pagina: la pianificazione
+chiarisce che attività e tappa restano personali e non inviano nulla al docente. Si prepara
+una restituzione separata: l’anteprima mostra il destinatario, il contenuto esatto e avvisa
+che la copia inviata non cambia se si modifica il lavoro originale. Si può ritirare la
 restituzione con il relativo riscontro conservando il lavoro personale.
 
 Condividere il riepilogo di un obiettivo è volontario e revocabile. I gestori di un

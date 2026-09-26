@@ -39,7 +39,7 @@ function SharedText({ value }: { value: Submission }) {
     </div>;
 }
 
-function WorkEditor({ assignmentId }: { assignmentId: number }) {
+function WorkEditor({ assignmentId, authorName }: { assignmentId: number; authorName?: string }) {
     const { lang } = useI18n(); const l = (key: Parameters<typeof learningText>[1]) => learningText(lang, key);
     const base = `/user/assignments/${assignmentId}`;
     const [work, setWork] = useState<Work | null>(null);
@@ -85,6 +85,8 @@ function WorkEditor({ assignmentId }: { assignmentId: number }) {
         {error != null && <p role="alert" className="text-sm text-red-700">{error instanceof GoalError && error.status === 409 ? l('conflict') : assignmentText(lang, 'error')} <button type="button" className="underline" disabled={busy} onClick={() => void load()}>{l('reload')}</button></p>}
         {work && <fieldset disabled={busy} className="min-w-0 space-y-5">
             {!work.planned ? <form className="space-y-3" onSubmit={event => { event.preventDefault(); void mutate('plan', 'POST', { date: date || null }); }}>
+                {/* F28 (lotto 5A): il passaggio dichiara ciò che crea e ciò che non invia. */}
+                <p className="rounded-md bg-indigo-50 p-3 text-sm text-slate-800">{l('planHelp')}</p>
                 <label className="block text-sm font-medium">{l('planDate')}<input type="date" className={input} value={date} onChange={e => setDate(e.target.value)} /></label>
                 <Button type="submit">{l('plan')}</Button>
             </form> : <>
@@ -123,7 +125,11 @@ function WorkEditor({ assignmentId }: { assignmentId: number }) {
                         {reflection && <Button type="button" variant="secondary" onClick={() => setShareText(reflection)}>{l('useReflection')}</Button>}
                         <label className="block text-sm font-medium">{l('shareText')}<textarea className={input} rows={4} maxLength={3000} value={shareText} onChange={e => { setShareText(e.target.value); setSaved(false); }} /></label>
                         <label className="block text-sm font-medium">{l('portfolio')}<select className={input} value={portfolioId} onChange={e => setPortfolioId(e.target.value)}><option value="">{l('none')}</option>{portfolio.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
-                        <section className="space-y-2 rounded-md bg-slate-50 p-3" aria-label={l('preview')}><h5 className="text-sm font-semibold">{l('preview')}</h5><SharedText value={preview} /></section>
+                        <section className="space-y-2 rounded-md bg-slate-50 p-3" aria-label={l('preview')}><h5 className="text-sm font-semibold">{l('preview')}</h5>
+                            {/* F29 (lotto 5A): destinatario esplicito e copia che non si aggiorna. */}
+                            {authorName && <p className="text-xs text-slate-600"><strong>{assignmentText(lang, 'recipient')}:</strong> {authorName}</p>}
+                            {work.submitted_at && <p className="text-xs text-slate-500">{l('copyStays')}</p>}
+                            <SharedText value={preview} /></section>
                         <Button type="submit" disabled={!shareText.trim() && !selectedPortfolio}>{l('share')}</Button>
                     </form>
                 </details>
@@ -132,13 +138,13 @@ function WorkEditor({ assignmentId }: { assignmentId: number }) {
     </div>;
 }
 
-export function AssignmentWork({ assignmentId }: { assignmentId: number }) {
+export function AssignmentWork({ assignmentId, authorName }: { assignmentId: number; authorName?: string }) {
     const { lang } = useI18n(); const [open, setOpen] = useState(false);
     useEffect(() => {
         const check = () => { if (window.location.hash === `#assignment-${assignmentId}`) setOpen(true); };
         check(); window.addEventListener('hashchange', check); return () => window.removeEventListener('hashchange', check);
     }, [assignmentId]);
-    return <div className="space-y-3"><Button type="button" variant="secondary" aria-expanded={open} onClick={() => setOpen(true)}>{learningText(lang, 'openWork')}</Button>{open && <WorkEditor assignmentId={assignmentId} />}</div>;
+    return <div className="space-y-3"><Button type="button" variant="secondary" aria-expanded={open} onClick={() => setOpen(true)}>{learningText(lang, 'openWork')}</Button>{open && <WorkEditor assignmentId={assignmentId} authorName={authorName} />}</div>;
 }
 
 function FeedbackEditor({ row, onSave }: { row: SharedWork; onSave: (text: string) => Promise<void> }) {
