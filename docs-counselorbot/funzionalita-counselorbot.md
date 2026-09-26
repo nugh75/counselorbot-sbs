@@ -150,9 +150,10 @@ Il riepilogo porta al lavoro preciso, conserva i dati precedenti in caso di erro
 e offre Riprova; il caricamento non blocca i collegamenti agli strumenti.
 
 Seguono cinque gruppi sempre aperti: **Il mio percorso**, **Conoscermi e riflettere**,
-**Studiare e ragionare**, **I miei lavori**, **Persone e supporto**. Le 16 destinazioni
+**Studiare e ragionare**, **I miei lavori**, **Persone e supporto**. Le 17 destinazioni
 hanno immagini già presenti, nome e descrizione, su due colonne desktop e una mobile.
-Cambiamenti è autonomo accanto a Taccuino e Risultati; Portfolio resta nel gruppo
+Analisi combinata dei profili è uno strumento autonomo in Conoscermi e riflettere,
+accanto a Taccuino, Cambiamenti e Risultati e conversazioni; Portfolio resta nel gruppo
 I miei lavori. Anche senza questionari o obiettivi si può aprire ciascuno strumento.
 I dati account restano nel menu della testata, senza un riquadro nell’ingresso.
 
@@ -170,10 +171,13 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Cambiamenti | `/profilo/cambiamenti` | Riflettere sulle differenze fra revisioni del Taccuino. |
 | Portfolio | `/profilo/portfolio` | Documentare lavori con titolo, descrizione, categoria, data, collegamenti e immagini; collegare un lavoro a un obiettivo attivo con «Collega a un obiettivo». Chiudere con la X un modulo con modifiche non salvate chiede conferma prima di scartarle. |
 | Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. |
+| Analisi combinata dei profili | `/profilo/analisi-combinata` | Generare una lettura integrata di almeno due strumenti tra QSA, QSAr e ZTPI. Si apre dal gruppo Conoscermi e riflettere e non compare più sotto i singoli risultati. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. |
 | Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot. |
+
+In Risultati e conversazioni, «Risultato della compilazione» è aperto inizialmente e si può richiudere o riaprire premendo il titolo, anche da tastiera con Invio o Spazio. La chiusura nasconde sintesi, grafici e dettagli; la conversazione resta visibile e i contenuti non vengono cancellati.
 
 Il vecchio indirizzo del libretto, `/profilo/libretto`, porta a Risultati e conversazioni.
 
