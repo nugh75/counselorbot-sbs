@@ -101,8 +101,7 @@ const it: Dict = {
 
     // nav
     'nav.admin': 'Admin',
-    'nav.groupsClasses': 'Gruppi e classi',
-    'nav.teacherPanel': 'Pannello docente',
+    'nav.teacherPanel': 'Area docente',
     'nav.adminLogin': 'Accesso admin',
     'nav.logout': 'Logout',
     'nav.login': 'Login',
@@ -1355,8 +1354,7 @@ const en: Dict = {
     'admin.features.tavolo': 'Working table — a graph the person and the model build together in the Personal area. Off: endpoints 404 and buttons hidden.',
 
     'nav.admin': 'Admin',
-    'nav.groupsClasses': 'Groups and classes',
-    'nav.teacherPanel': 'Teacher panel',
+    'nav.teacherPanel': 'Teacher area',
     'nav.adminLogin': 'Admin access',
     'nav.logout': 'Logout',
     'nav.login': 'Login',
@@ -2591,8 +2589,7 @@ const es: Dict = {
     'admin.features.tavolo': 'Mesa de trabajo — grafo que persona y modelo construyen juntos en el Área personal. Apagada: endpoints 404 y botones ocultos.',
 
     'nav.admin': 'Admin',
-    'nav.groupsClasses': 'Grupos y clases',
-    'nav.teacherPanel': 'Panel docente',
+    'nav.teacherPanel': 'Área docente',
     'nav.adminLogin': 'Acceso admin',
     'nav.logout': 'Salir',
     'nav.login': 'Acceder',
@@ -3826,7 +3823,6 @@ const fr: Dict = {
     'admin.features.tavolo': 'Table de travail — graphe que la personne et le modèle construisent ensemble dans l’Espace personnel. Désactivée : endpoints 404 et boutons masqués.',
 
     'nav.admin': 'Admin',
-    'nav.groupsClasses': 'Groupes et classes',
     'nav.teacherPanel': 'Espace enseignant',
     'nav.adminLogin': 'Accès admin',
     'nav.logout': 'Déconnexion',
@@ -5061,7 +5057,6 @@ const de: Dict = {
     'admin.features.tavolo': 'Arbeitstisch — Graph, den Person und Modell gemeinsam im persönlichen Bereich aufbauen. Aus: Endpoints 404 und Schaltflächen verborgen.',
 
     'nav.admin': 'Admin',
-    'nav.groupsClasses': 'Gruppen und Klassen',
     'nav.teacherPanel': 'Lehrkräftebereich',
     'nav.adminLogin': 'Admin-Zugang',
     'nav.logout': 'Abmelden',
@@ -6296,8 +6291,7 @@ const sv: Dict = {
     'admin.features.tavolo': 'Arbetsbord — graf som person och modell bygger tillsammans i det personliga området. Av: endpoints 404 och knappar dolda.',
 
     'nav.admin': 'Admin',
-    'nav.groupsClasses': 'Grupper och klasser',
-    'nav.teacherPanel': 'Lärarpanel',
+    'nav.teacherPanel': 'Lärarområde',
     'nav.adminLogin': 'Adminåtkomst',
     'nav.logout': 'Logga ut',
     'nav.login': 'Logga in',

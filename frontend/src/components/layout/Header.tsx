@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { BookOpen, Bot, ClipboardList, Compass, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, Users, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, ClipboardList, Compass, GraduationCap, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, type LucideIcon } from 'lucide-react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
@@ -82,8 +82,8 @@ export function Header() {
             key: 'teacher-panel',
             href: '/docente',
             menuOnly: true,
-            icon: Users,
-            label: t(canOpenResearchConsole ? 'nav.groupsClasses' : 'nav.teacherPanel'),
+            icon: GraduationCap,
+            label: t('nav.teacherPanel'),
         });
     }
     if (canOpenResearchConsole) {
