@@ -1,0 +1,71 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+change-template: '- $TITLE (#$NUMBER) by @$AUTHOR'
+
+categories:
+  - title: '🚀 Nuove Funzionalità'
+    labels:
+      - 'feature'
+      - 'enhancement'
+  - title: '🐛 Bug Risolti'
+    labels:
+      - 'fix'
+      - 'bug'
+  - title: '📝 Documentazione e Piani'
+    labels:
+      - 'docs'
+      - 'documentation'
+  - title: '🧹 Manutenzione e Refactoring'
+    labels:
+      - 'refactor'
+      - 'chore'
+      - 'test'
+
+version-resolver:
+  major:
+    labels:
+      - 'major'
+  minor:
+    labels:
+      - 'feature'
+      - 'enhancement'
+  patch:
+    labels:
+      - 'fix'
+      - 'bug'
+      - 'docs'
+      - 'chore'
+      - 'refactor'
+  default: patch
+
+autolabeler:
+  - label: 'feature'
+    title:
+      - '/^feat/i'
+    branch:
+      - '/^feature/i'
+  - label: 'fix'
+    title:
+      - '/^fix/i'
+    branch:
+      - '/^fix/i'
+  - label: 'docs'
+    title:
+      - '/^docs/i'
+    branch:
+      - '/^docs/i'
+  - label: 'refactor'
+    title:
+      - '/^refactor/i'
+    branch:
+      - '/^refactor/i'
+  - label: 'chore'
+    title:
+      - '/^chore/i'
+    branch:
+      - '/^chore/i'
+
+template: |
+  ## Sintesi modifiche in questa versione
+
+  $CHANGES

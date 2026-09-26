@@ -41,6 +41,12 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
   «→ Collega a un obiettivo» dal Portfolio (inline, un obiettivo per volta, solo obiettivi attivi,
   endpoint `/user/goals/{id}/links` esistente, 409 → pannello riapribile con dati freschi).
   F12/F13/F16 così assorbiti; il lotto 3A si considera chiuso.
+- **Lotto 1B applicato (2026-09-26)**: F03 — stati di caricamento/errore/vuoto distinti con
+  Riprova su Taccuino, Compilazioni, Portfolio, Classi e Telegram (un 503 non mostra più
+  «nessun dato» né fa sparire la card; crash preesistente di `CrossSynthesisCard` su risposta
+  inattesa corretto); F04 — uscita dal gruppo con conferma inline che nomina il gruppo,
+  conseguenze, busy ed errore locale; F25 — uploader pQBL allineato al backend (solo PDF,
+  100 MB). Test: `tests/personal-error-states.test.mjs` 7/7.
 - Errore lint preesistente `NewDeckDialog.tsx:36` (setState sincrono in effect) e 14 warning —
   già presenti prima di questo lavoro.
 - Backend: 4 test diagrammi/icone, 2 OCR locali, smoke `test_an_older_stage_of_the_map_can_be_drawn_again`

@@ -77,6 +77,8 @@ export function PortfolioCard() {
     const [q, setQ] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [loading, setLoading] = useState(true);
+    // F03 (lotto 1B): il caricamento fallito non è “nessun lavoro”.
+    const [loadError, setLoadError] = useState(false);
     const [form, setForm] = useState<EditForm | null>(null);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -112,6 +114,7 @@ export function PortfolioCard() {
 
     const load = useCallback(async () => {
         setLoading(true);
+        setLoadError(false);
         try {
             const params = new URLSearchParams();
             if (q.trim()) params.set('q', q.trim());
@@ -120,10 +123,13 @@ export function PortfolioCard() {
                 apiFetch(`/api/user/portfolio?${params.toString()}`),
                 apiFetch('/api/user/portfolio/categories'),
             ]);
-            setItems(itemsRes.ok ? await itemsRes.json() : []);
-            setCategories(catsRes.ok ? await catsRes.json() : []);
+            // F03: su errore si conservano i lavori già mostrati invece di svuotare.
+            if (!itemsRes.ok || !catsRes.ok) throw new Error('portfolio load failed');
+            setItems(await itemsRes.json());
+            setCategories(await catsRes.json());
         } catch (e) {
             console.error('Failed to load portfolio', e);
+            setLoadError(true);
         } finally {
             setLoading(false);
         }
@@ -409,6 +415,11 @@ export function PortfolioCard() {
             {/* Elenco lavori */}
             {loading ? (
                 <div className="text-sm text-slate-500">{t('portfolio.loading')}</div>
+            ) : loadError ? (
+                <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                    <p>{t('portfolio.loadError')}</p>
+                    <button type="button" onClick={() => void load()} className="mt-2 min-h-11 rounded-md border border-red-300 bg-white px-3 text-sm font-semibold text-red-700 hover:bg-red-50">{t('lp.retry')}</button>
+                </div>
             ) : items.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
                     {q || categoryFilter ? t('portfolio.emptyFound') : t('portfolio.emptyYet')}

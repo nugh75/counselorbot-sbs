@@ -142,6 +142,8 @@ export default function ProfilePage() {
     const isDark = useDarkMode();
     const [identity, setIdentity] = useState<Identity | null>(null);
     const [sessions, setSessions] = useState<QuestionnaireResult[]>([]);
+    // F03 (lotto 1B): fallire il caricamento non è “nessuna compilazione”.
+    const [sessionsError, setSessionsError] = useState(false);
     const [selectedSession, setSelectedSession] = useState<QuestionnaireResult | null>(null);
     const [conversation, setConversation] = useState<Array<{ role: string; text: string }> | null>(null);
     const [convLoading, setConvLoading] = useState(false);
@@ -168,29 +170,29 @@ export default function ProfilePage() {
                 setIdentity(id);
                 if (!activeSection) return;
                 const res = await apiFetch('/api/user/questionnaire-results');
-                if (res.ok) {
-                    const payload: unknown = await res.json();
-                    if (Array.isArray(payload)) {
-                        const data = payload as QuestionnaireResult[];
-                        setSessions(data);
-                        // `?instrument=` arrives from old booklet links: open that instrument's latest result.
-                        const requested = new URLSearchParams(window.location.search).get('instrument');
-                        const first = data.find((session) => session.questionnaire_type === requested) ?? data[0] ?? null;
-                        setSelectedSession((selected) => (
-                            selected
-                                ? data.find((session) => session.session_id === selected.session_id) ?? first
-                                : first
-                        ));
+                if (!res.ok) throw new Error('results failed');
+                const payload: unknown = await res.json();
+                if (Array.isArray(payload)) {
+                    setSessionsError(false);
+                    const data = payload as QuestionnaireResult[];
+                    setSessions(data);
+                    // `?instrument=` arrives from old booklet links: open that instrument's latest result.
+                    const requested = new URLSearchParams(window.location.search).get('instrument');
+                    const first = data.find((session) => session.questionnaire_type === requested) ?? data[0] ?? null;
+                    setSelectedSession((selected) => (
+                        selected
+                            ? data.find((session) => session.session_id === selected.session_id) ?? first
+                            : first
+                    ));
 
-                        // Sync localStorage completed profiles
-                        clearCompletedProfiles();
-                        const sorted = [...data].sort((a, b) =>
-                            new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
-                        );
-                        for (const s of sorted) {
-                            if (['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'].includes(s.questionnaire_type)) {
-                                addCompletedProfile(s.questionnaire_type, s.session_id, s.scores || {});
-                            }
+                    // Sync localStorage completed profiles
+                    clearCompletedProfiles();
+                    const sorted = [...data].sort((a, b) =>
+                        new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
+                    );
+                    for (const s of sorted) {
+                        if (['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP'].includes(s.questionnaire_type)) {
+                            addCompletedProfile(s.questionnaire_type, s.session_id, s.scores || {});
                         }
                     }
                 }
@@ -199,6 +201,7 @@ export default function ProfilePage() {
             }
         } catch (e) {
             console.error("Failed to load profile data", e);
+            setSessionsError(true);
         } finally {
             setLoading(false);
         }
@@ -466,7 +469,12 @@ export default function ProfilePage() {
                         {filteredSessions.length} / {sessions.length}
                     </span>
                 </div>
-                {sessions.length === 0 ? (
+                {sessionsError ? (
+                    <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                        <p>{t('profile.sessions.loadError')}</p>
+                        <button type="button" onClick={() => void loadData()} className="mt-2 min-h-11 rounded-md border border-red-300 bg-white px-3 text-sm font-semibold text-red-700 hover:bg-red-50">{t('lp.retry')}</button>
+                    </div>
+                ) : sessions.length === 0 ? (
                     <div className="text-center py-10 px-4 border border-dashed border-slate-200 rounded-xl bg-white space-y-4">
                         <p className="text-sm text-slate-500 max-w-xs mx-auto">{t('profile.noSessions')}</p>
                         <Link

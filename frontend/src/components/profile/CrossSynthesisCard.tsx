@@ -69,7 +69,7 @@ export function CrossSynthesisCard() {
                     <p className="mt-1 text-sm text-slate-500">{t('combined.desc')}</p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                    {availability.instruments.map((inst) => (
+                    {(availability.instruments ?? []).map((inst) => (
                         <span
                             key={inst.questionnaire_type}
                             className="px-2.5 py-0.5 border border-slate-200 bg-slate-50 text-slate-600 text-xs font-bold rounded-full uppercase"
