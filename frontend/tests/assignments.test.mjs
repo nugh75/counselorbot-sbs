@@ -77,7 +77,10 @@ for (const width of [1440, 390]) {
                 await learner.page.getByRole('link', { name: /Assegnazioni ricevute/ }).first().click();
                 await learner.page.getByRole('heading', { name: 'Assegnazioni ricevute', exact: true }).waitFor();
                 await learner.page.getByRole('heading', { name: 'Film per riflettere', exact: true }).first().waitFor();
-                assert.ok(await learner.page.getByText('Assegnato da: Docente di prova', { exact: true }).count() >= 3);
+                // Lista breve (F27): il mittente compare aprendo il dettaglio.
+                assert.ok(await learner.page.getByRole('button', { name: 'Dettagli', exact: true }).count() >= 3);
+                await learner.page.getByRole('button', { name: 'Dettagli', exact: true }).first().click();
+                await learner.page.getByText('Assegnato da: Docente di prova', { exact: true }).waitFor();
                 assert.equal(await learner.page.getByRole('button', { name: 'Revoca assegnazione' }).count(), 0);
                 assert.ok(await learner.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
                 await learner.page.screenshot({ path: `/tmp/assignments-received-${width}.png`, fullPage: true });
