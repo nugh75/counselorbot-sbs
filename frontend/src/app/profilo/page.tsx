@@ -756,7 +756,12 @@ export default function ProfilePage() {
             )}
 
             {activeSection === 'assignments' && <AssignmentsPanel showHeading={false} />}
-            {activeSection === 'groups' && <MyGroupsCard lang={lang} showHeading={false} canManageGroups={canUseTeacherAssistant(identity)} />}
+            {activeSection === 'groups' && <div className="space-y-4">
+                <MyGroupsCard lang={lang} showHeading={false} canManageGroups={canUseTeacherAssistant(identity)} />
+                {/* F30 (lotto 5A): i messaggi del docente sono leggibili anche nella pagina Classi,
+                    accanto al riepilogo di chi vede cosa. */}
+                <TeacherNotesCard lang={lang} />
+            </div>}
 
             {activeSection === 'telegram' && <TelegramLinkCard lang={lang} showHeading={false} />}
 
