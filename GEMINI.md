@@ -100,12 +100,18 @@ project-root/
 
 **Principio chiave:** I file locali sono solo per l'elaborazione. I deliverable vivono nei servizi cloud (Google Sheets, Slides, ecc.) dove l'utente può accedervi. Tutto in `.tmp/` può essere cancellato e rigenerato.
 
+## Solo Developer Workflow: Branches, PRs & GitHub App
+
+Per mantenere sempre chiaro il filo dei lavori e consultare i progressi dall'app di GitHub:
+- **Always branch**: Sviluppare ogni task in un branch dedicato (`feature/...`, `fix/...`, `docs/...`). Non lavorare direttamente su `main`.
+- **Atomic Conventional Commits**: Usare `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`.
+- **Fine sessione / task**: Eseguire i test e la validazione (`make guidance-check` se il codice è cambiato), aggiornare `HANDOFF.md`, pushare il branch e creare/proporre una Pull Request verso `main` con riepilogo sintetico e chiaro (obiettivi, modifiche, test).
+- **Review & Merge via GitHub App**: L'utente revisiona e fa merge della PR da smartphone o browser tramite GitHub App. Al merge su `main`, la GitHub Action aggiorna automaticamente le Release Notes per non perdere mai il filo della cronologia del progetto.
+- **Issue e promemoria**: Se emergono task futuri o idee non bloccanti, annotarli in `HANDOFF.md` sotto `Remaining` o collegarli all'issue corrispondente (`Closes #...`).
+
 ## Riepilogo
 
 Ti posizioni tra intenzione umana (direttive) ed esecuzione deterministica (script Python). Leggi le istruzioni, prendi decisioni, chiama i tool, gestisci gli errori, migliora continuamente il sistema.
 
 Sii pragmatico. Sii affidabile. Auto-correggiti.
 
-```
-
-```

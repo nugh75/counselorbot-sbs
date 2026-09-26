@@ -79,6 +79,10 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     const { t } = useI18n();
     const [hidden, setHidden] = useState(false);
     const [loading, setLoading] = useState(true);
+    // F03 (audit Area personale, lotto 1B): un 503 o un errore di rete non fa
+    // sparire il taccuino — mostra l'errore con Riprova invece di nasconderlo.
+    const [loadFailed, setLoadFailed] = useState(false);
+    const [loadAttempt, setLoadAttempt] = useState(0);
     const [profile, setProfile] = useState<Revision | null>(null);
     const [form, setForm] = useState<LearnerProfileData>({});
     const [editing, setEditing] = useState(false);
@@ -137,7 +141,12 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             try {
                 const [identity, res] = await Promise.all([getIdentity(), apiFetch('/api/user/learner-profile')]);
                 if (!active) return;
-                if (!identity?.authenticated || !res.ok) { setHidden(true); return; }
+                if (!identity?.authenticated) { setHidden(true); return; }
+                if (!res.ok) {
+                    // Un errore del server non è “nessun taccuino”: resta visibile con Riprova.
+                    if (res.status >= 500) { setLoadFailed(true); return; }
+                    setHidden(true); return;
+                }
                 const rev: Revision | null = await res.json();
                 if (!active) return;
                 const saveHeaders = withViewAsHeaders({ 'Content-Type': 'application/json' });
@@ -175,7 +184,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                 setSaveStatus(queue.status);
                 if (queue.pending) flush();
             } catch {
-                if (active) setHidden(true);
+                if (active) setLoadFailed(true);
             } finally {
                 if (active) setLoading(false);
             }
@@ -189,7 +198,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             window.removeEventListener('pagehide', flush);
             window.removeEventListener('online', flush);
         };
-    }, []);
+    }, [loadAttempt]);
 
     useEffect(() => {
         if (variant !== 'update' || !sessionId) return;
@@ -279,6 +288,11 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     };
 
     if (hidden || dismissed || loading) return null;
+    if (loadFailed) return <div role="alert" className="glass-panel space-y-3 p-5">
+        <p className="text-sm text-red-800">{t('lp.loadError')}</p>
+        <button type="button" onClick={() => { setLoadFailed(false); setLoading(true); setLoadAttempt(n => n + 1); }}
+            className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">{t('lp.retry')}</button>
+    </div>;
     if (suggestionOnly && (suggestion?.status !== 'ready' || (suggestionHandled && !editing))) return null;
     // Revisione a inizio sessione: se non c'è ancora un profilo si propone
     // l'intake, se c'è si chiede conferma rapida (un click se nulla è cambiato).

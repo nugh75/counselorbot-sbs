@@ -23,6 +23,8 @@ const TEXTS = {
         openBot: 'Apri il bot su Telegram',
         botHint: 'Bot ufficiale:',
         error: 'Operazione non riuscita, riprova.',
+        statusError: 'Impossibile verificare lo stato di Telegram.',
+        retry: 'Riprova',
     },
     en: {
         title: 'Telegram',
@@ -35,6 +37,8 @@ const TEXTS = {
         openBot: 'Open the bot on Telegram',
         botHint: 'Official bot:',
         error: 'Operation failed, please retry.',
+        statusError: 'The Telegram status could not be checked.',
+        retry: 'Retry',
     },
     es: {
         title: 'Telegram', subtitle: 'Vincula Telegram para usar CounselorBot también desde el bot.',
@@ -42,6 +46,8 @@ const TEXTS = {
         codeHint: 'Envía este código al bot antes de 10 minutos con:', unlink: 'Desvincular Telegram',
         openBot: 'Abrir el bot en Telegram', botHint: 'Bot oficial:',
         error: 'La operación ha fallado. Inténtalo de nuevo.',
+        statusError: 'No se pudo verificar el estado de Telegram.',
+        retry: 'Reintentar',
     },
     fr: {
         title: 'Telegram', subtitle: 'Associez Telegram pour utiliser CounselorBot également depuis le bot.',
@@ -49,6 +55,8 @@ const TEXTS = {
         codeHint: 'Envoyez ce code au bot dans les 10 minutes avec :', unlink: 'Dissocier Telegram',
         openBot: 'Ouvrir le bot sur Telegram', botHint: 'Bot officiel :',
         error: 'L’opération a échoué. Réessayez.',
+        statusError: 'Impossible de vérifier l’état de Telegram.',
+        retry: 'Réessayer',
     },
     de: {
         title: 'Telegram', subtitle: 'Verknüpfen Sie Telegram, um CounselorBot auch über den Bot zu nutzen.',
@@ -56,6 +64,8 @@ const TEXTS = {
         codeHint: 'Senden Sie diesen Code innerhalb von 10 Minuten mit folgendem Befehl an den Bot:', unlink: 'Telegram trennen',
         openBot: 'Bot in Telegram öffnen', botHint: 'Offizieller Bot:',
         error: 'Der Vorgang ist fehlgeschlagen. Versuchen Sie es erneut.',
+        statusError: 'Der Telegram-Status konnte nicht geprüft werden.',
+        retry: 'Erneut versuchen',
     },
     sv: {
         title: 'Telegram', subtitle: 'Länka Telegram för att använda CounselorBot även via boten.',
@@ -63,6 +73,8 @@ const TEXTS = {
         codeHint: 'Skicka den här koden till boten inom 10 minuter med:', unlink: 'Koppla från Telegram',
         openBot: 'Öppna boten i Telegram', botHint: 'Officiell bot:',
         error: 'Åtgärden misslyckades. Försök igen.',
+        statusError: 'Det gick inte att kontrollera Telegram-statusen.',
+        retry: 'Försök igen',
     },
 };
 
@@ -73,13 +85,17 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
     const [code, setCode] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(false);
+    const [statusError, setStatusError] = useState(false);
 
     const loadStatus = useCallback(async () => {
+        // F03: un errore di rete non è “non collegato” — è un errore con Riprova.
         try {
             const res = await apiFetch('/api/telegram/link-status');
-            if (res.ok) setStatus(await res.json() as LinkStatus);
+            if (!res.ok) throw new Error('link-status failed');
+            setStatus(await res.json() as LinkStatus);
+            setStatusError(false);
         } catch {
-            // silenzioso: la card resta in stato "non collegato"
+            setStatusError(true);
         }
     }, []);
 
@@ -148,10 +164,16 @@ export function TelegramLinkCard({ lang, showHeading = true }: { lang: string; s
             )}
             <p className="text-sm text-slate-500">{texts.subtitle}</p>
             <p className="text-sm font-medium text-slate-700">
-                {status?.linked
+                {!statusError && (status?.linked
                     ? `${texts.linked}${status.telegram_username ? ` (@${status.telegram_username})` : ''}`
-                    : texts.notLinked}
+                    : texts.notLinked)}
             </p>
+            {statusError && (
+                <p role="alert" className="text-sm text-red-800">
+                    {statusError && !status ? texts.statusError : ''}
+                    <button type="button" onClick={() => void loadStatus()} className="mt-2 block min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">{texts.retry}</button>
+                </p>
+            )}
             {botUsername && (
                 <p className="text-sm text-slate-600">
                     {texts.botHint}{' '}
