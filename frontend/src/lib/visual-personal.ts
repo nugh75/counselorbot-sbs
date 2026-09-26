@@ -1,23 +1,21 @@
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { emptyWorkspace, workspaceText, cardColumnsOf, type VisualWorkspace } from './visual-tools.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { readingText } from './i18n-reading.ts';
 
 export const notebookFields: Record<string, string> = {
     context: 'lp.field.context', goal: 'lp.field.goal', main_difficulty: 'lp.field.difficulty',
     strengths: 'lp.field.strengths', weaknesses: 'lp.field.weaknesses', notes: 'lp.field.notes',
 };
-export const bookletFields: Record<string, string> = {
-    motivation: 'booklet.field.motivation', objective: 'booklet.field.objective', strategy: 'booklet.field.strategy',
-    difficulties: 'booklet.field.difficulties', improvements: 'booklet.field.improvements',
-    discovery: 'booklet.field.discovery', bio_context: 'booklet.bio.context', bio_discovery: 'booklet.bio.discovery',
-    bio_keywords: 'booklet.bio.keywords', student_notes: 'booklet.field.studentNotes', final_observations: 'booklet.field.finalObservations',
-};
 export type PersonalContext = {
     questionnaire_type: string | null;
-    limits: { notebook: number; booklet: number };
+    limits: { notebook: number; reading: number };
     sources: Record<string, string>;
     notebook: Record<string, string>;
-    booklets: { id: number; title: string; data: Record<string, string> }[];
+    // «La mia lettura» della compilazione di questa sessione; null se la sessione non ha compilazione.
+    reading: { session_id: string; note: string } | null;
 };
+export const readingLabel = (lang: string) => `${readingText(lang, 'title')} · ${readingText(lang, 'note')}`;
 export type TransferEntry = { id: string; label: string; text: string; source: string };
 export type ImportTarget = 'cards' | 'actions' | 'comparison';
 
@@ -33,15 +31,15 @@ export function visualEntries(work: VisualWorkspace, l: (key: string) => string)
     ];
 }
 
-export function annotationEntries(data: PersonalContext, t: (key: string) => string, l: (key: string) => string): TransferEntry[] {
+export function annotationEntries(data: PersonalContext, t: (key: string) => string, l: (key: string) => string, lang: string): TransferEntry[] {
     const notebook = Object.entries(notebookFields).filter(([key]) => data.notebook[key]?.trim()).map(([key, label]) => ({
         id: `notebook_${key}`, label: `${l('notebook')} · ${t(label)}`, text: data.notebook[key], source: `${l('notebook')} · ${t(label)}`,
     }));
-    const booklets = data.booklets.flatMap(booklet => Object.entries(bookletFields).filter(([key]) => booklet.data[key]?.trim()).map(([key, label]) => ({
-        id: `booklet_${booklet.id}_${key}`, label: `${l('booklet')} · ${booklet.title || data.questionnaire_type} · ${t(label)}`,
-        text: booklet.data[key], source: `${l('booklet')} · ${booklet.title || data.questionnaire_type} · ${t(label)}`.slice(0, 300),
-    })));
-    return [...notebook, ...booklets];
+    const reading = data.reading?.note.trim() ? [{
+        id: 'reading_note', label: `${readingLabel(lang)} · ${data.questionnaire_type ?? ''}`.trim(), text: data.reading.note,
+        source: `${readingLabel(lang)} · ${data.questionnaire_type ?? ''}`.trim().slice(0, 300),
+    }] : [];
+    return [...notebook, ...reading];
 }
 
 export function importAnnotation(work: VisualWorkspace, entry: TransferEntry, target: ImportTarget, text: string, title: string): VisualWorkspace {

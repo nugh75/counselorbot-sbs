@@ -21,8 +21,11 @@ for (const target of ['cards', 'actions', 'comparison'] as ImportTarget[]) {
     });
 }
 test('only nonempty annotation fields are offered and visual selections retain their content', () => {
-    const entries = annotationEntries({ questionnaire_type: 'QSA', limits: { notebook: 600, booklet: 2000 }, sources: {}, notebook: { goal: entry.text }, booklets: [{ id: 1, title: 'Scheda', data: { objective: 'Una prova', strategy: '  ' } }] }, key => key, key => key);
-    assert.deepEqual(entries.map(item => item.id), ['notebook_goal', 'booklet_1_objective']);
+    const entries = annotationEntries({ questionnaire_type: 'QSA', limits: { notebook: 600, reading: 2000 }, sources: {}, notebook: { goal: entry.text, notes: '  ' }, reading: { session_id: 's1', note: 'Mi agito agli esami' } }, key => key, key => key, 'it');
+    assert.deepEqual(entries.map(item => item.id), ['notebook_goal', 'reading_note']);
+    assert.equal(entries[1].source, 'La mia lettura · Cosa mi dice di me · QSA');
+    const empty = annotationEntries({ questionnaire_type: null, limits: { notebook: 600, reading: 2000 }, sources: {}, notebook: {}, reading: { session_id: 's1', note: ' ' } }, key => key, key => key, 'it');
+    assert.deepEqual(empty, []);
     const work = importAnnotation(emptyWorkspace(), entry, 'actions', 'Testo rivisto', 'Titolo');
     work.actions[0].reflection = 'Riflessione';
     const result = visualEntries(work, key => key);
