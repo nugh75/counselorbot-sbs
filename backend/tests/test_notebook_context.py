@@ -49,6 +49,8 @@ def _envelope(db, request, identity, questionnaire_type):
 
 TEACHER_IDENTITY = {"username": "t1", "groups": ["docenti"], "is_admin": False, "is_researcher": False}
 STUDENT_IDENTITY = {"username": "t1", "groups": ["studenti"], "is_admin": False, "is_researcher": False}
+ADMIN_IDENTITY = {"username": "t1", "groups": ["studenti"], "is_admin": True, "is_researcher": False}
+RESEARCHER_IDENTITY = {"username": "t1", "groups": ["studenti"], "is_admin": False, "is_researcher": True}
 
 
 def test_defaults_unchanged_for_every_non_docenza_instrument():
@@ -121,6 +123,28 @@ def test_student_choice_restores_student_notebook_on_docenza():
         system = _envelope(db, request, TEACHER_IDENTITY, "OBIETTIVO_DOCENZA")
         assert 'Imparo da studente' in system
         assert 'Chimica' not in system
+
+
+def test_plan_managers_get_the_choice_not_plain_students():
+    """Admin e ricercatori sono plan managers come i docenti: la richiesta vale
+    anche per loro; uno studente puro resta sul default."""
+    with artifact_session() as db:
+        db.add(models.TeacherProfileRevision(username='t1', data={'subjects': 'Chimica'}, source='manual'))
+        db.add(models.LearnerProfileRevision(username='t1', data={'goal': 'Imparo da studente'}, source='manual'))
+        db.commit()
+        request = ChatRequest(
+            message=" turno ", questionnaire_type="OBIETTIVO_STUDIO",
+            language="it", notebook_context="teacher",
+        )
+        system = _envelope(db, request, TEACHER_IDENTITY, "OBIETTIVO_STUDIO")
+        assert 'Chimica' in system                      # docente: onorata
+        system_admin = _envelope(db, request, ADMIN_IDENTITY, "OBIETTIVO_STUDIO")
+        assert 'Chimica' in system_admin                # admin: onorata
+        system_researcher = _envelope(db, request, RESEARCHER_IDENTITY, "OBIETTIVO_STUDIO")
+        assert 'Chimica' in system_researcher           # ricercatore: onorata
+        system_student = _envelope(db, request, STUDENT_IDENTITY, "OBIETTIVO_STUDIO")
+        assert 'Chimica' not in system_student          # studente: default
+        assert 'Imparo da studente' in system_student
 
 
 def test_classes_stay_inside_docenza_chat():
