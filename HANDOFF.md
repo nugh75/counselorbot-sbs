@@ -32,10 +32,20 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
       `/tmp/cb-mainbase` (main vecchio) con i test nuovi → fallimenti da disallineamento test/codice.
 
 ## Remaining (non bloccanti)
+- **Lotto 1A** (audit Area personale) in backlog su accordo esplicito (utenti di prova); da fare
+  prima dell'apertura a utenti reali (F02 Portfolio `setForm(null)`, guardia `draftTitle` in VisualTools).
+- **Lotto 4, ancora aperti**: F21 (bacheca), F26 (Tavolo).
+- Errore lint preesistente `NewDeckDialog.tsx:36` (setState sincrono in effect) e 14 warning —
+  già presenti prima di questo lavoro.
+- Backend: 4 test diagrammi/icone, 2 OCR locali, smoke `test_an_older_stage_of_the_map_can_be_drawn_again`
+  falliscono anche su main (ambiente locale, fuori piano).
+- Prima di eliminare la tabella `student_booklets`: escludere workspace personali e marcatori per
+  utente dalla pulizia log a 90 giorni (`_log_retention_loop`) — rischio preesistente.
+
+## Completati il 2026-09-26 (audit Area personale)
 - **Lotto 2 dell'audit Area personale applicato (2026-09-26)**: testata comune 0.3 su tutte le
   pagine dell'area (`/profilo/*` mega-pagina, azioni/carte/confronto, flashcard, pQBL). Piano
-  aggiornato. Lot 1A in backlog su accordo esplicito (utenti di prova); da fare prima dell'apertura
-  a utenti reali (F02 Portfolio `setForm(null)`, guardia `draftTitle` in VisualTools).
+  aggiornato.
 - **Lotto 3A residuo applicato (2026-09-26)**: creazione obiettivo con «Più dettagli ▾» (criteri,
   priorità, stato, condivisione ripiegati; titolo/motivazione/data in vista) e ponte
   «→ Collega a un obiettivo» dal Portfolio (inline, un obiettivo per volta, solo obiettivi attivi,
@@ -47,7 +57,7 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
   inattesa corretto); F04 — uscita dal gruppo con conferma inline che nomina il gruppo,
   conseguenze, busy ed errore locale; F25 — uploader pQBL allineato al backend (solo PDF,
   100 MB). Test: `tests/personal-error-states.test.mjs` 7/7.
-- **Lotto 4 avviato (2026-09-26) — Linea del tempo**: decisione `planned` = reintroduzione del
+- **Lotto 4, parte applicata (2026-09-26) — Linea del tempo, Carte, Flashcard, Confronto**: decisione `planned` = reintroduzione del
   campo «Cosa programmo» nell'editor della pagina unificata, visibile solo su tappe future o
   senza data (il contratto del campo è invariato; snapshot e PDF lo includono già).
   `TimelineTools.tsx` eliminato come dead code (unico uso era il ramo `personal` irraggiungibile
@@ -55,17 +65,10 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
   `window.prompt` nativi, nei mazzi/colonne di Carte e nei mazzi di Flashcard.
   **F24 applicato (2026-09-26)**: Confronto progressivo (Criteri/Confronto/Scelta solo con
   almeno un'alternativa, etichette di passo 1–4 in sei lingue).
-  Restano aperti in lotto 4: F21 (bacheca), F26 (Tavolo).
-- Errore lint preesistente `NewDeckDialog.tsx:36` (setState sincrono in effect) e 14 warning —
-  già presenti prima di questo lavoro.
-- Backend: 4 test diagrammi/icone, 2 OCR locali, smoke `test_an_older_stage_of_the_map_can_be_drawn_again`
-  falliscono anche su main (ambiente locale, fuori piano).
-- **Domanda di prodotto aperta**: il campo `planned` («Cosa programmo») non è più editabile nella
-  pagina unificata `/profilo/timeline` — l'editor `MilestoneEditor` non lo espone e il ramo `personal`
-  di `TimelineTools.tsx` (che lo aveva) è codice morto non raggiungibile. Il dato resta nel modello,
-  nel PDF e nelle snapshot. Da decidere: reintrodurre il campo o ripulire il ramo morto.
-- Prima di eliminare la tabella `student_booklets`: escludere workspace personali e marcatori per
-  utente dalla pulizia log a 90 giorni (`_log_retention_loop`) — rischio preesistente.
+- **Domanda di prodotto chiusa**: il campo `planned` («Cosa programmo») è di nuovo editabile nella
+  pagina unificata `/profilo/timeline` (tappe future o senza data); `TimelineTools.tsx` eliminato.
+- **Guida funzionalità riallineata**: `docs-counselorbot/funzionalita-counselorbot.md` aggiornata
+  per lotti 2, 3A, 1B e 4 (parte applicata); `make guidance-refresh` eseguito.
 
 ## Resolutions
 - Test backend sempre da worktree/checkout con `DATABASE_URL` sul DB test `localhost:5435` (vedi CLAUDE.md/CONTEXT.md).
