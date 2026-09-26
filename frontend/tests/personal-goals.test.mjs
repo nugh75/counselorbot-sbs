@@ -171,8 +171,9 @@ test('personal tool shortcuts open the selected workspace', async () => {
         // Lotto 2: l'h1 è il nome breve approvato (0.1); «Bacheca delle azioni» resta nel workspace.
         await page.getByRole('heading', { name: 'Azioni', exact: true, level: 1 }).waitFor();
         await page.getByRole('heading', { name: 'Bacheca delle azioni', exact: true, level: 2 }).waitFor();
-        await page.locator('input[data-workspace-field][value^="Sessione breve"]').first().waitFor();
-        assert.ok(await page.locator('input').evaluateAll(inputs => inputs.some(input => input.value.startsWith('Sessione breve'))));
+        // F21: le card sono in lettura — il titolo è testo, non input.
+        await page.locator('article').filter({ hasText: 'Sessione breve' }).first().waitFor();
+        assert.ok(await page.locator('article').filter({ has: page.getByRole('button', { name: /^Modifica: Sessione breve/ }) }).first().isVisible());
         assert.deepEqual(errors, []);
     } finally { await context.close(); }
 });
@@ -373,10 +374,13 @@ test('a dated check reaches the board and needs a progress before done', async (
         await page.getByRole('button', { name: 'Chiudi', exact: true }).click();
         // The check, with its date, shows up on the action board…
         await page.goto(`${origin}/profilo/azioni`);
+        // F21: lettura di default — entra in modifica per i campi del controllo.
+        const cardByTitle = page.locator('article').filter({ hasText: 'Ripasso capitoli 1-3' }).first();
+        await cardByTitle.getByRole('button', { name: 'Modifica: Ripasso capitoli 1-3' }).click();
+        // In modifica il titolo è valore di input: la card si ri-ancora a quello.
         const card = page.locator('article').filter({ has: page.locator('input[value="Ripasso capitoli 1-3"]') }).first();
         await card.waitFor();
         const move = card.getByLabel(/Sposta/);
-        await card.locator('summary').click();
         // …and «Fatte» is disabled until a progress is chosen («a rilento» per the brief).
         assert.ok(await move.locator('option[value="done"]').getAttribute('disabled') !== null);
         await card.getByLabel('A che punto sono').selectOption({ label: 'In ritardo' });

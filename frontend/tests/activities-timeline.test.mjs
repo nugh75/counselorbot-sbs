@@ -47,9 +47,12 @@ for (const width of [1440, 390]) {
             if (!(await titleInput.isVisible())) await addSummary.click();
             await titleInput.fill(`Sessione di studio ${stamp} ${width}`);
             await page.getByRole('button', { name: 'Aggiungi azione', exact: true }).click();
-            await page.locator('input[value="Sessione di studio ' + stamp + ' ' + width + '"]').first().waitFor();
+            // F21: la card nasce in lettura; la modifica è esplicita.
+            const cardByTitle = page.locator('article').filter({ hasText: `Sessione di studio ${stamp} ${width}` }).first();
+            await cardByTitle.getByRole('button', { name: `Modifica: Sessione di studio ${stamp} ${width}` }).click();
+            // In modifica il titolo è il valore dell'input: la card si ancora a quello.
             const card = page.locator('article').filter({ has: page.locator(`input[value="Sessione di studio ${stamp} ${width}"]`) }).first();
-            await card.locator('summary').click();
+            await card.waitFor();
             await card.getByLabel('Quando', { exact: true }).selectOption('point');
             await card.getByLabel('Evento in un giorno').fill('2026-09-20');
             await page.getByRole('button', { name: 'Salva nell’Area personale' }).click();
