@@ -35,8 +35,11 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
 - **Lotto 1A** (audit Area personale) in backlog su accordo esplicito (utenti di prova); da fare
   prima dell'apertura a utenti reali (F02 Portfolio `setForm(null)`, guardia `draftTitle` in VisualTools).
 - **F21 applicato (2026-09-26)**: scheda azione leggibile di default con modifica esplicita
-  (Modifica → campi → Chiudi); il tavolo di sessione resta com'è. Solo F26 (Tavolo) resta
-  aperto nel lotto 4.
+  (Modifica → campi → Chiudi); il tavolo di sessione resta com'è.
+- **Sessione chiusa in produzione (2026-09-26)**. **F26 (Tavolo) è l'unico residuo del lotto 4**:
+  insieme a 1A (protezione bozze) e 5A/5B, va in backlog per la prossima sessione.
+  Verifica finale: frontend/api 200, unit 233/233, timeline 5/5, visual 32/0, error-states 7/7,
+  goals 19/21 (2 fallimenti preesistenti su main).
 - Errore lint preesistente `NewDeckDialog.tsx:36` (setState sincrono in effect) e 14 warning —
   già presenti prima di questo lavoro.
 - Backend: 4 test diagrammi/icone, 2 OCR locali, smoke `test_an_older_stage_of_the_map_can_be_drawn_again`
