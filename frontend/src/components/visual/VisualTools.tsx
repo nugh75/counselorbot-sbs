@@ -70,6 +70,8 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     // F23 (lotto 4): rinomina in linea per mazzi e colonne, al posto del prompt nativo.
     const [renamingDeckId, setRenamingDeckId] = useState<string | null>(null);
     const [renamingColumnId, setRenamingColumnId] = useState<string | null>(null);
+    // F21 (lotto 4): scheda leggibile per default, modifica esplicita per card.
+    const [editingActionId, setEditingActionId] = useState<string | null>(null);
     const [history, setHistory] = useState<VisualWorkspace[]>([]);
     const [loaded, setLoaded] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -346,10 +348,18 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 <div className="space-y-3">{work.actions.filter(a => a.stage === stage).map(action => {
                                     const diary = /^\/profilo\/assegnazioni#assignment-\d+$/.test(action.source || '') ? work.timeline?.events.find(event => event.action_ids.includes(action.id)) : undefined;
                                     return <article key={action.id} id={personal ? `action-${action.id}` : undefined} tabIndex={personal ? -1 : undefined} className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-3">
+                                    {personal && editingActionId !== action.id ? <>
+                                        <h4 className="break-words font-semibold text-slate-900">{action.kind === 'check' && <span className="mr-1 font-semibold" aria-hidden="true">◷</span>}{action.title}</h4>
+                                        <p className="mt-1 text-xs text-slate-500">{l(action.stage)}{action.kind && action.kind !== 'activity' ? ` · ${l(action.kind)}` : ''}</p>
+                                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                                            <Button type="button" variant="secondary" className="min-h-11 gap-2 px-3" aria-label={`${l('editAction')}: ${action.title}`} onClick={() => setEditingActionId(action.id)}><Pencil className="h-4 w-4" aria-hidden="true" />{l('editAction')}</Button>
+                                            {removeButton(action.title, () => edit(removeAction(work, action.id)))}
+                                        </div>
+                                    </> : <>
                                     <label className="block text-sm">{action.kind === 'check' && <span className="mr-1 font-semibold" aria-hidden="true">◷</span>}{l('titleField')}<input data-workspace-field required maxLength={160} value={action.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, title: e.target.value } : a) })} /></label>
                                     {personal && <ActionDateSummary action={action} locale={locale} />}
                                     <label className="mt-3 block text-sm">{l('move')}<select id={`${id}-action-${action.id}`} aria-label={`${l('move')}: ${action.title}`} value={action.stage} className={`${inputClass} mt-1 min-h-[44px]`} onChange={e => { edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, stage: e.target.value as ActionStage } : a) }); focusMoved(`${id}-action-${action.id}`); }}>{stages.map(s => <option key={s} value={s} disabled={s === 'done' && action.kind === 'check' && !action.progress}>{l(s)}</option>)}</select></label>{action.kind === 'check' && !action.progress && <p role="status" className="mt-1 text-xs text-slate-500">{l('checkNeedsProgress')}</p>}
-                                    <details className="mt-2"><summary className="min-h-[44px] cursor-pointer py-3 text-sm font-medium text-indigo-700">{l('detail')} · {action.kind === 'check' ? l('observe') : l('reflection')}</summary>
+                                    <details open={personal && editingActionId === action.id ? true : undefined} className="mt-2"><summary className="min-h-[44px] cursor-pointer py-3 text-sm font-medium text-indigo-700">{l('detail')} · {action.kind === 'check' ? l('observe') : l('reflection')}</summary>
                                         {action.kind === 'check' ? <>
                                             <label className="block text-sm">{l('progress')}<select className={`${inputClass} mt-1`} value={action.progress || ''} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, progress: (e.target.value || null) as 'on_track' | 'slow' | 'stuck' | null } : a) })}><option value="">—</option>{(['on_track', 'slow', 'stuck'] as const).map(progress => <option key={progress} value={progress}>{l(progress)}</option>)}</select></label>
                                             <label className="mt-2 block text-sm">{l('observe')}<textarea value={action.reflection} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>
@@ -359,8 +369,10 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                         <label className="block text-sm">{l('detail')}<textarea value={action.detail} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, detail: e.target.value } : a) })} /></label>
                                         {diary ? <p className="mt-2 py-2 text-sm text-slate-600">{action.kind === 'check' ? l('observe') : l('reflection')} · {l('timeline')}</p> : action.kind === 'check' ? null : <label className="mt-2 block text-sm">{l('reflection')}<textarea value={action.reflection} maxLength={1000} rows={3} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, reflection: e.target.value } : a) })} /></label>}
                                         <p className="mt-2 break-words text-xs text-slate-500">{l('source')}: <AssignmentSource source={action.source || l('personal')} lang={locale} linked={personal} /></p>
-                                        {removeButton(action.title, () => edit(removeAction(work, action.id)))}
                                     </details>
+                                    {personal && <div className="mt-2 flex flex-wrap items-center gap-2"><Button type="button" variant="secondary" className="min-h-11 gap-2 px-3" onClick={() => setEditingActionId(null)}>{l('close')}</Button></div>}
+                                    </>}
+                                    {!personal && removeButton(action.title, () => edit(removeAction(work, action.id)))}
                                 </article>; })}</div>
                             </section>)}</div>
                         </>}
