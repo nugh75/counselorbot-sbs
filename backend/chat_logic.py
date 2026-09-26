@@ -15,8 +15,8 @@ from fastapi import HTTPException
 from . import models
 from .student_context import LEARNER_PROFILE_LABELS
 from .teacher_context import class_context_for_student, teacher_groups_context, teacher_notebook_context
-from . import database
-from . import prompt_config
+from . import database, prompt_config
+from . import auth
 from .anonymous_codes import code_for_identity
 from .i18n_fields import localized
 from .ai_service import AIService
@@ -56,6 +56,11 @@ from .prompt_config import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Taccuino nel contesto, default per strumento: la docenza parla di se come
+# insegnante, tutto il resto del discente. Il docente puo' cambiare a mano dal
+# popover Opzioni (request.notebook_context), il default resta per tutti.
+DEFAULT_NOTEBOOK_CONTEXT: dict[str, str] = {"OBIETTIVO_DOCENZA": "teacher"}
 
 
 async def _memory_cleanup_loop(interval_seconds: int = 600):
@@ -2795,11 +2800,29 @@ def build_context_envelope(
     # --- [PROFILE] modello discente (auto-dichiarato) + PUNTEGGI (riferimento) ---
     username_for_context = identity.get("username", "") if identity else ""
     from .goals import goals_context
+    # Quale taccuino entra nel contesto: la scelta del docente (notebook_context
+    # nella richiesta) vale solo se ha davvero il ruolo docente, riverificato
+    # qui a ogni turno con lo stesso guard dell'API del taccuino (
+    # get_current_plan_manager): un cambio di ruolo esce dal contesto senza
+    # rifare nulla. Per tutti gli altri vale il default per strumento.
+    user_is_teacher = auth.is_teacher(identity.get("groups")) if identity else False
+    if user_is_teacher and request.notebook_context in ("teacher", "student", "none"):
+        notebook_mode = request.notebook_context
+    else:
+        notebook_mode = DEFAULT_NOTEBOOK_CONTEXT.get(questionnaire_type, "student")
     is_docenza_chat = questionnaire_type == "OBIETTIVO_DOCENZA"
-    if is_docenza_chat:
-        # Chat docenza: niente taccuino/portfolio/obiettivi dello studente
+    is_teacher_notebook = notebook_mode == "teacher"
+    if is_teacher_notebook:
+        # Contesto docente: niente taccuino/portfolio/obiettivi dello studente
         # (che per il docente sono di un'altra persona, se esistono). Al loro
         # posto taccuino del docente e classi scelte per la conversazione.
+        goal_context = ""
+        profile_context = ""
+        portfolio_context = ""
+        class_context = ""
+    elif notebook_mode == "none":
+        # Profilo svuotato di proposito: il resto dell'envelope (history,
+        # knowledge, skills...) non cambia.
         goal_context = ""
         profile_context = ""
         portfolio_context = ""
@@ -2809,7 +2832,8 @@ def build_context_envelope(
         profile_context = _learner_profile_context(db, username_for_context) if include_profile else ""
         portfolio_context = _portfolio_context(db, username_for_context) if include_profile else ""
         # Contesto classe: testo approvato dal docente, condiviso solo dove
-        # lui l'ha attivato. Fuori da Idea, che costruisce il proprio contesto.
+        # lui l'ha attivato. Fuori da Idea, che costruisce il proprio contesto,
+        # e da ogni turno che non usa il taccuino dello studente.
         class_context = (
             class_context_for_student(db, username_for_context)
             if include_profile and questionnaire_type != IDEA_INSTRUMENT
@@ -2831,15 +2855,16 @@ def build_context_envelope(
     else:
         system_prompt_scores = ""
     profile_block = "\n\n".join(s for s in (profile_context, portfolio_context, goal_context, system_prompt_scores) if s)
-    if is_docenza_chat:
+    if is_teacher_notebook:
         # Sostituzione del blocco discente con quello docente, al posto giusto
         # dell'envelope: stesso slot [PROFILE], punteggi e portfolio restano
-        # fuori di proposito. group_ids e' riverificato a ogni turno: una
-        # condivisione revocata esce dal contesto senza rifare la selezione.
+        # fuori di proposito. Le classi restano legate alla chat docenza:
+        # group_ids e' riverificato a ogni turno, una condivisione revocata
+        # esce dal contesto senza rifare la selezione.
         profile_block = "\n\n".join(
             s for s in (
                 teacher_notebook_context(db, username_for_context),
-                teacher_groups_context(db, username_for_context, getattr(request, "group_ids", None)),
+                teacher_groups_context(db, username_for_context, getattr(request, "group_ids", None)) if is_docenza_chat else "",
             ) if s
         )
     if components is not None:
