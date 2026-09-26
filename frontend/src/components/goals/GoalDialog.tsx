@@ -13,9 +13,6 @@ import { GoalReviewStep } from './GoalReviewStep';
 import { MethodPicker } from './MethodPicker';
 import { Field, GoalIssue, input, resourceLabel } from './GoalUI';
 
-// D1 flips this when GET /user/goals/{id}/pdf ships.
-const PDF_READY = false;
-
 export type DialogTarget = ({ kind: 'edit'; id: number } | { kind: 'create'; parentId?: number; source?: CatalogEntry; origin?: GoalOrigin }) & { prefill?: { motivation?: string; title?: string; action?: string } };
 type Shared = { goals: PersonalGoal[]; groups: GoalGroup[]; onSaved: (row: PersonalGoal) => void; onCreated: (row: PersonalGoal) => void; onDeleted: () => void; onReload: () => void };
 type Props = Shared & { target: DialogTarget; saved: boolean; onTarget: (target: DialogTarget) => void; onClose: () => void };
@@ -251,7 +248,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-white p-4 sm:px-6">
             {goal && <Button type="button" variant="ghost" disabled={busy || dirty} onClick={() => void remove()}>{l('delete')}</Button>}
-            <div className="ml-auto flex gap-2">{goal && PDF_READY && <a className="inline-flex min-h-11 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700" href={`/api/user/goals/${goal.id}/pdf?lang=${lang}`} download>{l('downloadPath')}</a>}<Button type="button" variant="secondary" onClick={onRequestClose}>{l('cancel')}</Button><Button type="submit" form="goal-dialog-form" disabled={busy || (goal ? !fieldsDirty || otherDraft : !form.title.trim())}>{l('save')}</Button></div>
+            <div className="ml-auto flex gap-2">{goal && <a className="inline-flex min-h-11 items-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700" href={`/api/user/goals/${goal.id}/pdf?lang=${lang}`} download>{l('downloadPath')}</a>}<Button type="button" variant="secondary" onClick={onRequestClose}>{l('cancel')}</Button><Button type="submit" form="goal-dialog-form" disabled={busy || (goal ? !fieldsDirty || otherDraft : !form.title.trim())}>{l('save')}</Button></div>
         </div>
     </>;
 }
