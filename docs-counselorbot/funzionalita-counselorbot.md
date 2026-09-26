@@ -149,7 +149,7 @@ senza data; un feedback è indicato come disponibile, non come non letto.
 Il riepilogo porta al lavoro preciso, conserva i dati precedenti in caso di errore
 e offre Riprova; il caricamento non blocca i collegamenti agli strumenti.
 
-Seguono cinque gruppi sempre aperti: **Il mio percorso**, **Conoscermi e riflettere**,
+Seguono cinque gruppi sempre aperti: **Conoscermi e riflettere**, **Il mio percorso**,
 **Studiare e ragionare**, **I miei lavori**, **Persone e supporto**. Le 16 destinazioni
 hanno immagini già presenti, nome e descrizione, su due colonne desktop e una mobile.
 Cambiamenti è autonomo accanto a Taccuino e Risultati; Portfolio resta nel gruppo
