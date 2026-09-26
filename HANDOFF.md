@@ -47,6 +47,12 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
   inattesa corretto); F04 — uscita dal gruppo con conferma inline che nomina il gruppo,
   conseguenze, busy ed errore locale; F25 — uploader pQBL allineato al backend (solo PDF,
   100 MB). Test: `tests/personal-error-states.test.mjs` 7/7.
+- **Lotto 4 avviato (2026-09-26) — Linea del tempo**: decisione `planned` = reintroduzione del
+  campo «Cosa programmo» nell'editor della pagina unificata, visibile solo su tappe future o
+  senza data (il contratto del campo è invariato; snapshot e PDF lo includono già).
+  `TimelineTools.tsx` eliminato come dead code (unico uso era il ramo `personal` irraggiungibile
+  dal lotto attività-timeline; nessun riferimento nei test). Restano aperti in lotto 4:
+  F23 (rinomine `window.prompt` in Carte/Flashcard), F21 (bacheca), F24 (Confronto), F26 (Tavolo).
 - Errore lint preesistente `NewDeckDialog.tsx:36` (setState sincrono in effect) e 14 warning —
   già presenti prima di questo lavoro.
 - Backend: 4 test diagrammi/icone, 2 OCR locali, smoke `test_an_older_stage_of_the_map_can_be_drawn_again`

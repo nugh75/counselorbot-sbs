@@ -14,7 +14,6 @@ import { NewDeckDialog } from './NewDeckDialog';
 import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, cardColumnsOf, cardColumnLabel, renameCardColumn, removeCardColumn, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, cardsInDeck, type ActionStage, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
 import { validTimelineDates } from '@/lib/timeline-dates';
 import { BUILTIN_CARD_IMAGES, tavoloImageUrl } from '@/lib/tavolo-images';
-import { TimelineTools } from './TimelineTools';
 import { ActionDateFields, ActionDateSummary } from './ActionDates';
 
 export type WorkTab = 'board' | 'comparison' | 'cards' | 'timeline';
@@ -327,7 +326,6 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 }}><ArrowRight className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                             </details>
                         </section>}
-                        {tab === 'timeline' && personal && <TimelineTools personal sessionId={sessionId} locale={locale} work={work} edit={edit} save={save} selected={timelineSelection} select={setTimelineSelection} focusEvent={focusEvent || request?.eventId} />}
                         {tab === 'board' && <>
                             <details open={!work.actions.length || Boolean(draftTitle) || createOpen} onToggle={event => { if (!event.currentTarget.open) setCreateOpen(false); }} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addAction')}</summary>
                             <form className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!draftTitle.trim() || draftTitle.length > 160 || work.actions.length >= (personal ? Infinity : 30)) return;

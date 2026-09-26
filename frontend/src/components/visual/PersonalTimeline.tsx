@@ -18,7 +18,7 @@ import { TimelineCalendar } from './TimelineCalendar';
 import { TimelineDateFields } from './TimelineDateFields';
 import { InstitutionTimelineDates } from './InstitutionTimelineDates';
 import { ExperienceReview } from './ExperienceReview';
-import { datePeriod, localToday, validTimelineDates, type TimelineDates } from '@/lib/timeline-dates';
+import { datePeriod, eventDates, localToday, validTimelineDates, type TimelineDates } from '@/lib/timeline-dates';
 import { filterItems, splitByToday, timelineItems, type TimelineItem, type TimelineItemKind } from '@/lib/timeline-items';
 import { TIMELINE_GLYPHS, timelineGlyph } from '@/lib/timeline-legend';
 import type { SavedWorkspace, TimelineEvent, VisualWorkspace } from '@/lib/visual-tools';
@@ -336,6 +336,14 @@ function MilestoneEditor({ event, locale, open, onOpen, onPatch, onRemove, onSav
                 <label className="block text-sm">{l('eventTitle')}<input data-workspace-field required maxLength={160} className={`${field} font-semibold`} value={event.title} onChange={e => onPatch({ title: e.target.value })} /></label>
                 <TimelineDateFields value={event} locale={locale} legacyPeriod={event.period} onChange={value => onPatch({ ...value, period: datePeriod(value) || event.period })} />
                 <label className="block text-sm">{l('symbol')}<select className={field} value={event.symbol} onChange={e => onPatch({ symbol: e.target.value as TimelineEvent['symbol'] })}>{(['milestone', 'study', 'work', 'change'] as const).map(key => <option key={key} value={key}>{l(key)}</option>)}</select></label>
+                {/* F22/lotto 4: le intenzioni tornano distinte dal diario, come da
+                    contratto del campo `planned` — solo su tappe future o senza data. */}
+                {(() => {
+                    const dates = eventDates(event);
+                    const undated = !dates.date_mode || (!dates.start_date && !dates.end_date);
+                    const future = undated || (dates.end_date ?? dates.start_date)! >= localToday();
+                    return future && <label className="block text-sm">{l('planned')}<textarea aria-label={l('planned')} rows={2} maxLength={1000} className={field} value={event.planned || ''} onChange={e => onPatch({ planned: e.target.value })} /></label>;
+                })()}
                 <label className="block text-sm">{l('diary')}<textarea aria-label={l('diary')} rows={2} maxLength={1000} className={field} value={event.reflection} onChange={e => onPatch({ reflection: e.target.value })} /></label>
                 {event.tense === 'past' && <ExperienceReview event={event} locale={locale} onPatch={review => onPatch({ review })} />}
                 <div className="flex flex-wrap gap-2">
