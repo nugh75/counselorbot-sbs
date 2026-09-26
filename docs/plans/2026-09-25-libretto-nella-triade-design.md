@@ -1,6 +1,6 @@
 # Il libretto confluisce nella triade: design
 
-Data: 2026-09-25 · Branch: `feature/libretto-triade` · Stato: in revisione utente
+Data: 2026-09-25 · Branch: `feature/libretto-triade` · Stato: implementato (2026-09-26, lotti A–D)
 
 Il libretto (`StudentBooklet`, `/profilo/libretto`) viene eliminato. Ogni sua
 domanda passa in una sezione che esiste già o che viene estesa, e gli obiettivi
