@@ -7,6 +7,7 @@ import { learningText } from '@/lib/i18n-assignment-work';
 import { apiFetch } from '@/lib/auth';
 import { fetchInstitutions, type Institution } from '@/lib/referrals-api';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
+import { GroupAssignments } from '../teacher/GroupAssignments';
 
 interface StudentGroup {
     id: number;
@@ -809,6 +810,8 @@ export function GroupsPanel() {
                         {openStudentsId === group.id && (
                             <PlanStudentsPanel base={`/api/admin/groups/${group.id}`} withNotes />
                         )}
+
+                        <GroupAssignments groupName={group.name} />
                     </section>
                 ))}
             </div>

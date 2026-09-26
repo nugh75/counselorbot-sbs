@@ -6,7 +6,9 @@ import { assignmentText } from '@/lib/i18n-assignments';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { AssignmentWork, AssignmentSubmissions } from './AssignmentWork';
 
-interface Assignment {
+// F31: l'interfaccia è esportata per il blocco "Assegnazioni della classe"
+// dentro la scheda gruppo di /docente/classi (GroupAssignments).
+export interface Assignment {
     intent?: 'proposal' | 'requested'; due_date?: string | null; response_prompt?: string;
     id: number; author_name: string; group_name: string; source_kind: 'goal' | 'strategy' | 'reading';
     recipient_username?: string | null; recipient_count?: number; instructions: string; created_at: string; revoked_at: string | null;
