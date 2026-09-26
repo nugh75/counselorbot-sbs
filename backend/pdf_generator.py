@@ -1240,8 +1240,9 @@ def generate_goal_path_pdf(goal: dict, parents: list[str], children: list[dict],
 
     _section_heading(pdf, t["criteria"], content_w)
     _path_lines(pdf, [goal["criteria"]] if (goal.get("criteria") or "").strip() else [], content_w)
-    # Il vecchio campo riflessione degli obiettivi aperti (spec § 8.6).
-    _path_field(pdf, t["note"], goal.get("reflection") or "", content_w)
+    # Il vecchio campo riflessione (spec § 8.6): con un bilancio è già in «Cosa ho capito».
+    if not goal.get("reviews"):
+        _path_field(pdf, t["note"], goal.get("reflection") or "", content_w)
 
     _section_heading(pdf, t["method"], content_w)
     _path_lines(pdf, [f"- {m['title']} ({t['certified'] if m['kind'] == 'certified' else t['own']})"
