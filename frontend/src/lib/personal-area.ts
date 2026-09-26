@@ -2,7 +2,7 @@ import type { PersonalGoal } from './goals';
 
 export const personalAreaGroups = [
     { id: 'journey', slugs: ['obiettivi', 'azioni', 'timeline'] },
-    { id: 'reflection', slugs: ['taccuino', 'libretto', 'cambiamenti', 'compilazioni'] },
+    { id: 'reflection', slugs: ['taccuino', 'cambiamenti', 'compilazioni'] },
     { id: 'study', slugs: ['pqbl', 'flashcard', 'carte', 'confronto', 'tavolo'] },
     { id: 'works', slugs: ['portfolio'] },
     { id: 'support', slugs: ['assegnazioni', 'classi', 'orientamento', 'telegram'] },
@@ -13,7 +13,6 @@ export const personalAreaImages = {
     azioni: '/images/platform/bacheca-azioni.png',
     timeline: '/images/platform/linea-del-tempo.png',
     taccuino: '/images/platform/su-di-me.png',
-    libretto: '/images/platform/libretto.png',
     cambiamenti: '/images/cards/self_reflection.png',
     compilazioni: '/images/platform/compilazioni.png',
     pqbl: '/images/intro/practice.png',

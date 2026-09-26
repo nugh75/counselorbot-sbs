@@ -6,10 +6,10 @@ import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 
 /**
- * Selettore a fattori condiviso da Libretto (StudentBookletCard) e «La mia
- * lettura» (ResultReadingCard): una riga per fattore o, per gli strumenti
- * senza dimensioni (tipi evento, SAVICKAS), un campo di testo libero.
- * Il valore è la stringa «CODICE - Etichetta», la stessa del libretto.
+ * Selettore a fattori di «La mia lettura» (ResultReadingCard): una riga per
+ * fattore o, per gli strumenti senza dimensioni (tipi evento, SAVICKAS), un
+ * campo di testo libero. Il valore è la stringa «CODICE - Etichetta», la stessa
+ * che la migrazione porta dal vecchio libretto.
  */
 export function FactorMultiSelect({ label, value, onChange, questionnaireType }: {
     label: string;

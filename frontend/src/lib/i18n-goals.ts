@@ -1,7 +1,6 @@
 // Complete six-language labels; authored catalog content keeps its declared language.
 const text = {
     discard: ['Ci sono modifiche non salvate. Vuoi lasciarle e continuare?', 'There are unsaved changes. Discard them and continue?', 'Hay cambios sin guardar. ¿Descartarlos y continuar?', 'Des modifications ne sont pas enregistrées. Les abandonner et continuer ?', 'Es gibt ungespeicherte Änderungen. Verwerfen und fortfahren?', 'Det finns osparade ändringar. Vill du lämna dem och fortsätta?'],
-    journey: ['Il mio percorso', 'My journey', 'Mi recorrido', 'Mon parcours', 'Mein Weg', 'Min väg'],
     goals: ['I miei obiettivi', 'My goals', 'Mis objetivos', 'Mes objectifs', 'Meine Ziele', 'Mina mål'],
     intro: ['Scegli cosa vuoi coltivare e collega azioni, riflessioni e lavori.', 'Choose what to work towards and connect actions, reflections and work.', 'Elige qué desarrollar y conecta acciones, reflexiones y trabajos.', 'Choisis ce que tu veux développer et relie actions, réflexions et travaux.', 'Wähle, woran du arbeiten möchtest, und verbinde Aktionen, Reflexionen und Arbeiten.', 'Välj vad du vill utveckla och koppla åtgärder, reflektioner och arbeten.'],
     choose: ['Scegli dal catalogo', 'Choose from the catalog', 'Elegir del catálogo', 'Choisir dans le catalogue', 'Aus dem Katalog wählen', 'Välj från katalogen'],
@@ -77,8 +76,6 @@ const text = {
     explore: ['Studiare, esplorare e agire', 'Study, explore and act', 'Estudiar, explorar y actuar', 'Étudier, explorer et agir', 'Lernen, erkunden und handeln', 'Studera, utforska och agera'],
     document: ['Documentare il percorso', 'Document my journey', 'Documentar el recorrido', 'Documenter le parcours', 'Meinen Weg dokumentieren', 'Dokumentera min väg'],
     support: ['Persone e supporto', 'People and support', 'Personas y apoyo', 'Personnes et soutien', 'Menschen und Unterstützung', 'Människor och stöd'],
-    related: ['Obiettivi collegati', 'Related goals', 'Objetivos vinculados', 'Objectifs liés', 'Verknüpfte Ziele', 'Länkade mål'],
-    manage: ['Gestisci obiettivi e collegamenti', 'Manage goals and links', 'Gestionar objetivos y vínculos', 'Gérer les objectifs et liens', 'Ziele und Verknüpfungen verwalten', 'Hantera mål och länkar'],
     login: ['Accedi per usare il tuo percorso personale.', 'Sign in to use your personal journey.', 'Inicia sesión para usar tu recorrido.', 'Connecte-toi pour utiliser ton parcours.', 'Melde dich an, um deinen Weg zu nutzen.', 'Logga in för att använda din personliga väg.'],
     doneHelp: ['Le azioni svolte documentano il percorso. Sei tu a decidere quando rivedere o concludere l’obiettivo.', 'Completed actions document your journey. You decide when to review or complete the goal.', 'Las acciones documentan tu recorrido. Tú decides cuándo revisar o concluir el objetivo.', 'Les actions documentent ton parcours. Tu décides quand revoir ou conclure l’objectif.', 'Erledigte Aktionen dokumentieren deinen Weg. Du entscheidest, wann du das Ziel überprüfst oder abschließt.', 'Genomförda åtgärder dokumenterar din väg. Du avgör när målet ska ses över eller avslutas.'],
     servesTo: ['Serve a (perché?)', 'Serves (why?)', 'Sirve para (¿por qué?)', 'Sert à (pourquoi ?)', 'Dient zu (warum?)', 'Tjänar till (varför?)'],

@@ -30,13 +30,13 @@ class PersonalTransfer(StrictModel):
 
 
 def personal_context(db: Session, session_id: str, username: str, language: str = 'it') -> dict:
-    from .routes.survey import STUDENT_BOOKLET_TYPES
+    from .routes.survey import INSTRUMENT_TYPES
 
     questionnaire = session_questionnaire(db, session_id)
     if not questionnaire:
         log = db.query(models.Log).filter_by(session_id=session_id, username=username, action='chat_message').order_by(models.Log.id.desc()).first()
         questionnaire = log.questionnaire_type if log else None
-    if questionnaire not in STUDENT_BOOKLET_TYPES:
+    if questionnaire not in INSTRUMENT_TYPES:
         questionnaire = None
     notebook = _latest_revision(db, username)
     labels = LABELS.get(language[:2], LABELS['en'])
