@@ -78,8 +78,7 @@ for (const width of [1440, 390]) {
 test('teacher publishes group content and submits common proposals for review', async () => {
     const { page, context, errors } = await fixture({ username: 'teacher-browser' });
     try {
-        await page.goto(`${origin}/docente`);
-        await page.locator('summary').filter({ hasText: /^Catalogo obiettivi$/ }).click();
+        await page.goto(`${origin}/docente/catalogo-obiettivi`);
         await page.screenshot({ path: '/tmp/personal-goals-teacher-loading.png', fullPage: true });
         await page.getByRole('button', { name: 'Nuova proposta', exact: true }).click();
         const proposal = `Preparare una presentazione insieme ${Math.random().toString(36).slice(2,8)}`;
@@ -147,8 +146,7 @@ test('stale edits preserve the draft and navigation requires an explicit choice'
 test('administrator can publish a common proposal from the review queue', async () => {
     const { page, context, errors } = await fixture({ username: 'admin-browser' });
     try {
-        await page.goto(`${origin}/docente`);
-        await page.locator('summary').filter({ hasText: /^Catalogo obiettivi$/ }).click();
+        await page.goto(`${origin}/docente/catalogo-obiettivi`);
         const pending = page.getByRole('article').filter({ hasText: 'In revisione · Catalogo comune' });
         await pending.getByRole('button', { name: 'Modifica', exact: true }).click();
         const adminProposal = `Proposta comune approvata ${Math.random().toString(36).slice(2,8)}`;
