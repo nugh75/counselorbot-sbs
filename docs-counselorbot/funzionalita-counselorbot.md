@@ -220,8 +220,15 @@ della persona.
 
 ## Docenti, ricercatori e amministrazione
 
-`/docente` gestisce gruppi/classi, contesto classe, somministrazioni, cataloghi e
-assegnazioni. Il Taccuino del docente descrive il ruolo professionale ed entra nel
+`/docente` è una panoramica illustrata, come l’Area personale: in alto il percorso
+«Obiettivi per la mia classe», poi tre gruppi (**Classe e assegnazioni**,
+**Cataloghi**, **Somministrazioni e ricerca**) con una voce per ogni pagina e, in
+fondo, il Taccuino del docente. Ogni voce apre una pagina dedicata con il ritorno
+all’Area docenti: `/docente/classi` (gruppi e classi gestiti, contesto classe),
+`/docente/assegnazioni`, `/docente/catalogo-obiettivi`, `/docente/strategie`,
+`/docente/materiali`, `/docente/orientamento` (solo docenti) e
+`/docente/somministrazioni`. Le pagine applicano lo stesso controllo di accesso
+della panoramica. Il Taccuino del docente descrive il ruolo professionale ed entra nel
 percorso OBIETTIVO_DOCENZA, distinto dal Taccuino personale. I docenti pubblicano
 strategie e materiali direttamente; pubblicano obiettivi nei propri gruppi, mentre
 il catalogo comune richiede revisione amministrativa. Possono assegnare a una persona
