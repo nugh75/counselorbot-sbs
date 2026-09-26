@@ -359,7 +359,7 @@ def seed_goals(db):
     """Idempotent, editable seed; ON CONFLICT supports concurrent startup workers."""
     from sqlalchemy.dialects.postgresql import insert
     entries = [
-        ('study', 'Organizzare meglio lo studio', 'Studio', 'Sperimenta un modo sostenibile di pianificare e rivedere lo studio.', 'Quale cambiamento concreto vuoi osservare?', 'Scegli una strategia nel Libretto; pianifica una piccola attività; racconta come è andata nel diario.'),
+        ('study', 'Organizzare meglio lo studio', 'Studio', 'Sperimenta un modo sostenibile di pianificare e rivedere lo studio.', 'Quale cambiamento concreto vuoi osservare?', 'Scegli una strategia per il metodo; pianifica una piccola azione; racconta com’è andata in un controllo.'),
         ('procrastination', 'Cominciare senza rimandare', 'Autoregolazione', 'Esplora cosa rende difficile iniziare e prova un primo passo.', 'In quali situazioni riesci a iniziare più facilmente?', 'Individua una difficoltà nel Taccuino; scegli un’attività breve; registra cosa ti ha aiutato.'),
         ('education', 'Confrontare percorsi formativi', 'Scelte', 'Raccogli informazioni e chiarisci i criteri che contano per te.', 'Quali informazioni ti servono per una scelta motivata?', 'Usa il confronto delle alternative; consulta i servizi di orientamento; annota domande e appuntamenti.'),
         ('career', 'Preparare una scelta professionale', 'Lavoro', 'Collega interessi, esperienze e possibilità professionali.', 'Come riconoscerai una scelta coerente con ciò che cerchi?', 'Rileggi Taccuino e Portfolio; confronta possibilità; pianifica un incontro o una ricerca.'),
