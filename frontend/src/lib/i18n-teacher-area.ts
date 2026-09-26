@@ -122,7 +122,7 @@ const descriptions = {
     ],
 } satisfies Record<TeacherAreaSlug, Localized>;
 
-const languageIndex = (lang: Lang) => Math.max(0, languages.indexOf(lang) === -1 ? 0 : languages.indexOf(lang));
+const languageIndex = (lang: Lang) => Math.max(0, languages.indexOf(lang));
 export const teacherAreaText = (lang: Lang, key: keyof typeof labels) => labels[key][languageIndex(lang)];
 export const teacherAreaName = (lang: Lang, slug: TeacherAreaSlug) => names[slug][languageIndex(lang)];
 export const teacherAreaDescription = (lang: Lang, slug: TeacherAreaSlug) => descriptions[slug][languageIndex(lang)];
