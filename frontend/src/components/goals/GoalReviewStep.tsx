@@ -12,7 +12,7 @@ import type { DialogTarget } from './GoalDialog';
 type ReviewForm = { commitment: Commitment | null; outcome: Outcome | null; satisfaction: Satisfaction | null; obstacles: string; change: string; learned: string; next_step: string };
 
 /** Il Bilancio dentro il popup obiettivo (§7.4): chiude l'obiettivo e offre i ponti verso il «dopo». */
-export function GoalReviewStep({ goal, onDone, onCancel, onNavigate, onDirty }: { goal: PersonalGoal; onDone: (row: PersonalGoal) => void; onCancel: () => void; onNavigate: (target: DialogTarget) => void; onDirty: (dirty: boolean) => void }) {
+export function GoalReviewStep({ goal, onDone, onCancel, onNavigate, onDirty, onReload }: { goal: PersonalGoal; onDone: (row: PersonalGoal) => void; onCancel: () => void; onNavigate: (target: DialogTarget) => void; onDirty: (dirty: boolean) => void; onReload: () => void }) {
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
     const [form, setForm] = useState<ReviewForm>({ commitment: null, outcome: null, satisfaction: null, obstacles: '', change: '', learned: '', next_step: '' });
     const [dirty, setDirty] = useState(false); const [done, setDone] = useState(false);
@@ -36,9 +36,10 @@ export function GoalReviewStep({ goal, onDone, onCancel, onNavigate, onDirty }: 
             {l((prefix + value) as GoalTextKey)}
         </label>)}
     </fieldset>;
+    // §10: 409 di revisione anche qui mostra «Ricarica» come nel resto del popup; la bozza resta (l'errore non azzera `done`).
     return <>
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:px-6">
-            <GoalIssue error={error} lang={lang} />
+            <GoalIssue error={error} lang={lang} retry={onReload} />
             {radios('reviewCommitment', 'review-commitment', form.commitment, ['full', 'enough', 'partial', 'none'], 'commitment_', value => change({ commitment: value as Commitment }))}
             {radios('reviewOutcome', 'review-outcome', form.outcome, ['reached', 'partial', 'not_reached', 'abandoned'], 'outcome_', value => change({ outcome: value as Outcome }))}
             {radios('reviewSatisfaction', 'review-satisfaction', form.satisfaction, ['much', 'enough', 'little', 'none'], 'satisfaction_', value => change({ satisfaction: value as Satisfaction }))}

@@ -100,7 +100,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     if (mode === 'review' && goal) {
         return <GoalReviewStep goal={held.current ?? goal} onDone={row => { held.current = row; }}
             onCancel={() => { flush(null); setMode('view'); }}
-            onNavigate={next => { flush(null); onNavigate(next); }} onDirty={onDirty} />;
+            onNavigate={next => { flush(null); onNavigate(next); }} onDirty={onDirty} onReload={onReload} />;
     }
 
     const byId = (id: number) => goals.find(row => row.id === id);
