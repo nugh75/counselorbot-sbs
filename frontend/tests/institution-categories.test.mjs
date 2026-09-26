@@ -136,8 +136,7 @@ for (const noNavigation of [false, true]) test(`unsaved form guards links, insti
     let accept = false; const dialogs = [];
     page.on('dialog', async dialog => { dialogs.push(dialog.message()); if (accept) await dialog.accept(); else await dialog.dismiss(); });
     try {
-        await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
-        await page.getByRole('link', { name: l('title'), exact: true }).click();
+        await page.goto(`${origin}/docente/orientamento`, { waitUntil: 'networkidle' });
         await page.getByRole('button', { name: l('new'), exact: true }).click();
         const name = page.getByLabel(`${l('name')} *`, { exact: true }); await name.fill('Bozza importante');
         await page.getByRole('combobox', { name: l('institution'), exact: true }).selectOption('2');

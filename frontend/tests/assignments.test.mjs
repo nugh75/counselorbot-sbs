@@ -43,18 +43,13 @@ for (const width of [1440, 390]) {
         const { page, context, errors } = await pageFor('teacher', width);
         const marker = `Indicazione browser ${width} ${Date.now().toString(36)}`;
         try {
-            await page.goto(`${origin}/docente`);
-            const catalogs = page.getByRole('region', { name: 'Cataloghi', exact: true });
-            await catalogs.getByRole('heading', { name: 'Cataloghi', exact: true }).waitFor();
-            assert.deepEqual(await catalogs.locator('summary').allTextContents(), ['Catalogo obiettivi', 'Strategie', 'Libri, film e altri materiali']);
             for (const scenario of [
-                { section: 'Catalogo obiettivi', title: 'Pianificare lo studio', group: 'Classe 3B', recipient: 'alice' },
-                { section: 'Strategie', title: 'Ripasso distribuito', group: 'Classe 3B', recipient: '' },
-                { section: 'Libri, film e altri materiali', title: 'Film per riflettere', group: 'Gruppo adulti', recipient: '' },
+                { path: '/docente/catalogo-obiettivi', title: 'Pianificare lo studio', group: 'Classe 3B', recipient: 'alice' },
+                { path: '/docente/strategie', title: 'Ripasso distribuito', group: 'Classe 3B', recipient: '' },
+                { path: '/docente/materiali', title: 'Film per riflettere', group: 'Gruppo adulti', recipient: '' },
             ]) {
-                const section = catalogs.locator('details').filter({ has: page.locator('summary').filter({ hasText: new RegExp(`^${scenario.section}$`) }) });
-                await section.locator('summary').click();
-                await section.getByRole('button', { name: 'Assegna', exact: true }).click();
+                await page.goto(`${origin}${scenario.path}`);
+                await page.getByRole('button', { name: 'Assegna', exact: true }).first().click();
                 const dialog = page.getByRole('dialog', { name: `Assegna: ${scenario.title}`, exact: true });
                 await dialog.getByLabel('Gruppo o classe', { exact: true }).selectOption({ label: scenario.group });
                 await dialog.getByLabel('Destinatario', { exact: true }).selectOption(scenario.recipient);
@@ -62,8 +57,7 @@ for (const width of [1440, 390]) {
                 assert.ok(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth), 'dialog fits the viewport');
                 await dialog.getByRole('button', { name: 'Conferma assegnazione' }).click();
                 await dialog.waitFor({ state: 'detached' });
-                await section.getByRole('status').filter({ hasText: 'Assegnazione inviata.' }).waitFor();
-                await section.locator('summary').click();
+                await page.getByRole('status').filter({ hasText: 'Assegnazione inviata.' }).waitFor();
             }
             const forAlice = (await received('alice')).filter(row => row.instructions === marker);
             const forBob = (await received('bob')).filter(row => row.instructions === marker);
@@ -74,8 +68,8 @@ for (const width of [1440, 390]) {
             const learner = await pageFor('alice', width);
             try {
                 await learner.page.goto(`${origin}/profilo`);
-                await learner.page.getByRole('link', { name: /Assegnazioni ricevute/ }).first().click();
-                await learner.page.getByRole('heading', { name: 'Assegnazioni ricevute', exact: true }).waitFor();
+                await learner.page.getByRole('link', { name: /Assegnazioni/ }).first().click();
+                await learner.page.getByRole('heading', { name: 'Assegnazioni', exact: true }).first().waitFor();
                 await learner.page.getByRole('heading', { name: 'Film per riflettere', exact: true }).first().waitFor();
                 // Lista breve (F27): il mittente compare aprendo il dettaglio.
                 assert.ok(await learner.page.getByRole('button', { name: 'Dettagli', exact: true }).count() >= 3);
@@ -86,7 +80,9 @@ for (const width of [1440, 390]) {
                 await learner.page.screenshot({ path: `/tmp/assignments-received-${width}.png`, fullPage: true });
                 assert.deepEqual(learner.errors, []);
             } finally { await learner.context.close(); }
+            await page.goto(`${origin}/docente/assegnazioni`);
             const sent = page.getByRole('region', { name: 'Assegnazioni effettuate', exact: true });
+            await sent.locator('article').filter({ hasText: marker }).first().waitFor();
             const film = sent.locator('article').filter({ hasText: marker }).filter({ has: page.getByRole('heading', { name: 'Film per riflettere' }) });
             page.once('dialog', dialog => dialog.accept());
             await film.getByRole('button', { name: 'Revoca assegnazione' }).click();
@@ -99,7 +95,7 @@ for (const width of [1440, 390]) {
     });
 }
 
-for (const [lang, heading] of [['en', 'Received assignments'], ['es', 'Asignaciones recibidas'], ['fr', 'Attributions reçues'], ['de', 'Erhaltene Zuweisungen'], ['sv', 'Mottagna tilldelningar']]) {
+for (const [lang, heading] of [['en', 'Assignments'], ['es', 'Actividades asignadas'], ['fr', 'Activités proposées'], ['de', 'Aufgaben'], ['sv', 'Tilldelade uppgifter']]) {
     test(`received assignments localized in ${lang}`, async () => {
         const { page, context, errors } = await pageFor('alice', 390, lang);
         try {
@@ -118,12 +114,9 @@ for (const width of [1440, 390]) {
         const marker = `Classe vuota ${width} ${Date.now().toString(36)}`;
         const username = `late-${width}`;
         try {
-            await page.goto(`${origin}/docente`);
-            const catalogs = page.getByRole('region', { name: 'Cataloghi', exact: true });
-            for (const sectionName of ['Strategie', 'Libri, film e altri materiali']) {
-                const section = catalogs.locator('details').filter({ has: page.locator('summary').filter({ hasText: new RegExp(`^${sectionName}$`) }) });
-                await section.locator('summary').click();
-                await section.getByRole('button', { name: 'Assegna', exact: true }).click();
+            for (const catalogPath of ['/docente/strategie', '/docente/materiali']) {
+                await page.goto(`${origin}${catalogPath}`);
+                await page.getByRole('button', { name: 'Assegna', exact: true }).first().click();
                 const dialog = page.getByRole('dialog');
                 await dialog.getByLabel('Gruppo o classe', { exact: true }).selectOption({ label: `Classe vuota ${width}` });
                 const recipient = dialog.getByLabel('Destinatario', { exact: true });
@@ -134,9 +127,9 @@ for (const width of [1440, 390]) {
                 assert.ok(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth));
                 await dialog.getByRole('button', { name: 'Conferma assegnazione' }).click();
                 await dialog.waitFor({ state: 'detached' });
-                await section.getByRole('status').filter({ hasText: 'Assegnazione inviata.' }).waitFor();
-                await section.locator('summary').click();
+                await page.getByRole('status').filter({ hasText: 'Assegnazione inviata.' }).waitFor();
             }
+            await page.goto(`${origin}/docente/assegnazioni`);
             const sent = page.getByRole('region', { name: 'Assegnazioni effettuate', exact: true });
             const deliveries = sent.locator('article').filter({ hasText: marker });
             await deliveries.nth(1).waitFor();
@@ -183,11 +176,8 @@ for (const width of [1440, 390]) {
         try {
             const goal = await call('/user/goals', 'alice', { title: `Obiettivo ${marker}`, motivation: 'Scelta personale' });
             const portfolio = await call('/user/portfolio', 'alice', { title: `Lavoro ${marker}`, description: 'Solo il testo scelto per la restituzione' });
-            await teacher.page.goto(`${origin}/docente`);
-            const catalogs = teacher.page.getByRole('region', { name: 'Cataloghi', exact: true });
-            const strategies = catalogs.locator('details').filter({ has: teacher.page.locator('summary').filter({ hasText: /^Strategie$/ }) });
-            await strategies.locator('summary').click();
-            await strategies.getByRole('button', { name: 'Assegna', exact: true }).click();
+            await teacher.page.goto(`${origin}/docente/strategie`);
+            await teacher.page.getByRole('button', { name: 'Assegna', exact: true }).first().click();
             const dialog = teacher.page.getByRole('dialog');
             await dialog.getByLabel('Gruppo o classe', { exact: true }).selectOption({ label: 'Classe 3B' });
             await dialog.getByLabel('Tipo di assegnazione').selectOption('requested');
@@ -198,6 +188,7 @@ for (const width of [1440, 390]) {
             await dialog.waitFor({ state: 'detached' });
             const assignment = (await call('/teacher/assignments', 'teacher')).find(row => row.instructions === marker);
             assert.equal(assignment.intent, 'requested');
+            await teacher.page.goto(`${origin}/docente/assegnazioni`);
             const teacherCard = teacher.page.locator(`#assignment-${assignment.id}`);
             await teacherCard.getByRole('button', { name: 'Restituzioni condivise', exact: true }).click();
             await teacherCard.getByText('Nessuna restituzione condivisa. Il lavoro personale non è visibile qui.').waitFor();
@@ -206,17 +197,18 @@ for (const width of [1440, 390]) {
             await studentCard.getByText('Racconta come hai provato la strategia', { exact: false }).waitFor();
             await studentCard.getByLabel('Quando provarla (facoltativo)').fill('2026-10-12');
             await studentCard.getByRole('button', { name: 'Pianifica nel mio percorso', exact: true }).click();
-            await studentCard.getByRole('link', { name: 'Apri la tappa nella Linea del tempo' }).waitFor();
+            // Dall'attività datata in poi (40c044c): il piano crea l'attività, non un evento duplicato.
+            await studentCard.getByRole('link', { name: 'Apri le mie attività' }).waitFor();
             await studentCard.getByLabel('Collega a un mio obiettivo (facoltativo)').selectOption(String(goal.id));
             await studentCard.getByRole('button', { name: 'Collega obiettivo', exact: true }).click();
             await studentCard.getByRole('status').filter({ hasText: 'Salvato.' }).waitFor();
             const linked = (await call('/user/goals', 'alice')).find(row => row.id === goal.id);
-            assert.deepEqual(linked.links.map(link => link.kind).sort(), ['action', 'event']);
+            assert.deepEqual(linked.links.map(link => link.kind).sort(), ['action']);
             await studentCard.getByRole('link', { name: goal.title, exact: true }).waitFor();
             await studentCard.getByLabel('Come è andata? Riflessione personale').fill(`Privata ${marker}`);
             if (width === 1440) {
                 const state = await call('/user/timeline', 'alice');
-                state.workspace.timeline.events.find(event => event.id === `assignment-${assignment.id}-event`).reflection = 'Modifica da un’altra scheda';
+                state.workspace.actions.find(action => action.id === `assignment-${assignment.id}`).reflection = 'Modifica da un’altra scheda';
                 const update = await fetch(`${api}/user/timeline`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-test-user': 'alice' },
                     body: JSON.stringify({ revision: state.revision, workspace: state.workspace }) });
                 assert.equal(update.status, 200, await update.text());
@@ -237,12 +229,11 @@ for (const width of [1440, 390]) {
             await studentCard.getByRole('status').filter({ hasText: 'Salvato.' }).waitFor();
             assert.deepEqual(await call(`/teacher/assignments/${assignment.id}/submissions`, 'teacher'), []);
             await studentCard.getByRole('link', { name: 'Apri le mie attività' }).click();
-            const activity = learner.page.locator('article').filter({ has: learner.page.locator(`[id$="-action-assignment-${assignment.id}"]`) });
-            await activity.locator('summary').click();
+            const activity = learner.page.locator(`#action-assignment-${assignment.id}`);
+            await activity.waitFor();
             assert.equal(await activity.getByLabel('Riflessione', { exact: true }).count(), 0, 'the activity reuses the diary reflection');
-            await activity.locator(`a[href="/profilo/timeline?event=assignment-${assignment.id}-event"]`).click();
-            await learner.page.waitForURL(`**/profilo/timeline?event=assignment-${assignment.id}-event`);
-            await learner.page.locator(`#timeline-assignment-${assignment.id}-event a[href="/profilo/assegnazioni#assignment-${assignment.id}"]`).click();
+            await learner.page.goto(`${origin}/profilo/assegnazioni#assignment-${assignment.id}`);
+            await studentCard.getByRole('button', { name: 'Lavora su questa assegnazione', exact: true }).click();
             await studentCard.getByLabel('Come è andata? Riflessione personale').waitFor();
             assert.equal(await studentCard.getByLabel('Come è andata? Riflessione personale').inputValue(), `Privata ${marker}`);
             await studentCard.locator('summary').filter({ hasText: /^Restituzione al docente$/ }).click();
@@ -264,9 +255,6 @@ for (const width of [1440, 390]) {
             assert.equal(await studentCard.getByLabel('Come è andata? Riflessione personale').inputValue(), `Privata ${marker}`);
             assert.ok(await learner.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             await studentCard.screenshot({ path: `/tmp/assignment-learning-${width}.png` });
-            await learner.page.goto(`${origin}/profilo`);
-            const journey = learner.page.getByRole('region', { name: 'Assegnazioni nel mio percorso' });
-            await journey.locator(`a[href="/profilo/assegnazioni#assignment-${assignment.id}"]`).waitFor();
             await learner.page.goto(`${origin}/profilo/assegnazioni#assignment-${assignment.id}`);
             await studentCard.getByRole('button', { name: 'Ritira la restituzione' }).waitFor();
             learner.page.once('dialog', dialog => dialog.accept());
