@@ -43,6 +43,7 @@ for (const width of [1440, 390]) {
             const goalTitle = `Studiare con un piano ${width} ${Math.random().toString(36).slice(2,8)}`;
             await page.getByLabel('Obiettivo', { exact: true }).fill(goalTitle);
             await page.getByLabel('Perché conta per me').fill('Voglio distribuire il lavoro.');
+            await page.getByText('Più dettagli').click();
             await page.getByLabel('Condividi il riepilogo con i docenti di').selectOption({ label: 'Gruppo di prova' });
             await page.getByRole('button', { name: 'Salva', exact: true }).click();
             await page.getByRole('dialog').getByRole('heading', { name: goalTitle, exact: true }).waitFor();
@@ -167,7 +168,9 @@ test('personal tool shortcuts open the selected workspace', async () => {
     try {
         await page.goto(`${origin}/profilo`);
         await page.getByRole('link', { name: 'Azioni', exact: true }).click();
-        await page.getByRole('heading', { name: 'Bacheca delle azioni', exact: true, level: 1 }).waitFor();
+        // Lotto 2: l'h1 è il nome breve approvato (0.1); «Bacheca delle azioni» resta nel workspace.
+        await page.getByRole('heading', { name: 'Azioni', exact: true, level: 1 }).waitFor();
+        await page.getByRole('heading', { name: 'Bacheca delle azioni', exact: true, level: 2 }).waitFor();
         await page.locator('input[data-workspace-field][value^="Sessione breve"]').first().waitFor();
         assert.ok(await page.locator('input').evaluateAll(inputs => inputs.some(input => input.value.startsWith('Sessione breve'))));
         assert.deepEqual(errors, []);
@@ -189,7 +192,7 @@ test('goals form a network with sub-goals, extra parents and inherited sharing',
     const create = async (title, share) => {
         await page.getByRole('button', { name: 'Scrivi il tuo obiettivo', exact: true }).click();
         await page.getByLabel('Obiettivo', { exact: true }).fill(title);
-        if (share) await page.getByLabel('Condividi il riepilogo con i docenti di').selectOption({ label: 'Gruppo di prova' });
+        if (share) { await page.getByText('Più dettagli').click(); await page.getByLabel('Condividi il riepilogo con i docenti di').selectOption({ label: 'Gruppo di prova' }); }
         await page.getByRole('button', { name: 'Salva', exact: true }).click();
         await page.getByRole('dialog').getByRole('heading', { name: title, exact: true }).waitFor();
         await page.getByRole('button', { name: 'Chiudi', exact: true }).click();
