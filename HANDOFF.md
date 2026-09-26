@@ -1,10 +1,10 @@
-# Handoff: Libretto nella triade — follow-up chiusi
-Data: 2026-09-26 | Sessione precedente: completamento lotti C–D, revisione finale, merge (PR #8) e deploy
+# Handoff: Audit Area personale — Lotti 1A, 1B, 2, 3A, 4, 5A completati; Risultati/Chat collassabili e Analisi Combinata autonoma
+Data: 2026-09-26 | Stato: Lotti 1A, 1B, 2, 3A, 4 e 5A completati e mergiati su main (PR #11, PR #12, PR #13, PR #14)
 
 ## Objective
-Il libretto (`StudentBooklet`, `/profilo/libretto`) è eliminato e le sue domande vivono in
-Compilazioni («La mia lettura»), Taccuino, Obiettivi (metodo, controlli, bilancio, origine, prove,
-PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in produzione.**
+Area personale: miglioramento UX, percorsi, accessibilità, gestione errori, unificazione testate e interazioni.
+Completati tutti i lotti previsti dal piano di modifica UX (1A, 1B, 2, 3A, 4, 5A), ad eccezione del lotto 5B (estensioni da concordare).
+Riordino dei gruppi all'ingresso con «Conoscermi e riflettere» prima de «Il mio percorso», scorporo di «Analisi combinata dei profili» come strumento autonomo in «Conoscermi e riflettere» e collasso del blocco risultato compilazione congiunto alla chat in «Risultati e conversazioni».
 
 ## Follow-up della sessione 2026-09-26 — TUTTI CHIUSI
 - [x] **Registro decisioni R1–R25 salvato**: `docs/handoff/2026-09-25-libretto-nella-triade-sdd-ledger.md`
@@ -32,14 +32,10 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
       `/tmp/cb-mainbase` (main vecchio) con i test nuovi → fallimenti da disallineamento test/codice.
 
 ## Remaining (non bloccanti)
-- **F21 applicato (2026-09-26)**: scheda azione leggibile di default con modifica esplicita
-  (Modifica → campi → Chiudi); il tavolo di sessione resta com'è.
-- **Sessione chiusa in produzione (2026-09-26)**. **F26 (Tavolo) e lotto 1A (F02/F06) applicati
-  prima della chiusura**: Tavolo con lista in cima e creazione/modello dopo; X del Portfolio
-  con conferma di scarto; i testi delle sotto-form di creazione attivano le guardie di uscita.
-  **Lotto 4 e Lotto 5A completati.** Resta solo 5B (estensioni da concordare: consegna lavoro già svolto, anteprima invito, bozze Tavolo).
-  Verifica finale: frontend/api 200, unit 233/233, timeline 5/5, visual 32/0, error-states 7/7,
-  personal-5a 4/4, goals 19/21 (2 fallimenti preesistenti su main).
+- **Lotto 5B (estensioni da decidere)**: consegna lavoro già svolto, anteprima invito, eventuale recupero bozze Tavolo.
+- **Deploy produzione da eseguire**: ricostruire l'immagine Docker del frontend per riflettere in produzione i merge di PR #12, #13 e #14:
+  `docker compose up -d --build frontend`
+- **Promemoria Sudo (obbligatorio)**: per il rebuild del container frontend non occorre alcun comando sudo. Se in futuro occorreranno modifiche di rete o vhost Nginx, ricordare il comando manuale `sudo ./update_nginx.sh`.
 - Errore lint preesistente `NewDeckDialog.tsx:36` (setState sincrono in effect) e 14 warning —
   già presenti prima di questo lavoro.
 - Backend: 4 test diagrammi/icone, 2 OCR locali, smoke `test_an_older_stage_of_the_map_can_be_drawn_again`
@@ -62,15 +58,14 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
   inattesa corretto); F04 — uscita dal gruppo con conferma inline che nomina il gruppo,
   conseguenze, busy ed errore locale; F25 — uploader pQBL allineato al backend (solo PDF,
   100 MB). Test: `tests/personal-error-states.test.mjs` 7/7.
-- **Lotto 4, parte applicata (2026-09-26) — Linea del tempo, Carte, Flashcard, Confronto**: decisione `planned` = reintroduzione del
-  campo «Cosa programmo» nell'editor della pagina unificata, visibile solo su tappe future o
-  senza data (il contratto del campo è invariato; snapshot e PDF lo includono già).
-  `TimelineTools.tsx` eliminato come dead code (unico uso era il ramo `personal` irraggiungibile
-  dal lotto attività-timeline; nessun riferimento nei test). **F23 applicato (2026-09-26)**: rinomina in linea (`ui/InlineRename.tsx`) al posto dei
-  `window.prompt` nativi, nei mazzi/colonne di Carte e nei mazzi di Flashcard.
-  **F24 applicato (2026-09-26)**: Confronto progressivo (Criteri/Confronto/Scelta solo con
-  almeno un'alternativa, etichette di passo 1–4 in sei lingue).
-- **Lotto 5A completato (2026-09-26) — Assegnazioni, Classi e Telegram (audit Area personale)**:
+- **Lotto 4 completato (2026-09-26) — Linea del tempo, Carte, Flashcard, Confronto, Azioni e Tavolo**:
+  - Decisione `planned` = reintroduzione del campo «Cosa programmo» nell'editor della pagina unificata, visibile solo su tappe future o senza data (il contratto del campo è invariato; snapshot e PDF lo includono già). `TimelineTools.tsx` eliminato come dead code.
+  - F21: scheda azione leggibile di default con modifica esplicita (`Modifica → campi → Chiudi`); stato di salvataggio nel footer; tavolo di sessione preservato.
+  - F23: rinomina in linea (`ui/InlineRename.tsx`) al posto dei `window.prompt` nativi, nei mazzi/colonne di Carte e nei mazzi di Flashcard.
+  - F24: Confronto progressivo (passo 1 Alternative sempre visibile, Criteri/Confronto/Scelta solo con almeno un'alternativa, etichette di passo 1–4 in sei lingue).
+  - F26: Tavolo con lista salvati in cima e creazione/modello dopo; didascalia sul ruolo del modello AI; rinomina in linea.
+- **Lotto 1A applicato (2026-09-26)**: F02/F06 — X del Portfolio con conferma di scarto; testi delle sotto-form di creazione (azione, carta, criterio, alternativa) agganciati alle guardie di uscita.
+- **Lotto 5A completato (2026-09-26, PR #13) — Assegnazioni, Classi e Telegram (audit Area personale)**:
   - F27: lista assegnazioni gestibile con un solo dettaglio aperto alla volta per lo studente e vista docente sempre espansa; filtri client-side per gruppo, tipo, finalità (richiesta/proposta) e stato (da esplorare, pianificata, inviata, con riscontro); link diretto con hash `#assignment-N`.
   - F28: pianificazione spiegata (`planHelp`: crea attività e tappa personali, non invia nulla al docente).
   - F29: anteprima con destinatario esplicito (`Destinatario: {author_name}`) e nota di copia statica (`copyStays`).
@@ -79,11 +74,15 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
   - F32: Telegram a 3 passi guidati con scadenza codice visibile (`expires_in_minutes`), verifica automatica al ritorno (`visibilitychange`), pulsante "Verifica il collegamento", stati distinti e rigenerazione codice.
   - F34 parziale: date localizzate con `toLocaleDateString(lang)` in assegnazioni, iscrizioni a gruppi e note docente.
   - Test browser: `frontend/tests/personal-5a.test.mjs` (4/4 pass), `frontend/tests/personal-error-states.test.mjs` (7/7 pass), `frontend/tests/assignments.test.mjs` compatibile, unit 233/233 pass, `tsc` ed `eslint` puliti.
-- **Ordinamento gruppi Area personale (2026-09-26)**: «Conoscermi e riflettere» precede ora «Il mio percorso» nella pagina d'ingresso di `/profilo` (`personalAreaGroups`).
-- **Domanda di prodotto chiusa**: il campo `planned` («Cosa programmo») è di nuovo editabile nella
-  pagina unificata `/profilo/timeline` (tappe future o senza data); `TimelineTools.tsx` eliminato.
-- **Guida funzionalità riallineata**: `docs-counselorbot/funzionalita-counselorbot.md` aggiornata
-  per lotti 2, 3A, 1B, 4 e 5A e nuovo ordinamento gruppi; `make guidance-refresh` e `make guidance-check` eseguiti.
+- **Ordinamento gruppi Area personale (2026-09-26, PR #13)**: «Conoscermi e riflettere» precede ora «Il mio percorso» nella pagina d'ingresso di `/profilo` (`personalAreaGroups`).
+- **Analisi combinata dei profili scorporata come strumento autonomo (2026-09-26, PR #12)**:
+  - Creata rotta dedicata `/profilo/analisi-combinata` all'interno di «Conoscermi e riflettere», rimuovendo la lettura integrata dal fondo di `/profilo/compilazioni`.
+  - Dotata di testata coerente, navigazione diretta e card informativa con immagini guida aggiornate in 6 lingue. Test browser dedicato: `frontend/tests/combined-analysis-page.test.mjs`.
+- **Collasso unificato risultato della compilazione e chat (2026-09-26, PR #12 e PR #14)**:
+  - In `/profilo/compilazioni`, il disclosure `#submission-result-content` racchiude l'intero pannello dei risultati tecnici (sintesi, grafici stanine, schede fattori) e l'intera conversazione con il counselor.
+  - Risolto il difetto per cui la chat restava visibile dopo aver collassato i risultati.
+  - Quando il risultato è collassato, la scheda «La mia lettura» è immediatamente visibile e accessibile sotto il comando di espansione. Test: `frontend/tests/submission-result-disclosure.test.mjs`.
+- **Guida funzionalità riallineata**: `docs-counselorbot/funzionalita-counselorbot.md` aggiornata per tutti i lotti completati, nuovo ordinamento gruppi, scorporo di Analisi combinata e collasso unificato risultati+chat; `make guidance-refresh` e `make guidance-check` eseguiti.
 
 ## Resolutions
 - Test backend sempre da worktree/checkout con `DATABASE_URL` sul DB test `localhost:5435` (vedi CLAUDE.md/CONTEXT.md).
