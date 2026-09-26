@@ -1,6 +1,6 @@
 # Area personale: audit dell'interazione e piano di modifica
 
-**Data:** 23 settembre 2026. **Stato:** punti 0.1 e 0.2 approvati e applicati all’ingresso dell’Area personale il 23 settembre 2026, su richiesta dell’utente di vedere le modifiche dopo rebuild Docker. Pilota 0.3 Orientamento e passi 0.3.2.1–0.3.2.3 distribuiti il 23 settembre 2026; estensione della testata alle altre pagine e lotti successivi ancora aperti. Le evidenze dell’audit originario si riferiscono alla base sotto indicata.
+**Data:** 23 settembre 2026. **Stato:** punti 0.1 e 0.2 approvati e applicati all’ingresso dell’Area personale il 23 settembre 2026, su richiesta dell’utente di vedere le modifiche dopo rebuild Docker. Pilota 0.3 Orientamento e passi 0.3.2.1–0.3.2.3 distribuiti il 23 settembre 2026; **estensione della testata (0.3) a tutte le pagine dell’area applicata il 26 settembre 2026** (mega-pagina `/profilo/*`, workspace unificati azioni/carte/confronto, flashcard e pQBL; `cambiamenti` resta sub-pagina del taccuino, `libretto` ritirata). Lotti 1A, 1B, 3A–5B ancora aperti; il lotto 1A è in backlog con accordo esplicito dell’utente finché gli utenti sono di prova.
 **Base del codice esaminato:** `edddddc`. Ambito: le 18 rotte dell'Area personale, i componenti condivisi e i passaggi verso gli strumenti esterni all'area.
 
 ## 1. Esito e priorità
@@ -1191,7 +1191,7 @@ Si affronta un solo intervento alla volta. La chiusura di un punto di pianificaz
 | --- | --- | --- | --- |
 | 0.1 | Nomi e raggruppamento degli strumenti | **Approvato e registrato — 23 settembre 2026** | Cinque gruppi, 17 destinazioni oltre all'ingresso, nomi e descrizioni definiti in §4; Portfolio autonomo e Cambiamenti allo stesso livello di Taccuino e Libretto |
 | 0.2 | Schema ASCII dell'ingresso | **Approvato e registrato — 23 settembre 2026 (§5.1)** | Riepilogo breve, cinque gruppi aperti, due colonne desktop e una mobile; immagini esistenti accanto a nome e descrizione. Applicato all’ingresso; abbinamenti immagini completati |
-| 0.3 | Schema della testata e navigazione comune | **Schema approvato; pilota Orientamento implementato (§4)** | Titolo, azione principale, ritorno e accesso alle altre pagine validati |
+| 0.3 | Schema della testata e navigazione comune | **Schema approvato; pilota Orientamento implementato (§4); esteso a tutte le pagine dell’area il 26 settembre 2026** | Titolo, azione principale, ritorno e accesso alle altre pagine validati |
 
 Gli schemi specifici di Libretto, Assegnazioni e delle altre pagine saranno validati prima dei rispettivi interventi. Nessuno schema successivo è approvato per effetto della chiusura di 0.1.
 

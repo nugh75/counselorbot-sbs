@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useI18n } from '@/lib/i18n-context';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -132,7 +131,6 @@ const PERSONAL_AREAS = [
     },
 ] as const;
 
-const ICON_BADGE_CLASS = 'bg-indigo-50 text-indigo-600';
 function personalSectionFromPath(pathname: string): PersonalSection | null {
     const slug = pathname.split('/').filter(Boolean)[1];
     return PERSONAL_AREAS.find((area) => area.slug === slug)?.id ?? null;
@@ -161,7 +159,6 @@ export default function ProfilePage() {
         description: personalAreaDescription(lang, area.slug),
     }));
     const activeArea = personalAreas.find((area) => area.id === activeSection) ?? null;
-    const ActiveAreaIcon = activeArea?.icon;
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -428,27 +425,10 @@ export default function ProfilePage() {
 
     return (
         <div className="page-wide px-4 py-8 space-y-8">
-            {activeSection === 'orientation' ? <PersonalAreaHeader slug="orientamento" /> : <PageHeader
-                backHref={activeArea ? '/profilo' : '/'}
-                title={activeArea?.title ?? personalAreaText(lang, 'title')}
-                subtitle={activeArea?.description ?? personalAreaText(lang, 'intro')}
-                icon={activeArea ? (
-                    activeArea.image ? (
-                        <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden">
-                            <Image
-                                src={activeArea.image}
-                                alt=""
-                                width={56}
-                                height={56}
-                                className="h-full w-full object-contain"
-                            />
-                        </span>
-                    ) : ActiveAreaIcon ? (
-                        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${ICON_BADGE_CLASS}`}>
-                            <ActiveAreaIcon className="h-5 w-5" aria-hidden />
-                        </span>
-                    ) : undefined
-                ) : undefined}
+            {activeArea ? <PersonalAreaHeader slug={activeArea.slug} /> : <PageHeader
+                backHref="/"
+                title={personalAreaText(lang, 'title')}
+                subtitle={personalAreaText(lang, 'intro')}
             />}
 
             {!activeArea && <PersonalAreaHome />}

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, FolderPlus, GraduationCap, Image as ImageIcon, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
@@ -130,7 +130,7 @@ export function FlashcardsPage() {
     );
 
     return <main className="page-narrow space-y-4 p-4">
-        <PageHeader title={l('title')} subtitle={l('subtitle')} backHref="/profilo" />
+        <PersonalAreaHeader slug="flashcard" />
         {issue && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
             <p>{l(issue)}</p>
             {issue === 'conflict' && <Button type="button" variant="secondary" className="mt-2 min-h-11 px-4" onClick={() => void load()}><RotateCcw className="mr-1 inline h-4 w-4" aria-hidden="true" />{l('reload')}</Button>}

@@ -13,11 +13,10 @@ import {
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { getSelectedCounselorId } from '@/lib/counselor';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { Callout } from '@/components/ui/Callout';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { clearPqblProgress, loadPqblProgress, savePqblProgress } from '@/lib/pqbl-progress';
-import { useRouter } from 'next/navigation';
 import type { Lang } from '@/lib/i18n';
 
 type Phase = 'setup' | 'generating' | 'onboarding' | 'quiz' | 'summary' | 'final' | 'finalResults';
@@ -95,7 +94,6 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export default function PqblPage() {
-    const router = useRouter();
     const { t, lang } = useI18n();
     const [phase, setPhase] = useState<Phase>('setup');
     const [size, setSize] = useState<number>(10);
@@ -440,7 +438,7 @@ export default function PqblPage() {
 
     return (
         <div className="page-narrow space-y-6">
-            <PageHeader title={t('pqbl.title')} subtitle={t('pqbl.subtitle')} onBack={() => router.push('/profilo')} backLabel={t('profile.nav')} />
+            <PersonalAreaHeader slug="pqbl" />
 
             {restoredProgress && (
                 <div className="flex flex-wrap items-center gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-950" role="status">

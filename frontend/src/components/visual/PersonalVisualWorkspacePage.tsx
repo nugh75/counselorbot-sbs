@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { PersonalTimeline } from '@/components/visual/PersonalTimeline';
 import { VisualTools, type WorkTab } from '@/components/visual/VisualTools';
 import { useI18n } from '@/lib/i18n-context';
 import { visualLabel } from '@/lib/i18n-visual-tools';
+
+// Lotto 2 dell'audit Area personale: la testata comune 0.3 su ogni pagina.
+const TAB_SLUGS = { timeline: 'timeline', board: 'azioni', cards: 'carte', comparison: 'confronto' } as const;
 
 export function PersonalVisualWorkspacePage({ tab }: { tab: WorkTab }) {
     const params = useSearchParams();
@@ -28,7 +30,7 @@ export function PersonalVisualWorkspacePage({ tab }: { tab: WorkTab }) {
     </main>;
 
     return <main className="page-narrow space-y-4 p-4">
-        <PageHeader title={visualLabel(lang, tab)} />
+        <PersonalAreaHeader slug={TAB_SLUGS[tab]} />
         <VisualTools
             personal
             hideTrigger
