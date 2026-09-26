@@ -32,8 +32,6 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
       `/tmp/cb-mainbase` (main vecchio) con i test nuovi → fallimenti da disallineamento test/codice.
 
 ## Remaining (non bloccanti)
-- **Lotto 1A** (audit Area personale) in backlog su accordo esplicito (utenti di prova); da fare
-  prima dell'apertura a utenti reali (F02 Portfolio `setForm(null)`, guardia `draftTitle` in VisualTools).
 - **F21 applicato (2026-09-26)**: scheda azione leggibile di default con modifica esplicita
   (Modifica → campi → Chiudi); il tavolo di sessione resta com'è.
 - **Sessione chiusa in produzione (2026-09-26)**. **F26 (Tavolo) e lotto 1A (F02/F06) applicati

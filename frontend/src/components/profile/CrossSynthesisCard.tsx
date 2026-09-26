@@ -22,7 +22,7 @@ interface Availability {
     instruments: AvailabilityInstrument[];
 }
 
-export function CrossSynthesisCard() {
+export function CrossSynthesisCard({ showHeading = true }: { showHeading?: boolean }) {
     const { t, lang } = useI18n();
     const [availability, setAvailability] = useState<Availability | null>(null);
     const [content, setContent] = useState<string | null>(null);
@@ -61,13 +61,13 @@ export function CrossSynthesisCard() {
     return (
         <section className="glass-panel p-5 space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+                {showHeading && <div>
                     <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-indigo-600" />
                         {t('combined.title')}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">{t('combined.desc')}</p>
-                </div>
+                </div>}
                 <div className="flex flex-wrap gap-1.5">
                     {(availability.instruments ?? []).map((inst) => (
                         <span
