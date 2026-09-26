@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { personalAreaName } from '../src/lib/i18n-personal-area.ts';
+import { teacherAreaName } from '../src/lib/i18n-teacher-area.ts';
 import { categoryText } from '../src/lib/i18n-institution-categories.ts';
 import { goalText } from '../src/lib/i18n-goals.ts';
 import { assignmentText } from '../src/lib/i18n-assignments.ts';
@@ -92,9 +93,9 @@ try {
                 await page.locator('summary').filter({ hasText: categoryText(lang, 'events') }).evaluate(el => { el.parentElement.open = true; });
                 await page.evaluate(() => window.scrollTo(0, 0));
             }
-            if (name === 'personal-area') {
+            if (name === 'personal-area' || name === 'teacher-area') {
                 await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
-                for (const image of await page.locator('[data-personal-area-home] img').all()) {
+                for (const image of await page.locator('[data-personal-area-home] img, [data-teacher-area-home] img').all()) {
                     await image.scrollIntoViewIfNeeded();
                     await image.evaluate(element => element.decode());
                 }
@@ -105,14 +106,13 @@ try {
             assert.deepEqual(errors, []);
             assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
             if (name === 'orientation') await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
-            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
+            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'teacher-area', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
             console.log(`${lang}/${name}`);
         }
         if (process.env.GUIDE_SCREENS === 'teacher-area') {
             authenticated = true; teacher = true;
             await go('/docente');
-            await page.getByRole('link', { name: categoryText(lang, 'title'), exact: true }).waitFor();
-            await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
+            await page.getByRole('link', { name: teacherAreaName(lang, 'orientamento'), exact: true }).waitFor();
             await capture('teacher-area');
             await context.close();
             continue;
@@ -167,13 +167,14 @@ try {
         await go('/strumenti/EVENTO_PROFESSIONALE'); await capture('professional-event');
         teacher = true;
         await go('/docente/orientamento'); await page.getByRole('heading', { name: title, exact: true }).waitFor(); await capture('institution-categories');
-        await go('/docente'); await page.locator('#teacher-catalogs-title').waitFor(); await capture('teacher-area');
+        await go('/docente'); await page.getByRole('link', { name: teacherAreaName(lang, 'orientamento'), exact: true }).waitFor(); await capture('teacher-area');
+        await go('/docente/classi');
         const groupCard = page.locator('section').filter({ has: page.getByRole('heading', { name: groupName, exact: true }) }).last();
         await capture('teacher-groups', groupCard.locator('..').locator('..'));
-        await page.locator('summary').filter({ hasText: goalText(lang, 'catalog') }).click();
+        await go('/docente/catalogo-obiettivi');
         const catalogSection = page.getByRole('region', { name: goalText(lang, 'catalog'), exact: true });
         await catalogSection.getByRole('heading', { name: title, exact: true }).waitFor();
-        await capture('teacher-catalog', page.locator('section[aria-labelledby="teacher-catalogs-title"]'));
+        await capture('teacher-catalog', catalogSection);
         await catalogSection.getByRole('button', { name: assignmentText(lang, 'assign'), exact: true }).click();
         const dialog = page.getByRole('dialog');
         await dialog.getByLabel(assignmentText(lang, 'group'), { exact: true }).selectOption('91');
@@ -183,6 +184,7 @@ try {
         await dialog.getByLabel(learningText(lang, 'responsePrompt'), { exact: true }).fill(responsePrompt);
         await capture('teacher-assignment', dialog);
         await page.keyboard.press('Escape');
+        await go('/docente/assegnazioni');
         await page.locator('#assignment-1').getByRole('button', { name: learningText(lang, 'submissions'), exact: true }).click();
         await page.locator('#assignment-1').getByRole('textbox').waitFor();
         await capture('teacher-feedback', page.locator('#assignment-1'));
