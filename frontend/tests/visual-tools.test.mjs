@@ -23,7 +23,7 @@ async function fixture(width, phase = 'intro', options = {}) {
     const control = { failSave: false, failLoad: false, failPdf: false, visual: { revision: 0, workspace: { actions: [], cards: [], comparison: { options: [], criteria: [], cells: [], chosen: null, reason: '' } } }, failDiagram: false, failPatch: false, failRender: false, failExport: false, saved: options.graph ? [{ source_text: reply, source_key: createHash('sha256').update(reply).digest('hex'), instruction: '', spec: graphSpec }] : [], requests: [], errors: [] };
     control.portfolio = [{ id: 91, title: 'Slide del progetto', description: 'Un lavoro di prova', images: [] }];
     control.copies = new Map();
-    control.personal = { questionnaire_type: 'QSA', limits: { notebook: 600, booklet: 2000 }, sources: { actions: 'Strumenti visivi · Piano personale', cards: 'Strumenti visivi · Carte', comparison: 'Strumenti visivi · Confronto' }, notebook: { notes: 'Annotazione originale', goal: 'Organizzare lo studio' }, booklets: [{ id: 7, title: 'La mia scheda', data: { student_notes: 'Nota esistente' } }] };
+    control.personal = { questionnaire_type: 'QSA', limits: { notebook: 600, reading: 2000 }, sources: { actions: 'Strumenti visivi · Piano personale', cards: 'Strumenti visivi · Carte', comparison: 'Strumenti visivi · Confronto' }, notebook: { notes: 'Annotazione originale', goal: 'Organizzare lo studio' }, reading: { session_id: 'fixture', note: 'Nota esistente' } };
     const catalog = {
         reading: [{ slug: 'test-book', title: 'Libro per la prova', why: 'Collegato al metodo di studio.', synopsis: 'SINOSSI COMPLETA DEL LIBRO', where: 'https://example.invalid/libro', languages: ['it', 'en'], warning: 'AVVERTENZA DEL LIBRO', status: 'proposed' }],
         strategy: [{ slug: 'test-strategy', name: 'Recupero attivo', description: 'Chiudi il testo e scrivi tre concetti.', recommended_when: 'Quando vuoi verificare cosa ricordi.', status: 'proposed' }],
@@ -66,15 +66,11 @@ async function fixture(width, phase = 'intro', options = {}) {
             if (control.failPersonal) return route.fulfill({ status: 503, body: '{}' });
             if (request.method() === 'POST') {
                 const body = request.postDataJSON();
-                let sheet = control.personal.booklets.find(item => item.id === body.booklet_id);
-                if (body.destination === 'booklet' && !sheet) {
-                    sheet = { id: 8, title: 'Nuova scheda', data: {} }; control.personal.booklets.push(sheet);
-                }
-                const target = body.destination === 'notebook' ? control.personal.notebook : sheet.data;
+                const target = body.destination === 'notebook' ? control.personal.notebook : control.personal.reading;
                 const block = `${body.text}\n(${control.personal.sources[body.entry.split(':')[0]]})`;
-                if ((target[body.field] || '').includes(block)) data = { status: 'duplicate', context: control.personal, booklet_id: sheet?.id };
+                if ((target[body.field] || '').includes(block)) data = { status: 'duplicate', context: control.personal };
                 else if ((target[body.field] || '') !== body.expected_text) return route.fulfill({ status: 409, body: '{}' });
-                else { target[body.field] = [target[body.field], block].filter(Boolean).join('\n\n'); data = { status: 'saved', context: control.personal, booklet_id: sheet?.id }; }
+                else { target[body.field] = [target[body.field], block].filter(Boolean).join('\n\n'); data = { status: 'saved', context: control.personal }; }
             } else data = control.personal;
         }
         else if ((url.pathname === '/api/session/fixture/visual-tools' || url.pathname === '/api/user/timeline')) {
@@ -627,7 +623,6 @@ for (const width of [390, 1280]) test(`personal timeline integrates institution 
         const events = page.locator('li[id^="timeline-"]');
         assert.equal(await events.first().getByLabel('Titolo della tappa', { exact: true }).evaluate(el => el.readOnly), true);
         await events.first().getByRole('checkbox', { name: 'Taccuino', exact: true }).check();
-        await events.first().getByRole('checkbox', { name: 'Libretto', exact: true }).check();
         assert.equal(await events.first().getByRole('link', { name: 'Taccuino', exact: true }).getAttribute('href'), '/profilo/taccuino');
         await page.getByRole('button', { name: visualLabel('it', 'personalSave'), exact: true }).click();
         await page.waitForFunction(label => [...document.querySelectorAll('button')].some(b => b.getAttribute('aria-label') === label && b.disabled), visualLabel('it', 'personalSave'));

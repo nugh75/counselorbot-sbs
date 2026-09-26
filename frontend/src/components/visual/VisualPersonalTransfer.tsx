@@ -6,7 +6,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { visualLabel } from '@/lib/i18n-visual-tools';
-import { annotationEntries, bookletFields, importAnnotation, notebookFields, visualEntries, type ImportTarget, type PersonalContext } from '@/lib/visual-personal';
+import { annotationEntries, importAnnotation, notebookFields, readingLabel, visualEntries, type ImportTarget, type PersonalContext } from '@/lib/visual-personal';
 import type { SavedWorkspace, VisualWorkspace } from '@/lib/visual-tools';
 
 const inputClass = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-800';
@@ -24,8 +24,7 @@ export function VisualPersonalTransfer({ sessionId, locale, work, saveWorkspace,
     const [data, setData] = useState<PersonalContext | null>(null);
     const [direction, setDirection] = useState<'out' | 'in'>('out');
     const [selection, setSelection] = useState('');
-    const [destination, setDestination] = useState<'notebook' | 'booklet'>('notebook');
-    const [bookletId, setBookletId] = useState('');
+    const [destination, setDestination] = useState<'notebook' | 'reading'>('notebook');
     const [field, setField] = useState('notes');
     const [target, setTarget] = useState<ImportTarget>('cards');
     const [draft, setDraft] = useState('');
@@ -49,10 +48,9 @@ export function VisualPersonalTransfer({ sessionId, locale, work, saveWorkspace,
     const invalidateLoad = useCallback(() => { generation.current++; }, []);
     useEffect(() => { heading.current?.focus(); void load(); return invalidateLoad; }, [load, invalidateLoad]);
 
-    const entries = direction === 'out' ? visualEntries(work, l) : data ? annotationEntries(data, t, l) : [];
+    const entries = direction === 'out' ? visualEntries(work, l) : data ? annotationEntries(data, t, l, locale) : [];
     const selected = entries.find(entry => entry.id === selection);
-    const booklet = data?.booklets.find(item => String(item.id) === bookletId);
-    const previous = (destination === 'notebook' ? data?.notebook[field] : booklet?.data[field]) || '';
+    const previous = (destination === 'notebook' ? data?.notebook[field] : data?.reading?.note) || '';
     const block = direction === 'out' && selected && data ? `${draft.trim()}\n(${data.sources[selected.source]})` : '';
     const preview = previous.includes(block) && block ? previous : [previous, block].filter(Boolean).join('\n\n');
     const maxLength = direction === 'out' ? data?.limits[destination] || 0 : target === 'actions' ? 1000 : target === 'cards' ? 600 : 160;
@@ -75,7 +73,7 @@ export function VisualPersonalTransfer({ sessionId, locale, work, saveWorkspace,
                 if (!saved) throw new Error('personalSaveError');
                 const response = await apiFetch(endpoint, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(15000),
-                    body: JSON.stringify({ revision: saved.revision, entry: selected.id, destination, booklet_id: bookletId ? Number(bookletId) : null,
+                    body: JSON.stringify({ revision: saved.revision, entry: selected.id, destination,
                         field, expected_text: previous, text: draft.trim(), language: locale }),
                 });
                 if (!response.ok) {
@@ -84,7 +82,6 @@ export function VisualPersonalTransfer({ sessionId, locale, work, saveWorkspace,
                 }
                 const result = await response.json();
                 setData(result.context);
-                if (result.booklet_id) setBookletId(String(result.booklet_id));
                 setStatus(result.status === 'duplicate' ? 'personalDuplicate' : 'personalSaved');
             }
         } catch (error) {
@@ -112,15 +109,12 @@ export function VisualPersonalTransfer({ sessionId, locale, work, saveWorkspace,
             </select></label>
             {!entries.length && <p className="text-sm text-slate-600">{l(direction === 'in' ? 'personalEmpty' : 'visualEmpty')}</p>}
             {direction === 'out' ? <>
-                <label className="block text-sm font-medium">{l('destination')}<select aria-label={l('destination')} className={inputClass} value={destination} onChange={event => { const next = event.target.value as 'notebook' | 'booklet'; setDestination(next); setField(next === 'notebook' ? 'notes' : 'student_notes'); setStatus(''); }}>
-                    <option value="notebook">{l('notebook')}</option><option value="booklet" disabled={!data.questionnaire_type}>{l('booklet')}{data.questionnaire_type ? ` · ${data.questionnaire_type}` : ''}</option>
+                <label className="block text-sm font-medium">{l('destination')}<select aria-label={l('destination')} className={inputClass} value={destination} onChange={event => { const next = event.target.value as 'notebook' | 'reading'; setDestination(next); setField(next === 'notebook' ? 'notes' : 'note'); setStatus(''); }}>
+                    <option value="notebook">{l('notebook')}</option><option value="reading" disabled={!data.reading}>{readingLabel(locale)}{data.questionnaire_type ? ` · ${data.questionnaire_type}` : ''}</option>
                 </select></label>
-                {destination === 'booklet' && <label className="block text-sm font-medium">{l('bookletSheet')}<select aria-label={l('bookletSheet')} className={inputClass} value={bookletId} onChange={event => { setBookletId(event.target.value); setStatus(''); }}>
-                    <option value="">{l('newSheet')}</option>{data.booklets.map(item => <option key={item.id} value={item.id}>{item.title || `${l('booklet')} ${item.id}`}</option>)}
+                {destination === 'notebook' && <label className="block text-sm font-medium">{l('destinationField')}<select aria-label={l('destinationField')} className={inputClass} value={field} onChange={event => { setField(event.target.value); setStatus(''); }}>
+                    {Object.entries(notebookFields).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}
                 </select></label>}
-                <label className="block text-sm font-medium">{l('destinationField')}<select aria-label={l('destinationField')} className={inputClass} value={field} onChange={event => { setField(event.target.value); setStatus(''); }}>
-                    {Object.entries(destination === 'notebook' ? notebookFields : bookletFields).map(([key, label]) => <option key={key} value={key}>{t(label)}</option>)}
-                </select></label>
             </> : <label className="block text-sm font-medium">{l('destination')}<select aria-label={l('destination')} className={inputClass} value={target} onChange={event => { setTarget(event.target.value as ImportTarget); setStatus(''); }}>
                 <option value="cards">{l('cards')}</option><option value="actions">{l('board')}</option><option value="comparison">{l('option')}</option>
             </select></label>}
