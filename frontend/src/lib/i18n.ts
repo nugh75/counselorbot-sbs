@@ -4610,7 +4610,7 @@ const fr: Dict = {
     'portfolio.edit': 'Modifier',
     'portfolio.delete': 'Supprimer',
     'portfolio.imageAlt': 'image',
-    'portfolio.discardConfirm': 'Abandoner les modifications non enregistrées ?',
+    'portfolio.discardConfirm': 'Abandonner les modifications non enregistrées ?',
     'portfolio.evidenceOf': 'preuve de : {title}',
     'portfolio.loadError': 'Impossible de charger le Portfolio. Tes travaux ne sont pas perdus.',
     'portfolio.linkToGoal': 'Lier à un objectif',
