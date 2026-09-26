@@ -51,8 +51,9 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
   campo «Cosa programmo» nell'editor della pagina unificata, visibile solo su tappe future o
   senza data (il contratto del campo è invariato; snapshot e PDF lo includono già).
   `TimelineTools.tsx` eliminato come dead code (unico uso era il ramo `personal` irraggiungibile
-  dal lotto attività-timeline; nessun riferimento nei test). Restano aperti in lotto 4:
-  F23 (rinomine `window.prompt` in Carte/Flashcard), F21 (bacheca), F24 (Confronto), F26 (Tavolo).
+  dal lotto attività-timeline; nessun riferimento nei test). **F23 applicato (2026-09-26)**: rinomina in linea (`ui/InlineRename.tsx`) al posto dei
+  `window.prompt` nativi, nei mazzi/colonne di Carte e nei mazzi di Flashcard.
+  Restano aperti in lotto 4: F21 (bacheca), F24 (Confronto), F26 (Tavolo).
 - Errore lint preesistente `NewDeckDialog.tsx:36` (setState sincrono in effect) e 14 warning —
   già presenti prima di questo lavoro.
 - Backend: 4 test diagrammi/icone, 2 OCR locali, smoke `test_an_older_stage_of_the_map_can_be_drawn_again`

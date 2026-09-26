@@ -11,6 +11,7 @@ import { apiFetch } from '@/lib/auth';
 import { normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { NewDeckDialog } from './NewDeckDialog';
+import { InlineRename } from '@/components/ui/InlineRename';
 import { emptyWorkspace, removeAction, removeCriterion, removeOption, setCell, workspaceText, timelineText, cardColumnsOf, cardColumnLabel, renameCardColumn, removeCardColumn, cardDecksOf, activeDeckIdOf, addCardDeck, renameCardDeck, removeCardDeck, setActiveCardDeck, cardsInDeck, type ActionStage, type SavedWorkspace, type VisualWorkspace } from '@/lib/visual-tools';
 import { validTimelineDates } from '@/lib/timeline-dates';
 import { BUILTIN_CARD_IMAGES, tavoloImageUrl } from '@/lib/tavolo-images';
@@ -66,6 +67,9 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const [saved, setSaved] = useState<SavedWorkspace>({ revision: 0, workspace: emptyWorkspace() });
     const [work, setWork] = useState<VisualWorkspace>(emptyWorkspace);
     const [timelineSelection, setTimelineSelection] = useState<string[] | null>(null);
+    // F23 (lotto 4): rinomina in linea per mazzi e colonne, al posto del prompt nativo.
+    const [renamingDeckId, setRenamingDeckId] = useState<string | null>(null);
+    const [renamingColumnId, setRenamingColumnId] = useState<string | null>(null);
     const [history, setHistory] = useState<VisualWorkspace[]>([]);
     const [loaded, setLoaded] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -378,15 +382,14 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                         const deckCards = cardsInDeck(work, deck.id);
                                         const deckCols = deck.card_columns?.length ? deck.card_columns : cardColumnsOf(work, deck.id);
                                         return <article key={deck.id} className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+                                            {renamingDeckId === deck.id ? <InlineRename value={deck.title} maxLength={100} ariaLabel={`${l('renameDeck')}: ${deck.title}`} onRename={name => { edit(renameCardDeck(work, deck.id, name, l('mainDeck'))); setRenamingDeckId(null); }} onCancel={() => setRenamingDeckId(null)} /> : <>
                                             <button type="button" className="min-h-11 flex-1 text-left" aria-label={`${l('cardDecks')}: ${deck.title}`} onClick={() => { edit(setActiveCardDeck(work, deck.id)); setDeckListOpen(false); }}>
                                                 <h4 className="break-words font-semibold text-slate-900">{deck.title} <span className="font-mono text-sm text-slate-500">{deckCards.length}</span></h4>
                                                 <p className="mt-1 break-words text-xs text-slate-500">{deckCols.map(c => cardColumnLabel(work, c, l)).join(' · ')}</p>
                                             </button>
+                                            </>}
                                             <div className="mt-2 flex items-center gap-1 self-end">
-                                                <Tooltip content={`${l('renameDeck')}: ${deck.title}`}><Button type="button" variant="ghost" className="h-8 w-8 p-0" aria-label={`${l('renameDeck')}: ${deck.title}`} onClick={() => {
-                                                    const name = window.prompt(l('renameDeck'), deck.title);
-                                                    if (name?.trim()) edit(renameCardDeck(work, deck.id, name.trim(), l('mainDeck')));
-                                                }}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                                <Tooltip content={`${l('renameDeck')}: ${deck.title}`}><Button type="button" variant="ghost" className="h-8 w-8 p-0" aria-label={`${l('renameDeck')}: ${deck.title}`} onClick={() => setRenamingDeckId(previous => previous === deck.id ? null : deck.id)}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                                 {decks.length > 1 && <Tooltip content={`${l('deleteDeck')}: ${deck.title}`}><Button type="button" variant="ghost" className="h-8 w-8 p-0" aria-label={`${l('deleteDeck')}: ${deck.title}`} onClick={() => {
                                                     if (window.confirm(`${l('deleteDeck')}: "${deck.title}"?`)) edit(removeCardDeck(work, deck.id, l('mainDeck')));
                                                 }}><Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" /></Button></Tooltip>}
@@ -398,12 +401,10 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                             ) : (<>
                             <div className="flex flex-wrap items-center gap-2">
                                 <Tooltip content={l('backToDecks')}><Button type="button" variant="secondary" className={buttonClass} aria-label={l('backToDecks')} onClick={() => setDeckListOpen(true)}><ArrowLeft className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                                <h3 className="min-w-0 break-words font-semibold text-slate-900">{currentDeckObj.title} <span className="font-mono text-sm text-slate-500">{activeDeckCards.length}</span></h3>
+                                {renamingDeckId === currentDeckObj.id && <InlineRename value={currentDeckObj.title} maxLength={100} ariaLabel={`${l('renameDeck')}: ${currentDeckObj.title}`} onRename={name => { edit(renameCardDeck(work, currentDeckObj.id, name, l('mainDeck'))); setRenamingDeckId(null); }} onCancel={() => setRenamingDeckId(null)} />}
+                                    {!renamingDeckId && <h3 className="min-w-0 break-words font-semibold text-slate-900">{currentDeckObj.title} <span className="font-mono text-sm text-slate-500">{activeDeckCards.length}</span></h3>}
                                 <div className="ml-auto flex items-center gap-1">
-                                    <Tooltip content={`${l('renameDeck')}: ${currentDeckObj.title}`}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('renameDeck')}: ${currentDeckObj.title}`} onClick={() => {
-                                        const name = window.prompt(l('renameDeck'), currentDeckObj.title);
-                                        if (name?.trim()) edit(renameCardDeck(work, currentDeckObj.id, name.trim(), l('mainDeck')));
-                                    }}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                    <Tooltip content={`${l('renameDeck')}: ${currentDeckObj.title}`}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('renameDeck')}: ${currentDeckObj.title}`} onClick={() => setRenamingDeckId(previous => previous === currentDeckObj.id ? null : currentDeckObj.id)}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                     {decks.length > 1 && <Tooltip content={`${l('deleteDeck')}: ${currentDeckObj.title}`}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('deleteDeck')}: ${currentDeckObj.title}`} onClick={() => {
                                         if (window.confirm(`${l('deleteDeck')}: "${currentDeckObj.title}"?`)) edit(removeCardDeck(work, currentDeckObj.id, l('mainDeck')));
                                     }}><Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" /></Button></Tooltip>}
@@ -456,12 +457,10 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 {!activeDeckCards.length && <p className="py-5 text-center text-slate-600">{l('emptyCards')}</p>}
                                 <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, 240px), 1fr))` }}>{currentDeckCols.map(column => { const columnTitle = cardColumnLabel(work, column, l); const colCards = activeDeckCards.filter(c => c.bucket === column.id); return <section key={column.id} aria-label={columnTitle} onDragOver={event => { if (!dragCardId) return; event.preventDefault(); setDragOverCol(column.id); }} onDragLeave={event => { if (event.currentTarget.contains(event.relatedTarget as Node)) return; setDragOverCol(previous => previous === column.id ? null : previous); }} onDrop={event => { event.preventDefault(); const droppedId = dragCardId || event.dataTransfer.getData('text/plain'); if (droppedId) edit({ ...work, cards: work.cards.map(c => c.id === droppedId ? { ...c, bucket: column.id } : c) }); setDragCardId(null); setDragOverCol(null); }} className={`min-w-0 rounded-xl border bg-slate-50 p-3 transition-colors ${dragOverCol === column.id && dragCardId ? 'border-indigo-500 bg-indigo-50/70' : 'border-slate-200'}`}>
                                     <div className="mb-3 flex items-start justify-between gap-1">
-                                        <h3 className="min-w-0 break-words font-semibold">{columnTitle} <span className="font-mono text-sm text-slate-500">{colCards.length}</span></h3>
+                                        {renamingColumnId === column.id && <InlineRename value={column.label || ''} maxLength={100} ariaLabel={`${l('renameColumn')}: ${columnTitle}`} onRename={name => { edit(renameCardColumn(work, column.id, name, activeDeckId)); setRenamingColumnId(null); }} onCancel={() => setRenamingColumnId(null)} />}
+                                        {!renamingColumnId && <h3 className="min-w-0 break-words font-semibold">{columnTitle} <span className="font-mono text-sm text-slate-500">{colCards.length}</span></h3>}
                                         <div className="flex shrink-0">
-                                            <Tooltip content={l('renameColumn')}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('renameColumn')}: ${columnTitle}`} onClick={() => {
-                                                const name = window.prompt(l('renameColumn'), column.label || undefined);
-                                                if (name?.trim()) edit(renameCardColumn(work, column.id, name.trim().slice(0, 100), activeDeckId));
-                                            }}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                                            <Tooltip content={l('renameColumn')}><Button type="button" variant="ghost" className={buttonClass} aria-label={`${l('renameColumn')}: ${columnTitle}`} onClick={() => setRenamingColumnId(previous => previous === column.id ? null : column.id)}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                             {currentDeckCols.length > 1 && removeButton(columnTitle, () => edit(removeCardColumn(work, column.id, activeDeckId)))}
                                         </div>
                                     </div>
