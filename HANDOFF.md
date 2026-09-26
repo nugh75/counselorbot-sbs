@@ -39,9 +39,9 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
 - **Sessione chiusa in produzione (2026-09-26)**. **F26 (Tavolo) e lotto 1A (F02/F06) applicati
   prima della chiusura**: Tavolo con lista in cima e creazione/modello dopo; X del Portfolio
   con conferma di scarto; i testi delle sotto-form di creazione attivano le guardie di uscita.
-  **Lotto 4 completato.** Restano solo 5A/5B (nuove funzionalità, prossima sessione).
+  **Lotto 4 e Lotto 5A completati.** Resta solo 5B (estensioni da concordare: consegna lavoro già svolto, anteprima invito, bozze Tavolo).
   Verifica finale: frontend/api 200, unit 233/233, timeline 5/5, visual 32/0, error-states 7/7,
-  goals 19/21 (2 fallimenti preesistenti su main).
+  personal-5a 4/4, goals 19/21 (2 fallimenti preesistenti su main).
 - Errore lint preesistente `NewDeckDialog.tsx:36` (setState sincrono in effect) e 14 warning —
   già presenti prima di questo lavoro.
 - Backend: 4 test diagrammi/icone, 2 OCR locali, smoke `test_an_older_stage_of_the_map_can_be_drawn_again`
@@ -72,10 +72,19 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
   `window.prompt` nativi, nei mazzi/colonne di Carte e nei mazzi di Flashcard.
   **F24 applicato (2026-09-26)**: Confronto progressivo (Criteri/Confronto/Scelta solo con
   almeno un'alternativa, etichette di passo 1–4 in sei lingue).
+- **Lotto 5A completato (2026-09-26) — Assegnazioni, Classi e Telegram (audit Area personale)**:
+  - F27: lista assegnazioni gestibile con un solo dettaglio aperto alla volta per lo studente e vista docente sempre espansa; filtri client-side per gruppo, tipo, finalità (richiesta/proposta) e stato (da esplorare, pianificata, inviata, con riscontro); link diretto con hash `#assignment-N`.
+  - F28: pianificazione spiegata (`planHelp`: crea attività e tappa personali, non invia nulla al docente).
+  - F29: anteprima con destinatario esplicito (`Destinatario: {author_name}`) e nota di copia statica (`copyStays`).
+  - F30: collegamenti contestuali Classi↔Assegnazioni (`/profilo/assegnazioni?group=...`) e messaggi docente consultabili nella pagina Classi (`MyGroupsCard` + `TeacherNotesCard`).
+  - F31: Orientamento verificato dal pilota 0.3 (nessuna modifica necessaria).
+  - F32: Telegram a 3 passi guidati con scadenza codice visibile (`expires_in_minutes`), verifica automatica al ritorno (`visibilitychange`), pulsante "Verifica il collegamento", stati distinti e rigenerazione codice.
+  - F34 parziale: date localizzate con `toLocaleDateString(lang)` in assegnazioni, iscrizioni a gruppi e note docente.
+  - Test browser: `frontend/tests/personal-5a.test.mjs` (4/4 pass), `frontend/tests/personal-error-states.test.mjs` (7/7 pass), `frontend/tests/assignments.test.mjs` compatibile, unit 233/233 pass, `tsc` ed `eslint` puliti.
 - **Domanda di prodotto chiusa**: il campo `planned` («Cosa programmo») è di nuovo editabile nella
   pagina unificata `/profilo/timeline` (tappe future o senza data); `TimelineTools.tsx` eliminato.
 - **Guida funzionalità riallineata**: `docs-counselorbot/funzionalita-counselorbot.md` aggiornata
-  per lotti 2, 3A, 1B e 4 (parte applicata); `make guidance-refresh` eseguito.
+  per lotti 2, 3A, 1B, 4 e 5A; `make guidance-refresh` e `make guidance-check` eseguiti.
 
 ## Resolutions
 - Test backend sempre da worktree/checkout con `DATABASE_URL` sul DB test `localhost:5435` (vedi CLAUDE.md/CONTEXT.md).
