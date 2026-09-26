@@ -157,6 +157,7 @@ def _timeline(db, username, booklets):
     work = state['workspace']
     events = work['timeline']['events']
     by_booklet = {b.id: b for b in booklets}
+    renamed = {}
     count = 0
     for event in events:
         if not event['id'].startswith('booklet-'):
@@ -165,6 +166,7 @@ def _timeline(db, username, booklets):
         bio = next((b for b in biography_events((by_booklet.get(booklet_id) or models.StudentBooklet(data={})).data)
                     if (b['context'] or '') == event['title'] or not b['context']), None)
         event['id'] = _migrated_id(booklet_id, event['id'])
+        renamed.setdefault(booklet_id, event)
         event['personal_links'] = [link for link in event.get('personal_links', []) if link != 'booklet']
         if bio and (bio['discovery'] or bio['keywords']):
             event['review'] = {'discovery': bio['discovery'][:1000], 'keywords': bio['keywords'][:200]}
@@ -173,15 +175,24 @@ def _timeline(db, username, booklets):
         if not booklet.questionnaire_type.startswith('EVENTO_'):
             continue
         data = booklet.data or {}
+        # La scheda evento salvava objective/strategy (prova la prossima volta / come e quando)
+        # e il contesto in bio_context; la sincronizzazione ne aveva già fatto una tappa.
         role = _text(data.get('event_role'))
+        review = dict(role=role if role in ('protagonist', 'observer', 'alongside') else None,
+                      worked=[i[:300] for i in _items(data.get('strength'))][:10],
+                      did_not_work=[i[:300] for i in _items(data.get('growth_area'))][:10],
+                      reading='\n\n'.join(part for part in (_text(data.get('bio_context')),
+                                                             _text(data.get('discovery') or data.get('reading'))) if part)[:1500],
+                      try_next=_text(data.get('objective') or data.get('try_next'))[:1000],
+                      how_when=_text(data.get('strategy') or data.get('how_when'))[:1000])
+        existing = renamed.get(booklet.id)
+        if existing is not None:
+            existing['review'] = {**(existing.get('review') or {}), **review}
+            continue
         when = _text(data.get('bio_date')) or _text(data.get('date'))
         event = dict(id=_migrated_id(booklet.id, 'event'), title=(_text(data.get('title')) or booklet.questionnaire_type)[:160],
                      tense='past', symbol='milestone', period=(when or (booklet.created_at.date().isoformat() if booklet.created_at else '—'))[:100],
-                     review=dict(role=role if role in ('protagonist', 'observer', 'alongside') else None,
-                                 worked=[i[:300] for i in _items(data.get('strength'))][:10],
-                                 did_not_work=[i[:300] for i in _items(data.get('growth_area'))][:10],
-                                 reading=_text(data.get('discovery') or data.get('reading'))[:1500],
-                                 try_next=_text(data.get('try_next'))[:1000], how_when=_text(data.get('how_when'))[:1000]))
+                     review=review)
         if _ISO.match(when):
             event.update(date_mode='point', start_date=when)
         if not any(e['id'] == event['id'] for e in events):
@@ -249,10 +260,17 @@ def migrate_booklets(db, username):
     return counts
 
 
+# Il marcatore per utente è una riga di `logs`, che la conservazione cancella dopo 90 giorni:
+# senza un segno durevole la migrazione ripartirebbe e duplicherebbe obiettivi e bilanci.
+DONE_CONFIG_KEY = 'booklet_triade_migration_done'
+
+
 def migrate_all_booklets(db):
+    if db.query(models.Config.key).filter_by(key=DONE_CONFIG_KEY).first():
+        return 0
     users = [u for (u,) in db.query(models.StudentBooklet.username).distinct()]
     users += [u for (u,) in db.query(models.PersonalGoal.username).filter(models.PersonalGoal.reflection != '').distinct()]
-    done = 0
+    done = failed = 0
     for username in sorted(set(users)):
         # Un libretto illeggibile non deve fermare gli altri: niente marcatore, si riprova al prossimo avvio.
         try:
@@ -260,5 +278,10 @@ def migrate_all_booklets(db):
                 done += 1
         except Exception:
             db.rollback()
+            failed += 1
             logger.exception('booklet migration failed for %s', username)
+    if not failed:
+        db.add(models.Config(key=DONE_CONFIG_KEY, value=date.today().isoformat(),
+                             description='One-off booklet migration completed for every user'))
+        db.commit()
     return done

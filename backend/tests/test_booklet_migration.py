@@ -66,6 +66,22 @@ def test_event_booklet_becomes_past_milestone():
         assert event['tense'] == 'past' and event['review']['worked'] == ['Schema'] and event['review']['role'] == 'protagonist'
 
 
+def test_event_booklet_with_its_synced_milestone_keeps_one_milestone_and_the_old_keys():
+    # Chiavi reali della vecchia scheda evento; salvarla creava già una tappa booklet-{id}-….
+    with artifact_session() as db:
+        row = booklet(db, questionnaire_type='EVENTO_STUDIO', title='Esame di chimica', bio_date='2026-03-12',
+                      event_role='observer', bio_context='Laboratorio', strength=['Schema'], growth_area=['Ansia'],
+                      discovery='Ripetere a voce aiuta', objective='Cinque minuti di domande', strategy='Giovedì')
+        ensure_personal_timeline(db, 'alice')
+        legacy_biography_event(db, row, 'Laboratorio')
+        migrate_booklets(db, 'alice')
+        events = load_workspace(db, None, 'alice')['workspace']['timeline']['events']
+        assert len(events) == 1
+        review = events[0]['review']
+        assert review['try_next'] == 'Cinque minuti di domande' and review['how_when'] == 'Giovedì'
+        assert review['reading'] == 'Laboratorio\n\nRipetere a voce aiuta' and review['role'] == 'observer'
+
+
 def test_booklet_timeline_events_are_renamed_without_booklet_link():
     with artifact_session() as db:
         result(db)
@@ -137,3 +153,15 @@ def test_one_failing_user_does_not_stop_the_others(monkeypatch):
         monkeypatch.setattr(booklet_migration, 'migrate_booklets', flaky)
         assert migrate_all_booklets(db) == 1
         assert [g.username for g in db.query(models.PersonalGoal)] == ['bob']
+        assert db.get(models.Config, booklet_migration.DONE_CONFIG_KEY) is None
+
+
+def test_a_complete_run_survives_the_log_purge():
+    with artifact_session() as db:
+        db.add(models.StudentBooklet(username='alice', questionnaire_type='QSA', data={'objective': 'Leggere di più'}))
+        db.commit()
+        assert migrate_all_booklets(db) == 1
+        assert db.get(models.Config, booklet_migration.DONE_CONFIG_KEY) is not None
+        db.query(models.Log).filter_by(action=MIGRATION_ACTION).delete(); db.commit()
+        assert migrate_all_booklets(db) == 0
+        assert db.query(models.PersonalGoal).count() == 1
