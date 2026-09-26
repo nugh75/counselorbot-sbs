@@ -8,7 +8,7 @@ let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser.close(); });
 
-async function fixture({ width = 1440, guest = false, live = false, dark = false, touch = false } = {}) {
+async function fixture({ width = 1440, guest = false, admin = false, live = false, dark = false, touch = false } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce', hasTouch: touch });
     const page = await context.newPage();
     page.setDefaultTimeout(15000);
@@ -38,7 +38,7 @@ async function fixture({ width = 1440, guest = false, live = false, dark = false
         if (request.method() === 'POST') requests.push({ path: url.pathname, body: request.postDataJSON() });
         if (url.pathname.startsWith('/api/tts') && live) return route.fallback();
         let data = [];
-        if (url.pathname === '/api/auth/me') data = { authenticated: !guest, is_admin: false, username: guest ? '' : 'voice-fixture', groups: ['studenti'] };
+        if (url.pathname === '/api/auth/me') data = { authenticated: admin || !guest, is_admin: admin, username: guest && !admin ? '' : 'voice-fixture', groups: admin ? ['admins'] : ['studenti'] };
         else if (url.pathname === '/api/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
         else if (url.pathname === '/api/counselors') data = [{ id: 1, name: 'Counselor 1', language: ['it'], is_active: true, suitable: true }];
         else if (url.pathname === '/api/orientation/status') data = { required: false, completed: true, latest_session_id: 'voice-fixture' };
@@ -66,13 +66,19 @@ async function fixture({ width = 1440, guest = false, live = false, dark = false
     return { page, context, requests, errors };
 }
 
+async function openVoiceReader(page, name = 'Lettore audio') {
+    const menu = page.getByRole('button', { name: /^(Menu|Menü|Menú|Meny)$/i });
+    await menu.click();
+    await page.getByRole('button', { name, exact: true }).click();
+}
+
 for (const width of [390, 1440]) {
     test(`public page reader, highlighting, controls, voice persistence and focus at ${width}px`, async () => {
         const f = await fixture({ width, guest: true, dark: width === 390 });
         try {
             const { page, requests } = f;
             await page.goto(`${origin}/guide`);
-            await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+            await openVoiceReader(page);
             const panel = page.getByRole('complementary', { name: 'Lettore audio' });
             await panel.getByLabel('Voce', { exact: true }).selectOption('it-IT-DiegoNeural');
             await panel.getByRole('button', { name: 'Ascolta pagina' }).click();
@@ -91,9 +97,9 @@ for (const width of [390, 1440]) {
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             await page.keyboard.press('Escape');
             assert.equal(await page.evaluate(() => window.__audios.at(-1).src), '');
-            assert.equal(await page.getByRole('button', { name: 'Lettore audio', exact: true }).evaluate(el => el === document.activeElement), true);
+            assert.equal(await page.getByRole('button', { name: 'Menu', exact: true }).evaluate(el => el === document.activeElement), true);
             await page.reload();
-            await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+            await openVoiceReader(page);
             assert.equal(await panel.getByLabel('Voce', { exact: true }).inputValue(), 'it-IT-DiegoNeural');
             assert.deepEqual(f.errors, []);
         } finally { await f.context.close(); }
@@ -216,7 +222,7 @@ for (const width of [390, 1440]) {
             const { page } = f;
             await page.goto(`${origin}/guide`);
             const mainBefore = await page.locator('main').boundingBox();
-            await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+            await openVoiceReader(page);
             const panel = page.getByRole('complementary');
             await panel.getByRole('button', { name: 'Ascolta pagina' }).click();
             await panel.getByRole('status').filter({ hasText: 'In lettura' }).waitFor();
@@ -282,7 +288,7 @@ test('page reading follows the selected counselor and separates personal voice c
             localStorage.setItem('counselorbot_selected_counselor', '1');
             window.dispatchEvent(new Event('storage'));
         });
-        await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        await openVoiceReader(page);
         const panel = page.getByRole('complementary');
         assert.equal(await panel.getByLabel('Voce', { exact: true }).inputValue(), '', 'legacy voice is not assigned to every counselor');
         await panel.getByLabel('Voce', { exact: true }).selectOption('it_IT-riccardo-x_low');
@@ -295,7 +301,7 @@ test('page reading follows the selected counselor and separates personal voice c
             window.dispatchEvent(new Event('storage'));
         });
         await panel.waitFor({ state: 'detached' });
-        await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        await openVoiceReader(page);
         assert.equal(await panel.getByLabel('Voce', { exact: true }).inputValue(), '', 'Sara uses her automatic profile');
         await panel.locator('option[value="it_IT-paola-medium"]').waitFor({ state: 'attached' });
         assert.match(await panel.getByLabel('Voce', { exact: true }).textContent(), /Paola.*Femminile/);
@@ -309,7 +315,7 @@ test('page reading follows the selected counselor and separates personal voice c
             window.dispatchEvent(new Event('storage'));
         });
         await panel.waitFor({ state: 'detached' });
-        await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        await openVoiceReader(page);
         assert.equal(await panel.getByLabel('Voce', { exact: true }).inputValue(), 'it_IT-riccardo-x_low', 'Marco retains his personal choice');
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
@@ -322,7 +328,7 @@ test('static page extraction excludes drafts, hidden content, chat logs and butt
         await f.page.locator('main').evaluate(el => {
             el.innerHTML = '<h1>Titolo leggibile</h1><p>Paragrafo <strong>importante</strong>.</p><div hidden>SEGRETO_NASCOSTO</div><div style="display:none">SEGRETO_CSS</div><textarea>BOZZA_PRIVATA</textarea><button>COMANDO</button><div role="log">CONVERSAZIONE</div><p class="sr-only">SOLO_SCREEN_READER</p>';
         });
-        await f.page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        await openVoiceReader(f.page);
         await f.page.getByRole('button', { name: 'Ascolta pagina' }).click();
         await f.page.locator('[data-voice-active="true"]').waitFor();
         assert.equal(f.requests.find(r => r.path === '/api/tts/stream').body.text, 'Titolo leggibile\n\nParagrafo importante.');
@@ -330,11 +336,11 @@ test('static page extraction excludes drafts, hidden content, chat logs and butt
 });
 
 test('imported pronunciation rules can be edited, previewed, disabled and persist', async () => {
-    const f = await fixture({ guest: true, width: 390 });
+    const f = await fixture({ admin: true, width: 390 });
     try {
         const { page } = f;
         await page.goto(`${origin}/guide`);
-        await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        await openVoiceReader(page);
         const panel = page.getByRole('complementary');
         await panel.locator('summary').filter({ hasText: 'Correzione della pronuncia (80)' }).click();
         await panel.getByRole('button', { name: 'Modifica mediano', exact: true }).click();
@@ -357,7 +363,7 @@ test('imported pronunciation rules can be edited, previewed, disabled and persis
         assert.deepEqual(f.requests.filter(r => r.path === '/api/tts/stream').at(-1).body.pronunciations, []);
         await page.keyboard.press('Escape');
         await page.reload();
-        await page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        await openVoiceReader(page);
         await panel.locator('summary').click();
         assert.equal(await panel.getByLabel('Applica le correzioni', { exact: true }).isChecked(), false);
         await panel.getByRole('button', { name: 'Modifica mediano', exact: true }).click();
@@ -369,17 +375,17 @@ test('imported pronunciation rules can be edited, previewed, disabled and persis
 });
 
 test('language changes stop audio and load a separate pronunciation dictionary', async () => {
-    const f = await fixture({ guest: true });
+    const f = await fixture({ admin: true });
     try {
         await f.page.goto(`${origin}/guide`);
-        await f.page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        await openVoiceReader(f.page);
         await f.page.getByLabel('Voce', { exact: true }).selectOption('it-IT-DiegoNeural');
         await f.page.getByRole('button', { name: 'Prova voce' }).click();
         await f.page.getByRole('status').filter({ hasText: 'In lettura' }).waitFor();
         await f.page.evaluate(() => { localStorage.setItem('cb_lang', 'en'); window.dispatchEvent(new Event('storage')); });
         await f.page.getByRole('complementary').waitFor({ state: 'detached' });
         assert.equal(await f.page.evaluate(() => window.__audios.at(-1).src), '');
-        await f.page.getByRole('button', { name: 'Audio reader', exact: true }).click();
+        await openVoiceReader(f.page, 'Audio reader');
         assert.equal(await f.page.getByLabel('Voice', { exact: true }).inputValue(), '');
         await f.page.getByRole('complementary').locator('summary').filter({ hasText: 'Pronunciation corrections (49)' }).waitFor();
         await f.page.getByRole('button', { name: 'Try voice' }).click();
@@ -397,7 +403,7 @@ test('live Edge preview plays without a duplicate transcript', { skip: !process.
     const f = await fixture({ guest: true, live: true });
     try {
         await f.page.goto(`${origin}/guide`);
-        await f.page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        await openVoiceReader(f.page);
         const panel = f.page.getByRole('complementary');
         await panel.getByRole('button', { name: 'Prova voce' }).click();
         await f.page.waitForFunction(() => window.__audios.some(audio => audio.currentTime > .15), null, { timeout: 45000 });
@@ -412,7 +418,7 @@ test('live Piper delivers playable WAV through the Next streaming proxy', { skip
     const f = await fixture({ guest: true, live: true });
     try {
         await f.page.goto(`${origin}/guide`);
-        await f.page.getByRole('button', { name: 'Lettore audio', exact: true }).click();
+        await openVoiceReader(f.page);
         const panel = f.page.getByRole('complementary');
         if (await panel.getByRole('button', { name: 'Espandi lettore' }).count()) await panel.getByRole('button', { name: 'Espandi lettore' }).click();
         await panel.getByLabel('Motore').selectOption('piper');

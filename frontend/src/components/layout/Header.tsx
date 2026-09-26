@@ -12,7 +12,7 @@ import { HeaderInstrument } from './HeaderInstrument';
 import { HeaderResume } from './HeaderResume';
 import { MotionToggle } from './MotionToggle';
 import { ThemeToggle } from './ThemeToggle';
-import { VoiceReaderMenuEntry, VoiceReaderTrigger } from '@/components/voice-reader/VoiceReader';
+import { VoiceReaderMenuEntry } from '@/components/voice-reader/VoiceReader';
 import { FlagIcon } from './FlagIcon';
 import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
 import { LANGUAGES } from '@/lib/i18n';
@@ -123,10 +123,6 @@ export function Header() {
                     </div>
 
                     <div className="ml-auto flex min-w-0 items-center gap-1">
-                        {/* Lettore audio: icona da `lg`, voce di menu sotto `xl`. */}
-                        <div className="hidden lg:block">
-                            <VoiceReaderTrigger />
-                        </div>
                         {/* Strumento e counselor selezionati: badge compatti durante il percorso. */}
                         <div className="hidden shrink-0 items-center gap-1 xl:flex">
                             <HeaderInstrument />
@@ -287,7 +283,7 @@ function HeaderMenu({
     const itemClass = 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700';
 
     return (
-        <div ref={ref} className={cn("relative", !items.some(item => item.menuOnly) && "lg:hidden")}>
+        <div ref={ref} className="relative">
             <button
                 type="button"
                 ref={triggerRef}
@@ -332,7 +328,7 @@ function HeaderMenu({
                             );
                     })}
                     {/* Il lettore segue le voci di navigazione, dopo "Gruppi e classi". */}
-                    <VoiceReaderMenuEntry className={itemClass} onActivate={close} />
+                    <VoiceReaderMenuEntry className={itemClass} onActivate={close} getOpener={() => triggerRef.current} />
                     <div className="xl:hidden">
                     {/* Sessioni congelate + chat locale interrotta: su mobile questa è
                         l'unica porta, l'icona "Riprendi" della topbar non c'è. */}
