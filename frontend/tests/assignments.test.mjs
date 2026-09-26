@@ -266,3 +266,56 @@ for (const width of [1440, 390]) {
         } finally { await teacher.context.close(); await learner.context.close(); }
     });
 }
+
+// F31: la scheda gruppo/classe di /docente/classi elenca in linea le
+// assegnazioni di quel gruppo e apre /docente/assegnazioni?group= filtrata.
+test('group card lists its assignments inline in /docente/classi', async () => {
+    const { page, context, errors } = await pageFor('teacher', 1440);
+    const marker = `Inline ${Date.now().toString(36)}`;
+    const requestId = `inline-${Date.now().toString(36)}`;
+    const call = async (path, body) => {
+        const response = await fetch(api + path, { method: body ? 'POST' : 'GET',
+            headers: { 'Content-Type': 'application/json', 'x-test-user': 'teacher' }, body: body ? JSON.stringify(body) : undefined });
+        assert.ok(response.ok, await response.clone().text()); return response.json();
+    };
+    try {
+        const targets = await call('/teacher/assignment-targets');
+        const group = targets.find(row => row.name === 'Classe 3B');
+        assert.ok(group, 'Class 3B is an assignment target');
+        const entry = (await call('/teacher/goal-catalog')).find(row => row.status === 'published' && row.data?.title === 'Pianificare lo studio');
+        assert.ok(entry, 'published goal entry is available');
+        await call('/teacher/assignments', { group_id: group.id, source_kind: 'goal', source_id: entry.id, instructions: marker, request_id: requestId, due_date: '2026-10-12' });
+
+        await page.goto(`${origin}/docente/classi`);
+        const blockFor = name => page.locator('details').filter({ hasText: 'Assegnazioni della classe' })
+            .filter({ has: page.locator(`a[href="/docente/assegnazioni?group=${encodeURIComponent(name)}"]`) });
+        const block = blockFor('Classe 3B');
+        await block.locator('summary').click();
+        const item = block.locator('a[href*="#assignment-"]').first();
+        await item.waitFor();
+        // Le assegnazioni degli altri gruppi restano fuori dal blocco della classe.
+        assert.equal(await block.getByText('Film per riflettere').count(), 0);
+        const href = await item.getAttribute('href');
+        assert.match(href, /^\/docente\/assegnazioni\?group=Classe%203B#assignment-\d+$/);
+        assert.equal(await block.getByRole('link', { name: 'Gestisci o assegna' }).getAttribute('href'), '/docente/assegnazioni?group=Classe%203B');
+
+        // Un gruppo senza assegnazioni mostra lo stato vuoto.
+        const emptyName = `Classe vuota ${Date.now().toString(36)}`;
+        await call('/admin/groups', { name: emptyName, school: null, school_level: null, institution_id: null });
+        await page.reload();
+        const emptyBlock = blockFor(emptyName);
+        await emptyBlock.locator('summary').click();
+        await emptyBlock.getByText('Nessuna assegnazione per questa classe o gruppo.', { exact: true }).waitFor();
+
+        // Il reload ha riavuto i <details>: si riapre il blocco della classe
+        // (il fetch riparte allo stato fresco del componente).
+        await block.locator('summary').click();
+        // Il link porta alla pagina assegnazioni già filtrata per il gruppo,
+        // con il dettaglio dell'assegnazione (e le sue indicazioni) a vista.
+        await item.click();
+        await page.waitForURL(/docente\/assegnazioni\?group=Classe/);
+        await page.getByText(marker, { exact: false }).waitFor();
+        assert.equal(await page.getByText('Film per riflettere').count(), 0);
+        assert.deepEqual(errors, []);
+    } finally { await context.close(); }
+});
