@@ -38,7 +38,9 @@ for (const width of [1440, 390]) {
         const { page, context, errors } = await fixture({ width });
         try {
             await page.goto(`${origin}/profilo/azioni`);
-            await page.getByRole('heading', { name: 'Bacheca delle azioni', exact: true, level: 1 }).waitFor();
+            // Lotto 2: l'h1 è il nome breve approvato (0.1); «Bacheca delle azioni» resta nel workspace.
+            await page.getByRole('heading', { name: 'Azioni', exact: true, level: 1 }).waitFor();
+            await page.getByRole('heading', { name: 'Bacheca delle azioni', exact: true, level: 2 }).waitFor();
             const titleInput = page.locator('input[id$="-new-action-title"]');
             const addSummary = page.locator('summary').filter({ hasText: 'Aggiungi azione' });
             await titleInput.or(addSummary).first().waitFor();
