@@ -15,9 +15,8 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-tracker';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
-import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
+import { ResultReadingCard } from '@/components/profile/ResultReadingCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
-import { JourneyOverview } from '@/components/goals/JourneyOverview';
 import { PersonalAreaHome } from '@/components/profile/PersonalAreaHome';
 import { personalAreaText, personalAreaName, personalAreaDescription } from '@/lib/i18n-personal-area';
 import { TavoloList } from '@/components/tavolo/TavoloList';
@@ -30,7 +29,7 @@ import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
     Trash2, Download, MessageSquare, ShieldAlert, Search,
-    NotebookPen, BookText, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, GraduationCap, BookOpen,
+    NotebookPen, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, GraduationCap, BookOpen,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -47,7 +46,7 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-type PersonalSection = 'assignments' | 'notebook' | 'booklet' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo' | 'flashcards' | 'pqbl';
+type PersonalSection = 'assignments' | 'notebook' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo' | 'flashcards' | 'pqbl';
 
 const PERSONAL_AREAS = [
     { id: 'assignments', slug: 'assegnazioni', icon: ClipboardList, image: '/images/platform/assegnazioni.png', titleKey: 'received', descriptionKey: 'intro' },
@@ -58,14 +57,6 @@ const PERSONAL_AREAS = [
         image: '/images/platform/su-di-me.png',
         titleKey: 'profile.about.title',
         descriptionKey: 'profile.about.subtitle',
-    },
-    {
-        id: 'booklet',
-        slug: 'libretto',
-        icon: BookText,
-        image: '/images/platform/libretto.png',
-        titleKey: 'profile.bookletSection.title',
-        descriptionKey: 'profile.bookletSection.subtitle',
     },
     {
         id: 'orientation',
@@ -162,7 +153,6 @@ export default function ProfilePage() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
     const [sessionSearch, setSessionSearch] = useState('');
-    const [selectedBookletType, setSelectedBookletType] = useState<BookletType>('QSA');
     const activeSection = personalSectionFromPath(pathname);
     const personalAreas = PERSONAL_AREAS.map((area) => ({
         ...area,
@@ -172,18 +162,6 @@ export default function ProfilePage() {
     }));
     const activeArea = personalAreas.find((area) => area.id === activeSection) ?? null;
     const ActiveAreaIcon = activeArea?.icon;
-
-    const bookletTypesOptions = useMemo((): BookletType[] => {
-        const completed = sessions
-            .map((s) => s.questionnaire_type)
-            .filter((type, index, self) => self.indexOf(type) === index) as BookletType[];
-
-        if (completed.length === 0) {
-            return ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', ...EVENT_BOOKLET_TYPES];
-        }
-
-        return [...new Set([...completed, selectedBookletType, ...EVENT_BOOKLET_TYPES])];
-    }, [sessions, selectedBookletType]);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -198,16 +176,14 @@ export default function ProfilePage() {
                     if (Array.isArray(payload)) {
                         const data = payload as QuestionnaireResult[];
                         setSessions(data);
+                        // `?instrument=` arrives from old booklet links: open that instrument's latest result.
+                        const requested = new URLSearchParams(window.location.search).get('instrument');
+                        const first = data.find((session) => session.questionnaire_type === requested) ?? data[0] ?? null;
                         setSelectedSession((selected) => (
                             selected
-                                ? data.find((session) => session.session_id === selected.session_id) ?? data[0] ?? null
-                                : data[0] ?? null
+                                ? data.find((session) => session.session_id === selected.session_id) ?? first
+                                : first
                         ));
-
-                        if (data.length > 0) {
-                            const requested = new URLSearchParams(window.location.search).get('instrument');
-                            setSelectedBookletType((requested && [...Object.keys(QUESTIONNAIRES), ...EVENT_BOOKLET_TYPES].includes(requested) ? requested : data[0].questionnaire_type) as BookletType);
-                        }
 
                         // Sync localStorage completed profiles
                         clearCompletedProfiles();
@@ -232,8 +208,6 @@ export default function ProfilePage() {
     }, [activeSection]);
 
     useEffect(() => {
-        const requested = new URLSearchParams(window.location.search).get('instrument');
-        if (requested && [...Object.keys(QUESTIONNAIRES), ...EVENT_BOOKLET_TYPES].includes(requested)) setSelectedBookletType(requested as BookletType);
         void loadData();
     }, [loadData]);
 
@@ -479,11 +453,11 @@ export default function ProfilePage() {
 
             {!activeArea && <PersonalAreaHome />}
 
-            {activeSection && ['notebook', 'booklet', 'portfolio', 'tavolo'].includes(activeSection) && <JourneyOverview kind={activeSection as 'notebook' | 'booklet' | 'portfolio' | 'tavolo'} />}
             {activeSection && ['notebook', 'sessions'].includes(activeSection) && <p className="rounded-lg border border-slate-200 p-3 text-sm text-slate-600">{learningText(lang, 'groupVisibility')}</p>}
             {activeSection === 'notebook' && (
             <section className="space-y-4" aria-label={t('profile.about.title')}>
                 <LearnerProfileCard variant="edit" />
+                <TeacherNotesCard lang={lang} />
                 <Link
                     href="/profilo/cambiamenti"
                     className="glass-panel p-5 block hover:bg-slate-50 transition-colors"
@@ -779,6 +753,8 @@ export default function ProfilePage() {
                                 )}
                             </div>
                         </div>
+
+                        <ResultReadingCard key={selectedSession.session_id} sessionId={selectedSession.session_id} questionnaireType={selectedSession.questionnaire_type} scores={selectedSession.scores} />
                     </>
                 ) : (
                     <div className="glass-panel p-12 text-center space-y-4 text-slate-500">
@@ -789,29 +765,6 @@ export default function ProfilePage() {
 
             <CrossSynthesisCard />
             </>
-            )}
-
-            {activeSection === 'booklet' && (
-            <section className="space-y-4" aria-label={t('profile.bookletSection.title')}>
-                <div className="glass-panel p-5">
-                    <label className="block">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.bookletSection.tool')}</span>
-                        <select
-                            value={selectedBookletType}
-                            onChange={(event) => setSelectedBookletType(event.target.value as BookletType)}
-                            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                        >
-                            {bookletTypesOptions.map((type) => (
-                                <option key={type} value={type}>
-                                    {bookletTypeOptionLabel(type, t, tf)}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                </div>
-                <StudentBookletCard questionnaireType={selectedBookletType} lang={lang} />
-                <TeacherNotesCard lang={lang} />
-            </section>
             )}
 
             {activeSection === 'assignments' && <AssignmentsPanel showHeading={false} />}

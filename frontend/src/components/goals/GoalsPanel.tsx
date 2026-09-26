@@ -5,7 +5,7 @@ import { List, Network, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
 import { goalText, type GoalTextKey } from '@/lib/i18n-goals';
-import { goalApi, type CatalogEntry, type GoalGroup, type PersonalGoal } from '@/lib/goals';
+import { goalApi, type CatalogEntry, type GoalGroup, type GoalOrigin, type PersonalGoal } from '@/lib/goals';
 import { buildForest, visibleGoals } from '@/lib/goal-network';
 import { GoalCatalogDialog } from './GoalCatalogDialog';
 import { GoalDialog, type DialogTarget } from './GoalDialog';
@@ -27,6 +27,14 @@ const stripParam = (name: string) => {
     } catch { /* best effort only */ }
 };
 const stripGoalParam = () => stripParam('goal');
+// `?new=1&origin=event:<id>&title=…` arrives from the chat, once a milestone has been saved.
+const ORIGIN_KINDS: GoalOrigin['kind'][] = ['reading', 'notebook', 'event', 'session'];
+const createTargetFromSearch = (search: URLSearchParams): DialogTarget => {
+    const [kind, ...rest] = (search.get('origin') ?? '').split(':');
+    const origin = ORIGIN_KINDS.includes(kind as GoalOrigin['kind']) && rest.length ? { kind: kind as GoalOrigin['kind'], target_id: rest.join(':') } : undefined;
+    const title = search.get('title')?.slice(0, 160);
+    return { kind: 'create', ...(origin ? { origin } : {}), ...(title ? { prefill: { title } } : {}) };
+};
 
 export function GoalsPanel() {
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
@@ -47,7 +55,10 @@ export function GoalsPanel() {
     useEffect(() => {
         void load().then(rows => {
             const search = new URLSearchParams(window.location.search);
-            if (search.get('new') === '1') { setSaved(false); setTarget({ kind: 'create' }); stripParam('new'); return; }
+            if (search.get('new') === '1') {
+                setSaved(false); setTarget(createTargetFromSearch(search));
+                ['new', 'origin', 'title'].forEach(stripParam); return;
+            }
             const requested = Number(search.get('goal'));
             if (!requested) return;
             if (rows.some(row => row.id === requested)) setTarget({ kind: 'edit', id: requested });

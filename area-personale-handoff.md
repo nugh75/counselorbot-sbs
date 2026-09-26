@@ -35,12 +35,13 @@ il precedente `HANDOFF.md`, non tracciato, riguarda un altro lavoro ed è preser
 - [ ] Completare 0.3/lotto 2 sulle altre sottopagine, una per volta: testata unica,
   ritorno certo, immagine esistente, azione principale dove utile. La variante
   senza «Vai a…» sostituisce gli schemi storici contrari ancora presenti nel piano.
-- [ ] Lotto 1A: bozze/uscita/errori e conflitti in Libretto, Portfolio, Obiettivi,
+- [ ] Lotto 1A: bozze/uscita/errori e conflitti in Risultati («La mia lettura»), Portfolio, Obiettivi,
   strumenti visuali e calendario. Le guardie delle categorie non coprono tali pagine.
 - [ ] Lotto 1B: errori con riprova, uscita dai gruppi confermata, testo pQBL.
 - [ ] Lotto 3A: Obiettivi e collegamenti; creare senza compilare tutto il bilancio,
   aprire attività precise e collegare senza perdere bozze.
-- [ ] Lotto 3B: Libretto, Taccuino, Portfolio, Risultati/Cambiamenti; una pagina
+- [ ] Lotto 3B: Taccuino, Portfolio, Risultati/Cambiamenti (il libretto è stato
+  eliminato il 2026-09-26: vedi `docs/plans/2026-09-25-libretto-nella-triade-design.md`); una pagina
   alla volta, conservando versioni, visibilità e significato dei dati.
 - [ ] Lotto 4: Carte, Confronto, Calendario, Flashcard, Tavolo e altri strumenti;
   distinguere lettura/modifica e assicurare alternative al trascinamento su mobile.
@@ -62,7 +63,7 @@ il precedente `HANDOFF.md`, non tracciato, riguarda un altro lavoro ed è preser
   scelto, con conferma su ✕/Annulla/Esc/sfondo/navigazione/Indietro/chiusura
   scheda. Spec: `docs/plans/2026-09-24-obiettivi-rete-design.md`; piano ed
   esecuzione task per task: `.superpowers/sdd/2026-09-24-obiettivi-rete-plan/`.
-  F06 resta aperta per Libretto, Portfolio, strumenti visuali e calendario
+  F06 resta aperta per Risultati, Portfolio, strumenti visuali e calendario
   (lotto 1A, invariato).
   - Minori rimandati (dettaglio in `progress.md` del piano): N+1 di
     `parent_ids` per obiettivo, invariante a singolo studente non filtrato per

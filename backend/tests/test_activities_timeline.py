@@ -209,6 +209,9 @@ def test_migrate_updates_goal_links_and_removes_duplicates():
             (goal.id, 'action', 'm-iso-future'),
             (other_goal.id, 'action', 'm-iso-future'),
         }
+        # Every migrated event link becomes an action means link.
+        for link in links:
+            assert link.kind == 'action' and link.role == 'means'
         assert db.get(models.PersonalGoal, goal.id).revision == goal_revision + 1
         assert db.get(models.PersonalGoal, other_goal.id).revision == other_revision + 1
 
@@ -288,3 +291,21 @@ def test_migration_is_idempotent():
         revision_after_second = load_workspace(db, None, 'alice')['revision']
         assert revision_after_first == revision_after_second
         assert db.query(models.Log).filter_by(username='alice', action=MIGRATION_ACTION).count() == 1
+
+
+def test_check_actions_need_progress_to_be_done():
+    ok = Action(id='k1', title='Come va?', kind='check', stage='done', progress='slow', adjustment='Ripasso al mattino')
+    assert ok.progress == 'slow'
+    with pytest.raises(ValidationError):
+        Action(id='k2', title='Come va?', kind='check', stage='done')
+    with pytest.raises(ValidationError):
+        Action(id='a1', title='Leggere', kind='activity', progress='slow')
+
+
+def test_past_milestone_accepts_review_future_does_not():
+    from backend.visual_tools import TimelineEvent
+    e = TimelineEvent(id='p1', title='Esame di chimica', period='2026-03', tense='past',
+                      review=dict(role='protagonist', worked=['Schema'], did_not_work=['Ansia'], reading='…', try_next='Ripasso a voce'))
+    assert e.review.worked == ['Schema']
+    with pytest.raises(ValidationError):
+        TimelineEvent(id='f1', title='Esame', period='2027', tense='future', review=dict(reading='x'))

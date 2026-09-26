@@ -2070,27 +2070,27 @@
       "evstudio-final": {
         "en": [
           "What do I do with this summary?",
-          "How do I save it in my booklet?",
+          "How do I save it as a milestone in my Timeline?",
           "When does it make sense to come back to this event?"
         ],
         "es": [
           "¿Qué hago con esta síntesis?",
-          "¿Cómo la guardo en mi cuadernillo?",
+          "¿Cómo la guardo como etapa en mi Línea del tiempo?",
           "¿Cuándo tiene sentido volver a este evento?"
         ],
         "fr": [
           "Que faire de cette synthèse ?",
-          "Comment l’enregistrer dans mon livret ?",
+          "Comment l’enregistrer comme étape dans ma Ligne du temps ?",
           "Quand est-il utile de revenir sur cet événement ?"
         ],
         "de": [
           "Was mache ich mit dieser Zusammenfassung?",
-          "Wie speichere ich sie in meinem Arbeitsheft?",
+          "Wie speichere ich sie als Etappe in meiner Zeitleiste?",
           "Wann ist es sinnvoll, auf dieses Ereignis zurückzukommen?"
         ],
         "sv": [
           "Vad gör jag med den här sammanfattningen?",
-          "Hur sparar jag den i mitt arbetshäfte?",
+          "Hur sparar jag den som en etapp på min tidslinje?",
           "När är det meningsfullt att återvända till den här händelsen?"
         ]
       }
@@ -2315,27 +2315,27 @@
       "evprof-final": {
         "en": [
           "What do I do with this summary?",
-          "How do I save it in my booklet?",
+          "How do I save it as a milestone in my Timeline?",
           "When does it make sense to come back to this event?"
         ],
         "es": [
           "¿Qué hago con esta síntesis?",
-          "¿Cómo la guardo en mi cuadernillo?",
+          "¿Cómo la guardo como etapa en mi Línea del tiempo?",
           "¿Cuándo tiene sentido volver a este evento?"
         ],
         "fr": [
           "Que faire de cette synthèse ?",
-          "Comment l’enregistrer dans mon livret ?",
+          "Comment l’enregistrer comme étape dans ma Ligne du temps ?",
           "Quand est-il utile de revenir sur cet événement ?"
         ],
         "de": [
           "Was mache ich mit dieser Zusammenfassung?",
-          "Wie speichere ich sie in meinem Arbeitsheft?",
+          "Wie speichere ich sie als Etappe in meiner Zeitleiste?",
           "Wann ist es sinnvoll, auf dieses Ereignis zurückzukommen?"
         ],
         "sv": [
           "Vad gör jag med den här sammanfattningen?",
-          "Hur sparar jag den i mitt arbetshäfte?",
+          "Hur sparar jag den som en etapp på min tidslinje?",
           "När är det meningsfullt att återvända till den här händelsen?"
         ]
       }
@@ -2846,7 +2846,7 @@
         "How should the results of a questionnaire be interpreted?",
         "What support materials does the project offer?",
         "Where can I find the instructions for completing the questionnaires?",
-        "How does the student booklet work?",
+        "How does “My reading” of results work?",
         "Which tools are also available in foreign languages?",
         "How do I request access for a school or institution?",
         "What is the procedure for collective administration?",
@@ -2868,7 +2868,7 @@
         "¿Cómo se interpretan los resultados de un cuestionario?",
         "¿Qué materiales de apoyo ofrece el proyecto?",
         "¿Dónde encuentro las instrucciones para completar los cuestionarios?",
-        "¿Cómo funciona el cuadernillo del estudiante?",
+        "¿Cómo funciona «Mi lectura» de los resultados?",
         "¿Qué herramientas están disponibles también en lengua extranjera?",
         "¿Cómo se solicita el acceso para una escuela o una institución?",
         "¿Cuál es el procedimiento para una administración colectiva?",
@@ -2890,7 +2890,7 @@
         "Comment interpréter les résultats d'un questionnaire ?",
         "Quels supports le projet propose-t-il ?",
         "Où puis-je trouver les instructions pour remplir les questionnaires ?",
-        "Comment fonctionne le livret de l'étudiant ?",
+        "Comment fonctionne « Ma lecture » des résultats ?",
         "Quels outils sont également disponibles en langue étrangère ?",
         "Comment demander l'accès pour une école ou un établissement ?",
         "Quelle est la procédure pour une passation collective ?",
@@ -2912,7 +2912,7 @@
         "Wie interpretiert man die Ergebnisse eines Fragebogens?",
         "Welche Unterstützungsmaterialien bietet das Projekt an?",
         "Wo finde ich die Anleitungen zum Ausfüllen der Fragebögen?",
-        "Wie funktioniert das Arbeitsheft des Studierenden?",
+        "Wie funktioniert „Meine Deutung“ der Ergebnisse?",
         "Welche Instrumente sind auch in Fremdsprachen verfügbar?",
         "Wie beantragt man den Zugang für eine Schule oder eine Einrichtung?",
         "Wie ist das Verfahren für eine kollektive Durchführung?",
@@ -2934,7 +2934,7 @@
         "Hur tolkar man resultaten från ett frågeformulär?",
         "Vilket stödmaterial erbjuder projektet?",
         "Var hittar jag instruktionerna för att fylla i frågeformulären?",
-        "Hur fungerar studentens arbetshäfte?",
+        "Hur fungerar ”Min tolkning” av resultaten?",
         "Vilka verktyg finns även tillgängliga på främmande språk?",
         "Hur ansöker man om åtkomst för en skola eller en organisation?",
         "Vad är proceduren för en kollektiv administrering?",
@@ -3738,7 +3738,7 @@
         "How does the guided chat with the AI counselor work?",
         "What is the student notebook (open learner model)?",
         "How can I use the portfolio on CounselorBot?",
-        "What is the purpose of the student booklet?",
+        "How does a goal grow out of a result?",
         "What is the combined analysis of the questionnaires?",
         "How does the OpenCode experience work?",
         "What is pQBL (pure Question-Based Learning)?",
@@ -3760,7 +3760,7 @@
         "¿Cómo funciona el chat guiado con el counselor de IA?",
         "¿Qué es el cuaderno del estudiante (open learner model)?",
         "¿Cómo puedo usar el portafolio en CounselorBot?",
-        "¿Para qué sirve el cuadernillo del estudiante?",
+        "¿Cómo nace un objetivo de un resultado?",
         "¿Qué es el análisis combinado de los cuestionarios?",
         "¿Cómo funciona la experiencia OpenCode?",
         "¿Qué es el pQBL (pure Question-Based Learning)?",
@@ -3782,7 +3782,7 @@
         "Comment fonctionne le chat guidé avec le conseiller IA ?",
         "Qu'est-ce que le carnet de l'étudiant (modèle d'apprenant ouvert) ?",
         "Comment puis-je utiliser le portfolio sur CounselorBot ?",
-        "À quoi sert le livret de l'étudiant ?",
+        "Comment un objectif naît-il d'un résultat ?",
         "Qu'est-ce que l'analyse combinée des questionnaires ?",
         "Comment fonctionne l'expérience OpenCode ?",
         "Qu'est-ce que le pQBL (pure Question-Based Learning) ?",
@@ -3804,7 +3804,7 @@
         "Wie funktioniert der geführte Chat mit dem KI-Berater?",
         "Was ist das Notizbuch des Studierenden (Open Learner Model)?",
         "Wie kann ich das Portfolio auf CounselorBot nutzen?",
-        "Wozu dient das Arbeitsheft des Studierenden?",
+        "Wie entsteht ein Ziel aus einem Ergebnis?",
         "Was ist die kombinierte Analyse der Fragebögen?",
         "Wie funktioniert die OpenCode-Erfahrung?",
         "Was ist pQBL (pure Question-Based Learning)?",
@@ -3826,7 +3826,7 @@
         "Hur fungerar den guidade chatten med AI-rådgivaren?",
         "Vad är studentens anteckningsbok (öppen lärarmodell)?",
         "Hur kan jag använda portföljen i CounselorBot?",
-        "Vad används studentens arbetshäfte till?",
+        "Hur växer ett mål fram ur ett resultat?",
         "Vad är den kombinerade analysen av frågeformulären?",
         "Hur fungerar OpenCode-upplevelsen?",
         "Vad är pQBL (pure Question-Based Learning)?",
@@ -3961,7 +3961,7 @@
         "How do I move to the next step in the chat?",
         "Does the counselor remember previous conversations?",
         "How do I read my profile after the chat?",
-        "What is the purpose of the reflection booklet?",
+        "How do I review a goal?",
         "How do I use the portfolio to document my journey?",
         "What can I upload to my portfolio?",
         "How do I perform a combined analysis of my results?",
@@ -3983,7 +3983,7 @@
         "¿Cómo paso al siguiente paso en el chat?",
         "¿El consejero recuerda las conversaciones anteriores?",
         "¿Cómo leo mi perfil después del chat?",
-        "¿Para qué sirve el cuadernillo de reflexión?",
+        "¿Cómo hago el balance de un objetivo?",
         "¿Cómo uso el portafolio para documentar mi proceso?",
         "¿Qué puedo cargar en mi portafolio?",
         "¿Cómo realizo el análisis combinado de mis resultados?",
@@ -4005,7 +4005,7 @@
         "Comment passer à l'étape suivante dans le chat ?",
         "Le conseiller se souvient-il des conversations précédentes ?",
         "Comment puis-je consulter mon profil après le chat ?",
-        "À quoi sert le carnet de réflexion ?",
+        "Comment faire le bilan d'un objectif ?",
         "Comment utiliser le portfolio pour documenter mon parcours ?",
         "Que puis-je télécharger dans mon portfolio ?",
         "Comment puis-je effectuer l'analyse combinée de mes résultats ?",
@@ -4027,7 +4027,7 @@
         "Wie gelange ich im Chat zum nächsten Schritt?",
         "Erinnert sich der Berater an frühere Unterhaltungen?",
         "Wie lese ich mein Profil nach dem Chat?",
-        "Wozu dient das Arbeitsheft zur Reflexion?",
+        "Wie ziehe ich die Bilanz eines Ziels?",
         "Wie nutze ich das Portfolio, um meinen Weg zu dokumentieren?",
         "Was kann ich in mein Portfolio hochladen?",
         "Wie führe ich eine kombinierte Analyse meiner Ergebnisse durch?",
@@ -4049,7 +4049,7 @@
         "Hur går jag vidare till nästa steg i chatten?",
         "Kommer rådgivaren ihåg tidigare konversationer?",
         "Hur läser jag min profil efter chatten?",
-        "Vad är syftet med arbetshäftet för reflektion?",
+        "Hur gör jag utvärderingen av ett mål?",
         "Hur använder jag portföljen för att dokumentera min resa?",
         "Vad kan jag ladda upp i min portfölj?",
         "Hur gör jag en kombinerad analys av mina resultat?",

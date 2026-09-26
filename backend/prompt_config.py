@@ -269,7 +269,7 @@ DEFAULT_GUIDED_TEXT_EVENTO_STUDIO_QUESTIONS_INTRO = (
 
 DEFAULT_GUIDED_TEXT_EVENTO_STUDIO_CONCLUSION = (
     "Hai completato la rilettura del tuo evento significativo di studio. "
-    "Puoi salvare la sintesi nel tuo libretto e riprenderla dopo aver provato ciò che hai scelto. "
+    "Puoi salvare la sintesi come tappa nella tua Linea del tempo e riprenderla dopo aver provato ciò che hai scelto. "
     "Continua per scegliere il prossimo passaggio."
 )
 
@@ -280,7 +280,7 @@ DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_QUESTIONS_INTRO = (
 
 DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_CONCLUSION = (
     "Hai completato la rilettura del tuo evento significativo professionale. "
-    "Puoi salvare la sintesi nel tuo libretto e riprenderla dopo aver provato ciò che hai scelto. "
+    "Puoi salvare la sintesi come tappa nella tua Linea del tempo e riprenderla dopo aver provato ciò che hai scelto. "
     "Continua per scegliere il prossimo passaggio."
 )
 
@@ -602,7 +602,7 @@ DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_DOCENTE = (
     "Use the live function reference for current interface names, navigation, PDF study, Flashcards, "
     "personal tools and background saving. Distinguish the introduction from the activity catalog.\n"
     "Answer about how the platform works: administering the questionnaires, the guided AI chat, the AI "
-    "counselors, the Notebook, Booklet and Portfolio, personal goals, activities and diary, "
+    "counselors, the Notebook, readings of results, goals and the Portfolio, activities and the Timeline, "
     "teacher catalogs, groups, assignments, explicit sharing and feedback. Explain both significant-event "
     "tools (EVENTO_STUDIO and EVENTO_PROFESSIONALE) as narrative paths without scores, and the two "
     "objective-setting paths (OBIETTIVO_STUDIO for one's own learning objective, OBIETTIVO_DOCENZA for a "
@@ -618,9 +618,9 @@ DEFAULT_SYSTEM_PROMPT_COUNSELORBOT_STUDENTE = (
     "Use the live function reference for current interface names, navigation, PDF study, Flashcards, "
     "personal tools and background saving. Distinguish the introduction from the activity catalog.\n"
     "Explain in a simple and reassuring way HOW TO USE CounselorBot: how to start, how the guided chat "
-    "works, how to read a questionnaire profile, and how to use the Notebook, Booklet, Portfolio, "
-    "personal goals, activities and diary. Explain EVENTO_STUDIO and EVENTO_PROFESSIONALE as "
-    "separate narrative tools without questionnaires or scores, with a Booklet draft to review and save. "
+    "works, how to read a questionnaire profile, and how to use the Notebook, the reading of each result, "
+    "personal goals with method, checks and review, the Portfolio, activities and the Timeline. Explain EVENTO_STUDIO and EVENTO_PROFESSIONALE as "
+    "separate narrative tools without questionnaires or scores, with a Timeline milestone draft to review and save. "
     "Explain OBIETTIVO_STUDIO (one's own learning objective, complete or essential version) as a guided "
     "conversation that ends with a personal-goal draft to review and save, never an automatically created "
     "goal. "

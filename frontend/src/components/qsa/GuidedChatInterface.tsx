@@ -39,7 +39,7 @@ import { useIsDesktop } from '@/lib/use-desktop';
 import { RecommendationsPanel } from '@/components/qsa/RecommendationsPanel';
 import { ChatWorkspace } from '@/components/qsa/ChatWorkspace';
 import { chatLayoutLabel } from '@/lib/i18n-chat-layout';
-import { EventBookletCard } from '@/components/qsa/EventBookletCard';
+import { EventMilestoneCard } from '@/components/qsa/EventMilestoneCard';
 import { isEventInstrument, type EventBookletDraft } from '@/lib/event-booklet';
 import { Button } from '@/components/ui/Button';
 import {
@@ -1851,7 +1851,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 <ChatContinuation locale={activeLocale} {...continuation} />
                 {/* Input Area */}
                 {currentPhase === FIXED_CONCLUSION_ID && !voiceMode && isEventInstrument(questionnaireType) && (
-                    <EventBookletCard questionnaireType={questionnaireType} draft={eventBookletDraft} />
+                    <EventMilestoneCard sessionId={sessionId} draft={eventBookletDraft} />
                 )}
                 {(currentPhase === FIXED_CONCLUSION_ID || essentialSummary) && !voiceMode && isGoalInstrument(questionnaireType) && (
                     <GoalDraftCard questionnaireType={questionnaireType} sessionId={sessionId} draft={goalDraftValue} onChange={setGoalDraftValue} />

@@ -15,6 +15,7 @@ export function GoalIssue({ error, lang, retry }: { error: unknown; lang: string
     return <div role="alert" className="space-y-2 rounded-md border border-red-200 bg-red-50 p-3 text-red-800"><p>{goalText(lang, key)}</p>{retry && <Button type="button" variant="secondary" onClick={retry}>{goalText(lang, key === 'conflict' ? 'reload' : 'retry')}</Button>}</div>;
 }
 export function resourceLabel(lang: string, kind: string) {
-    const keys: Record<string, string> = { action: 'activity', event: 'timeline', card: 'cards', comparison: 'comparison', portfolio: 'portfolio', notebook: 'notebook', booklet: 'booklet' };
+    const keys: Record<string, string> = { action: 'activity', event: 'timeline', card: 'cards', comparison: 'comparison', portfolio: 'portfolio', notebook: 'notebook' };
+    if (kind === 'reading' || kind === 'session') return goalText(lang, kind as GoalTextKey);
     return kind === 'portfolio' ? 'Portfolio' : kind === 'tavolo' ? 'Tavolo' : visualLabel(lang, keys[kind] || kind);
 }

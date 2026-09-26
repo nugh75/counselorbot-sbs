@@ -36,7 +36,8 @@ export function GoalDraftCard({ questionnaireType, sessionId, draft, onChange }:
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...data, review_date: data.review_date || null,
-                    status: 'active', request_id: await goalRequestId(sessionId) }),
+                    status: 'active', request_id: await goalRequestId(sessionId),
+                    origin: { kind: 'session', target_id: sessionId } }),
             });
             if (!res.ok) throw new Error(`goal save failed (${res.status})`);
             setSaved(true);

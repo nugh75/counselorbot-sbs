@@ -31,7 +31,7 @@ _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 DIRECTIVE = (
     "[BOOKLET DRAFT] After the visible summary and before the final marker line, append one "
-    "private block that the person never sees. It pre-fills their booklet entry, which they "
+    "private block that the person never sees. It pre-fills a milestone in their Timeline, which they "
     "review before saving. Use only what the person actually said in this path:\n"
     "```booklet\n"
     '{"title": "", "event_date": "", "role": "", "context": "", "worked": [], '

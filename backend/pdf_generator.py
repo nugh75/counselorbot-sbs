@@ -1078,227 +1078,209 @@ def generate_questionnaire_pdf(
     return pdf_bytes
 
 
-BOOKLET_LABELS = {
-    "strength": "Punti di forza da valorizzare",
-    "growth_area": "Aree da migliorare",
-    "motivation": "Perche' e' importante per me",
-    "objective": "Obiettivo",
-    "strategy": "Strategia concreta",
-    "period": "Periodo",
-    "commitment": "Impegno rispettato",
-    "difficulties": "Difficolta' incontrate",
-    "improvements": "Miglioramenti osservati",
-    "discovery": "Cosa ho scoperto",
-    "bio_date": "Data biografia",
-    "bio_context": "In occasione di",
-    "bio_discovery": "Ho scoperto che",
-    "bio_keywords": "Parole chiave",
-    "student_notes": "Note dello studente",
-    "final_satisfaction": "Valutazione finale",
-    "final_observations": "Osservazioni finali",
+# --- Percorso dell'obiettivo ------------------------------------------------
+# Un obiettivo dall'origine al bilancio (spec libretto nella triade § 9). Testi
+# in latin-1: accenti sì, apostrofi tipografici e trattini lunghi no.
+
+GOAL_PATH_TEXT = {
+    "it": {"title": "Percorso dell'obiettivo", "student": "Studente", "period": "Periodo", "status": "Stato",
+           "in_progress": "in corso", "origin": "1. Da dove nasce", "born_from": "Nato da",
+           "motivation": "Perché conta per me", "serves_to": "Serve a", "criteria": "2. Come riconoscerò un miglioramento", "note": "Note",
+           "method": "3. Metodo", "certified": "certificata", "own": "mia", "steps": "4. Sottobiettivi e azioni",
+           "subgoals": "Sottobiettivi", "actions": "Azioni", "checks": "5. Controlli", "observe": "Cosa osservo",
+           "adjust": "Cosa cambio", "evidence": "6. Prove", "review": "7. Bilancio", "past_reviews": "Bilanci precedenti",
+           "commitment": "Ho fatto ciò che avevo deciso?", "outcome": "L'obiettivo è raggiunto?",
+           "satisfaction": "Quanto sono soddisfatto?", "obstacles": "Cosa mi ha ostacolato?",
+           "change": "Cosa è cambiato in me?", "learned": "Cosa ho capito?", "next_step": "Cosa faccio diversamente?",
+           "active": "In corso", "paused": "In pausa", "completed": "Concluso", "archived": "Archiviato",
+           "todo": "da fare", "doing": "in corso", "done": "fatto",
+           "on_track": "in linea", "slow": "a rilento", "stuck": "fermo",
+           "reached": "sì", "partial": "in parte", "not_reached": "no", "abandoned": "lo abbandono",
+           "full": "del tutto", "enough": "abbastanza", "none": "per niente", "much": "molto", "little": "poco"},
+    "en": {"title": "Goal path", "student": "Student", "period": "Period", "status": "Status",
+           "in_progress": "in progress", "origin": "1. Where it comes from", "born_from": "Born from",
+           "motivation": "Why it matters to me", "serves_to": "Serves", "criteria": "2. How I will recognize progress", "note": "Notes",
+           "method": "3. Method", "certified": "certified", "own": "my own", "steps": "4. Sub-goals and actions",
+           "subgoals": "Sub-goals", "actions": "Actions", "checks": "5. Checks", "observe": "What I observe",
+           "adjust": "What I change", "evidence": "6. Evidence", "review": "7. Review", "past_reviews": "Past reviews",
+           "commitment": "Did I do what I had decided?", "outcome": "Is the goal reached?",
+           "satisfaction": "How satisfied am I?", "obstacles": "What got in my way?",
+           "change": "What has changed in me?", "learned": "What have I learned?", "next_step": "What will I do differently?",
+           "active": "Active", "paused": "Paused", "completed": "Completed", "archived": "Archived",
+           "todo": "to do", "doing": "doing", "done": "done",
+           "on_track": "on track", "slow": "slow", "stuck": "stuck",
+           "reached": "yes", "partial": "partly", "not_reached": "no", "abandoned": "I give it up",
+           "full": "completely", "enough": "enough", "none": "not at all", "much": "a lot", "little": "little"},
+    "es": {"title": "Recorrido del objetivo", "student": "Estudiante", "period": "Periodo", "status": "Estado",
+           "in_progress": "en curso", "origin": "1. De dónde nace", "born_from": "Nacido de",
+           "motivation": "Por qué me importa", "serves_to": "Sirve para", "criteria": "2. Cómo reconoceré una mejora", "note": "Notas",
+           "method": "3. Método", "certified": "certificada", "own": "mía", "steps": "4. Subobjetivos y acciones",
+           "subgoals": "Subobjetivos", "actions": "Acciones", "checks": "5. Comprobaciones", "observe": "Qué observo",
+           "adjust": "Qué cambio", "evidence": "6. Pruebas", "review": "7. Balance", "past_reviews": "Balances anteriores",
+           "commitment": "¿Hice lo que había decidido?", "outcome": "¿Se ha logrado el objetivo?",
+           "satisfaction": "¿Cuán satisfecho estoy?", "obstacles": "¿Qué me ha obstaculizado?",
+           "change": "¿Qué ha cambiado en mí?", "learned": "¿Qué he aprendido?", "next_step": "¿Qué haré de manera diferente?",
+           "active": "En curso", "paused": "En pausa", "completed": "Concluido", "archived": "Archivado",
+           "todo": "por hacer", "doing": "en curso", "done": "hecho",
+           "on_track": "va bien", "slow": "va lento", "stuck": "estancado",
+           "reached": "sí", "partial": "en parte", "not_reached": "no", "abandoned": "lo abandono",
+           "full": "del todo", "enough": "bastante", "none": "para nada", "much": "mucho", "little": "poco"},
+    "fr": {"title": "Parcours de l'objectif", "student": "Étudiant", "period": "Période", "status": "État",
+           "in_progress": "en cours", "origin": "1. D'où il vient", "born_from": "Né de",
+           "motivation": "Pourquoi cela compte pour moi", "serves_to": "Sert à", "criteria": "2. Comment reconnaître un progrès", "note": "Notes",
+           "method": "3. Méthode", "certified": "certifiée", "own": "la mienne", "steps": "4. Sous-objectifs et actions",
+           "subgoals": "Sous-objectifs", "actions": "Actions", "checks": "5. Contrôles", "observe": "Ce que j'observe",
+           "adjust": "Ce que je change", "evidence": "6. Preuves", "review": "7. Bilan", "past_reviews": "Bilans précédents",
+           "commitment": "Ai-je fait ce que j'avais décidé ?", "outcome": "L'objectif est-il atteint ?",
+           "satisfaction": "Quelle satisfaction ?", "obstacles": "Qu'est-ce qui m'a freiné ?",
+           "change": "Qu'est-ce qui a changé en moi ?", "learned": "Qu'ai-je appris ?", "next_step": "Que ferai-je autrement ?",
+           "active": "En cours", "paused": "En pause", "completed": "Terminé", "archived": "Archivé",
+           "todo": "à faire", "doing": "en cours", "done": "fait",
+           "on_track": "dans les temps", "slow": "au ralenti", "stuck": "bloqué",
+           "reached": "oui", "partial": "en partie", "not_reached": "non", "abandoned": "je l'abandonne",
+           "full": "entièrement", "enough": "assez", "none": "pas du tout", "much": "beaucoup", "little": "peu"},
+    "de": {"title": "Weg des Ziels", "student": "Lernende Person", "period": "Zeitraum", "status": "Stand",
+           "in_progress": "laufend", "origin": "1. Woher es kommt", "born_from": "Entstanden aus",
+           "motivation": "Warum es mir wichtig ist", "serves_to": "Dient zu", "criteria": "2. Woran ich Fortschritte erkenne", "note": "Notizen",
+           "method": "3. Methode", "certified": "zertifiziert", "own": "meine", "steps": "4. Unterziele und Aktionen",
+           "subgoals": "Unterziele", "actions": "Aktionen", "checks": "5. Überprüfungen", "observe": "Was ich beobachte",
+           "adjust": "Was ich ändere", "evidence": "6. Belege", "review": "7. Bilanz", "past_reviews": "Frühere Bilanzen",
+           "commitment": "Habe ich getan, was ich mir vorgenommen hatte?", "outcome": "Wurde das Ziel erreicht?",
+           "satisfaction": "Wie zufrieden bin ich?", "obstacles": "Was hat mich aufgehalten?",
+           "change": "Was hat sich in mir verändert?", "learned": "Was habe ich gelernt?", "next_step": "Was mache ich künftig anders?",
+           "active": "Aktiv", "paused": "Pausiert", "completed": "Abgeschlossen", "archived": "Archiviert",
+           "todo": "offen", "doing": "in Arbeit", "done": "erledigt",
+           "on_track": "im Plan", "slow": "schleppend", "stuck": "festgefahren",
+           "reached": "ja", "partial": "teilweise", "not_reached": "nein", "abandoned": "ich gebe es auf",
+           "full": "vollständig", "enough": "genug", "none": "überhaupt nicht", "much": "sehr", "little": "wenig"},
+    "sv": {"title": "Målets väg", "student": "Elev", "period": "Period", "status": "Läge",
+           "in_progress": "pågår", "origin": "1. Var det kommer ifrån", "born_from": "Uppstod ur",
+           "motivation": "Varför det är viktigt för mig", "serves_to": "Tjänar till", "criteria": "2. Hur jag märker framsteg", "note": "Anteckningar",
+           "method": "3. Metod", "certified": "certifierad", "own": "min egen", "steps": "4. Delmål och åtgärder",
+           "subgoals": "Delmål", "actions": "Åtgärder", "checks": "5. Kontroller", "observe": "Vad jag observerar",
+           "adjust": "Vad jag ändrar", "evidence": "6. Bevis", "review": "7. Utvärdering", "past_reviews": "Tidigare utvärderingar",
+           "commitment": "Gjorde jag vad jag hade bestämt?", "outcome": "Har målet uppnåtts?",
+           "satisfaction": "Hur nöjd är jag?", "obstacles": "Vad har hindrat mig?",
+           "change": "Vad har förändrats i mig?", "learned": "Vad har jag förstått?", "next_step": "Vad gör jag annorlunda?",
+           "active": "Pågående", "paused": "Pausat", "completed": "Avslutat", "archived": "Arkiverat",
+           "todo": "att göra", "doing": "pågår", "done": "klart",
+           "on_track": "enligt plan", "slow": "försenad", "stuck": "stilla",
+           "reached": "ja", "partial": "delvis", "not_reached": "nej", "abandoned": "jag ger upp det",
+           "full": "fullständigt", "enough": "tillräckligt", "none": "inte alls", "much": "mycket", "little": "lite"},
 }
 
-BOOKLET_FACTOR_CODES = {
-    "QSA": ("C1", "C2", "C3", "C4", "C5", "C6", "C7", "A1", "A2", "A3", "A4", "A5", "A6", "A7"),
-    "QSAr": ("C1r", "C2r", "C3r", "C4r", "A1r", "A2r", "A3r", "A4r"),
-    "ZTPI": ("T1", "T2", "T3", "T4", "T5"),
-    "QPCS": ("S1", "S2", "S3", "S4", "S5"),
-    "QPCC": ("K1", "K2", "K3", "K4", "K5"),
-    "QAP": ("AD1", "AD2", "AD3", "AD4"),
-}
+
+def _path_field(pdf: FPDF, label: str, value: str, content_w: float) -> None:
+    if not (value or "").strip():
+        return
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_text_color(*APP_TEXT_MUTED)
+    pdf.multi_cell(content_w, 5, _latin1(label), new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(*APP_TEXT)
+    pdf.multi_cell(content_w, 6, _latin1(value.strip()), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
 
 
-def _booklet_text(data: dict, key: str) -> str:
-    value = data.get(key)
-    if value is None:
+def _path_lines(pdf: FPDF, lines: list[str], content_w: float) -> None:
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(*APP_TEXT)
+    for line in lines or ["-"]:
+        pdf.multi_cell(content_w, 6, _latin1(line), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+
+
+def _day(value) -> str:
+    if not value:
         return ""
-    if isinstance(value, (int, float)):
-        return str(value)
-    if isinstance(value, list):
-        return ", ".join(str(item).strip() for item in value if str(item).strip())
-    return str(value).strip()
+    if isinstance(value, str):
+        return value[:10]
+    return value.strftime("%Y-%m-%d")
 
 
-def _booklet_text_list(data: dict, key: str) -> list[str]:
-    value = data.get(key)
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return [str(item).strip() for item in value if str(item).strip()]
-    text = str(value).strip()
-    return [text] if text else []
+def generate_goal_path_pdf(goal: dict, parents: list[str], children: list[dict], lang: str, student_name: str) -> bytes:
+    """Il percorso di un obiettivo: origine, criteri, metodo, azioni, controlli, prove, bilancio.
 
-
-def _booklet_biography_events(data: dict) -> list[dict]:
-    raw = data.get("bio_events")
-    if isinstance(raw, list):
-        events = [item for item in raw if isinstance(item, dict) and any(
-            str(item.get(key) or "").strip() for key in ("date", "context", "discovery", "keywords")
-        )]
-        if events:
-            return events
-    legacy = {
-        "date": data.get("bio_date"),
-        "context": data.get("bio_context"),
-        "discovery": data.get("bio_discovery"),
-        "keywords": data.get("bio_keywords"),
-    }
-    return [legacy] if any(str(value or "").strip() for value in legacy.values()) else []
-
-
-def _booklet_field(pdf: FPDF, label: str, value: str, content_w: float) -> None:
-    pdf.set_font("Helvetica", "B", 9)
-    pdf.set_text_color(70, 70, 80)
-    pdf.multi_cell(content_w, 5, _latin1(label), new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", "", 10)
-    pdf.set_text_color(25, 25, 30)
-    pdf.multi_cell(content_w, 6, _latin1(value or "________________________________________"), new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(2)
-
-
-def _booklet_multi_field(pdf: FPDF, label: str, values: list[str], content_w: float) -> None:
-    pdf.set_font("Helvetica", "B", 9)
-    pdf.set_text_color(70, 70, 80)
-    pdf.multi_cell(content_w, 5, _latin1(label), new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", "", 10)
-    pdf.set_text_color(25, 25, 30)
-    if not values:
-        pdf.multi_cell(content_w, 6, _latin1("________________________________________"), new_x="LMARGIN", new_y="NEXT")
-    for item in values:
-        pdf.multi_cell(content_w, 6, _latin1(f"- {item}"), new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(2)
-
-
-def _booklet_section(pdf: FPDF, title: str, content_w: float) -> None:
-    pdf.ln(3)
-    pdf.set_fill_color(238, 242, 255)
-    pdf.set_text_color(49, 46, 129)
-    pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(content_w, 8, _latin1(title), new_x="LMARGIN", new_y="NEXT", fill=True)
-    pdf.ln(2)
-
-
-def generate_student_booklet_pdf(
-    questionnaire_type: str,
-    scores: dict[str, int | float] | None,
-    session_id: str | None,
-    booklet_data: dict | None,
-    username: str,
-    submitted_at: str | None = None,
-    language: str | None = None,
-) -> BytesIO:
-    """Genera il libretto compilato dallo studente per una compilazione."""
-    lang = _normalize_lang(language)
-    ui = UI_TEXT[lang]
-    trans = FACTOR_TRANS[lang]
-    data = booklet_data or {}
-
-    pdf = ResultPDF(title="CounselorBot - Libretto dello studente", page_label=ui["page"])
+    `goal` è il dizionario di `goals.goal_dict`; i controlli portano anche `reflection`
+    e `adjustment` letti dalla bacheca. Un obiettivo aperto ha il timbro «in corso»
+    e niente bilancio.
+    """
+    t = GOAL_PATH_TEXT[_normalize_lang(lang)]
+    closed = goal["status"] in ("completed", "archived") and bool(goal.get("reviews"))
+    pdf = ResultPDF(title=f"CounselorBot - {t['title']}", page_label=UI_TEXT[_normalize_lang(lang)]["page"])
     pdf.alias_nb_pages()
     pdf.set_auto_page_break(auto=True, margin=18)
     pdf.add_page()
     content_w = pdf.w - pdf.l_margin - pdf.r_margin
 
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.set_text_color(*APP_PRIMARY)
+    pdf.multi_cell(content_w, 8, _latin1(goal["title"]), new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("Helvetica", "", 10)
-    pdf.set_text_color(80, 80, 90)
-    pdf.cell(0, 7, _latin1(f"{ui['type']}: {questionnaire_type}"), new_x="LMARGIN", new_y="NEXT")
-    if submitted_at:
-        try:
-            dt = datetime.fromisoformat(submitted_at)
-            pdf.cell(0, 7, _latin1(f"{ui['date']}: {dt.strftime('%d/%m/%Y %H:%M')}"), new_x="LMARGIN", new_y="NEXT")
-        except (ValueError, TypeError):
-            pass
-    if session_id:
-        pdf.cell(0, 7, _latin1(f"{ui['session']}: {session_id[:16]}..."), new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 7, _latin1(f"Account: {username}"), new_x="LMARGIN", new_y="NEXT")
-    title = _booklet_text(data, "title")
-    if title:
-        pdf.set_font("Helvetica", "B", 12)
-        pdf.set_text_color(49, 46, 129)
-        pdf.multi_cell(content_w, 8, _latin1(title), new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(*APP_TEXT_MUTED)
+    end = _day(goal["reviews"][0]["created_at"]) if closed else goal.get("review_date") or ""
+    period = " - ".join(part for part in (_day(goal.get("created_at")), end) if part)
+    for label, value in ((t["student"], student_name), (t["period"], period), (t["status"], t.get(goal["status"], goal["status"]))):
+        if value:
+            pdf.cell(0, 6, _latin1(f"{label}: {value}"), new_x="LMARGIN", new_y="NEXT")
+    if not closed:
+        pdf.ln(1)
+        pdf.set_fill_color(*APP_ACCENT_SOFT)
+        pdf.set_text_color(*APP_TEXT)
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(pdf.get_string_width(t["in_progress"]) + 8, 7, _latin1(t["in_progress"]), fill=True, align="C",
+                 new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(4)
 
-    _booklet_section(pdf, "1. Profilo di riferimento", content_w)
-    if questionnaire_type in ("SAVICKAS", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE"):
-        pdf.set_font("Helvetica", "", 10)
-        pdf.set_text_color(70, 70, 80)
-        pdf.multi_cell(
-            content_w,
-            6,
-            _latin1("Percorso narrativo qualitativo: usa il libretto per collegare temi emersi, obiettivi e prossimi passi."),
-            new_x="LMARGIN",
-            new_y="NEXT",
-        )
-        pdf.ln(2)
-    elif scores:
-        for code, raw_value in scores.items():
-            try:
-                value_int = int(round(float(raw_value)))
-            except (TypeError, ValueError):
-                continue
-            info = trans.get(code)
-            name = info[0] if info else code
-            label, color = _score_label(value_int, code in INVERTED_CODES, ui)
-            pdf.set_font("Helvetica", "B", 9)
-            pdf.set_text_color(25, 25, 30)
-            pdf.multi_cell(content_w, 5, _latin1(f"{code} - {name}"), new_x="LMARGIN", new_y="NEXT")
-            pdf.set_font("Helvetica", "B", 8)
-            pdf.set_text_color(*color)
-            pdf.cell(0, 5, _latin1(f"{value_int}/9 [{label}]"), new_x="LMARGIN", new_y="NEXT")
-            pdf.ln(1)
-    elif questionnaire_type in BOOKLET_FACTOR_CODES:
-        for code in BOOKLET_FACTOR_CODES[questionnaire_type]:
-            info = trans.get(code)
-            name = info[0] if info else code
-            desc = info[1] if info and len(info) > 1 else ""
-            pdf.set_font("Helvetica", "B", 9)
-            pdf.set_text_color(25, 25, 30)
-            pdf.multi_cell(content_w, 5, _latin1(f"{code} - {name}"), new_x="LMARGIN", new_y="NEXT")
-            if desc:
-                pdf.set_font("Helvetica", "", 8)
-                pdf.set_text_color(80, 80, 90)
-                pdf.multi_cell(content_w, 5, _latin1(desc), new_x="LMARGIN", new_y="NEXT")
-            pdf.ln(1)
-    else:
-        pdf.set_font("Helvetica", "", 10)
-        pdf.set_text_color(70, 70, 80)
-        pdf.multi_cell(content_w, 6, _latin1("Nessuna area predefinita disponibile per questo strumento."), new_x="LMARGIN", new_y="NEXT")
+    origin = goal.get("origin")
+    _section_heading(pdf, t["origin"], content_w)
+    _path_field(pdf, t["born_from"], origin["title"] if origin and origin.get("available") else "", content_w)
+    _path_field(pdf, t["motivation"], goal.get("motivation") or "", content_w)
+    _path_field(pdf, t["serves_to"], ", ".join(parents), content_w)
 
-    _booklet_section(pdf, "2. Scelgo cosa valorizzare e migliorare", content_w)
-    _booklet_multi_field(pdf, BOOKLET_LABELS["strength"], _booklet_text_list(data, "strength"), content_w)
-    _booklet_multi_field(pdf, BOOKLET_LABELS["growth_area"], _booklet_text_list(data, "growth_area"), content_w)
-    _booklet_field(pdf, BOOKLET_LABELS["motivation"], _booklet_text(data, "motivation"), content_w)
+    _section_heading(pdf, t["criteria"], content_w)
+    _path_lines(pdf, [goal["criteria"]] if (goal.get("criteria") or "").strip() else [], content_w)
+    # Il vecchio campo riflessione (spec § 8.6): con un bilancio è già in «Cosa ho capito».
+    if not goal.get("reviews"):
+        _path_field(pdf, t["note"], goal.get("reflection") or "", content_w)
 
-    _booklet_section(pdf, "3. Obiettivo e strategia", content_w)
-    period = " - ".join(part for part in (_booklet_text(data, "period_start"), _booklet_text(data, "period_end")) if part)
-    _booklet_field(pdf, BOOKLET_LABELS["objective"], _booklet_text(data, "objective"), content_w)
-    _booklet_field(pdf, BOOKLET_LABELS["strategy"], _booklet_text(data, "strategy"), content_w)
-    _booklet_field(pdf, BOOKLET_LABELS["period"], period, content_w)
+    _section_heading(pdf, t["method"], content_w)
+    _path_lines(pdf, [f"- {m['title']} ({t['certified'] if m['kind'] == 'certified' else t['own']})"
+                      for m in goal.get("method", []) if m.get("available")], content_w)
 
-    _booklet_section(pdf, "4. Verifico il percorso", content_w)
-    for key in ("commitment", "difficulties", "improvements", "discovery"):
-        _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
+    _section_heading(pdf, t["steps"], content_w)
+    if children:
+        _path_field(pdf, t["subgoals"], "\n".join(f"- {c['title']} ({t.get(c['status'], c['status'])})" for c in children), content_w)
+    actions = [l for l in goal.get("links", []) if l["kind"] == "action" and l.get("action_kind") != "check" and l.get("available")]
+    _path_field(pdf, t["actions"], "\n".join(f"- {a['title']} ({t.get(a.get('stage') or 'todo', '')})" for a in actions), content_w)
+    if not children and not actions:
+        _path_lines(pdf, [], content_w)
 
-    _booklet_section(pdf, "5. Biografia di apprendimento", content_w)
-    biography = _booklet_biography_events(data)
-    if not biography:
-        biography = [{}]
-    for index, event in enumerate(biography, start=1):
-        if len(biography) > 1:
-            pdf.set_font("Helvetica", "B", 10)
-            pdf.set_text_color(49, 46, 129)
-            pdf.multi_cell(content_w, 6, _latin1(f"Evento {index}"), new_x="LMARGIN", new_y="NEXT")
-        for key, event_key in (("bio_date", "date"), ("bio_context", "context"),
-                               ("bio_discovery", "discovery"), ("bio_keywords", "keywords")):
-            _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(event, event_key), content_w)
+    _section_heading(pdf, t["checks"], content_w)
+    checks = [c for c in goal.get("checks", []) if c.get("available")]
+    for check in checks:
+        head = " · ".join(part for part in (check.get("date") or "", check["title"], t.get(check.get("progress") or "", "")) if part)
+        _path_lines(pdf, [head], content_w)
+        _path_field(pdf, t["observe"], check.get("reflection") or "", content_w)
+        _path_field(pdf, t["adjust"], check.get("adjustment") or "", content_w)
+    if not checks:
+        _path_lines(pdf, [], content_w)
 
-    _booklet_section(pdf, "6. Note e valutazione finale", content_w)
-    for key in ("student_notes", "final_satisfaction", "final_observations"):
-        _booklet_field(pdf, BOOKLET_LABELS[key], _booklet_text(data, key), content_w)
+    _section_heading(pdf, t["evidence"], content_w)
+    _path_lines(pdf, [f"- {l['title']}" for l in goal.get("links", []) if l.get("role") == "evidence" and l.get("available")], content_w)
 
-    pdf_bytes = BytesIO()
-    pdf.output(pdf_bytes)
-    pdf_bytes.seek(0)
-    return pdf_bytes
+    if closed:
+        latest, *earlier = goal["reviews"]
+        _section_heading(pdf, t["review"], content_w)
+        for key in ("outcome", "commitment", "satisfaction"):
+            _path_field(pdf, t[key], t.get(latest.get(key) or "", ""), content_w)
+        for key in ("obstacles", "change", "learned", "next_step"):
+            _path_field(pdf, t[key], latest.get(key) or "", content_w)
+        if earlier:
+            _path_field(pdf, t["past_reviews"], "\n".join(
+                f"- {_day(r['created_at'])}: {t.get(r['outcome'], r['outcome'])}" for r in earlier), content_w)
+
+    return bytes(pdf.output())
 
 
 # --- Strumento Idea: la mappa e le sue tappe ---------------------------------

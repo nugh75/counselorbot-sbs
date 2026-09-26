@@ -62,7 +62,7 @@ def test_every_gate_lets_the_event_paths_through():
     from backend.prompt_revisions import SCOPE_GUIDED_STEP, _factory_defaults
     from backend.routes.admin import _EXPORT_INSTRUMENT_ORDER
     from backend.routes.memory import MEMORY_QUESTIONNAIRE_TYPES
-    from backend.routes.survey import STUDENT_BOOKLET_TYPES
+    from backend.routes.survey import INSTRUMENT_TYPES
     from backend.schemas import FROZEN_SESSION_TYPES
     from backend.skills_seed import ENGINE_INSTRUMENTS, SEEDED_INSTRUMENTS
     from backend.tool_brief_seed import TOOL_BRIEFS
@@ -72,7 +72,7 @@ def test_every_gate_lets_the_event_paths_through():
         assert qtype in FROZEN_SESSION_TYPES, "congelare la sessione fallirebbe"
         assert qtype in ENGINE_INSTRUMENTS, "il motore di skill non servirebbe il percorso"
         assert qtype not in SEEDED_INSTRUMENTS, "non esiste materiale certificato per gli eventi"
-        assert qtype in STUDENT_BOOKLET_TYPES
+        assert qtype in INSTRUMENT_TYPES
         assert qtype in _EXPORT_INSTRUMENT_ORDER, "l'export dei prompt lo salterebbe"
         assert qtype in TOOL_IDS and qtype in TOOL_DESCRIPTIONS and qtype in _KEYWORDS
         assert qtype in TOOL_BRIEFS, "la Bussola non saprebbe spiegarlo"

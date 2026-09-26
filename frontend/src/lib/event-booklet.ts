@@ -1,6 +1,6 @@
-// Bozza del libretto che la sintesi dell'Evento significativo prepara in un
-// blocco privato (backend/event_booklet.py). La persona la vede in un modulo,
-// la corregge e la salva: senza conferma non si scrive niente.
+// Bozza che la sintesi dell'Evento significativo prepara in un blocco privato
+// (backend/event_booklet.py). La persona la vede in un modulo, la corregge e la
+// salva come tappa della linea del tempo: senza conferma non si scrive niente.
 
 export const EVENT_INSTRUMENTS = ['EVENTO_STUDIO', 'EVENTO_PROFESSIONALE'] as const;
 export const EVENT_ROLES = ['protagonist', 'observer', 'alongside'] as const;
@@ -52,16 +52,32 @@ export function formFromDraft(draft: Partial<EventBookletDraft> | null | undefin
     };
 }
 
-export function bookletDataFromForm(form: EventBookletForm): EventBookletDraft {
+export interface MilestoneData {
+    title: string;
+    date: string | null;
+    review: {
+        role: Exclude<EventRole, ''> | null;
+        worked: string[];
+        did_not_work: string[];
+        reading: string;
+        try_next: string;
+        how_when: string;
+    };
+}
+
+// La rilettura di una tappa non ha un campo «contesto»: lo teniamo in testa
+// alla rilettura invece di perderlo.
+export function milestoneFromForm(form: EventBookletForm): MilestoneData {
     return {
         title: form.title.trim(),
-        bio_date: form.bio_date,
-        event_role: form.event_role,
-        bio_context: form.bio_context.trim(),
-        strength: items(form.worked),
-        growth_area: items(form.didNotWork),
-        discovery: form.discovery.trim(),
-        objective: form.objective.trim(),
-        strategy: form.strategy.trim(),
+        date: form.bio_date || null,
+        review: {
+            role: form.event_role || null,
+            worked: items(form.worked),
+            did_not_work: items(form.didNotWork),
+            reading: [form.bio_context.trim(), form.discovery.trim()].filter(Boolean).join('\n\n').slice(0, 1500),
+            try_next: form.objective.trim(),
+            how_when: form.strategy.trim(),
+        },
     };
 }

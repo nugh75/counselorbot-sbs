@@ -69,6 +69,9 @@ from .routes import teacher_profile as teacher_profile_routes
 from .routes import orientation as orientation_routes
 from .routes import cross_synthesis as cross_synthesis_routes
 from .routes import goals as goals_routes
+from .routes import readings as readings_routes
+from .routes import milestones as milestones_routes
+from .routes import personal_strategies as personal_strategies_routes
 from .routes import portfolio as portfolio_routes
 from .routes import pqbl as pqbl_routes
 from .routes import opencode as opencode_routes
@@ -528,6 +531,25 @@ def _run_seed_and_migrations():
                         conn.commit()
                 except Exception as e:
                     logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
+
+        for table, clause in [
+            ("personal_goals", "ADD COLUMN IF NOT EXISTS method JSON NOT NULL DEFAULT '[]'"),
+            ("goal_resource_links", "ADD COLUMN IF NOT EXISTS role VARCHAR NOT NULL DEFAULT 'related'"),
+        ]:
+            try:
+                with database.engine.connect() as conn:
+                    conn.execute(sa_text(f"ALTER TABLE {table} {clause}"))
+                    conn.commit()
+            except Exception as e:
+                logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
+
+        # A2: every action link is a means; normalize rows written before the role existed.
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text("UPDATE goal_resource_links SET role = 'means' WHERE kind = 'action' AND role <> 'means'"))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"goal_resource_links role normalization skipped/failed: {e}")
 
         for idx_clause in [
             "CREATE INDEX IF NOT EXISTS ix_questionnaire_results_administration_plan_id ON questionnaire_results (administration_plan_id)",
@@ -1263,6 +1285,17 @@ def _run_seed_and_migrations():
         from .goals import seed_goals
         seed_goals(db)
 
+        # Una tantum per utente: il libretto confluisce in letture, obiettivi,
+        # bilanci, taccuino e linea del tempo (spec § 8). Idempotente.
+        from .booklet_migration import migrate_all_booklets
+        try:
+            migrated = migrate_all_booklets(db)
+            if migrated:
+                logger.info(f"booklet migration: {migrated} users migrated")
+        except Exception as e:
+            db.rollback()
+            logger.error(f"booklet migration failed: {e}")
+
         from .assistant_questions_seed import seed_assistant_questions
         seed_assistant_questions(db, models)
 
@@ -1852,6 +1885,9 @@ app.include_router(orientation_routes.router)
 app.include_router(cross_synthesis_routes.router)
 app.include_router(portfolio_routes.router)
 app.include_router(goals_routes.router)
+app.include_router(readings_routes.router)
+app.include_router(milestones_routes.router)
+app.include_router(personal_strategies_routes.router)
 app.include_router(pqbl_routes.router)
 app.include_router(opencode_routes.router)
 app.include_router(presets_routes.router)

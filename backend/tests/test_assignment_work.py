@@ -60,9 +60,22 @@ def test_optional_goal_link_ownership_and_revisions(setup):
     response = c.post(path + '/goal', json=payload)
     assert response.status_code == 200, response.text
     assert {link.kind for link in db.query(models.GoalResourceLink).filter_by(goal_id=goal.id)} == {'action'}
+    assert all(link.role == 'means' for link in db.query(models.GoalResourceLink).filter_by(goal_id=goal.id))
     assert response.json()['linked_goals'] == [dict(id=goal.id, title=goal.title)]
     assert goal.shared_group_id is None and goal.status == 'active'
     assert c.post(path + '/goal', json=payload).status_code == 409
+
+
+def test_goal_link_from_assignment_is_an_action_means(setup):
+    """A2 fix: the action link created from an assignment must be born with role 'means'."""
+    db, c, who, group, _, sources = setup
+    _, path, work = assign_and_plan(c, who, group, sources)
+    goal = models.PersonalGoal(username='alice', title='Capire le mie scelte')
+    db.add(goal); db.commit()
+    payload = dict(revision=work['revision'], goal_id=goal.id, goal_revision=goal.revision)
+    assert c.post(path + '/goal', json=payload).status_code == 200
+    link = db.query(models.GoalResourceLink).filter_by(goal_id=goal.id).one()
+    assert link.kind == 'action' and link.role == 'means'
 
 
 def test_explicit_snapshot_feedback_resubmission_and_withdrawal(setup):
