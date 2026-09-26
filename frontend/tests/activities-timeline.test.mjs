@@ -4,7 +4,9 @@ import { chromium } from 'playwright';
 const origin = process.env.GOALS_BASE_URL || 'http://127.0.0.1:3107';
 const api = process.env.GOALS_API_URL || 'http://127.0.0.1:18096';
 const username = 'student-timeline';
-const stamp = new Date().toISOString().slice(11, 19).replaceAll(':', '');
+// Base36 run id (like personal-goals.test.mjs): a numeric timestamp would read as a
+// 10-digit run across the width suffix and the PII redaction would mask it as a phone.
+const stamp = Date.now().toString(36).slice(-6) + Math.random().toString(36).slice(2, 4);
 let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser.close(); });
@@ -50,6 +52,7 @@ for (const width of [1440, 390]) {
             await card.getByLabel('Evento in un giorno').fill('2026-09-20');
             await page.getByRole('button', { name: 'Salva nell’Area personale' }).click();
             await page.getByRole('status').filter({ hasText: 'Salvato nell’Area personale' }).waitFor();
+            await card.getByRole('link', { name: 'Vedi sulla linea del tempo' }).waitFor();
             await card.getByRole('link', { name: 'Vedi sulla linea del tempo' }).click();
             await page.getByRole('heading', { name: 'Linea del tempo', exact: true, level: 1 }).waitFor();
             const item = page.locator('a', { hasText: `Sessione di studio ${stamp} ${width}` }).first();
