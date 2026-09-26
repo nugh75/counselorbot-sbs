@@ -542,6 +542,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                         </>;
                         })()}
                         {tab === 'comparison' && <>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{l('stepOption')}</p>
                             <details open={!work.comparison.options.length || Boolean(option)} className="rounded-xl border border-slate-200 bg-slate-50 p-3"><summary className="min-h-[44px] cursor-pointer py-3 font-medium text-indigo-700">{l('addOption')}</summary>
                             <form className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3" onSubmit={event => { event.preventDefault(); if (!option.trim() || option.length > 160 || work.comparison.options.length >= 3) return;
                                 edit({ ...work, comparison: { ...work.comparison, options: [...work.comparison.options, { id: crypto.randomUUID(), title: option.trim(), source: optionSource }] } }); setOption(''); setOptionSource(''); }}>
@@ -549,7 +550,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 <label className="block text-sm font-medium">{l('option')}<input required maxLength={160} value={option} onChange={e => setOption(e.target.value)} className={`${inputClass} mt-1`} /></label>
                                 <Tooltip content={l('addOption')}><Button aria-label={l('addOption')} type="submit" className={buttonClass} disabled={work.comparison.options.length >= 3 || option.length > 160}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                             </form></details>
-                            <section aria-label={l('criteria')} className="space-y-2"><details open={!work.comparison.criteria.length} className="rounded-xl border border-slate-200 p-3">
+                            {work.comparison.options.length > 0 && <section aria-label={l('criteria')} className="space-y-2"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{l('stepCriteria')}</p><details open={!work.comparison.criteria.length} className="rounded-xl border border-slate-200 p-3">
                                 <summary className="min-h-[44px] cursor-pointer py-3 font-semibold text-indigo-700">{l('criteria')}</summary>
                                 <div className="flex flex-wrap gap-2">{work.comparison.criteria.map(c => <div key={c.id} className="flex min-w-0 flex-wrap items-center gap-1 rounded-md border border-slate-200 p-1">
                                     <input aria-label={l('criterion')} data-workspace-field required maxLength={100} value={c.label} className={`${inputClass} max-w-48`} onChange={e => edit({ ...work, comparison: { ...work.comparison, criteria: work.comparison.criteria.map(k => k.id === c.id ? { ...k, label: e.target.value } : k) } })} />
@@ -560,8 +561,9 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     <label className="min-w-0 flex-1 text-sm">{l('criterion')}<input required maxLength={100} value={criterion} className={`${inputClass} mt-1`} onChange={e => setCriterion(e.target.value)} /></label>
                                     <Tooltip content={l('addCriterion')}><Button aria-label={l('addCriterion')} type="submit" className={buttonClass} disabled={work.comparison.criteria.length >= 6}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                 </form></details>
-                            </section>
+                            </section>}
                             {!work.comparison.options.length && <p className="py-5 text-center text-slate-600">{l('emptyComparison')}</p>}
+                            {work.comparison.options.length > 0 && <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{l('stepCompare')}</p>}
                             <div className={`grid gap-3 ${work.comparison.options.length === 2 ? 'md:grid-cols-2' : work.comparison.options.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-1'}`}>{work.comparison.options.map(o => <article key={o.id} className={`min-w-0 rounded-xl border p-3 ${work.comparison.chosen === o.id ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-white'}`}>
                                 <label className="block text-sm">{l('option')}<input data-workspace-field required maxLength={160} value={o.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, comparison: { ...work.comparison, options: work.comparison.options.map(item => item.id === o.id ? { ...item, title: e.target.value } : item) } })} /></label>
                                 {work.comparison.criteria.map(c => <label key={c.id} className="mt-3 block text-sm">{c.label}<textarea maxLength={500} rows={3} value={work.comparison.cells.find(cell => cell.option_id === o.id && cell.criterion_id === c.id)?.note || ''} className={`${inputClass} mt-1`} onChange={e => edit(setCell(work, o.id, c.id, e.target.value))} /></label>)}
@@ -569,8 +571,11 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                 <p className="break-words text-xs text-slate-500">{l('source')}: {o.source || l('personal')}</p>
                                 {removeButton(o.title, () => edit(removeOption(work, o.id)))}
                             </article>)}</div>
+                            {work.comparison.options.length > 0 && <>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{l('stepChoice')}</p>
                             <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm"><input type="radio" name={`${id}-choice`} checked={!work.comparison.chosen} onChange={() => edit({ ...work, comparison: { ...work.comparison, chosen: null } })} />{l('noChoice')}</label>
                             <label className="block text-sm font-medium">{l('reason')}<textarea maxLength={1000} rows={3} value={work.comparison.reason} className={`${inputClass} mt-1`} onChange={e => edit({ ...work, comparison: { ...work.comparison, reason: e.target.value } })} /></label>
+                            </>}
                         </>}
                     </fieldset>}
                 </div>
