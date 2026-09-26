@@ -641,7 +641,7 @@ class ScoreRequest(BaseModel):
 
 # --- Learner profile (modello del discente auto-dichiarato) ---
 
-LEARNER_PROFILE_FIELDS = ("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year", "institution_slug")
+LEARNER_PROFILE_FIELDS = ("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "values", "gender", "age", "school_class", "school_year", "institution_slug")
 LEARNER_PROFILE_MAX_FIELD_CHARS = 600
 
 
@@ -653,6 +653,9 @@ class LearnerProfileSave(BaseModel):
     strengths: Optional[str] = None
     weaknesses: Optional[str] = None
     notes: Optional[str] = None
+    # «Cosa conta per me» (lotto C2): ponte verso gli Obiettivi, non entra nel
+    # prompt della Bussola (fuori da LEARNER_PROFILE_LABELS, come institution_slug).
+    values: Optional[str] = None
     gender: Optional[str] = None
     age: Optional[str] = None
     school_class: Optional[str] = None
@@ -665,7 +668,7 @@ class LearnerProfileSave(BaseModel):
     session_id: Optional[str] = None
     save_mode: Literal["autosave", "manual"] = "manual"
 
-    @validator("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "gender", "age", "school_class", "school_year", "institution_slug", pre=True)
+    @validator("context", "goal", "main_difficulty", "strengths", "weaknesses", "notes", "values", "gender", "age", "school_class", "school_year", "institution_slug", pre=True)
     def _trim_and_cap(cls, v):
         if v is None:
             return None
