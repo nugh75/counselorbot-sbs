@@ -2803,10 +2803,15 @@ def build_context_envelope(
     # Quale taccuino entra nel contesto: la scelta del docente (notebook_context
     # nella richiesta) vale solo se ha davvero il ruolo docente, riverificato
     # qui a ogni turno con lo stesso guard dell'API del taccuino (
-    # get_current_plan_manager): un cambio di ruolo esce dal contesto senza
-    # rifare nulla. Per tutti gli altri vale il default per strumento.
-    user_is_teacher = auth.is_teacher(identity.get("groups")) if identity else False
-    if user_is_teacher and request.notebook_context in ("teacher", "student", "none"):
+    # get_current_plan_manager: admin, ricercatori, docenti): un cambio di
+    # ruolo esce dal contesto senza rifare nulla. Per tutti gli altri vale il
+    # default per strumento.
+    user_is_plan_manager = bool(identity) and (
+        bool(identity.get("is_admin"))
+        or bool(identity.get("is_researcher"))
+        or auth.is_teacher(identity.get("groups"))
+    )
+    if user_is_plan_manager and request.notebook_context in ("teacher", "student", "none"):
         notebook_mode = request.notebook_context
     else:
         notebook_mode = DEFAULT_NOTEBOOK_CONTEXT.get(questionnaire_type, "student")

@@ -24,7 +24,7 @@ import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { NotebookContextSelector } from '@/components/qsa/NotebookContextSelector';
 import { readStoredNotebookContext, storeNotebookContext, type NotebookContextChoice } from '@/lib/notebook-context';
-import { isTeacher } from '@/lib/roles';
+import { canUseTeacherAssistant } from '@/lib/roles';
 import { getIdentity } from '@/lib/auth';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
 import { toast } from '@/components/ui/Toast';
@@ -461,10 +461,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // scelta vive nel browser (stessa filosofia di docenzaGroupIds); il
     // server riverifica il ruolo a ogni turno. 'default' non viaggia mai.
     const [notebookContext, setNotebookContext] = useState<NotebookContextChoice>(() => frozenSnapshot?.notebook_context ?? readStoredNotebookContext());
+    // Docenti, ricercatori e admin (plan managers): come il guard del taccuino docente.
     const [isTeacherUser, setIsTeacherUser] = useState(false);
     useEffect(() => {
         let active = true;
-        getIdentity().then((id) => { if (active) setIsTeacherUser(Boolean(id?.authenticated && isTeacher(id))); });
+        getIdentity().then((id) => { if (active) setIsTeacherUser(Boolean(id?.authenticated && canUseTeacherAssistant(id))); });
         return () => { active = false; };
     }, []);
     const changeNotebookContext = (value: NotebookContextChoice) => {
