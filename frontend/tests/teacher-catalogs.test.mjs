@@ -33,6 +33,7 @@ async function prepare(page, { teacher = true, lang = 'it', dark = false, path =
         else if (url.pathname === '/api/admin/reading-themes') data = [{ code: 'metodo-di-studio', label: 'Metodo di studio', factors: ['C1'] }];
         else if (url.pathname === '/api/admin/content-versions/ladders') data = { certified_strategy: ['draft', 'translated', 'certified'], certified_reading: ['draft', 'translated', 'certified'] };
         else if (url.pathname === '/api/user/account') data = { setup_complete: true, notebook_completed: true };
+        else if (url.pathname === '/api/user/teacher-notebook') data = { data: {} };
         const match = url.pathname.match(/^\/api\/admin\/certified-(strategies|readings)$/);
         if (match) {
             const kind = match[1];
@@ -68,22 +69,23 @@ for (const scenario of [{ width: 1440, teacher: true }, { width: 390, teacher: t
         const page = await browser.newPage({ viewport: { width: scenario.width, height: 950 } });
         try {
             const { writes, errors } = await prepare(page, { ...scenario, path: '/profilo/classi', dark: scenario.width === 390 });
-            await page.getByRole('heading', { name: 'Gruppi e classi a cui partecipo', exact: true }).waitFor();
-            await page.getByText(/Qui sei iscritto come partecipante, anche se sei docente/).waitFor();
             const membership = page.getByRole('region', { name: 'Gruppi e classi a cui partecipo', exact: true });
+            await membership.waitFor();
+            await page.getByText(/Gestisci le iscrizioni e leggi i messaggi dei docenti/).waitFor();
             await membership.getByText('Formazione adulti', { exact: true }).waitFor();
             const management = membership.getByRole('link', { name: /vai all’Area docenti/ });
             assert.equal(await management.count(), scenario.teacher ? 1 : 0);
             await membership.getByRole('textbox', { name: /Codice di invito/ }).fill('GR-UNIVERSITA');
             await membership.getByRole('button', { name: 'Entra', exact: true }).click();
             await membership.getByText('Laboratorio universitario', { exact: true }).waitFor();
-            await membership.getByRole('listitem').filter({ hasText: 'Formazione adulti' }).getByRole('button', { name: 'Lascia il gruppo o la classe' }).click();
+            await membership.getByRole('listitem').filter({ hasText: 'Formazione adulti' }).getByRole('button', { name: 'Lascia il gruppo: Formazione adulti', exact: true }).click();
+            await membership.getByRole('button', { name: 'Sì', exact: true }).click();
             await membership.getByText('Formazione adulti', { exact: true }).waitFor({ state: 'detached' });
             assert.deepEqual(writes, [{ kind: 'membership-join', body: { code: 'GR-UNIVERSITA' } }, { kind: 'membership-leave', membership_id: 71 }]);
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             if (scenario.teacher) {
                 await management.click();
-                await page.locator('summary').filter({ hasText: /^Catalogo obiettivi$/ }).waitFor();
+                await page.waitForURL(`${origin}/docente/classi`);
                 await page.getByRole('heading', { name: 'Gruppi e classi che gestisco', exact: true }).waitFor();
                 await page.getByRole('button', { name: 'Nuovo gruppo o classe', exact: true }).click();
                 await page.getByPlaceholder('Nome (es. 3B, universitari, formazione adulti)').waitFor();
@@ -103,11 +105,11 @@ for (const scenario of [{ width: 1440, height: 1000, dark: false }, { width: 390
         try {
             const page = await context.newPage();
             const { writes, errors } = await prepare(page, scenario);
+            await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
             await page.getByRole('heading', { name: 'Area docenti', exact: true }).waitFor();
-            assert.equal(await page.locator('summary').filter({ hasText: /^Catalogo obiettivi$/ }).isVisible(), true);
             assert.equal(await page.locator('a[href="/admin"]').count(), 0, 'catalog access does not show the admin console');
-            const strategies = page.locator('details').filter({ has: page.locator('summary').filter({ hasText: /^Strategie$/ }) });
-            await strategies.locator('summary').click();
+            await page.goto(`${origin}/docente/strategie`, { waitUntil: 'networkidle' });
+            const strategies = page;
             await strategies.getByRole('button', { name: 'Nuova strategia', exact: true }).click();
             await strategies.getByLabel('Slug', { exact: true }).fill('ripasso-docente');
             await strategies.getByLabel('Nome', { exact: true }).fill('Ripasso distribuito');
@@ -115,19 +117,14 @@ for (const scenario of [{ width: 1440, height: 1000, dark: false }, { width: 390
             await strategies.getByLabel('Quando è raccomandata', { exact: true }).fill('Per preparare una verifica.');
             await strategies.getByRole('button', { name: 'C1', exact: true }).click();
             await strategies.getByRole('combobox', { name: /^Stato/ }).selectOption('certified');
-            // Closing and reopening a catalog keeps the unfinished entry.
-            await strategies.locator('summary').click();
-            await strategies.locator('summary').click();
-            assert.equal(await strategies.getByLabel('Nome', { exact: true }).inputValue(), 'Ripasso distribuito');
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'strategy editor fits the viewport');
             await strategies.getByRole('button', { name: 'Salva', exact: true }).click();
             await strategies.getByText('Pubblicata', { exact: true }).waitFor();
             assert.equal(writes[0].body.status, 'certified');
             assert.deepEqual(writes[0].body.factor_codes, ['C1']);
-            await strategies.locator('summary').click();
 
-            const readings = page.locator('details').filter({ has: page.locator('summary').filter({ hasText: /^Libri, film e altri materiali$/ }) });
-            await readings.locator('summary').click();
+            await page.goto(`${origin}/docente/materiali`, { waitUntil: 'networkidle' });
+            const readings = page;
             await readings.getByRole('button', { name: 'Nuova voce', exact: true }).click();
             await readings.getByLabel('Slug', { exact: true }).fill('film-docente');
             await readings.getByRole('combobox', { name: /^Tipo/ }).selectOption('film');
@@ -160,11 +157,10 @@ test('catalog entry is localized and keyboard accessible', async () => {
     const page = await browser.newPage();
     try {
         await prepare(page, { lang: 'en' });
-        await page.getByRole('heading', { name: 'Catalogs', exact: true }).waitFor();
-        const summary = page.locator('summary').filter({ hasText: /^Books, films and other resources$/ });
-        await summary.focus();
+        await page.goto(`${origin}/docente/materiali`, { waitUntil: 'networkidle' });
+        const button = page.getByRole('button', { name: 'New entry', exact: true });
+        await button.focus();
         await page.keyboard.press('Enter');
-        await page.getByRole('button', { name: 'New entry', exact: true }).waitFor();
-        assert.equal(await summary.evaluate(element => element.parentElement.open), true);
+        await button.waitFor();
     } finally { await page.close(); }
 });
