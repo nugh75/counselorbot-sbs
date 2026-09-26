@@ -9,13 +9,14 @@ import { blankGoal, goalApi, goalFields, GoalError, type CatalogEntry, type Goal
 import { compareGoals, descendants, effectiveShares, progress, visibilityDelta } from '@/lib/goal-network';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { GoalForm } from './GoalForm';
+import { GoalReviewStep } from './GoalReviewStep';
 import { MethodPicker } from './MethodPicker';
 import { Field, GoalIssue, input, resourceLabel } from './GoalUI';
 
 // D1 flips this when GET /user/goals/{id}/pdf ships.
 const PDF_READY = false;
 
-export type DialogTarget = { kind: 'edit'; id: number } | { kind: 'create'; parentId?: number; source?: CatalogEntry; origin?: GoalOrigin; prefill?: { motivation?: string; title?: string } };
+export type DialogTarget = ({ kind: 'edit'; id: number } | { kind: 'create'; parentId?: number; source?: CatalogEntry; origin?: GoalOrigin }) & { prefill?: { motivation?: string; title?: string; action?: string } };
 type Shared = { goals: PersonalGoal[]; groups: GoalGroup[]; onSaved: (row: PersonalGoal) => void; onCreated: (row: PersonalGoal) => void; onDeleted: () => void; onReload: () => void };
 type Props = Shared & { target: DialogTarget; saved: boolean; onTarget: (target: DialogTarget) => void; onClose: () => void };
 
@@ -44,15 +45,15 @@ export function GoalDialog({ target, saved, onTarget, onClose, ...shared }: Prop
             </div>
             {target.kind === 'edit' && !goal ? <p className="p-6">{l('unavailable')}</p>
                 : <GoalDialogBody key={bodyKey} target={target} goal={goal} saved={saved} onDirty={onDirty}
-                    onNavigate={next => leave(() => onTarget(next))} onRequestClose={() => leave(onClose)} {...shared}
+                    onNavigate={next => leave(() => onTarget(next))} onTarget={onTarget} onRequestClose={() => leave(onClose)} {...shared}
                     onCreated={row => { dirty.current = false; shared.onCreated(row); }} />}
         </div>
     </dialog>;
 }
 
-type BodyProps = Shared & { target: DialogTarget; goal?: PersonalGoal; saved: boolean; onDirty: (dirty: boolean) => void; onNavigate: (target: DialogTarget) => void; onRequestClose: () => void };
+type BodyProps = Shared & { target: DialogTarget; goal?: PersonalGoal; saved: boolean; onDirty: (dirty: boolean) => void; onNavigate: (target: DialogTarget) => void; onRequestClose: () => void; onTarget: (target: DialogTarget) => void };
 
-function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigate, onRequestClose, onSaved, onCreated, onDeleted, onReload }: BodyProps) {
+function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigate, onRequestClose, onTarget, onSaved, onCreated, onDeleted, onReload }: BodyProps) {
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
     const source = target.kind === 'create' ? target.source : undefined;
     const parentId = target.kind === 'create' ? target.parentId : undefined;
@@ -64,6 +65,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     const [check, setCheck] = useState({ title: '', detail: '', date: '' });
     const [selection, setSelection] = useState(''); const [evidenceChoice, setEvidenceChoice] = useState(''); const [parentChoice, setParentChoice] = useState('');
     const [mode, setMode] = useState<'view' | 'review'>('view');
+    const held = useRef<PersonalGoal | null>(null); // post-review row, flushed to the panel when the step exits
     const [resources, setResources] = useState<GoalResource[]>([]); const [resourcesError, setResourcesError] = useState<unknown>(null);
     const [busy, setBusy] = useState(false); const [error, setError] = useState<unknown>(null);
     const actionRequest = useRef(''); const checkRequest = useRef(''); const createRequest = useRef(crypto.randomUUID());
@@ -79,16 +81,26 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     const otherDraft = actionDraft || checkDraft || Boolean(selection) || Boolean(evidenceChoice) || Boolean(parentChoice);
     useEffect(() => { onDirty(dirty); return () => onDirty(false); }, [dirty, onDirty]);
     useDraftGuard(dirty, l('discard'));
+    // «→ nuova azione» torna al popup col campo «Crea attività» precompilato: consumato al primo
+    // mount, prima che il pannello perda il target (GoalsPanel apre subito `edit:{id}` on `onTarget`).
+    const actionPrefill = target.kind === 'edit' ? target.prefill?.action : undefined;
+    useEffect(() => {
+        if (!actionPrefill || !goal) return;
+        setAction({ title: actionPrefill, detail: '', date: '' }); setMode('view');
+        onTarget({ ...target, prefill: undefined });
+    }, [actionPrefill, goal]); // eslint-disable-line react-hooks/exhaustive-deps
     const loadResources = useCallback(() => { void goalApi<GoalResource[]>('/user/goal-resources').then(rows => { setResources(rows); setResourcesError(null); }).catch(setResourcesError); }, []);
     useEffect(() => { if (goal) loadResources(); }, [goal, loadResources]);
-    if (mode === 'review') {
-        // B4 renders <GoalReviewStep goal={goal} … /> here, in place of the content.
-        return <>
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4 sm:px-6"><p className="text-sm text-slate-600">{l('review')}</p></div>
-            <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-white p-4 sm:px-6">
-                <div className="ml-auto flex gap-2"><Button type="button" variant="secondary" onClick={() => setMode('view')}>{l('cancel')}</Button></div>
-            </div>
-        </>;
+    const flush = useCallback((row: PersonalGoal | null) => {
+        if (!held.current || !goal) return;
+        onSaved(row ?? held.current); held.current = null;
+    }, [goal, onSaved]);
+    // B4: the review step. `onSaved` is deferred while the step is up (saving bumps the
+    // revision, which would remount this body through bodyKey and drop the after-bridges).
+    if (mode === 'review' && goal) {
+        return <GoalReviewStep goal={held.current ?? goal} onDone={row => { held.current = row; }}
+            onCancel={() => { flush(null); setMode('view'); }}
+            onNavigate={next => { flush(null); onNavigate(next); }} onDirty={onDirty} />;
     }
 
     const byId = (id: number) => goals.find(row => row.id === id);
