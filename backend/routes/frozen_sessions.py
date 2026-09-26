@@ -40,6 +40,7 @@ def _detail(row: models.FrozenSession) -> schemas.FrozenSessionDetail:
         guided_path=data.get("guided_path") or "complete",
         conversation_id=data.get("conversation_id"),
         reasoning_effort=data.get("reasoning_effort"),
+        notebook_context=data.get("notebook_context"),
         pdf_token=data.get("pdf_token"),
     )
 

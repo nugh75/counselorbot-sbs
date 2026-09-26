@@ -916,6 +916,7 @@ class FrozenSessionCreate(BaseModel):
     guided_path: Literal["complete", "essential"] = "complete"
     conversation_id: Optional[str] = None
     reasoning_effort: Optional[str] = None
+    notebook_context: Optional[str] = None  # taccuino nel contesto: studente|docente|nessuno
     label: Optional[str] = Field(default=None, max_length=200)
     pdf_token: Optional[str] = None
 
@@ -934,6 +935,10 @@ class FrozenSessionCreate(BaseModel):
         if not text:
             raise ValueError("session_id is required")
         return text
+
+    @validator("notebook_context", pre=True)
+    def _known_notebook_context(cls, v):
+        return v if v in ("student", "teacher", "none") else None
 
     @validator("questionnaire_type", pre=True)
     def _known_questionnaire(cls, v):
@@ -968,6 +973,7 @@ class FrozenSessionDetail(FrozenSessionSummary):
     guided_path: Literal["complete", "essential"] = "complete"
     conversation_id: Optional[str] = None
     reasoning_effort: Optional[str] = None
+    notebook_context: Optional[str] = None
     pdf_token: Optional[str] = None
 
 
