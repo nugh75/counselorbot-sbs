@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 23 settembre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 26 settembre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
@@ -113,11 +113,12 @@ lavori. Il progresso PDF, invece, è locale al browser.
 
 ## Area personale e strumenti
 
-**Interfaccia aggiornata in produzione il 23 settembre 2026:**
-nella pagina **Orientamento**, la nuova testata mantiene a sinistra il collegamento
-**Area personale**, sempre diretto all’ingresso. Sotto compaiono l’immagine
-esistente, il titolo e la descrizione. Il pannello «Vai a…» è stato rimosso
-su richiesta dell’utente. Le altre sottopagine saranno riviste separatamente.
+**Testata comune (26 settembre 2026):** tutte le pagine dell’Area personale
+(Taccuino, Risultati, Assegnazioni, Classi, Telegram, Portfolio, Tavolo,
+Orientamento, Azioni, Carte, Confronto, Linea del tempo, Flashcard e pQBL) hanno
+la stessa testata: a sinistra il collegamento **Area personale**, sempre diretto
+all’ingresso; sotto l’immagine, il titolo e la descrizione. Il pannello «Vai a…»
+è stato rimosso su richiesta dell’utente.
 
 **Categorie dell’istituto — disponibili in produzione:** ogni istituto definisce le
 proprie categorie di Orientamento tramite i suoi docenti. L’amministratore
@@ -157,20 +158,20 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 
 | Funzione | Dove | Che cosa permette |
 | --- | --- | --- |
-| Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; toccare un obiettivo per modificarlo in una finestra popup, dove si scrive un nuovo obiettivo o si adotta e personalizza una proposta del catalogo; scegliere un metodo (strategie certificate o proprie), pianificare azioni e controlli, collegare prove e lavori; chiudere con un bilancio, che diventa una tappa della Linea del tempo; scaricare il PDF «Percorso dell’obiettivo»; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
-| Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. |
+| Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; toccare un obiettivo per modificarlo in una finestra popup, dove si scrive un nuovo obiettivo o si adotta e personalizza una proposta del catalogo (in creazione restano visibili titolo, motivazione e data di revisione; criteri, priorità, stato e condivisione sono sotto «Più dettagli»); scegliere un metodo (strategie certificate o proprie), pianificare azioni e controlli, collegare prove e lavori; chiudere con un bilancio, che diventa una tappa della Linea del tempo; scaricare il PDF «Percorso dell’obiettivo»; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
+| Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; per le tappe future o senza data compare anche «Cosa programmo»; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. |
 | Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. |
-| Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
+| Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli (il nome del mazzo si cambia direttamente nella pagina: Invio salva, Esc annulla) e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
 | Tavolo | `/profilo/tavolo` | Lavorare con materiali, idee e counselor; riaprire Tavoli salvati quando la funzione è abilitata. |
-| Carte da ordinare | `/profilo/carte` | Raccogliere e ordinare pensieri in più mazzi, usando colonne, modelli e trascinamento. Non sono le Flashcard per il ripasso. |
-| Confrontare alternative | `/profilo/confronto` | Confrontare alternative con criteri personali. |
+| Carte da ordinare | `/profilo/carte` | Raccogliere e ordinare pensieri in più mazzi, usando colonne, modelli e trascinamento; mazzi e colonne si rinominano direttamente nella pagina. Non sono le Flashcard per il ripasso. |
+| Confrontare alternative | `/profilo/confronto` | Confrontare alternative con criteri personali, in quattro passi visibili: Alternative → Criteri → Confronto → Scelta. Criteri, schede e scelta compaiono dopo aver inserito almeno un’alternativa. |
 | Azioni | `/profilo/azioni` | Organizzare le azioni del proprio piano personale; ogni azione può avere una data facoltativa (giorno o periodo) e il collegamento «Vedi sulla linea del tempo». |
 | Taccuino | `/profilo/taccuino` | Scrivere contesto, difficoltà, risorse personali e ciò che conta per sé; conservare revisioni esplicite; trasformare la difficoltà principale in un obiettivo. |
 | Cambiamenti | `/profilo/cambiamenti` | Riflettere sulle differenze fra revisioni del Taccuino. |
-| Portfolio | `/profilo/portfolio` | Documentare lavori con titolo, descrizione, categoria, data, collegamenti e immagini. |
+| Portfolio | `/profilo/portfolio` | Documentare lavori con titolo, descrizione, categoria, data, collegamenti e immagini; collegare un lavoro a un obiettivo attivo con «Collega a un obiettivo». |
 | Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. |
-| Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito. |
+| Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot. |
 
@@ -186,6 +187,9 @@ Idea. Questi nomi non sono intercambiabili.
 
 Il salvataggio automatico lavora in background, senza messaggi di successo che
 spostano la pagina. Eventuali errori restano visibili per permettere il recupero.
+Se il caricamento di Taccuino, Risultati, Portfolio, Classi o Telegram non riesce,
+la scheda mostra un errore con **Riprova** invece di dire che non ci sono dati: i
+dati già visibili restano e un errore non fa risultare Telegram scollegato.
 Nel Taccuino l’autosalvataggio protegge una bozza recuperabile; solo il salvataggio
 manuale crea una revisione significativa nella cronologia. Non attribuire
 all’assistente la scrittura automatica del Taccuino. PDF e alcuni strumenti locali
