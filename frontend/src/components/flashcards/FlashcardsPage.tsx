@@ -9,6 +9,7 @@ import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { flashcardLabel } from '@/lib/i18n-flashcards';
 import { BUILTIN_CARD_IMAGES, tavoloImageUrl } from '@/lib/tavolo-images';
+import { InlineRename } from '@/components/ui/InlineRename';
 import { addCard, addDeck, deckProgress, emptyFlashcards, removeCard, removeDeck, renameDeck, resetDeckProgress, setCardStatus, shuffleCards, updateCard, type Flashcard, type FlashcardDeck, type FlashcardStatus, type FlashcardWorkspace, type SavedFlashcards } from '@/lib/flashcards';
 
 const inputClass = 'w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
@@ -31,6 +32,8 @@ export function FlashcardsPage() {
     const [study, setStudy] = useState<StudySession | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [deckName, setDeckName] = useState('');
+    // F23 (lotto 4): rinomina in linea al posto del prompt nativo del browser.
+    const [renamingDeck, setRenamingDeck] = useState(false);
     const [draftFront, setDraftFront] = useState('');
     const [draftBack, setDraftBack] = useState('');
     const [draftImage, setDraftImage] = useState('');
@@ -165,11 +168,12 @@ export function FlashcardsPage() {
             {study ? <StudyView study={study} deck={studyDeck} card={studyCard} onFlip={() => setStudy(s => s ? { ...s, flipped: true } : s)} onAnswer={answer} onExit={() => setStudy(null)} onRestart={() => { const deck = workRef.current.decks.find(d => d.id === study.deckId); if (deck) startStudy(deck, true); }} /> : <>
                 <div className="flex flex-wrap items-center gap-2">
                     <Tooltip content={l('backToDecks')}><Button type="button" variant="secondary" className={buttonClass} aria-label={l('backToDecks')} onClick={() => { setView('list'); setOpenDeckId(null); }}><ArrowLeft className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                    <h2 className="min-w-0 break-words font-semibold text-slate-900">{currentDeck.title} <span className="font-mono text-sm text-slate-500">{currentDeck.cards.length}</span></h2>
+                    {renamingDeck && <InlineRename value={currentDeck.title} maxLength={100} ariaLabel={l('renameDeck')} onRename={name => { edit(renameDeck(workRef.current, currentDeck.id, name)); setRenamingDeck(false); }} onCancel={() => setRenamingDeck(false)} />}
+                        {!renamingDeck && <h2 className="min-w-0 break-words font-semibold text-slate-900">{currentDeck.title} <span className="font-mono text-sm text-slate-500">{currentDeck.cards.length}</span></h2>}
                     <div className="ml-auto flex flex-wrap items-center gap-1">
                         <Tooltip content={l('study')}><Button type="button" variant="secondary" className="min-h-11 gap-2 px-3" aria-label={l('study')} disabled={!currentDeck.cards.length} onClick={() => startStudy(currentDeck)}>{l('study')}</Button></Tooltip>
                         <Tooltip content={l('resetProgress')}><Button type="button" variant="secondary" className={buttonClass} aria-label={l('resetProgress')} disabled={!currentDeck.cards.length} onClick={() => { if (window.confirm(`${l('resetProgress')}: "${currentDeck.title}"?`)) edit(resetDeckProgress(workRef.current, currentDeck.id)); }}><RotateCcw className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
-                        <Tooltip content={l('renameDeck')}><Button type="button" variant="ghost" className={buttonClass} aria-label={l('renameDeck')} onClick={() => { const name = window.prompt(l('renameDeck'), currentDeck.title); if (name?.trim()) edit(renameDeck(workRef.current, currentDeck.id, name)); }}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
+                        <Tooltip content={l('renameDeck')}><Button type="button" variant="ghost" className={buttonClass} aria-label={l('renameDeck')} onClick={() => setRenamingDeck(previous => !previous)}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         {work.decks.length > 1 && removeButton(currentDeck.title, () => { edit(removeDeck(workRef.current, currentDeck.id)); setView('list'); setOpenDeckId(null); })}
                     </div>
                 </div>
