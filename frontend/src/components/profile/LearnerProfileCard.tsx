@@ -72,6 +72,9 @@ interface Props {
     suggestionOnly?: boolean;
 }
 
+// Stesso limite per campo di LearnerProfileSave nel backend.
+const NOTES_MAX_CHARS = 600;
+
 export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial = false, onUnavailable, onBack, suggestionOnly = false }: Props) {
     const { t } = useI18n();
     const [hidden, setHidden] = useState(false);
@@ -229,12 +232,19 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     // esistenti e la bozza risulta modificata, come un salvataggio normale.
     // Letto da `window.location` (non `useSearchParams`) per non richiedere un
     // confine Suspense sulla pagina, che monta questa card senza uno.
+    // Applicata una volta, la nota esce dall'URL: ricaricare la pagina non la riaccoda.
+    // Se con le note esistenti supera il limite del campo, resta nell'URL e non si scrive nulla.
     useEffect(() => {
         if (loading || noteAppliedRef.current || typeof window === 'undefined') return;
-        const note = new URLSearchParams(window.location.search).get('note');
+        const url = new URL(window.location.href);
+        const note = url.searchParams.get('note');
         if (!note) return;
         noteAppliedRef.current = true;
-        changeForm({ ...form, notes: [form.notes, note].filter(Boolean).join('\n\n') });
+        const notes = [form.notes, note].filter(Boolean).join('\n\n');
+        if (notes.length > NOTES_MAX_CHARS) { setValidationError(t('lp.noteTooLong')); return; }
+        changeForm({ ...form, notes });
+        url.searchParams.delete('note');
+        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [loading]);
 
