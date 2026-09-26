@@ -187,7 +187,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
             {!goal && parentId && <p className="text-sm text-slate-600">{l('howPrompt')}</p>}
             {goal?.catalog_snapshot.data && <details className="rounded-md bg-slate-50 p-3 text-sm"><summary className="cursor-pointer py-1 font-semibold">{l('source')} · {l('version')} {goal.catalog_snapshot.version}</summary><p className="mt-2">{goal.catalog_snapshot.data.description}</p><p className="mt-2 whitespace-pre-wrap"><strong>{l('suggestions')}: </strong>{goal.catalog_snapshot.data.suggestions}</p></details>}
             <form id="goal-dialog-form" onSubmit={e => { e.preventDefault(); submit(); }}><fieldset disabled={busy || (Boolean(goal) && otherDraft)} className="space-y-4">
-                <GoalForm form={form} setForm={setForm} groups={groups} />
+                <GoalForm form={form} setForm={setForm} groups={groups} create={!goal} />
                 {inherited.map(([group, from]) => <p key={group} className="text-sm text-slate-600">ℹ {goalFormat(lang, 'inheritedShare', { group: groupName(group), goal: from.title })}</p>)}
                 {goal && <p className="text-sm text-slate-600">{l('doneHelp')}</p>}
             </fieldset></form>

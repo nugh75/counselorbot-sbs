@@ -8,13 +8,26 @@ import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
 import { PortfolioTimelineLinks } from './PortfolioTimelineLinks';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
-import { goalApi, type PersonalGoal } from '@/lib/goals';
+import { goalApi, GoalError, type PersonalGoal } from '@/lib/goals';
+import { goalText } from '@/lib/i18n-goals';
 
 // In anteprima le <img> (non passano da fetch) devono puntare all'account di
 // prova: il backend accetta l'impersonazione anche via query param view_as.
 function imageQuerySuffix(): string {
     const account = getViewAsAccount();
     return account ? `?view_as=${account.username}` : '';
+}
+
+function evidenceMap(rows: PersonalGoal[]): Record<string, string[]> {
+    const map: Record<string, string[]> = {};
+    for (const goal of rows) {
+        for (const link of goal.links) {
+            if (link.kind === 'portfolio' && link.role === 'evidence') {
+                (map[link.target_id] ??= []).push(goal.title);
+            }
+        }
+    }
+    return map;
 }
 
 interface PortfolioImage { id: string; filename?: string | null }
@@ -70,22 +83,24 @@ export function PortfolioCard() {
     // Conferma di eliminazione in linea, al posto della finestra nativa.
     const [confirmingDelete, setConfirmingDelete] = useState<number | null>(null);
     const [lightbox, setLightbox] = useState<LightboxImage | null>(null);
-    // Chip «prova di: {titolo}» (C2): un solo /user/goals, mappato per target_id.
+    // Chip «prova di: {titolo}» (C2) e righe obiettivo per il ponte dal contenuto (3A):
+    // un solo /user/goals, mappato per target_id con le revisioni aggiornate.
     const [evidenceOf, setEvidenceOf] = useState<Record<string, string[]>>({});
+    const [goals, setGoals] = useState<PersonalGoal[]>([]);
+    // F13 (lotto 3A): «Collega a un obiettivo» anche dal contenuto. Un obiettivo
+    // per volta, inline come ConfirmInline; il contratto di revisione resta quello
+    // delle altre scritture obiettivo (409 → pannello riapribile con dati freschi).
+    const [goalLinkFor, setGoalLinkFor] = useState<number | null>(null);
+    const [goalChoice, setGoalChoice] = useState('');
+    const [goalLinkBusy, setGoalLinkBusy] = useState(false);
+    const [goalLinkError, setGoalLinkError] = useState('');
     useEffect(() => {
         let active = true;
         goalApi<PersonalGoal[]>('/user/goals').then((rows) => {
             if (!active) return;
-            const map: Record<string, string[]> = {};
-            for (const goal of rows) {
-                for (const link of goal.links) {
-                    if (link.kind === 'portfolio' && link.role === 'evidence') {
-                        (map[link.target_id] ??= []).push(goal.title);
-                    }
-                }
-            }
-            setEvidenceOf(map);
-        }).catch(() => { if (active) setEvidenceOf({}); });
+            setGoals(rows);
+            setEvidenceOf(evidenceMap(rows));
+        }).catch(() => { if (active) { setEvidenceOf({}); setGoals([]); } });
         return () => { active = false; };
     }, []);
     useEffect(() => {
@@ -189,6 +204,28 @@ export function PortfolioCard() {
             console.error('Failed to delete portfolio item', e);
             toast.error(t('toast.error'));
         }
+    };
+
+    const linkToGoal = async (itemId: number) => {
+        const goal = goals.find(row => row.id === Number(goalChoice));
+        if (!goal) return;
+        setGoalLinkBusy(true); setGoalLinkError('');
+        try {
+            const updated = await goalApi<PersonalGoal>(`/user/goals/${goal.id}/links`, 'POST',
+                { kind: 'portfolio', target_id: String(itemId), role: 'evidence', revision: goal.revision });
+            setGoals(previous => previous.map(row => row.id === updated.id ? updated : row));
+            setEvidenceOf(previous => ({ ...previous, [itemId]: [...(previous[itemId] ?? []), updated.title] }));
+            setGoalLinkFor(null); setGoalChoice('');
+        } catch (e) {
+            // 409: l'obiettivo è cambiato (revisione vecchia) — ricaricare le righe
+            // risolve il prossimo tentativo senza dover uscire dalla pagina.
+            if (e instanceof GoalError && e.status === 409) {
+                setGoalLinkError(t('portfolio.linkConflict'));
+                goalApi<PersonalGoal[]>('/user/goals').then(setGoals).catch(() => {});
+            } else {
+                setGoalLinkError(t('toast.error'));
+            }
+        } finally { setGoalLinkBusy(false); }
     };
 
     const uploadImage = async (file: File) => {
@@ -433,6 +470,31 @@ export function PortfolioCard() {
                                         ))}
                                     </div>
                                 )}
+                                <div>
+                                    <button type="button" onClick={() => { setGoalLinkFor(previous => previous === item.id ? null : item.id); setGoalChoice(''); setGoalLinkError(''); }}
+                                        className="min-h-11 rounded-md px-2 text-xs font-semibold text-indigo-700 underline hover:text-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                        aria-expanded={goalLinkFor === item.id}>
+                                        → {t('portfolio.linkToGoal')}
+                                    </button>
+                                    {goalLinkFor === item.id && (
+                                        <div className="mt-2 space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3">
+                                            <label className="block text-xs font-semibold text-slate-600">
+                                                {goalText(lang, 'title')}
+                                                <select className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-sm" value={goalChoice} onChange={e => setGoalChoice(e.target.value)}>
+                                                    <option value="">—</option>
+                                                    {goals.filter(row => row.status === 'active').map(row => <option key={row.id} value={row.id}>{row.title.slice(0, 120)}</option>)}
+                                                </select>
+                                            </label>
+                                            {goalLinkError && <p role="alert" className="text-xs text-rose-700">{goalLinkError}</p>}
+                                            <div className="flex gap-2">
+                                                <button type="button" disabled={!goalChoice || goalLinkBusy} onClick={() => void linkToGoal(item.id)}
+                                                    className="min-h-11 rounded-md bg-indigo-600 px-3 text-sm font-semibold text-white disabled:opacity-50">{t('portfolio.linkConfirm')}</button>
+                                                <button type="button" onClick={() => { setGoalLinkFor(null); setGoalChoice(''); setGoalLinkError(''); }}
+                                                    className="min-h-11 rounded-md px-3 text-sm font-medium text-slate-600 hover:bg-white">{t('common.cancel')}</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                                 {item.description && <p className="mt-1 line-clamp-3 text-xs text-slate-500">{item.description}</p>}
                                 <PortfolioTimelineLinks itemId={item.id} description={item.description} locale={lang} />
                                 {item.link && (
