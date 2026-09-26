@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { bookletDataFromForm, formFromDraft, isEventInstrument } from './event-booklet.ts';
+import { formFromDraft, isEventInstrument, milestoneFromForm } from './event-booklet.ts';
 
 test('only the two significant-event paths offer the booklet draft', () => {
     assert.equal(isEventInstrument('EVENTO_STUDIO'), true);
@@ -26,11 +26,23 @@ test('without a draft the form opens empty, and an unknown role is not kept', ()
     assert.equal(formFromDraft({ event_role: 'boss' as never }).event_role, '');
 });
 
-test('saving turns the lines back into booklet lists and drops empty lines', () => {
-    const data = bookletDataFromForm({
-        ...formFromDraft(null), title: '  Riunione  ', worked: 'Ordine del giorno chiaro\n\n  ', didNotWork: '',
+test('saving turns the form into a timeline milestone and drops empty lines', () => {
+    const data = milestoneFromForm({
+        ...formFromDraft(null), title: '  Riunione  ', bio_date: '2026-03-12', event_role: 'observer',
+        worked: 'Ordine del giorno chiaro\n\n  ', didNotWork: '', bio_context: 'Consiglio di classe',
+        discovery: 'Serve un tempo per le domande', objective: 'Cinque minuti di domande', strategy: 'Giovedì',
     });
     assert.equal(data.title, 'Riunione');
-    assert.deepEqual(data.strength, ['Ordine del giorno chiaro']);
-    assert.deepEqual(data.growth_area, []);
+    assert.equal(data.date, '2026-03-12');
+    assert.deepEqual(data.review, {
+        role: 'observer', worked: ['Ordine del giorno chiaro'], did_not_work: [],
+        reading: 'Consiglio di classe\n\nServe un tempo per le domande', try_next: 'Cinque minuti di domande', how_when: 'Giovedì',
+    });
+});
+
+test('a milestone without date or role sends null for both', () => {
+    const data = milestoneFromForm({ ...formFromDraft(null), title: 'Colloquio' });
+    assert.equal(data.date, null);
+    assert.equal(data.review.role, null);
+    assert.equal(data.review.reading, '');
 });
