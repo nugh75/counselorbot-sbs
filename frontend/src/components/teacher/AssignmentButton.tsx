@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { assignmentText } from '@/lib/i18n-assignments';
 import { learningText } from '@/lib/i18n-assignment-work';
+import { Button } from '@/components/ui/Button';
 
 type Source = { kind: 'goal' | 'strategy' | 'reading'; id: number; title: string; groupId?: number | null };
 type Group = { id: number; name: string; participants: { username: string; name: string }[] };
@@ -59,8 +60,8 @@ function AssignmentDialog({ source, close, saved }: { source: Source; close: () 
                 <label className="block text-sm font-medium">{learningText(lang, 'dueDate')}<input type="date" className={input} value={dueDate} onChange={e => setDueDate(e.target.value)} /></label>
                 <label className="block text-sm font-medium">{learningText(lang, 'responsePrompt')}<textarea rows={2} maxLength={1500} className={input} value={responsePrompt} onChange={e => setResponsePrompt(e.target.value)} /></label>
                 <div className="flex flex-wrap gap-3">
-                    <button disabled={!group || busy} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{l('send')}</button>
-                    <button type="button" onClick={close} className="rounded-md border border-slate-300 px-4 py-2 text-sm">{l('cancel')}</button>
+                    <Button type="submit" disabled={!group || busy}>{l('send')}</Button>
+                    <Button type="button" variant="secondary" onClick={close}>{l('cancel')}</Button>
                 </div>
             </fieldset>
         </form>
@@ -70,7 +71,7 @@ function AssignmentDialog({ source, close, saved }: { source: Source; close: () 
 export function AssignmentButton(source: Source) {
     const { lang } = useI18n(); const [open, setOpen] = useState(false); const [sent, setSent] = useState(false);
     return <>
-        <button type="button" onClick={() => { setSent(false); setOpen(true); }} className="rounded-md border border-indigo-200 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">{assignmentText(lang, 'assign')}</button>
+        <Button variant="secondary" size="sm" type="button" onClick={() => { setSent(false); setOpen(true); }}>{assignmentText(lang, 'assign')}</Button>
         {sent && <span role="status" className="text-sm text-slate-600">{assignmentText(lang, 'saved')}</span>}
         {open && createPortal(<AssignmentDialog source={source} close={() => setOpen(false)} saved={() => setSent(true)} />, document.body)}
     </>;
