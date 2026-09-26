@@ -437,3 +437,32 @@ def test_abandoned_goal_is_archived_and_reopen_allows_second_review(setup):
     reopened = c.put(f"/user/goals/{row['id']}", json=edit_payload(closed, status='active')).json()
     again = c.post(f"/user/goals/{row['id']}/reviews", json=dict(outcome='partial', revision=reopened['revision'])).json()
     assert [rv['outcome'] for rv in again['reviews']] == ['partial', 'abandoned']
+
+
+def test_context_carries_method_last_check_and_review_within_budget(setup):
+    db, c, who, _ = setup
+    db.add(models.CertifiedStrategy(slug='self-test', name_it='Autoverifica', status='certified', is_active=True)); db.commit()
+    from backend.routes.personal_strategies import router as strategies_router
+    c.app.include_router(strategies_router)
+    own = c.post('/user/strategies', json=dict(text='Ripeto a voce')).json()
+    for i in range(5):
+        row = goal(c, title=f'Obiettivo pieno {i}', motivation='M' * 400, criteria='C' * 400,
+                   method=[dict(kind='certified', slug='self-test'), dict(kind='own', id=own['id'])])
+        c.post(f"/user/goals/{row['id']}/actions", json=dict(title='Come va?', kind='check', date='2026-10-10',
+               revision=row['revision'], request_id=f'chk-00000{i}'))
+    state = c.get('/user/timeline').json()
+    for action in state['workspace']['actions']:
+        action.update(stage='done', progress='slow', adjustment='Studio al mattino')
+    assert c.put('/user/timeline', json={k: state[k] for k in ('revision', 'workspace')}).status_code == 200
+    closed = c.post(f"/user/goals/{row['id']}/reviews", json=dict(outcome='partial', learned='Serve più tempo',
+                    revision=c.get('/user/goals').json()[0]['revision'])).json()
+    c.put(f"/user/goals/{row['id']}", json=edit_payload(closed, status='active'))
+    context = goals_context(db, 'alice')
+    content = json.loads(context.rsplit('\n', 1)[-1])
+    assert len(context.rsplit('\n', 1)[-1]) <= 6500 and content
+    first = next(item for item in content if item['title'] == 'Obiettivo pieno 4')
+    assert first['method'] == ['✦ Autoverifica', '✎ Ripeto a voce']
+    assert first['last_check'] == dict(progress='slow', adjustment='Studio al mattino', date='2026-10-10')
+    assert first['last_review'] == dict(outcome='partial', learned='Serve più tempo')
+    assert 'reflection' not in first
+    assert "Checks are the student's own progress notes; a review closes a goal" in context

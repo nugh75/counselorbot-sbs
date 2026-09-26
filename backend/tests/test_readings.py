@@ -46,3 +46,20 @@ def test_origin_reading_cannot_be_deleted(client):
     goal = c.post('/user/goals', json=dict(title='Gestire l’ansia', origin=dict(kind='reading', target_id='s1'))).json()
     assert c.get('/user/readings', params={'session_id': 's1'}).json()['goal_ids'] == [goal['id']]
     assert c.delete('/user/readings/s1').status_code == 409
+
+
+def test_reading_context_for_the_counselor(client):
+    from backend.chat_logic import _reading_context
+    db, c, who = client
+    assert _reading_context(db, 'alice', 'QSA', 's1') == ''
+    c.put('/user/readings/s1', json=body())
+    goal = c.post('/user/goals', json=dict(title='Gestire l’ansia', origin=dict(kind='reading', target_id='s1'))).json()
+    context = _reading_context(db, 'alice', 'QSA', 's1')
+    assert context.startswith('## La mia lettura dello strumento')
+    for expected in ('Punti di forza: C1', 'Da far crescere: C3', 'Cosa mi dice di me: Mi agito agli esami',
+                     f"Obiettivi nati da questa lettura: {goal['title']} (active)"):
+        assert expected in context, expected
+    # Una nuova compilazione senza lettura ripropone l'ultima lettura dello stesso strumento.
+    assert 'Mi agito agli esami' in _reading_context(db, 'alice', 'QSA', 's2')
+    assert _reading_context(db, 'alice', 'ZTPI', 's2') == ''
+    assert _reading_context(db, 'bob', 'QSA', 's1') == ''
