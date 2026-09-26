@@ -84,8 +84,9 @@ for (const width of [1440, 390]) {
             const sent = page.getByRole('region', { name: 'Assegnazioni effettuate', exact: true });
             await sent.locator('article').filter({ hasText: marker }).first().waitFor();
             const film = sent.locator('article').filter({ hasText: marker }).filter({ has: page.getByRole('heading', { name: 'Film per riflettere' }) });
-            page.once('dialog', dialog => dialog.accept());
+            // Lotto 5B: la conferma di revoca è in linea (ConfirmInline), non più window.confirm.
             await film.getByRole('button', { name: 'Revoca assegnazione' }).click();
+            await film.getByRole('button', { name: 'Sì', exact: true }).click();
             await film.getByText('Revocata', { exact: true }).waitFor();
             assert.equal((await received('eve')).filter(row => row.instructions === marker).length, 0);
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
@@ -154,8 +155,9 @@ for (const width of [1440, 390]) {
             await deliveries.nth(1).waitFor();
             assert.equal(await deliveries.getByText('Destinatari: Intero gruppo o classe (1)', { exact: true }).count(), 2);
             const film = deliveries.filter({ has: page.getByRole('heading', { name: 'Film per riflettere' }) });
-            page.once('dialog', dialog => dialog.accept());
+            // Lotto 5B: la conferma di revoca è in linea (ConfirmInline), non più window.confirm.
             await film.getByRole('button', { name: 'Revoca assegnazione' }).click();
+            await film.getByRole('button', { name: 'Sì', exact: true }).click();
             await film.getByText('Revocata', { exact: true }).waitFor();
             assert.deepEqual((await received(username)).map(row => row.source_kind), ['strategy']);
             assert.deepEqual(errors, []);
