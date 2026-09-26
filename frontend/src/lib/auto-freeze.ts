@@ -32,6 +32,7 @@ export function autoFreezeSignature(input: {
     responseLength: string;
     responseFormat?: string;
     guidedPath?: string;
+    notebookContext?: string;
 }): string {
     const last = input.messages[input.messages.length - 1];
     return [
@@ -40,6 +41,7 @@ export function autoFreezeSignature(input: {
         input.responseLength,
         input.responseFormat ?? "standard",
         input.guidedPath ?? "complete",
+        input.notebookContext ?? "default",
         last ? last.content.length : 0,
     ].join('|');
 }

@@ -1,5 +1,5 @@
 # Handoff: Scelta del taccuino nel contesto chat (docente)
-Data: 2026-09-27 | Stato: solo progetto, NESSUN codice scritto
+Data: 2026-09-27 | Stato: IMPLEMENTATO (backend, frontend, test, doc — in attesa di PR/merge)
 
 ## Objective
 Il docente (chi ha sia ruoli sia solo docenza) sceglie quale taccuino passa
@@ -12,11 +12,11 @@ taccuino studente) resta il DEFAULT, non un hard-code.
 ## Progress
 - [x] Analisi del codice esistente (vedi Resolutions)
 - [x] Progetto concordato con l'utente (vedi Decision Log)
-- [ ] Implementazione backend: campo + envelope
-- [ ] Implementazione frontend: selettore nel popover Opzioni
-- [ ] Persistenza scelta (localStorage + frozen session)
-- [ ] Test backend e frontend
-- [ ] Doc: CONTEXT.md (taccuino del docente / envelope) +
+- [x] Implementazione backend: campo + envelope
+- [x] Implementazione frontend: selettore nel popover Opzioni
+- [x] Persistenza scelta (localStorage + frozen session)
+- [x] Test backend e frontend
+- [x] Doc: CONTEXT.md (taccuino del docente / envelope) +
       docs-counselorbot/funzionalita-counselorbot.md + Make guidance-refresh/check
 
 ## Design concordato
@@ -114,7 +114,27 @@ taccuino studente) resta il DEFAULT, non un hard-code.
   ha la precedenza.
 
 ## Prossima sessione
+IMPLEMENTAZIONE COMPLETATA (branch feature/notebook-context-choice, PR da
+revisionare). Mappa dell'implementazione reale:
+- Backend: `DEFAULT_NOTEBOOK_CONTEXT` in `chat_logic.py` (top, dopo logger);
+  risoluzione in `build_context_envelope` (cercare `notebook_mode`);
+  `ChatRequest.notebook_context` in `api_models.py`; frozen session in
+  `schemas.py` (FrozenSessionCreate/Detail + validator) e
+  `routes/frozen_sessions.py`; test in `backend/tests/test_notebook_context.py`.
+- Frontend: `NotebookContextSelector.tsx` + `lib/notebook-context.ts`
+  (storage `cb-notebook-context`, default = non inviare il campo);
+  `GuidedChatInterface.tsx` (stato `notebookContext`, `isTeacherUser` via
+  getIdentity/isTeacher, 4 payload, snapshot + restore + firma autosalvataggio,
+  riga nel popover visibile solo ai docenti); `auto-freeze.ts` (signature);
+  `frozen-session.ts` (tipi); i18n `notebookContext.*` (6 lingue);
+  `DocenzaClassBar` hint adattato alla scelta. Test unitario in
+  `lib/notebook-context.test.ts` (npm run test, 236 pass).
+- Verifiche fatte: pytest notebook/teacher context 11 pass (venv host, DB
+  counselorbot_test su :5435); test_smoke confrontato con baseline via stash
+  (stessi fallimenti preesistenti, nessuno nuovo); tsc --noEmit pulito; lint =
+  baseline (1 errore preesistente NewDeckDialog); npm run build OK; guidance
+  refresh/check allineati. NOTA: il container di produzione ha il codice
+  dentro l'immagine (no mount /app/backend): i test in-container richiedono
+  rebuild; il deploy richiede `docker compose up -d --build`.
 Leggere `docs/operations/chat-format-essential-qsa.md` solo se serve per
-l'ordine del turno; altrimenti partire da Progress [ ] backend, poi
-frontend, poi test, poi doc + handoff di chiusura. Lavorare su branch
-`feature/notebook-context-choice` (mai su main).
+l'ordine del turno. Lavorare su branch feature/... (mai su main).

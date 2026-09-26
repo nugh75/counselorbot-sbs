@@ -32,6 +32,11 @@ class ChatRequest(schemas.BaseModel):
     # conversazione. Il server riverifica l'accesso a ogni turno e ignora il
     # campo per qualsiasi altro strumento.
     group_ids: Optional[list[int]] = None
+    # Quale taccuino entra nel contesto: studente, docente o nessuno. Il docente
+    # lo sceglie dal popover Opzioni della chat guidata; vale solo per chi ha
+    # davvero il ruolo docente (riverificato a ogni turno, come group_ids) e per
+    # default le regole restano le stesse (docenza -> docente, resto -> studente).
+    notebook_context: Optional[Literal["student", "teacher", "none"]] = None
 
 
 class SiteChatRequest(schemas.BaseModel):
