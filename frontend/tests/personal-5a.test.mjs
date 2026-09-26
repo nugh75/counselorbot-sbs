@@ -176,7 +176,7 @@ test('teacher list: assignments are always expanded with recipients and submissi
         '/teacher/assignments': route => route.fulfill({ json: teacherRows }),
     }, { ...identity, username: 'teacher-5a', name: 'Docente 5A', groups: ['docenti'] });
     try {
-        await page.goto(`${origin}/docente`);
+        await page.goto(`${origin}/docente/assegnazioni`);
         const sent = page.getByRole('region', { name: 'Assegnazioni effettuate', exact: true });
         await sent.getByRole('heading', { name: 'Obiettivo condiviso', exact: true }).waitFor();
         // Docente sempre espanso: destinatari e descrizioni subito visibili senza click o bottoni dettagli.
