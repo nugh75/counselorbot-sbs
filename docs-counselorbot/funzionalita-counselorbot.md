@@ -224,7 +224,9 @@ della persona.
 «Obiettivi per la mia classe», poi tre gruppi (**Classe e assegnazioni**,
 **Cataloghi**, **Somministrazioni e ricerca**) con una voce per ogni pagina e, in
 fondo, il Taccuino del docente. Ogni voce apre una pagina dedicata con il ritorno
-all’Area docenti: `/docente/classi` (gruppi e classi gestiti, contesto classe),
+all’Area docenti: `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
+della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
+link alla pagina dedicata con filtro già impostato),
 `/docente/assegnazioni`, `/docente/catalogo-obiettivi`, `/docente/strategie`,
 `/docente/materiali`, `/docente/orientamento` (solo docenti) e
 `/docente/somministrazioni`. Le pagine applicano lo stesso controllo di accesso
