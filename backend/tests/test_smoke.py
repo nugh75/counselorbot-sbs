@@ -4526,6 +4526,25 @@ def test_learner_profile_revisions_and_history():
         main.app.dependency_overrides.pop(auth.get_identity, None)
 
 
+def test_learner_profile_values_field_roundtrip():
+    """«Cosa conta per me» (C2): il taccuino salva e rilegge il campo `values`."""
+    main.app.dependency_overrides[auth.get_identity] = _fake_user_identity
+    try:
+        r = client.post("/user/learner-profile", json={
+            "values": "La giustizia",
+            "source": "manual",
+        })
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["values"] == "La giustizia"
+
+        r = client.get("/user/learner-profile")
+        assert r.status_code == 200, r.text
+        assert r.json()["data"]["values"] == "La giustizia"
+    finally:
+        client.delete("/user/learner-profile")
+        main.app.dependency_overrides.pop(auth.get_identity, None)
+
+
 def test_learner_profile_suggestion_waits_four_turns_and_remains_stable():
     """La proposta nasce da materiale esplicito e non cambia a ogni turno."""
     sid = "learner-profile-suggestion-test"

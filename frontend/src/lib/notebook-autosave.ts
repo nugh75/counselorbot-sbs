@@ -1,5 +1,5 @@
 export type NotebookData = Partial<Record<
-    'context' | 'goal' | 'main_difficulty' | 'strengths' | 'weaknesses' | 'notes'
+    'context' | 'goal' | 'main_difficulty' | 'strengths' | 'weaknesses' | 'notes' | 'values'
     | 'gender' | 'age' | 'school_class' | 'school_year' | 'institution_slug', string>>;
 export interface NotebookRevision {
     id: number;

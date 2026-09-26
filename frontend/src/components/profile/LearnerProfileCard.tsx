@@ -4,7 +4,7 @@
 // profilo auto-dichiarato. Append-only lato server: ogni salvataggio è una
 // revisione, lo storico mostra il cambiamento nel tempo.
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getIdentity, withViewAsHeaders } from '@/lib/auth';
 import { notebookAutosave, type NotebookAutosave, type NotebookData, type NotebookRevision, type SaveStatus } from '@/lib/notebook-autosave';
@@ -16,6 +16,8 @@ import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { INSTITUTION_NOT_LISTED, fetchInstitutions, type Institution } from '@/lib/referrals-api';
+import { goalApi, type GoalGroup, type PersonalGoal } from '@/lib/goals';
+import { GoalDialog, type DialogTarget } from '@/components/goals/GoalDialog';
 
 export type LearnerProfileData = NotebookData;
 type Revision = NotebookRevision;
@@ -41,6 +43,7 @@ const FIELDS: {
     { key: 'school_year', labelKey: 'lp.field.schoolYear' },
     { key: 'institution_slug', labelKey: 'lp.field.institution', type: 'select' },
     { key: 'context', labelKey: 'lp.field.context' },
+    { key: 'values', labelKey: 'lp.field.values', multiline: true },
     { key: 'goal', labelKey: 'lp.field.goal' },
     { key: 'main_difficulty', labelKey: 'lp.field.difficulty' },
     { key: 'strengths', labelKey: 'lp.field.strengths', multiline: true },
@@ -96,6 +99,29 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     }, []);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [validationError, setValidationError] = useState('');
+
+    // Ponte «→ Rendi obiettivo la difficoltà» (C2): solo nella pagina personale
+    // (variant 'edit'), non nel percorso guidato di intake/revisione.
+    const showGoalBridge = variant === 'edit';
+    const noteAppliedRef = useRef(false);
+    const [goals, setGoals] = useState<PersonalGoal[]>([]);
+    const [goalGroups, setGoalGroups] = useState<GoalGroup[]>([]);
+    const [goalTarget, setGoalTarget] = useState<DialogTarget | null>(null);
+    const [goalDialogSaved, setGoalDialogSaved] = useState(false);
+
+    // goals/groups servono al GoalDialog: stesso carico di ResultReadingCard (C1).
+    useEffect(() => {
+        if (!showGoalBridge) return;
+        let active = true;
+        goalApi<PersonalGoal[]>('/user/goals').then((rows) => { if (active) setGoals(rows); }).catch(() => { if (active) setGoals([]); });
+        goalApi<GoalGroup[]>('/user/goal-groups').then((rows) => { if (active) setGoalGroups(rows); }).catch(() => { if (active) setGoalGroups([]); });
+        return () => { active = false; };
+    }, [showGoalBridge]);
+
+    const reloadGoals = useCallback(() => {
+        goalApi<PersonalGoal[]>('/user/goals').then((rows) => setGoals(rows)).catch(() => setGoals([]));
+    }, []);
+    const closeGoalDialog = () => { setGoalTarget(null); setGoalDialogSaved(false); };
     const [suggestion, setSuggestion] = useState<NotebookSuggestion | null>(null);
     const [suggestionHandled, setSuggestionHandled] = useState(false);
 
@@ -198,6 +224,19 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
         setEditing(true);
         autosave.current?.update(next, variant === 'update' ? 'session_end' : (profile ? 'manual' : 'intake'), sessionId);
     };
+
+    // Il Bilancio (B4) rimanda qui con `?note=`: la nota si accoda alle note
+    // esistenti e la bozza risulta modificata, come un salvataggio normale.
+    // Letto da `window.location` (non `useSearchParams`) per non richiedere un
+    // confine Suspense sulla pagina, che monta questa card senza uno.
+    useEffect(() => {
+        if (loading || noteAppliedRef.current || typeof window === 'undefined') return;
+        const note = new URLSearchParams(window.location.search).get('note');
+        if (!note) return;
+        noteAppliedRef.current = true;
+        changeForm({ ...form, notes: [form.notes, note].filter(Boolean).join('\n\n') });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading]);
 
     const loadHistory = async () => {
         if (showHistory) { setShowHistory(false); return; }
@@ -490,7 +529,34 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
             ) : (
                 formUi
             )}
+            {showGoalBridge && !suggestionOnly && (form.main_difficulty || '').trim() && (
+                <div className="border-t border-slate-200 pt-3">
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            setGoalDialogSaved(false);
+                            setGoalTarget({ kind: 'create', origin: { kind: 'notebook', target_id: 'current' }, prefill: { motivation: form.values } });
+                        }}
+                    >
+                        {t('lp.bridge.difficultyToGoal')}
+                    </Button>
+                </div>
+            )}
             </Card>
+            {goalTarget && (
+                <GoalDialog
+                    target={goalTarget}
+                    goals={goals}
+                    groups={goalGroups}
+                    saved={goalDialogSaved}
+                    onTarget={(next) => { setGoalDialogSaved(false); setGoalTarget(next); }}
+                    onClose={closeGoalDialog}
+                    onReload={reloadGoals}
+                    onSaved={(row) => { setGoals((previous) => previous.map((goal) => goal.id === row.id ? row : goal)); setGoalDialogSaved(true); }}
+                    onCreated={(row) => { setGoals((previous) => [row, ...previous]); setGoalDialogSaved(true); closeGoalDialog(); }}
+                    onDeleted={() => { closeGoalDialog(); reloadGoals(); }}
+                />
+            )}
         </div>
     );
 }
