@@ -12,7 +12,7 @@ for (const [lang, width, instrument] of [
     ['en', 390, 'QSA'], ['es', 390, 'QSA'], ['fr', 390, 'QSA'],
     ['de', 390, 'QSA'], ['sv', 390, 'QSA'],
 ]) {
-    test(`result disclosure preserves conversation (${lang}, ${width}, ${instrument})`, async () => {
+    test(`collapsing submission result hides details and conversation (${lang}, ${width}, ${instrument})`, async () => {
         const context = await browser.newContext({ viewport: { width, height: 900 } });
         await context.addInitScript(lang => {
             localStorage.setItem('cb_lang', lang);
@@ -54,16 +54,20 @@ for (const [lang, width, instrument] of [
             await content.waitFor({ state: 'hidden' });
             assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
             assert.equal(await summary.isVisible(), false);
-            assert.equal(await conversation.isVisible(), true);
+            assert.equal(await conversation.isVisible(), false);
             assert.equal(await summary.count(), 1, 'collapsed content stays mounted');
+            assert.equal(await conversation.count(), 1, 'collapsed conversation stays mounted');
             await toggle.focus();
             await page.keyboard.press('Enter');
             await summary.waitFor();
+            await conversation.waitFor();
             assert.equal(await toggle.getAttribute('aria-expanded'), 'true');
+            assert.equal(await summary.isVisible(), true);
+            assert.equal(await conversation.isVisible(), true);
             if (instrument === 'QSA') assert.ok((await chart.boundingBox()).width > 0);
             await page.keyboard.press('Space');
             await content.waitFor({ state: 'hidden' });
-            assert.equal(await conversation.isVisible(), true);
+            assert.equal(await conversation.isVisible(), false);
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no horizontal overflow');
             if (lang === 'it') await page.screenshot({ path: `/tmp/submission-result-collapsed-${width}.png`, fullPage: true });
             assert.deepEqual(errors, []);

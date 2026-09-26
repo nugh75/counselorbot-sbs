@@ -561,9 +561,8 @@ export default function ProfilePage() {
                 </div>
                 {selectedSession ? (
                     <>
-                        <div className="glass-panel p-6 space-y-6">
-                            <div id="submission-result-content" hidden={!resultExpanded} className="space-y-6">
-                                {/* Session Detail Header */}
+                        <div id="submission-result-content" hidden={!resultExpanded} className="glass-panel p-6 space-y-6">
+                            {/* Session Detail Header */}
                                 <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2 flex-wrap">
@@ -716,7 +715,6 @@ export default function ProfilePage() {
                                         </div>
                                     </div>
                                 ) : null}
-                            </div>
 
                             {/* Render Chat Conversation */}
                             <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
