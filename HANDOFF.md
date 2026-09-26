@@ -82,7 +82,8 @@ Riordino dei gruppi all'ingresso con «Conoscermi e riflettere» prima de «Il m
   - In `/profilo/compilazioni`, il disclosure `#submission-result-content` racchiude l'intero pannello dei risultati tecnici (sintesi, grafici stanine, schede fattori) e l'intera conversazione con il counselor.
   - Risolto il difetto per cui la chat restava visibile dopo aver collassato i risultati.
   - Quando il risultato è collassato, la scheda «La mia lettura» è immediatamente visibile e accessibile sotto il comando di espansione. Test: `frontend/tests/submission-result-disclosure.test.mjs`.
-- **Guida funzionalità riallineata**: `docs-counselorbot/funzionalita-counselorbot.md` aggiornata per tutti i lotti completati, nuovo ordinamento gruppi, scorporo di Analisi combinata e collasso unificato risultati+chat; `make guidance-refresh` e `make guidance-check` eseguiti.
+- **Rimozione duplicazione lettore audio nella navbar**: rimosso il trigger inline ridondante dalla barra orizzontale in `Header.tsx` (il lettore vive unicamente all'interno del menu a tre punti, accessibile per tutti gli utenti e schermi). Aggiornati `VoiceReaderMenuEntry` e `VoiceReaderProvider` per gestire il focus accessibility (WCAG 2.1) al trigger del menu alla chiusura; test `frontend/tests/voice-reader.test.mjs` (16/16) e unit test (233/233) passanti.
+- **Guida funzionalità riallineata**: `docs-counselorbot/funzionalita-counselorbot.md` aggiornata per tutti i lotti completati, nuovo ordinamento gruppi, scorporo di Analisi combinata, collasso unificato risultati+chat e posizionamento del lettore audio nel menu; `make guidance-refresh` e `make guidance-check` eseguiti.
 
 ## Resolutions
 - Test backend sempre da worktree/checkout con `DATABASE_URL` sul DB test `localhost:5435` (vedi CLAUDE.md/CONTEXT.md).
