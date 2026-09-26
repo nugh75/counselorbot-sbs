@@ -17,6 +17,7 @@ const text = {
     criteria: ['Come riconoscerò un miglioramento', 'How I will recognize progress', 'Cómo reconoceré una mejora', 'Comment reconnaître un progrès', 'Woran ich Fortschritte erkenne', 'Hur jag märker framsteg'],
     reflection: ['La mia revisione del percorso', 'My reflection on the journey', 'Mi reflexión sobre el recorrido', 'Mon bilan du parcours', 'Mein Rückblick auf den Weg', 'Min reflektion över vägen'],
     reviewDate: ['Quando rivederlo', 'When to review it', 'Cuándo revisarlo', 'Quand faire le point', 'Wann überprüfen', 'När följa upp'],
+    moreDetails: ['Più dettagli', 'More details', 'Más detalles', 'Plus de détails', 'Mehr Details', 'Fler detaljer'],
     priority: ['Priorità', 'Priority', 'Prioridad', 'Priorité', 'Priorität', 'Prioritet'],
     high: ['Alta', 'High', 'Alta', 'Haute', 'Hoch', 'Hög'],
     normal: ['Media', 'Medium', 'Media', 'Moyenne', 'Mittel', 'Medel'],
