@@ -178,7 +178,7 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                 </div>
             )}
             {canManageGroups && (
-                <Link href="/docente" className="block text-sm text-indigo-700 underline underline-offset-2">
+                <Link href="/docente/classi" className="block text-sm text-indigo-700 underline underline-offset-2">
                     {texts.manage}
                 </Link>
             )}
