@@ -9,13 +9,13 @@ import { useI18n } from '@/lib/i18n-context';
 import { translate, type Lang } from '@/lib/i18n';
 import { getIdentity } from '@/lib/auth';
 import { getDisplayedCounselorId, subscribeToCounselor } from '@/lib/counselor';
-import { DEFAULT_VOICES, PIPER_VOICES, VOICE_EXCLUDED, pageReadingSource, highlightReadingBlock, type ReadingBlock } from '@/lib/voice-content';
+import { DEFAULT_VOICES, PIPER_VOICES, pageReadingSource, highlightReadingBlock, type ReadingBlock } from '@/lib/voice-content';
 import { VoiceReaderController, type ReaderInput } from '@/lib/voice-reader';
 import { pronunciationRules } from '@/lib/voice-pronunciation';
 import { PronunciationEditor } from './PronunciationEditor';
 
 type Target = { id: string; text: string; language: Lang; counselorId?: number | null; literalPronunciation?: boolean; blocks?: ReadingBlock[] };
-type ReaderContext = { openSettings: () => void; read: (target: Target) => void; release: (id: string) => void };
+type ReaderContext = { openSettings: (opener?: HTMLElement | null) => void; read: (target: Target) => void; release: (id: string) => void };
 const Context = createContext<ReaderContext | null>(null);
 const PREFERENCE_EVENT = 'counselorbot-voice-change';
 const preferenceKey = (language: Lang, counselorId?: number | null) => `cb_voice_${language}${counselorId ? `_counselor_${counselorId}` : ''}`;
@@ -73,11 +73,11 @@ export function VoiceReaderProvider({ children }: { children: React.ReactNode })
         void controller.start(speechInput(next));
     }, [controller, open]);
     const release = useCallback((id: string) => { if (source.current === id) close(); }, [close]);
-    // Il lettore si attiva solo intenzionalmente: icona cuffie nella barra in
-    // alto o pulsanti "Ascolta" espliciti. Nessun avvio da clic sulla pagina:
-    // il doppio clic è un gesto di navigazione delle schede, non un comando.
-    return <Context.Provider value={{ read, release, openSettings: () => {
-        setOpener(document.activeElement as HTMLElement);
+    // Il lettore si attiva solo intenzionalmente: voce di menu o pulsanti
+    // "Ascolta" espliciti. Nessun avvio da clic sulla pagina: il doppio clic è
+    // un gesto di navigazione delle schede, non un comando.
+    return <Context.Provider value={{ read, release, openSettings: (openerEl?: HTMLElement | null) => {
+        setOpener(openerEl ?? (document.activeElement as HTMLElement));
         setExpanded(true);
         setOpen(true);
     } }}>
@@ -100,11 +100,11 @@ export function VoiceReaderTrigger() {
 
 /** Row inside a menu (top-bar three-dot menu): opens the reader settings and
     lets the caller close the menu first. */
-export function VoiceReaderMenuEntry({ className, onActivate }: { className: string; onActivate?: () => void }) {
+export function VoiceReaderMenuEntry({ className, onActivate, getOpener }: { className: string; onActivate?: () => void; getOpener?: () => HTMLElement | null }) {
     const reader = useContext(Context);
     const { t } = useI18n();
     return <button type="button" className={className} aria-label={t('voice.title')}
-        onClick={() => { onActivate?.(); reader?.openSettings(); }}>
+        onClick={() => { onActivate?.(); reader?.openSettings(getOpener?.()); }}>
         <Headphones className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span className="truncate">{t('voice.title')}</span>
     </button>;

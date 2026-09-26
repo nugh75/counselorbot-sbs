@@ -51,7 +51,7 @@ modalità ogni volta e non cambia la preferenza degli altri strumenti.
   screenshot pertinente; le schermate della piattaforma sono disponibili nelle
   sei lingue, mentre le due viste della chat sono dimostrazioni in italiano.
 - Interfaccia e conversazioni: italiano, inglese, spagnolo, francese, tedesco e
-  svedese. Sono disponibili tema chiaro/scuro, navigazione mobile e lettura vocale.
+  svedese. Sono disponibili tema chiaro/scuro, navigazione responsive e lettura vocale dal menu a tre punti.
 
 ## Analisi dei questionari
 
@@ -98,7 +98,7 @@ essenziale. L’esperienza OpenCode è un’alternativa quando disponibile.
 
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
-e feedback quando disponibili. Il lettore nella navigazione legge il testo visibile,
+e feedback quando disponibili. Il lettore nel menu di navigazione legge il testo visibile,
 con impostazioni di voce e motore; la correzione della pronuncia è visibile solo
 all’amministratore. La chat guidata e la Bussola accettano
 registrazione del microfono o file audio: la trascrizione è da controllare, salvo
