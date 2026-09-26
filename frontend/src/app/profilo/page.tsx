@@ -16,6 +16,7 @@ import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
 import { addCompletedProfile, clearCompletedProfiles } from '@/lib/profile-tracker';
 import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
+import { ResultReadingCard } from '@/components/profile/ResultReadingCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import { JourneyOverview } from '@/components/goals/JourneyOverview';
 import { PersonalAreaHome } from '@/components/profile/PersonalAreaHome';
@@ -779,6 +780,8 @@ export default function ProfilePage() {
                                 )}
                             </div>
                         </div>
+
+                        <ResultReadingCard key={selectedSession.session_id} sessionId={selectedSession.session_id} questionnaireType={selectedSession.questionnaire_type} scores={selectedSession.scores} />
                     </>
                 ) : (
                     <div className="glass-panel p-12 text-center space-y-4 text-slate-500">

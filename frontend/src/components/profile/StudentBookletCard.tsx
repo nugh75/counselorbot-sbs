@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Download, Loader2, Plus, Save, Trash2, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Download, Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
+import { FactorMultiSelect } from '@/components/profile/FactorMultiSelect';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
@@ -140,7 +141,7 @@ function bookletTitle(summary: BookletSummary, fallback: string): string {
 }
 
 export function StudentBookletCard({ questionnaireType, lang }: { questionnaireType: BookletType; lang: string }) {
-    const { t, tf } = useI18n();
+    const { t } = useI18n();
     const [booklets, setBooklets] = useState<BookletSummary[]>([]);
     const [currentId, setCurrentId] = useState<number | null>(null);
     const [form, setForm] = useState<BookletData>(() => toBookletData({}));
@@ -149,15 +150,6 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
     const [saving, setSaving] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [confirmingDelete, setConfirmingDelete] = useState(false);
-
-    const factorOptions = useMemo(() => {
-        if (!isQuestionnaireType(questionnaireType) || questionnaireType === 'SAVICKAS') return [];
-        const config = QUESTIONNAIRES[questionnaireType];
-        return (config?.factors || []).map((factor) => {
-            const label = tf(`factor.${factor.code}.name`, factor.name);
-            return { value: `${factor.code} - ${label}`, label: `${factor.code} - ${label}` };
-        });
-    }, [questionnaireType, tf]);
 
     const loadBooklet = useCallback(async (id: number) => {
         setLoading(true);
@@ -215,18 +207,6 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
         setForm((prev) => ({ ...prev, [key]: value }));
     };
 
-    const setArrayItem = (key: 'strength' | 'growth_area', index: number, value: string) => {
-        setForm((prev) => {
-            const arr = [...prev[key]];
-            arr[index] = value;
-            return { ...prev, [key]: arr };
-        });
-    };
-
-    const addArrayItem = (key: 'strength' | 'growth_area') => {
-        setForm((prev) => ({ ...prev, [key]: [...prev[key], ''] }));
-    };
-
     const setBiographyEvent = (id: string, key: keyof Omit<BiographyEvent, 'id'>, value: string) => {
         setForm((previous) => ({
             ...previous,
@@ -245,13 +225,6 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
         setForm((previous) => {
             const remaining = previous.bio_events.filter((event) => event.id !== id);
             return { ...previous, bio_events: remaining.length ? remaining : [emptyBiographyEvent(crypto.randomUUID())] };
-        });
-    };
-
-    const removeArrayItem = (key: 'strength' | 'growth_area', index: number) => {
-        setForm((prev) => {
-            const arr = prev[key].filter((_, i) => i !== index);
-            return { ...prev, [key]: arr.length > 0 ? arr : [''] };
         });
     };
 
@@ -386,54 +359,6 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
         </label>
     );
 
-    const factorRow = (key: 'strength' | 'growth_area', index: number) => (
-        <div key={index} className="flex items-center gap-2">
-            {factorOptions.length > 0 ? (
-                <select
-                    value={form[key][index]}
-                    onChange={(event) => setArrayItem(key, index, event.target.value)}
-                    className={`${inputClass} mt-0`}
-                >
-                    <option value="">{t('booklet.factorChoose')}</option>
-                    {factorOptions.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                </select>
-            ) : (
-                <input
-                    value={form[key][index]}
-                    onChange={(event) => setArrayItem(key, index, event.target.value)}
-                    className={`${inputClass} mt-0`}
-                    placeholder={t('booklet.factorPlaceholder')}
-                />
-            )}
-            <button
-                type="button"
-                onClick={() => removeArrayItem(key, index)}
-                className="shrink-0 rounded-md border border-slate-200 p-2 text-slate-500 hover:bg-slate-50 hover:text-rose-500"
-                aria-label={t('booklet.remove')}
-            >
-                <X className="h-4 w-4" />
-            </button>
-        </div>
-    );
-
-    const factorMulti = (key: 'strength' | 'growth_area', label: string) => (
-        <div className="block">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</span>
-            <div className="mt-1 space-y-2">
-                {form[key].map((_, index) => factorRow(key, index))}
-            </div>
-            <button
-                type="button"
-                onClick={() => addArrayItem(key)}
-                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700"
-            >
-                <Plus className="h-3.5 w-3.5" /> {t('booklet.add')}
-            </button>
-        </div>
-    );
-
     return (
         <section className="glass-panel p-5 space-y-5">
             <div>
@@ -509,8 +434,18 @@ export function StudentBookletCard({ questionnaireType, lang }: { questionnaireT
                     )}
 
                     <div className="grid gap-3 md:grid-cols-2">
-                        {factorMulti('strength', t(isEventType(questionnaireType) ? 'eventBooklet.field.worked' : 'booklet.field.strength'))}
-                        {factorMulti('growth_area', t(isEventType(questionnaireType) ? 'eventBooklet.field.didNotWork' : 'booklet.field.growth'))}
+                        <FactorMultiSelect
+                            label={t(isEventType(questionnaireType) ? 'eventBooklet.field.worked' : 'booklet.field.strength')}
+                            value={form.strength}
+                            onChange={(next) => setForm((prev) => ({ ...prev, strength: next }))}
+                            questionnaireType={questionnaireType}
+                        />
+                        <FactorMultiSelect
+                            label={t(isEventType(questionnaireType) ? 'eventBooklet.field.didNotWork' : 'booklet.field.growth')}
+                            value={form.growth_area}
+                            onChange={(next) => setForm((prev) => ({ ...prev, growth_area: next }))}
+                            questionnaireType={questionnaireType}
+                        />
                     </div>
                     {textField('motivation', t('booklet.field.motivation'), 2)}
 
