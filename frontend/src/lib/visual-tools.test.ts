@@ -205,3 +205,18 @@ test('each deck type preset fixes its column ids and keeps labels localizable', 
     assert.deepEqual(deck?.card_columns?.map(c => c.id), ['pro', 'con']);
     assert.deepEqual(cardColumnsOf(w, w.active_deck_id).map(c => c.id), ['pro', 'con']);
 });
+
+test('check actions carry progress records and the new labels exist in six languages', () => {
+    const check: import('./visual-tools.ts').Action = { id: 'c', title: 'Weekly check', detail: '', stage: 'doing', reflection: 'Still working', source: '', kind: 'check', progress: 'slow', adjustment: 'Shorter sessions' };
+    assert.equal(check.progress, 'slow');
+    assert.equal(check.adjustment, 'Shorter sessions');
+    const l = (key: string) => visualLabel('it', key);
+    for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
+        for (const key of ['check', 'progress', 'on_track', 'slow', 'stuck', 'observe', 'adjust', 'checkNeedsProgress']) {
+            assert.ok(visualLabel(lang, key), `${lang}/${key}`);
+            assert.notEqual(visualLabel(lang, key), key, `${lang}/${key} missing translation`);
+        }
+        assert.notEqual(visualLabel(lang, 'on_track'), visualLabel(lang, 'check'), lang);
+    }
+    void l;
+});

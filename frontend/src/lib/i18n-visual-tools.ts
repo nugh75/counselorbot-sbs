@@ -255,7 +255,15 @@ const labels: Record<string, Record<string, string>> = {
         "pro": "Vantaggi",
         "con": "Svantaggi",
         "question": "Domanda",
-        "answer": "Risposta"
+        "answer": "Risposta",
+        "check": "Controllo",
+        "progress": "A che punto sono",
+        "on_track": "In linea",
+        "slow": "In ritardo",
+        "stuck": "Bloccato",
+        "observe": "Cosa osservo",
+        "adjust": "Cosa cambio",
+        "checkNeedsProgress": "Scegli prima «A che punto sono» per dichiarare il controllo provato.",
     },
     "en": {
         "otherTools": "Other personal tools",
@@ -513,7 +521,15 @@ const labels: Record<string, Record<string, string>> = {
         "pro": "Pros",
         "con": "Cons",
         "question": "Question",
-        "answer": "Answer"
+        "answer": "Answer",
+        "check": "Check",
+        "progress": "Where I am now",
+        "on_track": "On track",
+        "slow": "Slowing down",
+        "stuck": "Stuck",
+        "observe": "What I observe",
+        "adjust": "What I change",
+        "checkNeedsProgress": "Choose “Where I am now” before marking the check as done.",
     },
     "es": {
         "otherTools": "Otras herramientas personales",
@@ -771,7 +787,15 @@ const labels: Record<string, Record<string, string>> = {
         "pro": "Ventajas",
         "con": "Inconvenientes",
         "question": "Pregunta",
-        "answer": "Respuesta"
+        "answer": "Respuesta",
+        "check": "Comprobación",
+        "progress": "¿Dónde estoy?",
+        "on_track": "En camino",
+        "slow": "Con retraso",
+        "stuck": "Bloqueado",
+        "observe": "Qué observo",
+        "adjust": "Qué cambio",
+        "checkNeedsProgress": "Elige «¿Dónde estoy?» antes de dar la comprobación por probada.",
     },
     "fr": {
         "otherTools": "Autres outils personnels",
@@ -1029,7 +1053,15 @@ const labels: Record<string, Record<string, string>> = {
         "pro": "Avantages",
         "con": "Inconvénients",
         "question": "Question",
-        "answer": "Réponse"
+        "answer": "Réponse",
+        "check": "Contrôle",
+        "progress": "Où j’en suis",
+        "on_track": "En bonne voie",
+        "slow": "Au ralenti",
+        "stuck": "Bloqué",
+        "observe": "Ce que j’observe",
+        "adjust": "Ce que je change",
+        "checkNeedsProgress": "Choisis « Où j’en suis » avant de marquer le contrôle comme essayé.",
     },
     "de": {
         "otherTools": "Weitere persönliche Werkzeuge",
@@ -1287,7 +1319,15 @@ const labels: Record<string, Record<string, string>> = {
         "pro": "Vorteile",
         "con": "Nachteile",
         "question": "Frage",
-        "answer": "Antwort"
+        "answer": "Antwort",
+        "check": "Überprüfung",
+        "progress": "Wo stehe ich",
+        "on_track": "Auf Kurs",
+        "slow": "Verzögert",
+        "stuck": "Festgefahren",
+        "observe": "Was ich beobachte",
+        "adjust": "Was ich ändere",
+        "checkNeedsProgress": "Wähle erst „Wo stehe ich“, bevor du die Überprüfung als ausprobiert markierst.",
     },
     "sv": {
         "otherTools": "Andra personliga verktyg",
@@ -1545,7 +1585,15 @@ const labels: Record<string, Record<string, string>> = {
         "pro": "Fördelar",
         "con": "Nackdelar",
         "question": "Fråga",
-        "answer": "Svar"
+        "answer": "Svar",
+        "check": "Kontroll",
+        "progress": "Hur går det",
+        "on_track": "Enligt plan",
+        "slow": "Försenad",
+        "stuck": "Fastnat",
+        "observe": "Vad jag ser",
+        "adjust": "Vad jag ändrar",
+        "checkNeedsProgress": "Välj först »Hur går det« innan du markerar kontrollen som prövad."
     }
 };
 
