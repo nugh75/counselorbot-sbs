@@ -81,10 +81,11 @@ PDF «Percorso dell'obiettivo») e Linea del tempo. **Obiettivo raggiunto e in p
   - F32: Telegram a 3 passi guidati con scadenza codice visibile (`expires_in_minutes`), verifica automatica al ritorno (`visibilitychange`), pulsante "Verifica il collegamento", stati distinti e rigenerazione codice.
   - F34 parziale: date localizzate con `toLocaleDateString(lang)` in assegnazioni, iscrizioni a gruppi e note docente.
   - Test browser: `frontend/tests/personal-5a.test.mjs` (4/4 pass), `frontend/tests/personal-error-states.test.mjs` (7/7 pass), `frontend/tests/assignments.test.mjs` compatibile, unit 233/233 pass, `tsc` ed `eslint` puliti.
+- **Ordinamento gruppi Area personale (2026-09-26)**: «Conoscermi e riflettere» precede ora «Il mio percorso» nella pagina d'ingresso di `/profilo` (`personalAreaGroups`).
 - **Domanda di prodotto chiusa**: il campo `planned` («Cosa programmo») è di nuovo editabile nella
   pagina unificata `/profilo/timeline` (tappe future o senza data); `TimelineTools.tsx` eliminato.
 - **Guida funzionalità riallineata**: `docs-counselorbot/funzionalita-counselorbot.md` aggiornata
-  per lotti 2, 3A, 1B, 4 e 5A; `make guidance-refresh` e `make guidance-check` eseguiti.
+  per lotti 2, 3A, 1B, 4 e 5A e nuovo ordinamento gruppi; `make guidance-refresh` e `make guidance-check` eseguiti.
 
 ## Resolutions
 - Test backend sempre da worktree/checkout con `DATABASE_URL` sul DB test `localhost:5435` (vedi CLAUDE.md/CONTEXT.md).
