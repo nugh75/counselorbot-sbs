@@ -27,7 +27,7 @@ import { learningText } from '@/lib/i18n-assignment-work';
 import { MyGroupsCard } from '@/components/profile/MyGroupsCard';
 import OrientationDirectoryCard from '@/components/profile/OrientationDirectoryCard';
 import {
-    Trash2, Download, MessageSquare, ShieldAlert, Search,
+    Trash2, Download, MessageSquare, ShieldAlert, Search, ChevronDown,
     NotebookPen, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, GraduationCap, BookOpen,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -45,9 +45,17 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-type PersonalSection = 'assignments' | 'notebook' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo' | 'flashcards' | 'pqbl';
+type PersonalSection = 'combined' | 'assignments' | 'notebook' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo' | 'flashcards' | 'pqbl';
 
 const PERSONAL_AREAS = [
+    {
+        id: 'combined',
+        slug: 'analisi-combinata',
+        icon: ClipboardList,
+        image: '/images/intro/profiles.png',
+        titleKey: 'combined.title',
+        descriptionKey: 'combined.desc',
+    },
     { id: 'assignments', slug: 'assegnazioni', icon: ClipboardList, image: '/images/platform/assegnazioni.png', titleKey: 'received', descriptionKey: 'intro' },
     {
         id: 'notebook',
@@ -153,6 +161,7 @@ export default function ProfilePage() {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
     const [sessionSearch, setSessionSearch] = useState('');
+    const [resultExpanded, setResultExpanded] = useState(true);
     const activeSection = personalSectionFromPath(pathname);
     const personalAreas = PERSONAL_AREAS.map((area) => ({
         ...area,
@@ -524,7 +533,17 @@ export default function ProfilePage() {
             <section className="space-y-6" aria-labelledby="selected-session-details">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <h2 id="selected-session-details" className="text-lg font-bold text-slate-800">
-                        {t('profile.sessions.resultTitle')}
+                        <button
+                            type="button"
+                            aria-expanded={resultExpanded}
+                            aria-controls="submission-result-content"
+                            disabled={!selectedSession}
+                            onClick={() => setResultExpanded(expanded => !expanded)}
+                            className="flex min-h-11 items-center gap-2 rounded-lg text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600 disabled:cursor-default"
+                        >
+                            <ChevronDown aria-hidden="true" className={`h-5 w-5 shrink-0 ${resultExpanded ? '' : '-rotate-90'}`} />
+                            {t('profile.sessions.resultTitle')}
+                        </button>
                     </h2>
                     {selectedSession && (
                         // Prima il badge portava lo strumento e otto cifre
@@ -543,159 +562,161 @@ export default function ProfilePage() {
                 {selectedSession ? (
                     <>
                         <div className="glass-panel p-6 space-y-6">
-                            {/* Session Detail Header */}
-                            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className={`px-3 py-0.5 border text-xs font-bold rounded-full uppercase ${getTypeColor(selectedSession.questionnaire_type)}`}>
-                                            {selectedSession.questionnaire_type}
-                                        </span>
-                                        <span className="text-xs text-slate-500 font-medium">
-                                            {t('profile.submittedOn', { date: new Date(selectedSession.submitted_at).toLocaleString(lang) })}
-                                        </span>
+                            <div id="submission-result-content" hidden={!resultExpanded} className="space-y-6">
+                                {/* Session Detail Header */}
+                                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className={`px-3 py-0.5 border text-xs font-bold rounded-full uppercase ${getTypeColor(selectedSession.questionnaire_type)}`}>
+                                                {selectedSession.questionnaire_type}
+                                            </span>
+                                            <span className="text-xs text-slate-500 font-medium">
+                                                {t('profile.submittedOn', { date: new Date(selectedSession.submitted_at).toLocaleString(lang) })}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs font-mono text-slate-500">
+                                            {t('history.session')} ID: {selectedSession.session_id}
+                                        </p>
                                     </div>
-                                    <p className="text-xs font-mono text-slate-500">
-                                        {t('history.session')} ID: {selectedSession.session_id}
-                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleDownloadPdf(selectedSession.session_id, selectedSession.questionnaire_type)}
+                                            className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-600 transition-colors"
+                                            title={t('completed.downloadPdf')}
+                                        >
+                                            <Download className="w-3.5 h-3.5" />
+                                            PDF
+                                        </button>
+
+                                        {showDeleteConfirm === selectedSession.session_id ? (
+                                            <div className="flex items-center gap-1 bg-red-50 border border-red-100 rounded-lg p-1 animate-fade-in">
+                                                <span className="text-2xs font-semibold text-red-700 px-2">{t('profile.deleteShortConfirm')}</span>
+                                                <button
+                                                    onClick={() => handleDelete(selectedSession.session_id)}
+                                                    disabled={actionLoading === selectedSession.session_id}
+                                                    className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-2xs font-bold"
+                                                >
+                                                    {t('profile.yes')}
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowDeleteConfirm(null)}
+                                                    className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded text-2xs font-medium"
+                                                >
+                                                    {t('profile.no')}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => setShowDeleteConfirm(selectedSession.session_id)}
+                                                className="p-2 border border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700 rounded-lg transition-colors"
+                                                title={t('profile.deleteTooltip')}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handleDownloadPdf(selectedSession.session_id, selectedSession.questionnaire_type)}
-                                        className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-600 transition-colors"
-                                        title={t('completed.downloadPdf')}
-                                    >
-                                        <Download className="w-3.5 h-3.5" />
-                                        PDF
-                                    </button>
-                                    
-                                    {showDeleteConfirm === selectedSession.session_id ? (
-                                        <div className="flex items-center gap-1 bg-red-50 border border-red-100 rounded-lg p-1 animate-fade-in">
-                                            <span className="text-2xs font-semibold text-red-700 px-2">{t('profile.deleteShortConfirm')}</span>
-                                            <button
-                                                onClick={() => handleDelete(selectedSession.session_id)}
-                                                disabled={actionLoading === selectedSession.session_id}
-                                                className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-2xs font-bold"
-                                            >
-                                                {t('profile.yes')}
-                                            </button>
-                                            <button
-                                                onClick={() => setShowDeleteConfirm(null)}
-                                                className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 rounded text-2xs font-medium"
-                                            >
-                                                {t('profile.no')}
-                                            </button>
+
+                                {/* The final guided response is the synthesis for every instrument. */}
+                                <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
+                                    <h3 className="text-sm font-bold text-slate-700">{t('profile.sessionSummary.title')}</h3>
+                                    {summaryLoading ? (
+                                        <div className="py-4 text-center text-xs text-slate-500">
+                                            {t('profile.sessionSummary.loading')}
+                                        </div>
+                                    ) : sessionSummary ? (
+                                        <div className="prose prose-sm max-w-none text-slate-700 prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0">
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{sessionSummary}</ReactMarkdown>
                                         </div>
                                     ) : (
-                                        <button
-                                            onClick={() => setShowDeleteConfirm(selectedSession.session_id)}
-                                            className="p-2 border border-red-200 hover:bg-red-50 text-red-600 hover:text-red-700 rounded-lg transition-colors"
-                                            title={t('profile.deleteTooltip')}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        <p className="py-2 text-sm text-slate-500">
+                                            {t('profile.sessionSummary.pending')}
+                                        </p>
                                     )}
                                 </div>
-                            </div>
 
-                            {/* The final guided response is the synthesis for every instrument. */}
-                            <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
-                                <h3 className="text-sm font-bold text-slate-700">{t('profile.sessionSummary.title')}</h3>
-                                {summaryLoading ? (
-                                    <div className="py-4 text-center text-xs text-slate-500">
-                                        {t('profile.sessionSummary.loading')}
+                                {/* Render Scores Visual Chart if quantitative */}
+                                {chartData.length > 0 && (
+                                    <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
+                                        <h3 className="text-sm font-bold text-slate-700">{t('profile.factorBreakdown')}</h3>
+
+                                        <div className="h-64">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#e2e8f0'} />
+                                                    <XAxis dataKey="code" tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} />
+                                                    <YAxis domain={[0, 9]} ticks={[1, 3, 5, 7, 9]} tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} />
+                                                    <Tooltip content={(p: TooltipContentProps<number, string>) => {
+                                                        if (!p.active || !p.payload?.length) return null;
+                                                        const d = p.payload[0].payload;
+                                                        return (
+                                                            <div className="bg-white border border-slate-200 shadow-md rounded-lg p-2.5 text-xs max-w-xs">
+                                                                <p className="font-semibold text-slate-800">{d.code} - {d.name}</p>
+                                                                <p className="text-indigo-600 font-bold mt-1">{t('profile.stanineScoreLabel')} {d.value} / 9</p>
+                                                            </div>
+                                                        );
+                                                    }} />
+                                                    <Bar dataKey="value" maxBarSize={30}>
+                                                        {chartData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                                        ))}
+                                                        <LabelList dataKey="value" position="top" style={{ fontSize: '10px', fill: isDark ? '#cbd5e1' : '#475569', fontWeight: 'bold' }} />
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
                                     </div>
-                                ) : sessionSummary ? (
-                                    <div className="prose prose-sm max-w-none text-slate-700 prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{sessionSummary}</ReactMarkdown>
-                                    </div>
-                                ) : (
-                                    <p className="py-2 text-sm text-slate-500">
-                                        {t('profile.sessionSummary.pending')}
-                                    </p>
                                 )}
+
+                                {/* Detailed Grid of Factors */}
+                                {chartData.length > 0 && selectedSession.scores ? (
+                                    <div className="space-y-3">
+                                        <h3 className="text-sm font-bold text-slate-700">{t('profile.factorEvaluation')}</h3>
+
+                                        <div className="grid sm:grid-cols-2 gap-3">
+                                            {Object.entries(selectedSession.scores).map(([code, val]) => {
+                                                const config = QUESTIONNAIRES[selectedSession.questionnaire_type as QuestionnaireType];
+                                                const factorDef = config?.factors.find(f => f.code === code);
+                                                const inverted = config?.invertedFactors.includes(code);
+
+                                                const isStrength = inverted ? val <= 3 : val >= 7;
+                                                const isGrowth = inverted ? val >= 7 : val <= 3;
+
+                                                let badgeColor = 'bg-yellow-50 text-yellow-700 border-yellow-200';
+                                                let evaluation = t('profile.normal');
+                                                if (isStrength) {
+                                                    badgeColor = 'bg-green-50 text-green-700 border-green-200';
+                                                    evaluation = t('profile.strength');
+                                                } else if (isGrowth) {
+                                                    badgeColor = 'bg-red-50 text-red-700 border-red-200';
+                                                    evaluation = t('profile.growth');
+                                                }
+
+                                                return (
+                                                    <div key={code} className="border border-slate-100 rounded-xl p-3 bg-white space-y-1.5 flex flex-col justify-between">
+                                                        <div>
+                                                            <div className="flex justify-between items-start gap-2">
+                                                                <span className="font-bold text-xs text-slate-800">{code} - {tf(`factor.${code}.name`, factorDef?.name || code)}</span>
+                                                                <span className={`px-2 py-0.5 border text-2xs font-semibold rounded-full shrink-0 ${badgeColor}`}>
+                                                                    {evaluation}
+                                                                </span>
+                                                            </div>
+                                                            {factorDef?.description && (
+                                                                <p className="text-[11px] text-slate-500 leading-normal mt-1">{tf(`factor.${code}.desc`, factorDef.description)}</p>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-50">
+                                                            <span className="text-sm font-bold text-indigo-700">{val}</span>
+                                                            <span className="text-2xs text-slate-500">{t('profile.stanineLabel')}</span>
+                                                            {inverted && <span className="text-[9px] text-slate-500 italic">{t('profile.invertedShort')}</span>}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ) : null}
                             </div>
-
-                            {/* Render Scores Visual Chart if quantitative */}
-                            {chartData.length > 0 && (
-                                <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
-                                    <h3 className="text-sm font-bold text-slate-700">{t('profile.factorBreakdown')}</h3>
-                                    
-                                    <div className="h-64">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#e2e8f0'} />
-                                                <XAxis dataKey="code" tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} />
-                                                <YAxis domain={[0, 9]} ticks={[1, 3, 5, 7, 9]} tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} />
-                                                <Tooltip content={(p: TooltipContentProps<number, string>) => {
-                                                    if (!p.active || !p.payload?.length) return null;
-                                                    const d = p.payload[0].payload;
-                                                    return (
-                                                        <div className="bg-white border border-slate-200 shadow-md rounded-lg p-2.5 text-xs max-w-xs">
-                                                            <p className="font-semibold text-slate-800">{d.code} - {d.name}</p>
-                                                            <p className="text-indigo-600 font-bold mt-1">{t('profile.stanineScoreLabel')} {d.value} / 9</p>
-                                                        </div>
-                                                    );
-                                                }} />
-                                                <Bar dataKey="value" maxBarSize={30}>
-                                                    {chartData.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                                    ))}
-                                                    <LabelList dataKey="value" position="top" style={{ fontSize: '10px', fill: isDark ? '#cbd5e1' : '#475569', fontWeight: 'bold' }} />
-                                                </Bar>
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Detailed Grid of Factors */}
-                            {chartData.length > 0 && selectedSession.scores ? (
-                                <div className="space-y-3">
-                                    <h3 className="text-sm font-bold text-slate-700">{t('profile.factorEvaluation')}</h3>
-                                    
-                                    <div className="grid sm:grid-cols-2 gap-3">
-                                        {Object.entries(selectedSession.scores).map(([code, val]) => {
-                                            const config = QUESTIONNAIRES[selectedSession.questionnaire_type as QuestionnaireType];
-                                            const factorDef = config?.factors.find(f => f.code === code);
-                                            const inverted = config?.invertedFactors.includes(code);
-                                            
-                                            const isStrength = inverted ? val <= 3 : val >= 7;
-                                            const isGrowth = inverted ? val >= 7 : val <= 3;
-                                            
-                                            let badgeColor = 'bg-yellow-50 text-yellow-700 border-yellow-200';
-                                            let evaluation = t('profile.normal');
-                                            if (isStrength) {
-                                                badgeColor = 'bg-green-50 text-green-700 border-green-200';
-                                                evaluation = t('profile.strength');
-                                            } else if (isGrowth) {
-                                                badgeColor = 'bg-red-50 text-red-700 border-red-200';
-                                                evaluation = t('profile.growth');
-                                            }
-
-                                            return (
-                                                <div key={code} className="border border-slate-100 rounded-xl p-3 bg-white space-y-1.5 flex flex-col justify-between">
-                                                    <div>
-                                                        <div className="flex justify-between items-start gap-2">
-                                                            <span className="font-bold text-xs text-slate-800">{code} - {tf(`factor.${code}.name`, factorDef?.name || code)}</span>
-                                                            <span className={`px-2 py-0.5 border text-2xs font-semibold rounded-full shrink-0 ${badgeColor}`}>
-                                                                {evaluation}
-                                                            </span>
-                                                        </div>
-                                                        {factorDef?.description && (
-                                                            <p className="text-[11px] text-slate-500 leading-normal mt-1">{tf(`factor.${code}.desc`, factorDef.description)}</p>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-50">
-                                                        <span className="text-sm font-bold text-indigo-700">{val}</span>
-                                                        <span className="text-2xs text-slate-500">{t('profile.stanineLabel')}</span>
-                                                        {inverted && <span className="text-[9px] text-slate-500 italic">{t('profile.invertedShort')}</span>}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            ) : null}
 
                             {/* Render Chat Conversation */}
                             <div className="space-y-3 bg-white p-4 border border-slate-100 rounded-xl">
@@ -751,9 +772,10 @@ export default function ProfilePage() {
                 )}
             </section>
 
-            <CrossSynthesisCard />
             </>
             )}
+
+            {activeSection === 'combined' && <CrossSynthesisCard showHeading={false} />}
 
             {activeSection === 'assignments' && <AssignmentsPanel showHeading={false} />}
             {activeSection === 'groups' && <div className="space-y-4">
