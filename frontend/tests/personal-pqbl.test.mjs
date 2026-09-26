@@ -55,9 +55,10 @@ for (const width of [390, 1440]) {
             assert.equal(await resumeLink.getAttribute('href'), '/profilo/pqbl');
             await resumeLink.click();
             await page.getByText(/Feedback conservato/).waitFor();
-            await page.getByRole('button', { name: 'Area personale', exact: true }).click();
+            // Dalla testata comune il ritorno è un link, non più il bottone del vecchio PageHeader.
+            await page.locator('[data-personal-area-header]').getByRole('link', { name: 'Area personale', exact: true }).click();
             await page.waitForURL('**/profilo');
-            const tools = page.getByRole('navigation', { name: 'Studiare, esplorare e agire', exact: true });
+            const tools = page.getByRole('navigation', { name: 'Studiare e ragionare', exact: true });
             await tools.waitFor();
             const links = await tools.locator('a').evaluateAll(items => items.map(item => item.getAttribute('href')));
             assert.deepEqual(links.slice(0, 2), ['/profilo/pqbl', '/profilo/flashcard']);
@@ -70,7 +71,9 @@ for (const width of [390, 1440]) {
             assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('counselorbot_pqbl_progress_v1')).sessionId), 'pqbl-test');
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             await page.screenshot({ path: `/tmp/personal-pqbl-${width}.png`, fullPage: true });
-            assert.deepEqual(errors, []);
+            // Next in dev segna 'LegacyPqblPage' con un performance.measure che può avere
+            // timestamp negativo sul redirect /pqbl → /profilo/pqbl: rumore solo di dev.
+            assert.deepEqual(errors.filter(message => !String(message).includes('cannot have a negative time stamp')), []);
         } finally { await context.close(); }
     });
 }

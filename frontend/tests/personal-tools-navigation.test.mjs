@@ -48,6 +48,26 @@ for (const width of [390, 1280]) {
         try {
             for (const [path, title] of routes) {
                 await page.goto(`${origin}${path}`, { waitUntil: 'networkidle' });
+                if (path === '/profilo/timeline') {
+                    // Dal lotto attività-timeline la linea del tempo è una pagina propria:
+                    // testata comune e calendario, niente dialog.
+                    const header = page.locator('[data-personal-area-header]');
+                    await header.waitFor();
+                    assert.equal(await page.locator('main h1').count(), 1);
+                    assert.equal(await header.locator('h1').textContent(), title);
+                    const root = header.getByRole('link', { name: 'Area personale', exact: true });
+                    const rootBox = await root.boundingBox();
+                    const headingBox = await header.locator('h1').boundingBox();
+                    assert.ok(rootBox.x < headingBox.x, 'return link stays to the left of the title');
+                    assert.equal(await page.getByRole('dialog').count(), 0, 'the timeline is a page, not a dialog');
+                    await page.getByRole('region', { name: 'Calendario del percorso', exact: true }).waitFor();
+                    assert.equal(await page.getByRole('tablist').count(), 0, 'there is no shared tools switcher');
+                    assert.equal(await page.getByRole('tab').count(), 0, 'other workspaces are not embedded');
+                    assert.equal(new URL(page.url()).pathname, path);
+                    assert.equal(await page.title(), `${title} - CounselorBot`);
+                    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+                    continue;
+                }
                 const workspace = page.getByRole('dialog', { name: title, exact: true });
                 const back = workspace.getByRole('button', { name: 'Indietro', exact: true });
                 const heading = workspace.getByRole('heading', { name: title, exact: true, level: 2 });
