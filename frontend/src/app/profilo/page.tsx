@@ -18,7 +18,6 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { StudentBookletCard, EVENT_BOOKLET_TYPES, bookletTypeOptionLabel, type BookletType } from '@/components/profile/StudentBookletCard';
 import { ResultReadingCard } from '@/components/profile/ResultReadingCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
-import { JourneyOverview } from '@/components/goals/JourneyOverview';
 import { PersonalAreaHome } from '@/components/profile/PersonalAreaHome';
 import { personalAreaText, personalAreaName, personalAreaDescription } from '@/lib/i18n-personal-area';
 import { TavoloList } from '@/components/tavolo/TavoloList';
@@ -480,11 +479,11 @@ export default function ProfilePage() {
 
             {!activeArea && <PersonalAreaHome />}
 
-            {activeSection && ['notebook', 'booklet', 'portfolio', 'tavolo'].includes(activeSection) && <JourneyOverview kind={activeSection as 'notebook' | 'portfolio' | 'tavolo'} />}
             {activeSection && ['notebook', 'sessions'].includes(activeSection) && <p className="rounded-lg border border-slate-200 p-3 text-sm text-slate-600">{learningText(lang, 'groupVisibility')}</p>}
             {activeSection === 'notebook' && (
             <section className="space-y-4" aria-label={t('profile.about.title')}>
                 <LearnerProfileCard variant="edit" />
+                <TeacherNotesCard lang={lang} />
                 <Link
                     href="/profilo/cambiamenti"
                     className="glass-panel p-5 block hover:bg-slate-50 transition-colors"
@@ -813,7 +812,6 @@ export default function ProfilePage() {
                     </label>
                 </div>
                 <StudentBookletCard questionnaireType={selectedBookletType} lang={lang} />
-                <TeacherNotesCard lang={lang} />
             </section>
             )}
 
