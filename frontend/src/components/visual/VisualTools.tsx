@@ -101,7 +101,12 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
     const loadGeneration = useRef(0);
     const opener = useRef<HTMLElement | null>(null);
     const id = useId();
-    const dirty = JSON.stringify(work) !== JSON.stringify(saved.workspace);
+    // F06 (audit, lotto 1A): i testi nelle sotto-form di creazione, non ancora
+    // aggiunti, sono lavoro dell'utente e attivano le stesse protezioni del
+    // workspace modificato.
+    const workDirty = JSON.stringify(work) !== JSON.stringify(saved.workspace);
+    const draftsPending = Boolean(draftTitle.trim() || draftDetail.trim() || draftCard.trim() || criterion.trim() || option.trim());
+    const dirty = workDirty || draftsPending;
     const hasWork = Boolean(work.actions.length || work.cards.length || work.comparison.options.length || work.timeline?.events.length);
     const currentCatalog = providedCatalog ?? catalog;
     useEffect(() => {
@@ -594,7 +599,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                 {(personal || tab !== 'timeline') && <footer className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-50 p-3">
                     <p role="status" className="text-sm text-slate-600">{l(busy ? 'saving' : dirty ? 'unsaved' : loaded ? 'saved' : 'loading')}</p>
                     <div className="flex flex-wrap gap-2">
-                        <Tooltip content={l('saveHelp')} side="top"><Button aria-label={l('save')} type="button" className={personal ? 'min-h-11 px-4' : buttonClass} disabled={!loaded || busy || !dirty} onClick={() => void save()}><Save className="h-4 w-4" aria-hidden="true" />{personal && l('save')}</Button></Tooltip>
+                        <Tooltip content={l('saveHelp')} side="top"><Button aria-label={l('save')} type="button" className={personal ? 'min-h-11 px-4' : buttonClass} disabled={!loaded || busy || !workDirty} onClick={() => void save()}><Save className="h-4 w-4" aria-hidden="true" />{personal && l('save')}</Button></Tooltip>
                         <Tooltip content={l('undoHelp')} side="top"><Button type="button" variant="secondary" aria-label={l('undo')} className={buttonClass} disabled={busy || !history.length} onClick={() => { const previous = history[history.length - 1]; if (previous) { setWork(previous); setHistory(history.slice(0, -1)); } }}><Undo2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         <Tooltip content={l('exportHelp')} side="top"><Button aria-label={l('export')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork} onClick={() => void exportPdf()}><Download className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         {onDiscuss && <Tooltip content={l('discussHelp')} side="top"><Button aria-label={l('discuss')} type="button" variant="secondary" className={buttonClass} disabled={!loaded || busy || !hasWork || (tab === 'timeline' && !(work.timeline?.events.some(e => timelineSelection === null || timelineSelection.includes(e.id))))} onClick={() => void discuss()}><MessageSquare className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>}
