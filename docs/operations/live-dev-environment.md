@@ -149,3 +149,9 @@ Per vedere la fixture: `ssh -N -L 3124:127.0.0.1:3124 <utente>@<server-remoto>`,
 poi `http://localhost:3124`. Senza fixture API le chiamate falliscono volutamente.
 Arresto: Ctrl+C nel terminale che ha lanciato lo script. Dettagli e limiti in
 `docs/operations/teacher-loading-errors.md`.
+
+Il blocco B del taccuino riutilizza lo stesso server e isolamento. Da `frontend/`:
+`node --test tests/teacher-notebook-links.test.mjs tests/teacher-notebook-copy.test.mjs`.
+Copre rimandi, scarto/annullamento della bozza, salvataggio, cronologia, ruoli e
+sei lingue; dettagli in `docs/operations/teacher-notebook-links-validation.md`.
+Nessuna nuova porta, backend o procedura di avvio/arresto.
