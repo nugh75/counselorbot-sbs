@@ -11,6 +11,8 @@ import { assignmentText } from '../src/lib/i18n-assignments.ts';
 import { learningText } from '../src/lib/i18n-assignment-work.ts';
 import { emptyWorkspace } from '../src/lib/visual-tools.ts';
 import { visualLabel } from '../src/lib/i18n-visual-tools.ts';
+import { classPickerText } from '../src/lib/i18n-class-picker.ts';
+import { notebookLinkText } from '../src/lib/teacher-notebook-links.ts';
 
 const origin = new URL(process.env.GUIDE_BASE_URL || 'http://127.0.0.1:3000').origin;
 const locales = ['it', 'en', 'es', 'fr', 'de', 'sv'];
@@ -24,7 +26,7 @@ const samples = {
     de: ['Mein Lernen organisieren', 'Lernwerkstatt', 'Probiere zwei kurze Wiederholungen aus.', 'Beschreibe, was funktioniert hat und was du ändern würdest.', 'Ich habe das Wiederholen auf zwei Tage verteilt.', 'Vergleiche beim nächsten Mal auch, woran du dich ohne Notizen erinnerst.'],
     sv: ['Planera mina studier', 'Studieverkstad', 'Prova två korta repetitionspass.', 'Beskriv vad som fungerade och vad du skulle ändra.', 'Jag fördelade repetitionen över två dagar.', 'Jämför nästa gång också vad du minns utan anteckningar.'],
 };
-const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories'];
+const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories', 'teacher-class-picker'];
 const browser = await chromium.launch({ headless: true });
 try {
     for (const lang of captureLocales) {
@@ -115,6 +117,22 @@ try {
             await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'teacher-area', 'teacher-groups', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
             console.log(`${lang}/${name}`);
         }
+        async function capturePicker() {
+            await page.getByRole('button', { name: notebookLinkText(lang, 'classes'), exact: true }).click();
+            const popup = page.getByRole('dialog', { name: classPickerText(lang, 'title'), exact: true });
+            await popup.getByLabel(classPickerText(lang, 'label'), { exact: true }).selectOption('91');
+            await popup.locator('#class-picker-save-91:not(:disabled)').waitFor();
+            await capture('teacher-class-picker', popup);
+            await page.keyboard.press('Escape');
+        }
+        if (process.env.GUIDE_SCREENS === 'teacher-class-picker') {
+            authenticated = true; teacher = true;
+            await go('/docente');
+            await capture('teacher-area');
+            await capturePicker();
+            await context.close();
+            continue;
+        }
         if (['teacher-area', 'teacher-loading', 'teacher-classes'].includes(process.env.GUIDE_SCREENS)) {
             authenticated = true; teacher = true;
             if (process.env.GUIDE_SCREENS !== 'teacher-classes') {
@@ -182,6 +200,7 @@ try {
         teacher = true;
         await go('/docente/orientamento'); await page.getByRole('heading', { name: title, exact: true }).waitFor(); await capture('institution-categories');
         await go('/docente'); await page.getByRole('link', { name: teacherAreaName(lang, 'orientamento'), exact: true }).waitFor(); await capture('teacher-area');
+        await capturePicker();
         await go('/docente/classi');
         const groupCard = page.locator('section').filter({ has: page.getByRole('heading', { name: groupName, exact: true }) }).last();
         await capture('teacher-groups', groupCard.locator('..').locator('..'));
