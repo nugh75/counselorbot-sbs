@@ -289,6 +289,14 @@ Il Taccuino del docente è un’autodescrizione del ruolo e della pratica abitua
 con sei campi **facoltativi**, nell’ordine: discipline abituali, esperienza di
 insegnamento sintetica, come insegno di solito, panoramica dei miei incarichi e
 contesti, interessi per la mia crescita, altre informazioni sul mio ruolo.
+I campi sono raccolti in tre gruppi sempre aperti:
+
+- **Il mio ruolo**: discipline ed esperienza;
+- **La mia pratica e i miei contesti**: pratica abituale e incarichi;
+- **La mia crescita e altre informazioni**: interessi e note.
+
+Tutti i campi restano visibili e facoltativi, senza un percorso obbligatorio.
+Su schermi stretti i comandi e il messaggio di vuoto possono andare a capo.
 Gli hint visibili associati ai campi distinguono pratica generale e **Contesto
 classe**, interesse personale e obiettivo didattico per la classe, nota breve e
 singolo episodio o lavoro. Gli hint restano visibili anche nei campi compilati e
@@ -309,8 +317,8 @@ contribuire anche le classi selezionate, secondo il contesto scelto.
 Scrivi in modo sintetico ed esplicita nel turno i dettagli rilevanti: restano
 600 caratteri per campo e 1.200 complessivi nel blocco del taccuino, nell’ordine
 attuale, quindi le note possono non entrare tutte per intero. Salvataggio esplicito,
-revisioni, API e autorizzazioni restano invariati. Il blocco A conserva i chiarimenti; il blocco B aggiunge solo quattro rimandi
-contestuali, senza raggruppamenti nuovi o cambi del prompt.
+revisioni, API e autorizzazioni restano invariati. Restano i chiarimenti e i quattro
+rimandi contestuali; il raggruppamento riguarda solo il form e non cambia il prompt.
 
 Sotto gli hint del Taccuino del docente trovi rimandi volontari a Gruppi e classi,
 Obiettivi personali, Linea del tempo e Portfolio. Gli obiettivi personali
