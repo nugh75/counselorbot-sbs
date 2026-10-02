@@ -110,3 +110,30 @@ locale. Le fixture verificano UI e richieste API, non la persistenza del backend
 Le schermate della guida mostrano un popup con metodo vuoto e obiettivo non
 modificato, oltre al modulo di condivisione: i controlli cambiati non sono visibili
 in quelle fixture e questa correzione non richiede ricatture.
+
+## Regressione bozze assegnazioni e letture (solo frontend)
+
+Verificare con `ss -ltn` che 3112 sia libera, poi avviare
+`./scripts/dev-draft-protection-tests.sh`. Ascolta su `127.0.0.1:3112` con
+upstream fittizio `http://127.0.0.1:9`; nessun backend o database è necessario.
+La suite intercetta tutte le API (anche scritture) e blocca destinazioni esterne:
+usa soltanto assegnazioni e compilazioni anonime in memoria. Da `frontend/`:
+
+```bash
+node --test --experimental-strip-types tests/draft-protection.test.mjs
+```
+
+`DRAFTS_BASE_URL` può cambiare l’URL localhost. Non eseguire queste fixture su
+produzione. Copertura: annulla/scarta, dettagli, altra scheda, quattro filtri,
+hash, cambio compilazione/ricerca, vista richiusa, ripristino, salvataggio
+riuscito/fallito e in corso, invii duplicati, isolamento del testo e guard dei
+link/browser. Le sei lingue e i controlli da tastiera sono verificati nel browser.
+La guida nelle sezioni 12 e 14 descrive le protezioni: le immagini esistenti
+mostrano navigazione e lista in stato pulito, ancora corrispondenti alla UI.
+La conferma riutilizza il dialogo nativo già presente, senza nuovo layout.
+Le prove non certificano la persistenza backend, SSO reale o dispositivi fisici.
+
+Per vedere il frontend tramite SSH: `ssh -N -L 3112:127.0.0.1:3112 <utente>@<server>`,
+poi `http://localhost:3112`. I dati della suite sono disponibili solo nel browser
+Playwright che li intercetta. Arrestare il server con Ctrl+C; non lasciare
+processi della fixture attivi a fine lavoro.

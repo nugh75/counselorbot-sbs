@@ -42,9 +42,12 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
     // F27: lo studente apre un dettaglio alla volta. Un hash #assignment-N apre quella.
     // La vista docente resta sempre espansa per consultare subito invii, destinatari e riscontri.
     const [openId, setOpenId] = useState<number | null>(null);
+    const [draft, setDraft] = useState({ dirty: false, busy: false });
+    const onDraftStateChange = useCallback((dirty: boolean, busy: boolean) => setDraft({ dirty, busy }), []);
+    const leaveDraft = () => !draft.busy && (!draft.dirty || window.confirm(w('leaveDraft')));
     // Lotto 5B: la revoca conferma in linea, sulla scheda stessa.
     const [confirmRevoke, setConfirmRevoke] = useState<number | null>(null);
-    const toggle = (id: number) => setOpenId(current => current === id ? null : id);
+    const toggle = (id: number) => { if (leaveDraft()) setOpenId(current => current === id ? null : id); };
     const load = useCallback(async () => {
         setLoading(true); setFailed(false);
         try { const res = await apiFetch(`/api/${teacher ? 'teacher' : 'user'}/assignments`); if (!res.ok) throw new Error('unavailable'); setRows(await res.json()); }
@@ -53,12 +56,22 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
     useEffect(() => { void load(); if (teacher) window.addEventListener('teacher-assignments-changed', load); return () => window.removeEventListener('teacher-assignments-changed', load); }, [load, teacher]);
     // F27: un link diretto #assignment-N apre quel dettaglio anche se la lista cambia.
     useEffect(() => {
+        const match = window.location.hash.match(/^#assignment-(\d+)$/);
+        if (match) setOpenId(Number(match[1]));
+    }, []);
+    useEffect(() => {
+        const previousUrl = window.location.href;
         const check = () => {
             const match = window.location.hash.match(/^#assignment-(\d+)$/);
-            if (match) setOpenId(Number(match[1]));
+            if (!match || Number(match[1]) === openId) return;
+            if (draft.busy || (draft.dirty && !window.confirm(learningText(lang, 'leaveDraft')))) {
+                window.history.replaceState(window.history.state, '', previousUrl);
+                return;
+            }
+            setOpenId(Number(match[1]));
         };
-        check(); window.addEventListener('hashchange', check); return () => window.removeEventListener('hashchange', check);
-    }, []);
+        window.addEventListener('hashchange', check); return () => window.removeEventListener('hashchange', check);
+    }, [draft, lang, openId]);
     // F30: il collegamento dal gruppo porta ?group=Nome e preimposta il filtro.
     useEffect(() => {
         const group = new URLSearchParams(window.location.search).get('group');
@@ -86,20 +99,20 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
             <div className="flex flex-wrap gap-2 text-sm" role="group" aria-label={`${w('filterGroup')}, ${w('filterKind')}, ${w('intent')}, ${w('filterStatus')}`}>
                 {/* F30 fix: la select gruppo serve anche al docente — arrivo con
                     ?group= preimpostato dalla scheda classe senza modo di togliere il filtro. */}
-                <select aria-label={w('filterGroup')} value={groupFilter} onChange={e => setGroupFilter(e.target.value)} className="min-h-11 max-w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
+                <select disabled={draft.busy} aria-label={w('filterGroup')} value={groupFilter} onChange={e => { if (leaveDraft()) setGroupFilter(e.target.value); }} className="min-h-11 max-w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
                     <option value="">{w('filterAllGroups')}</option>
                     {groups.map(name => <option key={name} value={name}>{name}</option>)}
                 </select>
-                <select aria-label={w('filterKind')} value={kindFilter} onChange={e => setKindFilter(e.target.value)} className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
+                <select disabled={draft.busy} aria-label={w('filterKind')} value={kindFilter} onChange={e => { if (leaveDraft()) setKindFilter(e.target.value); }} className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
                     <option value="">{w('filterAllKinds')}</option>
                     {(['goal', 'strategy', 'reading'] as const).map(kind => <option key={kind} value={kind}>{l(kind)}</option>)}
                 </select>
-                <select aria-label={w('intent')} value={intentFilter} onChange={e => setIntentFilter(e.target.value)} className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
+                <select disabled={draft.busy} aria-label={w('intent')} value={intentFilter} onChange={e => { if (leaveDraft()) setIntentFilter(e.target.value); }} className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
                     <option value="">{w('filterAllIntents')}</option>
                     <option value="proposal">{w('proposal')}</option>
                     <option value="requested">{w('requested')}</option>
                 </select>
-                {!teacher && <select aria-label={w('filterStatus')} value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
+                {!teacher && <select disabled={draft.busy} aria-label={w('filterStatus')} value={statusFilter} onChange={e => { if (leaveDraft()) setStatusFilter(e.target.value); }} className="min-h-11 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
                     <option value="">{w('filterAllStates')}</option>
                     <option value="new">{w('new')}</option>
                     <option value="planned">{w('planned')}</option>
@@ -114,7 +127,7 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
             return <article key={row.id} id={`assignment-${row.id}`} className="glass-panel scroll-mt-24 space-y-3 break-words p-4 sm:p-5">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{l(row.source_kind)} · {row.group_name} · {new Date(row.created_at).toLocaleDateString(lang)}</p>
-                    {!teacher && <Button variant="secondary" size="sm" type="button" aria-expanded={open} onClick={() => toggle(row.id)}>{open ? w('closeDetail') : w('openDetail')}</Button>}
+                    {!teacher && <Button variant="secondary" size="sm" type="button" disabled={draft.busy} aria-expanded={open} onClick={() => toggle(row.id)}>{open ? w('closeDetail') : w('openDetail')}</Button>}
                 </div>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
                     <h3 className="font-bold text-slate-900">{row.snapshot.title}</h3>
@@ -139,7 +152,7 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
                     {row.snapshot.details && <p className="whitespace-pre-wrap text-sm">{row.snapshot.details}</p>}
                     {row.snapshot.where_to_find && <p className="whitespace-pre-wrap text-sm">{l('where')}: {row.snapshot.where_to_find}</p>}
                     {row.snapshot.source_reference && <p className="whitespace-pre-wrap text-sm text-slate-600">{l('source')}: {row.snapshot.source_reference}</p>}
-                    {!teacher && <AssignmentWork assignmentId={row.id} authorName={row.author_name} />}
+                    {!teacher && <AssignmentWork assignmentId={row.id} authorName={row.author_name} onDraftStateChange={onDraftStateChange} />}
                     {teacher && !row.revoked_at && <AssignmentSubmissions assignmentId={row.id} />}
                     {teacher && !row.revoked_at && (confirmRevoke === row.id
                         ? <ConfirmInline question={l('confirmRevoke')} busy={busy !== null}

@@ -153,6 +153,9 @@ export default function ProfilePage() {
     // F03 (lotto 1B): fallire il caricamento non è “nessuna compilazione”.
     const [sessionsError, setSessionsError] = useState(false);
     const [selectedSession, setSelectedSession] = useState<QuestionnaireResult | null>(null);
+    const [readingDraft, setReadingDraft] = useState({ dirty: false, busy: false });
+    const onReadingDraftChange = useCallback((dirty: boolean, busy: boolean) => setReadingDraft({ dirty, busy }), []);
+    const leaveReadingDraft = () => !readingDraft.busy && (!readingDraft.dirty || window.confirm(learningText(lang, 'leaveDraft')));
     const [conversation, setConversation] = useState<Array<{ role: string; text: string }> | null>(null);
     const [convLoading, setConvLoading] = useState(false);
     const [sessionSummary, setSessionSummary] = useState<string | null>(null);
@@ -264,6 +267,7 @@ export default function ProfilePage() {
     }, [activeSection, selectedSession, lang]);
 
     const handleDelete = async (sessionId: string) => {
+        if (selectedSession?.session_id === sessionId && !leaveReadingDraft()) return;
         setActionLoading(sessionId);
         try {
             const res = await apiFetch(`/api/questionnaire-result/${sessionId}`, {
@@ -308,21 +312,20 @@ export default function ProfilePage() {
         }
     };
 
-    const filteredSessions = useMemo(() => {
-        const query = sessionSearch.trim().toLowerCase();
-        if (!query) return sessions;
-        return sessions.filter((session) => {
-            const submitted = new Date(session.submitted_at);
-            const haystack = [
-                session.questionnaire_type,
-                session.session_id,
-                session.session_id.slice(0, 8),
-                submitted.toLocaleDateString(lang),
-                submitted.toLocaleString(lang),
-            ].join(' ').toLowerCase();
-            return haystack.includes(query);
-        });
-    }, [sessions, sessionSearch, lang]);
+    const matchesSearch = useCallback((session: QuestionnaireResult, search: string) => {
+        const query = search.trim().toLowerCase();
+        if (!query) return true;
+        const submitted = new Date(session.submitted_at);
+        const haystack = [
+            session.questionnaire_type,
+            session.session_id,
+            session.session_id.slice(0, 8),
+            submitted.toLocaleDateString(lang),
+            submitted.toLocaleString(lang),
+        ].join(' ').toLowerCase();
+        return haystack.includes(query);
+    }, [lang]);
+    const filteredSessions = useMemo(() => sessions.filter(session => matchesSearch(session, sessionSearch)), [sessions, sessionSearch, matchesSearch]);
 
     useEffect(() => {
         if (filteredSessions.length === 0) {
@@ -501,7 +504,11 @@ export default function ProfilePage() {
                                 <Search className="h-4 w-4 text-slate-500" />
                                 <input
                                     value={sessionSearch}
-                                    onChange={(event) => setSessionSearch(event.target.value)}
+                                    disabled={readingDraft.busy}
+                                    onChange={(event) => {
+                                        const next = event.target.value;
+                                        if (!selectedSession || matchesSearch(selectedSession, next) || leaveReadingDraft()) setSessionSearch(next);
+                                    }}
                                     placeholder={t('profile.sessions.searchPlaceholder')}
                                     className="min-w-0 flex-1 bg-transparent text-sm outline-none"
                                 />
@@ -511,8 +518,10 @@ export default function ProfilePage() {
                             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('profile.sessions.active')}</span>
                             <select
                                 value={selectedSession?.session_id || ''}
+                                disabled={readingDraft.busy}
                                 onChange={(event) => {
                                     const next = filteredSessions.find((session) => session.session_id === event.target.value) || null;
+                                    if (next?.session_id !== selectedSession?.session_id && !leaveReadingDraft()) return;
                                     setSelectedSession(next);
                                     setShowDeleteConfirm(null);
                                 }}
@@ -761,7 +770,7 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
-                        <ResultReadingCard key={selectedSession.session_id} sessionId={selectedSession.session_id} questionnaireType={selectedSession.questionnaire_type} scores={selectedSession.scores} />
+                        <ResultReadingCard key={selectedSession.session_id} sessionId={selectedSession.session_id} questionnaireType={selectedSession.questionnaire_type} scores={selectedSession.scores} onDraftStateChange={onReadingDraftChange} />
                     </>
                 ) : (
                     <div className="glass-panel p-12 text-center space-y-4 text-slate-500">
