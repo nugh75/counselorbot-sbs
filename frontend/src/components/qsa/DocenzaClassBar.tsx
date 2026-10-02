@@ -5,12 +5,13 @@
 // gestisce o che gli sono state condivise; gli id viaggiano in ogni turno
 // (chatPayload.group_ids) e il server riverifica l'accesso a ogni turno.
 
-import { useEffect, useState } from 'react';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { apiFetch } from '@/lib/auth';
 import type { NotebookContextChoice } from '@/lib/notebook-context';
 import { useI18n } from '@/lib/i18n-context';
+import { useTeacherResource } from '@/components/teacher/useTeacherResource';
+import { teacherAreaText } from '@/lib/i18n-teacher-area';
+import { teacherLoadingText } from '@/lib/i18n-teacher-loading';
 
 interface TeacherGroup {
     id: number;
@@ -77,21 +78,15 @@ export function readStoredDocenzaGroupIds(): number[] {
     }
 }
 
-export function DocenzaClassBar({ selected, onChange, notebookContext = 'default' }: { selected: number[]; onChange: (ids: number[]) => void; notebookContext?: NotebookContextChoice }) {
-    const { lang } = useI18n();
-    const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
-    const [groups, setGroups] = useState<TeacherGroup[] | null>(null);
+function parseGroups(payload: unknown): TeacherGroup[] {
+    if (!Array.isArray(payload)) throw new Error('invalid groups');
+    return payload as TeacherGroup[];
+}
 
-    useEffect(() => {
-        let active = true;
-        apiFetch('/api/admin/groups')
-            .then((res) => (res.ok ? res.json() : []))
-            .then((payload) => {
-                if (active) setGroups(Array.isArray(payload) ? payload as TeacherGroup[] : []);
-            })
-            .catch(() => { if (active) setGroups([]); });
-        return () => { active = false; };
-    }, []);
+export function DocenzaClassBar({ selected, onChange, notebookContext = 'default' }: { selected: number[]; onChange: (ids: number[]) => void; notebookContext?: NotebookContextChoice }) {
+    const { lang, t } = useI18n();
+    const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
+    const { data: groups, loading, failed, forbidden, reload } = useTeacherResource('/api/admin/groups', parseGroups);
 
     const toggle = (id: number) => {
         const next = selected.includes(id) ? selected.filter((value) => value !== id) : [...selected, id];
@@ -106,13 +101,18 @@ export function DocenzaClassBar({ selected, onChange, notebookContext = 'default
                 {texts.label}
             </p>
             <p className="mt-0.5 text-2xs text-indigo-700/80">{notebookContext === 'teacher' ? texts.hint : texts.hintNoNotebook}</p>
-            {groups === null ? (
-                <p className="mt-1 flex items-center gap-1 text-xs text-slate-500"><Loader2 className="h-3 w-3 animate-spin" /> …</p>
-            ) : groups.length === 0 ? (
+            {loading && <p role="status" className="mt-1 flex items-center gap-1 text-xs text-slate-500"><Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> {t('common.loading')}</p>}
+            {forbidden ? <p role="alert" className="mt-1 text-xs text-red-600">{teacherAreaText(lang, 'forbidden')}</p>
+                : failed && <div role="alert" className="mt-1 flex flex-wrap items-center gap-3 text-xs text-red-600">
+                    <p>{teacherLoadingText(lang, 'classes')}</p>
+                    <button type="button" disabled={loading} onClick={() => void reload()}
+                        className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t('setup.retry')}</button>
+                </div>}
+            {!loading && !failed && !forbidden && groups?.length === 0 ? (
                 <p className="mt-1 text-xs text-slate-500">{texts.none}</p>
             ) : (
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {groups.filter((group) => group.is_active).map((group) => {
+                    {(groups ?? []).filter((group) => group.is_active).map((group) => {
                         const isSelected = selected.includes(group.id);
                         return (
                             <button
@@ -133,6 +133,8 @@ export function DocenzaClassBar({ selected, onChange, notebookContext = 'default
                     })}
                 </div>
             )}
+            {!failed && !forbidden && groups !== undefined && <button type="button" disabled={loading} onClick={() => void reload()}
+                className="mt-1 min-h-11 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t('common.refresh')}</button>}
         </div>
     );
 }

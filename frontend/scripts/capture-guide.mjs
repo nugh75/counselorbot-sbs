@@ -62,6 +62,7 @@ try {
             if (path === '/auth/me') data = { authenticated, is_admin: false, is_researcher: false, username: authenticated ? (teacher ? 'teacher.demo' : 'student.demo') : null, name: authenticated ? 'Alex · Demo' : null, groups: authenticated ? [teacher ? 'docenti' : 'studenti'] : [] };
             else if (path === '/counselors') data = ['Clio', 'Giulio', 'Iride'].map((name, i) => ({ id: i + 1, name, slug: name.toLowerCase(), language: locales, is_active: true, suitable: true, model_origin: 'local' }));
             else if (path === '/user/learner-profile') data = { id: 1, data: { goal: title, context: groupName, notes: response }, source: 'manual', created_at: '2026-09-23T08:00:00Z' };
+            else if (path === '/user/teacher-notebook') data = null;
             else if (path === '/user/timeline') data = { revision: 1, workspace };
             else if (path === '/user/account') data = { setup_complete: true, notebook_completed: true };
             else if (path === '/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
@@ -109,11 +110,17 @@ try {
             await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'teacher-area', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
             console.log(`${lang}/${name}`);
         }
-        if (process.env.GUIDE_SCREENS === 'teacher-area') {
+        if (['teacher-area', 'teacher-loading'].includes(process.env.GUIDE_SCREENS)) {
             authenticated = true; teacher = true;
             await go('/docente');
             await page.getByRole('link', { name: teacherAreaName(lang, 'orientamento'), exact: true }).waitFor();
             await capture('teacher-area');
+            if (process.env.GUIDE_SCREENS === 'teacher-loading') {
+                await go('/docente/classi');
+                const groupCard = page.locator('section').filter({ has: page.getByRole('heading', { name: groupName, exact: true }) }).last();
+                await groupCard.waitFor();
+                await capture('teacher-groups', groupCard.locator('..').locator('..'));
+            }
             await context.close();
             continue;
         }

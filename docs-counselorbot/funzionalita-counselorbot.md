@@ -285,6 +285,21 @@ il catalogo comune richiede revisione amministrativa. Possono assegnare a una pe
 o a tutto un gruppo, anche vuoto: i nuovi iscritti ricevono le assegnazioni attive.
 La gestione dei gruppi è distinta dall’iscrizione personale a un gruppo.
 
+Un errore nel caricamento delle classi gestite, del Taccuino del docente o delle
+classi selezionabili nella chat viene segnalato con **Riprova**: non significa
+che i dati siano vuoti o persi. Il messaggio di vuoto compare solo dopo una
+lettura riuscita. Se una rilettura fallisce, i dati già visibili, le bozze e le
+classi selezionate restano disponibili. Una rilettura riuscita non sostituisce
+le modifiche non salvate del taccuino o del contesto classe.
+Il taccuino e il selettore della chat offrono **Aggiorna** per una rilettura
+esplicita. Finché la prima lettura non riesce, il taccuino non si può compilare
+o salvare e non si possono creare nuovi gruppi. Un salvataggio fallito conserva
+la bozza. Non ci sono salvataggi automatici né condivisioni aggiuntive.
+Un errore recuperabile del selettore non blocca la chat e non azzera la scelta;
+il server continua a verificare ruolo e accesso alle classi a ogni turno.
+Gli errori di accesso mantengono il controllo dei permessi, senza mostrare
+contenuti riservati o dettagli tecnici del server.
+
 I ricercatori dispongono anche di contatti e somministrazioni tramite codici anonimi
 secondo le autorizzazioni. L’amministrazione tecnica (`/admin`) configura counselor,
 prompt, passi guidati, strumenti, lingue, cataloghi, modelli AI, trascrizione, basi
