@@ -213,16 +213,18 @@ for (const legacy of [false, true]) {
     });
 }
 
-for (const [lang, phrase] of [
-    ['it', 'rimandi volontari a Gruppi e classi'], ['en', 'optional links open Groups and classes'],
-    ['es', 'enlaces voluntarios a Grupos y clases'], ['fr', 'des liens facultatifs ouvrent Groupes et classes'],
-    ['de', 'freiwillige Links zu Gruppen und Klassen'], ['sv', 'frivilliga länkar till Grupper och klasser'],
+for (const [lang, phrase, group] of [
+    ['it', 'rimandi volontari a Gruppi e classi', 'La mia crescita e altre informazioni'], ['en', 'optional links open Groups and classes', 'My development and other information'],
+    ['es', 'enlaces voluntarios a Grupos y clases', 'Mi desarrollo y otra información'], ['fr', 'des liens facultatifs ouvrent Groupes et classes', 'Mon développement et autres informations'],
+    ['de', 'freiwillige Links zu Gruppen und Klassen', 'Meine Entwicklung und weitere Angaben'], ['sv', 'frivilliga länkar till Grupper och klasser', 'Min utveckling och övrig information'],
 ]) {
     test(`${lang}: public teacher guide explains the voluntary links and draft protection`, async () => {
         const f = await fixture({ lang });
         try {
             await f.page.goto(`${origin}/guide?audience=teacher`, { waitUntil: 'networkidle' });
-            assert.ok((await f.page.locator('#guide-teacher-section-1').innerText()).includes(phrase));
+            const teacherGuide = await f.page.locator('#guide-teacher-section-1').innerText();
+            assert.ok(teacherGuide.includes(phrase));
+            assert.ok(teacherGuide.includes(group));
             assert.deepEqual(f.state.writes, []); assert.deepEqual(f.state.errors, []);
         } finally { await f.context.close(); }
     });
@@ -290,3 +292,49 @@ test('mouse cancellation restores textbox focus and selection; keyboard cancella
         assert.equal(await f.field.inputValue(), 'Bozza riservata');
     } finally { await f.context.close(); }
 });
+
+for (const dirty of [false, true]) {
+    test(`open groups preserve ${dirty ? 'dirty' : 'clean'} draft, focus and selection through language and resource rerenders`, async () => {
+        const f = await fixture({ width: 320 });
+        try {
+            const text = dirty ? 'Bozza di ruolo demo' : 'Materia demo';
+            if (dirty) await f.field.fill(text);
+            await f.field.focus();
+            await f.field.evaluate(e => e.setSelectionRange(2, 7));
+            const headings = [
+                ['en', 'My role'], ['es', 'Mi rol'], ['fr', 'Mon rôle'],
+                ['de', 'Meine Rolle'], ['sv', 'Min roll'], ['it', 'Il mio ruolo'],
+            ];
+            for (const [lang, name] of headings) {
+                // A language preference changed in another tab uses the public storage event.
+                await f.page.evaluate(lang => {
+                    localStorage.setItem('cb_lang', lang);
+                    window.dispatchEvent(new StorageEvent('storage', { key: 'cb_lang', newValue: lang }));
+                }, lang);
+                await f.notebook.getByRole('group', { name, exact: true }).waitFor();
+                assert.equal(await f.field.inputValue(), text);
+                assert.deepEqual(await f.field.evaluate(e => [e === document.activeElement, e.selectionStart, e.selectionEnd]), [true, 2, 7]);
+                assert.equal(await f.notebook.getByRole('group').count(), 3);
+            }
+            const reread = f.page.waitForResponse(r => new URL(r.url()).pathname === '/api/user/teacher-notebook');
+            await f.notebook.getByRole('button', { name: 'Aggiorna', exact: true }).evaluate(e => e.click());
+            await reread;
+            await f.notebook.getByRole('button', { name: 'Aggiorna', exact: true }).waitFor();
+            await f.page.waitForFunction(() => !document.querySelector('button:disabled'));
+            assert.equal(await f.field.inputValue(), text);
+            assert.deepEqual(await f.field.evaluate(e => [e === document.activeElement, e.selectionStart, e.selectionEnd]), [true, 2, 7]);
+            const link = f.notebook.getByRole('link', { name: destinations[0][0], exact: true });
+            await link.click();
+            if (dirty) {
+                assert.equal(f.state.dialogs.length, 1);
+                assert.equal(new URL(f.page.url()).pathname, '/docente');
+                assert.deepEqual(await f.field.evaluate(e => [e === document.activeElement, e.selectionStart, e.selectionEnd]), [true, 2, 7]);
+            } else {
+                await f.page.waitForURL(`${origin}/docente/classi`);
+                assert.deepEqual(f.state.dialogs, []);
+            }
+            assert.deepEqual(f.state.writes, []);
+            assert.deepEqual(f.state.errors, []);
+        } finally { await f.context.close(); }
+    });
+}

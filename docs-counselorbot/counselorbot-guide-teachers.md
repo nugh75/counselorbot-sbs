@@ -38,7 +38,13 @@ link does not copy notes or create, save, publish or share content. With unsaved
 changes, confirm discarding to leave or cancel to keep text, focus and selection.
 Wait for a pending save before leaving; a failed save keeps the draft and
 protection. A clean draft needs no confirmation; opening a new tab keeps the draft
-in the original tab. No new field grouping is introduced.
+in the original tab.
+
+The six fields are arranged in three always-open groups: “My role” (subjects and
+experience), “My practice and settings” (usual practice and roles), “My development
+and other information” (interests and notes). All fields remain visible and
+optional; the groups do not impose a sequence. On narrow screens, the controls
+and empty message can wrap.
 
 ## Teacher catalogs
 

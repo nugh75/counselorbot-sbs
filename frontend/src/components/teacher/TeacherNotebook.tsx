@@ -18,6 +18,9 @@ import { notebookLinkText, notebookToolLinks } from '@/lib/teacher-notebook-link
 
 const TEXTS = {
     it: {
+        roleGroup: 'Il mio ruolo',
+        practiceGroup: 'La mia pratica e i miei contesti',
+        developmentGroup: 'La mia crescita e altre informazioni',
         title: 'Taccuino del docente',
         subtitle: "Descrivi il tuo ruolo e la tua pratica abituale. Tutti i campi sono facoltativi. La chat «Obiettivi per la mia classe» usa queste note per impostazione predefinita; negli altri strumenti il default è il taccuino dello studente. Nelle Opzioni puoi scegliere quale taccuino usare.",
         subjects: 'Discipline insegnate',
@@ -45,6 +48,9 @@ const TEXTS = {
         summary: "Scrivi in modo sintetico: la chat usa un contesto breve e può non includere tutte le note per intero. Esplicita nel turno i dettagli rilevanti.",
     },
     en: {
+        roleGroup: 'My role',
+        practiceGroup: 'My practice and settings',
+        developmentGroup: 'My development and other information',
         title: 'Teacher notebook',
         subtitle: "Describe your role and usual teaching practice. All fields are optional. “Objectives for my class” uses these notes by default; other tools default to the student notebook. In Options you can choose which notebook to use.",
         subjects: 'Subjects taught',
@@ -72,6 +78,9 @@ const TEXTS = {
         summary: "Keep it brief: the chat uses a short context and may not include every note in full. State relevant details in your message.",
     },
     es: {
+        roleGroup: 'Mi rol',
+        practiceGroup: 'Mi práctica y mis contextos',
+        developmentGroup: 'Mi desarrollo y otra información',
         title: 'Cuaderno del docente',
         subtitle: "Describe tu rol y tu práctica habitual. Todos los campos son opcionales. «Objetivos para mi clase» usa estas notas por defecto; las demás herramientas usan por defecto el cuaderno del estudiante. En Opciones puedes elegir qué cuaderno usar.",
         subjects: 'Disciplinas que enseñas',
@@ -99,6 +108,9 @@ const TEXTS = {
         summary: "Escribe de forma breve: la conversación usa un contexto resumido y puede no incluir todas las notas completas. Explicita los detalles relevantes en tu mensaje.",
     },
     fr: {
+        roleGroup: 'Mon rôle',
+        practiceGroup: 'Ma pratique et mes contextes',
+        developmentGroup: 'Mon développement et autres informations',
         title: 'Carnet de l’enseignant',
         subtitle: "Décrivez votre rôle et votre pratique habituelle. Tous les champs sont facultatifs. « Objectifs pour ma classe » utilise ces notes par défaut ; les autres outils utilisent par défaut le carnet de l’étudiant. Dans Options, vous pouvez choisir le carnet à utiliser.",
         subjects: 'Disciplines enseignées',
@@ -126,6 +138,9 @@ const TEXTS = {
         summary: "Soyez concis : le chat utilise un contexte bref et peut ne pas inclure toutes les notes intégralement. Précisez les détails utiles dans votre message.",
     },
     de: {
+        roleGroup: 'Meine Rolle',
+        practiceGroup: 'Meine Praxis und meine Kontexte',
+        developmentGroup: 'Meine Entwicklung und weitere Angaben',
         title: 'Lehrkräfte-Notizbuch',
         subtitle: "Beschreiben Sie Ihre Rolle und Ihre übliche Unterrichtspraxis. Alle Felder sind freiwillig. „Ziele für meine Klasse“ nutzt diese Notizen standardmäßig; andere Werkzeuge nutzen standardmäßig das Studierenden-Notizbuch. In den Optionen können Sie das Notizbuch wählen.",
         subjects: 'Unterrichtete Fächer',
@@ -153,6 +168,9 @@ const TEXTS = {
         summary: "Fassen Sie sich kurz: Der Chat verwendet einen kurzen Kontext und enthält möglicherweise nicht jede Notiz vollständig. Nennen Sie relevante Details in Ihrer Nachricht.",
     },
     sv: {
+        roleGroup: 'Min roll',
+        practiceGroup: 'Min undervisning och mina sammanhang',
+        developmentGroup: 'Min utveckling och övrig information',
         title: 'Lärarens anteckningsbok',
         subtitle: "Beskriv din roll och din vanliga undervisning. Alla fält är valfria. ”Mål för min klass” använder dessa anteckningar som standard; andra verktyg använder elevens anteckningsbok som standard. I Alternativ kan du välja vilken anteckningsbok som ska användas.",
         subjects: 'Ämnen du undervisar i',
@@ -188,6 +206,12 @@ const FIELDS = [
     ['classes_overview', 'classes', 'classesPlaceholder', 'classesHint'],
     ['formation_interests', 'formation', 'formationPlaceholder', 'formationHint'],
     ['notes', 'notes', 'notesPlaceholder', 'notesHint'],
+] as const;
+
+const FIELD_GROUPS = [
+    { title: 'roleGroup', fields: FIELDS.slice(0, 2) },
+    { title: 'practiceGroup', fields: FIELDS.slice(2, 4) },
+    { title: 'developmentGroup', fields: FIELDS.slice(4, 6) },
 ] as const;
 
 function parseNotebook(payload: unknown): Record<string, string> {
@@ -275,41 +299,50 @@ export function TeacherNotebook() {
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-slate-500">{texts.subtitle}</p>
             <p className="mt-1 max-w-2xl text-sm text-slate-500">{texts.summary}</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {FIELDS.map(([key, labelKey, placeholderKey, hintKey]) => (
-                    <div key={key} className={key === 'notes' ? 'sm:col-span-2' : ''}>
-                        <label className="block text-xs font-semibold text-slate-600" htmlFor={`teacher-notebook-${key}`}>
-                            {texts[labelKey as keyof typeof texts] as string}
-                        </label>
-                        <textarea
-                            id={`teacher-notebook-${key}`}
-                            aria-describedby={`teacher-notebook-${key}-hint`}
-                            value={values[key] ?? ''}
-                            disabled={!loaded}
-                            onChange={(event) => {
-                                dirty.current = true;
-                                editVersion.current++;
-                                setSavedFlash(false);
-                                setValues((prev) => ({ ...prev, [key]: event.target.value }));
-                            }}
-                            placeholder={texts[placeholderKey as keyof typeof texts] as string}
-                            rows={2}
-                            maxLength={600}
-                            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                        />
-                        <p id={`teacher-notebook-${key}-hint`} className="mt-1 text-xs text-slate-500">
-                            {texts[hintKey]}
-                        </p>
-                        {notebookToolLinks.filter(link => link.field === key).map(link => (
-                            <Link key={link.href} href={link.href}
-                                className="mr-3 inline-flex min-h-[44px] items-center text-xs font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900 focus-visible:outline-2 focus-visible:outline-offset-2">
-                                {notebookLinkText(lang, link.label)}
-                            </Link>
-                        ))}
-                    </div>
+            <div className="mt-4 space-y-5">
+                {FIELD_GROUPS.map(group => (
+                    <fieldset key={group.title} className="min-w-0">
+                        <legend className="w-full border-b border-slate-200 pb-2">
+                            <h3 className="text-sm font-semibold text-slate-800">{texts[group.title]}</h3>
+                        </legend>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            {group.fields.map(([key, labelKey, placeholderKey, hintKey]) => (
+                                <div key={key} className={key === 'notes' ? 'sm:col-span-2' : ''}>
+                                    <label className="block text-xs font-semibold text-slate-600" htmlFor={`teacher-notebook-${key}`}>
+                                        {texts[labelKey as keyof typeof texts] as string}
+                                    </label>
+                                    <textarea
+                                        id={`teacher-notebook-${key}`}
+                                        aria-describedby={`teacher-notebook-${key}-hint`}
+                                        value={values[key] ?? ''}
+                                        disabled={!loaded}
+                                        onChange={(event) => {
+                                            dirty.current = true;
+                                            editVersion.current++;
+                                            setSavedFlash(false);
+                                            setValues((prev) => ({ ...prev, [key]: event.target.value }));
+                                        }}
+                                        placeholder={texts[placeholderKey as keyof typeof texts] as string}
+                                        rows={2}
+                                        maxLength={600}
+                                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                    />
+                                    <p id={`teacher-notebook-${key}-hint`} className="mt-1 text-xs text-slate-500">
+                                        {texts[hintKey]}
+                                    </p>
+                                    {notebookToolLinks.filter(link => link.field === key).map(link => (
+                                        <Link key={link.href} href={link.href}
+                                            className="mr-3 inline-flex min-h-[44px] items-center text-xs font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900 focus-visible:outline-2 focus-visible:outline-offset-2">
+                                            {notebookLinkText(lang, link.label)}
+                                        </Link>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    </fieldset>
                 ))}
             </div>
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3 flex flex-wrap items-center gap-3">
                 <button
                     type="button"
                     disabled={busy || loading || !loaded}
