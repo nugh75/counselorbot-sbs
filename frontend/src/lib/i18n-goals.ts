@@ -110,6 +110,7 @@ const text = {
     writeStrategy: ['Scrivi una mia strategia', 'Write one of my strategies', 'Escribe una de mis estrategias', 'Écris une de mes stratégies', 'Schreibe eine meiner Strategien', 'Skriv en av mina strategier'],
     myStrategies: ['Le mie strategie', 'My strategies', 'Mis estrategias', 'Mes stratégies', 'Meine Strategien', 'Mina strategier'],
     certifiedStrategies: ['Strategie certificate', 'Certified strategies', 'Estrategias certificadas', 'Stratégies certifiées', 'Zertifizierte Strategien', 'Certifierade strategier'],
+    saveMethodFirst: ['Salva le modifiche all’obiettivo e al metodo prima di usare «Metti in pratica».', 'Save changes to the goal and method before using “Put into practice”.', 'Guarda los cambios del objetivo y del método antes de usar «Pon en práctica».', 'Enregistre les modifications de l’objectif et de la méthode avant d’utiliser « Mets en pratique ».', 'Speichere die Änderungen am Ziel und an der Methode, bevor du „Setze in die Praxis um“ verwendest.', 'Spara ändringarna i målet och metoden innan du använder ”Sätt i praktiken”.'],
     putInPractice: ['Metti in pratica', 'Put into practice', 'Pon en práctica', 'Mets en pratique', 'Setze in die Praxis um', 'Sätt i praktiken'],
     ownMark: ['mia', 'my', 'mía', 'mienne', 'mein', 'min'],
     certifiedMark: ['certificata', 'certified', 'certificada', 'certifiée', 'zertifiziert', 'certifierad'],
