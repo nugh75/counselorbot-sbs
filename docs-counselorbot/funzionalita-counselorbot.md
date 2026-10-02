@@ -309,8 +309,25 @@ contribuire anche le classi selezionate, secondo il contesto scelto.
 Scrivi in modo sintetico ed esplicita nel turno i dettagli rilevanti: restano
 600 caratteri per campo e 1.200 complessivi nel blocco del taccuino, nell’ordine
 attuale, quindi le note possono non entrare tutte per intero. Salvataggio esplicito,
-revisioni, API e autorizzazioni restano invariati. Sono chiarimenti del blocco A:
-nessun nuovo collegamento agli strumenti, raggruppamento o cambio del prompt.
+revisioni, API e autorizzazioni restano invariati. Il blocco A conserva i chiarimenti; il blocco B aggiunge solo quattro rimandi
+contestuali, senza raggruppamenti nuovi o cambi del prompt.
+
+Sotto gli hint del Taccuino del docente trovi rimandi volontari a Gruppi e classi,
+Obiettivi personali, Linea del tempo e Portfolio. Gli obiettivi personali
+riguardano la tua crescita; il percorso per la classe è separato, in alto
+nell’Area docenti. Aprire un rimando non copia le note né crea, salva, pubblica o
+condivide contenuti. Con modifiche non salvate, conferma lo scarto per uscire
+oppure annulla per conservare testo, focus e selezione. Durante il salvataggio
+attendi prima di uscire; un errore conserva bozza e protezione. Una bozza pulita
+passa senza conferme; una nuova scheda conserva la bozza nel tab di origine.
+I quattro rimandi usano route esistenti senza parametri o prefill. Il rimando a
+Gruppi e classi apre la gestione, dove scegli esplicitamente la classe: non viene
+inferita dalle note. Cataloghi condivisi e percorso didattico restano disponibili
+nella panoramica, senza duplicarli sotto i campi. Il confronto con i valori salvati
+rimuove la protezione quando ripristini quei valori; un salvataggio riuscito aggiorna
+la baseline senza sostituire le modifiche fatte durante l’invio. I controlli di
+accesso delle destinazioni restano invariati. Nessuna cache persistente delle bozze
+del docente, nessun cambio di counselor, taccuino nel contesto o sessione.
 
 Un errore nel caricamento delle classi gestite, del Taccuino del docente o delle
 classi selezionabili nella chat viene segnalato con **Riprova**: non significa

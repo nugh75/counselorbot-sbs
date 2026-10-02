@@ -6,11 +6,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { NotebookPen } from 'lucide-react';
+import Link from 'next/link';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import { useTeacherResource } from './useTeacherResource';
 import { TeacherForbidden } from './TeacherAccess';
 import { teacherLoadingText } from '@/lib/i18n-teacher-loading';
+import { useDraftGuard } from '@/lib/use-draft-guard';
+import { learningText } from '@/lib/i18n-assignment-work';
+import { notebookLinkText, notebookToolLinks } from '@/lib/teacher-notebook-links';
 
 const TEXTS = {
     it: {
@@ -201,6 +205,7 @@ export function TeacherNotebook() {
     const { lang, t } = useI18n();
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [values, setValues] = useState<Record<string, string>>({});
+    const [baseline, setBaseline] = useState<Record<string, string>>({});
     const { data, loading, failed, forbidden, reload } = useTeacherResource('/api/user/teacher-notebook', parseNotebook);
     const loaded = data !== undefined && !forbidden;
     const [busy, setBusy] = useState(false);
@@ -210,11 +215,14 @@ export function TeacherNotebook() {
     const editVersion = useRef(0);
     const pendingSave = useRef<AbortController | null>(null);
     const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const hasChanges = loaded && FIELDS.some(([key]) => (values[key] ?? '') !== (baseline[key] ?? ''));
+    useDraftGuard(hasChanges || busy, learningText(lang, 'leaveDraft'), { blocked: busy, preserveFocus: true });
 
     useEffect(() => {
         // A successful reread must not replace the user's unsaved text.
-        if (data !== undefined && !dirty.current) setValues(data);
+        if (data !== undefined && !dirty.current) { setValues(data); setBaseline(data); }
     }, [data]);
+    useEffect(() => { dirty.current = hasChanges; }, [hasChanges]);
     useEffect(() => () => {
         pendingSave.current?.abort();
         if (flashTimer.current) clearTimeout(flashTimer.current);
@@ -241,7 +249,10 @@ export function TeacherNotebook() {
             });
             if (!current()) return;
             if (!res.ok) throw new Error('save failed');
+            const savedValues = Object.fromEntries(FIELDS.map(([key]) => [key, body[key] ?? '']));
+            setBaseline(savedValues);
             if (version === editVersion.current) {
+                setValues(savedValues);
                 dirty.current = false;
                 setSavedFlash(true);
                 if (flashTimer.current) clearTimeout(flashTimer.current);
@@ -289,6 +300,12 @@ export function TeacherNotebook() {
                         <p id={`teacher-notebook-${key}-hint`} className="mt-1 text-xs text-slate-500">
                             {texts[hintKey]}
                         </p>
+                        {notebookToolLinks.filter(link => link.field === key).map(link => (
+                            <Link key={link.href} href={link.href}
+                                className="mr-3 inline-flex min-h-[44px] items-center text-xs font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900 focus-visible:outline-2 focus-visible:outline-offset-2">
+                                {notebookLinkText(lang, link.label)}
+                            </Link>
+                        ))}
                     </div>
                 ))}
             </div>
@@ -308,6 +325,7 @@ export function TeacherNotebook() {
                     <p className="text-xs text-slate-500">{texts.empty}</p>
                 )}
             </div>
+            {busy && <p role="status" className="mt-2 text-xs text-slate-500">{notebookLinkText(lang, 'saving')}</p>}
             {loading && <p role="status" className="mt-3 text-sm text-slate-500">{t('common.loading')}</p>}
             {failed && <div role="alert" className="mt-3 flex flex-wrap items-center gap-3 text-sm text-red-600">
                 <p>{teacherLoadingText(lang, 'notebook')}</p>

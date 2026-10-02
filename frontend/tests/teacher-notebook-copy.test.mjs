@@ -14,6 +14,14 @@ const labels = {
     de: ['Unterrichtete Fächer', 'Unterrichtserfahrung', 'Wie ich gewöhnlich unterrichte', 'Überblick über meine Lehraufgaben', 'Interessen für meine Entwicklung', 'Weitere Angaben zu meiner Rolle'],
     sv: ['Ämnen du undervisar i', 'Undervisningserfarenhet', 'Hur jag brukar undervisa', 'Översikt över mina läraruppdrag', 'Intressen för min egen utveckling', 'Övrig information om min roll'],
 };
+const linkNames = {
+    it: ['Gestisci gruppi e classi', 'Per la mia crescita: Obiettivi personali', 'Per una tappa: Linea del tempo', 'Per un lavoro: Portfolio'],
+    en: ['Manage groups and classes', 'For my development: Personal goals', 'For a milestone: Timeline', 'For a piece of work: Portfolio'],
+    es: ['Gestionar grupos y clases', 'Para mi desarrollo: Objetivos personales', 'Para una etapa: Línea del tiempo', 'Para un trabajo: Portafolio'],
+    fr: ['Gérer les groupes et classes', 'Pour mon développement : Objectifs personnels', 'Pour une étape : Ligne du temps', 'Pour un travail : Portfolio'],
+    de: ['Gruppen und Klassen verwalten', 'Für meine Entwicklung: Persönliche Ziele', 'Für einen Meilenstein: Zeitleiste', 'Für eine Arbeit: Portfolio'],
+    sv: ['Hantera grupper och klasser', 'För min utveckling: Personliga mål', 'För en milstolpe: Tidslinje', 'För ett arbete: Portfolio'],
+};
 let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser?.close(); });
@@ -62,18 +70,34 @@ for (const [lang, names] of Object.entries(labels)) {
                 assert.equal(await field.evaluate(e => e === document.activeElement), true);
                 if (index < 5) {
                     await page.keyboard.press('Tab');
+                    if (index === 3 || index === 4) {
+                        assert.equal(await notebook.locator('a').nth(index - 3).evaluate(e => e === document.activeElement), true);
+                        await page.keyboard.press('Tab');
+                    }
                     assert.equal(await fields.nth(index + 1).evaluate(e => e === document.activeElement), true);
                 }
                 await field.fill(`  ${keys[index]} demo  `);
             }
             assert.deepEqual(writes, []); // typing never saves or transfers data
-            assert.equal(await notebook.locator('a').count(), 0); // no block B links
+            assert.equal(await notebook.locator('a').count(), 4); // contextual navigation only
+            assert.deepEqual(await notebook.locator('a').allTextContents(), linkNames[lang]);
+            assert.deepEqual(await notebook.locator('a').evaluateAll(links => links.map(l => l.getAttribute('href'))), ['/docente/classi', '/profilo/obiettivi', '/profilo/timeline', '/profilo/portfolio']);
+            for (const name of linkNames[lang]) {
+                const link = notebook.getByRole('link', { name, exact: true });
+                assert.ok(await link.isVisible());
+                assert.ok((await link.boundingBox()).height >= 44);
+            }
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             if (process.env.NOTEBOOK_SCREENSHOT_DIR && lang === 'de') {
                 mkdirSync(process.env.NOTEBOOK_SCREENSHOT_DIR, { recursive: true });
                 await page.screenshot({ path: `${process.env.NOTEBOOK_SCREENSHOT_DIR}/teacher-notebook-de-320.png`, fullPage: true });
             }
-            await fields.last().focus(); await page.keyboard.press('Tab');
+            await fields.last().focus();
+            for (const link of (await notebook.locator('a').all()).slice(2)) {
+                await page.keyboard.press('Tab');
+                assert.equal(await link.evaluate(e => e === document.activeElement), true);
+            }
+            await page.keyboard.press('Tab');
             const save = notebook.getByRole('button').first();
             assert.equal(await save.evaluate(e => e === document.activeElement), true);
             await page.keyboard.press('Enter');
