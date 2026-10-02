@@ -192,6 +192,14 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 
 In Risultati e conversazioni, «Risultato della compilazione» è aperto inizialmente e si può richiudere o riaprire premendo il titolo, anche da tastiera con Invio o Spazio. La chiusura nasconde sintesi, grafici, dettagli e conversazione con il counselor; i contenuti non vengono cancellati e «La mia lettura» resta accessibile subito sotto.
 
+«La mia lettura» si salva esplicitamente per la compilazione selezionata. Se il
+cambio di compilazione o la ricerca eliminerebbe una bozza modificata, viene
+chiesta conferma prima di scartarla. Annullare conserva testo, compilazione e
+ricerca precedenti. Durante il salvataggio campi, ricerca e selezione attendono
+la risposta: un errore conserva la bozza e la protezione. Un salvataggio riuscito
+o il ripristino dei valori salvati consente il passaggio senza avvisi. Richiudere
+il risultato conserva la lettura. Non vi è autosalvataggio.
+
 Il vecchio indirizzo del libretto, `/profilo/libretto`, porta a Risultati e conversazioni.
 
 Un **Profilo** è l’insieme dei punteggi di un questionario. Il **Taccuino** è
@@ -235,6 +243,18 @@ chiarisce che attività e tappa restano personali e non inviano nulla al docente
 una restituzione separata: l’anteprima mostra il destinatario, il contenuto esatto e avvisa
 che la copia inviata non cambia se si modifica il lavoro originale. Si può ritirare la
 restituzione con il relativo riscontro conservando il lavoro personale.
+
+Con modifiche non salvate al lavoro personale o alla restituzione, chiudere il
+dettaglio, aprire un’altra assegnazione (anche tramite collegamento interno) o
+cambiare un filtro richiede conferma prima di applicare il passaggio. Annullare
+conserva testo, assegnazione aperta e filtri precedenti. Durante un salvataggio
+questi controlli attendono la risposta e gli invii duplicati sono impediti. Un
+errore conserva la bozza; anche «Ricarica» chiede conferma prima di sostituirla.
+Ogni salvataggio aggiorna soltanto la propria parte: salvare la riflessione non
+salva né condivide una restituzione ancora in bozza. Il ritorno ai valori salvati
+rimuove l’avviso. Cambiare assegnazione dopo lo scarto non trasferisce testo
+all’altra. Non vi sono salvataggi o condivisioni automatici.
+Il caricamento iniziale senza bozza non richiede conferme di scarto.
 
 Condividere il riepilogo di un obiettivo è volontario e revocabile. I gestori di un
 gruppo possono già vedere Taccuino, risultati e relative conversazioni secondo i

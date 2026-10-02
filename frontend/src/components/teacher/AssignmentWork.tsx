@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
@@ -20,16 +20,16 @@ type Work = {
 type Portfolio = { id: number; title: string; description: string | null; updated_at: string | null; created_at: string };
 type SharedWork = Pick<Work, 'revision' | 'submission' | 'submitted_at' | 'feedback' | 'feedback_at'> & { username: string };
 
-function useDraftGuard(dirty: boolean, lang: string) {
+function useDraftGuard(dirty: boolean, lang: string, busy = false) {
     useEffect(() => {
-        if (!dirty) return;
+        if (!dirty && !busy) return;
         const unload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
         const leave = (event: MouseEvent) => {
-            if ((event.target as Element).closest?.('a[href]') && !window.confirm(learningText(lang, 'leaveDraft'))) { event.preventDefault(); event.stopPropagation(); }
+            if ((event.target as Element).closest?.('a[href]') && (busy || !window.confirm(learningText(lang, 'leaveDraft')))) { event.preventDefault(); event.stopPropagation(); }
         };
         window.addEventListener('beforeunload', unload); document.addEventListener('click', leave, true);
         return () => { window.removeEventListener('beforeunload', unload); document.removeEventListener('click', leave, true); };
-    }, [dirty, lang]);
+    }, [dirty, lang, busy]);
 }
 
 function SharedText({ value }: { value: Submission }) {
@@ -39,7 +39,8 @@ function SharedText({ value }: { value: Submission }) {
     </div>;
 }
 
-function WorkEditor({ assignmentId, authorName }: { assignmentId: number; authorName?: string }) {
+type DraftStateChange = (dirty: boolean, busy: boolean) => void;
+function WorkEditor({ assignmentId, authorName, onDraftStateChange }: { assignmentId: number; authorName?: string; onDraftStateChange?: DraftStateChange }) {
     const { lang } = useI18n(); const l = (key: Parameters<typeof learningText>[1]) => learningText(lang, key);
     const base = `/user/assignments/${assignmentId}`;
     const [work, setWork] = useState<Work | null>(null);
@@ -49,23 +50,31 @@ function WorkEditor({ assignmentId, authorName }: { assignmentId: number; author
     const [goalId, setGoalId] = useState(''); const [portfolioId, setPortfolioId] = useState(''); const [shareText, setShareText] = useState('');
     const [shareBaseline, setShareBaseline] = useState('');
     const [busy, setBusy] = useState(false); const [error, setError] = useState<unknown>(null); const [saved, setSaved] = useState(false);
+    const mounted = useRef(false); const inFlight = useRef(false);
     const load = useCallback(async () => {
         setBusy(true); setError(null); setSaved(false);
         try {
             const [state, ownGoals, ownPortfolio] = await Promise.all([request<Work>(`${base}/work`), request<PersonalGoal[]>('/user/goals'), request<Portfolio[]>('/user/portfolio')]);
+            if (!mounted.current) return;
             setWork(state); setGoals(ownGoals); setPortfolio(ownPortfolio);
             setReflection(state.event?.reflection ?? (state.action?.reflection || '')); setShareText(state.submission?.text || ''); setPortfolioId('');
             setReflectionRevision(state.workspace_revision);
             setShareBaseline(JSON.stringify([state.submission?.text || '', '']));
-        } catch (e) { setError(e); } finally { setBusy(false); }
+        } catch (e) { if (mounted.current) setError(e); } finally { if (mounted.current) setBusy(false); }
     }, [base]);
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => { mounted.current = true; void load(); return () => { mounted.current = false; }; }, [load]);
     const dirty = Boolean(work && (reflection !== (work.event?.reflection ?? (work.action?.reflection || '')) || JSON.stringify([shareText, portfolioId]) !== shareBaseline));
-    useDraftGuard(dirty, lang);
+    const protectedBusy = busy && work !== null;
+    useDraftGuard(dirty, lang, protectedBusy);
+    useEffect(() => { onDraftStateChange?.(dirty, protectedBusy); }, [dirty, protectedBusy, onDraftStateChange]);
+    useEffect(() => () => { onDraftStateChange?.(false, false); }, [onDraftStateChange]);
     const mutate = async (path: string, method: string, body?: unknown) => {
+        if (inFlight.current) return null;
+        inFlight.current = true;
         setBusy(true); setError(null); setSaved(false);
         try {
             const next = await request<Work>(`${base}/${path}`, method, body);
+            if (!mounted.current) return null;
             setWork(next); setSaved(true);
             if (path === 'reflection' || path === 'plan' || reflection === (work?.event?.reflection ?? (work?.action?.reflection || ''))) {
                 setReflection(next.event?.reflection ?? (next.action?.reflection || '')); setReflectionRevision(next.workspace_revision);
@@ -73,7 +82,7 @@ function WorkEditor({ assignmentId, authorName }: { assignmentId: number; author
             if (path === 'submission') setShareBaseline(JSON.stringify([shareText, portfolioId]));
             window.dispatchEvent(new Event('personal-assignments-changed'));
             return next;
-        } catch (e) { setError(e); return null; } finally { setBusy(false); }
+        } catch (e) { if (mounted.current) setError(e); return null; } finally { inFlight.current = false; if (mounted.current) setBusy(false); }
     };
     const selectedPortfolio = portfolio.find(item => String(item.id) === portfolioId);
     const selectedGoal = goals.find(goal => String(goal.id) === goalId);
@@ -82,7 +91,7 @@ function WorkEditor({ assignmentId, authorName }: { assignmentId: number; author
         <p className="text-sm text-slate-600">{l('privateWork')}</p>
         {busy && <p role="status">{assignmentText(lang, 'loading')}</p>}
         {saved && <p role="status">{l('saved')}</p>}
-        {error != null && <p role="alert" className="text-sm text-red-700">{error instanceof GoalError && error.status === 409 ? l('conflict') : assignmentText(lang, 'error')} <button type="button" className="underline" disabled={busy} onClick={() => void load()}>{l('reload')}</button></p>}
+        {error != null && <p role="alert" className="text-sm text-red-700">{error instanceof GoalError && error.status === 409 ? l('conflict') : assignmentText(lang, 'error')} <button type="button" className="underline" disabled={busy} onClick={() => { if (!dirty || window.confirm(l('leaveDraft'))) void load(); }}>{l('reload')}</button></p>}
         {work && <fieldset disabled={busy} className="min-w-0 space-y-5">
             {!work.planned ? <form className="space-y-3" onSubmit={event => { event.preventDefault(); void mutate('plan', 'POST', { date: date || null }); }}>
                 {/* F28 (lotto 5A): il passaggio dichiara ciò che crea e ciò che non invia. */}
@@ -138,13 +147,13 @@ function WorkEditor({ assignmentId, authorName }: { assignmentId: number; author
     </div>;
 }
 
-export function AssignmentWork({ assignmentId, authorName }: { assignmentId: number; authorName?: string }) {
+export function AssignmentWork({ assignmentId, authorName, onDraftStateChange }: { assignmentId: number; authorName?: string; onDraftStateChange?: DraftStateChange }) {
     const { lang } = useI18n(); const [open, setOpen] = useState(false);
     useEffect(() => {
         const check = () => { if (window.location.hash === `#assignment-${assignmentId}`) setOpen(true); };
         check(); window.addEventListener('hashchange', check); return () => window.removeEventListener('hashchange', check);
     }, [assignmentId]);
-    return <div className="space-y-3"><Button type="button" variant="secondary" aria-expanded={open} onClick={() => setOpen(true)}>{learningText(lang, 'openWork')}</Button>{open && <WorkEditor assignmentId={assignmentId} authorName={authorName} />}</div>;
+    return <div className="space-y-3"><Button type="button" variant="secondary" aria-expanded={open} onClick={() => setOpen(true)}>{learningText(lang, 'openWork')}</Button>{open && <WorkEditor key={assignmentId} assignmentId={assignmentId} authorName={authorName} onDraftStateChange={onDraftStateChange} />}</div>;
 }
 
 function FeedbackEditor({ row, onSave }: { row: SharedWork; onSave: (text: string) => Promise<void> }) {

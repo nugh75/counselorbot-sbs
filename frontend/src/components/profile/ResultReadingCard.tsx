@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +9,8 @@ import { apiFetch } from '@/lib/auth';
 import { goalApi, type GoalGroup, type PersonalGoal } from '@/lib/goals';
 import { toast } from '@/components/ui/Toast';
 import { readingText } from '@/lib/i18n-reading';
+import { learningText } from '@/lib/i18n-assignment-work';
+import { useDraftGuard } from '@/lib/use-draft-guard';
 import { FactorMultiSelect } from '@/components/profile/FactorMultiSelect';
 import { GoalDialog, type DialogTarget } from '@/components/goals/GoalDialog';
 
@@ -28,10 +30,11 @@ type ReadingRow = {
  * ponte «→ Rendi obiettivo» verso l'origine `reading` (GoalDialog, B3).
  * Le aree resa obiettivo restano le salvate: la bozza non crea ponti.
  */
-export function ResultReadingCard({ sessionId, questionnaireType, scores }: {
+export function ResultReadingCard({ sessionId, questionnaireType, scores, onDraftStateChange }: {
     sessionId: string;
     questionnaireType: string;
     scores: Record<string, number> | null;
+    onDraftStateChange?: (dirty: boolean, busy: boolean) => void;
 }) {
     const { lang, t } = useI18n();
     const l = (key: Parameters<typeof readingText>[1]) => readingText(lang, key);
@@ -45,6 +48,17 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores }: {
     const [groups, setGroups] = useState<GoalGroup[]>([]);
     const [target, setTarget] = useState<DialogTarget | null>(null);
     const [dialogSaved, setDialogSaved] = useState(false);
+    const mounted = useRef(false);
+    const inFlight = useRef(false);
+    // Empty rows are placeholders; the server trims factor names when saving.
+    const clean = (items: string[]) => items.map(item => item.trim()).filter(Boolean);
+    const dirty = Boolean(savedReading && (note !== savedReading.note
+        || JSON.stringify(clean(strengths)) !== JSON.stringify(savedReading.strengths)
+        || JSON.stringify(clean(growthAreas)) !== JSON.stringify(savedReading.growth_areas)));
+    useDraftGuard(dirty || saving, learningText(lang, 'leaveDraft'));
+    useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+    useEffect(() => { onDraftStateChange?.(dirty, saving); }, [dirty, saving, onDraftStateChange]);
+    useEffect(() => () => { onDraftStateChange?.(false, false); }, [onDraftStateChange]);
 
     const loadReading = useCallback(async () => {
         const res = await apiFetch(`/api/user/readings?session_id=${encodeURIComponent(sessionId)}`);
@@ -79,6 +93,8 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores }: {
     }, []);
 
     const save = async () => {
+        if (inFlight.current) return;
+        inFlight.current = true;
         setSaving(true);
         try {
             const res = await apiFetch(`/api/user/readings/${sessionId}`, {
@@ -88,6 +104,7 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores }: {
             });
             if (!res.ok) throw new Error('Save failed');
             const row: ReadingRow = await res.json();
+            if (!mounted.current) return;
             setSavedReading(row);
             setStrengths(row.strengths.length > 0 ? row.strengths : ['']);
             setGrowthAreas(row.growth_areas.length > 0 ? row.growth_areas : ['']);
@@ -95,15 +112,17 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores }: {
             toast.success(l('saved'));
         } catch (e) {
             console.error('Failed to save reading', e);
-            toast.error(t('toast.error'));
+            if (mounted.current) toast.error(t('toast.error'));
         } finally {
-            setSaving(false);
+            inFlight.current = false;
+            if (mounted.current) setSaving(false);
         }
     };
 
     const refreshReading = useCallback(() => {
         loadReading()
             .then((row) => {
+                if (!mounted.current) return;
                 setSavedReading(row);
                 setStrengths(row.strengths.length > 0 ? row.strengths : ['']);
                 setGrowthAreas(row.growth_areas.length > 0 ? row.growth_areas : ['']);
@@ -127,7 +146,7 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores }: {
             {loading ? (
                 <div className="text-sm text-slate-500">{t('booklet.loading')}</div>
             ) : (
-                <>
+                <fieldset disabled={saving} className="min-w-0 space-y-5">
                     <div className="grid gap-3 md:grid-cols-2">
                         <FactorMultiSelect
                             label={l('strengths')}
@@ -188,7 +207,7 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores }: {
                             </ul>
                         </section>
                     )}
-                </>
+                </fieldset>
             )}
             {target && <GoalDialog target={target} goals={goals} groups={groups} saved={dialogSaved}
                 onTarget={next => { setDialogSaved(false); setTarget(next); }} onClose={closeDialog}

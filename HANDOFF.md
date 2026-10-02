@@ -213,3 +213,59 @@ Pubblicare commit atomico e PR verso main nel Project CounselorBot; notificare
 la PR e chiudere il solo task S2 dopo push e apertura verificata. Il successore
 bozze `8b8119a1-e636-4422-8846-28dc40e2ac14` attende il merge dell'utente e la
 conferma di tier/modello/avvio: non avviarlo. Il goal complessivo resta aperto.
+
+## S3 — protezione bozze assegnazioni e letture (2026-10-02)
+
+Task `8b8119a1-e636-4422-8846-28dc40e2ac14`, branch
+`fix/protect-assignment-reading-drafts`, worktree
+`/home/nugh75/counselorbot-sbs-worktrees/s3-draft-protection-1002`, base
+`53c586859f1a047cf65a73fd34307c3faa21e901` (PR28 MERGED riverificata).
+Deroga esplicita dell’utente alla revisione cross-modello: nessun altro agente
+o revisore; mantenuti regressioni, verifiche tecniche e controllo dei diff.
+
+Il dettaglio delle assegnazioni e la card delle letture venivano smontati senza
+consultare lo stato della bozza. Ora gli editor comunicano modifiche e richieste
+in corso ai controlli che possono sostituirli. La conferma nativa già tradotta
+precede chiusura dettagli, altra scheda/hash, filtri, cambio compilazione e
+ricerca che nasconde il risultato attivo. Annullare conserva testo, oggetto,
+selezione e filtri. Durante un salvataggio i passaggi interni attendono la risposta;
+un errore conserva la bozza. Baseline indipendenti per lavoro/restituzione,
+confronto dei valori per lettura, blocco sincrono degli invii duplicati e nessun
+feedback di un editor già smontato. Richiudere il risultato mantiene già montata
+«La mia lettura»: questa conservazione è coperta da regressione.
+
+Sorgenti: `AssignmentsPanel.tsx`, `AssignmentWork.tsx`, `ResultReadingCard.tsx`,
+`app/profilo/page.tsx`. Nessuna modifica backend/schema, dipendenza, autosave,
+condivisione implicita o redesign. Aggiornati funzionalità, guida IT/EN/ES/FR/DE/SV,
+documentazione della fixture e manifest `platform-guidance-state.json`.
+
+Prove riproducibili con `scripts/dev-draft-protection-tests.sh` (:3112 localhost,
+upstream fittizio :9, tutte le API simulate, nessun database):
+
+- Prima del fix, chiusura dettagli e cambio compilazione fallivano entrambi
+  con `0 !== 1` sulla conferma mancante. Log locali in `.tmp/s3/assignment-red.log`
+  e `.tmp/s3/reading-red.log`; non sono artefatti versionati.
+- `cd frontend && node --test --experimental-strip-types
+  tests/draft-protection.test.mjs tests/goal-method-action.test.mjs`: 34/34 verdi,
+  di cui 24 protezioni bozze e 10 regressioni PR28. Le 24 prove sono state
+  riconfermate dopo l’ultima modifica. Fixture anonime verificano anche i corpi
+  API: bozza A mai inviata a B, errori, ripristino, attesa e invii duplicati,
+  link/beforeunload, tastiera e screenshot della guida nelle sei lingue/mobile.
+- `npm test`: 236/236; `npx tsc --noEmit`, ESLint mirato, `npm run i18n:check`,
+  `make guidance-refresh`, `make guidance-check` e `git diff --check`: verdi.
+  Non rieseguito lint globale né la vecchia guide-audiences: baseline e relativo
+  limite sono documentati nel blocco S2. Nuova suite guida mirata interamente verde.
+- Docker: sola immagine frontend `counselorbot-sbs-s3-draft-protection:validation`,
+  `docker build --tag counselorbot-sbs-s3-draft-protection:validation
+  --build-arg NEXT_PUBLIC_API_URL=/api frontend`; nessun avvio container/deploy.
+  La build esegue `npm run build` sul sorgente finale.
+  Build finale exit 0, immagine
+  `sha256:cf00932b32873e573b8754193fee191dc02851b6b9d025b4c603ee1d3665a28d`.
+
+Checkout principale allineato con il solo `git pull --ff-only`, da `4a5435e` a
+`53c5868`; `.gitignore` modificato e handoff docente non tracciato conservati
+con stato e SHA-256 identici prima/dopo. Nessun edit/commit nel principale.
+La fixture viene arrestata prima della consegna. I test non certificano backend,
+SSO reale o dispositivi fisici. Dopo push/PR, chiudere il solo task S3; il goal
+resta aperto. Successore errori/vuoti `52d583fa-ce96-426c-9956-4328c86a9b38`:
+avvio/tier/modello da confermare dopo merge, non lanciare.
