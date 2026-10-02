@@ -269,7 +269,7 @@ for (const surface of ['groups', 'notebook', 'chat']) {
             await f.go();
             await f.page.getByRole('status').filter({ hasText: 'Caricamento' }).waitFor();
             if (surface === 'notebook') {
-                await f.page.locator('a[href="/docente/classi"]').click();
+                await f.page.locator('a[aria-labelledby="teacher-link-classi"]').click();
                 await f.page.getByRole('heading', { name: 'Gruppi e classi che gestisco' }).waitFor();
             } else await f.page.goto(`${origin}/guide`, { waitUntil: 'domcontentloaded' });
             f.allowReads();
@@ -292,7 +292,7 @@ for (const surface of ['groups', 'notebook', 'chat']) {
         try {
             await f.go(); await f.page.getByRole('status').filter({ hasText: 'Caricamento' }).waitFor();
             if (surface === 'notebook') {
-                await f.page.locator('a[href="/docente/classi"]').click();
+                await f.page.locator('a[aria-labelledby="teacher-link-classi"]').click();
                 await f.page.getByRole('heading', { name: 'Gruppi e classi che gestisco' }).waitFor();
             } else await f.page.goto(`${origin}/guide`, { waitUntil: 'domcontentloaded' });
             f.allowReads(); f.state.identity = { ...f.state.identity, groups: ['studenti'] }; f.state.failure = 403;
