@@ -26,6 +26,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
         else if (url.pathname === '/api/orientation/status') data = { required: false, completed: true };
         else if (url.pathname === '/api/teacher/assignments') data = [];
         else if (url.pathname === '/api/admin/groups') data = [];
+        else if (url.pathname === '/api/user/teacher-notebook') data = null;
         else if (url.pathname === '/api/admin/administration-plans') data = [];
         else if (url.pathname === '/api/admin/research-contacts') data = [];
         else if (url.pathname === '/api/telegram/bot-info') data = {};
