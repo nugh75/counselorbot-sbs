@@ -1,5 +1,12 @@
 # Blocco B — rimandi del Taccuino del docente
 
+> Snapshot storico S9. S14 cambia il solo ingresso Classi in un pulsante che
+> apre il popup approvato. Gli altri tre rimandi e tutte le protezioni restano.
+> Le verifiche B ora esercitano navigazione/modifier/new-tab attraverso Obiettivi
+> personali; Classi e il suo 403 sono verificati nel popup, senza perdere
+> asserzioni su payload, focus, ordine, limiti e bozze. Evidenza combinata:
+> `teacher-class-management-validation.md`.
+
 S9, 2 ottobre 2026. Base `a0ba4bbf7c0c3e3bfe62ca01fcc2986645022af6`,
 con PR30/31/32. Worktree esclusivo `s9-notebook-links-1002`, branch
 `feature/teacher-notebook-tool-links`. Quota e contesto iniziali verificati da

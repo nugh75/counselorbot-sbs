@@ -60,8 +60,9 @@ test('existing home exit protects dirty text and focus before navigation', async
     } finally { await f.context.close(); }
 });
 
+// S14 Classi opens a popup (covered by teacher-class-picker). The other three
+// keep every previous navigation, payload, focus and draft-guard assertion.
 const destinations = [
-    ['Gestisci gruppi e classi', '/docente/classi', 'Gruppi e classi'],
     ['Per la mia crescita: Obiettivi personali', '/profilo/obiettivi', 'Obiettivi'],
     ['Per una tappa: Linea del tempo', '/profilo/timeline', 'Linea del tempo'],
     ['Per un lavoro: Portfolio', '/profilo/portfolio', 'Portfolio'],
@@ -70,7 +71,7 @@ for (const [role, options] of [
     ['teacher', {}], ['dual role', { groups: ['docenti', 'studenti'] }],
     ['researcher', { groups: ['ricercatori'] }], ['admin', { groups: [], admin: true }],
 ]) {
-    test(`${role}: four named destinations navigate without transferring or creating data; clean return`, async () => {
+    test(`${role}: three unchanged named destinations navigate without transferring or creating data; clean return`, async () => {
         const f = await fixture(options);
         try {
             assert.deepEqual(await f.notebook.locator('a').evaluateAll(links => links.map(l => l.getAttribute('href'))), destinations.map(d => d[1]));
@@ -98,7 +99,7 @@ test('explicit discard navigates; dirty text is neither saved nor added to URL',
     const f = await fixture();
     try {
         await f.field.fill('Testo riservato & classe=privata'); f.state.accept = true;
-        await f.notebook.getByRole('link', { name: destinations[1][0], exact: true }).click();
+        await f.notebook.getByRole('link', { name: destinations[0][0], exact: true }).click();
         await f.page.waitForURL(`${origin}/profilo/obiettivi`);
         assert.equal(f.state.dialogs.length, 1); assert.deepEqual(f.state.writes, []);
         await f.page.goBack({ waitUntil: 'networkidle' });
@@ -112,7 +113,7 @@ test('reverting to saved values is clean and needs no discard dialog', async () 
     try {
         await f.field.fill('Cambio'); await f.field.fill('Materia demo');
         await f.notebook.getByRole('link', { name: destinations[0][0], exact: true }).click();
-        await f.page.waitForURL(`${origin}/docente/classi`);
+        await f.page.waitForURL(`${origin}/profilo/obiettivi`);
         assert.deepEqual(f.state.dialogs, []); assert.deepEqual(f.state.writes, []);
     } finally { await f.context.close(); }
 });
@@ -140,7 +141,7 @@ for (const failure of [false, true]) {
                 await f.notebook.getByRole('button', { name: 'Taccuino salvato', exact: true }).waitFor();
                 assert.equal(await f.field.inputValue(), 'Bozza demo');
                 await f.notebook.getByRole('link', { name: destinations[0][0], exact: true }).click();
-                await f.page.waitForURL(`${origin}/docente/classi`);
+                await f.page.waitForURL(`${origin}/profilo/obiettivi`);
                 assert.deepEqual(f.state.dialogs, []);
                 await f.page.goBack({ waitUntil: 'networkidle' });
                 await f.page.waitForFunction(() => document.querySelector('#teacher-notebook-subjects')?.value === 'Bozza demo');
@@ -165,7 +166,7 @@ test('edits made during save survive success and stay guarded until restored to 
         assert.equal(f.state.dialogs.length, 1); assert.equal(await f.field.inputValue(), 'Versione successiva');
         await f.field.fill('Versione inviata');
         await f.notebook.getByRole('link', { name: destinations[0][0], exact: true }).click();
-        await f.page.waitForURL(`${origin}/docente/classi`);
+        await f.page.waitForURL(`${origin}/profilo/obiettivi`);
         assert.equal(f.state.dialogs.length, 1); assert.equal(f.state.writes.length, 1);
     } finally { release?.(); await f.context.close(); }
 });
@@ -180,8 +181,8 @@ test('modifier click and a new-tab link retain the source draft without confirma
             if (!modifier) await link.evaluate(e => { e.target = '_blank'; });
             const opened = f.context.waitForEvent('page');
             await link.click(modifier ? { modifiers: ['Control'] } : {});
-            const other = await opened; await other.waitForURL(`${origin}/docente/classi`);
-            assert.equal(new URL(other.url()).pathname, '/docente/classi');
+            const other = await opened; await other.waitForURL(`${origin}/profilo/obiettivi`);
+            assert.equal(new URL(other.url()).pathname, '/profilo/obiettivi');
             assert.equal(await f.field.inputValue(), 'Bozza del tab origine');
             assert.equal(new URL(f.page.url()).pathname, '/docente');
             await other.close();
@@ -230,10 +231,10 @@ for (const [lang, phrase, group] of [
     });
 }
 
-test('destination 403 keeps its existing guard; student has no notebook links', async () => {
+test('S14 Classi popup 403 keeps its existing guard; student has no notebook links', async () => {
     const f = await fixture({ denied: true });
     try {
-        await f.notebook.getByRole('link', { name: destinations[0][0], exact: true }).click();
+        await f.notebook.getByRole('button', { name: 'Gestisci gruppi e classi', exact: true }).click();
         await f.page.getByText('Pagina riservata a docenti, ricercatori e amministratori.', { exact: true }).waitFor();
         assert.equal(await f.page.getByRole('button', { name: 'Nuovo gruppo', exact: true }).count(), 0);
         assert.deepEqual(f.state.writes, []);
@@ -271,7 +272,7 @@ for (const legacy of [false, true]) {
             await f.field.fill('Cambio'); await f.field.fill('Versione inviata');
             assert.equal(await closeGuard(), false);
             await f.notebook.getByRole('link', { name: destinations[0][0], exact: true }).click();
-            await f.page.waitForURL(`${origin}/docente/classi`);
+            await f.page.waitForURL(`${origin}/profilo/obiettivi`);
             assert.deepEqual(f.state.dialogs, []);
         } finally { release?.(); await f.context.close(); }
     });
@@ -282,7 +283,7 @@ test('mouse cancellation restores textbox focus and selection; keyboard cancella
     try {
         await f.field.fill('Bozza riservata'); await f.field.focus();
         await f.field.evaluate(e => e.setSelectionRange(2, 8));
-        const link = f.notebook.getByRole('link', { name: 'Gestisci gruppi e classi', exact: true });
+        const link = f.notebook.getByRole('link', { name: destinations[0][0], exact: true });
         await link.click();
         assert.equal(f.state.dialogs.length, 1);
         assert.deepEqual(await f.field.evaluate(e => [e === document.activeElement, e.selectionStart, e.selectionEnd]), [true, 2, 8]);
@@ -330,7 +331,7 @@ for (const dirty of [false, true]) {
                 assert.equal(new URL(f.page.url()).pathname, '/docente');
                 assert.deepEqual(await f.field.evaluate(e => [e === document.activeElement, e.selectionStart, e.selectionEnd]), [true, 2, 7]);
             } else {
-                await f.page.waitForURL(`${origin}/docente/classi`);
+                await f.page.waitForURL(`${origin}/profilo/obiettivi`);
                 assert.deepEqual(f.state.dialogs, []);
             }
             assert.deepEqual(f.state.writes, []);

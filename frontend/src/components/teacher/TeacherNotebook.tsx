@@ -15,6 +15,7 @@ import { teacherLoadingText } from '@/lib/i18n-teacher-loading';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { notebookLinkText, notebookToolLinks } from '@/lib/teacher-notebook-links';
+import { ClassGroupPicker } from './ClassGroupPicker';
 
 const TEXTS = {
     it: {
@@ -235,12 +236,14 @@ export function TeacherNotebook() {
     const [busy, setBusy] = useState(false);
     const [savedFlash, setSavedFlash] = useState(false);
     const [error, setError] = useState('');
+    const [classPickerOpen, setClassPickerOpen] = useState(false);
+    const [classNavigationState, setClassNavigationState] = useState({ dirty: false, busy: false });
     const dirty = useRef(false);
     const editVersion = useRef(0);
     const pendingSave = useRef<AbortController | null>(null);
     const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const hasChanges = loaded && FIELDS.some(([key]) => (values[key] ?? '') !== (baseline[key] ?? ''));
-    useDraftGuard(hasChanges || busy, learningText(lang, 'leaveDraft'), { blocked: busy, preserveFocus: true });
+    useDraftGuard(hasChanges || busy || classNavigationState.dirty || classNavigationState.busy, learningText(lang, 'leaveDraft'), { blocked: busy || classNavigationState.busy, preserveFocus: true });
 
     useEffect(() => {
         // A successful reread must not replace the user's unsaved text.
@@ -330,7 +333,12 @@ export function TeacherNotebook() {
                                     <p id={`teacher-notebook-${key}-hint`} className="mt-1 text-xs text-slate-500">
                                         {texts[hintKey]}
                                     </p>
-                                    {notebookToolLinks.filter(link => link.field === key).map(link => (
+                                    {notebookToolLinks.filter(link => link.field === key).map(link => link.label === 'classes' ? (
+                                        <button key={link.href} type="button" aria-haspopup="dialog" onClick={() => setClassPickerOpen(true)}
+                                            className="mr-3 inline-flex min-h-[44px] items-center text-left text-xs font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900 focus-visible:outline-2 focus-visible:outline-offset-2">
+                                            {notebookLinkText(lang, link.label)}
+                                        </button>
+                                    ) : (
                                         <Link key={link.href} href={link.href}
                                             className="mr-3 inline-flex min-h-[44px] items-center text-xs font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900 focus-visible:outline-2 focus-visible:outline-offset-2">
                                             {notebookLinkText(lang, link.label)}
@@ -365,6 +373,7 @@ export function TeacherNotebook() {
                 <button type="button" disabled={loading || busy} onClick={() => void reload()}
                     className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t('setup.retry')}</button>
             </div>}
+            {classPickerOpen && <ClassGroupPicker close={() => setClassPickerOpen(false)} onNavigationState={setClassNavigationState} />}
         </div>
     );
 }

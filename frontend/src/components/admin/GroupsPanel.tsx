@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, Link2, Plus, Share2, Trash2, UserMinus, UserPlus, Users, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Check, ChevronDown, ChevronRight, Link2, Plus, Share2, Trash2, UserMinus, UserPlus, Users } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { apiFetch } from '@/lib/auth';
@@ -10,233 +10,19 @@ import { PlanStudentsPanel } from './PlanStudentsPanel';
 import { GroupAssignments } from '../teacher/GroupAssignments';
 import { useTeacherResource } from '../teacher/useTeacherResource';
 import { TeacherForbidden } from '../teacher/TeacherAccess';
+import { classGroupTexts as TEXTS } from '../teacher/class-group-texts';
+import { parseClassGroups, type StudentGroup } from '../teacher/class-group-types';
+import { ClassGroupEditor, ClassGroupEditorStatus } from '../teacher/ClassGroupEditor';
+import { useClassGroupEditors } from '../teacher/useClassGroupEditors';
+import { classLayoutText } from '@/lib/i18n-class-layout';
+import { Button } from '@/components/ui/Button';
 import { teacherLoadingText } from '@/lib/i18n-teacher-loading';
 
-interface StudentGroup {
-    id: number;
-    code: string;
-    name: string;
-    school: string | null;
-    school_level: string | null;
-    institution_id: number | null;
-    description: string | null;
-    methodologies: string | null;
-    context_visible_to_students: boolean;
-    owner_username: string;
-    is_active: boolean;
-    members_count: number;
-    created_at: string | null;
-}
-
-// Local copy is complete for every supported interface language.
-const TEXTS = {
-    it: {
-        title: "Gruppi e classi che gestisco",
-        subtitle: "Gestisci classi scolastiche o gruppi di adulti, universitari e altri partecipanti. Si entra tramite link di invito (web o Telegram) o codice dall’area personale. Collega un gruppo o una classe a un piano di somministrazione per associare i risultati.",
-        newGroup: "Nuovo gruppo o classe",
-        namePlaceholder: "Nome (es. 3B, universitari, formazione adulti)",
-        schoolPlaceholder: "Scuola, università o ente (opzionale)",
-        school: "Scuola, università o ente",
-        levelLabel: 'Fascia',
-        levelNone: 'Fascia non indicata',
-        levelSecondaria: 'Secondaria',
-        levelUniversita: 'Università',
-        levelAdulti: 'Adulti',
-        levelHint: 'Filtra le letture consigliate: senza fascia il bot chiede al partecipante a che punto degli studi si trova.',
-        institutionLabel: 'Istituto',
-        institutionNone: 'Nessun istituto',
-        institutionHint: "Alimenta il fallback per i partecipanti che non scelgono l'istituto nel taccuino.",
-        contextTitle: 'Contesto classe',
-        contextHint: 'Descrizione e metodologie della classe: con la condivisione attiva entrano nella chat guidata degli studenti iscritti e nella tua conversazione sugli obiettivi didattici.',
-        descriptionLabel: 'Descrizione della classe',
-        descriptionPlaceholder: 'Programma, progetti, convenzioni del gruppo (opzionale)',
-        methodologyLabel: 'Metodologie con questa classe',
-        methodologyPlaceholder: 'Come lavori di solito con loro (opzionale)',
-        shareContextLabel: 'Condividi il contesto con gli studenti iscritti',
-        save: 'Salva',
-        saved: 'Salvato',
-        create: 'Crea',
-        cancel: 'Annulla',
-        members: 'iscritti',
-        inactive: 'disattivata',
-        webLink: 'Link invito',
-        telegramLink: 'Link Telegram',
-        code: "Codice di invito",
-        students: "Partecipanti",
-        deactivate: 'Disattiva',
-        activate: 'Riattiva',
-        deleteGroup: 'Elimina',
-        empty: "Non gestisci ancora gruppi o classi. Creane uno e condividi il link con i partecipanti.",
-        error: 'Operazione non riuscita.',
-        shareTitle: 'Condivisa con',
-        shareBtn: 'Aggiungi selezionati',
-        sharedWith: 'Condivisa con',
-        removeShare: 'Rimuovi',
-        noShares: 'Non condivisa con altri.',
-        shareError: 'Condivisione non riuscita.',
-        shareSelectUsers: 'Seleziona utenti da aggiungere',
-        shareAlreadyShared: 'gia\' condivisa',
-        shareNoUsers: 'Nessun utente disponibile.',
-    },
-    en: {
-        title: "Groups and classes I manage",
-        subtitle: "Manage school classes or groups of adults, university students and other participants. Members join via an invitation link (web or Telegram) or a code in their personal area. Link a group or class to an administration plan to associate results.",
-        newGroup: "New group or class",
-        namePlaceholder: "Name (e.g. 3B, university students, adult learning)",
-        schoolPlaceholder: "School, university or organisation (optional)",
-        school: "School, university or organisation",
-        levelLabel: 'Level',
-        levelNone: 'No level set',
-        levelSecondaria: 'Secondary',
-        levelUniversita: 'University',
-        levelAdulti: 'Adults',
-        levelHint: 'Filters the readings the bot may suggest: with no level it asks the participant where they are in their studies.',
-        institutionLabel: 'Institution',
-        institutionNone: 'No institution',
-        institutionHint: 'Feeds the fallback for participants who never choose an institution in their notebook.',
-        contextTitle: 'Class context',
-        contextHint: 'Class description and methodologies: when sharing is on they enter the guided chat of enrolled students and your didactic-objective conversation.',
-        descriptionLabel: 'Class description',
-        descriptionPlaceholder: 'Curriculum, projects, group conventions (optional)',
-        methodologyLabel: 'Methodologies with this class',
-        methodologyPlaceholder: 'How you usually work with them (optional)',
-        shareContextLabel: 'Share the context with enrolled students',
-        save: 'Save',
-        saved: 'Saved',
-        create: 'Create',
-        cancel: 'Cancel',
-        members: 'members',
-        inactive: 'inactive',
-        webLink: 'Invitation link',
-        telegramLink: 'Telegram link',
-        code: "Invitation code",
-        students: "Participants",
-        deactivate: 'Deactivate',
-        activate: 'Reactivate',
-        deleteGroup: 'Delete',
-        empty: "You do not manage any groups or classes yet. Create one and share the link with participants.",
-        error: 'Operation failed.',
-        shareTitle: 'Shared with',
-        shareBtn: 'Add selected',
-        sharedWith: 'Shared with',
-        removeShare: 'Remove',
-        noShares: 'Not shared with anyone.',
-        shareError: 'Share failed.',
-        shareSelectUsers: 'Select users to add',
-        shareAlreadyShared: 'already shared',
-        shareNoUsers: 'No users available.',
-    },
-    es: {
-        title: "Grupos y clases que gestiono",
-        subtitle: "Gestiona clases escolares o grupos de adultos, universitarios y otros participantes. Se accede mediante un enlace de invitación (web o Telegram) o un código en el área personal. Vincula un grupo o una clase a un plan de administración para asociar los resultados.",
-        newGroup: "Nuevo grupo o clase", namePlaceholder: "Nombre (p. ej., 3B, universitarios, formación de adultos)",
-        schoolPlaceholder: "Escuela, universidad o entidad (opcional)", school: "Escuela, universidad o entidad", levelLabel: 'Nivel', levelNone: 'Nivel no indicado',
-        levelSecondaria: 'Secundaria', levelUniversita: 'Universidad', levelAdulti: 'Adultos',
-        levelHint: 'Filtra las lecturas recomendadas: sin un nivel, el bot pregunta al participante en qué etapa de sus estudios se encuentra.',
-        institutionLabel: 'Institución', institutionNone: 'Sin institución',
-        institutionHint: 'Alimenta el resguardo para los participantes que nunca eligen una institución en su cuaderno.',
-        contextTitle: 'Contexto de la clase',
-        contextHint: 'Descripción y metodologías de la clase: con el uso compartido entran en el chat guiado de los estudiantes inscritos y en tu conversación sobre objetivos didácticos.',
-        descriptionLabel: 'Descripción de la clase',
-        descriptionPlaceholder: 'Programa, proyectos, convenciones del grupo (opcional)',
-        methodologyLabel: 'Metodologías con esta clase',
-        methodologyPlaceholder: 'Cómo sueles trabajar con ellos (opcional)',
-        shareContextLabel: 'Compartir el contexto con los estudiantes inscritos',
-        save: 'Guardar',
-        saved: 'Guardado',
-        create: 'Crear', cancel: 'Cancelar', members: 'miembros', inactive: 'inactiva', webLink: 'Enlace de invitación',
-        telegramLink: 'Enlace de Telegram', code: "Código de invitación", students: "Participantes", deactivate: 'Desactivar',
-        activate: 'Reactivar', deleteGroup: 'Eliminar', empty: "Aún no gestionas grupos ni clases. Crea uno y comparte el enlace con los participantes.",
-        error: 'La operación ha fallado.', shareTitle: 'Compartida con', shareBtn: 'Añadir seleccionados', sharedWith: 'Compartida con',
-        removeShare: 'Quitar', noShares: 'No compartida con nadie.', shareError: 'No se pudo compartir.',
-        shareSelectUsers: 'Selecciona usuarios para añadir', shareAlreadyShared: 'ya compartida', shareNoUsers: 'No hay usuarios disponibles.',
-    },
-    fr: {
-        title: "Groupes et classes que je gère",
-        subtitle: "Gérez des classes scolaires ou des groupes d’adultes, d’étudiants universitaires et d’autres participants. L’inscription se fait par lien d’invitation (web ou Telegram) ou par code dans l’espace personnel. Associez un groupe ou une classe à un plan de passation pour relier les résultats.",
-        newGroup: "Nouveau groupe ou classe", namePlaceholder: "Nom (ex. 3B, étudiants, formation pour adultes)",
-        schoolPlaceholder: "École, université ou organisme (facultatif)", school: "École, université ou organisme", levelLabel: 'Niveau', levelNone: 'Niveau non indiqué',
-        levelSecondaria: 'Secondaire', levelUniversita: 'Université', levelAdulti: 'Adultes',
-        levelHint: 'Filtre les lectures recommandées : sans niveau, le bot demande au participant où il en est dans ses études.',
-        institutionLabel: 'Établissement', institutionNone: 'Aucun établissement',
-        institutionHint: "Alimente le repli pour les participants qui ne choisissent jamais d'établissement dans leur carnet.",
-        contextTitle: 'Contexte de la classe',
-        contextHint: 'Description et méthodologies de la classe : quand le partage est activé, elles entrent dans la conversation guidée des étudiants inscrits et dans votre échange sur les objectifs didactiques.',
-        descriptionLabel: 'Description de la classe',
-        descriptionPlaceholder: 'Programme, projets, conventions du groupe (facultatif)',
-        methodologyLabel: 'Méthodologies avec cette classe',
-        methodologyPlaceholder: 'Comment vous travaillez habituellement avec eux (facultatif)',
-        shareContextLabel: 'Partager le contexte avec les étudiants inscrits',
-        save: 'Enregistrer',
-        saved: 'Enregistré',
-        create: 'Créer', cancel: 'Annuler', members: 'membres', inactive: 'inactive', webLink: 'Lien d’invitation',
-        telegramLink: 'Lien Telegram', code: "Code d’invitation", students: "Participants", deactivate: 'Désactiver',
-        activate: 'Réactiver', deleteGroup: 'Supprimer', empty: "Vous ne gérez pas encore de groupes ou de classes. Créez-en un et partagez le lien avec les participants.",
-        error: 'L’opération a échoué.', shareTitle: 'Partagée avec', shareBtn: 'Ajouter la sélection', sharedWith: 'Partagée avec',
-        removeShare: 'Retirer', noShares: 'Partagée avec personne.', shareError: 'Échec du partage.',
-        shareSelectUsers: 'Sélectionnez les utilisateurs à ajouter', shareAlreadyShared: 'déjà partagée', shareNoUsers: 'Aucun utilisateur disponible.',
-    },
-    de: {
-        title: "Gruppen und Klassen, die ich verwalte",
-        subtitle: "Verwalten Sie Schulklassen oder Gruppen von Erwachsenen, Studierenden und anderen Teilnehmenden. Der Beitritt erfolgt per Einladungslink (Web oder Telegram) oder Code im persönlichen Bereich. Verknüpfen Sie eine Gruppe oder Klasse mit einem Durchführungsplan, um Ergebnisse zuzuordnen.",
-        newGroup: "Neue Gruppe oder Klasse", namePlaceholder: "Name (z. B. 3B, Studierende, Erwachsenenbildung)",
-        schoolPlaceholder: "Schule, Universität oder Organisation (optional)", school: "Schule, Universität oder Organisation", levelLabel: 'Stufe', levelNone: 'Keine Stufe angegeben',
-        levelSecondaria: 'Sekundarstufe', levelUniversita: 'Universität', levelAdulti: 'Erwachsene',
-        levelHint: 'Filtert empfohlene Lektüren: Ohne Stufe fragt der Bot die Teilnehmenden nach ihrem Ausbildungsstand.',
-        institutionLabel: 'Einrichtung', institutionNone: 'Keine Einrichtung',
-        institutionHint: 'Speist den Fallback für Teilnehmende, die im Lernheft nie eine Einrichtung wählen.',
-        contextTitle: 'Klassenkontext',
-        contextHint: 'Beschreibung und Methoden der Klasse: Bei freigegebenem Kontext fließen sie in den geführten Chat der eingeschriebenen Teilnehmenden und in Ihr Gespräch über Unterrichtsziele ein.',
-        descriptionLabel: 'Beschreibung der Klasse',
-        descriptionPlaceholder: 'Lehrplan, Projekte, Absprachen der Gruppe (optional)',
-        methodologyLabel: 'Methoden mit dieser Klasse',
-        methodologyPlaceholder: 'Wie Sie üblicherweise mit ihnen arbeiten (optional)',
-        shareContextLabel: 'Kontext mit den eingeschriebenen Teilnehmenden teilen',
-        save: 'Speichern',
-        saved: 'Gespeichert',
-        create: 'Erstellen', cancel: 'Abbrechen', members: 'Mitglieder', inactive: 'inaktiv', webLink: 'Einladungslink',
-        telegramLink: 'Telegram-Link', code: "Einladungscode", students: "Teilnehmende", deactivate: 'Deaktivieren',
-        activate: 'Reaktivieren', deleteGroup: 'Löschen', empty: "Sie verwalten noch keine Gruppen oder Klassen. Erstellen Sie eine und teilen Sie den Link mit den Teilnehmenden.",
-        error: 'Der Vorgang ist fehlgeschlagen.', shareTitle: 'Geteilt mit', shareBtn: 'Ausgewählte hinzufügen', sharedWith: 'Geteilt mit',
-        removeShare: 'Entfernen', noShares: 'Mit niemandem geteilt.', shareError: 'Teilen fehlgeschlagen.',
-        shareSelectUsers: 'Hinzuzufügende Benutzer auswählen', shareAlreadyShared: 'bereits geteilt', shareNoUsers: 'Keine Benutzer verfügbar.',
-    },
-    sv: {
-        title: "Grupper och klasser jag hanterar",
-        subtitle: "Hantera skolklasser eller grupper av vuxna, universitetsstudenter och andra deltagare. Deltagare går med via inbjudningslänk (webb eller Telegram) eller en kod i den personliga vyn. Koppla en grupp eller klass till en genomförandeplan för att knyta resultaten till den.",
-        newGroup: "Ny grupp eller klass", namePlaceholder: "Namn (t.ex. 3B, universitetsstudenter, vuxenutbildning)",
-        schoolPlaceholder: "Skola, universitet eller organisation (valfritt)", school: "Skola, universitet eller organisation", levelLabel: 'Nivå', levelNone: 'Ingen nivå angiven',
-        levelSecondaria: 'Gymnasienivå', levelUniversita: 'Universitet', levelAdulti: 'Vuxna',
-        levelHint: 'Filtrerar rekommenderad läsning: utan nivå frågar boten deltagaren var i utbildningen hen befinner sig.',
-        institutionLabel: 'Institution', institutionNone: 'Ingen institution',
-        institutionHint: 'Förser reservvärdet för deltagare som aldrig väljer en institution i sin anteckningsbok.',
-        contextTitle: 'Klasskontext',
-        contextHint: 'Klassbeskrivning och arbetssätt: när delning är på kommer de in i den vägledde chatten för inskrivna deltagare och i din samtals om undervisningsmål.',
-        descriptionLabel: 'Klassbeskrivning',
-        descriptionPlaceholder: 'Kursplan, projekt, gruppens överenskommelser (valfritt)',
-        methodologyLabel: 'Arbetssätt med den här klassen',
-        methodologyPlaceholder: 'Hur du vanligtvis arbetar med dem (valfritt)',
-        shareContextLabel: 'Dela kontexten med inskrivna deltagare',
-        save: 'Spara',
-        saved: 'Sparat',
-        create: 'Skapa', cancel: 'Avbryt', members: 'medlemmar', inactive: 'inaktiv', webLink: 'Inbjudningslänk',
-        telegramLink: 'Telegram-länk', code: "Inbjudningskod", students: "Deltagare", deactivate: 'Inaktivera',
-        activate: 'Återaktivera', deleteGroup: 'Ta bort', empty: "Du hanterar inga grupper eller klasser ännu. Skapa en och dela länken med deltagarna.",
-        error: 'Åtgärden misslyckades.', shareTitle: 'Delad med', shareBtn: 'Lägg till valda', sharedWith: 'Delad med',
-        removeShare: 'Ta bort', noShares: 'Inte delad med någon.', shareError: 'Delningen misslyckades.',
-        shareSelectUsers: 'Välj användare att lägga till', shareAlreadyShared: 'redan delad', shareNoUsers: 'Inga användare tillgängliga.',
-    },
-};
-
-function parseGroups(payload: unknown): StudentGroup[] {
-    if (!Array.isArray(payload)) throw new Error('invalid groups');
-    return payload as StudentGroup[];
-}
 
 export function GroupsPanel() {
     const { lang, t } = useI18n();
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
-    const { data: groups, loading, failed, forbidden, reload: load } = useTeacherResource('/api/admin/groups', parseGroups);
+    const { data: groups, loading, failed, forbidden, reload: load } = useTeacherResource('/api/admin/groups', parseClassGroups);
     const [creating, setCreating] = useState(false);
     const [newName, setNewName] = useState('');
     const [newSchool, setNewSchool] = useState('');
@@ -253,10 +39,9 @@ export function GroupsPanel() {
     const [allUsers, setAllUsers] = useState<{ username: string; display_name: string; in_plans: boolean; in_groups: boolean; in_notes: boolean; in_research_contacts: boolean; research_contact_id: number | null }[]>([]);
     const [selectedShares, setSelectedShares] = useState<Record<number, Set<string>>>({});
     const [shareOpen, setShareOpen] = useState<number | null>(null);
-    // Contesto classe in modifica: bozza per gruppo, salvataggio esplicito.
-    const [classCtx, setClassCtx] = useState<Record<number, { description: string; methodologies: string; visible: boolean }>>({});
-    const ctxVersions = useRef<Record<number, number>>({});
-    const [savedCtxId, setSavedCtxId] = useState<number | null>(null);
+    const editors = useClassGroupEditors(groups, load);
+    const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
+    const operationBusy = busy || editors.busy;
 
     useEffect(() => { setOrigin(window.location.origin); }, []);
     useEffect(() => {
@@ -270,59 +55,6 @@ export function GroupsPanel() {
             })
             .catch(() => { /* bot spento: nessun link Telegram */ });
     }, []);
-
-    // Bozze del contesto classe allineate ai gruppi caricati (creazione inclusa).
-    useEffect(() => {
-        if (!groups) return;
-        setClassCtx((prev) => {
-            const next: typeof prev = {};
-            for (const group of groups) {
-                const draft = prev[group.id];
-                next[group.id] = ctxVersions.current[group.id] && draft ? draft : {
-                    description: group.description ?? '',
-                    methodologies: group.methodologies ?? '',
-                    visible: group.context_visible_to_students,
-                };
-            }
-            return next;
-        });
-    }, [groups]);
-
-    const setCtxField = (groupId: number, patch: Partial<{ description: string; methodologies: string; visible: boolean }>) => {
-        ctxVersions.current[groupId] = (ctxVersions.current[groupId] ?? 0) + 1;
-        setClassCtx((prev) => {
-            const current = prev[groupId] || { description: '', methodologies: '', visible: false };
-            return { ...prev, [groupId]: { ...current, ...patch } };
-        });
-    };
-
-    const updateClassCtx = async (groupId: number) => {
-        const draft = classCtx[groupId];
-        if (!draft) return;
-        const version = ctxVersions.current[groupId] ?? 0;
-        setBusy(true);
-        setMessage('');
-        try {
-            const res = await apiFetch(`/api/admin/groups/${groupId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    description: draft.description.trim() || null,
-                    methodologies: draft.methodologies.trim() || null,
-                    context_visible_to_students: draft.visible,
-                }),
-            });
-            if (!res.ok) throw new Error('update failed');
-            if ((ctxVersions.current[groupId] ?? 0) === version) ctxVersions.current[groupId] = 0;
-            setSavedCtxId(groupId);
-            setTimeout(() => setSavedCtxId((id) => (id === groupId ? null : id)), 1500);
-            load();
-        } catch {
-            setMessage(texts.error);
-        } finally {
-            setBusy(false);
-        }
-    };
 
     const loadShares = useCallback(async (groupId: number) => {
         const res = await apiFetch(`/api/admin/groups/${groupId}/shares`);
@@ -407,36 +139,8 @@ export function GroupsPanel() {
         setTimeout(() => setCopiedKey(null), 1500);
     };
 
-    const updateLevel = async (groupId: number, level: string) => {
-        try {
-            const res = await apiFetch(`/api/admin/groups/${groupId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ school_level: level || null }),
-            });
-            if (!res.ok) throw new Error('update failed');
-            load();
-        } catch {
-            setMessage(texts.error);
-        }
-    };
-
-    const updateInstitution = async (groupId: number, institutionId: string) => {
-        try {
-            const res = await apiFetch(`/api/admin/groups/${groupId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ institution_id: institutionId ? Number(institutionId) : null }),
-            });
-            if (!res.ok) throw new Error('update failed');
-            load();
-        } catch {
-            setMessage(texts.error);
-        }
-    };
-
     const create = async () => {
-        if (!groups || busy || loading || !newName.trim()) return;
+        if (!groups || operationBusy || loading || !newName.trim()) return;
         setBusy(true);
         setMessage('');
         try {
@@ -497,7 +201,7 @@ export function GroupsPanel() {
     const webLink = (group: StudentGroup) => `${origin}/gruppo?g=${group.code}`;
     const telegramLink = (group: StudentGroup) => `https://t.me/${botUsername}?start=g_${group.code}`;
 
-    if (forbidden) return <TeacherForbidden />;
+    if (forbidden || editors.forbidden) return <TeacherForbidden />;
 
     return (
         <div className="space-y-4">
@@ -512,65 +216,73 @@ export function GroupsPanel() {
                     type="button"
                     disabled={!groups || loading}
                     onClick={() => setCreating(true)}
-                    className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
                     <Plus className="h-4 w-4" /> {texts.newGroup}
                 </button>
             </div>
 
             {creating && (
-                <div className="flex flex-col gap-2 rounded-md border border-slate-200 bg-white p-3 sm:flex-row">
-                    <input
-                        value={newName}
-                        onChange={(event) => setNewName(event.target.value)}
-                        placeholder={texts.namePlaceholder}
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                    />
-                    <input
-                        value={newSchool}
-                        onChange={(event) => setNewSchool(event.target.value)}
-                        placeholder={texts.schoolPlaceholder}
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                    />
-                    <select
-                        value={newLevel}
-                        onChange={(event) => setNewLevel(event.target.value)}
-                        title={texts.levelHint}
-                        aria-label={texts.levelLabel}
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm sm:w-48"
-                    >
-                        <option value="">{texts.levelNone}</option>
-                        <option value="secondaria">{texts.levelSecondaria}</option>
-                        <option value="universita">{texts.levelUniversita}</option>
-                        <option value="adulti">{texts.levelAdulti}</option>
-                    </select>
-                    <select
-                        value={newInstitutionId}
-                        onChange={(event) => setNewInstitutionId(event.target.value)}
-                        title={texts.institutionHint}
-                        aria-label={texts.institutionLabel}
-                        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm sm:w-48"
-                    >
-                        <option value="">{texts.institutionNone}</option>
-                        {institutions.map((institution) => (
-                            <option key={institution.id} value={String(institution.id)}>{institution.name}</option>
-                        ))}
-                    </select>
-                    <div className="flex gap-2">
+                <div className="grid min-w-0 gap-3 rounded-md border border-slate-200 bg-white p-3 sm:grid-cols-2">
+                    <label className="min-w-0 text-xs font-semibold text-slate-600">{classLayoutText(lang, 'name')}
+                        <input
+                            value={newName}
+                            onChange={(event) => setNewName(event.target.value)}
+                            placeholder={texts.namePlaceholder}
+                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        />
+                    </label>
+                    <label className="min-w-0 text-xs font-semibold text-slate-600">{texts.school}
+                        <input
+                            value={newSchool}
+                            onChange={(event) => setNewSchool(event.target.value)}
+                            placeholder={texts.schoolPlaceholder}
+                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        />
+                    </label>
+                    <label className="min-w-0 text-xs font-semibold text-slate-600">{texts.levelLabel}
+                        <select
+                            value={newLevel}
+                            onChange={(event) => setNewLevel(event.target.value)}
+                            title={texts.levelHint}
+                            aria-label={texts.levelLabel}
+                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        >
+                            <option value="">{texts.levelNone}</option>
+                            <option value="secondaria">{texts.levelSecondaria}</option>
+                            <option value="universita">{texts.levelUniversita}</option>
+                            <option value="adulti">{texts.levelAdulti}</option>
+                        </select>
+                    </label>
+                    <label className="min-w-0 text-xs font-semibold text-slate-600">{texts.institutionLabel}
+                        <select
+                            value={newInstitutionId}
+                            onChange={(event) => setNewInstitutionId(event.target.value)}
+                            title={texts.institutionHint}
+                            aria-label={texts.institutionLabel}
+                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        >
+                            <option value="">{texts.institutionNone}</option>
+                            {institutions.map((institution) => (
+                                <option key={institution.id} value={String(institution.id)}>{institution.name}</option>
+                            ))}
+                        </select>
+                    </label>
+                    <div className="flex flex-wrap gap-2 sm:col-span-2">
                         <button
                             type="button"
-                            disabled={busy || loading || !groups || !newName.trim()}
+                            disabled={operationBusy || loading || !groups || !newName.trim()}
                             onClick={() => void create()}
-                            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                            className="min-h-11 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                         >
                             {texts.create}
                         </button>
                         <button
                             type="button"
                             onClick={() => { setCreating(false); setNewName(''); setNewSchool(''); }}
-                            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            className="min-h-11 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                         >
-                            <X className="h-4 w-4" />
+                            {texts.cancel}
                         </button>
                     </div>
                 </div>
@@ -587,241 +299,170 @@ export function GroupsPanel() {
 
             <div className="space-y-3">
                 {(groups || []).map((group) => (
-                    <section key={group.id} className={`rounded-md border border-slate-200 bg-white p-4 ${group.is_active ? '' : 'opacity-60'}`}>
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                                <h3 className="font-bold text-slate-800">
-                                    {group.name}
-                                    {!group.is_active && <span className="ml-2 text-xs font-normal text-slate-500">({texts.inactive})</span>}
-                                </h3>
-                                <p className="text-xs text-slate-500">
-                                    {texts.code}: <span className="font-mono font-semibold text-slate-600">{group.code}</span>
-                                    {' - '}{group.members_count} {texts.members}
-                                    {' - '}{group.owner_username}
-                                    {group.school ? ` - ${texts.school}: ${group.school}` : ''}
-                                    {' - '}
-                                    <select
-                                        value={group.school_level ?? ''}
-                                        aria-label={texts.levelLabel}
-                                        title={texts.levelHint}
-                                        onChange={(event) => void updateLevel(group.id, event.target.value)}
-                                        className="rounded border border-slate-200 bg-white px-1 py-0.5 text-xs text-slate-600"
-                                    >
-                                        <option value="">{texts.levelNone}</option>
-                                        <option value="secondaria">{texts.levelSecondaria}</option>
-                                        <option value="universita">{texts.levelUniversita}</option>
-                                        <option value="adulti">{texts.levelAdulti}</option>
-                                    </select>
-                                    {' - '}
-                                    <select
-                                        value={group.institution_id === null ? '' : String(group.institution_id)}
-                                        aria-label={texts.institutionLabel}
-                                        title={texts.institutionHint}
-                                        onChange={(event) => void updateInstitution(group.id, event.target.value)}
-                                        className="rounded border border-slate-200 bg-white px-1 py-0.5 text-xs text-slate-600"
-                                    >
-                                        <option value="">{texts.institutionNone}</option>
-                                        {institutions.map((institution) => (
-                                            <option key={institution.id} value={String(institution.id)}>{institution.name}</option>
-                                        ))}
-                                    </select>
-                                </p>
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setOpenStudentsId(openStudentsId === group.id ? null : group.id)}
-                                    className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                                >
-                                    <Users className="h-4 w-4" /> {texts.students}
+                    <section key={group.id} className={`min-w-0 rounded-md border border-slate-200 bg-white p-4 ${group.is_active ? '' : 'opacity-60'}`}>
+                        <div className="min-w-0">
+                            <h3 className="font-bold text-slate-800">
+                                <button id={`class-toggle-${group.id}`} type="button" aria-expanded={!collapsed[group.id]} aria-controls={`class-body-${group.id}`}
+                                    aria-label={group.name}
+                                    title={classLayoutText(lang, collapsed[group.id] ? 'expand' : 'collapse')}
+                                    onClick={event => {
+                                        if (!collapsed[group.id] && document.getElementById(`class-body-${group.id}`)?.contains(document.activeElement)) event.currentTarget.focus();
+                                        setCollapsed(previous => ({ ...previous, [group.id]: !previous[group.id] }));
+                                    }}
+                                    className="flex min-h-11 w-full min-w-0 items-center gap-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2">
+                                    {collapsed[group.id] ? <ChevronRight className="h-5 w-5 shrink-0" aria-hidden /> : <ChevronDown className="h-5 w-5 shrink-0" aria-hidden />}
+                                    <span className="min-w-0 break-words">{group.name}</span>
                                 </button>
-                                <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() => void toggleActive(group)}
-                                    className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                                >
-                                    {group.is_active ? texts.deactivate : texts.activate}
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={busy}
-                                    title={texts.deleteGroup}
-                                    onClick={() => void remove(group)}
-                                    className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            </div>
+                            </h3>
+                            <p className="break-words text-xs text-slate-500">
+                                {!group.is_active && <span>{texts.inactive}{' - '}</span>}
+                                {group.members_count} {texts.members}{' - '}{group.owner_username}
+                                {group.school ? ` - ${texts.school}: ${group.school}` : ''}
+                            </p>
+                            <ClassGroupEditorStatus groupId={group.id} editors={editors} disabled={operationBusy}
+                                onRetrySuccess={() => requestAnimationFrame(() => document.getElementById(collapsed[group.id] ? `class-toggle-${group.id}` : `group-save-${group.id}`)?.focus())} />
                         </div>
-
-                        {origin && (
-                            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                                <input readOnly value={webLink(group)} className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700" />
-                                <button
-                                    type="button"
-                                    onClick={() => void copy(`web-${group.id}`, webLink(group))}
-                                    className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                                >
-                                    {copiedKey === `web-${group.id}` ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-                                    {texts.webLink}
-                                </button>
-                            </div>
-                        )}
-
-                        <details className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
-                            <summary className="cursor-pointer text-xs font-semibold text-slate-600">{texts.contextTitle}</summary>
-                            <p className="mt-2 text-2xs text-slate-500">{texts.contextHint}</p>
-                            <div className="mt-2 space-y-2">
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-600" htmlFor={`group-desc-${group.id}`}>{texts.descriptionLabel}</label>
-                                    <textarea
-                                        id={`group-desc-${group.id}`}
-                                        value={classCtx[group.id]?.description ?? ''}
-                                        onChange={(event) => setCtxField(group.id, { description: event.target.value })}
-                                        placeholder={texts.descriptionPlaceholder}
-                                        rows={2}
-                                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-600" htmlFor={`group-method-${group.id}`}>{texts.methodologyLabel}</label>
-                                    <textarea
-                                        id={`group-method-${group.id}`}
-                                        value={classCtx[group.id]?.methodologies ?? ''}
-                                        onChange={(event) => setCtxField(group.id, { methodologies: event.target.value })}
-                                        placeholder={texts.methodologyPlaceholder}
-                                        rows={2}
-                                        className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                                    />
-                                </div>
-                                <label className="flex items-center gap-2 text-xs text-slate-700">
-                                    <input
-                                        type="checkbox"
-                                        checked={classCtx[group.id]?.visible ?? group.context_visible_to_students}
-                                        onChange={(event) => setCtxField(group.id, { visible: event.target.checked })}
-                                        className="accent-indigo-600"
-                                    />
-                                    {texts.shareContextLabel}
-                                </label>
-                                <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() => void updateClassCtx(group.id)}
-                                    className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                                >
-                                    {savedCtxId === group.id ? texts.saved : texts.save}
-                                </button>
-                            </div>
-                        </details>
-                        {botUsername && (
-                            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                                <input readOnly value={telegramLink(group)} className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700" />
-                                <button
-                                    type="button"
-                                    onClick={() => void copy(`tg-${group.id}`, telegramLink(group))}
-                                    className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                                >
-                                    {copiedKey === `tg-${group.id}` ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-                                    {texts.telegramLink}
-                                </button>
-                            </div>
-                        )}
-                        <p className="mt-2 text-xs text-slate-500">{learningText(lang, 'groupVisibility')}</p>
-
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => toggleShare(group.id)}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
-                            >
-                                <Share2 className="h-3.5 w-3.5" />
-                                {texts.shareTitle}
-                                {shares[group.id]?.length ? ` (${shares[group.id].length})` : ''}
-                            </button>
-                        </div>
-
-                        {shareOpen === group.id && (
-                            <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-3">
-                                <p className="mb-2 text-xs font-semibold text-slate-500">{texts.shareSelectUsers}</p>
-                                <div className="max-h-40 space-y-1 overflow-y-auto">
-                                    {allUsers
-                                        .filter((u) => u.in_research_contacts || u.in_plans || u.in_groups || u.in_notes)
-                                        .filter((u) => u.username !== group.owner_username)
-                                        .map((user) => {
-                                            const alreadyShared = shares[group.id]?.some((s) => s.shared_with_username === user.username);
-                                            const selected = selectedShares[group.id]?.has(user.username) ?? false;
-                                            return (
-                                                <label key={user.username} className="flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:bg-white">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selected}
-                                                        disabled={busy || !!alreadyShared}
-                                                        onChange={() => toggleSelected(group.id, user.username)}
-                                                        className="accent-indigo-600"
-                                                    />
-                                                    <span className="flex-1 text-slate-700">
-                                                        {user.display_name}
-                                                        <span className="ml-1 text-2xs text-slate-500">{user.username}</span>
-                                                    </span>
-                                                    {alreadyShared && (
-                                                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-2xs font-medium text-slate-500">
-                                                            {texts.shareAlreadyShared}
-                                                        </span>
-                                                    )}
-                                                </label>
-                                            );
-                                        })}
-                                    {allUsers.filter((u) => u.in_research_contacts || u.in_plans || u.in_groups || u.in_notes).length === 0 && (
-                                        <p className="text-xs text-slate-500">{texts.shareNoUsers}</p>
-                                    )}
-                                </div>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                    <button
-                                        type="button"
-                                        disabled={busy || !selectedShares[group.id]?.size}
-                                        onClick={() => void addShares(group.id)}
-                                        className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                                    >
-                                        <UserPlus className="h-3.5 w-3.5" />
-                                        {texts.shareBtn}
-                                    </button>
-                                </div>
-                                {shares[group.id]?.length > 0 && (
-                                    <div className="mt-3">
-                                        <p className="mb-1 text-xs font-semibold text-slate-500">{texts.sharedWith}</p>
-                                        <div className="space-y-1">
-                                            {shares[group.id]?.map((share) => (
-                                                <div key={share.id} className="flex items-center justify-between rounded-md bg-white px-2 py-1.5 text-xs">
-                                                    <span className="text-slate-700">
-                                                        {allUsers.find((u) => u.username === share.shared_with_username)?.display_name || share.shared_with_username}
-                                                        <span className="ml-1 text-2xs text-slate-500">{share.shared_with_username}</span>
-                                                    </span>
-                                                    <button
-                                                        type="button"
-                                                        disabled={busy}
-                                                        onClick={() => void removeShare(group.id, share.id)}
-                                                        className="inline-flex items-center gap-1 text-red-500 hover:text-red-700"
-                                                    >
-                                                        <UserMinus className="h-3.5 w-3.5" />
-                                                        {texts.removeShare}
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
+                        <div id={`class-body-${group.id}`} hidden={!!collapsed[group.id]} className="mt-3 min-w-0">
+                            <ClassGroupEditor group={group} institutions={institutions} editors={editors} disabled={operationBusy} showStatus={false} />
+                            <div className="mt-4 border-t border-slate-200 pt-3">
+                                <p className="break-words text-xs text-slate-500">{texts.code}: <span className="font-mono font-semibold text-slate-600">{group.code}</span></p>
+                                {origin && (
+                                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                                        <input readOnly value={webLink(group)} className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700" />
+                                        <button
+                                            type="button"
+                                            onClick={() => void copy(`web-${group.id}`, webLink(group))}
+                                            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                        >
+                                            {copiedKey === `web-${group.id}` ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+                                            {texts.webLink}
+                                        </button>
                                     </div>
                                 )}
-                                {(!shares[group.id] || shares[group.id].length === 0) && (
-                                    <p className="mt-2 text-xs text-slate-500">{texts.noShares}</p>
+
+                                {botUsername && (
+                                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                                        <input readOnly value={telegramLink(group)} className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700" />
+                                        <button
+                                            type="button"
+                                            onClick={() => void copy(`tg-${group.id}`, telegramLink(group))}
+                                            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                        >
+                                            {copiedKey === `tg-${group.id}` ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+                                            {texts.telegramLink}
+                                        </button>
+                                    </div>
                                 )}
+                                <p className="mt-2 text-xs text-slate-500">{learningText(lang, 'groupVisibility')}</p>
+
+                                <div className="mt-2 flex flex-wrap items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleShare(group.id)}
+                                        className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                                    >
+                                        <Share2 className="h-3.5 w-3.5" />
+                                        {texts.shareTitle}
+                                        {shares[group.id]?.length ? ` (${shares[group.id].length})` : ''}
+                                    </button>
+                                </div>
+
+                                {shareOpen === group.id && (
+                                    <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-3">
+                                        <p className="mb-2 text-xs font-semibold text-slate-500">{texts.shareSelectUsers}</p>
+                                        <div className="max-h-40 space-y-1 overflow-y-auto">
+                                            {allUsers
+                                                .filter((u) => u.in_research_contacts || u.in_plans || u.in_groups || u.in_notes)
+                                                .filter((u) => u.username !== group.owner_username)
+                                                .map((user) => {
+                                                    const alreadyShared = shares[group.id]?.some((s) => s.shared_with_username === user.username);
+                                                    const selected = selectedShares[group.id]?.has(user.username) ?? false;
+                                                    return (
+                                                        <label key={user.username} className="flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:bg-white">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selected}
+                                                                disabled={operationBusy || !!alreadyShared}
+                                                                onChange={() => toggleSelected(group.id, user.username)}
+                                                                className="accent-indigo-600"
+                                                            />
+                                                            <span className="flex-1 text-slate-700">
+                                                                {user.display_name}
+                                                                <span className="ml-1 text-2xs text-slate-500">{user.username}</span>
+                                                            </span>
+                                                            {alreadyShared && (
+                                                                <span className="rounded-full bg-slate-200 px-2 py-0.5 text-2xs font-medium text-slate-500">
+                                                                    {texts.shareAlreadyShared}
+                                                                </span>
+                                                            )}
+                                                        </label>
+                                                    );
+                                                })}
+                                            {allUsers.filter((u) => u.in_research_contacts || u.in_plans || u.in_groups || u.in_notes).length === 0 && (
+                                                <p className="text-xs text-slate-500">{texts.shareNoUsers}</p>
+                                            )}
+                                        </div>
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            <button
+                                                type="button"
+                                                disabled={operationBusy || !selectedShares[group.id]?.size}
+                                                onClick={() => void addShares(group.id)}
+                                                className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                                            >
+                                                <UserPlus className="h-3.5 w-3.5" />
+                                                {texts.shareBtn}
+                                            </button>
+                                        </div>
+                                        {shares[group.id]?.length > 0 && (
+                                            <div className="mt-3">
+                                                <p className="mb-1 text-xs font-semibold text-slate-500">{texts.sharedWith}</p>
+                                                <div className="space-y-1">
+                                                    {shares[group.id]?.map((share) => (
+                                                        <div key={share.id} className="flex items-center justify-between rounded-md bg-white px-2 py-1.5 text-xs">
+                                                            <span className="text-slate-700">
+                                                                {allUsers.find((u) => u.username === share.shared_with_username)?.display_name || share.shared_with_username}
+                                                                <span className="ml-1 text-2xs text-slate-500">{share.shared_with_username}</span>
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                disabled={operationBusy}
+                                                                onClick={() => void removeShare(group.id, share.id)}
+                                                                className="inline-flex items-center gap-1 text-red-500 hover:text-red-700"
+                                                            >
+                                                                <UserMinus className="h-3.5 w-3.5" />
+                                                                {texts.removeShare}
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {(!shares[group.id] || shares[group.id].length === 0) && (
+                                            <p className="mt-2 text-xs text-slate-500">{texts.noShares}</p>
+                                        )}
+                                    </div>
+                                )}
+
+                                <Button type="button" variant="secondary" className="mt-3"
+                                    onClick={() => setOpenStudentsId(openStudentsId === group.id ? null : group.id)}>
+                                    <Users className="h-4 w-4" aria-hidden /> {texts.students}
+                                </Button>
+
+                                {openStudentsId === group.id && (
+                                    <PlanStudentsPanel base={`/api/admin/groups/${group.id}`} withNotes />
+                                )}
+
+                                <GroupAssignments groupName={group.name} />
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    <Button type="button" variant="secondary" disabled={operationBusy} onClick={() => void toggleActive(group)}>
+                                        {group.is_active ? texts.deactivate : texts.activate}
+                                    </Button>
+                                    <Button type="button" variant="danger" disabled={operationBusy} onClick={() => void remove(group)}>
+                                        <Trash2 className="h-4 w-4" aria-hidden /> {texts.deleteGroup}
+                                    </Button>
+                                </div>
                             </div>
-                        )}
-
-                        {openStudentsId === group.id && (
-                            <PlanStudentsPanel base={`/api/admin/groups/${group.id}`} withNotes />
-                        )}
-
-                        <GroupAssignments groupName={group.name} />
+                        </div>
                     </section>
                 ))}
             </div>

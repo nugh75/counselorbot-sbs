@@ -1,5 +1,10 @@
 # Blocco A — testi del Taccuino del docente
 
+> S14 conserva tutte le asserzioni A/C; Classi diventa un ingresso popup
+> (un pulsante + tre link), quindi ordine Tab e bersaglio del Salva sono
+> espliciti. La bozza privata resta montata. Vedi
+> `teacher-class-management-validation.md` per i risultati combinati.
+
 S7, 2 ottobre 2026. Base `d2ca66a393773075d4ed62616c0a7f02e7db760c`:
 PR31 e PR30 verificate MERGED prima del lavoro. Branch
 `fix/clarify-teacher-notebook-copy`, worktree esclusivo
