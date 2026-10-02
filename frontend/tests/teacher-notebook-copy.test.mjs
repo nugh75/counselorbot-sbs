@@ -22,13 +22,23 @@ const linkNames = {
     de: ['Gruppen und Klassen verwalten', 'Für meine Entwicklung: Persönliche Ziele', 'Für einen Meilenstein: Zeitleiste', 'Für eine Arbeit: Portfolio'],
     sv: ['Hantera grupper och klasser', 'För min utveckling: Personliga mål', 'För en milstolpe: Tidslinje', 'För ett arbete: Portfolio'],
 };
+const groupNames = {
+    it: ['Il mio ruolo', 'La mia pratica e i miei contesti', 'La mia crescita e altre informazioni'],
+    en: ['My role', 'My practice and settings', 'My development and other information'],
+    es: ['Mi rol', 'Mi práctica y mis contextos', 'Mi desarrollo y otra información'],
+    fr: ['Mon rôle', 'Ma pratique et mes contextes', 'Mon développement et autres informations'],
+    de: ['Meine Rolle', 'Meine Praxis und meine Kontexte', 'Meine Entwicklung und weitere Angaben'],
+    sv: ['Min roll', 'Min undervisning och mina sammanhang', 'Min utveckling och övrig information'],
+};
 let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser?.close(); });
 
 for (const [lang, names] of Object.entries(labels)) {
-    test(`${lang}: visible associated hints, optional fields, keyboard and unchanged explicit payload on mobile`, async () => {
-        const context = await browser.newContext({ viewport: { width: lang === 'de' ? 320 : 390, height: 900 } });
+    for (const scale of [1, 2, 4]) test(`${lang}: open groups, hints, keyboard and explicit payload at ${scale === 1 ? '320px' : `${scale * 100}% zoom equivalent`}`, async () => {
+        // A 1280px display at 200/400% browser zoom has a 640/320px CSS viewport.
+        // CSS zoom alone does not adapt media queries, so use viewport + pixel scale.
+        const context = await browser.newContext({ viewport: { width: scale === 2 ? 640 : 320, height: 900 }, deviceScaleFactor: scale });
         const page = await context.newPage(); page.setDefaultTimeout(15000);
         const writes = []; const errors = [];
         page.on('pageerror', error => errors.push(error.message));
@@ -56,6 +66,17 @@ for (const [lang, names] of Object.entries(labels)) {
             assert.equal(await fields.count(), 6);
             assert.deepEqual(await fields.evaluateAll(elements => elements.map(e => e.id.replace('teacher-notebook-', ''))), keys);
             const notebook = fields.first().locator('xpath=ancestor::div[h2]');
+            assert.equal(await notebook.getByRole('group').count(), 3);
+            assert.deepEqual(await notebook.getByRole('heading', { level: 3 }).allTextContents(), groupNames[lang]);
+            for (const [index, name] of groupNames[lang].entries()) {
+                const group = notebook.getByRole('group', { name, exact: true });
+                assert.equal(await group.isVisible(), true);
+                assert.deepEqual(await group.getByRole('textbox').evaluateAll(elements => elements.map(e => e.id)), [
+                    ['teacher-notebook-subjects', 'teacher-notebook-experience'],
+                    ['teacher-notebook-methodologies', 'teacher-notebook-classes_overview'],
+                    ['teacher-notebook-formation_interests', 'teacher-notebook-notes'],
+                ][index]);
+            }
             for (const [index, name] of names.entries()) {
                 const field = page.getByRole('textbox', { name, exact: true });
                 await field.waitFor(); assert.equal(await field.isEnabled(), true);
@@ -88,7 +109,7 @@ for (const [lang, names] of Object.entries(labels)) {
                 assert.ok((await link.boundingBox()).height >= 44);
             }
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-            if (process.env.NOTEBOOK_SCREENSHOT_DIR && lang === 'de') {
+            if (process.env.NOTEBOOK_SCREENSHOT_DIR && lang === 'de' && scale === 1) {
                 mkdirSync(process.env.NOTEBOOK_SCREENSHOT_DIR, { recursive: true });
                 await page.screenshot({ path: `${process.env.NOTEBOOK_SCREENSHOT_DIR}/teacher-notebook-de-320.png`, fullPage: true });
             }
@@ -106,6 +127,13 @@ for (const [lang, names] of Object.entries(labels)) {
             for (const field of await fields.all()) await field.fill('');
             await save.click();
             assert.deepEqual(writes[1], { path: '/api/user/teacher-notebook', body: Object.fromEntries(keys.map(k => [k, null])) });
+            // The same open groups fit mobile and desktop, including a reduced CSS viewport.
+            for (const width of [1440, 720, 320]) {
+                await page.setViewportSize({ width, height: 900 });
+                assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+                for (const field of await fields.all()) assert.equal(await field.isVisible(), true);
+                for (const group of await notebook.getByRole('group').all()) assert.equal(await group.isVisible(), true);
+            }
             assert.deepEqual(errors, []);
         } finally { await context.close(); }
     });
