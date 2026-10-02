@@ -88,3 +88,25 @@ attivato da `dev-backend.sh` tramite `PATH`, `LD_LIBRARY_PATH`,
 
 - Piano origine dell'implementazione: `docs/plans/2026-09-24-obiettivi-rete-plan.md`
 - Anteprima senza backend (solo dati demo): `docs/operations/personal-area-dev-preview.md`
+
+## Regressione metodo → azione (solo frontend e fixture)
+
+Da questo worktree, verificare che la porta 3112 sia libera con `ss -ltn`, poi
+avviare `./scripts/dev-method-action-tests.sh`. Il frontend ascolta soltanto su
+`127.0.0.1:3112`; il backend è impostato su una porta inutilizzabile e il test
+intercetta tutte le API con dati sintetici in memoria, comprese le scritture.
+Non servono backend, database o container. Arrestare il processo con Ctrl+C.
+
+Da `frontend/`, eseguire:
+
+```bash
+node --test --experimental-strip-types tests/goal-method-action.test.mjs
+```
+
+Il test copre metodo modificato, salvataggi espliciti, apertura e precompilazione
+azione, sei lingue/mobile, nuovo obiettivo, annullamento e riapertura, errori,
+retry e invii duplicati/in corso. `GOALS_BASE_URL` può cambiare l’URL del frontend
+locale. Le fixture verificano UI e richieste API, non la persistenza del backend.
+Le schermate della guida mostrano un popup con metodo vuoto e obiettivo non
+modificato, oltre al modulo di condivisione: i controlli cambiati non sono visibili
+in quelle fixture e questa correzione non richiede ricatture.

@@ -65,6 +65,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     const held = useRef<PersonalGoal | null>(null); // post-review row, flushed to the panel when the step exits
     const [resources, setResources] = useState<GoalResource[]>([]); const [resourcesError, setResourcesError] = useState<unknown>(null);
     const [busy, setBusy] = useState(false); const [error, setError] = useState<unknown>(null);
+    const actionDetails = useRef<HTMLDetailsElement>(null); const pending = useRef(false);
     const actionRequest = useRef(''); const checkRequest = useRef(''); const createRequest = useRef(crypto.randomUUID());
     const fieldsDirty = JSON.stringify(form) !== JSON.stringify(initial);
     const actionDraft = Boolean(action.title || action.detail || action.date);
@@ -78,12 +79,13 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     const otherDraft = actionDraft || checkDraft || Boolean(selection) || Boolean(evidenceChoice) || Boolean(parentChoice);
     useEffect(() => { onDirty(dirty); return () => onDirty(false); }, [dirty, onDirty]);
     useDraftGuard(dirty, l('discard'));
-    // «→ nuova azione» torna al popup col campo «Crea attività» precompilato: consumato al primo
+    // «→ nuova azione» torna al popup col modulo azione precompilato: consumato al primo
     // mount, prima che il pannello perda il target (GoalsPanel apre subito `edit:{id}` on `onTarget`).
     const actionPrefill = target.kind === 'edit' ? target.prefill?.action : undefined;
     useEffect(() => {
         if (!actionPrefill || !goal) return;
         setAction({ title: actionPrefill, detail: '', date: '' }); setMode('view');
+        if (actionDetails.current) actionDetails.current.open = true;
         onTarget({ ...target, prefill: undefined });
     }, [actionPrefill, goal]); // eslint-disable-line react-hooks/exhaustive-deps
     const loadResources = useCallback(() => { void goalApi<GoalResource[]>('/user/goal-resources').then(rows => { setResources(rows); setResourcesError(null); }).catch(setResourcesError); }, []);
@@ -108,8 +110,9 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
         return window.confirm([gained.length ? `${l('visibilityGain')} ${gained.map(groupName).join(', ')}` : '', lost.length ? `${l('visibilityLoss')} ${lost.map(groupName).join(', ')}` : '', l('visibilityConfirm')].filter(Boolean).join('\n'));
     };
     const run = async (work: () => Promise<PersonalGoal>, done: (row: PersonalGoal) => void = onSaved) => {
-        setBusy(true); setError(null);
-        try { done(await work()); } catch (e) { setError(e); } finally { setBusy(false); }
+        if (pending.current) return;
+        pending.current = true; setBusy(true); setError(null);
+        try { done(await work()); } catch (e) { setError(e); } finally { pending.current = false; setBusy(false); }
     };
     const patched = (patch: Partial<PersonalGoal>) => goals.map(row => row.id === goal!.id ? { ...row, ...patch } : row);
     const base = goal ? `/user/goals/${goal.id}` : '';
@@ -192,15 +195,19 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
                 {goal && <p className="text-sm text-slate-600">{l('doneHelp')}</p>}
             </fieldset></form>
             {goal?.reflection && !goal.reviews.length && <section className="rounded-md bg-slate-50 p-3 text-sm"><h3 className="font-semibold">{l('legacyNote')}</h3><p className="whitespace-pre-wrap text-slate-700">{goal.reflection}</p></section>}
-            {goal && dirty && <p role="status" className="text-sm text-slate-600">{l('unsaved')}</p>}
+            {goal && fieldsDirty && <p role="status" className="text-sm text-slate-600">{l('unsaved')}</p>}
             {goal && <section className="space-y-3"><h3 className="font-bold">{l('howIGetThere')}</h3>
-                <MethodPicker value={form.method} items={goal.method} onChange={method => setForm({ ...form, method })} disabled={busy || otherDraft} onPractice={title => setAction({ ...action, title })} />
+                <MethodPicker value={form.method} items={goal.method} onChange={method => setForm({ ...form, method })} disabled={busy || otherDraft} practiceDisabled={fieldsDirty} practiceHelp={fieldsDirty ? l('saveMethodFirst') : undefined} onPractice={title => {
+                    if (busy || dirty) return;
+                    setAction({ ...action, title });
+                    if (actionDetails.current) { actionDetails.current.open = true; actionDetails.current.querySelector('input')?.focus(); }
+                }} />
                 <div className="space-y-2"><h4 className="font-semibold">{l('reachedBy')}{total > 0 && <span className="ml-2 text-sm font-normal text-slate-600">{done}/{total} {l('subgoalsDone')}</span>}</h4>
                     <ul className="space-y-1">{children.map(row => goalRow(row, <ArrowDown className="h-4 w-4 shrink-0" aria-hidden />))}</ul>
                     <Button type="button" variant="secondary" disabled={busy} onClick={() => onNavigate({ kind: 'create', parentId: goal.id })}><Plus className="h-4 w-4" aria-hidden />{l('addSubgoal')}</Button>
                 </div>
                 <ul className="space-y-2">{means.map(linkRow)}</ul>
-                <details className="rounded-md border border-slate-200 p-3"><summary className="cursor-pointer py-2 font-semibold">{l('createAction')}</summary>
+                <details ref={actionDetails} className="rounded-md border border-slate-200 p-3"><summary className="cursor-pointer py-2 font-semibold">{l('createAction')}</summary>
                     <form className="mt-3" onSubmit={e => { e.preventDefault(); actionRequest.current ||= crypto.randomUUID(); void run(() => goalApi<PersonalGoal>(`${base}/actions`, 'POST', { ...action, date: action.date || null, revision: goal.revision, request_id: actionRequest.current })); }}><fieldset disabled={busy || fieldsDirty || checkDraft || Boolean(selection) || Boolean(evidenceChoice) || Boolean(parentChoice)} className="space-y-3">
                         <p className="text-sm text-slate-600">{l('actionHelp')}</p>
                         <Field label={l('actionTitle')}><input className={input} required maxLength={160} value={action.title} onChange={e => setAction({ ...action, title: e.target.value })} /></Field>
