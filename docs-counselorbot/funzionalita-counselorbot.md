@@ -337,6 +337,20 @@ la baseline senza sostituire le modifiche fatte durante l’invio. I controlli d
 accesso delle destinazioni restano invariati. Nessuna cache persistente delle bozze
 del docente, nessun cambio di counselor, taccuino nel contesto o sessione.
 
+La pagina **Gruppi e classi** mette la creazione prima dell’elenco e i campi
+modificabili prima degli inviti e della gestione dentro ogni scheda. Tutte le
+classi e i gruppi partono aperti: puoi comprimerli e riaprirli da tastiera senza
+perdere la bozza o avviare operazioni. La chiusura conserva anche note e messaggi
+in bozza di un dettaglio partecipante già aperto. Nome e scuola/ente rimangono in sola
+lettura dopo la creazione; fascia e istituto si salvano quando cambia la tendina.
+Descrizione, metodologie e condivisione del contesto con gli studenti richiedono
+**Salva**. Lo stato della bozza, il salvataggio e gli errori rimangono visibili
+anche a scheda chiusa. **Riprova salvataggio** ripete l’operazione fallita,
+conservando il contesto scritto; i dati salvati non vengono trasferiti a un’altra
+classe e una risposta tardiva non cancella le nuove modifiche. Inviti,
+condivisioni con colleghi, partecipanti e assegnazioni conservano azioni e
+permessi esistenti. Le tre sezioni del Taccuino del docente restano sempre aperte.
+
 Un errore nel caricamento delle classi gestite, del Taccuino del docente o delle
 classi selezionabili nella chat viene segnalato con **Riprova**: non significa
 che i dati siano vuoti o persi. Il messaggio di vuoto compare solo dopo una
