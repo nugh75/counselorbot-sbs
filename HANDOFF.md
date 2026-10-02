@@ -138,3 +138,78 @@ revisionare). Mappa dell'implementazione reale:
   rebuild; il deploy richiede `docker compose up -d --build`.
 Leggere `docs/operations/chat-format-essential-qsa.md` solo se serve per
 l'ordine del turno. Lavorare su branch feature/... (mai su main).
+
+---
+
+## S2 — salvataggio metodo → azione (2026-10-02)
+
+Agente sostituto: `s2-method-action-yolo-1002`; worktree
+`/home/nugh75/counselorbot-sbs-worktrees/s2-method-action-1002`, branch
+`fix/method-action-save-deadlock`, base `4a5435e1d289ccaa014f859a8f1a3267bec2a102`.
+Task: `0d0cd211-b467-4365-b8ad-747017adc8d7`.
+
+### Correzione e perimetro
+
+Con il metodo modificato, «Metti in pratica» preparava un'azione mentre il
+salvataggio dell'obiettivo era bloccato dalla bozza dell'azione e quello
+dell'azione dalle modifiche all'obiettivo. Ora il pulsante attende il salvataggio
+esplicito, con istruzione accessibile nelle sei lingue; poi apre il modulo
+precompilato e porta il focus al titolo. Solo la conferma crea l'azione collegata.
+Le altre bozze e i salvataggi in corso restano protetti; un riferimento sincrono
+impedisce due invii prima dell'aggiornamento dello stato React.
+
+File: `GoalDialog.tsx`, `MethodPicker.tsx`, testi `i18n-goals.ts`/`i18n.ts`,
+suite `frontend/tests/goal-method-action.test.mjs`, script
+`scripts/dev-method-action-tests.sh`, funzionalità e documentazione operativa,
+manifest della guida. Nessun redesign, modifica backend o intervento sui task
+separati bozze/errori. Deroga esplicita dell'utente alla revisione cross-modello:
+nessun revisore o sub-agente; mantenuti test tecnici e controllo dei diff.
+
+### Verifiche e prove prima/dopo
+
+- Prima del fix: la suite riproduceva `goal save disabled = true ; action save
+  disabled = true`, seguita dall'assert fallita. Dopo: 10/10 test browser verdi,
+  riconfermati dal sostituto con `cd frontend && node --test
+  --experimental-strip-types tests/goal-method-action.test.mjs`.
+- Copertura: sei lingue a 390 px, metodo modificato, nuovo obiettivo, apertura,
+  modifica e conferma dell'azione, legame e revisione API, annullamento uscita,
+  errori/retry, idempotency key, invii duplicati e altra bozza. Anche testo guida,
+  immagini della sezione interessata e assenza di overflow nelle sei lingue.
+- ESLint mirato sui quattro sorgenti modificati e sulla suite, controllo i18n
+  (2863 chiavi × sei lingue), TypeScript `tsc --noEmit`, `git diff --check` e
+  `make guidance-check`: verdi. Log precedente `npm test`: 42 file di libreria
+  superati, nessun fallimento; conservato in `/tmp/s2-frontend-tests.log`.
+- Lint globale fuori perimetro: 17 diagnostici (1 errore, 16 warning), identici
+  dopo normalizzazione dei percorsi in `/tmp/s2-current-lint.json` e
+  `/tmp/s2-baseline-lint.json`. Errore: `NewDeckDialog.tsx:36`,
+  `react-hooks/set-state-in-effect`. Non corretto in questo task.
+- Vecchia suite `guide-audiences.test.mjs`: sei fallimenti sul ramo corrente al
+  selettore pubblico, riga 32. Prova italiana 1440 px riprodotta sulla baseline
+  isolata con `GUIDE_BASE_URL=http://127.0.0.1:3113 node --test
+  --experimental-strip-types --test-name-pattern='1440px in it'
+  tests/guide-audiences.test.mjs`: stesso timeout sul link Docente nella
+  navigazione «Scegli la guida». La fixture simula un visitatore non autenticato,
+  mentre il codice mostra il selettore solo ai docenti. Sorgente guida e test
+  nella baseline verificati identici a HEAD; nessuna modifica a questi file.
+  Confronto baseline limitato alla prova italiana, non all'intera vecchia suite.
+
+Evidenze precedenti recuperate dalla sessione Codex
+`01a0fcf1-69ff-78d0-8d12-d1105b52c8a8`: risultato finale baseline nella chiamata
+`call_6okmbeJ831cCObg6jJSJbhqQ`. Nuova esecuzione della suite 10/10 conservata
+in `/tmp/s2-yolo-method-action.log`.
+
+### Docker e consegna
+
+Build precedente riuscita (exit 0), recuperata dal log della sessione:
+`docker build --tag counselorbot-sbs-s2-method-action:validation
+--build-arg NEXT_PUBLIC_API_URL=/api frontend`.
+Tag riconfermato con `docker image inspect`: ID
+`sha256:0716e1b9c760405b27b3b70631153293833b33c69f50839ba3e18fbb30922f8d`,
+creato il 2026-10-02 alle 14:20:54 UTC. Nessuna nuova build o avvio container,
+nessun deploy o merge. Le fixture usano localhost:3112 e backend fittizio
+`http://127.0.0.1:9`, senza database; vengono arrestate prima della consegna.
+
+Pubblicare commit atomico e PR verso main nel Project CounselorBot; notificare
+la PR e chiudere il solo task S2 dopo push e apertura verificata. Il successore
+bozze `8b8119a1-e636-4422-8846-28dc40e2ac14` attende il merge dell'utente e la
+conferma di tier/modello/avvio: non avviarlo. Il goal complessivo resta aperto.

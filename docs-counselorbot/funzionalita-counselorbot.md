@@ -213,6 +213,18 @@ all’assistente la scrittura automatica del Taccuino. PDF e alcuni strumenti lo
 conservano il progresso nel browser: non promettere una ripresa universale fra
 dispositivi. Nei moduli con Salva o Condividi occorre confermare esplicitamente.
 
+Nel popup di un obiettivo, salva le modifiche all’obiettivo e al metodo prima di
+usare **Metti in pratica**: finché ci sono modifiche, il pulsante è disabilitato
+con un’istruzione associata. Dopo il salvataggio, apre il modulo **Aggiungi
+un’azione** già precompilato con il titolo della strategia. Puoi modificare titolo,
+dettagli e data facoltativa; solo la conferma nel modulo crea l’azione personale
+collegata all’obiettivo. Anche un obiettivo nuovo va prima salvato, poi si sceglie
+e salva il metodo. Durante una bozza di azione o controllo, o un salvataggio in
+corso, **Metti in pratica** resta disabilitato e non sostituisce il lavoro.
+Un errore lascia le modifiche disponibili per riprovare; Annulla o la chiusura
+chiedono conferma prima di abbandonare una bozza, e rifiutare conserva i campi.
+Non si tratta di un’attività assegnata dal docente e non vi è autosalvataggio.
+
 Completare un’attività non conclude automaticamente un obiettivo. I collegamenti
 fra obiettivo e risorse non ne sincronizzano o condividono il contenuto. Le assegnazioni possono essere proposte da esplorare oppure attività con restituzione
 attesa e scadenza facoltativa, con filtri per gruppo, tipo, finalità (richiesta o proposta)
