@@ -12,6 +12,27 @@ This guide describes how teachers, researchers, and administrators use the
 CounselorBot platform. It covers the **platform's operation**, not the theory of
 strategic competences (for that, consult the "Strategic Competences" knowledge base).
 
+## Teacher notebook
+
+The notebook in `/docente` describes your role and usual practice. Its six optional
+fields cover subjects, brief teaching experience, how you usually teach, an
+overview of roles and settings, your own development interests, and other role
+information. Visible field hints distinguish general practice from Class context,
+a personal interest from a class objective, and a short note from an episode or
+work to keep. Notes neither manage classes nor publish catalogs or grant institution
+permissions. Significant professional event, Timeline and Portfolio retain their
+existing uses for episodes and work; avoid identifying participants in role notes.
+
+Class objectives use the teacher notebook by default; other tools use the student
+notebook. In chat Options, teachers can choose Default, Student, Teacher or None.
+This choice concerns notebook context, not all conversation data: Reading is
+separately controlled (disabled for class objectives), and None is not anonymity.
+An empty notebook does not exclude selected classes from the class-objective
+context, depending on the chosen notebook. Save explicitly. Keep notes brief:
+the unchanged limits are 600 characters per field and 1,200 for the overall
+notebook block in field order. Not every note may fit in full; state relevant
+details in chat. These are copy clarifications only; no new tool links or grouping.
+
 ## Teacher catalogs
 
 The teacher area (`/docente`) includes **Catalogs**, with separate expandable

@@ -285,6 +285,33 @@ il catalogo comune richiede revisione amministrativa. Possono assegnare a una pe
 o a tutto un gruppo, anche vuoto: i nuovi iscritti ricevono le assegnazioni attive.
 La gestione dei gruppi è distinta dall’iscrizione personale a un gruppo.
 
+Il Taccuino del docente è un’autodescrizione del ruolo e della pratica abituale,
+con sei campi **facoltativi**, nell’ordine: discipline abituali, esperienza di
+insegnamento sintetica, come insegno di solito, panoramica dei miei incarichi e
+contesti, interessi per la mia crescita, altre informazioni sul mio ruolo.
+Gli hint visibili associati ai campi distinguono pratica generale e **Contesto
+classe**, interesse personale e obiettivo didattico per la classe, nota breve e
+singolo episodio o lavoro. Gli hint restano visibili anche nei campi compilati e
+sono associati alla rispettiva textarea. Il messaggio di vuoto usa frasi brevi
+anche in tedesco e svedese, mantenendo i comandi nella disposizione attuale.
+Le note non creano né gestiscono classi, non concedono
+permessi istituzionali, non pubblicano cataloghi e non archiviano artefatti.
+Per episodi e lavori restano disponibili Evento professionale, Linea del tempo e
+Portfolio; evita dati identificativi dei partecipanti nelle note sul tuo ruolo.
+
+Il default è il taccuino **docente** per OBIETTIVO_DOCENZA e quello **studente** per
+gli altri strumenti. Nelle Opzioni della chat il docente può scegliere Predefinito,
+Studente, Docente o Nessuno. La scelta riguarda il contesto del taccuino, non
+ogni dato dell’intera conversazione: la **Lettura** è regolata separatamente
+(disabilitata per DOCENZA); **Nessuno non significa anonimato**.
+Puoi procedere con il taccuino vuoto: nelle conversazioni didattiche possono
+contribuire anche le classi selezionate, secondo il contesto scelto.
+Scrivi in modo sintetico ed esplicita nel turno i dettagli rilevanti: restano
+600 caratteri per campo e 1.200 complessivi nel blocco del taccuino, nell’ordine
+attuale, quindi le note possono non entrare tutte per intero. Salvataggio esplicito,
+revisioni, API e autorizzazioni restano invariati. Sono chiarimenti del blocco A:
+nessun nuovo collegamento agli strumenti, raggruppamento o cambio del prompt.
+
 Un errore nel caricamento delle classi gestite, del Taccuino del docente o delle
 classi selezionabili nella chat viene segnalato con **Riprova**: non significa
 che i dati siano vuoti o persi. Il messaggio di vuoto compare solo dopo una
