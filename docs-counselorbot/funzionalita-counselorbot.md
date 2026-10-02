@@ -321,21 +321,52 @@ revisioni, API e autorizzazioni restano invariati. Restano i chiarimenti e i qua
 rimandi contestuali; il raggruppamento riguarda solo il form e non cambia il prompt.
 
 Sotto gli hint del Taccuino del docente trovi rimandi volontari a Gruppi e classi,
-Obiettivi personali, Linea del tempo e Portfolio. Gli obiettivi personali
-riguardano la tua crescita; il percorso per la classe è separato, in alto
-nell’Area docenti. Aprire un rimando non copia le note né crea, salva, pubblica o
-condivide contenuti. Con modifiche non salvate, conferma lo scarto per uscire
-oppure annulla per conservare testo, focus e selezione. Durante il salvataggio
-attendi prima di uscire; un errore conserva bozza e protezione. Una bozza pulita
-passa senza conferme; una nuova scheda conserva la bozza nel tab di origine.
-I quattro rimandi usano route esistenti senza parametri o prefill. Il rimando a
-Gruppi e classi apre la gestione, dove scegli esplicitamente la classe: non viene
-inferita dalle note. Cataloghi condivisi e percorso didattico restano disponibili
-nella panoramica, senza duplicarli sotto i campi. Il confronto con i valori salvati
-rimuove la protezione quando ripristini quei valori; un salvataggio riuscito aggiorna
-la baseline senza sostituire le modifiche fatte durante l’invio. I controlli di
-accesso delle destinazioni restano invariati. Nessuna cache persistente delle bozze
-del docente, nessun cambio di counselor, taccuino nel contesto o sessione.
+Obiettivi personali, Linea del tempo e Portfolio. **Gruppi e classi** apre il popup
+«Modifica classe o gruppo» senza uscire dal taccuino. Il selettore parte con
+l’invito a scegliere esplicitamente tra gruppi gestiti o condivisi autorizzati;
+non deduce una classe dalle note. Nome, scuola/ente, proprietario e iscritti sono
+in sola lettura. Lo stesso editor della pagina Classi gestisce fascia e istituto
+con PUT immediato dopo selezione; descrizione, metodologie e condivisione del
+contesto richiedono **Salva**. **Annulla** scarta solo la bozza del contesto:
+non annulla fascia o istituto già salvati. Cambio classe e chiusura (X, Esc,
+sfondo, Annulla) chiedono «Continua a modificare» o «Scarta modifiche e prosegui»
+quando il contesto è modificato. Ogni PUT in corso blocca cambio e uscita;
+un errore conserva il testo e offre un nuovo tentativo. Le modifiche successive
+all’invio sopravvivono al salvataggio e rimangono da salvare. Il popup distingue
+caricamento, errori recuperabili, lista vuota e accesso negato. Il dialogo mantiene
+il focus al proprio interno e lo restituisce alla chiusura.
+
+La bozza privata del taccuino resta montata e conservata aprendo/chiudendo il
+popup. Scegliere una classe non salva dati, non modifica sessione, taccuino,
+notebook_context o contesto chat e non trasferisce testo in URL o prefill.
+La pagina Classi resta raggiungibile dalla normale navigazione; creazione,
+membri, inviti, assegnazioni e gestione restano lì. Nessun nuovo autosave,
+endpoint, grant, campo o migrazione. I sei campi del taccuino, limiti 600/1.200,
+ordine, consenso, default e protezioni rimangono invariati.
+
+Gli altri tre rimandi continuano a navigare verso Obiettivi personali, Linea
+del tempo e Portfolio senza parametri o prefill. Gli obiettivi personali
+riguardano la tua crescita; il percorso per la classe è separato in alto.
+Aprire questi rimandi non copia note né crea, salva, pubblica o condivide
+contenuti. Con una bozza privata modificata, conferma lo scarto per uscire o
+annulla per conservare testo, focus e selezione. Attendi il salvataggio in corso;
+un errore conserva bozza e protezione. Ripristinare i valori salvati rimuove la
+protezione; una nuova scheda conserva la bozza nel tab originale. Nessuna cache
+persistente delle bozze del docente o dei dati del popup tra account.
+
+La pagina **Gruppi e classi** mette la creazione prima dell’elenco e i campi
+modificabili prima degli inviti e della gestione dentro ogni scheda. Tutte le
+classi e i gruppi partono aperti: puoi comprimerli e riaprirli da tastiera senza
+perdere la bozza o avviare operazioni. La chiusura conserva anche note e messaggi
+in bozza di un dettaglio partecipante già aperto. Nome e scuola/ente rimangono in sola
+lettura dopo la creazione; fascia e istituto si salvano quando cambia la tendina.
+Descrizione, metodologie e condivisione del contesto con gli studenti richiedono
+**Salva**. Lo stato della bozza, il salvataggio e gli errori rimangono visibili
+anche a scheda chiusa. **Riprova salvataggio** ripete l’operazione fallita,
+conservando il contesto scritto; i dati salvati non vengono trasferiti a un’altra
+classe e una risposta tardiva non cancella le nuove modifiche. Inviti,
+condivisioni con colleghi, partecipanti e assegnazioni conservano azioni e
+permessi esistenti. Le tre sezioni del Taccuino del docente restano sempre aperte.
 
 Un errore nel caricamento delle classi gestite, del Taccuino del docente o delle
 classi selezionabili nella chat viene segnalato con **Riprova**: non significa

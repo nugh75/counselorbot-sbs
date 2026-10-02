@@ -156,7 +156,7 @@ test('groups: failed refresh retains class context and creation drafts; retry su
     const f = await fixture({ failure: false, width: 1440 });
     try {
         await f.go(); await f.page.getByRole('heading', { name: 'Classe Demo', exact: true }).waitFor();
-        await f.page.locator('summary').filter({ hasText: 'Contesto classe' }).click();
+        await f.page.getByLabel('Descrizione della classe', { exact: true }).waitFor();
         const description = f.page.getByLabel('Descrizione della classe');
         await description.fill('Bozza privata della classe');
         await f.page.getByLabel('Condividi il contesto con gli studenti iscritti').check();
@@ -186,7 +186,7 @@ test('groups: a successful refresh updates pristine context fields from the serv
     const f = await fixture({ failure: false });
     try {
         await f.go(); await f.page.getByRole('heading', { name: 'Classe Demo', exact: true }).waitFor();
-        await f.page.locator('summary').filter({ hasText: 'Contesto classe' }).click();
+        await f.page.getByLabel('Descrizione della classe', { exact: true }).waitFor();
         f.state.groups = [{ ...group, description: 'Contesto aggiornato sul server' }];
         const response = f.page.waitForResponse(r => r.url().endsWith('/api/admin/groups') && r.request().method() === 'GET');
         await f.page.getByRole('combobox', { name: 'Fascia', exact: true }).selectOption('adulti');

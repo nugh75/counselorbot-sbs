@@ -11,6 +11,8 @@ import { assignmentText } from '../src/lib/i18n-assignments.ts';
 import { learningText } from '../src/lib/i18n-assignment-work.ts';
 import { emptyWorkspace } from '../src/lib/visual-tools.ts';
 import { visualLabel } from '../src/lib/i18n-visual-tools.ts';
+import { classPickerText } from '../src/lib/i18n-class-picker.ts';
+import { notebookLinkText } from '../src/lib/teacher-notebook-links.ts';
 
 const origin = new URL(process.env.GUIDE_BASE_URL || 'http://127.0.0.1:3000').origin;
 const locales = ['it', 'en', 'es', 'fr', 'de', 'sv'];
@@ -24,7 +26,7 @@ const samples = {
     de: ['Mein Lernen organisieren', 'Lernwerkstatt', 'Probiere zwei kurze Wiederholungen aus.', 'Beschreibe, was funktioniert hat und was du ändern würdest.', 'Ich habe das Wiederholen auf zwei Tage verteilt.', 'Vergleiche beim nächsten Mal auch, woran du dich ohne Notizen erinnerst.'],
     sv: ['Planera mina studier', 'Studieverkstad', 'Prova två korta repetitionspass.', 'Beskriv vad som fungerade och vad du skulle ändra.', 'Jag fördelade repetitionen över två dagar.', 'Jämför nästa gång också vad du minns utan anteckningar.'],
 };
-const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories'];
+const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories', 'teacher-class-picker'];
 const browser = await chromium.launch({ headless: true });
 try {
     for (const lang of captureLocales) {
@@ -37,7 +39,7 @@ try {
         let authenticated = false;
         page.on('pageerror', error => errors.push(error.message));
         await page.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); }, lang);
-        const group = { id: 91, name: groupName, code: 'DEMO-3B', school: '', school_level: 'secondaria', owner_username: 'teacher.demo', is_active: true, members_count: 2, created_at: '2026-09-21T08:00:00Z' };
+        const group = { id: 91, name: groupName, code: 'DEMO-3B', school: '', school_level: 'secondaria', institution_id: null, description: instructions, methodologies: null, context_visible_to_students: false, owner_username: 'teacher.demo', is_active: true, members_count: 2, created_at: '2026-09-21T08:00:00Z' };
         const goal = { id: 1, title, motivation: instructions, criteria: responsePrompt, reflection: '', status: 'active', priority: 2, review_date: '2026-10-15', shared_group_id: null, revision: 1, catalog_id: null, catalog_snapshot: {}, links: [], parent_ids: [], method: [], origin: null, reviews: [], checks: [] };
         const assignment = { id: 1, author_name: 'Alex · Demo', group_name: groupName, source_kind: 'goal', recipient_username: null, recipient_count: 2, instructions, created_at: '2026-09-21T08:00:00Z', revoked_at: null, snapshot: { title, description: '', details: '' }, intent: 'requested', due_date: '2026-10-15', response_prompt: responsePrompt };
         const catalog = [{ id: 1, author_username: 'teacher.demo', group_id: 91, status: 'published', version: 1, data: { title, description: instructions, criteria: responsePrompt, suggestions: '', area: '', audience: '', language: lang } }];
@@ -87,6 +89,11 @@ try {
         async function go(path) { await page.goto(`${origin}${path}`, { waitUntil: 'networkidle' }); await page.locator('main h1, main h2').first().waitFor(); }
         async function capture(name, locator) {
             await page.mouse.move(1430, 10);
+            if (name === 'teacher-groups') {
+                for (const image of await page.locator('[data-teacher-area-header] img').all()) await image.evaluate(element => element.decode());
+                await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
+                locator = null; // Include creation and header; avoid sticky-header overlap on an element crop.
+            }
             if (name === 'institution-categories') {
                 await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
                 await page.locator('[data-institution-categories] img').evaluate(element => element.decode());
@@ -107,15 +114,33 @@ try {
             assert.deepEqual(errors, []);
             assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
             if (name === 'orientation') await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
-            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'teacher-area', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
+            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'teacher-area', 'teacher-groups', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
             console.log(`${lang}/${name}`);
         }
-        if (['teacher-area', 'teacher-loading'].includes(process.env.GUIDE_SCREENS)) {
+        async function capturePicker() {
+            await page.getByRole('button', { name: notebookLinkText(lang, 'classes'), exact: true }).click();
+            const popup = page.getByRole('dialog', { name: classPickerText(lang, 'title'), exact: true });
+            await popup.getByLabel(classPickerText(lang, 'label'), { exact: true }).selectOption('91');
+            await popup.locator('#class-picker-save-91:not(:disabled)').waitFor();
+            await capture('teacher-class-picker', popup);
+            await page.keyboard.press('Escape');
+        }
+        if (process.env.GUIDE_SCREENS === 'teacher-class-picker') {
             authenticated = true; teacher = true;
             await go('/docente');
-            await page.getByRole('link', { name: teacherAreaName(lang, 'orientamento'), exact: true }).waitFor();
             await capture('teacher-area');
-            if (process.env.GUIDE_SCREENS === 'teacher-loading') {
+            await capturePicker();
+            await context.close();
+            continue;
+        }
+        if (['teacher-area', 'teacher-loading', 'teacher-classes'].includes(process.env.GUIDE_SCREENS)) {
+            authenticated = true; teacher = true;
+            if (process.env.GUIDE_SCREENS !== 'teacher-classes') {
+                await go('/docente');
+                await page.getByRole('link', { name: teacherAreaName(lang, 'orientamento'), exact: true }).waitFor();
+                await capture('teacher-area');
+            }
+            if (process.env.GUIDE_SCREENS !== 'teacher-area') {
                 await go('/docente/classi');
                 const groupCard = page.locator('section').filter({ has: page.getByRole('heading', { name: groupName, exact: true }) }).last();
                 await groupCard.waitFor();
@@ -175,6 +200,7 @@ try {
         teacher = true;
         await go('/docente/orientamento'); await page.getByRole('heading', { name: title, exact: true }).waitFor(); await capture('institution-categories');
         await go('/docente'); await page.getByRole('link', { name: teacherAreaName(lang, 'orientamento'), exact: true }).waitFor(); await capture('teacher-area');
+        await capturePicker();
         await go('/docente/classi');
         const groupCard = page.locator('section').filter({ has: page.getByRole('heading', { name: groupName, exact: true }) }).last();
         await capture('teacher-groups', groupCard.locator('..').locator('..'));

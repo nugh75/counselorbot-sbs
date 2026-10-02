@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 
 // Anonymous HTTP fixtures, following PR31: no backend, database or external traffic.
 const origin = new URL(process.env.TEACHER_ERRORS_BASE_URL || 'http://127.0.0.1:3124').origin;
@@ -46,6 +46,12 @@ for (const [lang, names] of Object.entries(labels)) {
         await page.route('**/*', route => {
             const request = route.request(); const url = new URL(request.url());
             if (url.origin !== origin) return route.abort();
+            // Keep this notebook regression at the form/HTTP seam. The existing
+            // event illustration's 4x image-optimizer request can hang standalone;
+            // serve its real bytes without changing application image behavior.
+            if (url.pathname === '/_next/image' && url.searchParams.get('url') === '/images/platform/eventi.png') {
+                return route.fulfill({ contentType: 'image/png', body: readFileSync(new URL('../public/images/platform/eventi.png', import.meta.url)) });
+            }
             if (!url.pathname.startsWith('/api/')) return request.method() === 'GET' ? route.continue() : route.abort();
             if (request.method() !== 'GET') {
                 writes.push({ path: url.pathname, body: request.postDataJSON() });
@@ -92,7 +98,7 @@ for (const [lang, names] of Object.entries(labels)) {
                 if (index < 5) {
                     await page.keyboard.press('Tab');
                     if (index === 3 || index === 4) {
-                        assert.equal(await notebook.locator('a').nth(index - 3).evaluate(e => e === document.activeElement), true);
+                        assert.equal(await notebook.locator('button[aria-haspopup="dialog"], a').nth(index - 3).evaluate(e => e === document.activeElement), true);
                         await page.keyboard.press('Tab');
                     }
                     assert.equal(await fields.nth(index + 1).evaluate(e => e === document.activeElement), true);
@@ -100,11 +106,13 @@ for (const [lang, names] of Object.entries(labels)) {
                 await field.fill(`  ${keys[index]} demo  `);
             }
             assert.deepEqual(writes, []); // typing never saves or transfers data
-            assert.equal(await notebook.locator('a').count(), 4); // contextual navigation only
-            assert.deepEqual(await notebook.locator('a').allTextContents(), linkNames[lang]);
-            assert.deepEqual(await notebook.locator('a').evaluateAll(links => links.map(l => l.getAttribute('href'))), ['/docente/classi', '/profilo/obiettivi', '/profilo/timeline', '/profilo/portfolio']);
-            for (const name of linkNames[lang]) {
-                const link = notebook.getByRole('link', { name, exact: true });
+            // S14 replaces the Classi navigation link with an in-place dialog trigger.
+            assert.equal(await notebook.locator('button[aria-haspopup="dialog"]').count(), 1);
+            assert.equal(await notebook.locator('a').count(), 3);
+            assert.deepEqual(await notebook.locator('button[aria-haspopup="dialog"], a').allTextContents(), linkNames[lang]);
+            assert.deepEqual(await notebook.locator('a').evaluateAll(links => links.map(l => l.getAttribute('href'))), ['/profilo/obiettivi', '/profilo/timeline', '/profilo/portfolio']);
+            for (const [index, name] of linkNames[lang].entries()) {
+                const link = notebook.getByRole(index === 0 ? 'button' : 'link', { name, exact: true });
                 assert.ok(await link.isVisible());
                 assert.ok((await link.boundingBox()).height >= 44);
             }
@@ -114,12 +122,12 @@ for (const [lang, names] of Object.entries(labels)) {
                 await page.screenshot({ path: `${process.env.NOTEBOOK_SCREENSHOT_DIR}/teacher-notebook-de-320.png`, fullPage: true });
             }
             await fields.last().focus();
-            for (const link of (await notebook.locator('a').all()).slice(2)) {
+            for (const link of (await notebook.locator('a').all()).slice(1)) {
                 await page.keyboard.press('Tab');
                 assert.equal(await link.evaluate(e => e === document.activeElement), true);
             }
             await page.keyboard.press('Tab');
-            const save = notebook.getByRole('button').first();
+            const save = notebook.locator('button.bg-indigo-600'); // Classi now precedes Save as a dialog trigger.
             assert.equal(await save.evaluate(e => e === document.activeElement), true);
             await page.keyboard.press('Enter');
             await save.filter({ hasText: /salvato|saved|guardado|enregistré|gespeichert|sparad/i }).waitFor();

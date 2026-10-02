@@ -86,6 +86,11 @@ attivato da `dev-backend.sh` tramite `PATH`, `LD_LIBRARY_PATH`,
 
 ## Riferimenti
 
+- Classi S13 e successivo popup S14: `scripts/dev-teacher-class-management-tests.sh`,
+  solo frontend su `127.0.0.1:3133`, upstream inutilizzabile e API simulate;
+  nessun backend/database. Start/stop, comandi e limiti in
+  `docs/operations/teacher-class-management-validation.md`.
+
 - Piano origine dell'implementazione: `docs/plans/2026-09-24-obiettivi-rete-plan.md`
 - Anteprima senza backend (solo dati demo): `docs/operations/personal-area-dev-preview.md`
 
@@ -155,3 +160,23 @@ Il blocco B del taccuino riutilizza lo stesso server e isolamento. Da `frontend/
 Copre rimandi, scarto/annullamento della bozza, salvataggio, cronologia, ruoli e
 sei lingue; dettagli in `docs/operations/teacher-notebook-links-validation.md`.
 Nessuna nuova porta, backend o procedura di avvio/arresto.
+
+## Fixture popup Classi dal taccuino (S14)
+
+`scripts/dev-teacher-class-picker-tests.sh` avvia solo il frontend con hot reload
+su `127.0.0.1:3134`, upstream `http://127.0.0.1:9`. Verificare prima la porta
+con `ss -ltn 'sport = :3134'`. Nessun backend, SSO, database o container avviato;
+le API sono fixture anonime in memoria nel browser e il traffico esterno è bloccato.
+Da `frontend/`:
+
+```bash
+TEACHER_PICKER_BASE_URL=http://127.0.0.1:3134 node --test --experimental-strip-types tests/teacher-class-picker.test.mjs
+```
+
+Tunnel: `ssh -N -L 3134:127.0.0.1:3134 <utente>@<server>`; URL
+`http://localhost:3134`. Senza le fixture non è una preview autenticata.
+Arresto: Ctrl+C nel terminale dello script; usare solo PID verificati di questa
+sessione, mai pkill generici. Le prove compilate usano la stessa porta dopo aver
+arrestato il dev, con i comandi in `teacher-class-management-validation.md`.
+La baseline S13 è stata copiata in `/tmp/s14-parent-app`, servita solo su
+`127.0.0.1:3136` e arrestata al termine. Nessun altro worktree è stato modificato.
