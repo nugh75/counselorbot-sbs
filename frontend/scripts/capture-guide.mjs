@@ -37,7 +37,7 @@ try {
         let authenticated = false;
         page.on('pageerror', error => errors.push(error.message));
         await page.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); }, lang);
-        const group = { id: 91, name: groupName, code: 'DEMO-3B', school: '', school_level: 'secondaria', owner_username: 'teacher.demo', is_active: true, members_count: 2, created_at: '2026-09-21T08:00:00Z' };
+        const group = { id: 91, name: groupName, code: 'DEMO-3B', school: '', school_level: 'secondaria', institution_id: null, description: instructions, methodologies: null, context_visible_to_students: false, owner_username: 'teacher.demo', is_active: true, members_count: 2, created_at: '2026-09-21T08:00:00Z' };
         const goal = { id: 1, title, motivation: instructions, criteria: responsePrompt, reflection: '', status: 'active', priority: 2, review_date: '2026-10-15', shared_group_id: null, revision: 1, catalog_id: null, catalog_snapshot: {}, links: [], parent_ids: [], method: [], origin: null, reviews: [], checks: [] };
         const assignment = { id: 1, author_name: 'Alex · Demo', group_name: groupName, source_kind: 'goal', recipient_username: null, recipient_count: 2, instructions, created_at: '2026-09-21T08:00:00Z', revoked_at: null, snapshot: { title, description: '', details: '' }, intent: 'requested', due_date: '2026-10-15', response_prompt: responsePrompt };
         const catalog = [{ id: 1, author_username: 'teacher.demo', group_id: 91, status: 'published', version: 1, data: { title, description: instructions, criteria: responsePrompt, suggestions: '', area: '', audience: '', language: lang } }];
@@ -87,6 +87,11 @@ try {
         async function go(path) { await page.goto(`${origin}${path}`, { waitUntil: 'networkidle' }); await page.locator('main h1, main h2').first().waitFor(); }
         async function capture(name, locator) {
             await page.mouse.move(1430, 10);
+            if (name === 'teacher-groups') {
+                for (const image of await page.locator('[data-teacher-area-header] img').all()) await image.evaluate(element => element.decode());
+                await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
+                locator = null; // Include creation and header; avoid sticky-header overlap on an element crop.
+            }
             if (name === 'institution-categories') {
                 await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
                 await page.locator('[data-institution-categories] img').evaluate(element => element.decode());
@@ -107,15 +112,17 @@ try {
             assert.deepEqual(errors, []);
             assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
             if (name === 'orientation') await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
-            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'teacher-area', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
+            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'teacher-area', 'teacher-groups', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
             console.log(`${lang}/${name}`);
         }
-        if (['teacher-area', 'teacher-loading'].includes(process.env.GUIDE_SCREENS)) {
+        if (['teacher-area', 'teacher-loading', 'teacher-classes'].includes(process.env.GUIDE_SCREENS)) {
             authenticated = true; teacher = true;
-            await go('/docente');
-            await page.getByRole('link', { name: teacherAreaName(lang, 'orientamento'), exact: true }).waitFor();
-            await capture('teacher-area');
-            if (process.env.GUIDE_SCREENS === 'teacher-loading') {
+            if (process.env.GUIDE_SCREENS !== 'teacher-classes') {
+                await go('/docente');
+                await page.getByRole('link', { name: teacherAreaName(lang, 'orientamento'), exact: true }).waitFor();
+                await capture('teacher-area');
+            }
+            if (process.env.GUIDE_SCREENS !== 'teacher-area') {
                 await go('/docente/classi');
                 const groupCard = page.locator('section').filter({ has: page.getByRole('heading', { name: groupName, exact: true }) }).last();
                 await groupCard.waitFor();

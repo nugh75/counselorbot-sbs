@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 
 // Anonymous HTTP fixtures, following PR31: no backend, database or external traffic.
 const origin = new URL(process.env.TEACHER_ERRORS_BASE_URL || 'http://127.0.0.1:3124').origin;
@@ -46,6 +46,12 @@ for (const [lang, names] of Object.entries(labels)) {
         await page.route('**/*', route => {
             const request = route.request(); const url = new URL(request.url());
             if (url.origin !== origin) return route.abort();
+            // Keep this notebook regression at the form/HTTP seam. The existing
+            // event illustration's 4x image-optimizer request can hang standalone;
+            // serve its real bytes without changing application image behavior.
+            if (url.pathname === '/_next/image' && url.searchParams.get('url') === '/images/platform/eventi.png') {
+                return route.fulfill({ contentType: 'image/png', body: readFileSync(new URL('../public/images/platform/eventi.png', import.meta.url)) });
+            }
             if (!url.pathname.startsWith('/api/')) return request.method() === 'GET' ? route.continue() : route.abort();
             if (request.method() !== 'GET') {
                 writes.push({ path: url.pathname, body: request.postDataJSON() });

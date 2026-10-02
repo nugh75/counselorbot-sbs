@@ -9,6 +9,7 @@
 - **Test**: `docker exec counselorbot_backend python -m backend.tests.test_smoke`
 - **Repo**: (github)
 - **Visual identity**: `docs/design.md` — read it before changing layout, colour, typography, or any UI component
+- **Class management fixtures/editor contract**: `docs/operations/teacher-class-management-validation.md` — frontend-only tests on 127.0.0.1:3133; collapsible class cards and shared editor for the subsequent notebook popup.
 
 ## Mandatory platform documentation maintenance
 

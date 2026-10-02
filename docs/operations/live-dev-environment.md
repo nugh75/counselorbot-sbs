@@ -86,6 +86,11 @@ attivato da `dev-backend.sh` tramite `PATH`, `LD_LIBRARY_PATH`,
 
 ## Riferimenti
 
+- Classi S13 e successivo popup S14: `scripts/dev-teacher-class-management-tests.sh`,
+  solo frontend su `127.0.0.1:3133`, upstream inutilizzabile e API simulate;
+  nessun backend/database. Start/stop, comandi e limiti in
+  `docs/operations/teacher-class-management-validation.md`.
+
 - Piano origine dell'implementazione: `docs/plans/2026-09-24-obiettivi-rete-plan.md`
 - Anteprima senza backend (solo dati demo): `docs/operations/personal-area-dev-preview.md`
 
