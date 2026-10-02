@@ -269,3 +269,49 @@ La fixture viene arrestata prima della consegna. I test non certificano backend,
 SSO reale o dispositivi fisici. Dopo push/PR, chiudere il solo task S3; il goal
 resta aperto. Successore errori/vuoti `52d583fa-ce96-426c-9956-4328c86a9b38`:
 avvio/tier/modello da confermare dopo merge, non lanciare.
+## S4 — errori di caricamento docente (2 ottobre 2026)
+
+Task `52d583fa-ce96-426c-9956-4328c86a9b38`, goal
+`2ab67a9c-3e74-4ffa-ae45-622b99b1db1a`; worktree
+`/home/nugh75/counselorbot-sbs-worktrees/s4-loading-errors-1002`, branch
+`fix/teacher-loading-error-states`, base `e1e2b0d` (PR29). Solo
+codex/gpt-6.1-sol high: deroga cross-modello esplicita registrata nel diario,
+nessun altro agente. Dettagli riproducibili: `docs/operations/teacher-loading-errors.md`.
+
+GroupsPanel, TeacherNotebook e DocenzaClassBar distinguono caricamento, vuoto
+valido ed errore. Riprova è esplicito/localizzato; il refresh conserva bozze e
+selezione. Salva taccuino e creazione gruppi sono bloccati prima della lettura
+riuscita; il composer resta disponibile. Campi classe mai modificati si
+aggiornano dal server, bozze modificate restano intatte anche dopo retry riuscito.
+Abort e controllo scope scartano risposte tardive; 401/403 seguono il guard.
+Nessun cambio backend/schema/dipendenze o alla semantica notebook/default.
+
+Verifiche finali:
+
+- Rosso→verde su tutte e tre le superfici (HTTP503 / rete); 57/57 test browser
+  S4 sulla build standalone locale: errori/retry, loading/vuoto valido,
+  refresh/bozze/salvataggio, invio unico, unmount/account/ruolo/anteprima,
+  sei lingue, tastiera, overflow e guida con immagini ingrandibili.
+- PR28/29: draft-protection + goal-method-action 34/34; teacher-catalogs 7/7;
+  teacher-area-home smoke verde. `npm test`: 236/236.
+- TypeScript, ESLint mirato, i18n (2863 chiavi), build locale e Docker verdi;
+  documento funzionale/guida aggiornati; 12 screenshot ricatturati, ispezione
+  diretta Area docenti IT e classi EN; guidance-refresh/check e diff check.
+- Docker solo validazione: `counselorbot-sbs-s4-loading-errors:validation`,
+  image ID `sha256:1e5373d7456124c70977f32e9904a8be42df5cf2e0de64ebbff77cc0b4e79a66`.
+  Nessun container avviato, nessun deploy/restart/sudo. Warning ENV Docker legacy
+  preesistenti. Backend/DB/SSO reale e release produzione non verificati.
+- Baseline note NewDeckDialog (lint globale) e guide-audiences pubblico:
+  non rieseguite né modificate. I controlli pertinenti sono verdi. Le prove
+  tardive del taccuino sospendono la navigazione in dev con lettura trattenuta;
+  sono verdi sulla build compilata. L'anteprima è testata con cambio scope dopo
+  il mount; non sono state modificate identità, guard o banner globali.
+
+Main checkout allineato solo con `git pull --ff-only` a `e1e2b0d`;
+hash .gitignore `e440397c568fadda1b1d0098779eefd13665da099a26279a875b1ebaadc1e024`
+e handoff estraneo `bf3845abf29b27821d49829c80c7eb4f4cd5d9b966aad43205820796f349e824`
+identici prima/dopo. Nessun edit/stash/commit nel main checkout.
+Fixture dev/standalone su `127.0.0.1:3124`, upstream fittizio `127.0.0.1:9`;
+arresto con Ctrl+C prima della consegna, nessun backend o database usato.
+Consegna tramite commit/push e PR; chiusura task solo dopo la PR,
+goal complessivo lasciato al Timoniere in attesa del merge utente.
