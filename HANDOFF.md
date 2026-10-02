@@ -315,3 +315,46 @@ Fixture dev/standalone su `127.0.0.1:3124`, upstream fittizio `127.0.0.1:9`;
 arresto con Ctrl+C prima della consegna, nessun backend o database usato.
 Consegna tramite commit/push e PR; chiusura task solo dopo la PR,
 goal complessivo lasciato al Timoniere in attesa del merge utente.
+
+## S14 — popup Classi dal taccuino, consegna unica con S13 (2026-10-02)
+
+Worktree esclusivo `s14-class-popup-1002`, branch
+`feature/teacher-notebook-class-picker`, stack autorizzato dal commit S13
+`d1f3599c141a39573ca8b932e22b5e35dffc65b8` (ancestry, HEAD iniziale e remoto
+verificati). Approvazione ASCII di pagina e popup «ok», comportamento
+«Conserva il salvataggio attuale», confermati nella consegna S13 esterna.
+Un solo agente, nessun revisore o modello aggiunto.
+
+Il rimando Classi apre `ClassGroupPicker` con selezione inizialmente vuota,
+editor/PUT S13 riusati, guard di bozza e salvataggio per cambio/chiusura,
+focus trap/restore, stati lettura/retry/vuoto/403. Fascia e istituto mantengono
+il PUT immediato; Salva e scarto riguardano solo il contesto classe.
+Il taccuino resta montato e la bozza privata sopravvive. Nessun cambio di
+API, permessi, DB, notebook_context, envelope, sessione/chat, limiti 600/1.200,
+ordine/campi/consenso/default A/C o protezioni B/S4. Gli altri tre rimandi
+continuano a navigare e la pagina Classi resta nella normale navigazione.
+Guide/screenshot del popup nelle sei lingue, documento piattaforma e manifest
+allineati. Test e prove combinati, inclusi limiti baseline, in
+`docs/operations/teacher-class-management-validation.md`.
+
+Frontend-only su `127.0.0.1:3134`, fixture anonime in memoria, upstream
+irraggiungibile `127.0.0.1:9`, traffico esterno bloccato. Baseline S13 copiata
+in `/tmp/s14-parent-app` su :3136, senza modificare altri worktree.
+Avvio/stop/tunnel in `docs/operations/live-dev-environment.md`; processi propri
+arrestati prima della pubblicazione. Immagine frontend di sola validazione:
+`counselorbot-frontend:s14-class-popup-1002-validation`; nessun container
+avviato, backend/SSO/DB produzione, sudo, merge, deploy o blocco D.
+
+Task `3dc47b92-09aa-4eb9-9ffa-1013b8f750fc`: chiudere solo dopo verifiche,
+commit atomico S14, push e PR unica contro main con entrambi gli interventi.
+Goal `de3eed06-878a-41c5-8b83-63993f8a35cf` aperto fino al merge dell’utente.
+
+Validazione finale S14: 189/189 browser/smoke compilati (54 popup, 34 Classi,
+57 S4, 18 copy A/C, 25 rimandi B, smoke home), 236/236 unitari, TypeScript,
+i18n, ESLint mirato, build, guidance e diff riusciti. Lint globale identico
+a S13: 1 errore NewDeckDialog + 16 warning; guide-audiences 0/6, stessi vecchi
+link sulla base e sulla candidata. Immagine finale
+`sha256:ff2ff32e3a441e297986b7e21db80885ae7e20e20c385d98c506b64ce2645cf9`,
+138634848 byte, nessun container avviato. Una sola guard di navigazione nel
+taccuino riceve i segnali dirty/busy dal popup: evita conferme spurie sulla
+bozza privata nel browser legacy, con test rosso prima e verde dopo.

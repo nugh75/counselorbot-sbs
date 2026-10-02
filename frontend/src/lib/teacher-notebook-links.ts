@@ -1,6 +1,7 @@
 import type { Lang } from './i18n';
 
-// Navigation only: no notebook content, selected class or creation parameters.
+// Contextual entry points: classes opens the picker; the other three navigate.
+// No notebook content, selected class or creation parameters are transferred.
 export const notebookToolLinks = [
     { field: 'classes_overview', href: '/docente/classi', label: 'classes' },
     { field: 'formation_interests', href: '/profilo/obiettivi', label: 'goals' },

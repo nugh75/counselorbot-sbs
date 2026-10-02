@@ -137,7 +137,113 @@ Log locali di sessione in `/tmp/s13-*.log`, non artefatti durevoli della PR.
 
 ## S14 — popup e validazione combinata
 
-[DA COMPLETARE da S14 senza sostituire i risultati S13]
+Worktree `s14-class-popup-1002`, branch `feature/teacher-notebook-class-picker`.
+HEAD iniziale pulito e remoto S13 esatto
+`d1f3599c141a39573ca8b932e22b5e35dffc65b8`, ancestry verificata; main remoto
+`af26ef9d691e67e312c0f28028fde51849ec4051`. Lo stack autorizzato conserva il
+commit S13 senza cherry-pick, rebase, squash o amend. Popup ASCII già approvato,
+con selettore inizialmente vuoto e nome/scuola in sola lettura.
+
+### Implementazione e confini
+
+`ClassGroupPicker` riusa `useTeacherResource`, `useClassGroupEditors` e
+`ClassGroupEditor` S13. Non possiede copie dei valori/baseline, salvataggi o
+permessi. GET `/api/admin/groups` e `/api/institutions`, stessi PUT parziali
+S13, identici campi/trim/null. Il gate di ruolo del taccuino rimane quello della
+pagina Classi; le letture sono locali alla singola apertura, senza cache account.
+Nome, scuola/ente, proprietario e iscritti restano metadati in sola lettura.
+Nessuna creazione/eliminazione, membri, trasferimento, grant o assegnazione.
+
+Il solo ingresso Classi del taccuino diventa un pulsante `aria-haspopup=dialog`.
+La pagina completa resta nella normale navigazione. Gli altri tre link B non
+cambiano. Il popup non legge alcuna nota del taccuino e non modifica URL,
+notebook_context/envelope, sessione, consenso/default o contesto chat.
+I sei campi/ID/ordine e i limiti 600/1.200 A/C restano invariati; il taccuino è
+sempre montato. Annulla e scarto riguardano solo la bozza contesto classe,
+non fascia/istituto già salvati: testo esplicito in tutte le sei lingue.
+
+Cambio classe, Annulla, X, Esc e sfondo controllano dirty/busy S13, compresi
+PUT immediati delle tendine. La conferma offre Continua/Scarta e conserva
+classe, testo, focus e selezione quando annullata. I dialoghi nativi rendono
+inerte lo sfondo; il ciclo Tab esplicito impedisce il passaggio ai controlli
+del browser. La chiusura restituisce il focus al chiamante. Il popup comunica
+solo dirty/busy al taccuino: UNA guard di navigazione protegge entrambe le bozze,
+senza sovrapporre marker di cronologia nei browser senza Navigation API.
+Guard, API e controller condivisi non sono stati modificati.
+
+Test di riproduzione ha dimostrato che due guard distinte causavano una
+conferma del taccuino dopo lo scarto classe nel browser legacy (1/2 prima).
+La singola guard risolve il caso (2/2 dopo), senza scartare/salvare le note
+private; un test reale usa entrambe le bozze modificate. Altri test verificano
+Back/beforeunload, PUT in-flight, modifica successiva all’invio, doppio invio,
+errori e retry del contesto/delle tendine, identità cambiata durante un PUT,
+ruolo cambiato tramite reload e GET tardivo di un popup già chiuso.
+
+### Riproduzione e prove tecniche
+
+Avvio `scripts/dev-teacher-class-picker-tests.sh`, solo frontend su
+`127.0.0.1:3134` con upstream `127.0.0.1:9`, dopo verifica porta libera.
+Fixture anonime in memoria, tutte le API intercettate, traffico esterno bloccato;
+nessun backend, SSO, DB o container. Tunnel/stop/isolamento in
+`live-dev-environment.md`. Per l’app compilata, da `frontend/`:
+
+```bash
+BACKEND_ORIGIN=http://127.0.0.1:9 NEXT_TELEMETRY_DISABLED=1 npm run build
+cp -a public .next/standalone/public
+cp -a .next/static .next/standalone/.next/static
+PORT=3134 HOSTNAME=127.0.0.1 NEXT_TELEMETRY_DISABLED=1 node .next/standalone/server.js
+# Altro terminale, frontend:
+TEACHER_PICKER_BASE_URL=http://127.0.0.1:3134 TEACHER_CLASSES_BASE_URL=http://127.0.0.1:3134 TEACHER_ERRORS_BASE_URL=http://127.0.0.1:3134 TEACHER_AREA_BASE_URL=http://127.0.0.1:3134 node --test --experimental-strip-types --test-concurrency=2 tests/teacher-class-picker.test.mjs tests/teacher-class-management.test.mjs tests/teacher-loading-errors.test.mjs tests/teacher-notebook-copy.test.mjs tests/teacher-notebook-links.test.mjs tests/teacher-area-home.test.mjs
+```
+
+La fixture notebook continua a servire i byte reali di `eventi.png` come in S13,
+senza togliere asserzioni o modificare il servizio immagini. Il test B sposta
+le verifiche di navigazione/modifier/new-tab su Obiettivi personali, conservando
+payload, focus, cronologia, ruolo e bozza. Classi è ora verificata come popup,
+compreso il 403. A/C verifica un pulsante e tre link nello stesso ordine Tab,
+con lo stesso Salva e payload di sei campi.
+
+Catture: `GUIDE_BASE_URL=http://127.0.0.1:3134 GUIDE_SCREENS=teacher-class-picker
+node --experimental-strip-types scripts/capture-guide.mjs`, sei lingue,
+GET-only. I sei screenshot teacher-area sono stati rigenerati e risultano
+identici; sei nuovi `teacher-class-picker.png`, immagini Classi S13 conservate.
+La guida docente mostra entrambe le immagini della sezione taccuino.
+Ispezione delle catture IT/DE e browser a 320px, viewport/scala equivalenti
+al 200%/400%, inclusi nomi/scuole/proprietari lunghi e conferma da tastiera.
+Nessun feedback UX umano raccolto o inventato.
+
+**Risultati finali sulla candidata compilata:** 189/189 complessivi: 54/54
+popup (incluse sei gallerie guide), 34/34 Classi S13, 57/57 S4, 18/18 copy
+A/C, 25/25 rimandi B e smoke teacher-area-home. 236/236 unitari; TypeScript,
+i18n (2.863 chiavi, sei lingue + tuple locali complete verificate nel browser),
+ESLint di tutti i file toccati senza warning, build, guidance refresh/check/
+--base af26ef9 e diff/staged-check riusciti. Screenshot finali rigenerati
+sull’app compilata. Prima dell’ultima correzione la suite compilata era 185/185;
+le quattro prove aggiuntive mantengono visibile la regressione legacy
+scoperta e verificano tastiera/nomi molto lunghi, portando il totale a 189.
+
+Confronto ripetuto con S13 copiata in `/tmp/s14-parent-app` (standalone) e
+`/tmp/s14-parent-source` (sorgenti archiviati dal commit), senza scrivere negli
+altri worktree. Il test nuovo di apertura popup è rosso su S13 perché manca
+il pulsante; la candidata conserva la bozza e resta su `/docente`.
+Lint globale identico dopo normalizzazione dei path: errore NewDeckDialog +
+16 warning. `guide-audiences` resta 0/6 su base e candidata, stessi sei timeout
+alla riga 32 sui vecchi nomi dei link; nessuno dei due difetti fuori scope
+è stato corretto o mascherato. I nuovi test della guida decodificano e ingrandiscono
+l’immagine popup nelle sei lingue e verificano il ritorno del focus.
+
+Immagine solo validazione `counselorbot-frontend:s14-class-popup-1002-validation`,
+comando `docker build --build-arg NEXT_PUBLIC_API_URL=http://127.0.0.1:9 -t
+counselorbot-frontend:s14-class-popup-1002-validation frontend`.
+ID finale `sha256:ff2ff32e3a441e297986b7e21db80885ae7e20e20c385d98c506b64ce2645cf9` (138634848 byte). Nessun container avviato/riavviato,
+compose up, deploy, sudo o dati reali. I server propri :3134/:3136 sono arrestati
+prima della pubblicazione. Log `/tmp/s14-*.log`, non artefatti durevoli della PR.
+
+Limiti: fixture HTTP anonime non certificano backend, DB o SSO reale; nessuna
+revisione server/concorrenza cross-browser introdotta. Il browser conserva
+la responsabilità dell’avviso nativo beforeunload e di un’uscita cross-document
+esplicitamente confermata. L’ottimizzatore immagini resta fuori dalla prova
+notebook con l’intercettazione S13. Merge, deploy e blocco D non autorizzati.
 
 S13 pubblica la primaria senza PR parziale. S14 deve partire dal suo HEAD remoto
 esatto e aprire l'unica PR finale con entrambi i commit. Merge e deploy non sono
