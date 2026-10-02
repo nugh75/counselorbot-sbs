@@ -48,7 +48,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     assert.deepEqual(h2.slice(0, 3), ['Percorso guidato: obiettivi per la mia classe', 'Classe e assegnazioni', 'Cataloghi']);
     // link illustrati
     for (const href of ['/docente/classi', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
-        assert.equal(await page.locator(`a[href="${href}"]`).count(), 1, `link ${href}`);
+        assert.equal(await page.locator(`nav a[href="${href}"]`).count(), 1, `link ${href}`);
     }
     assert.ok(await page.locator('[data-teacher-area-home] img').first().isVisible());
     // taccuino inline: campo "Discipline insegnate"

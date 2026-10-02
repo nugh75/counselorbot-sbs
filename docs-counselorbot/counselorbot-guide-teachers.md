@@ -31,7 +31,14 @@ An empty notebook does not exclude selected classes from the class-objective
 context, depending on the chosen notebook. Save explicitly. Keep notes brief:
 the unchanged limits are 600 characters per field and 1,200 for the overall
 notebook block in field order. Not every note may fit in full; state relevant
-details in chat. These are copy clarifications only; no new tool links or grouping.
+details in chat. Below the teacher notebook hints, optional links open Groups and
+classes, Personal goals, Timeline and Portfolio. Personal goals concern your own
+development; the class path is separate, at the top of the Teacher area. Opening a
+link does not copy notes or create, save, publish or share content. With unsaved
+changes, confirm discarding to leave or cancel to keep text, focus and selection.
+Wait for a pending save before leaving; a failed save keeps the draft and
+protection. A clean draft needs no confirmation; opening a new tab keeps the draft
+in the original tab. No new field grouping is introduced.
 
 ## Teacher catalogs
 
