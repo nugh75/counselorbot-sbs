@@ -4,10 +4,13 @@
 // metodologie, classi). Salvataggio esplicito append-only; il contenuto entra
 // solo nella chat guidata degli obiettivi didattici (OBIETTIVO_DOCENZA).
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NotebookPen } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
-import { apiFetch } from '@/lib/auth';
+import { apiFetch, getViewAsAccount } from '@/lib/auth';
+import { useTeacherResource } from './useTeacherResource';
+import { TeacherForbidden } from './TeacherAccess';
+import { teacherLoadingText } from '@/lib/i18n-teacher-loading';
 
 const TEXTS = {
     it: {
@@ -141,28 +144,47 @@ const FIELDS = [
     ['notes', 'notes', 'notesPlaceholder'],
 ] as const;
 
+function parseNotebook(payload: unknown): Record<string, string> {
+    if (payload === null) return {};
+    if (!payload || typeof payload !== 'object' || !('data' in payload)
+        || !payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) throw new Error('invalid notebook');
+    return Object.fromEntries(FIELDS.map(([key]) => {
+        const value = (payload.data as Record<string, unknown>)[key];
+        if (value != null && typeof value !== 'string') throw new Error('invalid field');
+        return [key, value ?? ''];
+    }));
+}
+
 export function TeacherNotebook() {
-    const { lang } = useI18n();
+    const { lang, t } = useI18n();
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [values, setValues] = useState<Record<string, string>>({});
-    const [loaded, setLoaded] = useState(false);
+    const { data, loading, failed, forbidden, reload } = useTeacherResource('/api/user/teacher-notebook', parseNotebook);
+    const loaded = data !== undefined && !forbidden;
     const [busy, setBusy] = useState(false);
     const [savedFlash, setSavedFlash] = useState(false);
     const [error, setError] = useState('');
+    const dirty = useRef(false);
+    const editVersion = useRef(0);
+    const pendingSave = useRef<AbortController | null>(null);
+    const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const load = useCallback(() => {
-        apiFetch('/api/user/teacher-notebook')
-            .then((res) => (res.ok ? res.json() : null))
-            .then((payload: { data: Record<string, string> } | null) => {
-                setValues(payload?.data ?? {});
-            })
-            .catch(() => setValues({}))
-            .finally(() => setLoaded(true));
+    useEffect(() => {
+        // A successful reread must not replace the user's unsaved text.
+        if (data !== undefined && !dirty.current) setValues(data);
+    }, [data]);
+    useEffect(() => () => {
+        pendingSave.current?.abort();
+        if (flashTimer.current) clearTimeout(flashTimer.current);
     }, []);
 
-    useEffect(() => { load(); }, [load]);
-
     const save = async () => {
+        if (!loaded || loading || pendingSave.current) return;
+        const controller = new AbortController();
+        pendingSave.current = controller;
+        const version = editVersion.current;
+        const account = getViewAsAccount()?.username;
+        const current = () => !controller.signal.aborted && account === getViewAsAccount()?.username;
         setBusy(true);
         setError('');
         try {
@@ -173,16 +195,25 @@ export function TeacherNotebook() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
+                signal: controller.signal,
             });
+            if (!current()) return;
             if (!res.ok) throw new Error('save failed');
-            setSavedFlash(true);
-            setTimeout(() => setSavedFlash(false), 1500);
+            if (version === editVersion.current) {
+                dirty.current = false;
+                setSavedFlash(true);
+                if (flashTimer.current) clearTimeout(flashTimer.current);
+                flashTimer.current = setTimeout(() => setSavedFlash(false), 1500);
+            }
         } catch {
-            setError(texts.error);
+            if (current()) setError(texts.error);
         } finally {
-            setBusy(false);
+            if (current()) setBusy(false);
+            if (pendingSave.current === controller) pendingSave.current = null;
         }
     };
+
+    if (forbidden) return <TeacherForbidden />;
 
     return (
         <div className="rounded-lg border border-indigo-200 bg-white p-4">
@@ -199,7 +230,13 @@ export function TeacherNotebook() {
                         <textarea
                             id={`teacher-notebook-${key}`}
                             value={values[key] ?? ''}
-                            onChange={(event) => setValues((prev) => ({ ...prev, [key]: event.target.value }))}
+                            disabled={!loaded}
+                            onChange={(event) => {
+                                dirty.current = true;
+                                editVersion.current++;
+                                setSavedFlash(false);
+                                setValues((prev) => ({ ...prev, [key]: event.target.value }));
+                            }}
                             placeholder={texts[placeholderKey as keyof typeof texts] as string}
                             rows={2}
                             maxLength={600}
@@ -211,17 +248,25 @@ export function TeacherNotebook() {
             <div className="mt-3 flex items-center gap-3">
                 <button
                     type="button"
-                    disabled={busy}
+                    disabled={busy || loading || !loaded}
                     onClick={() => void save()}
                     className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
                     {savedFlash ? texts.saved : texts.save}
                 </button>
-                {error && <p className="text-sm text-red-600">{error}</p>}
-                {loaded && !savedFlash && !Object.values(values).some((v) => (v ?? '').trim()) && (
+                {!failed && loaded && <button type="button" disabled={loading || busy} onClick={() => void reload()}
+                    className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t('common.refresh')}</button>}
+                {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+                {loaded && !loading && !failed && !savedFlash && !Object.values(values).some((v) => (v ?? '').trim()) && (
                     <p className="text-xs text-slate-500">{texts.empty}</p>
                 )}
             </div>
+            {loading && <p role="status" className="mt-3 text-sm text-slate-500">{t('common.loading')}</p>}
+            {failed && <div role="alert" className="mt-3 flex flex-wrap items-center gap-3 text-sm text-red-600">
+                <p>{teacherLoadingText(lang, 'notebook')}</p>
+                <button type="button" disabled={loading || busy} onClick={() => void reload()}
+                    className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t('setup.retry')}</button>
+            </div>}
         </div>
     );
 }

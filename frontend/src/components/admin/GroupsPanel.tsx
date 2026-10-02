@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Link2, Plus, Share2, Trash2, UserMinus, UserPlus, Users, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { learningText } from '@/lib/i18n-assignment-work';
@@ -8,6 +8,9 @@ import { apiFetch } from '@/lib/auth';
 import { fetchInstitutions, type Institution } from '@/lib/referrals-api';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
 import { GroupAssignments } from '../teacher/GroupAssignments';
+import { useTeacherResource } from '../teacher/useTeacherResource';
+import { TeacherForbidden } from '../teacher/TeacherAccess';
+import { teacherLoadingText } from '@/lib/i18n-teacher-loading';
 
 interface StudentGroup {
     id: number;
@@ -225,10 +228,15 @@ const TEXTS = {
     },
 };
 
+function parseGroups(payload: unknown): StudentGroup[] {
+    if (!Array.isArray(payload)) throw new Error('invalid groups');
+    return payload as StudentGroup[];
+}
+
 export function GroupsPanel() {
-    const { lang } = useI18n();
+    const { lang, t } = useI18n();
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
-    const [groups, setGroups] = useState<StudentGroup[] | null>(null);
+    const { data: groups, loading, failed, forbidden, reload: load } = useTeacherResource('/api/admin/groups', parseGroups);
     const [creating, setCreating] = useState(false);
     const [newName, setNewName] = useState('');
     const [newSchool, setNewSchool] = useState('');
@@ -247,6 +255,7 @@ export function GroupsPanel() {
     const [shareOpen, setShareOpen] = useState<number | null>(null);
     // Contesto classe in modifica: bozza per gruppo, salvataggio esplicito.
     const [classCtx, setClassCtx] = useState<Record<number, { description: string; methodologies: string; visible: boolean }>>({});
+    const ctxVersions = useRef<Record<number, number>>({});
     const [savedCtxId, setSavedCtxId] = useState<number | null>(null);
 
     useEffect(() => { setOrigin(window.location.origin); }, []);
@@ -262,15 +271,6 @@ export function GroupsPanel() {
             .catch(() => { /* bot spento: nessun link Telegram */ });
     }, []);
 
-    const load = useCallback(() => {
-        apiFetch('/api/admin/groups')
-            .then((res) => (res.ok ? res.json() : []))
-            .then((payload) => setGroups(Array.isArray(payload) ? payload as StudentGroup[] : []))
-            .catch(() => setGroups([]));
-    }, []);
-
-    useEffect(() => { load(); }, [load]);
-
     // Bozze del contesto classe allineate ai gruppi caricati (creazione inclusa).
     useEffect(() => {
         if (!groups) return;
@@ -278,19 +278,18 @@ export function GroupsPanel() {
             const next: typeof prev = {};
             for (const group of groups) {
                 const draft = prev[group.id];
-                next[group.id] = draft && draft.description === (group.description ?? '') && draft.methodologies === (group.methodologies ?? '')
-                    ? draft
-                    : {
-                        description: group.description ?? '',
-                        methodologies: group.methodologies ?? '',
-                        visible: group.context_visible_to_students,
-                    };
+                next[group.id] = ctxVersions.current[group.id] && draft ? draft : {
+                    description: group.description ?? '',
+                    methodologies: group.methodologies ?? '',
+                    visible: group.context_visible_to_students,
+                };
             }
             return next;
         });
     }, [groups]);
 
     const setCtxField = (groupId: number, patch: Partial<{ description: string; methodologies: string; visible: boolean }>) => {
+        ctxVersions.current[groupId] = (ctxVersions.current[groupId] ?? 0) + 1;
         setClassCtx((prev) => {
             const current = prev[groupId] || { description: '', methodologies: '', visible: false };
             return { ...prev, [groupId]: { ...current, ...patch } };
@@ -300,6 +299,7 @@ export function GroupsPanel() {
     const updateClassCtx = async (groupId: number) => {
         const draft = classCtx[groupId];
         if (!draft) return;
+        const version = ctxVersions.current[groupId] ?? 0;
         setBusy(true);
         setMessage('');
         try {
@@ -313,6 +313,7 @@ export function GroupsPanel() {
                 }),
             });
             if (!res.ok) throw new Error('update failed');
+            if ((ctxVersions.current[groupId] ?? 0) === version) ctxVersions.current[groupId] = 0;
             setSavedCtxId(groupId);
             setTimeout(() => setSavedCtxId((id) => (id === groupId ? null : id)), 1500);
             load();
@@ -435,7 +436,7 @@ export function GroupsPanel() {
     };
 
     const create = async () => {
-        if (!newName.trim()) return;
+        if (!groups || busy || loading || !newName.trim()) return;
         setBusy(true);
         setMessage('');
         try {
@@ -496,6 +497,8 @@ export function GroupsPanel() {
     const webLink = (group: StudentGroup) => `${origin}/gruppo?g=${group.code}`;
     const telegramLink = (group: StudentGroup) => `https://t.me/${botUsername}?start=g_${group.code}`;
 
+    if (forbidden) return <TeacherForbidden />;
+
     return (
         <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -507,8 +510,9 @@ export function GroupsPanel() {
                 </div>
                 <button
                     type="button"
+                    disabled={!groups || loading}
                     onClick={() => setCreating(true)}
-                    className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                    className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
                     <Plus className="h-4 w-4" /> {texts.newGroup}
                 </button>
@@ -555,7 +559,7 @@ export function GroupsPanel() {
                     <div className="flex gap-2">
                         <button
                             type="button"
-                            disabled={busy || !newName.trim()}
+                            disabled={busy || loading || !groups || !newName.trim()}
                             onClick={() => void create()}
                             className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                         >
@@ -573,7 +577,13 @@ export function GroupsPanel() {
             )}
 
             {message && <p className="text-sm text-red-600">{message}</p>}
-            {groups !== null && groups.length === 0 && <p className="text-sm text-slate-500">{texts.empty}</p>}
+            {loading && <p role="status" className="text-sm text-slate-500">{t('common.loading')}</p>}
+            {failed && <div role="alert" className="flex flex-wrap items-center gap-3 text-sm text-red-600">
+                <p>{teacherLoadingText(lang, 'classes')}</p>
+                <button type="button" disabled={loading} onClick={() => void load()}
+                    className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t('setup.retry')}</button>
+            </div>}
+            {!loading && !failed && groups?.length === 0 && <p className="text-sm text-slate-500">{texts.empty}</p>}
 
             <div className="space-y-3">
                 {(groups || []).map((group) => (

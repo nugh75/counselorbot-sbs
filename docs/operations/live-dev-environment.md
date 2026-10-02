@@ -137,3 +137,15 @@ Per vedere il frontend tramite SSH: `ssh -N -L 3112:127.0.0.1:3112 <utente>@<ser
 poi `http://localhost:3112`. I dati della suite sono disponibili solo nel browser
 Playwright che li intercetta. Arrestare il server con Ctrl+C; non lasciare
 processi della fixture attivi a fine lavoro.
+
+## Fixture per errori di caricamento docente (S4)
+
+`scripts/dev-teacher-loading-errors-tests.sh` avvia soltanto il frontend su
+`127.0.0.1:3124`, con upstream API `127.0.0.1:9`. Verificare prima che la porta
+sia libera (`ss -ltn`). I test Playwright intercettano tutte le API e bloccano
+il traffico esterno: dati anonimi in memoria, nessun backend o database.
+Da `frontend/`: `node --test tests/teacher-loading-errors.test.mjs`.
+Per vedere la fixture: `ssh -N -L 3124:127.0.0.1:3124 <utente>@<server-remoto>`,
+poi `http://localhost:3124`. Senza fixture API le chiamate falliscono volutamente.
+Arresto: Ctrl+C nel terminale che ha lanciato lo script. Dettagli e limiti in
+`docs/operations/teacher-loading-errors.md`.
