@@ -11,7 +11,7 @@ import { Field, input } from './GoalUI';
 type Certified = { slug: string; name: string };
 
 /** Metodo dell'obiettivo: strategie certificate (✦) e dello studente (✎). Le proprie restano riusabili. */
-export function MethodPicker({ value, items, onChange, onPractice, disabled }: { value: MethodRef[]; items: MethodItem[]; onChange: (next: MethodRef[]) => void; onPractice?: (title: string) => void; disabled?: boolean }) {
+export function MethodPicker({ value, items, onChange, onPractice, disabled, practiceDisabled, practiceHelp }: { value: MethodRef[]; items: MethodItem[]; onChange: (next: MethodRef[]) => void; onPractice?: (title: string) => void; disabled?: boolean; practiceDisabled?: boolean; practiceHelp?: string }) {
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
     const [own, setOwn] = useState<PersonalStrategy[]>([]); const [certified, setCertified] = useState<Certified[]>([]);
     const [choice, setChoice] = useState(''); const [draft, setDraft] = useState('');
@@ -29,10 +29,11 @@ export function MethodPicker({ value, items, onChange, onPractice, disabled }: {
     };
     return <section className="space-y-2" aria-label={l('method')}>
         <h4 className="font-semibold">{l('method')}</h4>
+        {practiceHelp && <p id="goal-practice-help" className="text-sm text-slate-600">{practiceHelp}</p>}
         <ul className="space-y-1">{value.map(ref => <li key={ref.kind === 'own' ? `o${ref.id}` : `c${ref.slug}`} className="flex items-center gap-2 rounded-md bg-slate-50 px-2">
             <span aria-hidden>{ref.kind === 'own' ? '✎' : '✦'}</span>
             <span className="min-w-0 flex-1 break-words py-2">{titleOf(ref)} <span className="text-xs text-slate-500">({l(ref.kind === 'own' ? 'ownMark' : 'certifiedMark')})</span></span>
-            {onPractice && <Button type="button" variant="secondary" disabled={disabled} onClick={() => onPractice(titleOf(ref))}>{l('putInPractice')}</Button>}
+            {onPractice && <Button type="button" variant="secondary" disabled={disabled || practiceDisabled} aria-describedby={practiceHelp ? "goal-practice-help" : undefined} onClick={() => onPractice(titleOf(ref))}>{l('putInPractice')}</Button>}
             <Button type="button" variant="ghost" disabled={disabled} aria-label={`✕ ${titleOf(ref)}`} onClick={() => onChange(value.filter(v => !sameRef(v, ref)))}><X className="h-4 w-4" aria-hidden /></Button>
         </li>)}</ul>
         <div className="flex flex-wrap items-end gap-2"><div className="min-w-0 flex-1"><Field label={l('pickStrategy')}>
