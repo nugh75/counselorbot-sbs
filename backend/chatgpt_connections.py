@@ -11,6 +11,7 @@ import math
 import os
 from pathlib import Path
 import secrets
+import tempfile
 import threading
 import time
 import uuid
@@ -40,23 +41,95 @@ class ChatGPTError(Exception):
         super().__init__("chatgpt.errors." + code)
 
 
-def enabled():
+def enabled(db=None):
+    if db is not None:
+        # Checking a flag must not flush a caller's pending chat/score writes.
+        with db.no_autoflush:
+            setting = db.query(models.Config).filter_by(key="chatgpt_enabled").first()
+        if setting is not None:
+            return setting.value == "true"
     return os.getenv("CHATGPT_ENABLED", "false").lower() in {"1", "true", "yes"}
+
+
+def managed_key_path():
+    directory = os.getenv("CHATGPT_CREDENTIALS_DIR", "").strip()
+    return (Path(directory) if directory else Path(__file__).resolve().parents[1] / "chatgpt_credentials") / "credential.key"
 
 
 def cipher():
     key = os.getenv("CHATGPT_CREDENTIAL_KEY", "").strip()
     filename = os.getenv("CHATGPT_CREDENTIAL_KEY_FILE", "").strip()
     try:
-        if filename:
-            key = Path(filename).read_text().strip()
+        if filename or not key:
+            key = (Path(filename) if filename else managed_key_path()).read_text().strip()
         return Fernet(key.encode())
     except (ValueError, OSError):
         raise ChatGPTError("notConfigured") from None
 
 
-def require_ready():
-    if not enabled():
+def prepare_key(db):
+    """Create one private, durable key; never replace an existing grant's key."""
+    if os.getenv("CHATGPT_CREDENTIAL_KEY_FILE", "").strip() or os.getenv("CHATGPT_CREDENTIAL_KEY", "").strip():
+        cipher()  # Operator-managed secrets retain precedence, including errors.
+        return
+    path = managed_key_path()
+    if not path.exists():
+        if db.query(models.ChatGPTConnection).filter(models.ChatGPTConnection.encrypted_credentials.isnot(None)).first():
+            raise ChatGPTError("keyMissing")
+        temporary = None
+        try:
+            path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+            path.parent.chmod(0o700)
+            # Publish only a fully written key. Concurrent workers keep the
+            # first published key; O_EXCL inside mkstemp gives mode 0600.
+            fd, temporary = tempfile.mkstemp(dir=path.parent, prefix=".key-")
+            with os.fdopen(fd, "wb") as output:
+                output.write(Fernet.generate_key())
+                output.flush()
+                os.fsync(output.fileno())
+            try:
+                os.link(temporary, path)
+            except FileExistsError:
+                pass
+            directory_fd = os.open(path.parent, os.O_RDONLY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        except OSError:
+            raise ChatGPTError("notConfigured") from None
+        finally:
+            if temporary is not None:
+                Path(temporary).unlink(missing_ok=True)
+    cipher()
+
+
+def installation_status(db):
+    ready, reason = True, None
+    try:
+        cipher()
+    except ChatGPTError as exc:
+        ready, reason = False, exc.code
+        if not (os.getenv("CHATGPT_CREDENTIAL_KEY", "").strip() or os.getenv("CHATGPT_CREDENTIAL_KEY_FILE", "").strip()):
+            if not managed_key_path().exists() and db.query(models.ChatGPTConnection).filter(models.ChatGPTConnection.encrypted_credentials.isnot(None)).first():
+                reason = "keyMissing"
+    source = "environment" if os.getenv("CHATGPT_CREDENTIAL_KEY", "").strip() or os.getenv("CHATGPT_CREDENTIAL_KEY_FILE", "").strip() else "managed"
+    return {"enabled": enabled(db), "ready": ready, "reason": reason, "key_source": source}
+
+
+def set_installation_enabled(db, active):
+    db.execute(insert(models.Config).values(key="chatgpt_enabled", value="false", description="Personal ChatGPT connections enabled")
+               .on_conflict_do_nothing(index_elements=["key"]))
+    setting = db.query(models.Config).filter_by(key="chatgpt_enabled").with_for_update().one()
+    if active:
+        prepare_key(db)
+    setting.value = "true" if active else "false"
+    db.commit()
+    return installation_status(db)
+
+
+def require_ready(db=None):
+    if not enabled(db):
         raise ChatGPTError("disabled")
     cipher()
 
@@ -165,7 +238,7 @@ def validate_credentials(data, client_id, *, nonce=None, subject=None):
 
 
 def start_link(db, username):
-    require_ready()
+    require_ready(db)
     now = datetime.now(timezone.utc)
     # A single stable host identifier survives restarts; concurrent workers agree.
     db.execute(insert(models.Config).values(key="chatgpt_host_id", value="urn:uuid:" + str(uuid.uuid4()),
@@ -195,7 +268,7 @@ def read_link(db, token, *, lock=False):
 
 
 def link_parameters(db, token):
-    require_ready()
+    require_ready(db)
     row = read_link(db, token)
     host_id = db.query(models.Config).filter_by(key="chatgpt_host_id").one().value
     return {"nonce": row.nonce, "client_id": row.expected_client_id or "dynamic_agent_client",
@@ -204,7 +277,7 @@ def link_parameters(db, token):
 
 def remember_registration(db, token, client_id):
     """Keep the issued public client ID before code exchange; no grant yet."""
-    require_ready()
+    require_ready(db)
     if client_id == "dynamic_agent_client":
         raise ChatGPTError("invalidCredentials")
     link = read_link(db, token)
@@ -221,7 +294,7 @@ def remember_registration(db, token, client_id):
 
 
 def complete_link(db, token, client_id, data):
-    require_ready()
+    require_ready(db)
     if client_id == "dynamic_agent_client":
         raise ChatGPTError("invalidCredentials")
     link = read_link(db, token)
@@ -252,7 +325,7 @@ def preference(db):
 
 
 def access_token(db):
-    require_ready()
+    require_ready(db)
     username = owner(db)
     if not username:
         raise ChatGPTError("signIn")
@@ -330,7 +403,7 @@ def list_models(db):
 
 def set_preference(db, username, active, model):
     if active:
-        require_ready()
+        require_ready(db)
     row = db.query(models.ChatGPTConnection).filter_by(username=username).with_for_update().first()
     if row is None:
         raise ChatGPTError("reconnect")
@@ -346,7 +419,7 @@ def set_preference(db, username, active, model):
 def status(db, username):
     ready, reason = True, None
     try:
-        require_ready()
+        require_ready(db)
     except ChatGPTError as exc:
         ready, reason = False, exc.code
     row = db.query(models.ChatGPTConnection).filter_by(username=username).first()

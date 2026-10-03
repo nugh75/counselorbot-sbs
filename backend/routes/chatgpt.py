@@ -1,6 +1,5 @@
 """Personal SIWC accounts. No token or client-supplied user enters a reply."""
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -40,6 +39,13 @@ async def current_owner(request: Request, identity: dict = Depends(auth.get_iden
     if request.headers.get("X-View-As") or request.query_params.get("view_as"):
         raise HTTPException(403, "chatgpt.errors.signIn")
     return identity["username"]
+
+
+async def current_administrator(request: Request, identity: dict = Depends(auth.get_identity)):
+    username = await current_owner(request, identity)
+    if not identity.get("is_admin"):
+        raise HTTPException(403, "chatgpt.errors.adminOnly")
+    return username
 
 
 def browser_mutation(request: Request, x_requested_with: str | None = Header(default=None)):
@@ -83,6 +89,21 @@ class Preference(BaseModel):
 class Registration(BaseModel):
     model_config = ConfigDict(extra="forbid")
     client_id: str = Field(min_length=1, max_length=256)
+
+
+class InstallationSettings(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = Field(strict=True)
+
+
+@router.get("/admin/chatgpt/settings")
+def installation_status(username: str = Depends(current_administrator), db: Session = Depends(database.get_db)):
+    return accounts.installation_status(db)
+
+
+@router.put("/admin/chatgpt/settings", dependencies=[Depends(browser_mutation)])
+def installation_settings(data: InstallationSettings, username: str = Depends(current_administrator), db: Session = Depends(database.get_db)):
+    return invoke(accounts.set_installation_enabled, db, data.enabled)
 
 
 @router.get("/user/chatgpt")

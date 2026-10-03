@@ -10,6 +10,7 @@ import { Callout } from '@/components/ui/Callout';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admin/PromptRequestPreview';
 import { PromptFactoryAlignment, type FactoryAlignmentResult } from '@/components/admin/PromptFactoryAlignment';
+import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
 
 // --- Types ---
 
@@ -1800,6 +1801,7 @@ export function ConfigForm() {
 
             {section === 'general' && (
             <div className="space-y-8">
+            <ChatGPTSettingsPanel />
             {/* 1. Provider & Model Selection */}
             <div className="glass-panel p-6 space-y-6">
                 <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
