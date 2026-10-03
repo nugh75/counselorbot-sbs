@@ -2394,7 +2394,7 @@ def prompt_meta_config_key(questionnaire_type: str, step_id: str | None = None) 
     return base
 
 
-def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None) -> dict:
+def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None, *, advice_requested=False) -> dict:
     flags = dict(PROMPT_COMPONENT_DEFAULTS)
     flags["allowed_strategies"] = None
     try:
@@ -2412,6 +2412,8 @@ def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None)
                 "certified_strategies": False,
                 "shared_responses": False,
             })
+        if (questionnaire_type or "").upper() == "QSA":
+            flags.update(prompt_config.qsa_component_defaults(step_id, advice_requested=advice_requested))
         key = prompt_component_config_key(questionnaire_type, step_id or "generic")
         row = db.query(models.Config).filter(models.Config.key == key).first()
         if row and row.value:

@@ -910,6 +910,14 @@ def _run_seed_and_migrations():
             db.commit()
             logger.info("Config seeding committed")
 
+        # Older factory intros omitted their instrument and inherited QSA.
+        # Repair membership before count-based seeding, without rewriting text.
+        from .guided_step_classification import repair_intro_classification
+        repaired_intros = repair_intro_classification(db)
+        if repaired_intros:
+            db.commit()
+            logger.info("Classificazione presentazioni corretta: %s", repaired_intros)
+
         # Seed QSA guided steps if none exist for QSA
         qsa_count = db.query(models.GuidedStep).filter(
             models.GuidedStep.questionnaire_type == "QSA"
@@ -925,7 +933,7 @@ def _run_seed_and_migrations():
         ).count()
         if qsar_count == 0:
             for step_def in DEFAULT_QSAR_GUIDED_STEPS:
-                db.add(models.GuidedStep(**step_def))
+                db.add(models.GuidedStep(**{**step_def, "questionnaire_type": "QSAr"}))
             db.commit()
 
         # Seed ZTPI guided steps if none exist for ZTPI
@@ -934,7 +942,7 @@ def _run_seed_and_migrations():
         ).count()
         if ztpi_count == 0:
             for step_def in DEFAULT_ZTPI_GUIDED_STEPS:
-                db.add(models.GuidedStep(**step_def))
+                db.add(models.GuidedStep(**{**step_def, "questionnaire_type": "ZTPI"}))
             db.commit()
 
         # Seed Savickas guided steps if none exist for SAVICKAS
@@ -943,7 +951,7 @@ def _run_seed_and_migrations():
         ).count()
         if savickas_count == 0:
             for step_def in DEFAULT_SAVICKAS_GUIDED_STEPS:
-                db.add(models.GuidedStep(**step_def))
+                db.add(models.GuidedStep(**{**step_def, "questionnaire_type": "SAVICKAS"}))
             db.commit()
 
         # Seed agent-led questionnaires (QPCS, QPCC, QAP) if none exist

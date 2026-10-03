@@ -358,3 +358,57 @@ link sulla base e sulla candidata. Immagine finale
 138634848 byte, nessun container avviato. Una sola guard di navigazione nel
 taccuino riceve i segnali dirty/busy dal popup: evita conferme spurie sulla
 bozza privata nel browser legacy, con test rosso prima e verde dopo.
+
+## QSA — anteprima e allineamento dei prompt di fabbrica (2026-10-03)
+
+Ramo `feature/questionnaire-prompt-preview`. L’utente ha autorizzato
+l’allineamento alla `Guida_Costruzione_Prompt_QSA_CounselorBot.docx` e ha
+confermato che i prompt devono rimanere in inglese. Il documento caricato ha
+testo identico alla guida già versionata. Nessun altro agente impiegato.
+
+I dieci step QSA e i blocchi di sistema/pedagogici seguono il documento;
+conservati il veto di nuove strategie nella sintesi e la composizione delle
+direttive condivise. La matrice dei componenti QSA alimenta runtime ed editor;
+un consiglio esplicito nei follow-up ammessi può attivare una strategia, salvo
+override amministrativi. L’anteprima senza bozze usa le regole effettive del
+turno. Lingua della risposta e interfaccia mantengono IT/EN/ES/FR/DE/SV.
+
+Risolta la causa della presentazione Savickas tra gli step QSA: le tre
+presentazioni QSAr/ZTPI/Savickas mancavano di `questionnaire_type`. I default
+lo dichiarano ora esplicitamente; l’avvio riclassifica soltanto i tre ID noti
+erroneamente assegnati a QSA, conservando tutti gli altri campi.
+
+I testi di un DB esistente non vengono riscritti all’avvio. Il comando
+`backend.qsa_factory_alignment` prepara un piano per gli esatti default
+precedenti riconosciuti tramite hash, preservando personalizzazioni e revisioni
+admin. `backend.prompt_updates` applica/annulla atomicamente con controllo
+degli hash. Procedura e comandi Codespaces in
+`docs/operations/qsa-factory-alignment.md`.
+
+Verifiche: 95 test backend mirati e 206 smoke, 236 unitari frontend, TypeScript,
+ESLint mirato (un warning preesistente), i18n (2863 chiavi × sei lingue),
+anteprima browser a 1440/390 px per tutti gli undici pannelli e le sei lingue,
+guidance-refresh/check e diff check. Il test legge direttamente la guida DOCX
+indipendente e simula dieci step in sei lingue senza chiamate LLM.
+
+Nella sola copia cloud di sviluppo: applicati 17 aggiornamenti dei vecchi testi
+di fabbrica; il secondo piano è vuoto. QSA ha dieci step con `intro` iniziale,
+QSAr nove, ZTPI sette, Savickas otto, ciascuno con la propria presentazione.
+Nessun intervento sul Codespace dell’utente o sulla produzione; nessun merge,
+deploy, chiave LLM o aggiornamento di altri prompt.
+
+Dev nativo ancora attivo su localhost:3107 (frontend), :8002 (backend), DB
+dedicato su :5435. Avvio locale tramite `.cloud-counselorbot/start-backend.sh`
+e `scripts/dev-frontend.sh`; arresto con Ctrl+C nei terminali di avvio. Nel
+Codespace si usa il precedente `start.sh`, porta privata 3107; fare pull e
+applicare il piano al DB di sviluppo prima del nuovo avvio.
+
+Docker di sola validazione: backend ricostruito come
+`counselorbot-qsa-alignment:dev`, import dei nuovi prompt e del comando riusciti.
+Per il proxy cloud è stato necessario montare il trust bundle del sistema solo
+nella fase pip, usando un Dockerfile temporaneo esterno al repository; TLS
+rimane verificato e i Dockerfile versionati sono invariati. La build frontend
+è stata tentata ma i download npm falliscono con `ENOTFOUND` e `npm ci`
+termina con «Exit handler never called», lasciando Next non installato;
+nessuna immagine frontend finale prodotta. Nessun
+container di produzione ricostruito, avviato o riavviato.
