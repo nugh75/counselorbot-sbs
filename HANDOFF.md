@@ -532,3 +532,74 @@ PostgreSQL dedicato :5435. Avvio backend con
 Processi lasciati attivi: backend reloader PID 24513, frontend npm PID 24514 (Next PID 24533). Arresto: `kill 24513 24533`, senza toccare
 PostgreSQL o produzione. Log `/tmp/chatgpt-dev-backend.log` e
 `/tmp/chatgpt-dev-frontend.log`. Il Codespace dell'utente non e' stato aggiornato.
+
+
+## Attivazione ChatGPT dall’Amministrazione (2026-10-03)
+
+L’utente vuole abilitare la funzione dall’interfaccia senza generare chiavi o
+modificare file con comandi. Ramo `feature/chatgpt-admin-activation` creato da
+main aggiornato (`dbeb6167`, PR #39 verificata MERGED). Nessun agente delegato.
+
+Nuova scheda in Amministrazione → Configurazione → Generale → Collegamento
+ChatGPT: Abilita/Disabilita, stato e salvataggio immediato, collegamento all’Area
+personale. UI e messaggi backend in IT/EN/ES/FR/DE/SV, guida aggiornata nelle sei
+lingue. Il controllo cambia solo la disponibilità del servizio; ogni persona
+continua a collegare e attivare il proprio account separatamente.
+
+GET/PUT `/admin/chatgpt/settings` ammettono solo un amministratore autenticato
+reale; esclusi ricercatori e view-as, PUT protetto dall’header anti-CSRF e payload
+booleano stretto. `Config.chatgpt_enabled` persistente precede la variabile
+iniziale `CHATGPT_ENABLED`. Effetto sulle nuove richieste senza riavvio; la
+lettura del flag non esegue autoflush di scritture chat/punteggi pendenti.
+`chatgpt_*` esclusi dalla configurazione generica e scrittura rifiutata lì, per
+impedire bypass della preparazione della chiave e modifica dell’host ID.
+
+Prima attivazione: chiave Fernet privata in chatgpt_credentials/credential.key
+(0700 directory, 0600 file). Scrittura/fsync in temporaneo e pubblicazione
+atomica senza sovrascrittura: worker concorrenti convergono sulla stessa chiave.
+Nuovo volume Docker dedicato montato su /app/chatgpt_credentials; esclusioni
+Git/Docker, nessuna chiave restituita al browser o inserita nell’immagine.
+Le chiavi fornite dall’operatore restano prioritarie, anche se non valide.
+`CHATGPT_CREDENTIALS_DIR` può selezionare un altro archivio persistente.
+
+Disattivazione conserva chiave e credenziali, blocca nuove associazioni e
+inferenze personali senza ripiego a pagamento. Funziona anche se la chiave è
+mancante. Chiave persa con grant esistenti: richiede ripristino dal backup,
+non genera un sostituto. Chiave non valida o archivio non scrivibile: errore e
+nessuna attivazione salvata. Backup deve includere DB e chiave protetta coerenti.
+Procedura principale ora via UI in docs/operations/chatgpt-subscription.md.
+
+Verifiche: 53 backend integrazione/amministrazione, 72 routing/PII, 202 smoke
+eseguiti dal runner, 236 unitari frontend passati. Browser: 13 prove nuove
+(6 lingue, 390/1440 px + ricercatore) e 20 regressioni connessione personale/
+allineamento prompt passate. Controllo ricercatore attende davvero il 403 prima
+di verificare che il comando sia assente. TypeScript e i18n (2944 chiavi × sei
+lingue) passati; ESLint mirato zero errori, un warning preesistente in ConfigForm
+sulla dipendenza getConfigValue. Nessun account OpenAI reale o LLM chiamato.
+
+Prova aggiuntiva sull’app dev effettiva (API non simulate): dal pannello
+attivato, ricaricato e disattivato; stato verificato tramite API. Nel solo DB
+counselorbot_dev ora la scelta amministrativa è false, con chiave pronta.
+Chiave runtime conservata in /workspace/counselorbot-sbs/chatgpt_credentials,
+ignorata da Git e non letta/stampata. Screenshot /tmp/chatgpt-admin-live-390.png;
+fixture UI /tmp/chatgpt-admin-390.png e /tmp/chatgpt-admin-1440.png.
+Nessuna associazione OAuth o modifica di prompt/dati di produzione.
+
+Docker: check del Dockerfile backend passa; frontend restituisce tre avvisi
+preesistenti LegacyKeyValueFormat e codice 1. Compose validato con copia e
+variabili/credenziali fittizie fuori repo, perché qui non c’è un .env reale.
+Il rebuild completo non è eseguibile con circa 983 MiB liberi e driver vfs:
+una build precedente ha già saturato il disco; preflight in
+/tmp/chatgpt-admin-compose-validation/build-preflight.log. Nessuna nuova
+immagine finale prodotta, nessun container/volume rimosso o riavviato.
+Il normale aggiornamento dell’operatore deve ricostruire le immagini e applicare
+il volume persistente. Limiti SIWC/ammissibilità/licenza della PR precedente
+restano documentati; l’attivazione non cambia i piani ammessi da OpenAI.
+
+Dev lasciato attivo: backend :8002 (reloader PID 24513), frontend :3107 (npm
+PID 24514, Next PID 24533), PostgreSQL dedicato :5435. Arresto con
+`kill 24513 24533`, senza toccare DB/produzione. Venv locale conservata tramite
+symlink alla copia in /tmp, come nella sezione precedente. Nessun intervento
+sul Codespace dell’utente: aggiornare la nuova PR/main dopo il merge e riavviare
+una volta per caricare il codice; poi l’attivazione dal pannello non richiede
+ulteriori riavvii. Nessun merge o deploy da parte dell’agente.

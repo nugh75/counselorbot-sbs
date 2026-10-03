@@ -128,8 +128,22 @@ lavori. Il progresso PDF, invece, è locale al browser.
 
 ### Abbonamento personale ChatGPT (opzionale)
 
+L’amministratore apre **Amministrazione → Configurazione → Generale →
+Collegamento ChatGPT** e preme **Abilita collegamento ChatGPT**. Il server
+prepara automaticamente la protezione delle credenziali e salva la scelta:
+non servono comandi, modifica di file o riavvio. L’interfaccia indica lo stato
+e conferma subito il salvataggio. Il controllo è riservato agli amministratori;
+non è disponibile ai ricercatori o alle anteprime di ruolo.
+
+**Disabilita collegamento ChatGPT** sospende le nuove richieste e conserva gli
+account collegati. La riattivazione mantiene i collegamenti. Se la chiave di
+protezione manca per account esistenti, occorre ripristinarla dal backup del
+server; il pannello non la sostituisce automaticamente. Chi gestisce il server
+deve includere l’archivio protetto delle credenziali nei backup.
+
 Nell’Area personale, **Il tuo abbonamento ChatGPT** consente il collegamento
-se chi gestisce il server ha configurato e attivato la funzione. L’accesso a
+quando la funzione è attiva. **Apri il tuo collegamento ChatGPT** nel pannello
+amministrativo porta direttamente a questa scheda. L’accesso a
 CounselorBot e quello a ChatGPT sono distinti. La funzione usa il flusso ufficiale
 Sign in with ChatGPT per inferenza diretta, attualmente in anteprima: piani e
 installazioni ammessi vanno verificati prima dell’attivazione; un piano di
