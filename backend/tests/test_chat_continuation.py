@@ -104,7 +104,7 @@ def test_guided_continuation_streams_and_persists_one_complete_answer(monkeypatc
         strategy_candidates={}, system_prompt_final="Italian", full_message="Come studio?",
         history=[], sanitize=False, components={},
     )
-    monkeypatch.setattr(chat, "AIService", lambda db: ai)
+    monkeypatch.setattr(chat, "AIService", lambda db, username=None: ai)
     monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 6)
     monkeypatch.setattr(chat, "_apply_counselor_overrides", lambda *a: None)
     monkeypatch.setattr(chat, "prepare_chat_turn", lambda *a, **kw: prepared)
@@ -145,7 +145,7 @@ def test_guided_continuation_streams_and_persists_one_complete_answer(monkeypatc
 def test_site_continuation_uses_original_question_for_retrieval_and_saves_complete_answer(monkeypatch, partial, suffix):
     ai = SimpleNamespace(config={}, stream_response=MagicMock(return_value=iter([suffix])))
     index = SimpleNamespace(search=MagicMock(return_value=[{"source": "test"}]))
-    monkeypatch.setattr(site_chat, "AIService", lambda db: ai)
+    monkeypatch.setattr(site_chat, "AIService", lambda db, username=None: ai)
     monkeypatch.setattr(site_chat, "get_index", lambda collection: index)
     monkeypatch.setattr(site_chat, "_resolve_site_prompt", lambda *a: "Italian")
     monkeypatch.setattr(site_chat, "_apply_language_directive", lambda text, *a, **kw: text)

@@ -6,6 +6,7 @@ import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, Palette, P
 import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { Button } from '@/components/ui/Button';
+import { PersonalAPIPolicy } from '@/components/admin/PersonalAPIPolicy';
 import { Callout } from '@/components/ui/Callout';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admin/PromptRequestPreview';
@@ -1934,6 +1935,7 @@ export function ConfigForm() {
             </div>
 
             {/* 2. API Keys */}
+            <PersonalAPIPolicy />
             <div className="space-y-4">
                 <div>
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.apiKeys')}</h3>

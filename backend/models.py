@@ -27,6 +27,18 @@ class Config(Base):
     description = Column(String, nullable=True)
 
 
+class PersonalAPISettings(Base):
+    """One active AI connection per ai4auth account; credentials are encrypted."""
+    __tablename__ = "personal_api_settings"
+
+    username = Column(String, primary_key=True)
+    provider = Column(String, nullable=False)
+    model_name = Column(String, nullable=False)
+    encrypted_key = Column(Text, nullable=False)
+    enabled = Column(Boolean, nullable=False, default=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class APISecret(Base):
     """Legacy local key storage, retained for schema compatibility and never read at runtime."""
     __tablename__ = "api_secrets"

@@ -41,7 +41,8 @@ session_memory/          Runtime chat memory mounted in Docker
 1. Copy or create a `.env` file from [`.env.example`](.env.example).
 2. Set PostgreSQL credentials and any AI provider keys you need.
 3. In production, ai4auth injects `Remote-*` identity headers through the reverse proxy. Admin access is controlled by admin groups.
-4. API keys can be managed from the admin panel, but environment variables take precedence at runtime.
+4. System API keys are managed by ai4educ Console and read from the environment.
+5. Optional personal API keys are available from student and teacher areas when enabled by an administrator. Configure `PERSONAL_API_ENCRYPTION_KEY` first; see [personal API settings](docs/operations/personal-api-settings.md).
 
 Do not commit `.env` files, API keys, production uploads, or database dumps.
 

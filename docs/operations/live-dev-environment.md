@@ -216,3 +216,17 @@ GUIDE_BASE_URL=http://127.0.0.1:3134 GUIDE_SCREENS=teacher-area node --experimen
 
 Taccuino, popup e altre immagini non vengono rigenerati. Evidenze e limiti:
 `teacher-notebook-first-validation.md`. Nessun processo di S18 lasciato attivo.
+
+### Fixture browser delle API personali
+
+Avvio frontend isolato: `./scripts/dev-personal-api-fixtures.sh`, URL
+`http://127.0.0.1:3135`. La porta è verificata prima dell'avvio. Fermare con
+Ctrl+C nello stesso terminale. Nessun backend né database aggiuntivo è richiesto
+per `cd frontend && npm run test:personal-api`: tutte le API sono intercettate
+con fixture di account e chiavi fittizie. Non usare questa pagina per inserire
+credenziali reali durante la prova senza un backend di sviluppo isolato.
+
+Per rigenerare la schermata della guida con campo chiave vuoto:
+`cd frontend && PERSONAL_API_CAPTURE_GUIDE=1 npm run test:personal-api`.
+Le esecuzioni normali non riscrivono la schermata. Dettagli e limiti della
+funzione: [personal-api-settings.md](personal-api-settings.md).

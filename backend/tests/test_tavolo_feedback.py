@@ -127,7 +127,7 @@ def test_help_reads_current_content_and_history_without_modifying_the_map(table_
     client.put(path, json={'graph': graph, 'base_index': 0})
     calls = []
     class FakeAI:
-        def __init__(self, db):
+        def __init__(self, db, username=None):
             self.config = {}
         def call_model(self, **kwargs):
             calls.append(kwargs)

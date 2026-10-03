@@ -132,7 +132,7 @@ class _FakeAIService:
     """Sostituisce AIService: nessuna rete."""
     last_stream_args = {}
 
-    def __init__(self, db=None):
+    def __init__(self, db=None, username=None):
         self.config = {
             "active_provider": "openai",
             "model_name": "gpt-4o",
@@ -7966,7 +7966,7 @@ def test_diagram_from_message_uses_the_selected_counselor_preset():
         db.close()
 
     class _DiagramAIService:
-        def __init__(self, db):
+        def __init__(self, db, username=None):
             self.config = {"active_provider": "gemini", "model_name": "global-model"}
             self.disable_thinking = False
             self.reasoning_budget_override = None
@@ -8000,7 +8000,7 @@ def test_diagram_from_message_requires_a_selected_counselor():
     _set_diagram_skill(True)
 
     class _GlobalAIService:
-        def __init__(self, db):
+        def __init__(self, db, username=None):
             self.config = {"active_provider": "gemini", "model_name": "global-model"}
             self.disable_thinking = False
             self.reasoning_budget_override = None
@@ -8048,7 +8048,7 @@ def test_diagram_from_message_rejects_counselor_without_model_preset():
     class _GlobalAIService:
         called = False
 
-        def __init__(self, db):
+        def __init__(self, db, username=None):
             self.config = {"active_provider": "gemini", "model_name": "global-model"}
             self.disable_thinking = False
             self.reasoning_budget_override = None
@@ -8144,7 +8144,7 @@ def _run_diagram_with_fallback(counselor_id, broken_reply):
     calls = []
 
     class _FallbackAIService:
-        def __init__(self, db):
+        def __init__(self, db, username=None):
             self.config = {"active_provider": "gemini", "model_name": "global-model"}
             self.disable_thinking = False
             self.reasoning_budget_override = None

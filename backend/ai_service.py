@@ -13,6 +13,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import models
+from . import personal_api
 from . import pii
 from . import pii_ner
 from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
@@ -86,9 +87,28 @@ OPENAI_COMPAT_PROVIDERS = {
 LOCAL_PROVIDERS = {'ollama', 'llamacpp'}
 
 class AIService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, username: str | None = None):
         self.db = db
         self.config = self._load_config()
+        self.personal_target = None
+        self.personal_error = None
+        try:
+            connection = personal_api.active_settings(db, username)
+            if connection:
+                self.personal_target = (connection.provider, connection.model_name)
+                # The account connection replaces all system credentials for this
+                # instance. Explicit counselor targets cannot use another key.
+                for provider in API_KEY_ENV_MAP:
+                    self.config.pop(config_key(provider), None)
+                key = personal_api.decrypt_key(connection)
+                self.config[config_key(connection.provider)] = key
+                self.config['active_provider'] = connection.provider
+                self.config['model_name'] = connection.model_name
+                self.config['summary_model_name'] = connection.model_name
+        except personal_api.PersonalAPIError as exc:
+            # Raise within dispatch so existing HTTP/SSE error handlers can
+            # report it, while forbidding a fallback to system credentials.
+            self.personal_error = str(exc)
         self.last_usage = None
         self.last_provider = None
         self.last_model = None
@@ -227,6 +247,7 @@ class AIService:
             spent = self.db.query(func.coalesce(func.sum(models.Log.cost_usd), 0.0)).filter(
                 models.Log.timestamp >= month_start,
                 models.Log.cost_usd.isnot(None),
+                func.coalesce(models.Log.details["credential_source"].as_string(), "system") != "personal",
             ).scalar() or 0.0
             self._budget_locked_cache = float(spent) >= self.monthly_budget_usd
         except Exception as e:
@@ -238,6 +259,8 @@ class AIService:
         """Se il budget e' superato, forza Ollama locale + modello di fallback.
         Lascia invariati i provider gia' locali. Non tocca il benchmark
         (che usa call_model, percorso esplicito dell'admin)."""
+        if self.personal_target:
+            return self.personal_target
         if not self._free_target(provider, model) and self._budget_is_locked():
             fallback = self.budget_fallback_model or 'muse-glimmer:30b'
             logger.info(f"Budget mensile superato: fallback {provider}/{model} -> ollama/{fallback}")
@@ -426,7 +449,7 @@ class AIService:
                 client.models.list()
             return True
         except Exception as exc:
-            logger.warning("Verifica chiave API fallita per %s: %s", provider, exc)
+            logger.warning("Verifica chiave API fallita per %s (%s)", provider, type(exc).__name__)
             return False
 
     def get_response(
@@ -455,6 +478,10 @@ class AIService:
         )
 
     def _selected_target(self, provider, model):
+        if self.personal_error:
+            raise AIError(self.personal_error)
+        if self.personal_target:
+            return self.personal_target
         chosen = provider or self.config.get("active_provider", "openai")
         if model:
             return chosen, model
@@ -475,6 +502,8 @@ class AIService:
 
     def _targets(self, provider, model):
         primary = self._selected_target(provider, model)
+        if self.personal_target:
+            return [primary]
         primary = self._apply_budget_lock(*primary)
         raw = self.config.get("ai_fallback_targets", "[]")
         configured = json.loads(raw) if isinstance(raw, str) else raw
@@ -533,6 +562,10 @@ class AIService:
         """Chiamata bloccante a un (provider, model) ESPLICITO, bypassando la
         config attiva. Usato dal benchmark per confrontare modelli/provider.
         Popola self.last_usage (token/costo) quando il provider lo fornisce."""
+        if self.personal_error:
+            raise AIError(self.personal_error)
+        if self.personal_target:
+            provider, model = self.personal_target
         entry = self._provider(provider)
         plan = self._resolve_reasoning(model, requested_max_tokens=max_tokens,
                                        fallback_max_tokens=entry['call_max'])
@@ -546,8 +579,8 @@ class AIService:
         except AIError:
             raise
         except Exception as e:
-            logger.error(f"Errore call_model ({provider}/{model}): {e}")
-            raise AIError(f"Errore AI ({provider}/{model}): {e}") from e
+            logger.error("Errore call_model (%s/%s): %s", provider, model, type(e).__name__)
+            raise AIError(f"Errore AI ({provider}/{model}): {type(e).__name__}") from e
 
     # Token massimi per i riassunti (~80 parole → 120 token sono sufficienti)
     SUMMARY_MAX_TOKENS = 300
@@ -595,7 +628,7 @@ class AIService:
         try:
             return self._provider(provider)['call'](user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
         except Exception as e:
-            logger.error(f"Errore nella generazione del riassunto: {e}")
+            logger.error("Errore nella generazione del riassunto (%s)", type(e).__name__)
             # Fallback: troncamento semplice
             truncated = bot_response[:300].rsplit(' ', 1)[0]
             return f"{prefix}{truncated}..."

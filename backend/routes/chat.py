@@ -554,7 +554,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     request.language = _normalize_language(request.language)
 
     # 1. Retrieve Configuration and System Prompt based on Mode
-    ai_service = AIService(db)
+    ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
@@ -691,6 +691,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "system_prompt_key": prompt_key,
         "guided_phase_prompt_key": phase_prompt_key,
         "provider": _provider,
+        "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
         "model_attempts": getattr(ai_service, "last_attempts", []),
         "context_budget": getattr(ai_service, "last_context_report", None),
         "journey_coverage": prepared.components.get("journey_coverage"),
@@ -789,7 +790,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     request.language = _normalize_language(request.language)
 
     # Preparazione (usa la db della richiesta, ancora aperta qui)
-    ai_service = AIService(db)
+    ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
@@ -856,6 +857,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 "guided_phase_prompt_key": phase_prompt_key,
                 "provider": provider,
                 "model": model,
+                "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
                 "model_attempts": getattr(ai_service, "last_attempts", []),
                 "context_budget": getattr(ai_service, "last_context_report", None),
                 "journey_coverage": prepared.components.get("journey_coverage"),
@@ -1155,7 +1157,7 @@ async def chat_message(
     resolved_conversation_id = conversation_id_for(session_id, conversation_id)
     language = _normalize_language(language)
     # 1. Retrieve Configuration and System Prompt based on Mode
-    ai_service = AIService(db)
+    ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
 
     prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
     system_prompt = ai_service.config.get(
@@ -1206,6 +1208,7 @@ async def chat_message(
         "model": model,
         "questionnaire_type": questionnaire_type,
         "conversation_summary_length": len(conversation_summary),
+        "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
         "usage": usage,
         "cost_usd": cost_usd,
     }, "user_input", "bot_response")
