@@ -435,3 +435,21 @@ messaggi completi riflettono il budget simulato. Le trasformazioni specifiche de
 provider, compresa l’anonimizzazione esterna, non sono riprodotte. In caso di
 aggiornamento o errore, il contenuto precedente è dichiarato non aggiornato e la
 copia è disabilitata. I testi di anteprima supportano le sei lingue dell’interfaccia.
+
+L’editor dei prompt per step presenta un solo gruppo di selettori per sessione,
+counselor e lingua; i dati della sessione compaiono nell’anteprima, senza duplicati
+nell’editor. Appunti e selezioni dei componenti sono approfondimenti richiudibili.
+Una risposta dello studente vuota richiede un messaggio di prova prima di generare
+l’anteprima. L’assenza del modello e i principali limiti della simulazione sono
+spiegati nella lingua dell’interfaccia; gli avvisi originali restano nei dettagli
+tecnici. I blocchi distinguono inclusione simulata, esclusione, dato assente e
+recupero non eseguito. Tutti gli strumenti che condividono il pannello e le sei
+lingue usano lo stesso comportamento.
+
+La stampa delle pagine con anteprima nasconde testata fissa e navigazione,
+espande gli approfondimenti e rende stampabili i testi delle bozze senza aree a
+scorrimento. Dopo la stampa ripristina l’apertura precedente dei blocchi. Queste
+regole non modificano le altre pagine dell’applicazione.
+Il testo modificabile di uno step guidato è stampabile anche quando il suo
+pannello di anteprima è chiuso; non occorre aprire ogni anteprima per stampare
+le istruzioni degli step.

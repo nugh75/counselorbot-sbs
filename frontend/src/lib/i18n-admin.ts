@@ -4752,7 +4752,7 @@ const promptAuditIt: Dict = {
     'admin.config.inner.guidedSteps': 'Step guidati',
     'admin.config.noTexts': 'Nessun testo interfaccia configurato per questo strumento.',
     'admin.promptAudit.title': 'Prompt per step',
-    'admin.promptAudit.subtitle': 'Vista admin dei soli prompt collegati allo step selezionato: prompt di sistema e prompt dello step.',
+    'admin.promptAudit.subtitle': 'Modifica le istruzioni dello step e controlla come vengono combinate con il contesto nell’anteprima.',
     'admin.promptAudit.stepSelect': 'Step da ispezionare',
     'admin.promptAudit.sessionSelect': 'Sessione reale',
     'admin.promptAudit.noSession': 'Nessuna sessione selezionata',
@@ -4764,7 +4764,7 @@ const promptAuditIt: Dict = {
     'admin.promptAudit.mode': 'Modalita',
     'admin.promptAudit.promptKey': 'Chiave prompt',
     'admin.promptAudit.injectedList': 'Prompt mostrati',
-    'admin.promptAudit.onlyPrompts': 'Questa vista mostra solo i prompt. Non include punteggi, knowledge context, history, counselor o altri dati runtime.',
+    'admin.promptAudit.onlyPrompts': 'L’anteprima simula la composizione della richiesta; non esegue chiamate al modello.',
     'admin.promptAudit.editSystemPrompt': 'Modifica prompt di sistema',
     'admin.promptAudit.editStep': 'Modifica questo step',
     'admin.promptAudit.block.stepPrompt': 'Prompt dello step',
@@ -4774,7 +4774,7 @@ const promptAuditIt: Dict = {
 
 const promptAuditEn: Dict = {
     'admin.promptAudit.title': 'Step prompts',
-    'admin.promptAudit.subtitle': 'Admin view of only the prompts linked to the selected step: system prompt and step prompt.',
+    'admin.promptAudit.subtitle': 'Edit step instructions and inspect how they combine with context in the preview.',
     'admin.promptAudit.stepSelect': 'Step to inspect',
     'admin.promptAudit.sessionSelect': 'Real session',
     'admin.promptAudit.noSession': 'No session selected',
@@ -4786,7 +4786,7 @@ const promptAuditEn: Dict = {
     'admin.promptAudit.mode': 'Mode',
     'admin.promptAudit.promptKey': 'Prompt key',
     'admin.promptAudit.injectedList': 'Shown prompts',
-    'admin.promptAudit.onlyPrompts': 'This view shows prompts only. It does not include scores, knowledge context, history, counselor, or other runtime data.',
+    'admin.promptAudit.onlyPrompts': 'The preview simulates request composition; it does not call the model.',
     'admin.promptAudit.editSystemPrompt': 'Edit system prompts',
     'admin.promptAudit.editStep': 'Edit this step',
     'admin.promptAudit.block.stepPrompt': 'Step prompt',
@@ -5440,7 +5440,7 @@ const administrationPlansSv: Dict = {
 
 const promptAuditEs: Dict = {
     'admin.promptAudit.title': 'Prompts por paso',
-    'admin.promptAudit.subtitle': 'Vista de administración solo de los prompts vinculados al paso seleccionado: prompt de sistema y prompt del paso.',
+    'admin.promptAudit.subtitle': 'Edita las instrucciones del paso y comprueba cómo se combinan con el contexto.',
     'admin.promptAudit.stepSelect': 'Paso a inspeccionar',
     'admin.promptAudit.sessionSelect': 'Sesión real',
     'admin.promptAudit.noSession': 'Ninguna sesión seleccionada',
@@ -5452,7 +5452,7 @@ const promptAuditEs: Dict = {
     'admin.promptAudit.mode': 'Modo',
     'admin.promptAudit.promptKey': 'Clave del prompt',
     'admin.promptAudit.injectedList': 'Prompts mostrados',
-    'admin.promptAudit.onlyPrompts': 'Esta vista muestra solo los prompts. No incluye puntuaciones, contexto de conocimiento, historial, counselor u otros datos de ejecución.',
+    'admin.promptAudit.onlyPrompts': 'La vista previa simula la solicitud; no realiza llamadas al modelo.',
     'admin.promptAudit.editSystemPrompt': 'Editar prompts de sistema',
     'admin.promptAudit.editStep': 'Editar este paso',
     'admin.promptAudit.block.stepPrompt': 'Prompt del paso',
@@ -5474,7 +5474,7 @@ const promptAuditEs: Dict = {
 
 const promptAuditFr: Dict = {
     'admin.promptAudit.title': 'Prompts par étape',
-    'admin.promptAudit.subtitle': 'Vue admin des seuls prompts liés à l’étape sélectionnée : prompt système et prompt d’étape.',
+    'admin.promptAudit.subtitle': 'Modifiez les instructions de l’étape et examinez leur combinaison avec le contexte.',
     'admin.promptAudit.stepSelect': 'Étape à inspecter',
     'admin.promptAudit.sessionSelect': 'Session réelle',
     'admin.promptAudit.noSession': 'Aucune session sélectionnée',
@@ -5486,7 +5486,7 @@ const promptAuditFr: Dict = {
     'admin.promptAudit.mode': 'Mode',
     'admin.promptAudit.promptKey': 'Clé du prompt',
     'admin.promptAudit.injectedList': 'Prompts affichés',
-    'admin.promptAudit.onlyPrompts': 'Cette vue montre uniquement les prompts. Elle n’inclut pas les scores, le contexte de connaissances, l’historique, le counselor ni d’autres données d’exécution.',
+    'admin.promptAudit.onlyPrompts': 'L’aperçu simule la requête ; aucun appel au modèle.',
     'admin.promptAudit.editSystemPrompt': 'Modifier les prompts système',
     'admin.promptAudit.editStep': 'Modifier cette étape',
     'admin.promptAudit.block.stepPrompt': 'Prompt d’étape',
@@ -5508,7 +5508,7 @@ const promptAuditFr: Dict = {
 
 const promptAuditDe: Dict = {
     'admin.promptAudit.title': 'Schritt-Prompts',
-    'admin.promptAudit.subtitle': 'Admin-Ansicht nur der mit dem ausgewählten Schritt verknüpften Prompts: System-Prompt und Schritt-Prompt.',
+    'admin.promptAudit.subtitle': 'Schrittanweisungen bearbeiten und ihre Kombination mit dem Kontext prüfen.',
     'admin.promptAudit.stepSelect': 'Zu prüfender Schritt',
     'admin.promptAudit.sessionSelect': 'Echte Sitzung',
     'admin.promptAudit.noSession': 'Keine Sitzung ausgewählt',
@@ -5520,7 +5520,7 @@ const promptAuditDe: Dict = {
     'admin.promptAudit.mode': 'Modus',
     'admin.promptAudit.promptKey': 'Prompt-Schlüssel',
     'admin.promptAudit.injectedList': 'Angezeigte Prompts',
-    'admin.promptAudit.onlyPrompts': 'Diese Ansicht zeigt nur die Prompts. Sie enthält keine Werte, keinen Wissenskontext, keinen Verlauf, keinen Counselor und keine anderen Laufzeitdaten.',
+    'admin.promptAudit.onlyPrompts': 'Die Vorschau simuliert die Anfrage ohne Modellaufrufe.',
     'admin.promptAudit.editSystemPrompt': 'System-Prompts bearbeiten',
     'admin.promptAudit.editStep': 'Diesen Schritt bearbeiten',
     'admin.promptAudit.block.stepPrompt': 'Schritt-Prompt',
@@ -5542,7 +5542,7 @@ const promptAuditDe: Dict = {
 
 const promptAuditSv: Dict = {
     'admin.promptAudit.title': 'Steg-prompter',
-    'admin.promptAudit.subtitle': 'Adminvy med endast de prompter som är kopplade till det valda steget: systemprompt och stegprompt.',
+    'admin.promptAudit.subtitle': 'Redigera stegets instruktioner och granska hur de kombineras med kontexten.',
     'admin.promptAudit.stepSelect': 'Steg att granska',
     'admin.promptAudit.sessionSelect': 'Verklig session',
     'admin.promptAudit.noSession': 'Ingen session vald',
@@ -5554,7 +5554,7 @@ const promptAuditSv: Dict = {
     'admin.promptAudit.mode': 'Läge',
     'admin.promptAudit.promptKey': 'Promptnyckel',
     'admin.promptAudit.injectedList': 'Visade prompter',
-    'admin.promptAudit.onlyPrompts': 'Denna vy visar endast prompter. Den inkluderar inte poäng, kunskapskontext, historik, counselor eller andra körningsdata.',
+    'admin.promptAudit.onlyPrompts': 'Förhandsvisningen simulerar begäran utan modellanrop.',
     'admin.promptAudit.editSystemPrompt': 'Redigera systemprompter',
     'admin.promptAudit.editStep': 'Redigera detta steg',
     'admin.promptAudit.block.stepPrompt': 'Stegprompt',

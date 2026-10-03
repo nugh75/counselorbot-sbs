@@ -33,3 +33,16 @@ ramo della PR, installare solo eventuali nuove dipendenze e riavviare i processi
 Questo intervento non cambia dipendenze né schema del database. Non occorre
 ricopiare il database. In produzione il codice è incluso nelle immagini: dopo
 il merge serve la procedura di deploy/rebuild prevista dal progetto.
+
+## Semplificazione e stampa
+
+La selezione del contesto è unica nella scheda Prompt per step. L’editor contiene
+solo testi modificabili; appunti e opzioni sono richiudibili. Il test browser copre
+l’identità della richiesta per tutti gli 11 strumenti amministrativi e i messaggi
+di validazione nelle sei lingue. Una risposta vuota non effettua richieste.
+
+La stampa è limitata alla presenza di `.prompt-workspace`. `beforeprint` espande
+i dettagli dello spazio corrente e copia i valori delle textarea in elementi di
+stampa; `afterprint` ripristina apertura e DOM. Le aree a scorrimento vengono
+espanse e la testata fissa viene nascosta. Il test genera un PDF con Chromium e
+verifica le regole di stampa; la resa di Firefox/macOS richiede una prova locale.

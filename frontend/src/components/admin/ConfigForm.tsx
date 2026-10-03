@@ -48,16 +48,6 @@ interface QuestionnaireResult {
     submitted_at: string;
 }
 
-interface PromptPreview {
-    envelope?: { system_prompt_final?: string; full_message?: string; history?: unknown[] };
-    components?: Record<string, unknown>;
-    component_flags?: Record<string, boolean>;
-    component_options?: { certified_strategy_limit?: number; allowed_strategies?: string[] };
-    component_config_key?: string;
-    knowledge?: { included?: boolean; context_length?: number; strategy_ids?: string[]; certified_strategy_ids?: string[] };
-    selected_result?: { session_id: string; username?: string | null; submitted_at?: string | null } | null;
-}
-
 interface ApprovedStrategyOption {
     id: string;
     questionnaires?: string[];
@@ -596,44 +586,6 @@ function parseAllowedStrategies(raw: string): string[] | undefined {
     return undefined;
 }
 
-function textValue(value: unknown): string {
-    if (typeof value === 'string') return value;
-    if (value == null) return '';
-    return JSON.stringify(value, null, 2);
-}
-
-function PromptTextBlock({
-    title,
-    subtitle,
-    text,
-    emptyLabel,
-}: {
-    title: string;
-    subtitle?: string;
-    text: string | null | undefined;
-    emptyLabel: string;
-}) {
-    const { t } = useI18n();
-    const value = text || '';
-    const stats = textStats(value);
-    return (
-        <div className="rounded-lg border border-slate-200 bg-white">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-                <div>
-                    <h5 className="text-sm font-semibold text-slate-800">{title}</h5>
-                    {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
-                </div>
-                <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
-                    {stats.chars} {t('admin.config.chars')} · {stats.lines} {t('admin.config.lines')}
-                </span>
-            </div>
-            <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words p-4 text-xs leading-relaxed text-slate-700">
-                {value.trim() ? value : emptyLabel}
-            </pre>
-        </div>
-    );
-}
-
 function EditablePromptTextBlock({
     title,
     subtitle,
@@ -774,8 +726,6 @@ function StepPromptsPanel({
         : (configs.find((config) => config.key === localizedStepKey)?.value || selectedStep?.prompt || '');
     const savedStep = savedSteps.find(step => step.id === selectedStep?.id);
     const savedLocalizedStep = savedStep ? { ...savedStep, prompt: selectedLanguage === 'it' ? savedStep.prompt : savedConfigs.find(c => c.key === localizedStepKey)?.value || savedStep.prompt } : undefined;
-    const [preview, setPreview] = useState<PromptPreview | null>(null);
-    const [previewLoading, setPreviewLoading] = useState(false);
     const [componentDraft, setComponentDraft] = useState<Record<string, unknown> | null>(null);
     // ponytail: reuse public /counselors fetch (active only), filter client-side by instrument.
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
@@ -819,51 +769,19 @@ function StepPromptsPanel({
 
     const flags = {
         ...PROMPT_COMPONENT_DEFAULTS,
-        ...(preview?.component_flags || configFlags),
+        ...configFlags,
         ...configFlagOverrides,
         ...(componentDraft as Record<string, boolean> | null),
     };
-    const certifiedStrategyLimit = preview?.component_options?.certified_strategy_limit ?? configCertifiedStrategyLimit;
+    const certifiedStrategyLimit = configCertifiedStrategyLimit;
     const configAllowedStrategies = parseAllowedStrategies(componentConfigValue);
-    const allowedStrategies = preview?.component_options?.allowed_strategies ?? configAllowedStrategies;
+    const allowedStrategies = configAllowedStrategies;
     const componentConfigPayload = {
         ...flags,
         certified_strategy_limit: certifiedStrategyLimit,
         allowed_strategies: allowedStrategies,
         ...componentDraft,
     };
-    const flagsJson = JSON.stringify(componentConfigPayload);
-
-    useEffect(() => {
-        if (!selectedStep) return;
-        let cancelled = false;
-        const loadingTimer = window.setTimeout(() => {
-            if (!cancelled) setPreviewLoading(true);
-        }, 0);
-        fetch('/api/admin/prompt-audit/dry-run', {
-            method: 'POST',
-            headers: authJsonHeaders(),
-            body: JSON.stringify({
-                questionnaire_type: questionnaireType,
-                language: selectedLanguage,
-                phase: selectedStep.id,
-                mode: selectedStep.system_prompt_mode || 'generic',
-                message: editingPrompt === 'step' ? stepDraft : localizedStepValue,
-                config_overrides: Object.fromEntries([[systemPromptKey, editingPrompt === 'system' ? systemDraft : systemPrompt], [metaPromptKey, editingPrompt === 'meta' ? metaDraft : metaPrompt]]),
-                use_phase_prompt: true,
-                session_id: selectedSessionId || undefined,
-                counselor_id: selectedCounselorId || undefined,
-                include_knowledge: true,
-                include_history: true,
-                component_flags: JSON.parse(flagsJson),
-            }),
-        })
-            .then((res) => res.ok ? res.json() : null)
-            .then((data) => { if (!cancelled) setPreview(data); })
-            .catch(() => { if (!cancelled) setPreview(null); })
-            .finally(() => { if (!cancelled) setPreviewLoading(false); });
-        return () => { cancelled = true; window.clearTimeout(loadingTimer); };
-    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, selectedCounselorId, selectedLanguage, localizedStepValue, systemPrompt, guidanceText, metaPrompt, flagsJson, editingPrompt, stepDraft, systemDraft, metaDraft, systemPromptKey, metaPromptKey]);
 
     const toggleFlag = (name: string) => {
         if (!componentKey) return;
@@ -910,15 +828,11 @@ function StepPromptsPanel({
             allowed_strategies: currentList,
         });
     };
-    const ragSummary = preview?.knowledge
-        ? `RAG: ${preview.knowledge.included ? 'ON' : 'OFF'}\ncontext_length: ${preview.knowledge.context_length || 0}\nstrategy_ids: ${(preview.knowledge.strategy_ids || []).join(', ') || '-'}\ncertified_strategy_ids: ${(preview.knowledge.certified_strategy_ids || []).join(', ') || '-'}`
-        : '';
     const componentText = promptComponentText(selectedLanguage);
     const uiText = promptUiText(selectedLanguage);
-    const loadingLabel = previewLoading ? uiText.loading : t('admin.promptAudit.empty');
 
     return (
-        <div className="glass-panel p-5 space-y-5">
+        <div className="prompt-workspace glass-panel p-5 space-y-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-700">
@@ -931,6 +845,8 @@ function StepPromptsPanel({
                 </div>
             </div>
 
+            <details className="rounded-lg border border-slate-200 p-3">
+            <summary className="cursor-pointer text-sm text-slate-600">{uiText.guidanceNotes}</summary>
             <EditablePromptTextBlock
                 title={uiText.guidanceNotes}
                 subtitle={guidanceKey}
@@ -951,6 +867,7 @@ function StepPromptsPanel({
                 cancelLabel={uiText.cancel}
             />
 
+            </details>
             <div className="grid gap-4 lg:grid-cols-4">
                 <label className="space-y-2 text-xs font-semibold text-slate-500">
                     {t('admin.promptAudit.stepSelect')}
@@ -985,9 +902,9 @@ function StepPromptsPanel({
                 </div>
             </div>
 
-            <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-4">
+            <details className="rounded-lg border border-slate-200 bg-white p-4 space-y-4">
+                <summary className="cursor-pointer text-sm font-semibold text-slate-800">{componentText.title}</summary>
                 <div>
-                    <h4 className="text-sm font-semibold text-slate-800">{componentText.title}</h4>
                     {componentDraft && <button type="button" onClick={async () => { if (await onSaveComponentFlags(componentKey, componentConfigPayload)) setComponentDraft(null); }} className="mt-2 rounded bg-indigo-600 px-3 py-2 text-xs text-white">{uiText.save}</button>}
                     <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {Object.keys(PROMPT_COMPONENT_DEFAULTS)
@@ -1094,13 +1011,10 @@ function StepPromptsPanel({
                         </div>
                     </div>
                 )}
-            </div>
+            </details>
 
             <div className="grid items-start gap-4 xl:grid-cols-2">
             <div className="grid gap-4">
-                {selectedCounselorId !== '' && (
-                    <PromptTextBlock title={componentText.labels.counselor} text={textValue(preview?.components?.counselor)} emptyLabel={loadingLabel} />
-                )}
                 <EditablePromptTextBlock
                     title={componentText.labels.step_prompt}
                     subtitle={localizedStepKey || selectedStep?.id}
@@ -1157,17 +1071,6 @@ function StepPromptsPanel({
                     saveLabel={uiText.save}
                     cancelLabel={uiText.cancel}
                 />
-                <PromptTextBlock title={componentText.labels.cognitive_factors} text={textValue(preview?.components?.cognitive_factors)} emptyLabel={loadingLabel} />
-                <PromptTextBlock title={componentText.labels.affective_factors} text={textValue(preview?.components?.affective_factors)} emptyLabel={loadingLabel} />
-                <PromptTextBlock title={componentText.labels.other_scores} text={textValue(preview?.components?.other_scores)} emptyLabel={loadingLabel} />
-                <PromptTextBlock title={componentText.labels.knowledge} text={ragSummary} emptyLabel={loadingLabel} />
-                <PromptTextBlock title={componentText.labels.history} text={textValue(preview?.components?.history)} emptyLabel={loadingLabel} />
-                {selectedCounselorId === '' && (
-                    <PromptTextBlock title={componentText.labels.counselor} text={textValue(preview?.components?.counselor)} emptyLabel={loadingLabel} />
-                )}
-                <PromptTextBlock title={componentText.labels.metadata} text={textValue(preview?.components?.metadata)} emptyLabel={loadingLabel} />
-                <PromptTextBlock title={componentText.labels.profile} text={textValue(preview?.components?.profile)} emptyLabel={loadingLabel} />
-                <PromptTextBlock title={componentText.labels.student_booklet} text={textValue(preview?.components?.student_booklet)} emptyLabel={loadingLabel} />
             </div>
             {selectedStep && <PromptRequestPreview
                 step={{ ...selectedStep, prompt: editingPrompt === 'step' ? stepDraft : localizedStepValue }}
@@ -1175,6 +1078,7 @@ function StepPromptsPanel({
                 savedStep={savedLocalizedStep}
                 language={selectedLanguage}
                 results={results}
+                hideContextControls
                 selectedSession={selectedSessionId} selectedCounselor={selectedCounselorId}
                 onSession={onSelectSession} onCounselor={onSelectCounselor} onLanguage={onSelectLanguage}
                 componentFlags={componentConfigPayload} componentFlagsDirty={!!componentDraft} componentLabels={componentText.labels}
@@ -1186,10 +1090,6 @@ function StepPromptsPanel({
 
             <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-4 text-xs text-slate-600">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h4 className="flex items-center gap-2 text-sm font-semibold text-indigo-800"><FileText className="h-4 w-4" />{t('admin.promptAudit.injectedList')}</h4>
-                        <p className="mt-2">{t('admin.promptAudit.onlyPrompts')}</p>
-                    </div>
                     <div className="flex flex-wrap gap-2">
                         <button type="button" onClick={onEditSystemPrompts} className="rounded-md border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">{t('admin.promptAudit.editSystemPrompt')}</button>
                         <button type="button" onClick={onEditStep} className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700">{t('admin.promptAudit.editStep')}</button>
@@ -2595,7 +2495,7 @@ export function ConfigForm() {
                                                     </div>
                                                 </div>
 
-                                                <div className="grid items-start gap-4 xl:grid-cols-2">
+                                                <div className="prompt-workspace grid items-start gap-4 xl:grid-cols-2">
                                                 <div className="space-y-2">
                                                     <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptSend')}</label>
                                                     <textarea
@@ -2603,6 +2503,7 @@ export function ConfigForm() {
                                                         value={step.prompt}
                                                         onChange={(e) => updateStepField(step.id, 'prompt', e.target.value)}
                                                     />
+                                                    <pre className="prompt-print-value">{step.prompt}</pre>
                                                     <PromptHistory scope="guided_step" targetKey={step.id} currentValue={step.prompt} onRestored={(value) => updateStepField(step.id, 'prompt', value)} />
                                                 </div>
                                                 <GuidedStepPromptPreview key={step.id} step={step} savedStep={savedSteps.find(s => s.id === step.id)} configs={configs} savedConfigs={savedConfigs} componentLabels={promptComponentText(lang).labels} language="it" results={questionnaireResults.filter(r => normalizedQuestionnaireType(r.questionnaire_type) === normalizedQuestionnaireType(q.questionnaireType))} />
