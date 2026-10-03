@@ -271,7 +271,7 @@ da laurea, uguale per docenti, ricercatori e amministrazione.
 `/docente` è una panoramica illustrata, come l'Area personale: in alto il percorso
 «Obiettivi per la mia classe», poi tre gruppi (**Classe e assegnazioni**,
 **Cataloghi**, **Somministrazioni e ricerca**) con una voce per ogni pagina e, in
-fondo, il Taccuino del docente. Ogni voce apre una pagina dedicata con il ritorno
+fondo, l’ingresso al Taccuino del docente (`/docente/taccuino`), senza form nella home. Ogni voce apre una pagina dedicata con il ritorno
 all’Area docenti: `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
 della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
 link alla pagina dedicata con filtro già impostato),
@@ -284,6 +284,14 @@ strategie e materiali direttamente; pubblicano obiettivi nei propri gruppi, ment
 il catalogo comune richiede revisione amministrativa. Possono assegnare a una persona
 o a tutto un gruppo, anche vuoto: i nuovi iscritti ricevono le assegnazioni attive.
 La gestione dei gruppi è distinta dall’iscrizione personale a un gruppo.
+
+La pagina `/docente/taccuino` si apre dall’ingresso nella home o direttamente,
+anche dopo un refresh. La freccia nell’intestazione torna a `/docente`; la bozza
+non salvata richiede conferma prima di uscire (Annulla conserva testo, focus e
+selezione), e il salvataggio in corso blocca l’uscita. Docenti, ricercatori e
+amministratori conservano lo stesso accesso, comprese le anteprime di ruolo.
+Il Taccuino studente rimane distinto in `/profilo/taccuino`: un account con
+entrambi i ruoli sceglie quale pagina aprire, senza trasferimenti automatici.
 
 Il Taccuino del docente è un’autodescrizione del ruolo e della pratica abituale,
 con sei campi **facoltativi**, nell’ordine: discipline abituali, esperienza di

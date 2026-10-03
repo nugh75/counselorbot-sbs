@@ -63,7 +63,7 @@ async function fixture({ surface = 'groups', failure = 503, lang = 'it', width =
         return route.fulfill({ json: data });
     });
     const go = async () => {
-        await page.goto(`${origin}${surface === 'groups' ? '/docente/classi' : surface === 'notebook' ? '/docente' : '/?resume=1'}`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`${origin}${surface === 'groups' ? '/docente/classi' : surface === 'notebook' ? '/docente/taccuino' : '/?resume=1'}`, { waitUntil: 'domcontentloaded' });
         if (surface === 'chat') await page.getByRole('button', { name: 'Inizia', exact: true }).click();
     };
     const hold = () => { let release; state.hold = new Promise(resolve => { release = resolve; }); return () => { state.hold = null; release(); }; };
@@ -269,6 +269,8 @@ for (const surface of ['groups', 'notebook', 'chat']) {
             await f.go();
             await f.page.getByRole('status').filter({ hasText: 'Caricamento' }).waitFor();
             if (surface === 'notebook') {
+                // S16: return through the page header, then open the existing Classi entry.
+                await f.page.locator('[data-teacher-area-header] a[href="/docente"]').click();
                 await f.page.locator('a[aria-labelledby="teacher-link-classi"]').click();
                 await f.page.getByRole('heading', { name: 'Gruppi e classi che gestisco' }).waitFor();
             } else await f.page.goto(`${origin}/guide`, { waitUntil: 'domcontentloaded' });
@@ -292,6 +294,8 @@ for (const surface of ['groups', 'notebook', 'chat']) {
         try {
             await f.go(); await f.page.getByRole('status').filter({ hasText: 'Caricamento' }).waitFor();
             if (surface === 'notebook') {
+                // S16: return through the page header, then open the existing Classi entry.
+                await f.page.locator('[data-teacher-area-header] a[href="/docente"]').click();
                 await f.page.locator('a[aria-labelledby="teacher-link-classi"]').click();
                 await f.page.getByRole('heading', { name: 'Gruppi e classi che gestisco' }).waitFor();
             } else await f.page.goto(`${origin}/guide`, { waitUntil: 'domcontentloaded' });

@@ -66,14 +66,14 @@ for (const [lang, names] of Object.entries(labels)) {
             return route.fulfill({ json: data });
         });
         try {
-            await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
+            await page.goto(`${origin}/docente/taccuino`, { waitUntil: 'networkidle' });
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'empty notebook fits mobile');
             const fields = page.locator('textarea[id^="teacher-notebook-"]');
             assert.equal(await fields.count(), 6);
             assert.deepEqual(await fields.evaluateAll(elements => elements.map(e => e.id.replace('teacher-notebook-', ''))), keys);
-            const notebook = fields.first().locator('xpath=ancestor::div[h2]');
+            const notebook = page.locator('[data-teacher-notebook]');
             assert.equal(await notebook.getByRole('group').count(), 3);
-            assert.deepEqual(await notebook.getByRole('heading', { level: 3 }).allTextContents(), groupNames[lang]);
+            assert.deepEqual(await notebook.getByRole('heading', { level: 2 }).allTextContents(), groupNames[lang]);
             for (const [index, name] of groupNames[lang].entries()) {
                 const group = notebook.getByRole('group', { name, exact: true });
                 assert.equal(await group.isVisible(), true);
