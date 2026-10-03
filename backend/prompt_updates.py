@@ -72,8 +72,10 @@ def make_plan(snapshot):
     return {"version": 1, "changes": changes}
 
 
-def apply_plan(db, plan, *, author="prompt-coherence", rollback=False):
+def apply_plan(db, plan, *, author="prompt-coherence", rollback=False, origin="admin"):
     from . import models, prompt_revisions
+    if origin not in prompt_revisions.ORIGINS:
+        raise ValueError("Unknown prompt revision origin")
     targets = {"config": (models.Config, "key", "value"),
                "guided_step": (models.GuidedStep, "id", "prompt"),
                "counselor_persona": (models.Counselor, "id", "persona")}
@@ -88,12 +90,12 @@ def apply_plan(db, plan, *, author="prompt-coherence", rollback=False):
         pending.append((row, value_field, change))
     for row, field, change in pending:
         prompt_revisions.record(db, change["scope"], change["key"], getattr(row, field),
-                                prompt_revisions.ORIGIN_ADMIN, author=author, note="Baseline before approved prompt alignment")
+                                origin, author=author, note="Baseline before approved prompt alignment")
         db.flush()
         value = change["before"] if rollback else change["after"]
         setattr(row, field, value)
         prompt_revisions.record(db, change["scope"], change["key"], value,
-                                prompt_revisions.ORIGIN_ADMIN, author=author,
+                                origin, author=author,
                                 note="Approved prompt alignment rollback" if rollback else "Approved prompt coherence alignment")
     db.commit()
     return len(pending)

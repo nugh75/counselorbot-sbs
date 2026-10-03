@@ -473,7 +473,7 @@ _QSAR_INVERTED_CODES = ("C4r", "A1r")
 
 
 def _apply_global_directives(system_prompt: str, language: Optional[str], db=None,
-                            platform_full: bool = True) -> str:
+                            platform_full: bool = True, config_overrides=None) -> str:
     """Applica in un unico blocco le tre direttive globali: lingua, registro e
     thinking. Legge i testi dalle config del DB se presenti; altrimenti usa i
     default hardcoded."""
@@ -485,6 +485,8 @@ def _apply_global_directives(system_prompt: str, language: Optional[str], db=Non
             db_local.close()
 
     def _read(key: str, fallback: str) -> str:
+        if config_overrides is not None and key in config_overrides:
+            return config_overrides[key].strip()
         row = db.query(models.Config).filter(models.Config.key == key).first()
         if row and (row.value or "").strip():
             return row.value.strip()
@@ -2392,7 +2394,7 @@ def prompt_meta_config_key(questionnaire_type: str, step_id: str | None = None) 
     return base
 
 
-def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None) -> dict:
+def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None, *, advice_requested=False) -> dict:
     flags = dict(PROMPT_COMPONENT_DEFAULTS)
     flags["allowed_strategies"] = None
     try:
@@ -2410,6 +2412,8 @@ def get_prompt_component_flags(db, questionnaire_type: str, step_id: str | None)
                 "certified_strategies": False,
                 "shared_responses": False,
             })
+        if (questionnaire_type or "").upper() == "QSA":
+            flags.update(prompt_config.qsa_component_defaults(step_id, advice_requested=advice_requested))
         key = prompt_component_config_key(questionnaire_type, step_id or "generic")
         row = db.query(models.Config).filter(models.Config.key == key).first()
         if row and row.value:
@@ -2577,19 +2581,20 @@ def _scores_enabled(flags: dict[str, bool] | None, questionnaire_type: str) -> b
     return _component_enabled(flags, "other_scores")
 
 
-def _instrument_meta_system_prompt(db, questionnaire_type: str, step_id: str | None = None) -> str:
+def _instrument_meta_system_prompt(db, questionnaire_type: str, step_id: str | None = None, config_overrides=None) -> str:
     if not questionnaire_type:
         return ""
-    try:
-        # First try per-step config, fall back to instrument-level
-        if step_id:
-            step_key = prompt_meta_config_key(questionnaire_type, step_id)
-            row = db.query(models.Config).filter(models.Config.key == step_key).first()
-            if row and str(row.value or "").strip():
-                return str(row.value).strip()
-        # Fallback to instrument-level meta prompt
-        row = db.query(models.Config).filter(models.Config.key == prompt_meta_config_key(questionnaire_type)).first()
+    def read(key):
+        if config_overrides is not None and key in config_overrides:
+            return str(config_overrides[key] or "").strip()
+        row = db.query(models.Config).filter(models.Config.key == key).first()
         return str(row.value or "").strip() if row else ""
+    try:
+        if step_id:
+            value = read(prompt_meta_config_key(questionnaire_type, step_id))
+            if value:
+                return value
+        return read(prompt_meta_config_key(questionnaire_type))
     except Exception:
         return ""
 
@@ -2675,6 +2680,7 @@ def build_context_envelope(
     component_flags: dict[str, bool] | None = None,
     components: dict | None = None,
     skills_blocks: dict[str, list[str]] | None = None,
+    config_overrides: dict[str, str] | None = None,
 ) -> tuple[str, str, list]:
     """Assembla l'envelope canonico della chat counselor (Fase 5):
     SYSTEM = [PERSONA] [SECTION] [STUDENT] [PROFILE] [KNOWLEDGE]
@@ -2729,7 +2735,7 @@ def build_context_envelope(
         if system_prompt:
             parts_system.append(system_prompt)
 
-    meta_system_prompt = _instrument_meta_system_prompt(db, questionnaire_type, step_id)
+    meta_system_prompt = _instrument_meta_system_prompt(db, questionnaire_type, step_id, config_overrides)
     if components is not None:
         components["meta_system_prompt"] = meta_system_prompt
     if meta_system_prompt:

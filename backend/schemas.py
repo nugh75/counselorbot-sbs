@@ -41,6 +41,38 @@ class ConfigResponse(ConfigBase):
         from_attributes = True
 
 # Prompt revisions
+class PromptFactoryAlignmentChange(BaseModel):
+    scope: Literal["config", "guided_step"]
+    key: str
+    before: str
+    after: str
+    expected_hash: str
+
+
+class PromptFactoryAlignmentPreserved(BaseModel):
+    scope: Literal["config", "guided_step"]
+    key: str
+    reason: Literal["personalised", "different_instrument"]
+
+
+class PromptFactoryAlignmentPreview(BaseModel):
+    version: Literal[1]
+    changes: List[PromptFactoryAlignmentChange]
+    preserved: List[PromptFactoryAlignmentPreserved]
+    review_hash: str
+
+
+class PromptFactoryAlignmentApply(BaseModel):
+    review_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    model_config = {"extra": "forbid"}
+
+
+class PromptFactoryAlignmentResult(BaseModel):
+    updated: int
+    config_values: Dict[str, str]
+    step_prompts: Dict[str, str]
+
+
 class PromptRevisionResponse(BaseModel):
     id: int
     scope: str
@@ -95,6 +127,8 @@ class LogResponse(LogBase):
 
 
 class PromptAuditRequest(BaseModel):
+    config_overrides: Optional[Dict[str, str]] = None
+    step_mode_override: Optional[str] = None
     questionnaire_type: Optional[str] = None
     language: Optional[str] = "it"
     phase: Optional[str] = None
@@ -149,6 +183,8 @@ class GuidedStepUpdate(BaseModel):
     color_theme: Optional[str] = None
 
 class GuidedStepResponse(GuidedStepBase):
+    component_defaults: Optional[Dict[str, Any]] = None
+
     class Config:
         from_attributes = True
 

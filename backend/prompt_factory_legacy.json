@@ -1,0 +1,605 @@
+{
+  "configs": {
+    "counselorbot_chat_context": [
+      "7fa2f0ac485d706dc3ea0c2d401151a303a92a2c8140a5650d04c7ccffc1f6a4"
+    ],
+    "directive_affirmative": [
+      "172aecf6a37633ee6fc8b1b1ab5e5362c7db3f27883d2c00886ecff4fda65c4c"
+    ],
+    "directive_context": [
+      "0d2813120ec40bbeddd22488f4987255b6ea0fdba0f4aff6a95b2c77dcfcadf5"
+    ],
+    "directive_conversation_quality": [
+      "2c6b64ccf75a544f699eab8e100c7bc738e7bd5ec7a66388e0b582f2bc4ee3b4"
+    ],
+    "directive_language": [
+      "55d0c15de6a69a4ad2b4ad65ed3eb2bc1f0bb4fb20efe4d9ef5fc976bfaff5c8"
+    ],
+    "directive_register": [
+      "aa6a7069efbd81a1bc8ed1c95ef615232da0d9ab81f8b31aa0900572534ef108"
+    ],
+    "directive_thinking": [
+      "109705cee1812494a5c0d80d18eb169c6f1648afed662b722849576e784cbe77"
+    ],
+    "framework_chat_context": [
+      "2a9228f4b1369d573c7c134ff651c9c05fd12257e2fc7fcc6a51cf2576b0cf2c"
+    ],
+    "pqbl_question_generation_prompt": [
+      "3650fe0b59a9c89060391507557ef2b6b95f59a3e0dae7b256a5c7cf6b4074cf"
+    ],
+    "pqbl_skill_extraction_prompt": [
+      "4cfc1bd4280dc04b8d43982551810867b945a9e059fac9597ae47046881295d1"
+    ],
+    "prompt_counselorbot_chat_docente": [
+      "7b453d2646e9a52653d63abe98d99ba4de3b789191a038c6c85500817ec58ea6"
+    ],
+    "prompt_counselorbot_chat_studente": [
+      "84c59047276cbbaa682336a883decf9034445fe97398bcda244a316218f0646a"
+    ],
+    "prompt_cross_synthesis": [
+      "90ede7aa07669e3cbf558e06d0156ba807438a97973c5b18338b990195e4012f"
+    ],
+    "prompt_evento_interview": [
+      "5585677e2b7ce601f5afbabbb11cc7b27f6c015893de7b1e09a715a8633131f8"
+    ],
+    "prompt_evento_summary": [
+      "5ba52fe023b417f6a20dc606cc7ee2469c3a89e9fe253d7076acccbb0130d054"
+    ],
+    "prompt_evprof_intro": [
+      "9e77750520e37c9b7c58b7f9366bc4d254b49434f8d31d2226b8da8b99f31834"
+    ],
+    "prompt_evstudio_intro": [
+      "86f2e96c9b375ec9e6ef7d4112badcfe5a5977c4c9de3638320ec22708fbdb9e"
+    ],
+    "prompt_factor": [
+      "ccbe86796a79729944f66bb5bb8baa85a0ea3923070003598aeaa8f332bcf2c3",
+      "1ef8ea8ad37de38c64ab3d37d87129c17a49abf49348a723310c6967f6be357f"
+    ],
+    "prompt_factor_qa": [
+      "30c58cd1a2b8fee153938018bb74c4222d41c4652144a135015a0816788b78ec",
+      "4b178bd4ead74fdd40f97232e79c3ff892f02524f31e9392bb9889b4f47e1eeb"
+    ],
+    "prompt_generic": [
+      "6ce953a692cc2b40fdc52860f08529063701f968494c5b96d87dac7c2a9fee62"
+    ],
+    "prompt_guided_questions": [
+      "8d34760b2e84c018b37aaa1ded0f7bace8663c84e05c4b6a56ba650f24c3ab53"
+    ],
+    "prompt_idea_focus": [
+      "5d42c6a2218e2bb14ba8bb1e8e18cd7d41c08a103d653e5383d16fbdf105a60f"
+    ],
+    "prompt_idea_variant_concept": [
+      "f17edd4e5f4787b4597e71662fad326ecd55c4c58d1a657ae9cd57722475b7c8"
+    ],
+    "prompt_idea_variant_research": [
+      "f86e547174fd4a925134b83f3a311e164f8137f6c6e8da45bdbeb4dc6db4cc61"
+    ],
+    "prompt_idea_variant_student_open": [
+      "214e1cb53b5472e557e2a55386a3c4f4c4c9c65fab55126c54456f2226644500"
+    ],
+    "prompt_idea_variant_student_path": [
+      "a6a2406524c17a84a36b4e78dab2bc74a326e0e2ab881fbd2974f9167836a267"
+    ],
+    "prompt_intro": [
+      "c7e6cae57a1ca5b5df7a5bcd9dc9ba49ad1bd097e76ce5de04ecfc93fe5dfd45"
+    ],
+    "prompt_meta_EVENTO_PROFESSIONALE": [
+      "c9defec59311cc7aa617578cefaaf047eea609c8d0d6e79f0a8037d61ecde22a"
+    ],
+    "prompt_meta_EVENTO_STUDIO": [
+      "c9defec59311cc7aa617578cefaaf047eea609c8d0d6e79f0a8037d61ecde22a"
+    ],
+    "prompt_meta_QAP": [
+      "f25decabc9a72d666b1efe3363b77edf358fc672d0bc8321b83c92a56e99f92d"
+    ],
+    "prompt_meta_QPCC": [
+      "f25decabc9a72d666b1efe3363b77edf358fc672d0bc8321b83c92a56e99f92d"
+    ],
+    "prompt_meta_QPCS": [
+      "f25decabc9a72d666b1efe3363b77edf358fc672d0bc8321b83c92a56e99f92d"
+    ],
+    "prompt_meta_QSA": [
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "prompt_meta_QSAR": [
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "prompt_meta_QSAR_qsar-affective": [
+      "70cd958da65f71180f799ba6d3e404f9bd6047a4b43409bb9560a77f47a41efa"
+    ],
+    "prompt_meta_QSAR_qsar-attributions": [
+      "ec7baba39487dc4abdc78ea034c3a3a9f9a770438510adf80004e2302f131c1b"
+    ],
+    "prompt_meta_QSAR_qsar-cognitive": [
+      "522975d89788914b3af3367e58e2bd7ae83fea7481f920865e6396d089e93dd2"
+    ],
+    "prompt_meta_QSAR_qsar-emotions": [
+      "0e38ce51b8af03f6a78a8801633bca0a2524d60e0535a9652b4788199404b781"
+    ],
+    "prompt_meta_QSAR_qsar-intro": [
+      "8a5b577901ae33483fac5862e11c77ad977e699e6cdab451951c3ce8ed87999d"
+    ],
+    "prompt_meta_QSAR_qsar-motivation": [
+      "030bd00b69fb5eca54a9a450a23bd35f57d80f39efd100224532a76a73bd13b1"
+    ],
+    "prompt_meta_QSAR_qsar-processing": [
+      "e0640600e4771170f864cdf8d1cfd1a6e2ae89658e2b9818190a66e1126b0a2b"
+    ],
+    "prompt_meta_QSAR_qsar-selfcontrol": [
+      "a618053c0e1335cc34ccf538f04ce1e5cf7d69ca7fd2cd57826003bbf2a40d9c"
+    ],
+    "prompt_meta_QSAR_qsar-synthesis": [
+      "d3e36360606480dea7773f007799f7a871a2320a4debe424984b0ee5f0f61f87"
+    ],
+    "prompt_meta_QSA_affective": [
+      "8d96e3910dc1b16e4f17a6bae12af56e648f5153711c3d98dd510e0c68021e0a"
+    ],
+    "prompt_meta_QSA_cognitive": [
+      "ff989b9fca48892b473db4718f61e433cdad73e468c9462516cf1aa4a4234409"
+    ],
+    "prompt_meta_QSA_intro": [
+      "db775299033d0d70f272dd37fc3c288ecbc2373ff27c701cf48f79463396e517"
+    ],
+    "prompt_meta_QSA_sl-attribution": [
+      "861f3e1dd2ca54070bca1f1cbfa4d668534123daf0d095b74940d2ebece94178"
+    ],
+    "prompt_meta_QSA_sl-elaboration": [
+      "2b86838597a574097fdd6399a2493965d2eab4153c117c4957a74219bad606df",
+      "aed9d0f2a914e67c61ae374fb96feed8b16c688b6a9d4a82cd59abef77110d1b"
+    ],
+    "prompt_meta_QSA_sl-emotions": [
+      "a46b864592b2e37686f08f392eec4176088971896a1429858d5455a8b545c4e4",
+      "56ff1f7ee6b7f1fac3e3da15a82a61165a1762b5eb83fb494db6da678cdb06e9"
+    ],
+    "prompt_meta_QSA_sl-motivation": [
+      "c4e31e50cae0845f2e17442c3290e8a26ed388f1d8ea753a9daee09308b7d1ac",
+      "d7a472aab529518f39d75ea976a13a52f147b91c9d6cfc9a248223543a612632"
+    ],
+    "prompt_meta_QSA_sl-selfcontrol": [
+      "9ffefacc4e2b81e732157912a05a876e509e5051aa17caa1de9cb2d43f3801a4"
+    ],
+    "prompt_meta_QSA_sl-social": [
+      "abc25359e5cfac9cad396ac751a7277168fb31b213aba1851a17dcf14066ccab",
+      "2ed046f9f7f0cc0edab6fd368d9fd1018cb00dace0001052d0f25ce351aed0e8"
+    ],
+    "prompt_meta_QSA_sl-synthesis": [
+      "2ace8e428829416c4ea8c4e5e403db0f6784b9317f0a5c3c90d4a16fdee19546",
+      "5c3cd37f0a9888a5861dad6954de4f2988a35d3c9f8a471aa3e6346d4a81fed6"
+    ],
+    "prompt_meta_SAVICKAS": [
+      "df362bb44fbb09d3bab7cbd0cea57308e06f0cde718f0ba892bb97740b733c87"
+    ],
+    "prompt_meta_SAVICKAS_savickas-final": [
+      "f5a01204832f35ad38068c98877dba99fdfb2de8a0f45d9bca8355002e88c901"
+    ],
+    "prompt_meta_SAVICKAS_savickas-intro": [
+      "db775299033d0d70f272dd37fc3c288ecbc2373ff27c701cf48f79463396e517"
+    ],
+    "prompt_meta_ZTPI": [
+      "18cd608de17818fd2b0cb2536f2e4eb3cb45bac12bf7a4bd461ae475d5795fe4"
+    ],
+    "prompt_meta_ZTPI_ztpi-btp": [
+      "8eb3054e53a95da785446ba5e5231e360a694486d4ac83684bfeffd80a83f7e4"
+    ],
+    "prompt_meta_ZTPI_ztpi-intro": [
+      "db775299033d0d70f272dd37fc3c288ecbc2373ff27c701cf48f79463396e517"
+    ],
+    "prompt_meta_ZTPI_ztpi-t5": [
+      "758e60f72bffe010e15d8de1dbf308455e32e6f5fccf6320b2375f178f436d42"
+    ],
+    "prompt_obbdocenza_intro": [
+      "4a030955f6a296b387d6aa9c9e4129ade860d74cd0e77eec1b8b9cb688cceef1"
+    ],
+    "prompt_obbstudio_intro": [
+      "ccd4e6e82c0bb3056a08b32b95c09d88b582cd53f4f494cebf3e1f5ae4eb6722"
+    ],
+    "prompt_obiettivo_interview": [
+      "2a85c1134c785ba17f75320890063cb99a66b6c178e4e2d2e418677be862e49e"
+    ],
+    "prompt_obiettivo_summary": [
+      "b88e4fa1e0b5f0d625a03af88b86316ed35f7c20d36d27eaef642fcae7e1ce58"
+    ],
+    "prompt_qap_factor": [
+      "7ade3159cc25f747c631a6e827a302f1a409ac21fc33bde3aa2c63517842d0d3"
+    ],
+    "prompt_qap_interview": [
+      "feda43e81da192fb1dd9613777e9d1661031c2c16708cd76f2f5a86942313553"
+    ],
+    "prompt_qap_summary": [
+      "822e268318526130c7dd84494b6f448247abf1deac0232a5f0ba3beaed69631a"
+    ],
+    "prompt_qap_welcome": [
+      "205c0def2bbc87fc5cde60d172350af8fa1743b77e036b36a7f4a0008614bf82"
+    ],
+    "prompt_qpcc_factor": [
+      "559b3a566b679db86347fcb9190bb1a75865ec306a2c508d3bd16d762c6bbeac"
+    ],
+    "prompt_qpcc_interview": [
+      "174bc73ff2b7d5991b5c5ddfee503aff00e64183689a4e9229fab26f4a488411"
+    ],
+    "prompt_qpcc_summary": [
+      "822e268318526130c7dd84494b6f448247abf1deac0232a5f0ba3beaed69631a"
+    ],
+    "prompt_qpcc_welcome": [
+      "ee4218ee496263050394d653e2ce4952d57baf75c74e0b61f823b3598ba97113"
+    ],
+    "prompt_qpcs_analysis": [
+      "c51991789806fafcd0717704d841625434990392d51db81bfa39fe99bad9b07c"
+    ],
+    "prompt_qpcs_factor": [
+      "da5590bf3e1120c1984730a6c48669044c8f194ce367fbd459336284ed1dcd4c"
+    ],
+    "prompt_qpcs_summary": [
+      "f449c9b58842c88986b969126efa01640eae012ae75d3d8cfd88e1971bf6fb0f"
+    ],
+    "prompt_qpcs_welcome": [
+      "8d4ab67d4d66bacbf077a8024ff615b839c6e6bd946039b20c9aeef1734cce36"
+    ],
+    "prompt_qsar_factor": [
+      "0ec4e6bd6b74cae722b157991e1bde05450d214f81243d57b487c978335741ab"
+    ],
+    "prompt_qsar_factor_qa": [
+      "f9114e17135a09117d480a37061289eccded1d319fbe293aece4df097fb42590"
+    ],
+    "prompt_qsar_generic": [
+      "9ceeb4788a3be29ff5e0a19a0651f464eefacf98dcbecd4c16848f29553ddae4"
+    ],
+    "prompt_qsar_intro": [
+      "6b6ba426cd1300bd92c672638f6003311e773220514641a7dd5e61bf672b78e6"
+    ],
+    "prompt_qsar_second_level": [
+      "4c788e191c72b76e5dbd9ac21e09f543b03e9641ef7752512ef37dad36b976ec"
+    ],
+    "prompt_savickas_interview": [
+      "5b95b156c3dcd05ee98e61b759f7ece2e036913b0d622c57de30f98b1cc19f10"
+    ],
+    "prompt_savickas_intro": [
+      "95eff5361edcaf61481c0b4cf4fdf7d6f5232e2aac3c414367cf96cb2d971026"
+    ],
+    "prompt_savickas_summary": [
+      "8d4b4b0ebe65577e25c7383c0e51a4811ce4d4213c662da069c10a76ce4cf82d"
+    ],
+    "prompt_second_level": [
+      "88d6d609578292fba955f94f6a26867947df2a8d11783e1837c8029b07e3eb0d",
+      "14b6ca437d7d837b2c861c35f5f486a61c933c2272c29c4d1b58c4d0275b5182"
+    ],
+    "prompt_site_chat_docente": [
+      "ec7eb4f25004516998a299ba963364e8da64d11d6a7442e4222741a20078fd91"
+    ],
+    "prompt_site_chat_studente": [
+      "e8fb36c1eadc71d6cf1a98df052b9020a1700d9bece64d09b1b7483acfec96de"
+    ],
+    "prompt_ztpi_btp": [
+      "bbbeef06f98314f09cbd877c7c1de452ecd571133cc6fd8198ce222b1a349bfd"
+    ],
+    "prompt_ztpi_factor": [
+      "64957c4e544c42201bf334ad42c9ed3b880e0bd2738b71dd32d15009494f35e2"
+    ],
+    "prompt_ztpi_intro": [
+      "6aad84e395d7cee5fb5ddd6daf7448190268eb3d0aaf46d065e7a773556f8d86"
+    ],
+    "questionari_chat_context": [
+      "ebaa2492c8223d2eee9ec071498159f59467a293d6466ace6f1f65ae935d0d96"
+    ],
+    "site_chat_knowledge_card": [
+      "01f59e02849120cc645c1d68209277b92192526afa50c48a9dd2e1f82f59b902"
+    ],
+    "site_chat_platform_context": [
+      "663a4b6e05ce56a2f77bc23158859fe7db154a1ac87de74b24a9a3004a592bfa"
+    ]
+  },
+  "steps": {
+    "affective": [
+      "5e9d70615a63fe840480083b4b9597a4fb3dac51bd3f597442d223da137750d0",
+      "a231b894e50a42684ebeea5227eb748ad6004a932c78b1f94cdcc0f5a4ccbd02"
+    ],
+    "cognitive": [
+      "217f64d0d14e002b3dc267c4eeff66682b767ffcf2f8808f3a35d26e3e2880b2",
+      "376dab17499d7a6108db1176a7eb03ad2ac3351ac7bad6a2831424f3b58d2ffb"
+    ],
+    "evprof-criticita": [
+      "46fa388bac4e11a1db1bb6743c2cc11df0a435923b654b8fe8eced77cfacd276"
+    ],
+    "evprof-evento": [
+      "04cceb471eb07607deb544569e2b5dd92fc3c28f5953e666e6972d8a4597e503"
+    ],
+    "evprof-fatto": [
+      "9e02bc5feec7050f4501f6fa73b17b509405c05d1c1feceab9da067e35a60b70"
+    ],
+    "evprof-final": [
+      "48798e95d7138bcdef6b68d125891f524f8dbe84c7a2677f4e6240f38fd8f542"
+    ],
+    "evprof-funzionato": [
+      "047d4218d0740700e41a9e9e6da4479893e54e8babec3b202742113940660b7b"
+    ],
+    "evprof-intro": [
+      "f7e01df2c4f5535e04a9dbaa568be9a7854ad091b65579e0d371e5b3dd5a7d98"
+    ],
+    "evprof-patto": [
+      "2e47f3f501451dc33021a3182da39268562bc5dd1e56b6ad2708d1c3ca373133"
+    ],
+    "evprof-prossima": [
+      "38b025020e3fb060da1129212a68829f342a095a3489a4e22e58d150a1a46a1d"
+    ],
+    "evprof-rilettura": [
+      "53807e7d77fa86eee1f75481705843ede03e36c3b838cf3a13002dc844f7310a"
+    ],
+    "evstudio-criticita": [
+      "46fa388bac4e11a1db1bb6743c2cc11df0a435923b654b8fe8eced77cfacd276"
+    ],
+    "evstudio-evento": [
+      "8c42cd78109847477b0c413099c69adf039441c28efdf0ff44512c266dc773ca"
+    ],
+    "evstudio-fatto": [
+      "9e02bc5feec7050f4501f6fa73b17b509405c05d1c1feceab9da067e35a60b70"
+    ],
+    "evstudio-final": [
+      "48798e95d7138bcdef6b68d125891f524f8dbe84c7a2677f4e6240f38fd8f542"
+    ],
+    "evstudio-funzionato": [
+      "047d4218d0740700e41a9e9e6da4479893e54e8babec3b202742113940660b7b"
+    ],
+    "evstudio-intro": [
+      "8c7926e91c7172b1ef94122d4ee8be3229e9ca69322ddbd56b22ed9120d88abe"
+    ],
+    "evstudio-patto": [
+      "b0e1d54b176324b0de9de0ae23a36ba1725c869ddf108732c163b302f9f45acc"
+    ],
+    "evstudio-prossima": [
+      "38b025020e3fb060da1129212a68829f342a095a3489a4e22e58d150a1a46a1d"
+    ],
+    "evstudio-rilettura": [
+      "53807e7d77fa86eee1f75481705843ede03e36c3b838cf3a13002dc844f7310a"
+    ],
+    "idea-alternatives": [
+      "2c96dedd67b32039e893254bd77c96662b583465dffb9df2c9034b5c500fb7e4"
+    ],
+    "idea-assumptions": [
+      "e8e20c5df4b5093a7e0c4da70abc30ec0c563378dfd255e6b312dda44f0f600c"
+    ],
+    "idea-evidence": [
+      "6a5accc2a581ffeaba69e2b190371fabfee0a879529993e7270f0231966e4f39"
+    ],
+    "idea-implications": [
+      "b750a84796fcb9498be8e043b744588db6153895e84049e15b81fdfa99841dee"
+    ],
+    "idea-intro": [
+      "33a3c7f0570d53e575c741364c4b97c39f07bd50fd9e774d46e093b859065238"
+    ],
+    "idea-question": [
+      "181eb9eec49f4d538044abbace5af761d1bb86541229b663d4ce9341f63d1506"
+    ],
+    "idea-statement": [
+      "ec915672707d0fc29ba27dae7c64fd58a71ce034bf9661779799ca612e9901f7"
+    ],
+    "idea-synthesis": [
+      "742a4d24b21792e95f23b9862cd9434ae7e238f42fd765918467f9081d5ee7f1"
+    ],
+    "intro": [
+      "eef71fb098429826886771d79a94be490242580cf28cb45373da2f34c561f54a",
+      "06ae1a68902e6b97d90d1f481ab3e81d20fe3c555f34f882475ee2082e7e6110"
+    ],
+    "obbdocenza-final": [
+      "b8b4495dfde79be126099670f374b5b724eeb9065954e728dd256ac991119bf7"
+    ],
+    "obbdocenza-intro": [
+      "8ac6dc4d1166076172f264c4729d200c30eaa3b0522b916757f35ecf9b5bcee6"
+    ],
+    "obbdocenza-livello": [
+      "730f99f9fc45fb4963497dd917e8fdd33309dbb1b3e6dbd18e44bc43a96ad089"
+    ],
+    "obbdocenza-partenza": [
+      "3f733b07efac4fbf17fb9ad418950fb0f74a27b8205c4de89e339db945906b91"
+    ],
+    "obbdocenza-patto": [
+      "d76e065403094546480b852d925969aa784206789fe313d81a7ff6028873d0d1"
+    ],
+    "obbdocenza-piano": [
+      "5e1bf880c7d79d9cd8cf4543d905aa61b3abbf420d45a73bca8dc089b10ecf09"
+    ],
+    "obbdocenza-sfida": [
+      "7337cc83de9b3abb7ea7fad1314bf5da87a58b2a742359fc2528e1167fd8777d"
+    ],
+    "obbdocenza-smart": [
+      "d9e281713d7065576b3efd38cdd575535e6b281317b0a4d6f7829b66b2edc40b"
+    ],
+    "obbdocenza-verifica": [
+      "7d7ee8288a1fa4e256aebc70e699534170b452a2fd50399ae6214cf13919366b"
+    ],
+    "obbstudio-final": [
+      "382cfbd018b264603529a9ab9b485ebfee5bd236dd6c7fc81a2ecc3a36773f79"
+    ],
+    "obbstudio-intro": [
+      "5205f7ea2080421dc536ba67e542fe83d82c92700e1195ad57484fe6a750f0bf"
+    ],
+    "obbstudio-livello": [
+      "8b60201d9fe0f87ce77c48c731a4c48eed34ee223a8ee5fbf0a8eb384e7785f2"
+    ],
+    "obbstudio-partenza": [
+      "14af9bdb041232f995aa0d4f94a94f4fc62d85971dc793812053fb00ed41db0b"
+    ],
+    "obbstudio-patto": [
+      "fc76b5351114186e9a4d7db7fb68f54a204f7b5279349363fa00c58e92e9a487"
+    ],
+    "obbstudio-piano": [
+      "bd9141ef2f06b06e3cba8d149e2a557c85a7b036fd1a8314c96c099b522dae1e"
+    ],
+    "obbstudio-sfida": [
+      "a78ec58fe45a31c9fd08f2be631f187d807372efaf74b4d7dd11ecf44e8a9a69"
+    ],
+    "obbstudio-smart": [
+      "d9e281713d7065576b3efd38cdd575535e6b281317b0a4d6f7829b66b2edc40b"
+    ],
+    "obbstudio-verifica": [
+      "ead2e02e257c041d2ec23a82cbe44b53f5dbbdd9de0d31cf93d8322696b6af6d"
+    ],
+    "qap-controllo": [
+      "224eea3857f34ff2d5f7f488a9d104a6d80b0c0fd34f853c9453573a4ff2defb"
+    ],
+    "qap-curiosita": [
+      "58923015b4c9090f449146bd3fb0f0184af3fd937607be5642cda0e00acc5f1d"
+    ],
+    "qap-fiducia": [
+      "4648a4f212918c880605eb78bbaf6816b61bb12212b122d8d1665a65c546b7f0"
+    ],
+    "qap-intro": [
+      "9cbaf543108c36cbe56ffa3b5acd4d298a8690edb1aa4bde53ed2ef5492e954a"
+    ],
+    "qap-preoccupazione": [
+      "9692e3dc881e3f6facf1fa5778cfeb980183e18d5a8da9bf7b36780a5da5930e"
+    ],
+    "qap-profilo": [
+      "b7a102e34e5e856bdd9a317811b65607c592bca4edafed7f1b067b74b2203af2"
+    ],
+    "qap-sintesi": [
+      "9e157673b439ea2c17ad28a64b3f46df64ea6936cd66ec9259d83159f6bb46c3"
+    ],
+    "qpcc-comunicazione": [
+      "2fdbaf2f0fb03f70e1325bd34f22de1fbe9482b77b9444551536553c552ba58d"
+    ],
+    "qpcc-controllo": [
+      "9eeb0de75798728ad2727a12e13e8fcb4eb10bdf648142c8201477e34aec6bf2"
+    ],
+    "qpcc-convinzioni": [
+      "3fe09352953685881245d783aa1dc408140d8cf253e2a23cccd7c939dfa1e31e"
+    ],
+    "qpcc-elaborazione": [
+      "cd689f4f8e23d172d5634acbf68b76fc1987620e2134e5e27f42938be17d452d"
+    ],
+    "qpcc-intro": [
+      "bcb98cd5dfa11ac1999d766197f9f053750067450ee54256ccaf9d04665ef808"
+    ],
+    "qpcc-profilo": [
+      "1cdd80f37bd1acc0489b0b7caf1a752d12330744364799d50f7da5fc1a5818a8"
+    ],
+    "qpcc-sintesi": [
+      "412b05b80c41f1af99027c2fe7c0763a0aa284a15424447cc256d702e5ef0bd3"
+    ],
+    "qpcc-volizione": [
+      "37751e2ebc3290ff9288bca980e9248d46cd864697234791e2c65924c4d7ffe7"
+    ],
+    "qpcs-apprendimento": [
+      "68e9b5df047eac27d563b762a7bde54c4214a6857122def1856e73794cfb28ac"
+    ],
+    "qpcs-comunicazione": [
+      "12a53c03abac48bdf3542aeab5177af9e6601a4e4af40ff23f4e8af203dfab1c"
+    ],
+    "qpcs-emozioni": [
+      "e640391679b2d2715767a907c6a16efa7666c72ac090c0b43f071a692bd6b1eb"
+    ],
+    "qpcs-fiducia": [
+      "f3c825477692d613a842a138e038989482000ac964d922fc889764361dc43290"
+    ],
+    "qpcs-intro": [
+      "2d0282adbdda7f0fc7a8cd04fcbf850bc3c21f08c6e82c4ccfe0653672bbd82e"
+    ],
+    "qpcs-profilo": [
+      "c400915869504329882df2434fc232521e1ef9720efa4a5c6a47753283aac0cd"
+    ],
+    "qpcs-sintesi": [
+      "1bd2525f58bff1e71d2bdf2ce7899df8274d5bb636afe1941d24a94ed26b532e"
+    ],
+    "qpcs-volizione": [
+      "716ceef6df9139ff69fa8f2b5945e4ef56e2557a2c21066e1898dc3b605aae7c"
+    ],
+    "qsar-affective": [
+      "ba358b0c236043ebdee9eba5b155447098c40e96356ee09baca34c55912b1371"
+    ],
+    "qsar-attributions": [
+      "609aa4e710f4c83114eac79aea1a722f697f9c7ad55ba4ed991ed09a7a6c8f3d"
+    ],
+    "qsar-cognitive": [
+      "346380642585a7234c94d36ac820e525b029446d5818fd4d6adaffc6ff63b49a"
+    ],
+    "qsar-emotions": [
+      "7d70e26034851f0e1360ed25b57069443c5df5b1b3c7195be4aca620cb5ab6f6"
+    ],
+    "qsar-intro": [
+      "06ae1a68902e6b97d90d1f481ab3e81d20fe3c555f34f882475ee2082e7e6110"
+    ],
+    "qsar-motivation": [
+      "8281d46e0f773e1e334979e19b3d0b4bd887439be97fc00991e4911f46a16617"
+    ],
+    "qsar-processing": [
+      "d17ab4661460f75516a216262054997afa25b317df3178adf3b63f246458e740"
+    ],
+    "qsar-selfcontrol": [
+      "a40e2f29f7c943078a8d532c6c5cc5c0fb08e6025420412e6c8e0f32cc7cc3d8"
+    ],
+    "qsar-synthesis": [
+      "ae2f065482b212a5614ce1e223ba03c18b165a4d5574aeae5e544d41be9231a7"
+    ],
+    "savickas-final": [
+      "7d39eb572111056fb2cca5e6540c5ede9d4bea19724bec4e31f3e70b5cf3ee4d"
+    ],
+    "savickas-intro": [
+      "8a22ffd56539dfab245cac33779c27aeee3621dfbe3a671ccb24c460d3cdb41e"
+    ],
+    "savickas-patto": [
+      "d7c8015253976a36d4ce785884825f357cb706d1dd037711bde061f52802bbae"
+    ],
+    "savickas-q1": [
+      "b255c962f498ccf7670b4f835910834aa8580e48d8a7ce5f6f31d6ba1cfa1d80"
+    ],
+    "savickas-q2": [
+      "15dd4ae44dee684d7d57da85d2d58e222ed656257cd943fd101bd634ee8567b5"
+    ],
+    "savickas-q3": [
+      "298db7b32d6934e0deb8711257386fc5e7c8d4e888aa11163af3de86bbd91770"
+    ],
+    "savickas-q4": [
+      "18199d0081985d627fa9dc74af16c1bf8d94bbac35e902f7873ad83977060eef"
+    ],
+    "savickas-q5": [
+      "d573ff1e213e239c6305a6552f3d8267c540e093353216e14b5c390fbb288e10"
+    ],
+    "sl-attribution": [
+      "3f1c8e18bdc3bb92321c9774963f78ee96942f698d446aceedfc7d88bda80131",
+      "54daba80be4a1449ef3848788a29561e2862daa8f3b6951b0cc6e7ab4b6ce8a3"
+    ],
+    "sl-elaboration": [
+      "c01ac9d0f4724af5af377b13c42c2db4f35c3ef5618f23c41c1097b0effa91fe",
+      "3b91a1339ac416ee2bf210f0c171e8b523d757b844f7c65f831ec3de26523dbf"
+    ],
+    "sl-emotions": [
+      "a371610cd4d7bea9e62aee22d6850f1758aadff54e6ae027780ba2f893ced4e1",
+      "2c493ca1ac5c6b7f4369a9af34571068b95435d12f27ff6755b90e8806b23082"
+    ],
+    "sl-motivation": [
+      "d981eae6669c311711dedec38ede23c08021b6d0cc5c05cb0254109bde8eccb5",
+      "0ccffb463878c0cf6664e42d9bce6d0c16f6dfcda7e1f8e1257800c72f87c7e5"
+    ],
+    "sl-selfcontrol": [
+      "8ceb3e4cb98fb206f90269023ebfa30ba062a5b32f17526e9532447b0bf75a7c",
+      "48d560756fc6e96221486d5faa8e03bea353872492bc6d5d2b4ae1d83e99f783"
+    ],
+    "sl-social": [
+      "f0e5fa819585b1af0366ec0837700b3aade0aaea654252d5cd014ca865876387",
+      "40c74dd5f42db802b631a16afef0e41110146666aa19d14ddc88f78f25500cae"
+    ],
+    "sl-synthesis": [
+      "09e41eff4ae57e9719912cfe7fb4cc9aebf652fe6c6b286062207ec7c81899cc"
+    ],
+    "ztpi-btp": [
+      "54cc51a72a56ce6d9a0a6ebaf8eb2c4549e51bf6649a31473416c57a247e94b7"
+    ],
+    "ztpi-intro": [
+      "06ae1a68902e6b97d90d1f481ab3e81d20fe3c555f34f882475ee2082e7e6110"
+    ],
+    "ztpi-t1": [
+      "ed7fe0e06c197fa44aa9e3fc057b175be755626555664504a98d4823efd922d6"
+    ],
+    "ztpi-t2": [
+      "d84f5c758deb34bb1807879b159499634f6d6668e2499545f72b2dba360a1f78"
+    ],
+    "ztpi-t3": [
+      "26e2b671929f6c0c91758975f67cf4388a14c29a7f6fe0ef218a760e7fa9f5b3"
+    ],
+    "ztpi-t4": [
+      "aa40b65f5075bd0c562ebb23e1413b3a5b86ce900b8287be015705e5444cb4eb"
+    ],
+    "ztpi-t5": [
+      "5bca194c71f2db88caff8419d72f3e58c9e6bc3130bcc6d18c96510d5a6f7a17"
+    ]
+  }
+}

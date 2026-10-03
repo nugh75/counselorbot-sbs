@@ -358,3 +358,106 @@ link sulla base e sulla candidata. Immagine finale
 138634848 byte, nessun container avviato. Una sola guard di navigazione nel
 taccuino riceve i segnali dirty/busy dal popup: evita conferme spurie sulla
 bozza privata nel browser legacy, con test rosso prima e verde dopo.
+
+## QSA — anteprima e allineamento dei prompt di fabbrica (2026-10-03)
+
+Ramo `feature/questionnaire-prompt-preview`. L’utente ha autorizzato
+l’allineamento alla `Guida_Costruzione_Prompt_QSA_CounselorBot.docx` e ha
+confermato che i prompt devono rimanere in inglese. Il documento caricato ha
+testo identico alla guida già versionata. Nessun altro agente impiegato.
+
+I dieci step QSA e i blocchi di sistema/pedagogici seguono il documento;
+conservati il veto di nuove strategie nella sintesi e la composizione delle
+direttive condivise. La matrice dei componenti QSA alimenta runtime ed editor;
+un consiglio esplicito nei follow-up ammessi può attivare una strategia, salvo
+override amministrativi. L’anteprima senza bozze usa le regole effettive del
+turno. Lingua della risposta e interfaccia mantengono IT/EN/ES/FR/DE/SV.
+
+Risolta la causa della presentazione Savickas tra gli step QSA: le tre
+presentazioni QSAr/ZTPI/Savickas mancavano di `questionnaire_type`. I default
+lo dichiarano ora esplicitamente; l’avvio riclassifica soltanto i tre ID noti
+erroneamente assegnati a QSA, conservando tutti gli altri campi.
+
+I testi di un DB esistente non vengono riscritti all’avvio. Il comando
+`backend.qsa_factory_alignment` prepara un piano per gli esatti default
+precedenti riconosciuti tramite hash, preservando personalizzazioni e revisioni
+admin. `backend.prompt_updates` applica/annulla atomicamente con controllo
+degli hash. Procedura e comandi Codespaces in
+`docs/operations/qsa-factory-alignment.md`.
+
+Verifiche: 95 test backend mirati e 206 smoke, 236 unitari frontend, TypeScript,
+ESLint mirato (un warning preesistente), i18n (2863 chiavi × sei lingue),
+anteprima browser a 1440/390 px per tutti gli undici pannelli e le sei lingue,
+guidance-refresh/check e diff check. Il test legge direttamente la guida DOCX
+indipendente e simula dieci step in sei lingue senza chiamate LLM.
+
+Nella sola copia cloud di sviluppo: applicati 17 aggiornamenti dei vecchi testi
+di fabbrica; il secondo piano è vuoto. QSA ha dieci step con `intro` iniziale,
+QSAr nove, ZTPI sette, Savickas otto, ciascuno con la propria presentazione.
+Nessun intervento sul Codespace dell’utente o sulla produzione; nessun merge,
+deploy, chiave LLM o aggiornamento di altri prompt.
+
+Dev nativo ancora attivo su localhost:3107 (frontend), :8002 (backend), DB
+dedicato su :5435. Avvio locale tramite `.cloud-counselorbot/start-backend.sh`
+e `scripts/dev-frontend.sh`; arresto con Ctrl+C nei terminali di avvio. Nel
+Codespace si usa il precedente `start.sh`, porta privata 3107; fare pull e
+applicare il piano al DB di sviluppo prima del nuovo avvio.
+
+Docker di sola validazione: backend ricostruito come
+`counselorbot-qsa-alignment:dev`, import dei nuovi prompt e del comando riusciti.
+Per il proxy cloud è stato necessario montare il trust bundle del sistema solo
+nella fase pip, usando un Dockerfile temporaneo esterno al repository; TLS
+rimane verificato e i Dockerfile versionati sono invariati. La build frontend
+è stata tentata ma i download npm falliscono con `ENOTFOUND` e `npm ci`
+termina con «Exit handler never called», lasciando Next non installato;
+nessuna immagine frontend finale prodotta. Nessun
+container di produzione ricostruito, avviato o riavviato.
+
+## Pulsante comune di allineamento dei prompt (2026-10-03)
+
+L’utente ha approvato il pulsante e precisato che deve coprire tutte le chat.
+Implementato sopra le schede di `ConfigForm`, con anteprima di sola lettura,
+confronto prima/dopo, elenco dei testi conservati e conferma esplicita.
+Interfaccia IT/EN/ES/FR/DE/SV, testi del modello in inglese. Nessun agente
+delegato. Continua il ramo `feature/questionnaire-prompt-preview`, PR #38.
+
+`backend.prompt_factory_alignment` ricava dai registri 93 istruzioni di config
+e 101 step in dodici percorsi, inclusi assistenti, contesti e direttive.
+Aggiorna solo vecchi testi riconosciuti tramite hash o storico seed/migration;
+personalizzazioni e proprietà admin prevalgono. Esclusi varianti linguistiche,
+testi UI, impostazioni operative, persone dei counselor e step personalizzati.
+La classificazione errata di uno step impedisce di riscriverne il prompt.
+
+Il POST accetta solo il digest del piano rivisto, lo ricostruisce con lock e
+applica atomicamente con storico. Un conflitto restituisce 409; il browser
+richiede una nuova anteprima, blocca i doppi click e sincronizza gli editor.
+I salvataggi e ripristini admin acquisiscono gli stessi lock anche quando
+il testo è identico. Quattro prove concorrenti fallivano prima della correzione
+e ora verificano il blocco effettivo su connessioni PostgreSQL separate.
+Bozze e salvataggi pendenti impediscono l’allineamento. CRUD e riordino
+aggiornano la baseline salvata senza nascondere bozze ancora aperte.
+
+Le revisioni di questa operazione hanno origine migration, così restano
+aggiornabili da future versioni di fabbrica. Un salvataggio admin identico al
+testo seed acquisisce la proprietà admin una sola volta. La CLI precedente
+mantiene il proprio comportamento; nessuna riscrittura automatica all’avvio.
+Procedura: `docs/operations/prompt-factory-alignment.md`.
+
+Verifiche: 55 backend mirati, 206 smoke, 236 unitari frontend, otto nuove prove
+browser e due regressioni delle anteprime desktop/mobile riusciti. TypeScript,
+i18n (2884 chiavi × sei lingue), ESLint mirato (solo un warning preesistente),
+guidance-refresh/check e diff check. Schemi PostgreSQL di test isolati; nessun
+LLM chiamato. Anteprima autenticata sul dev: HTTP200, zero aggiornamenti
+necessari e storico invariato; accesso anonimo HTTP401.
+
+Backend Docker ricostruito con il trust bundle cloud temporaneo, TLS verificato:
+`counselorbot-prompt-factory-alignment:validation`, immagine
+`sha256:3cde72012b693b5856418b2e7218c3923cc1d0b33b296b468bd5172b58bcf63a`.
+Import del catalogo 93/101 riuscito in container effimero senza rete. Frontend
+Docker tentato, bloccato dall’errore npm/DNS dell’ambiente che lascia Next
+non installato; controlli e browser nativi riusciti. Dockerfile versionati
+invariati. Dev ancora su :3107/:8002, PostgreSQL dedicato su :5435; avvio e
+arresto come nella sezione precedente. Per Codespaces: aggiornare il ramo
+(oppure main dopo il merge dell’utente), riavviare frontend/backend e usare
+Amministrazione → Allinea prompt di fabbrica. Nessun aggiornamento del DB
+del Codespace o di produzione, nessun merge o deploy in questa sessione.

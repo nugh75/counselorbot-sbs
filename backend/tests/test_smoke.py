@@ -539,7 +539,7 @@ def test_opencode_workspace_uses_requested_language():
         assert "# Profile" in document
         assert "Profile scores" in document
         assert "System prompt key: `prompt_factor`" in guide
-        assert "Analyse ONLY the COGNITIVE factors" in guide
+        assert "Analyse only the cognitive factors of my QSA profile" in guide
         assert "I want to improve my study planning" in memory
 
         with open(os.path.join(workspace, "appunti.md"), "w", encoding="utf-8") as fh:
@@ -1596,7 +1596,9 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         assert body["knowledge"]["certified_strategy_ids"] == []
         assert system_prompt.count("You are Nadia") == 1
         assert "You are Nadia. You are introducing" not in system_prompt
-        assert "cognitive and affective factors" not in system_prompt
+        # QSA names its two areas, without analysing individual factors here.
+        assert "C1 (" not in system_prompt
+        assert "A1 (" not in system_prompt
         assert "cognitive and affective components" not in system_prompt
         assert "there are no right or wrong answers" not in system_prompt
         assert "without asking anything" not in system_prompt
@@ -1620,8 +1622,12 @@ def test_prompt_audit_intro_envelope_is_light_for_all_instruments():
         else:
             assert "will not normally ask me questions" not in system_prompt
             assert "without asking anything" not in system_prompt
-            assert "step-by-step reading of my profile results" in system_prompt
-            assert "move forward with the next-step button when ready" in system_prompt
+            if questionnaire_type == "QSA":
+                assert "explore my full QSA profile step by step" in system_prompt
+                assert "move forward when ready" in system_prompt
+            else:
+                assert "step-by-step reading of my profile results" in system_prompt
+                assert "move forward with the next-step button when ready" in system_prompt
             assert "Avoid bureaucratic wording, stage labels and meta-negations" in system_prompt
         for marker in forbidden_system_blocks:
             assert marker not in system_prompt, (questionnaire_type, marker, system_prompt)
@@ -1708,7 +1714,7 @@ def test_prompt_audit_dry_run_builds_qsa_envelope_without_side_effects():
     assert "C1 (Strategie elaborative)" in system_prompt
     assert "C7 (Autointerrogazione)" in system_prompt
     assert "A1 (Ansietà di base)" not in system_prompt
-    assert "Analyse ONLY the COGNITIVE factors" in body["inputs"]["effective_user_message"]
+    assert "Analyse only the cognitive factors of my QSA profile" in body["inputs"]["effective_user_message"]
     assert "- C1" in body["inputs"]["scoped_scores_context"]
     assert "- A1" not in body["inputs"]["scoped_scores_context"]
     assert body["envelope"]["history"] == []
@@ -2064,8 +2070,8 @@ def test_startup_migration_updates_intro_question_contract():
         assert "guiding the reading of the profile results already provided" in cfg.value
         assert "will not normally ask me questions" not in step.prompt
         assert "without asking anything" not in step.prompt
-        assert "step-by-step reading of my profile results" in step.prompt
-        assert "move forward with the next-step button when ready" in step.prompt
+        assert "explore my full QSA profile step by step" in step.prompt
+        assert "move forward when ready" in step.prompt
         assert "how we'll explore my profile together" not in step.prompt
     finally:
         if cfg is not None and original_cfg is not None:
@@ -5535,7 +5541,7 @@ def test_retrieved_context_routing_and_strategy_exclusion():
     # 1. Test defaults for intro phase (no strategies, only counselorbot RAG)
     flags = get_prompt_component_flags(db, "QSA", "intro")
     
-    assert flags["knowledge"] is False
+    assert flags["knowledge"] is True
     assert flags["rag_counselorbot"] is True
     assert flags["rag_competenzestrategiche"] is False
     assert flags["approved_strategies"] is False
@@ -5543,8 +5549,7 @@ def test_retrieved_context_routing_and_strategy_exclusion():
     assert flags["shared_responses"] is False
 
     # 2. Test _retrieved_context routing logic using these flags
-    # We toggle knowledge to True to test RAG retrieval with these flags
-    flags["knowledge"] = True
+    # The QSA factory intro allows platform knowledge, without strategy sources.
     (
         knowledge_context, strategy_ids, certified_strategy_ids, _skills_blocks,
         _reading_ids, _meta,
@@ -8212,3 +8217,90 @@ def test_diagram_from_message_falls_back_when_counselor_model_writes_no_spec():
 if __name__ == "__main__":
     import sys
     sys.exit(_main())
+
+
+def test_prompt_preview_uses_drafts_without_persisting_configuration():
+    db = _TestSession()
+    try:
+        before = {row.key: row.value for row in db.query(models.Config).all()}
+        before_logs = db.query(models.Log).count()
+    finally:
+        db.close()
+    payload = {
+        "questionnaire_type": "QSA", "mode": "generic", "language": "it",
+        "message": "DRAFT_STUDENT_MESSAGE", "include_knowledge": False,
+        "config_overrides": {
+            "prompt_generic": "DRAFT_SYSTEM_INSTRUCTION",
+            "directive_register": "DRAFT_REGISTER_INSTRUCTION",
+            "prompt_meta_QSA": "DRAFT_META_INSTRUCTION",
+        },
+    }
+    response = client.post("/admin/prompt-audit/dry-run", json=payload)
+    assert response.status_code == 200, response.text
+    system = response.json()["envelope"]["system_prompt_final"]
+    for marker in payload["config_overrides"].values():
+        assert marker in system
+    assert "DRAFT_STUDENT_MESSAGE" in response.json()["envelope"]["full_message"]
+    db = _TestSession()
+    try:
+        assert {row.key: row.value for row in db.query(models.Config).all()} == before
+        assert db.query(models.Log).count() == before_logs
+    finally:
+        db.close()
+
+
+def test_prompt_preview_rejects_non_prompt_configuration():
+    response = client.post("/admin/prompt-audit/dry-run", json={
+        "message": "test", "config_overrides": {"active_provider": "unconfigured"},
+    })
+    assert response.status_code == 400, response.text
+
+
+def test_prompt_preview_draft_mode_does_not_modify_guided_step():
+    _ensure_guided_steps("QSA")
+    db = _TestSession()
+    try:
+        before = db.query(models.GuidedStep).filter(models.GuidedStep.id == "cognitive").first().system_prompt_mode
+    finally:
+        db.close()
+    response = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QSA", "phase": "cognitive", "mode": "generic",
+        "step_mode_override": "generic", "use_phase_prompt": True,
+        "message": "DRAFT_STEP_INSTRUCTION", "include_knowledge": False,
+        "config_overrides": {"prompt_generic": "DRAFT_MODE_SYSTEM"},
+    })
+    assert response.status_code == 200, response.text
+    assert "DRAFT_MODE_SYSTEM" in response.json()["envelope"]["system_prompt_final"]
+    db = _TestSession()
+    try:
+        assert db.query(models.GuidedStep).filter(models.GuidedStep.id == "cognitive").first().system_prompt_mode == before
+    finally:
+        db.close()
+
+
+def test_prompt_preview_can_clear_a_saved_meta_prompt_without_writing():
+    db = _TestSession()
+    try:
+        row = db.query(models.Config).filter(models.Config.key == "prompt_meta_QSA").first()
+        old = row.value if row else None
+        if row is None:
+            row = models.Config(key="prompt_meta_QSA", value="SAVED_META_TO_CLEAR")
+            db.add(row)
+        else:
+            row.value = "SAVED_META_TO_CLEAR"
+        db.commit()
+        response = client.post("/admin/prompt-audit/dry-run", json={
+            "questionnaire_type": "QSA", "message": "test", "include_knowledge": False,
+            "config_overrides": {"prompt_meta_QSA": ""},
+        })
+        assert response.status_code == 200, response.text
+        assert "SAVED_META_TO_CLEAR" not in response.json()["envelope"]["system_prompt_final"]
+        db.refresh(row)
+        assert row.value == "SAVED_META_TO_CLEAR"
+    finally:
+        if old is None:
+            db.delete(row)
+        else:
+            row.value = old
+        db.commit()
+        db.close()
