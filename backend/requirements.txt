@@ -5,6 +5,7 @@ pydantic
 python-dotenv
 psycopg2-binary
 python-jose[cryptography]
+cryptography
 passlib[bcrypt]
 argon2-cffi
 edge-tts

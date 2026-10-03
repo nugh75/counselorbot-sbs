@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from .. import auth, models
 from ..chat_preferences import ResponseFormat
-from ..database import get_db
+from ..database import get_personal_ai_db as get_db
 from ..orientation import analyze_turn, normalize_language
 from ..student_context import latest_learner_profile
 

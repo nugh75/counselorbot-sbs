@@ -77,9 +77,14 @@ export function withViewAsHeaders(headers?: HeadersInit): Headers {
 }
 
 export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+    const headers = withViewAsHeaders(init.headers);
+    if (typeof window !== 'undefined') {
+        try { headers.set('X-CounselorBot-Language', window.localStorage?.getItem('cb_lang') || 'it'); }
+        catch { headers.set('X-CounselorBot-Language', 'it'); }
+    }
     return fetch(input, {
         ...init,
-        headers: withViewAsHeaders(init.headers),
+        headers,
     });
 }
 
