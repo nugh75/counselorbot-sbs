@@ -39,21 +39,21 @@ async function fixture({ groups = ['docenti'], admin = false, lang = 'it', width
         if (denied && url.pathname === '/api/admin/groups') return route.fulfill({ status: 403, json: {} });
         return route.fulfill({ json: data });
     });
-    await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
+    await page.goto(`${origin}/docente/taccuino`, { waitUntil: 'networkidle' });
     const field = page.locator('#teacher-notebook-subjects');
     if (groups.includes('studenti') && groups.length === 1 && !admin) await page.getByText('Pagina riservata a docenti, ricercatori e amministratori.', { exact: true }).waitFor();
     else await page.waitForFunction(() => document.querySelector('#teacher-notebook-subjects')?.value === 'Materia demo');
-    return { context, page, state, field, notebook: field.locator('xpath=ancestor::div[h2]') };
+    return { context, page, state, field, notebook: page.locator('[data-teacher-notebook]') };
 }
 
-test('existing home exit protects dirty text and focus before navigation', async () => {
+test('dedicated page header exit protects dirty text and focus before navigation', async () => {
     const f = await fixture();
     try {
         await f.field.fill('Bozza riservata'); await f.field.focus();
         await f.field.evaluate(e => e.setSelectionRange(2, 8));
-        await f.page.locator('a[aria-labelledby="teacher-link-classi"]').evaluate(e => e.click());
+        await f.page.locator('[data-teacher-area-header] a[href="/docente"]').evaluate(e => e.click());
         assert.equal(f.state.dialogs.length, 1, 'dirty exit asks to discard');
-        assert.equal(new URL(f.page.url()).pathname, '/docente');
+        assert.equal(new URL(f.page.url()).pathname, '/docente/taccuino');
         assert.equal(await f.field.inputValue(), 'Bozza riservata');
         assert.deepEqual(await f.field.evaluate(e => [e === document.activeElement, e.selectionStart, e.selectionEnd]), [true, 2, 8]);
         assert.deepEqual(f.state.writes, []);
@@ -129,7 +129,7 @@ for (const failure of [false, true]) {
             await f.notebook.getByRole('status').filter({ hasText: 'Salvataggio in corso' }).waitFor();
             await save.evaluate(e => e.click());
             await f.notebook.getByRole('link', { name: destinations[0][0], exact: true }).click();
-            assert.equal(new URL(f.page.url()).pathname, '/docente');
+            assert.equal(new URL(f.page.url()).pathname, '/docente/taccuino');
             assert.equal(await f.field.inputValue(), '  Bozza demo  ');
             assert.deepEqual(f.state.dialogs, []); assert.equal(f.state.writes.length, 1);
             release(); f.state.hold = null;
@@ -184,7 +184,7 @@ test('modifier click and a new-tab link retain the source draft without confirma
             const other = await opened; await other.waitForURL(`${origin}/profilo/obiettivi`);
             assert.equal(new URL(other.url()).pathname, '/profilo/obiettivi');
             assert.equal(await f.field.inputValue(), 'Bozza del tab origine');
-            assert.equal(new URL(f.page.url()).pathname, '/docente');
+            assert.equal(new URL(f.page.url()).pathname, '/docente/taccuino');
             await other.close();
         }
         assert.deepEqual(f.state.dialogs, []); assert.deepEqual(f.state.writes, []);
@@ -200,11 +200,11 @@ for (const legacy of [false, true]) {
         const f = await fixture({ legacy });
         try {
             await f.page.goto(`${origin}/docente/classi`, { waitUntil: 'networkidle' });
-            await f.page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
+            await f.page.goto(`${origin}/docente/taccuino`, { waitUntil: 'networkidle' });
             await f.field.fill('Bozza indietro'); await f.field.focus();
             await f.field.evaluate(e => e.setSelectionRange(1, 5));
             await f.page.evaluate(() => history.back());
-            await f.page.waitForFunction(() => location.pathname === '/docente');
+            await f.page.waitForFunction(() => location.pathname === '/docente/taccuino');
             assert.equal(f.state.dialogs.length, 1);
             assert.deepEqual(await f.field.evaluate(e => [e.value, e === document.activeElement, e.selectionStart, e.selectionEnd]), ['Bozza indietro', true, 1, 5]);
             f.state.accept = true; await f.page.evaluate(() => history.back());
@@ -249,7 +249,7 @@ for (const legacy of [false, true]) {
         const f = await fixture({ legacy }); let release;
         try {
             await f.page.goto(`${origin}/docente/classi`, { waitUntil: 'networkidle' });
-            await f.page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
+            await f.page.goto(`${origin}/docente/taccuino`, { waitUntil: 'networkidle' });
             await f.page.waitForFunction(() => document.querySelector('#teacher-notebook-subjects')?.value === 'Materia demo');
             const closeGuard = () => f.page.evaluate(() => {
                 const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); return event.defaultPrevented;
@@ -260,7 +260,7 @@ for (const legacy of [false, true]) {
             await f.notebook.getByRole('button', { name: 'Salva taccuino', exact: true }).click();
             await f.notebook.getByRole('status').filter({ hasText: 'Salvataggio in corso' }).waitFor();
             await f.page.evaluate(() => history.back());
-            await f.page.waitForFunction(() => location.pathname === '/docente');
+            await f.page.waitForFunction(() => location.pathname === '/docente/taccuino');
             assert.equal(await f.field.inputValue(), 'Versione inviata');
             // Cross-document Back may need the browser's native beforeunload
             // warning (empty message); dismissing it retains the pending save.
@@ -328,7 +328,7 @@ for (const dirty of [false, true]) {
             await link.click();
             if (dirty) {
                 assert.equal(f.state.dialogs.length, 1);
-                assert.equal(new URL(f.page.url()).pathname, '/docente');
+                assert.equal(new URL(f.page.url()).pathname, '/docente/taccuino');
                 assert.deepEqual(await f.field.evaluate(e => [e === document.activeElement, e.selectionStart, e.selectionEnd]), [true, 2, 7]);
             } else {
                 await f.page.waitForURL(`${origin}/profilo/obiettivi`);

@@ -51,8 +51,10 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
         assert.equal(await page.locator(`nav a[href="${href}"]`).count(), 1, `link ${href}`);
     }
     assert.ok(await page.locator('[data-teacher-area-home] img').first().isVisible());
-    // taccuino inline: campo "Discipline insegnate"
-    await page.getByLabel('Discipline insegnate').waitFor();
+    // S16: the home is an entry point and never mounts the notebook form.
+    assert.equal(await page.locator('[data-teacher-notebook]').count(), 0);
+    assert.equal(await page.getByLabel('Discipline insegnate').count(), 0);
+    assert.equal(await page.getByRole('link', { name: 'Taccuino del docente', exact: true }).getAttribute('href'), '/docente/taccuino');
     // percorso guidato verso la chat
     assert.ok(await page.locator('a[href="/?start=OBIETTIVO_DOCENZA"]').count() >= 1);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));

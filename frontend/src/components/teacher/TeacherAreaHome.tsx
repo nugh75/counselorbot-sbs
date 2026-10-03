@@ -25,7 +25,7 @@ function TeacherAreaEntry({ slug }: { slug: TeacherAreaSlug }) {
     );
 }
 
-export function TeacherAreaHome({ teacher, notebookSlot }: { teacher: boolean; notebookSlot?: React.ReactNode }) {
+export function TeacherAreaHome({ teacher }: { teacher: boolean }) {
     const { lang } = useI18n();
     const l = (key: Parameters<typeof teacherAreaText>[1]) => teacherAreaText(lang, key);
     return (
@@ -48,13 +48,7 @@ export function TeacherAreaHome({ teacher, notebookSlot }: { teacher: boolean; n
                     </nav>
                 </section>
             ))}
-            {notebookSlot && (
-                <section aria-labelledby="teacher-notebook-group">
-                    <h2 id="teacher-notebook-group" className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">{l('notebook')}</h2>
-                    <p className="mt-1 max-w-2xl text-sm text-slate-600">{l('notebookNote')}</p>
-                    <div className="mt-2">{notebookSlot}</div>
-                </section>
-            )}
+            <TeacherAreaEntry slug="taccuino" />
         </div>
     );
 }
