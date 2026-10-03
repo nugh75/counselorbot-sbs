@@ -25,7 +25,7 @@ def generate(monkeypatch):
         calls = []
 
         class AI:
-            def __init__(self, db):
+            def __init__(self, db, username=None):
                 self.config = {}
 
             def call_model(self, **kwargs):

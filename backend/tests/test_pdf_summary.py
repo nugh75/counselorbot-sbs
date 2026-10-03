@@ -29,7 +29,7 @@ def result(db):
 def test_whole_conversation_and_final_decision_reach_summary(monkeypatch, db, result):
     prompts = []
     class FakeAI:
-        def __init__(self, db): pass
+        def __init__(self, db, username=None): pass
         def get_response(self, prompt, *args, **kwargs):
             prompts.append(prompt)
             return 'DECISIONE_FINALE: scelgo una sola azione.' if 'DECISIONE_FINALE' in prompt else 'Note iniziali.'

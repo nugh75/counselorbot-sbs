@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from .. import auth, models, schemas
+from .. import auth, models, schemas, personal_api
 from ..database import get_db
 from ..memory_service import session_memory
 
@@ -275,7 +275,7 @@ def _account_preferences(db: Session, username: str):
                       .order_by(models.FrozenSession.updated_at.desc()).first())
             if frozen:
                 counselor_id = (frozen.data or {}).get("counselor_id")
-    counselor = db.get(models.Counselor, counselor_id) if counselor_id else None
+    counselor = personal_api.visible_counselor(db, counselor_id, username) if counselor_id else None
     revision = _latest_revision(db, username)
     notebook_ready = bool((prefs and prefs.notebook_completed) or
                           (revision and any(str(v or "").strip() for v in revision.data.values())))
@@ -300,7 +300,7 @@ async def save_account_preferences(payload: AccountPreferencesSave,
     username = current_user["username"]
     state = _account_preferences(db, username)
     counselor_id = payload.counselor_id if payload.counselor_id is not None else state["counselor_id"]
-    counselor = db.get(models.Counselor, counselor_id) if counselor_id else None
+    counselor = personal_api.visible_counselor(db, counselor_id, username) if counselor_id else None
     if not counselor or not counselor.is_active:
         raise HTTPException(status_code=422, detail="Choose an active counselor")
     if payload.complete_setup and not state["notebook_ready"]:

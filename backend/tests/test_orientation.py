@@ -69,7 +69,7 @@ class _FakeAIService:
     # il ramo "testo libero", quello che scatta quando il JSON non e' forzato.
     override = None
 
-    def __init__(self, db=None):
+    def __init__(self, db=None, username=None):
         self.config = {}
         self.disable_thinking = False
         self.reasoning_budget_override = None

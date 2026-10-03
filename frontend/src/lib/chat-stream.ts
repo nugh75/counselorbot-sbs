@@ -3,6 +3,8 @@
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { withViewAsHeaders } from './auth.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { chatHTTPErrorCode, safeChatErrorCode } from './chat-errors.ts';
 import type { RecommendationCatalog } from '@/lib/recommendations';
 import type { EventBookletDraft } from '@/lib/event-booklet';
 import type { GoalDraft } from '@/lib/goal-draft';
@@ -29,6 +31,15 @@ export class IncompleteChatStreamError extends Error {
     }
 }
 
+export class ChatProviderError extends Error {
+    code: string;
+    constructor(code: string) {
+        super('The AI provider could not complete the request.');
+        this.name = 'ChatProviderError';
+        this.code = code;
+    }
+}
+
 export async function streamChat(
     payload: Record<string, unknown>,
     onDelta: (fullText: string) => void,
@@ -44,7 +55,9 @@ export async function streamChat(
     });
 
     if (!res.ok || !res.body) {
-        throw new Error(`Stream non disponibile (${res.status})`);
+        const body: unknown = await res.json().catch(() => null);
+        if (signal?.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError');
+        throw new ChatProviderError(chatHTTPErrorCode(res.status, body));
     }
 
     const reader = res.body.getReader();
@@ -79,7 +92,7 @@ export async function streamChat(
                 const json = line.slice(5).trim();
                 if (!json) continue;
 
-                let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; incomplete?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; recommendations?: RecommendationCatalog; event_booklet?: EventBookletDraft | null; goal_draft?: GoalDraft | null; error?: string };
+                let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; incomplete?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; recommendations?: RecommendationCatalog; event_booklet?: EventBookletDraft | null; goal_draft?: GoalDraft | null; error?: string; error_code?: string };
                 try {
                     evt = JSON.parse(json);
                 } catch {
@@ -89,6 +102,8 @@ export async function streamChat(
                 if (evt.session_id) sessionId = evt.session_id;
                 if (evt.conversation_id) conversationId = evt.conversation_id;
                 if (evt.error) {
+                    const code = safeChatErrorCode(evt.error_code);
+                    if (code) throw new ChatProviderError(code);
                     throw new Error(evt.error);
                 }
                 if (typeof evt.reasoning === 'string') {

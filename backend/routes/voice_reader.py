@@ -3,6 +3,7 @@
 Audio travels inside the requesting stream; no files, public audio URLs or
 student text are retained. Access follows the existing /tts edge-auth policy.
 """
+from .. import personal_api
 import asyncio
 import base64
 import json
@@ -100,7 +101,7 @@ def spoken_segments(text: str, language: str, rules: list[PronunciationRule] | N
 
 def reader_voice(request: ReaderRequest, db: Session) -> str:
     if request.counselor_id and not request.voice_override:
-        counselor = db.get(models.Counselor, request.counselor_id)
+        counselor = personal_api.visible_counselor(db, request.counselor_id)
         if counselor and counselor.voice_mapping:
             assigned = counselor.voice_mapping.get(request.language)
             if request.engine == "edge":
@@ -184,7 +185,7 @@ async def reader_events(segments: list[dict], voice: str, engine: str = "edge"):
 
 
 @router.post("/stream")
-async def stream(request: ReaderRequest, db: Session = Depends(database.get_db)):
+async def stream(request: ReaderRequest, db: Session = Depends(database.get_personal_ai_db)):
     segments = spoken_segments(request.text, request.language, request.pronunciations, request.plain_text)
     if not segments:
         raise HTTPException(422, "No readable text")

@@ -64,7 +64,7 @@ async def generate_cross_synthesis(
     if not profile_block:
         raise HTTPException(status_code=400, detail="No usable scores found")
 
-    ai_service = AIService(db)
+    ai_service = AIService(db, username=current_user["username"])
     system_prompt = ai_service.config.get(
         "prompt_cross_synthesis", DEFAULT_SYSTEM_PROMPT_CROSS_SYNTHESIS
     ) or DEFAULT_SYSTEM_PROMPT_CROSS_SYNTHESIS

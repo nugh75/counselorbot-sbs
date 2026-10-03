@@ -16,6 +16,7 @@ Endpoint:
 - POST /pqbl/sessions/{sid}/final-test   → submit unico del test finale
 - GET  /pqbl/sessions/{sid}/summary      → metriche (primo tentativo, per skill, tempo)
 """
+from .. import personal_api
 import hashlib
 import logging
 import math
@@ -49,7 +50,7 @@ from ..prompt_config import (
 from ..guided_text_i18n import resolve_text
 
 router = APIRouter()
-get_db = database.get_db
+get_db = database.get_personal_ai_db
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 if not logger.handlers:
@@ -89,11 +90,7 @@ def _resolve_counselor_preset(db: Session, counselor_id: int):
     """
     if not counselor_id:
         return None, None
-    counselor = (
-        db.query(models.Counselor)
-        .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
-        .first()
-    )
+    counselor = personal_api.require_visible_counselor(db, counselor_id)
     if not counselor or not counselor.preset_id:
         return None, None
     preset = (
@@ -171,6 +168,7 @@ def _generate_all_chunks(document_id: str):
 
         from ..chatgpt_connections import bind_identity
         bind_identity(db, {"authenticated": True, "username": doc.username}, doc.language)
+        personal_api.bind_counselor(db, doc.counselor_id)
         ai = AIService(db)
         # Il modello del preset del counselor scelto dallo studente ha la
         # precedenza; ripiego su pqbl_model (config) e infine sul modello attivo.
@@ -365,6 +363,7 @@ async def upload_pqbl_document(
 
     doc = models.PqblDocument(
         id=str(uuid.uuid4()),
+        counselor_id=counselor_id or None,
         username=identity.get("username") or None,
         filename=file.filename,
         text_hash=file_hash,

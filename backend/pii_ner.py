@@ -109,7 +109,7 @@ def _ner_entities(text: str, base_url: str, model: str) -> list:
 
 # --- Anonimizzazione multi-testo --------------------------------------------
 
-def anonymize_texts(texts: list, ollama_base: str = None) -> tuple:
+def anonymize_texts(texts: list, ollama_base: str = None, *, ner_enabled: bool | None = None, ner_model: str | None = None) -> tuple:
     """Anonimizza una lista di testi (user_message, system_prompt, history).
 
     Ritorna `(testi_anonimizzati, mapping, ner_ok)`:
@@ -120,6 +120,8 @@ def anonymize_texts(texts: list, ollama_base: str = None) -> tuple:
     """
     if ollama_base is None:
         ollama_base = _DEFAULT_OLLAMA
+    use_ner = _ner_enabled if ner_enabled is None else ner_enabled
+    model = ner_model or _ner_model
     mapping: dict = {}
     # token per (tipo, valore): lo stesso valore usa lo stesso token ovunque.
     value_tokens: dict = {}
@@ -152,9 +154,9 @@ def anonymize_texts(texts: list, ollama_base: str = None) -> tuple:
                 det_spans.append((idx, idx + len(value), token))
                 idx += len(value)
         ner_spans = []  # (start, end, token) — layer NER
-        if _ner_enabled:
+        if use_ner:
             try:
-                for ntype, value in _ner_entities(text, ollama_base, _ner_model):
+                for ntype, value in _ner_entities(text, ollama_base, model):
                     token = token_for(ntype, value)
                     idx = 0
                     while True:

@@ -101,7 +101,7 @@ def test_manual_generation_preserves_factor_dictionary_during_fallback_and_repai
     calls = []
     raw = spec_for('A6')
     class AI:
-        def __init__(self, db):
+        def __init__(self, db, username=None):
             self.config = {}
         def call_model(self, **kwargs):
             calls.append(kwargs)
