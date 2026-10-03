@@ -1,94 +1,123 @@
-# API personali di studenti e docenti
+# Connessioni AI personali di studenti e docenti
 
-La funzione è disattivata per default. Un amministratore reale può abilitarla
-in **Amministrazione → Configurazione → Generale → API personali**; il ruolo ricercatore non basta.
-I collegamenti compaiono in Area personale (`/profilo/api-personali`) e Area
-docenti (`/docente/api-personali`) quando la funzione è abilitata. Le due pagine
-configurano lo stesso account ai4auth.
+La funzione è disattivata per default. Il vero amministratore la abilita in
+**Amministrazione → Configurazione → Generale → API personali**; il ricercatore
+non può abilitarla. L’attivazione prepara automaticamente la protezione delle
+credenziali, senza comandi o variabili obbligatorie sul server.
 
-Ogni account salva una connessione attiva: provider, identificativo esatto del
-modello, chiave e scelta personale/sistema. Il campo chiave resta vuoto dopo il
-salvataggio; vuoto conserva la chiave precedente solo per lo stesso provider.
-Cambiare provider richiede una nuova chiave. La verifica effettua una richiesta
-in sola lettura al provider, senza generare testo: non garantisce accesso a uno
-specifico modello. L’eliminazione richiede conferma in pagina. A funzione
-disabilitata non vengono mostrati collegamenti, modulo o sezione della Guida;
-un accesso diretto alla pagina rimanda alla rispettiva area personale.
-L’endpoint DELETE resta disponibile al proprietario autenticato per eliminare
-le proprie credenziali, anche con la funzione disabilitata.
+La pagina si trova in `/profilo/api-personali` e `/docente/api-personali`.
+Entrambe gestiscono lo stesso account CounselorBot. Quando la funzione è
+spenta, collegamenti, modulo e sezione della Guida sono nascosti; una visita
+diretta rimanda alla rispettiva area. Le connessioni e i counselor restano salvati.
 
-## Attivazione da Amministrazione
+## Connessioni e associazioni
 
-Dopo il normale aggiornamento dell’applicazione, selezionare **Consenti API
-personali a studenti e docenti**. Non occorre generare chiavi o modificare file
-sul server. L’attivazione crea automaticamente una chiave privata Fernet in
-`personal_api_credentials/credential.key`, con directory 0700 e file 0600;
-la scelta è salvata nel database e si applica subito alle nuove richieste.
-Il volume Docker dedicato `personal_api_credentials` conserva la chiave dopo
-riavvii e sostituzioni del container. Includerlo nel backup insieme al database.
+**Aggiungi connessione** salva nome, provider, identificativo esatto del modello
+e chiave. Il nome è un’etichetta scelta dall’utente per riconoscere il proprio
+account provider: non effettua un login al provider. Si possono aggiungere più
+connessioni e chiavi, anche dello stesso provider o di account esterni diversi.
+Le chiavi appartengono sempre all’account CounselorBot autenticato: non si possono
+leggere, usare o assegnare connessioni di un altro utente.
 
-Una chiave esistente non viene sostituita. Se il file manca mentre esistono
-credenziali salvate, l’attivazione richiede il ripristino dal backup. In caso di
-permessi insufficienti, la funzione rimane disabilitata e mostra un errore.
-Le installazioni che usano già `PERSONAL_API_ENCRYPTION_KEY` continuano a usarla;
-non sono necessarie migrazioni delle credenziali. Per operatori avanzati restano
-facoltativi `PERSONAL_API_ENCRYPTION_KEY_FILE` (precedenza sul valore diretto)
-e `PERSONAL_API_CREDENTIALS_DIR` (directory privata alternativa).
+La chiave è cifrata e non viene restituita nelle risposte. Le nuove credenziali
+sono legate all’utente, al provider e all’identificativo della connessione: uno
+scambio tra record non consente di usare un’altra chiave. In modifica, il campo
+vuoto conserva la chiave per lo stesso provider; cambiarlo richiede una nuova
+chiave. **Elimina connessione** chiede conferma e rimuove la chiave e le sue
+associazioni; conserva i counselor. Le associazioni rimosse tornano alla scelta
+predefinita, come indicato nella conferma. Se era la connessione predefinita,
+questa torna alle API di sistema; se non rimangono connessioni, l’uso personale
+viene disattivato. Un endpoint di eliminazione resta disponibile al proprietario
+anche se l’amministratore ha disabilitato la funzione, senza mostrare la pagina.
 
-Il backend aggiornato crea idempotentemente `personal_api_settings`. Il
-normale aggiornamento Docker richiede la ricostruzione delle immagini; non
-servono sudo o modifiche nginx per questa funzione con il proxy esistente.
-GET/PUT `/admin/personal-api-policy` sono riservati al vero amministratore.
-Le mutazioni richiedono `X-Requested-With: CounselorBot`, sono escluse dalle
-anteprime di ruolo e le risposte sono `Cache-Control: no-store`. Il pannello
-configurazione generico non può leggere o modificare le impostazioni private.
+In **Modelli dei counselor**, ciascun counselor ha un selettore della
+connessione: più counselor possono usare la stessa connessione, oppure
+connessioni diverse. **Connessione predefinita** serve i counselor senza
+un’associazione specifica e le funzioni senza counselor; può essere impostata
+su API di sistema. Le associazioni si applicano solo nell’account del richiedente,
+senza modificare preset, persona o prompt dei counselor dell’istituzione.
+La lista dei counselor mostra il modello effettivamente assegnato a quell’account.
 
-## Risoluzione e limiti
+**Usa le mie API personali** e **Salva associazioni e utilizzo** rendono attive
+le scelte. Disattivando e salvando, le nuove richieste usano le API di sistema.
+Il passaggio alle API personali disattiva l’uso dell’abbonamento ChatGPT, e
+viceversa, conservando tutte le credenziali. Le richieste già avviate mantengono
+la configurazione iniziale. Un errore della connessione personale non attiva
+modelli o chiavi di sistema di riserva.
 
-La connessione personale è risolta sul server dall’identità autenticata del richiedente;
-nessun endpoint accetta uno username di destinazione. In pQBL il proprietario
-proviene dal documento autorizzato, anche nel lavoro in background.
+## Counselor personali
 
-Chat guidata (streaming e normale), messaggi chat, Bussola, Assistente, studio
-da PDF, analisi combinata, sintesi PDF dei risultati, Tavolo e diagrammi usano
-la connessione personale selezionata, anche quando il counselor ha un preset
-diverso. L'anonimizzazione dei dati verso provider esterni rimane applicata.
-Non si accettano endpoint arbitrari, provider locali o il gateway interno
-OmniRoute. I servizi locali di OCR/embedding/trascrizione, voce, giudici interni,
-benchmark e terminale OpenCode mantengono la configurazione di sistema.
+**Crea un counselor** salva nome, descrizione e istruzioni private dell’account.
+Le istruzioni possono essere scritte nella lingua dell’utente: vengono conservate
+senza traduzione e si aggiungono alle regole e ai prompt del percorso. I prompt
+di fabbrica rimangono in inglese. La lingua della risposta segue le impostazioni
+della conversazione. I counselor personali possono essere modificati o eliminati
+con conferma e scelti nei normali selettori delle nuove conversazioni. Le sessioni
+già congelate mantengono il loro counselor.
 
-Una connessione personale attiva non usa chiavi di sistema o modelli di riserva
-in caso di errore. Lo spegnimento amministrativo e il ritorno alla modalità
-sistema si applicano alle nuove istanze/richieste; una richiesta già avviata,
-incluso un job pQBL in corso, mantiene la configurazione iniziale. Lo spegnimento
-non elimina i dati: alla riattivazione torna valida la scelta personale salvata.
+I counselor personali gestiscono gli strumenti dichiarati dall’applicazione;
+la loro lista strumenti usa `*`, senza eludere autorizzazioni e feature gate dei
+singoli percorsi. Non compaiono agli altri utenti, nella lista amministrativa,
+nei benchmark, nel laboratorio, nelle revisioni/allineamenti dei prompt, nelle
+traduzioni automatiche o nella scelta globale Telegram. Il backend controlla
+l’accesso anche se viene inviato direttamente il loro ID. Eliminare un counselor
+rimuove le sue associazioni e azzera la preferenza dell’account se lo usava.
+Le conversazioni già salvate mantengono il loro testo.
 
-**API personali** e **abbonamento ChatGPT** sono scelte alternative: attivare
-una modalità disattiva la preferenza dell’altra nello stesso aggiornamento,
-senza cancellare nessuna credenziale. Le pagine studente e docente gestiscono
-lo stesso account. Anche i servizi AI annidati usano l’identità del richiedente,
-non quella dello studente cui appartiene un risultato consultato. Un’eventuale
-vecchia selezione ambigua blocca l’inferenza e richiede una scelta esplicita.
+## Prova della connessione ed errori
 
-I costi delle chat personali sono marcati nei log con `credential_source=personal`
-e non concorrono al blocco del budget mensile di sistema. Il pannello costi può
-continuare a mostrare le stime di tutte le richieste: il pagamento delle richieste
-personali è a carico dell'account del provider dell'utente. Le chiavi non sono
-incluse nelle risposte o negli envelope dei log né salvate nello storage browser.
+**Prova connessione e modello** invia solo su richiesta un messaggio neutro
+«Reply with OK.» al modello e alla chiave salvati. Non invia risultati, taccuini
+o conversazioni. Consuma quota e può costare secondo il provider; salvarli o
+associarli non effettua chiamate LLM. La prova conserva il filtro dei dati esterni
+ed esclude altre connessioni, abbonamenti e fallback. Una risposta conferma quella
+prova breve; non garantisce quote future o capacità del modello sull’intero percorso.
 
-## Verifiche isolate
+Gli errori espongono codici sicuri e testi nelle sei lingue: autenticazione,
+modello senza accesso o provider disponibili, quota/credito, limite temporaneo,
+richiesta incompatibile, servizio locale di protezione dei dati, connessione o
+configurazione. Gli step guidati conservano questi codici invece di mostrare sempre
+un generico problema temporaneo. Testo grezzo del provider, credenziali e dati
+inviati non vengono riportati all’utente. Su Codespaces il servizio locale di
+anonimizzazione può essere assente: il blocco è riportato esplicitamente; questa
+modifica non disabilita automaticamente la protezione.
 
-Backend: `python -m pytest backend/tests/test_personal_api.py backend/tests/test_personal_ai_admin.py` usa
-`backend.tests.artifact_database.artifact_session`, un nuovo schema con rollback
-nel database PostgreSQL `counselorbot_test`; nessun uso di dati di produzione.
+## Protezione, migrazione e API
 
-Frontend: `cd frontend && PERSONAL_API_BASE_URL=http://127.0.0.1:3135 node --test tests/personal-api.test.mjs`.
-Avviare un Next dev su `127.0.0.1:3135` per questi test. Le API sono fixture del
-browser: nessun provider reale né credenziale reale viene chiamato. La suite
-copre accessi studente/docente, salvataggio/verifica/eliminazione, interruttore
-admin, errore di salvataggio e sei lingue, tema scuro, larghezze 320/390/1440 px.
-`node --test --experimental-strip-types tests/personal-ai-visibility.test.mjs`
-verifica inoltre le due aree, ogni combinazione di flag, accessi diretti
-disabilitati e attivazione amministrativa senza chiavi preconfigurate.
-La schermata `frontend/public/guide/api-personali.png` proviene dalla fixture
-italiana con campo chiave vuoto.
+La chiave Fernet è conservata in `personal_api_credentials/credential.key`
+(directory 0700, file 0600), nel volume Docker dedicato. Includere archivio e
+DB nel backup. La chiave non viene rigenerata se manca mentre esistono credenziali.
+Restano facoltativi gli override `PERSONAL_API_ENCRYPTION_KEY`,
+`PERSONAL_API_ENCRYPTION_KEY_FILE` e `PERSONAL_API_CREDENTIALS_DIR`.
+
+L’aggiornamento crea le tabelle `personal_api_connections`, `personal_ai_routing`
+e `personal_counselor_connections`, aggiunge `counselors.owner_username` prima
+delle query di snapshot dei prompt e `pqbl_documents.counselor_id`.
+L’indice del proprietario e le migrazioni sono idempotenti. Le vecchie configurazioni
+`personal_api_settings` vengono copiate una volta, conservando cifratura, modello
+e attivazione come connessione predefinita. La copia legacy non può riattivare
+una chiave eliminata. Non viene modificato nessun prompt salvato.
+
+API del solo proprietario:
+
+- GET/POST `/user/api-connections`; PUT/DELETE `/user/api-connections/{id}`.
+- POST `/user/api-connections/{id}/test`: solo prova esplicita, senza dati dell’utente.
+- PUT `/user/api-routing`: attivazione, default e associazioni validate insieme.
+- GET/POST `/user/counselors`; PUT/DELETE `/user/counselors/{id}`.
+- GET `/user/api-settings`: compatibilità per visibilità/stato; le vecchie mutazioni
+  rispondono 409 dopo la migrazione per non sovrascrivere configurazioni multiple.
+
+Le mutazioni richiedono `X-Requested-With: CounselorBot`, non accettano username,
+URL arbitrari o identità in anteprima; risposte e lista counselor non sono
+memorizzabili in cache. Le API amministrative restano riservate al vero amministratore.
+Chat, Bussola, Assistente, studio da PDF, sintesi, analisi combinata, Tavolo e
+diagrammi rispettano la scelta personale. La generazione pQBL conserva il counselor
+scelto anche in background. Servizi locali, OCR, embedding, trascrizione, voce,
+benchmark e OpenCode restano su configurazione di sistema.
+
+Per distribuire serve il normale aggiornamento e ricostruzione delle immagini,
+senza sudo o modifiche nginx per questa funzione con il proxy esistente.
+Aggiornare e riavviare tutti i processi backend prima di creare counselor privati:
+le versioni precedenti non riconoscono il campo proprietario e potrebbero elencarli
+come counselor condivisi. Un rollback a quelle versioni richiede di verificare
+prima la presenza dei counselor privati; non usare processi di versioni diverse.

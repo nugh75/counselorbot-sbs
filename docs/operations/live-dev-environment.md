@@ -251,3 +251,32 @@ configurazione manuale, poi ha ripristinato entrambi i flag a false; nessuna
 chiave API utente salvata, nessun OAuth e nessuna chiamata LLM. Le directory
 private di sviluppo restano sul disco, escluse da Git e dal contesto Docker.
 Non usare una copia di produzione per queste prove.
+
+### Connessioni multiple e counselor privati
+
+La stessa fixture browser su `127.0.0.1:3135` verifica più account/chiavi dello
+stesso provider, associazioni condivise da più counselor, scelta predefinita,
+creazione e modifica dei counselor privati con istruzioni nella lingua scelta.
+La schermata `frontend/public/guide/api-personali.png` usa dati fittizi e non
+mostra chiavi. Controlli in tema scuro, sei lingue, 320 e 1440 px.
+
+```bash
+cd frontend
+PERSONAL_API_BASE_URL=http://127.0.0.1:3135 npm run test:personal-api
+PERSONAL_API_BASE_URL=http://127.0.0.1:3135 npm run test:personal-ai
+CHROMIUM_PATH=/usr/bin/chromium RECOVERY_BASE_URL=http://127.0.0.1:3135 npm run test:recovery
+```
+
+`CHROMIUM_PATH` è facoltativo se il browser Playwright è già installato. Le API
+di queste prove sono intercettate; non verificano quote o accesso reale a OpenRouter.
+Il backend su `127.0.0.1:8002`, collegato al solo DB `counselorbot_dev`, ha
+completato l’avvio con l’aggiornamento dello schema e risposto a `/docs` e
+`/auth/me`. I test backend usano invece schemi isolati nel DB `counselorbot_test`
+con rollback, comprese migrazione della vecchia chiave, cifratura, isolamento tra
+proprietari e selezione del modello associato. Nessun provider reale chiamato.
+
+I processi uvicorn 8002 e frontend fixture 3135 vengono fermati al termine della
+sessione; PostgreSQL e dati persistenti vengono conservati. La ricostruzione
+Docker completa non è stata eseguita: meno di 500 MiB liberi nel filesystem
+Docker vfs, sotto la riserva di 5 GiB. Il Codespace dell’utente non è stato
+aggiornato automaticamente.

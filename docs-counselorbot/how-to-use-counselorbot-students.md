@@ -155,12 +155,24 @@ three replies and a summary; do not extend this to other scored questionnaires.
 ## Personal APIs (when enabled by the administrator)
 
 Open **Personal APIs** from your personal area (`/profilo/api-personali`).
-Save a supported external provider, an exact model ID and your own API key.
-Select **Use my personal APIs** to use your provider account, or clear the
-checkbox and save to return to system APIs. Personal requests are billed to
-your provider account. Your key is encrypted on the server and is never shown
-after saving; you can verify, replace or delete it. A provider change needs
-a new key. Verification checks the key, not access to a particular model.
+Add one or more named connections with a supported provider, exact model ID
+and your own API key. Multiple keys for the same provider or different provider
+accounts can coexist. Link each connection to one or more counselors and choose
+a default for unassigned counselors and features without a counselor. Select
+**Use my personal APIs** and save associations to activate them; switching it off
+returns new requests to system APIs. Keys are encrypted and never returned.
+An empty key field preserves the saved key for the same provider. Connection
+deletion requires confirmation and removes its associations, keeping counselors.
+
+Create your own private counselor with a name, description and instructions in
+your own language. Link a saved connection to it and select it for new chats.
+You can edit or delete your counselors; other accounts cannot select them.
+Institution counselors and their prompts are unchanged.
+
+**Test connection and model** sends a short neutral request only when pressed.
+It consumes quota and can incur a provider charge. Errors distinguish key access,
+model availability, quota, rate limits and an unavailable local data protection
+service. Saving and assigning connections do not call an LLM.
 
 This account preference applies to chat, Compass, Assistant, PDF study, combined
 analysis, PDF summaries, Tavolo and diagrams; audio, local services and technical
