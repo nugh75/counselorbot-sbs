@@ -356,8 +356,13 @@ class AIService:
             return user_message, system_prompt, history, {}
         history = history or []
         texts = [user_message, system_prompt] + [m.get('content', '') for m in history]
+        # Read this instance's DB snapshot: another worker's module-level flag
+        # must not keep requiring Ollama after an administrator selects basic.
+        ner_flag = self.config.get('pii_ner_enabled')
+        ner_enabled = None if ner_flag is None else str(ner_flag).strip().lower() not in ('0', 'false', 'no', 'off')
         anon_texts, mapping, ner_ok = pii_ner.anonymize_texts(
-            texts, ollama_base=self._ollama_base())
+            texts, ollama_base=self._ollama_base(), ner_enabled=ner_enabled,
+            ner_model=self.config.get('pii_ner_model'))
         if not ner_ok and self.external_pii_fallback == 'block':
             raise AIError(
                 "Anonimizzazione PII non disponibile (modello locale non raggiungibile). "
