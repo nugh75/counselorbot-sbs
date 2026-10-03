@@ -130,7 +130,7 @@ def live_value(db: Session, scope: str, target_key: str) -> Optional[str]:
         row = db.query(models.GuidedStep).filter(models.GuidedStep.id == target_key).first()
         return None if row is None else (row.prompt or "")
     if scope == SCOPE_COUNSELOR_PERSONA:
-        row = db.query(models.Counselor).filter(models.Counselor.id == int(target_key)).first()
+        row = db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).filter(models.Counselor.id == int(target_key)).first()
         return None if row is None else (row.persona or "")
     raise ValueError(f"scope sconosciuto: {scope}")
 
@@ -148,7 +148,7 @@ def write_live(db: Session, scope: str, target_key: str, value: str) -> bool:
             return False
         row.prompt = value
     elif scope == SCOPE_COUNSELOR_PERSONA:
-        row = db.query(models.Counselor).filter(models.Counselor.id == int(target_key)).first()
+        row = db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).filter(models.Counselor.id == int(target_key)).first()
         if row is None:
             return False
         row.persona = value
@@ -222,7 +222,7 @@ def live_prompt_rows(db: Session) -> List[tuple]:
             rows.append((SCOPE_CONFIG, cfg.key, cfg.value or ""))
     for step in db.query(models.GuidedStep).all():
         rows.append((SCOPE_GUIDED_STEP, step.id, step.prompt or ""))
-    for counselor in db.query(models.Counselor).all():
+    for counselor in db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).all():
         rows.append((SCOPE_COUNSELOR_PERSONA, str(counselor.id), counselor.persona or ""))
     return rows
 

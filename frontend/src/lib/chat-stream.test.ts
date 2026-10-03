@@ -1,7 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { streamChat, IncompleteChatStreamError } from './chat-stream.ts';
+import { streamChat, IncompleteChatStreamError, ChatProviderError } from './chat-stream.ts';
+
+test('safe provider codes reach the caller without exposing upstream messages', async (t) => {
+    t.mock.method(globalThis, 'fetch', async () => new Response(event({ error: 'Private provider details', error_code: 'personalAPI.errors.quota' })));
+    await assert.rejects(streamChat({}, () => {}), (error: unknown) => {
+        assert.ok(error instanceof ChatProviderError);
+        assert.equal(error.code, 'personalAPI.errors.quota');
+        assert.equal(error.message.includes('Private'), false);
+        return true;
+    });
+});
 
 const event = (data: object) => `data: ${JSON.stringify(data)}\n\n`;
 

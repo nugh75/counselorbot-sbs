@@ -656,7 +656,7 @@ async def _finish_flow(db: Session, state: models.TelegramConversationState) -> 
 def _counselor_name(db: Session, counselor_id: int | None, language: str) -> str:
     if counselor_id:
         counselor = (
-            db.query(models.Counselor)
+            db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None))
             .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
             .first()
         )
@@ -667,7 +667,7 @@ def _counselor_name(db: Session, counselor_id: int | None, language: str) -> str
 
 def _counselor_keyboard(db: Session, language: str) -> list[list[dict]]:
     counselors = (
-        db.query(models.Counselor)
+        db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None))
         .filter(models.Counselor.is_active.is_(True))
         .order_by(models.Counselor.id)
         .all()

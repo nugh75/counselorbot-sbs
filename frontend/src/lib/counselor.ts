@@ -1,3 +1,4 @@
+import { apiFetch } from './auth';
 // Selezione del counselor lato utente: persistita in localStorage e iniettata
 // come `counselor_id` nelle richieste di chat dei questionari guidati.
 
@@ -11,6 +12,7 @@ export interface PublicCounselor {
     questionnaire_types?: string[] | null;
     language: string[];
     is_active?: boolean;
+    is_personal?: boolean;
     show_in_assistant?: boolean;
     assistant_audience?: string | null;
     model_origin?: 'local' | 'external' | null;
@@ -76,7 +78,7 @@ export async function fetchCounselors(
         if (questionnaireType) params.set('questionnaire_type', questionnaireType);
         const qs = params.toString();
         const url = qs ? `/api/counselors?${qs}` : '/api/counselors';
-        const res = await fetch(url);
+        const res = await apiFetch(url, { cache: 'no-store' });
         if (!res.ok) return [];
         const data = await res.json();
         return Array.isArray(data) ? data : [];
