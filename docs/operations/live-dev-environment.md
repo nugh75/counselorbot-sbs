@@ -53,6 +53,46 @@ Il proxy `/api/*` di Next in dev va a `http://127.0.0.1:8002` grazie a
 stessa variabile non esiste e il rewrite resta su `http://backend:8000`
 (nome servizio Compose), quindi la configurazione di produzione non cambia.
 
+Chat guidata, chat del sito, OpenCode e voce usano lo stesso resolver del backend
+del rewrite: `BACKEND_ORIGIN` ha precedenza, quindi `BACKEND_INTERNAL_URL`, quindi
+il nome servizio Docker. Il rewrite generale viene dopo le route dinamiche per
+conservare lo streaming di OpenCode. Dopo un aggiornamento delle route o della
+configurazione Next, riavviare il solo frontend dev con il comando abituale.
+
+### Test isolati dei proxy HTTP e streaming
+
+Verificare che 3135 e 3136 siano libere (`ss -ltn`). Da root repository:
+
+```bash
+bash scripts/dev-stream-proxy-tests.sh
+```
+
+In un secondo terminale:
+
+```bash
+cd frontend
+STREAM_PROXY_BASE_URL=http://127.0.0.1:3135 STREAM_PROXY_UPSTREAM_PORT=3136 \
+  node --test tests/stream-proxy.test.mjs
+RECOVERY_BASE_URL=http://127.0.0.1:3135 CHROMIUM_PATH=/usr/bin/chromium \
+  npm run test:recovery
+```
+
+Il primo runner avvia e arresta un server fittizio su 3136. Controlla API ordinarie,
+tre chat e voce passando realmente per Next; mantiene identità, lingua e codici
+di errore, e verifica un nuovo tentativo dopo errori HTTP o interruzione upstream.
+Il secondo usa fixture nel browser per messaggi e recupero a 390/1440 px.
+Nessun database, account reale o provider LLM viene contattato. `CHROMIUM_PATH`
+può essere omesso quando il browser Playwright è installato. Arresto frontend:
+`Ctrl+C` nel primo terminale. Non avviare insieme altri runner che usano 3135/3136.
+
+Nel cloud Codex, una build Turbopack con font Google può richiedere la CA di
+sistema: `NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS=1 npm run build`.
+Il comando mantiene TLS verificato e il proxy ereditato. Verificato con font
+reali in una directory di build su `/tmp`, perché il filesystem del checkout
+aveva meno di 500 MiB liberi. Nessun file ambiente copiato nella directory di
+build. Requisito TLS e istruzioni sono salvati nella bozza dell’ambiente Codex;
+la pubblicazione della bozza resta distinta dalla prova effettuata qui.
+
 ## Database di sviluppo
 
 Il backend dev si collega a `counselorbot_test` (stesso Postgres, database

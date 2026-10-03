@@ -82,6 +82,22 @@ inviati non vengono riportati all’utente. Su Codespaces il servizio locale di
 anonimizzazione può essere assente: il blocco è riportato esplicitamente; questa
 modifica non disabilita automaticamente la protezione.
 
+Gli errori AI durante la preparazione di `/chat` e `/chat/stream`, prima dello
+stream, conservano il codice allowlist in HTTP 502 `detail.error_code`. Il proxy
+Next e il consumer leggono questi codici anche per risposte HTTP non riuscite;
+testo grezzo, errori HTML e codici ignoti non sono mostrati. I problemi di servizio,
+accesso e configurazione hanno messaggi distinti nelle sei lingue. Il pulsante
+**Ripeti passaggio** conserva step, counselor e messaggi precedenti.
+
+In sviluppo host/Codespaces, chat e prova connessione usano lo stesso backend:
+`BACKEND_ORIGIN`, poi `BACKEND_INTERNAL_URL`, poi `http://backend:8000` per Docker.
+Una vecchia versione delle route streaming ignorava `BACKEND_ORIGIN` e cercava
+l’host Docker anche se le API normali funzionavano. Aggiornare il frontend e
+riavviare `next dev` dopo il pull; non occorre una nuova impostazione server.
+Il rewrite generale è un fallback dopo le route dinamiche, anche per OpenCode.
+Le presentazioni QSA/QSAr disattivano il ragionamento anche per ID/modalità legacy;
+gli step di analisi conservano la scelta dell’utente. Nessun prompt DB è riscritto.
+
 ### Prove in cloud senza Ollama
 
 Il vero amministratore può aprire **Configurazione → Generale → Protezione dei

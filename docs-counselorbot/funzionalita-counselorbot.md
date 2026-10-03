@@ -371,6 +371,13 @@ la pagina lo indica prima della prova. Quota esaurita, modello indisponibile,
 chiave rifiutata, limite di richieste e servizio di protezione dei dati assente
 hanno messaggi distinti nelle sei lingue, anche negli step guidati. Una prova
 breve riuscita non garantisce quote future o capacità sull’intero percorso.
+La chat distingue anche un servizio non raggiungibile, una sessione di accesso
+non valida e un passaggio incompatibile con la configurazione corrente. Questi
+messaggi rimangono leggibili nelle sei lingue anche quando il problema precede
+l’inizio della risposta; i dettagli grezzi del provider restano nascosti.
+**Ripeti passaggio** ritenta lo stesso step con il counselor scelto, conservando
+la conversazione precedente. La presentazione QSA/QSAr non attiva il ragionamento
+del modello, anche con configurazioni precedenti dello step.
 Il modulo protegge le bozze; errori di salvataggio conservano chiave e campi.
 Le configurazioni precedenti vengono conservate come connessioni predefinite.
 I costi personali restano a carico dell’account provider di ciascuna chiave.
