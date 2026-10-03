@@ -54,6 +54,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _require_direct_chat(db, identity, language="it"):
+    from ..chatgpt_connections import bind_identity, preference
+    from ..chatgpt_i18n import error_message
+    bind_identity(db, identity, language)
+    if preference(db):
+        raise HTTPException(409, error_message("unsupported", language))
+
+
 def get_db():
     db = database.SessionLocal()
     try:
@@ -662,6 +670,7 @@ async def create_opencode_workspace(
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_current_user),
 ):
+    _require_direct_chat(db, identity, request.locale or "it")
     if not _WORKSPACE_ID_RE.match(request.workspace_id):
         raise HTTPException(status_code=400, detail="workspace_id non valido")
     if request.pdf_token and not _PDF_TOKEN_RE.match(request.pdf_token):
@@ -884,7 +893,9 @@ async def chat_opencode(
     key: str,
     request: OpencodeChatRequest,
     identity: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
 ):
+    _require_direct_chat(db, identity)
     if not _KEY_RE.match(key):
         raise HTTPException(status_code=400, detail="Workspace key non valida")
     config = _get_api_instance(key)
@@ -1326,6 +1337,12 @@ async def opencode_terminal(websocket: WebSocket):
     if not identity["authenticated"]:
         await websocket.close(code=4403)
         return
+    with database.SessionLocal() as db:
+        try:
+            _require_direct_chat(db, identity)
+        except HTTPException:
+            await websocket.close(code=4409)
+            return
     key = websocket.query_params.get("key") or ""
     if not _KEY_RE.match(key):
         await websocket.close(code=4400)

@@ -214,6 +214,7 @@ function GuideContent() {
             <nav aria-label={t('guide.indexTitle')} className="glass-panel p-5">
                 <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">{t('guide.indexTitle')}</h2>
                 <ol className="mt-3 space-y-1">
+                    <li><a href="#guide-chatgpt" className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700">{t('chatgpt.title')}</a></li>
                     {sections.map((n) => (
                         <li key={n}>
                             <a
@@ -239,6 +240,11 @@ function GuideContent() {
             </nav>
 
             <ol className="space-y-4">
+                <li id="guide-chatgpt" className="glass-panel scroll-mt-24 space-y-2 p-5">
+                    <h2 className="font-bold text-slate-900">{t('chatgpt.title')}</h2>
+                    <p className="text-sm leading-relaxed text-slate-600">{t('chatgpt.guide')}</p>
+                    <Link href="/profilo#chatgpt" className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline">{t('chatgpt.connect')}</Link>
+                </li>
                 {sections.map((n) => (
                     <li key={n} id={sectionId(n)} className="glass-panel scroll-mt-24 p-5 text-left">
                         <div className="flex items-start justify-between gap-4">

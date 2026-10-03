@@ -38,7 +38,7 @@ export async function streamChat(
 ): Promise<ChatStreamResult> {
     const res = await fetch(endpoint, {
         method: 'POST',
-        headers: withViewAsHeaders({ 'Content-Type': 'application/json' }),
+        headers: withViewAsHeaders({ 'Content-Type': 'application/json', 'X-CounselorBot-Language': typeof payload.language === 'string' ? payload.language : 'it' }),
         body: JSON.stringify(payload),
         signal,
     });

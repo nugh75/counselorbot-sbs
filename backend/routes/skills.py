@@ -14,7 +14,7 @@ from ..skills import engine as skills_engine
 from ..skills import handlers as skills_handlers
 
 router = APIRouter()
-get_db = database.get_db
+get_db = database.get_personal_ai_db
 
 _ALLOWED_ROUTING = {"always", "support", "primary", "optional"}
 _ALLOWED_SLOTS = {"section", "knowledge", "directive_tail"}
