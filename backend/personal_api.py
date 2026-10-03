@@ -10,6 +10,10 @@ from .api_secrets import API_KEY_ENV_MAP
 from .credential_storage import CredentialStore, CredentialStorageError
 
 POLICY_KEY = "personal_api_enabled"
+CONNECTION_ERROR_CODES = frozenset("personalAPI.errors." + reason for reason in (
+    "authentication", "modelUnavailable", "quota", "rateLimit", "privacy",
+    "invalidRequest", "connection", "configuration", "counselor",
+))
 # Internal gateways and arbitrary endpoints must never receive personal keys.
 PROVIDERS = tuple(provider for provider in API_KEY_ENV_MAP if provider != "omniroute")
 storage = CredentialStore("PERSONAL_API", "personal_api_credentials", "PERSONAL_API_ENCRYPTION_KEY")
@@ -179,7 +183,7 @@ def require_visible_counselor(db, counselor_id, username=None):
 def connection_error_code(exc):
     """Classify provider failures without exposing upstream text or request data."""
     code = getattr(exc, "code", None)
-    if isinstance(code, str) and code.startswith("personalAPI.errors."):
+    if isinstance(code, str) and code in CONNECTION_ERROR_CODES:
         return code
     status = getattr(exc, "status_code", None)
     body = getattr(exc, "body", None)

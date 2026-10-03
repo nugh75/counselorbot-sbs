@@ -13,7 +13,7 @@ import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { ChatProviderError } from '@/lib/chat-stream';
-import { personalAPIErrorText } from '@/lib/i18n-personal-api';
+import { chatErrorText } from '@/lib/i18n-personal-api';
 import { apiFetch } from '@/lib/auth';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
@@ -1126,7 +1126,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             } else {
                 setMessages(prev => [...prev, {
                     role: 'assistant',
-                    content: personalAPIErrorText(activeLocale as Lang, stepErrorCode) ?? t('guided.stepError')
+                    content: chatErrorText(activeLocale as Lang, stepErrorCode) ?? t('guided.stepError')
                 }]);
             }
         } catch {
@@ -1312,9 +1312,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 }
             }
             return cleanText || undefined;
-        } catch {
+        } catch (error) {
             if (controller.signal.aborted) return;
-            setMessages(prev => [...prev, { role: 'assistant', content: t('guided.connError') }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: (error instanceof ChatProviderError ? chatErrorText(activeLocale as Lang, error.code) : null) ?? t('guided.connError') }]);
         } finally {
             if (requestRef.current === controller) {
                 requestRef.current = null;

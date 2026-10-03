@@ -8,7 +8,7 @@ before(async () => { browser = await chromium.launch({ headless: true, ...(proce
 after(async () => { await browser?.close(); });
 const event = data => `data: ${JSON.stringify(data)}\n\n`;
 
-async function fixture(width = 390, { initialError = false, experience = 'standard', incompleteDone = false, stepError = null } = {}) {
+async function fixture(width = 390, { initialError = false, experience = 'standard', incompleteDone = false, stepError = null, stepErrorHTTP = false } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
     const page = await context.newPage();
     const control = { deleted: false, deleteError: false, deletions: [], frozenError: initialError, streams: [], details: [], errors: [] };
@@ -54,6 +54,7 @@ async function fixture(width = 390, { initialError = false, experience = 'standa
         else if (url.pathname === '/api/opencode/workspace') data = { key: 'recovery', api_available: true, session_id: 'opencode-test', needs_seed: false, history: snapshot.messages.filter(message => message.role !== 'system') };
         else if (['/api/chat/stream', '/api/site-chat/stream', '/api/opencode/workspace/recovery/chat'].includes(url.pathname)) {
             control.streams.push(request.postDataJSON());
+            if (stepError && stepErrorHTTP && control.streams.length === 1) return route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ error: 'Private upstream details', error_code: stepError }) });
             if (stepError) return route.fulfill({ contentType: 'text/event-stream', body: control.streams.length === 1
                 ? event({ error: 'Private upstream details', error_code: stepError })
                 : event({ display: 'Risposta recuperata.' }) + event({ done: true, response: 'Risposta recuperata.' }) });
@@ -70,13 +71,19 @@ async function fixture(width = 390, { initialError = false, experience = 'standa
 }
 
 for (const width of [390, 1440]) {
-    for (const [reason, message] of [
-        ['quota', 'Il provider segnala quota esaurita o credito insufficiente.'],
-        ['modelUnavailable', 'Il modello scelto non è disponibile per questa chiave'],
-        ['privacy', 'La richiesta è stata bloccata perché il servizio locale di protezione dei dati non risponde.'],
+    for (const [code, message, stepErrorHTTP] of [
+        ['personalAPI.errors.quota', 'Il provider segnala quota esaurita o credito insufficiente.', false],
+        ['personalAPI.errors.modelUnavailable', 'Il modello scelto non è disponibile per questa chiave', false],
+        ['personalAPI.errors.privacy', 'La richiesta è stata bloccata perché il servizio locale di protezione dei dati non risponde.', false],
+        ['personalAPI.errors.quota', 'Il provider segnala quota esaurita o credito insufficiente.', true],
+        ['personalAPI.errors.modelUnavailable', 'Il modello scelto non è disponibile per questa chiave', true],
+        ['personalAPI.errors.privacy', 'La richiesta è stata bloccata perché il servizio locale di protezione dei dati non risponde.', true],
+        ['chat.errors.connection', 'Non riesco a raggiungere il servizio della chat.', true],
+        ['chat.errors.access', 'La sessione di accesso non è valida', true],
+        ['chat.errors.configuration', 'Non è stato possibile avviare questo passaggio con la configurazione corrente.', true],
     ]) {
-        test(`guided step explains personal API ${reason} and remains retryable at ${width}px`, async () => {
-            const { page, context, control } = await fixture(width, { stepError: `personalAPI.errors.${reason}` });
+        test(`guided step explains ${code} over ${stepErrorHTTP ? 'HTTP' : 'SSE'} and remains retryable at ${width}px`, async () => {
+            const { page, context, control } = await fixture(width, { stepError: code, stepErrorHTTP });
             try {
                 await page.goto(`${origin}/?frozen=recovery`, { waitUntil: 'networkidle' });
                 const repeat = page.getByRole('button', { name: 'Ripeti Passaggio', exact: true }).first();

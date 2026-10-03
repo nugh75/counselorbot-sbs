@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { backendOrigin } from './src/lib/backend-origin';
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -21,15 +22,17 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    return [
+    // Resolve dynamic streaming routes (including OpenCode) before the general
+    // API rewrite, which otherwise buffers their upstream event stream.
+    return { beforeFiles: [], afterFiles: [], fallback: [
       {
         source: "/api/:path*",
         // Upstream del proxy: in produzione (Docker) resta il nome servizio
         // Compose `backend:8000`; in sviluppo sull'host si imposta
         // BACKEND_ORIGIN=http://127.0.0.1:8001 senza toccare il Dockerfile.
-        destination: `${process.env.BACKEND_ORIGIN || "http://backend:8000"}/:path*`,
+        destination: `${backendOrigin()}/:path*`,
       },
-    ];
+    ] };
   },
 };
 
