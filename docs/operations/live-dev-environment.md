@@ -230,3 +230,24 @@ Per rigenerare la schermata della guida con campo chiave vuoto:
 `cd frontend && PERSONAL_API_CAPTURE_GUIDE=1 npm run test:personal-api`.
 Le esecuzioni normali non riscrivono la schermata. Dettagli e limiti della
 funzione: [personal-api-settings.md](personal-api-settings.md).
+
+
+### Verifiche di attivazione e visibilità AI personali
+
+La PR 40 include anche l’attivazione amministrativa ChatGPT e risolve la
+coesistenza delle due modalità. Dal frontend di sviluppo isolato su 3107:
+
+```bash
+cd frontend
+PERSONAL_API_BASE_URL=http://127.0.0.1:3107 npm run test:personal-api
+npm run test:personal-ai
+node --test --experimental-strip-types tests/chatgpt-subscription.test.mjs tests/chatgpt-admin-settings.test.mjs
+```
+
+Le suite usano account e credenziali fittizi nelle API del browser. La prova
+aggiuntiva con API reali dell’app sul database dedicato `counselorbot_dev`
+ha verificato che i pulsanti amministrativi preparano le chiavi senza
+configurazione manuale, poi ha ripristinato entrambi i flag a false; nessuna
+chiave API utente salvata, nessun OAuth e nessuna chiamata LLM. Le directory
+private di sviluppo restano sul disco, escluse da Git e dal contesto Docker.
+Non usare una copia di produzione per queste prove.

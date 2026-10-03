@@ -1,3 +1,50 @@
+# Handoff: PR unica per attivazione e visibilità delle connessioni AI personali
+Data: 2026-10-03 | Stato: implementato e verificato, da revisionare e unire
+
+- Branch `feature/personal-api-keys`, PR 40. Include i commit della PR 41 e
+  l’ultimo `main`; conflitti risolti senza rebase o force push. La PR 41 viene
+  sostituita dalla 40 su richiesta esplicita dell’utente. Nessun merge o deploy.
+- Commit di integrazione `eeb0fd23`; funzione `b85e3bfe`.
+- API personali: l’amministratore può abilitare dal pannello senza variabili
+  server. Chiave Fernet privata automatica, directory 0700 / file 0600,
+  pubblicazione atomica; volume Docker `personal_api_credentials`. Gli override
+  operatori esistenti sono rispettati. Una chiave persa con credenziali salvate
+  richiede ripristino, non viene rigenerata. Il meccanismo è condiviso con ChatGPT,
+  mantenendo archivi e chiavi separati.
+- Se disabilitate, entrambe le funzioni sono nascoste nelle aree personali e
+  nella Guida; link diretti rimandano all’area. Studenti e docenti hanno
+  `/profilo/api-personali`, `/docente/api-personali`, `/profilo/chatgpt` e
+  `/docente/chatgpt`. Lo spegnimento amministrativo seleziona il modello di
+  installazione per le nuove richieste e conserva credenziali e preferenza.
+- Attivare una modalità personale disattiva l’altra nello stesso aggiornamento,
+  con lock per account. I servizi annidati rispettano il richiedente autenticato,
+  anche consultando risultati altrui; le anteprime/demo non spendono credenziali.
+- Validazione: 81 test integrazione e credenziali; 222 regressioni routing/chat/
+  diagrammi/pQBL/PII; 202 smoke; 236 unità frontend; 58 test browser (11 API,
+  25 ChatGPT, 22 visibilità/Guida/attivazione nelle sei lingue); TypeScript,
+  i18n (2947 chiavi, sei lingue), lint mirati e diff check. Nessuna chiamata a
+  provider reale o fatturazione. Test PostgreSQL su schemi isolati con rollback.
+- Prova live con API reali dell’app, senza mock, su DB `counselorbot_dev`:
+  attivazione delle due funzioni da UI, chiave automatica API, navigazione nelle
+  due aree personali. Entrambi i flag riportati al valore iniziale (false),
+  nessuna chiave API utente salvata e nessun OAuth OpenAI effettuato.
+- Docker: Compose validato con fixture `.env` vuota esterna al repository;
+  controllo Dockerfile backend passato. Frontend segnala tre vecchi ENV in
+  formato legacy, file non modificato. Ricostruzione completa non eseguita:
+  circa 800 MiB liberi nel filesystem Docker vfs, sotto la riserva di 5 GiB.
+  Non rimossi container, immagini, volumi, database o dati persistenti.
+- Il collegamento ChatGPT grafico senza terminale resta sospeso per il futuro
+  pacchetto applicativo, come concordato. L’attivazione amministrativa è grafica;
+  l’attuale associazione account mantiene il componente locale ufficiale.
+- Le credenziali automatiche di sviluppo sono ignorate da Git e Docker e non
+  sono state stampate. Documentazione, Guida nelle sei lingue e schermata API
+  personali revisionate; manifest guidance aggiornato.
+- Processi di sviluppo di questa sessione: uvicorn 8002 / Next 3107;
+  al termine della verifica vengono fermati. Il Codespace dell’utente non è
+  accessibile a questa sessione e non è stato aggiornato automaticamente.
+
+---
+
 # Handoff: API personali per studenti e docenti
 Data: 2026-10-03 | Stato: IMPLEMENTATO, da revisionare e distribuire
 

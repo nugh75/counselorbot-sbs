@@ -34,15 +34,17 @@ Dopo il normale aggiornamento dell’applicazione, un amministratore apre
 **Abilita collegamento ChatGPT**. Non deve generare chiavi, modificare `.env`
 o eseguire comandi. Il server prepara la protezione delle credenziali e salva
 la scelta nel database. La modifica vale per le nuove richieste immediatamente,
-senza riavvio. **Apri il tuo collegamento ChatGPT** porta poi all’Area personale:
+senza riavvio. **Apri il tuo collegamento ChatGPT** porta a `/profilo/chatgpt`:
 ogni utente collega e attiva il proprio account, separatamente dal controllo
 amministrativo.
 
 **Disabilita collegamento ChatGPT** blocca nuove associazioni e richieste
-personali, mantenendo le registrazioni e le credenziali cifrate. Le chat con
-preferenza personale attiva non ripiegano automaticamente su altri provider:
-la persona può scegliere **Usa il modello dell’installazione**. Scollegare un
-account resta possibile. Riabilitare riusa la stessa chiave e gli stessi account.
+personali, mantenendo le registrazioni e le credenziali cifrate. Le nuove
+richieste usano il modello dell’installazione per scelta dell’amministratore.
+La voce, i badge e la sezione della Guida vengono nascosti; le pagine dirette
+rimandano alla rispettiva area personale. Riabilitare riusa la stessa chiave,
+gli stessi account e la preferenza salvata. L’endpoint di scollegamento resta
+accessibile al proprietario autenticato, anche con la funzione disabilitata.
 
 Solo gli amministratori reali possono leggere o modificare il controllo.
 Ricercatori, studenti e anteprime di ruolo non possono attivarlo. Le API dedicate
@@ -93,7 +95,8 @@ scaricabile è incluso nel backend e usa Python 3.10+ sul computer dell’utente
 
 ## Collegamento sul computer dell’utente
 
-1. Accedere a CounselorBot e aprire **Area personale → Il tuo abbonamento ChatGPT**.
+1. Accedere a CounselorBot e aprire **Area personale → Il tuo abbonamento ChatGPT**
+   (`/profilo/chatgpt`), oppure la stessa voce nell’Area docenti (`/docente/chatgpt`).
 2. Premere **Collega ChatGPT**, scaricare `chatgpt-connect.py` ed eseguire il comando
    mostrato sul proprio computer, con Python 3.10 o successivo.
 3. Inserire il codice al prompt del terminale: scade in 10 minuti; non passarlo
@@ -138,11 +141,17 @@ Consultare un altro studente usa l’identità del richiedente, non il collegame
 di quello studente. Profili demo e processi di sistema senza utente non usano
 abbonamenti personali.
 
-ChatGPT non ha ripieghi ad altri provider. Anche se la funzione viene disattivata
-mentre una preferenza personale è salvata, la richiesta si ferma finché la
-persona non sceglie **Usa il modello dell’installazione**. Non si inventano
-contatori o orari di reset; la quota si consulta su ChatGPT. I nomi dei modelli
-non vengono usati per stimare costi con il listino API.
+Una richiesta ChatGPT attiva non ripiega su API personali, API di sistema o
+modelli locali in caso di errore o quota esaurita. L’esplicita disattivazione
+amministrativa seleziona invece il modello dell’installazione per le nuove
+richieste. Un override operativo `CHATGPT_ENABLED=false` senza una scelta
+amministrativa conserva il precedente comportamento di blocco della preferenza.
+Non si inventano contatori o orari di reset; la quota si consulta su ChatGPT.
+I nomi dei modelli non vengono usati per stimare costi con il listino API.
+
+Attivare **Usa il mio abbonamento** disattiva la preferenza delle API personali,
+e viceversa. Entrambe le credenziali restano conservate. I due pannelli applicano
+la scelta con un lock condiviso per account, anche nei salvataggi simultanei.
 
 **Scollega** elimina sempre i token locali e tenta la revoca OpenAI. Se la revoca
 non è confermata, controllare anche le connessioni nelle impostazioni ChatGPT.
