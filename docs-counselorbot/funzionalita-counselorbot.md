@@ -476,3 +476,30 @@ una configurazione salvata; i valori salvati continuano a prevalere.
 Un database esistente mantiene i propri testi: l’allineamento dei vecchi prompt
 di fabbrica si applica mediante un piano controllato con hash e storico, con
 possibilità di rollback. I prompt personalizzati sono segnalati e preservati.
+
+### Allineamento dei prompt di fabbrica per tutte le chat
+
+In Amministrazione, «Allinea prompt di fabbrica» apre il confronto dei prompt
+salvati con i default aggiornati di tutte le chat e dei dodici percorsi guidati.
+Comprende prompt di sistema, step, direttive condivise e contesti configurabili
+degli assistenti; impostazioni operative, testi dell’interfaccia, varianti per
+lingua e persone dei counselor restano esclusi. Le istruzioni di fabbrica per
+il modello mantengono l’inglese; il pannello è disponibile nelle sei lingue.
+
+L’anteprima identifica gli step con strumento, etichetta e ID, e mostra testo
+attuale e nuovo testo, insieme ai prompt personalizzati
+o assegnati a un altro strumento che vengono conservati. Aprire o chiudere il
+confronto non modifica il database. Solo «Conferma allineamento» applica il lotto
+visualizzato e conserva i testi precedenti nello storico. Se un prompt cambia
+dopo l’anteprima, occorre ricaricare il confronto: non viene applicato un lotto
+parziale. Le modifiche nell’editor e i salvataggi in corso bloccano l’allineamento;
+durante l’operazione i controlli dell’editor attendono la risposta.
+Anche i salvataggi o ripristini contemporanei di un altro amministratore
+attendono l’allineamento, compresi quelli che confermano un testo identico.
+
+Si aggiornano solo istruzioni registrate e riconosciute come fabbrica tramite
+hash precedenti o revisioni seed/migration; la proprietà amministrativa prevale.
+Un salvataggio esplicito dell’amministratore rende il testo protetto anche se
+coincide con la versione di fabbrica. I testi aggiornati dal pulsante rimangono
+riconoscibili come fabbrica per gli allineamenti successivi. La conferma aggiorna
+gli editor della pagina; non richiama un LLM e non richiede comandi nel terminale.

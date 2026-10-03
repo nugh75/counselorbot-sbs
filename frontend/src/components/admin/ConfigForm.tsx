@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admin/PromptRequestPreview';
+import { PromptFactoryAlignment, type FactoryAlignmentResult } from '@/components/admin/PromptFactoryAlignment';
 
 // --- Types ---
 
@@ -38,6 +39,7 @@ interface GuidedStep {
     system_prompt_mode: string;
     color_theme: string;
     questionnaire_type: string;
+    label_i18n?: Record<string, string> | null;
     component_defaults?: Record<string, boolean | number> | null;
 }
 
@@ -684,6 +686,7 @@ function StepPromptsPanel({
     onSaveMetaPrompt,
     onSaveGuidance,
     onSaveStepPrompt,
+    onDirtyChange,
     t,
 }: {
     questionnaireType: string;
@@ -707,6 +710,7 @@ function StepPromptsPanel({
     onSaveMetaPrompt: (key: string, value: string) => void;
     onSaveGuidance: (key: string, value: string) => void;
     onSaveStepPrompt: (step: GuidedStep, value: string, language: string, localizedKey: string) => void;
+    onDirtyChange: (dirty: boolean) => void;
     t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
     const selectedStep = steps.find((step) => step.id === selectedStepId) || steps[0];
@@ -769,6 +773,10 @@ function StepPromptsPanel({
     const [metaDraft, setMetaDraft] = useState(metaPrompt);
     const [guidanceDraft, setGuidanceDraft] = useState(guidanceText);
     const [stepDraft, setStepDraft] = useState(selectedStep?.prompt || '');
+    useEffect(() => {
+        onDirtyChange(editingPrompt !== null || componentDraft !== null);
+        return () => onDirtyChange(false);
+    }, [editingPrompt, componentDraft, onDirtyChange]);
     const modeLabel = selectedStep?.system_prompt_mode
         ? t(`admin.mode.${selectedStep.system_prompt_mode}`)
         : '';
@@ -1117,6 +1125,9 @@ export function ConfigForm() {
     const [section, setSection] = useState<string>('general');
     const [instrumentSubsection, setInstrumentSubsection] = useState<InstrumentSubsection>('step-prompts');
     const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+    const [factoryAlignmentBusy, setFactoryAlignmentBusy] = useState(false);
+    const [hasPromptDraft, setHasPromptDraft] = useState(false);
+    const [pendingPromptSaves, setPendingPromptSaves] = useState(0);
 
     const showToast = (type: 'success' | 'error', msg: string) => {
         setToast({ type, msg });
@@ -1260,6 +1271,7 @@ export function ConfigForm() {
     // --- Config helpers ---
 
     const handleSaveConfig = async (item: ConfigItem): Promise<boolean> => {
+        setPendingPromptSaves(count => count + 1);
         try {
             const res = await fetch('/api/admin/config', {
                 method: 'POST',
@@ -1274,6 +1286,8 @@ export function ConfigForm() {
             console.error('Failed to save config', error);
             showToast('error', t('admin.config.saveError'));
             return false;
+        } finally {
+            setPendingPromptSaves(count => count - 1);
         }
     };
 
@@ -1341,6 +1355,7 @@ export function ConfigForm() {
     // --- Guided Steps CRUD ---
 
     const handleSaveStep = async (step: GuidedStep) => {
+        setPendingPromptSaves(count => count + 1);
         try {
             const res = await fetch(`/api/admin/guided-steps/${step.id}`, {
                 method: 'PUT',
@@ -1358,6 +1373,8 @@ export function ConfigForm() {
         } catch (error) {
             console.error('Failed to save step', error);
             showToast('error', t('admin.config.saveError'));
+        } finally {
+            setPendingPromptSaves(count => count - 1);
         }
     };
 
@@ -1369,6 +1386,7 @@ export function ConfigForm() {
             id: newStep.id.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
             sort_order: sameType.length > 0 ? Math.max(...sameType.map(s => s.sort_order)) + 1 : 1,
         };
+        setPendingPromptSaves(count => count + 1);
         try {
             const res = await fetch('/api/admin/guided-steps', {
                 method: 'POST',
@@ -1378,6 +1396,7 @@ export function ConfigForm() {
             if (res.ok) {
                 const created = await res.json();
                 setGuidedSteps(prev => [...prev, created]);
+                setSavedSteps(prev => [...prev, created]);
                 setPromptStepIds(prev => ({ ...prev, [created.questionnaire_type]: created.id }));
                 setNewStep({ id: '', sort_order: 0, label: '', prompt: '', system_prompt_mode: 'generic', color_theme: 'blue', questionnaire_type: newStep.questionnaire_type });
                 setShowNewStepForm(false);
@@ -1388,11 +1407,14 @@ export function ConfigForm() {
         } catch (error) {
             console.error('Failed to create step', error);
             showToast('error', t('admin.config.saveError'));
+        } finally {
+            setPendingPromptSaves(count => count - 1);
         }
     };
 
     const handleDeleteStep = async (stepId: string) => {
         if (!confirm(t('admin.config.confirmDeleteStep', { id: stepId }))) return;
+        setPendingPromptSaves(count => count + 1);
         try {
             const res = await fetch(`/api/admin/guided-steps/${stepId}`, {
                 method: 'DELETE',
@@ -1400,6 +1422,7 @@ export function ConfigForm() {
             });
             if (res.ok) {
                 setGuidedSteps(prev => prev.filter(s => s.id !== stepId));
+                setSavedSteps(prev => prev.filter(s => s.id !== stepId));
                 setPromptStepIds(prev => {
                     const next = { ...prev };
                     for (const [qType, selectedId] of Object.entries(next)) {
@@ -1414,6 +1437,8 @@ export function ConfigForm() {
         } catch (error) {
             console.error('Failed to delete step', error);
             showToast('error', t('admin.config.saveError'));
+        } finally {
+            setPendingPromptSaves(count => count - 1);
         }
     };
 
@@ -1430,6 +1455,7 @@ export function ConfigForm() {
 
         const a = siblings[idx];
         const b = siblings[swapIdx];
+        setPendingPromptSaves(count => count + 1);
         // Scambia i sort_order tra i due step adiacenti.
         setGuidedSteps(prev => prev.map(s => {
             if (s.id === a.id) return { ...s, sort_order: b.sort_order };
@@ -1447,10 +1473,17 @@ export function ConfigForm() {
                 ]),
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            setSavedSteps(prev => prev.map(s => {
+                if (s.id === a.id) return { ...s, sort_order: b.sort_order };
+                if (s.id === b.id) return { ...s, sort_order: a.sort_order };
+                return s;
+            }));
             showToast('success', t('admin.config.saved'));
         } catch (error) {
             console.error('Failed to reorder steps', error);
             showToast('error', t('admin.config.saveError'));
+        } finally {
+            setPendingPromptSaves(count => count - 1);
         }
     };
 
@@ -1684,6 +1717,21 @@ export function ConfigForm() {
         color: q.color,
     }));
 
+    const hasUnsavedChanges = hasPromptDraft || showNewStepForm || pendingPromptSaves > 0
+        || configs.some(item => item.value !== savedConfigs.find(saved => saved.key === item.key)?.value)
+        || guidedSteps.some(step => JSON.stringify(step) !== JSON.stringify(savedSteps.find(saved => saved.id === step.id)));
+
+    const applyFactoryResult = (result: FactoryAlignmentResult) => {
+        const updateConfigs = (items: ConfigItem[]) => items.map(item =>
+            Object.hasOwn(result.config_values, item.key) ? { ...item, value: result.config_values[item.key] } : item);
+        const updateSteps = (items: GuidedStep[]) => items.map(step =>
+            Object.hasOwn(result.step_prompts, step.id) ? { ...step, prompt: result.step_prompts[step.id] } : step);
+        setConfigs(updateConfigs);
+        setSavedConfigs(updateConfigs);
+        setGuidedSteps(updateSteps);
+        setSavedSteps(updateSteps);
+    };
+
     return (
         <div className="space-y-8">
             {/* Toast feedback salvataggi — portal su body: evita l'antenato con transform
@@ -1702,6 +1750,11 @@ export function ConfigForm() {
                 document.body
             )}
 
+            <PromptFactoryAlignment disabled={hasUnsavedChanges}
+                stepLabels={Object.fromEntries(guidedSteps.map(step => [step.id, `${step.questionnaire_type} — ${step.label_i18n?.[lang] || step.label}`]))}
+                onApplied={applyFactoryResult} onBusyChange={setFactoryAlignmentBusy} />
+
+            <fieldset disabled={factoryAlignmentBusy} className="contents">
             {/* Sub-tab nav per risorsa */}
             <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
                 <button
@@ -2200,6 +2253,7 @@ export function ConfigForm() {
                                     selectedLanguage={promptLanguages[q.questionnaireType] || lang || 'it'}
                                     onSelectLanguage={(language) => setPromptLanguages(prev => ({ ...prev, [q.questionnaireType]: language }))}
                                     onSaveComponentFlags={saveComponentFlags}
+                                    onDirtyChange={setHasPromptDraft}
                                     onSaveSystemPrompt={(key, value) => {
                                         setConfigDraft(key, value, key);
                                         handleSaveConfig({ key, value, description: key });
@@ -2529,7 +2583,7 @@ export function ConfigForm() {
                     </div>
                 );
             })}
-
+            </fieldset>
         </div>
     );
 }
