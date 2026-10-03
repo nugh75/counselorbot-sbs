@@ -26,7 +26,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from sqlalchemy.orm import Session
 
-from .. import auth, database, models
+from .. import auth, database, models, personal_api
 from ..ai_service import AIService, AIError
 from ..message_diagrams import session_owner
 from ..tavolo import (
@@ -171,14 +171,14 @@ def _compose_request(graph: TavoloGraph, prompt: str, preset: dict | None, lang:
 
 
 async def _compose(db: Session, *, graph: TavoloGraph, text: str, preset: dict | None,
-                    lang: str, counselor_id: int | None,
+                    lang: str, counselor_id: int | None, username: str = "",
                     ) -> tuple[TavoloComposition | None, bool]:
     """Uno schema intero dal modello: stesso passo per il seme di `/tavolo` e
     per `/compose`, che divergono solo in cosa fanno del risultato.
     """
     return await _ask_model(
         db,
-        task=_compose_request(graph, text, preset, lang),
+        task=_compose_request(graph, text, preset, lang), username=username,
         counselor_id=counselor_id,
         system_prompt=_compose_system_prompt(preset),
         parse=parse_composition,
@@ -392,7 +392,7 @@ async def create_tavolo(
         preset = preset_of(request.preset)
         composition, _unavailable = await _compose(
             db, graph=graph, text=request.source_text, preset=preset,
-            lang=request.lang, counselor_id=request.counselor_id,
+            lang=request.lang, counselor_id=request.counselor_id, username=_owner(identity),
         )
         if composition is not None:
             if preset:
@@ -458,8 +458,11 @@ def tavolo_capabilities(
 ):
     """Configuration, not a promise that a model will return a valid schema."""
     _require_feature(db)
-    _owner(identity)
+    username = _owner(identity)
     candidates = _model_candidates(db, counselor_id)
+    connection = personal_api.active_settings(db, username)
+    if connection:
+        candidates = [(connection.provider, connection.model_name, None, None)]
     return {
         "available": bool(candidates),
         "fallback_origin": (
@@ -683,7 +686,7 @@ async def compose_tavolo(
 
     composition, unavailable = await _compose(
         db, graph=graph, text=request.prompt, preset=preset,
-        lang=request.lang, counselor_id=request.counselor_id,
+        lang=request.lang, counselor_id=request.counselor_id, username=_owner(identity),
     )
     if composition is None:
         raise HTTPException(status_code=503 if unavailable else 502, detail="nessuno schema")
@@ -809,12 +812,15 @@ async def _ask_model(db: Session, *, task: str, counselor_id: int | None,
         from ..goals import goals_context
         system_prompt += "\n" + goals_context(db, username, tavolo_id=tavolo_id)
     candidates = _model_candidates(db, counselor_id)
+    connection = personal_api.active_settings(db, username)
+    if connection:
+        candidates = [(connection.provider, connection.model_name, None, None)]
     if not candidates:
         raise HTTPException(status_code=422, detail="nessun modello configurato")
 
     unavailable = False
     for provider, model, disable_thinking, budget in candidates:
-        ai_service = AIService(db)
+        ai_service = AIService(db, username=username)
         _apply_counselor_overrides(ai_service, disable_thinking, budget)
         ai_service.config['ai_timeout_seconds'] = str(min(
             int(ai_service.config.get('ai_timeout_seconds') or 120), MODEL_TIMEOUT_SECONDS,

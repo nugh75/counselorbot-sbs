@@ -25,6 +25,8 @@ feature descriptions automatically. Active database prompt changes use the same
 review contract and the guarded update plan, never startup overwrites.
 See `docs/operations/platform-guidance.md` for runtime, RAG and screenshot details.
 
+- **API personali**: configurazione account cifrata, opt-in controllato dall’amministratore; pagine `/profilo/api-personali` e `/docente/api-personali`, policy `personal_api_enabled`, cifratura `PERSONAL_API_ENCRYPTION_KEY`. Dettagli e limiti: `docs/operations/personal-api-settings.md`.
+
 ## Domain
 CounselorBot is an AI-powered web app that helps students analyze learning/career profiles through six scored questionnaires, four conversation tools (SAVICKAS, IDEA and the two significant-event paths), and personal journey resources. UI and content are primarily Italian.
 
@@ -658,7 +660,7 @@ Makefile                    Prompt testing shortcuts
 ```
 
 ## Conventions
-- **Configuration is DB-driven except secrets**: prompts and UI texts are DB rows seeded from `prompt_config.py` at startup (idempotent, no overwrite). API keys come only from the environment managed by ai4educ Console; ConfigForm displays and verifies them but cannot edit them.
+- **Configuration is DB-driven except secrets**: prompts and UI texts are DB rows seeded from `prompt_config.py` at startup (idempotent, no overwrite). System API keys come only from the environment managed by ai4educ Console; personal account keys use separate encrypted storage when enabled by an administrator; ConfigForm displays and verifies the system keys but cannot edit them.
 - **Error contract**: AI failures raise `AIError`. SSE emits `{error}` event. Non-streaming maps `AIError` → HTTP 502. Frontend consumer throws on `{error}`.
 - **Interrupted responses**: streaming endpoints emit session/conversation IDs before text; `done` is required for completion. `ChatContinuation` keeps the visible text and resumes on its own after transport/provider interruption: up to 3 automatic continuations, 400 ms apart, and only then a localized Continue action as manual fallback. The optional `partial_response` request field (max 60,000 characters) asks guided/site/OpenCode chat to generate only the missing suffix; the server returns and logs the combined answer. Guided phase advancement and final metadata wait for `done`. This detects interrupted streams, not semantically unfinished prose in an otherwise successful response. `npm run test:recovery` uses API fixtures against `RECOVERY_BASE_URL` (default localhost:3101).
 - **Resume loading**: failed frozen-session requests retain the current list and expose Retry in the home and desktop/mobile navigation. Header loading starts after authentication. Conversation and summary details in `/profilo` load only in the compilations section.

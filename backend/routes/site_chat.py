@@ -341,7 +341,7 @@ async def site_chat_stream(
     conversation_id = conversation_id_for(session_id, request.conversation_id)
     collection = _normalize_collection(request.collection)
     index = get_index(collection)
-    ai_service = AIService(db)
+    ai_service = AIService(db, username=current_user.get("username"))
     platform_reference = read_platform_guide() if collection == COLLECTION_COUNSELORBOT else None
     system_prompt = _apply_language_directive(
         _resolve_site_prompt(ai_service, request.audience, collection, platform_reference), request.language, db=db
@@ -431,6 +431,7 @@ async def site_chat_stream(
                     "usage": usage,
                     "response_length": request.response_length,
                     "cost_usd": cost_usd,
+                    "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
                 }, "question", "answer"),
             )
             log_db.add(log_entry)

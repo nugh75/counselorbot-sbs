@@ -169,7 +169,7 @@ def _generate_all_chunks(document_id: str):
         )
         db.commit()
 
-        ai = AIService(db)
+        ai = AIService(db, username=doc.username)
         # Il modello del preset del counselor scelto dallo studente ha la
         # precedenza; ripiego su pqbl_model (config) e infine sul modello attivo.
         dedicated_model = (preset_model or ai.config.get("pqbl_model") or "").strip()

@@ -232,3 +232,21 @@ Input and conversation-mode preferences are saved only through their explicit
 checkboxes; Idea asks for its mode each time. Response format (conversation, bullets,
 table) is independent of response length. QSA offers its own essential path of
 three replies and a summary; do not extend this to other scored questionnaires.
+
+## Personal APIs (when enabled by the administrator)
+
+Open **Personal APIs** from your teacher area (`/docente/api-personali`).
+Save a supported external provider, an exact model ID and your own API key.
+Select **Use my personal APIs** to use your provider account, or clear the
+checkbox and save to return to system APIs. Personal requests are billed to
+your provider account. Your key is encrypted on the server and is never shown
+after saving; you can verify, replace or delete it. A provider change needs
+a new key. Verification checks the key, not access to a particular model.
+
+This account preference applies to chat, Compass, Assistant, PDF study, combined
+analysis, PDF summaries, Tavolo and diagrams; audio, local services and technical
+tools keep the system settings. When the administrator disables the feature,
+new requests use system APIs and the personal-area link is hidden. Existing
+requests finish with their original settings. You can still delete a saved key
+from the direct settings URL. No automatic system-key fallback occurs when
+an active personal connection fails.

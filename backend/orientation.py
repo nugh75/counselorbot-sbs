@@ -829,7 +829,7 @@ You only advise: never write, edit or fill in the student's Notebook, readings, 
         if row.get("role") in {"user", "assistant"}
     ]
     try:
-        service = AIService(db)
+        service = AIService(db, username=username)
         if disable_thinking is not None:
             service.disable_thinking = disable_thinking
             service.config["disable_thinking"] = "true" if disable_thinking else "false"

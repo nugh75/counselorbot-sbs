@@ -3,6 +3,8 @@
 // Public, localized guide. The audience query selects documentation, not permissions.
 
 import Link from 'next/link';
+import { personalAPIText } from '@/lib/i18n-personal-api';
+import personalAPIImage from '../../../public/guide/api-personali.png';
 import { useSearchParams } from 'next/navigation';
 import Image, { type StaticImageData } from 'next/image';
 import chatOverview from '../../../public/guide/chat-guidata.png';
@@ -208,6 +210,13 @@ function GuideContent() {
                 <p className="text-sm leading-relaxed text-slate-700">{l(teacher ? 'teacherIntro' : 'studentIntro')}</p>
                 <p className="text-xs leading-relaxed text-slate-500">{l('screenshots')}</p>
             </div>
+
+            <section className="glass-panel p-5" aria-labelledby="guide-personal-api">
+                <h2 id="guide-personal-api" className="text-lg font-bold text-slate-900">{personalAPIText(lang, 'title')}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">{t('guide.personalAPIs')}</p>
+                <Link href={teacher ? '/docente/api-personali' : '/profilo/api-personali'} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 hover:underline">{personalAPIText(lang, 'title')}</Link>
+                <div className="mt-4">{renderFigure(personalAPIImage, personalAPIText(lang, 'title'), personalAPIText(lang, 'title'))}</div>
+            </section>
 
             {/* Indice con ancore (GUA-03): ogni sezione è raggiungibile senza
                 attraversare l'intero documento. */}

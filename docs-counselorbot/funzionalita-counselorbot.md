@@ -263,6 +263,41 @@ docenti. Le bozze delle restituzioni e gli obiettivi collegati non sono divulgat
 dal flusso delle assegnazioni. L’AI non salva, adotta, condivide o consegna al posto
 della persona.
 
+## API personali
+
+Quando l’amministratore abilita **API personali** in Configurazione AI,
+studenti e docenti trovano il collegamento nella propria pagina personale:
+`/profilo/api-personali` per l’Area personale e `/docente/api-personali` per
+l’Area docenti. Le due pagine condividono le impostazioni dello stesso account.
+La funzione è disabilitata per default e il ricercatore non può abilitarla.
+
+La persona sceglie provider e modello, inserisce una chiave API e salva.
+**Usa le mie API personali** passa alle credenziali dell’account del provider;
+togliendo la spunta e salvando si torna alle API di sistema. La chiave è cifrata
+sul server e non viene restituita né mostrata dopo il salvataggio. Si può
+verificarla, sostituirla o eliminarla con conferma. Lasciare il campo vuoto
+conserva la chiave già salvata per quel provider; cambiarlo richiede una chiave
+nuova. La verifica della chiave non garantisce accesso al modello scelto.
+Il modulo protegge le modifiche non salvate quando si lascia la pagina; un
+errore di salvataggio conserva i campi compilati per riprovare.
+I costi delle richieste personali sono a carico del proprio account provider.
+
+La scelta vale per chat, Bussola, Assistente, studio da PDF, analisi combinata,
+sintesi PDF dei risultati, Tavolo e diagrammi, e prevale sul modello del
+counselor. Il filtro dei dati per provider esterni resta applicato. I servizi
+locali, la voce, i benchmark e il terminale tecnico mantengono la configurazione
+di sistema. Sono ammessi i provider esterni supportati, senza URL arbitrari.
+Se la chiave personale dà errore non si passa automaticamente alle chiavi di
+sistema.
+
+Spegnendo la funzione, l’amministratore fa usare le API di sistema alle nuove
+richieste e nasconde i collegamenti dalle aree personali. Le richieste già
+avviate terminano con la configurazione iniziale. Le chiavi salvate restano
+cifrate e possono essere eliminate raggiungendo direttamente la pagina.
+Alla riattivazione riprende la scelta salvata. Per l’attivazione il server deve
+avere configurata la chiave di cifratura; dettagli in
+`docs/operations/personal-api-settings.md`.
+
 ## Docenti, ricercatori e amministrazione
 
 Nel menu della header la voce verso l'area è «Area docente» con l'icona a berretto
@@ -397,7 +432,7 @@ I ricercatori dispongono anche di contatti e somministrazioni tramite codici ano
 secondo le autorizzazioni. L’amministrazione tecnica (`/admin`) configura counselor,
 prompt, passi guidati, strumenti, lingue, cataloghi, modelli AI, trascrizione, basi
 documentali, registri, costi e strumenti di audit. Il ruolo docente non concede
-questi permessi. Le credenziali dei provider sono gestite centralmente in ai4educ
+questi permessi. Le credenziali di sistema dei provider sono gestite centralmente in ai4educ
 Console; CounselorBot mostra stato e controlli senza consentire di modificarle.
 
 ## Esportazioni e limiti

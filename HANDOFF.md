@@ -1,3 +1,35 @@
+# Handoff: API personali per studenti e docenti
+Data: 2026-10-03 | Stato: IMPLEMENTATO, da revisionare e distribuire
+
+- Branch: `feature/personal-api-keys`.
+- Account: provider, modello, chiave cifrata Fernet, scelta personale/sistema;
+  pagine `/profilo/api-personali` e `/docente/api-personali`, stessa impostazione.
+- Admin reale: interruttore in Configurazione AI; policy `personal_api_enabled`,
+  default spento, guardia anche nell’API generica config per i ricercatori.
+- Runtime: chat, Bussola, Assistente, pQBL, analisi combinata, sintesi PDF,
+  Tavolo e diagrammi usano la scelta account. Nessun ripiego sulle chiavi di
+  sistema quando la connessione personale fallisce. Filtro PII invariato;
+  costi personali esclusi dal blocco del budget di sistema.
+- Verifiche: 250 test backend (PostgreSQL `counselorbot_test` isolato), 11 test
+  browser (sei lingue, tema scuro, 320/390/1440 px), TypeScript, i18n, lint
+  dei file nuovi, guidance-check. Build Docker backend/frontend riuscite;
+  import delle nuove rotte e del modello verificato nell’immagine backend.
+- Limite preesistente: lint globale fallisce in
+  `frontend/src/components/visual/NewDeckDialog.tsx:36`
+  (`react-hooks/set-state-in-effect`); il file non è cambiato.
+- Nessun deploy o aggiornamento dei container di produzione. Prima di abilitare
+  in produzione configurare `PERSONAL_API_ENCRYPTION_KEY` sul backend e
+  ricostruire le immagini; nessun comando sudo o modifica nginx necessario.
+  Dettagli: `docs/operations/personal-api-settings.md`.
+- Le schermate guida usano account e chiavi fittizie; campo chiave vuoto.
+- Associazione GitHub Project non disponibile: il token risponde
+  `Resource not accessible by integration` alla lettura `projectsV2`.
+- Processi di prova fermati: Next fixture :3135 e container PostgreSQL
+  `counselorbot-personal-api-test-db`. Script riproducibile e stop documentati
+  in `docs/operations/live-dev-environment.md`.
+
+---
+
 # Handoff: Scelta del taccuino nel contesto chat (docente)
 Data: 2026-09-27 | Stato: IMPLEMENTATO (backend, frontend, test, doc — in attesa di PR/merge)
 
