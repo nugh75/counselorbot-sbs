@@ -268,10 +268,12 @@ della persona.
 Nel menu della header la voce verso l'area è «Area docente» con l'icona a berretto
 da laurea, uguale per docenti, ricercatori e amministrazione.
 
-`/docente` è una panoramica illustrata, come l'Area personale: in alto il percorso
-«Obiettivi per la mia classe», poi tre gruppi (**Classe e assegnazioni**,
-**Cataloghi**, **Somministrazioni e ricerca**) con una voce per ogni pagina e, in
-fondo, l’ingresso al Taccuino del docente (`/docente/taccuino`), senza form nella home. Ogni voce apre una pagina dedicata con il ritorno
+`/docente` è una panoramica illustrata, come l'Area personale: il primo ingresso
+è il Taccuino del docente (`/docente/taccuino`), senza form nella home. Seguono il
+percorso «Obiettivi per la mia classe» (DOCENZA) e i tre gruppi (**Classe e assegnazioni**,
+**Cataloghi**, **Somministrazioni e ricerca**), nello stesso ordine e con una voce
+per ogni pagina. L’ordine visivo coincide con quello dei collegamenti nel DOM e
+della navigazione da tastiera. Ogni voce apre una pagina dedicata con il ritorno
 all’Area docenti: `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
 della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
 link alla pagina dedicata con filtro già impostato),

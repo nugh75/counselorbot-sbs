@@ -201,3 +201,18 @@ URL `http://localhost:3134/docente/taccuino`. Senza fixture le API falliscono
 volutamente. Stop: Ctrl+C nel terminale di avvio, oppure TERM ai soli PID
 verificati di questa sessione. Fermare il dev prima di build e server compilato.
 Comandi completi, baseline e limiti: `teacher-notebook-page-validation.md`.
+
+## Taccuino primo nella home docente (S18)
+
+Stesse fixture, porta 3134, upstream isolato e avvio/stop di S16. Il primo
+collegamento della home `/docente` è `/docente/taccuino`, prima di DOCENZA.
+Il test `teacher-notebook-page.test.mjs` verifica ordine DOM, Tab/Shift+Tab,
+destinazione e layout a 320/1440 px nelle sei lingue. Per aggiornare soltanto
+le sei immagini della home, da `frontend/`:
+
+```bash
+GUIDE_BASE_URL=http://127.0.0.1:3134 GUIDE_SCREENS=teacher-area node --experimental-strip-types scripts/capture-guide.mjs
+```
+
+Taccuino, popup e altre immagini non vengono rigenerati. Evidenze e limiti:
+`teacher-notebook-first-validation.md`. Nessun processo di S18 lasciato attivo.
