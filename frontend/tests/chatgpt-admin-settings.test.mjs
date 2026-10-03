@@ -56,7 +56,7 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                 await panel.getByText(t('admin.enabled'), { exact: true }).waitFor();
                 assert.deepEqual(f.writes, [{ enabled: true }]);
                 assert.equal(await panel.locator('code, input[type=password], textarea').count(), 0);
-                assert.equal(await panel.getByRole('link', { name: t('admin.personal') }).getAttribute('href'), '/profilo#chatgpt');
+                assert.equal(await panel.getByRole('link', { name: t('admin.personal') }).getAttribute('href'), '/profilo/chatgpt');
                 if (language === 'it') await panel.screenshot({ path: `/tmp/chatgpt-admin-${width}.png` });
                 await panel.getByRole('link', { name: t('admin.personal') }).click();
                 await f.page.locator('#chatgpt').getByRole('button', { name: t('connect'), exact: true }).waitFor();

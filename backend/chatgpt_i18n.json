@@ -14,7 +14,8 @@
     "unsupported": "Questo collegamento usa le chat guidate e l’Assistente. Per OpenCode, disattiva prima l’abbonamento personale e scegli il modello dell’installazione.",
     "keyMissing": "La chiave di protezione manca e ci sono account già collegati. Ripristina la chiave dal backup del server prima di riattivare la funzione.",
     "adminOnly": "Solo un amministratore può gestire il collegamento ChatGPT.",
-    "adminSettings": "Gestisci il collegamento ChatGPT dal pannello dedicato in Amministrazione."
+    "adminSettings": "Gestisci il collegamento ChatGPT dal pannello dedicato in Amministrazione.",
+    "credentialChoice": "Scegli una sola modalità personale: API personali oppure abbonamento ChatGPT, dalla tua area personale."
   },
   "en": {
     "disabled": "The ChatGPT connection is disabled. An administrator can enable it in Administration → General → ChatGPT connection.",
@@ -31,7 +32,8 @@
     "unsupported": "This connection supports guided chats and the Assistant. To use OpenCode, first disable your personal subscription and choose the installation’s model.",
     "keyMissing": "The protection key is missing and accounts are already connected. Restore the key from the server backup before enabling the feature again.",
     "adminOnly": "Only an administrator can manage the ChatGPT connection.",
-    "adminSettings": "Manage the ChatGPT connection through its dedicated Administration panel."
+    "adminSettings": "Manage the ChatGPT connection through its dedicated Administration panel.",
+    "credentialChoice": "Choose one personal mode: personal APIs or a ChatGPT subscription, in your personal area."
   },
   "es": {
     "disabled": "La conexión con ChatGPT está desactivada. Un administrador puede activarla en Administración → General → Conexión con ChatGPT.",
@@ -48,7 +50,8 @@
     "unsupported": "Esta conexión permite las conversaciones guiadas y el Asistente. Para usar OpenCode, desactiva primero tu suscripción personal y elige el modelo de la instalación.",
     "keyMissing": "Falta la clave de protección y ya hay cuentas conectadas. Restaura la clave desde la copia del servidor antes de reactivar la función.",
     "adminOnly": "Solo un administrador puede gestionar la conexión con ChatGPT.",
-    "adminSettings": "Gestiona la conexión con ChatGPT desde su panel específico en Administración."
+    "adminSettings": "Gestiona la conexión con ChatGPT desde su panel específico en Administración.",
+    "credentialChoice": "Elige un solo modo personal: API personales o suscripción ChatGPT, desde tu área personal."
   },
   "fr": {
     "disabled": "La connexion à ChatGPT est désactivée. Un administrateur peut l’activer dans Administration → Général → Connexion à ChatGPT.",
@@ -65,7 +68,8 @@
     "unsupported": "Cette connexion prend en charge les conversations guidées et l’Assistant. Pour utiliser OpenCode, désactivez d’abord votre abonnement personnel et choisissez le modèle de l’installation.",
     "keyMissing": "La clé de protection manque et des comptes sont déjà connectés. Restaurez la clé depuis la sauvegarde du serveur avant de réactiver la fonction.",
     "adminOnly": "Seul un administrateur peut gérer la connexion à ChatGPT.",
-    "adminSettings": "Gérez la connexion à ChatGPT depuis son panneau dédié dans Administration."
+    "adminSettings": "Gérez la connexion à ChatGPT depuis son panneau dédié dans Administration.",
+    "credentialChoice": "Choisis un seul mode personnel : API personnelles ou abonnement ChatGPT, dans ton espace personnel."
   },
   "de": {
     "disabled": "Die ChatGPT-Verbindung ist deaktiviert. Administratoren können sie unter Administration → Allgemein → ChatGPT-Verbindung aktivieren.",
@@ -82,7 +86,8 @@
     "unsupported": "Diese Verbindung unterstützt geführte Chats und den Assistenten. Deaktiviere für OpenCode zuerst dein persönliches Abonnement und wähle das Modell der Installation.",
     "keyMissing": "Der Schutzschlüssel fehlt und es sind bereits Konten verbunden. Stelle den Schlüssel aus der Serversicherung wieder her, bevor du die Funktion erneut aktivierst.",
     "adminOnly": "Nur Administratoren können die ChatGPT-Verbindung verwalten.",
-    "adminSettings": "Verwalte die ChatGPT-Verbindung im dafür vorgesehenen Administrationsbereich."
+    "adminSettings": "Verwalte die ChatGPT-Verbindung im dafür vorgesehenen Administrationsbereich.",
+    "credentialChoice": "Wähle in deinem persönlichen Bereich einen Modus: eigene APIs oder ChatGPT-Abonnement."
   },
   "sv": {
     "disabled": "ChatGPT-anslutningen är avaktiverad. En administratör kan aktivera den under Administration → Allmänt → ChatGPT-anslutning.",
@@ -99,6 +104,7 @@
     "unsupported": "Denna anslutning stöder guidade chattar och Assistenten. För OpenCode, inaktivera först din personliga prenumeration och välj installationens modell.",
     "keyMissing": "Skyddsnyckeln saknas och konton är redan anslutna. Återställ nyckeln från serverns säkerhetskopia innan du aktiverar funktionen igen.",
     "adminOnly": "Endast en administratör kan hantera ChatGPT-anslutningen.",
-    "adminSettings": "Hantera ChatGPT-anslutningen i den särskilda panelen i Administration."
+    "adminSettings": "Hantera ChatGPT-anslutningen i den särskilda panelen i Administration.",
+    "credentialChoice": "Välj ett personligt läge i ditt personliga område: egna API:er eller ChatGPT-abonnemang."
   }
 }

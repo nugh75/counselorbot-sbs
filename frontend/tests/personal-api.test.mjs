@@ -3,7 +3,7 @@ import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
 const origin = process.env.PERSONAL_API_BASE_URL || 'http://127.0.0.1:3135';
 let browser;
-before(async () => { browser = await chromium.launch({ headless: true }); });
+before(async () => { browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true }); });
 after(async () => { await browser?.close(); });
 async function fixture({ role = 'student', available = true, configured = false, width = 390, locale = 'it', dark = false } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 1050 }, reducedMotion: 'reduce' });
@@ -11,14 +11,16 @@ async function fixture({ role = 'student', available = true, configured = false,
     const errors = [], writes = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(({ locale, dark }) => { localStorage.setItem('cb_lang', locale); localStorage.setItem('cb_theme', dark ? 'dark' : 'light'); }, { locale, dark });
-    const settings = { available, providers: ['openai', 'anthropic', 'gemini', 'openrouter'], configured, provider: 'openai', model: configured ? 'gpt-4o' : '', enabled: configured, active: available && configured };
-    const policy = { enabled: available, encryption_ready: true }; let failSave = false;
+    const settings = { available, chatgpt_enabled: false, providers: ['openai', 'anthropic', 'gemini', 'openrouter'], configured, provider: 'openai', model: configured ? 'gpt-4o' : '', enabled: configured, active: available && configured };
+    const policy = { enabled: available, encryption_ready: true, reason: null, key_source: 'managed' }; let failSave = false;
     await page.route('**/api/**', async route => {
         const request = route.request(), path = new URL(request.url()).pathname; let data = [], status = 200;
         if (path === '/api/auth/me') data = { authenticated: true, username: 'api-fixture', name: 'Test', is_admin: role === 'admin', groups: role === 'teacher' ? ['docenti'] : ['studenti'] };
         else if (path === '/api/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
+        else if (path === '/api/user/chatgpt') data = { enabled: false, available: false, use_subscription: false };
         else if (path === '/api/orientation/status') data = { required: false, completed: true };
         else if (path === '/api/user/api-settings') {
+            if (request.method() !== 'GET') assert.equal(request.headers()['x-requested-with'], 'CounselorBot');
             if (request.method() === 'PUT') { const body = request.postDataJSON(); writes.push({ method: 'PUT', body }); if (failSave) status = 500; else Object.assign(settings, { configured: true, provider: body.provider, model: body.model, enabled: body.enabled, active: settings.available && body.enabled }); }
             else if (request.method() === 'DELETE') { writes.push({ method: 'DELETE' }); Object.assign(settings, { configured: false, provider: 'openai', model: '', enabled: false, active: false }); }
             data = settings;
@@ -52,18 +54,17 @@ for (const [role, width] of [['student', 390], ['teacher', 1440]]) {
         } finally { await f.context.close(); }
     });
 }
-test('disabled feature hides home entry and preserves deletion through direct settings page', async () => {
+test('disabled feature hides home entry and redirects a direct settings visit', async () => {
     const f = await fixture({ available: false, configured: true });
     try {
         const loaded = f.page.waitForResponse(r => new URL(r.url()).pathname === '/api/user/api-settings');
         await f.page.goto(`${origin}/profilo`); await loaded;
         assert.equal(await f.page.getByRole('link', { name: /^API personali/ }).count(), 0);
         await f.page.goto(`${origin}/profilo/api-personali`);
-        await f.page.getByText(/L’amministratore ha disabilitato/).waitFor();
+        await f.page.waitForURL(`${origin}/profilo`);
         assert.equal(await f.page.getByLabel('Chiave API', { exact: true }).count(), 0);
-        await f.page.getByRole('button', { name: 'Elimina chiave personale' }).click();
-        await f.page.getByRole('button', { name: 'Elimina chiave personale' }).click();
-        await f.page.getByText('Configurazione salvata.', { exact: true }).waitFor(); assert.equal(f.writes.length, 1);
+        assert.equal(await f.page.getByRole('heading', { name: 'API personali', exact: true }).count(), 0);
+        assert.equal(f.writes.length, 0);
     } finally { await f.context.close(); }
 });
 test('save failure preserves the unsaved key and edits', async () => {

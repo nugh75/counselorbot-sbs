@@ -92,8 +92,14 @@ class AIService:
         self.config = self._load_config()
         self.personal_target = None
         self.personal_error = None
+        from .chatgpt_connections import preference, owner
+        self.chatgpt_model = preference(db)
+        account = owner(db) if "chatgpt_username" in getattr(db, "info", {}) else username
         try:
-            connection = personal_api.active_settings(db, username)
+            connection = personal_api.active_settings(db, account)
+            if connection and self.chatgpt_model:
+                from .chatgpt_i18n import error_message
+                raise personal_api.PersonalAPIError(error_message("credentialChoice", db.info.get("chatgpt_language", "it")))
             if connection:
                 self.personal_target = (connection.provider, connection.model_name)
                 # The account connection replaces all system credentials for this
@@ -118,8 +124,6 @@ class AIService:
         # Ultimo ragionamento «sto pensando» estratto (nativo Ollama o tag <think>),
         # esposto ai chiamatori non-stream (es. audit /live) come canale separato.
         self.last_thinking = None
-        from .chatgpt_connections import preference
-        self.chatgpt_model = preference(db)
         if self.chatgpt_model:
             self.config.update(active_provider="openai_chatgpt", model_name=self.chatgpt_model)
         # Modalità "no thinking": disattiva il reasoning sui modelli che lo supportano

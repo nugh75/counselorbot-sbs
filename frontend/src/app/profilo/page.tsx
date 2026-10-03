@@ -17,7 +17,6 @@ import { LearnerProfileCard } from '@/components/profile/LearnerProfileCard';
 import { ResultReadingCard } from '@/components/profile/ResultReadingCard';
 import { PortfolioCard } from '@/components/profile/PortfolioCard';
 import { PersonalAreaHome } from '@/components/profile/PersonalAreaHome';
-import { ChatGPTConnectionPanel } from '@/components/profile/ChatGPTConnectionPanel';
 import { personalAreaText, personalAreaName, personalAreaDescription } from '@/lib/i18n-personal-area';
 import { TavoloList } from '@/components/tavolo/TavoloList';
 import { CrossSynthesisCard } from '@/components/profile/CrossSynthesisCard';
@@ -448,7 +447,6 @@ export default function ProfilePage() {
             />}
 
             {!activeArea && <PersonalAreaHome />}
-            {!activeArea && <div id="chatgpt" className="scroll-mt-28"><ChatGPTConnectionPanel /></div>}
 
             {activeSection && ['notebook', 'sessions'].includes(activeSection) && <p className="rounded-lg border border-slate-200 p-3 text-sm text-slate-600">{learningText(lang, 'groupVisibility')}</p>}
             {activeSection === 'notebook' && (

@@ -58,7 +58,7 @@ export function ChatGPTSettingsPanel() {
                 {(settings.reason === 'keyMissing' || (settings.enabled && !settings.ready)) && <Callout variant="warning">{t(`chatgpt.errors.${settings.reason || 'notConfigured'}`)}</Callout>}
                 <Button type="button" variant={settings.enabled ? 'secondary' : 'primary'} disabled={busy} onClick={() => void update()}>{t(busy ? 'chatgpt.admin.saving' : settings.enabled ? 'chatgpt.admin.disable' : 'chatgpt.admin.enable')}</Button>
                 {saved && <p role="status" className="text-sm text-indigo-800">{t('chatgpt.admin.saved')}</p>}
-                {settings.enabled && settings.ready && <Link className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/profilo#chatgpt">{t('chatgpt.admin.personal')}</Link>}
+                {settings.enabled && settings.ready && <Link className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/profilo/chatgpt">{t('chatgpt.admin.personal')}</Link>}
             </>}
             <p className="text-sm text-slate-600">{t('chatgpt.admin.disableHelp')}</p>
             <p className="text-xs text-slate-600">{t('chatgpt.admin.backup')}</p>

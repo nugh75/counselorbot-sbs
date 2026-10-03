@@ -9,9 +9,7 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
 import secrets
-import tempfile
 import threading
 import time
 import uuid
@@ -23,6 +21,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from . import models
+from .credential_storage import CredentialStore, CredentialStorageError
 
 ISSUER = "https://auth.openai.com"
 RESOURCE = "https://api.openai.com/v1"
@@ -33,6 +32,7 @@ DIRECT_SCOPE = "chatgpt.tokens.use.direct"
 _jwks = None
 _jwks_time = 0
 _jwks_lock = threading.Lock()
+storage = CredentialStore("CHATGPT", "chatgpt_credentials")
 
 
 class ChatGPTError(Exception):
@@ -52,69 +52,30 @@ def enabled(db=None):
 
 
 def managed_key_path():
-    directory = os.getenv("CHATGPT_CREDENTIALS_DIR", "").strip()
-    return (Path(directory) if directory else Path(__file__).resolve().parents[1] / "chatgpt_credentials") / "credential.key"
+    return storage.path()
 
 
 def cipher():
-    key = os.getenv("CHATGPT_CREDENTIAL_KEY", "").strip()
-    filename = os.getenv("CHATGPT_CREDENTIAL_KEY_FILE", "").strip()
     try:
-        if filename or not key:
-            key = (Path(filename) if filename else managed_key_path()).read_text().strip()
-        return Fernet(key.encode())
-    except (ValueError, OSError):
-        raise ChatGPTError("notConfigured") from None
+        return storage.cipher()
+    except CredentialStorageError as exc:
+        raise ChatGPTError(exc.code) from None
+
+
+def _has_credentials(db):
+    with db.no_autoflush:
+        return db.query(models.ChatGPTConnection).filter(models.ChatGPTConnection.encrypted_credentials.isnot(None)).first() is not None
 
 
 def prepare_key(db):
-    """Create one private, durable key; never replace an existing grant's key."""
-    if os.getenv("CHATGPT_CREDENTIAL_KEY_FILE", "").strip() or os.getenv("CHATGPT_CREDENTIAL_KEY", "").strip():
-        cipher()  # Operator-managed secrets retain precedence, including errors.
-        return
-    path = managed_key_path()
-    if not path.exists():
-        if db.query(models.ChatGPTConnection).filter(models.ChatGPTConnection.encrypted_credentials.isnot(None)).first():
-            raise ChatGPTError("keyMissing")
-        temporary = None
-        try:
-            path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-            path.parent.chmod(0o700)
-            # Publish only a fully written key. Concurrent workers keep the
-            # first published key; O_EXCL inside mkstemp gives mode 0600.
-            fd, temporary = tempfile.mkstemp(dir=path.parent, prefix=".key-")
-            with os.fdopen(fd, "wb") as output:
-                output.write(Fernet.generate_key())
-                output.flush()
-                os.fsync(output.fileno())
-            try:
-                os.link(temporary, path)
-            except FileExistsError:
-                pass
-            directory_fd = os.open(path.parent, os.O_RDONLY)
-            try:
-                os.fsync(directory_fd)
-            finally:
-                os.close(directory_fd)
-        except OSError:
-            raise ChatGPTError("notConfigured") from None
-        finally:
-            if temporary is not None:
-                Path(temporary).unlink(missing_ok=True)
-    cipher()
+    try:
+        storage.prepare(lambda: _has_credentials(db))
+    except CredentialStorageError as exc:
+        raise ChatGPTError(exc.code) from None
 
 
 def installation_status(db):
-    ready, reason = True, None
-    try:
-        cipher()
-    except ChatGPTError as exc:
-        ready, reason = False, exc.code
-        if not (os.getenv("CHATGPT_CREDENTIAL_KEY", "").strip() or os.getenv("CHATGPT_CREDENTIAL_KEY_FILE", "").strip()):
-            if not managed_key_path().exists() and db.query(models.ChatGPTConnection).filter(models.ChatGPTConnection.encrypted_credentials.isnot(None)).first():
-                reason = "keyMissing"
-    source = "environment" if os.getenv("CHATGPT_CREDENTIAL_KEY", "").strip() or os.getenv("CHATGPT_CREDENTIAL_KEY_FILE", "").strip() else "managed"
-    return {"enabled": enabled(db), "ready": ready, "reason": reason, "key_source": source}
+    return {"enabled": enabled(db), **storage.status(lambda: _has_credentials(db))}
 
 
 def set_installation_enabled(db, active):
@@ -319,6 +280,10 @@ def complete_link(db, token, client_id, data):
 def preference(db):
     if not owner(db):
         return None
+    with db.no_autoflush:
+        setting = db.query(models.Config).filter_by(key="chatgpt_enabled").first()
+    if setting is not None and setting.value != "true":
+        return None  # An explicit administrator decision selects installation AI.
     with credential_session(db) as private:
         row = private.query(models.ChatGPTConnection).filter_by(username=owner(db), use_subscription=True).first()
         return row.preferred_model if row and row.preferred_model else None
@@ -402,6 +367,8 @@ def list_models(db):
 
 
 def set_preference(db, username, active, model):
+    from .personal_api import lock_choice
+    lock_choice(db, username)
     if active:
         require_ready(db)
     row = db.query(models.ChatGPTConnection).filter_by(username=username).with_for_update().first()
@@ -412,11 +379,13 @@ def set_preference(db, username, active, model):
         if not model or model not in {item["slug"] for item in row.catalog or []}:
             raise ChatGPTError("model")
         row.preferred_model = model
+        db.query(models.PersonalAPISettings).filter_by(username=username).update({"enabled": False})
     row.use_subscription = active
     db.commit()
 
 
 def status(db, username):
+    from .personal_api import feature_enabled
     ready, reason = True, None
     try:
         require_ready(db)
@@ -425,7 +394,7 @@ def status(db, username):
     row = db.query(models.ChatGPTConnection).filter_by(username=username).first()
     pending = db.query(models.ChatGPTLink).filter(models.ChatGPTLink.username == username,
                   models.ChatGPTLink.expires_at > datetime.now(timezone.utc)).first() is not None
-    return {"available": ready, "reason": reason, "connected": bool(row and row.encrypted_credentials),
+    return {"available": ready, "enabled": enabled(db), "personal_api_enabled": feature_enabled(db), "reason": reason, "connected": bool(row and row.encrypted_credentials),
             "email": row.email if row else None, "use_subscription": bool(row and row.use_subscription), "pending_link": pending,
             "model": row.preferred_model if row else None, "needs_reconnect": bool(row and row.last_error == "reconnect"),
             "registered": bool(row and row.client_id),

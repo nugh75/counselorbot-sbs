@@ -4,5 +4,6 @@ session_memory
 frontend
 uploads
 chatgpt_credentials
+personal_api_credentials
 *.db
 *.pdf
