@@ -27,34 +27,69 @@ risposta reale, rinnovo, revoca e ricollegamento. I test automatici usano JWT
 firmati di prova, PostgreSQL isolato e risposte simulate; non dimostrano quota
 disponibile o ammissibilità del server presso OpenAI.
 
-## Configurazione del backend
+## Attivazione dalla pagina Amministrazione
 
-Lo startup aggiunge `chatgpt_connections` e `chatgpt_links` al database PostgreSQL.
-I prompt e i dati esistenti non vengono sovrascritti. L’autenticazione resta
-quella di ai4auth. Generare una chiave Fernet **una sola volta**, fuori Git:
+Dopo il normale aggiornamento dell’applicazione, un amministratore apre
+**Amministrazione → Configurazione → Generale → Collegamento ChatGPT** e preme
+**Abilita collegamento ChatGPT**. Non deve generare chiavi, modificare `.env`
+o eseguire comandi. Il server prepara la protezione delle credenziali e salva
+la scelta nel database. La modifica vale per le nuove richieste immediatamente,
+senza riavvio. **Apri il tuo collegamento ChatGPT** porta poi all’Area personale:
+ogni utente collega e attiva il proprio account, separatamente dal controllo
+amministrativo.
 
-```bash
-umask 077
-backend/.venv/bin/python -c 'from cryptography.fernet import Fernet; from pathlib import Path; Path("/percorso/protetto/chatgpt.key").open("xb").write(Fernet.generate_key())'
-```
+**Disabilita collegamento ChatGPT** blocca nuove associazioni e richieste
+personali, mantenendo le registrazioni e le credenziali cifrate. Le chat con
+preferenza personale attiva non ripiegano automaticamente su altri provider:
+la persona può scegliere **Usa il modello dell’installazione**. Scollegare un
+account resta possibile. Riabilitare riusa la stessa chiave e gli stessi account.
 
-Configurare l’ambiente del backend:
+Solo gli amministratori reali possono leggere o modificare il controllo.
+Ricercatori, studenti e anteprime di ruolo non possono attivarlo. Le API dedicate
+sono GET/PUT `/admin/chatgpt/settings`; il PUT richiede il normale header anti-CSRF
+CounselorBot. Chiave e token non vengono restituiti al browser. Le chiavi
+`chatgpt_*` sono escluse dalla configurazione generica e non sono scrivibili da
+`/admin/config`, per impedire bypass del controllo dedicato e cambi dell’host ID.
 
-```dotenv
-CHATGPT_ENABLED=true
-CHATGPT_CREDENTIAL_KEY_FILE=/percorso/protetto/chatgpt.key
-```
+## Chiave persistente e backup del server
 
-In alternativa usare `CHATGPT_CREDENTIAL_KEY` nel gestore di segreti. Il file
-ha precedenza. In Docker montarlo in sola lettura e usare il percorso interno
-al container: non copiarlo nell’immagine e non committarlo. Conservare un backup
-protetto della chiave separatamente dal database; cambiarla rende illeggibili
-i collegamenti e richiede ripristino o ricollegamento.
+Alla prima attivazione, se non è già fornita una chiave dall’operatore, il backend
+crea una chiave Fernet in `chatgpt_credentials/credential.key`, accanto alla
+cartella `backend`. La directory è privata (0700), il file è 0600; creazione e
+pubblicazione atomica impediscono a worker concorrenti di usare chiavi diverse.
+La chiave è esclusa da Git e dal contesto Docker e non entra nelle immagini.
+In Docker Compose il volume dedicato `chatgpt_credentials` è già montato su
+`/app/chatgpt_credentials` e sopravvive a riavvii e sostituzioni dei container.
+In sviluppo nativo la directory resta nella copia locale; conservarla quando
+si aggiorna o si sposta l’installazione.
 
-Ricostruire/riavviare backend e frontend con il normale aggiornamento eseguito
-dall’operatore. Questa modifica non effettua deploy. Non servono API key OpenAI.
-Lo strumento scaricabile è incluso nell’immagine backend e usa solo la libreria
-standard di Python 3.10+ sul computer dell’utente.
+Il backup deve conservare sia il database sia questo archivio protetto, con
+accesso limitato e copie coerenti. Non cancellare il volume. Se la chiave manca
+ma il database contiene account già collegati, il pannello richiede di
+ripristinarla dal backup: non ne genera una nuova che renderebbe i token
+illeggibili. Anche una chiave presente ma non valida impedisce l’attivazione e
+non viene sostituita. Un percorso non scrivibile mostra un errore senza salvare
+l’attivazione. Il recupero del backup resta un’operazione dell’amministratore
+del server; non è una nuova configurazione richiesta agli utenti.
+
+Gli operatori che già usano un gestore di segreti possono continuare a fornire
+`CHATGPT_CREDENTIAL_KEY_FILE` oppure `CHATGPT_CREDENTIAL_KEY`: hanno precedenza
+sulla chiave automatica, incluso in caso di errore, e non vengono rigenerati.
+`CHATGPT_CREDENTIALS_DIR` permette di scegliere un’altra directory persistente
+per la chiave automatica. Non modificare questa scelta dopo aver collegato
+account senza trasferire anche la chiave esistente.
+
+La scelta `Config.chatgpt_enabled` salvata dal pannello prevale su
+`CHATGPT_ENABLED`. La variabile resta solo una configurazione iniziale per
+installazioni senza una scelta amministrativa salvata; il valore iniziale
+predefinito è `false`. Disattivare dal pannello funziona anche con una chiave
+mancante o una variabile iniziale `true`.
+
+Lo startup aggiunge `chatgpt_connections` e `chatgpt_links` al database PostgreSQL;
+i prompt e i dati esistenti non vengono sovrascritti. L’autenticazione resta
+ai4auth. Il normale aggiornamento Docker deve ricostruire le immagini e applicare
+il nuovo montaggio persistente; questa modifica non effettua deploy. Lo strumento
+scaricabile è incluso nel backend e usa Python 3.10+ sul computer dell’utente.
 
 ## Collegamento sul computer dell’utente
 
