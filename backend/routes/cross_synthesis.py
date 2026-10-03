@@ -18,7 +18,7 @@ from ..cross_synthesis import (
     build_multi_instrument_block,
     latest_scored_results,
 )
-from ..database import get_db
+from ..database import get_personal_ai_db as get_db
 from ..prompt_config import DEFAULT_SYSTEM_PROMPT_CROSS_SYNTHESIS
 
 logger = logging.getLogger(__name__)

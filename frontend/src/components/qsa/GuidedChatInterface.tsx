@@ -1,4 +1,5 @@
 'use client';
+import { ChatGPTUsageBadge } from '@/components/profile/ChatGPTUsageBadge';
 
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
 
@@ -1627,6 +1628,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
 
     const conversation = (
         <div className="space-y-4">
+        <ChatGPTUsageBadge />
         <ChatWorkspace locale={activeLocale} subtitle={getPhaseLabel(currentPhase)}
             onBack={onBack}
             advancement={stepNavigation}

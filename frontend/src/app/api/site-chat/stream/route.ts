@@ -20,6 +20,8 @@ const AUTH_HEADERS = [
     'remote-email',
     'remote-name',
     'remote-groups',
+    'x-view-as',
+    'x-counselorbot-language',
 ];
 
 export async function POST(req: NextRequest) {

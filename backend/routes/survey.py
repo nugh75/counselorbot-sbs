@@ -22,7 +22,7 @@ from .. import scoring_service, recommendation_service
 from .. import content_version_service, i18n_fields
 
 router = APIRouter()
-get_db = database.get_db
+get_db = database.get_personal_ai_db
 logger = logging.getLogger(__name__)
 
 # Strumenti con risultati propri: i questionari e Idea + i due percorsi evento.

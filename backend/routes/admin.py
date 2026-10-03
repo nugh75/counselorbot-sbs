@@ -1126,20 +1126,18 @@ async def export_logs(
 @router.get("/admin/config", response_model=List[schemas.ConfigResponse])
 async def read_config(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     # Secrets have a dedicated masked endpoint and must never reach the browser.
-    configs = db.query(models.Config).filter(~models.Config.key.like("api_key_%")).all()
+    configs = db.query(models.Config).filter(~models.Config.key.like("api_key_%"), ~models.Config.key.like("chatgpt_%")).all()
     return configs
 
 
 @router.post("/admin/config", response_model=schemas.ConfigResponse)
 async def create_or_update_config(config: schemas.ConfigCreate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
-    from ..personal_api import POLICY_KEY, encryption_ready
-    if config.key == POLICY_KEY:
+    if config.key.startswith("chatgpt_"):
+        raise HTTPException(409, "chatgpt.errors.adminSettings")
+    if config.key.startswith("personal_api_"):
         if not current_user.get("is_admin"):
             raise HTTPException(403, "Accesso riservato agli amministratori")
-        if config.value not in ("true", "false"):
-            raise HTTPException(422, "Valore booleano non valido")
-        if config.value == "true" and not encryption_ready():
-            raise HTTPException(409, "Configurare PERSONAL_API_ENCRYPTION_KEY sul server")
+        raise HTTPException(409, "Usare il pannello API personali in Amministrazione")
     if provider_from_config_key(config.key):
         raise HTTPException(
             status_code=409,

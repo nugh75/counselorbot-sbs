@@ -65,7 +65,7 @@ from ..diagram_render import ROLE_WORDS, parse_spec
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-get_db = database.get_db
+get_db = database.get_personal_ai_db
 
 
 class PatchRequest(BaseModel):

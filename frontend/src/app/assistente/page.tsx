@@ -1,4 +1,5 @@
 'use client';
+import { ChatGPTUsageBadge } from '@/components/profile/ChatGPTUsageBadge';
 
 import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -543,7 +544,7 @@ export default function AssistentePage() {
                         </button>
                         <h1 className="text-2xl font-bold text-slate-900">{t('assistant.title')}</h1>
                     </div>
-
+                    <ChatGPTUsageBadge />
                     <div ref={scrollRef} role="log" aria-label={t('assistant.title')} className="glass-panel min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
                         {messages.length === 0 && (
                             <div className="flex items-start gap-3 text-slate-600">
