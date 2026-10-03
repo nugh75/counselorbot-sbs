@@ -1,3 +1,49 @@
+# Handoff: connessioni multiple e counselor privati nella PR 40
+Data: 2026-10-03 | Stato: implementato e verificato, da revisionare e unire
+
+- Branch `feature/personal-api-keys`, stessa PR 40 richiesta dall’utente;
+  incorpora attivazione amministrativa e visibilità già integrate. Nessun merge,
+  deploy o aggiornamento automatico del Codespace dell’utente.
+- Studenti e docenti salvano più connessioni nominate, anche chiavi di più
+  account dello stesso provider. Connessione predefinita personale/sistema e
+  associazioni counselor→connessione; una connessione può servire più counselor.
+  Modelli effettivi nel selettore, senza cambiare i preset dell’istituzione.
+- Counselor privati: creazione, modifica e cancellazione con istruzioni nella
+  lingua dell’utente, senza traduzione. Visibili e utilizzabili solo dal
+  proprietario; esclusi da admin, laboratorio, allineamenti, traduzioni e
+  catalogo Telegram condiviso. Controllo anche sugli ID inviati direttamente.
+- Schema: nuove tabelle `personal_api_connections`, `personal_ai_routing`,
+  `personal_counselor_connections`; campo proprietario aggiunto prima degli
+  snapshot dei prompt, counselor pQBL conservato in background. Migrazione
+  idempotente della vecchia configurazione senza reinserire la chiave.
+  Cifratura delle nuove chiavi legata anche all’ID connessione; selezione senza
+  ripiego su altre chiavi o credenziali di sistema in caso di errore personale.
+- Pulsante esplicito «Prova connessione e modello»: breve richiesta neutra,
+  quota/costo indicati prima della prova. Errori sicuri nelle sei lingue per
+  chiave, quota, modello, limiti, protezione dati e connessione; spiegazioni
+  anche negli step guidati, con «Ripeti passaggio» ancora utilizzabile.
+- Verifiche: 100 test backend credenziali/integrità/migrazione e 101 regressioni
+  chat/Bussola/Tavolo/diagrammi/preferenze/routing; 237 unità frontend;
+  65 browser (23 connessioni, 22 visibilità/attivazione, 20 recupero chat).
+  TypeScript, lint mirati, i18n (2947 chiavi / sei lingue), compileall,
+  guidance-check e diff check passati. Fixture readings di recovery aggiornata
+  al contratto reale null, conservando tutte le asserzioni.
+- Prova di avvio backend su DB `counselorbot_dev`: startup completo dopo la
+  migrazione, `/docs` e `/auth/me` rispondono; servizi locali RAG/embedding non
+  presenti in questo ambiente. Test DB su schemi isolati con rollback.
+  Nessuna chiamata LLM reale o fatturazione. Il catalogo pubblico OpenRouter
+  contiene `qwen/qwen3.8-27b:free`; non verifica quota/accesso della chiave utente.
+- Docker completo non ricostruito: meno di 500 MiB liberi nel filesystem vfs,
+  sotto la riserva di 5 GiB. Non rimossi container, immagini, volumi o dati.
+  Aggiornare tutti i worker prima di creare counselor privati: vecchie versioni
+  non riconoscono la proprietà e richiedono una verifica prima del rollback.
+- Documentazione Markdown, Guida nelle sei lingue, schermata senza chiavi e
+  manifest guidance aggiornati. Processi di questa sessione uvicorn 8002 e
+  frontend fixture 3135 fermati alla fine; PostgreSQL e archivi conservati.
+  Collegamento ChatGPT senza terminale ancora sospeso per il futuro pacchetto app.
+
+---
+
 # Handoff: PR unica per attivazione e visibilità delle connessioni AI personali
 Data: 2026-10-03 | Stato: implementato e verificato, da revisionare e unire
 

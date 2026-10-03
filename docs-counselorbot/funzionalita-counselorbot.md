@@ -341,22 +341,42 @@ configurare variabili, modificare file o eseguire comandi sul server. Le chiavi
 sono conservate dopo riavvii e aggiornamenti; l’archivio protetto va incluso
 nei backup insieme al database.
 
-La persona sceglie provider e modello, inserisce una chiave API e salva.
-**Usa le mie API personali** passa alle credenziali dell’account del provider;
-togliendo la spunta e salvando si torna alle API di sistema. Attivare le API
-personali disattiva l’uso dell’abbonamento ChatGPT, e viceversa; entrambe le
-credenziali restano salvate. La chiave è cifrata
-sul server e non viene restituita né mostrata dopo il salvataggio. Si può
-verificarla, sostituirla o eliminarla con conferma. Lasciare il campo vuoto
-conserva la chiave già salvata per quel provider; cambiarlo richiede una chiave
-nuova. La verifica della chiave non garantisce accesso al modello scelto.
-Il modulo protegge le modifiche non salvate quando si lascia la pagina; un
-errore di salvataggio conserva i campi compilati per riprovare.
-I costi delle richieste personali sono a carico del proprio account provider.
+La persona può salvare **più connessioni AI**, ciascuna con nome riconoscibile,
+provider, modello e chiave API, anche dello stesso provider o di account esterni
+diversi. Le chiavi sono cifrate e non vengono restituite né mostrate dopo il
+salvataggio. In modifica, il campo vuoto conserva la chiave per quel provider;
+cambiarlo richiede una chiave nuova. L’eliminazione di una connessione chiede
+conferma, rimuove la chiave e le associazioni e conserva i counselor.
+
+Nella stessa pagina si può associare ciascuna connessione a **uno o più counselor**.
+I counselor mantengono la propria personalità e i prompt del percorso, usando
+modello e chiave della connessione assegnata. La connessione predefinita si
+applica ai counselor senza associazione e alle funzioni senza counselor; può
+essere impostata su API di sistema. La lista counselor mostra il modello
+assegnato nell’account. Le scelte non cambiano i counselor dell’istituzione.
+**Usa le mie API personali** e **Salva associazioni e utilizzo** attivano le scelte;
+la disattivazione torna alle API di sistema. API personali e abbonamento ChatGPT
+restano alternative, conservando tutte le credenziali.
+
+Studenti e docenti possono **creare counselor personali**, con nome, descrizione
+e istruzioni **nella propria lingua**, senza traduzione obbligatoria. Le
+istruzioni si aggiungono alle regole del percorso. I prompt di fabbrica restano
+in inglese. I counselor sono privati nell’account: non compaiono agli altri utenti,
+nel catalogo amministrativo o nei flussi di allineamento dei prompt. Si possono
+modificare o eliminare con conferma e selezionare nelle nuove conversazioni.
+
+**Prova connessione e modello** invia su richiesta un breve messaggio neutro al
+modello salvato, senza contenuti personali. Consuma quota e può avere un costo;
+la pagina lo indica prima della prova. Quota esaurita, modello indisponibile,
+chiave rifiutata, limite di richieste e servizio di protezione dei dati assente
+hanno messaggi distinti nelle sei lingue, anche negli step guidati. Una prova
+breve riuscita non garantisce quote future o capacità sull’intero percorso.
+Il modulo protegge le bozze; errori di salvataggio conservano chiave e campi.
+Le configurazioni precedenti vengono conservate come connessioni predefinite.
+I costi personali restano a carico dell’account provider di ciascuna chiave.
 
 La scelta vale per chat, Bussola, Assistente, studio da PDF, analisi combinata,
-sintesi PDF dei risultati, Tavolo e diagrammi, e prevale sul modello del
-counselor. Il filtro dei dati per provider esterni resta applicato. I servizi
+sintesi PDF dei risultati, Tavolo e diagrammi, secondo le associazioni salvate. Il filtro dei dati per provider esterni resta applicato. I servizi
 locali, la voce, i benchmark e il terminale tecnico mantengono la configurazione
 di sistema. Sono ammessi i provider esterni supportati, senza URL arbitrari.
 Se la chiave personale dà errore non si passa automaticamente alle chiavi di
