@@ -52,16 +52,37 @@ async function fixture({ lang = 'it', groups = ['docenti'], admin = false, previ
     return { context, page, state, go, field, ready };
 }
 
-for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) test(`${lang}: home entry, keyboard, canonical route, direct refresh and clean return at 320px`, async () => {
-    const f = await fixture({ lang, width: 320 });
+for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) for (const width of [320, 1440]) test(`${lang}: first home entry, keyboard, canonical route, direct refresh and clean return at ${width}px`, async () => {
+    const f = await fixture({ lang, width });
     try {
         await f.go('/docente');
         const entry = f.page.getByRole('link', { name: teacherAreaName(lang, 'taccuino'), exact: true });
         assert.equal(await entry.getAttribute('href'), routePath);
+        const home = f.page.locator('[data-teacher-area-home]');
+        assert.deepEqual(await home.locator('a').evaluateAll(elements => elements.map(e => e.getAttribute('href'))), [
+            routePath, '/?start=OBIETTIVO_DOCENZA', '/docente/classi', '/docente/assegnazioni',
+            '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali',
+            '/docente/orientamento', '/docente/somministrazioni',
+        ], 'notebook precedes DOCENZA and every other home destination');
+        assert.equal(await home.locator('[tabindex]').evaluateAll(elements => elements.filter(e => e.tabIndex > 0).length), 0);
+        const notebookBox = await entry.boundingBox();
+        const pathBox = await home.locator('a[href="/?start=OBIETTIVO_DOCENZA"]').boundingBox();
+        assert.ok(notebookBox && pathBox && notebookBox.y + notebookBox.height <= pathBox.y, 'notebook is visually first');
         assert.equal(await f.page.locator('[data-teacher-notebook], textarea[id^="teacher-notebook-"]').count(), 0);
         assert.equal(f.state.reads.filter(r => r.path === '/api/user/teacher-notebook').length, 0, 'home entry fetches no notebook');
         assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-        await entry.focus(); await f.page.keyboard.press('Enter'); await f.ready();
+        // Traverse the unchanged global navigation, then inspect the first
+        // home control reached through the browser's natural Tab order.
+        for (let tab = 0; tab < 40; tab++) {
+            await f.page.keyboard.press('Tab');
+            if (await home.evaluate(e => e.contains(document.activeElement))) break;
+        }
+        assert.equal(await entry.evaluate(e => e === document.activeElement), true, 'first home control reached with Tab is notebook');
+        await f.page.keyboard.press('Tab');
+        assert.equal(await home.locator('a[href="/?start=OBIETTIVO_DOCENZA"]').evaluate(e => e === document.activeElement), true, 'next Tab reaches DOCENZA');
+        await f.page.keyboard.press('Shift+Tab');
+        assert.equal(await entry.evaluate(e => e === document.activeElement), true);
+        await f.page.keyboard.press('Enter'); await f.ready();
         assert.equal(new URL(f.page.url()).pathname, routePath);
         const title = f.page.getByRole('heading', { level: 1, name: teacherAreaName(lang, 'taccuino'), exact: true });
         assert.equal(await title.evaluate(e => e === document.activeElement), true);

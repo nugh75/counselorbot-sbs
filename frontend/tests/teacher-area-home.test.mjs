@@ -59,6 +59,11 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     assert.ok(await page.locator('a[href="/?start=OBIETTIVO_DOCENZA"]').count() >= 1);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);
+    // The first destination also works with pointer activation.
+    await page.locator('[data-teacher-area-home] a').first().click();
+    await page.waitForURL(`${origin}/docente/taccuino`);
+    await page.locator('[data-teacher-notebook]').waitFor();
+    assert.deepEqual(errors, []);
     await page.close();
 }
 
@@ -112,6 +117,7 @@ for (const [slug, marker] of [
     await page.getByRole('heading', { name: 'Percorso guidato: obiettivi per la mia classe', exact: true }).waitFor();
     assert.equal(await page.locator('a[href="/docente/somministrazioni"]').count(), 1);
     assert.equal(await page.locator('a[href="/docente/orientamento"]').count(), 0);
+    assert.equal(await page.locator('[data-teacher-area-home] a').first().getAttribute('href'), '/docente/taccuino');
     assert.deepEqual(errors, []);
     await page.close();
 }
