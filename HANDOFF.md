@@ -461,3 +461,74 @@ arresto come nella sezione precedente. Per Codespaces: aggiornare il ramo
 (oppure main dopo il merge dell’utente), riavviare frontend/backend e usare
 Amministrazione → Allinea prompt di fabbrica. Nessun aggiornamento del DB
 del Codespace o di produzione, nessun merge o deploy in questa sessione.
+
+
+## Abbonamento personale ChatGPT (2026-10-03)
+
+Implementazione autorizzata dall'utente dopo il piano; priorita' alle chat dentro
+CounselorBot. Ramo `feature/chatgpt-subscription`, derivato da main aggiornato e
+aggiornato poi con fast-forward al merge della PR #38 (`1cac9b6b`), verificata
+MERGED su GitHub prima della pubblicazione.
+Nessun agente delegato, nessun merge/deploy e nessun account OpenAI reale usato.
+
+Flusso SIWC ufficiale verificato sui documenti OpenAI attuali: callback OAuth
+sul computer della persona tramite helper Python standard scaricabile, pairing
+monouso con hash e scadenza, PKCE/state/nonce, verifica dei JWT RS256 con JWKS
+fisso. Il client ID pubblico emesso viene conservato prima dello scambio del
+codice; un grant non verificato non abilita inferenza. Token Fernet nel DB,
+mai risposte/log/browser storage. Rinnovo serializzato con lock PostgreSQL e
+sessione separata; rispetto di earliest_refresh_at e token rotanti. Revoca
+remota tentata e cancellazione locale garantita, avviso se revoca non confermata.
+
+Area personale e indicatore nelle chat in IT/EN/ES/FR/DE/SV; catalogo disponibile
+per account, scelta esplicita del modello e attivazione. Connessione da sola non
+consente inferenza. Provider `openai_chatgpt` via Responses con istruzioni,
+cronologia, store:false e streaming completato solo all'evento finale. La scelta
+personale prevale sui preset e non ripiega su API a pagamento. Quote/errori
+localizzati, nessun prezzo API inventato. Identita' autenticata propagata alle
+chiamate personali, account demo/view-as esclusi; OCR ed embeddings restano
+servizi dell'installazione. OpenCode bloccato con scelta personale attiva.
+Anteprima prompt mostra il trasporto senza token e prima del filtro PII.
+
+Funzione spenta per default. Procedura, chiave persistente, helper/tunnel,
+backup, limitazioni e fonti in `docs/operations/chatgpt-subscription.md`.
+L'anteprima SIWC per strumenti OSS locali/VM personali non autorizza
+automaticamente un server scolastico condiviso o piani Edu/Business. Verificare
+il percorso OpenAI dell'installazione; questo codice non implementa il profilo
+partner ospitato. Nel repo manca LICENSE: il proprietario deve sceglierla prima
+della distribuzione OSS. Accesso, catalogo, inferenza, refresh e revoca con account
+reale sono una verifica manuale ancora necessaria; nessuna chiamata a pagamento.
+
+Verifiche: 41 test finali dell'integrazione passati dopo le ultime modifiche;
+precedentemente 112 backend mirati (integrazione/routing/PII) e 206 smoke,
+236 unitari frontend, 12 prove browser ChatGPT in sei lingue a 390/1440 px e
+10 regressioni browser delle anteprime/allineamento prompt. TypeScript,
+i18n (2927 chiavi per sei lingue), ESLint mirato riusciti. Il lint globale
+resta bloccato dall'errore preesistente setState in effect in
+`frontend/src/components/visual/NewDeckDialog.tsx:36` e warning preesistenti.
+Nessun LLM reale chiamato, database/schemi di test dedicati.
+
+Docker: build backend e frontend tentate senza avviare produzione. Backend
+completo bloccato dall'accesso apt alla rete cloud; frontend da npm/DNS
+ENOTFOUND che lascia Next non installato. Anche build backend incrementale
+interrotta per spazio insufficiente: nessuna nuova immagine finale prodotta.
+Log `/tmp/chatgpt-docker-backend.log`, `/tmp/chatgpt-docker-frontend.log`,
+`/tmp/chatgpt-docker-backend-incremental.log`. Restano da ricostruire le immagini
+nel normale ambiente di deploy con rete/spazio disponibili.
+
+Durante la validazione Docker il disco root ha esaurito lo spazio. Conservata
+copia completa della venv in `/tmp/chatgpt-dev-runtime/backend-venv`; il tentativo
+di spostamento non ha liberato spazio. Rimossi solo tre record di cache Docker
+non condivisi/reclamabili prodotti dalle build incrementali di questa sessione,
+identificati singolarmente: nessun volume, container, immagine o database
+rimosso. La venv parziale originale e' conservata in
+`/workspace/.cloud-counselorbot/backend-venv-partial-preserved`; backend/.venv e'
+un symlink locale escluso da Git alla copia completa. Non eliminare queste copie.
+
+Dev nativo ripristinato: frontend localhost:3107, backend localhost:8002,
+PostgreSQL dedicato :5435. Avvio backend con
+`/workspace/.cloud-counselorbot/start-backend.sh`, frontend con
+`cd frontend && npm run dev -- --hostname 127.0.0.1 --port 3107`.
+Processi lasciati attivi: backend reloader PID 24513, frontend npm PID 24514 (Next PID 24533). Arresto: `kill 24513 24533`, senza toccare
+PostgreSQL o produzione. Log `/tmp/chatgpt-dev-backend.log` e
+`/tmp/chatgpt-dev-frontend.log`. Il Codespace dell'utente non e' stato aggiornato.
