@@ -151,6 +151,8 @@ class GuidedStepUpdate(BaseModel):
     color_theme: Optional[str] = None
 
 class GuidedStepResponse(GuidedStepBase):
+    component_defaults: Optional[Dict[str, Any]] = None
+
     class Config:
         from_attributes = True
 

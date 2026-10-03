@@ -17,7 +17,7 @@ for (const width of [1440, 390]) {
     if (path === '/api/auth/me') data = { username: 'fixture', authenticated: true, is_admin: true, groups: ['admins'] };
     if (path === '/api/admin/config') data = [{ key: 'prompt_generic', value: 'SAVED_SYSTEM', description: '' }];
     if (path === '/api/admin/config/env-status') data = {};
-    if (path === '/api/admin/guided-steps') data = instruments.map(([,code]) => ({ id: code === 'QSA' ? 'preview-fixture' : `fixture-${code}`, questionnaire_type: code, label: 'Fixture step', sort_order: 0, prompt: 'SAVED_STEP', system_prompt_mode: 'generic', color_theme: 'blue' }));
+    if (path === '/api/admin/guided-steps') data = instruments.map(([,code]) => ({ id: code === 'QSA' ? 'preview-fixture' : `fixture-${code}`, questionnaire_type: code, label: 'Fixture step', sort_order: 0, prompt: 'SAVED_STEP', system_prompt_mode: 'generic', color_theme: 'blue', component_defaults: code === 'QSA' ? { cognitive_factors: false, affective_factors: false, knowledge: true, certified_strategy_limit: 0 } : null }));
     if (path.endsWith('/dry-run')) {
      if (fail) return route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
      data = { envelope: { system_prompt_final: body.config_overrides?.prompt_generic || 'SAVED_SYSTEM', full_message: body.message, history: [{ role: 'user', content: 'PREVIOUS_USER' }, { role: 'assistant', content: 'PREVIOUS_ASSISTANT' }] }, components: { step_prompt: body.message, history: [], cognitive_factors: 'EXCLUDED_SCORES' }, component_flags: { cognitive_factors: false }, resolved: { provider: unknownModel ? 'unknown' : 'fixture', model: unknownModel ? 'unknown' : 'fixture-model', context_budget: {} }, warnings: [{ code: 'retrieval_not_replayed', message: 'TECHNICAL_RETRIEVAL_DETAIL' }, { code: 'unknown_context_capacity', message: 'TECHNICAL_CAPACITY_DETAIL' }] };
@@ -66,6 +66,13 @@ for (const width of [1440, 390]) {
      await shared.getByText('fixture-model', { exact: false }).waitFor();
      assert.equal(await shared.getByRole('combobox').count(), 1);
      assert.equal(requests.filter(r => r.path.endsWith('/dry-run')).at(-1).body.questionnaire_type, code);
+     assert.equal(requests.filter(r => r.path.endsWith('/dry-run')).at(-1).body.component_flags, undefined);
+     if (code === 'QSA') {
+      await page.getByText('Componenti passati alla fase', { exact: true }).click();
+      assert.equal(await page.getByRole('checkbox', { name: 'Fattori cognitivi', exact: true }).isChecked(), false);
+      assert.equal(await page.getByRole('checkbox', { name: 'Fattori affettivi', exact: true }).isChecked(), false);
+      await page.getByText('Componenti passati alla fase', { exact: true }).click();
+     }
      assert.equal(await page.getByText('Questa vista mostra solo i prompt.', { exact: false }).count(), 0);
      assert.equal(await shared.getByText('TECHNICAL_RETRIEVAL_DETAIL', { exact: false }).isVisible(), false);
      await shared.getByRole('button', { name: 'Per componenti' }).click();

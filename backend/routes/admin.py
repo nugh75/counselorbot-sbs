@@ -1297,9 +1297,18 @@ async def verify_api_key(
 
 # --- Admin Guided Steps CRUD ---
 
+def _guided_step_response(row):
+    from ..prompt_config import qsa_component_defaults
+    return schemas.GuidedStepResponse.model_validate(row).model_copy(update={
+        "component_defaults": qsa_component_defaults(row.id)
+        if row.questionnaire_type == "QSA" else None,
+    })
+
+
 @router.get("/admin/guided-steps", response_model=List[schemas.GuidedStepResponse])
 async def admin_list_guided_steps(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
-    return db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order).all()
+    rows = db.query(models.GuidedStep).order_by(models.GuidedStep.sort_order).all()
+    return [_guided_step_response(row) for row in rows]
 
 
 @router.post("/admin/guided-steps", response_model=schemas.GuidedStepResponse)
@@ -1319,7 +1328,7 @@ async def admin_create_guided_step(step: schemas.GuidedStepCreate, current_user:
     )
     db.commit()
     db.refresh(db_step)
-    return db_step
+    return _guided_step_response(db_step)
 
 
 @router.put("/admin/guided-steps/{step_id}", response_model=schemas.GuidedStepResponse)
@@ -1341,7 +1350,7 @@ async def admin_update_guided_step(step_id: str, update: schemas.GuidedStepUpdat
         )
     db.commit()
     db.refresh(db_step)
-    return db_step
+    return _guided_step_response(db_step)
 
 
 @router.delete("/admin/guided-steps/{step_id}")

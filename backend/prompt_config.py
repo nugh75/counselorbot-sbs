@@ -34,23 +34,7 @@ QA_DEPTH_SENTINEL = "[DEPTH ON REQUEST]"
 
 DEFAULT_QA_DEPTH_DIRECTIVE = '\n\n' + _text("default_qa_depth_directive")
 
-DEFAULT_SYSTEM_PROMPT_FACTOR_QA = (
-    "In the follow-up phase of an analysis step already completed, the student asks "
-    "a clarifying question. "
-    "Your task is to COMMENT on and EXPAND ONLY what has already emerged in the "
-    "current conversation: it is a comment on what was already said, not a new analysis. "
-    "Reply in a FOCUSED, conversational way. Binding rules: "
-    "(1) do NOT produce tables unless the student explicitly requests them; "
-    "(2) answer ONLY the question asked, referring solely to the factors already discussed "
-    "and relevant to the question; "
-    "(3) do NOT re-list or re-analyse all the factors of the profile; "
-    "(4) do NOT introduce factors, scores, data or topics not yet covered in the "
-    "conversation (e.g. if only the cognitive factors have been discussed so far, do not bring in "
-    "the affective factors or later steps, unless the student explicitly asks); "
-    "(5) no opening greetings, go straight to the answer. "
-    "Clear and professional tone, with practical, targeted suggestions."
-    + DEFAULT_QA_DEPTH_DIRECTIVE
-)
+DEFAULT_SYSTEM_PROMPT_FACTOR_QA = _text("default_system_prompt_factor_qa") + DEFAULT_QA_DEPTH_DIRECTIVE
 
 # Direttiva di sintesi per il secondo livello: i counselor tendono a elencare i
 # fattori del gruppo invece di metterli in relazione. Questo blocco (additivo,
@@ -94,11 +78,7 @@ LEGACY_SECOND_LEVEL_METHOD = (
 )
 
 DEFAULT_SYSTEM_PROMPT_SECOND_LEVEL = (
-    "Provide second-level analysis of the "
-    "macro-dimensions of the study method, relating the factors to one another and "
-    "proposing practical guidance. "
-    "You are inside an already-started structured analysis sequence: do NOT use opening greetings "
-    "(e.g. 'Hi!', 'Great idea', 'Welcome'). Start directly with the requested analysis."
+    _text("default_system_prompt_second_level")
     + DEFAULT_FACTOR_INTERPLAY_QSA
     + DEFAULT_SECOND_LEVEL_METHOD
 )
@@ -1616,125 +1596,90 @@ DEFAULT_GUIDED_STEPS: List[Dict] = [
         "id": "intro",
         "sort_order": 0,
         "label": "0. Presentazione",
-        "prompt": SCORE_BASED_INTRO_STEP_PROMPT,
+        "prompt": _text("qsa_step_intro"),
         "system_prompt_mode": "intro",
+        "questionnaire_type": "QSA",
         "color_theme": "teal",
     },
     {
         "id": "cognitive",
         "sort_order": 1,
         "label": "1. Fattori Cognitivi",
-        "prompt": (
-            "Analyse ONLY the COGNITIVE factors (C1-C7) of my QSA profile. "
-            "For each, give the score, interpretation and a short comment."
-        ),
+        "prompt": _text("qsa_step_cognitive"),
         "system_prompt_mode": "factor",
+        "questionnaire_type": "QSA",
         "color_theme": "blue",
     },
     {
         "id": "affective",
         "sort_order": 2,
         "label": "2. Fattori Affettivi",
-        "prompt": (
-            "Analyse ONLY the AFFECTIVE factors (A1-A7) of my QSA profile. "
-            "For each, give the score, interpretation and a short comment."
-        ),
+        "prompt": _text("qsa_step_affective"),
         "system_prompt_mode": "factor",
+        "questionnaire_type": "QSA",
         "color_theme": "purple",
     },
     {
         "id": "sl-elaboration",
         "sort_order": 3,
         "label": "3.1 Elaborazione e Org.",
-        "prompt": (
-            "Second-Level Analysis - Part 1: ELABORATION AND ORGANISATION. "
-            "Analyse together the factors: C1 (Elaborative strategies), "
-            "C5 (Use of semantic organisers), C7 (Self-questioning). "
-            "Assess how the student processes and structures information."
-        ),
+        "prompt": _text("qsa_step_sl_elaboration"),
         "system_prompt_mode": "second-level",
+        "questionnaire_type": "QSA",
         "color_theme": "indigo",
     },
     {
         "id": "sl-selfcontrol",
         "sort_order": 4,
         "label": "3.2 Autocontrollo",
-        "prompt": (
-            "Second-Level Analysis - Part 2: SELF-CONTROL AND CONCENTRATION. "
-            "Analyse together the factors: C2 (Self-regulation), C3 (Disorientation), "
-            "C6 (Concentration difficulties). Assess the ability to manage the study "
-            "process."
-        ),
+        "prompt": _text("qsa_step_sl_selfcontrol"),
         "system_prompt_mode": "second-level",
+        "questionnaire_type": "QSA",
         "color_theme": "indigo",
     },
     {
         "id": "sl-motivation",
         "sort_order": 5,
         "label": "3.3 Motivazione",
-        "prompt": (
-            "Second-Level Analysis - Part 3: MOTIVATION AND WILL. "
-            "Analyse together the factors: A2 (Volition), A5 (Lack of perseverance), "
-            "A6 (Perceived competence). Assess motivational drive and self-confidence."
-            + SL_MOTIVATION_SYMMETRY_NOTE
-        ),
+        "prompt": _text("qsa_step_sl_motivation"),
         "system_prompt_mode": "second-level",
+        "questionnaire_type": "QSA",
         "color_theme": "pink",
     },
     {
         "id": "sl-emotions",
         "sort_order": 6,
         "label": "3.4 Gestione Emotiva",
-        "prompt": (
-            "Second-Level Analysis - Part 4: EMOTIONAL MANAGEMENT. "
-            "Analyse together the factors: A1 (Baseline anxiety), "
-            "A7 (Emotional interference). Assess the ability to manage stress "
-            "and negative emotions."
-        ),
+        "prompt": _text("qsa_step_sl_emotions"),
         "system_prompt_mode": "second-level",
+        "questionnaire_type": "QSA",
         "color_theme": "pink",
     },
     {
         "id": "sl-attribution",
         "sort_order": 7,
         "label": "3.5 Stile Attributivo",
-        "prompt": (
-            "Second-Level Analysis - Part 5: ATTRIBUTIONAL STYLE. "
-            "Analyse together the factors: A3 (Attribution to controllable causes), "
-            "A4 (Attribution to uncontrollable causes). Assess how the student interprets "
-            "successes and failures." + SL_ATTRIBUTION_A6_NOTE
-        ),
+        "prompt": _text("qsa_step_sl_attribution"),
         "system_prompt_mode": "second-level",
+        "questionnaire_type": "QSA",
         "color_theme": "orange",
     },
     {
         "id": "sl-social",
         "sort_order": 8,
         "label": "3.6 Dimensione Sociale",
-        "prompt": (
-            "Second-Level Analysis - Part 6: SOCIAL DIMENSION. "
-            "Analyse factor C4 (Willingness to collaborate). Assess the inclination "
-            "towards group work."
-        ),
+        "prompt": _text("qsa_step_sl_social"),
         "system_prompt_mode": "second-level",
+        "questionnaire_type": "QSA",
         "color_theme": "teal",
     },
     {
         "id": "sl-synthesis",
         "sort_order": 9,
         "label": "3.7 Sintesi Integrata",
-        "prompt": (
-            "Second-Level Analysis - Part 7: INTEGRATED SYNTHESIS. "
-            "Consider the WHOLE profile: cognitive factors C1-C7 and affective-motivational "
-            "factors A1-A7. Do NOT re-analyse each factor one by one: identify the 2-3 most "
-            "salient relationships in this profile that CROSS the two areas (e.g. anxiety "
-            "A1/A7 affecting concentration C6; perceived competence A6 sustaining or "
-            "undermining strategies C1/C2; attributional style A3/A4 shaping perseverance "
-            "A5) and build a single integrated picture of HOW the student studies and WHY, "
-            "grounded in the actual scores."
-            + SYNTHESIS_ADVICE_DIRECTIVE
-        ),
+        "prompt": _text("qsa_step_sl_synthesis") + SYNTHESIS_ADVICE_DIRECTIVE,
         "system_prompt_mode": "second-level",
+        "questionnaire_type": "QSA",
         "color_theme": "indigo",
     },
 ]
@@ -1747,6 +1692,7 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "prompt": SCORE_BASED_INTRO_STEP_PROMPT,
         "system_prompt_mode": "intro",
         "color_theme": "teal",
+        "questionnaire_type": "QSAr",
     },
     {
         "id": "qsar-cognitive",
@@ -1863,6 +1809,7 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "prompt": SCORE_BASED_INTRO_STEP_PROMPT,
         "system_prompt_mode": "intro",
         "color_theme": "teal",
+        "questionnaire_type": "ZTPI",
     },
     {
         "id": "ztpi-t1",
@@ -1977,6 +1924,7 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
         "prompt": SAVICKAS_INTRO_STEP_PROMPT,
         "system_prompt_mode": "intro",
         "color_theme": "teal",
+        "questionnaire_type": "SAVICKAS",
     },
     {
         "id": "savickas-patto",
@@ -2747,3 +2695,22 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
                  'fr': "6. Synthèse et Plan d'Action",
                  'de': '6. Synthese und Aktionsplan',
                  'sv': '6. Syntes och handlingsplan'}}]
+
+
+# Factory entry-turn component policy from the QSA guide. Database overrides
+# remain authoritative; requested follow-up advice is handled at runtime.
+QSA_PROMPT_COMPONENT_DEFAULTS = json.loads(
+    (Path(__file__).parent / "qsa_prompt_components.json").read_text(encoding="utf-8")
+)
+
+
+def qsa_component_defaults(step_id, *, advice_requested=False):
+    """Entry policy, with the guide's exception for explicitly requested advice.
+
+    These are factory defaults. Saved component options are applied afterwards
+    and can disable advice even when the student requests it.
+    """
+    flags = dict(QSA_PROMPT_COMPONENT_DEFAULTS.get(step_id, {}))
+    if advice_requested and flags and step_id not in {"intro", "sl-synthesis"}:
+        flags.update(knowledge=True, certified_strategies=True, certified_strategy_limit=1)
+    return flags

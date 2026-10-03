@@ -453,3 +453,26 @@ regole non modificano le altre pagine dell’applicazione.
 Il testo modificabile di uno step guidato è stampabile anche quando il suo
 pannello di anteprima è chiuso; non occorre aprire ogni anteprima per stampare
 le istruzioni degli step.
+
+### Prompt QSA di fabbrica e appartenenza degli step
+
+Il percorso QSA di fabbrica contiene dieci step: presentazione, lettura dei
+fattori cognitivi e affettivi, sei letture tematiche di secondo livello e sintesi.
+Le istruzioni per il modello sono in inglese; la direttiva di lingua determina
+le risposte del counselor nelle sei lingue dell’applicazione. I testi di fabbrica
+seguono la Guida Costruzione Prompt QSA: lettura dei soli fattori pertinenti,
+etichette e inversioni già calcolate, domanda riflessiva e al massimo una
+strategia certificata quando il turno la consente. Presentazione e lettura dei
+fattori non introducono consigli; la sintesi non introduce strategie nuove.
+Un consiglio richiesto esplicitamente in un follow-up può attivare una strategia
+nei passaggi consentiti, rispettando le esclusioni salvate dall’amministratore.
+
+Le presentazioni QSAr, ZTPI e Savickas appartengono ai rispettivi strumenti e
+non compaiono tra gli step QSA. I record di fabbrica precedentemente classificati
+come QSA vengono riclassificati senza riscrivere istruzioni o traduzioni.
+Le opzioni dell’editor QSA mostrano i valori di fabbrica dello step quando manca
+una configurazione salvata; i valori salvati continuano a prevalere.
+
+Un database esistente mantiene i propri testi: l’allineamento dei vecchi prompt
+di fabbrica si applica mediante un piano controllato con hash e storico, con
+possibilità di rollback. I prompt personalizzati sono segnalati e preservati.

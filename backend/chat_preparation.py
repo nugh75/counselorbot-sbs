@@ -201,7 +201,10 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     system_prompt = _apply_idea_variant_directive(system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
     components = {}
-    component_flags = get_prompt_component_flags(db, questionnaire_type, request.phase)
+    advice_requested = is_advice_follow_up(request)
+    component_flags = get_prompt_component_flags(
+        db, questionnaire_type, request.phase, advice_requested=advice_requested,
+    )
     # Nei follow-up in-step il mode della richiesta prevale sul mode dello step:
     # puo' approfondire un consiglio gia' emerso senza recuperarne uno nuovo.
     step_mode = request.mode if _is_conversational_mode(request.mode) else (step.system_prompt_mode if step else request.mode)
@@ -211,7 +214,6 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         for key in PROMPT_COMPONENT_DEFAULTS:
             if key in component_overrides:
                 component_flags[key] = bool(component_overrides[key])
-    advice_requested = is_advice_follow_up(request)
     component_flags = apply_advice_retrieval_policy(
         component_flags, step_mode, request.phase, advice_requested=advice_requested
     )

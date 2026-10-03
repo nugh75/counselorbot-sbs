@@ -38,6 +38,7 @@ interface GuidedStep {
     system_prompt_mode: string;
     color_theme: string;
     questionnaire_type: string;
+    component_defaults?: Record<string, boolean | number> | null;
 }
 
 interface QuestionnaireResult {
@@ -539,11 +540,15 @@ function localizedStepPromptConfigKey(stepId: string, language: string): string 
     return `guided_step_prompt_${stepId.trim().replace(/[^A-Za-z0-9_-]+/g, '-')}${language === 'it' ? '' : `__${language}`}`;
 }
 
-function parseComponentFlags(raw: string): Record<string, boolean> {
+function parseComponentFlags(raw: string, defaults?: Record<string, boolean | number> | null): Record<string, boolean> {
+    const base: Record<string, boolean> = { ...PROMPT_COMPONENT_DEFAULTS };
+    for (const [name, value] of Object.entries(defaults || {})) {
+        if (typeof value === 'boolean') base[name] = value;
+    }
     try {
-        return { ...PROMPT_COMPONENT_DEFAULTS, ...(JSON.parse(raw || '{}') || {}) };
+        return { ...base, ...(JSON.parse(raw || '{}') || {}) };
     } catch {
-        return { ...PROMPT_COMPONENT_DEFAULTS };
+        return base;
     }
 }
 
@@ -712,9 +717,10 @@ function StepPromptsPanel({
     const metaPromptKey = promptMetaConfigKey(questionnaireType, selectedStep?.id);
     const instrumentMetaKey = promptMetaConfigKey(questionnaireType);
     const componentConfigValue = configs.find((config) => config.key === componentKey)?.value || '';
-    const configFlags = parseComponentFlags(componentConfigValue);
+    const configFlags = parseComponentFlags(componentConfigValue, selectedStep?.component_defaults);
     const configFlagOverrides = parseComponentFlagOverrides(componentConfigValue);
-    const defaultCertifiedLimit = defaultCertifiedStrategyLimit(selectedStep?.system_prompt_mode);
+    const defaultCertifiedLimit = Number(selectedStep?.component_defaults?.certified_strategy_limit
+        ?? defaultCertifiedStrategyLimit(selectedStep?.system_prompt_mode));
     const configCertifiedStrategyLimit = parseCertifiedStrategyLimit(componentConfigValue, defaultCertifiedLimit);
     const guidanceText = configs.find((config) => config.key === guidanceKey)?.value || '';
     const metaPrompt = configs.find((config) => config.key === metaPromptKey)?.value
@@ -1081,7 +1087,7 @@ function StepPromptsPanel({
                 hideContextControls
                 selectedSession={selectedSessionId} selectedCounselor={selectedCounselorId}
                 onSession={onSelectSession} onCounselor={onSelectCounselor} onLanguage={onSelectLanguage}
-                componentFlags={componentConfigPayload} componentFlagsDirty={!!componentDraft} componentLabels={componentText.labels}
+                componentFlags={componentDraft ? componentConfigPayload : undefined} componentFlagsDirty={!!componentDraft} componentLabels={componentText.labels}
                 configs={[...configs.filter(c => c.key !== systemPromptKey && c.key !== metaPromptKey),
                     { key: systemPromptKey, value: editingPrompt === 'system' ? systemDraft : systemPrompt },
                     { key: metaPromptKey, value: editingPrompt === 'meta' ? metaDraft : metaPrompt }]}

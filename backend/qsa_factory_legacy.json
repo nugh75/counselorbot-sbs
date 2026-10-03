@@ -1,0 +1,30 @@
+{
+  "steps": {
+    "intro": "06ae1a68902e6b97d90d1f481ab3e81d20fe3c555f34f882475ee2082e7e6110",
+    "cognitive": "376dab17499d7a6108db1176a7eb03ad2ac3351ac7bad6a2831424f3b58d2ffb",
+    "affective": "a231b894e50a42684ebeea5227eb748ad6004a932c78b1f94cdcc0f5a4ccbd02",
+    "sl-elaboration": "3b91a1339ac416ee2bf210f0c171e8b523d757b844f7c65f831ec3de26523dbf",
+    "sl-selfcontrol": "48d560756fc6e96221486d5faa8e03bea353872492bc6d5d2b4ae1d83e99f783",
+    "sl-motivation": "0ccffb463878c0cf6664e42d9bce6d0c16f6dfcda7e1f8e1257800c72f87c7e5",
+    "sl-emotions": "2c493ca1ac5c6b7f4369a9af34571068b95435d12f27ff6755b90e8806b23082",
+    "sl-attribution": "54daba80be4a1449ef3848788a29561e2862daa8f3b6951b0cc6e7ab4b6ce8a3",
+    "sl-social": "40c74dd5f42db802b631a16afef0e41110146666aa19d14ddc88f78f25500cae",
+    "sl-synthesis": "09e41eff4ae57e9719912cfe7fb4cc9aebf652fe6c6b286062207ec7c81899cc"
+  },
+  "configs": {
+    "prompt_factor": "1ef8ea8ad37de38c64ab3d37d87129c17a49abf49348a723310c6967f6be357f",
+    "prompt_second_level": "14b6ca437d7d837b2c861c35f5f486a61c933c2272c29c4d1b58c4d0275b5182",
+    "prompt_factor_qa": "4b178bd4ead74fdd40f97232e79c3ff892f02524f31e9392bb9889b4f47e1eeb",
+    "prompt_meta_QSA_intro": "db775299033d0d70f272dd37fc3c288ecbc2373ff27c701cf48f79463396e517",
+    "prompt_meta_QSA_cognitive": "ff989b9fca48892b473db4718f61e433cdad73e468c9462516cf1aa4a4234409",
+    "prompt_meta_QSA_affective": "8d96e3910dc1b16e4f17a6bae12af56e648f5153711c3d98dd510e0c68021e0a",
+    "prompt_meta_QSA_sl-elaboration": "aed9d0f2a914e67c61ae374fb96feed8b16c688b6a9d4a82cd59abef77110d1b",
+    "prompt_meta_QSA_sl-selfcontrol": "9ffefacc4e2b81e732157912a05a876e509e5051aa17caa1de9cb2d43f3801a4",
+    "prompt_meta_QSA_sl-motivation": "d7a472aab529518f39d75ea976a13a52f147b91c9d6cfc9a248223543a612632",
+    "prompt_meta_QSA_sl-emotions": "56ff1f7ee6b7f1fac3e3da15a82a61165a1762b5eb83fb494db6da678cdb06e9",
+    "prompt_meta_QSA_sl-attribution": "861f3e1dd2ca54070bca1f1cbfa4d668534123daf0d095b74940d2ebece94178",
+    "prompt_meta_QSA_sl-social": "2ed046f9f7f0cc0edab6fd368d9fd1018cb00dace0001052d0f25ce351aed0e8",
+    "prompt_meta_QSA_sl-synthesis": "5c3cd37f0a9888a5861dad6954de4f2988a35d3c9f8a471aa3e6346d4a81fed6",
+    "prompt_intro": "c7e6cae57a1ca5b5df7a5bcd9dc9ba49ad1bd097e76ce5de04ecfc93fe5dfd45"
+  }
+}
