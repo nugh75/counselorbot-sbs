@@ -375,6 +375,18 @@ Il modulo protegge le bozze; errori di salvataggio conservano chiave e campi.
 Le configurazioni precedenti vengono conservate come connessioni predefinite.
 I costi personali restano a carico dell’account provider di ciascuna chiave.
 
+In **Amministrazione → Configurazione → Generale → Protezione dei dati per i
+modelli esterni**, il vero amministratore sceglie **Filtro di base + modello
+locale** oppure **Solo filtro di base (senza Ollama)** e salva. La prima modalità
+rimane quella predefinita e blocca le richieste esterne se il servizio locale
+non risponde. La seconda permette di provare l’app in cloud senza modelli locali,
+mantenendo il filtro automatico di email, telefoni e identificativi riconosciuti.
+Non garantisce la rimozione di nomi, indirizzi o tutte le informazioni sanitarie
+dal testo libero: i limiti sono mostrati prima del salvataggio. Per le prove si
+usano dati fittizi. La scelta vale anche per API personali e ChatGPT; si applica
+alle nuove richieste su tutti i processi senza riavvio. Nessun cambio automatico
+quando si apre la pagina. Il ricercatore non può modificare questa protezione.
+
 La scelta vale per chat, Bussola, Assistente, studio da PDF, analisi combinata,
 sintesi PDF dei risultati, Tavolo e diagrammi, secondo le associazioni salvate. Il filtro dei dati per provider esterni resta applicato. I servizi
 locali, la voce, i benchmark e il terminale tecnico mantengono la configurazione

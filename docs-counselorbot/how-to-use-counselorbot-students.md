@@ -154,6 +154,12 @@ three replies and a summary; do not extend this to other scored questionnaires.
 
 ## Personal APIs (when enabled by the administrator)
 
+If the connection test reports that the local data protection service is
+unavailable, the request was blocked before reaching the provider. Ask the
+administrator to restore that service or explicitly select the basic filter
+without Ollama. This filter has limits and does not guarantee anonymity; use
+fictional data for cloud tests. Then retry the connection and the guided step.
+
 Open **Personal APIs** from your personal area (`/profilo/api-personali`).
 Add one or more named connections with a supported provider, exact model ID
 and your own API key. Multiple keys for the same provider or different provider

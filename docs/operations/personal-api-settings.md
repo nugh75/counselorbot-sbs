@@ -82,6 +82,34 @@ inviati non vengono riportati all’utente. Su Codespaces il servizio locale di
 anonimizzazione può essere assente: il blocco è riportato esplicitamente; questa
 modifica non disabilita automaticamente la protezione.
 
+### Prove in cloud senza Ollama
+
+Il vero amministratore può aprire **Configurazione → Generale → Protezione dei
+dati per i modelli esterni**, scegliere **Solo filtro di base (senza Ollama)**
+e premere **Salva protezione dei dati**. Poi l’utente può ripetere **Prova
+connessione e modello** e lo step della conversazione. Un precedente errore di
+protezione non certifica la chiave: la richiesta era bloccata prima del provider.
+
+Questo filtro conserva email, telefoni e identificativi riconosciuti dalle regole
+automatiche come placeholder reversibili. Non garantisce la rimozione di nomi,
+indirizzi o tutte le informazioni sanitarie nel testo libero. Usare dati fittizi
+nelle prove in cloud; la modalità non garantisce anonimato. Per il riconoscimento
+contestuale serve la modalità locale con Ollama e il modello configurato.
+
+GET/PUT `/admin/external-privacy` richiedono un amministratore reale; PUT richiede
+anche `X-Requested-With: CounselorBot` e accetta solo `mode: basic|local`.
+Il salvataggio aggiorna insieme `external_pii_redact=true`,
+`external_pii_fallback=block` e `pii_ner_enabled=false|true`, con lock e una sola
+transazione. Non cambia chiavi o prompt e non invia richieste LLM. Le configurazioni
+precedenti con filtro spento o fallback permissivo appaiono come personalizzate,
+senza modifiche finché non viene salvata una modalità. Anche l’API config generica
+rifiuta modifiche di queste impostazioni da ricercatori.
+
+Ogni AIService passa al detector le impostazioni del proprio snapshot DB, anziché
+dipendere dal flag globale nel worker. Il cambio vale quindi per le nuove richieste
+anche su worker già avviati, conservando la configurazione delle richieste in corso.
+Il default resta locale e bloccante; non si passa al filtro di base automaticamente.
+
 ## Protezione, migrazione e API
 
 La chiave Fernet è conservata in `personal_api_credentials/credential.key`

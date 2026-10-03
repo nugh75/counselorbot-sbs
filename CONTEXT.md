@@ -5,6 +5,7 @@
 ## Quick Reference
 - **Personal ChatGPT subscription (optional SIWC preview)**: `docs/operations/chatgpt-subscription.md` — default off, immediate activation from Administration → General with automatic persistent private key (dedicated Docker volume), encrypted per-user credentials, loopback helper for remote VMs, direct Responses API, explicit provider choice without paid failover; verify deployment eligibility and the repository license before a school pilot.
 - **Stack**: Python (FastAPI), Next.js App Router, PostgreSQL, Docker Compose
+- **Protezione dei provider esterni**: l’amministratore reale sceglie da Generale il filtro automatico senza Ollama (`basic`) oppure filtro + NER locale (`local`, default bloccante). GET/PUT `/admin/external-privacy`; tre impostazioni aggiornate insieme, lettura per richiesta anche su più worker. Il filtro base è limitato e non garantisce anonimato; limiti visibili prima del salvataggio. Dettagli: `docs/operations/personal-api-settings.md`.
 - **Entry point**: `docker compose up -d --build` or `uvicorn backend.main:app --reload --port 8000` + `cd frontend && npm run dev`
 - **Sviluppo live (hot reload, senza Docker)**: `docs/operations/live-dev-environment.md` — `scripts/dev-backend.sh` (:8002, DB di test) + `scripts/dev-frontend.sh` (:3107)
 - **Test**: `docker exec counselorbot_backend python -m backend.tests.test_smoke`

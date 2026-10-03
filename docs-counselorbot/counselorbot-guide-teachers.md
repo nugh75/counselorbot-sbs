@@ -214,6 +214,16 @@ thumbs-up responses, and helpful answers are shared anonymously.
 
 ## Privacy and data
 
+An administrator can choose **Basic filter only (without Ollama)** under
+**Configuration → General → Data protection for external models**, then save.
+This supports cloud testing without a local model, while preserving rule-based
+filtering of emails, phone numbers and recognized identifiers. It does not
+guarantee removal of names, addresses or all health information from free text;
+use fictional data for tests. The default keeps the local model and blocks
+external requests when it is unavailable. New requests across workers adopt
+the saved mode without a server restart. Teachers without administrator rights
+cannot change this installation-wide setting.
+
 Session data and profiles are managed by the platform; interaction logging supports
 monitoring and research with PII redaction, configurable retention, and GDPR-compliant
 session deletion. Production data lives on PostgreSQL 15; tests run against a dedicated
