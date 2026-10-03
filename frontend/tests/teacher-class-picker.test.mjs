@@ -55,7 +55,7 @@ async function fixture({ lang = 'it', width = 390, scale = 1, roles = ['docenti'
         else if (url.pathname === '/api/telegram/bot-info') data = {};
         return route.fulfill({ json: data });
     });
-    await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
+    await page.goto(`${origin}/docente/taccuino`, { waitUntil: 'networkidle' });
     const opener = page.getByRole('button', { name: notebookLinkText(lang, 'classes'), exact: true });
     const popup = page.getByRole('dialog', { name: classPickerText(lang, 'title'), exact: true });
     const selector = popup.getByLabel(classPickerText(lang, 'label'), { exact: true });
@@ -86,9 +86,9 @@ test('opening/selection/closing preserve private notebook DOM, values, selection
         await f.open(); assert.equal(await f.selector.inputValue(), ''); await f.page.keyboard.press('Escape');
         await f.popup.waitFor({ state: 'hidden' });
         assert.equal(await f.page.evaluate(() => JSON.stringify(localStorage)), storage);
-        assert.equal(new URL(f.page.url()).pathname, '/docente'); assert.equal(new URL(f.page.url()).search, '');
+        assert.equal(new URL(f.page.url()).pathname, '/docente/taccuino'); assert.equal(new URL(f.page.url()).search, '');
         assert.deepEqual(f.state.writes, []); assert.deepEqual(f.state.confirms, []); assert.deepEqual(f.state.errors, []);
-        assert.equal(await f.page.locator('a[aria-labelledby="teacher-link-classi"]').count(), 1, 'normal Classi navigation remains');
+        assert.equal(await f.page.locator('[data-teacher-area-header] a[href="/docente"]').count(), 1, 'return to teacher home remains');
     } finally { await f.context.close(); }
 });
 
@@ -311,7 +311,7 @@ for (const legacy of [false, true]) test(`${legacy ? 'legacy history' : 'navigat
     try {
         if (legacy) await f.page.addInitScript(() => Object.defineProperty(window, 'navigation', { value: undefined }));
         await f.page.goto(`${origin}/docente/classi`, { waitUntil: 'networkidle' });
-        await f.page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
+        await f.page.goto(`${origin}/docente/taccuino`, { waitUntil: 'networkidle' });
         await f.open(); await f.select(); await f.description.fill('Bozza da conservare');
         const unload = () => f.page.evaluate(() => { const e = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(e); return e.defaultPrevented; });
         assert.equal(await unload(), true); await f.description.focus(); await f.description.evaluate(e => e.setSelectionRange(1, 4));
@@ -330,7 +330,7 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) test(`${lang}: public g
     try {
         await f.page.goto(`${origin}/guide?audience=teacher`, { waitUntil: 'networkidle' });
         const section = f.page.locator('#guide-teacher-section-1');
-        assert.equal(await section.locator('figure').count(), 2);
+        assert.equal(await section.locator('figure').count(), 3); // Home, dedicated notebook, Classi popup.
         const figure = section.locator('figure').filter({ has: f.page.getByRole('img', { name: classPickerText(lang, 'title'), exact: true }) });
         await figure.scrollIntoViewIfNeeded(); await figure.locator('img').evaluate(e => e.decode());
         assert.ok(await figure.locator('img').evaluate(e => e.naturalWidth > 0));
@@ -352,7 +352,7 @@ for (const legacy of [false, true]) test(`${legacy ? 'legacy history' : 'navigat
         await f.popup.waitFor({ state: 'hidden' });
         await f.page.waitForTimeout(150); // Let legacy marker cleanup deliver its asynchronous popstate.
         assert.deepEqual(f.state.confirms, [], 'closing a class dialog must never trigger private notebook navigation');
-        assert.equal(await notebook.inputValue(), 'Taccuino privato'); assert.equal(new URL(f.page.url()).pathname, '/docente');
+        assert.equal(await notebook.inputValue(), 'Taccuino privato'); assert.equal(new URL(f.page.url()).pathname, '/docente/taccuino');
         assert.deepEqual(f.state.writes, []); assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
 });

@@ -26,7 +26,7 @@ const samples = {
     de: ['Mein Lernen organisieren', 'Lernwerkstatt', 'Probiere zwei kurze Wiederholungen aus.', 'Beschreibe, was funktioniert hat und was du ändern würdest.', 'Ich habe das Wiederholen auf zwei Tage verteilt.', 'Vergleiche beim nächsten Mal auch, woran du dich ohne Notizen erinnerst.'],
     sv: ['Planera mina studier', 'Studieverkstad', 'Prova två korta repetitionspass.', 'Beskriv vad som fungerade och vad du skulle ändra.', 'Jag fördelade repetitionen över två dagar.', 'Jämför nästa gång också vad du minns utan anteckningar.'],
 };
-const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories', 'teacher-class-picker'];
+const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories', 'teacher-class-picker', 'teacher-notebook'];
 const browser = await chromium.launch({ headless: true });
 try {
     for (const lang of captureLocales) {
@@ -89,7 +89,8 @@ try {
         async function go(path) { await page.goto(`${origin}${path}`, { waitUntil: 'networkidle' }); await page.locator('main h1, main h2').first().waitFor(); }
         async function capture(name, locator) {
             await page.mouse.move(1430, 10);
-            if (name === 'teacher-groups') {
+            if (name === 'teacher-groups' || name === 'teacher-notebook') {
+                await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
                 for (const image of await page.locator('[data-teacher-area-header] img').all()) await image.evaluate(element => element.decode());
                 await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
                 locator = null; // Include creation and header; avoid sticky-header overlap on an element crop.
@@ -114,10 +115,16 @@ try {
             assert.deepEqual(errors, []);
             assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
             if (name === 'orientation') await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
-            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'teacher-area', 'teacher-groups', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
+            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'teacher-area', 'teacher-groups', 'teacher-notebook', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
             console.log(`${lang}/${name}`);
         }
+        async function captureNotebook() {
+            await go('/docente/taccuino');
+            await page.locator('#teacher-notebook-subjects:not(:disabled)').waitFor();
+            await capture('teacher-notebook');
+        }
         async function capturePicker() {
+            await go('/docente/taccuino');
             await page.getByRole('button', { name: notebookLinkText(lang, 'classes'), exact: true }).click();
             const popup = page.getByRole('dialog', { name: classPickerText(lang, 'title'), exact: true });
             await popup.getByLabel(classPickerText(lang, 'label'), { exact: true }).selectOption('91');
@@ -125,10 +132,11 @@ try {
             await capture('teacher-class-picker', popup);
             await page.keyboard.press('Escape');
         }
-        if (process.env.GUIDE_SCREENS === 'teacher-class-picker') {
+        if (['teacher-class-picker', 'teacher-notebook'].includes(process.env.GUIDE_SCREENS)) {
             authenticated = true; teacher = true;
             await go('/docente');
             await capture('teacher-area');
+            await captureNotebook();
             await capturePicker();
             await context.close();
             continue;
@@ -200,6 +208,7 @@ try {
         teacher = true;
         await go('/docente/orientamento'); await page.getByRole('heading', { name: title, exact: true }).waitFor(); await capture('institution-categories');
         await go('/docente'); await page.getByRole('link', { name: teacherAreaName(lang, 'orientamento'), exact: true }).waitFor(); await capture('teacher-area');
+        await captureNotebook();
         await capturePicker();
         await go('/docente/classi');
         const groupCard = page.locator('section').filter({ has: page.getByRole('heading', { name: groupName, exact: true }) }).last();

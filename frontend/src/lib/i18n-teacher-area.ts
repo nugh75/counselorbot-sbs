@@ -40,12 +40,12 @@ const labels = {
     ],
     back: ['Torna a CounselorBot', 'Back to CounselorBot', 'Volver a CounselorBot', 'Retour à CounselorBot', 'Zurück zu CounselorBot', 'Tillbaka till CounselorBot'],
     notebookNote: [
-        "Il taccuino qui sotto descrive il tuo ruolo e la tua pratica abituale. Gli obiettivi per la classe usano per default il taccuino docente; gli altri strumenti quello dello studente. Nelle Opzioni della chat puoi scegliere Studente, Docente o Nessuno, oppure tornare a Predefinito. La scelta riguarda il contesto del taccuino, non tutti i dati della conversazione; Nessuno non rende la chat anonima.",
-        "The notebook below describes your role and usual practice. Class objectives default to the teacher notebook; other tools to the student notebook. In chat Options you can choose Student, Teacher or None, or return to Default. This choice concerns notebook context, not all conversation data; None does not make the chat anonymous.",
-        "El cuaderno de abajo describe tu rol y tu práctica habitual. Los objetivos para la clase usan por defecto el cuaderno docente; las demás herramientas el del estudiante. En Opciones puedes elegir Estudiante, Docente o Ninguno, o volver a Predeterminado. La elección afecta al contexto del cuaderno, no a todos los datos de la conversación; Ninguno no hace anónima la conversación.",
-        "Le carnet ci-dessous décrit votre rôle et votre pratique habituelle. Les objectifs pour la classe utilisent par défaut le carnet enseignant ; les autres outils celui de l’étudiant. Dans Options, choisissez Étudiant, Enseignant ou Aucun, ou revenez à Par défaut. Ce choix concerne le contexte du carnet, pas toutes les données de la conversation ; Aucun ne rend pas le chat anonyme.",
-        "Das Notizbuch unten beschreibt Ihre Rolle und übliche Praxis. Klassenziele nutzen standardmäßig das Lehrkräfte-Notizbuch; andere Werkzeuge das Studierenden-Notizbuch. In den Chat-Optionen können Sie Studierende, Lehrkraft oder Keines wählen oder zu Standard zurückkehren. Die Wahl betrifft den Notizbuchkontext, nicht alle Gesprächsdaten; Keines macht den Chat nicht anonym.",
-        "Anteckningsboken nedan beskriver din roll och vanliga undervisning. Klassmål använder lärarens anteckningsbok som standard; andra verktyg elevens. I chattens Alternativ kan du välja Student, Lärare eller Ingen, eller återgå till Standard. Valet gäller anteckningsbokens sammanhang, inte alla samtalsdata; Ingen gör inte chatten anonym.",
+        "Il taccuino descrive il tuo ruolo e la tua pratica abituale. Gli obiettivi per la classe usano per default il taccuino docente; gli altri strumenti quello dello studente. Nelle Opzioni della chat puoi scegliere Studente, Docente o Nessuno, oppure tornare a Predefinito. La scelta riguarda il contesto del taccuino, non tutti i dati della conversazione; Nessuno non rende la chat anonima.",
+        "The notebook describes your role and usual practice. Class objectives default to the teacher notebook; other tools to the student notebook. In chat Options you can choose Student, Teacher or None, or return to Default. This choice concerns notebook context, not all conversation data; None does not make the chat anonymous.",
+        "El cuaderno describe tu rol y tu práctica habitual. Los objetivos para la clase usan por defecto el cuaderno docente; las demás herramientas el del estudiante. En Opciones puedes elegir Estudiante, Docente o Ninguno, o volver a Predeterminado. La elección afecta al contexto del cuaderno, no a todos los datos de la conversación; Ninguno no hace anónima la conversación.",
+        "Le carnet décrit votre rôle et votre pratique habituelle. Les objectifs pour la classe utilisent par défaut le carnet enseignant ; les autres outils celui de l’étudiant. Dans Options, choisissez Étudiant, Enseignant ou Aucun, ou revenez à Par défaut. Ce choix concerne le contexte du carnet, pas toutes les données de la conversation ; Aucun ne rend pas le chat anonyme.",
+        "Das Notizbuch beschreibt Ihre Rolle und übliche Praxis. Klassenziele nutzen standardmäßig das Lehrkräfte-Notizbuch; andere Werkzeuge das Studierenden-Notizbuch. In den Chat-Optionen können Sie Studierende, Lehrkraft oder Keines wählen oder zu Standard zurückkehren. Die Wahl betrifft den Notizbuchkontext, nicht alle Gesprächsdaten; Keines macht den Chat nicht anonym.",
+        "Anteckningsboken beskriver din roll och vanliga undervisning. Klassmål använder lärarens anteckningsbok som standard; andra verktyg elevens. I chattens Alternativ kan du välja Student, Lärare eller Ingen, eller återgå till Standard. Valet gäller anteckningsbokens sammanhang, inte alla samtalsdata; Ingen gör inte chatten anonym.",
     ],
     classroom: ['Classe e assegnazioni', 'Class and assignments', 'Clase y asignaciones', 'Classe et attributions', 'Klasse und Zuweisungen', 'Klass och tilldelningar'],
     catalogs: ['Cataloghi', 'Catalogs', 'Catálogos', 'Catalogues', 'Kataloge', 'Kataloger'],
@@ -54,6 +54,7 @@ const labels = {
 } satisfies Record<string, Localized>;
 
 const names = {
+    taccuino: labels.notebook,
     classi: ['Gruppi e classi', 'Groups and classes', 'Grupos y clases', 'Groupes et classes', 'Gruppen und Klassen', 'Grupper och klasser'],
     assegnazioni: ['Assegnazioni effettuate', 'Sent assignments', 'Asignaciones realizadas', 'Attributions effectuées', 'Gesendete Zuweisungen', 'Skickade tilldelningar'],
     'catalogo-obiettivi': ['Catalogo obiettivi', 'Goal catalog', 'Catálogo de objetivos', 'Catalogue d’objectifs', 'Zielkatalog', 'Målkatalog'],
@@ -64,6 +65,14 @@ const names = {
 } satisfies Record<TeacherAreaSlug, Localized>;
 
 const descriptions = {
+    taccuino: [
+        'Descrivi il tuo ruolo, la tua pratica abituale e i tuoi interessi di crescita.',
+        'Describe your role, usual practice and development interests.',
+        'Describe tu rol, tu práctica habitual y tus intereses de desarrollo.',
+        'Décrivez votre rôle, votre pratique habituelle et vos intérêts de développement.',
+        'Beschreiben Sie Ihre Rolle, Ihre übliche Praxis und Ihre Entwicklungsinteressen.',
+        'Beskriv din roll, din vanliga undervisning och dina utvecklingsintressen.',
+    ],
     classi: [
         'Crea classi e gruppi, distribuisci il codice di invito e scrivi il contesto della classe.',
         'Create classes and groups, share the invite code and write the class context.',
