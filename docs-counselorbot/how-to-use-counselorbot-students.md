@@ -166,6 +166,9 @@ This account preference applies to chat, Compass, Assistant, PDF study, combined
 analysis, PDF summaries, Tavolo and diagrams; audio, local services and technical
 tools keep the system settings. When the administrator disables the feature,
 new requests use system APIs and the personal-area link is hidden. Existing
-requests finish with their original settings. You can still delete a saved key
-from the direct settings URL. No automatic system-key fallback occurs when
+requests finish with their original settings. The form and Guide section are
+hidden too; direct page visits return to your own area. Re-enabling restores
+the saved preference. Administrative activation prepares key protection
+automatically, without server commands. Choosing personal APIs switches off
+ChatGPT subscription use, and vice versa; both credentials remain saved. No automatic system-key fallback occurs when
 an active personal connection fails.

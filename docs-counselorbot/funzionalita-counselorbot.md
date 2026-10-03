@@ -135,14 +135,16 @@ non servono comandi, modifica di file o riavvio. L’interfaccia indica lo stato
 e conferma subito il salvataggio. Il controllo è riservato agli amministratori;
 non è disponibile ai ricercatori o alle anteprime di ruolo.
 
-**Disabilita collegamento ChatGPT** sospende le nuove richieste e conserva gli
-account collegati. La riattivazione mantiene i collegamenti. Se la chiave di
+**Disabilita collegamento ChatGPT** nasconde la funzione agli utenti e conserva
+gli account collegati. Le nuove richieste usano il modello dell’installazione. La riattivazione mantiene i collegamenti. Se la chiave di
 protezione manca per account esistenti, occorre ripristinarla dal backup del
 server; il pannello non la sostituisce automaticamente. Chi gestisce il server
 deve includere l’archivio protetto delle credenziali nei backup.
 
-Nell’Area personale, **Il tuo abbonamento ChatGPT** consente il collegamento
-quando la funzione è attiva. **Apri il tuo collegamento ChatGPT** nel pannello
+Nell’Area personale (`/profilo/chatgpt`) e nell’Area docenti (`/docente/chatgpt`),
+**Il tuo abbonamento ChatGPT** consente il collegamento quando la funzione è
+attiva. Se disabilitata, la voce, i badge e la sezione della Guida non compaiono;
+un accesso diretto rimanda alla rispettiva area personale. **Apri il tuo collegamento ChatGPT** nel pannello
 amministrativo porta direttamente a questa scheda. L’accesso a
 CounselorBot e quello a ChatGPT sono distinti. La funzione usa il flusso ufficiale
 Sign in with ChatGPT per inferenza diretta, attualmente in anteprima: piani e
@@ -334,10 +336,16 @@ studenti e docenti trovano il collegamento nella propria pagina personale:
 `/profilo/api-personali` per l’Area personale e `/docente/api-personali` per
 l’Area docenti. Le due pagine condividono le impostazioni dello stesso account.
 La funzione è disabilitata per default e il ricercatore non può abilitarla.
+L’attivazione prepara automaticamente la protezione delle chiavi: non occorre
+configurare variabili, modificare file o eseguire comandi sul server. Le chiavi
+sono conservate dopo riavvii e aggiornamenti; l’archivio protetto va incluso
+nei backup insieme al database.
 
 La persona sceglie provider e modello, inserisce una chiave API e salva.
 **Usa le mie API personali** passa alle credenziali dell’account del provider;
-togliendo la spunta e salvando si torna alle API di sistema. La chiave è cifrata
+togliendo la spunta e salvando si torna alle API di sistema. Attivare le API
+personali disattiva l’uso dell’abbonamento ChatGPT, e viceversa; entrambe le
+credenziali restano salvate. La chiave è cifrata
 sul server e non viene restituita né mostrata dopo il salvataggio. Si può
 verificarla, sostituirla o eliminarla con conferma. Lasciare il campo vuoto
 conserva la chiave già salvata per quel provider; cambiarlo richiede una chiave
@@ -357,9 +365,9 @@ sistema.
 Spegnendo la funzione, l’amministratore fa usare le API di sistema alle nuove
 richieste e nasconde i collegamenti dalle aree personali. Le richieste già
 avviate terminano con la configurazione iniziale. Le chiavi salvate restano
-cifrate e possono essere eliminate raggiungendo direttamente la pagina.
-Alla riattivazione riprende la scelta salvata. Per l’attivazione il server deve
-avere configurata la chiave di cifratura; dettagli in
+cifrate. Anche il modulo e la sezione della Guida scompaiono: un link diretto
+rimanda alla rispettiva area personale. Alla riattivazione riprende la scelta
+salvata. I dettagli di attivazione automatica e ripristino sono in
 `docs/operations/personal-api-settings.md`.
 
 ## Docenti, ricercatori e amministrazione
