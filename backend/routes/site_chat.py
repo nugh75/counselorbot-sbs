@@ -64,7 +64,7 @@ from ..rag_index import (
 )
 
 router = APIRouter()
-get_db = database.get_db
+get_db = database.get_personal_ai_db
 logger = logging.getLogger(__name__)
 
 _SITE_CHAT_GROUP_MARKERS = (

@@ -10,7 +10,7 @@ from ..ai_service import AIService
 from ..prompt_audit import build_prompt_audit, prompt_audit_matrix, run_prompt_audit_live
 
 router = APIRouter()
-get_db = database.get_db
+get_db = database.get_personal_ai_db
 
 
 async def require_prompt_audit_access(

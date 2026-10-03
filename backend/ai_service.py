@@ -98,6 +98,10 @@ class AIService:
         # Ultimo ragionamento «sto pensando» estratto (nativo Ollama o tag <think>),
         # esposto ai chiamatori non-stream (es. audit /live) come canale separato.
         self.last_thinking = None
+        from .chatgpt_connections import preference
+        self.chatgpt_model = preference(db)
+        if self.chatgpt_model:
+            self.config.update(active_provider="openai_chatgpt", model_name=self.chatgpt_model)
         # Modalità "no thinking": disattiva il reasoning sui modelli che lo supportano
         self.disable_thinking = str(self.config.get('disable_thinking', 'false')).lower() == 'true'
         # Override opzionale del budget di ragionamento (es. dal preset del counselor).
@@ -137,6 +141,7 @@ class AIService:
         # stream    = None → il provider non ha stream incrementale (chunk unico via call)
         # Aggiungere un provider = una voce qui + la coppia _call_/_stream_.
         self._providers = {
+            'openai_chatgpt': {'call': self._call_chatgpt, 'stream': self._stream_chatgpt, 'call_max': None, 'stream_max': None},
             'openai':     {'call': self._call_openai,     'stream': self._stream_openai,     'call_max': None, 'stream_max': None},
             'anthropic':  {'call': self._call_anthropic,  'stream': self._stream_anthropic,  'call_max': 4096, 'stream_max': 4096},
             'openrouter': {'call': self._call_openrouter, 'stream': self._stream_openrouter, 'call_max': None, 'stream_max': None},
@@ -455,6 +460,8 @@ class AIService:
         )
 
     def _selected_target(self, provider, model):
+        if self.chatgpt_model:
+            return "openai_chatgpt", self.chatgpt_model
         chosen = provider or self.config.get("active_provider", "openai")
         if model:
             return chosen, model
@@ -475,6 +482,8 @@ class AIService:
 
     def _targets(self, provider, model):
         primary = self._selected_target(provider, model)
+        if primary[0] == "openai_chatgpt":
+            return [primary]
         primary = self._apply_budget_lock(*primary)
         raw = self.config.get("ai_fallback_targets", "[]")
         configured = json.loads(raw) if isinstance(raw, str) else raw
@@ -527,12 +536,18 @@ class AIService:
                 # Log classifications only; upstream errors can contain request data.
                 attempt["error_type"] = type(exc).__name__
                 logger.warning("AI attempt %s/%s failed (%s)", selected_provider, selected_model, type(exc).__name__)
+        if self.chatgpt_model and isinstance(last_error, AIError):
+            raise last_error
         raise AIError(f"Nessun modello configurato ha completato la risposta ({type(last_error).__name__}).") from last_error
 
     def call_model(self, provider: str, model: str, user_message: str, system_prompt: str, max_tokens: int = None):
         """Chiamata bloccante a un (provider, model) ESPLICITO, bypassando la
-        config attiva. Usato dal benchmark per confrontare modelli/provider.
+        config attiva. La scelta personale esplicita precede anche i modelli
+        ausiliari. Il benchmark senza identita' personale resta esplicito.
         Popola self.last_usage (token/costo) quando il provider lo fornisce."""
+        if self.chatgpt_model:
+            provider, model = "openai_chatgpt", self.chatgpt_model
+        self.last_provider, self.last_model = provider, model
         entry = self._provider(provider)
         plan = self._resolve_reasoning(model, requested_max_tokens=max_tokens,
                                        fallback_max_tokens=entry['call_max'])
@@ -897,6 +912,8 @@ class AIService:
             except Exception as exc:
                 last_error = exc
                 attempt["error_type"] = type(exc).__name__
+                if self.chatgpt_model and isinstance(exc, AIError):
+                    raise exc
                 # Solo il contenuto gia' arrivato allo studente impedisce il
                 # ripiego. Il ragionamento viaggia su un canale separato, non
                 # entra nella risposta e non viene salvato: un modello che ha
@@ -953,6 +970,24 @@ class AIService:
                 close()
         if finish_reason == "length":
             raise AIError("The model reached its output token limit before completing the response.")
+
+    def _stream_chatgpt(self, user_message, system_prompt, model, max_tokens=None, history=None):
+        from .chatgpt_connections import ChatGPTError
+        from .chatgpt_responses import stream
+        from .chatgpt_i18n import error_message
+        try:
+            for item in stream(self.db, model, user_message, system_prompt, self._normalize_history(history),
+                               timeout=self._int_config("ai_timeout_seconds", 120, 10, 600)):
+                if isinstance(item, dict) and item.get("type") == "usage":
+                    self.last_usage = item["usage"]
+                yield item
+        except ChatGPTError as exc:
+            language = getattr(self.db, "info", {}).get("chatgpt_language", "it")
+            raise AIError(error_message(exc.code, language)) from None
+
+    def _call_chatgpt(self, user_message, system_prompt, model, max_tokens=None, history=None):
+        return "".join(item for item in self._stream_chatgpt(user_message, system_prompt, model, history=history)
+                       if isinstance(item, str))
 
     def _stream_openai(self, user_message, system_prompt, model, max_tokens: int = None, history=None):
         api_key = self._get_api_key('api_key_openai')

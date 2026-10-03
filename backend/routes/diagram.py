@@ -33,7 +33,7 @@ from .chat import _apply_counselor_overrides, _resolve_counselor
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-get_db = database.get_db
+get_db = database.get_personal_ai_db
 
 # I cento SVG del catalogo stanno accanto al modulo che li nomina. Finora li
 # leggeva solo Graphviz; la tela del tavolo li chiede via HTTP, e restano una

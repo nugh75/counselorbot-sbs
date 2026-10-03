@@ -20,6 +20,8 @@ export async function POST(
         'remote-groups',
         'x-forwarded-auth-secret',
         'x-forwarded-host',
+        'x-view-as',
+        'x-counselorbot-language',
     ]) {
         const value = req.headers.get(name);
         if (value) headers.set(name, value);

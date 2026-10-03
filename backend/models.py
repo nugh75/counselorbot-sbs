@@ -19,6 +19,31 @@ class AccountPreferences(Base):
     notebook_completed = Column(Boolean, nullable=False, default=False)
 
 
+class ChatGPTConnection(Base):
+    """One renewable SIWC registration owned by an authenticated app account."""
+    __tablename__ = "chatgpt_connections"
+    username = Column(String, primary_key=True)
+    client_id = Column(String, nullable=True)
+    subject = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    encrypted_credentials = Column(Text, nullable=True)
+    use_subscription = Column(Boolean, nullable=False, default=False)
+    preferred_model = Column(String, nullable=True)
+    catalog = Column(JSON, nullable=True)
+    last_error = Column(String, nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class ChatGPTLink(Base):
+    """Short-lived, single-use capability for an authorized local OAuth helper."""
+    __tablename__ = "chatgpt_links"
+    token_hash = Column(String(64), primary_key=True)
+    username = Column(String, nullable=False, index=True)
+    nonce = Column(String, nullable=False)
+    expected_client_id = Column(String, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+
+
 class Config(Base):
     __tablename__ = "configs"
 
