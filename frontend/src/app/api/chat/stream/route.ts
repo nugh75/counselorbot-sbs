@@ -24,6 +24,7 @@ const AUTH_HEADERS = [
     // Anteprima profilo di prova: senza questo, le interazioni in streaming si
     // attribuirebbero all'admin invece che al profilo di prova selezionato.
     'x-view-as',
+    'x-counselorbot-language',
 ];
 
 export async function POST(req: NextRequest) {

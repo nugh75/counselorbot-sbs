@@ -3,5 +3,6 @@
 session_memory
 frontend
 uploads
+chatgpt_credentials
 *.db
 *.pdf

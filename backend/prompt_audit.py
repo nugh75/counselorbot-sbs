@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from . import models, model_pricing, pii, schemas
 from .ai_service import AIError, AIService
+from .chatgpt_responses import preview as chatgpt_preview
 from .anonymous_codes import code_for_identity
 from .api_models import ChatRequest
 from .chat_preparation import prepare_chat_turn
@@ -316,6 +317,8 @@ def build_prompt_audit(
 
     provider = c_provider or ai_service.config.get("active_provider", "unknown")
     model = c_model or ai_service.config.get("model_name", "unknown")
+    if getattr(ai_service, "chatgpt_model", None):
+        provider, model = "openai_chatgpt", ai_service.chatgpt_model
     from .model_context import ContextCapacityError, context_profile, fit_context
     from .reasoning_profiles import resolve_plan
     plan = resolve_plan(model, disable_thinking=ai_service.disable_thinking,
@@ -387,6 +390,9 @@ def build_prompt_audit(
             "full_message": full_message,
             "history": history,
         },
+        "transport": chatgpt_preview(
+            model, full_message, system_prompt_final, history,
+        ) if provider == "openai_chatgpt" else None,
         "inputs": {
             "raw_message": request.message,
             "effective_user_message": effective_message,

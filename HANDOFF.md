@@ -493,3 +493,145 @@ arresto come nella sezione precedente. Per Codespaces: aggiornare il ramo
 (oppure main dopo il merge dell’utente), riavviare frontend/backend e usare
 Amministrazione → Allinea prompt di fabbrica. Nessun aggiornamento del DB
 del Codespace o di produzione, nessun merge o deploy in questa sessione.
+
+
+## Abbonamento personale ChatGPT (2026-10-03)
+
+Implementazione autorizzata dall'utente dopo il piano; priorita' alle chat dentro
+CounselorBot. Ramo `feature/chatgpt-subscription`, derivato da main aggiornato e
+aggiornato poi con fast-forward al merge della PR #38 (`1cac9b6b`), verificata
+MERGED su GitHub prima della pubblicazione.
+Nessun agente delegato, nessun merge/deploy e nessun account OpenAI reale usato.
+
+Flusso SIWC ufficiale verificato sui documenti OpenAI attuali: callback OAuth
+sul computer della persona tramite helper Python standard scaricabile, pairing
+monouso con hash e scadenza, PKCE/state/nonce, verifica dei JWT RS256 con JWKS
+fisso. Il client ID pubblico emesso viene conservato prima dello scambio del
+codice; un grant non verificato non abilita inferenza. Token Fernet nel DB,
+mai risposte/log/browser storage. Rinnovo serializzato con lock PostgreSQL e
+sessione separata; rispetto di earliest_refresh_at e token rotanti. Revoca
+remota tentata e cancellazione locale garantita, avviso se revoca non confermata.
+
+Area personale e indicatore nelle chat in IT/EN/ES/FR/DE/SV; catalogo disponibile
+per account, scelta esplicita del modello e attivazione. Connessione da sola non
+consente inferenza. Provider `openai_chatgpt` via Responses con istruzioni,
+cronologia, store:false e streaming completato solo all'evento finale. La scelta
+personale prevale sui preset e non ripiega su API a pagamento. Quote/errori
+localizzati, nessun prezzo API inventato. Identita' autenticata propagata alle
+chiamate personali, account demo/view-as esclusi; OCR ed embeddings restano
+servizi dell'installazione. OpenCode bloccato con scelta personale attiva.
+Anteprima prompt mostra il trasporto senza token e prima del filtro PII.
+
+Funzione spenta per default. Procedura, chiave persistente, helper/tunnel,
+backup, limitazioni e fonti in `docs/operations/chatgpt-subscription.md`.
+L'anteprima SIWC per strumenti OSS locali/VM personali non autorizza
+automaticamente un server scolastico condiviso o piani Edu/Business. Verificare
+il percorso OpenAI dell'installazione; questo codice non implementa il profilo
+partner ospitato. Nel repo manca LICENSE: il proprietario deve sceglierla prima
+della distribuzione OSS. Accesso, catalogo, inferenza, refresh e revoca con account
+reale sono una verifica manuale ancora necessaria; nessuna chiamata a pagamento.
+
+Verifiche: 41 test finali dell'integrazione passati dopo le ultime modifiche;
+precedentemente 112 backend mirati (integrazione/routing/PII) e 206 smoke,
+236 unitari frontend, 12 prove browser ChatGPT in sei lingue a 390/1440 px e
+10 regressioni browser delle anteprime/allineamento prompt. TypeScript,
+i18n (2927 chiavi per sei lingue), ESLint mirato riusciti. Il lint globale
+resta bloccato dall'errore preesistente setState in effect in
+`frontend/src/components/visual/NewDeckDialog.tsx:36` e warning preesistenti.
+Nessun LLM reale chiamato, database/schemi di test dedicati.
+
+Docker: build backend e frontend tentate senza avviare produzione. Backend
+completo bloccato dall'accesso apt alla rete cloud; frontend da npm/DNS
+ENOTFOUND che lascia Next non installato. Anche build backend incrementale
+interrotta per spazio insufficiente: nessuna nuova immagine finale prodotta.
+Log `/tmp/chatgpt-docker-backend.log`, `/tmp/chatgpt-docker-frontend.log`,
+`/tmp/chatgpt-docker-backend-incremental.log`. Restano da ricostruire le immagini
+nel normale ambiente di deploy con rete/spazio disponibili.
+
+Durante la validazione Docker il disco root ha esaurito lo spazio. Conservata
+copia completa della venv in `/tmp/chatgpt-dev-runtime/backend-venv`; il tentativo
+di spostamento non ha liberato spazio. Rimossi solo tre record di cache Docker
+non condivisi/reclamabili prodotti dalle build incrementali di questa sessione,
+identificati singolarmente: nessun volume, container, immagine o database
+rimosso. La venv parziale originale e' conservata in
+`/workspace/.cloud-counselorbot/backend-venv-partial-preserved`; backend/.venv e'
+un symlink locale escluso da Git alla copia completa. Non eliminare queste copie.
+
+Dev nativo ripristinato: frontend localhost:3107, backend localhost:8002,
+PostgreSQL dedicato :5435. Avvio backend con
+`/workspace/.cloud-counselorbot/start-backend.sh`, frontend con
+`cd frontend && npm run dev -- --hostname 127.0.0.1 --port 3107`.
+Processi lasciati attivi: backend reloader PID 24513, frontend npm PID 24514 (Next PID 24533). Arresto: `kill 24513 24533`, senza toccare
+PostgreSQL o produzione. Log `/tmp/chatgpt-dev-backend.log` e
+`/tmp/chatgpt-dev-frontend.log`. Il Codespace dell'utente non e' stato aggiornato.
+
+
+## Attivazione ChatGPT dall’Amministrazione (2026-10-03)
+
+L’utente vuole abilitare la funzione dall’interfaccia senza generare chiavi o
+modificare file con comandi. Ramo `feature/chatgpt-admin-activation` creato da
+main aggiornato (`dbeb6167`, PR #39 verificata MERGED). Nessun agente delegato.
+
+Nuova scheda in Amministrazione → Configurazione → Generale → Collegamento
+ChatGPT: Abilita/Disabilita, stato e salvataggio immediato, collegamento all’Area
+personale. UI e messaggi backend in IT/EN/ES/FR/DE/SV, guida aggiornata nelle sei
+lingue. Il controllo cambia solo la disponibilità del servizio; ogni persona
+continua a collegare e attivare il proprio account separatamente.
+
+GET/PUT `/admin/chatgpt/settings` ammettono solo un amministratore autenticato
+reale; esclusi ricercatori e view-as, PUT protetto dall’header anti-CSRF e payload
+booleano stretto. `Config.chatgpt_enabled` persistente precede la variabile
+iniziale `CHATGPT_ENABLED`. Effetto sulle nuove richieste senza riavvio; la
+lettura del flag non esegue autoflush di scritture chat/punteggi pendenti.
+`chatgpt_*` esclusi dalla configurazione generica e scrittura rifiutata lì, per
+impedire bypass della preparazione della chiave e modifica dell’host ID.
+
+Prima attivazione: chiave Fernet privata in chatgpt_credentials/credential.key
+(0700 directory, 0600 file). Scrittura/fsync in temporaneo e pubblicazione
+atomica senza sovrascrittura: worker concorrenti convergono sulla stessa chiave.
+Nuovo volume Docker dedicato montato su /app/chatgpt_credentials; esclusioni
+Git/Docker, nessuna chiave restituita al browser o inserita nell’immagine.
+Le chiavi fornite dall’operatore restano prioritarie, anche se non valide.
+`CHATGPT_CREDENTIALS_DIR` può selezionare un altro archivio persistente.
+
+Disattivazione conserva chiave e credenziali, blocca nuove associazioni e
+inferenze personali senza ripiego a pagamento. Funziona anche se la chiave è
+mancante. Chiave persa con grant esistenti: richiede ripristino dal backup,
+non genera un sostituto. Chiave non valida o archivio non scrivibile: errore e
+nessuna attivazione salvata. Backup deve includere DB e chiave protetta coerenti.
+Procedura principale ora via UI in docs/operations/chatgpt-subscription.md.
+
+Verifiche: 53 backend integrazione/amministrazione, 72 routing/PII, 202 smoke
+eseguiti dal runner, 236 unitari frontend passati. Browser: 13 prove nuove
+(6 lingue, 390/1440 px + ricercatore) e 20 regressioni connessione personale/
+allineamento prompt passate. Controllo ricercatore attende davvero il 403 prima
+di verificare che il comando sia assente. TypeScript e i18n (2944 chiavi × sei
+lingue) passati; ESLint mirato zero errori, un warning preesistente in ConfigForm
+sulla dipendenza getConfigValue. Nessun account OpenAI reale o LLM chiamato.
+
+Prova aggiuntiva sull’app dev effettiva (API non simulate): dal pannello
+attivato, ricaricato e disattivato; stato verificato tramite API. Nel solo DB
+counselorbot_dev ora la scelta amministrativa è false, con chiave pronta.
+Chiave runtime conservata in /workspace/counselorbot-sbs/chatgpt_credentials,
+ignorata da Git e non letta/stampata. Screenshot /tmp/chatgpt-admin-live-390.png;
+fixture UI /tmp/chatgpt-admin-390.png e /tmp/chatgpt-admin-1440.png.
+Nessuna associazione OAuth o modifica di prompt/dati di produzione.
+
+Docker: check del Dockerfile backend passa; frontend restituisce tre avvisi
+preesistenti LegacyKeyValueFormat e codice 1. Compose validato con copia e
+variabili/credenziali fittizie fuori repo, perché qui non c’è un .env reale.
+Il rebuild completo non è eseguibile con circa 983 MiB liberi e driver vfs:
+una build precedente ha già saturato il disco; preflight in
+/tmp/chatgpt-admin-compose-validation/build-preflight.log. Nessuna nuova
+immagine finale prodotta, nessun container/volume rimosso o riavviato.
+Il normale aggiornamento dell’operatore deve ricostruire le immagini e applicare
+il volume persistente. Limiti SIWC/ammissibilità/licenza della PR precedente
+restano documentati; l’attivazione non cambia i piani ammessi da OpenAI.
+
+Dev lasciato attivo: backend :8002 (reloader PID 24513), frontend :3107 (npm
+PID 24514, Next PID 24533), PostgreSQL dedicato :5435. Arresto con
+`kill 24513 24533`, senza toccare DB/produzione. Venv locale conservata tramite
+symlink alla copia in /tmp, come nella sezione precedente. Nessun intervento
+sul Codespace dell’utente: aggiornare la nuova PR/main dopo il merge e riavviare
+una volta per caricare il codice; poi l’attivazione dal pannello non richiede
+ulteriori riavvii. Nessun merge o deploy da parte dell’agente.

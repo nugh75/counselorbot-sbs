@@ -37,6 +37,7 @@ type Preview = {
     knowledge?: { context?: string };
     resolved?: { provider?: string; model?: string; context_budget?: Record<string, unknown> };
     warnings?: { code: string; message: string }[];
+    transport?: { endpoint: string; authentication: string; body: Record<string, unknown>; unsupported_parameters: string[] } | null;
 };
 
 export function PromptRequestPreview({ step, configs, results, language = 'it', selectedSession, selectedCounselor, onSession, onCounselor, onLanguage, componentFlags, componentFlagsDirty, componentLabels, savedStep, savedConfigs, hideContextControls }: {
@@ -53,7 +54,7 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
     componentFlags?: Record<string, unknown>; componentLabels?: Record<string, string>;
 }) {
     const rootRef = useRef<HTMLElement>(null);
-    const { lang } = useI18n();
+    const { lang, t } = useI18n();
     const l = labels[lang as keyof typeof labels] || labels.en;
     const languageLabel = { it: 'Lingua', en: 'Language', es: 'Idioma', fr: 'Langue', de: 'Sprache', sv: 'Språk' }[lang] || 'Language';
     const e = explanations[lang as keyof typeof explanations] || explanations.en;
@@ -126,7 +127,7 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
     const data = needsMessage ? undefined : state.data;
     const envelope = data?.envelope;
     const messages = envelope ? [{ role: 'system', content: envelope.system_prompt_final }, ...envelope.history, { role: 'user', content: envelope.full_message }] : [];
-    const text = JSON.stringify(messages, null, 2);
+    const text = JSON.stringify(data?.transport || messages, null, 2);
     const blocks: [string, unknown][] = view === 'messages'
         ? messages.map((m, i) => [`${i + 1}. ${m.role === 'system' ? l[14] : m.role} ${i === messages.length - 1 ? `· ${l[15]}` : ''}`, m.content])
         : Object.entries({ ...data?.components, knowledge: data?.knowledge?.context || '' });
@@ -158,6 +159,7 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
         <div className="max-h-[65vh] space-y-2 overflow-auto" aria-busy={loading}>
             {blocks.filter(([key, value]) => `${key} ${typeof value === 'string' ? value : JSON.stringify(value)}`.toLowerCase().includes(search.toLowerCase())).map(([key, value]) => <details key={key} open={view === 'messages' || !!search} className="rounded border bg-white p-3"><summary className="cursor-pointer break-words text-xs font-semibold">{componentLabels?.[key] || key}{view === 'components' && <span className="ml-2 font-normal text-slate-500">{data?.component_flags?.[key] === false ? e[6] : key === 'knowledge' && data?.warnings?.some(w => w.code === 'retrieval_not_replayed') ? e[8] : hasContent(value) ? e[5] : e[7]}</span>}</summary>{view === 'components' && data?.component_origins?.[key] && <p className="mt-1 break-words font-mono text-[11px] text-slate-500">{data.component_origins[key]}</p>}<pre className="mt-2 whitespace-pre-wrap break-words text-xs">{value ? typeof value === 'string' ? value : JSON.stringify(value, null, 2) : l[13]}</pre></details>)}
         </div>
+        {data?.transport && <details className="text-xs"><summary>{t('chatgpt.preview.title')}</summary><p className="mt-2">{t('chatgpt.preview.help')}</p><pre className="mt-2 whitespace-pre-wrap break-words">{JSON.stringify(data.transport, null, 2)}</pre></details>}
         {data?.resolved?.context_budget && <details className="text-xs"><summary>{l[20]}</summary><pre className="whitespace-pre-wrap">{JSON.stringify(data.resolved.context_budget, null, 2)}</pre></details>}
     </section>;
 }

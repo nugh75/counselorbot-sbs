@@ -169,7 +169,9 @@ def _generate_all_chunks(document_id: str):
         )
         db.commit()
 
-        ai = AIService(db, username=doc.username)
+        from ..chatgpt_connections import bind_identity
+        bind_identity(db, {"authenticated": True, "username": doc.username}, doc.language)
+        ai = AIService(db)
         # Il modello del preset del counselor scelto dallo studente ha la
         # precedenza; ripiego su pqbl_model (config) e infine sul modello attivo.
         dedicated_model = (preset_model or ai.config.get("pqbl_model") or "").strip()

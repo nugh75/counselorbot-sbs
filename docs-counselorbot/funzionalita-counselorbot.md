@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 26 settembre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 3 ottobre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
@@ -125,6 +125,70 @@ Eliminare un punto di ripresa non elimina i risultati del questionario o gli alt
 lavori. Il progresso PDF, invece, è locale al browser.
 
 ## Area personale e strumenti
+
+### Abbonamento personale ChatGPT (opzionale)
+
+L’amministratore apre **Amministrazione → Configurazione → Generale →
+Collegamento ChatGPT** e preme **Abilita collegamento ChatGPT**. Il server
+prepara automaticamente la protezione delle credenziali e salva la scelta:
+non servono comandi, modifica di file o riavvio. L’interfaccia indica lo stato
+e conferma subito il salvataggio. Il controllo è riservato agli amministratori;
+non è disponibile ai ricercatori o alle anteprime di ruolo.
+
+**Disabilita collegamento ChatGPT** sospende le nuove richieste e conserva gli
+account collegati. La riattivazione mantiene i collegamenti. Se la chiave di
+protezione manca per account esistenti, occorre ripristinarla dal backup del
+server; il pannello non la sostituisce automaticamente. Chi gestisce il server
+deve includere l’archivio protetto delle credenziali nei backup.
+
+Nell’Area personale, **Il tuo abbonamento ChatGPT** consente il collegamento
+quando la funzione è attiva. **Apri il tuo collegamento ChatGPT** nel pannello
+amministrativo porta direttamente a questa scheda. L’accesso a
+CounselorBot e quello a ChatGPT sono distinti. La funzione usa il flusso ufficiale
+Sign in with ChatGPT per inferenza diretta, attualmente in anteprima: piani e
+installazioni ammessi vanno verificati prima dell’attivazione; un piano di
+scuola/università non è automaticamente ammesso.
+
+**Collega ChatGPT** genera un codice temporaneo. La persona scarica lo strumento,
+lo esegue sul proprio computer con Python 3.10 o successivo e inserisce il codice
+quando richiesto: si apre l’accesso ufficiale a ChatGPT. Il backend verifica e
+conserva cifrate le credenziali. Non incollarle nell’interfaccia o nella chat.
+Se il sito richiede un ulteriore accesso al proxy, usare un tunnel locale.
+
+Dopo il collegamento occorre scegliere un modello tra quelli disponibili per
+il proprio account e premere **Usa il mio abbonamento**. Collegare l’account
+da solo non cambia il modello. La scelta personale precede il preset del
+counselor, mantenendo chat e memoria in CounselorBot. La scheda e le impostazioni
+chat mostrano la scelta; la quota si consulta nelle impostazioni di ChatGPT
+e non viene convertita in costi API stimati.
+
+Ogni persona usa il proprio collegamento: quello di un docente non viene
+usato dagli studenti. Consultare un risultato altrui non seleziona l’abbonamento
+del proprietario del risultato. I profili di prova non usano abbonamenti.
+Credenziali scadute/revocate richiedono un nuovo accesso; indisponibilità
+temporanee conservano il collegamento. Quota esaurita e risposte interrotte
+producono un avviso, senza passaggio automatico alle API a pagamento.
+
+**Usa il modello dell’installazione** disattiva la preferenza personale.
+**Scollega** elimina le credenziali locali e tenta la revoca presso OpenAI:
+se non confermata, controllare anche le connessioni nelle impostazioni ChatGPT.
+La registrazione resta disponibile per ricollegare lo stesso account. Dopo
+averlo scollegato, **Collega un altro account ChatGPT** azzera la registrazione.
+
+La modalità copre chat native, Bussola, sintesi e strumenti testuali che usano
+il servizio AI autenticato. OpenCode richiede la scelta esplicita del modello
+dell’installazione: le credenziali personali non passano agli agenti. RAG ed
+OCR continuano a usare i servizi dell’installazione. OpenAI elabora i messaggi:
+`store: false` non garantisce assenza di conservazione presso il fornitore;
+il filtro locale dei dati personali segue la configurazione esistente.
+
+Nell’anteprima amministrativa, **Richiesta Responses per ChatGPT** mostra
+endpoint, istruzioni e messaggi quando l’amministratore ha selezionato il
+proprio abbonamento. La struttura precede il filtro dei dati personali;
+la simulazione non chiama modelli e non espone credenziali. I prompt restano
+in inglese e l’interfaccia è disponibile nelle sei lingue.
+
+Configurazione e limiti: `docs/operations/chatgpt-subscription.md`.
 
 **Testata comune (26 settembre 2026):** tutte le pagine dell’Area personale
 (Taccuino, Risultati, Assegnazioni, Classi, Telegram, Portfolio, Tavolo,

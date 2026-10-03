@@ -70,7 +70,7 @@ def _tokens(usage) -> tuple[int, int] | None:
 def price_for(provider: str | None, model: str | None) -> tuple[float, float] | None:
     """Prezzo (in_per_M, out_per_M) per provider+model; fallback su match del
     solo nome modello tra tutti i provider. None se sconosciuto."""
-    if model is None:
+    if model is None or provider == "openai_chatgpt":
         return None
     table = PRICES_PER_M.get(provider or "", {})
     if model in table:

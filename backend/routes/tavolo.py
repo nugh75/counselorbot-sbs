@@ -66,7 +66,7 @@ from ..tavolo_presets import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-get_db = database.get_db
+get_db = database.get_personal_ai_db
 
 TAVOLO_STORAGE_DIR = os.getenv("TAVOLO_STORAGE_DIR", "/app/uploads/tavolo")
 # Come per i diagrammi: due modelli, riparazione compresa, devono stare sotto
