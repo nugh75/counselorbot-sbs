@@ -1,6 +1,7 @@
 // Traduzioni del pannello admin (operator-only), disponibili in tutte le lingue UI.
 
 import { readingsIt, readingsEn, readingsEs, readingsFr, readingsDe, readingsSv } from './i18n-readings';
+import { PROMPT_ALIGNMENT_DICTS } from './i18n-prompt-alignment';
 import type { Lang } from './i18n';
 
 type Dict = Record<string, string>;
@@ -485,7 +486,7 @@ const it: Dict = {
     'admin.config.stepSystemPrompt': 'Prompt di Sistema',
     'admin.config.stepColor': 'Colore',
     'admin.config.stepPromptCreate': "Prompt (inviato all'AI per generare l'analisi)",
-    'admin.config.stepPromptSend': "Prompt (inviato all'AI)",
+    'admin.config.stepPromptSend': "Istruzione dello step",
     'admin.config.createStep': 'Crea Step',
     'admin.config.cancel': 'Annulla',
     'admin.config.noTexts': 'Nessun testo interfaccia configurato per questo strumento.',
@@ -1205,7 +1206,7 @@ const en: Dict = {
     'admin.config.stepSystemPrompt': 'System Prompt',
     'admin.config.stepColor': 'Colour',
     'admin.config.stepPromptCreate': 'Prompt (sent to the AI to generate the analysis)',
-    'admin.config.stepPromptSend': 'Prompt (sent to the AI)',
+    'admin.config.stepPromptSend': 'Step instruction',
     'admin.config.createStep': 'Create Step',
     'admin.config.cancel': 'Cancel',
     'admin.config.noTexts': 'No interface text configured for this instrument.',
@@ -1633,7 +1634,7 @@ const es: Dict = {
     'admin.config.guidedSteps': 'Pasos guiados', 'admin.config.guidedStepsDesc': 'Pasos de análisis automático en el recorrido guiado. Puedes añadirlos, eliminarlos y reordenarlos.',
     'admin.config.addStep': 'Añadir paso', 'admin.config.newStep': 'Nuevo paso', 'admin.config.stepId': 'ID (único, sin espacios)', 'admin.config.stepTitle': 'Título',
     'admin.config.stepSystemPrompt': 'Prompt de sistema', 'admin.config.stepColor': 'Color', 'admin.config.stepPromptCreate': 'Prompt (enviado a la IA para generar el análisis)',
-    'admin.config.stepPromptSend': 'Prompt (enviado a la IA)', 'admin.config.createStep': 'Crear paso', 'admin.config.cancel': 'Cancelar',
+    'admin.config.stepPromptSend': 'Instrucción del paso', 'admin.config.createStep': 'Crear paso', 'admin.config.cancel': 'Cancelar',
     'admin.config.noSteps': 'No hay pasos configurados. Haz clic en "Añadir paso" para comenzar.',
     'admin.config.confirmDeleteStep': '¿Eliminar el paso "{id}"? Esta acción no se puede deshacer.', 'admin.config.moveUp': 'Subir', 'admin.config.moveDown': 'Bajar',
     'admin.config.save': 'Guardar', 'admin.config.delete': 'Eliminar', 'admin.config.placeholderStepId': 'p. ej., analisis-metodo',
@@ -2217,7 +2218,7 @@ const fr: Dict = {
     'admin.config.guidedSteps': 'Étapes guidées', 'admin.config.guidedStepsDesc': "Étapes d'analyse automatique du parcours guidé. Vous pouvez les ajouter, les supprimer et les réordonner.",
     'admin.config.addStep': 'Ajouter une étape', 'admin.config.newStep': 'Nouvelle étape', 'admin.config.stepId': 'ID (unique, sans espaces)', 'admin.config.stepTitle': 'Titre',
     'admin.config.stepSystemPrompt': 'Prompt système', 'admin.config.stepColor': 'Couleur', 'admin.config.stepPromptCreate': "Prompt (envoyé à l'IA pour générer l'analyse)",
-    'admin.config.stepPromptSend': "Prompt (envoyé à l'IA)", 'admin.config.createStep': "Créer l'étape", 'admin.config.cancel': 'Annuler',
+    'admin.config.stepPromptSend': "Instruction de l’étape", 'admin.config.createStep': "Créer l'étape", 'admin.config.cancel': 'Annuler',
     'admin.config.noSteps': 'Aucune étape configurée. Cliquez sur « Ajouter une étape » pour commencer.',
     'admin.config.confirmDeleteStep': "Supprimer l'étape « {id} » ? Cette action est irréversible.", 'admin.config.moveUp': 'Monter', 'admin.config.moveDown': 'Descendre',
     'admin.config.save': 'Enregistrer', 'admin.config.delete': 'Supprimer', 'admin.config.placeholderStepId': 'p. ex. analyse-methode',
@@ -2801,7 +2802,7 @@ const de: Dict = {
     'admin.config.guidedSteps': 'Geführte Schritte', 'admin.config.guidedStepsDesc': 'Automatische Analyseschritte im geführten Ablauf. Sie können hinzugefügt, entfernt und sortiert werden.',
     'admin.config.addStep': 'Schritt hinzufügen', 'admin.config.newStep': 'Neuer Schritt', 'admin.config.stepId': 'ID (eindeutig, ohne Leerzeichen)', 'admin.config.stepTitle': 'Titel',
     'admin.config.stepSystemPrompt': 'System-Prompt', 'admin.config.stepColor': 'Farbe', 'admin.config.stepPromptCreate': 'Prompt (an die KI zur Erstellung der Analyse gesendet)',
-    'admin.config.stepPromptSend': 'Prompt (an die KI gesendet)', 'admin.config.createStep': 'Schritt erstellen', 'admin.config.cancel': 'Abbrechen',
+    'admin.config.stepPromptSend': 'Schrittanweisung', 'admin.config.createStep': 'Schritt erstellen', 'admin.config.cancel': 'Abbrechen',
     'admin.config.noSteps': 'Keine Schritte konfiguriert. Klicken Sie zum Start auf "Schritt hinzufügen".',
     'admin.config.confirmDeleteStep': 'Schritt "{id}" löschen? Diese Aktion kann nicht rückgängig gemacht werden.', 'admin.config.moveUp': 'Nach oben', 'admin.config.moveDown': 'Nach unten',
     'admin.config.save': 'Speichern', 'admin.config.delete': 'Löschen', 'admin.config.placeholderStepId': 'z. B. methoden-analyse',
@@ -3385,7 +3386,7 @@ const sv: Dict = {
     'admin.config.guidedSteps': 'Guidade steg', 'admin.config.guidedStepsDesc': 'Automatiska analyssteg i den guidade vägen. Du kan lägga till, ta bort och ordna om dem.',
     'admin.config.addStep': 'Lägg till steg', 'admin.config.newStep': 'Nytt steg', 'admin.config.stepId': 'ID (unikt, utan blanksteg)', 'admin.config.stepTitle': 'Titel',
     'admin.config.stepSystemPrompt': 'Systemprompt', 'admin.config.stepColor': 'Färg', 'admin.config.stepPromptCreate': 'Prompt (skickas till AI för att skapa analysen)',
-    'admin.config.stepPromptSend': 'Prompt (skickas till AI)', 'admin.config.createStep': 'Skapa steg', 'admin.config.cancel': 'Avbryt',
+    'admin.config.stepPromptSend': 'Steginstruktion', 'admin.config.createStep': 'Skapa steg', 'admin.config.cancel': 'Avbryt',
     'admin.config.noSteps': 'Inga steg har konfigurerats. Klicka på "Lägg till steg" för att börja.',
     'admin.config.confirmDeleteStep': 'Ta bort steget "{id}"? Åtgärden kan inte ångras.', 'admin.config.moveUp': 'Flytta upp', 'admin.config.moveDown': 'Flytta ned',
     'admin.config.save': 'Spara', 'admin.config.delete': 'Ta bort', 'admin.config.placeholderStepId': 't.ex. metod-analys',
@@ -4752,7 +4753,7 @@ const promptAuditIt: Dict = {
     'admin.config.inner.guidedSteps': 'Step guidati',
     'admin.config.noTexts': 'Nessun testo interfaccia configurato per questo strumento.',
     'admin.promptAudit.title': 'Prompt per step',
-    'admin.promptAudit.subtitle': 'Vista admin dei soli prompt collegati allo step selezionato: prompt di sistema e prompt dello step.',
+    'admin.promptAudit.subtitle': 'Modifica le istruzioni dello step e controlla come vengono combinate con il contesto nell’anteprima.',
     'admin.promptAudit.stepSelect': 'Step da ispezionare',
     'admin.promptAudit.sessionSelect': 'Sessione reale',
     'admin.promptAudit.noSession': 'Nessuna sessione selezionata',
@@ -4764,7 +4765,7 @@ const promptAuditIt: Dict = {
     'admin.promptAudit.mode': 'Modalita',
     'admin.promptAudit.promptKey': 'Chiave prompt',
     'admin.promptAudit.injectedList': 'Prompt mostrati',
-    'admin.promptAudit.onlyPrompts': 'Questa vista mostra solo i prompt. Non include punteggi, knowledge context, history, counselor o altri dati runtime.',
+    'admin.promptAudit.onlyPrompts': 'L’anteprima simula la composizione della richiesta; non esegue chiamate al modello.',
     'admin.promptAudit.editSystemPrompt': 'Modifica prompt di sistema',
     'admin.promptAudit.editStep': 'Modifica questo step',
     'admin.promptAudit.block.stepPrompt': 'Prompt dello step',
@@ -4774,7 +4775,7 @@ const promptAuditIt: Dict = {
 
 const promptAuditEn: Dict = {
     'admin.promptAudit.title': 'Step prompts',
-    'admin.promptAudit.subtitle': 'Admin view of only the prompts linked to the selected step: system prompt and step prompt.',
+    'admin.promptAudit.subtitle': 'Edit step instructions and inspect how they combine with context in the preview.',
     'admin.promptAudit.stepSelect': 'Step to inspect',
     'admin.promptAudit.sessionSelect': 'Real session',
     'admin.promptAudit.noSession': 'No session selected',
@@ -4786,7 +4787,7 @@ const promptAuditEn: Dict = {
     'admin.promptAudit.mode': 'Mode',
     'admin.promptAudit.promptKey': 'Prompt key',
     'admin.promptAudit.injectedList': 'Shown prompts',
-    'admin.promptAudit.onlyPrompts': 'This view shows prompts only. It does not include scores, knowledge context, history, counselor, or other runtime data.',
+    'admin.promptAudit.onlyPrompts': 'The preview simulates request composition; it does not call the model.',
     'admin.promptAudit.editSystemPrompt': 'Edit system prompts',
     'admin.promptAudit.editStep': 'Edit this step',
     'admin.promptAudit.block.stepPrompt': 'Step prompt',
@@ -5440,7 +5441,7 @@ const administrationPlansSv: Dict = {
 
 const promptAuditEs: Dict = {
     'admin.promptAudit.title': 'Prompts por paso',
-    'admin.promptAudit.subtitle': 'Vista de administración solo de los prompts vinculados al paso seleccionado: prompt de sistema y prompt del paso.',
+    'admin.promptAudit.subtitle': 'Edita las instrucciones del paso y comprueba cómo se combinan con el contexto.',
     'admin.promptAudit.stepSelect': 'Paso a inspeccionar',
     'admin.promptAudit.sessionSelect': 'Sesión real',
     'admin.promptAudit.noSession': 'Ninguna sesión seleccionada',
@@ -5452,7 +5453,7 @@ const promptAuditEs: Dict = {
     'admin.promptAudit.mode': 'Modo',
     'admin.promptAudit.promptKey': 'Clave del prompt',
     'admin.promptAudit.injectedList': 'Prompts mostrados',
-    'admin.promptAudit.onlyPrompts': 'Esta vista muestra solo los prompts. No incluye puntuaciones, contexto de conocimiento, historial, counselor u otros datos de ejecución.',
+    'admin.promptAudit.onlyPrompts': 'La vista previa simula la solicitud; no realiza llamadas al modelo.',
     'admin.promptAudit.editSystemPrompt': 'Editar prompts de sistema',
     'admin.promptAudit.editStep': 'Editar este paso',
     'admin.promptAudit.block.stepPrompt': 'Prompt del paso',
@@ -5474,7 +5475,7 @@ const promptAuditEs: Dict = {
 
 const promptAuditFr: Dict = {
     'admin.promptAudit.title': 'Prompts par étape',
-    'admin.promptAudit.subtitle': 'Vue admin des seuls prompts liés à l’étape sélectionnée : prompt système et prompt d’étape.',
+    'admin.promptAudit.subtitle': 'Modifiez les instructions de l’étape et examinez leur combinaison avec le contexte.',
     'admin.promptAudit.stepSelect': 'Étape à inspecter',
     'admin.promptAudit.sessionSelect': 'Session réelle',
     'admin.promptAudit.noSession': 'Aucune session sélectionnée',
@@ -5486,7 +5487,7 @@ const promptAuditFr: Dict = {
     'admin.promptAudit.mode': 'Mode',
     'admin.promptAudit.promptKey': 'Clé du prompt',
     'admin.promptAudit.injectedList': 'Prompts affichés',
-    'admin.promptAudit.onlyPrompts': 'Cette vue montre uniquement les prompts. Elle n’inclut pas les scores, le contexte de connaissances, l’historique, le counselor ni d’autres données d’exécution.',
+    'admin.promptAudit.onlyPrompts': 'L’aperçu simule la requête ; aucun appel au modèle.',
     'admin.promptAudit.editSystemPrompt': 'Modifier les prompts système',
     'admin.promptAudit.editStep': 'Modifier cette étape',
     'admin.promptAudit.block.stepPrompt': 'Prompt d’étape',
@@ -5508,7 +5509,7 @@ const promptAuditFr: Dict = {
 
 const promptAuditDe: Dict = {
     'admin.promptAudit.title': 'Schritt-Prompts',
-    'admin.promptAudit.subtitle': 'Admin-Ansicht nur der mit dem ausgewählten Schritt verknüpften Prompts: System-Prompt und Schritt-Prompt.',
+    'admin.promptAudit.subtitle': 'Schrittanweisungen bearbeiten und ihre Kombination mit dem Kontext prüfen.',
     'admin.promptAudit.stepSelect': 'Zu prüfender Schritt',
     'admin.promptAudit.sessionSelect': 'Echte Sitzung',
     'admin.promptAudit.noSession': 'Keine Sitzung ausgewählt',
@@ -5520,7 +5521,7 @@ const promptAuditDe: Dict = {
     'admin.promptAudit.mode': 'Modus',
     'admin.promptAudit.promptKey': 'Prompt-Schlüssel',
     'admin.promptAudit.injectedList': 'Angezeigte Prompts',
-    'admin.promptAudit.onlyPrompts': 'Diese Ansicht zeigt nur die Prompts. Sie enthält keine Werte, keinen Wissenskontext, keinen Verlauf, keinen Counselor und keine anderen Laufzeitdaten.',
+    'admin.promptAudit.onlyPrompts': 'Die Vorschau simuliert die Anfrage ohne Modellaufrufe.',
     'admin.promptAudit.editSystemPrompt': 'System-Prompts bearbeiten',
     'admin.promptAudit.editStep': 'Diesen Schritt bearbeiten',
     'admin.promptAudit.block.stepPrompt': 'Schritt-Prompt',
@@ -5542,7 +5543,7 @@ const promptAuditDe: Dict = {
 
 const promptAuditSv: Dict = {
     'admin.promptAudit.title': 'Steg-prompter',
-    'admin.promptAudit.subtitle': 'Adminvy med endast de prompter som är kopplade till det valda steget: systemprompt och stegprompt.',
+    'admin.promptAudit.subtitle': 'Redigera stegets instruktioner och granska hur de kombineras med kontexten.',
     'admin.promptAudit.stepSelect': 'Steg att granska',
     'admin.promptAudit.sessionSelect': 'Verklig session',
     'admin.promptAudit.noSession': 'Ingen session vald',
@@ -5554,7 +5555,7 @@ const promptAuditSv: Dict = {
     'admin.promptAudit.mode': 'Läge',
     'admin.promptAudit.promptKey': 'Promptnyckel',
     'admin.promptAudit.injectedList': 'Visade prompter',
-    'admin.promptAudit.onlyPrompts': 'Denna vy visar endast prompter. Den inkluderar inte poäng, kunskapskontext, historik, counselor eller andra körningsdata.',
+    'admin.promptAudit.onlyPrompts': 'Förhandsvisningen simulerar begäran utan modellanrop.',
     'admin.promptAudit.editSystemPrompt': 'Redigera systemprompter',
     'admin.promptAudit.editStep': 'Redigera detta steg',
     'admin.promptAudit.block.stepPrompt': 'Stegprompt',
@@ -6505,10 +6506,10 @@ const counselorExtrasSv: Dict = {
 };
 
 export const ADMIN_DICTS: Record<Lang, Dict> = {
-    it: { ...it, ...trainingIt, ...pqblIt, ...certifiedIt, ...assistantQuestionsIt, ...guidedStepQuestionsIt, ...administrationPlansIt, ...promptAuditIt, ...assistantAdminIt, ...ragDocsIt, ...readingsIt, ...counselorExtrasIt },
-    en: { ...en, ...trainingEn, ...pqblEn, ...certifiedEn, ...assistantQuestionsEn, ...guidedStepQuestionsEn, ...administrationPlansEn, ...promptAuditEn, ...assistantAdminEn, ...ragDocsEn, ...readingsEn, ...counselorExtrasEn },
-    es: { ...es, ...trainingEs, ...pqblEs, ...certifiedEs, ...assistantQuestionsEs, ...guidedStepQuestionsEs, ...administrationPlansEs, ...promptAuditEs, ...assistantAdminEs, ...ragDocsEs, ...readingsEs, ...counselorExtrasEs },
-    fr: { ...fr, ...trainingFr, ...pqblFr, ...certifiedFr, ...assistantQuestionsFr, ...guidedStepQuestionsFr, ...administrationPlansFr, ...promptAuditFr, ...assistantAdminFr, ...ragDocsFr, ...readingsFr, ...counselorExtrasFr },
-    de: { ...de, ...trainingDe, ...pqblDe, ...certifiedDe, ...assistantQuestionsDe, ...guidedStepQuestionsDe, ...administrationPlansDe, ...promptAuditDe, ...assistantAdminDe, ...ragDocsDe, ...readingsDe, ...counselorExtrasDe },
-    sv: { ...sv, ...trainingSv, ...pqblSv, ...certifiedSv, ...assistantQuestionsSv, ...guidedStepQuestionsSv, ...administrationPlansSv, ...promptAuditSv, ...assistantAdminSv, ...ragDocsSv, ...readingsSv, ...counselorExtrasSv },
+    it: { ...it, ...trainingIt, ...pqblIt, ...certifiedIt, ...assistantQuestionsIt, ...guidedStepQuestionsIt, ...administrationPlansIt, ...promptAuditIt, ...assistantAdminIt, ...ragDocsIt, ...readingsIt, ...counselorExtrasIt, ...PROMPT_ALIGNMENT_DICTS.it },
+    en: { ...en, ...trainingEn, ...pqblEn, ...certifiedEn, ...assistantQuestionsEn, ...guidedStepQuestionsEn, ...administrationPlansEn, ...promptAuditEn, ...assistantAdminEn, ...ragDocsEn, ...readingsEn, ...counselorExtrasEn, ...PROMPT_ALIGNMENT_DICTS.en },
+    es: { ...es, ...trainingEs, ...pqblEs, ...certifiedEs, ...assistantQuestionsEs, ...guidedStepQuestionsEs, ...administrationPlansEs, ...promptAuditEs, ...assistantAdminEs, ...ragDocsEs, ...readingsEs, ...counselorExtrasEs, ...PROMPT_ALIGNMENT_DICTS.es },
+    fr: { ...fr, ...trainingFr, ...pqblFr, ...certifiedFr, ...assistantQuestionsFr, ...guidedStepQuestionsFr, ...administrationPlansFr, ...promptAuditFr, ...assistantAdminFr, ...ragDocsFr, ...readingsFr, ...counselorExtrasFr, ...PROMPT_ALIGNMENT_DICTS.fr },
+    de: { ...de, ...trainingDe, ...pqblDe, ...certifiedDe, ...assistantQuestionsDe, ...guidedStepQuestionsDe, ...administrationPlansDe, ...promptAuditDe, ...assistantAdminDe, ...ragDocsDe, ...readingsDe, ...counselorExtrasDe, ...PROMPT_ALIGNMENT_DICTS.de },
+    sv: { ...sv, ...trainingSv, ...pqblSv, ...certifiedSv, ...assistantQuestionsSv, ...guidedStepQuestionsSv, ...administrationPlansSv, ...promptAuditSv, ...assistantAdminSv, ...ragDocsSv, ...readingsSv, ...counselorExtrasSv, ...PROMPT_ALIGNMENT_DICTS.sv },
 };

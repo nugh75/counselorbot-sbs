@@ -408,3 +408,98 @@ ZTPI e Savickas. Le proposte AI aiutano a riflettere, non sono diagnosi o decisi
 vincolanti. Le funzioni disabilitate o non autorizzate non vanno presentate come
 accessibili a ogni account. L’assistente deve indicare la pagina e il prossimo
 passo utile, senza inventare pulsanti o promettere azioni eseguite automaticamente.
+
+### Anteprima delle richieste dei questionari nell’amministrazione
+
+Nelle schede **Prompt per step** e **Step guidati** si può consultare l’anteprima
+accanto all’editor. In Step guidati si apre con **Anteprima della richiesta**:
+non vengono caricate anteprime per tutti gli step automaticamente. Il campo del
+prompt è denominato **Istruzione dello step**, perché il testo viene combinato
+con istruzioni di sistema, direttive e contesto.
+
+L’anteprima usa i valori dell’editor, anche non salvati, senza modificare il
+database. Un indicatore distingue le modifiche non salvate e si può scegliere
+di mostrare la configurazione salvata. Si può scegliere counselor, lingua, sessione e simulare ingresso
+nello step o risposta dello studente. La vista **Per componenti** mostra i blocchi
+preparati, la provenienza disponibile e componenti esclusi o senza contenuto;
+**Messaggi completi** mostra sistema, cronologia e messaggio corrente nell’ordine
+simulato dopo l’adattamento alla capacità del modello. Sono disponibili ricerca,
+copia e il rapporto di riduzione del contesto. Le selezioni dei componenti nella
+scheda Prompt per step richiedono un salvataggio esplicito.
+
+È una simulazione amministrativa, non la registrazione della richiesta inviata
+al provider: non esegue chiamate LLM, recuperi esterni o handler delle skill.
+Senza sessione possono mancare punteggi e dati personali. Il recupero non eseguito
+è segnalato; la vista dei componenti precede eventuali riduzioni, mentre i
+messaggi completi riflettono il budget simulato. Le trasformazioni specifiche del
+provider, compresa l’anonimizzazione esterna, non sono riprodotte. In caso di
+aggiornamento o errore, il contenuto precedente è dichiarato non aggiornato e la
+copia è disabilitata. I testi di anteprima supportano le sei lingue dell’interfaccia.
+
+L’editor dei prompt per step presenta un solo gruppo di selettori per sessione,
+counselor e lingua; i dati della sessione compaiono nell’anteprima, senza duplicati
+nell’editor. Appunti e selezioni dei componenti sono approfondimenti richiudibili.
+Una risposta dello studente vuota richiede un messaggio di prova prima di generare
+l’anteprima. L’assenza del modello e i principali limiti della simulazione sono
+spiegati nella lingua dell’interfaccia; gli avvisi originali restano nei dettagli
+tecnici. I blocchi distinguono inclusione simulata, esclusione, dato assente e
+recupero non eseguito. Tutti gli strumenti che condividono il pannello e le sei
+lingue usano lo stesso comportamento.
+
+La stampa delle pagine con anteprima nasconde testata fissa e navigazione,
+espande gli approfondimenti e rende stampabili i testi delle bozze senza aree a
+scorrimento. Dopo la stampa ripristina l’apertura precedente dei blocchi. Queste
+regole non modificano le altre pagine dell’applicazione.
+Il testo modificabile di uno step guidato è stampabile anche quando il suo
+pannello di anteprima è chiuso; non occorre aprire ogni anteprima per stampare
+le istruzioni degli step.
+
+### Prompt QSA di fabbrica e appartenenza degli step
+
+Il percorso QSA di fabbrica contiene dieci step: presentazione, lettura dei
+fattori cognitivi e affettivi, sei letture tematiche di secondo livello e sintesi.
+Le istruzioni per il modello sono in inglese; la direttiva di lingua determina
+le risposte del counselor nelle sei lingue dell’applicazione. I testi di fabbrica
+seguono la Guida Costruzione Prompt QSA: lettura dei soli fattori pertinenti,
+etichette e inversioni già calcolate, domanda riflessiva e al massimo una
+strategia certificata quando il turno la consente. Presentazione e lettura dei
+fattori non introducono consigli; la sintesi non introduce strategie nuove.
+Un consiglio richiesto esplicitamente in un follow-up può attivare una strategia
+nei passaggi consentiti, rispettando le esclusioni salvate dall’amministratore.
+
+Le presentazioni QSAr, ZTPI e Savickas appartengono ai rispettivi strumenti e
+non compaiono tra gli step QSA. I record di fabbrica precedentemente classificati
+come QSA vengono riclassificati senza riscrivere istruzioni o traduzioni.
+Le opzioni dell’editor QSA mostrano i valori di fabbrica dello step quando manca
+una configurazione salvata; i valori salvati continuano a prevalere.
+
+Un database esistente mantiene i propri testi: l’allineamento dei vecchi prompt
+di fabbrica si applica mediante un piano controllato con hash e storico, con
+possibilità di rollback. I prompt personalizzati sono segnalati e preservati.
+
+### Allineamento dei prompt di fabbrica per tutte le chat
+
+In Amministrazione, «Allinea prompt di fabbrica» apre il confronto dei prompt
+salvati con i default aggiornati di tutte le chat e dei dodici percorsi guidati.
+Comprende prompt di sistema, step, direttive condivise e contesti configurabili
+degli assistenti; impostazioni operative, testi dell’interfaccia, varianti per
+lingua e persone dei counselor restano esclusi. Le istruzioni di fabbrica per
+il modello mantengono l’inglese; il pannello è disponibile nelle sei lingue.
+
+L’anteprima identifica gli step con strumento, etichetta e ID, e mostra testo
+attuale e nuovo testo, insieme ai prompt personalizzati
+o assegnati a un altro strumento che vengono conservati. Aprire o chiudere il
+confronto non modifica il database. Solo «Conferma allineamento» applica il lotto
+visualizzato e conserva i testi precedenti nello storico. Se un prompt cambia
+dopo l’anteprima, occorre ricaricare il confronto: non viene applicato un lotto
+parziale. Le modifiche nell’editor e i salvataggi in corso bloccano l’allineamento;
+durante l’operazione i controlli dell’editor attendono la risposta.
+Anche i salvataggi o ripristini contemporanei di un altro amministratore
+attendono l’allineamento, compresi quelli che confermano un testo identico.
+
+Si aggiornano solo istruzioni registrate e riconosciute come fabbrica tramite
+hash precedenti o revisioni seed/migration; la proprietà amministrativa prevale.
+Un salvataggio esplicito dell’amministratore rende il testo protetto anche se
+coincide con la versione di fabbrica. I testi aggiornati dal pulsante rimangono
+riconoscibili come fabbrica per gli allineamenti successivi. La conferma aggiorna
+gli editor della pagina; non richiama un LLM e non richiede comandi nel terminale.

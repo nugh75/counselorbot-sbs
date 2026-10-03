@@ -785,3 +785,35 @@ h1.text-3xl {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
 }
+
+.prompt-print-value { display: none; }
+@media print {
+    body:has(.prompt-workspace) { background: white; }
+    body:has(.prompt-workspace) .console-header,
+    body:has(.prompt-workspace) .admin-shell aside,
+    body:has(.prompt-workspace) .admin-shell button,
+    body:has(.prompt-workspace) .admin-shell input,
+    body:has(.prompt-workspace) .prompt-workspace textarea { display: none !important; }
+    body:has(.prompt-workspace) .admin-shell,
+    body:has(.prompt-workspace) .admin-shell section,
+    body:has(.prompt-workspace) .admin-shell .grid {
+        display: block !important;
+        min-height: 0 !important;
+        height: auto !important;
+        position: static !important;
+    }
+    body:has(.prompt-workspace) .prompt-workspace,
+    body:has(.prompt-workspace) .prompt-workspace * {
+        max-height: none !important;
+        overflow: visible !important;
+        position: static !important;
+    }
+    body:has(.prompt-workspace) .prompt-workspace pre {
+        white-space: pre-wrap !important;
+        overflow-wrap: anywhere;
+        font-size: 9pt;
+    }
+    body:has(.prompt-workspace) .prompt-print-value { display: block; }
+    body:has(.prompt-workspace) .prompt-workspace summary { break-after: avoid; }
+    body:has(.prompt-workspace) .admin-shell select { max-width: 100%; }
+}

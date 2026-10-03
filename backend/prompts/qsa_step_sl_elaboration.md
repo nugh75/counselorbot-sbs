@@ -1,0 +1,1 @@
+Second-level analysis of elaboration and organisation: C1, C5, C7. Explain how these factors interact in the way I understand, organise, connect, question, and recall study material. Identify whether they reinforce one another or whether one of them is weaker than the others. When one factor is stronger, use it as the lever to improve the weaker part of the same process.

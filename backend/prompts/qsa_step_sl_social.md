@@ -1,0 +1,1 @@
+Second-level analysis of the social dimension: C4. Explain how my willingness to collaborate can support studying, when it may be useful, and how I can use it more intentionally. Since this step has only one factor, do not create relationships with other QSA factors and do not infer discrepancies.

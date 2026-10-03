@@ -250,7 +250,7 @@ def build_prompt_audit(
     ai_service_cls: Callable[[Session], AIService] = AIService,
     allow_retrieval: bool = False,
 ) -> dict[str, Any]:
-    request = ChatRequest(**payload.model_dump(exclude={"include_knowledge", "include_history", "component_flags", "retrieval_context", "journey_context"}, exclude_none=False))
+    request = ChatRequest(**payload.model_dump(exclude={"include_knowledge", "include_history", "component_flags", "retrieval_context", "journey_context", "config_overrides", "step_mode_override"}, exclude_none=False))
     request.language = _normalize_language(request.language)
     session_id = request.session_id or f"prompt-audit-{uuid.uuid4()}"
     result = db.query(models.QuestionnaireResult).filter(models.QuestionnaireResult.session_id == session_id).first() if request.session_id else None
@@ -263,6 +263,10 @@ def build_prompt_audit(
     if payload.include_knowledge and not allow_retrieval and payload.retrieval_context is None:
         warnings.append({"code": "retrieval_not_replayed", "message": "Dry-run does not call models, retrieve external sources or run skill handlers. Supply retrieval_context to replay the captured turn, or use the live audit."})
     ai_service = ai_service_cls(db)
+    overrides = payload.config_overrides or {}
+    if any(not key.startswith(("prompt_", "directive_")) for key in overrides):
+        raise HTTPException(status_code=400, detail="Only prompt and directive text can be previewed.")
+    ai_service.config = {**ai_service.config, **overrides}
     counselor, c_provider, c_model, c_persona, c_disable_thinking, c_reasoning_budget, counselor_warnings = _resolve_counselor(db, request.counselor_id)
     warnings.extend(counselor_warnings)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
@@ -284,7 +288,7 @@ def build_prompt_audit(
         component_overrides=payload.component_flags,
         retrieval_context=getattr(payload, "retrieval_context", None),
         provider=c_provider, model=c_model, journey_override=getattr(payload, "journey_context", None),
-        allow_generation=allow_retrieval,
+        allow_generation=allow_retrieval, config_overrides=overrides, step_mode_override=payload.step_mode_override,
     )
     max_tokens = prepared.max_tokens
     effective_message = prepared.effective_message
@@ -399,6 +403,18 @@ def build_prompt_audit(
             "context": knowledge_context,
         },
         "components": components,
+        "component_origins": {
+            "system_prompt": prompt_key,
+            "step_prompt": phase_prompt_key or "request.message",
+            "meta_system_prompt": prompt_meta_config_key(questionnaire_type, request.phase),
+            "history": "session_memory",
+            "knowledge": "retrieval_context" if payload.retrieval_context else "retrieval_not_replayed",
+            "cognitive_factors": "questionnaire_result",
+            "affective_factors": "questionnaire_result",
+            "other_scores": "questionnaire_result",
+            "profile": "learner_profile",
+            "counselor": "counselor.persona",
+        },
         "component_flags": component_flags,
         "component_options": component_options,
         "component_config_key": prompt_component_config_key(questionnaire_type, request.phase or "generic"),
