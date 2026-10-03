@@ -98,7 +98,7 @@ from ..chat_logic import (
 )
 
 router = APIRouter()
-get_db = database.get_db
+get_db = database.get_personal_ai_db
 logger = logging.getLogger(__name__)
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 ALLOWED_UPLOAD_SUFFIXES = {".pdf", ".jpg", ".jpeg", ".png"}
@@ -1277,7 +1277,7 @@ async def audit_qsa(
 async def upload_qsa_document(
     file: UploadFile = File(...),
     questionnaire_type: str = Form("QSA"),
-    db: Session = Depends(get_db),
+    db: Session = Depends(database.get_db),
 ):
     temp_dir = ".tmp"
     os.makedirs(temp_dir, exist_ok=True)
