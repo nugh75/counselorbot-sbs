@@ -8212,3 +8212,90 @@ def test_diagram_from_message_falls_back_when_counselor_model_writes_no_spec():
 if __name__ == "__main__":
     import sys
     sys.exit(_main())
+
+
+def test_prompt_preview_uses_drafts_without_persisting_configuration():
+    db = _TestSession()
+    try:
+        before = {row.key: row.value for row in db.query(models.Config).all()}
+        before_logs = db.query(models.Log).count()
+    finally:
+        db.close()
+    payload = {
+        "questionnaire_type": "QSA", "mode": "generic", "language": "it",
+        "message": "DRAFT_STUDENT_MESSAGE", "include_knowledge": False,
+        "config_overrides": {
+            "prompt_generic": "DRAFT_SYSTEM_INSTRUCTION",
+            "directive_register": "DRAFT_REGISTER_INSTRUCTION",
+            "prompt_meta_QSA": "DRAFT_META_INSTRUCTION",
+        },
+    }
+    response = client.post("/admin/prompt-audit/dry-run", json=payload)
+    assert response.status_code == 200, response.text
+    system = response.json()["envelope"]["system_prompt_final"]
+    for marker in payload["config_overrides"].values():
+        assert marker in system
+    assert "DRAFT_STUDENT_MESSAGE" in response.json()["envelope"]["full_message"]
+    db = _TestSession()
+    try:
+        assert {row.key: row.value for row in db.query(models.Config).all()} == before
+        assert db.query(models.Log).count() == before_logs
+    finally:
+        db.close()
+
+
+def test_prompt_preview_rejects_non_prompt_configuration():
+    response = client.post("/admin/prompt-audit/dry-run", json={
+        "message": "test", "config_overrides": {"active_provider": "unconfigured"},
+    })
+    assert response.status_code == 400, response.text
+
+
+def test_prompt_preview_draft_mode_does_not_modify_guided_step():
+    _ensure_guided_steps("QSA")
+    db = _TestSession()
+    try:
+        before = db.query(models.GuidedStep).filter(models.GuidedStep.id == "cognitive").first().system_prompt_mode
+    finally:
+        db.close()
+    response = client.post("/admin/prompt-audit/dry-run", json={
+        "questionnaire_type": "QSA", "phase": "cognitive", "mode": "generic",
+        "step_mode_override": "generic", "use_phase_prompt": True,
+        "message": "DRAFT_STEP_INSTRUCTION", "include_knowledge": False,
+        "config_overrides": {"prompt_generic": "DRAFT_MODE_SYSTEM"},
+    })
+    assert response.status_code == 200, response.text
+    assert "DRAFT_MODE_SYSTEM" in response.json()["envelope"]["system_prompt_final"]
+    db = _TestSession()
+    try:
+        assert db.query(models.GuidedStep).filter(models.GuidedStep.id == "cognitive").first().system_prompt_mode == before
+    finally:
+        db.close()
+
+
+def test_prompt_preview_can_clear_a_saved_meta_prompt_without_writing():
+    db = _TestSession()
+    try:
+        row = db.query(models.Config).filter(models.Config.key == "prompt_meta_QSA").first()
+        old = row.value if row else None
+        if row is None:
+            row = models.Config(key="prompt_meta_QSA", value="SAVED_META_TO_CLEAR")
+            db.add(row)
+        else:
+            row.value = "SAVED_META_TO_CLEAR"
+        db.commit()
+        response = client.post("/admin/prompt-audit/dry-run", json={
+            "questionnaire_type": "QSA", "message": "test", "include_knowledge": False,
+            "config_overrides": {"prompt_meta_QSA": ""},
+        })
+        assert response.status_code == 200, response.text
+        assert "SAVED_META_TO_CLEAR" not in response.json()["envelope"]["system_prompt_final"]
+        db.refresh(row)
+        assert row.value == "SAVED_META_TO_CLEAR"
+    finally:
+        if old is None:
+            db.delete(row)
+        else:
+            row.value = old
+        db.commit()
+        db.close()

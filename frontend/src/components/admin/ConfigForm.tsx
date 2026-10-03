@@ -8,6 +8,7 @@ import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { PromptHistory } from '@/components/admin/PromptHistory';
+import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admin/PromptRequestPreview';
 
 // --- Types ---
 
@@ -712,6 +713,8 @@ function StepPromptsPanel({
     onEditSystemPrompts,
     onEditStep,
     configs,
+    savedConfigs,
+    savedSteps,
     results,
     selectedSessionId,
     onSelectSession,
@@ -733,6 +736,8 @@ function StepPromptsPanel({
     onEditSystemPrompts: () => void;
     onEditStep: () => void;
     configs: ConfigItem[];
+    savedConfigs: ConfigItem[];
+    savedSteps: GuidedStep[];
     results: QuestionnaireResult[];
     selectedSessionId: string;
     onSelectSession: (sessionId: string) => void;
@@ -740,7 +745,7 @@ function StepPromptsPanel({
     onSelectCounselor: (counselorId: number | '') => void;
     selectedLanguage: string;
     onSelectLanguage: (language: string) => void;
-    onSaveComponentFlags: (key: string, flags: Record<string, unknown>) => void;
+    onSaveComponentFlags: (key: string, flags: Record<string, unknown>) => Promise<boolean>;
     onSaveSystemPrompt: (key: string, value: string) => void;
     onSaveMetaPrompt: (key: string, value: string) => void;
     onSaveGuidance: (key: string, value: string) => void;
@@ -767,8 +772,11 @@ function StepPromptsPanel({
     const localizedStepValue = selectedLanguage === 'it'
         ? selectedStep?.prompt || ''
         : (configs.find((config) => config.key === localizedStepKey)?.value || selectedStep?.prompt || '');
+    const savedStep = savedSteps.find(step => step.id === selectedStep?.id);
+    const savedLocalizedStep = savedStep ? { ...savedStep, prompt: selectedLanguage === 'it' ? savedStep.prompt : savedConfigs.find(c => c.key === localizedStepKey)?.value || savedStep.prompt } : undefined;
     const [preview, setPreview] = useState<PromptPreview | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
+    const [componentDraft, setComponentDraft] = useState<Record<string, unknown> | null>(null);
     // ponytail: reuse public /counselors fetch (active only), filter client-side by instrument.
     const [counselors, setCounselors] = useState<PublicCounselor[]>([]);
     useEffect(() => { fetchCounselors().then(setCounselors).catch(() => setCounselors([])); }, []);
@@ -813,6 +821,7 @@ function StepPromptsPanel({
         ...PROMPT_COMPONENT_DEFAULTS,
         ...(preview?.component_flags || configFlags),
         ...configFlagOverrides,
+        ...(componentDraft as Record<string, boolean> | null),
     };
     const certifiedStrategyLimit = preview?.component_options?.certified_strategy_limit ?? configCertifiedStrategyLimit;
     const configAllowedStrategies = parseAllowedStrategies(componentConfigValue);
@@ -821,6 +830,7 @@ function StepPromptsPanel({
         ...flags,
         certified_strategy_limit: certifiedStrategyLimit,
         allowed_strategies: allowedStrategies,
+        ...componentDraft,
     };
     const flagsJson = JSON.stringify(componentConfigPayload);
 
@@ -838,7 +848,8 @@ function StepPromptsPanel({
                 language: selectedLanguage,
                 phase: selectedStep.id,
                 mode: selectedStep.system_prompt_mode || 'generic',
-                message: localizedStepValue,
+                message: editingPrompt === 'step' ? stepDraft : localizedStepValue,
+                config_overrides: Object.fromEntries([[systemPromptKey, editingPrompt === 'system' ? systemDraft : systemPrompt], [metaPromptKey, editingPrompt === 'meta' ? metaDraft : metaPrompt]]),
                 use_phase_prompt: true,
                 session_id: selectedSessionId || undefined,
                 counselor_id: selectedCounselorId || undefined,
@@ -852,15 +863,15 @@ function StepPromptsPanel({
             .catch(() => { if (!cancelled) setPreview(null); })
             .finally(() => { if (!cancelled) setPreviewLoading(false); });
         return () => { cancelled = true; window.clearTimeout(loadingTimer); };
-    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, selectedCounselorId, selectedLanguage, localizedStepValue, systemPrompt, guidanceText, metaPrompt, flagsJson]);
+    }, [questionnaireType, selectedStep?.id, selectedStep?.system_prompt_mode, selectedSessionId, selectedCounselorId, selectedLanguage, localizedStepValue, systemPrompt, guidanceText, metaPrompt, flagsJson, editingPrompt, stepDraft, systemDraft, metaDraft, systemPromptKey, metaPromptKey]);
 
     const toggleFlag = (name: string) => {
         if (!componentKey) return;
-        onSaveComponentFlags(componentKey, { ...componentConfigPayload, [name]: !flags[name] });
+        setComponentDraft({ ...componentConfigPayload, [name]: !flags[name] });
     };
     const updateCertifiedStrategyLimit = (value: number) => {
         if (!componentKey) return;
-        onSaveComponentFlags(componentKey, { ...componentConfigPayload, certified_strategy_limit: value });
+        setComponentDraft({ ...componentConfigPayload, certified_strategy_limit: value });
     };
     const eligibleApproved = allApprovedStrategies.filter((s) =>
         Array.isArray(s.questionnaires) &&
@@ -894,7 +905,7 @@ function StepPromptsPanel({
         } else {
             currentList.push(idOrSlug);
         }
-        onSaveComponentFlags(componentKey, {
+        setComponentDraft({
             ...componentConfigPayload,
             allowed_strategies: currentList,
         });
@@ -904,9 +915,6 @@ function StepPromptsPanel({
         : '';
     const componentText = promptComponentText(selectedLanguage);
     const uiText = promptUiText(selectedLanguage);
-    const finalPrompt = preview?.envelope
-        ? `SYSTEM\n${preview.envelope.system_prompt_final || ''}\n\nUSER MESSAGE\n${preview.envelope.full_message || ''}\n\n${componentText.labels.history}\n${JSON.stringify(preview.envelope.history || [], null, 2)}`
-        : '';
     const loadingLabel = previewLoading ? uiText.loading : t('admin.promptAudit.empty');
 
     return (
@@ -980,6 +988,7 @@ function StepPromptsPanel({
             <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-4">
                 <div>
                     <h4 className="text-sm font-semibold text-slate-800">{componentText.title}</h4>
+                    {componentDraft && <button type="button" onClick={async () => { if (await onSaveComponentFlags(componentKey, componentConfigPayload)) setComponentDraft(null); }} className="mt-2 rounded bg-indigo-600 px-3 py-2 text-xs text-white">{uiText.save}</button>}
                     <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {Object.keys(PROMPT_COMPONENT_DEFAULTS)
                             .filter((name) => !['rag_counselorbot', 'rag_competenzestrategiche', 'rag_questionari', 'approved_strategies', 'certified_strategies', 'shared_responses'].includes(name))
@@ -1027,7 +1036,7 @@ function StepPromptsPanel({
                                     <span>{componentText.certified_strategies_limit}</span>
                                     <select
                                         className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 disabled:bg-slate-100 disabled:text-slate-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-                                        value={certifiedStrategyLimit}
+                                        value={Number(componentConfigPayload.certified_strategy_limit)}
                                         onChange={(event) => updateCertifiedStrategyLimit(Number(event.target.value))}
                                         disabled={!flags.knowledge || !flags.certified_strategies}
                                     >
@@ -1087,6 +1096,7 @@ function StepPromptsPanel({
                 )}
             </div>
 
+            <div className="grid items-start gap-4 xl:grid-cols-2">
             <div className="grid gap-4">
                 {selectedCounselorId !== '' && (
                     <PromptTextBlock title={componentText.labels.counselor} text={textValue(preview?.components?.counselor)} emptyLabel={loadingLabel} />
@@ -1158,7 +1168,20 @@ function StepPromptsPanel({
                 <PromptTextBlock title={componentText.labels.metadata} text={textValue(preview?.components?.metadata)} emptyLabel={loadingLabel} />
                 <PromptTextBlock title={componentText.labels.profile} text={textValue(preview?.components?.profile)} emptyLabel={loadingLabel} />
                 <PromptTextBlock title={componentText.labels.student_booklet} text={textValue(preview?.components?.student_booklet)} emptyLabel={loadingLabel} />
-                <PromptTextBlock title={uiText.finalPrompt} text={finalPrompt} emptyLabel={loadingLabel} />
+            </div>
+            {selectedStep && <PromptRequestPreview
+                step={{ ...selectedStep, prompt: editingPrompt === 'step' ? stepDraft : localizedStepValue }}
+                savedConfigs={savedConfigs}
+                savedStep={savedLocalizedStep}
+                language={selectedLanguage}
+                results={results}
+                selectedSession={selectedSessionId} selectedCounselor={selectedCounselorId}
+                onSession={onSelectSession} onCounselor={onSelectCounselor} onLanguage={onSelectLanguage}
+                componentFlags={componentConfigPayload} componentFlagsDirty={!!componentDraft} componentLabels={componentText.labels}
+                configs={[...configs.filter(c => c.key !== systemPromptKey && c.key !== metaPromptKey),
+                    { key: systemPromptKey, value: editingPrompt === 'system' ? systemDraft : systemPrompt },
+                    { key: metaPromptKey, value: editingPrompt === 'meta' ? metaDraft : metaPrompt }]}
+            />}
             </div>
 
             <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-4 text-xs text-slate-600">
@@ -1182,6 +1205,8 @@ function StepPromptsPanel({
 export function ConfigForm() {
     const { t, lang } = useI18n();
     const [configs, setConfigs] = useState<ConfigItem[]>([]);
+    const [savedConfigs, setSavedConfigs] = useState<ConfigItem[]>([]);
+    const [savedSteps, setSavedSteps] = useState<GuidedStep[]>([]);
     const [loading, setLoading] = useState(true);
     const [section, setSection] = useState<string>('general');
     const [instrumentSubsection, setInstrumentSubsection] = useState<InstrumentSubsection>('step-prompts');
@@ -1238,6 +1263,7 @@ export function ConfigForm() {
             if (configRes.ok) {
                 const data: ConfigItem[] = await configRes.json();
                 setConfigs(data);
+                setSavedConfigs(data);
                 const prov = data.find(c => c.key === 'active_provider')?.value;
                 const mod = data.find(c => c.key === 'model_name')?.value;
                 if (prov) setActiveProvider(prov);
@@ -1248,7 +1274,7 @@ export function ConfigForm() {
 
             if (envRes.ok) setEnvOverrides(await envRes.json());
             if (apiKeysRes.ok) setApiKeyStatuses(await apiKeysRes.json());
-            if (stepsRes.ok) setGuidedSteps(await stepsRes.json());
+            if (stepsRes.ok) { const steps: GuidedStep[] = await stepsRes.json(); setGuidedSteps(steps); setSavedSteps(steps); }
             if (resultsRes.ok) setQuestionnaireResults(await resultsRes.json());
         } catch (error) {
             console.error('Failed to fetch config', error);
@@ -1335,6 +1361,7 @@ export function ConfigForm() {
                 body: JSON.stringify(item),
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            setSavedConfigs(previous => [...previous.filter(c => c.key !== item.key), item]);
             showToast('success', t('admin.config.saved'));
             return true;
         } catch (error) {
@@ -1362,10 +1389,10 @@ export function ConfigForm() {
 
     const getConfigValue = (key: string) => configs.find(c => c.key === key)?.value || '';
 
-    const saveComponentFlags = (key: string, flags: Record<string, unknown>) => {
+    const saveComponentFlags = async (key: string, flags: Record<string, unknown>) => {
         const value = JSON.stringify(flags);
         setConfigDraft(key, value, key);
-        handleSaveConfig({ key, value, description: key });
+        return handleSaveConfig({ key, value, description: key });
     };
 
     // Testi rivolti allo studente: salvati per-lingua con chiave suffissata (es. text_..._en).
@@ -1420,6 +1447,7 @@ export function ConfigForm() {
                 }),
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            setSavedSteps(previous => [...previous.filter(s => s.id !== step.id), { ...step }]);
             showToast('success', t('admin.config.saved'));
         } catch (error) {
             console.error('Failed to save step', error);
@@ -2257,7 +2285,7 @@ export function ConfigForm() {
                                     onSelectStep={(stepId) => setPromptStepIds(prev => ({ ...prev, [q.questionnaireType]: stepId }))}
                                     onEditSystemPrompts={() => setInstrumentSubsection('system-prompts')}
                                     onEditStep={() => setInstrumentSubsection('guided-steps')}
-                                    configs={configs}
+                                    configs={configs} savedConfigs={savedConfigs} savedSteps={savedSteps}
                                     results={questionnaireResults.filter((result) => normalizedQuestionnaireType(result.questionnaire_type) === normalizedQuestionnaireType(q.questionnaireType))}
                                     selectedSessionId={promptSessionIds[q.questionnaireType] || ''}
                                     onSelectSession={(sessionId) => setPromptSessionIds(prev => ({ ...prev, [q.questionnaireType]: sessionId }))}
@@ -2567,6 +2595,7 @@ export function ConfigForm() {
                                                     </div>
                                                 </div>
 
+                                                <div className="grid items-start gap-4 xl:grid-cols-2">
                                                 <div className="space-y-2">
                                                     <label className="text-xs font-semibold text-slate-500">{t('admin.config.stepPromptSend')}</label>
                                                     <textarea
@@ -2575,6 +2604,8 @@ export function ConfigForm() {
                                                         onChange={(e) => updateStepField(step.id, 'prompt', e.target.value)}
                                                     />
                                                     <PromptHistory scope="guided_step" targetKey={step.id} currentValue={step.prompt} onRestored={(value) => updateStepField(step.id, 'prompt', value)} />
+                                                </div>
+                                                <GuidedStepPromptPreview key={step.id} step={step} savedStep={savedSteps.find(s => s.id === step.id)} configs={configs} savedConfigs={savedConfigs} componentLabels={promptComponentText(lang).labels} language="it" results={questionnaireResults.filter(r => normalizedQuestionnaireType(r.questionnaire_type) === normalizedQuestionnaireType(q.questionnaireType))} />
                                                 </div>
                                             </div>
                                         );

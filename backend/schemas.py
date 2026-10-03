@@ -95,6 +95,8 @@ class LogResponse(LogBase):
 
 
 class PromptAuditRequest(BaseModel):
+    config_overrides: Optional[Dict[str, str]] = None
+    step_mode_override: Optional[str] = None
     questionnaire_type: Optional[str] = None
     language: Optional[str] = "it"
     phase: Optional[str] = None
