@@ -23,6 +23,7 @@ async function fixture({ role = 'student', api = false, chatgpt = false, lang = 
         if (path === '/api/auth/me') data = { authenticated: true, username: 'visibility-fixture', is_admin: role === 'admin', groups: role === 'teacher' ? ['docenti'] : ['studenti'] };
         else if (path === '/api/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
         else if (path === '/api/orientation/status') data = { required: false, completed: true };
+        else if (path === '/api/admin/external-privacy') data = { mode: 'local', local_model: 'qwen3:0.6b' };
         else if (path === '/api/user/api-connections') data = { available: flags.api, chatgpt_enabled: flags.chatgpt, providers: ['openai'], enabled: false, connections: [], bindings: [], counselors: [], default_connection_id: null };
         else if (path === '/api/user/api-settings') data = { available: flags.api, providers: ['openai'], configured: false, provider: 'openai', model: '', enabled: false, active: false };
         else if (path === '/api/user/chatgpt') data = { enabled: flags.chatgpt, available: flags.chatgpt, reason: flags.chatgpt ? null : 'disabled', connected: false, use_subscription: false, models: [], pending_link: false };

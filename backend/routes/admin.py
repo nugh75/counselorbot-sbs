@@ -1143,6 +1143,8 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
             status_code=409,
             detail="Le chiavi API si modificano in ai4educ Console, pagina Segreti",
         )
+    if config.key in {'external_pii_redact', 'external_pii_fallback', 'pii_ner_enabled', 'pii_ner_model'} and not current_user.get('is_admin'):
+        raise HTTPException(403, 'Accesso riservato agli amministratori')
     from ..model_context import validate_routing_config
     try:
         validate_routing_config(config.key, config.value)

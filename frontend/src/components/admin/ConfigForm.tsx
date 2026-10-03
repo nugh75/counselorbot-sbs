@@ -7,6 +7,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { Button } from '@/components/ui/Button';
 import { PersonalAPIPolicy } from '@/components/admin/PersonalAPIPolicy';
+import { ExternalPrivacySettings } from '@/components/admin/ExternalPrivacySettings';
 import { Callout } from '@/components/ui/Callout';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admin/PromptRequestPreview';
@@ -1938,6 +1939,7 @@ export function ConfigForm() {
 
             {/* 2. API Keys */}
             <PersonalAPIPolicy />
+            <ExternalPrivacySettings />
             <div className="space-y-4">
                 <div>
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.apiKeys')}</h3>
