@@ -1,3 +1,44 @@
+# Handoff: chat QSA raggiunge il backend di sviluppo e conserva gli errori
+Data: 2026-10-03 | Stato: implementato e verificato, da revisionare nella PR 40
+
+- Riprodotto con HTTP reale: `/api/health` 200, `/api/chat/stream` 500 con
+  `ENOTFOUND backend` usando solo `BACKEND_ORIGIN`. Le route streaming ignoravano
+  l’indirizzo host usato dal rewrite e dalla prova delle connessioni personali.
+- Resolver condiviso: `BACKEND_ORIGIN`, poi `BACKEND_INTERNAL_URL`, poi Docker.
+  Chat guidata, sito, OpenCode e voce usano lo stesso backend. Rewrite in fallback
+  dopo le route dinamiche: OpenCode passa davvero dalla route SSE senza buffering.
+- Proxy chat condiviso: identità, lingua e annullamento inoltrati, corpo upstream
+  trasmesso senza consumo. Errori HTTP prima dello stream e problemi di rete
+  conservano solo codici allowlist; nessuna esposizione di testi grezzi o chiavi.
+  Preparazione backend AI mappata a HTTP 502 con codice sicuro. Messaggi nelle
+  sei lingue negli step e follow-up; Ripeti mantiene fase, counselor e cronologia.
+- Presentazioni QSA/QSAr disattivano il ragionamento anche con ID/modalità legacy.
+  Scelta del ragionamento negli step di analisi conservata; prompt DB non cambiati.
+- Verifiche: 158 backend (66 chat/routing/connessioni + 92 privacy/preparazione),
+  249 unità frontend, 32 browser a 390/1440 px, 9 test HTTP reali attraverso Next;
+  TypeScript, lint mirati, i18n sei lingue, compileall, bash -n e guidance passati.
+- Build Next di produzione completa passata con font reali e TLS verificato:
+  `NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS=1 npm run build`. Sorgenti e
+  dipendenze installate copiati in `/tmp/counselorbot-qsa-frontend-build`, senza
+  file ambiente né metadati Git, per non saturare `/workspace`. Primo tentativo
+  diagnosticato come mancata fiducia CA; nessun mock o verifica TLS disabilitata.
+- Salvati nella bozza Codex requisito della variabile TLS e istruzioni `start_skill`
+  aggiornate, preservando installazione, segreti e repository; `saved`,
+  `requires_publish=true`. Salvataggio non applica la configurazione al runtime.
+  `API_KEY_OPENROUTER` ancora assente qui; nessuna chiave reale verificata o inferenza
+  esterna. Le prove della chat usano esclusivamente dati e upstream fittizi.
+- Guida nelle sei lingue e documentazione aggiornate; schermate API/protezione
+  riviste, nessun controllo o layout nuovo da fotografare. Nuovo launcher per
+  fixture HTTP `scripts/dev-stream-proxy-tests.sh`. Processi fixture della sessione
+  fermati al termine; PostgreSQL e dati persistenti conservati.
+- Stesso branch `feature/personal-api-keys` e PR 40. Il Codespace dell’utente va
+  aggiornato e frontend/backend riavviati con i comandi abituali; niente variabili
+  server aggiuntive per questa correzione. Nessun merge/deploy. Docker completo
+  non ricostruito: meno di 500 MiB liberi. Il successo con la chiave utente nel
+  Codespace resta da verificare dopo l’aggiornamento.
+
+---
+
 # Handoff: filtro esterno senza modello locale dalla pagina amministrativa
 Data: 2026-10-03 | Stato: implementato e verificato, da revisionare nella PR 40
 
