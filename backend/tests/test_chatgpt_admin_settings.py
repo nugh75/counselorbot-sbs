@@ -1,5 +1,6 @@
 """Admin activation with persistent private keys and isolated PostgreSQL data."""
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -10,7 +11,7 @@ from fastapi.testclient import TestClient
 import pytest
 from sqlalchemy.orm import Session
 
-from backend import auth, database, models
+from backend import auth, database, models, credential_storage
 from backend import chatgpt_connections as accounts, chatgpt_responses as responses
 from backend.routes import admin, chatgpt
 from backend.tests.artifact_database import artifact_session
@@ -110,7 +111,7 @@ def test_admin_setting_precedes_environment_and_preserves_opted_in_grant(signed)
         accounts.set_preference(db, "alice", True, "fixture-model")
         sealed = row.encrypted_credentials
         accounts.set_installation_enabled(db, False)
-        assert accounts.preference(db) == "fixture-model"
+        assert accounts.preference(db) is None
         assert accounts.status(db, "alice")["reason"] == "disabled"
         with pytest.raises(accounts.ChatGPTError, match="disabled"):
             next(responses.stream(db, "fixture-model", "hello", "instructions"))
@@ -151,7 +152,7 @@ def test_invalid_operator_key_is_not_replaced_by_an_automatic_key(local_settings
 
 def test_storage_failure_does_not_enable_the_feature(local_settings, monkeypatch):
     with artifact_session() as db:
-        monkeypatch.setattr(accounts.tempfile, "mkstemp", Mock(side_effect=PermissionError()))
+        monkeypatch.setattr(credential_storage.tempfile, "mkstemp", Mock(side_effect=PermissionError()))
         with pytest.raises(accounts.ChatGPTError, match="notConfigured"):
             accounts.set_installation_enabled(db, True)
         assert not local_settings.exists() and not accounts.enabled(db)
@@ -159,7 +160,7 @@ def test_storage_failure_does_not_enable_the_feature(local_settings, monkeypatch
 
 def test_concurrent_workers_publish_one_complete_key(local_settings):
     def worker(_):
-        db = SimpleNamespace(query=lambda *args: SimpleNamespace(filter=lambda *args: SimpleNamespace(first=lambda: None)))
+        db = SimpleNamespace(no_autoflush=nullcontext(), query=lambda *args: SimpleNamespace(filter=lambda *args: SimpleNamespace(first=lambda: None)))
         accounts.prepare_key(db)
         return local_settings.read_bytes()
     with ThreadPoolExecutor(max_workers=8) as pool:

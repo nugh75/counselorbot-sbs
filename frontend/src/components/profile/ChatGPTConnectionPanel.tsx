@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
@@ -10,8 +11,9 @@ import { getViewAsAccount } from '@/lib/auth';
 
 type LinkCode = { pairing_code: string; expires_at: string };
 
-export function ChatGPTConnectionPanel() {
+export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' | 'docente' }) {
     const { t } = useI18n();
+    const router = useRouter();
     const [status, setStatus] = useState<ChatGPTStatus>();
     const [model, setModel] = useState('');
     const [link, setLink] = useState<LinkCode>();
@@ -33,11 +35,21 @@ export function ChatGPTConnectionPanel() {
         const controller = new AbortController();
         setOrigin(window.location.origin);
         if (getViewAsAccount()) { setPreview(true); return; }
-        void chatgptRequest<ChatGPTStatus>('', 'GET', undefined, controller.signal).then(next => {
-            setStatus(next); setModel(next.model || '');
-        }).catch(() => { if (!controller.signal.aborted) setErrorKey('chatgpt.errors.unavailable'); });
-        return () => controller.abort();
+        const refreshStatus = () => {
+            void chatgptRequest<ChatGPTStatus>('', 'GET', undefined, controller.signal).then(next => {
+                setStatus(next); setModel(next.model || '');
+                if (!next.enabled) setLink(undefined);
+            }).catch(() => { if (!controller.signal.aborted) setErrorKey('chatgpt.errors.unavailable'); });
+        };
+        refreshStatus();
+        window.addEventListener('focus', refreshStatus);
+        window.addEventListener('chatgpt-connection-changed', refreshStatus);
+        return () => { controller.abort(); window.removeEventListener('focus', refreshStatus); window.removeEventListener('chatgpt-connection-changed', refreshStatus); };
     }, []);
+
+    useEffect(() => {
+        if (status?.enabled === false) router.replace(`/${area}`);
+    }, [status?.enabled, area, router]);
 
     const act = async (operation: () => Promise<void>) => {
         setBusy(true); setErrorKey(''); setNotice(''); setCopied('');
@@ -96,10 +108,14 @@ export function ChatGPTConnectionPanel() {
     };
     const command = `python3 chatgpt-connect.py --server '${origin}'`;
 
-    if (preview) return null;
+    if (preview || status?.enabled === false) return null;
+    if (!status) return errorKey
+        ? <Callout variant="danger"><p>{t(errorKey)}</p><Button variant="secondary" onClick={() => void act(async () => { await load(); })}>{t('chatgpt.retry')}</Button></Callout>
+        : <p role="status">{t('chatgpt.loading')}</p>;
     return <Card as="section" className="space-y-4" >
         <h2 className="text-xl font-semibold text-slate-900">{t('chatgpt.title')}</h2>
         <p className="text-sm text-slate-600">{t('chatgpt.intro')}</p>
+        {status.personal_api_enabled && <p className="text-sm text-slate-600">{t('chatgpt.choiceHelp')}</p>}
         {errorKey && <Callout variant="danger"><p>{t(errorKey)}</p><Button type="button" variant="secondary" disabled={busy} onClick={() => void act(async () => { await load(); })}>{t('chatgpt.retry')}</Button></Callout>}
         {(notice || status?.revocation_pending) && <Callout variant="warning">{t(notice || 'chatgpt.revocation')}</Callout>}
         {!status && !errorKey && <p role="status">{t('chatgpt.loading')}</p>}

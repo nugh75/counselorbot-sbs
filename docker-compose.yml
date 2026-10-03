@@ -80,6 +80,7 @@ services:
       - ./uploads:/app/uploads
       # Persistent encryption key, created when admin enables ChatGPT.
       - chatgpt_credentials:/app/chatgpt_credentials
+      - personal_api_credentials:/app/personal_api_credentials
       # Sorgente in /var/lib (disco) e non /run (tmpfs): /run e' svuotata a ogni
       # avvio WSL e la dir ricreata con un inode nuovo staccava il bind-mount.
       - /var/lib/cloudflared-agent:/run/cloudflared-agent
@@ -125,6 +126,7 @@ volumes:
   postgres_data:
   rag_index:
   chatgpt_credentials:
+  personal_api_credentials:
 
 networks:
   default:

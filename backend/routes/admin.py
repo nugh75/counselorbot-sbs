@@ -1126,7 +1126,7 @@ async def export_logs(
 @router.get("/admin/config", response_model=List[schemas.ConfigResponse])
 async def read_config(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     # Secrets have a dedicated masked endpoint and must never reach the browser.
-    configs = db.query(models.Config).filter(~models.Config.key.like("api_key_%"), ~models.Config.key.like("chatgpt_%")).all()
+    configs = db.query(models.Config).filter(~models.Config.key.like("api_key_%"), ~models.Config.key.like("chatgpt_%"), ~models.Config.key.like("personal_api_%")).all()
     return configs
 
 

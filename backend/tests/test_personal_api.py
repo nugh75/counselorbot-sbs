@@ -13,7 +13,8 @@ from backend.tests.artifact_database import artifact_session
 
 
 @pytest.fixture
-def db(monkeypatch):
+def db(monkeypatch, tmp_path):
+    monkeypatch.setenv('PERSONAL_API_CREDENTIALS_DIR', str(tmp_path / 'personal'))
     monkeypatch.setenv('PERSONAL_API_ENCRYPTION_KEY', Fernet.generate_key().decode())
     monkeypatch.setenv('API_KEY_OPENAI', 'system-openai-test')
     monkeypatch.setenv('API_KEY_ANTHROPIC', 'system-anthropic-test')
@@ -35,7 +36,7 @@ def client(db):
     app.dependency_overrides[database.get_db] = lambda: db
     current = {'identity': identity()}
     app.dependency_overrides[auth.get_identity] = lambda: current['identity']
-    with TestClient(app) as c:
+    with TestClient(app, headers={'X-Requested-With': 'CounselorBot'}) as c:
         c.actor = current
         yield c
 
@@ -92,7 +93,7 @@ def test_only_real_admin_can_control_policy(client, db):
     assert client.put('/admin/personal-api-policy', json={'enabled': False}).json()['enabled'] is False
     with pytest.raises(HTTPException) as exc:
         asyncio.run(admin.create_or_update_config(schemas.ConfigCreate(key=personal_api.POLICY_KEY, value='yes'), current_user=identity('admin', is_admin=True), db=db))
-    assert exc.value.status_code == 422
+    assert exc.value.status_code == 409
 
 
 def test_disabled_feature_blocks_writes_and_dispatch_but_allows_removal(client, db):

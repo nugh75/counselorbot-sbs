@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { PersonalAPILink } from '@/components/profile/PersonalAPILink';
+import { PersonalAIConnections } from '@/components/profile/PersonalAIConnections';
 import Link from 'next/link';
 import { ArrowRight, Target } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
@@ -32,7 +32,7 @@ export function TeacherAreaHome({ teacher }: { teacher: boolean }) {
     return (
         <div className="space-y-6" data-teacher-area-home>
             <TeacherAreaEntry slug="taccuino" />
-            <PersonalAPILink area="docente" />
+            <PersonalAIConnections area="docente" />
             <section aria-labelledby="teacher-goal-path">
                 <h2 id="teacher-goal-path" className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">{l('goalPathTitle')}</h2>
                 <Link href="/?start=OBIETTIVO_DOCENZA" className="mt-2 flex items-start gap-3 rounded-lg border border-indigo-200 bg-white p-4 transition-colors hover:bg-indigo-50">

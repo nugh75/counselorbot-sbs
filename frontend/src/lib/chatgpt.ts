@@ -2,7 +2,7 @@ import { apiFetch } from './auth';
 
 export type ChatGPTModel = { slug: string; display_name: string };
 export type ChatGPTStatus = {
-    available: boolean; reason: string | null; connected: boolean; email: string | null;
+    available: boolean; enabled: boolean; personal_api_enabled: boolean; reason: string | null; connected: boolean; email: string | null;
     use_subscription: boolean; model: string | null; needs_reconnect: boolean;
     pending_link: boolean; registered: boolean; revocation_pending: boolean; models: ChatGPTModel[];
 };

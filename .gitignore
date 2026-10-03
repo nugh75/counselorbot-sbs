@@ -36,6 +36,7 @@ rag-collections/
 
 # Private server-managed ChatGPT encryption key (persist separately from Git)
 /chatgpt_credentials/
+/personal_api_credentials/
 
 # Indice RAG rigenerato in locale (lock + cache di embedding): non versionarlo.
 .rag_index/

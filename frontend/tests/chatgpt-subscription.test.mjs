@@ -17,7 +17,7 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
             const writes = [], errors = [];
             page.on('pageerror', error => errors.push(error.message));
             let failModels = false;
-            const status = { available: true, reason: null, connected: false, email: null, use_subscription: false,
+            const status = { available: true, enabled: true, reason: null, connected: false, email: null, use_subscription: false,
                 model: null, needs_reconnect: false, pending_link: false, models: [] };
             await page.route('**/api/**', async route => {
                 const request = route.request(), path = new URL(request.url()).pathname, method = request.method();
@@ -48,7 +48,7 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
             });
             const t = key => CHATGPT_DICTS[language]['chatgpt.' + key];
             try {
-                await page.goto(origin + '/profilo#chatgpt');
+                await page.goto(origin + '/profilo/chatgpt');
                 const panel = page.locator('#chatgpt');
                 await panel.getByRole('heading', { name: t('title') }).waitFor();
                 await panel.getByText(t('privacy'), { exact: true }).waitFor({ state: 'visible' });
