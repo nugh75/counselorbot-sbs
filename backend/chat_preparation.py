@@ -162,7 +162,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
                       c_persona="", counselor_name=None, include_retrieval=True,
                       include_history=True, create_anonymous_code=False,
                       component_overrides=None, retrieval_context=None,
-                      provider=None, model=None, journey_override=None, allow_generation=False):
+                      provider=None, model=None, journey_override=None, allow_generation=False, config_overrides=None, step_mode_override=None):
     essential = validate_path(request.questionnaire_type, getattr(request, "guided_path", "complete"), request.phase)
     if essential and request.use_phase_prompt:
         request = request.copy(update={"use_phase_prompt": False, "message": "Present the current essential-path step using the conversation evidence.", "internal_message": True, "memory_message": ""})
@@ -178,6 +178,12 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     if questionnaire_type == IDEA_INSTRUMENT:
         max_tokens = (max_tokens or 700) + 1200
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
+    if step_mode_override is not None and step and step_mode_override != step.system_prompt_mode:
+        from types import SimpleNamespace
+        step = SimpleNamespace(**{column.key: getattr(step, column.key) for column in step.__table__.columns})
+        step.system_prompt_mode = step_mode_override
+        if request.use_phase_prompt:
+            prompt_key, system_prompt = _resolve_system_prompt(ai_service, step_mode_override, None, db)
     # Catalogo completo degli strumenti solo dove il turno puo' parlarne: intro,
     # chat libera fuori dal percorso, o una domanda esplicita sulla piattaforma.
     # Il primo step del percorso e' un benvenuto anche quando il suo mode dice
@@ -190,7 +196,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         or skills_intents.asks_about_platform(request.message or "")
     )
     system_prompt = _apply_global_directives(system_prompt, request.language, db,
-                                             platform_full=platform_full)
+                                             platform_full=platform_full, config_overrides=config_overrides)
     system_prompt = _apply_response_length_directive(system_prompt, effective_response_length)
     system_prompt = _apply_idea_variant_directive(system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
@@ -341,7 +347,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
         knowledge_context=knowledge_context, include_scores_reference=include_analysis_context,
         component_flags=component_flags,
-        skills_blocks=skills_blocks, components=components,
+        skills_blocks=skills_blocks, components=components, config_overrides=config_overrides,
         include_history=include_history, include_session_memory=include_history,
         create_anonymous_code=create_anonymous_code,
     )

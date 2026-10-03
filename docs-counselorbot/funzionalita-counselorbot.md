@@ -408,3 +408,30 @@ ZTPI e Savickas. Le proposte AI aiutano a riflettere, non sono diagnosi o decisi
 vincolanti. Le funzioni disabilitate o non autorizzate non vanno presentate come
 accessibili a ogni account. L’assistente deve indicare la pagina e il prossimo
 passo utile, senza inventare pulsanti o promettere azioni eseguite automaticamente.
+
+### Anteprima delle richieste dei questionari nell’amministrazione
+
+Nelle schede **Prompt per step** e **Step guidati** si può consultare l’anteprima
+accanto all’editor. In Step guidati si apre con **Anteprima della richiesta**:
+non vengono caricate anteprime per tutti gli step automaticamente. Il campo del
+prompt è denominato **Istruzione dello step**, perché il testo viene combinato
+con istruzioni di sistema, direttive e contesto.
+
+L’anteprima usa i valori dell’editor, anche non salvati, senza modificare il
+database. Un indicatore distingue le modifiche non salvate e si può scegliere
+di mostrare la configurazione salvata. Si può scegliere counselor, lingua, sessione e simulare ingresso
+nello step o risposta dello studente. La vista **Per componenti** mostra i blocchi
+preparati, la provenienza disponibile e componenti esclusi o senza contenuto;
+**Messaggi completi** mostra sistema, cronologia e messaggio corrente nell’ordine
+simulato dopo l’adattamento alla capacità del modello. Sono disponibili ricerca,
+copia e il rapporto di riduzione del contesto. Le selezioni dei componenti nella
+scheda Prompt per step richiedono un salvataggio esplicito.
+
+È una simulazione amministrativa, non la registrazione della richiesta inviata
+al provider: non esegue chiamate LLM, recuperi esterni o handler delle skill.
+Senza sessione possono mancare punteggi e dati personali. Il recupero non eseguito
+è segnalato; la vista dei componenti precede eventuali riduzioni, mentre i
+messaggi completi riflettono il budget simulato. Le trasformazioni specifiche del
+provider, compresa l’anonimizzazione esterna, non sono riprodotte. In caso di
+aggiornamento o errore, il contenuto precedente è dichiarato non aggiornato e la
+copia è disabilitata. I testi di anteprima supportano le sei lingue dell’interfaccia.
