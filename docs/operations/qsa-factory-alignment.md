@@ -33,6 +33,10 @@ questo intervento, e una verifica del prompt non certifica la risposta del model
 
 ## Database esistenti
 
+La pagina Amministrazione offre ora **Allinea prompt di fabbrica**, con
+anteprima e conferma, per tutte le chat. È l’alternativa ai comandi seguenti;
+vedere `prompt-factory-alignment.md`. I prompt personalizzati restano protetti.
+
 Il pull del codice corregge l’appartenenza all’avvio e aggiorna i default, ma
 non sostituisce i testi già salvati. Il comando seguente prepara un piano:
 

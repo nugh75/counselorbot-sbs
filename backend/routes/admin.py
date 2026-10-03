@@ -1142,7 +1142,8 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
         validate_routing_config(config.key, config.value)
     except (ValueError, TypeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    db_config = db.query(models.Config).filter(models.Config.key == config.key).first()
+    # Coordinate even an unchanged-text ownership claim with factory alignment.
+    db_config = db.query(models.Config).filter(models.Config.key == config.key).with_for_update().first()
     if db_config:
         db_config.value = config.value
         db_config.description = config.description
@@ -1167,6 +1168,29 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
     if config.key == "pii_ner_model":
         pii_ner.set_ner_model((config.value or "").strip())
     return db_config
+
+
+@router.get("/admin/prompt-factory-alignment/preview", response_model=schemas.PromptFactoryAlignmentPreview)
+async def preview_prompt_factory_alignment(
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    from ..prompt_factory_alignment import make_plan, review_hash
+    plan = make_plan(db)
+    return {**plan, "review_hash": review_hash(plan)}
+
+
+@router.post("/admin/prompt-factory-alignment/apply", response_model=schemas.PromptFactoryAlignmentResult)
+async def apply_prompt_factory_alignment(
+    approval: schemas.PromptFactoryAlignmentApply,
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    from ..prompt_factory_alignment import apply_review
+    try:
+        return apply_review(db, approval.review_hash, author=current_user.get("username"))
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail="prompt_alignment_changed") from exc
 
 
 @router.get("/admin/prompt-revisions", response_model=List[schemas.PromptRevisionResponse])
@@ -1333,7 +1357,7 @@ async def admin_create_guided_step(step: schemas.GuidedStepCreate, current_user:
 
 @router.put("/admin/guided-steps/{step_id}", response_model=schemas.GuidedStepResponse)
 async def admin_update_guided_step(step_id: str, update: schemas.GuidedStepUpdate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
-    db_step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first()
+    db_step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).with_for_update().first()
     if not db_step:
         raise HTTPException(status_code=404, detail="Step not found")
     update_data = update.model_dump(exclude_unset=True)

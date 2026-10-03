@@ -1,6 +1,7 @@
 // Traduzioni del pannello admin (operator-only), disponibili in tutte le lingue UI.
 
 import { readingsIt, readingsEn, readingsEs, readingsFr, readingsDe, readingsSv } from './i18n-readings';
+import { PROMPT_ALIGNMENT_DICTS } from './i18n-prompt-alignment';
 import type { Lang } from './i18n';
 
 type Dict = Record<string, string>;
@@ -6505,10 +6506,10 @@ const counselorExtrasSv: Dict = {
 };
 
 export const ADMIN_DICTS: Record<Lang, Dict> = {
-    it: { ...it, ...trainingIt, ...pqblIt, ...certifiedIt, ...assistantQuestionsIt, ...guidedStepQuestionsIt, ...administrationPlansIt, ...promptAuditIt, ...assistantAdminIt, ...ragDocsIt, ...readingsIt, ...counselorExtrasIt },
-    en: { ...en, ...trainingEn, ...pqblEn, ...certifiedEn, ...assistantQuestionsEn, ...guidedStepQuestionsEn, ...administrationPlansEn, ...promptAuditEn, ...assistantAdminEn, ...ragDocsEn, ...readingsEn, ...counselorExtrasEn },
-    es: { ...es, ...trainingEs, ...pqblEs, ...certifiedEs, ...assistantQuestionsEs, ...guidedStepQuestionsEs, ...administrationPlansEs, ...promptAuditEs, ...assistantAdminEs, ...ragDocsEs, ...readingsEs, ...counselorExtrasEs },
-    fr: { ...fr, ...trainingFr, ...pqblFr, ...certifiedFr, ...assistantQuestionsFr, ...guidedStepQuestionsFr, ...administrationPlansFr, ...promptAuditFr, ...assistantAdminFr, ...ragDocsFr, ...readingsFr, ...counselorExtrasFr },
-    de: { ...de, ...trainingDe, ...pqblDe, ...certifiedDe, ...assistantQuestionsDe, ...guidedStepQuestionsDe, ...administrationPlansDe, ...promptAuditDe, ...assistantAdminDe, ...ragDocsDe, ...readingsDe, ...counselorExtrasDe },
-    sv: { ...sv, ...trainingSv, ...pqblSv, ...certifiedSv, ...assistantQuestionsSv, ...guidedStepQuestionsSv, ...administrationPlansSv, ...promptAuditSv, ...assistantAdminSv, ...ragDocsSv, ...readingsSv, ...counselorExtrasSv },
+    it: { ...it, ...trainingIt, ...pqblIt, ...certifiedIt, ...assistantQuestionsIt, ...guidedStepQuestionsIt, ...administrationPlansIt, ...promptAuditIt, ...assistantAdminIt, ...ragDocsIt, ...readingsIt, ...counselorExtrasIt, ...PROMPT_ALIGNMENT_DICTS.it },
+    en: { ...en, ...trainingEn, ...pqblEn, ...certifiedEn, ...assistantQuestionsEn, ...guidedStepQuestionsEn, ...administrationPlansEn, ...promptAuditEn, ...assistantAdminEn, ...ragDocsEn, ...readingsEn, ...counselorExtrasEn, ...PROMPT_ALIGNMENT_DICTS.en },
+    es: { ...es, ...trainingEs, ...pqblEs, ...certifiedEs, ...assistantQuestionsEs, ...guidedStepQuestionsEs, ...administrationPlansEs, ...promptAuditEs, ...assistantAdminEs, ...ragDocsEs, ...readingsEs, ...counselorExtrasEs, ...PROMPT_ALIGNMENT_DICTS.es },
+    fr: { ...fr, ...trainingFr, ...pqblFr, ...certifiedFr, ...assistantQuestionsFr, ...guidedStepQuestionsFr, ...administrationPlansFr, ...promptAuditFr, ...assistantAdminFr, ...ragDocsFr, ...readingsFr, ...counselorExtrasFr, ...PROMPT_ALIGNMENT_DICTS.fr },
+    de: { ...de, ...trainingDe, ...pqblDe, ...certifiedDe, ...assistantQuestionsDe, ...guidedStepQuestionsDe, ...administrationPlansDe, ...promptAuditDe, ...assistantAdminDe, ...ragDocsDe, ...readingsDe, ...counselorExtrasDe, ...PROMPT_ALIGNMENT_DICTS.de },
+    sv: { ...sv, ...trainingSv, ...pqblSv, ...certifiedSv, ...assistantQuestionsSv, ...guidedStepQuestionsSv, ...administrationPlansSv, ...promptAuditSv, ...assistantAdminSv, ...ragDocsSv, ...readingsSv, ...counselorExtrasSv, ...PROMPT_ALIGNMENT_DICTS.sv },
 };

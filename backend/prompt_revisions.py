@@ -76,7 +76,11 @@ def record(
     """
     text = value or ""
     previous = latest(db, scope, target_key)
-    if previous is not None and previous.value == text:
+    # Saving a factory text explicitly makes it administrator-owned even when
+    # the text is unchanged. Repeated saves keep the history idempotent.
+    if previous is not None and previous.value == text and (
+        origin != ORIGIN_ADMIN or previous.origin == ORIGIN_ADMIN
+    ):
         return False
 
     db.add(
@@ -134,12 +138,12 @@ def live_value(db: Session, scope: str, target_key: str) -> Optional[str]:
 def write_live(db: Session, scope: str, target_key: str, value: str) -> bool:
     """Scrive il testo nella riga viva. False se la riga non esiste piu'."""
     if scope == SCOPE_CONFIG:
-        row = db.query(models.Config).filter(models.Config.key == target_key).first()
+        row = db.query(models.Config).filter(models.Config.key == target_key).with_for_update().first()
         if row is None:
             return False
         row.value = value
     elif scope == SCOPE_GUIDED_STEP:
-        row = db.query(models.GuidedStep).filter(models.GuidedStep.id == target_key).first()
+        row = db.query(models.GuidedStep).filter(models.GuidedStep.id == target_key).with_for_update().first()
         if row is None:
             return False
         row.prompt = value
@@ -198,6 +202,8 @@ def _factory_defaults() -> dict:
         prompt_config.DEFAULT_IDEA_GUIDED_STEPS,
         prompt_config.DEFAULT_EVENTO_STUDIO_GUIDED_STEPS,
         prompt_config.DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS,
+        prompt_config.DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS,
+        prompt_config.DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS,
         prompt_config.DEFAULT_QPCS_GUIDED_STEPS,
         prompt_config.DEFAULT_QPCC_GUIDED_STEPS,
         prompt_config.DEFAULT_QAP_GUIDED_STEPS,
