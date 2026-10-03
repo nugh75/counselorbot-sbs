@@ -1,3 +1,36 @@
+# Handoff: filtro esterno senza modello locale dalla pagina amministrativa
+Data: 2026-10-03 | Stato: implementato e verificato, da revisionare nella PR 40
+
+- Il test dell’utente segnala `personalAPI.errors.privacy`: richiesta bloccata
+  prima di OpenRouter per detector Ollama non disponibile, non chiave invalida.
+- In Generale, pannello «Protezione dei dati per i modelli esterni»: modalità
+  locale (default invariato e bloccante) o filtro automatico senza Ollama.
+  Salvataggio esplicito, limiti del filtro base visibili, nessuna chiamata LLM.
+- GET/PUT `/admin/external-privacy`, solo vero amministratore, CSRF e no-store;
+  aggiornamento atomico di tre impostazioni. Anche la config generica rifiuta
+  modifiche della protezione da parte dei ricercatori.
+- Detector legge flag/modello dallo snapshot di ogni AIService: cambio recepito
+  dalle nuove richieste nei worker già avviati. La redazione di email, telefoni
+  e identificativi rimane attiva; nessuna garanzia di anonimato in modalità base.
+- Verifiche: 176 test backend (105 protezione/credenziali e 71 ChatGPT/routing),
+  38 browser (16 protezione/Guida e 22 visibilità/attivazione), TypeScript,
+  lint mirati, i18n sei lingue, compileall, guidance-check e diff check passati.
+  Avvio backend dev completo, nuova rotta anonima risponde 401. DB e browser
+  isolati con dati fittizi; nessuna inferenza esterna né fatturazione.
+- Fixture demo corretta al nome reale `studente.demo`; nessuna asserzione tolta.
+  Screenshot `protezione-dati.png` catturato e verificato, Guida nelle sei lingue
+  e Markdown aggiornati. I processi locali 8002/3135 vengono fermati al termine.
+- Segreto `API_KEY_OPENROUTER`: assente nel processo corrente. Aggiunto soltanto
+  il requisito proxy verso `openrouter.ai` nella bozza dell’ambiente Codex;
+  risultato `saved`, `requires_publish=true`. Nessun valore letto, stampato o
+  copiato nel repository; bozza salvata non equivale a runtime applicato.
+  Validità/quote della chiave reale restano non verificate.
+- Branch `feature/personal-api-keys`, stessa PR 40, nessun merge/deploy.
+  Docker completo non ricostruito: meno di 500 MiB liberi contro riserva 5 GiB.
+  Il Codespace dell’utente deve aggiornare il branch prima di usare il pannello.
+
+---
+
 # Handoff: connessioni multiple e counselor privati nella PR 40
 Data: 2026-10-03 | Stato: implementato e verificato, da revisionare e unire
 

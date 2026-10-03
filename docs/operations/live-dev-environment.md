@@ -280,3 +280,22 @@ sessione; PostgreSQL e dati persistenti vengono conservati. La ricostruzione
 Docker completa non è stata eseguita: meno di 500 MiB liberi nel filesystem
 Docker vfs, sotto la riserva di 5 GiB. Il Codespace dell’utente non è stato
 aggiornato automaticamente.
+
+### Filtro esterno senza modello Ollama
+
+Il pannello amministrativo è verificabile nella stessa fixture su 3135:
+
+```bash
+cd frontend
+PRIVACY_BASE_URL=http://127.0.0.1:3135 node --test --experimental-strip-types tests/external-privacy.test.mjs
+```
+
+La suite usa dati fittizi, API intercettate e nessuna chiamata LLM. Verifica
+scelta esplicita, salvataggio/rilettura, errori che conservano il modo attivo,
+ricercatore escluso, Guida amministrativa, sei lingue e 320/1440 px in tema scuro.
+`PRIVACY_CAPTURE_GUIDE=1` rigenera soltanto `guide/protezione-dati.png`.
+I test backend controllano che il filtro base non chiami Ollama, mascheri anche
+system/history e ripristini la risposta, mentre la modalità locale resta bloccante
+anche con un flag globale vecchio nel worker. Nuova rotta provata sul backend
+dev 8002: startup completo e 401 senza identità. Processi locali fermati a fine
+sessione; nessuna modifica alle impostazioni o al server del Codespace dell’utente.
