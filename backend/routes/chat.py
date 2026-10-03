@@ -201,8 +201,8 @@ def _apply_counselor_overrides(
 # Passi in cui la risposta e' presentazione o patto, non analisi: il testo e'
 # gia' nel prompt del passo e il pensiero non lo cambia, costa soltanto. La
 # regola vince sulla scelta dello studente perche' non c'e' su cosa ragionare.
-NO_REASONING_STEP_MODES = frozenset({"intro"})
-NO_REASONING_STEP_IDS = frozenset({"qap-intro", "qpcc-intro", "qpcs-intro", "savickas-patto"})
+NO_REASONING_STEP_MODES = frozenset({"intro", "qsa-intro"})
+NO_REASONING_STEP_IDS = frozenset({"intro", "qsar-intro", "qap-intro", "qpcc-intro", "qpcs-intro", "savickas-patto"})
 
 
 def _step_forbids_reasoning(step) -> bool:
@@ -564,11 +564,15 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         is_first_step = bool(first_step and first_step.id == step.id)
         if is_first_step:
             session_memory.clear(session_id)
-    prepared = prepare_chat_turn(
-        db, ai_service, request, session_id, identity,
-        c_persona=c_persona, counselor_name=c_name, provider=c_provider, model=c_model,
-        create_anonymous_code=False, allow_generation=True,
-    )
+    try:
+        prepared = prepare_chat_turn(
+            db, ai_service, request, session_id, identity,
+            c_persona=c_persona, counselor_name=c_name, provider=c_provider, model=c_model,
+            create_anonymous_code=False, allow_generation=True,
+        )
+    except AIError as exc:
+        code = exc.code if exc.code in personal_api.CONNECTION_ERROR_CODES else "chat.errors.connection"
+        raise HTTPException(502, detail={"error_code": code}) from None
     prompt_key = prepared.prompt_key
     phase_prompt_key = prepared.phase_prompt_key
     effective_message = prepared.effective_message
@@ -801,11 +805,15 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         is_first_step = bool(first_step and first_step.id == step.id)
         if is_first_step and not request.partial_response:
             session_memory.clear(session_id)
-    prepared = prepare_chat_turn(
-        db, ai_service, request, session_id, identity,
-        c_persona=c_persona, counselor_name=c_name, provider=c_provider, model=c_model,
-        create_anonymous_code=False, allow_generation=True,
-    )
+    try:
+        prepared = prepare_chat_turn(
+            db, ai_service, request, session_id, identity,
+            c_persona=c_persona, counselor_name=c_name, provider=c_provider, model=c_model,
+            create_anonymous_code=False, allow_generation=True,
+        )
+    except AIError as exc:
+        code = exc.code if exc.code in personal_api.CONNECTION_ERROR_CODES else "chat.errors.connection"
+        raise HTTPException(502, detail={"error_code": code}) from None
     prompt_key = prepared.prompt_key
     phase_prompt_key = prepared.phase_prompt_key
     effective_message = prepared.effective_message

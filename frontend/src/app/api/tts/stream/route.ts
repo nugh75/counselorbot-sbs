@@ -1,8 +1,9 @@
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+import { backendOrigin } from '@/lib/backend-origin';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-const BACKEND = process.env.BACKEND_INTERNAL_URL || 'http://backend:8000';
 
 // A filesystem route is necessary: the general Next rewrite buffers SSE.
 export async function POST(request: NextRequest) {
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
         if (value) headers.set(name, value);
     }
     try {
-        const upstream = await fetch(`${BACKEND}/tts/stream`, {
+        const upstream = await fetch(`${backendOrigin()}/tts/stream`, {
             method: 'POST', headers, body: await request.text(), signal: request.signal,
         });
         return new Response(upstream.body, {

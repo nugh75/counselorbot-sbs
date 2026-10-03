@@ -3,6 +3,8 @@
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { withViewAsHeaders } from './auth.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { chatHTTPErrorCode, safeChatErrorCode } from './chat-errors.ts';
 import type { RecommendationCatalog } from '@/lib/recommendations';
 import type { EventBookletDraft } from '@/lib/event-booklet';
 import type { GoalDraft } from '@/lib/goal-draft';
@@ -53,7 +55,9 @@ export async function streamChat(
     });
 
     if (!res.ok || !res.body) {
-        throw new Error(`Stream non disponibile (${res.status})`);
+        const body: unknown = await res.json().catch(() => null);
+        if (signal?.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError');
+        throw new ChatProviderError(chatHTTPErrorCode(res.status, body));
     }
 
     const reader = res.body.getReader();
@@ -98,7 +102,8 @@ export async function streamChat(
                 if (evt.session_id) sessionId = evt.session_id;
                 if (evt.conversation_id) conversationId = evt.conversation_id;
                 if (evt.error) {
-                    if (typeof evt.error_code === 'string' && evt.error_code.startsWith('personalAPI.errors.')) throw new ChatProviderError(evt.error_code);
+                    const code = safeChatErrorCode(evt.error_code);
+                    if (code) throw new ChatProviderError(code);
                     throw new Error(evt.error);
                 }
                 if (typeof evt.reasoning === 'string') {
