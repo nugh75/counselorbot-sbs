@@ -8,6 +8,7 @@ Endpoint:
 - GET  /site-chat/status   → stato dell'indice RAG
 - POST /site-chat/reindex  → ricostruzione forzata dell'indice (solo admin)
 """
+from .. import personal_api
 import json as _json
 import logging
 import re
@@ -117,11 +118,7 @@ def _resolve_counselor(db, counselor_id):
     """(persona, name) dal counselor attivo. None se non selezionato/non trovato."""
     if not counselor_id:
         return None, None
-    counselor = (
-        db.query(models.Counselor)
-        .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
-        .first()
-    )
+    counselor = personal_api.require_visible_counselor(db, counselor_id)
     if not counselor:
         return None, None
     return counselor.persona, counselor.name
@@ -341,6 +338,7 @@ async def site_chat_stream(
     conversation_id = conversation_id_for(session_id, request.conversation_id)
     collection = _normalize_collection(request.collection)
     index = get_index(collection)
+    personal_api.bind_counselor(db, request.counselor_id)
     ai_service = AIService(db, username=current_user.get("username"))
     platform_reference = read_platform_guide() if collection == COLLECTION_COUNSELORBOT else None
     system_prompt = _apply_language_directive(

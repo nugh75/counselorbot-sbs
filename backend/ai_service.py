@@ -42,6 +42,9 @@ def _requests_json_response(system_prompt: str, user_message: str) -> bool:
 class AIError(Exception):
     """Errore di configurazione o di chiamata al provider AI.
     Sollevato invece di restituire stringhe d'errore come fossero risposte del bot."""
+    def __init__(self, message, *, code=None):
+        super().__init__(message)
+        self.code = code
 
 
 # Prompt usato per aggiornare il riassunto rotante della sessione
@@ -96,21 +99,12 @@ class AIService:
         self.chatgpt_model = preference(db)
         account = owner(db) if "chatgpt_username" in getattr(db, "info", {}) else username
         try:
-            connection = personal_api.active_settings(db, account)
+            connection = personal_api.active_settings(db, account, getattr(db, "info", {}).get("personal_ai_counselor_id"))
             if connection and self.chatgpt_model:
                 from .chatgpt_i18n import error_message
                 raise personal_api.PersonalAPIError(error_message("credentialChoice", db.info.get("chatgpt_language", "it")))
             if connection:
-                self.personal_target = (connection.provider, connection.model_name)
-                # The account connection replaces all system credentials for this
-                # instance. Explicit counselor targets cannot use another key.
-                for provider in API_KEY_ENV_MAP:
-                    self.config.pop(config_key(provider), None)
-                key = personal_api.decrypt_key(connection)
-                self.config[config_key(connection.provider)] = key
-                self.config['active_provider'] = connection.provider
-                self.config['model_name'] = connection.model_name
-                self.config['summary_model_name'] = connection.model_name
+                self.use_personal_connection(connection)
         except personal_api.PersonalAPIError as exc:
             # Raise within dispatch so existing HTTP/SSE error handlers can
             # report it, while forbidding a fallback to system credentials.
@@ -182,6 +176,19 @@ class AIService:
                 'stream': partial(self._stream_openai_compatible, _name),
                 'call_max': None, 'stream_max': None,
             }
+
+    def use_personal_connection(self, connection):
+        self.personal_target = (connection.provider, connection.model_name)
+        self.personal_error = None
+        self.chatgpt_model = None
+        for provider in API_KEY_ENV_MAP:
+            self.config.pop(config_key(provider), None)
+        self.config[config_key(connection.provider)] = personal_api.decrypt_key(connection)
+        self.config.update(active_provider=connection.provider, model_name=connection.model_name,
+                           summary_model_name=connection.model_name)
+
+    def _personal_failure(self, exc):
+        return AIError("Personal AI connection failed.", code=personal_api.connection_error_code(exc))
 
     @staticmethod
     def _usage_to_dict(usage):
@@ -354,7 +361,8 @@ class AIService:
         if not ner_ok and self.external_pii_fallback == 'block':
             raise AIError(
                 "Anonimizzazione PII non disponibile (modello locale non raggiungibile). "
-                "Riprova, oppure disattiva la redazione esterna dal pannello admin.")
+                "Riprova, oppure disattiva la redazione esterna dal pannello admin.",
+                code="personalAPI.errors.privacy")
         anon_history = [
             dict(m, content=anon_texts[2 + i]) if m.get('content') else m
             for i, m in enumerate(history)
@@ -488,7 +496,7 @@ class AIService:
 
     def _selected_target(self, provider, model):
         if self.personal_error:
-            raise AIError(self.personal_error)
+            raise AIError(self.personal_error, code="personalAPI.errors.configuration")
         if self.chatgpt_model:
             return "openai_chatgpt", self.chatgpt_model
         if self.personal_target:
@@ -569,6 +577,8 @@ class AIService:
                 logger.warning("AI attempt %s/%s failed (%s)", selected_provider, selected_model, type(exc).__name__)
         if self.chatgpt_model and isinstance(last_error, AIError):
             raise last_error
+        if self.personal_target:
+            raise self._personal_failure(last_error) from None
         raise AIError(f"Nessun modello configurato ha completato la risposta ({type(last_error).__name__}).") from last_error
 
     def call_model(self, provider: str, model: str, user_message: str, system_prompt: str, max_tokens: int = None):
@@ -577,7 +587,7 @@ class AIService:
         ausiliari. Il benchmark senza identita' personale resta esplicito.
         Popola self.last_usage (token/costo) quando il provider lo fornisce."""
         if self.personal_error:
-            raise AIError(self.personal_error)
+            raise AIError(self.personal_error, code="personalAPI.errors.configuration")
         if self.chatgpt_model:
             provider, model = "openai_chatgpt", self.chatgpt_model
         elif self.personal_target:
@@ -597,6 +607,8 @@ class AIService:
             raise
         except Exception as e:
             logger.error("Errore call_model (%s/%s): %s", provider, model, type(e).__name__)
+            if self.personal_target:
+                raise self._personal_failure(e) from None
             raise AIError(f"Errore AI ({provider}/{model}): {type(e).__name__}") from e
 
     # Token massimi per i riassunti (~80 parole → 120 token sono sufficienti)
@@ -947,6 +959,8 @@ class AIService:
             except Exception as exc:
                 last_error = exc
                 attempt["error_type"] = type(exc).__name__
+                if self.personal_target:
+                    raise self._personal_failure(exc) from None
                 if self.chatgpt_model and isinstance(exc, AIError):
                     raise exc
                 # Solo il contenuto gia' arrivato allo studente impedisce il

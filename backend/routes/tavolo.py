@@ -460,7 +460,8 @@ def tavolo_capabilities(
     _require_feature(db)
     username = _owner(identity)
     candidates = _model_candidates(db, counselor_id)
-    connection = personal_api.active_settings(db, username)
+    personal_api.bind_counselor(db, counselor_id)
+    connection = personal_api.active_settings(db, username, counselor_id)
     if connection:
         candidates = [(connection.provider, connection.model_name, None, None)]
     return {
@@ -812,7 +813,8 @@ async def _ask_model(db: Session, *, task: str, counselor_id: int | None,
         from ..goals import goals_context
         system_prompt += "\n" + goals_context(db, username, tavolo_id=tavolo_id)
     candidates = _model_candidates(db, counselor_id)
-    connection = personal_api.active_settings(db, username)
+    personal_api.bind_counselor(db, counselor_id)
+    connection = personal_api.active_settings(db, username, counselor_id)
     if connection:
         candidates = [(connection.provider, connection.model_name, None, None)]
     if not candidates:

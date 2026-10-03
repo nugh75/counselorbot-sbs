@@ -250,7 +250,8 @@ async def diagram_from_message(
     fallback = _diagram_fallback(db)
     if fallback and fallback[:2] not in [c[:2] for c in candidates]:
         candidates.append(fallback)
-    connection = personal_api.active_settings(db, identity.get("username") if identity.get("authenticated") else None)
+    personal_api.bind_counselor(db, request.counselor_id)
+    connection = personal_api.active_settings(db, identity.get("username") if identity.get("authenticated") else None, request.counselor_id)
     if connection:
         candidates = [(connection.provider, connection.model_name, disable_thinking, reasoning_budget)]
     if not candidates:

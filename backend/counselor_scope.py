@@ -85,7 +85,7 @@ def extend_interview_counselors(db) -> bool:
     if db.query(models.Config).filter(models.Config.key == EVENT_PATHS_MARKER).first() is not None:
         return False
     updated = False
-    for counselor in db.query(models.Counselor).all():
+    for counselor in db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).all():
         declared = list(counselor.questionnaire_types or [])
         codes = {str(item).upper() for item in declared}
         if "SAVICKAS" not in codes:
@@ -115,7 +115,7 @@ def extend_obiettivo_counselors(db) -> bool:
     if db.query(models.Config).filter(models.Config.key == OBIETTIVO_PATHS_MARKER).first() is not None:
         return False
     updated = False
-    for counselor in db.query(models.Counselor).all():
+    for counselor in db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).all():
         declared = list(counselor.questionnaire_types or [])
         codes = {str(item).upper() for item in declared}
         if "SAVICKAS" not in codes:

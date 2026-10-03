@@ -6,6 +6,7 @@ provider non risponde o restituisce JSON invalido, un classificatore locale
 produce comunque un orientamento prudente.
 """
 from __future__ import annotations
+from . import personal_api
 
 import json
 import logging
@@ -550,11 +551,7 @@ def fallback_analysis(message: str, language: str = "it") -> OrientationAnalysis
 def _counselor_runtime(db: Session, counselor_id: int | None):
     if not counselor_id:
         return None, None, None, None, None
-    counselor = (
-        db.query(models.Counselor)
-        .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
-        .first()
-    )
+    counselor = personal_api.require_visible_counselor(db, counselor_id)
     if counselor is None:
         return None, None, None, None, None
     preset = db.query(models.ModelPreset).filter(models.ModelPreset.id == counselor.preset_id).first() if counselor.preset_id else None
@@ -829,6 +826,7 @@ You only advise: never write, edit or fill in the student's Notebook, readings, 
         if row.get("role") in {"user", "assistant"}
     ]
     try:
+        personal_api.bind_counselor(db, counselor_id)
         service = AIService(db, username=username)
         if disable_thinking is not None:
             service.disable_thinking = disable_thinking

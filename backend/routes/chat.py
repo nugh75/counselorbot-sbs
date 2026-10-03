@@ -1,5 +1,6 @@
 """Endpoint di chat e QSA: /chat, /chat/stream, /chat/message,
 /qsa/guided-ui-texts, /qsa/audit, /qsa/upload, /tts."""
+from .. import personal_api
 import functools
 import io
 import logging
@@ -139,11 +140,7 @@ def _resolve_counselor(db, counselor_id):
     """
     if not counselor_id:
         return None, None, None, None, None, None
-    counselor = (
-        db.query(models.Counselor)
-        .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
-        .first()
-    )
+    counselor = personal_api.require_visible_counselor(db, counselor_id)
     if not counselor:
         return None, None, None, None, None, None
     provider = model = None
@@ -554,6 +551,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     request.language = _normalize_language(request.language)
 
     # 1. Retrieve Configuration and System Prompt based on Mode
+    personal_api.bind_counselor(db, request.counselor_id)
     ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
@@ -790,6 +788,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     request.language = _normalize_language(request.language)
 
     # Preparazione (usa la db della richiesta, ancora aperta qui)
+    personal_api.bind_counselor(db, request.counselor_id)
     ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
@@ -1129,7 +1128,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     _err_db.close()
             except Exception:
                 pass
-            yield f"data: {_json.dumps({'error': str(e)})}\n\n"
+            yield f"data: {_json.dumps({'error': str(e), **({'error_code': e.code} if isinstance(e, AIError) and e.code else {})})}\n\n"
 
     return StreamingResponse(
         event_gen(),
@@ -1433,7 +1432,7 @@ async def text_to_speech(request: TTSRequest, db: Session = Depends(get_db)):
 
         voice = request.voice
         if request.counselor_id and not request.voice_override:
-            counselor = db.query(models.Counselor).filter(models.Counselor.id == request.counselor_id).first()
+            counselor = personal_api.visible_counselors(db).filter(models.Counselor.id == request.counselor_id).first()
             if counselor and counselor.voice_mapping:
                 lang_code = request.voice.split("-")[0].lower()
                 custom_voice = counselor.voice_mapping.get(lang_code)

@@ -380,6 +380,7 @@ def set_preference(db, username, active, model):
             raise ChatGPTError("model")
         row.preferred_model = model
         db.query(models.PersonalAPISettings).filter_by(username=username).update({"enabled": False})
+        db.query(models.PersonalAIRouting).filter_by(username=username).update({"enabled": False})
     row.use_subscription = active
     db.commit()
 

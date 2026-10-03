@@ -73,6 +73,31 @@ class APISecret(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     updated_by = Column(String, nullable=True)
 
+
+class PersonalAPIConnection(Base):
+    __tablename__ = "personal_api_connections"
+    id = Column(String(32), primary_key=True)
+    username = Column(String, nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+    provider = Column(String, nullable=False)
+    model_name = Column(String, nullable=False)
+    encrypted_key = Column(Text, nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class PersonalAIRouting(Base):
+    __tablename__ = "personal_ai_routing"
+    username = Column(String, primary_key=True)
+    enabled = Column(Boolean, nullable=False, default=False)
+    default_connection_id = Column(String(32), ForeignKey("personal_api_connections.id", ondelete="SET NULL"), nullable=True)
+
+
+class PersonalCounselorConnection(Base):
+    __tablename__ = "personal_counselor_connections"
+    username = Column(String, primary_key=True)
+    counselor_id = Column(Integer, ForeignKey("counselors.id", ondelete="CASCADE"), primary_key=True)
+    connection_id = Column(String(32), ForeignKey("personal_api_connections.id", ondelete="CASCADE"), nullable=False)
+
 class Log(Base):
     __tablename__ = "logs"
 
@@ -445,6 +470,7 @@ class PqblDocument(Base):
     __tablename__ = "pqbl_documents"
 
     id = Column(String, primary_key=True)
+    counselor_id = Column(Integer, nullable=True)
     username = Column(String, nullable=True, index=True)
     filename = Column(String, nullable=True)
     text_hash = Column(String, index=True, nullable=False)
@@ -901,6 +927,8 @@ class Counselor(Base):
     __tablename__ = "counselors"
 
     id = Column(Integer, primary_key=True, index=True)
+    # null: institution counselor; otherwise private to this authenticated account.
+    owner_username = Column(String, nullable=True, index=True)
     slug = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)        # breve, mostrata all'utente (sorgente: italiano)
