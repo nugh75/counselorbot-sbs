@@ -226,9 +226,10 @@ function parseNotebook(payload: unknown): Record<string, string> {
     }));
 }
 
-export function TeacherNotebook() {
+export function TeacherNotebook({ showHeading = true }: { showHeading?: boolean }) {
     const { lang, t } = useI18n();
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
+    const GroupHeading = showHeading ? 'h3' : 'h2';
     const [values, setValues] = useState<Record<string, string>>({});
     const [baseline, setBaseline] = useState<Record<string, string>>({});
     const { data, loading, failed, forbidden, reload } = useTeacherResource('/api/user/teacher-notebook', parseNotebook);
@@ -296,17 +297,17 @@ export function TeacherNotebook() {
     if (forbidden) return <TeacherForbidden />;
 
     return (
-        <div className="rounded-lg border border-indigo-200 bg-white p-4">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-slate-800">
+        <div data-teacher-notebook className="rounded-lg border border-indigo-200 bg-white p-4">
+            {showHeading && <h2 className="flex items-center gap-2 text-lg font-bold text-slate-800">
                 <NotebookPen className="h-5 w-5 text-indigo-600" /> {texts.title}
-            </h2>
+            </h2>}
             <p className="mt-1 max-w-2xl text-sm text-slate-500">{texts.subtitle}</p>
             <p className="mt-1 max-w-2xl text-sm text-slate-500">{texts.summary}</p>
             <div className="mt-4 space-y-5">
                 {FIELD_GROUPS.map(group => (
                     <fieldset key={group.title} className="min-w-0">
                         <legend className="w-full border-b border-slate-200 pb-2">
-                            <h3 className="text-sm font-semibold text-slate-800">{texts[group.title]}</h3>
+                            <GroupHeading className="text-sm font-semibold text-slate-800">{texts[group.title]}</GroupHeading>
                         </legend>
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
                             {group.fields.map(([key, labelKey, placeholderKey, hintKey]) => (

@@ -180,3 +180,24 @@ sessione, mai pkill generici. Le prove compilate usano la stessa porta dopo aver
 arrestato il dev, con i comandi in `teacher-class-management-validation.md`.
 La baseline S13 è stata copiata in `/tmp/s14-parent-app`, servita solo su
 `127.0.0.1:3136` e arrestata al termine. Nessun altro worktree è stato modificato.
+
+
+## Pagina Taccuino docente (S16)
+
+`/docente` contiene solo l’ingresso illustrato; il form e il popup Classi vivono
+in `/docente/taccuino`. La suite riusa `scripts/dev-teacher-class-picker-tests.sh`
+e `127.0.0.1:3134`, dopo `ss -ltn 'sport = :3134'`; nessuna nuova porta o dato.
+Upstream `http://127.0.0.1:9`, API intercettate e dati anonimi in memoria; nessun
+backend, SSO, DB o container avviato. Da `frontend/`:
+
+```bash
+TEACHER_PICKER_BASE_URL=http://127.0.0.1:3134 node --test --experimental-strip-types tests/teacher-notebook-page.test.mjs
+GUIDE_BASE_URL=http://127.0.0.1:3134 GUIDE_SCREENS=teacher-notebook node --experimental-strip-types scripts/capture-guide.mjs
+```
+
+La cattura aggiorna solo home docente, pagina taccuino e popup nelle sei lingue.
+Tunnel: `ssh -N -L 3134:127.0.0.1:3134 <utente>@<server>`;
+URL `http://localhost:3134/docente/taccuino`. Senza fixture le API falliscono
+volutamente. Stop: Ctrl+C nel terminale di avvio, oppure TERM ai soli PID
+verificati di questa sessione. Fermare il dev prima di build e server compilato.
+Comandi completi, baseline e limiti: `teacher-notebook-page-validation.md`.

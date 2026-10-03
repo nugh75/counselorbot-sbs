@@ -14,7 +14,13 @@ strategic competences (for that, consult the "Strategic Competences" knowledge b
 
 ## Teacher notebook
 
-The notebook in `/docente` describes your role and usual practice. Its six optional
+Open **Teacher notebook** from `/docente` for its dedicated page
+`/docente/taccuino`, also available directly and after refresh. The header arrow
+returns to the Teacher area; the existing draft guard protects this exit.
+The home contains an entry rather than the form. The student notebook stays
+separate at `/profilo/taccuino`, including for accounts with both roles.
+
+The notebook describes your role and usual practice. Its six optional
 fields cover subjects, brief teaching experience, how you usually teach, an
 overview of roles and settings, your own development interests, and other role
 information. Visible field hints distinguish general practice from Class context,

@@ -19,6 +19,7 @@ import { categoryText } from '@/lib/i18n-institution-categories';
 import { classPickerText } from '@/lib/i18n-class-picker';
 import { guideAudienceText, type GuideAudienceKey } from '@/lib/i18n-guide-audiences';
 import { guideImages } from '@/lib/guide-images';
+import { teacherAreaName } from '@/lib/i18n-teacher-area';
 
 const TEACHER_ROUTES = ['/docente', '/docente', '/docente', '/docente', '/docente', '/docente', '/bussola'];
 
@@ -83,7 +84,7 @@ function GuideContent() {
         15: '/images/platform/classi.png',
     };
     const sectionImages: Record<number, { image: StaticImageData; caption: string }[]> = teacher ? {
-        1: [{ image: images['teacher-area'], caption: l('teacher1Title') }, { image: images['teacher-class-picker'], caption: classPickerText(lang, 'title') }],
+        1: [{ image: images['teacher-area'], caption: l('teacher1Title') }, { image: images['teacher-notebook'], caption: teacherAreaName(lang, 'taccuino') }, { image: images['teacher-class-picker'], caption: classPickerText(lang, 'title') }],
         2: [{ image: images['teacher-groups'], caption: l('teacher2Title') }, { image: images['institution-categories'], caption: categoryText(lang, 'title') }],
         3: [{ image: images['teacher-catalog'], caption: l('teacher3Title') }],
         4: [{ image: images['teacher-assignment'], caption: l('teacher4Title') }],
@@ -267,6 +268,9 @@ function GuideContent() {
 
                         {teacher && (
                             <Link href={TEACHER_ROUTES[n - 1]} className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{l('open')}</Link>
+                        )}
+                        {teacher && n === 1 && (
+                            <Link href="/docente/taccuino" className="ml-3 mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{teacherAreaName(lang, 'taccuino')}</Link>
                         )}
                         {sectionImages[n] && (
                             <div className="mt-6 space-y-6">
