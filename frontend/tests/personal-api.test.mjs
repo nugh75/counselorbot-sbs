@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
+import { personalAPIText } from '../src/lib/i18n-personal-api.ts';
 const origin = process.env.PERSONAL_API_BASE_URL || 'http://127.0.0.1:3135';
 let browser;
 before(async () => { browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true }); });
@@ -16,7 +17,7 @@ async function fixture({ role = 'student', width = 390, locale = 'it', configure
         const req = route.request(), path = new URL(req.url()).pathname, method = req.method(); let data = [], status = 200;
         if (path === '/api/auth/me') data = { authenticated: true, username: 'api-fixture', name: 'Test', groups: role === 'teacher' ? ['docenti'] : ['studenti'], is_admin: false };
         else if (path === '/api/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
-        else if (path === '/api/user/chatgpt') data = { enabled: false, available: false, use_subscription: false };
+        else if (path === '/api/user/chatgpt') data = { enabled: settings.chatgpt_enabled, available: settings.chatgpt_enabled, use_subscription: false };
         else if (path === '/api/orientation/status') data = { required: false, completed: true };
         else if (path === '/api/counselors') data = settings.counselors.map(c => ({ ...c, slug: 'test-'+c.id, language: ['*'], questionnaire_types: ['*'], is_active: true, model: 'test-model' }));
         else if (path === '/api/user/api-settings') data = { available: settings.available, configured: !!settings.connections.length, enabled: settings.enabled, active: settings.available && settings.enabled };
@@ -101,3 +102,42 @@ test('updated guide screenshot has fake names and no key', async () => {
     const f=await fixture({ width:1440 });
     try { await f.page.goto(`${origin}/profilo/api-personali`); await f.page.locator('#personal-counselor-1').waitFor(); assert.equal(await f.page.locator('#personal-key').count(),0); if(process.env.PERSONAL_API_CAPTURE_GUIDE==='1') { await f.page.locator('nextjs-portal').evaluateAll(nodes => nodes.forEach(n => { n.style.display='none'; })); await f.page.screenshot({ path:'public/guide/api-personali.png',fullPage:true }); } } finally { await f.context.close(); }
 });
+
+for (const role of ['student', 'teacher']) for (const locale of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
+    test(`${role}: API and ChatGPT have a named section at the bottom in ${locale}`, async () => {
+        const f = await fixture({ role, locale });
+        const area = role === 'teacher' ? 'docente' : 'profilo';
+        f.settings.chatgpt_enabled = true;
+        try {
+            await f.page.goto(`${origin}/${area}`);
+            const home = f.page.locator(role === 'teacher' ? '[data-teacher-area-home]' : '[data-personal-area-home]');
+            const section = home.getByRole('region', { name: personalAPIText(locale, 'sectionTitle'), exact: true });
+            await section.getByRole('heading', { level: 2 }).waitFor();
+            assert.equal(await section.getByRole('navigation', { name: personalAPIText(locale, 'sectionTitle'), exact: true }).count(), 1);
+            assert.deepEqual(await section.getByRole('link').evaluateAll(links => links.map(link => link.getAttribute('href'))), [`/${area}/api-personali`, `/${area}/chatgpt`]);
+            assert.equal(await section.evaluate(el => el === el.parentElement.lastElementChild), true);
+            for (const width of [320, 1440]) {
+                await f.page.setViewportSize({ width, height: 1050 });
+                await section.scrollIntoViewIfNeeded();
+                assert.equal(await section.evaluate(el => el.getBoundingClientRect().top >= el.previousElementSibling.getBoundingClientRect().bottom), true);
+                const first = await section.getByRole('link').nth(0).boundingBox();
+                const second = await section.getByRole('link').nth(1).boundingBox();
+                assert.ok(width < 768 ? second.y > first.y && second.x === first.x : second.y === first.y && second.x > first.x);
+                assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+                if (locale === 'it') await section.screenshot({ path: `/tmp/${area}-ai-section-${width}.png` });
+            }
+            await f.page.evaluate(() => document.documentElement.classList.add('dark'));
+            await f.page.setViewportSize({ width: 320, height: 1050 });
+            assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+            f.settings.available = false;
+            await f.page.evaluate(() => window.dispatchEvent(new Event('focus')));
+            await section.locator(`a[href="/${area}/api-personali"]`).waitFor({ state: 'detached' });
+            assert.equal(await section.locator(`a[href="/${area}/chatgpt"]`).count(), 1);
+            f.settings.chatgpt_enabled = false;
+            await f.page.evaluate(() => window.dispatchEvent(new Event('focus')));
+            await section.waitFor({ state: 'detached' });
+            assert.deepEqual(f.writes, []);
+            assert.deepEqual(f.errors, []);
+        } finally { await f.context.close(); }
+    });
+}
