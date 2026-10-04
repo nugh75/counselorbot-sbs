@@ -126,6 +126,12 @@ lavori. Il progresso PDF, invece, è locale al browser.
 
 ## Area personale e strumenti
 
+La sezione **API e ChatGPT** è in fondo alla panoramica dell’Area personale
+(`/profilo`) e dell’Area docenti (`/docente`), dopo tutte le sezioni degli strumenti.
+Raccoglie i collegamenti alle API personali e all’abbonamento ChatGPT abilitati
+per l’installazione, su due colonne da desktop e una da mobile.
+Se nessuna delle due funzioni è attiva, la sezione non compare.
+
 ### Abbonamento personale ChatGPT (opzionale)
 
 L’amministratore apre **Amministrazione → Configurazione → Generale →
