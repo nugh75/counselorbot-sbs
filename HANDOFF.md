@@ -1,3 +1,202 @@
+# Handoff: chat QSA raggiunge il backend di sviluppo e conserva gli errori
+Data: 2026-10-03 | Stato: implementato e verificato, da revisionare nella PR 40
+
+- Riprodotto con HTTP reale: `/api/health` 200, `/api/chat/stream` 500 con
+  `ENOTFOUND backend` usando solo `BACKEND_ORIGIN`. Le route streaming ignoravano
+  l’indirizzo host usato dal rewrite e dalla prova delle connessioni personali.
+- Resolver condiviso: `BACKEND_ORIGIN`, poi `BACKEND_INTERNAL_URL`, poi Docker.
+  Chat guidata, sito, OpenCode e voce usano lo stesso backend. Rewrite in fallback
+  dopo le route dinamiche: OpenCode passa davvero dalla route SSE senza buffering.
+- Proxy chat condiviso: identità, lingua e annullamento inoltrati, corpo upstream
+  trasmesso senza consumo. Errori HTTP prima dello stream e problemi di rete
+  conservano solo codici allowlist; nessuna esposizione di testi grezzi o chiavi.
+  Preparazione backend AI mappata a HTTP 502 con codice sicuro. Messaggi nelle
+  sei lingue negli step e follow-up; Ripeti mantiene fase, counselor e cronologia.
+- Presentazioni QSA/QSAr disattivano il ragionamento anche con ID/modalità legacy.
+  Scelta del ragionamento negli step di analisi conservata; prompt DB non cambiati.
+- Verifiche: 158 backend (66 chat/routing/connessioni + 92 privacy/preparazione),
+  249 unità frontend, 32 browser a 390/1440 px, 9 test HTTP reali attraverso Next;
+  TypeScript, lint mirati, i18n sei lingue, compileall, bash -n e guidance passati.
+- Build Next di produzione completa passata con font reali e TLS verificato:
+  `NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS=1 npm run build`. Sorgenti e
+  dipendenze installate copiati in `/tmp/counselorbot-qsa-frontend-build`, senza
+  file ambiente né metadati Git, per non saturare `/workspace`. Primo tentativo
+  diagnosticato come mancata fiducia CA; nessun mock o verifica TLS disabilitata.
+- Salvati nella bozza Codex requisito della variabile TLS e istruzioni `start_skill`
+  aggiornate, preservando installazione, segreti e repository; `saved`,
+  `requires_publish=true`. Salvataggio non applica la configurazione al runtime.
+  `API_KEY_OPENROUTER` ancora assente qui; nessuna chiave reale verificata o inferenza
+  esterna. Le prove della chat usano esclusivamente dati e upstream fittizi.
+- Guida nelle sei lingue e documentazione aggiornate; schermate API/protezione
+  riviste, nessun controllo o layout nuovo da fotografare. Nuovo launcher per
+  fixture HTTP `scripts/dev-stream-proxy-tests.sh`. Processi fixture della sessione
+  fermati al termine; PostgreSQL e dati persistenti conservati.
+- Stesso branch `feature/personal-api-keys` e PR 40. Il Codespace dell’utente va
+  aggiornato e frontend/backend riavviati con i comandi abituali; niente variabili
+  server aggiuntive per questa correzione. Nessun merge/deploy. Docker completo
+  non ricostruito: meno di 500 MiB liberi. Il successo con la chiave utente nel
+  Codespace resta da verificare dopo l’aggiornamento.
+
+---
+
+# Handoff: filtro esterno senza modello locale dalla pagina amministrativa
+Data: 2026-10-03 | Stato: implementato e verificato, da revisionare nella PR 40
+
+- Il test dell’utente segnala `personalAPI.errors.privacy`: richiesta bloccata
+  prima di OpenRouter per detector Ollama non disponibile, non chiave invalida.
+- In Generale, pannello «Protezione dei dati per i modelli esterni»: modalità
+  locale (default invariato e bloccante) o filtro automatico senza Ollama.
+  Salvataggio esplicito, limiti del filtro base visibili, nessuna chiamata LLM.
+- GET/PUT `/admin/external-privacy`, solo vero amministratore, CSRF e no-store;
+  aggiornamento atomico di tre impostazioni. Anche la config generica rifiuta
+  modifiche della protezione da parte dei ricercatori.
+- Detector legge flag/modello dallo snapshot di ogni AIService: cambio recepito
+  dalle nuove richieste nei worker già avviati. La redazione di email, telefoni
+  e identificativi rimane attiva; nessuna garanzia di anonimato in modalità base.
+- Verifiche: 176 test backend (105 protezione/credenziali e 71 ChatGPT/routing),
+  38 browser (16 protezione/Guida e 22 visibilità/attivazione), TypeScript,
+  lint mirati, i18n sei lingue, compileall, guidance-check e diff check passati.
+  Avvio backend dev completo, nuova rotta anonima risponde 401. DB e browser
+  isolati con dati fittizi; nessuna inferenza esterna né fatturazione.
+- Fixture demo corretta al nome reale `studente.demo`; nessuna asserzione tolta.
+  Screenshot `protezione-dati.png` catturato e verificato, Guida nelle sei lingue
+  e Markdown aggiornati. I processi locali 8002/3135 vengono fermati al termine.
+- Segreto `API_KEY_OPENROUTER`: assente nel processo corrente. Aggiunto soltanto
+  il requisito proxy verso `openrouter.ai` nella bozza dell’ambiente Codex;
+  risultato `saved`, `requires_publish=true`. Nessun valore letto, stampato o
+  copiato nel repository; bozza salvata non equivale a runtime applicato.
+  Validità/quote della chiave reale restano non verificate.
+- Branch `feature/personal-api-keys`, stessa PR 40, nessun merge/deploy.
+  Docker completo non ricostruito: meno di 500 MiB liberi contro riserva 5 GiB.
+  Il Codespace dell’utente deve aggiornare il branch prima di usare il pannello.
+
+---
+
+# Handoff: connessioni multiple e counselor privati nella PR 40
+Data: 2026-10-03 | Stato: implementato e verificato, da revisionare e unire
+
+- Branch `feature/personal-api-keys`, stessa PR 40 richiesta dall’utente;
+  incorpora attivazione amministrativa e visibilità già integrate. Nessun merge,
+  deploy o aggiornamento automatico del Codespace dell’utente.
+- Studenti e docenti salvano più connessioni nominate, anche chiavi di più
+  account dello stesso provider. Connessione predefinita personale/sistema e
+  associazioni counselor→connessione; una connessione può servire più counselor.
+  Modelli effettivi nel selettore, senza cambiare i preset dell’istituzione.
+- Counselor privati: creazione, modifica e cancellazione con istruzioni nella
+  lingua dell’utente, senza traduzione. Visibili e utilizzabili solo dal
+  proprietario; esclusi da admin, laboratorio, allineamenti, traduzioni e
+  catalogo Telegram condiviso. Controllo anche sugli ID inviati direttamente.
+- Schema: nuove tabelle `personal_api_connections`, `personal_ai_routing`,
+  `personal_counselor_connections`; campo proprietario aggiunto prima degli
+  snapshot dei prompt, counselor pQBL conservato in background. Migrazione
+  idempotente della vecchia configurazione senza reinserire la chiave.
+  Cifratura delle nuove chiavi legata anche all’ID connessione; selezione senza
+  ripiego su altre chiavi o credenziali di sistema in caso di errore personale.
+- Pulsante esplicito «Prova connessione e modello»: breve richiesta neutra,
+  quota/costo indicati prima della prova. Errori sicuri nelle sei lingue per
+  chiave, quota, modello, limiti, protezione dati e connessione; spiegazioni
+  anche negli step guidati, con «Ripeti passaggio» ancora utilizzabile.
+- Verifiche: 100 test backend credenziali/integrità/migrazione e 101 regressioni
+  chat/Bussola/Tavolo/diagrammi/preferenze/routing; 237 unità frontend;
+  65 browser (23 connessioni, 22 visibilità/attivazione, 20 recupero chat).
+  TypeScript, lint mirati, i18n (2947 chiavi / sei lingue), compileall,
+  guidance-check e diff check passati. Fixture readings di recovery aggiornata
+  al contratto reale null, conservando tutte le asserzioni.
+- Prova di avvio backend su DB `counselorbot_dev`: startup completo dopo la
+  migrazione, `/docs` e `/auth/me` rispondono; servizi locali RAG/embedding non
+  presenti in questo ambiente. Test DB su schemi isolati con rollback.
+  Nessuna chiamata LLM reale o fatturazione. Il catalogo pubblico OpenRouter
+  contiene `qwen/qwen3.8-27b:free`; non verifica quota/accesso della chiave utente.
+- Docker completo non ricostruito: meno di 500 MiB liberi nel filesystem vfs,
+  sotto la riserva di 5 GiB. Non rimossi container, immagini, volumi o dati.
+  Aggiornare tutti i worker prima di creare counselor privati: vecchie versioni
+  non riconoscono la proprietà e richiedono una verifica prima del rollback.
+- Documentazione Markdown, Guida nelle sei lingue, schermata senza chiavi e
+  manifest guidance aggiornati. Processi di questa sessione uvicorn 8002 e
+  frontend fixture 3135 fermati alla fine; PostgreSQL e archivi conservati.
+  Collegamento ChatGPT senza terminale ancora sospeso per il futuro pacchetto app.
+
+---
+
+# Handoff: PR unica per attivazione e visibilità delle connessioni AI personali
+Data: 2026-10-03 | Stato: implementato e verificato, da revisionare e unire
+
+- Branch `feature/personal-api-keys`, PR 40. Include i commit della PR 41 e
+  l’ultimo `main`; conflitti risolti senza rebase o force push. La PR 41 viene
+  sostituita dalla 40 su richiesta esplicita dell’utente. Nessun merge o deploy.
+- Commit di integrazione `eeb0fd23`; funzione `b85e3bfe`.
+- API personali: l’amministratore può abilitare dal pannello senza variabili
+  server. Chiave Fernet privata automatica, directory 0700 / file 0600,
+  pubblicazione atomica; volume Docker `personal_api_credentials`. Gli override
+  operatori esistenti sono rispettati. Una chiave persa con credenziali salvate
+  richiede ripristino, non viene rigenerata. Il meccanismo è condiviso con ChatGPT,
+  mantenendo archivi e chiavi separati.
+- Se disabilitate, entrambe le funzioni sono nascoste nelle aree personali e
+  nella Guida; link diretti rimandano all’area. Studenti e docenti hanno
+  `/profilo/api-personali`, `/docente/api-personali`, `/profilo/chatgpt` e
+  `/docente/chatgpt`. Lo spegnimento amministrativo seleziona il modello di
+  installazione per le nuove richieste e conserva credenziali e preferenza.
+- Attivare una modalità personale disattiva l’altra nello stesso aggiornamento,
+  con lock per account. I servizi annidati rispettano il richiedente autenticato,
+  anche consultando risultati altrui; le anteprime/demo non spendono credenziali.
+- Validazione: 81 test integrazione e credenziali; 222 regressioni routing/chat/
+  diagrammi/pQBL/PII; 202 smoke; 236 unità frontend; 58 test browser (11 API,
+  25 ChatGPT, 22 visibilità/Guida/attivazione nelle sei lingue); TypeScript,
+  i18n (2947 chiavi, sei lingue), lint mirati e diff check. Nessuna chiamata a
+  provider reale o fatturazione. Test PostgreSQL su schemi isolati con rollback.
+- Prova live con API reali dell’app, senza mock, su DB `counselorbot_dev`:
+  attivazione delle due funzioni da UI, chiave automatica API, navigazione nelle
+  due aree personali. Entrambi i flag riportati al valore iniziale (false),
+  nessuna chiave API utente salvata e nessun OAuth OpenAI effettuato.
+- Docker: Compose validato con fixture `.env` vuota esterna al repository;
+  controllo Dockerfile backend passato. Frontend segnala tre vecchi ENV in
+  formato legacy, file non modificato. Ricostruzione completa non eseguita:
+  circa 800 MiB liberi nel filesystem Docker vfs, sotto la riserva di 5 GiB.
+  Non rimossi container, immagini, volumi, database o dati persistenti.
+- Il collegamento ChatGPT grafico senza terminale resta sospeso per il futuro
+  pacchetto applicativo, come concordato. L’attivazione amministrativa è grafica;
+  l’attuale associazione account mantiene il componente locale ufficiale.
+- Le credenziali automatiche di sviluppo sono ignorate da Git e Docker e non
+  sono state stampate. Documentazione, Guida nelle sei lingue e schermata API
+  personali revisionate; manifest guidance aggiornato.
+- Processi di sviluppo di questa sessione: uvicorn 8002 / Next 3107;
+  al termine della verifica vengono fermati. Il Codespace dell’utente non è
+  accessibile a questa sessione e non è stato aggiornato automaticamente.
+
+---
+
+# Handoff: API personali per studenti e docenti
+Data: 2026-10-03 | Stato: IMPLEMENTATO, da revisionare e distribuire
+
+- Branch: `feature/personal-api-keys`.
+- Account: provider, modello, chiave cifrata Fernet, scelta personale/sistema;
+  pagine `/profilo/api-personali` e `/docente/api-personali`, stessa impostazione.
+- Admin reale: interruttore in Configurazione AI; policy `personal_api_enabled`,
+  default spento, guardia anche nell’API generica config per i ricercatori.
+- Runtime: chat, Bussola, Assistente, pQBL, analisi combinata, sintesi PDF,
+  Tavolo e diagrammi usano la scelta account. Nessun ripiego sulle chiavi di
+  sistema quando la connessione personale fallisce. Filtro PII invariato;
+  costi personali esclusi dal blocco del budget di sistema.
+- Verifiche: 250 test backend (PostgreSQL `counselorbot_test` isolato), 11 test
+  browser (sei lingue, tema scuro, 320/390/1440 px), TypeScript, i18n, lint
+  dei file nuovi, guidance-check. Build Docker backend/frontend riuscite;
+  import delle nuove rotte e del modello verificato nell’immagine backend.
+- Limite preesistente: lint globale fallisce in
+  `frontend/src/components/visual/NewDeckDialog.tsx:36`
+  (`react-hooks/set-state-in-effect`); il file non è cambiato.
+- Nessun deploy o aggiornamento dei container di produzione. Prima di abilitare
+  in produzione configurare `PERSONAL_API_ENCRYPTION_KEY` sul backend e
+  ricostruire le immagini; nessun comando sudo o modifica nginx necessario.
+  Dettagli: `docs/operations/personal-api-settings.md`.
+- Le schermate guida usano account e chiavi fittizie; campo chiave vuoto.
+- Associazione GitHub Project non disponibile: il token risponde
+  `Resource not accessible by integration` alla lettura `projectsV2`.
+- Processi di prova fermati: Next fixture :3135 e container PostgreSQL
+  `counselorbot-personal-api-test-db`. Script riproducibile e stop documentati
+  in `docs/operations/live-dev-environment.md`.
+
+---
+
 # Handoff: Scelta del taccuino nel contesto chat (docente)
 Data: 2026-09-27 | Stato: IMPLEMENTATO (backend, frontend, test, doc — in attesa di PR/merge)
 
@@ -532,3 +731,74 @@ PostgreSQL dedicato :5435. Avvio backend con
 Processi lasciati attivi: backend reloader PID 24513, frontend npm PID 24514 (Next PID 24533). Arresto: `kill 24513 24533`, senza toccare
 PostgreSQL o produzione. Log `/tmp/chatgpt-dev-backend.log` e
 `/tmp/chatgpt-dev-frontend.log`. Il Codespace dell'utente non e' stato aggiornato.
+
+
+## Attivazione ChatGPT dall’Amministrazione (2026-10-03)
+
+L’utente vuole abilitare la funzione dall’interfaccia senza generare chiavi o
+modificare file con comandi. Ramo `feature/chatgpt-admin-activation` creato da
+main aggiornato (`dbeb6167`, PR #39 verificata MERGED). Nessun agente delegato.
+
+Nuova scheda in Amministrazione → Configurazione → Generale → Collegamento
+ChatGPT: Abilita/Disabilita, stato e salvataggio immediato, collegamento all’Area
+personale. UI e messaggi backend in IT/EN/ES/FR/DE/SV, guida aggiornata nelle sei
+lingue. Il controllo cambia solo la disponibilità del servizio; ogni persona
+continua a collegare e attivare il proprio account separatamente.
+
+GET/PUT `/admin/chatgpt/settings` ammettono solo un amministratore autenticato
+reale; esclusi ricercatori e view-as, PUT protetto dall’header anti-CSRF e payload
+booleano stretto. `Config.chatgpt_enabled` persistente precede la variabile
+iniziale `CHATGPT_ENABLED`. Effetto sulle nuove richieste senza riavvio; la
+lettura del flag non esegue autoflush di scritture chat/punteggi pendenti.
+`chatgpt_*` esclusi dalla configurazione generica e scrittura rifiutata lì, per
+impedire bypass della preparazione della chiave e modifica dell’host ID.
+
+Prima attivazione: chiave Fernet privata in chatgpt_credentials/credential.key
+(0700 directory, 0600 file). Scrittura/fsync in temporaneo e pubblicazione
+atomica senza sovrascrittura: worker concorrenti convergono sulla stessa chiave.
+Nuovo volume Docker dedicato montato su /app/chatgpt_credentials; esclusioni
+Git/Docker, nessuna chiave restituita al browser o inserita nell’immagine.
+Le chiavi fornite dall’operatore restano prioritarie, anche se non valide.
+`CHATGPT_CREDENTIALS_DIR` può selezionare un altro archivio persistente.
+
+Disattivazione conserva chiave e credenziali, blocca nuove associazioni e
+inferenze personali senza ripiego a pagamento. Funziona anche se la chiave è
+mancante. Chiave persa con grant esistenti: richiede ripristino dal backup,
+non genera un sostituto. Chiave non valida o archivio non scrivibile: errore e
+nessuna attivazione salvata. Backup deve includere DB e chiave protetta coerenti.
+Procedura principale ora via UI in docs/operations/chatgpt-subscription.md.
+
+Verifiche: 53 backend integrazione/amministrazione, 72 routing/PII, 202 smoke
+eseguiti dal runner, 236 unitari frontend passati. Browser: 13 prove nuove
+(6 lingue, 390/1440 px + ricercatore) e 20 regressioni connessione personale/
+allineamento prompt passate. Controllo ricercatore attende davvero il 403 prima
+di verificare che il comando sia assente. TypeScript e i18n (2944 chiavi × sei
+lingue) passati; ESLint mirato zero errori, un warning preesistente in ConfigForm
+sulla dipendenza getConfigValue. Nessun account OpenAI reale o LLM chiamato.
+
+Prova aggiuntiva sull’app dev effettiva (API non simulate): dal pannello
+attivato, ricaricato e disattivato; stato verificato tramite API. Nel solo DB
+counselorbot_dev ora la scelta amministrativa è false, con chiave pronta.
+Chiave runtime conservata in /workspace/counselorbot-sbs/chatgpt_credentials,
+ignorata da Git e non letta/stampata. Screenshot /tmp/chatgpt-admin-live-390.png;
+fixture UI /tmp/chatgpt-admin-390.png e /tmp/chatgpt-admin-1440.png.
+Nessuna associazione OAuth o modifica di prompt/dati di produzione.
+
+Docker: check del Dockerfile backend passa; frontend restituisce tre avvisi
+preesistenti LegacyKeyValueFormat e codice 1. Compose validato con copia e
+variabili/credenziali fittizie fuori repo, perché qui non c’è un .env reale.
+Il rebuild completo non è eseguibile con circa 983 MiB liberi e driver vfs:
+una build precedente ha già saturato il disco; preflight in
+/tmp/chatgpt-admin-compose-validation/build-preflight.log. Nessuna nuova
+immagine finale prodotta, nessun container/volume rimosso o riavviato.
+Il normale aggiornamento dell’operatore deve ricostruire le immagini e applicare
+il volume persistente. Limiti SIWC/ammissibilità/licenza della PR precedente
+restano documentati; l’attivazione non cambia i piani ammessi da OpenAI.
+
+Dev lasciato attivo: backend :8002 (reloader PID 24513), frontend :3107 (npm
+PID 24514, Next PID 24533), PostgreSQL dedicato :5435. Arresto con
+`kill 24513 24533`, senza toccare DB/produzione. Venv locale conservata tramite
+symlink alla copia in /tmp, come nella sezione precedente. Nessun intervento
+sul Codespace dell’utente: aggiornare la nuova PR/main dopo il merge e riavviare
+una volta per caricare il codice; poi l’attivazione dal pannello non richiede
+ulteriori riavvii. Nessun merge o deploy da parte dell’agente.

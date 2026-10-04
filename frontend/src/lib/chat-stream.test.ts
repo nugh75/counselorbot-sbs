@@ -1,7 +1,55 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { streamChat, IncompleteChatStreamError } from './chat-stream.ts';
+import { streamChat, IncompleteChatStreamError, ChatProviderError } from './chat-stream.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { chatErrorText } from './i18n-personal-api.ts';
+
+for (const [status, body, code] of [
+    [502, { detail: { error_code: 'personalAPI.errors.privacy' }, private: 'Private provider details' }, 'personalAPI.errors.privacy'],
+    [429, { detail: 'personalAPI.errors.quota' }, 'personalAPI.errors.quota'],
+    [500, { error_code: 'chat.errors.connection' }, 'chat.errors.connection'],
+    [422, { detail: [{ msg: 'Private request details' }] }, 'chat.errors.configuration'],
+    [401, { detail: 'Private access details' }, 'chat.errors.access'],
+    [500, { error_code: 'personalAPI.errors.Private provider details' }, 'chat.errors.connection'],
+] as const) {
+    test(`HTTP ${status} reaches the caller with ${code} before SSE`, async (t) => {
+        t.mock.method(globalThis, 'fetch', async () => Response.json(body, { status }));
+        await assert.rejects(streamChat({}, () => {}), (error: unknown) => {
+            assert.ok(error instanceof ChatProviderError);
+            assert.equal(error.code, code);
+            assert.equal(error.message.includes('Private'), false);
+            return true;
+        });
+    });
+}
+
+test('a gateway HTML error does not expose its body or masquerade as a partial response', async (t) => {
+    t.mock.method(globalThis, 'fetch', async () => new Response('<html>Private gateway details</html>', { status: 502 }));
+    await assert.rejects(streamChat({ partial_response: 'Testo già visibile' }, () => {}), (error: unknown) => {
+        assert.ok(error instanceof ChatProviderError);
+        assert.equal(error.code, 'chat.errors.connection');
+        return true;
+    });
+});
+
+test('chat infrastructure errors have messages in all six interface languages', () => {
+    for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv'] as const) {
+        for (const reason of ['connection', 'access', 'configuration']) assert.ok(chatErrorText(lang, `chat.errors.${reason}`));
+        assert.ok(chatErrorText(lang, 'personalAPI.errors.privacy'));
+        assert.equal(chatErrorText(lang, 'chat.errors.private-fixture-key'), null);
+    }
+});
+
+test('safe provider codes reach the caller without exposing upstream messages', async (t) => {
+    t.mock.method(globalThis, 'fetch', async () => new Response(event({ error: 'Private provider details', error_code: 'personalAPI.errors.quota' })));
+    await assert.rejects(streamChat({}, () => {}), (error: unknown) => {
+        assert.ok(error instanceof ChatProviderError);
+        assert.equal(error.code, 'personalAPI.errors.quota');
+        assert.equal(error.message.includes('Private'), false);
+        return true;
+    });
+});
 
 const event = (data: object) => `data: ${JSON.stringify(data)}\n\n`;
 

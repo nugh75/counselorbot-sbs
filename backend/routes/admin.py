@@ -1126,17 +1126,25 @@ async def export_logs(
 @router.get("/admin/config", response_model=List[schemas.ConfigResponse])
 async def read_config(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     # Secrets have a dedicated masked endpoint and must never reach the browser.
-    configs = db.query(models.Config).filter(~models.Config.key.like("api_key_%")).all()
+    configs = db.query(models.Config).filter(~models.Config.key.like("api_key_%"), ~models.Config.key.like("chatgpt_%"), ~models.Config.key.like("personal_api_%")).all()
     return configs
 
 
 @router.post("/admin/config", response_model=schemas.ConfigResponse)
 async def create_or_update_config(config: schemas.ConfigCreate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    if config.key.startswith("chatgpt_"):
+        raise HTTPException(409, "chatgpt.errors.adminSettings")
+    if config.key.startswith("personal_api_"):
+        if not current_user.get("is_admin"):
+            raise HTTPException(403, "Accesso riservato agli amministratori")
+        raise HTTPException(409, "Usare il pannello API personali in Amministrazione")
     if provider_from_config_key(config.key):
         raise HTTPException(
             status_code=409,
             detail="Le chiavi API si modificano in ai4educ Console, pagina Segreti",
         )
+    if config.key in {'external_pii_redact', 'external_pii_fallback', 'pii_ner_enabled', 'pii_ner_model'} and not current_user.get('is_admin'):
+        raise HTTPException(403, 'Accesso riservato agli amministratori')
     from ..model_context import validate_routing_config
     try:
         validate_routing_config(config.key, config.value)

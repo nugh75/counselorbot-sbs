@@ -1,5 +1,6 @@
 """Endpoint di chat e QSA: /chat, /chat/stream, /chat/message,
 /qsa/guided-ui-texts, /qsa/audit, /qsa/upload, /tts."""
+from .. import personal_api
 import functools
 import io
 import logging
@@ -139,11 +140,7 @@ def _resolve_counselor(db, counselor_id):
     """
     if not counselor_id:
         return None, None, None, None, None, None
-    counselor = (
-        db.query(models.Counselor)
-        .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
-        .first()
-    )
+    counselor = personal_api.require_visible_counselor(db, counselor_id)
     if not counselor:
         return None, None, None, None, None, None
     provider = model = None
@@ -204,8 +201,8 @@ def _apply_counselor_overrides(
 # Passi in cui la risposta e' presentazione o patto, non analisi: il testo e'
 # gia' nel prompt del passo e il pensiero non lo cambia, costa soltanto. La
 # regola vince sulla scelta dello studente perche' non c'e' su cosa ragionare.
-NO_REASONING_STEP_MODES = frozenset({"intro"})
-NO_REASONING_STEP_IDS = frozenset({"qap-intro", "qpcc-intro", "qpcs-intro", "savickas-patto"})
+NO_REASONING_STEP_MODES = frozenset({"intro", "qsa-intro"})
+NO_REASONING_STEP_IDS = frozenset({"intro", "qsar-intro", "qap-intro", "qpcc-intro", "qpcs-intro", "savickas-patto"})
 
 
 def _step_forbids_reasoning(step) -> bool:
@@ -554,7 +551,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     request.language = _normalize_language(request.language)
 
     # 1. Retrieve Configuration and System Prompt based on Mode
-    ai_service = AIService(db)
+    personal_api.bind_counselor(db, request.counselor_id)
+    ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
@@ -566,11 +564,15 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         is_first_step = bool(first_step and first_step.id == step.id)
         if is_first_step:
             session_memory.clear(session_id)
-    prepared = prepare_chat_turn(
-        db, ai_service, request, session_id, identity,
-        c_persona=c_persona, counselor_name=c_name, provider=c_provider, model=c_model,
-        create_anonymous_code=False, allow_generation=True,
-    )
+    try:
+        prepared = prepare_chat_turn(
+            db, ai_service, request, session_id, identity,
+            c_persona=c_persona, counselor_name=c_name, provider=c_provider, model=c_model,
+            create_anonymous_code=False, allow_generation=True,
+        )
+    except AIError as exc:
+        code = exc.code if exc.code in personal_api.CONNECTION_ERROR_CODES else "chat.errors.connection"
+        raise HTTPException(502, detail={"error_code": code}) from None
     prompt_key = prepared.prompt_key
     phase_prompt_key = prepared.phase_prompt_key
     effective_message = prepared.effective_message
@@ -691,6 +693,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "system_prompt_key": prompt_key,
         "guided_phase_prompt_key": phase_prompt_key,
         "provider": _provider,
+        "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
         "model_attempts": getattr(ai_service, "last_attempts", []),
         "context_budget": getattr(ai_service, "last_context_report", None),
         "journey_coverage": prepared.components.get("journey_coverage"),
@@ -789,7 +792,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     request.language = _normalize_language(request.language)
 
     # Preparazione (usa la db della richiesta, ancora aperta qui)
-    ai_service = AIService(db)
+    personal_api.bind_counselor(db, request.counselor_id)
+    ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
     c_provider, c_model, c_persona, c_name, c_disable_thinking, c_reasoning_budget = _resolve_counselor(db, request.counselor_id)
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
@@ -801,11 +805,15 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         is_first_step = bool(first_step and first_step.id == step.id)
         if is_first_step and not request.partial_response:
             session_memory.clear(session_id)
-    prepared = prepare_chat_turn(
-        db, ai_service, request, session_id, identity,
-        c_persona=c_persona, counselor_name=c_name, provider=c_provider, model=c_model,
-        create_anonymous_code=False, allow_generation=True,
-    )
+    try:
+        prepared = prepare_chat_turn(
+            db, ai_service, request, session_id, identity,
+            c_persona=c_persona, counselor_name=c_name, provider=c_provider, model=c_model,
+            create_anonymous_code=False, allow_generation=True,
+        )
+    except AIError as exc:
+        code = exc.code if exc.code in personal_api.CONNECTION_ERROR_CODES else "chat.errors.connection"
+        raise HTTPException(502, detail={"error_code": code}) from None
     prompt_key = prepared.prompt_key
     phase_prompt_key = prepared.phase_prompt_key
     effective_message = prepared.effective_message
@@ -856,6 +864,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 "guided_phase_prompt_key": phase_prompt_key,
                 "provider": provider,
                 "model": model,
+                "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
                 "model_attempts": getattr(ai_service, "last_attempts", []),
                 "context_budget": getattr(ai_service, "last_context_report", None),
                 "journey_coverage": prepared.components.get("journey_coverage"),
@@ -1127,7 +1136,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     _err_db.close()
             except Exception:
                 pass
-            yield f"data: {_json.dumps({'error': str(e)})}\n\n"
+            yield f"data: {_json.dumps({'error': str(e), **({'error_code': e.code} if isinstance(e, AIError) and e.code else {})})}\n\n"
 
     return StreamingResponse(
         event_gen(),
@@ -1155,7 +1164,7 @@ async def chat_message(
     resolved_conversation_id = conversation_id_for(session_id, conversation_id)
     language = _normalize_language(language)
     # 1. Retrieve Configuration and System Prompt based on Mode
-    ai_service = AIService(db)
+    ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
 
     prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
     system_prompt = ai_service.config.get(
@@ -1206,6 +1215,7 @@ async def chat_message(
         "model": model,
         "questionnaire_type": questionnaire_type,
         "conversation_summary_length": len(conversation_summary),
+        "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
         "usage": usage,
         "cost_usd": cost_usd,
     }, "user_input", "bot_response")
@@ -1430,7 +1440,7 @@ async def text_to_speech(request: TTSRequest, db: Session = Depends(get_db)):
 
         voice = request.voice
         if request.counselor_id and not request.voice_override:
-            counselor = db.query(models.Counselor).filter(models.Counselor.id == request.counselor_id).first()
+            counselor = personal_api.visible_counselors(db).filter(models.Counselor.id == request.counselor_id).first()
             if counselor and counselor.voice_mapping:
                 lang_code = request.voice.split("-")[0].lower()
                 custom_voice = counselor.voice_mapping.get(lang_code)

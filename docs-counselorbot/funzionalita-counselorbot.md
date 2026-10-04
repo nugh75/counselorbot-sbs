@@ -128,8 +128,24 @@ lavori. Il progresso PDF, invece, è locale al browser.
 
 ### Abbonamento personale ChatGPT (opzionale)
 
-Nell’Area personale, **Il tuo abbonamento ChatGPT** consente il collegamento
-se chi gestisce il server ha configurato e attivato la funzione. L’accesso a
+L’amministratore apre **Amministrazione → Configurazione → Generale →
+Collegamento ChatGPT** e preme **Abilita collegamento ChatGPT**. Il server
+prepara automaticamente la protezione delle credenziali e salva la scelta:
+non servono comandi, modifica di file o riavvio. L’interfaccia indica lo stato
+e conferma subito il salvataggio. Il controllo è riservato agli amministratori;
+non è disponibile ai ricercatori o alle anteprime di ruolo.
+
+**Disabilita collegamento ChatGPT** nasconde la funzione agli utenti e conserva
+gli account collegati. Le nuove richieste usano il modello dell’installazione. La riattivazione mantiene i collegamenti. Se la chiave di
+protezione manca per account esistenti, occorre ripristinarla dal backup del
+server; il pannello non la sostituisce automaticamente. Chi gestisce il server
+deve includere l’archivio protetto delle credenziali nei backup.
+
+Nell’Area personale (`/profilo/chatgpt`) e nell’Area docenti (`/docente/chatgpt`),
+**Il tuo abbonamento ChatGPT** consente il collegamento quando la funzione è
+attiva. Se disabilitata, la voce, i badge e la sezione della Guida non compaiono;
+un accesso diretto rimanda alla rispettiva area personale. **Apri il tuo collegamento ChatGPT** nel pannello
+amministrativo porta direttamente a questa scheda. L’accesso a
 CounselorBot e quello a ChatGPT sono distinti. La funzione usa il flusso ufficiale
 Sign in with ChatGPT per inferenza diretta, attualmente in anteprima: piani e
 installazioni ammessi vanno verificati prima dell’attivazione; un piano di
@@ -313,6 +329,86 @@ docenti. Le bozze delle restituzioni e gli obiettivi collegati non sono divulgat
 dal flusso delle assegnazioni. L’AI non salva, adotta, condivide o consegna al posto
 della persona.
 
+## API personali
+
+Quando l’amministratore abilita **API personali** in Configurazione AI,
+studenti e docenti trovano il collegamento nella propria pagina personale:
+`/profilo/api-personali` per l’Area personale e `/docente/api-personali` per
+l’Area docenti. Le due pagine condividono le impostazioni dello stesso account.
+La funzione è disabilitata per default e il ricercatore non può abilitarla.
+L’attivazione prepara automaticamente la protezione delle chiavi: non occorre
+configurare variabili, modificare file o eseguire comandi sul server. Le chiavi
+sono conservate dopo riavvii e aggiornamenti; l’archivio protetto va incluso
+nei backup insieme al database.
+
+La persona può salvare **più connessioni AI**, ciascuna con nome riconoscibile,
+provider, modello e chiave API, anche dello stesso provider o di account esterni
+diversi. Le chiavi sono cifrate e non vengono restituite né mostrate dopo il
+salvataggio. In modifica, il campo vuoto conserva la chiave per quel provider;
+cambiarlo richiede una chiave nuova. L’eliminazione di una connessione chiede
+conferma, rimuove la chiave e le associazioni e conserva i counselor.
+
+Nella stessa pagina si può associare ciascuna connessione a **uno o più counselor**.
+I counselor mantengono la propria personalità e i prompt del percorso, usando
+modello e chiave della connessione assegnata. La connessione predefinita si
+applica ai counselor senza associazione e alle funzioni senza counselor; può
+essere impostata su API di sistema. La lista counselor mostra il modello
+assegnato nell’account. Le scelte non cambiano i counselor dell’istituzione.
+**Usa le mie API personali** e **Salva associazioni e utilizzo** attivano le scelte;
+la disattivazione torna alle API di sistema. API personali e abbonamento ChatGPT
+restano alternative, conservando tutte le credenziali.
+
+Studenti e docenti possono **creare counselor personali**, con nome, descrizione
+e istruzioni **nella propria lingua**, senza traduzione obbligatoria. Le
+istruzioni si aggiungono alle regole del percorso. I prompt di fabbrica restano
+in inglese. I counselor sono privati nell’account: non compaiono agli altri utenti,
+nel catalogo amministrativo o nei flussi di allineamento dei prompt. Si possono
+modificare o eliminare con conferma e selezionare nelle nuove conversazioni.
+
+**Prova connessione e modello** invia su richiesta un breve messaggio neutro al
+modello salvato, senza contenuti personali. Consuma quota e può avere un costo;
+la pagina lo indica prima della prova. Quota esaurita, modello indisponibile,
+chiave rifiutata, limite di richieste e servizio di protezione dei dati assente
+hanno messaggi distinti nelle sei lingue, anche negli step guidati. Una prova
+breve riuscita non garantisce quote future o capacità sull’intero percorso.
+La chat distingue anche un servizio non raggiungibile, una sessione di accesso
+non valida e un passaggio incompatibile con la configurazione corrente. Questi
+messaggi rimangono leggibili nelle sei lingue anche quando il problema precede
+l’inizio della risposta; i dettagli grezzi del provider restano nascosti.
+**Ripeti passaggio** ritenta lo stesso step con il counselor scelto, conservando
+la conversazione precedente. La presentazione QSA/QSAr non attiva il ragionamento
+del modello, anche con configurazioni precedenti dello step.
+Il modulo protegge le bozze; errori di salvataggio conservano chiave e campi.
+Le configurazioni precedenti vengono conservate come connessioni predefinite.
+I costi personali restano a carico dell’account provider di ciascuna chiave.
+
+In **Amministrazione → Configurazione → Generale → Protezione dei dati per i
+modelli esterni**, il vero amministratore sceglie **Filtro di base + modello
+locale** oppure **Solo filtro di base (senza Ollama)** e salva. La prima modalità
+rimane quella predefinita e blocca le richieste esterne se il servizio locale
+non risponde. La seconda permette di provare l’app in cloud senza modelli locali,
+mantenendo il filtro automatico di email, telefoni e identificativi riconosciuti.
+Non garantisce la rimozione di nomi, indirizzi o tutte le informazioni sanitarie
+dal testo libero: i limiti sono mostrati prima del salvataggio. Per le prove si
+usano dati fittizi. La scelta vale anche per API personali e ChatGPT; si applica
+alle nuove richieste su tutti i processi senza riavvio. Nessun cambio automatico
+quando si apre la pagina. Il ricercatore non può modificare questa protezione.
+
+La scelta vale per chat, Bussola, Assistente, studio da PDF, analisi combinata,
+sintesi PDF dei risultati, Tavolo e diagrammi, secondo le associazioni salvate. Il filtro dei dati per provider esterni resta applicato. I servizi
+locali, la voce, i benchmark e il terminale tecnico mantengono la configurazione
+di sistema. Sono ammessi i provider esterni supportati, senza URL arbitrari.
+Se la chiave personale dà errore non si passa automaticamente alle chiavi di
+sistema.
+
+Spegnendo la funzione, l’amministratore fa usare le API di sistema alle nuove
+richieste e nasconde i collegamenti dalle aree personali. Le richieste già
+avviate terminano con la configurazione iniziale. Le chiavi salvate restano
+cifrate. Anche il modulo e la sezione della Guida scompaiono: un link diretto
+rimanda alla rispettiva area personale. Alla riattivazione riprende la scelta
+salvata. I dettagli di attivazione automatica e ripristino sono in
+`docs/operations/personal-api-settings.md`.
+
 ## Docenti, ricercatori e amministrazione
 
 Nel menu della header la voce verso l'area è «Area docente» con l'icona a berretto
@@ -447,7 +543,7 @@ I ricercatori dispongono anche di contatti e somministrazioni tramite codici ano
 secondo le autorizzazioni. L’amministrazione tecnica (`/admin`) configura counselor,
 prompt, passi guidati, strumenti, lingue, cataloghi, modelli AI, trascrizione, basi
 documentali, registri, costi e strumenti di audit. Il ruolo docente non concede
-questi permessi. Le credenziali dei provider sono gestite centralmente in ai4educ
+questi permessi. Le credenziali di sistema dei provider sono gestite centralmente in ai4educ
 Console; CounselorBot mostra stato e controlli senza consentire di modificarle.
 
 ## Esportazioni e limiti

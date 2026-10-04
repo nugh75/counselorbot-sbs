@@ -9,7 +9,6 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
 import secrets
 import threading
 import time
@@ -22,6 +21,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from . import models
+from .credential_storage import CredentialStore, CredentialStorageError
 
 ISSUER = "https://auth.openai.com"
 RESOURCE = "https://api.openai.com/v1"
@@ -32,6 +32,7 @@ DIRECT_SCOPE = "chatgpt.tokens.use.direct"
 _jwks = None
 _jwks_time = 0
 _jwks_lock = threading.Lock()
+storage = CredentialStore("CHATGPT", "chatgpt_credentials")
 
 
 class ChatGPTError(Exception):
@@ -40,23 +41,56 @@ class ChatGPTError(Exception):
         super().__init__("chatgpt.errors." + code)
 
 
-def enabled():
+def enabled(db=None):
+    if db is not None:
+        # Checking a flag must not flush a caller's pending chat/score writes.
+        with db.no_autoflush:
+            setting = db.query(models.Config).filter_by(key="chatgpt_enabled").first()
+        if setting is not None:
+            return setting.value == "true"
     return os.getenv("CHATGPT_ENABLED", "false").lower() in {"1", "true", "yes"}
 
 
+def managed_key_path():
+    return storage.path()
+
+
 def cipher():
-    key = os.getenv("CHATGPT_CREDENTIAL_KEY", "").strip()
-    filename = os.getenv("CHATGPT_CREDENTIAL_KEY_FILE", "").strip()
     try:
-        if filename:
-            key = Path(filename).read_text().strip()
-        return Fernet(key.encode())
-    except (ValueError, OSError):
-        raise ChatGPTError("notConfigured") from None
+        return storage.cipher()
+    except CredentialStorageError as exc:
+        raise ChatGPTError(exc.code) from None
 
 
-def require_ready():
-    if not enabled():
+def _has_credentials(db):
+    with db.no_autoflush:
+        return db.query(models.ChatGPTConnection).filter(models.ChatGPTConnection.encrypted_credentials.isnot(None)).first() is not None
+
+
+def prepare_key(db):
+    try:
+        storage.prepare(lambda: _has_credentials(db))
+    except CredentialStorageError as exc:
+        raise ChatGPTError(exc.code) from None
+
+
+def installation_status(db):
+    return {"enabled": enabled(db), **storage.status(lambda: _has_credentials(db))}
+
+
+def set_installation_enabled(db, active):
+    db.execute(insert(models.Config).values(key="chatgpt_enabled", value="false", description="Personal ChatGPT connections enabled")
+               .on_conflict_do_nothing(index_elements=["key"]))
+    setting = db.query(models.Config).filter_by(key="chatgpt_enabled").with_for_update().one()
+    if active:
+        prepare_key(db)
+    setting.value = "true" if active else "false"
+    db.commit()
+    return installation_status(db)
+
+
+def require_ready(db=None):
+    if not enabled(db):
         raise ChatGPTError("disabled")
     cipher()
 
@@ -165,7 +199,7 @@ def validate_credentials(data, client_id, *, nonce=None, subject=None):
 
 
 def start_link(db, username):
-    require_ready()
+    require_ready(db)
     now = datetime.now(timezone.utc)
     # A single stable host identifier survives restarts; concurrent workers agree.
     db.execute(insert(models.Config).values(key="chatgpt_host_id", value="urn:uuid:" + str(uuid.uuid4()),
@@ -195,7 +229,7 @@ def read_link(db, token, *, lock=False):
 
 
 def link_parameters(db, token):
-    require_ready()
+    require_ready(db)
     row = read_link(db, token)
     host_id = db.query(models.Config).filter_by(key="chatgpt_host_id").one().value
     return {"nonce": row.nonce, "client_id": row.expected_client_id or "dynamic_agent_client",
@@ -204,7 +238,7 @@ def link_parameters(db, token):
 
 def remember_registration(db, token, client_id):
     """Keep the issued public client ID before code exchange; no grant yet."""
-    require_ready()
+    require_ready(db)
     if client_id == "dynamic_agent_client":
         raise ChatGPTError("invalidCredentials")
     link = read_link(db, token)
@@ -221,7 +255,7 @@ def remember_registration(db, token, client_id):
 
 
 def complete_link(db, token, client_id, data):
-    require_ready()
+    require_ready(db)
     if client_id == "dynamic_agent_client":
         raise ChatGPTError("invalidCredentials")
     link = read_link(db, token)
@@ -246,13 +280,17 @@ def complete_link(db, token, client_id, data):
 def preference(db):
     if not owner(db):
         return None
+    with db.no_autoflush:
+        setting = db.query(models.Config).filter_by(key="chatgpt_enabled").first()
+    if setting is not None and setting.value != "true":
+        return None  # An explicit administrator decision selects installation AI.
     with credential_session(db) as private:
         row = private.query(models.ChatGPTConnection).filter_by(username=owner(db), use_subscription=True).first()
         return row.preferred_model if row and row.preferred_model else None
 
 
 def access_token(db):
-    require_ready()
+    require_ready(db)
     username = owner(db)
     if not username:
         raise ChatGPTError("signIn")
@@ -329,8 +367,10 @@ def list_models(db):
 
 
 def set_preference(db, username, active, model):
+    from .personal_api import lock_choice
+    lock_choice(db, username)
     if active:
-        require_ready()
+        require_ready(db)
     row = db.query(models.ChatGPTConnection).filter_by(username=username).with_for_update().first()
     if row is None:
         raise ChatGPTError("reconnect")
@@ -339,20 +379,23 @@ def set_preference(db, username, active, model):
         if not model or model not in {item["slug"] for item in row.catalog or []}:
             raise ChatGPTError("model")
         row.preferred_model = model
+        db.query(models.PersonalAPISettings).filter_by(username=username).update({"enabled": False})
+        db.query(models.PersonalAIRouting).filter_by(username=username).update({"enabled": False})
     row.use_subscription = active
     db.commit()
 
 
 def status(db, username):
+    from .personal_api import feature_enabled
     ready, reason = True, None
     try:
-        require_ready()
+        require_ready(db)
     except ChatGPTError as exc:
         ready, reason = False, exc.code
     row = db.query(models.ChatGPTConnection).filter_by(username=username).first()
     pending = db.query(models.ChatGPTLink).filter(models.ChatGPTLink.username == username,
                   models.ChatGPTLink.expires_at > datetime.now(timezone.utc)).first() is not None
-    return {"available": ready, "reason": reason, "connected": bool(row and row.encrypted_credentials),
+    return {"available": ready, "enabled": enabled(db), "personal_api_enabled": feature_enabled(db), "reason": reason, "connected": bool(row and row.encrypted_credentials),
             "email": row.email if row else None, "use_subscription": bool(row and row.use_subscription), "pending_link": pending,
             "model": row.preferred_model if row else None, "needs_reconnect": bool(row and row.last_error == "reconnect"),
             "registered": bool(row and row.client_id),

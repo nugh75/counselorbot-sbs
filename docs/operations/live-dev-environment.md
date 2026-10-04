@@ -53,6 +53,46 @@ Il proxy `/api/*` di Next in dev va a `http://127.0.0.1:8002` grazie a
 stessa variabile non esiste e il rewrite resta su `http://backend:8000`
 (nome servizio Compose), quindi la configurazione di produzione non cambia.
 
+Chat guidata, chat del sito, OpenCode e voce usano lo stesso resolver del backend
+del rewrite: `BACKEND_ORIGIN` ha precedenza, quindi `BACKEND_INTERNAL_URL`, quindi
+il nome servizio Docker. Il rewrite generale viene dopo le route dinamiche per
+conservare lo streaming di OpenCode. Dopo un aggiornamento delle route o della
+configurazione Next, riavviare il solo frontend dev con il comando abituale.
+
+### Test isolati dei proxy HTTP e streaming
+
+Verificare che 3135 e 3136 siano libere (`ss -ltn`). Da root repository:
+
+```bash
+bash scripts/dev-stream-proxy-tests.sh
+```
+
+In un secondo terminale:
+
+```bash
+cd frontend
+STREAM_PROXY_BASE_URL=http://127.0.0.1:3135 STREAM_PROXY_UPSTREAM_PORT=3136 \
+  node --test tests/stream-proxy.test.mjs
+RECOVERY_BASE_URL=http://127.0.0.1:3135 CHROMIUM_PATH=/usr/bin/chromium \
+  npm run test:recovery
+```
+
+Il primo runner avvia e arresta un server fittizio su 3136. Controlla API ordinarie,
+tre chat e voce passando realmente per Next; mantiene identità, lingua e codici
+di errore, e verifica un nuovo tentativo dopo errori HTTP o interruzione upstream.
+Il secondo usa fixture nel browser per messaggi e recupero a 390/1440 px.
+Nessun database, account reale o provider LLM viene contattato. `CHROMIUM_PATH`
+può essere omesso quando il browser Playwright è installato. Arresto frontend:
+`Ctrl+C` nel primo terminale. Non avviare insieme altri runner che usano 3135/3136.
+
+Nel cloud Codex, una build Turbopack con font Google può richiedere la CA di
+sistema: `NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS=1 npm run build`.
+Il comando mantiene TLS verificato e il proxy ereditato. Verificato con font
+reali in una directory di build su `/tmp`, perché il filesystem del checkout
+aveva meno di 500 MiB liberi. Nessun file ambiente copiato nella directory di
+build. Requisito TLS e istruzioni sono salvati nella bozza dell’ambiente Codex;
+la pubblicazione della bozza resta distinta dalla prova effettuata qui.
+
 ## Database di sviluppo
 
 Il backend dev si collega a `counselorbot_test` (stesso Postgres, database
@@ -216,3 +256,86 @@ GUIDE_BASE_URL=http://127.0.0.1:3134 GUIDE_SCREENS=teacher-area node --experimen
 
 Taccuino, popup e altre immagini non vengono rigenerati. Evidenze e limiti:
 `teacher-notebook-first-validation.md`. Nessun processo di S18 lasciato attivo.
+
+### Fixture browser delle API personali
+
+Avvio frontend isolato: `./scripts/dev-personal-api-fixtures.sh`, URL
+`http://127.0.0.1:3135`. La porta è verificata prima dell'avvio. Fermare con
+Ctrl+C nello stesso terminale. Nessun backend né database aggiuntivo è richiesto
+per `cd frontend && npm run test:personal-api`: tutte le API sono intercettate
+con fixture di account e chiavi fittizie. Non usare questa pagina per inserire
+credenziali reali durante la prova senza un backend di sviluppo isolato.
+
+Per rigenerare la schermata della guida con campo chiave vuoto:
+`cd frontend && PERSONAL_API_CAPTURE_GUIDE=1 npm run test:personal-api`.
+Le esecuzioni normali non riscrivono la schermata. Dettagli e limiti della
+funzione: [personal-api-settings.md](personal-api-settings.md).
+
+
+### Verifiche di attivazione e visibilità AI personali
+
+La PR 40 include anche l’attivazione amministrativa ChatGPT e risolve la
+coesistenza delle due modalità. Dal frontend di sviluppo isolato su 3107:
+
+```bash
+cd frontend
+PERSONAL_API_BASE_URL=http://127.0.0.1:3107 npm run test:personal-api
+npm run test:personal-ai
+node --test --experimental-strip-types tests/chatgpt-subscription.test.mjs tests/chatgpt-admin-settings.test.mjs
+```
+
+Le suite usano account e credenziali fittizi nelle API del browser. La prova
+aggiuntiva con API reali dell’app sul database dedicato `counselorbot_dev`
+ha verificato che i pulsanti amministrativi preparano le chiavi senza
+configurazione manuale, poi ha ripristinato entrambi i flag a false; nessuna
+chiave API utente salvata, nessun OAuth e nessuna chiamata LLM. Le directory
+private di sviluppo restano sul disco, escluse da Git e dal contesto Docker.
+Non usare una copia di produzione per queste prove.
+
+### Connessioni multiple e counselor privati
+
+La stessa fixture browser su `127.0.0.1:3135` verifica più account/chiavi dello
+stesso provider, associazioni condivise da più counselor, scelta predefinita,
+creazione e modifica dei counselor privati con istruzioni nella lingua scelta.
+La schermata `frontend/public/guide/api-personali.png` usa dati fittizi e non
+mostra chiavi. Controlli in tema scuro, sei lingue, 320 e 1440 px.
+
+```bash
+cd frontend
+PERSONAL_API_BASE_URL=http://127.0.0.1:3135 npm run test:personal-api
+PERSONAL_API_BASE_URL=http://127.0.0.1:3135 npm run test:personal-ai
+CHROMIUM_PATH=/usr/bin/chromium RECOVERY_BASE_URL=http://127.0.0.1:3135 npm run test:recovery
+```
+
+`CHROMIUM_PATH` è facoltativo se il browser Playwright è già installato. Le API
+di queste prove sono intercettate; non verificano quote o accesso reale a OpenRouter.
+Il backend su `127.0.0.1:8002`, collegato al solo DB `counselorbot_dev`, ha
+completato l’avvio con l’aggiornamento dello schema e risposto a `/docs` e
+`/auth/me`. I test backend usano invece schemi isolati nel DB `counselorbot_test`
+con rollback, comprese migrazione della vecchia chiave, cifratura, isolamento tra
+proprietari e selezione del modello associato. Nessun provider reale chiamato.
+
+I processi uvicorn 8002 e frontend fixture 3135 vengono fermati al termine della
+sessione; PostgreSQL e dati persistenti vengono conservati. La ricostruzione
+Docker completa non è stata eseguita: meno di 500 MiB liberi nel filesystem
+Docker vfs, sotto la riserva di 5 GiB. Il Codespace dell’utente non è stato
+aggiornato automaticamente.
+
+### Filtro esterno senza modello Ollama
+
+Il pannello amministrativo è verificabile nella stessa fixture su 3135:
+
+```bash
+cd frontend
+PRIVACY_BASE_URL=http://127.0.0.1:3135 node --test --experimental-strip-types tests/external-privacy.test.mjs
+```
+
+La suite usa dati fittizi, API intercettate e nessuna chiamata LLM. Verifica
+scelta esplicita, salvataggio/rilettura, errori che conservano il modo attivo,
+ricercatore escluso, Guida amministrativa, sei lingue e 320/1440 px in tema scuro.
+`PRIVACY_CAPTURE_GUIDE=1` rigenera soltanto `guide/protezione-dati.png`.
+I test backend controllano che il filtro base non chiami Ollama, mascheri anche
+system/history e ripristini la risposta, mentre la modalità locale resta bloccante
+anche con un flag globale vecchio nel worker. Nuova rotta provata sul backend
+dev 8002: startup completo e 401 senza identità. Processi locali fermati a fine
+sessione; nessuna modifica alle impostazioni o al server del Codespace dell’utente.

@@ -23,7 +23,7 @@ def test_compass_knows_personal_journey_without_a_personal_goal(monkeypatch):
     prompts = []
 
     class FakeAI:
-        def __init__(self, db):
+        def __init__(self, db, username=None):
             self.config = {}
 
         def get_response(self, message, system_prompt, *args, **kwargs):
@@ -119,7 +119,7 @@ def test_live_reference_grounds_stream_even_without_embeddings(monkeypatch, coll
     from backend.platform_guidance import GUIDE_FILENAME
     ai = SimpleNamespace(config={}, stream_response=MagicMock(return_value=iter(['Apri Area personale.'])))
     search = MagicMock(side_effect=AIError('Embeddings unavailable')) if failure else MagicMock(return_value=[])
-    monkeypatch.setattr(site_chat, 'AIService', lambda db: ai)
+    monkeypatch.setattr(site_chat, 'AIService', lambda db, username=None: ai)
     monkeypatch.setattr(site_chat, 'get_index', lambda collection: SimpleNamespace(search=search))
     monkeypatch.setattr(site_chat, '_apply_language_directive', lambda text, *a, **kw: text)
     monkeypatch.setattr(site_chat, '_resolve_counselor', lambda *a: (None, None))

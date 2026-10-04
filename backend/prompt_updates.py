@@ -84,6 +84,8 @@ def apply_plan(db, plan, *, author="prompt-coherence", rollback=False, origin="a
         cls, key_field, value_field = targets[change["scope"]]
         key = int(change["key"]) if cls is models.Counselor else change["key"]
         row = db.query(cls).filter(getattr(cls, key_field) == key).with_for_update().first()
+        if cls is models.Counselor and row is not None and row.owner_username is not None:
+            raise ValueError("Private counselor cannot be changed by prompt alignment")
         expected = digest(change["after"]) if rollback else change["expected_hash"]
         if row is None or digest(getattr(row, value_field)) != expected:
             raise ValueError(f"Prompt changed since review: {change['scope']}/{change['key']}")

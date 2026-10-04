@@ -66,6 +66,8 @@ from .routes import audio_input as audio_input_routes
 from .routes import memory as memory_routes
 from .routes import site_chat as site_chat_routes
 from .routes import learner_profile as learner_profile_routes
+from .routes import external_privacy as external_privacy_routes
+from .routes import personal_api as personal_api_routes
 from .routes import teacher_profile as teacher_profile_routes
 from .routes import orientation as orientation_routes
 from .routes import cross_synthesis as cross_synthesis_routes
@@ -304,6 +306,9 @@ def _seed_and_migrate():
         lock_conn.exec_driver_sql("SELECT pg_advisory_lock(91234)")
 
     try:
+        from .personal_api import ensure_schema
+        with database.engine.begin() as schema_connection:
+            ensure_schema(schema_connection)
         db = database.SessionLocal()
         try:
             # On the first deployment of the revision feature, classify the
@@ -772,6 +777,10 @@ def _run_seed_and_migrations():
                 conn.commit()
         except Exception as e:
             logger.debug(f"recommendation history unique constraint skipped/failed: {e}")
+
+        from .personal_api import migrate_legacy_connections
+        migrate_legacy_connections(db)
+        db.commit()
 
         # Create initial admin user if not exists
         user = db.query(models.User).filter(models.User.username == "admin").first()
@@ -1534,7 +1543,7 @@ def _migrate_counselor_personas_and_intros(db):
     """
     changed = False
 
-    counselors = db.query(models.Counselor).all()
+    counselors = db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).all()
     for counselor in counselors:
         new_persona = _COUNSELOR_PERSONA_EN_BY_SLUG.get(counselor.slug)
         if not new_persona:
@@ -1720,16 +1729,16 @@ def _seed_assistant_counselors(db):
     # Pulisci vecchi slug (da sessione precedente)
     old_slugs = {"sintesi-studente", "analisi-studente", "sintesi-docente", "analisi-docente"}
     for old in old_slugs:
-        c = db.query(models.Counselor).filter(models.Counselor.slug == old).first()
+        c = db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).filter(models.Counselor.slug == old).first()
         if c:
             db.delete(c)
-    existing_slugs = {c.slug for c in db.query(models.Counselor).all()}
+    existing_slugs = {c.slug for c in db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).all()}
     changed = False
     for cfg in _ASSISTANT_COUNSELOR_DEFAULTS:
         slug = cfg["slug"]
         persona = _COUNSELOR_PERSONA_EN_BY_SLUG.get(slug)
         if slug in existing_slugs:
-            c = db.query(models.Counselor).filter(models.Counselor.slug == slug).first()
+            c = db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).filter(models.Counselor.slug == slug).first()
             if c:
                 if not c.show_in_assistant:
                     c.show_in_assistant = True
@@ -1890,6 +1899,8 @@ app.include_router(audio_input_routes.router)
 app.include_router(memory_routes.router)
 app.include_router(site_chat_routes.router)
 app.include_router(learner_profile_routes.router)
+app.include_router(external_privacy_routes.router)
+app.include_router(personal_api_routes.router)
 app.include_router(teacher_profile_routes.router)
 app.include_router(orientation_routes.router)
 app.include_router(cross_synthesis_routes.router)

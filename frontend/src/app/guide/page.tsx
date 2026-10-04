@@ -3,6 +3,11 @@
 // Public, localized guide. The audience query selects documentation, not permissions.
 
 import Link from 'next/link';
+import { usePersonalAIFeatures } from '@/lib/use-personal-ai-features';
+import { personalAPIText } from '@/lib/i18n-personal-api';
+import personalAPIImage from '../../../public/guide/api-personali.png';
+import externalPrivacyImage from '../../../public/guide/protezione-dati.png';
+import { externalPrivacyText } from '@/lib/i18n-external-privacy';
 import { useSearchParams } from 'next/navigation';
 import Image, { type StaticImageData } from 'next/image';
 import chatOverview from '../../../public/guide/chat-guidata.png';
@@ -29,6 +34,7 @@ export default function GuidePage() {
 
 function GuideContent() {
     const { t, lang } = useI18n();
+    const personalFeatures = usePersonalAIFeatures();
     const params = useSearchParams();
     // Senza parametro esplicito la guida segue il ruolo dell'utente: docenti,
     // ricercatori e admin aprono la versione docente, tutti gli altri quella
@@ -39,12 +45,14 @@ function GuideContent() {
         return a === 'teacher' ? 'teacher' : a === 'student' ? 'student' : null;
     });
     const [isTeacherUser, setIsTeacherUser] = useState(false);
+    const [isAdminUser, setIsAdminUser] = useState(false);
     useEffect(() => {
         let cancelled = false;
         getIdentity().then((identity) => {
             if (cancelled || !identity) return;
             identityRef.current = identity;
             setIsTeacherUser(canUseTeacherAssistant(identity));
+            setIsAdminUser(identity.is_admin === true);
             if (!params.get('audience')) {
                 setAudience(canUseTeacherAssistant(identity) ? 'teacher' : 'student');
             }
@@ -209,12 +217,28 @@ function GuideContent() {
                 <p className="text-xs leading-relaxed text-slate-500">{l('screenshots')}</p>
             </div>
 
+            {personalFeatures.personalAPI && <section className="glass-panel p-5" aria-labelledby="guide-personal-api">
+                <h2 id="guide-personal-api" className="text-lg font-bold text-slate-900">{personalAPIText(lang, 'title')}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">{t('guide.personalAPIs')}</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">{externalPrivacyText(lang, 'guide')}</p>
+                <Link href={teacher ? '/docente/api-personali' : '/profilo/api-personali'} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 hover:underline">{personalAPIText(lang, 'title')}</Link>
+                <div className="mt-4">{renderFigure(personalAPIImage, personalAPIText(lang, 'title'), personalAPIText(lang, 'title'))}</div>
+            </section>}
+
+            {isAdminUser && <section className="glass-panel p-5" aria-labelledby="guide-external-privacy">
+                <h2 id="guide-external-privacy" className="text-lg font-bold text-slate-900">{externalPrivacyText(lang, 'title')}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">{externalPrivacyText(lang, 'guide')}</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">{externalPrivacyText(lang, 'limits')}</p>
+                <div className="mt-4">{renderFigure(externalPrivacyImage, externalPrivacyText(lang, 'title'), externalPrivacyText(lang, 'title'))}</div>
+            </section>}
+
             {/* Indice con ancore (GUA-03): ogni sezione è raggiungibile senza
                 attraversare l'intero documento. */}
             <nav aria-label={t('guide.indexTitle')} className="glass-panel p-5">
                 <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">{t('guide.indexTitle')}</h2>
                 <ol className="mt-3 space-y-1">
-                    <li><a href="#guide-chatgpt" className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700">{t('chatgpt.title')}</a></li>
+                    {isAdminUser && <li><a href="#guide-external-privacy" className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700">{externalPrivacyText(lang, 'title')}</a></li>}
+                    {personalFeatures.chatgpt && <li><a href="#guide-chatgpt" className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700">{t('chatgpt.title')}</a></li>}
                     {sections.map((n) => (
                         <li key={n}>
                             <a
@@ -240,11 +264,11 @@ function GuideContent() {
             </nav>
 
             <ol className="space-y-4">
-                <li id="guide-chatgpt" className="glass-panel scroll-mt-24 space-y-2 p-5">
+                {personalFeatures.chatgpt && <li id="guide-chatgpt" className="glass-panel scroll-mt-24 space-y-2 p-5">
                     <h2 className="font-bold text-slate-900">{t('chatgpt.title')}</h2>
                     <p className="text-sm leading-relaxed text-slate-600">{t('chatgpt.guide')}</p>
-                    <Link href="/profilo#chatgpt" className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline">{t('chatgpt.connect')}</Link>
-                </li>
+                    <Link href={teacher ? '/docente/chatgpt' : '/profilo/chatgpt'} className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline">{t('chatgpt.connect')}</Link>
+                </li>}
                 {sections.map((n) => (
                     <li key={n} id={sectionId(n)} className="glass-panel scroll-mt-24 p-5 text-left">
                         <div className="flex items-start justify-between gap-4">
