@@ -69,7 +69,6 @@ export function PersonalAreaHome() {
     const { lang } = useI18n();
     return <div className="space-y-6" data-personal-area-home>
         <PersonalResume />
-        <PersonalAIConnections area="profilo" />
         {personalAreaGroups.map(group => <section key={group.id} aria-labelledby={`personal-group-${group.id}`}>
             <h2 id={`personal-group-${group.id}`} className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">{personalAreaText(lang, group.id)}</h2>
             <nav aria-labelledby={`personal-group-${group.id}`} className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
@@ -84,5 +83,6 @@ export function PersonalAreaHome() {
                 </Link>)}
             </nav>
         </section>)}
+        <PersonalAIConnections area="profilo" />
     </div>;
 }
