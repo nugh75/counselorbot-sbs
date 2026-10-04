@@ -219,6 +219,7 @@ function GuideContent() {
 
             {personalFeatures.personalAPI && <section className="glass-panel p-5" aria-labelledby="guide-personal-api">
                 <h2 id="guide-personal-api" className="text-lg font-bold text-slate-900">{personalAPIText(lang, 'title')}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{personalAPIText(lang, 'sectionLocation')}</p>
                 <p className="mt-2 text-sm leading-relaxed text-slate-700">{t('guide.personalAPIs')}</p>
                 <p className="mt-2 text-sm leading-relaxed text-slate-700">{externalPrivacyText(lang, 'guide')}</p>
                 <Link href={teacher ? '/docente/api-personali' : '/profilo/api-personali'} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 hover:underline">{personalAPIText(lang, 'title')}</Link>
@@ -266,6 +267,7 @@ function GuideContent() {
             <ol className="space-y-4">
                 {personalFeatures.chatgpt && <li id="guide-chatgpt" className="glass-panel scroll-mt-24 space-y-2 p-5">
                     <h2 className="font-bold text-slate-900">{t('chatgpt.title')}</h2>
+                    <p className="text-sm leading-relaxed text-slate-600">{personalAPIText(lang, 'sectionLocation')}</p>
                     <p className="text-sm leading-relaxed text-slate-600">{t('chatgpt.guide')}</p>
                     <Link href={teacher ? '/docente/chatgpt' : '/profilo/chatgpt'} className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline">{t('chatgpt.connect')}</Link>
                 </li>}
