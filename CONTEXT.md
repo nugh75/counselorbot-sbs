@@ -3,8 +3,10 @@
 <!-- ai4educ:context-template v1.0 -->
 
 ## Quick Reference
-- **Personal ChatGPT subscription (optional SIWC preview)**: `docs/operations/chatgpt-subscription.md` — default off, encrypted per-user credentials, loopback helper for remote VMs, direct Responses API, explicit provider choice without paid failover; verify deployment eligibility and the repository license before a school pilot.
+- **Personal ChatGPT subscription (optional SIWC preview)**: `docs/operations/chatgpt-subscription.md` — default off, immediate activation from Administration → General with automatic persistent private key (dedicated Docker volume), encrypted per-user credentials, loopback helper for remote VMs, direct Responses API, explicit provider choice without paid failover; verify deployment eligibility and the repository license before a school pilot.
 - **Stack**: Python (FastAPI), Next.js App Router, PostgreSQL, Docker Compose
+- **Proxy streaming in sviluppo**: rewrite e route chat/sito/OpenCode/voce condividono `backendOrigin()` (`BACKEND_ORIGIN` → `BACKEND_INTERNAL_URL` → host Docker); rewrite generale in fallback dopo route dinamiche. Errori HTTP prima dello stream mantengono codici sicuri, con messaggi localizzati anche nei follow-up QSA. Test HTTP reali isolati: `scripts/dev-stream-proxy-tests.sh`, `frontend/tests/stream-proxy.test.mjs`; dettagli in `docs/operations/live-dev-environment.md`.
+- **Protezione dei provider esterni**: l’amministratore reale sceglie da Generale il filtro automatico senza Ollama (`basic`) oppure filtro + NER locale (`local`, default bloccante). GET/PUT `/admin/external-privacy`; tre impostazioni aggiornate insieme, lettura per richiesta anche su più worker. Il filtro base è limitato e non garantisce anonimato; limiti visibili prima del salvataggio. Dettagli: `docs/operations/personal-api-settings.md`.
 - **Entry point**: `docker compose up -d --build` or `uvicorn backend.main:app --reload --port 8000` + `cd frontend && npm run dev`
 - **Sviluppo live (hot reload, senza Docker)**: `docs/operations/live-dev-environment.md` — `scripts/dev-backend.sh` (:8002, DB di test) + `scripts/dev-frontend.sh` (:3107)
 - **Test**: `docker exec counselorbot_backend python -m backend.tests.test_smoke`
@@ -25,6 +27,8 @@ presence in the change. This gate detects omissions; it does not write or valida
 feature descriptions automatically. Active database prompt changes use the same
 review contract and the guarded update plan, never startup overwrites.
 See `docs/operations/platform-guidance.md` for runtime, RAG and screenshot details.
+
+- **API personali**: più connessioni cifrate per account (più provider/chiavi/account esterni), associazioni counselor→connessione e connessione predefinita; creazione di counselor privati con istruzioni nella lingua dell’utente; opt-in controllato dall’amministratore; pagine `/profilo/api-personali` e `/docente/api-personali`, policy `personal_api_enabled`, chiave privata automatica nel volume `personal_api_credentials` (override operatore `PERSONAL_API_ENCRYPTION_KEY` facoltativo), visibilità solo se abilitata. ChatGPT usa pagine dedicate `/profilo/chatgpt` e `/docente/chatgpt`; le due modalità personali sono alternative e conservano le credenziali. Dettagli e limiti: `docs/operations/personal-api-settings.md`.
 
 ## Domain
 CounselorBot is an AI-powered web app that helps students analyze learning/career profiles through six scored questionnaires, four conversation tools (SAVICKAS, IDEA and the two significant-event paths), and personal journey resources. UI and content are primarily Italian.
@@ -659,7 +663,7 @@ Makefile                    Prompt testing shortcuts
 ```
 
 ## Conventions
-- **Configuration is DB-driven except secrets**: prompts and UI texts are DB rows seeded from `prompt_config.py` at startup (idempotent, no overwrite). API keys come only from the environment managed by ai4educ Console; ConfigForm displays and verifies them but cannot edit them.
+- **Configuration is DB-driven except secrets**: prompts and UI texts are DB rows seeded from `prompt_config.py` at startup (idempotent, no overwrite). System API keys come only from the environment managed by ai4educ Console; personal account keys use separate encrypted storage when enabled by an administrator; ConfigForm displays and verifies the system keys but cannot edit them.
 - **Error contract**: AI failures raise `AIError`. SSE emits `{error}` event. Non-streaming maps `AIError` → HTTP 502. Frontend consumer throws on `{error}`.
 - **Interrupted responses**: streaming endpoints emit session/conversation IDs before text; `done` is required for completion. `ChatContinuation` keeps the visible text and resumes on its own after transport/provider interruption: up to 3 automatic continuations, 400 ms apart, and only then a localized Continue action as manual fallback. The optional `partial_response` request field (max 60,000 characters) asks guided/site/OpenCode chat to generate only the missing suffix; the server returns and logs the combined answer. Guided phase advancement and final metadata wait for `done`. This detects interrupted streams, not semantically unfinished prose in an otherwise successful response. `npm run test:recovery` uses API fixtures against `RECOVERY_BASE_URL` (default localhost:3101).
 - **Resume loading**: failed frozen-session requests retain the current list and expose Retry in the home and desktop/mobile navigation. Header loading starts after authentication. Conversation and summary details in `/profilo` load only in the compilations section.

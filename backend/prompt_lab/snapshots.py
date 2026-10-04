@@ -40,7 +40,7 @@ def static_data(db):
         'steps': [values(row) for row in db.query(models.GuidedStep).filter_by(questionnaire_type='QSA').order_by(models.GuidedStep.id)],
         'factors': [values(row) for row in db.query(models.Factor).filter_by(instrument_code='QSA').order_by(models.Factor.id)],
         'counselors': [values(row, ('id', 'name', 'persona', 'preset_id', 'questionnaire_types', 'language'))
-                       for row in db.query(models.Counselor).filter_by(is_active=True).order_by(models.Counselor.id)
+                       for row in db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).filter_by(is_active=True).order_by(models.Counselor.id)
                        if not row.questionnaire_types or 'QSA' in row.questionnaire_types],
         'presets': [values(row, PRESET_FIELDS) for row in db.query(models.ModelPreset).filter_by(is_active=True).order_by(models.ModelPreset.id)],
     }

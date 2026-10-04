@@ -135,7 +135,7 @@ def _needs_translation(counselor: models.Counselor) -> bool:
 
 def translate_counselor_sync(db: Session, counselor_id: int, force: bool = False) -> None:
     """Genera/aggiorna le traduzioni di un counselor. Best-effort: logga e ignora errori."""
-    counselor = db.query(models.Counselor).filter(models.Counselor.id == counselor_id).first()
+    counselor = db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).filter(models.Counselor.id == counselor_id).first()
     if not counselor or not (counselor.description or "").strip():
         return
     if not force and not _needs_translation(counselor):
@@ -184,7 +184,7 @@ def backfill_async() -> None:
     def _run() -> None:
         db = database.SessionLocal()
         try:
-            rows = db.query(models.Counselor).all()
+            rows = db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).all()
             pending = [c.id for c in rows if _needs_translation(c)]
             for cid in pending:
                 translate_counselor_sync(db, cid)

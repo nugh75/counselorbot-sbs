@@ -1,5 +1,6 @@
 """API studente per la Bussola CounselorBot."""
 from __future__ import annotations
+from .. import personal_api
 
 import uuid
 from datetime import datetime, timezone
@@ -90,11 +91,7 @@ def _latest(db: Session, owner: str, status: str | None = None):
 def _active_counselor(db: Session, counselor_id: int | None) -> models.Counselor | None:
     if counselor_id is None:
         return None
-    counselor = (
-        db.query(models.Counselor)
-        .filter(models.Counselor.id == counselor_id, models.Counselor.is_active.is_(True))
-        .first()
-    )
+    counselor = personal_api.require_visible_counselor(db, counselor_id)
     if counselor is None:
         raise HTTPException(status_code=400, detail="Choose an active counselor")
     return counselor

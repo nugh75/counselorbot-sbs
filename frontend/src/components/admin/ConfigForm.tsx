@@ -6,10 +6,13 @@ import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, Palette, P
 import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { Button } from '@/components/ui/Button';
+import { PersonalAPIPolicy } from '@/components/admin/PersonalAPIPolicy';
+import { ExternalPrivacySettings } from '@/components/admin/ExternalPrivacySettings';
 import { Callout } from '@/components/ui/Callout';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admin/PromptRequestPreview';
 import { PromptFactoryAlignment, type FactoryAlignmentResult } from '@/components/admin/PromptFactoryAlignment';
+import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
 
 // --- Types ---
 
@@ -1800,6 +1803,7 @@ export function ConfigForm() {
 
             {section === 'general' && (
             <div className="space-y-8">
+            <ChatGPTSettingsPanel />
             {/* 1. Provider & Model Selection */}
             <div className="glass-panel p-6 space-y-6">
                 <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
@@ -1934,6 +1938,8 @@ export function ConfigForm() {
             </div>
 
             {/* 2. API Keys */}
+            <PersonalAPIPolicy />
+            <ExternalPrivacySettings />
             <div className="space-y-4">
                 <div>
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.apiKeys')}</h3>

@@ -151,3 +151,42 @@ Input and conversation-mode preferences are saved only through their explicit
 checkboxes; Idea asks for its mode each time. Response format (conversation, bullets,
 table) is independent of response length. QSA offers its own essential path of
 three replies and a summary; do not extend this to other scored questionnaires.
+
+## Personal APIs (when enabled by the administrator)
+
+If the connection test reports that the local data protection service is
+unavailable, the request was blocked before reaching the provider. Ask the
+administrator to restore that service or explicitly select the basic filter
+without Ollama. This filter has limits and does not guarantee anonymity; use
+fictional data for cloud tests. Then retry the connection and the guided step.
+
+Open **Personal APIs** from your personal area (`/profilo/api-personali`).
+Add one or more named connections with a supported provider, exact model ID
+and your own API key. Multiple keys for the same provider or different provider
+accounts can coexist. Link each connection to one or more counselors and choose
+a default for unassigned counselors and features without a counselor. Select
+**Use my personal APIs** and save associations to activate them; switching it off
+returns new requests to system APIs. Keys are encrypted and never returned.
+An empty key field preserves the saved key for the same provider. Connection
+deletion requires confirmation and removes its associations, keeping counselors.
+
+Create your own private counselor with a name, description and instructions in
+your own language. Link a saved connection to it and select it for new chats.
+You can edit or delete your counselors; other accounts cannot select them.
+Institution counselors and their prompts are unchanged.
+
+**Test connection and model** sends a short neutral request only when pressed.
+It consumes quota and can incur a provider charge. Errors distinguish key access,
+model availability, quota, rate limits and an unavailable local data protection
+service. Saving and assigning connections do not call an LLM.
+
+This account preference applies to chat, Compass, Assistant, PDF study, combined
+analysis, PDF summaries, Tavolo and diagrams; audio, local services and technical
+tools keep the system settings. When the administrator disables the feature,
+new requests use system APIs and the personal-area link is hidden. Existing
+requests finish with their original settings. The form and Guide section are
+hidden too; direct page visits return to your own area. Re-enabling restores
+the saved preference. Administrative activation prepares key protection
+automatically, without server commands. Choosing personal APIs switches off
+ChatGPT subscription use, and vice versa; both credentials remain saved. No automatic system-key fallback occurs when
+an active personal connection fails.

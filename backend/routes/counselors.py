@@ -6,10 +6,10 @@ user-facing dei counselor attivi (per il selettore lato studente).
 """
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, auth, database, prompt_revisions
+from .. import models, schemas, auth, database, prompt_revisions, personal_api
 from ..counselor_i18n import localized_description, translate_counselor_async, translate_counselor_sync
 from ..counselor_scope import restricted_instruments, suits
 from ..reasoning_profiles import supports_reasoning
@@ -54,15 +54,19 @@ def _serialize(counselor: models.Counselor, presets: dict) -> schemas.CounselorR
 # --- Pubblico (lato utente) ------------------------------------------------
 @router.get("/counselors", response_model=List[schemas.CounselorPublic])
 async def list_public_counselors(
+    response: Response,
     lang: Optional[str] = Query(None),
     questionnaire_type: Optional[str] = Query(
         None, description="Marca come adatti i counselor che possono servire questo strumento"
     ),
     language: Optional[str] = Query(None, description="Filtra counselor che supportano questa lingua ('*' = tutte)"),
     db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
 ):
+    username = identity.get("username") if identity.get("authenticated") else None
+    response.headers["Cache-Control"] = "no-store"
     q = (
-        db.query(models.Counselor)
+        personal_api.visible_counselors(db, username)
         .filter(models.Counselor.is_active.is_(True))
         .order_by(models.Counselor.sort_order.asc(), models.Counselor.id.asc())
     )
@@ -87,6 +91,10 @@ async def list_public_counselors(
         provider = preset.provider if preset else active
         pub.model_origin = _provider_origin(provider)
         pub.model = preset.model if preset else active_model
+        selected_connection = personal_api.active_settings(db, username, r.id)
+        if selected_connection:
+            pub.model, pub.model_origin = selected_connection.model_name, "external"
+        pub.is_personal = bool(r.owner_username)
         pub.suitable = suits(r, questionnaire_type, restricted)
         pub.reasoning_capable = supports_reasoning(pub.model)
         out.append(pub)
@@ -103,7 +111,7 @@ async def list_counselors(
 ):
     presets = _preset_map(db)
     rows = (
-        db.query(models.Counselor)
+        db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None))
         .order_by(models.Counselor.sort_order.asc(), models.Counselor.id.asc())
         .all()
     )
@@ -163,7 +171,7 @@ async def update_counselor(
     current_user: models.User = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    counselor = db.query(models.Counselor).filter(models.Counselor.id == counselor_id).first()
+    counselor = db.query(models.Counselor).filter(models.Counselor.id == counselor_id, models.Counselor.owner_username.is_(None)).first()
     if not counselor:
         raise HTTPException(status_code=404, detail="Counselor non trovato")
     updates = payload.model_dump(exclude_unset=True)
@@ -207,7 +215,7 @@ async def delete_counselor(
     current_user: models.User = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    counselor = db.query(models.Counselor).filter(models.Counselor.id == counselor_id).first()
+    counselor = db.query(models.Counselor).filter(models.Counselor.id == counselor_id, models.Counselor.owner_username.is_(None)).first()
     if not counselor:
         raise HTTPException(status_code=404, detail="Counselor non trovato")
     db.delete(counselor)
@@ -221,7 +229,7 @@ async def translate_counselor(
     current_user: models.User = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    counselor = db.query(models.Counselor).filter(models.Counselor.id == counselor_id).first()
+    counselor = db.query(models.Counselor).filter(models.Counselor.id == counselor_id, models.Counselor.owner_username.is_(None)).first()
     if not counselor:
         raise HTTPException(status_code=404, detail="Counselor non trovato")
     translate_counselor_sync(db, counselor_id, force=True)

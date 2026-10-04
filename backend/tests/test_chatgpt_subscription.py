@@ -257,6 +257,7 @@ def test_demo_and_anonymous_sessions_cannot_use_subscriptions(signed):
 
 def test_responses_transport_exact_payload_completion_usage_and_close(monkeypatch):
     calls, closes = [], []
+    monkeypatch.setattr(responses, "require_ready", lambda db: None)
     monkeypatch.setattr(responses, "access_token", lambda db: "fixture-oauth")
     monkeypatch.setattr(responses, "preference", lambda db: "model")
     events = [SimpleNamespace(type="response.output_text.delta", delta="Hello"),

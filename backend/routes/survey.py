@@ -829,7 +829,7 @@ def _generate_summary(
     chunks = _summary_chunks(messages, lang)
     if not chunks:
         return None
-    ai = AIService(db)
+    ai = AIService(db, username=result.username)
     from_notes = False
     while len(chunks) > 1:
         notes: list[str] = []

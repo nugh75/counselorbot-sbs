@@ -1134,6 +1134,7 @@ class CounselorPublic(BaseModel):
     questionnaire_types: Optional[List[str]] = None
     language: List[str] = ["*"]
     is_active: bool = True
+    is_personal: bool = False
     show_in_assistant: bool = False
     assistant_audience: Optional[str] = None
     # "local" (Ollama/llama.cpp) | "external" (API a pagamento). Derivato dal preset.

@@ -1,7 +1,7 @@
 """The SIWC Responses transport, shared by dispatch and prompt inspection."""
 from openai import OpenAI, APIStatusError, APIConnectionError
 
-from .chatgpt_connections import ChatGPTError, RESOURCE, access_token, mark_reconnect, preference
+from .chatgpt_connections import ChatGPTError, RESOURCE, access_token, mark_reconnect, preference, require_ready
 
 
 def payload(model, message, instructions, history=None):
@@ -18,6 +18,7 @@ def preview(model, message, instructions, history=None):
 
 
 def stream(db, model, message, instructions, history=None, timeout=120):
+    require_ready(db)
     # Connection is not consent to infer: activation and model are explicit.
     if preference(db) != model:
         raise ChatGPTError("model")

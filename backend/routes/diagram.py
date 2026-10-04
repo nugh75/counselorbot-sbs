@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from .. import auth, database, models
+from .. import auth, database, models, personal_api
 from ..ai_service import AIService, AIError
 from ..diagram_icon_catalog import DIAGRAM_ICONS, ICON_CATALOG, ICON_SELECTION_PROMPT
 from ..diagram_symbols import factor_selection_prompt
@@ -250,6 +250,10 @@ async def diagram_from_message(
     fallback = _diagram_fallback(db)
     if fallback and fallback[:2] not in [c[:2] for c in candidates]:
         candidates.append(fallback)
+    personal_api.bind_counselor(db, request.counselor_id)
+    connection = personal_api.active_settings(db, identity.get("username") if identity.get("authenticated") else None, request.counselor_id)
+    if connection:
+        candidates = [(connection.provider, connection.model_name, disable_thinking, reasoning_budget)]
     if not candidates:
         raise HTTPException(status_code=422, detail="selected counselor has no configured model")
 
@@ -258,7 +262,7 @@ async def diagram_from_message(
     for provider, model, dt, rb in candidates:
         # Un AIService per tentativo: gli override di un modello non devono
         # restare addosso al successivo.
-        ai_service = AIService(db)
+        ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
         _apply_counselor_overrides(ai_service, dt, rb)
         ai_service.config['ai_timeout_seconds'] = str(min(
             int(ai_service.config.get('ai_timeout_seconds') or 120), DIAGRAM_MODEL_TIMEOUT_SECONDS,

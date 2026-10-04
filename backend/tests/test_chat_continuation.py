@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import ValidationError
+from fastapi import BackgroundTasks, HTTPException
 
 from backend.api_models import ChatRequest, SiteChatRequest, OpencodeChatRequest
 from backend.chat_continuation import continuation_message
@@ -63,12 +64,37 @@ def test_presentation_steps_never_reason():
     """Presentazione e patto recitano un testo gia' scritto: il pensiero costa
     e non cambia la risposta, quindi la regola vince anche su "Esteso"."""
     for step in (SimpleNamespace(id="intro", system_prompt_mode="intro"),
+                 SimpleNamespace(id="intro", system_prompt_mode="legacy-mode"),
+                 SimpleNamespace(id="intro", system_prompt_mode="qsa-intro"),
                  SimpleNamespace(id="qsar-intro", system_prompt_mode="intro"),
+                 SimpleNamespace(id="qsar-intro", system_prompt_mode="legacy-mode"),
                  SimpleNamespace(id="savickas-patto", system_prompt_mode="savickas-interview")):
         service = SimpleNamespace(disable_thinking=False, config={}, reasoning_budget_override=None)
         chat._apply_reasoning_effort(service, "deep")
         chat._apply_step_reasoning(service, step)
         assert service.disable_thinking is True, step.id
+
+
+@pytest.mark.parametrize('streaming', [False, True])
+@pytest.mark.parametrize('code,expected', [
+    ('personalAPI.errors.privacy', 'personalAPI.errors.privacy'),
+    ('personalAPI.errors.quota', 'personalAPI.errors.quota'),
+    (None, 'chat.errors.connection'),
+    ('personalAPI.errors.private-fixture-key', 'chat.errors.connection'),
+])
+def test_preparation_errors_keep_only_safe_codes_before_streaming(monkeypatch, streaming, code, expected):
+    monkeypatch.setattr(chat, 'AIService', lambda *args, **kwargs: SimpleNamespace(config={}))
+    monkeypatch.setattr(chat, '_resolve_counselor', lambda *args: (None,) * 6)
+    monkeypatch.setattr(chat, '_apply_counselor_overrides', lambda *args: None)
+    def broken(*args, **kwargs):
+        raise AIError('Private provider details', code=code)
+    monkeypatch.setattr(chat, 'prepare_chat_turn', broken)
+    request = ChatRequest(message='Test', questionnaire_type='QSA')
+    with pytest.raises(HTTPException) as error:
+        asyncio.run(chat.chat_stream(request, db=MagicMock(), identity={}) if streaming else
+                    chat.chat(request, BackgroundTasks(), db=MagicMock(), identity={}))
+    assert error.value.status_code == 502
+    assert error.value.detail == {'error_code': expected}
 
 
 def test_analysis_steps_keep_the_chosen_reasoning():
@@ -104,7 +130,7 @@ def test_guided_continuation_streams_and_persists_one_complete_answer(monkeypatc
         strategy_candidates={}, system_prompt_final="Italian", full_message="Come studio?",
         history=[], sanitize=False, components={},
     )
-    monkeypatch.setattr(chat, "AIService", lambda db: ai)
+    monkeypatch.setattr(chat, "AIService", lambda db, username=None: ai)
     monkeypatch.setattr(chat, "_resolve_counselor", lambda *a: (None,) * 6)
     monkeypatch.setattr(chat, "_apply_counselor_overrides", lambda *a: None)
     monkeypatch.setattr(chat, "prepare_chat_turn", lambda *a, **kw: prepared)
@@ -145,7 +171,7 @@ def test_guided_continuation_streams_and_persists_one_complete_answer(monkeypatc
 def test_site_continuation_uses_original_question_for_retrieval_and_saves_complete_answer(monkeypatch, partial, suffix):
     ai = SimpleNamespace(config={}, stream_response=MagicMock(return_value=iter([suffix])))
     index = SimpleNamespace(search=MagicMock(return_value=[{"source": "test"}]))
-    monkeypatch.setattr(site_chat, "AIService", lambda db: ai)
+    monkeypatch.setattr(site_chat, "AIService", lambda db, username=None: ai)
     monkeypatch.setattr(site_chat, "get_index", lambda collection: index)
     monkeypatch.setattr(site_chat, "_resolve_site_prompt", lambda *a: "Italian")
     monkeypatch.setattr(site_chat, "_apply_language_directive", lambda text, *a, **kw: text)

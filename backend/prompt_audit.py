@@ -95,7 +95,7 @@ def _resolve_counselor(db: Session, counselor_id: int | None) -> tuple[dict[str,
     if not counselor_id:
         return None, None, None, None, None, None, warnings
 
-    counselor = db.query(models.Counselor).filter(models.Counselor.id == counselor_id).first()
+    counselor = db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).filter(models.Counselor.id == counselor_id).first()
     if not counselor:
         warnings.append({"code": "counselor_not_found", "message": f"Counselor {counselor_id} not found."})
         return {"id": counselor_id, "found": False}, None, None, None, None, None, warnings
@@ -708,7 +708,7 @@ def prompt_audit_matrix(
     else:
         counselor_ids = [
             row.id for row in (
-                db.query(models.Counselor)
+                db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None))
                 .filter(models.Counselor.is_active.is_(True))
                 .order_by(models.Counselor.sort_order.asc(), models.Counselor.id.asc())
                 .all()

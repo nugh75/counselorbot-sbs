@@ -13,6 +13,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import models
+from . import personal_api
 from . import pii
 from . import pii_ner
 from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
@@ -41,6 +42,9 @@ def _requests_json_response(system_prompt: str, user_message: str) -> bool:
 class AIError(Exception):
     """Errore di configurazione o di chiamata al provider AI.
     Sollevato invece di restituire stringhe d'errore come fossero risposte del bot."""
+    def __init__(self, message, *, code=None):
+        super().__init__(message)
+        self.code = code
 
 
 # Prompt usato per aggiornare il riassunto rotante della sessione
@@ -86,9 +90,25 @@ OPENAI_COMPAT_PROVIDERS = {
 LOCAL_PROVIDERS = {'ollama', 'llamacpp'}
 
 class AIService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, username: str | None = None):
         self.db = db
         self.config = self._load_config()
+        self.personal_target = None
+        self.personal_error = None
+        from .chatgpt_connections import preference, owner
+        self.chatgpt_model = preference(db)
+        account = owner(db) if "chatgpt_username" in getattr(db, "info", {}) else username
+        try:
+            connection = personal_api.active_settings(db, account, getattr(db, "info", {}).get("personal_ai_counselor_id"))
+            if connection and self.chatgpt_model:
+                from .chatgpt_i18n import error_message
+                raise personal_api.PersonalAPIError(error_message("credentialChoice", db.info.get("chatgpt_language", "it")))
+            if connection:
+                self.use_personal_connection(connection)
+        except personal_api.PersonalAPIError as exc:
+            # Raise within dispatch so existing HTTP/SSE error handlers can
+            # report it, while forbidding a fallback to system credentials.
+            self.personal_error = str(exc)
         self.last_usage = None
         self.last_provider = None
         self.last_model = None
@@ -98,8 +118,6 @@ class AIService:
         # Ultimo ragionamento «sto pensando» estratto (nativo Ollama o tag <think>),
         # esposto ai chiamatori non-stream (es. audit /live) come canale separato.
         self.last_thinking = None
-        from .chatgpt_connections import preference
-        self.chatgpt_model = preference(db)
         if self.chatgpt_model:
             self.config.update(active_provider="openai_chatgpt", model_name=self.chatgpt_model)
         # Modalità "no thinking": disattiva il reasoning sui modelli che lo supportano
@@ -158,6 +176,19 @@ class AIService:
                 'stream': partial(self._stream_openai_compatible, _name),
                 'call_max': None, 'stream_max': None,
             }
+
+    def use_personal_connection(self, connection):
+        self.personal_target = (connection.provider, connection.model_name)
+        self.personal_error = None
+        self.chatgpt_model = None
+        for provider in API_KEY_ENV_MAP:
+            self.config.pop(config_key(provider), None)
+        self.config[config_key(connection.provider)] = personal_api.decrypt_key(connection)
+        self.config.update(active_provider=connection.provider, model_name=connection.model_name,
+                           summary_model_name=connection.model_name)
+
+    def _personal_failure(self, exc):
+        return AIError("Personal AI connection failed.", code=personal_api.connection_error_code(exc))
 
     @staticmethod
     def _usage_to_dict(usage):
@@ -232,6 +263,7 @@ class AIService:
             spent = self.db.query(func.coalesce(func.sum(models.Log.cost_usd), 0.0)).filter(
                 models.Log.timestamp >= month_start,
                 models.Log.cost_usd.isnot(None),
+                func.coalesce(models.Log.details["credential_source"].as_string(), "system") != "personal",
             ).scalar() or 0.0
             self._budget_locked_cache = float(spent) >= self.monthly_budget_usd
         except Exception as e:
@@ -243,6 +275,8 @@ class AIService:
         """Se il budget e' superato, forza Ollama locale + modello di fallback.
         Lascia invariati i provider gia' locali. Non tocca il benchmark
         (che usa call_model, percorso esplicito dell'admin)."""
+        if self.personal_target:
+            return self.personal_target
         if not self._free_target(provider, model) and self._budget_is_locked():
             fallback = self.budget_fallback_model or 'muse-glimmer:30b'
             logger.info(f"Budget mensile superato: fallback {provider}/{model} -> ollama/{fallback}")
@@ -322,12 +356,18 @@ class AIService:
             return user_message, system_prompt, history, {}
         history = history or []
         texts = [user_message, system_prompt] + [m.get('content', '') for m in history]
+        # Read this instance's DB snapshot: another worker's module-level flag
+        # must not keep requiring Ollama after an administrator selects basic.
+        ner_flag = self.config.get('pii_ner_enabled')
+        ner_enabled = None if ner_flag is None else str(ner_flag).strip().lower() not in ('0', 'false', 'no', 'off')
         anon_texts, mapping, ner_ok = pii_ner.anonymize_texts(
-            texts, ollama_base=self._ollama_base())
+            texts, ollama_base=self._ollama_base(), ner_enabled=ner_enabled,
+            ner_model=self.config.get('pii_ner_model'))
         if not ner_ok and self.external_pii_fallback == 'block':
             raise AIError(
                 "Anonimizzazione PII non disponibile (modello locale non raggiungibile). "
-                "Riprova, oppure disattiva la redazione esterna dal pannello admin.")
+                "Riprova, oppure disattiva la redazione esterna dal pannello admin.",
+                code="personalAPI.errors.privacy")
         anon_history = [
             dict(m, content=anon_texts[2 + i]) if m.get('content') else m
             for i, m in enumerate(history)
@@ -431,7 +471,7 @@ class AIService:
                 client.models.list()
             return True
         except Exception as exc:
-            logger.warning("Verifica chiave API fallita per %s: %s", provider, exc)
+            logger.warning("Verifica chiave API fallita per %s (%s)", provider, type(exc).__name__)
             return False
 
     def get_response(
@@ -460,8 +500,12 @@ class AIService:
         )
 
     def _selected_target(self, provider, model):
+        if self.personal_error:
+            raise AIError(self.personal_error, code="personalAPI.errors.configuration")
         if self.chatgpt_model:
             return "openai_chatgpt", self.chatgpt_model
+        if self.personal_target:
+            return self.personal_target
         chosen = provider or self.config.get("active_provider", "openai")
         if model:
             return chosen, model
@@ -482,7 +526,7 @@ class AIService:
 
     def _targets(self, provider, model):
         primary = self._selected_target(provider, model)
-        if primary[0] == "openai_chatgpt":
+        if self.personal_target or primary[0] == "openai_chatgpt":
             return [primary]
         primary = self._apply_budget_lock(*primary)
         raw = self.config.get("ai_fallback_targets", "[]")
@@ -538,6 +582,8 @@ class AIService:
                 logger.warning("AI attempt %s/%s failed (%s)", selected_provider, selected_model, type(exc).__name__)
         if self.chatgpt_model and isinstance(last_error, AIError):
             raise last_error
+        if self.personal_target:
+            raise self._personal_failure(last_error) from None
         raise AIError(f"Nessun modello configurato ha completato la risposta ({type(last_error).__name__}).") from last_error
 
     def call_model(self, provider: str, model: str, user_message: str, system_prompt: str, max_tokens: int = None):
@@ -545,8 +591,12 @@ class AIService:
         config attiva. La scelta personale esplicita precede anche i modelli
         ausiliari. Il benchmark senza identita' personale resta esplicito.
         Popola self.last_usage (token/costo) quando il provider lo fornisce."""
+        if self.personal_error:
+            raise AIError(self.personal_error, code="personalAPI.errors.configuration")
         if self.chatgpt_model:
             provider, model = "openai_chatgpt", self.chatgpt_model
+        elif self.personal_target:
+            provider, model = self.personal_target
         self.last_provider, self.last_model = provider, model
         entry = self._provider(provider)
         plan = self._resolve_reasoning(model, requested_max_tokens=max_tokens,
@@ -561,8 +611,10 @@ class AIService:
         except AIError:
             raise
         except Exception as e:
-            logger.error(f"Errore call_model ({provider}/{model}): {e}")
-            raise AIError(f"Errore AI ({provider}/{model}): {e}") from e
+            logger.error("Errore call_model (%s/%s): %s", provider, model, type(e).__name__)
+            if self.personal_target:
+                raise self._personal_failure(e) from None
+            raise AIError(f"Errore AI ({provider}/{model}): {type(e).__name__}") from e
 
     # Token massimi per i riassunti (~80 parole → 120 token sono sufficienti)
     SUMMARY_MAX_TOKENS = 300
@@ -610,7 +662,7 @@ class AIService:
         try:
             return self._provider(provider)['call'](user_msg, SUMMARY_SYSTEM_PROMPT, summary_model, max_tokens=mt)
         except Exception as e:
-            logger.error(f"Errore nella generazione del riassunto: {e}")
+            logger.error("Errore nella generazione del riassunto (%s)", type(e).__name__)
             # Fallback: troncamento semplice
             truncated = bot_response[:300].rsplit(' ', 1)[0]
             return f"{prefix}{truncated}..."
@@ -912,6 +964,8 @@ class AIService:
             except Exception as exc:
                 last_error = exc
                 attempt["error_type"] = type(exc).__name__
+                if self.personal_target:
+                    raise self._personal_failure(exc) from None
                 if self.chatgpt_model and isinstance(exc, AIError):
                     raise exc
                 # Solo il contenuto gia' arrivato allo studente impedisce il
