@@ -1,6 +1,9 @@
 # Consegna differenziazione prompt CR1–CR4
 Data: 2026-10-05
 
+PR: https://github.com/nugh75/counselorbot-sbs/pull/53 (Project V2 CounselorBot).
+Notify tentato subito, non recapitato: nessun Timoniere/canale mobile attivo.
+
 Worktree dedicato `/tmp/counselorbot-prompt-differentiation-1005`, branch
 `feature/prompt-differentiation`, base `origin/main` 005cf2c.
 Requisiti confermati completati: conteggi stimati, livelli configurabili e

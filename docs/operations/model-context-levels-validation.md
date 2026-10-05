@@ -108,6 +108,9 @@ Registrati LOCAL, sync `not-linked`; nessuna issue pubblicata manualmente.
   sospetto, richiede revisione umana.
 - `2a50c13c-0ad7-4f41-b3ab-01f56888de76`: errore lint preesistente confermato,
   fuori ambito.
+- `9c665d96-9364-4db6-a1d0-24e7e7e699a6`: compatibilità sospetta della CLI gh
+  con Projects classic dismessi; PR creata senza `--project`, poi collegata
+  con successo al Project V2 usando GraphQL.
 
 ### Bug non registrati
 
