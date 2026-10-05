@@ -1,3 +1,35 @@
+# Handoff: codice incollabile nel terminale e callback SSH
+Data: 2026-10-05 | Stato: deploy verificato; PR creata come ultimo passo
+
+- Richiesta dell'utente: mantenere la CLI e risolvere il codice che non compare
+  al prompt SSH/code-server. Il precedente `getpass` nascondeva l'input.
+- Input ora visibile, messaggio esplicito **premi Invio** e conferma del numero
+  di caratteri; `--hide-code` conserva l'inserimento nascosto facoltativo.
+  Il campo richiede il codice CounselorBot, mai un token o una chiave OpenAI.
+- CLI remota con `--no-browser --callback-port 1455`: URL da aprire nel browser
+  locale e callback inoltrato alla stessa porta dello host SSH. Listener sempre
+  su127.0.0.1; code-server ha loopback distinto, documentato nella pagina e guida.
+- Copia scaricata `chatgpt-connect.py` nella radice confrontata byte per byte
+  con la versione Git precedente: nessuna modifica utente. Aggiornata per
+  correggere anche il comando effettivamente usato; originale conservato in
+  `dist/chatgpt-cli-backups/chatgpt-connect.20261005-083201.py` (0600, escluso da Git).
+- Verifiche: input reale in PTY host e container code-server con codice fittizio
+  e risposta pubblica409 sicura; 16 test helper nell'immagine Docker isolata
+  senza rete (17 subtest), PKCE/callback/porta occupata; 12 browser desktop/mobile
+  in sei lingue, TypeScript, lint mirato, i18n2952, guida e build Docker passati.
+- Backend/frontend ricostruiti e ricreati, tre container healthy. Download CLI
+  autenticato sul dominio confrontato con i byte del sorgente aggiornato;
+  identità Console, download Mac, protezione basic, logout e revoca verificati.
+- Il percorso dell'utente sul suo SSH e l'accesso reale a ChatGPT restano da
+  completare: test soltanto con grant fittizi, nessun account OpenAI utilizzato.
+  Procedura: `docs/operations/chatgpt-subscription.md`.
+- Branch `fix/chatgpt-ssh-code-input`; nessun merge eseguito dall'agente.
+  Dev e processi PTY di prova fermati. Stack applicazione avviato;
+  stop senza perdere dati: `docker compose --env-file .env -f docker-compose.portable.yml stop`.
+  **`sudo ./update_nginx.sh` non è necessario**: proxy Console già valido.
+
+---
+
 # Handoff: pairing ChatGPT e assistente grafico macOS pubblicati
 Data: 2026-10-05 | Stato: deploy e verifiche completati; PR da revisionare
 

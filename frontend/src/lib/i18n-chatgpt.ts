@@ -18,7 +18,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.copy": "Copia",
         "chatgpt.copied": "Copiato",
         "chatgpt.command": "Comando da eseguire sul tuo computer",
-        "chatgpt.remote": "Questo codice temporaneo non è un token né una chiave API OpenAI. I token vengono gestiti automaticamente dopo l’accesso. Usa lo strumento sul computer del browser, fuori da code-server, SSH o container.",
+        "chatgpt.remote": "Questo codice temporaneo non è un token né una chiave API OpenAI. I token vengono gestiti automaticamente dopo l’accesso. Apri l’assistente Mac sul computer del browser; per il terminale via SSH usa l’inoltro della porta callback indicato sotto.",
         "chatgpt.connected": "Account collegato",
         "chatgpt.model": "Modello del tuo piano",
         "chatgpt.choose": "Scegli un modello",
@@ -46,7 +46,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.errors.incomplete": "ChatGPT ha interrotto la risposta. Il turno non è stato completato: riprova.",
         "chatgpt.errors.unsupported": "Questo collegamento usa le chat guidate e l’Assistente. Per OpenCode, disattiva prima l’abbonamento personale e scegli il modello dell’installazione.",
         "chatgpt.forget": "Collega un altro account ChatGPT",
-        "chatgpt.guide": "Nell’Area personale, la scheda “Il tuo abbonamento ChatGPT” permette di collegare il tuo account quando l’installazione lo supporta. Il collegamento usa uno strumento sul tuo computer; dopo l’accesso scegli un modello e premi “Usa il mio abbonamento”. Le chat restano in CounselorBot. Puoi controllare la quota su ChatGPT, tornare al modello dell’installazione o scollegare l’account. L’amministratore abilita il collegamento da Amministrazione → Generale → Collegamento ChatGPT: la protezione delle credenziali viene preparata automaticamente e la modifica ha effetto senza riavvio. La funzione compare solo se abilitata dall’amministratore, nell’Area personale o nell’Area docenti. Quando viene disabilitata, le voci e questa sezione della Guida vengono nascoste. Se disponibile, l’assistente grafico per macOS permette di incollare il codice di associazione e accedere senza terminale. Va aperto sul Mac del browser, non in code-server. Il codice non è un token OpenAI; le credenziali vengono gestite automaticamente.",
+        "chatgpt.guide": "Nell’Area personale, la scheda “Il tuo abbonamento ChatGPT” permette di collegare il tuo account quando l’installazione lo supporta. Il collegamento usa uno strumento sul tuo computer; dopo l’accesso scegli un modello e premi “Usa il mio abbonamento”. Le chat restano in CounselorBot. Puoi controllare la quota su ChatGPT, tornare al modello dell’installazione o scollegare l’account. L’amministratore abilita il collegamento da Amministrazione → Generale → Collegamento ChatGPT: la protezione delle credenziali viene preparata automaticamente e la modifica ha effetto senza riavvio. La funzione compare solo se abilitata dall’amministratore, nell’Area personale o nell’Area docenti. Quando viene disabilitata, le voci e questa sezione della Guida vengono nascoste. Se disponibile, l’assistente grafico per macOS permette di incollare il codice di associazione e accedere senza terminale. Va aperto sul Mac del browser, non in code-server. Il codice non è un token OpenAI; le credenziali vengono gestite automaticamente. Da SSH: sul computer del browser apri un tunnel locale verso la porta 1455 dello host SSH. Esegui questo comando nella shell di quello host, incolla il codice e premi Invio; poi apri l’URL mostrato nel browser del tuo computer. Il loopback di code-server dentro un container è distinto da quello dello host.",
         "chatgpt.admin.title": "Collegamento ChatGPT",
         "chatgpt.admin.description": "Consenti agli utenti di collegare il proprio abbonamento e usarlo nelle chat di CounselorBot. Ogni persona attiva il proprio account dall’Area personale.",
         "chatgpt.admin.enabled": "Collegamento ChatGPT attivo",
@@ -67,7 +67,8 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Scarica l’assistente grafico per macOS",
         "chatgpt.macosInstructions": "Copia il codice qui sotto. Scarica lo ZIP, estrailo e apri CounselorBot-ChatGPT sullo stesso Mac in cui usi il browser. Incolla il codice nell’assistente e premi Collega: si aprirà l’accesso ufficiale a ChatGPT. Non serve il terminale.",
         "chatgpt.macosSecurity": "L’assistente non è notarizzato da Apple. Se macOS blocca l’apertura, dopo aver provato ad aprirlo vai in Impostazioni di Sistema → Privacy e sicurezza → Apri comunque.",
-        "chatgpt.manual": "Altri sistemi o collegamento da terminale"
+        "chatgpt.manual": "Collegamento da terminale (anche SSH)",
+        "chatgpt.sshInstructions": "Da SSH: sul computer del browser apri un tunnel locale verso la porta 1455 dello host SSH. Esegui questo comando nella shell di quello host, incolla il codice e premi Invio; poi apri l’URL mostrato nel browser del tuo computer. Il loopback di code-server dentro un container è distinto da quello dello host."
     },
     "en": {
         "chatgpt.title": "Your ChatGPT subscription",
@@ -86,7 +87,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.copy": "Copy",
         "chatgpt.copied": "Copied",
         "chatgpt.command": "Command to run on your computer",
-        "chatgpt.remote": "This temporary code is not an OpenAI token or API key. Tokens are handled automatically after sign-in. Run the helper on the browser’s computer, outside code-server, SSH or containers.",
+        "chatgpt.remote": "This temporary code is not an OpenAI token or API key. Tokens are handled automatically after sign-in. Open the Mac assistant on the browser’s computer; for a terminal over SSH, forward the callback port as described below.",
         "chatgpt.connected": "Account connected",
         "chatgpt.model": "Model from your plan",
         "chatgpt.choose": "Choose a model",
@@ -114,7 +115,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.errors.incomplete": "ChatGPT interrupted the response. The turn was not completed: retry.",
         "chatgpt.errors.unsupported": "This connection supports guided chats and the Assistant. To use OpenCode, first disable your personal subscription and choose the installation’s model.",
         "chatgpt.forget": "Connect a different ChatGPT account",
-        "chatgpt.guide": "In your personal area, the “Your ChatGPT subscription” card lets you connect your account when supported by the installation. Sign-in uses a helper on your computer; afterwards choose a model and select “Use my subscription”. Chats remain in CounselorBot. You can check quota on ChatGPT, return to the installation’s model or disconnect the account. The administrator enables the connection in Administration → General → ChatGPT connection: credential protection is prepared automatically and the change takes effect without a restart. The feature appears only when enabled by the administrator, in the personal or teacher area. When disabled, the entries and this Guide section are hidden. When available, the graphical macOS assistant lets you paste the pairing code and sign in without a terminal. Open it on the browser’s Mac, not in code-server. The code is not an OpenAI token; credentials are handled automatically.",
+        "chatgpt.guide": "In your personal area, the “Your ChatGPT subscription” card lets you connect your account when supported by the installation. Sign-in uses a helper on your computer; afterwards choose a model and select “Use my subscription”. Chats remain in CounselorBot. You can check quota on ChatGPT, return to the installation’s model or disconnect the account. The administrator enables the connection in Administration → General → ChatGPT connection: credential protection is prepared automatically and the change takes effect without a restart. The feature appears only when enabled by the administrator, in the personal or teacher area. When disabled, the entries and this Guide section are hidden. When available, the graphical macOS assistant lets you paste the pairing code and sign in without a terminal. Open it on the browser’s Mac, not in code-server. The code is not an OpenAI token; credentials are handled automatically. Over SSH: on the browser’s computer, open a local tunnel to port 1455 on the SSH host. Run this command in that host’s shell, paste the code and press Enter, then open the displayed URL in your own browser. A code-server container has a separate loopback from its host.",
         "chatgpt.admin.title": "ChatGPT connection",
         "chatgpt.admin.description": "Allow users to connect their own subscription and use it in CounselorBot chats. Each person activates their own account in the Personal area.",
         "chatgpt.admin.enabled": "ChatGPT connection enabled",
@@ -135,7 +136,8 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Download the graphical assistant for macOS",
         "chatgpt.macosInstructions": "Copy the code below. Download and extract the ZIP, then open CounselorBot-ChatGPT on the same Mac as your browser. Paste the code and select Connect to open the official ChatGPT sign-in. No terminal needed.",
         "chatgpt.macosSecurity": "The assistant is not notarized by Apple. If macOS blocks it, first try opening it, then go to System Settings → Privacy & Security → Open Anyway.",
-        "chatgpt.manual": "Other systems or terminal connection"
+        "chatgpt.manual": "Terminal connection (including SSH)",
+        "chatgpt.sshInstructions": "Over SSH: on the browser’s computer, open a local tunnel to port 1455 on the SSH host. Run this command in that host’s shell, paste the code and press Enter, then open the displayed URL in your own browser. A code-server container has a separate loopback from its host."
     },
     "es": {
         "chatgpt.title": "Tu suscripción a ChatGPT",
@@ -154,7 +156,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.copy": "Copiar",
         "chatgpt.copied": "Copiado",
         "chatgpt.command": "Comando para ejecutar en tu ordenador",
-        "chatgpt.remote": "Este código temporal no es un token ni una clave API OpenAI. Los tokens se gestionan automáticamente tras el acceso. Ejecuta la herramienta en el ordenador del navegador, fuera de code-server, SSH o contenedores.",
+        "chatgpt.remote": "Este código temporal no es un token ni una clave API OpenAI. Los tokens se gestionan automáticamente tras el acceso. Abre el asistente Mac en el ordenador del navegador; para el terminal por SSH, reenvía el puerto de retorno como se indica abajo.",
         "chatgpt.connected": "Cuenta conectada",
         "chatgpt.model": "Modelo de tu plan",
         "chatgpt.choose": "Elige un modelo",
@@ -182,7 +184,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.errors.incomplete": "ChatGPT ha interrumpido la respuesta. El turno no se ha completado: reintenta.",
         "chatgpt.errors.unsupported": "Esta conexión permite las conversaciones guiadas y el Asistente. Para usar OpenCode, desactiva primero tu suscripción personal y elige el modelo de la instalación.",
         "chatgpt.forget": "Conectar otra cuenta de ChatGPT",
-        "chatgpt.guide": "En el área personal, la tarjeta “Tu suscripción a ChatGPT” permite conectar tu cuenta si la instalación lo admite. El acceso usa una herramienta en tu ordenador; después elige un modelo y pulsa “Usar mi suscripción”. Los chats siguen en CounselorBot. Puedes consultar la cuota en ChatGPT, volver al modelo de la instalación o desconectar la cuenta. El administrador activa la conexión en Administración → General → Conexión con ChatGPT: la protección de las credenciales se prepara automáticamente y el cambio se aplica sin reiniciar. La función solo aparece si el administrador la activa, en el área personal o docente. Al desactivarla se ocultan los enlaces y esta sección de la Guía. Si está disponible, el asistente gráfico macOS permite pegar el código y acceder sin terminal. Ábrelo en el Mac del navegador, no en code-server. El código no es un token OpenAI; las credenciales se gestionan automáticamente.",
+        "chatgpt.guide": "En el área personal, la tarjeta “Tu suscripción a ChatGPT” permite conectar tu cuenta si la instalación lo admite. El acceso usa una herramienta en tu ordenador; después elige un modelo y pulsa “Usar mi suscripción”. Los chats siguen en CounselorBot. Puedes consultar la cuota en ChatGPT, volver al modelo de la instalación o desconectar la cuenta. El administrador activa la conexión en Administración → General → Conexión con ChatGPT: la protección de las credenciales se prepara automáticamente y el cambio se aplica sin reiniciar. La función solo aparece si el administrador la activa, en el área personal o docente. Al desactivarla se ocultan los enlaces y esta sección de la Guía. Si está disponible, el asistente gráfico macOS permite pegar el código y acceder sin terminal. Ábrelo en el Mac del navegador, no en code-server. El código no es un token OpenAI; las credenciales se gestionan automáticamente. Por SSH: desde el ordenador del navegador, abre un túnel local al puerto 1455 del servidor SSH. Ejecuta este comando en su terminal, pega el código y pulsa Intro; después abre la URL mostrada en tu navegador. Un contenedor code-server tiene un loopback distinto del servidor.",
         "chatgpt.admin.title": "Conexión con ChatGPT",
         "chatgpt.admin.description": "Permite a los usuarios conectar su propia suscripción y usarla en los chats de CounselorBot. Cada persona activa su cuenta en el Área personal.",
         "chatgpt.admin.enabled": "Conexión con ChatGPT activada",
@@ -203,7 +205,8 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Descargar el asistente gráfico para macOS",
         "chatgpt.macosInstructions": "Copia el código. Descarga y extrae el ZIP y abre CounselorBot-ChatGPT en el mismo Mac que el navegador. Pega el código y pulsa Conectar para abrir el acceso oficial a ChatGPT. No necesitas terminal.",
         "chatgpt.macosSecurity": "El asistente no está notarizado por Apple. Si macOS lo bloquea, intenta abrirlo y ve a Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente.",
-        "chatgpt.manual": "Otros sistemas o conexión desde terminal"
+        "chatgpt.manual": "Conexión por terminal (también SSH)",
+        "chatgpt.sshInstructions": "Por SSH: desde el ordenador del navegador, abre un túnel local al puerto 1455 del servidor SSH. Ejecuta este comando en su terminal, pega el código y pulsa Intro; después abre la URL mostrada en tu navegador. Un contenedor code-server tiene un loopback distinto del servidor."
     },
     "fr": {
         "chatgpt.title": "Votre abonnement ChatGPT",
@@ -222,7 +225,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.copy": "Copier",
         "chatgpt.copied": "Copié",
         "chatgpt.command": "Commande à exécuter sur votre ordinateur",
-        "chatgpt.remote": "Ce code temporaire n’est ni un jeton ni une clé API OpenAI. Les jetons sont gérés automatiquement après la connexion. Exécutez l’outil sur l’ordinateur du navigateur, hors de code-server, SSH ou conteneurs.",
+        "chatgpt.remote": "Ce code temporaire n’est ni un jeton ni une clé API OpenAI. Les jetons sont gérés automatiquement après la connexion. Ouvrez l’assistant Mac sur l’ordinateur du navigateur ; par SSH, transférez le port de retour comme indiqué ci-dessous.",
         "chatgpt.connected": "Compte connecté",
         "chatgpt.model": "Modèle de votre forfait",
         "chatgpt.choose": "Choisissez un modèle",
@@ -250,7 +253,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.errors.incomplete": "ChatGPT a interrompu la réponse. Le tour n’a pas été terminé : réessayez.",
         "chatgpt.errors.unsupported": "Cette connexion prend en charge les conversations guidées et l’Assistant. Pour utiliser OpenCode, désactivez d’abord votre abonnement personnel et choisissez le modèle de l’installation.",
         "chatgpt.forget": "Connecter un autre compte ChatGPT",
-        "chatgpt.guide": "Dans votre espace personnel, la carte “Votre abonnement ChatGPT” permet de connecter votre compte si l’installation le prend en charge. La connexion utilise un outil sur votre ordinateur ; choisissez ensuite un modèle et “Utiliser mon abonnement”. Les conversations restent dans CounselorBot. Vous pouvez consulter le quota sur ChatGPT, revenir au modèle de l’installation ou déconnecter le compte. L’administrateur active la connexion dans Administration → Général → Connexion à ChatGPT : la protection des identifiants est préparée automatiquement et le changement prend effet sans redémarrage. La fonction apparaît uniquement si l’administrateur l’active, dans l’espace personnel ou enseignant. La désactivation masque les liens et cette section du Guide. Si disponible, l’assistant graphique macOS permet de coller le code et de se connecter sans terminal. Ouvrez-le sur le Mac du navigateur, pas dans code-server. Le code n’est pas un jeton OpenAI ; les identifiants sont gérés automatiquement.",
+        "chatgpt.guide": "Dans votre espace personnel, la carte “Votre abonnement ChatGPT” permet de connecter votre compte si l’installation le prend en charge. La connexion utilise un outil sur votre ordinateur ; choisissez ensuite un modèle et “Utiliser mon abonnement”. Les conversations restent dans CounselorBot. Vous pouvez consulter le quota sur ChatGPT, revenir au modèle de l’installation ou déconnecter le compte. L’administrateur active la connexion dans Administration → Général → Connexion à ChatGPT : la protection des identifiants est préparée automatiquement et le changement prend effet sans redémarrage. La fonction apparaît uniquement si l’administrateur l’active, dans l’espace personnel ou enseignant. La désactivation masque les liens et cette section du Guide. Si disponible, l’assistant graphique macOS permet de coller le code et de se connecter sans terminal. Ouvrez-le sur le Mac du navigateur, pas dans code-server. Le code n’est pas un jeton OpenAI ; les identifiants sont gérés automatiquement. Par SSH : depuis l’ordinateur du navigateur, ouvrez un tunnel local vers le port 1455 de l’hôte SSH. Exécutez cette commande sur cet hôte, collez le code et appuyez sur Entrée, puis ouvrez l’URL affichée dans votre navigateur. Un conteneur code-server possède un loopback distinct de celui de l’hôte.",
         "chatgpt.admin.title": "Connexion à ChatGPT",
         "chatgpt.admin.description": "Permettez aux utilisateurs de connecter leur abonnement et de l’utiliser dans les chats CounselorBot. Chaque personne active son compte dans l’Espace personnel.",
         "chatgpt.admin.enabled": "Connexion à ChatGPT activée",
@@ -271,7 +274,8 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Télécharger l’assistant graphique pour macOS",
         "chatgpt.macosInstructions": "Copiez le code. Téléchargez et extrayez le ZIP, puis ouvrez CounselorBot-ChatGPT sur le même Mac que votre navigateur. Collez le code et cliquez sur Connecter pour ouvrir la connexion officielle ChatGPT. Aucun terminal nécessaire.",
         "chatgpt.macosSecurity": "L’assistant n’est pas notarié par Apple. Si macOS le bloque, essayez de l’ouvrir puis accédez à Réglages Système → Confidentialité et sécurité → Ouvrir quand même.",
-        "chatgpt.manual": "Autres systèmes ou connexion par terminal"
+        "chatgpt.manual": "Connexion par terminal (SSH inclus)",
+        "chatgpt.sshInstructions": "Par SSH : depuis l’ordinateur du navigateur, ouvrez un tunnel local vers le port 1455 de l’hôte SSH. Exécutez cette commande sur cet hôte, collez le code et appuyez sur Entrée, puis ouvrez l’URL affichée dans votre navigateur. Un conteneur code-server possède un loopback distinct de celui de l’hôte."
     },
     "de": {
         "chatgpt.title": "Dein ChatGPT-Abonnement",
@@ -290,7 +294,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.copy": "Kopieren",
         "chatgpt.copied": "Kopiert",
         "chatgpt.command": "Befehl für deinen Computer",
-        "chatgpt.remote": "Dieser temporäre Code ist kein OpenAI-Token oder API-Schlüssel. Tokens werden nach der Anmeldung automatisch verwaltet. Starte das Werkzeug auf dem Computer des Browsers, außerhalb von code-server, SSH oder Containern.",
+        "chatgpt.remote": "Dieser temporäre Code ist kein OpenAI-Token oder API-Schlüssel. Tokens werden nach der Anmeldung automatisch verwaltet. Öffne die Mac-App auf dem Computer des Browsers; leite für SSH den unten beschriebenen Callback-Port weiter.",
         "chatgpt.connected": "Konto verbunden",
         "chatgpt.model": "Modell deines Tarifs",
         "chatgpt.choose": "Modell auswählen",
@@ -318,7 +322,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.errors.incomplete": "ChatGPT hat die Antwort unterbrochen. Der Gesprächsschritt wurde nicht abgeschlossen: Versuche es erneut.",
         "chatgpt.errors.unsupported": "Diese Verbindung unterstützt geführte Chats und den Assistenten. Deaktiviere für OpenCode zuerst dein persönliches Abonnement und wähle das Modell der Installation.",
         "chatgpt.forget": "Anderes ChatGPT-Konto verbinden",
-        "chatgpt.guide": "Im persönlichen Bereich kannst du dein Konto über “Dein ChatGPT-Abonnement” verbinden, wenn die Installation dies unterstützt. Die Anmeldung nutzt eine Hilfe auf deinem Computer; wähle danach ein Modell und “Mein Abonnement nutzen”. Chats bleiben in CounselorBot. Du kannst das Kontingent in ChatGPT prüfen, zum Modell der Installation zurückkehren oder das Konto trennen. Administratoren aktivieren die Verbindung unter Administration → Allgemein → ChatGPT-Verbindung: Der Schutz der Zugangsdaten wird automatisch eingerichtet und die Änderung gilt ohne Neustart. Die Funktion erscheint nur bei Aktivierung durch die Administration im persönlichen Bereich oder Lehrkräftebereich. Bei Deaktivierung werden die Einträge und dieser Leitfadenabschnitt ausgeblendet. Falls verfügbar, ermöglicht der grafische macOS-Assistent die Anmeldung mit Kopplungscode ohne Terminal. Öffne ihn auf dem Mac des Browsers, nicht in code-server. Der Code ist kein OpenAI-Token; Anmeldedaten werden automatisch verwaltet.",
+        "chatgpt.guide": "Im persönlichen Bereich kannst du dein Konto über “Dein ChatGPT-Abonnement” verbinden, wenn die Installation dies unterstützt. Die Anmeldung nutzt eine Hilfe auf deinem Computer; wähle danach ein Modell und “Mein Abonnement nutzen”. Chats bleiben in CounselorBot. Du kannst das Kontingent in ChatGPT prüfen, zum Modell der Installation zurückkehren oder das Konto trennen. Administratoren aktivieren die Verbindung unter Administration → Allgemein → ChatGPT-Verbindung: Der Schutz der Zugangsdaten wird automatisch eingerichtet und die Änderung gilt ohne Neustart. Die Funktion erscheint nur bei Aktivierung durch die Administration im persönlichen Bereich oder Lehrkräftebereich. Bei Deaktivierung werden die Einträge und dieser Leitfadenabschnitt ausgeblendet. Falls verfügbar, ermöglicht der grafische macOS-Assistent die Anmeldung mit Kopplungscode ohne Terminal. Öffne ihn auf dem Mac des Browsers, nicht in code-server. Der Code ist kein OpenAI-Token; Anmeldedaten werden automatisch verwaltet. Über SSH: Öffne auf dem Computer des Browsers einen lokalen Tunnel zu Port 1455 des SSH-Hosts. Führe diesen Befehl auf dem Host aus, füge den Code ein und drücke Enter. Öffne dann die angezeigte URL im eigenen Browser. Ein code-server-Container hat einen vom Host getrennten Loopback.",
         "chatgpt.admin.title": "ChatGPT-Verbindung",
         "chatgpt.admin.description": "Erlaube Nutzern, ihr eigenes Abonnement zu verbinden und in CounselorBot-Chats zu verwenden. Jede Person aktiviert ihr Konto im Persönlichen Bereich.",
         "chatgpt.admin.enabled": "ChatGPT-Verbindung aktiviert",
@@ -339,7 +343,8 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Grafischen Assistenten für macOS herunterladen",
         "chatgpt.macosInstructions": "Kopiere den Code. Lade die ZIP-Datei herunter, entpacke sie und öffne CounselorBot-ChatGPT auf dem Mac mit deinem Browser. Füge den Code ein und wähle Verbinden für die offizielle ChatGPT-Anmeldung. Kein Terminal erforderlich.",
         "chatgpt.macosSecurity": "Der Assistent ist nicht von Apple notarisiert. Wenn macOS ihn blockiert, versuche ihn zu öffnen und gehe zu Systemeinstellungen → Datenschutz & Sicherheit → Dennoch öffnen.",
-        "chatgpt.manual": "Andere Systeme oder Verbindung im Terminal"
+        "chatgpt.manual": "Verbindung im Terminal (auch SSH)",
+        "chatgpt.sshInstructions": "Über SSH: Öffne auf dem Computer des Browsers einen lokalen Tunnel zu Port 1455 des SSH-Hosts. Führe diesen Befehl auf dem Host aus, füge den Code ein und drücke Enter. Öffne dann die angezeigte URL im eigenen Browser. Ein code-server-Container hat einen vom Host getrennten Loopback."
     },
     "sv": {
         "chatgpt.title": "Din ChatGPT-prenumeration",
@@ -358,7 +363,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.copy": "Kopiera",
         "chatgpt.copied": "Kopierat",
         "chatgpt.command": "Kommando att köra på din dator",
-        "chatgpt.remote": "Den tillfälliga koden är varken en OpenAI-token eller API-nyckel. Tokens hanteras automatiskt efter inloggningen. Kör verktyget på webbläsarens dator, utanför code-server, SSH eller containrar.",
+        "chatgpt.remote": "Den tillfälliga koden är varken en OpenAI-token eller API-nyckel. Tokens hanteras automatiskt efter inloggningen. Öppna Mac-appen på webbläsarens dator; vidarebefordra callback-porten enligt nedan när du använder SSH.",
         "chatgpt.connected": "Konto anslutet",
         "chatgpt.model": "Modell i ditt abonnemang",
         "chatgpt.choose": "Välj en modell",
@@ -386,7 +391,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.errors.incomplete": "ChatGPT avbröt svaret. Samtalssteget slutfördes inte: försök igen.",
         "chatgpt.errors.unsupported": "Denna anslutning stöder guidade chattar och Assistenten. För OpenCode, inaktivera först din personliga prenumeration och välj installationens modell.",
         "chatgpt.forget": "Anslut ett annat ChatGPT-konto",
-        "chatgpt.guide": "I ditt personliga område kan du ansluta kontot via “Din ChatGPT-prenumeration” om installationen stöder detta. Inloggningen använder ett verktyg på din dator; välj sedan en modell och “Använd min prenumeration”. Chattarna finns kvar i CounselorBot. Du kan kontrollera kvoten i ChatGPT, återgå till installationens modell eller koppla från kontot. Administratören aktiverar anslutningen under Administration → Allmänt → ChatGPT-anslutning: skyddet för inloggningsuppgifterna förbereds automatiskt och ändringen gäller utan omstart. Funktionen visas endast när administratören aktiverat den, i det personliga området eller lärarområdet. Vid avaktivering döljs länkarna och detta guideavsnitt. När den finns kan den grafiska macOS-assistenten ta emot kopplingskoden och logga in utan terminal. Öppna den på webbläsarens Mac, inte i code-server. Koden är ingen OpenAI-token; inloggningsuppgifter hanteras automatiskt.",
+        "chatgpt.guide": "I ditt personliga område kan du ansluta kontot via “Din ChatGPT-prenumeration” om installationen stöder detta. Inloggningen använder ett verktyg på din dator; välj sedan en modell och “Använd min prenumeration”. Chattarna finns kvar i CounselorBot. Du kan kontrollera kvoten i ChatGPT, återgå till installationens modell eller koppla från kontot. Administratören aktiverar anslutningen under Administration → Allmänt → ChatGPT-anslutning: skyddet för inloggningsuppgifterna förbereds automatiskt och ändringen gäller utan omstart. Funktionen visas endast när administratören aktiverat den, i det personliga området eller lärarområdet. Vid avaktivering döljs länkarna och detta guideavsnitt. När den finns kan den grafiska macOS-assistenten ta emot kopplingskoden och logga in utan terminal. Öppna den på webbläsarens Mac, inte i code-server. Koden är ingen OpenAI-token; inloggningsuppgifter hanteras automatiskt. Via SSH: öppna en lokal tunnel från webbläsarens dator till port 1455 på SSH-värden. Kör kommandot på värden, klistra in koden och tryck Enter. Öppna sedan den visade URL:en i din webbläsare. En code-server-container har en annan loopback än värden.",
         "chatgpt.admin.title": "ChatGPT-anslutning",
         "chatgpt.admin.description": "Låt användare ansluta sitt eget abonnemang och använda det i CounselorBot-chattar. Varje person aktiverar sitt konto i det Personliga området.",
         "chatgpt.admin.enabled": "ChatGPT-anslutningen är aktiverad",
@@ -407,6 +412,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Ladda ner den grafiska assistenten för macOS",
         "chatgpt.macosInstructions": "Kopiera koden. Ladda ner och packa upp ZIP-filen och öppna CounselorBot-ChatGPT på samma Mac som webbläsaren. Klistra in koden och välj Anslut för den officiella ChatGPT-inloggningen. Ingen terminal behövs.",
         "chatgpt.macosSecurity": "Assistenten är inte notariserad av Apple. Om macOS blockerar den, försök öppna den och gå till Systeminställningar → Integritet och säkerhet → Öppna ändå.",
-        "chatgpt.manual": "Andra system eller anslutning via terminal"
+        "chatgpt.manual": "Anslutning via terminal (även SSH)",
+        "chatgpt.sshInstructions": "Via SSH: öppna en lokal tunnel från webbläsarens dator till port 1455 på SSH-värden. Kör kommandot på värden, klistra in koden och tryck Enter. Öppna sedan den visade URL:en i din webbläsare. En code-server-container har en annan loopback än värden."
     }
 };

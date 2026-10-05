@@ -107,6 +107,7 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
         catch { setCopied(''); } // The selectable text remains available.
     };
     const command = `python3 chatgpt-connect.py --server '${origin}'`;
+    const sshCommand = `${command} --no-browser --callback-port 1455`;
 
     if (preview || status?.enabled === false) return null;
     if (!status) return errorKey
@@ -138,6 +139,9 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
                 <p className="text-sm font-semibold">{t('chatgpt.command')}</p>
                 <code className="block break-all rounded bg-slate-50 p-3 text-sm">{command}</code>
                 <Button type="button" variant="secondary" onClick={() => void copy(command, 'command')}>{t(copied === 'command' ? 'chatgpt.copied' : 'chatgpt.copy')}</Button>
+                <p className="text-sm">{t('chatgpt.sshInstructions')}</p>
+                <code data-testid="chatgpt-ssh-command" className="block break-all rounded bg-slate-50 p-3 text-sm">{sshCommand}</code>
+                <Button type="button" variant="secondary" onClick={() => void copy(sshCommand, 'ssh')}>{t(copied === 'ssh' ? 'chatgpt.copied' : 'chatgpt.copy')}</Button>
             </details>
             <Button type="button" variant="secondary" disabled={busy} onClick={() => void act(async () => { await chatgptRequest('/link', 'DELETE'); setLink(undefined); await load(); })}>{t('chatgpt.cancel')}</Button>
         </div>}
