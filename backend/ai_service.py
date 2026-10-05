@@ -114,6 +114,7 @@ class AIService:
         self.last_model = None
         self.last_attempts = []
         self.last_context_report = None
+        self.context_data = None
         self.last_envelope = None
         # Ultimo ragionamento «sto pensando» estratto (nativo Ollama o tag <think>),
         # esposto ai chiamatori non-stream (es. audit /live) come canale separato.
@@ -549,6 +550,7 @@ class AIService:
         profile = context_profile(self.config, provider, model)
         system, message, history, self.last_context_report = fit_context(
             system, message, self._normalize_history(history), profile, plan.max_tokens,
+            context_data=self.context_data,
         )
         self.last_envelope = {"system_prompt_final": system, "full_message": message, "history": history}
         # A local-to-cloud fallback crosses the privacy boundary too.

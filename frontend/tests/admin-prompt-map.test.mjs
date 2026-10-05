@@ -134,6 +134,7 @@ async function fixture(width = 1440, { failReorder = false, failUsage = false, f
         let data = [];
         if (url.pathname === '/api/auth/me') data = { username: 'fixture', authenticated: true, is_admin: true, groups: ['admins'] };
         if (url.pathname === '/api/admin/config/env-status') data = {};
+        if (url.pathname === '/api/admin/presets') data = [{ id: 21, name: 'Fixture small', provider: 'ollama', model: 'fixture-small', is_active: true }];
         if (url.pathname === '/api/admin/prompt-map/instruments') data = promptMap.instruments;
         if (url.pathname === '/api/admin/prompt-map') data = { ...map, instrument: url.searchParams.get('instrument') };
         if (url.pathname === '/api/admin/guided-step-questions' && request.method() === 'GET') data = questions;
@@ -151,7 +152,7 @@ async function fixture(width = 1440, { failReorder = false, failUsage = false, f
                 envelope: { system_prompt_final: 'SYSTEM', full_message: 'USER', history: [] },
                 components: { system_prompt: 'Analizza i fattori.', step_prompt: body.message, meta_system_prompt: 'Meta QSA', counselor: 'Sei Iride.', guided_path: 'percorso' },
                 component_origins: { system_prompt: 'prompt_factor', step_prompt: 'guided_step:cognitive', meta_system_prompt: 'prompt_meta_QSA_cognitive', counselor: 'counselor.persona' },
-                component_flags: {}, warnings: [], resolved: { provider: 'p', model: 'm' },
+                component_flags: {}, warnings: [], resolved: { provider: 'p', model: 'm', context_budget: { input_tokens: 120, input_budget: 800, blocks: { instructions_and_contracts: 80, current_message: 40, history: 0 } } },
             };
         } else if (['POST', 'PUT', 'PATCH'].includes(request.method())) {
             data = request.postDataJSON();
@@ -367,6 +368,14 @@ test('step preview asks the dry run for the step and colours blocks by level of 
         // Meta prompt dello step non salvato: eredita il livello dello strumento.
         assert.match(await classOf('Meta system prompt'), /border-l-indigo-500/);
 
+        const selected = page.waitForResponse(response => new URL(response.url()).pathname === '/api/admin/prompt-audit/dry-run'
+            && response.request().postDataJSON().model_preset_id === 21);
+        await preview.getByLabel('Configurazione del modello', { exact: true }).selectOption('21');
+        await selected;
+        assert.equal(previews.at(-1).model_preset_id, 21);
+        await preview.locator('[data-context-token-report]').waitFor();
+        assert.match(await preview.locator('[data-context-token-report]').innerText(), /120.*800/);
+
         // Turno libero dello studente: mode di follow-up risolto dal backend.
         await preview.getByLabel('Ingresso nello step').selectOption('reply');
         const replied = page.waitForResponse(response => new URL(response.url()).pathname === '/api/admin/prompt-audit/dry-run'
@@ -544,5 +553,66 @@ test('failed deletion preserves the session list, confirmation and step', async 
         assert.equal(await dialog.getByLabel('Digita «affective» per confermare').inputValue(), 'affective');
         assert.equal(await page.locator('#pm-step-affective').count(), 1);
         assert.deepEqual(writes, [{ method: 'DELETE', path: '/api/admin/guided-steps/affective' }]);
+    } finally { await f.close(); }
+});
+
+for (const width of [1440, 390]) test(`manual model context settings preserve drafts and save explicitly at ${width}px`, async () => {
+    const f = await fixture(width);
+    try {
+        const level = { label: 'Totale', directives_tokens: null, persona_tokens: null, profile_tokens: null, knowledge_tokens: null, knowledge_top_n: null, history_turns: null, meta: true, short_prompt: false };
+        await f.page.route('**/api/admin/model-context-levels', route => route.fulfill({ json: {
+            levels: { totale: level, ristretto: { ...level, label: 'Ristretto', meta: false, short_prompt: true } },
+            profiles: { 'ollama/fixture-small': { level: 'ristretto', context_tokens: 16384 } },
+        } }));
+        await f.page.goto(`${origin}/admin?section=general`);
+        const settings = f.page.getByRole('region', { name: 'Contesto per modello' });
+        await settings.waitFor();
+        assert.equal(f.writes.length, 0);
+        await settings.locator('summary').filter({ hasText: 'Ristretto' }).click();
+        await settings.getByRole('textbox', { name: 'Nome del livello ristretto', exact: true }).fill('Breve locale');
+        await settings.getByRole('spinbutton', { name: 'Persona: tetto token ristretto', exact: true }).fill('222');
+        assert.equal(f.writes.length, 0);
+        await settings.getByRole('button', { name: 'Salva livelli', exact: true }).click();
+        await until(() => f.writes.length === 1);
+        assert.equal(f.writes[0].body.key, 'model_context_levels');
+        assert.equal(JSON.parse(f.writes[0].body.value).ristretto.persona_tokens, 222);
+        assert.equal(JSON.parse(f.writes[0].body.value).ristretto.label, 'Breve locale');
+        await settings.getByRole('combobox', { name: 'Livello 1', exact: true }).selectOption('totale');
+        assert.equal(f.writes.length, 1);
+        await settings.getByRole('button', { name: 'Salva assegnazioni', exact: true }).click();
+        await until(() => f.writes.length === 2);
+        assert.equal(JSON.parse(f.writes[1].body.value)['ollama/fixture-small'].level, 'totale');
+        assert.equal(JSON.parse(f.writes[1].body.value)['ollama/fixture-small'].context_tokens, 16384);
+        await f.page.route('**/api/admin/config', route => route.fulfill({ status: 500, json: { detail: 'fixture failure' } }));
+        await settings.getByRole('spinbutton', { name: 'Persona: tetto token ristretto', exact: true }).fill('333');
+        await settings.getByRole('button', { name: 'Salva livelli', exact: true }).click();
+        await settings.getByRole('alert').waitFor();
+        assert.equal(await settings.getByRole('spinbutton', { name: 'Persona: tetto token ristretto', exact: true }).inputValue(), '333');
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
+        await capture(f.page, `model-context-${width}`);
+    } finally { await f.close(); }
+});
+
+test('short prompt is administrator-owned, counts its draft and preserves shared confirmation', async () => {
+    const f = await fixture();
+    try {
+        await f.page.route('**/api/admin/prompt-map?*', route => {
+            const map = structuredClone(promptMap);
+            map.levels.instrument.push(config('prompt_factor__short', '', { role: 'system_prompt_short', shared: true, used_by: { instruments: ['QSA'], steps: users(['cognitive', 'affective']) } }));
+            return route.fulfill({ json: map });
+        });
+        await f.page.reload();
+        const card = f.page.locator('[data-entry-key="prompt_factor__short"]');
+        await card.waitFor();
+        await card.getByRole('button', { name: 'Modifica', exact: true }).click();
+        await card.getByRole('textbox', { name: 'prompt_factor__short', exact: true }).fill('Testo breve scritto dall’amministratore.');
+        assert.ok(await card.locator('[data-token-estimate]').count() >= 2);
+        assert.equal(f.writes.length, 0);
+        await card.getByRole('button', { name: 'Salva', exact: true }).click();
+        assert.equal(f.writes.length, 0);
+        await card.getByRole('button', { name: 'Conferma: salva per tutti', exact: true }).click();
+        await until(() => f.writes.length === 1);
+        assert.equal(f.writes[0].body.key, 'prompt_factor__short');
+        assert.equal(f.writes[0].body.value, 'Testo breve scritto dall’amministratore.');
     } finally { await f.close(); }
 });
