@@ -20,6 +20,7 @@ from .chat_preferences import apply_response_format
 from . import models
 from .ai_service import AIError, AIService
 from .student_context import student_context, latest_learner_profile
+from .practice_notebooks import practice_notebook_context, simulation_notice
 from .prompt_contract import persona_context
 from .prompt_config import DEFAULT_COUNSELORBOT_CHAT_CONTEXT
 from .platform_guidance import platform_guidance_context
@@ -742,14 +743,22 @@ def analyze_turn(
     current_recommendations: list[dict[str, str]] | None = None,
     opening: bool = False,
     response_format: str = "standard",
+    practice_notebook: models.TeacherPracticeNotebook | None = None,
 ) -> OrientationAnalysis:
-    """Interpreta un turno; il catalogo chiuso resta l'autorità finale."""
+    """Interpreta un turno; il catalogo chiuso resta l'autorità finale.
+
+    `practice_notebook` (gia' verificato dal chiamante: docente proprietario)
+    sostituisce tutto cio' che la Bussola sa del docente con lo studente
+    simulato, preceduto dal blocco [SIMULATION]."""
     lang = normalize_language(language)
     language_name = LANGUAGE_NAMES[lang]
     fallback = _fallback_without_repetition(fallback_analysis(message, lang), history, lang)
     if opening:
-        revision = latest_learner_profile(db, username)
-        data = revision.data if revision is not None and isinstance(revision.data, dict) else {}
+        if practice_notebook is not None:
+            data = practice_notebook.data if isinstance(practice_notebook.data, dict) else {}
+        else:
+            revision = latest_learner_profile(db, username)
+            data = revision.data if revision is not None and isinstance(revision.data, dict) else {}
         focus = next((str(data.get(key) or "").strip()[:160] for key in ("goal", "main_difficulty", "strengths", "context") if str(data.get(key) or "").strip()), "")
         questions = {
             "it": "Partiamo da ciò che hai scritto nel Taccuino: «{focus}». Quale aspetto vuoi affrontare per primo?",
@@ -766,8 +775,16 @@ def analyze_turn(
     # Che cosa lo studente ha gia' fatto: senza, la Bussola raccomanda al buio
     # e sa di un questionario compilato solo se lo studente glielo scrive.
     from .goals import goals_context
-    student = student_context(db, username)
-    student += "\n" + goals_context(db, username)
+    if practice_notebook is not None:
+        # Prova del docente: niente taccuino, compilazioni, sessioni,
+        # portfolio o obiettivi suoi; solo lo studente simulato.
+        student = (
+            "\n[SIMULATION]\n" + simulation_notice(lang)
+            + "\n\n[PROFILE]\n" + practice_notebook_context(practice_notebook) + "\n"
+        )
+    else:
+        student = student_context(db, username)
+        student += "\n" + goals_context(db, username)
     briefs = _tool_briefs(db, message, history, lang)
     current_cards = [{"id": item["id"], "reason": str(item.get("reason") or "")[:600]}
                      for item in (current_recommendations or []) if item.get("id") in TOOL_IDS][:3]
