@@ -89,6 +89,10 @@ Tutti salvati LOCAL, sync `not-linked`; nessuna issue pubblicata a mano.
 - 2a50c13c-0ad7-4f41-b3ab-01f56888de76: errore lint preesistente,
   confermato, fuori dal compito; evidenza aggiornata.
 
+- 9c665d96-9364-4db6-a1d0-24e7e7e699a6: CLI GitHub richiama Projects classic
+  dismessi anche con `gh pr edit`; confermato, workaround REST/GraphQL V2
+  riuscito. PR aperta e collegata al progetto.
+
 ### Bug non registrati
 
 Nessuno.
