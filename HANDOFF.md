@@ -1,3 +1,43 @@
+# Handoff: pairing ChatGPT e assistente grafico macOS pubblicati
+Data: 2026-10-05 | Stato: deploy e verifiche completati; PR da revisionare
+
+- Riprodotta la causa del fallimento: nginx richiedeva il cookie Console
+  anche al helper con Bearer; il terminale code-server non è il computer del
+  browser per il callback locale. Anche la User-Agent Python subiva un 403.
+- Tre eccezioni nginx esatte per il solo pairing temporaneo; metodi/body
+  limitati, cookie e header identità rimossi, no-store. Altre API e download
+  mantengono SSO Console. Helper Python con User-Agent accettata e messaggi
+  sicuri; file scaricato dall'utente nella radice preservato senza modificarlo.
+- Assistente nativo Mac12+, Intel/Apple Silicon, senza Python o terminale:
+  sorgenti in `tools/chatgpt-macos`, build/test con `scripts/build-chatgpt-macos.sh`.
+  ZIP autenticato disponibile nella pagina; codice di associazione distinto
+  dai token. PKCE/state, callback127.0.0.1, trasferimento HTTPS; nessun token
+  visualizzato o salvato dal helper. Documentazione e Guida in sei lingue aggiornate.
+- Artefatto locale escluso da Git, bind backend readonly. SHA256 ZIP:
+  `02f472d3a42cc492a49a7d8fc36b4daa060620df6fddefa4a632f2b8ccf2735d`.
+  Firma ad hoc, non notarizzato: eventuale consenso Gatekeeper dalla GUI.
+  Finestra aperta su Apple Silicon; Intel compilato senza hardware Intel disponibile.
+- Su richiesta esplicita dell'utente applicata protezione **basic** con l'API
+  amministrativa atomica: redazione attiva, NER disattivato, fallback block.
+  Rilettura API e runtime verificati con testi fittizi; nessuna chiamata Ollama/AI.
+- Verifiche: 140 backend su DB separato, 5 helper HTTP, 253 unità frontend,
+  12 browser in sei lingue a 390/1440 px, 23 HTTP proxy isolati; test nativi,
+  TypeScript, i18n2951, lint mirato, build Docker e guidance passati.
+- Backend/frontend aggiornati e tre container healthy. Configurazione Console
+  applicata con backup, nginx-t/reload e secondo giro idempotente. Dominio:
+  https://counselorbot.labform.net. SSO reale, download ZIP, logout/revoca e
+  rifiuto codici assenti/invalidi verificati pubblicamente, nessun pairing reale creato.
+- Da completare dall'utente: aprire l'assistente sul Mac del browser, collegare
+  il proprio ChatGPT, scegliere un modello e attivare **Usa il mio abbonamento**.
+  Nessun account OpenAI o inferenza reale utilizzato nei test.
+- Branch `fix/chatgpt-graphical-pairing`; PR creata come ultimo passo, nessun merge.
+  PR43 dell'installazione precedente verificata MERGED. Nessun processo dev o
+  app di prova lasciato aperto. Stop stack senza perdere dati:
+  `docker compose --env-file .env -f docker-compose.portable.yml stop`.
+  **`sudo ./update_nginx.sh` non è necessario** per questa installazione Console Docker.
+
+---
+
 # Handoff: installazione portabile con SSO Console su labform.net
 Data: 2026-10-05 | Stato: installato e verificato; PR da revisionare
 
