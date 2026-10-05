@@ -168,11 +168,21 @@ Sign in with ChatGPT per inferenza diretta, attualmente in anteprima: piani e
 installazioni ammessi vanno verificati prima dell’attivazione; un piano di
 scuola/università non è automaticamente ammesso.
 
-**Collega ChatGPT** genera un codice temporaneo. La persona scarica lo strumento,
-lo esegue sul proprio computer con Python 3.10 o successivo e inserisce il codice
-quando richiesto: si apre l’accesso ufficiale a ChatGPT. Il backend verifica e
-conserva cifrate le credenziali. Non incollarle nell’interfaccia o nella chat.
-Se il sito richiede un ulteriore accesso al proxy, usare un tunnel locale.
+**Collega ChatGPT** genera un codice di associazione CounselorBot, valido dieci
+minuti: non è un token o una chiave API OpenAI. Se disponibile, **Scarica
+l’assistente grafico per macOS** scarica un’app per Mac Intel e Apple Silicon,
+senza Python né terminale. La persona copia il codice, estrae lo ZIP e apre
+l’assistente sullo stesso Mac del browser; incolla il codice e preme **Collega**.
+Si apre l’accesso ufficiale a ChatGPT e il trasferimento delle credenziali avviene
+automaticamente. L’app non è notarizzata da Apple: l’eventuale autorizzazione
+all’apertura si gestisce dalle impostazioni macOS, come indicato nel pannello.
+
+La sezione **Altri sistemi o collegamento da terminale** conserva lo strumento
+Python 3.10+. Entrambi vanno eseguiti sul computer del browser, fuori da
+code-server, SSH e container. Il backend verifica e conserva cifrate le
+credenziali; non vanno incollate nell’interfaccia o nella chat. L’ingress
+portabile consente solo i tre endpoint con codice di associazione temporaneo;
+le pagine personali e le altre API continuano a richiedere il login Console.
 
 Dopo il collegamento occorre scegliere un modello tra quelli disponibili per
 il proprio account e premere **Usa il mio abbonamento**. Collegare l’account
