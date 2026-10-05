@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import type { PromptMap, PromptMapEntry } from './prompt-map';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, needsSharedConfirm, saveRequest } from './prompt-map.ts';
+import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, needsSharedConfirm, saveRequest, stepsByInstrument } from './prompt-map.ts';
 
 function entry(overrides: Partial<PromptMapEntry>): PromptMapEntry {
     return {
@@ -72,4 +72,22 @@ test('inherited refs resolve to the entry on its level', () => {
     assert.equal(findEntry(map, 'prompt_factor')?.level, 'instrument');
     assert.equal(findEntry(map, 'text_guided_conclusion')?.level, 'group');
     assert.deepEqual(levelCounts(map), { common: 1, group: 1, instrument: 1, step: 0 });
+});
+
+test('shared entries list their steps under each instrument, in the instruments order', () => {
+    const shared = entry({
+        key: 'prompt_evento_interview', level: 'group',
+        used_by: {
+            instruments: ['EVENTO_STUDIO', 'EVENTO_PROFESSIONALE'],
+            steps: [
+                { instrument: 'EVENTO_PROFESSIONALE', step_id: 'fatto', label: 'Il fatto' },
+                { instrument: 'EVENTO_STUDIO', step_id: 'evento', label: "L'evento" },
+                { instrument: 'EVENTO_STUDIO', step_id: 'fatto', label: 'Il fatto' },
+            ],
+        },
+    });
+    assert.deepEqual(stepsByInstrument(shared).map(({ instrument, steps }) => [instrument, steps.map(step => step.step_id)]), [
+        ['EVENTO_STUDIO', ['evento', 'fatto']],
+        ['EVENTO_PROFESSIONALE', ['fatto']],
+    ]);
 });

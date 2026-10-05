@@ -244,6 +244,49 @@ def test_shared_event_prompts_are_group_level():
             assert entry["shared"] is True
 
 
+def test_each_group_lists_exactly_the_instruments_that_use_its_entries():
+    _seed_all_instruments()
+    client = _client()
+    db = _TestSession()
+    try:
+        runtime_keys = {i: _runtime_config_keys(db, i) for i in INSTRUMENTS}
+        for instrument in ("EVENTO_STUDIO", "QSA", "IDEA"):
+            groups = _map(client, instrument)["levels"]["groups"]
+            sets = [frozenset(group["instruments"]) for group in groups]
+            # Un riquadro per insieme di strumenti, e lo strumento scelto ne fa parte.
+            assert len(sets) == len(set(sets)), (instrument, sets)
+            for group in groups:
+                assert instrument in group["instruments"]
+                for entry in group["entries"]:
+                    users = {i for i in INSTRUMENTS if entry["key"] in runtime_keys[i]}
+                    assert set(group["instruments"]) == users, (instrument, entry["key"])
+                    assert entry["used_by"]["instruments"] == group["instruments"]
+
+        groups = _map(client, "EVENTO_STUDIO")["levels"]["groups"]
+        event = next(g for g in groups if any(e["key"] == "prompt_evento_interview" for e in g["entries"]))
+        assert event["instruments"] == ["EVENTO_STUDIO", "EVENTO_PROFESSIONALE"]
+        assert {e["key"] for e in event["entries"]} >= {"prompt_evento_interview", "prompt_evento_summary"}
+        # Gli step di "usato da" portano nome tradotto e tipo (fase fissa o step).
+        interview = next(e for e in event["entries"] if e["key"] == "prompt_evento_interview")
+        steps = interview["used_by"]["steps"]
+        assert {s["instrument"] for s in steps} == {"EVENTO_STUDIO", "EVENTO_PROFESSIONALE"}
+        rows = {
+            (r.questionnaire_type, r.id): r
+            for r in db.query(models.GuidedStep).filter(
+                models.GuidedStep.questionnaire_type.in_(("EVENTO_STUDIO", "EVENTO_PROFESSIONALE"))
+            )
+        }
+        for step in steps:
+            assert step["fixed"] is False
+            assert step["label_i18n"] == dict(rows[(step["instrument"], step["step_id"])].label_i18n or {})
+        questions = next(
+            e for g in _map(client, "QSA")["levels"]["groups"] for e in g["entries"] if e["key"] == "label_guided_questions"
+        )
+        assert all(s["fixed"] and s["step_id"] == "questions" for s in questions["used_by"]["steps"])
+    finally:
+        db.close()
+
+
 def test_common_level_has_all_six_directives_and_persona():
     _seed_all_instruments()
     prompt_map = _map(_client(), "QSA")

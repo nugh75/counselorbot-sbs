@@ -197,10 +197,13 @@ def _used_by(uses: list[_Use], step_labels: dict) -> dict:
     for u in uses:
         if u.step_id and (u.instrument, u.step_id) not in seen:
             seen.add((u.instrument, u.step_id))
+            label, label_i18n = step_labels.get((u.instrument, u.step_id), (u.step_id, {}))
             steps.append({
                 "instrument": u.instrument,
                 "step_id": u.step_id,
-                "label": step_labels.get((u.instrument, u.step_id), u.step_id),
+                "label": label,
+                "label_i18n": label_i18n,
+                "fixed": u.step_id in (QUESTIONS_PHASE, CONCLUSION_PHASE),
             })
     return {"instruments": instruments, "steps": steps}
 
@@ -284,10 +287,13 @@ def build_prompt_map(db, instrument: str) -> dict | None:
         return None
     all_instruments = set(steps_by_instrument)
     configs = {row.key: row for row in db.query(models.Config).all()}
-    step_labels = {(s.questionnaire_type, s.id): s.label for steps in steps_by_instrument.values() for s in steps}
+    step_labels = {
+        (s.questionnaire_type, s.id): (s.label, dict(s.label_i18n or {}))
+        for steps in steps_by_instrument.values() for s in steps
+    }
     for i in all_instruments:
-        step_labels[(i, QUESTIONS_PHASE)] = QUESTIONS_PHASE
-        step_labels[(i, CONCLUSION_PHASE)] = CONCLUSION_PHASE
+        step_labels[(i, QUESTIONS_PHASE)] = (QUESTIONS_PHASE, {})
+        step_labels[(i, CONCLUSION_PHASE)] = (CONCLUSION_PHASE, {})
 
     uses_by_key: dict[str, list[_Use]] = defaultdict(list)
     for i in sorted(all_instruments):
