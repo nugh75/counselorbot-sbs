@@ -26,7 +26,8 @@ import { acceptsAgreement, advanceButtons, advanceLabelKey, autoAdvancesOnGenera
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { NotebookContextSelector } from '@/components/qsa/NotebookContextSelector';
-import { readStoredNotebookContext, storeNotebookContext, type NotebookContextChoice } from '@/lib/notebook-context';
+import { PracticeNotebookPicker } from '@/components/qsa/PracticeNotebookPicker';
+import { notebookContextPayload, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId, type NotebookContextChoice } from '@/lib/notebook-context';
 import { canUseTeacherAssistant } from '@/lib/roles';
 import { getIdentity } from '@/lib/auth';
 import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/ReasoningSelector';
@@ -475,6 +476,15 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         setNotebookContext(value);
         storeNotebookContext(value);
     };
+    // Taccuino studente di prova (solo con "practice"): id del docente, il
+    // server ne verifica proprietà e ruolo a ogni turno.
+    const [practiceNotebookId, setPracticeNotebookId] = useState<number | null>(() => frozenSnapshot?.practice_notebook_id ?? readStoredPracticeNotebookId());
+    const changePracticeNotebookId = useCallback((id: number | null) => {
+        setPracticeNotebookId(id);
+        storePracticeNotebookId(id);
+    }, []);
+    const notebookPayload = notebookContextPayload(isTeacherUser, notebookContext, practiceNotebookId);
+    const notebookSignature = notebookContext === 'practice' ? `practice:${practiceNotebookId ?? ''}` : notebookContext;
     const desktop = useIsDesktop();
     // Se l'ultimo turno ha disegnato. Null prima del primo: una mappa che non
     // c'e' ancora non e' una mappa rimasta ferma.
@@ -765,6 +775,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     if (frozenSnapshot.notebook_context) {
                         setNotebookContext(frozenSnapshot.notebook_context);
                     }
+                    if (frozenSnapshot.practice_notebook_id) {
+                        setPracticeNotebookId(frozenSnapshot.practice_notebook_id);
+                    }
                     // Le fasi già aperte restano tali: altrimenti l'effetto di cambio
                     // fase rigenera l'intro della fase ripresa e lo studente si
                     // rilegge la presentazione sotto alla conversazione di prima.
@@ -993,7 +1006,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 counselor_id: counselorId,
                 idea_variant: isIdea ? ideaVariant : undefined,
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
-                notebook_context: isTeacherUser && notebookContext !== 'default' ? notebookContext : undefined,
+                ...notebookPayload,
                 idea_budget: isIdea ? ideaBudget : undefined,
             }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
             if (result.conversation_id) setConversationId(result.conversation_id);
@@ -1040,7 +1053,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         counselor_id: counselorId,
                         idea_variant: isIdea ? ideaVariant : undefined,
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
-                notebook_context: isTeacherUser && notebookContext !== 'default' ? notebookContext : undefined,
+                ...notebookPayload,
                         idea_budget: isIdea ? ideaBudget : undefined,
                     };
                 }
@@ -1064,7 +1077,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     counselor_id: counselorId,
                     idea_variant: isIdea ? ideaVariant : undefined,
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
-                notebook_context: isTeacherUser && notebookContext !== 'default' ? notebookContext : undefined,
+                ...notebookPayload,
                     idea_budget: isIdea ? ideaBudget : undefined,
                 };
             };
@@ -1262,7 +1275,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 counselor_id: counselorId,
                 idea_variant: isIdea ? ideaVariant : undefined,
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
-                notebook_context: isTeacherUser && notebookContext !== 'default' ? notebookContext : undefined,
+                ...notebookPayload,
                 idea_budget: isIdea ? ideaBudget : undefined,
             };
             if (scoresContextOverride || essential) {
@@ -1375,6 +1388,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         guided_path: guidedPath,
         reasoning_effort: reasoningEffort,
         notebook_context: notebookContext !== 'default' ? notebookContext : undefined,
+        practice_notebook_id: notebookContext === 'practice' && practiceNotebookId ? practiceNotebookId : undefined,
         label: `${questionnaireType} — ${getPhaseLabel(currentPhase)}`,
     });
 
@@ -1401,7 +1415,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             const snapshot = buildSnapshot();
             await freezeSession(snapshot);
             pendingSnapshotRef.current = null;
-            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext });
+            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature });
             toast.success(t('frozen.frozen'));
             onFrozen?.();
         } catch {
@@ -1426,7 +1440,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             isLoading,
             completed: completedRef.current,
         })) return;
-        const signature = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext });
+        const signature = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature });
         if (signature === savedSignatureRef.current) return;
         pendingSnapshotRef.current = { snapshot: buildSnapshot(), signature };
         const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
@@ -1434,7 +1448,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         // buildSnapshot legge lo stato corrente a ogni render: le dipendenze qui
         // sono quello che rende lo snapshot diverso dal precedente.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext, isLoading, sessionId]);
+    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookSignature, isLoading, sessionId]);
 
     // Uscita dallo strumento con un turno ancora in attesa: `pagehide` copre tab
     // chiusa, ricarica e link che lasciano la pagina (il logo dell'header è un
@@ -1606,11 +1620,14 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             <span className="min-w-0 flex-1">{t('responseLength.shortLabel')}</span>
                             <ResponseLengthSelector value={responseLength} onChange={setResponseLength} disabled={isLoading} />
                         </div>
-                        {isTeacherUser && <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
-                            <NotebookPen className="h-4 w-4 shrink-0" aria-hidden="true" />
-                            <span className="min-w-0 flex-1">{t('notebookContext.label')}</span>
+                        {isTeacherUser && <div className="space-y-1 px-2 pb-1 text-sm text-slate-600">
+                            <div className="flex min-h-[44px] items-center gap-2">
+                                <NotebookPen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                                <span className="min-w-0 flex-1">{t('notebookContext.label')}</span>
+                            </div>
                             <NotebookContextSelector value={notebookContext} onChange={changeNotebookContext} disabled={isLoading} />
                         </div>}
+                        {isTeacherUser && notebookContext === 'practice' && <PracticeNotebookPicker value={practiceNotebookId} onChange={changePracticeNotebookId} disabled={isLoading} />}
                         {reasoningCapable && <div className="flex min-h-[44px] items-center gap-2 px-2 text-sm text-slate-600">
                             <Brain className="h-4 w-4 shrink-0" aria-hidden="true" />
                             <span className="min-w-0 flex-1">{t('reasoning.shortLabel')}</span>

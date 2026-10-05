@@ -34,7 +34,8 @@ export interface FrozenSessionDetail extends FrozenSessionSummary {
     guided_path?: GuidedPath;
     conversation_id?: string | null;
     response_length?: 'short' | 'medium' | 'long' | null;
-    notebook_context?: 'student' | 'teacher' | 'none' | null;
+    notebook_context?: 'student' | 'teacher' | 'practice' | 'none' | null;
+    practice_notebook_id?: number | null;
     reasoning_effort?: 'off' | 'standard' | 'deep' | null;
     pdf_token?: string | null;
 }
@@ -52,7 +53,8 @@ export interface FrozenSessionSnapshot {
     guided_path?: GuidedPath;
     conversation_id?: string;
     response_length: 'short' | 'medium' | 'long';
-    notebook_context?: 'student' | 'teacher' | 'none';
+    notebook_context?: 'student' | 'teacher' | 'practice' | 'none';
+    practice_notebook_id?: number;
     // Solo la chat guidata: la sandbox OpenCode parla con il proprio agente e
     // non ha una leva sul ragionamento.
     reasoning_effort?: 'off' | 'standard' | 'deep';

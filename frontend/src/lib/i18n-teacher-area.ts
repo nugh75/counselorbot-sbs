@@ -55,6 +55,7 @@ const labels = {
 
 const names = {
     taccuino: labels.notebook,
+    'taccuini-prova': ['Taccuini di prova', 'Practice notebooks', 'Cuadernos de práctica', 'Carnets d’entraînement', 'Übungs-Notizbücher', 'Övningsanteckningsböcker'],
     classi: ['Gruppi e classi', 'Groups and classes', 'Grupos y clases', 'Groupes et classes', 'Gruppen und Klassen', 'Grupper och klasser'],
     assegnazioni: ['Assegnazioni effettuate', 'Sent assignments', 'Asignaciones realizadas', 'Attributions effectuées', 'Gesendete Zuweisungen', 'Skickade tilldelningar'],
     'catalogo-obiettivi': ['Catalogo obiettivi', 'Goal catalog', 'Catálogo de objetivos', 'Catalogue d’objectifs', 'Zielkatalog', 'Målkatalog'],
@@ -65,6 +66,14 @@ const names = {
 } satisfies Record<TeacherAreaSlug, Localized>;
 
 const descriptions = {
+    'taccuini-prova': [
+        'Crea studenti immaginari e usali nelle chat guidate per allenarti prima delle sessioni reali.',
+        'Create imaginary students and use them in guided chats to practise before real sessions.',
+        'Crea estudiantes imaginarios y úsalos en los chats guiados para practicar antes de las sesiones reales.',
+        'Créez des étudiants imaginaires et utilisez-les dans les chats guidés pour vous entraîner avant les séances réelles.',
+        'Erstellen Sie erfundene Lernende und nutzen Sie sie in begleiteten Chats, um vor echten Sitzungen zu üben.',
+        'Skapa påhittade elever och använd dem i de vägledda chattarna för att öva före riktiga sessioner.',
+    ],
     taccuino: [
         'Descrivi il tuo ruolo, la tua pratica abituale e i tuoi interessi di crescita.',
         'Describe your role, usual practice and development interests.',

@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowDown, ArrowRight, Check, Compass, Loader2, Mic, Send, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowRight, Check, Compass, Loader2, Mic, NotebookPen, Send, Sparkles } from 'lucide-react';
 import { AudioInput } from '@/components/ui/AudioInput';
 import { AudioSendOption } from '@/components/ui/AudioSendOption';
 import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
@@ -30,6 +30,11 @@ import {
 import { QUESTIONNAIRES, type QuestionnaireType } from '@/lib/questionnaires';
 import { skipOrientationThisVisit, orientationToolHref, safeOrientationNext } from '@/lib/tool-catalog';
 import { fetchAccountPreferences } from '@/lib/account-preferences';
+import { NotebookContextSelector } from '@/components/qsa/NotebookContextSelector';
+import { PracticeNotebookPicker } from '@/components/qsa/PracticeNotebookPicker';
+import { getIdentity } from '@/lib/auth';
+import { canUseTeacherAssistant } from '@/lib/roles';
+import { notebookContextPayload, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId, type NotebookContextChoice } from '@/lib/notebook-context';
 
 function safeNextHref(): string | null {
     if (typeof window === 'undefined') return null;
@@ -67,6 +72,26 @@ export default function BussolaPage() {
     const [atFork, setAtFork] = useState(false);
     const endRef = useRef<HTMLDivElement>(null);
     const leavingRef = useRef(false);
+    // Docente che si allena: nella Bussola esiste solo la prova (la scelta è
+    // condivisa con le chat guidate); il server riverifica ruolo e proprietà.
+    const [isTeacherUser, setIsTeacherUser] = useState(false);
+    const [notebookChoice, setNotebookChoice] = useState<NotebookContextChoice>(() => readStoredNotebookContext() === 'practice' ? 'practice' : 'default');
+    const [practiceNotebookId, setPracticeNotebookId] = useState<number | null>(readStoredPracticeNotebookId);
+    useEffect(() => {
+        let active = true;
+        getIdentity().then((id) => { if (active) setIsTeacherUser(Boolean(id?.authenticated && canUseTeacherAssistant(id))); }).catch(() => {});
+        return () => { active = false; };
+    }, []);
+    const changeNotebookChoice = (value: NotebookContextChoice) => {
+        // Non cancella una scelta Studente/Docente/Nessuno fatta nelle chat guidate.
+        if (value === 'practice' || readStoredNotebookContext() === 'practice') storeNotebookContext(value);
+        setNotebookChoice(value);
+    };
+    const changePracticeNotebookId = useCallback((id: number | null) => {
+        setPracticeNotebookId(id);
+        storePracticeNotebookId(id);
+    }, []);
+    const notebookPayload = notebookContextPayload(isTeacherUser, notebookChoice, practiceNotebookId);
 
     const openSession = useCallback(async (sessionId: string) => {
         setLoading(true);
@@ -90,11 +115,11 @@ export default function BussolaPage() {
         }
     }, [lang, router, t]);
 
-    const createSession = useCallback(async (newSession: boolean, counselorId: number) => {
+    const createSession = useCallback(async (newSession: boolean, counselorId: number, notebook: Parameters<typeof startOrientation>[3] = {}) => {
         setLoading(true);
         setError('');
         try {
-            const row = await startOrientation(lang, newSession, counselorId);
+            const row = await startOrientation(lang, newSession, counselorId, notebook);
             setSession(row);
         } catch {
             setError(t('orientation.error'));
@@ -113,7 +138,7 @@ export default function BussolaPage() {
                 return;
             }
             setAtFork(false);
-            await createSession(true, prefs.counselor_id);
+            await createSession(true, prefs.counselor_id, notebookPayload);
         } catch { setError(t('orientation.error')); }
         finally { setLoading(false); }
     };
@@ -159,7 +184,7 @@ export default function BussolaPage() {
         setSending(true);
         setError('');
         try {
-            const row = await sendOrientationMessage(session.session_id, message, lang, responseFormat);
+            const row = await sendOrientationMessage(session.session_id, message, lang, responseFormat, notebookPayload);
             setSession(row);
             return row.messages.at(-1)?.role === 'assistant' ? row.messages.at(-1)?.content : undefined;
         } catch {
@@ -333,6 +358,14 @@ export default function BussolaPage() {
                                 <div className="flex items-end gap-2">
                                     <ChatActionsPopover label={chatLayoutLabel(lang, 'options')}>{close => <>
                                         <ResponseFormatSelector value={responseFormat} onChange={setResponseFormat} disabled={sending} />
+                                        {isTeacherUser && <div className="space-y-1 px-2 pb-1 text-sm text-slate-600">
+                                            <div className="flex min-h-[44px] items-center gap-2">
+                                                <NotebookPen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                                                <span className="min-w-0 flex-1">{t('notebookContext.label')}</span>
+                                            </div>
+                                            <NotebookContextSelector value={notebookChoice} onChange={changeNotebookChoice} disabled={sending} options={['default', 'practice']} />
+                                        </div>}
+                                        {isTeacherUser && notebookChoice === 'practice' && <PracticeNotebookPicker value={practiceNotebookId} onChange={changePracticeNotebookId} disabled={sending} />}
                                         <div ref={setVoiceOptionsContainer} />
                                         {!voiceMode && <button type="button" disabled={sending || audioBusy} className="flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-slate-100 disabled:opacity-50" onClick={() => { close(); setVoiceMode(true); }}>
                                             <Mic className="h-4 w-4 shrink-0" />{t('audio.voice.title')}

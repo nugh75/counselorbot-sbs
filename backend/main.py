@@ -69,6 +69,7 @@ from .routes import learner_profile as learner_profile_routes
 from .routes import external_privacy as external_privacy_routes
 from .routes import personal_api as personal_api_routes
 from .routes import teacher_profile as teacher_profile_routes
+from .routes import practice_notebooks as practice_notebook_routes
 from .routes import orientation as orientation_routes
 from .routes import cross_synthesis as cross_synthesis_routes
 from .routes import goals as goals_routes
@@ -1902,6 +1903,7 @@ app.include_router(learner_profile_routes.router)
 app.include_router(external_privacy_routes.router)
 app.include_router(personal_api_routes.router)
 app.include_router(teacher_profile_routes.router)
+app.include_router(practice_notebook_routes.router)
 app.include_router(orientation_routes.router)
 app.include_router(cross_synthesis_routes.router)
 app.include_router(portfolio_routes.router)
