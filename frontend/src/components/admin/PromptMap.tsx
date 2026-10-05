@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowDownRight, Layers, Pencil, RefreshCw, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { PromptHistory } from '@/components/admin/PromptHistory';
+import { PromptRequestPreview } from '@/components/admin/PromptRequestPreview';
 import {
     PROMPT_MAP_LANGUAGES, badgeFor, booleanFlags, componentsValue, entryAnchor, entryText, findEntry, levelAnchor, levelCounts,
     needsSharedConfirm, saveRequest, stepAnchor,
@@ -25,11 +26,11 @@ export const LEVEL_STYLE: Record<PromptMapLevel, string> = {
     common: 'border-slate-300 bg-slate-50 text-slate-700',
     group: 'border-amber-300 bg-amber-50 text-amber-800',
     instrument: 'border-indigo-300 bg-indigo-50 text-indigo-800',
-    step: 'border-emerald-300 bg-emerald-50 text-emerald-800',
+    step: 'border-violet-300 bg-violet-50 text-violet-800',
 };
 const BADGE_STYLE: Record<PromptMapBadge, string> = {
     'model-entry': 'border-indigo-200 bg-indigo-50 text-indigo-700',
-    'model-turn': 'border-violet-200 bg-violet-50 text-violet-700',
+    'model-turn': 'border-indigo-300 bg-white text-indigo-700',
     'model-follow-up': 'border-sky-200 bg-sky-50 text-sky-700',
     student: 'border-emerald-200 bg-emerald-50 text-emerald-700',
     admin: 'border-slate-200 bg-slate-100 text-slate-600',
@@ -359,11 +360,52 @@ function LevelHeading({ level, title, hint, count }: { level: PromptMapLevel; ti
     </header>;
 }
 
-export function PromptMap({ componentLabels, renderStepPreview }: {
-    componentLabels?: Record<string, string>;
-    /** Blocco C: anteprima di ciò che riceve il modello per lo step selezionato. */
-    renderStepPreview?: (map: PromptMapData, step: PromptMapStep) => ReactNode;
-}) {
+const LEVEL_BLOCK: Record<PromptMapLevel, string> = {
+    common: 'border-l-4 border-l-slate-500',
+    group: 'border-l-4 border-l-amber-500',
+    instrument: 'border-l-4 border-l-indigo-500',
+    step: 'border-l-4 border-l-violet-500',
+};
+
+/** Livello da cui arriva un blocco dell'anteprima, dalla chiave che il backend indica come origine. */
+export function previewBlockLevel(map: PromptMapData, step: PromptMapStep, key: string, origin?: string): PromptMapLevel | undefined {
+    if (key === 'step_prompt') return 'step';
+    if (key === 'counselor') return 'common';
+    if (!origin) return undefined;
+    const entry = findEntry(map, origin);
+    if (entry) return entry.level;
+    // Meta prompt dello step non salvato: vale quello ereditato dal livello superiore.
+    return step.refs.find(ref => ref.key === origin || ref.override_key === origin)?.level;
+}
+
+function StepPreview({ map, step, componentLabels }: { map: PromptMapData; step: PromptMapStep; componentLabels?: Record<string, string> }) {
+    const { t } = useI18n();
+    const name = useInstrumentName();
+    const [open, setOpen] = useState(false);
+    const prompt = step.entries.find(entry => entry.kind === 'guided_step' && entry.field === 'prompt');
+    return <div>
+        <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}
+            className="rounded border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50">
+            {t('admin.promptMap.preview')}
+        </button>
+        {open && <div className="mt-3 space-y-2">
+            <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-600">
+                <span className="font-semibold">{t('admin.promptMap.previewLegend')}:</span>
+                {LEVELS.map(level => <LevelTag key={level} level={level} name={name(map.instrument)} />)}
+                <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5">{t('admin.promptMap.previewOther')}</span>
+            </p>
+            {/* Valori salvati: nessun override, l'anteprima legge il DB come la chat. */}
+            <PromptRequestPreview configs={[]} results={[]} componentLabels={componentLabels} followUpMode={step.follow_up_mode}
+                step={{ id: step.id, prompt: String(prompt?.value ?? ''), questionnaire_type: map.instrument, system_prompt_mode: step.system_prompt_mode || 'generic' }}
+                blockClassName={(key, origin) => {
+                    const level = previewBlockLevel(map, step, key, origin);
+                    return level ? LEVEL_BLOCK[level] : 'bg-slate-50';
+                }} />
+        </div>}
+    </div>;
+}
+
+export function PromptMap({ componentLabels }: { componentLabels?: Record<string, string> }) {
     const { t, lang } = useI18n();
     const name = useInstrumentName();
     const [instruments, setInstruments] = useState<PromptMapInstrument[]>([]);
@@ -502,7 +544,7 @@ export function PromptMap({ componentLabels, renderStepPreview }: {
                         {level === 'step' && <ul className="ml-4 mt-1 space-y-0.5 border-l border-slate-200 pl-2">
                             {map.levels.steps.map(item => <li key={item.id}>
                                 <button type="button" onClick={() => selectStep(item.id)} aria-current={item.id === stepId ? 'step' : undefined}
-                                    className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs ${item.id === stepId ? 'bg-emerald-50 font-semibold text-emerald-800' : 'text-slate-600 hover:bg-slate-50'}`}>
+                                    className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs ${item.id === stepId ? 'bg-violet-50 font-semibold text-violet-800' : 'text-slate-600 hover:bg-slate-50'}`}>
                                     <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${item.fixed ? 'border border-slate-400' : COLOR_DOT[item.color_theme || ''] || 'bg-slate-400'}`} />
                                     <span className="truncate">{stepTitle(item, lang, t)}</span>
                                 </button>
@@ -544,7 +586,7 @@ export function PromptMap({ componentLabels, renderStepPreview }: {
                             {map.levels.steps.map(item => <option key={item.id} value={item.id}>{stepTitle(item, lang, t)}</option>)}
                         </select>
                     </label>
-                    {step && <div id={stepAnchor(step.id)} className="scroll-mt-16 rounded-lg border border-emerald-200 bg-emerald-50/30 p-3 sm:p-4">
+                    {step && <div id={stepAnchor(step.id)} className="scroll-mt-16 rounded-lg border border-violet-200 bg-violet-50/30 p-3 sm:p-4">
                         <header className="mb-3 flex flex-wrap items-center gap-2">
                             <span aria-hidden className={`h-3 w-3 rounded-full ${step.fixed ? 'border border-slate-400' : COLOR_DOT[step.color_theme || ''] || 'bg-slate-400'}`} />
                             <h5 className="text-sm font-bold text-slate-800">{stepTitle(step, lang, t)}</h5>
@@ -570,7 +612,7 @@ export function PromptMap({ componentLabels, renderStepPreview }: {
                                     onOverride={item.role === 'meta' && item.override_key ? () => setOverrideFor(item.override_key || '') : undefined} />)}
                             </ul>
                         </div>}
-                        {renderStepPreview && !step.fixed && <div className="mt-4">{renderStepPreview(map, step)}</div>}
+                        {!step.fixed && <div className="mt-4"><StepPreview key={`${map.instrument}-${step.id}`} map={map} step={step} componentLabels={componentLabels} /></div>}
                     </div>}
                 </section>
             </div>
