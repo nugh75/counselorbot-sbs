@@ -2,6 +2,7 @@
 
 import { readingsIt, readingsEn, readingsEs, readingsFr, readingsDe, readingsSv } from './i18n-readings';
 import { PROMPT_ALIGNMENT_DICTS } from './i18n-prompt-alignment';
+import { PROMPT_MAP_DICTS } from './i18n-prompt-map';
 import type { Lang } from './i18n';
 
 type Dict = Record<string, string>;
@@ -465,7 +466,7 @@ const it: Dict = {
     'admin.config.section.directives': 'Direttive Globali',
     'admin.config.section.label': 'Sezione',
     'admin.config.section.groupSettings': 'Impostazioni',
-    'admin.config.section.groupTools': 'Strumenti',
+    'admin.config.section.groupTools': 'Strumenti — vista classica',
     'admin.config.section.search': 'Cerca sezione…',
     'admin.config.section.empty': 'Nessuna sezione trovata',
     'admin.config.saved': 'Salvato',
@@ -1195,7 +1196,7 @@ const en: Dict = {
     'admin.config.section.directives': 'Global Directives',
     'admin.config.section.label': 'Section',
     'admin.config.section.groupSettings': 'Settings',
-    'admin.config.section.groupTools': 'Tools',
+    'admin.config.section.groupTools': 'Tools — classic view',
     'admin.config.section.search': 'Search sections…',
     'admin.config.section.empty': 'No sections found',
     'admin.config.saved': 'Saved',
@@ -1648,7 +1649,7 @@ const es: Dict = {
     'admin.config.apiKeyReplace': 'Sustituir', 'admin.config.apiKeyConfigure': 'Configurar', 'admin.config.apiKeyVerify': 'Verificar funcionamiento', 'admin.config.apiKeyRemove': 'Eliminar',
     'admin.config.apiKeySaved': 'Clave guardada. Verifica su funcionamiento.', 'admin.config.apiKeyDeleteConfirm': '¿Eliminar esta clave API del panel de Administración?', 'admin.config.localConnections': 'Conexiones a modelos locales',
     'admin.config.section.general': 'General', 'admin.config.section.directives': 'Directivas Globales', 'admin.config.saved': 'Guardado', 'admin.config.deleted': 'Eliminado', 'admin.config.saveError': 'Error al guardar',
-    'admin.config.section.label': 'Sección', 'admin.config.section.groupSettings': 'Ajustes', 'admin.config.section.groupTools': 'Herramientas', 'admin.config.section.search': 'Buscar sección…', 'admin.config.section.empty': 'No se encontró ninguna sección',
+    'admin.config.section.label': 'Sección', 'admin.config.section.groupSettings': 'Ajustes', 'admin.config.section.groupTools': 'Herramientas — vista clásica', 'admin.config.section.search': 'Buscar sección…', 'admin.config.section.empty': 'No se encontró ninguna sección',
     'admin.config.envSet': 'Definida mediante variable de entorno (.env)',
     'admin.config.promptsTexts': 'Prompts y textos por cuestionario', 'admin.config.systemPrompts': 'Prompts de sistema (instrucciones para la IA)',
     'admin.config.textsMessages': 'Textos y mensajes (mostrados al estudiante)', 'admin.config.editingLang': 'Idioma en edición', 'admin.config.saveAll': 'Guardar todo', 'admin.config.saveAllTitle': 'Guardar todo este cuestionario',
@@ -2238,7 +2239,7 @@ const fr: Dict = {
     'admin.config.apiKeyReplace': 'Remplacer', 'admin.config.apiKeyConfigure': 'Configurer', 'admin.config.apiKeyVerify': 'Vérifier le fonctionnement', 'admin.config.apiKeyRemove': 'Supprimer',
     'admin.config.apiKeySaved': 'Clé enregistrée. Vérifiez son fonctionnement.', 'admin.config.apiKeyDeleteConfirm': 'Supprimer cette clé API du panneau Administration ?', 'admin.config.localConnections': 'Connexions aux modèles locaux',
     'admin.config.section.general': 'Général', 'admin.config.section.directives': 'Directives Globales', 'admin.config.saved': 'Enregistré', 'admin.config.deleted': 'Supprimé', 'admin.config.saveError': "Échec de l'enregistrement",
-    'admin.config.section.label': 'Section', 'admin.config.section.groupSettings': 'Paramètres', 'admin.config.section.groupTools': 'Outils', 'admin.config.section.search': 'Rechercher une section…', 'admin.config.section.empty': 'Aucune section trouvée',
+    'admin.config.section.label': 'Section', 'admin.config.section.groupSettings': 'Paramètres', 'admin.config.section.groupTools': 'Outils — vue classique', 'admin.config.section.search': 'Rechercher une section…', 'admin.config.section.empty': 'Aucune section trouvée',
     'admin.config.envSet': "Définie par variable d'environnement (.env)",
     'admin.config.promptsTexts': 'Prompts et textes par questionnaire', 'admin.config.systemPrompts': "Prompts système (instructions pour l'IA)",
     'admin.config.textsMessages': "Textes et messages (affichés à l'étudiant)", 'admin.config.editingLang': 'Langue en cours', 'admin.config.saveAll': 'Tout enregistrer', 'admin.config.saveAllTitle': 'Enregistrer tout ce questionnaire',
@@ -2828,7 +2829,7 @@ const de: Dict = {
     'admin.config.apiKeyReplace': 'Ersetzen', 'admin.config.apiKeyConfigure': 'Konfigurieren', 'admin.config.apiKeyVerify': 'Funktion prüfen', 'admin.config.apiKeyRemove': 'Entfernen',
     'admin.config.apiKeySaved': 'Schlüssel gespeichert. Prüfen Sie seine Funktion.', 'admin.config.apiKeyDeleteConfirm': 'Diesen API-Schlüssel aus dem Administrationsbereich entfernen?', 'admin.config.localConnections': 'Lokale Modellverbindungen',
     'admin.config.section.general': 'Allgemein', 'admin.config.section.directives': 'Globale Direktiven', 'admin.config.saved': 'Gespeichert', 'admin.config.deleted': 'Gelöscht', 'admin.config.saveError': 'Speichern fehlgeschlagen',
-    'admin.config.section.label': 'Bereich', 'admin.config.section.groupSettings': 'Einstellungen', 'admin.config.section.groupTools': 'Werkzeuge', 'admin.config.section.search': 'Bereich suchen…', 'admin.config.section.empty': 'Kein Bereich gefunden',
+    'admin.config.section.label': 'Bereich', 'admin.config.section.groupSettings': 'Einstellungen', 'admin.config.section.groupTools': 'Werkzeuge — klassische Ansicht', 'admin.config.section.search': 'Bereich suchen…', 'admin.config.section.empty': 'Kein Bereich gefunden',
     'admin.config.envSet': 'Über Umgebungsvariable (.env) festgelegt',
     'admin.config.promptsTexts': 'Prompts und Texte pro Fragebogen', 'admin.config.systemPrompts': 'System-Prompts (Anweisungen für die KI)',
     'admin.config.textsMessages': 'Texte und Meldungen (für Studierende sichtbar)', 'admin.config.editingLang': 'Bearbeitete Sprache', 'admin.config.saveAll': 'Alles speichern', 'admin.config.saveAllTitle': 'Diesen gesamten Fragebogen speichern',
@@ -3418,7 +3419,7 @@ const sv: Dict = {
     'admin.config.apiKeyReplace': 'Ersätt', 'admin.config.apiKeyConfigure': 'Konfigurera', 'admin.config.apiKeyVerify': 'Verifiera funktion', 'admin.config.apiKeyRemove': 'Ta bort',
     'admin.config.apiKeySaved': 'Nyckeln har sparats. Verifiera att den fungerar.', 'admin.config.apiKeyDeleteConfirm': 'Ta bort denna API-nyckel från administrationspanelen?', 'admin.config.localConnections': 'Lokala modellanslutningar',
     'admin.config.section.general': 'Allmänt', 'admin.config.section.directives': 'Globala Direktiv', 'admin.config.saved': 'Sparad', 'admin.config.deleted': 'Borttagen', 'admin.config.saveError': 'Kunde inte spara',
-    'admin.config.section.label': 'Avsnitt', 'admin.config.section.groupSettings': 'Inställningar', 'admin.config.section.groupTools': 'Verktyg', 'admin.config.section.search': 'Sök avsnitt…', 'admin.config.section.empty': 'Inga avsnitt hittades',
+    'admin.config.section.label': 'Avsnitt', 'admin.config.section.groupSettings': 'Inställningar', 'admin.config.section.groupTools': 'Verktyg — klassisk vy', 'admin.config.section.search': 'Sök avsnitt…', 'admin.config.section.empty': 'Inga avsnitt hittades',
     'admin.config.envSet': 'Angiven via miljövariabel (.env)',
     'admin.config.promptsTexts': 'Promptar och texter per frågeformulär', 'admin.config.systemPrompts': 'Systempromptar (instruktioner för AI)',
     'admin.config.textsMessages': 'Texter och meddelanden (visas för studenten)', 'admin.config.editingLang': 'Redigeringsspråk', 'admin.config.saveAll': 'Spara allt', 'admin.config.saveAllTitle': 'Spara hela detta frågeformulär',
@@ -6550,10 +6551,10 @@ const counselorExtrasSv: Dict = {
 };
 
 export const ADMIN_DICTS: Record<Lang, Dict> = {
-    it: { ...it, ...trainingIt, ...pqblIt, ...certifiedIt, ...assistantQuestionsIt, ...guidedStepQuestionsIt, ...administrationPlansIt, ...promptAuditIt, ...assistantAdminIt, ...ragDocsIt, ...readingsIt, ...counselorExtrasIt, ...PROMPT_ALIGNMENT_DICTS.it },
-    en: { ...en, ...trainingEn, ...pqblEn, ...certifiedEn, ...assistantQuestionsEn, ...guidedStepQuestionsEn, ...administrationPlansEn, ...promptAuditEn, ...assistantAdminEn, ...ragDocsEn, ...readingsEn, ...counselorExtrasEn, ...PROMPT_ALIGNMENT_DICTS.en },
-    es: { ...es, ...trainingEs, ...pqblEs, ...certifiedEs, ...assistantQuestionsEs, ...guidedStepQuestionsEs, ...administrationPlansEs, ...promptAuditEs, ...assistantAdminEs, ...ragDocsEs, ...readingsEs, ...counselorExtrasEs, ...PROMPT_ALIGNMENT_DICTS.es },
-    fr: { ...fr, ...trainingFr, ...pqblFr, ...certifiedFr, ...assistantQuestionsFr, ...guidedStepQuestionsFr, ...administrationPlansFr, ...promptAuditFr, ...assistantAdminFr, ...ragDocsFr, ...readingsFr, ...counselorExtrasFr, ...PROMPT_ALIGNMENT_DICTS.fr },
-    de: { ...de, ...trainingDe, ...pqblDe, ...certifiedDe, ...assistantQuestionsDe, ...guidedStepQuestionsDe, ...administrationPlansDe, ...promptAuditDe, ...assistantAdminDe, ...ragDocsDe, ...readingsDe, ...counselorExtrasDe, ...PROMPT_ALIGNMENT_DICTS.de },
-    sv: { ...sv, ...trainingSv, ...pqblSv, ...certifiedSv, ...assistantQuestionsSv, ...guidedStepQuestionsSv, ...administrationPlansSv, ...promptAuditSv, ...assistantAdminSv, ...ragDocsSv, ...readingsSv, ...counselorExtrasSv, ...PROMPT_ALIGNMENT_DICTS.sv },
+    it: { ...it, ...trainingIt, ...pqblIt, ...certifiedIt, ...assistantQuestionsIt, ...guidedStepQuestionsIt, ...administrationPlansIt, ...promptAuditIt, ...assistantAdminIt, ...ragDocsIt, ...readingsIt, ...counselorExtrasIt, ...PROMPT_ALIGNMENT_DICTS.it, ...PROMPT_MAP_DICTS.it },
+    en: { ...en, ...trainingEn, ...pqblEn, ...certifiedEn, ...assistantQuestionsEn, ...guidedStepQuestionsEn, ...administrationPlansEn, ...promptAuditEn, ...assistantAdminEn, ...ragDocsEn, ...readingsEn, ...counselorExtrasEn, ...PROMPT_ALIGNMENT_DICTS.en, ...PROMPT_MAP_DICTS.en },
+    es: { ...es, ...trainingEs, ...pqblEs, ...certifiedEs, ...assistantQuestionsEs, ...guidedStepQuestionsEs, ...administrationPlansEs, ...promptAuditEs, ...assistantAdminEs, ...ragDocsEs, ...readingsEs, ...counselorExtrasEs, ...PROMPT_ALIGNMENT_DICTS.es, ...PROMPT_MAP_DICTS.es },
+    fr: { ...fr, ...trainingFr, ...pqblFr, ...certifiedFr, ...assistantQuestionsFr, ...guidedStepQuestionsFr, ...administrationPlansFr, ...promptAuditFr, ...assistantAdminFr, ...ragDocsFr, ...readingsFr, ...counselorExtrasFr, ...PROMPT_ALIGNMENT_DICTS.fr, ...PROMPT_MAP_DICTS.fr },
+    de: { ...de, ...trainingDe, ...pqblDe, ...certifiedDe, ...assistantQuestionsDe, ...guidedStepQuestionsDe, ...administrationPlansDe, ...promptAuditDe, ...assistantAdminDe, ...ragDocsDe, ...readingsDe, ...counselorExtrasDe, ...PROMPT_ALIGNMENT_DICTS.de, ...PROMPT_MAP_DICTS.de },
+    sv: { ...sv, ...trainingSv, ...pqblSv, ...certifiedSv, ...assistantQuestionsSv, ...guidedStepQuestionsSv, ...administrationPlansSv, ...promptAuditSv, ...assistantAdminSv, ...ragDocsSv, ...readingsSv, ...counselorExtrasSv, ...PROMPT_ALIGNMENT_DICTS.sv, ...PROMPT_MAP_DICTS.sv },
 };
