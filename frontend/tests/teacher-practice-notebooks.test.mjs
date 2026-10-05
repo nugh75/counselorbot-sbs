@@ -34,6 +34,10 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
             name: 'Docente di prova', email: 'teacher@example.invalid', groups: teacher ? ['docenti'] : ['studenti'],
         });
         if (url.pathname === '/api/user/account') return json({ setup_complete: true, notebook_completed: true });
+        if (url.pathname === '/api/admin/groups') return json([
+            { id: 31, name: '3B', school: 'Liceo Demo', context_visible_to_students: true, is_active: true },
+            { id: 32, name: '4A', school: null, context_visible_to_students: false, is_active: true },
+        ]);
         if (url.pathname === '/api/user/account-preferences') return json({ counselor_ready: true, notebook_ready: true, counselor_id: 1 });
         if (url.pathname === '/api/orientation/status') return json(compass
             ? { required: true, completed: false, in_progress_session_id: 'b1', latest_session_id: 'b1' }
@@ -44,7 +48,7 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
         if (url.pathname === '/api/teacher/practice-notebooks') {
             if (!teacher) return json({ detail: 'forbidden' }, 403);
             if (method === 'POST') {
-                const row = { id: store.nextId++, title: body.title, data: body.data, archived_at: null };
+                const row = { id: store.nextId++, title: body.title, data: body.data, group_ids: body.group_ids ?? [], archived_at: null };
                 store.rows.unshift(row);
                 return json(row, 201);
             }
@@ -61,6 +65,7 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
             }
             if (body.title !== undefined) row.title = body.title;
             if (body.data !== undefined) row.data = body.data;
+            if (body.group_ids !== undefined) row.group_ids = body.group_ids;
             if (body.archived !== undefined) row.archived_at = body.archived ? '2026-10-05T10:00:00Z' : null;
             return json(row);
         }
@@ -84,7 +89,7 @@ test('il docente crea, modifica, archivia, ripristina ed elimina i taccuini di p
     await page.getByRole('button', { name: 'Salva', exact: true }).click();
     await page.getByRole('heading', { name: 'Marco, adulto in formazione' }).waitFor();
     const created = requests.find(r => r.method === 'POST');
-    assert.deepEqual(created.body, { title: 'Marco, adulto in formazione', data: { strengths: 'Curioso' } });
+    assert.deepEqual(created.body, { title: 'Marco, adulto in formazione', data: { strengths: 'Curioso' }, group_ids: [] });
 
     const marco = page.locator('[data-practice-notebook="2"]');
     await marco.getByRole('button', { name: 'Modifica' }).click();
@@ -242,5 +247,26 @@ test('nella chat guidata il docente sceglie «Prova» e un taccuino: turno e sna
     assert.equal(frozen?.notebook_context, 'practice');
     assert.equal(frozen?.practice_notebook_id, 6);
     assert.deepEqual(state.errors, []);
+    await page.close();
+});
+
+test('il docente associa classi a un taccuino di prova e vede quali non sono condivise', async () => {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const { errors, requests, store } = await prepare(page);
+    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    await page.locator('[data-practice-notebook="1"]').getByRole('button', { name: 'Modifica' }).click();
+    const classes = page.getByRole('group', { name: 'Classi dello studente' });
+    await classes.getByRole('checkbox', { name: /3B — Liceo Demo/ }).check();
+    await classes.getByRole('checkbox', { name: /4A/ }).check();
+    assert.ok(await classes.getByText('contesto non condiviso con gli studenti: non entra nella chat').isVisible());
+    await page.getByRole('button', { name: 'Salva', exact: true }).click();
+    await page.locator('[data-practice-notebook="1"]').getByRole('button', { name: 'Modifica' }).waitFor();
+    assert.deepEqual(requests.filter(r => r.method === 'PUT').at(-1).body.group_ids, [31, 32]);
+    assert.deepEqual(store.rows[0].group_ids, [31, 32]);
+    const card = page.locator('[data-practice-notebook="1"]');
+    assert.ok(await card.getByText('3B — Liceo Demo').isVisible());
+    assert.ok(await card.getByText('contesto non condiviso con gli studenti: non entra nella chat').isVisible());
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    assert.deepEqual(errors, []);
     await page.close();
 });

@@ -22,12 +22,14 @@ test('il corpo inviato è ripulito e limitato', () => {
 
 test('la lista scarta righe malformate', () => {
     const rows = parsePracticeNotebooks([
-        { id: 1, title: 'A', data: { goal: 'g' } },
+        { id: 1, title: 'A', data: { goal: 'g' }, group_ids: [3, 'x', 4] },
         { id: 'x', title: 'B' },
         null,
         { id: 2, title: 'C', data: null },
     ]);
     assert.deepEqual(rows.map((row: { id: number }) => row.id), [1, 2]);
+    assert.deepEqual(rows[0].group_ids, [3, 4]);
     assert.deepEqual(rows[1].data, {});
+    assert.deepEqual(rows[1].group_ids, []);
     assert.deepEqual(parsePracticeNotebooks({}), []);
 });

@@ -26,6 +26,9 @@ export interface PracticeNotebook {
     id: number;
     title: string;
     data: PracticeNotebookData;
+    // Classi dello studente simulato: il server tiene solo quelle del docente
+    // o condivise con lui; in chat il contesto entra solo se condiviso.
+    group_ids: number[];
     archived_at?: string | null;
     created_at?: string | null;
     updated_at?: string | null;
@@ -37,7 +40,11 @@ export function parsePracticeNotebooks(payload: unknown): PracticeNotebook[] {
         Boolean(row) && typeof row === 'object'
         && Number.isInteger((row as PracticeNotebook).id)
         && typeof (row as PracticeNotebook).title === 'string',
-    ).map((row) => ({ ...row, data: row.data && typeof row.data === 'object' ? row.data : {} }));
+    ).map((row) => ({
+        ...row,
+        data: row.data && typeof row.data === 'object' ? row.data : {},
+        group_ids: Array.isArray(row.group_ids) ? row.group_ids.filter((id) => Number.isInteger(id)) : [],
+    }));
 }
 
 // Corpo da inviare: nome ripulito, solo campi noti e non vuoti.
