@@ -146,7 +146,7 @@ Se nessuna delle due funzioni è attiva, la sezione non compare.
 ### Abbonamento personale ChatGPT (opzionale)
 
 L’amministratore apre **Amministrazione → Configurazione → Generale →
-Collegamento ChatGPT** e preme **Abilita collegamento ChatGPT**. Il server
+AI dello studente: proprie chiavi e proprio ChatGPT → Collegamento ChatGPT** e preme **Abilita collegamento ChatGPT**. Il server
 prepara automaticamente la protezione delle credenziali e salva la scelta:
 non servono comandi, modifica di file o riavvio. L’interfaccia indica lo stato
 e conferma subito il salvataggio. Il controllo è riservato agli amministratori;
@@ -364,7 +364,8 @@ della persona.
 
 ## API personali
 
-Quando l’amministratore abilita **API personali** in Configurazione AI,
+Quando l’amministratore abilita **API personali** in **Amministrazione →
+Configurazione → Generale → AI dello studente: proprie chiavi e proprio ChatGPT**,
 studenti e docenti trovano il collegamento nella propria pagina personale:
 `/profilo/api-personali` per l’Area personale e `/docente/api-personali` per
 l’Area docenti. Le due pagine condividono le impostazioni dello stesso account.
@@ -415,8 +416,8 @@ Il modulo protegge le bozze; errori di salvataggio conservano chiave e campi.
 Le configurazioni precedenti vengono conservate come connessioni predefinite.
 I costi personali restano a carico dell’account provider di ciascuna chiave.
 
-In **Amministrazione → Configurazione → Generale → Protezione dei dati per i
-modelli esterni**, il vero amministratore sceglie **Filtro di base + modello
+In **Amministrazione → Configurazione → Generale → AI dello studente: proprie chiavi e proprio ChatGPT →
+Protezione dei dati per i modelli esterni**, il vero amministratore sceglie **Filtro di base + modello
 locale** oppure **Solo filtro di base (senza Ollama)** e salva. La prima modalità
 rimane quella predefinita e blocca le richieste esterne se il servizio locale
 non risponde. La seconda permette di provare l’app in cloud senza modelli locali,
@@ -592,13 +593,19 @@ passo utile, senza inventare pulsanti o promettere azioni eseguite automaticamen
 
 In **Amministrazione → Configurazione & Prompt** la sezione si sceglie dal
 filtro **Sezione**, non da una fila di pulsanti. Il filtro raggruppa
-**Impostazioni** (Mappa dei prompt, Generale, Direttive Globali) e **Strumenti —
+**Impostazioni** (Generale, Mappa dei prompt, Direttive Globali) e **Strumenti —
 vista classica** (QSA, QSAr, ZTPI, Savickas, eventi significativi, obiettivi,
 QPCS, QPCC, QAP, con le quattro schede storiche) e ha un campo di
 ricerca che trova anche il nome esteso dello strumento. Si usa con mouse o
 tastiera (frecce, Invio, Esc). La sezione scelta resta nell’indirizzo
 (`/admin?section=qsa`): ricaricando la pagina o condividendo il link si riapre
 la stessa sezione; un valore non riconosciuto apre Generale.
+
+Nella sezione Generale, dopo modello attivo, ripieghi e funzioni, il blocco
+**AI dello studente: proprie chiavi e proprio ChatGPT** riunisce in quest’ordine **API personali**,
+**Collegamento ChatGPT** e **Protezione dei dati per i modelli esterni**. Le
+**API Keys** della piattaforma sono dell’amministratore e restano fuori dal
+blocco, subito sotto.
 
 ### Mappa dei prompt delle chat guidate
 
