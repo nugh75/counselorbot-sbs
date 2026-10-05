@@ -15,6 +15,7 @@ import { PromptFactoryAlignment, type FactoryAlignmentResult } from '@/component
 import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
 import { AI4EDUC_SECRETS_URL } from '@/lib/auth';
 import { SectionFilter, type SectionFilterGroup } from '@/components/admin/SectionFilter';
+import { PromptMap, writeInstrumentParam } from '@/components/admin/PromptMap';
 
 // --- Types ---
 
@@ -1693,6 +1694,7 @@ export function ConfigForm() {
         {
             label: t('admin.config.section.groupSettings'),
             items: [
+                { id: 'prompt-map', label: t('admin.promptMap.section'), detail: t('admin.promptMap.sectionDetail'), icon: <Layers aria-hidden className="w-4 h-4 shrink-0 text-indigo-600" /> },
                 { id: 'general', label: t('admin.config.section.general'), icon: <Server aria-hidden className="w-4 h-4 shrink-0 text-indigo-600" /> },
                 { id: 'directives', label: t('admin.config.section.directives'), icon: <FileText aria-hidden className="w-4 h-4 shrink-0 text-amber-600" /> },
             ],
@@ -2148,6 +2150,8 @@ export function ConfigForm() {
             )}
 
             {/* 3. Strumento attivo: prompt, testi e step separati in tab interne */}
+            {activeSection === 'prompt-map' && <PromptMap componentLabels={promptComponentText(lang).labels} />}
+
             {questionnaireConfigs.filter((q) => q.id === activeSection).map((q) => {
                 const c = colorMap[q.color];
                 const allKeys = [...q.systemPrompts.map(p => p.key), ...q.texts.map(t => textConfigKey(t.key))];
@@ -2165,6 +2169,15 @@ export function ConfigForm() {
                                     {q.title}
                                 </h3>
                             </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => { writeInstrumentParam(q.questionnaireType); openSection('prompt-map'); }}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 hover:opacity-80 ${c.title} text-xs font-bold rounded-lg transition-colors border ${c.border}`}
+                            >
+                                <Layers className="w-3.5 h-3.5" />
+                                {t('admin.promptMap.openMap')}
+                            </button>
                             <button
                                 onClick={async () => {
                                     for (const key of allKeys) {
@@ -2177,6 +2190,7 @@ export function ConfigForm() {
                                 <Save className="w-3.5 h-3.5" />
                                 {t('admin.config.saveAll')}
                             </button>
+                            </div>
                         </div>
 
                         <div className="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-white p-1">
