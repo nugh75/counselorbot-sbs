@@ -3,6 +3,13 @@ import { test } from 'node:test';
 import { chromium } from 'playwright';
 
 const origin = process.env.PROMPT_PREVIEW_BASE_URL || 'http://127.0.0.1:3107';
+
+// The configuration sections live in a searchable filter, not in a row of buttons.
+async function chooseSection(page, name) {
+    await page.locator('button[aria-haspopup="listbox"]').click();
+    await page.getByRole('listbox').getByRole('option', { name, exact: true }).click();
+}
+
 const labels = {
     it: ['Allinea prompt di fabbrica', 'Allineamento dei prompt di fabbrica', 'Conferma allineamento', 'Ricarica anteprima', 'Chiudi', 'Nessun prompt di fabbrica da aggiornare.', 'Aggiornati 2 prompt.'],
     en: ['Align factory prompts', 'Factory prompt alignment', 'Confirm alignment', 'Reload preview', 'Close', 'No factory prompts to update.', 'Updated 2 prompts.'],
@@ -93,7 +100,7 @@ for (const language of Object.keys(labels)) {
             await panel.getByText(empty, { exact: true }).waitFor();
             assert.equal(await panel.getByRole('button', { name: confirm }).count(), 0);
             await panel.getByRole('button', { name: close, exact: true }).click();
-            await page.getByRole('button', { name: 'QSA', exact: true }).click();
+            await chooseSection(page, 'QSA');
             await page.getByText('Updated English step instruction.', { exact: true }).waitFor();
             assert.equal(await page.getByRole('button', { name: action, exact: true }).isEnabled(), true);
         } finally { await f.close(); }
@@ -106,11 +113,11 @@ test('all tabs share one button; drafts, errors, stale approval and duplicate co
         const { page, requests, state } = f;
         const action = page.getByRole('button', { name: labels.it[0], exact: true });
         for (const name of ['QSA', 'QSAr', 'ZTPI', 'Savickas', 'Evento significativo di studio', 'Evento significativo professionale', 'Il mio obiettivo di apprendimento', 'Obiettivi per la mia classe', 'QPCS', 'QPCC', 'QAP']) {
-            await page.getByRole('button', { name, exact: true }).click();
+            await chooseSection(page, name);
             assert.equal(await action.count(), 1);
             assert.equal(await action.isEnabled(), true);
         }
-        await page.getByRole('button', { name: 'QSA', exact: true }).click();
+        await chooseSection(page, 'QSA');
         await page.getByRole('button', { name: 'Modifica', exact: true }).first().click();
         assert.equal(await action.isDisabled(), true);
         await page.getByRole('button', { name: 'Annulla', exact: true }).click();
@@ -155,7 +162,7 @@ test('saved step creation, ordering and deletion unlock alignment; ordering pres
     try {
         const { page, requests } = f;
         const action = page.getByRole('button', { name: labels.it[0], exact: true });
-        await page.getByRole('button', { name: 'QSA', exact: true }).click();
+        await chooseSection(page, 'QSA');
         await page.getByRole('button', { name: 'Step guidati', exact: true }).click();
         const first = page.locator('.glass-panel').filter({ has: page.getByRole('heading', { name: 'Fixture step', exact: true }) });
         await first.locator('textarea').fill('Unsaved English draft.');
