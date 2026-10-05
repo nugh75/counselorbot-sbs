@@ -60,6 +60,9 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                 assert.equal(await panel.getByText(t('macosInstructions'), { exact: true }).isVisible(), true);
                 if (language === 'it') await panel.getByTestId('chatgpt-link').screenshot({ path: `/tmp/chatgpt-macos-pairing-${width}.png` });
                 await panel.locator('summary').click();
+                await panel.getByText(t('sshInstructions'), { exact: true }).waitFor({ state: 'visible' });
+                assert.equal(await panel.getByTestId('chatgpt-ssh-command').textContent(), `python3 chatgpt-connect.py --server '${origin}' --no-browser --callback-port 1455`);
+                if (language === 'it') await panel.getByTestId('chatgpt-link').screenshot({ path: `/tmp/chatgpt-ssh-pairing-${width}.png` });
                 assert.equal(await panel.getByRole('link', { name: t('download') }).getAttribute('href'), '/api/chatgpt/helper');
                 assert.equal(await page.evaluate(() => JSON.stringify({ ...localStorage, ...sessionStorage }).includes('fixture-pairing')), false);
                 assert.equal(writes.some(write => write.path.endsWith('/preference')), false);

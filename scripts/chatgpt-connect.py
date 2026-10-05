@@ -2,7 +2,8 @@
 """Run on your own computer: loopback OAuth -> your CounselorBot over TLS.
 
 Python 3.10+, standard library only. Credentials are kept in memory and never
-printed or saved. The short-lived pairing code is read with getpass, not argv.
+printed or saved. The short-lived pairing code is read interactively, not argv.
+Use --hide-code for invisible input, or --no-browser --callback-port for SSH.
 """
 import argparse
 import base64
@@ -77,7 +78,7 @@ def server_origin(value):
     return value.rstrip("/")
 
 
-def connect(origin, pairing_code, *, no_browser=False):
+def connect(origin, pairing_code, *, no_browser=False, callback_port=0):
     parameters = request_json(origin + "/api/chatgpt/link/parameters", token=pairing_code)
     state, verifier = secrets.token_urlsafe(32), secrets.token_urlsafe(48)
     challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
@@ -109,7 +110,11 @@ def connect(origin, pairing_code, *, no_browser=False):
             self.end_headers()
             self.wfile.write(b"Connection in progress. Return to CounselorBot when the helper confirms completion." if valid else b"Invalid callback.")
 
-    with HTTPServer(("127.0.0.1", 0), Handler) as local:
+    try:
+        listener = HTTPServer(("127.0.0.1", callback_port), Handler)
+    except OSError:
+        raise ConnectionFailure("La porta del callback è occupata o non disponibile. Scegli un'altra --callback-port e aggiorna il tunnel SSH con la stessa porta.") from None
+    with listener as local:
         local.timeout = 1
         redirect_uri = f"http://127.0.0.1:{local.server_port}/auth/callback"
         query = dict(client_id=parameters["client_id"], ext_agent_host_id=parameters["host_id"],
@@ -120,9 +125,11 @@ def connect(origin, pairing_code, *, no_browser=False):
         authorize = ISSUER + "/api/accounts/authorize?" + urllib.parse.urlencode(query)
         print("Opening ChatGPT sign-in. Credentials will stay out of this terminal.")
         if no_browser:
-            print(authorize)
+            print(f"Callback locale: {redirect_uri}. Da SSH inoltra questa porta al computer del browser.", flush=True)
+            print("Apri questo URL nel browser del tuo computer:", flush=True)
+            print(authorize, flush=True)
         elif not webbrowser.open(authorize):
-            raise ConnectionFailure("Il browser non è disponibile qui. Apri lo strumento sul tuo computer, fuori da code-server, SSH o container.")
+            raise ConnectionFailure("Il browser non è disponibile qui. Usa --no-browser --callback-port con un tunnel SSH, oppure esegui lo strumento sul computer del browser.")
         deadline = time.monotonic() + 600
         while not callback and time.monotonic() < deadline:
             local.handle_request()
@@ -144,17 +151,39 @@ def connect(origin, pairing_code, *, no_browser=False):
     print("Connected. Return to CounselorBot, choose a model and enable your subscription.")
 
 
+def port_number(value):
+    try:
+        port = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("La porta callback deve essere un numero tra 0 e 65535.") from None
+    if not 0 <= port <= 65535:
+        raise argparse.ArgumentTypeError("La porta callback deve essere tra 0 e 65535.")
+    return port
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server", required=True, help="CounselorBot origin (HTTPS or localhost tunnel)")
     parser.add_argument("--no-browser", action="store_true", help="Print the public sign-in URL instead of opening it")
+    parser.add_argument("--callback-port", type=port_number, default=0, help="Loopback callback port (0: automatic; use a fixed port with SSH -L)")
+    parser.add_argument("--hide-code", action="store_true", help="Hide the pairing code while pasting it; press Enter to submit")
     args = parser.parse_args()
     try:
         origin = server_origin(args.server)
-        pairing_code = getpass.getpass("Codice di associazione CounselorBot (l'incolla non viene visualizzato): ").strip()
+        print("Incolla il codice di associazione generato da CounselorBot, non un token o una chiave OpenAI. Poi premi Invio.", flush=True)
+        read_code = getpass.getpass if args.hide_code else input
+        prompt = "Codice di associazione (incolla invisibile): " if args.hide_code else "Codice di associazione (visibile): "
+        pairing_code = read_code(prompt).strip()
         if not 30 <= len(pairing_code) <= 100:
             raise ConnectionFailure("Copia tutto il codice di associazione mostrato in CounselorBot. Non inserire un token o una chiave API OpenAI.")
-        connect(origin, pairing_code, no_browser=args.no_browser)
+        print(f"Codice ricevuto ({len(pairing_code)} caratteri). Avvio il collegamento…", flush=True)
+        connect(origin, pairing_code, no_browser=args.no_browser, callback_port=args.callback_port)
+    except EOFError:
+        print("Nessun codice ricevuto. Incolla il codice al prompt e premi Invio.", file=sys.stderr)
+        return 1
+    except KeyboardInterrupt:
+        print("Collegamento annullato.", file=sys.stderr)
+        return 1
     except ConnectionFailure as failure:
         print(str(failure), file=sys.stderr)
         return 1
