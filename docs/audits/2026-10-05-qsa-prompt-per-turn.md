@@ -136,3 +136,117 @@ modello:
    che il team ha già fatto questo ragionamento una volta: vale la pena applicarlo
    anche a `[META SYSTEM PROMPT]` (1.349 char/turno di teoria, identica per tutto lo
    step) e a `[TURN CONTRACT]` nei follow-up in-step, se i benchmark lo confermano.
+---
+
+# Addendum: conviene adottare la prompt cache?
+
+Audit successivo, stessa data, svolto insieme a una revisione indipendente con
+Claude Opus. Stessa impostazione: sola lettura, nessuna modifica al codice.
+Dossier completo: `/tmp/qsa_prompt_audit/cache-dossier.md`; risposta integrale di
+Opus: `/tmp/qsa_prompt_audit/opus-cache-verdict.md`.
+
+## Verdetto
+
+**Dipende, e per i provider economici su cui il progetto punta oggi il risparmio è
+0 €.** Cerebras, Together (Llama 3.3) e DeepInfra (Llama 3.3) espongono la cache ma
+**non scontano** la lettura; Ollama locale non ha alcun costo per token. La cache
+conviene solo se la produzione gira su un provider che sconta (DeepSeek ~-98%,
+Groq/Fireworks/OpenAI ~-50/-90%) o su Anthropic con breakpoint esplicito.
+
+Quindi **non è decidibile prima di sapere quale provider serve davvero la produzione**
+e `active_provider` non basta: preset del counselor, connessioni personali,
+`ai_fallback_targets` e budget fallback possono cambiare il provider effettivo.
+La verità è nella tabella `logs` (query nel dossier, da eseguire dentro il container
+`postgres`, senza toccare il `.env` dell'host).
+
+## La misura che cambia il quadro: il PII
+
+Il 33–85% di prefisso stabile misurato sopra è **un tetto teorico**. Fra il prompt
+preparato e quello che arriva al provider passa `_anonymize_external`
+(`backend/ai_service.py:557`), attivo di default su tutti i provider esterni: i
+segnaposto `[[PII:TIPO:n]]` sono numerati con un contatore **unico per chiamata**, e
+i testi vengono elaborati nell'ordine `[user_message, system_prompt, history]`.
+
+Se lo studente scrive un numero di telefono, la numerazione dentro il prompt di
+sistema scala di uno: lo stesso prompt viene mandato come `[[PII:TELEFONO:1]]` e poi
+come `[[PII:TELEFONO:2]]`. **Riproduzione fatta e registrata come bug.** In più il
+layer NER chiama un LLM locale su tutto il testo, prompt di sistema compreso, senza
+temperatura né seed.
+
+Prima di qualsiasi breakpoint, quindi, va reso deterministico il prompt di sistema.
+
+## Numeri (1.000 sessioni QSA da 30 turni, ~3.800 token cacheabili per turno)
+
+| Scenario | Risparmio |
+|---|---:|
+| deepseek (sconto ~98%) | ~3,35 € |
+| groq gpt-oss-120b (-50%) | ~2,85 € |
+| fireworks llama-3.3 (-50%) | ~17,10 € |
+| cerebras / together llama / deepinfra llama | **0 €** |
+| Ollama locale | **0 €** |
+
+Break-even: nei provider automatici senza premio di scrittura ogni hit è guadagno,
+basta 1–2 follow-up per step. Con scrittura a 1,25× (Anthropic TTL 5 min, OpenAI
+recenti) servono almeno 2 follow-up per step **e** almeno il 28% dei follow-up entro
+il TTL.
+
+## TTL: non è il collo di bottiglia
+
+5 minuti sembrano incompatibili con un percorso guidato, dove lo studente legge tra
+un turno e l'altro. Ma per i provider economici il TTL è ≥ 1 h (Groq 2 h, DeepSeek
+ore-giorni), e la parte di prompt **precedente a `[STUDENT]` (~2.800 token) è
+identica per tutti gli studenti sullo stesso step**: in un uso di classe la cache
+resta calda anche se un singolo studente torna dopo 20 minuti. Il TTL pesa solo per
+Anthropic.
+
+## Ordine dei blocchi: niente riordino generale
+
+Il riordino completo (fascio invariante in testa) costerebbe più di quanto rende:
+fra uno step e l'altro resterebbero cacheabili solo ~1.000 token, sotto le soglie di
+OpenAI (1.024) e Gemini (2.048–4.096), e LANGUAGE/REGISTER passerebbero davanti alla
+sezione di step, cambiando le priorità che i modelli open-weight pesano molto.
+
+**Spostamento chirurgico consigliato:** il prompt di step (319–676 caratteri) oggi
+sta al byte 0 solo nei turni di ingresso e azzera il prefisso; spostarlo in coda (o
+nel turno utente, come il codice già fa per `qpcs-` e `idea-`) raddoppia gli hit senza
+toccare il resto. Da validare con `backend/tests/test_openrouter_qsa_benchmark.py`.
+
+Dove mettere un eventuale breakpoint: in `_attempt_input`, **dopo**
+`_anonymize_external` e dopo `fit_context`, che muta la stringa (variante `__short`,
+trimming di persona/profilo/knowledge/meta). Salvare l'offset come attributo
+separato, senza marchingrini dentro `system_prompt_final`, così
+`backend/tests/test_chat_preparation.py` continua a confrontare stringhe uguali.
+
+## Piano a gradini
+
+1. **Misurare, costo zero, nessun codice.** Provider effettivo, `cached_tokens` già
+   presenti nei log, pause fra i turni, follow-up per step. Se il provider è Cerebras,
+   Together-Llama, DeepInfra-Llama o Ollama: **fermarsi qui**, la cache non è il
+   problema.
+2. **Rendere stabile il prefisso** (poco codice): determinismo del PII, spostamento
+   del prompt di step, `prompt_cache_key` stabile per Mistral e DeepInfra, e
+   `estimate_cost_usd` che considera i token cacheizzati.
+3. **Breakpoint esplicito** solo se il provider è Anthropic (o OpenRouter verso
+   Anthropic/Qwen) e il volume lo giustifica.
+
+**Da non fare:** riordino generale, sentinelle di cache dentro
+`system_prompt_final`, cache esplicita Gemini (si paga a €/ora di storage).
+
+## Bug emersi da questo addendum (registrati nel Diario, non pubblicati a mano)
+
+- Contatore PII che rende il prompt di sistema dipendente dal messaggio dello
+  studente → nessun riuso del prefisso (confermato, riprodotto).
+- Anthropic: `last_usage` mai valorizzato e assente dal listino → `cost_usd` sempre
+  null, budget non osservato (confermato).
+- `estimate_cost_usd` fattura i token cacheizzati a prezzo pieno → budget in anticipo
+  (sospetto).
+
+## Limiti di questo addendum
+
+- Lo stato della cache per provider è stato raccolto da Opus su documentazione
+  provider (ottobre 2026) e va riverificato prima di una decisione: i prezzi cambiano
+  e `backend/model_pricing.py` risulta già disallineato su Together e DeepSeek
+  (affermazione non verificata da me).
+- Nessun dato di produzione: manca il provider effettivo e la hit rate reale.
+- Nessuna misura sulla qualità: spostare il prompt di step in coda può cambiare
+  l'aderenza del modello, e serve il benchmark QSA per dirlo.
