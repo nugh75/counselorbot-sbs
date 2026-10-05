@@ -184,9 +184,15 @@ class GuidedStepUpdate(BaseModel):
 
 class GuidedStepResponse(GuidedStepBase):
     component_defaults: Optional[Dict[str, Any]] = None
+    # Chiave del prompt di sistema risolta come a runtime (chat_logic.guided_step_system_prompt_key).
+    system_prompt_key: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+class GuidedStepModeResponse(BaseModel):
+    mode: str
+    system_prompt_key: Optional[str] = None
 
 class ReorderItem(BaseModel):
     id: str
