@@ -63,10 +63,7 @@ def context_profile(config: dict, provider: str, model: str) -> dict:
     }
 
 
-_SECTION = re.compile(
-    r"(?m)^\[(?:PERSONA|SECTION|META SYSTEM PROMPT|STUDENT|GUIDED PATH|PROFILE|"
-    r"READING|IDEA REFERENCE|IDEA SOURCES|IDEA MAP|KNOWLEDGE|JOURNEY EVIDENCE|TURN CONTRACT)\]"
-)
+_SECTION = re.compile(r"(?m)^\[[A-Z][A-Z _-]*\]")
 
 
 def _without_background(system: str) -> tuple[str, list[str]]:
