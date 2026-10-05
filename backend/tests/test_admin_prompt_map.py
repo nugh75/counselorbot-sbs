@@ -349,6 +349,19 @@ def test_suggested_questions_are_editable_through_the_questions_api():
         assert entry["used_by"]["steps"][0]["label"] == step["label"]
 
 
+def test_context_components_come_right_after_the_step_fields():
+    _seed_all_instruments()
+    client = _client()
+    for instrument in ("QSA", "EVENTO_STUDIO", "IDEA"):
+        for step in _map(client, instrument)["levels"]["steps"]:
+            if step["fixed"]:
+                continue
+            fields = [e.get("field") if e["kind"] == "guided_step" else e["role"] for e in step["entries"]]
+            # Nome, colore, istruzione, poi il contesto; prompt, meta, note e domande dopo.
+            assert fields[:4] == ["label", "color_theme", "prompt", "components"], (instrument, step["id"], fields)
+            assert fields[-1] == "suggested_questions", (instrument, step["id"], fields)
+
+
 def test_unknown_instrument_is_404():
     response = _client().get("/admin/prompt-map", params={"instrument": "NOPE"})
     assert response.status_code == 404
