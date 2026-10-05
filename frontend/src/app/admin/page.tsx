@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookOpen, Compass, Settings, FileText, ClipboardList, ShieldAlert, BarChart3, ListChecks, Database, BrainCircuit, GraduationCap, Coins, SlidersHorizontal, Gauge, Users, Award, MessageCircleQuestion, Wand2, PanelLeftClose, PanelLeftOpen, CalendarDays, Eye, FolderOpen, Bot, Download, Mic, Image as ImageIcon } from 'lucide-react';
-import { ConfigForm } from '@/components/admin/ConfigForm';
+import { ConfigForm, writeSectionParam } from '@/components/admin/ConfigForm';
 import { LogViewer } from '@/components/admin/LogViewer';
 import { CostStats } from '@/components/admin/CostStats';
 import { PresetsPanel } from '@/components/admin/PresetsPanel';
@@ -123,6 +123,11 @@ export default function AdminPage() {
         },
     ];
     const activeItem = navGroups.flatMap((group) => group.items).find((item) => item.id === activeTab);
+
+    // `?section=` belongs to the configuration tab: drop it elsewhere so a reload does not reopen it.
+    useEffect(() => {
+        if (activeTab !== 'config') writeSectionParam(null);
+    }, [activeTab]);
 
     useEffect(() => {
         getRealIdentity().then((id) => {
