@@ -36,7 +36,16 @@ const promptMap = {
             instruments: ['QSA', 'IDEA'],
             entries: [config('text_guided_conclusion', 'Hai completato il percorso.', {
                 role: 'phase_text', level: 'group', destination: 'student', when: 'student', shared: true, translations: { en: 'Done.' },
-                used_by: { instruments: ['QSA', 'IDEA'], steps: [] },
+                used_by: { instruments: ['QSA', 'IDEA'], steps: ['QSA', 'IDEA'].map(instrument => ({ instrument, step_id: 'conclusion', label: 'conclusion', fixed: true })) },
+            })],
+        }, {
+            instruments: ['QSA', 'ZTPI', 'EVENTO_STUDIO'],
+            entries: [config('label_guided_questions', 'Domande', {
+                role: 'phase_label', level: 'group', destination: 'student', when: 'student', shared: true,
+                used_by: { instruments: ['QSA', 'ZTPI', 'EVENTO_STUDIO'], steps: [
+                    { instrument: 'QSA', step_id: 'questions', label: 'questions', fixed: true },
+                    { instrument: 'EVENTO_STUDIO', step_id: 'evento', label: "L'evento", label_i18n: { en: 'The event' } },
+                ] },
             })],
         }],
         instrument: [
@@ -128,6 +137,36 @@ test('levels go from shared to step and inherited texts link to their level', as
         await page.getByRole('navigation', { name: 'Livelli' }).last().getByRole('button', { name: 'Conclusione' }).click();
         await page.locator('#pm-step-conclusion').waitFor();
         assert.match(await page.locator('#pm-step-conclusion').innerText(), /text_guided_conclusion/);
+    } finally { await f.close(); }
+});
+
+test('each group names its instruments, highlights the selected one and the warnings cite them', async () => {
+    const f = await fixture();
+    try {
+        const { page, writes } = f;
+        const groups = page.locator('#pm-level-group [data-group]');
+        assert.equal(await groups.count(), 2);
+        const first = groups.nth(0);
+        const members = group => group.getByRole('list', { name: 'Strumenti del gruppo' }).getByRole('listitem');
+        assert.deepEqual(await members(first).allInnerTexts(), ['QSA', 'IDEA']);
+        assert.equal(await first.locator('[aria-current="true"]').innerText(), 'QSA');
+        assert.match(await first.innerText(), /Modificare qui cambia tutti gli strumenti del gruppo: QSA · IDEA\./);
+        const second = groups.nth(1);
+        assert.deepEqual(await members(second).allInnerTexts(), ['QSA', 'ZTPI', 'Evento di studio']);
+        assert.equal(await second.locator('[title="Evento significativo di studio"]').count(), 1);
+
+        // "Usato da" nomina gli strumenti e, aperto, gli step di ciascuno.
+        const card = page.locator('[data-entry-key="label_guided_questions"]');
+        assert.match(await card.innerText(), /usato da 3 strumenti: QSA · ZTPI · Evento di studio/);
+        await card.getByText('2 step', { exact: true }).click();
+        const steps = await card.locator('[data-used-by-steps] li').allInnerTexts();
+        assert.deepEqual(steps.map(text => text.replace(/\s+/g, ' ').trim()), ['QSA: Domande', "Evento di studio: L'evento"]);
+
+        await card.getByRole('button', { name: 'Modifica' }).click();
+        await card.locator('textarea').fill('Le tue domande');
+        await card.getByRole('button', { name: 'Salva', exact: true }).click();
+        assert.match(await card.getByRole('alert').innerText(), /Condiviso: QSA · ZTPI · Evento di studio \(2 step\)\./);
+        assert.equal(writes.length, 0);
     } finally { await f.close(); }
 });
 
