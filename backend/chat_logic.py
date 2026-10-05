@@ -1908,6 +1908,22 @@ def guided_step_system_prompt_key(step) -> str:
     return _system_prompt_key(step.system_prompt_mode, step.id, step)
 
 
+# Mode che la chat guidata invia per una domanda libera dello studente dentro uno
+# step di analisi (GuidedChatInterface.resolveInteractiveMode): QSA e QSAr non
+# rigenerano l'analisi e passano al prompt discorsivo; gli altri tengono il mode dello step.
+FOLLOW_UP_MODE_BY_STEP_MODE = {
+    "factor": "factor-qa",
+    "second-level": "factor-qa",
+    "qsar-factor": "qsar-factor-qa",
+    "qsar-second-level": "qsar-factor-qa",
+}
+
+
+def guided_step_follow_up_mode(step) -> str:
+    """Mode dei turni liberi dello studente nello step (stesso step, nessuna istruzione)."""
+    return FOLLOW_UP_MODE_BY_STEP_MODE.get(step.system_prompt_mode, step.system_prompt_mode)
+
+
 def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str], db):
     """Resolve system prompt key/value with guided-phase override support."""
     # Questions phase has its own system prompt
