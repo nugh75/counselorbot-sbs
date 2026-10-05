@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import type { PromptMap, PromptMapEntry } from './prompt-map';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, levelSection, moveItem, needsSharedConfirm, saveRequest, sectionDefaultOpen, sectionsForEntry, sortOrderChanges, stepSection, stepsByInstrument } from './prompt-map.ts';
+import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, levelSection, moveItem, needsSharedConfirm, normalizeStepId, saveRequest, sectionDefaultOpen, sectionsForEntry, sortOrderChanges, stepSection, stepsByInstrument } from './prompt-map.ts';
 
 function entry(overrides: Partial<PromptMapEntry>): PromptMapEntry {
     return {
@@ -134,4 +134,10 @@ test('sections start with shared levels closed, instrument and steps open, only 
     assert.deepEqual(sectionsForEntry(map, 'text_guided_conclusion'), ['level:group']);
     assert.deepEqual(sectionsForEntry(map, 'guided_step:cognitive:prompt'), ['level:step', 'step:QSA:cognitive']);
     assert.deepEqual(sectionsForEntry(map, 'missing'), []);
+});
+
+test('new step ids are normalized like the classic view', () => {
+    assert.equal(normalizeStepId('QSA Nuovo!'), 'qsa-nuovo');
+    assert.equal(normalizeStepId('qsa-nuovo-', false), 'qsa-nuovo-');
+    assert.equal(normalizeStepId('  '), '');
 });
