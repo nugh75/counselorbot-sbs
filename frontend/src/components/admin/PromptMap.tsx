@@ -9,9 +9,9 @@ import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview } from '@/components/admin/PromptRequestPreview';
 import {
     PROMPT_MAP_LANGUAGES, badgeFor, booleanFlags, componentsValue, entryAnchor, entryText, findEntry, levelAnchor, levelCounts,
-    needsSharedConfirm, saveRequest, stepAnchor,
+    needsSharedConfirm, saveRequest, stepAnchor, stepsByInstrument,
     type PromptMap as PromptMapData, type PromptMapBadge, type PromptMapCounselor, type PromptMapEntry, type PromptMapInstrument,
-    type PromptMapLevel, type PromptMapRef, type PromptMapStep,
+    type PromptMapLevel, type PromptMapRef, type PromptMapStep, type PromptMapUser,
 } from '@/lib/prompt-map';
 
 // Vista "Mappa dei prompt": i testi delle chat guidate di uno strumento dal
@@ -75,6 +75,17 @@ function useInstrumentName() {
     return useCallback((id: string) => tf(`q.${id}.fullName`, id), [tf]);
 }
 
+/** Titolo breve dello strumento (es. "QSA", "Evento di studio"), nella lingua dell'admin. */
+function useInstrumentShortName() {
+    const { tf } = useI18n();
+    return useCallback((id: string) => tf(`q.${id}.name`, id), [tf]);
+}
+
+function userStepTitle(step: PromptMapUser, lang: string, t: (key: string) => string) {
+    if (step.fixed) return t(`admin.promptMap.phase.${step.step_id}`);
+    return step.label_i18n?.[lang] || step.label;
+}
+
 function stepTitle(step: PromptMapStep, lang: string, t: (key: string) => string) {
     if (step.fixed) return t(`admin.promptMap.phase.${step.id}`);
     return step.label_i18n?.[lang] || step.label;
@@ -88,10 +99,10 @@ function entryTitle(entry: PromptMapEntry, t: (key: string) => string, tf: (key:
 
 function UsedBy({ entry }: { entry: PromptMapEntry }) {
     const { t } = useI18n();
-    const name = useInstrumentName();
+    const name = useInstrumentShortName();
     const { instruments, steps } = entry.used_by;
     if (instruments.length > 1) {
-        return <span title={instruments.map(name).join(' · ')}>{t('admin.promptMap.usedByInstruments', { count: instruments.length })}</span>;
+        return <span>{t('admin.promptMap.usedByInstruments', { count: instruments.length, names: instruments.map(name).join(' · ') })}</span>;
     }
     if (steps.length > 1) {
         return <span title={steps.map(step => step.label).join(' · ')}>{t('admin.promptMap.usedBySteps', { count: steps.length })}</span>;
@@ -99,9 +110,28 @@ function UsedBy({ entry }: { entry: PromptMapEntry }) {
     return null;
 }
 
-function sharedUsers(entry: PromptMapEntry, name: (id: string) => string) {
+/** Step di una voce condivisa, per strumento: il dettaglio di "usato da". */
+function UsedBySteps({ entry }: { entry: PromptMapEntry }) {
+    const { t, lang } = useI18n();
+    const name = useInstrumentShortName();
     const { instruments, steps } = entry.used_by;
-    if (instruments.length > 1) return instruments.map(name).join(' · ');
+    if (!steps.length || (instruments.length < 2 && steps.length < 2)) return null;
+    return <details data-used-by-steps className="mt-1 text-[11px] text-slate-500">
+        <summary className="cursor-pointer select-none">{t('admin.promptMap.stepCount', { count: steps.length })}</summary>
+        <ul className="mt-1 space-y-0.5 pl-3">
+            {stepsByInstrument(entry).filter(item => item.steps.length).map(item => <li key={item.instrument}>
+                <span className="font-semibold text-slate-600">{name(item.instrument)}:</span> {item.steps.map(step => userStepTitle(step, lang, t)).join(' · ')}
+            </li>)}
+        </ul>
+    </details>;
+}
+
+function sharedUsers(entry: PromptMapEntry, name: (id: string) => string, t: (key: string, params?: Record<string, string | number>) => string) {
+    const { instruments, steps } = entry.used_by;
+    if (instruments.length > 1) {
+        const names = instruments.map(name).join(' · ');
+        return steps.length ? `${names} (${t('admin.promptMap.stepCount', { count: steps.length })})` : names;
+    }
     return steps.map(step => step.label).join(' · ');
 }
 
@@ -112,7 +142,7 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
     componentLabels?: Record<string, string>;
 }) {
     const { t } = useI18n();
-    const name = useInstrumentName();
+    const name = useInstrumentShortName();
     const fieldId = useId();
     const multilingual = !!entry.translations && (entry.destination === 'student');
     const [language, setLanguage] = useState('it');
@@ -167,7 +197,7 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
             onChange={event => { setDraft(event.target.value); setConfirming(false); }} rows={Math.min(18, Math.max(6, draft.split('\n').length + 1))}
             className="w-full rounded border border-slate-300 bg-white p-2 font-mono text-xs leading-relaxed text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" />}
         {confirming && <p role="alert" className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            {t('admin.promptMap.sharedWarning', { users: sharedUsers(entry, name) })}
+            {t('admin.promptMap.sharedWarning', { users: sharedUsers(entry, name, t) })}
         </p>}
         {error && <p role="alert" className="text-xs text-red-700">{error}</p>}
         <div className="flex flex-wrap justify-end gap-2">
@@ -213,6 +243,7 @@ function EntryCard({ entry, highlighted, onSaved, onEditPersona, componentLabels
                     <UsedBy entry={entry} />
                     {entry.kind === 'config' && !entry.stored && <span className="italic">{t('admin.promptMap.notStored')}</span>}
                 </p>
+                <UsedBySteps entry={entry} />
             </div>
             <div className="flex flex-wrap items-center gap-1">
                 <Badge kind={badgeFor(entry)} />
@@ -408,6 +439,7 @@ function StepPreview({ map, step, componentLabels }: { map: PromptMapData; step:
 export function PromptMap({ componentLabels }: { componentLabels?: Record<string, string> }) {
     const { t, lang } = useI18n();
     const name = useInstrumentName();
+    const shortName = useInstrumentShortName();
     const [instruments, setInstruments] = useState<PromptMapInstrument[]>([]);
     const [instrument, setInstrument] = useState(readInstrumentParam);
     const [map, setMap] = useState<PromptMapData | null>(null);
@@ -564,9 +596,16 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                     <LevelHeading level="group" title={t('admin.promptMap.level.group')} hint={t('admin.promptMap.level.groupHint')} count={counts.group} />
                     {map.levels.groups.length === 0 && <p className="text-xs text-slate-500">{t('admin.promptMap.emptyGroups')}</p>}
                     <div className="space-y-4">
-                        {map.levels.groups.map(group => <div key={group.instruments.join('|')} className="rounded-lg border border-amber-200 bg-amber-50/40 p-3">
-                            <p className="text-xs font-semibold text-amber-900">{group.instruments.map(name).join(' · ')}</p>
-                            <p className="mt-1 text-xs text-amber-800">⚠ {t('admin.promptMap.groupWarning')}</p>
+                        {map.levels.groups.map(group => <div key={group.instruments.join('|')} data-group={group.instruments.join('|')}
+                            className="rounded-lg border border-amber-200 bg-amber-50/40 p-3">
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-amber-900">{t('admin.promptMap.groupTitle', { count: group.instruments.length })}</p>
+                            <ul aria-label={t('admin.promptMap.groupInstruments')} className="mt-1.5 flex flex-wrap gap-1.5">
+                                {group.instruments.map(id => <li key={id} title={name(id)} aria-current={id === map.instrument ? 'true' : undefined}
+                                    className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${id === map.instrument ? 'border-amber-600 bg-amber-600 text-white' : 'border-amber-300 bg-white text-amber-900'}`}>
+                                    {shortName(id)}
+                                </li>)}
+                            </ul>
+                            <p className="mt-2 text-xs text-amber-800">⚠ {t('admin.promptMap.groupWarning', { instruments: group.instruments.map(shortName).join(' · ') })}</p>
                             <div className="mt-3 space-y-3">{group.entries.map(card)}</div>
                         </div>)}
                     </div>

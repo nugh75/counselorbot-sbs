@@ -18,8 +18,16 @@ Opzione B dell'audit `docs/audits/2026-10-05-admin-prompt-sections.md`.
   `FILTRO CONTESTO`.
 - Salvataggi solo tramite le API esistenti, che scrivono `prompt_revisions`:
   `POST /admin/config`, `PUT /admin/guided-steps/{id}`, `PUT /admin/counselors/{id}`.
+- Livello 2: un riquadro per ogni insieme distinto di strumenti
+  (`levels.groups[].instruments`, calcolato dal backend). L'intestazione elenca
+  gli strumenti per titolo breve (`q.<id>.name`, altrimenti l'id; nome esteso nel
+  `title`), evidenzia lo strumento scelto (`aria-current`) e l'avviso li cita per
+  nome. Nessuna lista di strumenti nel frontend.
+- "Usato da" di una voce condivisa: nomi degli strumenti in chiaro e, nel
+  dettaglio «N step», gli step di ciascuno (`used_by.steps[]` con `label_i18n` e
+  `fixed` per le fasi Domande/Conclusione).
 - Prima di salvare una voce di livello 2 o usata da più step: avviso con l'elenco
-  di chi la usa e conferma esplicita.
+  di chi la usa (strumenti per nome e numero di step) e conferma esplicita.
 - La persona del counselor è di sola lettura qui: "Modifica" apre un popup che
   usa la stessa API del tab Counselor (nessuna seconda fonte).
 - Le quattro schede storiche restano nella sezione *Strumenti — vista classica*
@@ -55,10 +63,16 @@ Sezione [ Mappa dei prompt ▾ ]   (Impostazioni: Mappa dei prompt · Generale �
 │                      │   … altre 5 direttive, prompt fase Domande, titolo Conclusione│
 │                      │                                                               │
 │                      │ ② GRUPPI · prompt condivisi da più strumenti                  │
-│                      │ ┌ QSA · ZTPI · QPCS · QPCC · QAP · IDEA ────────────────────┐ │
-│                      │ │ ⚠ Modificare qui cambia tutti gli strumenti del gruppo.   │ │
+│                      │ ┌ GRUPPO · 6 STRUMENTI ─────────────────────────────────────┐ │
+│                      │ │ [■QSA] [ZTPI] [QPCS] [QPCC] [QAP] [IDEA]  (■ = scelto)    │ │
+│                      │ │ ⚠ Modificare qui cambia tutti gli strumenti del gruppo:   │ │
+│                      │ │   QSA · ZTPI · QPCS · QPCC · QAP · IDEA.                   │ │
 │                      │ │ Titolo fase Domande          [→ STUDENTE]  6 lingue        │ │
+│                      │ │   usato da 6 strumenti: QSA · ZTPI · … ▸ 6 step            │ │
 │                      │ │ Banner fase Domande          [→ STUDENTE]                  │ │
+│                      │ └───────────────────────────────────────────────────────────┘ │
+│                      │ ┌ GRUPPO · 2 STRUMENTI ─ [■QSA] [IDEA] ─────────────────────┐ │
+│                      │ │ ⚠ … del gruppo: QSA · IDEA.  Testo intro · Conclusione    │ │
 │                      │ └───────────────────────────────────────────────────────────┘ │
 │                      │                                                               │
 │                      │ ③ STRUMENTO QSA · vale per tutti i suoi step                  │
@@ -163,6 +177,10 @@ della pagina (solo la barra dei livelli).
 ![Step con anteprima colorata per livello, 1440 px](img/admin-prompt-map-step-preview-1440.png)
 
 ![Mappa dei prompt a 390 px](img/admin-prompt-map-390.png)
+
+![Livello 2 di QSA: due gruppi distinti, strumenti per nome, QSA evidenziato](img/admin-prompt-map-groups-1440.png)
+
+![Livello 2 di Evento di studio: «usato da» con gli step di ciascuno strumento](img/admin-prompt-map-groups-evento-1440.png)
 
 Colori dei livelli: ① comune grigio, ② gruppi ocra, ③ strumento petrolio, ④ step
 viola; nell'anteprima il bordo sinistro di ogni blocco indica il livello da cui

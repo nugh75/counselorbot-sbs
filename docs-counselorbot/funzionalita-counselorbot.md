@@ -620,8 +620,11 @@ ha quattro livelli:
    con il suo storico), le sei direttive globali e i testi usati da ogni strumento,
    come il prompt della fase Domande.
 2. **Gruppi**: testi condivisi da più strumenti (per esempio i prompt
-   dell’intervista e della sintesi dei due Eventi significativi), con l’avviso che
-   una modifica vale per tutti gli strumenti del gruppo.
+   dell’intervista e della sintesi dei due Eventi significativi). Ogni insieme di
+   strumenti ha un riquadro proprio, che si apre con l’elenco degli strumenti del
+   gruppo per nome breve (lo strumento scelto è evidenziato) e con l’avviso che
+   una modifica vale per tutti quegli strumenti, citati per nome. Ogni voce dice
+   da quali strumenti è usata e, aprendo «N step», quali step di ciascuno.
 3. **Strumento**: meta prompt, prompt delle domande dello studente (per QSA e QSAr),
    testi delle fasi Domande e Conclusione e prompt di sistema condivisi da più step.
 4. **Step**, in ordine di percorso con le fasi fisse Domande e Conclusione: nome
@@ -638,7 +641,8 @@ di destinazione: **→ MODELLO · ingresso** (inviato quando lo studente entra n
 step), **→ MODELLO · ogni turno**, **→ MODELLO · domande dello studente**,
 **→ STUDENTE** (mostrato, mai inviato al modello), **SOLO ADMIN** (note di lavoro)
 e **FILTRO CONTESTO** (componenti). Un testo usato da più strumenti o da più step
-chiede una conferma che elenca chi lo usa prima del salvataggio. I testi per lo
+chiede una conferma che elenca chi lo usa (strumenti per nome e numero di step)
+prima del salvataggio. I testi per lo
 studente si modificano lingua per lingua. Ogni salvataggio passa dalle funzioni già
 esistenti e resta nello storico delle revisioni, ripristinabile dalla voce stessa;
 uno step può ricevere un meta prompt proprio con «Sovrascrivi per questo step».
