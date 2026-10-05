@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDownRight, ChevronDown, ChevronUp, Layers, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { ArrowDownRight, ChevronDown, ChevronRight, ChevronUp, Layers, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { PromptHistory } from '@/components/admin/PromptHistory';
@@ -10,7 +10,7 @@ import { PromptRequestPreview } from '@/components/admin/PromptRequestPreview';
 import type { AdminGuidedStepQuestion } from '@/lib/guided-step-questions';
 import {
     PROMPT_MAP_LANGUAGES, badgeFor, booleanFlags, componentsValue, entryAnchor, entryText, findEntry, levelAnchor, levelCounts,
-    moveItem, needsSharedConfirm, saveRequest, sortOrderChanges, stepAnchor, stepsByInstrument,
+    levelSection, moveItem, needsSharedConfirm, saveRequest, sectionDefaultOpen, sectionsForEntry, sortOrderChanges, stepAnchor, stepSection, stepsByInstrument,
     type PromptMap as PromptMapData, type PromptMapBadge, type PromptMapCounselor, type PromptMapEntry, type PromptMapInstrument,
     type PromptMapLevel, type PromptMapRef, type PromptMapStep, type PromptMapUser,
 } from '@/lib/prompt-map';
@@ -515,18 +515,57 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
     </DialogShell>;
 }
 
-function LevelHeading({ level, title, hint, count }: { level: PromptMapLevel; title: string; hint: string; count?: number }) {
-    return <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-            <h4 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-800">
-                <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs ${LEVEL_STYLE[level]}`}>{LEVELS.indexOf(level) + 1}</span>
-                {title}
-            </h4>
-            <p className="mt-0.5 text-xs text-slate-500">{hint}</p>
+/** Sezione a tutta larghezza che si apre e si chiude dall'intestazione: livelli e step della mappa. */
+function Collapsible({ anchor, open, onToggle, heading, count, hint, actions, headingLevel = 4, className = '', children }: {
+    anchor: string;
+    open: boolean;
+    onToggle: () => void;
+    heading: ReactNode;
+    count?: string;
+    hint?: string;
+    actions?: ReactNode;
+    headingLevel?: 4 | 5;
+    className?: string;
+    children: ReactNode;
+}) {
+    const regionId = useId();
+    const Heading = headingLevel === 4 ? 'h4' : 'h5';
+    return <section id={anchor} data-section-open={open ? 'true' : 'false'} className={`scroll-mt-4 ${className}`}>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <Heading className="min-w-0 flex-1">
+                <button type="button" aria-expanded={open} aria-controls={open ? regionId : undefined} onClick={onToggle}
+                    className="flex w-full min-w-0 items-center gap-2 rounded py-1 text-left hover:bg-slate-900/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                    <ChevronRight aria-hidden className={`h-4 w-4 shrink-0 text-slate-500 transition-transform duration-150 motion-reduce:transition-none ${open ? 'rotate-90' : ''}`} />
+                    <span className="min-w-0 flex-1">{heading}</span>
+                    {count && <span className="shrink-0 whitespace-nowrap text-xs font-normal normal-case tracking-normal text-slate-500">{count}</span>}
+                </button>
+            </Heading>
+            {actions}
         </div>
-        {count !== undefined && <span className="text-xs text-slate-400">{count}</span>}
-    </header>;
+        {hint && <p className="pl-6 text-xs text-slate-500">{hint}</p>}
+        {open && <div id={regionId} className="mt-3">{children}</div>}
+    </section>;
 }
+
+function LevelTitle({ level, title }: { level: PromptMapLevel; title: string }) {
+    return <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-800">
+        <span aria-hidden className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs ${LEVEL_STYLE[level]}`}>{LEVELS.indexOf(level) + 1}</span>
+        <span className="min-w-0 break-words">{title}</span>
+    </span>;
+}
+
+const OPEN_SECTIONS_KEY = 'cb_prompt_map_sections';
+
+/** Sezioni aperte o chiuse a mano da chi guarda (solo nel suo browser). */
+const readOpenSections = (): Record<string, boolean> => {
+    try {
+        const parsed = JSON.parse(window.localStorage.getItem(OPEN_SECTIONS_KEY) || '{}');
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch { return {}; }
+};
+const writeOpenSections = (value: Record<string, boolean>) => {
+    try { window.localStorage.setItem(OPEN_SECTIONS_KEY, JSON.stringify(value)); } catch { /* storage non disponibile: vale per questa visita */ }
+};
 
 const LEVEL_BLOCK: Record<PromptMapLevel, string> = {
     common: 'border-l-4 border-l-slate-500',
@@ -582,8 +621,9 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
     const [map, setMap] = useState<PromptMapData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
-    const [stepId, setStepId] = useState('');
     const [highlight, setHighlight] = useState('');
+    const [openSections, setOpenSections] = useState(readOpenSections);
+    const [pendingScroll, setPendingScroll] = useState('');
     const [persona, setPersona] = useState<PromptMapCounselor | null>(null);
     const [overrideFor, setOverrideFor] = useState('');
     const [questionsFor, setQuestionsFor] = useState<{ entry: PromptMapEntry; stepName: string } | null>(null);
@@ -605,7 +645,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
         return () => writeInstrumentParam(null);
     }, [instrument]);
 
-    const load = useCallback(async (target: string, keepStep = false) => {
+    const load = useCallback(async (target: string) => {
         setLoading(true);
         setError(false);
         try {
@@ -613,7 +653,6 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
             if (!response.ok) throw new Error('map');
             const data: PromptMapData = await response.json();
             setMap(data);
-            setStepId(current => keepStep && data.levels.steps.some(step => step.id === current) ? current : data.levels.steps[0]?.id || '');
         } catch {
             setError(true);
         } finally {
@@ -626,7 +665,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
     const reload = useCallback(() => {
         setStatus(t('admin.promptMap.saved'));
         setOverrideFor('');
-        void load(instrument, true);
+        void load(instrument);
     }, [instrument, load, t]);
 
     useEffect(() => {
@@ -635,27 +674,62 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
         return () => clearTimeout(timer);
     }, [status]);
 
+    const isOpen = (section: string) => !!map && (openSections[section] ?? sectionDefaultOpen(map, section));
+    const setSections = (sections: string[], value?: boolean) => {
+        if (!map) return;
+        setOpenSections(current => {
+            const next = { ...current };
+            for (const section of sections) next[section] = value ?? !(current[section] ?? sectionDefaultOpen(map, section));
+            writeOpenSections(next);
+            return next;
+        });
+    };
+    const toggle = (section: string) => setSections([section]);
+
+    // "vai": apre il livello (e lo step) della voce, poi ci scorre quando è nel DOM.
     const goTo = (key: string) => {
         if (!map) return;
-        const owner = map.levels.steps.find(step => step.entries.some(entry => entry.key === key));
-        if (owner) setStepId(owner.id);
+        setSections(sectionsForEntry(map, key), true);
         setHighlight(key);
-        requestAnimationFrame(() => document.getElementById(entryAnchor(key))?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+        setPendingScroll(key);
         setTimeout(() => setHighlight(current => (current === key ? '' : current)), 2200);
     };
-    const scrollToLevel = (level: PromptMapLevel) => document.getElementById(levelAnchor(level))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    const selectStep = (id: string) => {
-        setStepId(id);
-        setOverrideFor('');
-        requestAnimationFrame(() => document.getElementById(stepAnchor(id))?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-    };
+    useEffect(() => {
+        if (!pendingScroll) return;
+        const frame = requestAnimationFrame(() => {
+            document.getElementById(entryAnchor(pendingScroll))?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setPendingScroll('');
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [pendingScroll, openSections]);
 
     const counts = map ? levelCounts(map) : null;
     const instrumentName = map ? name(map.instrument) : '';
-    const step = map?.levels.steps.find(item => item.id === stepId);
     const card = (entry: PromptMapEntry, stepName = '') => <EntryCard key={entry.key} entry={entry} highlighted={highlight === entry.key}
         componentLabels={componentLabels} onSaved={reload} onEditPersona={setPersona}
         onEditQuestions={entry.kind === 'step_questions' ? () => setQuestionsFor({ entry, stepName }) : undefined} />;
+
+    const stepBody = (step: PromptMapStep) => <>
+        <div className="space-y-3">
+            {step.entries.map(entry => card(entry, stepTitle(step, lang, t)))}
+            {step.refs.filter(item => item.role === 'meta' && item.override_key === overrideFor).map(item => <EntryCard key={`override-${item.override_key}`} initiallyEditing
+                componentLabels={componentLabels} onSaved={reload} onEditPersona={setPersona} onCloseEditor={() => setOverrideFor('')}
+                entry={{
+                    key: item.override_key || '', kind: 'config', role: 'meta_step', level: 'step', destination: 'model', when: 'every_turn',
+                    value: map ? findEntry(map, item.key)?.value ?? '' : '', stored: false, shared: false,
+                    used_by: { instruments: [map?.instrument || ''], steps: [{ instrument: map?.instrument || '', step_id: step.id, label: step.label }] },
+                    editor: { method: 'POST', path: '/admin/config' }, read_only: false,
+                }} />)}
+        </div>
+        {map && step.refs.length > 0 && <div className="mt-4">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">{t('admin.promptMap.inherited')}</p>
+            <ul className="space-y-2">
+                {step.refs.map(item => <RefRow key={`${item.key}-${item.role}`} map={map} refItem={item} onGo={goTo}
+                    onOverride={item.role === 'meta' && item.override_key ? () => setOverrideFor(item.override_key || '') : undefined} />)}
+            </ul>
+        </div>}
+        {map && !step.fixed && <div className="mt-4"><StepPreview key={`${map.instrument}-${step.id}`} map={map} step={step} componentLabels={componentLabels} /></div>}
+    </>;
 
     return <section aria-labelledby="prompt-map-title" className="space-y-4">
         <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
@@ -674,7 +748,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                             {instruments.map(item => <option key={item.id} value={item.id}>{name(item.id)}</option>)}
                         </select>
                     </label>
-                    <button type="button" onClick={() => instrument && void load(instrument, true)} disabled={loading}
+                    <button type="button" onClick={() => instrument && void load(instrument)} disabled={loading}
                         className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
                         <RefreshCw aria-hidden className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />{t('admin.promptMap.reload')}
                     </button>
@@ -695,105 +769,65 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
         {error && <p role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{t('admin.promptMap.loadError')}</p>}
         {!map && !error && <p className="text-sm text-slate-500">{t('admin.promptMap.loading')}</p>}
 
-        {map && counts && <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-6">
-            {/* Mobile: barra dei livelli orizzontale; desktop: colonna sticky con gli step. */}
-            <nav aria-label={t('admin.promptMap.levels')} className="sticky top-0 z-20 -mx-4 mb-3 flex gap-2 overflow-x-auto border-b border-slate-200 bg-white/95 px-4 py-2 backdrop-blur lg:hidden">
-                {LEVELS.map(level => <button key={level} type="button" onClick={() => scrollToLevel(level)}
-                    className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold ${LEVEL_STYLE[level]}`}>
-                    {LEVEL_NUMBER[level]} {level === 'instrument' ? map.instrument : t(`admin.promptMap.levelShort.${level}`)}
-                </button>)}
-            </nav>
-            <nav aria-label={t('admin.promptMap.levels')} className="hidden self-start lg:sticky lg:top-4 lg:block">
-                <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">{t('admin.promptMap.levels')}</p>
-                <ul className="space-y-1 text-sm">
-                    {LEVELS.map(level => <li key={level}>
-                        <button type="button" onClick={() => scrollToLevel(level)} className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left hover:bg-slate-100">
-                            <span className="flex items-center gap-2 text-slate-700"><span className={`inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] ${LEVEL_STYLE[level]}`}>{LEVELS.indexOf(level) + 1}</span>
-                                {level === 'instrument' ? map.instrument : t(`admin.promptMap.levelShort.${level}`)}</span>
-                            <span className="text-xs text-slate-400">{counts[level]}</span>
-                        </button>
-                        {level === 'step' && <ul className="ml-4 mt-1 space-y-0.5 border-l border-slate-200 pl-2">
-                            {map.levels.steps.map(item => <li key={item.id}>
-                                <button type="button" onClick={() => selectStep(item.id)} aria-current={item.id === stepId ? 'step' : undefined}
-                                    className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs ${item.id === stepId ? 'bg-violet-50 font-semibold text-violet-800' : 'text-slate-600 hover:bg-slate-50'}`}>
-                                    <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${item.fixed ? 'border border-slate-400' : COLOR_DOT[item.color_theme || ''] || 'bg-slate-400'}`} />
-                                    <span className="truncate">{stepTitle(item, lang, t)}</span>
-                                </button>
+        {map && counts && <div className="space-y-3">
+            <Collapsible anchor={levelAnchor('common')} open={isOpen(levelSection('common'))} onToggle={() => toggle(levelSection('common'))}
+                className={`rounded-lg border border-slate-200 bg-white px-3 py-2 sm:px-4 ${LEVEL_BLOCK.common}`}
+                heading={<LevelTitle level="common" title={t('admin.promptMap.level.common')} />} hint={t('admin.promptMap.level.commonHint')}
+                count={t('admin.promptMap.entryCount', { count: counts.common })}>
+                <div className="space-y-3 pb-2">{map.levels.common.map(entry => card(entry))}</div>
+            </Collapsible>
+
+            <Collapsible anchor={levelAnchor('group')} open={isOpen(levelSection('group'))} onToggle={() => toggle(levelSection('group'))}
+                className={`rounded-lg border border-slate-200 bg-white px-3 py-2 sm:px-4 ${LEVEL_BLOCK.group}`}
+                heading={<LevelTitle level="group" title={t('admin.promptMap.level.group')} />} hint={t('admin.promptMap.level.groupHint')}
+                count={t('admin.promptMap.entryCount', { count: counts.group })}>
+                {map.levels.groups.length === 0 && <p className="pb-2 text-xs text-slate-500">{t('admin.promptMap.emptyGroups')}</p>}
+                <div className="space-y-4 pb-2">
+                    {map.levels.groups.map(group => <div key={group.instruments.join('|')} data-group={group.instruments.join('|')}
+                        className="rounded-lg border border-amber-200 bg-amber-50/40 p-3">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-amber-900">{t('admin.promptMap.groupTitle', { count: group.instruments.length })}</p>
+                        <ul aria-label={t('admin.promptMap.groupInstruments')} className="mt-1.5 flex flex-wrap gap-1.5">
+                            {group.instruments.map(id => <li key={id} title={name(id)} aria-current={id === map.instrument ? 'true' : undefined}
+                                className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${id === map.instrument ? 'border-amber-600 bg-amber-600 text-white' : 'border-amber-300 bg-white text-amber-900'}`}>
+                                {shortName(id)}
                             </li>)}
-                        </ul>}
-                    </li>)}
-                </ul>
-            </nav>
+                        </ul>
+                        <p className="mt-2 text-xs text-amber-800">⚠ {t('admin.promptMap.groupWarning', { instruments: group.instruments.map(shortName).join(' · ') })}</p>
+                        <div className="mt-3 space-y-3">{group.entries.map(entry => card(entry))}</div>
+                    </div>)}
+                </div>
+            </Collapsible>
 
-            <div className="min-w-0 space-y-8">
-                <section id={levelAnchor('common')} className="scroll-mt-16">
-                    <LevelHeading level="common" title={t('admin.promptMap.level.common')} hint={t('admin.promptMap.level.commonHint')} count={counts.common} />
-                    <div className="space-y-3">{map.levels.common.map(entry => card(entry))}</div>
-                </section>
+            <Collapsible anchor={levelAnchor('instrument')} open={isOpen(levelSection('instrument'))} onToggle={() => toggle(levelSection('instrument'))}
+                className={`rounded-lg border border-slate-200 bg-white px-3 py-2 sm:px-4 ${LEVEL_BLOCK.instrument}`}
+                heading={<LevelTitle level="instrument" title={t('admin.promptMap.level.instrument', { name: instrumentName })} />} hint={t('admin.promptMap.level.instrumentHint')}
+                count={t('admin.promptMap.entryCount', { count: counts.instrument })}>
+                {map.levels.instrument.length === 0 && <p className="pb-2 text-xs text-slate-500">{t('admin.promptMap.emptyLevel')}</p>}
+                <div className="space-y-3 pb-2">{map.levels.instrument.map(entry => card(entry))}</div>
+            </Collapsible>
 
-                <section id={levelAnchor('group')} className="scroll-mt-16">
-                    <LevelHeading level="group" title={t('admin.promptMap.level.group')} hint={t('admin.promptMap.level.groupHint')} count={counts.group} />
-                    {map.levels.groups.length === 0 && <p className="text-xs text-slate-500">{t('admin.promptMap.emptyGroups')}</p>}
-                    <div className="space-y-4">
-                        {map.levels.groups.map(group => <div key={group.instruments.join('|')} data-group={group.instruments.join('|')}
-                            className="rounded-lg border border-amber-200 bg-amber-50/40 p-3">
-                            <p className="text-[11px] font-bold uppercase tracking-wider text-amber-900">{t('admin.promptMap.groupTitle', { count: group.instruments.length })}</p>
-                            <ul aria-label={t('admin.promptMap.groupInstruments')} className="mt-1.5 flex flex-wrap gap-1.5">
-                                {group.instruments.map(id => <li key={id} title={name(id)} aria-current={id === map.instrument ? 'true' : undefined}
-                                    className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${id === map.instrument ? 'border-amber-600 bg-amber-600 text-white' : 'border-amber-300 bg-white text-amber-900'}`}>
-                                    {shortName(id)}
-                                </li>)}
-                            </ul>
-                            <p className="mt-2 text-xs text-amber-800">⚠ {t('admin.promptMap.groupWarning', { instruments: group.instruments.map(shortName).join(' · ') })}</p>
-                            <div className="mt-3 space-y-3">{group.entries.map(entry => card(entry))}</div>
-                        </div>)}
-                    </div>
-                </section>
-
-                <section id={levelAnchor('instrument')} className="scroll-mt-16">
-                    <LevelHeading level="instrument" title={t('admin.promptMap.level.instrument', { name: instrumentName })} hint={t('admin.promptMap.level.instrumentHint')} count={counts.instrument} />
-                    {map.levels.instrument.length === 0 && <p className="text-xs text-slate-500">{t('admin.promptMap.emptyLevel')}</p>}
-                    <div className="space-y-3">{map.levels.instrument.map(entry => card(entry))}</div>
-                </section>
-
-                <section id={levelAnchor('step')} className="scroll-mt-16">
-                    <LevelHeading level="step" title={t('admin.promptMap.level.step')} hint={t('admin.promptMap.level.stepHint')} count={counts.step} />
-                    <label className="mb-3 flex flex-col text-xs font-semibold text-slate-600 lg:hidden">
-                        {t('admin.promptMap.stepSelect')}
-                        <select aria-label={t('admin.promptMap.stepSelect')} value={stepId} onChange={event => selectStep(event.target.value)} className="mt-1 rounded border border-slate-300 bg-white px-2 py-1.5 text-sm">
-                            {map.levels.steps.map(item => <option key={item.id} value={item.id}>{stepTitle(item, lang, t)}</option>)}
-                        </select>
-                    </label>
-                    {step && <div id={stepAnchor(step.id)} className="scroll-mt-16 rounded-lg border border-violet-200 bg-violet-50/30 p-3 sm:p-4">
-                        <header className="mb-3 flex flex-wrap items-center gap-2">
-                            <span aria-hidden className={`h-3 w-3 rounded-full ${step.fixed ? 'border border-slate-400' : COLOR_DOT[step.color_theme || ''] || 'bg-slate-400'}`} />
-                            <h5 className="text-sm font-bold text-slate-800">{stepTitle(step, lang, t)}</h5>
-                            <code className="font-mono text-[11px] text-slate-500">{step.id}</code>
-                            {step.system_prompt_mode && <span className="text-[11px] text-slate-500">{t('admin.promptMap.mode', { mode: step.system_prompt_mode })}</span>}
-                            {step.fixed && <span className="rounded border border-slate-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">{t('admin.promptMap.fixedPhase')}</span>}
-                        </header>
-                        <div className="space-y-3">
-                            {step.entries.map(entry => card(entry, stepTitle(step, lang, t)))}
-                            {step.refs.filter(item => item.role === 'meta' && item.override_key === overrideFor).map(item => <EntryCard key={`override-${item.override_key}`} initiallyEditing
-                                componentLabels={componentLabels} onSaved={reload} onEditPersona={setPersona} onCloseEditor={() => setOverrideFor('')}
-                                entry={{
-                                    key: item.override_key || '', kind: 'config', role: 'meta_step', level: 'step', destination: 'model', when: 'every_turn',
-                                    value: findEntry(map, item.key)?.value ?? '', stored: false, shared: false,
-                                    used_by: { instruments: [map.instrument], steps: [{ instrument: map.instrument, step_id: step.id, label: step.label }] },
-                                    editor: { method: 'POST', path: '/admin/config' }, read_only: false,
-                                }} />)}
-                        </div>
-                        {step.refs.length > 0 && <div className="mt-4">
-                            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">{t('admin.promptMap.inherited')}</p>
-                            <ul className="space-y-2">
-                                {step.refs.map(item => <RefRow key={`${item.key}-${item.role}`} map={map} refItem={item} onGo={goTo}
-                                    onOverride={item.role === 'meta' && item.override_key ? () => setOverrideFor(item.override_key || '') : undefined} />)}
-                            </ul>
-                        </div>}
-                        {!step.fixed && <div className="mt-4"><StepPreview key={`${map.instrument}-${step.id}`} map={map} step={step} componentLabels={componentLabels} /></div>}
-                    </div>}
-                </section>
-            </div>
+            <Collapsible anchor={levelAnchor('step')} open={isOpen(levelSection('step'))} onToggle={() => toggle(levelSection('step'))}
+                className={`rounded-lg border border-slate-200 bg-white px-3 py-2 sm:px-4 ${LEVEL_BLOCK.step}`}
+                heading={<LevelTitle level="step" title={t('admin.promptMap.level.step')} />} hint={t('admin.promptMap.level.stepHint')}
+                count={t('admin.promptMap.stepCount', { count: counts.step })}>
+                <div className="space-y-2 pb-2">
+                    {map.levels.steps.map(step => {
+                        const section = stepSection(map.instrument, step.id);
+                        return <Collapsible key={step.id} anchor={stepAnchor(step.id)} headingLevel={5} open={isOpen(section)} onToggle={() => toggle(section)}
+                            className="rounded-lg border border-violet-200 bg-violet-50/30 px-3 py-1.5 sm:px-4"
+                            count={t('admin.promptMap.stepEntryCount', { count: step.entries.length, inherited: step.refs.length })}
+                            heading={<span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                <span aria-hidden className={`h-3 w-3 shrink-0 rounded-full ${step.fixed ? 'border border-slate-400' : COLOR_DOT[step.color_theme || ''] || 'bg-slate-400'}`} />
+                                <span className="text-sm font-bold text-slate-800">{stepTitle(step, lang, t)}</span>
+                                <code className="font-mono text-[11px] font-normal text-slate-500">{step.id}</code>
+                                {step.system_prompt_mode && <span className="text-[11px] font-normal text-slate-500">{t('admin.promptMap.mode', { mode: step.system_prompt_mode })}</span>}
+                                {step.fixed && <span className="rounded border border-slate-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">{t('admin.promptMap.fixedPhase')}</span>}
+                            </span>}>
+                            <div className="pb-2">{stepBody(step)}</div>
+                        </Collapsible>;
+                    })}
+                </div>
+            </Collapsible>
         </div>}
 
         {questionsFor && <QuestionsDialog entry={questionsFor.entry} stepName={questionsFor.stepName}

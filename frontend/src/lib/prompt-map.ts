@@ -119,6 +119,34 @@ export function stepAnchor(stepId: string): string {
     return `pm-step-${stepId.replace(/[^A-Za-z0-9_-]+/g, '-')}`;
 }
 
+/** Id di una sezione collassabile: un livello o uno step di uno strumento. */
+export function levelSection(level: PromptMapLevel): string {
+    return `level:${level}`;
+}
+
+export function stepSection(instrument: string, stepId: string): string {
+    return `step:${instrument}:${stepId}`;
+}
+
+/**
+ * Apertura iniziale: Comune e Gruppi chiusi (lunghi e di rado toccati),
+ * Strumento e Step aperti, degli step solo il primo.
+ */
+export function sectionDefaultOpen(map: PromptMap, section: string): boolean {
+    if (section === levelSection('common') || section === levelSection('group')) return false;
+    if (section.startsWith('level:')) return true;
+    const first = map.levels.steps[0];
+    return !!first && section === stepSection(map.instrument, first.id);
+}
+
+/** Sezioni da aprire per mostrare una voce: il suo livello e, se appartiene a uno step, lo step. */
+export function sectionsForEntry(map: PromptMap, key: string): string[] {
+    const owner = map.levels.steps.find(step => step.entries.some(entry => entry.key === key));
+    if (owner) return [levelSection('step'), stepSection(map.instrument, owner.id)];
+    const entry = findEntry(map, key);
+    return entry ? [levelSection(entry.level)] : [];
+}
+
 /** Voce a cui punta un riferimento ereditato, cercata nei livelli superiori. */
 export function findEntry(map: PromptMap, key: string): PromptMapEntry | undefined {
     const { common, groups, instrument, steps } = map.levels;
