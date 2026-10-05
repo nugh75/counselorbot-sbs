@@ -39,7 +39,9 @@ test('the catalog, the admin prompt sections and the suggested questions include
     assert.equal(catalog.match(/'EVENTO_PROFESSIONALE'/g)?.length, 2);
     const config = read('../components/admin/ConfigForm.tsx');
     assert.ok(config.includes("questionnaireType: 'EVENTO_STUDIO'") && config.includes("questionnaireType: 'EVENTO_PROFESSIONALE'"));
-    assert.ok(config.includes("'evento-interview': 'prompt_evento_interview'"));
+    // Mode e chiavi del prompt di sistema arrivano dal backend: nessuna copia nel pannello.
+    assert.ok(read('../../../backend/prompt_config.py').includes('"evento-interview": "prompt_evento_interview"'));
+    assert.ok(!config.includes("'evento-interview': 'prompt_evento_interview'") && !config.includes('SYSTEM_PROMPT_KEY_BY_'));
     const questions = read('../components/admin/GuidedStepQuestionsPanel.tsx');
     assert.ok(questions.includes('EVENTO_STUDIO: [') && questions.includes('EVENTO_PROFESSIONALE: ['));
 });

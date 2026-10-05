@@ -1890,13 +1890,31 @@ def _should_sanitize_ztpi_text(mode: Optional[str], phase: Optional[str]) -> boo
     return False
 
 
+def _system_prompt_key(mode: Optional[str], phase: Optional[str], step=None) -> str:
+    """Chiave del prompt di sistema per (mode, fase); `step` e' lo step con id `phase`, se esiste.
+
+    Unica fonte della risoluzione: la usano la chat e l'admin (/admin/guided-steps).
+    """
+    phase = GUIDED_PHASE_ALIASES.get(phase, phase)
+    if phase in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS:
+        return GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS[phase]["key"]
+    if step is not None and mode not in _CONVERSATIONAL_MODES:
+        return MODE_TO_SYSTEM_PROMPT_KEY.get(step.system_prompt_mode, "prompt_generic")
+    return MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
+
+
+def guided_step_system_prompt_key(step) -> str:
+    """Chiave del prompt di sistema usata all'ingresso nello step (phase = id, mode = mode dello step)."""
+    return _system_prompt_key(step.system_prompt_mode, step.id, step)
+
+
 def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str], db):
     """Resolve system prompt key/value with guided-phase override support."""
     # Questions phase has its own system prompt
     phase = GUIDED_PHASE_ALIASES.get(phase, phase)
     if phase in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS:
         guided_system = GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS[phase]
-        guided_key = guided_system["key"]
+        guided_key = _system_prompt_key(mode, phase)
         return guided_key, ai_service.config.get(
             guided_key,
             guided_system.get("default", ai_service.config.get("prompt_generic", DEFAULT_SYSTEM_PROMPT_GENERIC)),
@@ -1906,7 +1924,7 @@ def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str
     # Va onorato anche quando `phase` punta a uno step di analisi, altrimenti il
     # ramo sottostante userebbe il prompt di analisi (tabella + tutti i fattori).
     if mode in _CONVERSATIONAL_MODES:
-        prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
+        prompt_key = _system_prompt_key(mode, phase)
         base_prompt = ai_service.config.get(
             prompt_key, SYSTEM_PROMPT_DEFAULTS.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC)
         )
@@ -1918,7 +1936,7 @@ def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str
     if phase:
         step = db.query(models.GuidedStep).filter(models.GuidedStep.id == phase).first()
         if step:
-            prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(step.system_prompt_mode, "prompt_generic")
+            prompt_key = _system_prompt_key(mode, phase, step)
             base_prompt = ai_service.config.get(
                 prompt_key,
                 SYSTEM_PROMPT_DEFAULTS.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC),
@@ -1929,7 +1947,7 @@ def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str
             return prompt_key, base_prompt
 
     # Fallback: mode-based system prompt
-    prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
+    prompt_key = _system_prompt_key(mode, phase)
     return prompt_key, ai_service.config.get(
         prompt_key,
         SYSTEM_PROMPT_DEFAULTS.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC),

@@ -488,7 +488,8 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 ### Admin: Guided Steps
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/admin/guided-steps` | List all steps |
+| `GET` | `/api/admin/guided-steps` | List all steps, each with `system_prompt_key` resolved like the chat runtime (`chat_logic.guided_step_system_prompt_key`) |
+| `GET` | `/api/admin/guided-steps/modes` | Allowed step modes (`intro` + `MODE_TO_SYSTEM_PROMPT_KEY`) with their system prompt key; the admin panel keeps no copy of these maps |
 | `POST` | `/api/admin/guided-steps` | Create step |
 | `PUT` | `/api/admin/guided-steps/{id}` | Update step |
 | `DELETE` | `/api/admin/guided-steps/{id}` | Delete step |

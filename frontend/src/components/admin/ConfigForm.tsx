@@ -46,6 +46,13 @@ interface GuidedStep {
     questionnaire_type: string;
     label_i18n?: Record<string, string> | null;
     component_defaults?: Record<string, boolean | number> | null;
+    // Chiave del prompt di sistema risolta dal backend come a runtime.
+    system_prompt_key?: string | null;
+}
+
+interface GuidedStepMode {
+    mode: string;
+    system_prompt_key: string | null;
 }
 
 interface QuestionnaireResult {
@@ -187,31 +194,6 @@ const PROVIDERS: Record<string, { label: string; models: string[] }> = {
     }
 };
 
-const SYSTEM_PROMPT_MODES = [
-    { value: 'intro', label: 'Presentazione' },
-    { value: 'factor', label: 'Analisi Fattori' },
-    { value: 'second-level', label: 'Secondo Livello' },
-    { value: 'generic', label: 'Generica' },
-    { value: 'qsar-factor', label: 'QSAr Analisi Fattori' },
-    { value: 'qsar-second-level', label: 'QSAr Secondo Livello' },
-    { value: 'qsar-generic', label: 'QSAr Generica' },
-    { value: 'ztpi-factor', label: 'ZTPI Analisi Fattori' },
-    { value: 'ztpi-btp', label: 'ZTPI Profilo Temporale Bilanciato' },
-    { value: 'savickas-interview', label: 'Savickas Intervista' },
-    { value: 'savickas-summary', label: 'Savickas Sintesi' },
-    { value: 'evento-interview', label: 'Evento significativo Intervista' },
-    { value: 'evento-summary', label: 'Evento significativo Sintesi' },
-    { value: 'qpcs-factor', label: 'QPCS Analisi Fattori' },
-    { value: 'qpcc-factor', label: 'QPCC Analisi Fattori' },
-    { value: 'qap-factor', label: 'QAP Analisi Risorse' },
-    { value: 'qpcs-analysis', label: 'QPCS Percorso Guidato' },
-    { value: 'qpcs-summary', label: 'QPCS Sintesi' },
-    { value: 'qpcc-interview', label: 'QPCC Percorso Guidato' },
-    { value: 'qpcc-summary', label: 'QPCC Sintesi' },
-    { value: 'qap-interview', label: 'QAP Percorso Guidato' },
-    { value: 'qap-summary', label: 'QAP Sintesi' },
-];
-
 const DEFAULT_PLACEHOLDERS: Record<string, [string, string]> = {
     it: ['Italian', 'italiano'],
     en: ['English', 'English'],
@@ -243,31 +225,7 @@ const COLOR_THEMES = [
     { value: 'rose', label: 'Rosa chiaro', dot: 'bg-rose-500' },
 ];
 
-const SYSTEM_PROMPT_KEY_BY_MODE: Record<string, string> = {
-    factor: 'prompt_factor',
-    'factor-qa': 'prompt_factor_qa',
-    'second-level': 'prompt_second_level',
-    generic: 'prompt_generic',
-    'qsar-factor': 'prompt_qsar_factor',
-    'qsar-factor-qa': 'prompt_qsar_factor_qa',
-    'qsar-second-level': 'prompt_qsar_second_level',
-    'qsar-generic': 'prompt_qsar_generic',
-    'ztpi-factor': 'prompt_ztpi_factor',
-    'ztpi-btp': 'prompt_ztpi_btp',
-    'savickas-interview': 'prompt_savickas_interview',
-    'savickas-summary': 'prompt_savickas_summary',
-    'evento-interview': 'prompt_evento_interview',
-    'evento-summary': 'prompt_evento_summary',
-    'qpcs-factor': 'prompt_qpcs_factor',
-    'qpcc-factor': 'prompt_qpcc_factor',
-    'qap-factor': 'prompt_qap_factor',
-    'qpcs-analysis': 'prompt_qpcs_analysis',
-    'qpcs-summary': 'prompt_qpcs_summary',
-    'qpcc-interview': 'prompt_qpcc_interview',
-    'qpcc-summary': 'prompt_qpcc_summary',
-    'qap-interview': 'prompt_qap_interview',
-    'qap-summary': 'prompt_qap_summary',
-};const PROMPT_COMPONENT_DEFAULTS: Record<string, boolean> = {
+const PROMPT_COMPONENT_DEFAULTS: Record<string, boolean> = {
     system_prompt: true,
     step_prompt: true,
     cognitive_factors: true,
@@ -499,19 +457,6 @@ function promptUiText(language: string) {
     return PROMPT_UI_TEXTS[language] || PROMPT_UI_TEXTS.it;
 }
 
-const SYSTEM_PROMPT_KEY_BY_PHASE: Record<string, string> = {
-    questions: 'prompt_guided_questions',
-    intro: 'prompt_intro',
-    'qsar-intro': 'prompt_qsar_intro',
-    'ztpi-intro': 'prompt_ztpi_intro',
-    'savickas-intro': 'prompt_savickas_intro',
-    'evstudio-intro': 'prompt_evstudio_intro',
-    'evprof-intro': 'prompt_evprof_intro',
-    'qpcs-welcome': 'prompt_qpcs_welcome',
-    'qpcc-welcome': 'prompt_qpcc_welcome',
-    'qap-welcome': 'prompt_qap_welcome',
-};
-
 // --- Helper to get auth header ---
 
 // Auth gestita al bordo da ai4auth (forward-auth): nessun token lato client.
@@ -536,8 +481,7 @@ function textStats(text: string | null | undefined): { chars: number; lines: num
 }
 
 function promptKeyForStep(step: GuidedStep | undefined): string {
-    if (!step) return '';
-    return SYSTEM_PROMPT_KEY_BY_PHASE[step.id] || SYSTEM_PROMPT_KEY_BY_MODE[step.system_prompt_mode] || 'prompt_generic';
+    return step?.system_prompt_key || '';
 }
 
 function promptComponentConfigKey(questionnaireType: string, stepId: string): string {
@@ -1165,6 +1109,7 @@ export function ConfigForm() {
 
     // Dynamic guided steps
     const [guidedSteps, setGuidedSteps] = useState<GuidedStep[]>([]);
+    const [stepModes, setStepModes] = useState<GuidedStepMode[]>([]);
     const [showNewStepForm, setShowNewStepForm] = useState(false);
     const [newStep, setNewStep] = useState<GuidedStep>({
         id: '', sort_order: 0, label: '', prompt: '',
@@ -1190,12 +1135,13 @@ export function ConfigForm() {
 
     const fetchConfigs = async () => {
         try {
-            const [configRes, envRes, apiKeysRes, stepsRes, resultsRes] = await Promise.all([
+            const [configRes, envRes, apiKeysRes, stepsRes, resultsRes, modesRes] = await Promise.all([
                 fetch('/api/admin/config', { headers: authHeaders() }),
                 fetch('/api/admin/config/env-status', { headers: authHeaders() }),
                 fetch('/api/admin/api-keys', { headers: authHeaders() }),
                 fetch('/api/admin/guided-steps', { headers: authHeaders() }),
                 fetch('/api/admin/questionnaire-results?limit=100', { headers: authHeaders() }),
+                fetch('/api/admin/guided-steps/modes', { headers: authHeaders() }),
             ]);
 
             if (configRes.ok) {
@@ -1214,6 +1160,7 @@ export function ConfigForm() {
             if (apiKeysRes.ok) setApiKeyStatuses(await apiKeysRes.json());
             if (stepsRes.ok) { const steps: GuidedStep[] = await stepsRes.json(); setGuidedSteps(steps); setSavedSteps(steps); }
             if (resultsRes.ok) setQuestionnaireResults(await resultsRes.json());
+            if (modesRes.ok) setStepModes(await modesRes.json());
         } catch (error) {
             console.error('Failed to fetch config', error);
         } finally {
@@ -1389,7 +1336,10 @@ export function ConfigForm() {
                 }),
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            setSavedSteps(previous => [...previous.filter(s => s.id !== step.id), { ...step }]);
+            // Il mode salvato puo' cambiare la chiave del prompt di sistema: la risolve il backend.
+            const { system_prompt_key }: GuidedStep = await res.json();
+            setSavedSteps(previous => [...previous.filter(s => s.id !== step.id), { ...step, system_prompt_key }]);
+            setGuidedSteps(previous => previous.map(s => s.id === step.id ? { ...s, system_prompt_key } : s));
             showToast('success', t('admin.config.saved'));
         } catch (error) {
             console.error('Failed to save step', error);
@@ -1506,6 +1456,13 @@ export function ConfigForm() {
         } finally {
             setPendingPromptSaves(count => count - 1);
         }
+    };
+
+    // Mode ammessi dal backend; il mode corrente resta selezionabile anche se non e' in lista,
+    // cosi' il select non lo sostituisce in silenzio con la prima opzione.
+    const modeOptions = (current: string) => {
+        const modes = stepModes.map(m => m.mode);
+        return current && !modes.includes(current) ? [current, ...modes] : modes;
     };
 
     const updateStepField = (stepId: string, field: keyof GuidedStep, value: string | number) => {
@@ -2430,8 +2387,8 @@ export function ConfigForm() {
                                                     value={newStep.system_prompt_mode}
                                                     onChange={(e) => setNewStep(prev => ({ ...prev, system_prompt_mode: e.target.value }))}
                                                 >
-                                                    {SYSTEM_PROMPT_MODES.map(m => (
-                                                        <option key={m.value} value={m.value}>{t(`admin.mode.${m.value}`)}</option>
+                                                    {modeOptions(newStep.system_prompt_mode).map(mode => (
+                                                        <option key={mode} value={mode}>{t(`admin.mode.${mode}`)}</option>
                                                     ))}
                                                 </select>
                                             </div>
@@ -2545,8 +2502,8 @@ export function ConfigForm() {
                                                             value={step.system_prompt_mode}
                                                             onChange={(e) => updateStepField(step.id, 'system_prompt_mode', e.target.value)}
                                                         >
-                                                            {SYSTEM_PROMPT_MODES.map(m => (
-                                                                <option key={m.value} value={m.value}>{t(`admin.mode.${m.value}`)}</option>
+                                                            {modeOptions(step.system_prompt_mode).map(mode => (
+                                                                <option key={mode} value={mode}>{t(`admin.mode.${mode}`)}</option>
                                                             ))}
                                                         </select>
                                                     </div>
