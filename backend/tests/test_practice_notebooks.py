@@ -337,3 +337,85 @@ def test_frozen_session_keeps_the_practice_choice():
         detail = client.get("/session/frozen/practice-freeze-1").json()
         assert detail["notebook_context"] == "practice"
         assert detail["practice_notebook_id"] == 7
+
+
+# --- Classi dello studente simulato ----------------------------------------
+
+def _groups(db):
+    own_shared = models.StudentGroup(code="GR-PRC001", name="3B", owner_username="t1", description="Classe che ama il laboratorio",
+                                     context_visible_to_students=True, is_active=True)
+    own_private = models.StudentGroup(code="GR-PRC002", name="4A", owner_username="t1", description="Contesto NON condiviso",
+                                      context_visible_to_students=False, is_active=True)
+    co_taught = models.StudentGroup(code="GR-PRC003", name="5C", owner_username="t2", description="Classe in co-docenza",
+                                    context_visible_to_students=True, is_active=True)
+    foreign = models.StudentGroup(code="GR-PRC004", name="1Z", owner_username="t9", description="Classe ESTRANEA",
+                                  context_visible_to_students=True, is_active=True)
+    db.add_all([own_shared, own_private, co_taught, foreign])
+    db.commit()
+    db.add(models.GroupShare(group_id=co_taught.id, shared_with_username="t1", granted_by_username="t2"))
+    db.commit()
+    return own_shared, own_private, co_taught, foreign
+
+
+def test_api_keeps_only_the_teachers_own_or_shared_classes():
+    with artifact_session() as db:
+        own_shared, own_private, co_taught, foreign = _groups(db)
+        client = _app(db, TEACHER, practice_notebooks.router)
+        created = client.post("/teacher/practice-notebooks", json={
+            "title": "Giulia",
+            "group_ids": [own_shared.id, foreign.id, co_taught.id, own_shared.id, 999999, "x"],
+        }).json()
+        assert created["group_ids"] == [own_shared.id, co_taught.id]
+        updated = client.put(f"/teacher/practice-notebooks/{created['id']}", json={"group_ids": [own_private.id]}).json()
+        assert updated["group_ids"] == [own_private.id]
+        # Omesso: invariato.
+        assert client.put(f"/teacher/practice-notebooks/{created['id']}", json={"title": "G."}).json()["group_ids"] == [own_private.id]
+
+
+def test_practice_class_context_mirrors_what_a_real_student_receives():
+    with artifact_session() as db:
+        own_shared, own_private, co_taught, foreign = _groups(db)
+        practice = _seed_teacher(db)
+        practice.group_ids = [own_shared.id, own_private.id, co_taught.id, foreign.id]
+        db.commit()
+        request = ChatRequest(
+            message=" turno ", questionnaire_type="QSA", language="it",
+            notebook_context="practice", practice_notebook_id=practice.id,
+        )
+        system = _envelope(db, request, TEACHER, "QSA")
+        assert "[CONTESTO CLASSE]" in system
+        assert "Classe che ama il laboratorio" in system          # propria, condivisa con gli studenti
+        assert "Classe in co-docenza" in system                   # condivisa con il docente
+        assert "Contesto NON condiviso" not in system             # condivisione spenta
+        assert "Classe ESTRANEA" not in system                    # mai salvabile, mai nel contesto
+        assert system.index("[PROFILE]") < system.index("[CONTESTO CLASSE]")
+
+        # Idea non riceve il contesto classe, come per uno studente vero.
+        idea = ChatRequest(
+            message=" turno ", questionnaire_type="IDEA", language="it",
+            notebook_context="practice", practice_notebook_id=practice.id,
+        )
+        assert "[CONTESTO CLASSE]" not in _envelope(db, idea, TEACHER, "IDEA")
+
+        # Condivisione revocata o classe disattivata: esce al turno dopo.
+        db.query(models.GroupShare).filter(models.GroupShare.group_id == co_taught.id).delete()
+        own_shared.is_active = False
+        db.commit()
+        system = _envelope(db, request, TEACHER, "QSA")
+        assert "Classe in co-docenza" not in system
+        assert "Classe che ama il laboratorio" not in system
+        assert "[CONTESTO CLASSE]" not in system
+
+
+def test_teacher_student_memberships_never_enter_the_simulation():
+    """Le iscrizioni del docente come partecipante restano fuori dalla prova."""
+    with artifact_session() as db:
+        own_shared, _, _, foreign = _groups(db)
+        db.add(models.GroupMembership(group_id=foreign.id, username="t1"))
+        db.commit()
+        practice = _seed_teacher(db)
+        request = ChatRequest(
+            message=" turno ", questionnaire_type="QSA", language="it",
+            notebook_context="practice", practice_notebook_id=practice.id,
+        )
+        assert "Classe ESTRANEA" not in _envelope(db, request, TEACHER, "QSA")

@@ -718,6 +718,9 @@ class TeacherPracticeNotebook(Base):
     owner_username = Column(String, nullable=False, index=True)
     title = Column(String(120), nullable=False)
     data = Column(JSON, nullable=False, default=dict)
+    # Classi dello studente simulato (del docente o condivise con lui): in
+    # prova il loro contesto entra solo dove uno studente vero lo riceverebbe.
+    group_ids = Column(JSON, nullable=False, default=list)
     archived_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

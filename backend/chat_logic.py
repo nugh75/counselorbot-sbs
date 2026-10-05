@@ -14,7 +14,7 @@ from fastapi import HTTPException
 
 from . import models
 from .student_context import LEARNER_PROFILE_LABELS
-from .teacher_context import class_context_for_student, teacher_groups_context, teacher_notebook_context
+from .teacher_context import class_context_for_practice, class_context_for_student, teacher_groups_context, teacher_notebook_context
 from .practice_notebooks import is_plan_manager, practice_notebook_context, requested_practice_notebook, simulation_notice
 from . import database, prompt_config
 from .anonymous_codes import code_for_identity
@@ -2874,11 +2874,16 @@ def build_context_envelope(
     elif notebook_mode in ("none", "practice"):
         # Profilo svuotato di proposito: il resto dell'envelope (history,
         # knowledge, skills...) non cambia. In prova il posto del taccuino lo
-        # prende lo studente simulato, piu' sotto.
+        # prende lo studente simulato, piu' sotto, con le sue classi alle
+        # stesse condizioni di uno studente vero (condivisione attiva, mai Idea).
         goal_context = ""
         profile_context = ""
         portfolio_context = ""
-        class_context = ""
+        class_context = (
+            class_context_for_practice(db, practice_notebook.owner_username, practice_notebook.group_ids)
+            if notebook_mode == "practice" and include_profile and questionnaire_type != IDEA_INSTRUMENT
+            else ""
+        )
     else:
         goal_context = goals_context(db, username_for_context) if include_profile else ""
         profile_context = _learner_profile_context(db, username_for_context) if include_profile else ""

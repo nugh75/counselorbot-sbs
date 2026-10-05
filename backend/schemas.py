@@ -783,9 +783,27 @@ def _practice_notebook_data(value: Any) -> Dict[str, str]:
     return data
 
 
+def _practice_group_ids(value: Any) -> List[int]:
+    """Id interi positivi, senza duplicati, nell'ordine dato."""
+    ids: List[int] = []
+    for item in value if isinstance(value, list) else []:
+        try:
+            group_id = int(item)
+        except (TypeError, ValueError):
+            continue
+        if group_id > 0 and group_id not in ids:
+            ids.append(group_id)
+    return ids
+
+
 class PracticeNotebookCreate(BaseModel):
     title: str = Field(min_length=1, max_length=PRACTICE_NOTEBOOK_TITLE_MAX_CHARS)
     data: Dict[str, str] = Field(default_factory=dict)
+    group_ids: List[int] = Field(default_factory=list)
+
+    @validator("group_ids", pre=True)
+    def _clean_group_ids(cls, v):
+        return _practice_group_ids(v)
 
     @validator("title", pre=True)
     def _trim_title(cls, v):
@@ -799,7 +817,12 @@ class PracticeNotebookCreate(BaseModel):
 class PracticeNotebookUpdate(BaseModel):
     title: Optional[str] = Field(default=None, min_length=1, max_length=PRACTICE_NOTEBOOK_TITLE_MAX_CHARS)
     data: Optional[Dict[str, str]] = None
+    group_ids: Optional[List[int]] = None
     archived: Optional[bool] = None
+
+    @validator("group_ids", pre=True)
+    def _clean_group_ids(cls, v):
+        return None if v is None else _practice_group_ids(v)
 
     @validator("title", pre=True)
     def _trim_title(cls, v):
@@ -814,9 +837,14 @@ class PracticeNotebookResponse(BaseModel):
     id: int
     title: str
     data: Dict[str, Any]
+    group_ids: List[int] = Field(default_factory=list)
     archived_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+    @validator("group_ids", pre=True)
+    def _stored_group_ids(cls, v):
+        return _practice_group_ids(v)
 
     class Config:
         from_attributes = True
