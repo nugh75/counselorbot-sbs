@@ -1,15 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDownRight, Layers, Pencil, RefreshCw, X } from 'lucide-react';
+import { ArrowDownRight, ChevronDown, ChevronUp, Layers, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview } from '@/components/admin/PromptRequestPreview';
+import type { AdminGuidedStepQuestion } from '@/lib/guided-step-questions';
 import {
     PROMPT_MAP_LANGUAGES, badgeFor, booleanFlags, componentsValue, entryAnchor, entryText, findEntry, levelAnchor, levelCounts,
-    needsSharedConfirm, saveRequest, stepAnchor, stepsByInstrument,
+    moveItem, needsSharedConfirm, saveRequest, sortOrderChanges, stepAnchor, stepsByInstrument,
     type PromptMap as PromptMapData, type PromptMapBadge, type PromptMapCounselor, type PromptMapEntry, type PromptMapInstrument,
     type PromptMapLevel, type PromptMapRef, type PromptMapStep, type PromptMapUser,
 } from '@/lib/prompt-map';
@@ -216,11 +217,12 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
     </div>;
 }
 
-function EntryCard({ entry, highlighted, onSaved, onEditPersona, componentLabels, initiallyEditing = false, onCloseEditor }: {
+function EntryCard({ entry, highlighted, onSaved, onEditPersona, onEditQuestions, componentLabels, initiallyEditing = false, onCloseEditor }: {
     entry: PromptMapEntry;
     highlighted?: boolean;
     onSaved: () => void;
     onEditPersona: (counselor: PromptMapCounselor) => void;
+    onEditQuestions?: (entry: PromptMapEntry) => void;
     componentLabels?: Record<string, string>;
     initiallyEditing?: boolean;
     onCloseEditor?: () => void;
@@ -265,10 +267,13 @@ function EntryCard({ entry, highlighted, onSaved, onEditPersona, componentLabels
             </li>)}
         </ul>}
 
-        {entry.kind === 'step_questions' && <div className="mt-2 text-xs text-slate-600">
+        {entry.kind === 'step_questions' && <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
             {Object.keys(questions).length === 0 ? <p>{t('admin.promptMap.noQuestions')}</p>
                 : <p>{Object.entries(questions).map(([code, items]) => `${code.toUpperCase()} ${items.length}`).join(' · ')}</p>}
-            <p className="mt-1 text-slate-500">{t('admin.promptMap.questionsHint')}</p>
+            {onEditQuestions && <button type="button" onClick={() => onEditQuestions(entry)}
+                className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                <Pencil aria-hidden className="h-3 w-3" />{t('admin.promptMap.editQuestions')}
+            </button>}
         </div>}
 
         {entry.role === 'components' && !editing && <p className="mt-2 flex flex-wrap gap-1">
@@ -285,7 +290,7 @@ function EntryCard({ entry, highlighted, onSaved, onEditPersona, componentLabels
             {text || t('admin.promptMap.empty')}
         </p> : null}
 
-        {!entry.read_only && !editing && <div className="mt-2 flex justify-end">
+        {!entry.read_only && entry.kind !== 'step_questions' && !editing && <div className="mt-2 flex justify-end">
             <button type="button" onClick={() => setEditing(true)}
                 className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                 <Pencil aria-hidden className="h-3 w-3" />{t('admin.promptMap.edit')}
@@ -324,17 +329,40 @@ function RefRow({ map, refItem, onGo, onOverride }: {
     </li>;
 }
 
-function PersonaDialog({ counselor, onClose, onSaved }: { counselor: PromptMapCounselor; onClose: () => void; onSaved: () => void }) {
+function DialogShell({ title, hint, onClose, children, footer }: {
+    title: string;
+    hint?: string;
+    onClose: () => void;
+    children: ReactNode;
+    footer?: ReactNode;
+}) {
     const { t } = useI18n();
     const titleId = useId();
-    const [draft, setDraft] = useState(counselor.persona);
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState('');
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
         document.addEventListener('keydown', onKey);
         return () => document.removeEventListener('keydown', onKey);
     }, [onClose]);
+    return createPortal(<div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-6" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+        <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-xl bg-white shadow-xl sm:rounded-xl">
+            <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                <div className="min-w-0">
+                    <h4 id={titleId} className="break-words text-sm font-bold text-slate-800">{title}</h4>
+                    {hint && <p className="mt-0.5 text-xs text-slate-500">{hint}</p>}
+                </div>
+                <button type="button" onClick={onClose} aria-label={t('admin.promptMap.close')} className="rounded p-1 text-slate-500 hover:bg-slate-100"><X className="h-4 w-4" /></button>
+            </header>
+            <div className="space-y-3 overflow-y-auto px-4 py-3">{children}</div>
+            {footer && <footer className="flex flex-wrap justify-end gap-2 border-t border-slate-200 px-4 py-3">{footer}</footer>}
+        </div>
+    </div>, document.body);
+}
+
+function PersonaDialog({ counselor, onClose, onSaved }: { counselor: PromptMapCounselor; onClose: () => void; onSaved: () => void }) {
+    const { t } = useI18n();
+    const [draft, setDraft] = useState(counselor.persona);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
     const save = async () => {
         setSaving(true);
         setError('');
@@ -351,31 +379,140 @@ function PersonaDialog({ counselor, onClose, onSaved }: { counselor: PromptMapCo
             setSaving(false);
         }
     };
-    return createPortal(<div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-6" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-        <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-xl bg-white shadow-xl sm:rounded-xl">
-            <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
-                <div>
-                    <h4 id={titleId} className="text-sm font-bold text-slate-800">{t('admin.promptMap.personaTitle', { name: counselor.name })}</h4>
-                    <p className="mt-0.5 text-xs text-slate-500">{t('admin.promptMap.personaHint')}</p>
-                </div>
-                <button type="button" onClick={onClose} aria-label={t('admin.promptMap.close')} className="rounded p-1 text-slate-500 hover:bg-slate-100"><X className="h-4 w-4" /></button>
-            </header>
-            <div className="space-y-3 overflow-y-auto px-4 py-3">
-                <label className="block text-xs font-medium text-slate-500">{t('admin.counselors.persona')}
-                    <textarea autoFocus value={draft} onChange={event => setDraft(event.target.value)} rows={12}
-                        className="mt-1 w-full rounded border border-slate-300 p-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" />
-                </label>
-                {error && <p role="alert" className="text-xs text-red-700">{error}</p>}
-                <PromptHistory scope="counselor_persona" targetKey={String(counselor.id)} currentValue={counselor.persona} onRestored={onSaved} />
-            </div>
-            <footer className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3">
-                <button type="button" onClick={onClose} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">{t('admin.promptMap.cancel')}</button>
-                <button type="button" onClick={save} disabled={saving} className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">
-                    {saving ? t('admin.promptMap.saving') : t('admin.promptMap.save')}
-                </button>
-            </footer>
+    return <DialogShell title={t('admin.promptMap.personaTitle', { name: counselor.name })} hint={t('admin.promptMap.personaHint')} onClose={onClose}
+        footer={<>
+            <button type="button" onClick={onClose} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">{t('admin.promptMap.cancel')}</button>
+            <button type="button" onClick={save} disabled={saving} className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">
+                {saving ? t('admin.promptMap.saving') : t('admin.promptMap.save')}
+            </button>
+        </>}>
+        <label className="block text-xs font-medium text-slate-500">{t('admin.counselors.persona')}
+            <textarea autoFocus value={draft} onChange={event => setDraft(event.target.value)} rows={12}
+                className="mt-1 w-full rounded border border-slate-300 p-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" />
+        </label>
+        {error && <p role="alert" className="text-xs text-red-700">{error}</p>}
+        <PromptHistory scope="counselor_persona" targetKey={String(counselor.id)} currentValue={counselor.persona} onRestored={onSaved} />
+    </DialogShell>;
+}
+
+const QUESTIONS_API = '/api/admin/guided-step-questions';
+
+/** Domande suggerite di uno step, per lingua, con le API di guided_step_questions (stessa tabella della scheda dedicata). */
+function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; stepName: string; onClose: (changed: boolean) => void }) {
+    const { t } = useI18n();
+    const { questionnaire_type: instrument = '', step_id: stepId = '' } = entry.editor;
+    const [items, setItems] = useState<AdminGuidedStepQuestion[] | null>(null);
+    const [language, setLanguage] = useState('it');
+    const [draft, setDraft] = useState('');
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editText, setEditText] = useState('');
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState('');
+    const [changed, setChanged] = useState(false);
+    const close = useCallback(() => onClose(changed), [changed, onClose]);
+
+    const load = useCallback(async () => {
+        try {
+            const response = await apiFetch(QUESTIONS_API);
+            if (!response.ok) throw new Error('load');
+            const rows: AdminGuidedStepQuestion[] = await response.json();
+            setItems(rows.filter(row => row.questionnaire_type === instrument && row.step_id === stepId));
+        } catch {
+            setError(t('admin.promptMap.questions.loadError'));
+        }
+    }, [instrument, stepId, t]);
+    useEffect(() => { void load(); }, [load]);
+
+    const byLanguage = (code: string) => (items ?? []).filter(row => row.language === code)
+        .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+    const list = byLanguage(language);
+
+    const run = async (requests: { url: string; method: string; body?: unknown }[]) => {
+        setBusy(true);
+        setError('');
+        try {
+            for (const request of requests) {
+                const response = await apiFetch(request.url, {
+                    method: request.method,
+                    ...(request.body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request.body) }),
+                });
+                if (!response.ok) throw new Error('save');
+            }
+            setChanged(true);
+            setEditingId(null);
+            setDeletingId(null);
+            await load();
+            return true;
+        } catch {
+            setError(t('admin.promptMap.saveError'));
+            await load();
+            return false;
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const add = async () => {
+        const text = draft.trim();
+        if (!text) return;
+        const sortOrder = list.reduce((max, row) => Math.max(max, row.sort_order), -1) + 1;
+        if (await run([{ url: QUESTIONS_API, method: 'POST', body: { questionnaire_type: instrument, step_id: stepId, language, text, sort_order: sortOrder, is_active: true } }])) setDraft('');
+    };
+    const move = (index: number, delta: number) => run(sortOrderChanges(moveItem(list, index, index + delta))
+        .map(change => ({ url: `${QUESTIONS_API}/${change.id}`, method: 'PUT', body: { sort_order: change.sort_order } })));
+
+    const iconButton = 'inline-flex h-8 min-w-8 items-center justify-center rounded border border-slate-300 bg-white px-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40';
+    return <DialogShell title={t('admin.promptMap.questions.title', { step: stepName })} hint={t('admin.promptMap.questions.hint')} onClose={close}
+        footer={<button type="button" onClick={close} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">{t('admin.promptMap.close')}</button>}>
+        <div role="group" aria-label={t('admin.promptMap.questions.languages')} className="flex flex-wrap gap-1.5">
+            {PROMPT_MAP_LANGUAGES.map(code => <button key={code} type="button" aria-pressed={code === language}
+                onClick={() => { setLanguage(code); setEditingId(null); setDeletingId(null); }}
+                className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${code === language ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                {code.toUpperCase()} {items ? byLanguage(code).length : ''}
+            </button>)}
         </div>
-    </div>, document.body);
+        {error && <p role="alert" className="text-xs text-red-700">{error}</p>}
+        {!items && !error && <p className="text-xs text-slate-500">{t('admin.promptMap.loading')}</p>}
+        {items && <ol aria-label={t('admin.promptMap.role.suggested_questions')} className="space-y-2">
+            {list.length === 0 && <li className="text-xs text-slate-500">{t('admin.promptMap.questions.empty')}</li>}
+            {list.map((row, index) => <li key={row.id} data-question-id={row.id} className="rounded border border-slate-200 bg-slate-50 px-3 py-2">
+                {editingId === row.id ? <div className="space-y-2">
+                    <textarea autoFocus aria-label={t('admin.promptMap.edit')} value={editText} onChange={event => setEditText(event.target.value)} rows={3}
+                        className="w-full rounded border border-slate-300 bg-white p-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <div className="flex flex-wrap justify-end gap-2">
+                        <button type="button" onClick={() => setEditingId(null)} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">{t('admin.promptMap.cancel')}</button>
+                        <button type="button" disabled={busy || !editText.trim()} onClick={() => run([{ url: `${QUESTIONS_API}/${row.id}`, method: 'PUT', body: { text: editText.trim() } }])}
+                            className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">{t('admin.promptMap.save')}</button>
+                    </div>
+                </div> : <div className="flex flex-wrap items-start gap-2">
+                    <p className="min-w-0 flex-1 basis-48 whitespace-pre-wrap break-words text-sm text-slate-700">
+                        <span className="mr-1 font-mono text-[11px] text-slate-400">{index + 1}.</span>{row.text}
+                        {!row.is_active && <span className="ml-2 rounded border border-slate-300 px-1 text-[10px] font-semibold uppercase text-slate-500">{t('admin.promptMap.questions.inactive')}</span>}
+                    </p>
+                    <div className="flex shrink-0 flex-wrap gap-1">
+                        <button type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} aria-label={t('admin.promptMap.questions.moveUp')} className={iconButton}><ChevronUp aria-hidden className="h-4 w-4" /></button>
+                        <button type="button" disabled={busy || index === list.length - 1} onClick={() => move(index, 1)} aria-label={t('admin.promptMap.questions.moveDown')} className={iconButton}><ChevronDown aria-hidden className="h-4 w-4" /></button>
+                        <button type="button" disabled={busy} onClick={() => { setEditingId(row.id); setEditText(row.text); setDeletingId(null); }} aria-label={t('admin.promptMap.edit')} className={iconButton}><Pencil aria-hidden className="h-3.5 w-3.5" /></button>
+                        {deletingId === row.id
+                            ? <button type="button" disabled={busy} onClick={() => run([{ url: `${QUESTIONS_API}/${row.id}`, method: 'DELETE' }])}
+                                className="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white disabled:opacity-60">{t('admin.promptMap.questions.confirmDelete')}</button>
+                            : <button type="button" disabled={busy} onClick={() => setDeletingId(row.id)} aria-label={t('admin.promptMap.questions.delete')} className={`${iconButton} text-red-700`}><Trash2 aria-hidden className="h-3.5 w-3.5" /></button>}
+                    </div>
+                </div>}
+            </li>)}
+        </ol>}
+        {items && <div className="space-y-2 rounded border border-dashed border-slate-300 p-3">
+            <label className="block text-xs font-semibold text-slate-600">{t('admin.promptMap.questions.new', { lang: language.toUpperCase() })}
+                <textarea value={draft} onChange={event => setDraft(event.target.value)} rows={2}
+                    className="mt-1 w-full rounded border border-slate-300 bg-white p-2 text-sm font-normal text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" />
+            </label>
+            <div className="flex justify-end">
+                <button type="button" disabled={busy || !draft.trim()} onClick={add}
+                    className="inline-flex items-center gap-1 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"><Plus aria-hidden className="h-3.5 w-3.5" />{t('admin.promptMap.questions.add')}</button>
+            </div>
+        </div>}
+    </DialogShell>;
 }
 
 function LevelHeading({ level, title, hint, count }: { level: PromptMapLevel; title: string; hint: string; count?: number }) {
@@ -449,6 +586,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
     const [highlight, setHighlight] = useState('');
     const [persona, setPersona] = useState<PromptMapCounselor | null>(null);
     const [overrideFor, setOverrideFor] = useState('');
+    const [questionsFor, setQuestionsFor] = useState<{ entry: PromptMapEntry; stepName: string } | null>(null);
     const [status, setStatus] = useState('');
 
     useEffect(() => {
@@ -515,8 +653,9 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
     const counts = map ? levelCounts(map) : null;
     const instrumentName = map ? name(map.instrument) : '';
     const step = map?.levels.steps.find(item => item.id === stepId);
-    const card = (entry: PromptMapEntry) => <EntryCard key={entry.key} entry={entry} highlighted={highlight === entry.key}
-        componentLabels={componentLabels} onSaved={reload} onEditPersona={setPersona} />;
+    const card = (entry: PromptMapEntry, stepName = '') => <EntryCard key={entry.key} entry={entry} highlighted={highlight === entry.key}
+        componentLabels={componentLabels} onSaved={reload} onEditPersona={setPersona}
+        onEditQuestions={entry.kind === 'step_questions' ? () => setQuestionsFor({ entry, stepName }) : undefined} />;
 
     return <section aria-labelledby="prompt-map-title" className="space-y-4">
         <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
@@ -589,7 +728,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
             <div className="min-w-0 space-y-8">
                 <section id={levelAnchor('common')} className="scroll-mt-16">
                     <LevelHeading level="common" title={t('admin.promptMap.level.common')} hint={t('admin.promptMap.level.commonHint')} count={counts.common} />
-                    <div className="space-y-3">{map.levels.common.map(card)}</div>
+                    <div className="space-y-3">{map.levels.common.map(entry => card(entry))}</div>
                 </section>
 
                 <section id={levelAnchor('group')} className="scroll-mt-16">
@@ -606,7 +745,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                                 </li>)}
                             </ul>
                             <p className="mt-2 text-xs text-amber-800">⚠ {t('admin.promptMap.groupWarning', { instruments: group.instruments.map(shortName).join(' · ') })}</p>
-                            <div className="mt-3 space-y-3">{group.entries.map(card)}</div>
+                            <div className="mt-3 space-y-3">{group.entries.map(entry => card(entry))}</div>
                         </div>)}
                     </div>
                 </section>
@@ -614,7 +753,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                 <section id={levelAnchor('instrument')} className="scroll-mt-16">
                     <LevelHeading level="instrument" title={t('admin.promptMap.level.instrument', { name: instrumentName })} hint={t('admin.promptMap.level.instrumentHint')} count={counts.instrument} />
                     {map.levels.instrument.length === 0 && <p className="text-xs text-slate-500">{t('admin.promptMap.emptyLevel')}</p>}
-                    <div className="space-y-3">{map.levels.instrument.map(card)}</div>
+                    <div className="space-y-3">{map.levels.instrument.map(entry => card(entry))}</div>
                 </section>
 
                 <section id={levelAnchor('step')} className="scroll-mt-16">
@@ -634,7 +773,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                             {step.fixed && <span className="rounded border border-slate-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">{t('admin.promptMap.fixedPhase')}</span>}
                         </header>
                         <div className="space-y-3">
-                            {step.entries.map(card)}
+                            {step.entries.map(entry => card(entry, stepTitle(step, lang, t)))}
                             {step.refs.filter(item => item.role === 'meta' && item.override_key === overrideFor).map(item => <EntryCard key={`override-${item.override_key}`} initiallyEditing
                                 componentLabels={componentLabels} onSaved={reload} onEditPersona={setPersona} onCloseEditor={() => setOverrideFor('')}
                                 entry={{
@@ -657,6 +796,8 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
             </div>
         </div>}
 
+        {questionsFor && <QuestionsDialog entry={questionsFor.entry} stepName={questionsFor.stepName}
+            onClose={changed => { setQuestionsFor(null); if (changed) reload(); }} />}
         {persona && <PersonaDialog counselor={persona} onClose={() => setPersona(null)} onSaved={() => { setPersona(null); reload(); }} />}
     </section>;
 }
