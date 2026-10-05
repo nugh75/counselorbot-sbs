@@ -4,12 +4,12 @@ import { chromium } from 'playwright';
 
 const origin = process.env.PROMPT_PREVIEW_BASE_URL || 'http://127.0.0.1:3107';
 const labels = {
-    it: ['Sezione', 'Impostazioni', 'Strumenti', 'Cerca sezione…', 'Nessuna sezione trovata', 'Generale'],
-    en: ['Section', 'Settings', 'Tools', 'Search sections…', 'No sections found', 'General'],
-    es: ['Sección', 'Ajustes', 'Herramientas', 'Buscar sección…', 'No se encontró ninguna sección', 'General'],
-    fr: ['Section', 'Paramètres', 'Outils', 'Rechercher une section…', 'Aucune section trouvée', 'Général'],
-    de: ['Bereich', 'Einstellungen', 'Werkzeuge', 'Bereich suchen…', 'Kein Bereich gefunden', 'Allgemein'],
-    sv: ['Avsnitt', 'Inställningar', 'Verktyg', 'Sök avsnitt…', 'Inga avsnitt hittades', 'Allmänt'],
+    it: ['Sezione', 'Impostazioni', 'Strumenti — vista classica', 'Cerca sezione…', 'Nessuna sezione trovata', 'Generale'],
+    en: ['Section', 'Settings', 'Tools — classic view', 'Search sections…', 'No sections found', 'General'],
+    es: ['Sección', 'Ajustes', 'Herramientas — vista clásica', 'Buscar sección…', 'No se encontró ninguna sección', 'General'],
+    fr: ['Section', 'Paramètres', 'Outils — vue classique', 'Rechercher une section…', 'Aucune section trouvée', 'Général'],
+    de: ['Bereich', 'Einstellungen', 'Werkzeuge — klassische Ansicht', 'Bereich suchen…', 'Kein Bereich gefunden', 'Allgemein'],
+    sv: ['Avsnitt', 'Inställningar', 'Verktyg — klassisk vy', 'Sök avsnitt…', 'Inga avsnitt hittades', 'Allmänt'],
 };
 
 async function fixture(language, { width = 1440, path = '/admin' } = {}) {
@@ -44,7 +44,8 @@ for (const language of Object.keys(labels)) {
             const listbox = page.getByRole('listbox', { name: label });
             await listbox.getByRole('group', { name: settings, exact: true }).getByRole('option', { name: general, exact: true }).waitFor();
             assert.equal(await listbox.getByRole('group', { name: tools, exact: true }).getByRole('option').count(), 11);
-            assert.equal(await listbox.getByRole('option').count(), 13);
+            // Impostazioni: Mappa dei prompt, Generale, Direttive globali.
+            assert.equal(await listbox.getByRole('option').count(), 14);
             assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
             const input = page.getByRole('combobox', { name: search });
             await input.fill('zzz');

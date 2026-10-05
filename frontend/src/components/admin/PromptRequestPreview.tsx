@@ -40,7 +40,7 @@ type Preview = {
     transport?: { endpoint: string; authentication: string; body: Record<string, unknown>; unsupported_parameters: string[] } | null;
 };
 
-export function PromptRequestPreview({ step, configs, results, language = 'it', selectedSession, selectedCounselor, onSession, onCounselor, onLanguage, componentFlags, componentFlagsDirty, componentLabels, savedStep, savedConfigs, hideContextControls }: {
+export function PromptRequestPreview({ step, configs, results, language = 'it', selectedSession, selectedCounselor, onSession, onCounselor, onLanguage, componentFlags, componentFlagsDirty, componentLabels, savedStep, savedConfigs, hideContextControls, followUpMode, blockClassName }: {
     step: { id: string; prompt: string; questionnaire_type: string; system_prompt_mode: string };
     configs: { key: string; value: string }[];
     results: { session_id: string; username?: string | null }[];
@@ -52,6 +52,10 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
     onSession?: (value: string) => void; onCounselor?: (value: number | '') => void; onLanguage?: (value: string) => void;
     componentFlagsDirty?: boolean;
     componentFlags?: Record<string, unknown>; componentLabels?: Record<string, string>;
+    /** Mode dei turni liberi dello studente, risolto dal backend (mappa dei prompt). */
+    followUpMode?: string | null;
+    /** Classe aggiuntiva per blocco (vista Per componenti), per esempio il livello di provenienza. */
+    blockClassName?: (key: string, origin?: string) => string | undefined;
 }) {
     const rootRef = useRef<HTMLElement>(null);
     const { lang, t } = useI18n();
@@ -98,7 +102,7 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
     }, []);
     const request = JSON.stringify({
         questionnaire_type: displayedStep.questionnaire_type, language: effectiveLanguage, phase: displayedStep.id,
-        mode: reply ? (displayedStep.questionnaire_type === 'QSA' && ['factor', 'second-level'].includes(displayedStep.system_prompt_mode) ? 'factor-qa' : displayedStep.questionnaire_type === 'QSAr' && ['qsar-factor', 'qsar-second-level'].includes(displayedStep.system_prompt_mode) ? 'qsar-factor-qa' : displayedStep.questionnaire_type === 'SAVICKAS' ? 'savickas-interview' : displayedStep.system_prompt_mode) : displayedStep.system_prompt_mode,
+        mode: reply ? followUpMode || (displayedStep.questionnaire_type === 'QSA' && ['factor', 'second-level'].includes(displayedStep.system_prompt_mode) ? 'factor-qa' : displayedStep.questionnaire_type === 'QSAr' && ['qsar-factor', 'qsar-second-level'].includes(displayedStep.system_prompt_mode) ? 'qsar-factor-qa' : displayedStep.questionnaire_type === 'SAVICKAS' ? 'savickas-interview' : displayedStep.system_prompt_mode) : displayedStep.system_prompt_mode,
         step_mode_override: displayedStep.system_prompt_mode,
         message: reply ? message : displayedStep.prompt, use_phase_prompt: !reply,
         session_id: session || undefined, counselor_id: counselor ? Number(counselor) : undefined,
@@ -157,7 +161,7 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
         <input aria-label={l[10]} placeholder={l[10]} value={search} onChange={e => setSearch(e.target.value)} className="w-full rounded border bg-white p-2 text-sm" />
         {view === 'components' && <p className="text-xs text-slate-600">{e[9]}</p>}
         <div className="max-h-[65vh] space-y-2 overflow-auto" aria-busy={loading}>
-            {blocks.filter(([key, value]) => `${key} ${typeof value === 'string' ? value : JSON.stringify(value)}`.toLowerCase().includes(search.toLowerCase())).map(([key, value]) => <details key={key} open={view === 'messages' || !!search} className="rounded border bg-white p-3"><summary className="cursor-pointer break-words text-xs font-semibold">{componentLabels?.[key] || key}{view === 'components' && <span className="ml-2 font-normal text-slate-500">{data?.component_flags?.[key] === false ? e[6] : key === 'knowledge' && data?.warnings?.some(w => w.code === 'retrieval_not_replayed') ? e[8] : hasContent(value) ? e[5] : e[7]}</span>}</summary>{view === 'components' && data?.component_origins?.[key] && <p className="mt-1 break-words font-mono text-[11px] text-slate-500">{data.component_origins[key]}</p>}<pre className="mt-2 whitespace-pre-wrap break-words text-xs">{value ? typeof value === 'string' ? value : JSON.stringify(value, null, 2) : l[13]}</pre></details>)}
+            {blocks.filter(([key, value]) => `${key} ${typeof value === 'string' ? value : JSON.stringify(value)}`.toLowerCase().includes(search.toLowerCase())).map(([key, value]) => <details key={key} open={view === 'messages' || !!search} className={`rounded border bg-white p-3 ${view === 'components' ? blockClassName?.(key, data?.component_origins?.[key]) || '' : ''}`}><summary className="cursor-pointer break-words text-xs font-semibold">{componentLabels?.[key] || key}{view === 'components' && <span className="ml-2 font-normal text-slate-500">{data?.component_flags?.[key] === false ? e[6] : key === 'knowledge' && data?.warnings?.some(w => w.code === 'retrieval_not_replayed') ? e[8] : hasContent(value) ? e[5] : e[7]}</span>}</summary>{view === 'components' && data?.component_origins?.[key] && <p className="mt-1 break-words font-mono text-[11px] text-slate-500">{data.component_origins[key]}</p>}<pre className="mt-2 whitespace-pre-wrap break-words text-xs">{value ? typeof value === 'string' ? value : JSON.stringify(value, null, 2) : l[13]}</pre></details>)}
         </div>
         {data?.transport && <details className="text-xs"><summary>{t('chatgpt.preview.title')}</summary><p className="mt-2">{t('chatgpt.preview.help')}</p><pre className="mt-2 whitespace-pre-wrap break-words">{JSON.stringify(data.transport, null, 2)}</pre></details>}
         {data?.resolved?.context_budget && <details className="text-xs"><summary>{l[20]}</summary><pre className="whitespace-pre-wrap">{JSON.stringify(data.resolved.context_budget, null, 2)}</pre></details>}

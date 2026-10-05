@@ -260,6 +260,52 @@ _OBIETTIVO_GUIDED_TEXTS = {
 }
 
 
+# Testi di fase propri dello strumento (Domande e Conclusione), stesso schema.
+_INSTRUMENT_PHASE_TEXTS = {
+    "QSAr": ("text_qsar_questions_intro", DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO,
+             "text_qsar_conclusion", DEFAULT_GUIDED_TEXT_QSAR_CONCLUSION),
+    "ZTPI": ("text_ztpi_questions_intro", DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO,
+             "text_ztpi_conclusion", DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION),
+    "SAVICKAS": ("text_savickas_questions_intro", DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO,
+                 "text_savickas_conclusion", DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION),
+    **_EVENT_GUIDED_TEXTS,
+    **_OBIETTIVO_GUIDED_TEXTS,
+    **_AGENT_GUIDED_TEXTS,
+}
+
+# Strumenti il cui titolo e banner della fase Domande sono calcolati nel codice
+# (numero della fase nel percorso), non letti dalla config.
+_COMPUTED_QUESTIONS_PHASE_NUMBER = {
+    "QSAr": 8, "SAVICKAS": 7,
+    "EVENTO_STUDIO": 8, "EVENTO_PROFESSIONALE": 8,
+    "OBIETTIVO_STUDIO": 8, "OBIETTIVO_DOCENZA": 8,
+}
+
+GUIDED_PHASE_TEXT_FIELDS = (
+    "label_guided_questions",
+    "text_guided_questions_phase_banner",
+    "text_guided_questions_intro",
+    "label_guided_conclusion",
+    "text_guided_conclusion",
+)
+
+
+def guided_phase_text_keys(questionnaire_type: str) -> dict:
+    """Chiave di config letta per ogni testo di fase; None = testo calcolato nel codice.
+
+    Unica fonte: la usano `/qsa/guided-ui-texts` e la mappa dei prompt dell'admin.
+    """
+    keys = {field: field for field in GUIDED_PHASE_TEXT_FIELDS}
+    if questionnaire_type in _COMPUTED_QUESTIONS_PHASE_NUMBER:
+        keys["label_guided_questions"] = None
+        keys["text_guided_questions_phase_banner"] = None
+    if questionnaire_type in _INSTRUMENT_PHASE_TEXTS:
+        intro_key, _, concl_key, _ = _INSTRUMENT_PHASE_TEXTS[questionnaire_type]
+        keys["text_guided_questions_intro"] = intro_key
+        keys["text_guided_conclusion"] = concl_key
+    return keys
+
+
 def _draft_module(questionnaire_type: str | None):
     """Il modulo del blocco privato di questo strumento, se ne ha uno.
 
@@ -375,49 +421,17 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
     )
 
     # Override questions/conclusion texts per questionnaire
-    if questionnaire_type == "QSAr":
+    phase_number = _COMPUTED_QUESTIONS_PHASE_NUMBER.get(questionnaire_type)
+    if phase_number:
         result["label_guided_questions"] = qlabel
-        result["text_guided_questions_phase_banner"] = f"--- {phase_word} 8: {qlabel} ---"
-        result["text_guided_questions_intro"] = resolve_text(
-            cfg_get, "text_qsar_questions_intro", lang, DEFAULT_GUIDED_TEXT_QSAR_QUESTIONS_INTRO
-        )
-        result["text_guided_conclusion"] = resolve_text(
-            cfg_get, "text_qsar_conclusion", lang, DEFAULT_GUIDED_TEXT_QSAR_CONCLUSION
-        )
-    elif questionnaire_type == "ZTPI":
-        result["text_guided_questions_intro"] = _sanitize_ztpi_user_text(
-            resolve_text(cfg_get, "text_ztpi_questions_intro", lang, DEFAULT_GUIDED_TEXT_ZTPI_QUESTIONS_INTRO),
-            lang,
-        )
-        result["text_guided_conclusion"] = _sanitize_ztpi_user_text(
-            resolve_text(cfg_get, "text_ztpi_conclusion", lang, DEFAULT_GUIDED_TEXT_ZTPI_CONCLUSION),
-            lang,
-        )
-    elif questionnaire_type == "SAVICKAS":
-        result["label_guided_questions"] = qlabel
-        result["text_guided_questions_phase_banner"] = f"--- {phase_word} 7: {qlabel} ---"
-        result["text_guided_questions_intro"] = resolve_text(
-            cfg_get, "text_savickas_questions_intro", lang, DEFAULT_GUIDED_TEXT_SAVICKAS_QUESTIONS_INTRO
-        )
-        result["text_guided_conclusion"] = resolve_text(
-            cfg_get, "text_savickas_conclusion", lang, DEFAULT_GUIDED_TEXT_SAVICKAS_CONCLUSION
-        )
-    elif questionnaire_type in _EVENT_GUIDED_TEXTS:
-        intro_key, intro_default, concl_key, concl_default = _EVENT_GUIDED_TEXTS[questionnaire_type]
-        result["label_guided_questions"] = qlabel
-        result["text_guided_questions_phase_banner"] = f"--- {phase_word} 8: {qlabel} ---"
+        result["text_guided_questions_phase_banner"] = f"--- {phase_word} {phase_number}: {qlabel} ---"
+    if questionnaire_type in _INSTRUMENT_PHASE_TEXTS:
+        intro_key, intro_default, concl_key, concl_default = _INSTRUMENT_PHASE_TEXTS[questionnaire_type]
         result["text_guided_questions_intro"] = resolve_text(cfg_get, intro_key, lang, intro_default)
         result["text_guided_conclusion"] = resolve_text(cfg_get, concl_key, lang, concl_default)
-    elif questionnaire_type in _OBIETTIVO_GUIDED_TEXTS:
-        intro_key, intro_default, concl_key, concl_default = _OBIETTIVO_GUIDED_TEXTS[questionnaire_type]
-        result["label_guided_questions"] = qlabel
-        result["text_guided_questions_phase_banner"] = f"--- {phase_word} 8: {qlabel} ---"
-        result["text_guided_questions_intro"] = resolve_text(cfg_get, intro_key, lang, intro_default)
-        result["text_guided_conclusion"] = resolve_text(cfg_get, concl_key, lang, concl_default)
-    elif questionnaire_type in _AGENT_GUIDED_TEXTS:
-        intro_key, intro_default, concl_key, concl_default = _AGENT_GUIDED_TEXTS[questionnaire_type]
-        result["text_guided_questions_intro"] = resolve_text(cfg_get, intro_key, lang, intro_default)
-        result["text_guided_conclusion"] = resolve_text(cfg_get, concl_key, lang, concl_default)
+    if questionnaire_type == "ZTPI":
+        result["text_guided_questions_intro"] = _sanitize_ztpi_user_text(result["text_guided_questions_intro"], lang)
+        result["text_guided_conclusion"] = _sanitize_ztpi_user_text(result["text_guided_conclusion"], lang)
 
     return result
 

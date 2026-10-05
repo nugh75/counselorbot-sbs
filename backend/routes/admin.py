@@ -1357,6 +1357,27 @@ async def admin_list_guided_step_modes(current_user: models.User = Depends(auth.
     ]
 
 
+@router.get("/admin/prompt-map/instruments")
+async def admin_prompt_map_instruments(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    """Strumenti con chat guidata, per la vista "Mappa dei prompt"."""
+    from ..prompt_map import ordered_instruments
+    return ordered_instruments(db)
+
+
+@router.get("/admin/prompt-map")
+async def admin_prompt_map(instrument: str, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    """Prompt delle chat guidate di uno strumento, dal comune al particolare (4 livelli).
+
+    Calcolata dalle funzioni della chat; sola lettura. Ogni voce indica l'endpoint
+    esistente che la salva (POST /admin/config, PUT /admin/guided-steps/{id}, ...).
+    """
+    from ..prompt_map import build_prompt_map
+    prompt_map = build_prompt_map(db, instrument)
+    if prompt_map is None:
+        raise HTTPException(status_code=404, detail=f"Instrument '{instrument}' has no guided steps")
+    return prompt_map
+
+
 @router.post("/admin/guided-steps", response_model=schemas.GuidedStepResponse)
 async def admin_create_guided_step(step: schemas.GuidedStepCreate, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     existing = db.query(models.GuidedStep).filter(models.GuidedStep.id == step.id).first()
