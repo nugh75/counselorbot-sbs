@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import type { PromptMap, PromptMapEntry } from './prompt-map';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, needsSharedConfirm, saveRequest, stepsByInstrument } from './prompt-map.ts';
+import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, moveItem, needsSharedConfirm, saveRequest, sortOrderChanges, stepsByInstrument } from './prompt-map.ts';
 
 function entry(overrides: Partial<PromptMapEntry>): PromptMapEntry {
     return {
@@ -90,4 +90,20 @@ test('shared entries list their steps under each instrument, in the instruments 
         ['EVENTO_STUDIO', ['evento', 'fatto']],
         ['EVENTO_PROFESSIONALE', ['fatto']],
     ]);
+});
+
+test('moving an item keeps the others in order and ignores moves out of range', () => {
+    assert.deepEqual(moveItem(['a', 'b', 'c'], 2, 0), ['c', 'a', 'b']);
+    assert.deepEqual(moveItem(['a', 'b', 'c'], 0, 1), ['b', 'a', 'c']);
+    assert.deepEqual(moveItem(['a', 'b', 'c'], 0, -1), ['a', 'b', 'c']);
+    assert.deepEqual(moveItem(['a', 'b', 'c'], 2, 3), ['a', 'b', 'c']);
+});
+
+test('a new order reuses the existing sort_order slots and only sends who moved', () => {
+    const steps = [{ id: 'intro', sort_order: 10 }, { id: 'cognitive', sort_order: 11 }, { id: 'affective', sort_order: 14 }];
+    assert.deepEqual(sortOrderChanges(moveItem(steps, 2, 1)), [{ id: 'affective', sort_order: 11 }, { id: 'cognitive', sort_order: 14 }]);
+    assert.deepEqual(sortOrderChanges(steps), []);
+    // Valori ripetuti (domande tutte a 0): si rinumera 0..n-1.
+    const questions = [{ id: 1, sort_order: 0 }, { id: 2, sort_order: 0 }, { id: 3, sort_order: 0 }];
+    assert.deepEqual(sortOrderChanges(moveItem(questions, 2, 0)), [{ id: 1, sort_order: 1 }, { id: 2, sort_order: 2 }]);
 });

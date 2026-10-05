@@ -331,6 +331,24 @@ def test_value_reflects_db_and_save_through_config_api():
             db.close()
 
 
+def test_suggested_questions_are_editable_through_the_questions_api():
+    _seed_all_instruments()
+    prompt_map = _map(_client(), "QSA")
+    for step in prompt_map["levels"]["steps"]:
+        entries = [e for e in step["entries"] if e["kind"] == "step_questions"]
+        if step["id"] == "conclusion":
+            assert not entries
+            continue
+        (entry,) = entries
+        assert entry["read_only"] is False
+        # Stessa API della scheda "Domande suggerite step": nessuna seconda fonte.
+        assert entry["editor"] == {
+            "method": "POST", "path": "/admin/guided-step-questions", "panel": "guided-step-questions",
+            "questionnaire_type": "QSA", "step_id": step["id"],
+        }
+        assert entry["used_by"]["steps"][0]["label"] == step["label"]
+
+
 def test_unknown_instrument_is_404():
     response = _client().get("/admin/prompt-map", params={"instrument": "NOPE"})
     assert response.status_code == 404

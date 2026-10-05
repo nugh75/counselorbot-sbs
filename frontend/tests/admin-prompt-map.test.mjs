@@ -20,6 +20,19 @@ const stepField = (stepId, field, value, destination, when) => ({
     ...(field === 'label' ? { translations: { en: 'Cognitive factors' } } : {}),
 });
 
+const questionsEntry = (stepId, value) => ({
+    key: `guided_step_questions:QSA:${stepId}`, kind: 'step_questions', field: 'suggested_questions', role: 'suggested_questions', level: 'step',
+    destination: 'student', when: 'student', value, stored: true, shared: false, used_by: { instruments: ['QSA'], steps: users([stepId]) },
+    editor: { method: 'POST', path: '/admin/guided-step-questions', panel: 'guided-step-questions', questionnaire_type: 'QSA', step_id: stepId }, read_only: false,
+});
+const question = (id, language, text, sort_order) => ({
+    id, questionnaire_type: 'QSA', step_id: 'cognitive', language, text, sort_order, is_active: true, created_at: '2026-10-05T00:00:00Z', updated_at: null,
+});
+const questions = [
+    question(1, 'it', 'Cosa misura?', 0), question(2, 'it', 'Come miglioro?', 1), question(3, 'en', 'What does it measure?', 0),
+    { ...question(4, 'it', 'Altro step', 0), step_id: 'affective' },
+];
+
 const promptMap = {
     instrument: 'QSA',
     instruments: [{ id: 'QSA', step_count: 2 }, { id: 'EVENTO_STUDIO', step_count: 9 }],
@@ -60,6 +73,7 @@ const promptMap = {
                     stepField('cognitive', 'label', 'Fattori cognitivi', 'student', 'student'),
                     stepField('cognitive', 'color_theme', 'blue', 'student', 'student'),
                     stepField('cognitive', 'prompt', 'Analizza i fattori cognitivi.', 'model', 'entry'),
+                    questionsEntry('cognitive', { it: ['Cosa misura?', 'Come miglioro?'], en: ['What does it measure?'] }),
                 ],
                 refs: [
                     { key: 'prompt_factor', level: 'instrument', role: 'system_prompt', when: 'entry' },
@@ -81,6 +95,14 @@ const promptMap = {
     },
 };
 
+async function until(condition, timeout = 5000) {
+    const started = Date.now();
+    while (!condition()) {
+        if (Date.now() - started > timeout) throw new Error('timeout');
+        await new Promise(resolve => setTimeout(resolve, 25));
+    }
+}
+
 async function fixture(width = 1440) {
     const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
     const context = await browser.newContext({ viewport: { width, height: 900 } });
@@ -96,6 +118,7 @@ async function fixture(width = 1440) {
         if (url.pathname === '/api/admin/config/env-status') data = {};
         if (url.pathname === '/api/admin/prompt-map/instruments') data = promptMap.instruments;
         if (url.pathname === '/api/admin/prompt-map') data = { ...promptMap, instrument: url.searchParams.get('instrument') };
+        if (url.pathname === '/api/admin/guided-step-questions' && request.method() === 'GET') data = questions;
         if (url.pathname === '/api/admin/prompt-audit/dry-run') {
             const body = request.postDataJSON();
             previews.push(body);
@@ -108,6 +131,9 @@ async function fixture(width = 1440) {
         } else if (['POST', 'PUT'].includes(request.method())) {
             data = request.postDataJSON();
             writes.push({ method: request.method(), path: url.pathname, body: data });
+        } else if (request.method() === 'DELETE') {
+            data = { ok: true };
+            writes.push({ method: 'DELETE', path: url.pathname });
         }
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
     });
@@ -267,5 +293,55 @@ test('step preview asks the dry run for the step and colours blocks by level of 
         await replied;
         assert.equal(previews.at(-1).mode, 'factor-qa');
         assert.equal(previews.at(-1).use_phase_prompt, false);
+    } finally { await f.close(); }
+});
+
+test('suggested questions are edited per language in a popup with the guided step questions API', async () => {
+    const f = await fixture();
+    try {
+        const { page, writes } = f;
+        const card = page.locator('[data-entry-key="guided_step_questions:QSA:cognitive"]');
+        assert.match(await card.innerText(), /IT 2 · EN 1/);
+        assert.doesNotMatch(await card.innerText(), /SOLA LETTURA/);
+        await card.getByRole('button', { name: 'Modifica domande' }).click();
+        const dialog = page.getByRole('dialog', { name: 'Domande suggerite · Fattori cognitivi' });
+        const rows = dialog.getByRole('list', { name: 'Domande suggerite' }).getByRole('listitem');
+        await rows.first().waitFor();
+        // Solo le domande di questo step e di questa lingua.
+        assert.equal(await rows.count(), 2);
+        assert.equal(await dialog.getByRole('button', { name: 'IT 2' }).getAttribute('aria-pressed'), 'true');
+
+        await rows.nth(1).getByRole('button', { name: 'Sposta su' }).click();
+        await until(() => writes.length === 2);
+        assert.deepEqual(writes.splice(0), [
+            { method: 'PUT', path: '/api/admin/guided-step-questions/2', body: { sort_order: 0 } },
+            { method: 'PUT', path: '/api/admin/guided-step-questions/1', body: { sort_order: 1 } },
+        ]);
+
+        await rows.nth(0).getByRole('button', { name: 'Modifica' }).click();
+        await dialog.getByRole('textbox', { name: 'Modifica' }).fill('Cosa misura il QSA?');
+        await dialog.getByRole('button', { name: 'Salva', exact: true }).click();
+        await until(() => writes.length === 1);
+        assert.deepEqual(writes.splice(0), [{ method: 'PUT', path: '/api/admin/guided-step-questions/1', body: { text: 'Cosa misura il QSA?' } }]);
+
+        await rows.nth(1).getByRole('button', { name: 'Elimina la domanda' }).click();
+        assert.equal(writes.length, 0);
+        await rows.nth(1).getByRole('button', { name: 'Conferma eliminazione' }).click();
+        await until(() => writes.length === 1);
+        assert.deepEqual(writes.splice(0), [{ method: 'DELETE', path: '/api/admin/guided-step-questions/2' }]);
+
+        await dialog.getByRole('button', { name: 'EN 1' }).click();
+        assert.equal(await rows.count(), 1);
+        await dialog.getByLabel('Nuova domanda (EN)').fill('How do I improve?');
+        await dialog.getByRole('button', { name: 'Aggiungi' }).click();
+        await until(() => writes.length === 1);
+        assert.deepEqual(writes.splice(0), [{ method: 'POST', path: '/api/admin/guided-step-questions', body: {
+            questionnaire_type: 'QSA', step_id: 'cognitive', language: 'en', text: 'How do I improve?', sort_order: 1, is_active: true,
+        } }]);
+
+        const reloads = page.waitForRequest(request => new URL(request.url()).pathname === '/api/admin/prompt-map');
+        await dialog.getByRole('button', { name: 'Chiudi' }).last().click();
+        await dialog.waitFor({ state: 'detached' });
+        await reloads;
     } finally { await f.close(); }
 });
