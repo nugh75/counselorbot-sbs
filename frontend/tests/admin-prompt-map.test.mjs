@@ -77,6 +77,7 @@ async function fixture(width = 1440) {
     const context = await browser.newContext({ viewport: { width, height: 900 } });
     const page = await context.newPage();
     const writes = [];
+    const previews = [];
     await page.addInitScript(() => localStorage.setItem('cb_lang', 'it'));
     await page.route('**/api/**', async route => {
         const request = route.request();
@@ -86,7 +87,16 @@ async function fixture(width = 1440) {
         if (url.pathname === '/api/admin/config/env-status') data = {};
         if (url.pathname === '/api/admin/prompt-map/instruments') data = promptMap.instruments;
         if (url.pathname === '/api/admin/prompt-map') data = { ...promptMap, instrument: url.searchParams.get('instrument') };
-        if (['POST', 'PUT'].includes(request.method())) {
+        if (url.pathname === '/api/admin/prompt-audit/dry-run') {
+            const body = request.postDataJSON();
+            previews.push(body);
+            data = {
+                envelope: { system_prompt_final: 'SYSTEM', full_message: 'USER', history: [] },
+                components: { system_prompt: 'Analizza i fattori.', step_prompt: body.message, meta_system_prompt: 'Meta QSA', counselor: 'Sei Iride.', guided_path: 'percorso' },
+                component_origins: { system_prompt: 'prompt_factor', step_prompt: 'guided_step:cognitive', meta_system_prompt: 'prompt_meta_QSA_cognitive', counselor: 'counselor.persona' },
+                component_flags: {}, warnings: [], resolved: { provider: 'p', model: 'm' },
+            };
+        } else if (['POST', 'PUT'].includes(request.method())) {
             data = request.postDataJSON();
             writes.push({ method: request.method(), path: url.pathname, body: data });
         }
@@ -94,7 +104,7 @@ async function fixture(width = 1440) {
     });
     await page.goto(`${origin}/admin?section=prompt-map&instrument=QSA`);
     await page.locator('[data-entry-key="prompt_factor"]').waitFor();
-    return { page, writes, close: async () => { await context.close(); await browser.close(); } };
+    return { page, writes, previews, close: async () => { await context.close(); await browser.close(); } };
 }
 
 test('levels go from shared to step and inherited texts link to their level', async () => {
@@ -190,5 +200,33 @@ test('mobile layout has a level bar, a step select and no horizontal scroll', as
         await page.locator('#pm-step-affective').waitFor();
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         assert.equal(overflow, 0);
+    } finally { await f.close(); }
+});
+
+test('step preview asks the dry run for the step and colours blocks by level of origin', async () => {
+    const f = await fixture();
+    try {
+        const { page, previews } = f;
+        await page.getByRole('button', { name: 'Anteprima di ciò che riceve il modello' }).click();
+        const preview = page.locator('section.prompt-request-preview');
+        await preview.locator('details', { hasText: 'Prompt di sistema' }).first().waitFor();
+        assert.equal(previews[0].phase, 'cognitive');
+        assert.equal(previews[0].use_phase_prompt, true);
+        assert.equal(previews[0].message, 'Analizza i fattori cognitivi.');
+        const classOf = async (text) => preview.locator('details', { hasText: text }).first().getAttribute('class');
+        assert.match(await classOf('Prompt di sistema'), /border-l-indigo-500/);
+        assert.match(await classOf('Prompt dello step'), /border-l-violet-500/);
+        assert.match(await classOf('Persona counselor'), /border-l-slate-500/);
+        // Meta prompt dello step non salvato: eredita il livello dello strumento.
+        assert.match(await classOf('Meta system prompt'), /border-l-indigo-500/);
+
+        // Turno libero dello studente: mode di follow-up risolto dal backend.
+        await preview.getByLabel('Ingresso nello step').selectOption('reply');
+        const replied = page.waitForResponse(response => new URL(response.url()).pathname === '/api/admin/prompt-audit/dry-run'
+            && response.request().postDataJSON().message === 'Perché?');
+        await preview.getByLabel('Messaggio di prova').fill('Perché?');
+        await replied;
+        assert.equal(previews.at(-1).mode, 'factor-qa');
+        assert.equal(previews.at(-1).use_phase_prompt, false);
     } finally { await f.close(); }
 });
