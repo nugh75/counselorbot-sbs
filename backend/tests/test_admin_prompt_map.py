@@ -212,6 +212,23 @@ def test_qsa_factor_prompt_is_instrument_level_and_inherited_by_its_steps():
         assert step["follow_up_mode"] == "factor-qa"
 
 
+def test_step_components_carry_runtime_flags_and_meta_override_key():
+    _seed_all_instruments()
+    prompt_map = _map(_client(), "EVENTO_STUDIO")
+    db = _TestSession()
+    try:
+        for step in prompt_map["levels"]["steps"]:
+            if step["fixed"]:
+                continue
+            components = next(e for e in step["entries"] if e["role"] == "components")
+            assert components["destination"] == "context_filter"
+            assert components["effective"] == chat_logic.get_prompt_component_flags(db, "EVENTO_STUDIO", step["id"])
+            meta_ref = next(ref for ref in step["refs"] if ref["role"] == "meta")
+            assert meta_ref["override_key"] == chat_logic.prompt_meta_config_key("EVENTO_STUDIO", step["id"])
+    finally:
+        db.close()
+
+
 def test_shared_event_prompts_are_group_level():
     _seed_all_instruments()
     client = _client()
@@ -291,6 +308,7 @@ if __name__ == "__main__":
     test_every_runtime_key_appears_once_at_one_level()
     test_step_fields_and_fixed_phases_are_on_the_step_level()
     test_qsa_factor_prompt_is_instrument_level_and_inherited_by_its_steps()
+    test_step_components_carry_runtime_flags_and_meta_override_key()
     test_shared_event_prompts_are_group_level()
     test_common_level_has_all_six_directives_and_persona()
     test_value_reflects_db_and_save_through_config_api()
