@@ -1694,8 +1694,8 @@ export function ConfigForm() {
         {
             label: t('admin.config.section.groupSettings'),
             items: [
-                { id: 'prompt-map', label: t('admin.promptMap.section'), detail: t('admin.promptMap.sectionDetail'), icon: <Layers aria-hidden className="w-4 h-4 shrink-0 text-indigo-600" /> },
                 { id: 'general', label: t('admin.config.section.general'), icon: <Server aria-hidden className="w-4 h-4 shrink-0 text-indigo-600" /> },
+                { id: 'prompt-map', label: t('admin.promptMap.section'), detail: t('admin.promptMap.sectionDetail'), icon: <Layers aria-hidden className="w-4 h-4 shrink-0 text-indigo-600" /> },
                 { id: 'directives', label: t('admin.config.section.directives'), icon: <FileText aria-hidden className="w-4 h-4 shrink-0 text-amber-600" /> },
             ],
         },
@@ -1767,7 +1767,6 @@ export function ConfigForm() {
 
             {activeSection === 'general' && (
             <div className="space-y-8">
-            <ChatGPTSettingsPanel />
             {/* 1. Provider & Model Selection */}
             <div className="glass-panel p-6 space-y-6">
                 <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
@@ -1901,9 +1900,18 @@ export function ConfigForm() {
                 </div>
             </div>
 
-            {/* 2. API Keys */}
-            <PersonalAPIPolicy />
-            <ExternalPrivacySettings />
+            {/* 2. AI dello studente: chiavi personali, ChatGPT, privacy verso provider esterni */}
+            <section aria-labelledby="student-ai-settings-title" className="space-y-4" data-testid="student-ai-settings">
+                <div>
+                    <h3 id="student-ai-settings-title" className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.studentAi.title')}</h3>
+                    <p className="mt-1 ml-1 text-sm text-slate-600">{t('admin.config.studentAi.intro')}</p>
+                </div>
+                <PersonalAPIPolicy />
+                <ChatGPTSettingsPanel />
+                <ExternalPrivacySettings />
+            </section>
+
+            {/* 3. API Keys */}
             <div className="space-y-4">
                 <div>
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.apiKeys')}</h3>
