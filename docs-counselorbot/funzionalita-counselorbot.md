@@ -626,6 +626,14 @@ provider, compresa l’anonimizzazione esterna, non sono riprodotte. In caso di
 aggiornamento o errore, il contenuto precedente è dichiarato non aggiornato e la
 copia è disabilitata. I testi di anteprima supportano le sei lingue dell’interfaccia.
 
+Il **Prompt di sistema** mostrato nella scheda Prompt per step è quello che la
+chat usa davvero all’ingresso nello step: la chiave viene calcolata dal server
+con la stessa regola della chat (per gli step di apertura conta l’id dello step,
+per gli altri il tipo di step). Vale per tutti gli strumenti, compresi gli
+obiettivi e le aperture di QPCS, QPCC e QAP. Nella scheda Step guidati il menu
+del campo Prompt di sistema elenca i tipi di step che il server conosce, compresi
+quelli degli obiettivi e di Idea, e mostra sempre il tipo salvato.
+
 L’editor dei prompt per step presenta un solo gruppo di selettori per sessione,
 counselor e lingua; i dati della sessione compaiono nell’anteprima, senza duplicati
 nell’editor. Appunti e selezioni dei componenti sono approfondimenti richiudibili.
