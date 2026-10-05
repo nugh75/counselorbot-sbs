@@ -2689,6 +2689,20 @@ def _idea_turns_used(db, session_id: str) -> int:
         return 0
 
 
+def instruction_parts(request, system_prompt, effective_message, persona, meta, component_flags):
+    """Canonical editable instruction prefix, also used for context variants."""
+    parts = []
+    if getattr(request, "use_phase_prompt", False) and effective_message and _component_enabled(component_flags, "step_prompt"):
+        parts.append(effective_message)
+    if persona and _component_enabled(component_flags, "counselor"):
+        parts.append(persona.strip())
+    if system_prompt and _component_enabled(component_flags, "system_prompt"):
+        parts.append(system_prompt)
+    if meta:
+        parts.append("[META SYSTEM PROMPT]\n" + meta)
+    return parts
+
+
 def build_context_envelope(
     db,
     ai_service,
@@ -2755,25 +2769,11 @@ def build_context_envelope(
         components["step_prompt"] = effective_message
         components["knowledge"] = knowledge_context
 
-    parts_system = []
-    if getattr(request, "use_phase_prompt", False):
-        if effective_message:
-            parts_system.append(effective_message)
-        if c_persona and _component_enabled(component_flags, "counselor"):
-            parts_system.append(c_persona.strip())
-        if system_prompt:
-            parts_system.append(system_prompt)
-    else:
-        if c_persona and _component_enabled(component_flags, "counselor"):
-            parts_system.append(c_persona.strip())
-        if system_prompt:
-            parts_system.append(system_prompt)
-
     meta_system_prompt = _instrument_meta_system_prompt(db, questionnaire_type, step_id, config_overrides)
+    parts_system = instruction_parts(request, system_prompt, effective_message, c_persona, meta_system_prompt, component_flags)
     if components is not None:
         components["meta_system_prompt"] = meta_system_prompt
-    if meta_system_prompt:
-        parts_system.append("[META SYSTEM PROMPT]\n" + meta_system_prompt)
+        components["instruction_prefix"] = "\n\n".join(parts_system).replace("{{counselor_name}}", counselor_name or "the counsellor")
 
     # Slot [SECTION] delle skill: predisposto, nessuna skill lo usa nel pilota.
     for block in (skills_blocks or {}).get("section", []):

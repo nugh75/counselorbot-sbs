@@ -619,9 +619,22 @@ aperti, con il primo step espanso. La scelta delle sezioni aperte viene conserva
 nel browser per la mappa; «vai» apre anche la sezione di destinazione.
 
 Ogni testo e la sua bozza mostrano il numero stimato di token, compresi persona
-del counselor e domande suggerite. I prompt di sistema hanno una voce separata
-per la variante breve, scritta dall'amministratore e inizialmente vuota;
-salvarla non cambia il prompt normale e conserva la conferma per testi condivisi.
+del counselor e domande suggerite. Ogni istruzione destinata al modello ha i
+pulsanti **Totale**, **Ristretto** e **Minimo**. Sono disponibili anche le
+varianti per i livelli personalizzati salvati in Generale. Include direttive, meta prompt,
+follow-up, varianti Idea, istruzioni di step e persona. Seleziona il livello,
+premi **Modifica**, inserisci il testo e **Salva**: ogni variante è indipendente,
+salvata nel database con il proprio storico e la conferma per testi condivisi.
+Una variante vuota usa Totale; Minimo non usa il testo di Ristretto. Durante
+la modifica, salva o annulla prima di cambiare livello per conservare la bozza.
+Totale mantiene il testo esistente; le vecchie varianti brevi valgono soltanto
+per Ristretto finché non viene salvata la sua nuova variante.
+
+Il modello usa i testi del livello assegnato quando «Usa i testi del livello,
+se presenti» è attivo. I limiti dei blocchi restano validi: per inviare anche
+una variante meta, attiva «Includi meta prompt» nel livello; i default Ristretto
+e Minimo lo escludono. L'anteprima con preset mostra i testi scelti sia nei
+blocchi sia nei messaggi. Il testo libero dello studente non viene sostituito.
 
 In **Generale → Contesto per modello**, l'amministratore può rinominare e
 aggiungere livelli, modificare i tetti dei componenti e assegnare un livello

@@ -1,4 +1,4 @@
-# Livelli di contesto e varianti brevi (CR1–CR4)
+# Livelli di contesto e varianti dei prompt (CR1–CR4)
 
 In **Amministrazione → Configurazione & Prompt → Generale**, «Contesto per
 modello» consente di modificare i livelli e assegnarli manualmente a un nome
@@ -9,13 +9,13 @@ gli eventuali limiti e il flag `compact` già configurati.
 ```text
 Generale → Contesto per modello
   Livelli: Totale | Ristretto | Minimo | Aggiungi livello
-    Nome, tetti token, massimo record conoscenze, scambi recenti, meta, breve
+    Nome, tetti token, massimo record conoscenze, scambi recenti, meta, testi del livello
     Salva livelli
   Assegnazioni manuali
     Provider/modello → livello → finestra/budget → Salva assegnazioni
 Mappa dei prompt
-  Prompt normale      ≈ token
-  Variante breve      ≈ token → Modifica → Salva (con conferma se condivisa)
+  Ogni prompt → [Totale] [Ristretto] [Minimo] → ≈ token
+    Modifica → Salva nel database (con conferma se condiviso)
 Anteprima step
   Preset scelto → totale/budget → token per blocco → messaggi completi
 ```
@@ -52,16 +52,45 @@ protetti. I componenti disabilitati nello step non vengono riabilitati dal
 livello. Lo storico mantiene scambi recenti completi; messaggio corrente e
 punteggi in esso presenti non vengono troncati.
 
-## Variante breve e misure
+## Varianti per ogni prompt e misure
 
-Ogni prompt di sistema e di follow-up nella Mappa ha una voce `__short`, nello
-stesso livello di appartenenza e con gli stessi consumatori. È vuota finché
-l'amministratore la scrive: questa implementazione non contiene testi brevi
-generati dall'agente. Il salvataggio usa le revisioni e le conferme esistenti;
-non modifica il prompt normale. Un livello con `short_prompt=true` usa il
-testo breve disponibile, altrimenti quello normale. Le direttive dinamiche di
-lingua, punteggi, consigli e formato vengono applicate a entrambe le sezioni.
-Ogni tentativo di ripiego ricompone il contesto originale per il proprio modello.
+In **Mappa dei prompt**, ogni testo destinato al modello ha i pulsanti
+**Totale**, **Ristretto** e **Minimo**: direttive globali, sistema, follow-up,
+meta dello strumento e dello step, varianti Idea, istruzioni di ogni step e
+persona di ciascun counselor. Selezionare il livello, premere **Modifica**,
+inserire il testo e **Salva**. Le varianti sono indipendenti e restano nel DB.
+I pulsanti del livello sono disabilitati durante la modifica: salvare o
+annullare prima di cambiare, per conservare la bozza.
+
+Totale usa il testo già esistente e il suo proprietario (Config, GuidedStep o
+Counselor). Gli altri livelli salvano righe Config con chiave
+`<chiave-base>__level_<id-livello>` e revisioni `origin=admin`, tramite
+`POST /admin/config`. Per step e persona le chiavi base sono
+`guided_step:<id>:prompt` e `counselor_persona:<id>`. I livelli personalizzati
+salvati in Generale aggiungono pulsanti; gli ID sono codificati senza collisioni.
+Leggere la Mappa non crea righe. Nessuna migrazione o riscrittura all'avvio.
+
+Una variante vuota eredita **Totale**, anche dopo un salvataggio esplicito;
+Minimo non eredita Ristretto. Le vecchie righe `__short` rimangono compatibili
+solo con Ristretto, finché non si salva la sua nuova riga: salvarla vuota
+rimuove esplicitamente tale eredità. I testi di Totale restano disponibili.
+Conferme per prompt condivisi e storico/ripristino restano quelli esistenti.
+
+Il livello assegnato esattamente a provider/modello sceglie i suoi testi quando
+**Usa i testi del livello, se presenti** è attivo (`short_prompt`, nome storico
+del flag nel JSON). Nessuna assegnazione: testi Totale. Un ripiego usa di nuovo
+l'envelope originale con il livello del proprio modello. Retrieval, evidenza,
+ledger e dati vengono raccolti una sola volta; ogni variante riceve gli stessi
+contratti obbligatori, punteggi, direttive dinamiche e formato.
+
+I limiti del livello restano attivi **dopo** aver selezionato i testi: se
+**Includi meta prompt** è spento, anche la variante meta è esclusa; una persona
+che supera il tetto viene omessa interamente. Ristretto e Minimo hanno meta
+spento nei default. Attivarlo in Generale se si vuole inviare quel blocco.
+Le istruzioni di step cambiano solo all'ingresso (`use_phase_prompt`), anche
+nei turni QPCS/Idea che le ripetono nel messaggio al modello. Il messaggio
+libero dello studente non viene sostituito. Etichette, colori, domande suggerite
+e note admin conservano i loro editor: non sono istruzioni del modello.
 
 La stima è `ceil(byte UTF-8 / 3) + 8` per messaggio: non è un tokenizer del
 provider. Badge in Mappa e conteggio della bozza si aggiornano senza salvare.
@@ -74,14 +103,15 @@ resta senza chiamate ai modelli e senza trasformazioni PII del trasporto.
 
 ## Prompt Lab e confronto ripetibile
 
-Gli snapshot includono configurazione dei livelli, assegnazioni, varianti brevi
+Gli snapshot includono configurazione dei livelli, assegnazioni, varianti per livello
 e hash del codice di composizione. Il worker applica i limiti del modello a
 ogni braccio e conserva il rapporto del contesto realmente inviato. Il client
 locale invia anche il `num_ctx` configurato.
 
 Il comando `python -m backend.prompt_lab.context_comparison` prepara un set
 fisso di **tre step per ciascuno dei dodici strumenti**: apertura, posizione
-centrale, chiusura. Usa solo default di fabbrica, una cronologia sintetica in
+centrale, chiusura. Confronta Totale, Ristretto e Minimo: **108 envelope**
+nel conteggio senza generazione e **216 prove** con due modelli. Usa solo default di fabbrica, una cronologia sintetica in
 italiano e assenza esplicita di punteggi. Non importa prompt o dati operativi,
 non scrive versioni brevi e non attiva configurazioni. Richiede un database
 PostgreSQL vuoto con nome terminante in `_test`, su loopback.
