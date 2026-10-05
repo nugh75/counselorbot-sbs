@@ -331,6 +331,37 @@ def test_value_reflects_db_and_save_through_config_api():
             db.close()
 
 
+def test_suggested_questions_are_editable_through_the_questions_api():
+    _seed_all_instruments()
+    prompt_map = _map(_client(), "QSA")
+    for step in prompt_map["levels"]["steps"]:
+        entries = [e for e in step["entries"] if e["kind"] == "step_questions"]
+        if step["id"] == "conclusion":
+            assert not entries
+            continue
+        (entry,) = entries
+        assert entry["read_only"] is False
+        # Stessa API della scheda "Domande suggerite step": nessuna seconda fonte.
+        assert entry["editor"] == {
+            "method": "POST", "path": "/admin/guided-step-questions", "panel": "guided-step-questions",
+            "questionnaire_type": "QSA", "step_id": step["id"],
+        }
+        assert entry["used_by"]["steps"][0]["label"] == step["label"]
+
+
+def test_context_components_come_right_after_the_step_fields():
+    _seed_all_instruments()
+    client = _client()
+    for instrument in ("QSA", "EVENTO_STUDIO", "IDEA"):
+        for step in _map(client, instrument)["levels"]["steps"]:
+            if step["fixed"]:
+                continue
+            fields = [e.get("field") if e["kind"] == "guided_step" else e["role"] for e in step["entries"]]
+            # Nome, colore, istruzione, poi il contesto; prompt, meta, note e domande dopo.
+            assert fields[:4] == ["label", "color_theme", "prompt", "components"], (instrument, step["id"], fields)
+            assert fields[-1] == "suggested_questions", (instrument, step["id"], fields)
+
+
 def test_unknown_instrument_is_404():
     response = _client().get("/admin/prompt-map", params={"instrument": "NOPE"})
     assert response.status_code == 404

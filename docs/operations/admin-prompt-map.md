@@ -36,161 +36,157 @@ Opzione B dell'audit `docs/audits/2026-10-05-admin-prompt-sections.md`.
 URL: `/admin?section=prompt-map&instrument=QSA` (l'id `prompt-map` è nuovo; gli
 id esistenti di `?section=` non cambiano).
 
-## Prototipo desktop (1440 px)
+## Struttura corrente (desktop e mobile)
 
-```
-Configurazione
-Sezione [ Mappa dei prompt ▾ ]   (Impostazioni: Mappa dei prompt · Generale · Direttive
-                                   Strumenti — vista classica: QSA · QSAr · …)
-┌──────────────────────────────────────────────────────────────────────────────────────┐
-│ MAPPA DEI PROMPT · CHAT GUIDATE                    Strumento [ QSA ▾ ]  ↻ Ricarica   │
-│ Dal comune al particolare. Ogni testo si modifica in un solo posto; più in basso      │
-│ compare ereditato.                                                                    │
-│ Legenda  [→ MODELLO · ingresso] [→ MODELLO · ogni turno] [→ MODELLO · domande stud.]  │
-│          [→ STUDENTE] [SOLO ADMIN] [FILTRO CONTESTO]                                  │
-├──────────────────────┬───────────────────────────────────────────────────────────────┤
-│ LIVELLI (sticky)     │ ① COMUNE A TUTTE LE CHAT GUIDATE · vale sempre        9 voci  │
-│ ① Comune         9   │ ┌───────────────────────────────────────────────────────────┐ │
-│ ② Gruppi         4   │ │ Persona del counselor    [→ MODELLO · ogni turno] SOLA LETT.│ │
-│ ③ Strumento QSA  4   │ │  Sofia   «Sei Sofia, una counselor…»            [Modifica ⧉] │ │
-│ ④ Step          12   │ │  Marco   «…»                                     [Modifica ⧉] │ │
-│   0 Presentazione    │ ├───────────────────────────────────────────────────────────┤ │
-│   1 Fattori cogn.    │ │ Direttiva qualità conversazione [→ MODELLO · ogni turno]  │ │
-│   2 Fattori aff.     │ │ directive_conversation_quality · 12 strumenti             │ │
-│   …                  │ │ «[ORIENTATION] Begin with the specific…» (2 righe)        │ │
-│   Domande (fissa)    │ │                                   [Storico] [Modifica]    │ │
-│   Conclusione (fissa)│ └───────────────────────────────────────────────────────────┘ │
-│                      │   … altre 5 direttive, prompt fase Domande, titolo Conclusione│
-│                      │                                                               │
-│                      │ ② GRUPPI · prompt condivisi da più strumenti                  │
-│                      │ ┌ GRUPPO · 6 STRUMENTI ─────────────────────────────────────┐ │
-│                      │ │ [■QSA] [ZTPI] [QPCS] [QPCC] [QAP] [IDEA]  (■ = scelto)    │ │
-│                      │ │ ⚠ Modificare qui cambia tutti gli strumenti del gruppo:   │ │
-│                      │ │   QSA · ZTPI · QPCS · QPCC · QAP · IDEA.                   │ │
-│                      │ │ Titolo fase Domande          [→ STUDENTE]  6 lingue        │ │
-│                      │ │   usato da 6 strumenti: QSA · ZTPI · … ▸ 6 step            │ │
-│                      │ │ Banner fase Domande          [→ STUDENTE]                  │ │
-│                      │ └───────────────────────────────────────────────────────────┘ │
-│                      │ ┌ GRUPPO · 2 STRUMENTI ─ [■QSA] [IDEA] ─────────────────────┐ │
-│                      │ │ ⚠ … del gruppo: QSA · IDEA.  Testo intro · Conclusione    │ │
-│                      │ └───────────────────────────────────────────────────────────┘ │
-│                      │                                                               │
-│                      │ ③ STRUMENTO QSA · vale per tutti i suoi step                  │
-│                      │   Meta prompt dello strumento     [→ MODELLO · ogni turno]    │
-│                      │   Prompt analisi fattori          [→ MODELLO · ingresso]      │
-│                      │     prompt_factor · usato da 2 step: Cognitivi, Affettivi     │
-│                      │   Prompt domande dello studente   [→ MODELLO · domande stud.] │
-│                      │     prompt_factor_qa · usato da 9 step                        │
-│                      │   Prompt secondo livello          [→ MODELLO · ingresso] 7 st.│
-│                      │                                                               │
-│                      │ ④ STEP  (in ordine di percorso)                               │
-│                      │ ┌ 1 · Fattori cognitivi ● blu · mode factor ────────────────┐ │
-│                      │ │ Nome dello step      [→ STUDENTE] it·en·es·fr·de·sv [Mod.]│ │
-│                      │ │ Colore               [→ STUDENTE] ● blu            [Mod.] │ │
-│                      │ │ Istruzione dello step[→ MODELLO · ingresso]        [Mod.] │ │
-│                      │ │ Meta prompt dello step (sovrascrive ③) [→ MODELLO] [Mod.] │ │
-│                      │ │ Componenti del contesto [FILTRO CONTESTO] ☑ ☑ ☐ …  [Mod.] │ │
-│                      │ │ Note per la fase     [SOLO ADMIN]                  [Mod.] │ │
-│                      │ │ Domande suggerite    [→ STUDENTE] it 3 · en 3 · …         │ │
-│                      │ │ ░ Ereditati ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │ │
-│                      │ │ ░ Prompt di sistema · prompt_factor     ③ Strumento → vai │ │
-│                      │ │ ░ Domande dello studente · prompt_factor_qa ③ → vai       │ │
-│                      │ │ [▸ Anteprima di ciò che riceve il modello]                │ │
-│                      │ └───────────────────────────────────────────────────────────┘ │
-│                      │ ┌ Domande · fase fissa ─────────────────────────────────────┐ │
-│                      │ │ ░ Prompt fase Domande · prompt_guided_questions ① → vai   │ │
-│                      │ │ ░ Testo introduttivo · text_guided_questions_intro ② → vai│ │
-│                      │ └───────────────────────────────────────────────────────────┘ │
-└──────────────────────┴───────────────────────────────────────────────────────────────┘
+```text
+MAPPA DEI PROMPT                 Strumento [QSA v] [Ricarica]
+  > 1 Comune a tutte le chat guidate · N voci
+  > 2 Gruppi · N voci
+  v 3 Strumento · QSA · N voci
+      testi propri dello strumento
+  v 4 Step · N step
+      v Fattori cognitivi                         [su][giu][elimina]
+          Nome · Colore · Istruzione
+          Componenti del contesto
+          Altri testi dello step · Note · Domande suggerite [Modifica domande]
+          Ereditati [vai] · Anteprima
+      > Fattori affettivi                         [su][giu][elimina]
+      > Domande (fissa)
+      > Conclusione (fissa)
+      [Aggiungi step]
 ```
 
-### Modifica di una voce
+Comune e Gruppi partono chiusi, Strumento e Step aperti; è espanso soltanto il
+primo step. Lo stato viene ricordato nel `localStorage` del browser (step distinti
+per strumento). I riferimenti «vai» espandono il livello e lo step di destinazione
+prima di scorrere alla voce. Non esistono più la colonna sinistra, la barra mobile
+dei livelli o il selettore dello step. I componenti del contesto sono subito dopo
+nome, colore e istruzione.
 
-```
-┌ Prompt evento – intervista  [→ MODELLO · ogni turno]  prompt_evento_interview ────────┐
-│ ┌───────────────────────────────────────────────────────────────────────────────────┐ │
-│ │ textarea (testo corrente)                                                         │ │
-│ └───────────────────────────────────────────────────────────────────────────────────┘ │
-│ ⚠ Condiviso: Evento studio · Evento professionale (16 step). Il salvataggio vale per  │
-│   tutti.                              [Annulla] [Salva per tutti]                     │
-└───────────────────────────────────────────────────────────────────────────────────────┘
-Testi per lo studente: schede lingua [it] [en] [es] [fr] [de] [sv] sopra la textarea
-(it = valore base; le altre salvano <chiave>__<lingua>, come "Testi interfaccia").
-```
+### Domande suggerite nel popup
 
-### Popup persona del counselor
-
-```
-┌──────────── Persona del counselor · Sofia ─────────────── ✕ ┐
-│ Il testo vive nel tab Counselor; qui lo modifichi con la    │
-│ stessa API (PUT /admin/counselors/{id}).                    │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ textarea                                                │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│ [Storico revisioni ▸]                     [Annulla] [Salva] │
-└─────────────────────────────────────────────────────────────┘
+```text
+Domande suggerite · Fattori cognitivi                    [chiudi]
+  [IT 2] [EN 1] [ES 0] [FR 0] [DE 0] [SV 0]
+  domanda 1                  [su][giu][modifica][elimina]
+  domanda 2                  [su][giu][modifica][elimina]
+  Nuova domanda [____________________] [Aggiungi]
+                                                       [Chiudi]
 ```
 
-## Prototipo mobile (390 px)
+Il popup usa `GET/POST /admin/guided-step-questions` e `PUT/DELETE
+/admin/guided-step-questions/{id}`; filtra per strumento, step e lingua. La
+modifica e l'aggiunta salvano solo sul comando esplicito; l'eliminazione richiede
+una seconda conferma. Cambiare lingua o chiudere con una bozza chiede conferma.
+Il riordino aggiorna soltanto le posizioni cambiate. La scheda classica usa gli
+stessi dati; non si creano copie dei testi.
 
-```
-┌──────────────────────────────┐
-│ Sezione [Mappa dei prompt ▾] │
-│ MAPPA DEI PROMPT             │
-│ Strumento [ QSA          ▾ ] │
-│ ▸ Legenda (chiusa)           │
-├──────────────────────────────┤
-│ [①Comune][②Gruppi][③QSA][④Step]  ← barra sticky, scorre in orizzontale
-├──────────────────────────────┤
-│ ① COMUNE           9 voci    │
-│ ┌──────────────────────────┐ │
-│ │ Persona del counselor    │ │
-│ │ [→ MODELLO·ogni turno]   │ │
-│ │ [SOLA LETTURA]           │ │
-│ │ Sofia «Sei Sofia…»       │ │
-│ │              [Modifica ⧉]│ │
-│ └──────────────────────────┘ │
-│ ┌──────────────────────────┐ │
-│ │ Direttiva qualità conv.  │ │
-│ │ [→ MODELLO·ogni turno]   │ │
-│ │ «[ORIENTATION] Begin…»   │ │
-│ │ [Storico]     [Modifica] │ │
-│ └──────────────────────────┘ │
-│ …                            │
-│ ④ STEP                       │
-│ Step [1 · Fattori cognit. ▾] │  ← select al posto della colonna sinistra
-│ ┌──────────────────────────┐ │
-│ │ Nome dello step          │ │
-│ │ [→ STUDENTE]   [Modifica]│ │
-│ │ …                        │ │
-│ │ ░ prompt_factor  ③ → vai │ │
-│ └──────────────────────────┘ │
-└──────────────────────────────┘
-Badge e pulsanti vanno a capo; textarea a tutta larghezza; nessuno scroll orizzontale
-della pagina (solo la barra dei livelli).
+### Aggiunta, spostamento, eliminazione di step
+
+```text
+Nuovo step
+  Id [________] Nome [________] Tipo [generic v] Posizione [In fondo v]
+  Istruzione [____________________________________________________]
+                                                   [Annulla] [Crea step]
+
+Eliminare lo step «Fattori affettivi»?                    [chiudi]
+  Uso da parte degli studenti: 3 sessioni · 12 messaggi registrati
+  fixture-s1                                             6 messaggi
+  fixture-s2                                             4 messaggi
+  fixture-s3                                             2 messaggi
+  Le configurazioni dei prompt, le revisioni e le trascrizioni restano.
+  Digita «affective» per confermare [________________]
+                                                [Annulla] [Elimina step]
 ```
 
-## Schermate (ambiente dev, DB `counselorbot_test`)
+- Aggiunta: `POST /admin/guided-steps`; identificativo normalizzato in minuscole,
+  cifre e trattini, univoco globalmente; nome obbligatorio, istruzione facoltativa,
+  modalità dall'API `/admin/guided-steps/modes`. Crea in fondo, poi riordina se si
+  sceglie «Prima di». Se il secondo comando fallisce, lo step creato resta e un
+  avviso persistente invita a usare le frecce: non viene proposta una seconda
+  creazione dello stesso step.
+- Spostamento: `PATCH /admin/guided-steps/reorder`, una richiesta con le sole
+  posizioni cambiate, limitata agli step mobili dello strumento visualizzato. Su
+  mobile i comandi hanno una riga dedicata sotto il titolo e il conteggio.
+- Eliminazione: prima `GET /admin/guided-steps/{id}/usage`, protetto per gli admin,
+  restituisce conteggio delle sessioni distinte, messaggi, domande suggerite e
+  `session_details[]` (`session_id`, `messages`). L'uso deriva dai log conservati
+  con lo stesso strumento e fase; non è un censimento delle sessioni senza log
+  o già eliminate dalla retention. Nel popup sono visibili solo identificativi
+  e conteggi, senza testo delle conversazioni o dati anagrafici. La conferma
+  richiede l'id esatto, poi `DELETE /admin/guided-steps/{id}`. Se la lettura
+  dell'uso fallisce non è possibile confermare. Un errore di eliminazione conserva
+  il popup e permette di riprovare. Durante l'eliminazione la chiusura è bloccata.
+- Le fasi fisse Domande/Conclusione non hanno comandi strutturali. Dalla mappa
+  l'ultimo step mobile non è eliminabile. La cancellazione rimuove solo la riga
+  `GuidedStep`: configurazioni dei prompt, revisioni, trascrizioni e domande
+  suggerite restano conservate. Le domande non sono più proposte nello step
+  rimosso. Nessuno script aggiorna i prompt già salvati nel database.
 
-![Mappa dei prompt a 1440 px](img/admin-prompt-map-1440.png)
+## Schermate correnti (fixture browser senza DB)
 
-![Step con anteprima colorata per livello, 1440 px](img/admin-prompt-map-step-preview-1440.png)
+![Mappa con livelli e step collassabili a 1440 px](img/admin-prompt-map-1440.png)
 
-![Mappa dei prompt a 390 px](img/admin-prompt-map-390.png)
+![Mappa a 390 px](img/admin-prompt-map-390.png)
 
-![Livello 2 di QSA: due gruppi distinti, strumenti per nome, QSA evidenziato](img/admin-prompt-map-groups-1440.png)
+![Conferma con elenco sessioni e identificativo dello step](img/admin-prompt-map-delete-step.png)
 
-![Livello 2 di Evento di studio: «usato da» con gli step di ciascuno strumento](img/admin-prompt-map-groups-evento-1440.png)
+![Conferma di eliminazione a 390 px](img/admin-prompt-map-delete-step-390.png)
 
-Colori dei livelli: ① comune grigio, ② gruppi ocra, ③ strumento petrolio, ④ step
-viola; nell'anteprima il bordo sinistro di ogni blocco indica il livello da cui
-proviene il testo (grigio pieno: codice o dati della sessione).
+La guida pubblica studente/docente non descrive le funzioni di amministrazione;
+per questo cambiamento non richiede aggiornamenti alle sei versioni o alle loro
+schermate. Le nuove stringhe del pannello admin sono presenti nelle sei lingue.
 
 ## Sviluppo e verifica
 
 - Backend: `GET /admin/prompt-map/instruments`, `GET /admin/prompt-map?instrument=<id>`
   (`backend/prompt_map.py`, test `backend/tests/test_admin_prompt_map.py`).
+- Struttura e conferma: `backend/tests/test_admin_guided_step_structure.py`,
+  su PostgreSQL effimero dedicato, mai sul DB operativo.
 - Frontend: `frontend/src/components/admin/PromptMap.tsx`, i18n in
   `frontend/src/lib/i18n-prompt-map.ts`, test browser
   `frontend/tests/admin-prompt-map.test.mjs` (API intercettate, ambiente dev su 3107).
 - Ambiente dev: `docs/operations/live-dev-environment.md`.
+
+Per riprodurre le catture con dati fittizi, da `frontend/`:
+
+```bash
+PROMPT_MAP_BASE_URL=http://127.0.0.1:3107 \
+PROMPT_MAP_SCREENSHOT_DIR=../docs/operations/img \
+node --test tests/admin-prompt-map.test.mjs
+```
+
+Le fixture intercettano tutte le API; verificano ordine, richieste di salvataggio,
+bozze delle domande, conferma ed errori, senza scrivere dati operativi. Le immagini
+con gruppi e anteprima ancora nel repository sono catture storiche della versione
+precedente e non documentano il nuovo layout.
+
+## Verifica del 5 ottobre 2026 (S25)
+
+- Branch mantenuto: `feature/prompt-map-step-editing`; PR [#52](https://github.com/nugh75/counselorbot-sbs/pull/52).
+- Backend: **17 test passati** nell'immagine locale ricostruita, su PostgreSQL 15
+  effimero dedicato (solo loopback `18498`, dati sintetici, nessun volume operativo).
+  Coprono uso per strumento/fase, elenco e conteggi, accesso negato allo studente,
+  aggiunta/riordino e conservazione di configurazioni, revisioni, log e domande
+  dopo l'eliminazione.
+- Frontend: **264 test unitari passati**, **16 test browser passati** contro
+  l'immagine ricostruita su loopback `3155`, con tutte le API simulate. Desktop
+  1440 px e mobile 390 px, sezioni ricordate, contesto al quarto posto,
+  CRUD domande, ordine/creazione, conferma per id, errore di lettura dell'uso,
+  errore di cancellazione e posizionamento fallito dopo creazione riuscita.
+- i18n delle sei lingue, TypeScript e ESLint dei file modificati: passati.
+  `npm run lint` globale: **1 errore preesistente** in
+  `frontend/src/components/visual/NewDeckDialog.tsx:36`
+  (`react-hooks/set-state-in-effect`) e 44 warning. Il file è stato confrontato
+  byte per byte con `HEAD` e risulta identico. Bug già presente nel Diario:
+  `2a50c13c-0ad7-4f41-b3ab-01f56888de76`.
+- Immagini locali: `counselorbot-s25-frontend-check:20261005` e
+  `counselorbot-s25-backend-check:20261005`; build complete e test eseguiti sul
+  loro codice. Non costituiscono un rilascio in produzione. I container di prova
+  vengono fermati e rimossi a fine verifica; le immagini restano disponibili.
+- Nessuna modifica a prompt/configurazioni DB operativi, `.env`, proxy o servizi
+  di produzione. Il dev preesistente del worktree su `3107` resta attivo; si ferma
+  con `Ctrl+C` nel terminale che lo ha avviato. I test non usano il suo backend.
+- Screenshot aggiornati con dati fittizi. La guida pubblica studente/docente è
+  stata riesaminata e non contiene questa superficie admin; manifest aggiornato
+  con `make guidance-refresh`, controllo `make guidance-check` passato.

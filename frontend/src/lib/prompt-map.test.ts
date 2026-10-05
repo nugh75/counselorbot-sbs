@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import type { PromptMap, PromptMapEntry } from './prompt-map';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, needsSharedConfirm, saveRequest, stepsByInstrument } from './prompt-map.ts';
+import { badgeFor, booleanFlags, componentsValue, entryText, findEntry, levelCounts, levelSection, moveItem, needsSharedConfirm, normalizeStepId, saveRequest, sectionDefaultOpen, sectionsForEntry, sortOrderChanges, stepSection, stepsByInstrument } from './prompt-map.ts';
 
 function entry(overrides: Partial<PromptMapEntry>): PromptMapEntry {
     return {
@@ -90,4 +90,54 @@ test('shared entries list their steps under each instrument, in the instruments 
         ['EVENTO_STUDIO', ['evento', 'fatto']],
         ['EVENTO_PROFESSIONALE', ['fatto']],
     ]);
+});
+
+test('moving an item keeps the others in order and ignores moves out of range', () => {
+    assert.deepEqual(moveItem(['a', 'b', 'c'], 2, 0), ['c', 'a', 'b']);
+    assert.deepEqual(moveItem(['a', 'b', 'c'], 0, 1), ['b', 'a', 'c']);
+    assert.deepEqual(moveItem(['a', 'b', 'c'], 0, -1), ['a', 'b', 'c']);
+    assert.deepEqual(moveItem(['a', 'b', 'c'], 2, 3), ['a', 'b', 'c']);
+});
+
+test('a new order reuses the existing sort_order slots and only sends who moved', () => {
+    const steps = [{ id: 'intro', sort_order: 10 }, { id: 'cognitive', sort_order: 11 }, { id: 'affective', sort_order: 14 }];
+    assert.deepEqual(sortOrderChanges(moveItem(steps, 2, 1)), [{ id: 'affective', sort_order: 11 }, { id: 'cognitive', sort_order: 14 }]);
+    assert.deepEqual(sortOrderChanges(steps), []);
+    // Valori ripetuti (domande tutte a 0): si rinumera 0..n-1.
+    const questions = [{ id: 1, sort_order: 0 }, { id: 2, sort_order: 0 }, { id: 3, sort_order: 0 }];
+    assert.deepEqual(sortOrderChanges(moveItem(questions, 2, 0)), [{ id: 1, sort_order: 1 }, { id: 2, sort_order: 2 }]);
+});
+
+test('sections start with shared levels closed, instrument and steps open, only the first step open', () => {
+    const step = (id: string, entries: PromptMapEntry[] = []) => ({
+        id, label: id, label_i18n: {}, color_theme: 'blue', sort_order: 1, system_prompt_mode: 'factor', system_prompt_key: null,
+        follow_up_mode: null, fixed: false, entries, refs: [],
+    });
+    const map: PromptMap = {
+        instrument: 'QSA', instruments: [],
+        levels: {
+            common: [entry({ key: 'directive_context', level: 'common' })],
+            groups: [{ instruments: ['QSA', 'IDEA'], entries: [entry({ key: 'text_guided_conclusion', level: 'group' })] }],
+            instrument: [entry({})],
+            steps: [step('intro'), step('cognitive', [entry({ key: 'guided_step:cognitive:prompt', level: 'step' })])],
+        },
+    };
+    assert.equal(sectionDefaultOpen(map, levelSection('common')), false);
+    assert.equal(sectionDefaultOpen(map, levelSection('group')), false);
+    assert.equal(sectionDefaultOpen(map, levelSection('instrument')), true);
+    assert.equal(sectionDefaultOpen(map, levelSection('step')), true);
+    assert.equal(sectionDefaultOpen(map, stepSection('QSA', 'intro')), true);
+    assert.equal(sectionDefaultOpen(map, stepSection('QSA', 'cognitive')), false);
+
+    // "vai" apre il livello della voce e, per le voci di uno step, anche lo step.
+    assert.deepEqual(sectionsForEntry(map, 'directive_context'), ['level:common']);
+    assert.deepEqual(sectionsForEntry(map, 'text_guided_conclusion'), ['level:group']);
+    assert.deepEqual(sectionsForEntry(map, 'guided_step:cognitive:prompt'), ['level:step', 'step:QSA:cognitive']);
+    assert.deepEqual(sectionsForEntry(map, 'missing'), []);
+});
+
+test('new step ids are normalized like the classic view', () => {
+    assert.equal(normalizeStepId('QSA Nuovo!'), 'qsa-nuovo');
+    assert.equal(normalizeStepId('qsa-nuovo-', false), 'qsa-nuovo-');
+    assert.equal(normalizeStepId('  '), '');
 });

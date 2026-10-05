@@ -6,6 +6,17 @@ import { chromium } from 'playwright';
 // sul posto tramite le API esistenti, conferma per i testi condivisi e popup
 // della persona del counselor. API intercettate, nessun DB.
 const origin = process.env.PROMPT_MAP_BASE_URL || 'http://127.0.0.1:3107';
+const captureDir = process.env.PROMPT_MAP_SCREENSHOT_DIR;
+const capture = async (page, name) => {
+    if (!captureDir) return;
+    // Wait for the existing page entrance animation before taking documentation images.
+    await page.waitForTimeout(600);
+    const options = { path: `${captureDir}/${name}.png` };
+    if (['admin-prompt-map-1440', 'admin-prompt-map-390'].includes(name)) {
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await page.screenshot({ ...options, fullPage: true });
+    } else await page.screenshot(options);
+};
 
 const users = (ids) => ids.map(id => ({ instrument: 'QSA', step_id: id, label: id }));
 const config = (key, value, extra = {}) => ({
@@ -19,6 +30,19 @@ const stepField = (stepId, field, value, destination, when) => ({
     editor: { method: 'PUT', path: `/admin/guided-steps/${stepId}`, field }, read_only: false,
     ...(field === 'label' ? { translations: { en: 'Cognitive factors' } } : {}),
 });
+
+const questionsEntry = (stepId, value) => ({
+    key: `guided_step_questions:QSA:${stepId}`, kind: 'step_questions', field: 'suggested_questions', role: 'suggested_questions', level: 'step',
+    destination: 'student', when: 'student', value, stored: true, shared: false, used_by: { instruments: ['QSA'], steps: users([stepId]) },
+    editor: { method: 'POST', path: '/admin/guided-step-questions', panel: 'guided-step-questions', questionnaire_type: 'QSA', step_id: stepId }, read_only: false,
+});
+const question = (id, language, text, sort_order) => ({
+    id, questionnaire_type: 'QSA', step_id: 'cognitive', language, text, sort_order, is_active: true, created_at: '2026-10-05T00:00:00Z', updated_at: null,
+});
+const questions = [
+    question(1, 'it', 'Cosa misura?', 0), question(2, 'it', 'Come miglioro?', 1), question(3, 'en', 'What does it measure?', 0),
+    { ...question(4, 'it', 'Altro step', 0), step_id: 'affective' },
+];
 
 const promptMap = {
     instrument: 'QSA',
@@ -60,6 +84,8 @@ const promptMap = {
                     stepField('cognitive', 'label', 'Fattori cognitivi', 'student', 'student'),
                     stepField('cognitive', 'color_theme', 'blue', 'student', 'student'),
                     stepField('cognitive', 'prompt', 'Analizza i fattori cognitivi.', 'model', 'entry'),
+                    config('prompt_components_QSA_cognitive', '{"learner_profile":true,"history":true}', { role: 'components', level: 'step', destination: 'context_filter', effective: { learner_profile: true, history: true }, used_by: { instruments: ['QSA'], steps: users(['cognitive']) } }),
+                    questionsEntry('cognitive', { it: ['Cosa misura?', 'Come miglioro?'], en: ['What does it measure?'] }),
                 ],
                 refs: [
                     { key: 'prompt_factor', level: 'instrument', role: 'system_prompt', when: 'entry' },
@@ -81,12 +107,26 @@ const promptMap = {
     },
 };
 
-async function fixture(width = 1440) {
+async function until(condition, timeout = 5000) {
+    const started = Date.now();
+    while (!condition()) {
+        if (Date.now() - started > timeout) throw new Error('timeout');
+        await new Promise(resolve => setTimeout(resolve, 25));
+    }
+}
+
+/** Apre o chiude una sezione della mappa dall'intestazione (livello o step). */
+async function toggleSection(page, anchor) {
+    await page.locator(`#${anchor} > div button[aria-expanded]`).first().click();
+}
+
+async function fixture(width = 1440, { failReorder = false, failUsage = false, failDelete = false } = {}) {
     const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
     const context = await browser.newContext({ viewport: { width, height: 900 } });
     const page = await context.newPage();
     const writes = [];
     const previews = [];
+    const map = structuredClone(promptMap);
     await page.addInitScript(() => localStorage.setItem('cb_lang', 'it'));
     await page.route('**/api/**', async route => {
         const request = route.request();
@@ -95,7 +135,15 @@ async function fixture(width = 1440) {
         if (url.pathname === '/api/auth/me') data = { username: 'fixture', authenticated: true, is_admin: true, groups: ['admins'] };
         if (url.pathname === '/api/admin/config/env-status') data = {};
         if (url.pathname === '/api/admin/prompt-map/instruments') data = promptMap.instruments;
-        if (url.pathname === '/api/admin/prompt-map') data = { ...promptMap, instrument: url.searchParams.get('instrument') };
+        if (url.pathname === '/api/admin/prompt-map') data = { ...map, instrument: url.searchParams.get('instrument') };
+        if (url.pathname === '/api/admin/guided-step-questions' && request.method() === 'GET') data = questions;
+        if (url.pathname === '/api/admin/guided-steps/modes') data = [{ mode: 'intro', system_prompt_key: null }, { mode: 'generic', system_prompt_key: 'prompt_generic' }, { mode: 'factor', system_prompt_key: 'prompt_factor' }];
+        if (url.pathname.endsWith('/usage')) {
+            if (failUsage) return route.fulfill({ status: 503, json: { detail: 'fixture usage failure' } });
+            data = { step_id: 'affective', questionnaire_type: 'QSA', sessions: 3, messages: 12, suggested_questions: 1,
+                session_details: [{ session_id: 'fixture-s1', messages: 6 }, { session_id: 'fixture-s2', messages: 4 }, { session_id: 'fixture-s3', messages: 2 }],
+            };
+        }
         if (url.pathname === '/api/admin/prompt-audit/dry-run') {
             const body = request.postDataJSON();
             previews.push(body);
@@ -105,14 +153,34 @@ async function fixture(width = 1440) {
                 component_origins: { system_prompt: 'prompt_factor', step_prompt: 'guided_step:cognitive', meta_system_prompt: 'prompt_meta_QSA_cognitive', counselor: 'counselor.persona' },
                 component_flags: {}, warnings: [], resolved: { provider: 'p', model: 'm' },
             };
-        } else if (['POST', 'PUT'].includes(request.method())) {
+        } else if (['POST', 'PUT', 'PATCH'].includes(request.method())) {
             data = request.postDataJSON();
             writes.push({ method: request.method(), path: url.pathname, body: data });
+            if (url.pathname === '/api/admin/guided-steps' && request.method() === 'POST') {
+                map.levels.steps.splice(map.levels.steps.findIndex(step => step.fixed), 0, { ...data, fixed: false, label_i18n: {}, entries: [stepField(data.id, 'label', data.label, 'student', 'student')], refs: [] });
+            }
+            if (url.pathname === '/api/admin/guided-steps/reorder') {
+                if (failReorder) return route.fulfill({ status: 503, json: { detail: 'fixture reorder failure' } });
+                for (const item of data) map.levels.steps.find(step => step.id === item.id).sort_order = item.sort_order;
+                map.levels.steps.sort((a, b) => Number(a.fixed) - Number(b.fixed) || a.sort_order - b.sort_order);
+            }
+        } else if (request.method() === 'DELETE') {
+            data = { ok: true };
+            writes.push({ method: 'DELETE', path: url.pathname });
+            if (url.pathname.startsWith('/api/admin/guided-steps/')) {
+                if (failDelete) return route.fulfill({ status: 503, json: { detail: 'fixture delete failure' } });
+                map.levels.steps = map.levels.steps.filter(step => step.id !== url.pathname.split('/').at(-1));
+            }
         }
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
     });
-    await page.goto(`${origin}/admin?section=prompt-map&instrument=QSA`);
-    await page.locator('[data-entry-key="prompt_factor"]').waitFor();
+    try {
+        await page.goto(`${origin}/admin?section=prompt-map&instrument=QSA`);
+        await page.locator('[data-entry-key="prompt_factor"]').waitFor();
+    } catch (error) {
+        await browser.close();
+        throw error;
+    }
     return { page, writes, previews, close: async () => { await context.close(); await browser.close(); } };
 }
 
@@ -120,23 +188,37 @@ test('levels go from shared to step and inherited texts link to their level', as
     const f = await fixture();
     try {
         const { page } = f;
+        await capture(page, 'admin-prompt-map-1440');
         const headings = await page.locator('section[aria-labelledby="prompt-map-title"] h4').allInnerTexts();
-        assert.deepEqual(headings.map(text => text.replace(/^\d\s*/, '').trim().toLowerCase()), [
-            'comune a tutte le chat guidate', 'gruppi', 'strumento questionario sulle strategie di apprendimento', 'step',
+        assert.deepEqual(headings.map(text => text.replace(/\s+/g, ' ').trim().toLowerCase()), [
+            '1 comune a tutte le chat guidate 2 voci', '2 gruppi 2 voci', '3 strumento questionario sulle strategie di apprendimento 2 voci', '4 step 3 step',
         ]);
-        assert.match(await page.locator('[data-entry-key="text_guided_conclusion"]').innerText(), /usato da 2 strumenti/);
+        // Comune e Gruppi chiusi, Strumento e Step aperti; degli step solo il primo.
+        const open = await page.locator('[data-section-open]').evaluateAll(nodes => nodes.map(node => `${node.id}:${node.dataset.sectionOpen}`));
+        assert.deepEqual(open, [
+            'pm-level-common:false', 'pm-level-group:false', 'pm-level-instrument:true', 'pm-level-step:true',
+            'pm-step-cognitive:true', 'pm-step-affective:false', 'pm-step-conclusion:false',
+        ]);
+        assert.equal(await page.locator('[data-entry-key="text_guided_conclusion"]').count(), 0);
+        assert.equal(await page.getByRole('navigation').filter({ hasText: 'Comune' }).count(), 0);
         assert.match(page.url(), /section=prompt-map/);
         assert.match(page.url(), /instrument=QSA/);
 
         // Lo step mostra il prompt di sistema condiviso come ereditato, non come voce propria.
         const step = page.locator('#pm-step-cognitive');
         assert.equal(await step.locator('[data-entry-key="prompt_factor"]').count(), 0);
+        assert.deepEqual(await step.locator('[data-entry-key]').evaluateAll(nodes => nodes.slice(0, 4).map(node => node.dataset.entryKey)), ['guided_step:cognitive:label', 'guided_step:cognitive:color_theme', 'guided_step:cognitive:prompt', 'prompt_components_QSA_cognitive']);
         await step.getByRole('button', { name: /vai/ }).first().click();
         await page.waitForFunction(() => document.querySelector('[data-entry-key="prompt_factor"]')?.className.includes('ring-2'));
 
-        await page.getByRole('navigation', { name: 'Livelli' }).last().getByRole('button', { name: 'Conclusione' }).click();
-        await page.locator('#pm-step-conclusion').waitFor();
-        assert.match(await page.locator('#pm-step-conclusion').innerText(), /text_guided_conclusion/);
+        await toggleSection(page, 'pm-step-conclusion');
+        const conclusion = page.locator('#pm-step-conclusion');
+        assert.match(await conclusion.innerText(), /text_guided_conclusion/);
+        // "vai" verso un livello chiuso lo apre e ci scorre.
+        await conclusion.getByRole('button', { name: /vai/ }).click();
+        await page.waitForFunction(() => document.querySelector('[data-entry-key="text_guided_conclusion"]')?.className.includes('ring-2'));
+        assert.equal(await page.locator('#pm-level-group').getAttribute('data-section-open'), 'true');
+        assert.match(await page.locator('[data-entry-key="text_guided_conclusion"]').innerText(), /usato da 2 strumenti/);
     } finally { await f.close(); }
 });
 
@@ -144,6 +226,7 @@ test('each group names its instruments, highlights the selected one and the warn
     const f = await fixture();
     try {
         const { page, writes } = f;
+        await toggleSection(page, 'pm-level-group');
         const groups = page.locator('#pm-level-group [data-group]');
         assert.equal(await groups.count(), 2);
         const first = groups.nth(0);
@@ -203,6 +286,7 @@ test('student texts save per language with the suffixed key', async () => {
     const f = await fixture();
     try {
         const { page, writes } = f;
+        await toggleSection(page, 'pm-level-group');
         const card = page.locator('[data-entry-key="text_guided_conclusion"]');
         await card.getByRole('button', { name: 'Modifica' }).click();
         await card.getByLabel('Lingua del testo').selectOption('en');
@@ -219,6 +303,7 @@ test('counselor persona is read-only and edited in a popup with the counselor AP
     const f = await fixture();
     try {
         const { page, writes } = f;
+        await toggleSection(page, 'pm-level-common');
         const card = page.locator('[data-entry-key="counselor_persona"]');
         assert.match(await card.innerText(), /SOLA LETTURA/);
         assert.equal(await card.locator('textarea').count(), 0);
@@ -231,14 +316,37 @@ test('counselor persona is read-only and edited in a popup with the counselor AP
     } finally { await f.close(); }
 });
 
-test('mobile layout has a level bar, a step select and no horizontal scroll', async () => {
+test('mobile layout opens every section without horizontal scroll', async () => {
     const f = await fixture(390);
     try {
         const { page } = f;
-        await page.getByRole('combobox', { name: 'Step', exact: true }).selectOption('affective');
-        await page.locator('#pm-step-affective').waitFor();
+        await capture(page, 'admin-prompt-map-390');
+        const titleRow = await page.locator('#pm-step-cognitive > div h5').first().boundingBox();
+        const actions = await page.getByRole('button', { name: 'Elimina lo step «Fattori cognitivi»' }).boundingBox();
+        assert.ok(actions.y >= titleRow.y + titleRow.height - 1, 'structure actions have their own row on mobile');
+        for (const anchor of ['pm-level-common', 'pm-level-group', 'pm-step-affective', 'pm-step-conclusion']) await toggleSection(page, anchor);
+        await page.locator('[data-entry-key="guided_step:affective:prompt"]').waitFor();
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         assert.equal(overflow, 0);
+    } finally { await f.close(); }
+});
+
+test('open and closed sections are remembered for the viewer', async () => {
+    const f = await fixture();
+    try {
+        const { page } = f;
+        await toggleSection(page, 'pm-level-common');
+        await toggleSection(page, 'pm-step-cognitive');
+        await page.reload();
+        await page.locator('[data-entry-key="prompt_factor"]').waitFor();
+        assert.equal(await page.locator('#pm-level-common').getAttribute('data-section-open'), 'true');
+        assert.equal(await page.locator('#pm-step-cognitive').getAttribute('data-section-open'), 'false');
+        assert.equal(await page.locator('[data-entry-key="guided_step:cognitive:prompt"]').count(), 0);
+        // Chiave illeggibile: si torna ai default, la pagina funziona.
+        await page.evaluate(() => localStorage.setItem('cb_prompt_map_sections', '{oops'));
+        await page.reload();
+        await page.locator('[data-entry-key="guided_step:cognitive:prompt"]').waitFor();
+        assert.equal(await page.locator('#pm-level-common').getAttribute('data-section-open'), 'false');
     } finally { await f.close(); }
 });
 
@@ -267,5 +375,174 @@ test('step preview asks the dry run for the step and colours blocks by level of 
         await replied;
         assert.equal(previews.at(-1).mode, 'factor-qa');
         assert.equal(previews.at(-1).use_phase_prompt, false);
+    } finally { await f.close(); }
+});
+
+test('suggested questions are edited per language in a popup with the guided step questions API', async () => {
+    const f = await fixture();
+    try {
+        const { page, writes } = f;
+        const card = page.locator('[data-entry-key="guided_step_questions:QSA:cognitive"]');
+        assert.match(await card.innerText(), /IT 2 · EN 1/);
+        assert.doesNotMatch(await card.innerText(), /SOLA LETTURA/);
+        await card.getByRole('button', { name: 'Modifica domande' }).click();
+        const dialog = page.getByRole('dialog', { name: 'Domande suggerite · Fattori cognitivi' });
+        const rows = dialog.getByRole('list', { name: 'Domande suggerite' }).getByRole('listitem');
+        await rows.first().waitFor();
+        // Solo le domande di questo step e di questa lingua.
+        assert.equal(await rows.count(), 2);
+        assert.equal(await dialog.getByRole('button', { name: 'IT 2' }).getAttribute('aria-pressed'), 'true');
+
+        await rows.nth(1).getByRole('button', { name: 'Sposta su' }).click();
+        await until(() => writes.length === 2);
+        assert.deepEqual(writes.splice(0), [
+            { method: 'PUT', path: '/api/admin/guided-step-questions/2', body: { sort_order: 0 } },
+            { method: 'PUT', path: '/api/admin/guided-step-questions/1', body: { sort_order: 1 } },
+        ]);
+
+        await rows.nth(0).getByRole('button', { name: 'Modifica' }).click();
+        await dialog.getByRole('textbox', { name: 'Modifica' }).fill('Cosa misura il QSA?');
+        await dialog.getByRole('button', { name: 'Salva', exact: true }).click();
+        await until(() => writes.length === 1);
+        assert.deepEqual(writes.splice(0), [{ method: 'PUT', path: '/api/admin/guided-step-questions/1', body: { text: 'Cosa misura il QSA?' } }]);
+
+        await rows.nth(1).getByRole('button', { name: 'Elimina la domanda' }).click();
+        assert.equal(writes.length, 0);
+        await rows.nth(1).getByRole('button', { name: 'Conferma eliminazione' }).click();
+        await until(() => writes.length === 1);
+        assert.deepEqual(writes.splice(0), [{ method: 'DELETE', path: '/api/admin/guided-step-questions/2' }]);
+
+        await dialog.getByRole('button', { name: 'EN 1' }).click();
+        assert.equal(await rows.count(), 1);
+        await dialog.getByLabel('Nuova domanda (EN)').fill('How do I improve?');
+        await dialog.getByRole('button', { name: 'Aggiungi' }).click();
+        await until(() => writes.length === 1);
+        assert.deepEqual(writes.splice(0), [{ method: 'POST', path: '/api/admin/guided-step-questions', body: {
+            questionnaire_type: 'QSA', step_id: 'cognitive', language: 'en', text: 'How do I improve?', sort_order: 1, is_active: true,
+        } }]);
+
+        const reloads = page.waitForRequest(request => new URL(request.url()).pathname === '/api/admin/prompt-map');
+        await dialog.getByRole('button', { name: 'Chiudi' }).last().click();
+        await dialog.waitFor({ state: 'detached' });
+        await reloads;
+    } finally { await f.close(); }
+});
+
+test('steps move up and down through the reorder API; fixed phases have no structure buttons', async () => {
+    const f = await fixture();
+    try {
+        const { page, writes } = f;
+        assert.equal(await page.getByRole('button', { name: 'Sposta su «Fattori cognitivi»' }).isDisabled(), true);
+        assert.equal(await page.getByRole('button', { name: 'Sposta giù «Fattori affettivi»' }).isDisabled(), true);
+        assert.equal(await page.locator('#pm-step-conclusion').getByRole('button', { name: /Sposta|Elimina/ }).count(), 0);
+        await page.getByRole('button', { name: 'Sposta giù «Fattori cognitivi»' }).click();
+        await until(() => writes.length === 1);
+        assert.deepEqual(writes, [{ method: 'PATCH', path: '/api/admin/guided-steps/reorder', body: [
+            { id: 'affective', sort_order: 1 }, { id: 'cognitive', sort_order: 2 },
+        ] }]);
+    } finally { await f.close(); }
+});
+
+test('a new step is created with the guided steps API and placed at the chosen position', async () => {
+    const f = await fixture();
+    try {
+        const { page, writes } = f;
+        await page.getByRole('button', { name: 'Aggiungi step' }).click();
+        const form = page.getByRole('form', { name: 'Nuovo step' });
+        await form.getByLabel('Id').fill('cognitive');
+        await form.getByLabel('Nome', { exact: true }).fill('Nuovo');
+        await form.getByRole('button', { name: 'Crea step' }).click();
+        assert.match(await form.getByRole('alert').innerText(), /Esiste già uno step con questo id/);
+        assert.equal(writes.length, 0);
+
+        await form.getByLabel('Id').fill('QSA Nuovo!');
+        assert.equal(await form.getByLabel('Id').inputValue(), 'qsa-nuovo-');
+        await form.getByLabel('Tipo (mode)').selectOption('factor');
+        await form.getByLabel('Posizione').selectOption({ label: 'Prima di «Fattori affettivi»' });
+        await form.getByRole('button', { name: 'Crea step' }).click();
+        await until(() => writes.length === 2);
+        assert.deepEqual(writes, [
+            { method: 'POST', path: '/api/admin/guided-steps', body: {
+                id: 'qsa-nuovo', sort_order: 3, label: 'Nuovo', prompt: '', system_prompt_mode: 'factor', color_theme: 'blue', questionnaire_type: 'QSA',
+            } },
+            { method: 'PATCH', path: '/api/admin/guided-steps/reorder', body: [{ id: 'qsa-nuovo', sort_order: 2 }, { id: 'affective', sort_order: 3 }] },
+        ]);
+        await form.waitFor({ state: 'detached' });
+    } finally { await f.close(); }
+});
+
+test('deleting a step shows student usage and needs the step id typed', async () => {
+    const f = await fixture();
+    try {
+        const { page, writes } = f;
+        await page.getByRole('button', { name: 'Elimina lo step «Fattori affettivi»' }).click();
+        const dialog = page.getByRole('dialog', { name: 'Eliminare lo step «Fattori affettivi»?' });
+        await dialog.locator('[data-step-usage]').waitFor();
+        await capture(page, 'admin-prompt-map-delete-step');
+        assert.match(await dialog.innerText(), /3 sessioni · 12 messaggi registrati/);
+        assert.deepEqual(await dialog.locator('[data-session-id]').allTextContents(), ['fixture-s1', 'fixture-s2', 'fixture-s3']);
+        assert.match(await dialog.innerText(), /1 domande suggerite restano salvate/);
+        assert.match(await dialog.innerText(), /storico delle revisioni non vengono toccati/);
+        const confirm = dialog.getByRole('button', { name: 'Elimina step' });
+        assert.equal(await confirm.isDisabled(), true);
+        await dialog.getByLabel('Digita «affective» per confermare').fill('Fattori affettivi');
+        assert.equal(await confirm.isDisabled(), true);
+        await dialog.getByLabel('Digita «affective» per confermare').fill('affective');
+        await confirm.click();
+        await dialog.waitFor({ state: 'detached' });
+        assert.deepEqual(writes, [{ method: 'DELETE', path: '/api/admin/guided-steps/affective' }]);
+    } finally { await f.close(); }
+});
+
+
+test('creation keeps the new step and reports a failed position without offering duplicate creation', async () => {
+    const f = await fixture(1440, { failReorder: true });
+    try {
+        const { page, writes } = f;
+        await page.getByRole('button', { name: 'Aggiungi step' }).click();
+        const form = page.getByRole('form', { name: 'Nuovo step' });
+        await form.getByLabel('Id').fill('qsa-new');
+        await form.getByLabel('Nome', { exact: true }).fill('Nuovo');
+        await form.getByLabel('Posizione').selectOption('affective');
+        await form.getByRole('button', { name: 'Crea step' }).click();
+        await form.waitFor({ state: 'detached' });
+        await page.locator('#pm-step-qsa-new').waitFor();
+        assert.match(await page.locator('section[aria-labelledby="prompt-map-title"]').getByRole('alert').innerText(), /Step creato in fondo.*spostamento.*non riuscito/i);
+        assert.equal(writes.filter(item => item.method === 'POST').length, 1);
+        assert.deepEqual(await page.locator('[id^="pm-step-"]').evaluateAll(nodes => nodes.map(node => node.id)), ['pm-step-cognitive', 'pm-step-affective', 'pm-step-qsa-new', 'pm-step-conclusion']);
+    } finally { await f.close(); }
+});
+
+test('failed usage blocks deletion and cancelling sends no write', async () => {
+    const f = await fixture(390, { failUsage: true });
+    try {
+        const { page, writes } = f;
+        await page.getByRole('button', { name: 'Elimina lo step «Fattori affettivi»' }).click();
+        const dialog = page.getByRole('dialog');
+        await dialog.getByRole('alert').waitFor();
+        await dialog.getByLabel('Digita «affective» per confermare').fill('affective');
+        assert.equal(await dialog.getByRole('button', { name: 'Elimina step' }).isDisabled(), true);
+        await dialog.getByRole('button', { name: 'Annulla' }).click();
+        await dialog.waitFor({ state: 'detached' });
+        assert.deepEqual(writes, []);
+    } finally { await f.close(); }
+});
+
+test('failed deletion preserves the session list, confirmation and step', async () => {
+    const f = await fixture(390, { failDelete: true });
+    try {
+        const { page, writes } = f;
+        await page.getByRole('button', { name: 'Elimina lo step «Fattori affettivi»' }).click();
+        const dialog = page.getByRole('dialog');
+        await dialog.locator('[data-step-usage]').waitFor();
+        await capture(page, 'admin-prompt-map-delete-step-390');
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+        await dialog.getByLabel('Digita «affective» per confermare').fill('affective');
+        await dialog.getByRole('button', { name: 'Elimina step' }).click();
+        await dialog.getByRole('alert').waitFor();
+        assert.equal(await dialog.locator('[data-session-id]').count(), 3);
+        assert.equal(await dialog.getByLabel('Digita «affective» per confermare').inputValue(), 'affective');
+        assert.equal(await page.locator('#pm-step-affective').count(), 1);
+        assert.deepEqual(writes, [{ method: 'DELETE', path: '/api/admin/guided-steps/affective' }]);
     } finally { await f.close(); }
 });
