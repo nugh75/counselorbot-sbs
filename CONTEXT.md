@@ -3,6 +3,7 @@
 <!-- ai4educ:context-template v1.0 -->
 
 ## Quick Reference
+- **Installazione portabile Console/macOS**: `docs/operations/portable-install-audit.md` e `docs/operations/portable-installation.md` — Compose autonomo `docker compose --env-file .env -f docker-compose.portable.yml up -d --build`, progetto `counselorbot-portable`, dominio `counselorbot.labform.net`, DB interno e rete Console; SSO pubblico, identità admin e logout verificati il 5 ottobre 2026. Ollama non installato, provider in attesa dell'operatore e privacy bloccante preservata.
 - **Personal ChatGPT subscription (optional SIWC preview)**: `docs/operations/chatgpt-subscription.md` — default off, immediate activation from Administration → General with automatic persistent private key (dedicated Docker volume), encrypted per-user credentials, loopback helper for remote VMs, direct Responses API, explicit provider choice without paid failover; verify deployment eligibility and the repository license before a school pilot.
 - **Stack**: Python (FastAPI), Next.js App Router, PostgreSQL, Docker Compose
 - **Proxy streaming in sviluppo**: rewrite e route chat/sito/OpenCode/voce condividono `backendOrigin()` (`BACKEND_ORIGIN` → `BACKEND_INTERNAL_URL` → host Docker); rewrite generale in fallback dopo route dinamiche. Errori HTTP prima dello stream mantengono codici sicuri, con messaggi localizzati anche nei follow-up QSA. Test HTTP reali isolati: `scripts/dev-stream-proxy-tests.sh`, `frontend/tests/stream-proxy.test.mjs`; dettagli in `docs/operations/live-dev-environment.md`.

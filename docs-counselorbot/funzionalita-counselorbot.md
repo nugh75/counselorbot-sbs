@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 3 ottobre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 5 ottobre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
@@ -25,7 +25,16 @@ per docenti/ricercatori, **Amministrazione** per gli admin) restano nel menu a t
 punti, insieme a uscita e preferenze; su schermi stretti il menu raccoglie tutte
 le voci nello stesso ordine.
 
-L’accesso personale usa l’account ai4educ. Quando mancano le impostazioni iniziali,
+L’accesso personale usa l’account della Console ai4educ collegata all’installazione.
+Login, uscita e collegamenti a Portale, Console e Segreti seguono i domini
+configurati per quella installazione; dopo il login si torna alla pagina richiesta
+di CounselorBot. Nell’installazione `counselorbot.labform.net` l’account è quello
+gestito da `auth.labform.net` e `manager.labform.net`. Il collegamento **Segreti**
+dell’amministrazione seleziona il progetto Docker di questa installazione.
+Le funzioni AI richiedono
+un provider configurato dall’amministratore; la sola disponibilità del sito e
+dell’account non garantisce che chat, ricerca con embeddings o OCR siano attivi.
+Quando mancano le impostazioni iniziali,
 si scelgono counselor e Taccuino. La scelta del counselor resta nell’account e può
 essere modificata dalla pagina dei counselor. Metodo di inserimento dei risultati
 e modalità di conversazione si ricordano solo selezionando l’apposita casella nella
@@ -42,8 +51,10 @@ modalità ogni volta e non cambia la preferenza degli altri strumenti.
   **CounselorBot**. Le altre basi restano distinte; non attribuire alla piattaforma
   le funzioni di competenzestrategiche.it. Il presente documento viene letto a ogni
   richiesta CounselorBot; i documenti di approfondimento sono recuperati dall’indice.
-- **Guida interfaccia** (`/guide`): pubblica anche senza login, con percorsi per
-  uso personale e per docenti, immagini ingrandibili e collegamenti alle sezioni.
+- **Guida interfaccia** (`/guide`): con percorsi per uso personale e per docenti,
+  immagini ingrandibili e collegamenti alle sezioni. È pubblica anche senza login
+  nelle installazioni che consentono accesso pubblico; su `counselorbot.labform.net`
+  l'intero sito, inclusa la Guida e le sue immagini, richiede l'accesso Console.
   Senza parametro `audience` il percorso segue il ruolo: docenti, ricercatori e
   amministratori aprono la versione docente, studenti e visitatori quella
   studente, e solo chi può usare l’assistente docente vede il selettore dei due

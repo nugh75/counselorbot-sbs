@@ -13,6 +13,7 @@ import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admin/PromptRequestPreview';
 import { PromptFactoryAlignment, type FactoryAlignmentResult } from '@/components/admin/PromptFactoryAlignment';
 import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
+import { AI4EDUC_SECRETS_URL } from '@/lib/auth';
 
 // --- Types ---
 
@@ -1949,7 +1950,7 @@ export function ConfigForm() {
                     <div className="space-y-2">
                         <p>{t('admin.config.apiKeysContract')}</p>
                         <a
-                            href="https://manager.ai4educ.org/segreti?project=counselorbot-10-step"
+                            href={AI4EDUC_SECRETS_URL}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1.5 font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"

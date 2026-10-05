@@ -1,0 +1,125 @@
+name: counselorbot-portable
+
+# Standalone configuration for the existing portable Console; do not combine
+# with docker-compose.yml (which targets the original Linux installation).
+services:
+  postgres:
+    image: ${COUNSELORBOT_POSTGRES_IMAGE:-postgres:15}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      default:
+        aliases:
+          - counselorbot-portable-postgres
+
+  counselorbot-backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        PYTHON_BASE_IMAGE: ${COUNSELORBOT_PYTHON_BASE_IMAGE:-python:3.10-slim}
+    command: [uvicorn, backend.main:app, --host, 0.0.0.0, --port, "8000", --workers, "1"]
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@counselorbot-portable-postgres:5432/${POSTGRES_DB}
+      AI4AUTH_VERIFY_URL: http://ai4auth:9091/api/verify
+      AI4AUTH_PUBLIC_HOST: ${COUNSELORBOT_HOSTNAME:-counselorbot.labform.net}
+      ADMIN_GROUPS: ${ADMIN_GROUPS:-admins}
+      OLLAMA_PRELOAD: "false"
+      COUNSELOR_TRANSLATE_DISABLED: "1"
+      ADMIN_SYNC_DISABLED: ${ADMIN_SYNC_DISABLED:-1}
+      SESSION_MEMORY_DIR: /app/session_memory
+      RAG_DOCS_DIR: /app/docs
+      RAG_INDEX_DIR: /app/rag_index
+      COUNSELORBOT_DOCS_DIR: /app/docs-counselorbot
+      QSA_PDF_STORAGE_DIR: /app/uploads/qsa
+      IDEA_SOURCES_STORAGE_DIR: /app/uploads/idea-sources
+      RAG_DYNAMIC_COLLECTIONS_DIR: /app/rag-collections
+      CHATGPT_CREDENTIALS_DIR: /app/chatgpt_credentials
+      PERSONAL_API_CREDENTIALS_DIR: /app/personal_api_credentials
+    ports:
+      - "127.0.0.1:${COUNSELORBOT_BACKEND_PORT:-8087}:8000"
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    volumes:
+      - session_memory:/app/session_memory
+      - ./knowledge:/app/knowledge:ro
+      - ./docs:/app/docs
+      - ./docs-counselorbot:/app/docs-counselorbot
+      - rag_collections:/app/rag-collections
+      - rag_index:/app/rag_index
+      - uploads:/app/uploads
+      - chatgpt_credentials:/app/chatgpt_credentials
+      - personal_api_credentials:/app/personal_api_credentials
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/auth/me', timeout=5)"]
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 120s
+    networks:
+      - default
+      - console
+
+  counselorbot-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NODE_BASE_IMAGE: ${COUNSELORBOT_NODE_BASE_IMAGE:-node:22-alpine}
+        BACKEND_ORIGIN: http://counselorbot-backend:8000
+        NEXT_PUBLIC_APP_URL: https://${COUNSELORBOT_HOSTNAME:-counselorbot.labform.net}
+        NEXT_PUBLIC_AI4AUTH_BASE: ${COUNSELORBOT_AUTH_URL:-https://auth.labform.net}
+        NEXT_PUBLIC_AI4EDUC_PORTAL_URL: ${COUNSELORBOT_PORTAL_URL:-https://portal.labform.net}
+        NEXT_PUBLIC_AI4EDUC_MANAGER_URL: ${COUNSELORBOT_MANAGER_URL:-https://manager.labform.net}
+        NEXT_PUBLIC_AI4EDUC_PROJECT_ID: counselorbot-portable
+        NEXT_PUBLIC_API_URL: /api
+    environment:
+      BACKEND_ORIGIN: http://counselorbot-backend:8000
+      NEXT_TELEMETRY_DISABLED: "1"
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${COUNSELORBOT_FRONTEND_PORT:-3108}:3000"
+    depends_on:
+      counselorbot-backend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/auth/me').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 30s
+    networks:
+      default:
+      console:
+        aliases:
+          - counselorbot-portable-frontend
+
+volumes:
+  postgres_data:
+  session_memory:
+  rag_collections:
+  rag_index:
+  uploads:
+  chatgpt_credentials:
+  personal_api_credentials:
+
+networks:
+  default:
+  console:
+    external: true
+    name: ${COUNSELORBOT_CONSOLE_NETWORK:-console-platform_default}
