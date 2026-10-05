@@ -17,7 +17,8 @@ from ..prompt_config import ALL_CONFIG_TEXT_DEFINITIONS
 
 LANGUAGES = ('it', 'en', 'es', 'fr', 'de', 'sv')
 PRESET_FIELDS = ('id', 'name', 'provider', 'model', 'temperature', 'max_tokens', 'disable_thinking', 'reasoning_budget')
-CONFIG_EXTRA = {'feature_idea_focus', 'orientation_tool_briefs', 'active_provider', 'model_name', 'ai_fallback_targets'}
+CONFIG_EXTRA = {'feature_idea_focus', 'orientation_tool_briefs', 'active_provider', 'model_name', 'ai_fallback_targets',
+                'model_context_levels', 'model_context_profiles', 'ollama_num_ctx'}
 CONFIG_PREFIXES = ('prompt_component_', 'prompt_meta_', 'prompt_placeholder_')
 
 
@@ -35,7 +36,7 @@ def static_data(db):
                if row.key in keys or row.key.split('__', 1)[0] in keys or row.key.startswith(CONFIG_PREFIXES)}
     return {
         'code_hash': digest({name: hashlib.sha256((Path(__file__).parents[1] / name).read_bytes()).hexdigest()
-                             for name in ('chat_preparation.py', 'chat_logic.py', 'prompt_contract.py', 'prompt_config.py', 'prompt_lab/snapshots.py', 'prompt_lab/worker.py', 'prompt_lab/evaluation.py', 'prompt_lab/contracts.py', 'prompt_lab/local_models.py', 'recommendation_blocks.py')}),
+                             for name in ('model_context.py', 'chat_preparation.py', 'chat_logic.py', 'prompt_contract.py', 'prompt_config.py', 'prompt_lab/snapshots.py', 'prompt_lab/worker.py', 'prompt_lab/evaluation.py', 'prompt_lab/contracts.py', 'prompt_lab/local_models.py', 'recommendation_blocks.py')}),
         'configs': configs,
         'steps': [values(row) for row in db.query(models.GuidedStep).filter_by(questionnaire_type='QSA').order_by(models.GuidedStep.id)],
         'factors': [values(row) for row in db.query(models.Factor).filter_by(instrument_code='QSA').order_by(models.Factor.id)],
@@ -106,7 +107,9 @@ def render(snapshot, case, prompt):
         if case.get('message', '').strip():
             history.append({'role': 'user', 'content': case['message']})
         return {'system_prompt_final': prepared.system_prompt_final,
-                'full_message': prepared.full_message, 'history': history, 'profile_context': req.scores_context}
+                'full_message': prepared.full_message, 'history': history, 'profile_context': req.scores_context,
+                'context_data': ai.context_data,
+                'context_config': {key: ai.config[key] for key in ('model_context_levels', 'model_context_profiles', 'ollama_num_ctx') if key in ai.config}}
 
 
 def coverage_blockers(snapshot, payload):

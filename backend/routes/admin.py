@@ -1123,6 +1123,16 @@ async def export_logs(
     )
 
 
+@router.get("/admin/model-context-levels")
+def get_model_context_levels(current_user: dict = Depends(auth.get_current_active_admin),
+                             db: Session = Depends(get_db)):
+    from ..model_context import context_levels
+    values = {row.key: row.value for row in db.query(models.Config).filter(
+        models.Config.key.in_(["model_context_profiles", "model_context_levels"])
+    ).all()}
+    return {"levels": context_levels(values), "profiles": json.loads(values.get("model_context_profiles") or "{}")}
+
+
 @router.get("/admin/config", response_model=List[schemas.ConfigResponse])
 async def read_config(current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     # Secrets have a dedicated masked endpoint and must never reach the browser.
@@ -1145,9 +1155,22 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
         )
     if config.key in {'external_pii_redact', 'external_pii_fallback', 'pii_ner_enabled', 'pii_ner_model'} and not current_user.get('is_admin'):
         raise HTTPException(403, 'Accesso riservato agli amministratori')
-    from ..model_context import validate_routing_config
+    from ..model_context import context_levels, validate_routing_config
     try:
         validate_routing_config(config.key, config.value)
+        if config.key in {"model_context_profiles", "model_context_levels"}:
+            # Both Config rows form one contract, including first insertions.
+            # Serialize saves so concurrent requests cannot create dangling levels.
+            if db.get_bind().dialect.name == "postgresql":
+                db.execute(sa_text("SELECT pg_advisory_xact_lock(:key)"), {"key": 73051005})
+            values = {row.key: row.value for row in db.query(models.Config).filter(
+                models.Config.key.in_(["model_context_profiles", "model_context_levels"])
+            ).all()}
+            values[config.key] = config.value
+            levels = context_levels(values)
+            profiles = json.loads(values.get("model_context_profiles") or "{}")
+            if any(profile.get("level") and profile["level"] not in levels for profile in profiles.values()):
+                raise ValueError("Un modello usa un livello inesistente: aggiorna prima la sua assegnazione.")
     except (ValueError, TypeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     # Coordinate even an unchanged-text ownership claim with factory alignment.

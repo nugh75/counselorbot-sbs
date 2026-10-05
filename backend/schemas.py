@@ -127,6 +127,7 @@ class LogResponse(LogBase):
 
 
 class PromptAuditRequest(BaseModel):
+    model_preset_id: Optional[int] = Field(default=None, gt=0)
     config_overrides: Optional[Dict[str, str]] = None
     step_mode_override: Optional[str] = None
     questionnaire_type: Optional[str] = None
