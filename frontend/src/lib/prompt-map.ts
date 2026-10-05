@@ -11,6 +11,8 @@ export interface PromptMapUser {
     instrument: string;
     step_id: string;
     label: string;
+    label_i18n?: Record<string, string>;
+    fixed?: boolean;
 }
 
 export interface PromptMapCounselor {
@@ -97,6 +99,12 @@ export function badgeFor(entry: Pick<PromptMapEntry, 'destination' | 'when'>): P
 /** Una voce usata da più strumenti o da più step chiede conferma prima del salvataggio. */
 export function needsSharedConfirm(entry: PromptMapEntry): boolean {
     return entry.level === 'group' || entry.used_by.instruments.length > 1 || entry.used_by.steps.length > 1;
+}
+
+/** Step che usano la voce, raggruppati per strumento nell'ordine di `used_by.instruments`. */
+export function stepsByInstrument(entry: PromptMapEntry): { instrument: string; steps: PromptMapUser[] }[] {
+    const { instruments, steps } = entry.used_by;
+    return instruments.map(instrument => ({ instrument, steps: steps.filter(step => step.instrument === instrument) }));
 }
 
 export function entryAnchor(key: string): string {
