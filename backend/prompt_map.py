@@ -8,7 +8,8 @@ funzioni della chat (`chat_logic`, `routes.chat.guided_phase_text_keys`), non
 con liste cablate.
 
 Sola lettura: nessuna scrittura su `configs`, `guided_steps` o revisioni. Ogni
-voce indica l'endpoint esistente che la salva.
+voce indica l'endpoint esistente che la salva (anche le domande suggerite, con
+le API di `guided_step_questions`).
 """
 from __future__ import annotations
 
@@ -231,7 +232,7 @@ def _step_field(step, field: str, destination: str, when: str, value) -> dict:
     return entry
 
 
-def _questions_entry(instrument: str, step_id: str, rows: list) -> dict:
+def _questions_entry(instrument: str, step_id: str, label: str, rows: list) -> dict:
     by_lang: dict[str, list[str]] = defaultdict(list)
     for row in rows:
         by_lang[row.language].append(row.text)
@@ -246,9 +247,14 @@ def _questions_entry(instrument: str, step_id: str, rows: list) -> dict:
         "value": dict(by_lang),
         "stored": bool(rows),
         "shared": False,
-        "used_by": {"instruments": [instrument], "steps": [{"instrument": instrument, "step_id": step_id, "label": step_id}]},
-        "editor": {"method": "PUT", "path": "/admin/guided-step-questions/{id}", "panel": "guided-step-questions"},
-        "read_only": True,
+        "used_by": {"instruments": [instrument], "steps": [{"instrument": instrument, "step_id": step_id, "label": label}]},
+        # Popup della mappa: elenco, aggiunta, modifica, eliminazione e ordine con
+        # le API di /admin/guided-step-questions (la stessa tabella della scheda dedicata).
+        "editor": {
+            "method": "POST", "path": "/admin/guided-step-questions", "panel": "guided-step-questions",
+            "questionnaire_type": instrument, "step_id": step_id,
+        },
+        "read_only": False,
     }
 
 
@@ -345,8 +351,9 @@ def build_prompt_map(db, instrument: str) -> dict | None:
             _step_field(step, "label", DEST_STUDENT, WHEN_STUDENT, step.label),
             _step_field(step, "color_theme", DEST_STUDENT, WHEN_STUDENT, step.color_theme),
             _step_field(step, "prompt", DEST_MODEL, WHEN_ENTRY, step.prompt),
-            *step_entries.get(step.id, []),
-            _questions_entry(instrument, step.id, questions_by_step.get(step.id, [])),
+            # Il contesto subito dopo i campi dello step: decide cosa riceve il modello.
+            *sorted(step_entries.get(step.id, []), key=lambda e: e["role"] != "components"),
+            _questions_entry(instrument, step.id, step.label, questions_by_step.get(step.id, [])),
         ]
         refs = list(step_refs.get(step.id, []))
         if not any(e["role"] == "meta_step" for e in entries):
@@ -369,7 +376,8 @@ def build_prompt_map(db, instrument: str) -> dict | None:
     for phase in (QUESTIONS_PHASE, CONCLUSION_PHASE):
         entries = list(step_entries.get(phase, []))
         if phase == QUESTIONS_PHASE:
-            entries.append(_questions_entry(instrument, FIXED_QUESTIONS_STEP_ID, questions_by_step.get(FIXED_QUESTIONS_STEP_ID, [])))
+            entries.append(_questions_entry(instrument, FIXED_QUESTIONS_STEP_ID, phase,
+                                            questions_by_step.get(FIXED_QUESTIONS_STEP_ID, [])))
         steps_out.append({
             "id": phase,
             "label": phase,

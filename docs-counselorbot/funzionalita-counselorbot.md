@@ -613,7 +613,10 @@ blocco, subito sotto.
 (`/admin?section=prompt-map&instrument=QSA`) mostra tutti i testi che una chat
 guidata usa, dal comune al particolare, e permette di modificarli sul posto.
 Si sceglie lo strumento (tutti quelli con step guidati, Idea compresa); la pagina
-ha quattro livelli:
+ha quattro livelli, ciascuno apribile e richiudibile dalla propria intestazione,
+senza un menu laterale. Comune e Gruppi partono chiusi; Strumento e Step sono
+aperti, con il primo step espanso. La scelta delle sezioni aperte viene conservata
+nel browser per la mappa; «vai» apre anche la sezione di destinazione.
 
 1. **Comune a tutte le chat guidate**: la persona del counselor (sola lettura;
    «Modifica» apre un riquadro che salva con la stessa funzione del tab Counselor,
@@ -629,9 +632,33 @@ ha quattro livelli:
    testi delle fasi Domande e Conclusione e prompt di sistema condivisi da più step.
 4. **Step**, in ordine di percorso con le fasi fisse Domande e Conclusione: nome
    nelle sei lingue, colore, istruzione dello step, prompt di sistema proprio dello
-   step, meta prompt dello step se sovrascrive quello dello strumento, componenti
-   del contesto, note per la fase, domande suggerite (si modificano nella scheda
-   Domande suggerite step) e anteprima.
+   step, meta prompt dello step se sovrascrive quello dello strumento, note per la
+   fase, domande suggerite e anteprima. I componenti del contesto compaiono subito
+   dopo nome, colore e istruzione dello step. Anche ogni step è apribile e
+   richiudibile dalla sua intestazione.
+
+«Modifica domande» apre un popup dello step con le sei lingue: permette di
+aggiungere, modificare, eliminare con conferma e spostare le domande suggerite,
+con gli stessi dati della scheda Domande suggerite step. Ogni comando salva
+esplicitamente; una bozza non salvata chiede conferma prima di essere abbandonata.
+
+Nel livello Step, «Aggiungi step» chiede nome, identificativo, tipo, istruzione
+facoltativa e posizione (in fondo o prima di uno step). Le frecce spostano uno
+step nel percorso dello strumento. Su mobile i comandi stanno su una riga
+separata, sotto il titolo e il conteggio dello step. Domande e Conclusione sono
+fasi fisse, senza
+comandi di spostamento o eliminazione; dalla mappa non si può eliminare l’unico
+step rimasto dello strumento. Per eliminare uno step si apre una conferma con
+il numero delle sessioni e dei messaggi registrati che lo usano e l’elenco degli
+identificativi delle sessioni, con il numero di messaggi di ciascuna. L’uso è
+ricavato dai log conservati dello stesso strumento e della stessa fase: non
+ricostruisce sessioni prive di log o già rimosse dalla conservazione. Se l’uso
+non è leggibile, l’eliminazione resta bloccata. Occorre digitare l’identificativo
+esatto dello step e premere «Elimina step». Configurazioni dei prompt, storico
+delle revisioni, trascrizioni e domande suggerite restano conservati; le domande
+dello step eliminato non sono più proposte nel percorso. Se la creazione riesce
+ma il posizionamento fallisce, lo step resta in fondo e un avviso invita a
+riprovare con le frecce.
 
 Ogni testo si modifica in un solo posto, al livello a cui appartiene; agli step
 compare **ereditato**, in grigio, con il collegamento «vai» al livello giusto.

@@ -1430,6 +1430,36 @@ async def admin_delete_guided_step(step_id: str, current_user: models.User = Dep
     return {"status": "success", "message": f"Step '{step_id}' deleted"}
 
 
+@router.get("/admin/guided-steps/{step_id}/usage")
+async def admin_guided_step_usage(step_id: str, current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
+    """Uso dello step da parte degli studenti, in sola lettura (conferma di eliminazione).
+
+    Le trascrizioni sono le righe di `logs` con lo strumento e la fase dello step;
+    le domande suggerite restano in tabella anche dopo l'eliminazione.
+    """
+    db_step = db.query(models.GuidedStep).filter(models.GuidedStep.id == step_id).first()
+    if not db_step:
+        raise HTTPException(status_code=404, detail="Step not found")
+    logs = db.query(models.Log).filter(
+        models.Log.questionnaire_type == db_step.questionnaire_type, models.Log.phase == step_id,
+    )
+    sessions = logs.filter(models.Log.session_id.isnot(None)).with_entities(
+        models.Log.session_id, func.count(models.Log.id).label("messages"),
+    ).group_by(models.Log.session_id).order_by(models.Log.session_id).all()
+    questions = db.query(models.GuidedStepQuestion).filter(
+        models.GuidedStepQuestion.questionnaire_type == db_step.questionnaire_type,
+        models.GuidedStepQuestion.step_id == step_id,
+    ).count()
+    return {
+        "step_id": step_id,
+        "questionnaire_type": db_step.questionnaire_type,
+        "sessions": len(sessions),
+        "session_details": [{"session_id": session.session_id, "messages": session.messages} for session in sessions],
+        "messages": logs.count(),
+        "suggested_questions": questions,
+    }
+
+
 @router.patch("/admin/guided-steps/reorder")
 async def admin_reorder_guided_steps(items: List[schemas.ReorderItem], current_user: models.User = Depends(auth.get_current_active_admin), db: Session = Depends(get_db)):
     for item in items:

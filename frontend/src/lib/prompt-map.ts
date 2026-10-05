@@ -36,7 +36,7 @@ export interface PromptMapEntry {
     default?: string | null;
     shared: boolean;
     used_by: { instruments: string[]; steps: PromptMapUser[] };
-    editor: { method: string; path: string; field?: string; panel?: string };
+    editor: { method: string; path: string; field?: string; panel?: string; questionnaire_type?: string; step_id?: string };
     read_only: boolean;
     translations?: Record<string, string>;
     effective?: Record<string, unknown>;
@@ -119,6 +119,34 @@ export function stepAnchor(stepId: string): string {
     return `pm-step-${stepId.replace(/[^A-Za-z0-9_-]+/g, '-')}`;
 }
 
+/** Id di una sezione collassabile: un livello o uno step di uno strumento. */
+export function levelSection(level: PromptMapLevel): string {
+    return `level:${level}`;
+}
+
+export function stepSection(instrument: string, stepId: string): string {
+    return `step:${instrument}:${stepId}`;
+}
+
+/**
+ * Apertura iniziale: Comune e Gruppi chiusi (lunghi e di rado toccati),
+ * Strumento e Step aperti, degli step solo il primo.
+ */
+export function sectionDefaultOpen(map: PromptMap, section: string): boolean {
+    if (section === levelSection('common') || section === levelSection('group')) return false;
+    if (section.startsWith('level:')) return true;
+    const first = map.levels.steps[0];
+    return !!first && section === stepSection(map.instrument, first.id);
+}
+
+/** Sezioni da aprire per mostrare una voce: il suo livello e, se appartiene a uno step, lo step. */
+export function sectionsForEntry(map: PromptMap, key: string): string[] {
+    const owner = map.levels.steps.find(step => step.entries.some(entry => entry.key === key));
+    if (owner) return [levelSection('step'), stepSection(map.instrument, owner.id)];
+    const entry = findEntry(map, key);
+    return entry ? [levelSection(entry.level)] : [];
+}
+
 /** Voce a cui punta un riferimento ereditato, cercata nei livelli superiori. */
 export function findEntry(map: PromptMap, key: string): PromptMapEntry | undefined {
     const { common, groups, instrument, steps } = map.levels;
@@ -186,4 +214,38 @@ export function componentsValue(stored: unknown, flags: Record<string, boolean>)
 
 export function booleanFlags(effective: Record<string, unknown> | undefined): Record<string, boolean> {
     return Object.fromEntries(Object.entries(effective ?? {}).filter(([, value]) => typeof value === 'boolean')) as Record<string, boolean>;
+}
+
+/** Lista con l'elemento `from` spostato in `to`; spostamenti fuori dalla lista non cambiano nulla. */
+export function moveItem<T>(items: T[], from: number, to: number): T[] {
+    if (from < 0 || from >= items.length || to < 0 || to >= items.length || from === to) return [...items];
+    const next = [...items];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    return next;
+}
+
+export interface SortOrderItem<Id = string | number> {
+    id: Id;
+    sort_order: number;
+}
+
+/**
+ * `sort_order` per una lista già nel nuovo ordine: riusa i valori che la lista
+ * aveva (in ordine crescente), così gli altri elementi non si muovono; con valori
+ * ripetuti rinumera 0..n-1. Restituisce solo gli elementi che cambiano.
+ */
+export function sortOrderChanges<Id>(ordered: SortOrderItem<Id>[]): SortOrderItem<Id>[] {
+    let slots = ordered.map(item => item.sort_order).sort((a, b) => a - b);
+    if (new Set(slots).size !== slots.length) slots = ordered.map((_, index) => index);
+    return ordered.flatMap((item, index) => (item.sort_order === slots[index] ? [] : [{ id: item.id, sort_order: slots[index] }]));
+}
+
+/**
+ * Id di un nuovo step come lo normalizza la vista classica: minuscole, cifre e
+ * trattini. Durante la digitazione (`final = false`) i trattini finali restano.
+ */
+export function normalizeStepId(value: string, final = true): string {
+    const id = value.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    return final ? id.replace(/^-+|-+$/g, '') : id;
 }
