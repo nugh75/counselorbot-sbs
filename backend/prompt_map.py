@@ -21,6 +21,7 @@ from .chat_logic import (
     guided_step_follow_up_mode,
     guided_step_system_prompt_key,
     _system_prompt_key,
+    get_prompt_component_flags,
     prompt_component_config_key,
     prompt_meta_config_key,
 )
@@ -60,6 +61,7 @@ CONCLUSION_PHASE = "conclusion"
 _CONFIG_EDITOR = {"method": "POST", "path": "/admin/config"}
 _DEFAULTS = {item["key"]: item.get("default", "") for item in ALL_CONFIG_TEXT_DEFINITIONS}
 _DEFINITION_LABELS = {item["key"]: item.get("label", "") for item in ALL_CONFIG_TEXT_DEFINITIONS}
+_DESCRIPTIONS = {item["key"]: item.get("description", "") for item in ALL_CONFIG_TEXT_DEFINITIONS}
 _PHASE_TEXT_ROLE = {
     "label_guided_questions": ("phase_label", QUESTIONS_PHASE),
     "text_guided_questions_phase_banner": ("phase_banner", QUESTIONS_PHASE),
@@ -169,6 +171,8 @@ def _config_entry(key: str, uses: list[_Use], level: str, configs: dict, step_la
         "destination": first.destination,
         "when": first.when if len(when) == 1 else WHEN_EVERY_TURN,
         "label": _DEFINITION_LABELS.get(key, ""),
+        # Descrizione della riga: il salvataggio (POST /admin/config) la riscrive.
+        "description": row.description if row is not None and row.description else _DESCRIPTIONS.get(key, ""),
         "value": row.value if row is not None and row.value is not None else _DEFAULTS.get(key, ""),
         "stored": row is not None,
         "default": _DEFAULTS.get(key),
@@ -301,6 +305,9 @@ def build_prompt_map(db, instrument: str) -> dict | None:
         level = _level(uses, all_instruments)
         level_of[key] = level
         entry = _config_entry(key, uses, level, configs, step_labels)
+        if uses[0].role == "components":
+            # Flag effettivi come li calcola la chat (default di codice + override salvato).
+            entry["effective"] = get_prompt_component_flags(db, instrument, uses[0].step_id)
         if level == LEVEL_COMMON:
             common.append(entry)
         elif level == LEVEL_GROUP:
@@ -337,7 +344,9 @@ def build_prompt_map(db, instrument: str) -> dict | None:
         ]
         refs = list(step_refs.get(step.id, []))
         if not any(e["role"] == "meta_step" for e in entries):
-            refs.append({"key": meta_key, "level": level_of[meta_key], "role": "meta", "when": WHEN_EVERY_TURN})
+            refs.append({"key": meta_key, "level": level_of[meta_key], "role": "meta", "when": WHEN_EVERY_TURN,
+                         # Chiave che sovrascrive il meta prompt solo per questo step.
+                         "override_key": prompt_meta_config_key(instrument, step.id)})
         steps_out.append({
             "id": step.id,
             "label": step.label,
