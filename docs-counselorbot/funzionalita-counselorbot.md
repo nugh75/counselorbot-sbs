@@ -618,6 +618,26 @@ senza un menu laterale. Comune e Gruppi partono chiusi; Strumento e Step sono
 aperti, con il primo step espanso. La scelta delle sezioni aperte viene conservata
 nel browser per la mappa; «vai» apre anche la sezione di destinazione.
 
+Ogni testo e la sua bozza mostrano il numero stimato di token, compresi persona
+del counselor e domande suggerite. I prompt di sistema hanno una voce separata
+per la variante breve, scritta dall'amministratore e inizialmente vuota;
+salvarla non cambia il prompt normale e conserva la conferma per testi condivisi.
+
+In **Generale → Contesto per modello**, l'amministratore può rinominare e
+aggiungere livelli, modificare i tetti dei componenti e assegnare un livello
+a un nome esatto di provider/modello. Totale, Ristretto e Minimo sono i livelli
+iniziali. Salvataggio dei livelli e delle assegnazioni è esplicito; un errore
+conserva la bozza. Nessun modello riceve un livello automaticamente. Lo step
+mantiene la precedenza per i componenti esclusi; il messaggio corrente e i
+contratti obbligatori sono conservati. Configurazione, stime e limiti della
+verifica automatica: `docs/operations/model-context-levels.md`.
+
+Prompt Lab conserva negli snapshot questi livelli e le assegnazioni e adatta
+ogni prova al modello scelto. Il risultato conserva il rapporto dei token del
+contesto effettivamente inviato. Un conteggio minore non dimostra una risposta
+migliore: la verifica automatica richiede lettura educativa dei risultati e
+non attiva configurazioni o prompt.
+
 1. **Comune a tutte le chat guidate**: la persona del counselor (sola lettura;
    «Modifica» apre un riquadro che salva con la stessa funzione del tab Counselor,
    con il suo storico), le sei direttive globali e i testi usati da ogni strumento,
@@ -702,6 +722,8 @@ preparati, la provenienza disponibile e componenti esclusi o senza contenuto;
 simulato dopo l’adattamento alla capacità del modello. Sono disponibili ricerca,
 copia e il rapporto di riduzione del contesto. Le selezioni dei componenti nella
 scheda Prompt per step richiedono un salvataggio esplicito.
+Si può scegliere un preset di modello attivo e vedere token per blocco, totale
+e budget di ingresso; la capacità non configurata rimane sconosciuta.
 
 È una simulazione amministrativa, non la registrazione della richiesta inviata
 al provider: non esegue chiamate LLM, recuperi esterni o handler delle skill.

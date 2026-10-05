@@ -92,6 +92,8 @@ class LocalModels:
             messages.append({"role": "user", "content": user or ""})
 
         options: dict[str, Any] = {}
+        if preset.get("context_tokens"):
+            options["num_ctx"] = int(preset["context_tokens"])
         if preset.get("temperature") is not None:
             options["temperature"] = preset["temperature"]
         if preset.get("max_tokens"):

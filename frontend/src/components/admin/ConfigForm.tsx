@@ -13,6 +13,7 @@ import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admin/PromptRequestPreview';
 import { PromptFactoryAlignment, type FactoryAlignmentResult } from '@/components/admin/PromptFactoryAlignment';
 import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
+import { ModelContextSettings } from '@/components/admin/ModelContextSettings';
 import { AI4EDUC_SECRETS_URL } from '@/lib/auth';
 import { SectionFilter, type SectionFilterGroup } from '@/components/admin/SectionFilter';
 import { PromptMap, writeInstrumentParam } from '@/components/admin/PromptMap';
@@ -1857,7 +1858,6 @@ export function ConfigForm() {
                 <p className="text-sm text-slate-600">{t('admin.routing.help')}</p>
                 {[
                     ['ai_fallback_targets', 'admin.routing.targets', '[]'],
-                    ['model_context_profiles', 'admin.routing.context', '{}'],
                     ['ai_timeout_seconds', 'admin.routing.timeout', '120'],
                 ].map(([key, label, fallback]) => (
                     <div key={key} className="space-y-2">
@@ -1874,6 +1874,7 @@ export function ConfigForm() {
                 <p className="text-xs text-slate-500">{t('admin.routing.example')}</p>
                 <code className="block overflow-x-auto text-xs text-slate-700">{'[{"provider":"openrouter","model":"openrouter/free"},{"provider":"omniroute","model":"auto/best-chat"}]'}</code>
                 <code className="block overflow-x-auto text-xs text-slate-700">{'{"ollama/qwen3.8:latest":{"context_tokens":16384,"input_tokens":8000,"compact":true}}'}</code>
+                <ModelContextSettings />
             </div>
 
             {/* 1bis. Funzioni */}

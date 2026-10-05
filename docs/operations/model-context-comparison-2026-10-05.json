@@ -1,0 +1,6188 @@
+{
+  "version": 1,
+  "synthetic": true,
+  "calibrated": true,
+  "model_digests": {
+    "gemma3:1b": "8648f39daa8fbf5b18c7b4e6a8fb4990c692751d49917417b8842ca5758e7ffc",
+    "qwen3.8:27B": "22130167c4c20e20c7b71454612966ca8e8171e9b3cc8ab6ce8aa6cbfec79643"
+  },
+  "model_identity_stable": true,
+  "records": [
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4490,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4490,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 437,
+          "instructions_and_contracts": 2137,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "98dab92f1f095300bd9a2424f9cfd3420d6f548a209425c53f8322c912d2e1c5"
+    },
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3953,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4490,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2137,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "4ee1d696c1bbe44a96daed8074e5cf7dc7b874703b6a9f257704c8f2d957e92b"
+    },
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-funzionato",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3713,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3713,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 437,
+          "knowledge": 57,
+          "instructions_and_contracts": 1823,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "5c6b871b1bb6910395145919c05c8af26dd1fe2143e236f691516d9ff9aa991f"
+    },
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-funzionato",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3176,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3713,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1823,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "e7e0b03dadf0cbc05f661fa3cd813e226e2bdfdb50738d971ace2e0f412ddd8b"
+    },
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-final",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4294,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4294,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 437,
+          "knowledge": 57,
+          "instructions_and_contracts": 2404,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "8f494bfbb0a5ca5d5800298b066003143cc93ca515dedbe54d8d73b7e9f9b3a8"
+    },
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-final",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3758,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4294,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2405,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "4274b91b064b8cef49eb110898b9f05ce6452202b3eda5f74aedcd701860f0b3"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4494,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4494,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 437,
+          "instructions_and_contracts": 2141,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "b4fa528f928d3b24f05d623dc4019dcda199dc9741db55a7dd20818acb86e8c9"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3958,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4494,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2142,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "694b0febd3503512685a7b5166fd63a4f9e3fa565182b1247ed270c630a07af6"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-funzionato",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3710,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3710,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 437,
+          "knowledge": 57,
+          "instructions_and_contracts": 1820,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "db5919209d1e9ec046ab8ef35efa5edeb0e3fbde84a3c20467f299c77ac5f784"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-funzionato",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3173,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3710,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1820,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "e513eebaff4bfb89da49385bfa940751687b9a4d44438ee35234cd3baac51bee"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-final",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4291,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4291,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 437,
+          "knowledge": 57,
+          "instructions_and_contracts": 2401,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "bc0e0e3bb305c510ab40d8dba48bf2136f3e3fbbed20076f864c7368827641ba"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-final",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3754,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4291,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2401,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "61133bd93b06880945a752c4f50f4a35f27209be3261a21e29f2e990f33509c3"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 5221,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 5221,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3061,
+          "current_message": 195,
+          "history": 300
+        }
+      },
+      "input_hash": "6c141b1979e6ac74224ce5fa486b82c95d4f0890c907501ca1660db6d44a8e28"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 5121,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 5221,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3061,
+          "current_message": 195,
+          "history": 200
+        }
+      },
+      "input_hash": "22e1cecc9259ff18217cd68d10e2c90fa22588111166f4a0f7d62dae2ccd16c2"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-alternatives",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4603,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4603,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3017,
+          "current_message": 141,
+          "history": 300
+        }
+      },
+      "input_hash": "da1414faa2bad445ca6faa6d4f14027dd60ab03a9f21a42b224f469c63474528"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-alternatives",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4503,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4603,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3017,
+          "current_message": 141,
+          "history": 200
+        }
+      },
+      "input_hash": "31e51a46b4288f7ce5f0683ac4cb906aa3743c7c586036b76703abcd56f55156"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-synthesis",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4961,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4961,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3331,
+          "current_message": 185,
+          "history": 300
+        }
+      },
+      "input_hash": "37f551a3f8ee3c93ac3582dd14e440a3a615fce2dd75bfc95d792417ef7e29b2"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-synthesis",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4861,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4961,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3331,
+          "current_message": 185,
+          "history": 200
+        }
+      },
+      "input_hash": "afc6dfd28c06594b03d46ffb22fe86430b7710a1fe1c4645703d50e718feb3d1"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4114,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4114,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2198,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "2ae4740155452f60a9b34fef4d01761b5600b93836affcb6f3227d729118cf38"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4014,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4114,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2198,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "859711845a75a0d569d3a2e926d2740cac8cbcd89659e0aafb88c3c61418872f"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-smart",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3449,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3449,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1996,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "22c05e8df4b5062e63d48b58d91e746fd74d3b3595efcd5251aa9f6bed5582d5"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-smart",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3349,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3449,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1996,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1e55013cd42190c055e4a9f892cbcf81defbe27d791b38a92459ccb774fe88ee"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-final",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4362,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4362,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2909,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "3cef7dc8c498820a774f4b49aca43f724d7ffaa6cb9d1f4942b9e6808d5a34e1"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-final",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4262,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4362,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2909,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "9b3c13105484e17d368671600bb8b1be78304ac69167db46a48140e374dda829"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4106,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4106,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2190,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "e9b325bc52c24b4ff7bfac091a54646fa418742602a92dc662fcef5e4eb9631a"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4006,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4106,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2190,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "dd798f05748202ef2816358407cb0fe41a26e91bfd404bc64cbadc26ce9d0aea"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-smart",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3447,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3447,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1994,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "939b9b99c7050eb5324ccf6d547ae1843a98c3a99c700150ffa2e5ef7b9f8ae8"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-smart",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3347,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3447,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1994,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1dd1a140aa7ce157921bd9024929768fe39b980b242fc4bc0a230dbc1e0ea90f"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-final",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4232,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4232,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2779,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "6e18b2268325307ab5b7625026e6fb0709c8c9ea1fc79803d7d0f9ec3ef82b5c"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-final",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4132,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4232,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2779,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "6b9c610c04e39d3ecc129de9da4284c68e822ce7cfa3713ac745b91f9776438f"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4352,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4352,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 430,
+          "instructions_and_contracts": 2006,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "f30fbc45f8ac7b6fada7965a431653d14a182302df043a08194090207bb6d3da"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3821,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4352,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2005,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "112ff8b63bbf50a2d3f9d8996f5b4f508a19ddbea0f01f86ea4892aadda352af"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-controllo",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3765,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3765,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 1882,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "73b6df8babb75560086292dc041270c796ae8e2ba4c3224ad780dac5d9712ca4"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-controllo",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3235,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3765,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1882,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "d36da451b2c093d97814a15678998ee3db20d58e78cb7996dbb145ba4fa61ec7"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-sintesi",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3823,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3823,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 1940,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "fa16c1b3ec222e148feb9f4318e46b889f0bf3a040da12942eb8028a88c28806"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-sintesi",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3293,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3823,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1940,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "040bd8981ce87b4eb41b6593c18d16fa4353a3eaa32bd8b36d1f7130462fd987"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4339,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4339,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 430,
+          "instructions_and_contracts": 1993,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "68d689674904bde43c3bb54fe1846775a18e94aba967514ce6a7ce694d77044d"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3808,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4339,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 1992,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "3b33c5b0292139e3e4ff7dafa2198f67af9a3b6c338fce2cc220aed3e5b364a7"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-volizione",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3830,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3830,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 1947,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "7a64bd917a482422492e079dce11671784d8b186201867a272cab1829cc95167"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-volizione",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3300,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3830,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1947,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "fc1efd26b2dff52e50c2141a57c2a3886d77d43ad18b0f36ae7fcb938d59282b"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-sintesi",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3820,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3820,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 1937,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "b0c3b62ea697ae68e8ceaf9cf8da7eda0baa434d4abc5a311d13ede6210e6035"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-sintesi",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3290,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3820,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1937,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "2042d027cc4573e35fb0894831eccc49dab2c774bccf4ec820947badb700f34d"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 5020,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 5020,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 430,
+          "instructions_and_contracts": 2254,
+          "current_message": 428,
+          "history": 300
+        }
+      },
+      "input_hash": "74674d64304b5ebc90eaf083d2f9079b07dc9e953c14026caf459f0fd69e9990"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4490,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 5020,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2254,
+          "current_message": 428,
+          "history": 200
+        }
+      },
+      "input_hash": "42935c6acf923554d4e8d2adaacd8462e41bd34e16b8eb82a610152a02e0748e"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-volizione",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4543,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4543,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 2459,
+          "current_message": 209,
+          "history": 300
+        }
+      },
+      "input_hash": "fe07ea505e9f32df8fef2a07eb4eb4dd691b02a1ab896b5d994297a3f4a5c769"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-volizione",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4012,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4543,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2458,
+          "current_message": 209,
+          "history": 200
+        }
+      },
+      "input_hash": "d8decd7327644157e3dc1bcbc09604fa96ff558423833c6cf2c85ca1f0d07cdf"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-sintesi",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4268,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4268,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 2135,
+          "current_message": 258,
+          "history": 300
+        }
+      },
+      "input_hash": "876f24a74b581d7d6966d06fafb3cd66dc026b204ab09d9de88a51f29ce0431b"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-sintesi",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3738,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4268,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2135,
+          "current_message": 258,
+          "history": 200
+        }
+      },
+      "input_hash": "08e57b517bd5766571028e3662203c1b580b28f7aaad9a6222b3fd1f3583ac30"
+    },
+    {
+      "instrument": "QSA",
+      "step": "intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4388,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4388,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 270,
+          "knowledge": 57,
+          "instructions_and_contracts": 2145,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "6ed4dd625dff43142979b00de870122b442a4ebaa34ba8dc3fa33624249d464f"
+    },
+    {
+      "instrument": "QSA",
+      "step": "intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4018,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4388,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2145,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1e9e340dc25582da525e128a3c4d4405b61d4709fc7e5446c23324c2a21e83f8"
+    },
+    {
+      "instrument": "QSA",
+      "step": "sl-motivation",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4725,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4725,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 436,
+          "knowledge": 57,
+          "instructions_and_contracts": 2836,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "1b67a116e16a9b55247a1b03a97b43e509a45f903f15a4b42587991195881ffc"
+    },
+    {
+      "instrument": "QSA",
+      "step": "sl-motivation",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4189,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4725,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2836,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "16fe5390d831e5b2e7ab15cdfc67bf917a57a0eb7f5b2407cc65fe6a8d2a901f"
+    },
+    {
+      "instrument": "QSA",
+      "step": "sl-synthesis",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 5797,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 5797,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 637,
+          "knowledge": 57,
+          "instructions_and_contracts": 3707,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "a1cc294ea1671ea7917f18486a1bdc4caf73de25b3abda1385e0eb5512a9668a"
+    },
+    {
+      "instrument": "QSA",
+      "step": "sl-synthesis",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 5061,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 5797,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3708,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1cf515d257b60e41fa8ef3b71076fd980519fe82cde7d729ba599c884954cda5"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4148,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4148,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 67,
+          "instructions_and_contracts": 2165,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "774cd212cd327eaa79806fabb9500000f80960250f9cba99ebb3e5ecf063f61d"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3980,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4148,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2164,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "f2a9a5e5e790427090469b44e138dd4422484812f8f3b423e52f465d31c3799f"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-selfcontrol",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3941,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3941,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 101,
+          "knowledge": 57,
+          "instructions_and_contracts": 2387,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "b43aa3775e09f93e7712571102b9a3e093ed038ff5deeda9f9694e2445742047"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-selfcontrol",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3740,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3941,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2387,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "a8e63ded7407d21ae46001d2da1307670ead2ddabe0cc015a7a404de59c98d88"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-synthesis",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4864,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4864,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 163,
+          "knowledge": 57,
+          "instructions_and_contracts": 3248,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "95f11550c12542d8382b4076d1f5cf9c8ea62298bb90bc612526da58fbea9bd7"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-synthesis",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4601,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4864,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3248,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "6efb2ba1893919a2a0c32e7a5632549ff1ab396b6b7d07c4608aab5abe16975a"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4230,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4230,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 270,
+          "instructions_and_contracts": 2044,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "7bc603ed4d15a828ff4e62ff1d7c2eaadba8b958a1fc466f3b1f970f395b4665"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3860,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4230,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2044,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1d779055f66ed8d13fa3b0d346ad4966c1fd6e91aa23fd3c27990c1c5ec43310"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-q3",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3652,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3652,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 471,
+          "knowledge": 57,
+          "instructions_and_contracts": 1728,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "d759504343e6d1a5136266c58c6957ee749b62b48c805a86215606320af36752"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-q3",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3081,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3652,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1728,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1f9d45a3b367bac22d4b127ff2cb4f619b592ad719f83de87d9549095d926a8d"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-final",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3961,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3961,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 537,
+          "knowledge": 57,
+          "instructions_and_contracts": 1971,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "3bbabd75498bb64f727ae0e87de32c80ec21e95664ebf8df52260d5ad26134f4"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-final",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3324,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3961,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1971,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "3673ba4c48d031eb78503dcd742e67b9f9f6fa71b3b837fcf73921e36704b81f"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-intro",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4286,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4286,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 270,
+          "instructions_and_contracts": 2100,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "2ee20afceedea1d025fbe43e66ed6ad3c7207ccac4dedeb8bf560409859f3622"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-intro",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3916,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4286,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2100,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "a75e99725e16c870deb70979ff635a01f8cb91d060dc79339bff9e344755a176"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-t3",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3890,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3890,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 459,
+          "knowledge": 57,
+          "instructions_and_contracts": 1978,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "06bc2d5f058b3a9c3283e0adb9dae386dd71d7f525efcc931574c344363da693"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-t3",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3331,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3890,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1978,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "5c1e6c952b2af97be59f80f0d3cc5b574517a9c5be09d80058bd34ddacd1afc6"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-btp",
+      "model": "qwen3.8:27B",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4017,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4017,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 204,
+          "knowledge": 57,
+          "instructions_and_contracts": 2360,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "cb7f8ee8d41f781862503ed85c1bafdad17e84cd103833c26593f6e7508dea2f"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-btp",
+      "model": "qwen3.8:27B",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3713,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4017,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2360,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "176a2acbcf42c68e1737117b57082e81649488cf3efdcf712af09a2a8d85672a"
+    },
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4490,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4490,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 437,
+          "instructions_and_contracts": 2137,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "98dab92f1f095300bd9a2424f9cfd3420d6f548a209425c53f8322c912d2e1c5"
+    },
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3953,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4490,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2137,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "4ee1d696c1bbe44a96daed8074e5cf7dc7b874703b6a9f257704c8f2d957e92b"
+    },
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-funzionato",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3713,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3713,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 437,
+          "knowledge": 57,
+          "instructions_and_contracts": 1823,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "5c6b871b1bb6910395145919c05c8af26dd1fe2143e236f691516d9ff9aa991f"
+    },
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-funzionato",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3176,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3713,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1823,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "e7e0b03dadf0cbc05f661fa3cd813e226e2bdfdb50738d971ace2e0f412ddd8b"
+    },
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-final",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4294,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4294,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 437,
+          "knowledge": 57,
+          "instructions_and_contracts": 2404,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "8f494bfbb0a5ca5d5800298b066003143cc93ca515dedbe54d8d73b7e9f9b3a8"
+    },
+    {
+      "instrument": "EVENTO_PROFESSIONALE",
+      "step": "evprof-final",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3758,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4294,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2405,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "4274b91b064b8cef49eb110898b9f05ce6452202b3eda5f74aedcd701860f0b3"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4494,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4494,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 437,
+          "instructions_and_contracts": 2141,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "b4fa528f928d3b24f05d623dc4019dcda199dc9741db55a7dd20818acb86e8c9"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3958,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4494,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2142,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "694b0febd3503512685a7b5166fd63a4f9e3fa565182b1247ed270c630a07af6"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-funzionato",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3710,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3710,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 437,
+          "knowledge": 57,
+          "instructions_and_contracts": 1820,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "db5919209d1e9ec046ab8ef35efa5edeb0e3fbde84a3c20467f299c77ac5f784"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-funzionato",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3173,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3710,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1820,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "e513eebaff4bfb89da49385bfa940751687b9a4d44438ee35234cd3baac51bee"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-final",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4291,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4291,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 437,
+          "knowledge": 57,
+          "instructions_and_contracts": 2401,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "bc0e0e3bb305c510ab40d8dba48bf2136f3e3fbbed20076f864c7368827641ba"
+    },
+    {
+      "instrument": "EVENTO_STUDIO",
+      "step": "evstudio-final",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3754,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4291,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2401,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "61133bd93b06880945a752c4f50f4a35f27209be3261a21e29f2e990f33509c3"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 5221,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 5221,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3061,
+          "current_message": 195,
+          "history": 300
+        }
+      },
+      "input_hash": "6c141b1979e6ac74224ce5fa486b82c95d4f0890c907501ca1660db6d44a8e28"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 5121,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 5221,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3061,
+          "current_message": 195,
+          "history": 200
+        }
+      },
+      "input_hash": "22e1cecc9259ff18217cd68d10e2c90fa22588111166f4a0f7d62dae2ccd16c2"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-alternatives",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4603,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4603,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3017,
+          "current_message": 141,
+          "history": 300
+        }
+      },
+      "input_hash": "da1414faa2bad445ca6faa6d4f14027dd60ab03a9f21a42b224f469c63474528"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-alternatives",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4503,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4603,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3017,
+          "current_message": 141,
+          "history": 200
+        }
+      },
+      "input_hash": "31e51a46b4288f7ce5f0683ac4cb906aa3743c7c586036b76703abcd56f55156"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-synthesis",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4961,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4961,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3331,
+          "current_message": 185,
+          "history": 300
+        }
+      },
+      "input_hash": "37f551a3f8ee3c93ac3582dd14e440a3a615fce2dd75bfc95d792417ef7e29b2"
+    },
+    {
+      "instrument": "IDEA",
+      "step": "idea-synthesis",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4861,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4961,
+        "prompt_variant": "normal",
+        "input_budget": 31056,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3331,
+          "current_message": 185,
+          "history": 200
+        }
+      },
+      "input_hash": "afc6dfd28c06594b03d46ffb22fe86430b7710a1fe1c4645703d50e718feb3d1"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4114,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4114,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2198,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "2ae4740155452f60a9b34fef4d01761b5600b93836affcb6f3227d729118cf38"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4014,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4114,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2198,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "859711845a75a0d569d3a2e926d2740cac8cbcd89659e0aafb88c3c61418872f"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-smart",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3449,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3449,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1996,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "22c05e8df4b5062e63d48b58d91e746fd74d3b3595efcd5251aa9f6bed5582d5"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-smart",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3349,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3449,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1996,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1e55013cd42190c055e4a9f892cbcf81defbe27d791b38a92459ccb774fe88ee"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-final",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4362,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4362,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2909,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "3cef7dc8c498820a774f4b49aca43f724d7ffaa6cb9d1f4942b9e6808d5a34e1"
+    },
+    {
+      "instrument": "OBIETTIVO_DOCENZA",
+      "step": "obbdocenza-final",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4262,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4362,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2909,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "9b3c13105484e17d368671600bb8b1be78304ac69167db46a48140e374dda829"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4106,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4106,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2190,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "e9b325bc52c24b4ff7bfac091a54646fa418742602a92dc662fcef5e4eb9631a"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4006,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4106,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2190,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "dd798f05748202ef2816358407cb0fe41a26e91bfd404bc64cbadc26ce9d0aea"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-smart",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3447,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3447,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1994,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "939b9b99c7050eb5324ccf6d547ae1843a98c3a99c700150ffa2e5ef7b9f8ae8"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-smart",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3347,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3447,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1994,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1dd1a140aa7ce157921bd9024929768fe39b980b242fc4bc0a230dbc1e0ea90f"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-final",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4232,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4232,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2779,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "6e18b2268325307ab5b7625026e6fb0709c8c9ea1fc79803d7d0f9ec3ef82b5c"
+    },
+    {
+      "instrument": "OBIETTIVO_STUDIO",
+      "step": "obbstudio-final",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4132,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4232,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2779,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "6b9c610c04e39d3ecc129de9da4284c68e822ce7cfa3713ac745b91f9776438f"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4352,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4352,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 430,
+          "instructions_and_contracts": 2006,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "f30fbc45f8ac7b6fada7965a431653d14a182302df043a08194090207bb6d3da"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3821,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4352,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2005,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "112ff8b63bbf50a2d3f9d8996f5b4f508a19ddbea0f01f86ea4892aadda352af"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-controllo",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3765,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3765,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 1882,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "73b6df8babb75560086292dc041270c796ae8e2ba4c3224ad780dac5d9712ca4"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-controllo",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3235,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3765,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1882,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "d36da451b2c093d97814a15678998ee3db20d58e78cb7996dbb145ba4fa61ec7"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-sintesi",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3823,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3823,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 1940,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "fa16c1b3ec222e148feb9f4318e46b889f0bf3a040da12942eb8028a88c28806"
+    },
+    {
+      "instrument": "QAP",
+      "step": "qap-sintesi",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3293,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3823,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1940,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "040bd8981ce87b4eb41b6593c18d16fa4353a3eaa32bd8b36d1f7130462fd987"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4339,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4339,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 430,
+          "instructions_and_contracts": 1993,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "68d689674904bde43c3bb54fe1846775a18e94aba967514ce6a7ce694d77044d"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3808,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4339,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 1992,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "3b33c5b0292139e3e4ff7dafa2198f67af9a3b6c338fce2cc220aed3e5b364a7"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-volizione",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3830,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3830,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 1947,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "7a64bd917a482422492e079dce11671784d8b186201867a272cab1829cc95167"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-volizione",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3300,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3830,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1947,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "fc1efd26b2dff52e50c2141a57c2a3886d77d43ad18b0f36ae7fcb938d59282b"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-sintesi",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3820,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3820,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 1937,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "b0c3b62ea697ae68e8ceaf9cf8da7eda0baa434d4abc5a311d13ede6210e6035"
+    },
+    {
+      "instrument": "QPCC",
+      "step": "qpcc-sintesi",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3290,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3820,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1937,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "2042d027cc4573e35fb0894831eccc49dab2c774bccf4ec820947badb700f34d"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 5020,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 5020,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 430,
+          "instructions_and_contracts": 2254,
+          "current_message": 428,
+          "history": 300
+        }
+      },
+      "input_hash": "74674d64304b5ebc90eaf083d2f9079b07dc9e953c14026caf459f0fd69e9990"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4490,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 5020,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2254,
+          "current_message": 428,
+          "history": 200
+        }
+      },
+      "input_hash": "42935c6acf923554d4e8d2adaacd8462e41bd34e16b8eb82a610152a02e0748e"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-volizione",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4543,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4543,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 2459,
+          "current_message": 209,
+          "history": 300
+        }
+      },
+      "input_hash": "fe07ea505e9f32df8fef2a07eb4eb4dd691b02a1ab896b5d994297a3f4a5c769"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-volizione",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4012,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4543,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2458,
+          "current_message": 209,
+          "history": 200
+        }
+      },
+      "input_hash": "d8decd7327644157e3dc1bcbc09604fa96ff558423833c6cf2c85ca1f0d07cdf"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-sintesi",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4268,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4268,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 430,
+          "knowledge": 57,
+          "instructions_and_contracts": 2135,
+          "current_message": 258,
+          "history": 300
+        }
+      },
+      "input_hash": "876f24a74b581d7d6966d06fafb3cd66dc026b204ab09d9de88a51f29ce0431b"
+    },
+    {
+      "instrument": "QPCS",
+      "step": "qpcs-sintesi",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": null,
+      "step_adherence": null,
+      "quality_status": "inconclusive",
+      "error": "ModelError",
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3738,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4268,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2135,
+          "current_message": 258,
+          "history": 200
+        }
+      },
+      "input_hash": "08e57b517bd5766571028e3662203c1b580b28f7aaad9a6222b3fd1f3583ac30"
+    },
+    {
+      "instrument": "QSA",
+      "step": "intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4388,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4388,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 270,
+          "knowledge": 57,
+          "instructions_and_contracts": 2145,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "6ed4dd625dff43142979b00de870122b442a4ebaa34ba8dc3fa33624249d464f"
+    },
+    {
+      "instrument": "QSA",
+      "step": "intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4018,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4388,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2145,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1e9e340dc25582da525e128a3c4d4405b61d4709fc7e5446c23324c2a21e83f8"
+    },
+    {
+      "instrument": "QSA",
+      "step": "sl-motivation",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4725,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4725,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 436,
+          "knowledge": 57,
+          "instructions_and_contracts": 2836,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "1b67a116e16a9b55247a1b03a97b43e509a45f903f15a4b42587991195881ffc"
+    },
+    {
+      "instrument": "QSA",
+      "step": "sl-motivation",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4189,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4725,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2836,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "16fe5390d831e5b2e7ab15cdfc67bf917a57a0eb7f5b2407cc65fe6a8d2a901f"
+    },
+    {
+      "instrument": "QSA",
+      "step": "sl-synthesis",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 5797,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 5797,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 637,
+          "knowledge": 57,
+          "instructions_and_contracts": 3707,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "a1cc294ea1671ea7917f18486a1bdc4caf73de25b3abda1385e0eb5512a9668a"
+    },
+    {
+      "instrument": "QSA",
+      "step": "sl-synthesis",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 5061,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 5797,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3708,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1cf515d257b60e41fa8ef3b71076fd980519fe82cde7d729ba599c884954cda5"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4148,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4148,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 67,
+          "instructions_and_contracts": 2165,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "774cd212cd327eaa79806fabb9500000f80960250f9cba99ebb3e5ecf063f61d"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3980,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4148,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2164,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "f2a9a5e5e790427090469b44e138dd4422484812f8f3b423e52f465d31c3799f"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-selfcontrol",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3941,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3941,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 101,
+          "knowledge": 57,
+          "instructions_and_contracts": 2387,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "b43aa3775e09f93e7712571102b9a3e093ed038ff5deeda9f9694e2445742047"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-selfcontrol",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3740,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3941,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2387,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "a8e63ded7407d21ae46001d2da1307670ead2ddabe0cc015a7a404de59c98d88"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-synthesis",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4864,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4864,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 163,
+          "knowledge": 57,
+          "instructions_and_contracts": 3248,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "95f11550c12542d8382b4076d1f5cf9c8ea62298bb90bc612526da58fbea9bd7"
+    },
+    {
+      "instrument": "QSAr",
+      "step": "qsar-synthesis",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4601,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4864,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 3248,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "6efb2ba1893919a2a0c32e7a5632549ff1ab396b6b7d07c4608aab5abe16975a"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4230,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4230,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 270,
+          "instructions_and_contracts": 2044,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "7bc603ed4d15a828ff4e62ff1d7c2eaadba8b958a1fc466f3b1f970f395b4665"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3860,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4230,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2044,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1d779055f66ed8d13fa3b0d346ad4966c1fd6e91aa23fd3c27990c1c5ec43310"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-q3",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "passed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3652,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3652,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 471,
+          "knowledge": 57,
+          "instructions_and_contracts": 1728,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "d759504343e6d1a5136266c58c6957ee749b62b48c805a86215606320af36752"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-q3",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3081,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3652,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1728,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "1f9d45a3b367bac22d4b127ff2cb4f619b592ad719f83de87d9549095d926a8d"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-final",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3961,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3961,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 537,
+          "knowledge": 57,
+          "instructions_and_contracts": 1971,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "3bbabd75498bb64f727ae0e87de32c80ec21e95664ebf8df52260d5ad26134f4"
+    },
+    {
+      "instrument": "SAVICKAS",
+      "step": "savickas-final",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3324,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3961,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1971,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "3673ba4c48d031eb78503dcd742e67b9f9f6fa71b3b837fcf73921e36704b81f"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-intro",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": false,
+      "step_adherence": true,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4286,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4286,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "meta": 270,
+          "instructions_and_contracts": 2100,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "2ee20afceedea1d025fbe43e66ed6ad3c7207ccac4dedeb8bf560409859f3622"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-intro",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": false,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3916,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4286,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1535,
+          "persona": 73,
+          "instructions_and_contracts": 2100,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "a75e99725e16c870deb70979ff635a01f8cb91d060dc79339bff9e344755a176"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-t3",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3890,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 3890,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 459,
+          "knowledge": 57,
+          "instructions_and_contracts": 1978,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "06bc2d5f058b3a9c3283e0adb9dae386dd71d7f525efcc931574c344363da693"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-t3",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3331,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 3890,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 1978,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "5c1e6c952b2af97be59f80f0d3cc5b574517a9c5be09d80058bd34ddacd1afc6"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-btp",
+      "model": "gemma3:1b",
+      "level": "totale",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [],
+        "history_messages_dropped": 0,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 4017,
+        "compact": false,
+        "level": "totale",
+        "limits": {
+          "label": "Totale",
+          "directives_tokens": null,
+          "persona_tokens": null,
+          "profile_tokens": null,
+          "knowledge_tokens": null,
+          "knowledge_top_n": null,
+          "history_turns": null,
+          "meta": true,
+          "short_prompt": false
+        },
+        "original_input_tokens": 4017,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "meta": 204,
+          "knowledge": 57,
+          "instructions_and_contracts": 2360,
+          "current_message": 8,
+          "history": 300
+        }
+      },
+      "input_hash": "cb7f8ee8d41f781862503ed85c1bafdad17e84cd103833c26593f6e7508dea2f"
+    },
+    {
+      "instrument": "ZTPI",
+      "step": "ztpi-btp",
+      "model": "gemma3:1b",
+      "level": "ristretto",
+      "invented_data": true,
+      "step_adherence": false,
+      "quality_status": "failed",
+      "error": null,
+      "context": {
+        "removed": [
+          "meta"
+        ],
+        "history_messages_dropped": 4,
+        "estimated": true,
+        "context_tokens": 32768,
+        "input_tokens": 3713,
+        "compact": false,
+        "level": "ristretto",
+        "limits": {
+          "label": "Ristretto",
+          "directives_tokens": null,
+          "persona_tokens": 400,
+          "profile_tokens": 1200,
+          "knowledge_tokens": 1800,
+          "knowledge_top_n": 3,
+          "history_turns": 4,
+          "meta": false,
+          "short_prompt": true
+        },
+        "original_input_tokens": 4017,
+        "prompt_variant": "normal",
+        "input_budget": 32256,
+        "blocks": {
+          "directives": 1015,
+          "persona": 73,
+          "knowledge": 57,
+          "instructions_and_contracts": 2360,
+          "current_message": 8,
+          "history": 200
+        }
+      },
+      "input_hash": "176a2acbcf42c68e1737117b57082e81649488cf3efdcf712af09a2a8d85672a"
+    }
+  ],
+  "limits": [
+    "Factory prompts only; no administrator short texts or production data.",
+    "Three steps per instrument, Italian only, synthetic history and absent scores.",
+    "Model judgment is technical evidence and requires human educational review."
+  ],
+  "report_kind": "synthetic_model_judgments_and_estimated_context"
+}

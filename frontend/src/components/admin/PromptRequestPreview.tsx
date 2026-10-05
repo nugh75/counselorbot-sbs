@@ -63,6 +63,13 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
     const languageLabel = { it: 'Lingua', en: 'Language', es: 'Idioma', fr: 'Langue', de: 'Sprache', sv: 'Språk' }[lang] || 'Language';
     const e = explanations[lang as keyof typeof explanations] || explanations.en;
     const [showSaved, setShowSaved] = useState(false);
+    const [presets, setPresets] = useState<{ id: number; name: string; provider: string; model: string; is_active: boolean }[]>([]);
+    const [modelPreset, setModelPreset] = useState('');
+    useEffect(() => {
+        let active = true;
+        fetch('/api/admin/presets').then(response => response.ok ? response.json() : []).then(data => { if (active) setPresets(data); }).catch(() => {});
+        return () => { active = false; };
+    }, []);
     const displayedStep = showSaved && savedStep ? savedStep : step;
     const displayedConfigs = showSaved && savedConfigs ? savedConfigs : configs;
     const hasDraft = savedStep && savedConfigs && (componentFlagsDirty || step.prompt !== savedStep.prompt || step.system_prompt_mode !== savedStep.system_prompt_mode || configs.some(c => (c.key.startsWith('prompt_') || c.key.startsWith('directive_')) && c.value !== (savedConfigs.find(s => s.key === c.key)?.value || '')));
@@ -101,6 +108,7 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
         return () => { after(); window.removeEventListener('beforeprint', before); window.removeEventListener('afterprint', after); };
     }, []);
     const request = JSON.stringify({
+        model_preset_id: modelPreset ? Number(modelPreset) : undefined,
         questionnaire_type: displayedStep.questionnaire_type, language: effectiveLanguage, phase: displayedStep.id,
         mode: reply ? followUpMode || (displayedStep.questionnaire_type === 'QSA' && ['factor', 'second-level'].includes(displayedStep.system_prompt_mode) ? 'factor-qa' : displayedStep.questionnaire_type === 'QSAr' && ['qsar-factor', 'qsar-second-level'].includes(displayedStep.system_prompt_mode) ? 'qsar-factor-qa' : displayedStep.questionnaire_type === 'SAVICKAS' ? 'savickas-interview' : displayedStep.system_prompt_mode) : displayedStep.system_prompt_mode,
         step_mode_override: displayedStep.system_prompt_mode,
@@ -137,6 +145,7 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
         : Object.entries({ ...data?.components, knowledge: data?.knowledge?.context || '' });
     return <section ref={rootRef} aria-label={l[0]} className="prompt-workspace prompt-request-preview space-y-3 rounded-lg border border-indigo-200 bg-indigo-50/30 p-4 xl:sticky xl:top-4">
         <h4 className="font-semibold text-indigo-800">{l[0]}</h4>
+        <label className="block text-xs text-slate-600">{l[19]}<select aria-label={l[19]} value={modelPreset} onChange={event => setModelPreset(event.target.value)} className="mt-1 w-full rounded border bg-white p-2 text-xs"><option value="">{t('admin.context.unassigned')}</option>{presets.filter(preset => preset.is_active).map(preset => <option key={preset.id} value={preset.id}>{preset.name} · {preset.provider}/{preset.model}</option>)}</select></label>
         <p className="text-xs text-slate-600">{l[1]}</p>
         {savedStep && savedConfigs && <><p className="text-xs font-semibold">{!showSaved && hasDraft ? stateLabels[0] : stateLabels[1]}</p><label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={showSaved} onChange={e => setShowSaved(e.target.checked)} />{stateLabels[2]}</label></>}
         <div className="grid gap-2 sm:grid-cols-2">
@@ -165,6 +174,10 @@ export function PromptRequestPreview({ step, configs, results, language = 'it', 
         </div>
         {data?.transport && <details className="text-xs"><summary>{t('chatgpt.preview.title')}</summary><p className="mt-2">{t('chatgpt.preview.help')}</p><pre className="mt-2 whitespace-pre-wrap break-words">{JSON.stringify(data.transport, null, 2)}</pre></details>}
         {data?.resolved?.context_budget && <details className="text-xs"><summary>{l[20]}</summary><pre className="whitespace-pre-wrap">{JSON.stringify(data.resolved.context_budget, null, 2)}</pre></details>}
+        {typeof data?.resolved?.context_budget?.input_tokens === 'number' && <div data-context-token-report className="space-y-2 text-xs text-slate-600">
+            <p>{t('admin.context.budget', { count: data.resolved.context_budget.input_tokens, budget: String(data.resolved.context_budget.input_budget ?? '?') })}</p>
+            <details><summary>{t('admin.context.blocks')}</summary><dl className="mt-2 grid grid-cols-2 gap-1">{Object.entries(data.resolved.context_budget.blocks as Record<string, number> || {}).map(([key, count]) => <div key={key} className="contents"><dt className="break-words">{componentLabels?.[key] || key}</dt><dd>{t('admin.context.tokens', { count })}</dd></div>)}</dl></details>
+        </div>}
     </section>;
 }
 
