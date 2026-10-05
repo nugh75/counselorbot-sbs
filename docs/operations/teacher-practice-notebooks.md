@@ -30,7 +30,9 @@ simulato.
  │ └───────────────────────────────────────────────┘  │
  │ ▸ Archiviati (n)   [Ripristina] [Elimina]          │
  └────────────────────────────────────────────────────┘
- Editor inline: Nome* + campi del taccuino studente (lp.field.*)
+ Editor inline: Nome* + campi del taccuino studente (lp.field.*), una colonna
+                Classi dello studente: [x] 3B — Liceo   [x] 4A
+                                       «contesto non condiviso: non entra»
                 [Salva] [Annulla]   — nessun autosalvataggio
 
 Popover Opzioni (chat guidata e Bussola), solo docenti/ricercatori/admin:
@@ -53,8 +55,16 @@ Envelope del turno (modalità prova):
 
 - **Modello** `TeacherPracticeNotebook` (`teacher_practice_notebooks`): owner,
   nome (≤120), dati (stessi campi di `LEARNER_PROFILE_LABELS`, ≤600 per campo),
-  `archived_at`. Tabella nuova creata da `create_all`, nessuna migrazione.
+  `group_ids` (JSON, classi dello studente simulato), `archived_at`. Tabella
+  creata da `create_all`; `group_ids` aggiunta alle tabelle esistenti all'avvio
+  (`ALTER TABLE … ADD COLUMN IF NOT EXISTS group_ids JSON NOT NULL DEFAULT '[]'`).
   Nessun limite al numero di taccuini.
+- **Classi**: salvate solo se attive e del docente o condivise con lui
+  (`teacher_context.visible_group_for_teacher`), le altre si scartano. In chat
+  `class_context_for_practice` le riverifica a ogni turno e passa solo quelle
+  con `context_visible_to_students`, con lo stesso blocco e lo stesso tetto
+  (600) di `class_context_for_student`; mai in IDEA né nella Bussola. Le
+  iscrizioni del docente come partecipante non entrano.
 - **API** (`auth.get_current_plan_manager`, owner verificato, altrui = 404):
   `GET /teacher/practice-notebooks[?include_archived=true]`,
   `POST /teacher/practice-notebooks`, `PUT /teacher/practice-notebooks/{id}`
