@@ -1,3 +1,32 @@
+# Handoff: varianti DB di tutti i prompt per Totale/Ristretto/Minimo
+Data: 2026-10-05 | Stato: completato localmente, pubblicazione PR
+
+- Correzione successiva a #53 (merge dd48085): ogni testo modello nella Mappa
+  ha pulsanti Totale/Ristretto/Minimo, varianti Config indipendenti e revisioni.
+  Include direttive, sistema/follow-up, meta, Idea, step e persona.
+- Worktree `/tmp/counselorbot-prompt-variants-all-levels-1005`, branch
+  `feature/prompt-variants-all-levels`, creato da origin/main dopo verifica Git.
+  Nessuna modifica ai checkout o ai cambiamenti preesistenti.
+- Vuoto eredita Totale; __short compatibile solo con Ristretto. Modelli e
+  ripieghi usano il livello assegnato, con gli stessi contratti e dati. Anteprima
+  a blocchi/messaggi coerente. Limiti del livello ancora attivi; meta va abilitato
+  se desiderato (default ristretto/minimo: escluso).
+- Verifiche: 168 backend in Docker, 265 unit frontend, 21 browser Mappa + 2
+  anteprima, build, TypeScript, i18n3139/6, lint mirato e guidance. Lint globale
+  resta bloccato dal NewDeckDialog preesistente (1 errore/44 warning).
+- Confronto Prompt Lab senza generazione: 108 richieste (36 per livello), nessuna
+  nuova prova live di qualità; runner live esteso a 216 casi. Nessuna assegnazione
+  o scrittura di prompt operativi.
+- Dettagli, screenshot, comandi e bug LOCAL:
+  `docs/operations/prompt-variants-all-levels-validation.md`.
+- Nessun deploy operativo. Dopo merge: rebuild backend/frontend/worker Lab;
+  quindi testi e assegnazioni manuali. Nessuna migrazione DB o proxy/sudo.
+  Container/processi di prova propri arrestati alla consegna; immagini conservate.
+- Bug non registrati: nessuno. Bug nuovi corretti, fixture corrette; errore lint
+  fuori ambito già registrato, evidenza aggiornata. Nessuna issue aperta a mano.
+
+---
+
 # Handoff: differenziazione prompt CR1–CR4
 Data: 2026-10-05 | Stato: implementazione e verifiche locali, PR da revisionare
 

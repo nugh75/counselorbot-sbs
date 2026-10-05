@@ -22,7 +22,9 @@ Tunnel: `ssh -N -L 3165:127.0.0.1:3165 <utente>@<server>`;
 pagina `http://localhost:3165/admin?section=general` (senza fixture richiede
 le API e l'autenticazione reali, non presenti in questo ambiente).
 Stop: Ctrl+C nel terminale di avvio. La verifica Docker usa invece loopback
-3166. PostgreSQL sintetico dedicato su18598 per test backend/confronto CR4,
+3166 per CR1–CR4; 3167 per le varianti DB di tutti i prompt (container
+`counselorbot-prompt-variants-frontend-validation`, arresto con
+`docker stop counselorbot-prompt-variants-frontend-validation`). PostgreSQL sintetico dedicato su18598 per test backend/confronto CR4,
 con database `_test` e senza dati operativi. Tutti i processi e container propri
 di questa verifica vengono fermati alla consegna, senza intervenire sui dev
 preesistenti. [Configurazione e limiti](model-context-levels.md).

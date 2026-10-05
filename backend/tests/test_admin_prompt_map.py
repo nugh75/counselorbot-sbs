@@ -124,7 +124,7 @@ def _runtime_config_keys(db, instrument):
     keys.update(key for key in guided_phase_text_keys(instrument).values() if key)
     # Fase fissa Domande: prompt per id di fase, qualunque sia il mode.
     question_key = chat_logic._resolve_system_prompt(service, "generic", "questions", db)[0]
-    keys.update((question_key, question_key + "__short"))
+    keys.add(question_key)
     steps = (
         db.query(models.GuidedStep)
         .filter(models.GuidedStep.questionnaire_type == instrument)
@@ -133,11 +133,11 @@ def _runtime_config_keys(db, instrument):
     for step in steps:
         # Ingresso nello step: phase = id, mode = mode dello step.
         entry_key = chat_logic._resolve_system_prompt(service, step.system_prompt_mode, step.id, db)[0]
-        keys.update((entry_key, entry_key + "__short"))
+        keys.add(entry_key)
         # Turno libero dello studente nello step.
         follow_up_mode = chat_logic.guided_step_follow_up_mode(step)
         follow_up_key = chat_logic._resolve_system_prompt(service, follow_up_mode, step.id, db)[0]
-        keys.update((follow_up_key, follow_up_key + "__short"))
+        keys.add(follow_up_key)
         keys.add(chat_logic.prompt_component_config_key(instrument, step.id))
         if chat_logic._instrument_meta_system_prompt(db, instrument, step.id) != \
                 chat_logic._instrument_meta_system_prompt(db, instrument):
@@ -171,6 +171,7 @@ def test_every_runtime_key_appears_once_at_one_level():
             # Il livello dichiarato dalla voce coincide con la sezione in cui compare.
             misplaced = [(level, e["key"], e["level"]) for level, e in config_entries if e["level"] != level]
             assert not misplaced, (instrument, misplaced)
+            assert all(set(e['variants']) >= {'ristretto', 'minimo'} for _, e in config_entries if e['destination'] == 'model')
             missing = _runtime_config_keys(db, instrument) - set(counts)
             assert not missing, (instrument, sorted(missing))
     finally:

@@ -30,7 +30,8 @@ def case():
 
 def test_comparison_records_every_model_and_arm_without_activation():
     result = compare([case()], ["large", "small"], Client())
-    assert result["calibrated"] and len(result["records"]) == 4
+    assert result["calibrated"] and len(result["records"]) == 6
+    assert {row["level"] for row in result["records"]} == {"totale", "ristretto", "minimo"}
     assert all(row["quality_status"] == "passed" for row in result["records"])
     assert all(row["invented_data"] is False for row in result["records"])
     assert all("input_hash" in row and "blocks" in row["context"] for row in result["records"])
@@ -38,7 +39,7 @@ def test_comparison_records_every_model_and_arm_without_activation():
 
 def test_timeout_budget_keeps_all_missing_answers_in_denominator():
     result = compare([case()], ["large", "small"], Client(), max_seconds=-1)
-    assert len(result["records"]) == 4
+    assert len(result["records"]) == 6
     assert all(row["error"] == "EvaluationTimeLimit" for row in result["records"])
     assert all(row["quality_status"] == "inconclusive" for row in result["records"])
 

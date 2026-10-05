@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-05",
+  "synthetic": true,
+  "quality_status": "not_run",
+  "generation_calls": 0,
+  "instruments": [
+    "EVENTO_PROFESSIONALE",
+    "EVENTO_STUDIO",
+    "IDEA",
+    "OBIETTIVO_DOCENZA",
+    "OBIETTIVO_STUDIO",
+    "QAP",
+    "QPCC",
+    "QPCS",
+    "QSA",
+    "QSAr",
+    "SAVICKAS",
+    "ZTPI"
+  ],
+  "cases_per_level": 36,
+  "records": 108,
+  "source_sha256": "c082ac48b395ea1310190d82b53bf033157bc8d2da034b9c1c55729b1f3cfc3f",
+  "levels": {
+    "totale": {
+      "requests": 36,
+      "estimated_input_tokens": 153146,
+      "min": 3447,
+      "max": 5797
+    },
+    "ristretto": {
+      "requests": 36,
+      "estimated_input_tokens": 139168,
+      "min": 3081,
+      "max": 5121
+    },
+    "minimo": {
+      "requests": 36,
+      "estimated_input_tokens": 134902,
+      "min": 2953,
+      "max": 4993
+    }
+  },
+  "limits": [
+    "Factory texts only; no operational prompt or student data imported.",
+    "Estimated tokens; no model tokenizer.",
+    "No new live quality comparison; saved texts require educational review."
+  ]
+}
