@@ -4,8 +4,10 @@ Vista di *Amministrazione → Configurazione → Mappa dei prompt*: i testi dell
 guidate di uno strumento, **dal comune al particolare**, modificabili sul posto.
 Opzione B dell'audit `docs/audits/2026-10-05-admin-prompt-sections.md`.
 
-Dal 5 ottobre, testi e bozze mostrano i token stimati e i prompt di sistema
-hanno una voce `__short` inizialmente vuota, scritta dall'amministratore.
+Dal 5 ottobre, testi e bozze mostrano i token stimati. Ogni istruzione del
+modello ha i pulsanti Totale, Ristretto e Minimo: selezione → Modifica → Salva
+nel database, con testi indipendenti e storico. Vale anche per direttive, meta,
+step, varianti Idea e persona del counselor. Vuoto significa ereditare Totale.
 L'anteprima sceglie un preset attivo e mostra token per blocco, totale e budget.
 Livelli/assegnazioni manuali si gestiscono in Generale: [procedura](model-context-levels.md)
 e [risultati CR1–CR4](model-context-levels-validation.md).
@@ -35,7 +37,8 @@ e [risultati CR1–CR4](model-context-levels-validation.md).
 - Prima di salvare una voce di livello 2 o usata da più step: avviso con l'elenco
   di chi la usa (strumenti per nome e numero di step) e conferma esplicita.
 - La persona del counselor è di sola lettura qui: "Modifica" apre un popup che
-  usa la stessa API del tab Counselor (nessuna seconda fonte).
+  usa la stessa API del tab Counselor per Totale; Ristretto e Minimo usano
+  righe Config separate, con il proprio storico.
 - Le quattro schede storiche restano nella sezione *Strumenti — vista classica*
   (stessi id di `?section=`).
 

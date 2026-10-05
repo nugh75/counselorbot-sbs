@@ -220,7 +220,20 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
     </div>;
 }
 
-function EntryCard({ entry, highlighted, onSaved, onEditPersona, onEditQuestions, componentLabels, initiallyEditing = false, onCloseEditor }: {
+function VariantButtons({ variants, selected, disabled, onSelect }: {
+    variants: Record<string, PromptMapEntry>; selected: string; disabled?: boolean; onSelect: (level: string) => void;
+}) {
+    const { t } = useI18n();
+    return <div role="group" aria-label={t('admin.context.variants')} className="mt-2 flex flex-wrap gap-1.5">
+        {['totale', ...Object.keys(variants)].map(level => <button key={level} type="button" disabled={disabled}
+            aria-pressed={selected === level} onClick={() => onSelect(level)}
+            className={`rounded border px-2.5 py-1 text-xs font-semibold disabled:opacity-60 ${selected === level ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}>
+            {variants[level]?.context_label || t('admin.context.total')}
+        </button>)}
+    </div>;
+}
+
+function EntryCard({ entry: baseEntry, highlighted, onSaved, onEditPersona, onEditQuestions, componentLabels, initiallyEditing = false, onCloseEditor }: {
     entry: PromptMapEntry;
     highlighted?: boolean;
     onSaved: () => void;
@@ -232,17 +245,19 @@ function EntryCard({ entry, highlighted, onSaved, onEditPersona, onEditQuestions
 }) {
     const { t, tf, lang } = useI18n();
     const [editing, setEditing] = useState(initiallyEditing);
+    const [level, setLevel] = useState('totale');
+    const entry = baseEntry.variants?.[level] || baseEntry;
     const close = () => { setEditing(false); onCloseEditor?.(); };
     const text = entry.kind === 'config' || entry.kind === 'guided_step' ? entryText(entry, entry.destination === 'student' && entry.translations ? lang : 'it') : '';
     const counselors = entry.kind === 'counselor_persona' ? entry.value as PromptMapCounselor[] : [];
     const questions = entry.kind === 'step_questions' ? entry.value as Record<string, string[]> : {};
     const flags = entry.role === 'components' ? booleanFlags(entry.effective) : {};
 
-    return <article id={entryAnchor(entry.key)} data-entry-key={entry.key}
+    return <article id={entryAnchor(baseEntry.key)} data-entry-key={baseEntry.key}
         className={`scroll-mt-24 rounded-lg border bg-white p-3 shadow-sm transition-shadow sm:p-4 ${highlighted ? 'border-indigo-400 ring-2 ring-indigo-300' : 'border-slate-200'}`}>
         <header className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-                <h5 className="text-sm font-semibold text-slate-800">{entryTitle(entry, t, tf)}</h5>
+                <h5 className="text-sm font-semibold text-slate-800">{entryTitle(baseEntry, t, tf)}</h5>
                 <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
                     {entry.kind === 'config' && <code className="break-all font-mono">{entry.key}</code>}
                     <UsedBy entry={entry} />
@@ -257,7 +272,11 @@ function EntryCard({ entry, highlighted, onSaved, onEditPersona, onEditQuestions
             </div>
         </header>
 
-        {entry.role === 'system_prompt_short' && <p className="mt-2 text-xs text-slate-500">{t('admin.context.shortHelp')}</p>}
+        {baseEntry.variants && <VariantButtons variants={baseEntry.variants} selected={level} disabled={editing} onSelect={setLevel} />}
+        {entry.context_level && <p className="mt-2 text-xs text-slate-500">{t('admin.context.variantHelp')}</p>}
+        {entry.context_level && !text.trim() && !editing && <p className="mt-2 line-clamp-4 whitespace-pre-wrap break-words text-xs text-slate-600">
+            {entryText(baseEntry, 'it')}
+        </p>}
 
         {entry.kind === 'counselor_persona' && <ul className="mt-3 space-y-2">
             {counselors.length === 0 && <li className="text-xs text-slate-500">{t('admin.promptMap.noPersona')}</li>}
@@ -266,6 +285,8 @@ function EntryCard({ entry, highlighted, onSaved, onEditPersona, onEditQuestions
                     <p className="text-xs font-semibold text-slate-700">{counselor.name}</p>
                     <p data-token-estimate className="text-xs text-slate-500">{t('admin.context.tokens', { count: estimateTokens(counselor.persona) })}</p>
                     <p className="line-clamp-2 whitespace-pre-wrap text-xs text-slate-500">{counselor.persona || t('admin.promptMap.empty')}</p>
+                    {counselor.variants && <VariantButtons variants={counselor.variants} selected="totale"
+                        onSelect={level => onEditPersona({ ...counselor, context_level: level })} />}
                 </div>
                 <button type="button" onClick={() => onEditPersona(counselor)} aria-label={`${t('admin.promptMap.edit')} · ${counselor.name}`}
                     className="inline-flex shrink-0 items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">
@@ -367,7 +388,10 @@ function DialogShell({ title, hint, onClose, children, footer }: {
 
 function PersonaDialog({ counselor, onClose, onSaved }: { counselor: PromptMapCounselor; onClose: () => void; onSaved: () => void }) {
     const { t } = useI18n();
-    const [draft, setDraft] = useState(counselor.persona);
+    const level = counselor.context_level || 'totale';
+    const variant = counselor.variants?.[level];
+    const current = variant ? String(variant.value ?? '') : counselor.persona;
+    const [draft, setDraft] = useState(current);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const save = async () => {
@@ -375,9 +399,11 @@ function PersonaDialog({ counselor, onClose, onSaved }: { counselor: PromptMapCo
         setError('');
         try {
             // Stessa API e stesso formato del tab Counselor (CounselorsPanel).
-            const response = await apiFetch(`/api/admin/counselors/${counselor.id}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ persona: draft.trim() || null }),
-            });
+            const request = variant ? saveRequest(variant, draft) : {
+                url: `/api/admin/counselors/${counselor.id}`, method: 'PUT', body: { persona: draft.trim() || null },
+            };
+            const response = await apiFetch(request.url, { method: request.method,
+                headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request.body) });
             if (!response.ok) throw new Error('save');
             onSaved();
         } catch {
@@ -393,13 +419,14 @@ function PersonaDialog({ counselor, onClose, onSaved }: { counselor: PromptMapCo
                 {saving ? t('admin.promptMap.saving') : t('admin.promptMap.save')}
             </button>
         </>}>
+        {variant && <p className="text-xs text-slate-600">{variant.context_label} · {t('admin.context.variantHelp')}</p>}
         <label className="block text-xs font-medium text-slate-500">{t('admin.counselors.persona')}
             <textarea autoFocus value={draft} onChange={event => setDraft(event.target.value)} rows={12}
                 className="mt-1 w-full rounded border border-slate-300 p-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" />
         </label>
         <p data-token-estimate className="text-xs text-slate-500">{t('admin.context.tokens', { count: estimateTokens(draft) })}</p>
         {error && <p role="alert" className="text-xs text-red-700">{error}</p>}
-        <PromptHistory scope="counselor_persona" targetKey={String(counselor.id)} currentValue={counselor.persona} onRestored={onSaved} />
+        <PromptHistory scope={variant ? 'config' : 'counselor_persona'} targetKey={variant?.key || String(counselor.id)} currentValue={current} onRestored={onSaved} />
     </DialogShell>;
 }
 

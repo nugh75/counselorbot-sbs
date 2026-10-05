@@ -339,6 +339,13 @@ def build_prompt_audit(
         )
     except ContextCapacityError as exc:
         warnings.append({"code": "context_capacity_exceeded", "message": str(exc)})
+    selected_variant = (getattr(ai_service, "context_data", None) or {}).get("variants", {}).get(context_report.get("prompt_variant"))
+    if selected_variant:
+        components = {**components, **selected_variant["components"]}
+        # Optional blocks omitted by the budget do not appear as included texts.
+        for name in ("counselor", "meta_system_prompt"):
+            if components[name] and components[name] not in system_prompt_final:
+                components[name] = ""
     if context_report.get("context_tokens") is None:
         warnings.append({"code": "unknown_context_capacity", "message": "No verified context window configured for this model."})
     # Explicit compact profiles deliberately omit optional background. The report

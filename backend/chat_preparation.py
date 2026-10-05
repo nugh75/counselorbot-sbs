@@ -4,6 +4,8 @@ Retrieval can be replaced by a captured context for reproducible, offline audits
 Writing session memory and recording model output remain endpoint responsibilities.
 """
 from dataclasses import dataclass
+from types import SimpleNamespace
+from .prompt_variants import level_config, variant_levels, variant_text
 from .chat_preferences import apply_response_format
 from .qsa_essential import validate_path, directive as essential_directive, is_essential_summary
 from .prompt_contract import turn_contract
@@ -52,6 +54,8 @@ from .chat_logic import (
     _should_include_step_analysis_context,
     _step_allows_practical_advice,
     build_context_envelope,
+    instruction_parts,
+    _instrument_meta_system_prompt,
     conversation_id_for,
 )
 
@@ -63,7 +67,7 @@ IDEA_VARIANT_KEYS = {
 }
 
 
-def _apply_idea_variant_directive(system_prompt: str, ai_service, request) -> str:
+def _apply_idea_variant_directive(system_prompt: str, ai_service, request, config_overrides=None) -> str:
     """Aggiunge la direttiva della variante scelta all'avvio della sessione Idea.
 
     Variante ignota o assente: vale quella piu' prudente, l'idea libera, che non
@@ -72,7 +76,7 @@ def _apply_idea_variant_directive(system_prompt: str, ai_service, request) -> st
     if (request.questionnaire_type or "") != IDEA_INSTRUMENT:
         return system_prompt
     key = IDEA_VARIANT_KEYS.get(request.idea_variant or "", IDEA_VARIANT_KEYS["student-open"])
-    directive = ai_service.config.get(key, SYSTEM_PROMPT_DEFAULTS.get(key, ""))
+    directive = (config_overrides or ai_service.config).get(key, SYSTEM_PROMPT_DEFAULTS.get(key, ""))
     if not directive or directive.strip() in system_prompt:
         return system_prompt
     return system_prompt.rstrip() + "\n\n" + directive.strip()
@@ -178,8 +182,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     if questionnaire_type == IDEA_INSTRUMENT:
         max_tokens = (max_tokens or 700) + 1200
     prompt_key, system_prompt = _resolve_system_prompt(ai_service, request.mode, request.phase, db)
-    if step_mode_override is not None and step and step_mode_override != step.system_prompt_mode:
-        from types import SimpleNamespace
+    mode_overridden = step_mode_override is not None and step and step_mode_override != step.system_prompt_mode
+    if mode_overridden:
         step = SimpleNamespace(**{column.key: getattr(step, column.key) for column in step.__table__.columns})
         step.system_prompt_mode = step_mode_override
         if request.use_phase_prompt:
@@ -196,25 +200,28 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         or skills_intents.asks_about_platform(request.message or "")
     )
     base_prompt = system_prompt
-    configured_base = ai_service.config.get(prompt_key, SYSTEM_PROMPT_DEFAULTS.get(prompt_key, ""))
-    short_prompt = ai_service.config.get(prompt_key + "__short", "")
-    if config_overrides is not None:
-        short_prompt = config_overrides.get(prompt_key + "__short", short_prompt)
-    # Resolve the owned base before dynamic directives and score annotations.
-    # Apply exactly the same transformations to the normal and short sections.
-    short_system = None
-    if short_prompt.strip() and configured_base and base_prompt.startswith(configured_base):
-        short_system = short_prompt.strip() + base_prompt[len(configured_base):]
+    configs = {**ai_service.config, **(config_overrides or {})}
+    level_configs = {level: level_config(configs, level) for level in variant_levels(configs) if level != "totale"}
+    level_systems = {}
+    for level, config in level_configs.items():
+        mode, phase = request.mode, request.phase
+        if mode_overridden and request.use_phase_prompt:
+            mode, phase = step_mode_override, None
+        _, level_systems[level] = _resolve_system_prompt(SimpleNamespace(config=config), mode, phase, db)
 
     def transform(function, normal, *args, **kwargs):
-        nonlocal short_system
-        if short_system is not None:
-            short_system = function(short_system, *args, **kwargs)
+        for level in level_systems:
+            level_kwargs = dict(kwargs)
+            if function in (_apply_global_directives, _apply_idea_variant_directive):
+                level_kwargs["config_overrides"] = level_configs[level]
+            level_systems[level] = function(level_systems[level], *args, **level_kwargs)
         return function(normal, *args, **kwargs)
 
     system_prompt = transform(_apply_global_directives, system_prompt, request.language, db,
                                              platform_full=platform_full, config_overrides=config_overrides)
     global_directives = system_prompt[len(base_prompt):].strip()
+    level_directives = {level: _apply_global_directives("", request.language, db,
+        platform_full=platform_full, config_overrides=config).strip() for level, config in level_configs.items()}
     system_prompt = transform(_apply_response_length_directive, system_prompt, effective_response_length)
     system_prompt = transform(_apply_idea_variant_directive, system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
@@ -357,8 +364,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     )
 
     system_prompt += notes_tail + conversation_tail
-    if short_system is not None:
-        short_system += notes_tail + conversation_tail
+    for level in level_systems:
+        level_systems[level] += notes_tail + conversation_tail
 
     # Assembla l'envelope canonico (Fase 5):
     #   SYSTEM = [PERSONA] [SECTION] [STUDENT] [PROFILE] [KNOWLEDGE]
@@ -461,10 +468,44 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         "meta": "[META SYSTEM PROMPT]\n" + components["meta_system_prompt"] if components.get("meta_system_prompt") else "",
         "knowledge": "[KNOWLEDGE]\n" + knowledge_context if knowledge_context and component_flags.get("knowledge", True) else "",
     }
+    # Build only the owned instruction prefix again. Retrieval, history, ledger,
+    # evidence and protected contracts are captured once and shared verbatim.
+    prefix = components.pop("instruction_prefix")
+    assert not prefix or system_prompt_final.startswith(prefix)
+    remainder = system_prompt_final[len(prefix):].lstrip("\n")
+    variants = {}
+    for level, config in level_configs.items():
+        persona_key = f"counselor_persona:{request.counselor_id}"
+        persona = variant_text(configs, persona_key, level).strip() or c_persona
+        phase_text = model_message
+        if request.use_phase_prompt and phase_prompt_key:
+            phase_text = variant_text(configs, phase_prompt_key + ":prompt", level).strip() or model_message
+            if _is_strategy_questionnaire(questionnaire_type):
+                phase_text = _annotate_qsa_factor_codes(phase_text, request.language, questionnaire_type=questionnaire_type)
+        meta = _instrument_meta_system_prompt(db, questionnaire_type, request.phase, config)
+        persona_block = persona_context(persona, c_name).strip()
+        level_prefix = rendered("\n\n".join(instruction_parts(request, level_systems[level], phase_text,
+            persona_block, meta, component_flags)))
+        level_message = full_message
+        if request.use_phase_prompt and request.mode.startswith(("qpcs-", "idea-")) and component_flags.get("step_prompt", True):
+            level_message = f"{message_scores_context}\n\n{phase_text}".strip() if message_scores_context else phase_text
+        variants[level] = {
+            "system": "\n\n".join(part for part in (level_prefix, remainder) if part),
+            "message": level_message,
+            "components": {
+                "system_prompt": rendered(level_systems[level]) if component_flags.get("system_prompt", True) else "",
+                "step_prompt": phase_text if component_flags.get("step_prompt", True) else "",
+                "counselor": rendered(persona_block) if component_flags.get("counselor", True) else "",
+                "meta_system_prompt": rendered(meta),
+            },
+            "fragments": {**fragments, "directives": rendered(level_directives[level]),
+                "persona": rendered(persona_block) if component_flags.get("counselor", True) else "",
+                "meta": "[META SYSTEM PROMPT]\n" + rendered(meta) if meta else ""},
+        }
     ai_service.context_data = {
         "system": system_prompt_final, "fragments": fragments,
+        "message": full_message, "variants": variants,
         "base": rendered(components.get("system_prompt", "")),
-        "short": rendered(short_system) if short_system is not None else "",
         "prompt_key": prompt_key,
     }
     return PreparedTurn(

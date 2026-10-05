@@ -209,7 +209,12 @@ def fit_context(system: str, message: str, history: list, profile: dict, output_
     fragments = dict(data.get("fragments", {}))
     limits = profile.get("limits", {})
     if limits:
-        if limits.get("short_prompt") and data.get("short"):
+        variant = data.get("variants", {}).get(profile.get("level"))
+        if limits.get("short_prompt") and variant and data.get("message") == message:
+            system, message = variant["system"], variant["message"]
+            fragments = dict(variant["fragments"])
+            report["prompt_variant"] = profile["level"]
+        elif limits.get("short_prompt") and data.get("short") and profile.get("level") not in {"minimo", "totale"}:
             base = data.get("base", "")
             if base and system.count(base) == 1:
                 system = system.replace(base, data["short"], 1)
