@@ -1,3 +1,28 @@
+# Handoff: installazione portabile con SSO Console su labform.net
+Data: 2026-10-05 | Stato: installato e verificato; PR da revisionare
+
+- Applicazione pubblicata su https://counselorbot.labform.net con il tunnel
+  Console esistente. Backend, frontend e PostgreSQL separato sono healthy.
+- Audit prima dell'installazione e piano: [report](docs/operations/portable-install-audit.md).
+  Configurazione, comandi e risultati: [procedura](docs/operations/portable-installation.md).
+- SSO pubblico reale verificato: identità condivisa con Console, ruolo admin,
+  API amministrative, cookie di dominio Secure/HttpOnly, logout e revoca.
+  Registrazione idempotente; backup privato, test nginx e reload completati.
+- Next/Plotly aggiornati; produzione frontend senza vulnerabilità note.
+  Rilievi residui: cinque high nei tool dev, una CVE Python senza patch
+  senza percorso vulnerabile identificato, errore lint upstream e warning.
+- Verifiche: 253 test frontend, 202 smoke backend, 85 test auth/segreti/privacy
+  con DB separato; build/TypeScript, i18n, guida e browser desktop/mobile passati.
+- Nessun Ollama installato. Provider e credenziali attendono l'operatore;
+  redazione PII attiva, detector locale attivo, fallback block preservato.
+- I tre container dell'app restano avviati; browser e container temporaneo
+  chiusi, nessun processo dev. Stop senza perdere dati:
+  `docker compose --env-file .env -f docker-compose.portable.yml stop`.
+- Ramo `feature/portable-labform-install`; nessun merge. Il deploy Console
+  Docker è applicato: `sudo ./update_nginx.sh` non è necessario.
+
+---
+
 # Handoff: chat QSA raggiunge il backend di sviluppo e conserva gli errori
 Data: 2026-10-03 | Stato: implementato e verificato, da revisionare nella PR 40
 

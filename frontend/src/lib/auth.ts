@@ -1,5 +1,7 @@
 // Identità utente da ai4auth (forward-auth). Il backend legge gli header
 // Remote-* iniettati da nginx ed espone /api/auth/me.
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { createAuthUrls } from './auth-urls.ts';
 
 export interface Identity {
     email: string;
@@ -135,22 +137,23 @@ export async function getIdentity(): Promise<Identity | null> {
 }
 
 // Console ai4educ: portale per tutti gli utenti, manager per gli amministratori.
-export const AI4EDUC_PORTAL_URL = 'https://portal.ai4educ.org/';
-export const AI4EDUC_MANAGER_URL = 'https://manager.ai4educ.org';
+const authUrls = createAuthUrls({
+    appUrl: process.env.NEXT_PUBLIC_APP_URL,
+    authBase: process.env.NEXT_PUBLIC_AI4AUTH_BASE,
+    portalUrl: process.env.NEXT_PUBLIC_AI4EDUC_PORTAL_URL,
+    managerUrl: process.env.NEXT_PUBLIC_AI4EDUC_MANAGER_URL,
+    projectId: process.env.NEXT_PUBLIC_AI4EDUC_PROJECT_ID,
+});
+export const AI4EDUC_PORTAL_URL = authUrls.portalUrl;
+export const AI4EDUC_MANAGER_URL = authUrls.managerUrl;
+export const AI4EDUC_SECRETS_URL = authUrls.secretsUrl;
 
 // Logout gestito da ai4auth (distrugge la sessione e il cookie di dominio)
-export const AI4AUTH_LOGOUT_URL = 'https://auth.ai4educ.org/logout';
+export const AI4AUTH_LOGOUT_URL = authUrls.logoutUrl;
 
 // Login ai4auth con ritorno alla pagina corrente (?rd=)
-export const AI4AUTH_LOGIN_URL = 'https://auth.ai4educ.org/login';
-
-const DEPLOYED_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://counselorbot-sbs.ai4educ.org';
+export const AI4AUTH_LOGIN_URL = authUrls.loginUrl;
 
 export function ai4authLoginUrl(returnPath: string = '/admin'): string {
-    const path = returnPath.startsWith('/') && !returnPath.startsWith('//') ? returnPath : '/admin';
-    const origin = typeof window !== 'undefined' && (window.location.hostname.endsWith('.ai4educ.org')
-        || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? window.location.origin
-        : DEPLOYED_APP_URL.replace(/\/$/, '');
-    return `${AI4AUTH_LOGIN_URL}?rd=${encodeURIComponent(`${origin}${path}`)}`;
+    return authUrls.login(returnPath, typeof window !== 'undefined' ? window.location.origin : undefined);
 }
