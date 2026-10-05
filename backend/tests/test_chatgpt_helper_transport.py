@@ -5,9 +5,13 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import socket
 import threading
 import unittest
 from unittest.mock import patch
+import urllib.error
+import urllib.parse
+import urllib.request
 
 
 PAIRING = "fixture-pairing-code-0000000000000000000000"
@@ -61,11 +65,13 @@ class HelperTransportTests(unittest.TestCase):
     def setUp(self):
         self.helper = load_helper()
 
-    def main_output(self, origin, pairing=PAIRING):
+    def main_output(self, origin, pairing=PAIRING, flags=()):
         out, err = io.StringIO(), io.StringIO()
-        with patch.object(self.helper.sys, "argv", ["chatgpt-connect.py", "--server", origin]), \
-                patch.object(self.helper.getpass, "getpass", return_value=pairing), \
+        with patch.object(self.helper.sys, "argv", ["chatgpt-connect.py", "--server", origin, *flags]), \
+                patch("builtins.input", return_value=pairing) as visible, \
+                patch.object(self.helper.getpass, "getpass", return_value=pairing) as hidden, \
                 redirect_stdout(out), redirect_stderr(err):
+            self.last_reads = {"input": visible, "getpass": hidden}
             status = self.helper.main()
         return status, out.getvalue() + err.getvalue()
 
@@ -132,6 +138,139 @@ class HelperTransportTests(unittest.TestCase):
                 self.assertIn("Copia tutto il codice di associazione", output)
                 self.assertNotIn(pairing, output)
                 connect.assert_not_called()
+
+    def test_default_input_is_visible_and_hidden_input_remains_opt_in(self):
+        for flags, reader, unused in [((), "input", "getpass"), (("--hide-code",), "getpass", "input")]:
+            with self.subTest(flags=flags), patch.object(self.helper, "connect") as connect:
+                result, output = self.main_output("https://fixture.example.invalid", flags=flags)
+                self.assertEqual(result, 0)
+                self.last_reads[reader].assert_called_once()
+                self.last_reads[unused].assert_not_called()
+                connect.assert_called_once_with("https://fixture.example.invalid", PAIRING,
+                                                no_browser=False, callback_port=0)
+                self.assertNotIn(PAIRING, output)
+
+    def test_invalid_callback_ports_fail_before_reading_code_or_starting_transport(self):
+        for value in ["-1", "65536", "not-a-port"]:
+            with self.subTest(value=value), patch.object(self.helper, "connect") as connect:
+                with self.assertRaises(SystemExit) as failure:
+                    self.main_output("https://fixture.example.invalid", flags=("--callback-port", value))
+                self.assertEqual(failure.exception.code, 2)
+                self.last_reads["input"].assert_not_called()
+                self.last_reads["getpass"].assert_not_called()
+                connect.assert_not_called()
+
+    def test_valid_callback_port_boundaries_and_ssh_flags_reach_connector(self):
+        for value in [0, 1455, 65535]:
+            with self.subTest(port=value), patch.object(self.helper, "connect") as connect:
+                result, output = self.main_output("https://fixture.example.invalid",
+                    flags=("--callback-port", str(value), "--no-browser"))
+                self.assertEqual(result, 0)
+                connect.assert_called_once_with("https://fixture.example.invalid", PAIRING,
+                                                no_browser=True, callback_port=value)
+                self.assertNotIn(PAIRING, output)
+
+    def test_no_browser_callback_uses_fixed_or_dynamic_loopback_port_and_preserves_pkce(self):
+        with socket.socket() as reserve:
+            reserve.bind(("127.0.0.1", 0))
+            fixed_port = reserve.getsockname()[1]
+        for port in [0, fixed_port]:
+            with self.subTest(port=port):
+                calls, query, printed, threads, callback_errors = [], {}, [], [], []
+
+                def request_json(url, **kwargs):
+                    calls.append((url, kwargs))
+                    if url.endswith("/parameters"):
+                        self.assertEqual(kwargs["token"], PAIRING)
+                        return {"client_id": "dynamic_agent_client", "nonce": "fixture-nonce",
+                                "host_id": "urn:uuid:fixture", "agent_name": "CounselorBot"}
+                    if url.endswith("/registration"):
+                        self.assertEqual(kwargs["token"], PAIRING)
+                        self.assertEqual(kwargs["data"], {"client_id": "fixture-issued-client"})
+                        return {"registered": True}
+                    if url.endswith("/oauth/token"):
+                        data = kwargs["data"]
+                        self.assertTrue(kwargs["form"])
+                        self.assertEqual(data["redirect_uri"], query["redirect_uri"][0])
+                        self.assertEqual(data["client_id"], "fixture-issued-client")
+                        self.assertEqual(data["code"], "fixture-authorization-code")
+                        challenge = self.helper.base64.urlsafe_b64encode(
+                            self.helper.hashlib.sha256(data["code_verifier"].encode()).digest()).rstrip(b"=").decode()
+                        self.assertEqual(challenge, query["code_challenge"][0])
+                        return {"access_token": PRIVATE_RESPONSE, "refresh_token": PRIVATE_RESPONSE,
+                                "id_token": PRIVATE_RESPONSE, "token_type": "Bearer"}
+                    self.assertEqual(url, "https://fixture.example.invalid/api/chatgpt/link/complete")
+                    self.assertEqual(kwargs["token"], PAIRING)
+                    self.assertEqual(kwargs["data"]["client_id"], "fixture-issued-client")
+                    self.assertEqual(kwargs["data"]["access_token"], PRIVATE_RESPONSE)
+                    self.assertNotIn("username", kwargs["data"])
+                    return {"connected": True}
+
+                def printed_line(message, **_):
+                    printed.append(str(message))
+                    if not str(message).startswith(self.helper.ISSUER + "/api/accounts/authorize?"):
+                        return
+                    query.update(urllib.parse.parse_qs(urllib.parse.urlsplit(message).query))
+                    redirect = urllib.parse.urlsplit(query["redirect_uri"][0])
+                    self.assertEqual(redirect.hostname, "127.0.0.1")
+                    self.assertEqual(redirect.path, "/auth/callback")
+                    self.assertGreater(redirect.port, 0)
+                    if port:
+                        self.assertEqual(redirect.port, port)
+                    self.assertEqual(query["nonce"], ["fixture-nonce"])
+                    self.assertEqual(query["code_challenge_method"], ["S256"])
+
+                    def callback():
+                        try:
+                            wrong = urllib.parse.urlencode({"state": "wrong-state", "code": "untrusted"})
+                            try:
+                                urllib.request.urlopen(query["redirect_uri"][0] + "?" + wrong, timeout=5)
+                                raise AssertionError("Invalid state was accepted")
+                            except urllib.error.HTTPError as error:
+                                self.assertEqual(error.code, 400)
+                            valid = urllib.parse.urlencode({"state": query["state"][0],
+                                "code": "fixture-authorization-code", "client_id": "fixture-issued-client"})
+                            with urllib.request.urlopen(query["redirect_uri"][0] + "?" + valid, timeout=5) as response:
+                                self.assertEqual(response.status, 200)
+                                self.assertEqual(response.headers["Cache-Control"], "no-store")
+                        except Exception as error:
+                            callback_errors.append(error)
+
+                    thread = threading.Thread(target=callback, daemon=True)
+                    thread.start()
+                    threads.append(thread)
+
+                with patch.object(self.helper, "request_json", side_effect=request_json), \
+                        patch.object(self.helper, "print", side_effect=printed_line, create=True), \
+                        patch.object(self.helper.webbrowser, "open") as browser:
+                    self.helper.connect("https://fixture.example.invalid", PAIRING,
+                                        no_browser=True, callback_port=port)
+                    browser.assert_not_called()
+                for thread in threads:
+                    thread.join(timeout=5)
+                    self.assertFalse(thread.is_alive())
+                self.assertEqual(callback_errors, [])
+                self.assertEqual(len(calls), 4)
+                self.assertNotIn(PAIRING, "\n".join(printed))
+                self.assertNotIn(PRIVATE_RESPONSE, "\n".join(printed))
+
+    def test_occupied_callback_port_fails_safely_without_browser_or_credential_exchange(self):
+        parameters = {"client_id": "dynamic_agent_client", "nonce": "fixture-nonce",
+                      "host_id": "urn:uuid:fixture", "agent_name": "CounselorBot"}
+        with socket.socket() as occupied:
+            occupied.bind(("127.0.0.1", 0))
+            occupied.listen()
+            port = occupied.getsockname()[1]
+            with patch.object(self.helper, "request_json", return_value=parameters) as transport, \
+                    patch.object(self.helper.webbrowser, "open") as browser:
+                result, output = self.main_output("https://fixture.example.invalid",
+                                                 flags=("--no-browser", "--callback-port", str(port)))
+                self.assertEqual(result, 1)
+                self.assertTrue(output.strip())
+                self.assertNotIn(PAIRING, output)
+                self.assertNotIn(PRIVATE_RESPONSE, output)
+                browser.assert_not_called()
+                self.assertTrue(all(call.args[0].endswith("/parameters") for call in transport.call_args_list))
 
 
 if __name__ == "__main__":
