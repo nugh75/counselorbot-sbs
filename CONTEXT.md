@@ -490,12 +490,16 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 |--------|----------|-------------|
 | `GET` | `/api/admin/guided-steps` | List all steps, each with `system_prompt_key` resolved like the chat runtime (`chat_logic.guided_step_system_prompt_key`) |
 | `GET` | `/api/admin/guided-steps/modes` | Allowed step modes (`intro` + `MODE_TO_SYSTEM_PROMPT_KEY`) with their system prompt key; the admin panel keeps no copy of these maps |
+| `GET` | `/api/admin/prompt-map/instruments` | Instruments with guided steps (admin order) and their step count |
+| `GET` | `/api/admin/prompt-map?instrument=<id>` | Read-only prompt map of one instrument's guided chat in 4 levels (`common`, `groups`, `instrument`, `steps` incl. fixed `questions`/`conclusion`). Each entry: key, level, destination (`model`/`student`/`admin`/`context_filter`), when (`entry`/`every_turn`/`follow_up`/`student`/`admin`), used by (instruments, steps), current value, `stored`, existing save endpoint. A text appears once, at the level computed from usage (`backend/prompt_map.py`, same functions as the chat: `guided_step_system_prompt_key`, `guided_step_follow_up_mode`, `routes.chat.guided_phase_text_keys`); steps get inherited ones as `refs` |
 | `POST` | `/api/admin/guided-steps` | Create step |
 | `PUT` | `/api/admin/guided-steps/{id}` | Update step |
 | `DELETE` | `/api/admin/guided-steps/{id}` | Delete step |
 | `PATCH` | `/api/admin/guided-steps/reorder` | Reorder steps |
 | `GET/POST` | `/api/admin/guided-step-questions` | List/create suggested questions |
 | `PUT/DELETE` | `/api/admin/guided-step-questions/{id}` | Update/delete suggested question |
+
+Admin view: *Configurazione → Mappa dei prompt* (`?section=prompt-map&instrument=<id>`, `frontend/src/components/admin/PromptMap.tsx`) reads this map and saves through the existing APIs (`POST /admin/config`, `PUT /admin/guided-steps/{id}`, `PUT /admin/counselors/{id}`, all writing `prompt_revisions`); texts used by several instruments or steps need a confirmation. The four old tabs stay under *Strumenti — vista classica*. Layout and rules: `docs/operations/admin-prompt-map.md`.
 
 ### Admin: Instruments & Factors
 | Method | Endpoint | Description |
