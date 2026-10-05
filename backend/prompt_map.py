@@ -351,7 +351,8 @@ def build_prompt_map(db, instrument: str) -> dict | None:
             _step_field(step, "label", DEST_STUDENT, WHEN_STUDENT, step.label),
             _step_field(step, "color_theme", DEST_STUDENT, WHEN_STUDENT, step.color_theme),
             _step_field(step, "prompt", DEST_MODEL, WHEN_ENTRY, step.prompt),
-            *step_entries.get(step.id, []),
+            # Il contesto subito dopo i campi dello step: decide cosa riceve il modello.
+            *sorted(step_entries.get(step.id, []), key=lambda e: e["role"] != "components"),
             _questions_entry(instrument, step.id, step.label, questions_by_step.get(step.id, [])),
         ]
         refs = list(step_refs.get(step.id, []))
