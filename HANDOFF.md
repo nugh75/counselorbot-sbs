@@ -1,6 +1,10 @@
 # Handoff: varianti DB di tutti i prompt per Totale/Ristretto/Minimo
-Data: 2026-10-05 | Stato: completato localmente, pubblicazione PR
+Data: 2026-10-05 | Stato: PR #54 aperta, da revisionare
 
+- PR [#54](https://github.com/nugh75/counselorbot-sbs/pull/54), aperta su main e
+  collegata al Project V2 CounselorBot. Notify eseguito immediatamente dopo
+  apertura, best-effort; canale mobile disabilitato e nessun segnale recapitato.
+- Commit `e7f18bf` (test anteprima precedente), `5b1bdaf` (funzionalità e prove).
 - Correzione successiva a #53 (merge dd48085): ogni testo modello nella Mappa
   ha pulsanti Totale/Ristretto/Minimo, varianti Config indipendenti e revisioni.
   Include direttive, sistema/follow-up, meta, Idea, step e persona.
