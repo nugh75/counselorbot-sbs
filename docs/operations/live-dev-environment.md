@@ -6,6 +6,27 @@ modifiche dal browser del Mac, **senza toccare i container di produzione**
 
 ## Comandi
 
+### Differenziazione prompt (fixture admin)
+
+`scripts/dev-context-frontend.sh`: frontend su `127.0.0.1:3165`, porta controllata
+prima dell'avvio, backend inaccessibile `127.0.0.1:9`. Non usa un DB applicativo;
+la suite intercetta tutte le API con dati sintetici.
+
+```bash
+./scripts/dev-context-frontend.sh
+# In un altro terminale, dalla cartella frontend:
+PROMPT_MAP_BASE_URL=http://127.0.0.1:3165 node --test tests/admin-prompt-map.test.mjs
+```
+
+Tunnel: `ssh -N -L 3165:127.0.0.1:3165 <utente>@<server>`;
+pagina `http://localhost:3165/admin?section=general` (senza fixture richiede
+le API e l'autenticazione reali, non presenti in questo ambiente).
+Stop: Ctrl+C nel terminale di avvio. La verifica Docker usa invece loopback
+3166. PostgreSQL sintetico dedicato su18598 per test backend/confronto CR4,
+con database `_test` e senza dati operativi. Tutti i processi e container propri
+di questa verifica vengono fermati alla consegna, senza intervenire sui dev
+preesistenti. [Configurazione e limiti](model-context-levels.md).
+
 ```bash
 # 1. Backend dev (FastAPI + uvicorn --reload, porta 8002)
 ~/counselorbot-sbs/scripts/dev-backend.sh

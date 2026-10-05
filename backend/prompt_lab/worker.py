@@ -587,6 +587,17 @@ class Worker:
                goals: Sequence[Mapping[str, str]], budget: _Budget) -> None:
         try:
             envelope = render(snapshot, dict(case), arm["text"])
+            if "context_config" in envelope:
+                from ..model_context import context_profile, fit_context
+                system, message, history, report = fit_context(
+                    envelope["system_prompt_final"], envelope["full_message"], envelope.get("history") or [],
+                    context_profile(envelope["context_config"], preset["provider"], preset["model"]),
+                    preset.get("max_tokens") or 700, context_data=envelope.get("context_data"),
+                )
+                envelope.update(system_prompt_final=system, full_message=message, history=history, context_budget=report)
+                preset = {**preset, "context_tokens": report.get("context_tokens")}
+                envelope.pop("context_config", None)
+                envelope.pop("context_data", None)
             envelope["candidate_hash"] = hashlib.sha256(arm["text"].encode()).hexdigest()
         except Exception as exc:
             # An envelope that cannot be rebuilt is not a valid trial. It is
@@ -798,6 +809,8 @@ def _stored_envelope(envelope: Mapping[str, Any] | None) -> dict | None:
     out["history"] = list(envelope.get("history") or [])
     out["profile_context"] = envelope.get("profile_context", "")
     out["candidate_hash"] = envelope.get("candidate_hash")
+    if isinstance(envelope.get("context_budget"), dict):
+        out["context_budget"] = envelope["context_budget"]
     return out
 
 

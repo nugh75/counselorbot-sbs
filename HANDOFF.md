@@ -1,3 +1,45 @@
+# Handoff: differenziazione prompt CR1–CR4
+Data: 2026-10-05 | Stato: implementazione e verifiche locali, PR da revisionare
+
+PR [#53](https://github.com/nugh75/counselorbot-sbs/pull/53), aperta verso main e
+collegata al Project V2 CounselorBot. `gh --project` non compatibile con API
+classic dismesse: usata l'API GraphQL V2, bug sospetto registrato LOCAL.
+Notify eseguito subito: nessun Timoniere attivo, notifiche mobile disabilitate;
+nessun segnale recapitato. Proseguito come previsto dal requisito best-effort.
+
+- Worktree `/tmp/counselorbot-prompt-differentiation-1005`, branch
+  `feature/prompt-differentiation`, base origin/main `005cf2c`.
+- CR1: stime token su testi/bozze nella Mappa, blocchi/totale/budget in
+  anteprima e rapporto nei log sync/streaming.
+- CR2: livelli Config rinominabili/aggiungibili, tetti componenti, meta/storico
+  e assegnazione esatta manuale provider/modello. Salvataggio esplicito;
+  step e contratti obbligatori conservano precedenza.
+- CR3: editor `__short` vuoto per ogni prompt di sistema/follow-up, stessa
+  proprietà/conferma/revisione; normale se breve assente. Testi scritti soltanto
+  dall'amministratore. Ogni ripiego riparte dall'envelope originale.
+- CR4: snapshot/worker Prompt Lab condividono l'adattamento. Runner fisso:
+  3 step × 12 strumenti × 2 modelli × 2 livelli, 144 prove sintetiche locali.
+  Token stimati −9,13%, nessun miglioramento qualità dimostrato; nessuna
+  attivazione automatica. Verdetti automatici, non revisione educativa umana.
+- Backend: 140 test nell'immagine isolata, inclusa parità 65×6×3.
+  Frontend: 265 unità, 19 browser desktop/mobile, build con TypeScript,
+  i18n3136/6 e lint mirato. Lint globale bloccato da errore NewDeckDialog
+  preesistente; dettagli/limiti/bug nella pagina di validazione.
+- Docker backend/frontend ricostruiti come immagini locali di verifica.
+  Nessun deploy, merge, sudo, modifica .env, dati o prompt operativi.
+  Dev3165 e container propri frontend3166/PostgreSQL18598 fermati alla fine;
+  immagini restano disponibili, altri processi non toccati.
+- Correzione compact in commit separato `8902e96`; feature/documentazione in
+  commit dedicato `d491b16`. Push e PR a main; nessun merge eseguito.
+- Documentazione: `docs/operations/model-context-levels.md` e
+  `docs/operations/model-context-levels-validation.md`; JSON depurato e
+  screenshot desktop/mobile. Manifest guida aggiornato e controllato.
+- Bug tutti LOCAL nel Diario, nessuna issue manuale: compact e isolamento
+  fixture risolti; segnalazione conferma scartata; qualità sintetica sospetta;
+  lint preesistente confermato. Bug non registrati: nessuno.
+
+---
+
 # Handoff: codice incollabile nel terminale e callback SSH
 Data: 2026-10-05 | Stato: deploy verificato; PR creata come ultimo passo
 

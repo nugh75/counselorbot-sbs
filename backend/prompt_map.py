@@ -17,6 +17,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from . import models
+from .model_context import estimate_tokens
 from .chat_logic import (
     _instrument_meta_system_prompt,
     guided_step_follow_up_mode,
@@ -142,6 +143,13 @@ def _instrument_uses(db, instrument: str, steps: list) -> list[_Use]:
                          WHEN_EVERY_TURN, instrument, step.id))
         uses.append(_Use(_guidance_key(instrument, step.id), "guidance", DEST_ADMIN, WHEN_ADMIN,
                          instrument, step.id))
+    # Short variants have the same owner and consumers as the normal prompt.
+    # Missing rows stay empty: only the administrator writes these texts.
+    uses.extend([
+        _Use(u.key + "__short", "system_prompt_short", u.destination, u.when,
+             u.instrument, u.step_id, u.min_level)
+        for u in uses if u.role in {"system_prompt", "follow_up_prompt"}
+    ])
     return uses
 
 
@@ -182,6 +190,9 @@ def _config_entry(key: str, uses: list[_Use], level: str, configs: dict, step_la
         "read_only": False,
     }
     entry["shared"] = len(entry["used_by"]["instruments"]) > 1 or len(entry["used_by"]["steps"]) > 1
+    entry["estimated_tokens"] = estimate_tokens(entry["value"])
+    if first.role == "system_prompt_short":
+        entry["variant_of"] = key.removesuffix("__short")
     if first.destination == DEST_STUDENT:
         entry["translations"] = {
             lang: configs[f"{key}__{lang}"].value or ""
@@ -229,6 +240,8 @@ def _step_field(step, field: str, destination: str, when: str, value) -> dict:
     }
     if field == "label":
         entry["translations"] = dict(step.label_i18n or {})
+    if isinstance(value, str):
+        entry["estimated_tokens"] = estimate_tokens(value)
     return entry
 
 

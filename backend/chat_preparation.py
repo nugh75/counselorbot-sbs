@@ -195,10 +195,28 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         or (step.sort_order or 0) == 0
         or skills_intents.asks_about_platform(request.message or "")
     )
-    system_prompt = _apply_global_directives(system_prompt, request.language, db,
+    base_prompt = system_prompt
+    configured_base = ai_service.config.get(prompt_key, SYSTEM_PROMPT_DEFAULTS.get(prompt_key, ""))
+    short_prompt = ai_service.config.get(prompt_key + "__short", "")
+    if config_overrides is not None:
+        short_prompt = config_overrides.get(prompt_key + "__short", short_prompt)
+    # Resolve the owned base before dynamic directives and score annotations.
+    # Apply exactly the same transformations to the normal and short sections.
+    short_system = None
+    if short_prompt.strip() and configured_base and base_prompt.startswith(configured_base):
+        short_system = short_prompt.strip() + base_prompt[len(configured_base):]
+
+    def transform(function, normal, *args, **kwargs):
+        nonlocal short_system
+        if short_system is not None:
+            short_system = function(short_system, *args, **kwargs)
+        return function(normal, *args, **kwargs)
+
+    system_prompt = transform(_apply_global_directives, system_prompt, request.language, db,
                                              platform_full=platform_full, config_overrides=config_overrides)
-    system_prompt = _apply_response_length_directive(system_prompt, effective_response_length)
-    system_prompt = _apply_idea_variant_directive(system_prompt, ai_service, request)
+    global_directives = system_prompt[len(base_prompt):].strip()
+    system_prompt = transform(_apply_response_length_directive, system_prompt, effective_response_length)
+    system_prompt = transform(_apply_idea_variant_directive, system_prompt, ai_service, request)
     effective_message, phase_prompt_key = _resolve_user_message_for_chat(ai_service, request, db)
     components = {}
     advice_requested = is_advice_follow_up(request)
@@ -236,8 +254,8 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     include_analysis_context = _should_include_step_analysis_context(step_mode)
     phase_codes = _phase_factor_codes(db, request.phase) if include_analysis_context else set()
     if include_analysis_context:
-        system_prompt = _apply_qsa_factor_directive(system_prompt, questionnaire_type, request.language, phase_codes)
-        system_prompt = _apply_current_step_factor_scope_directive(system_prompt, questionnaire_type, phase_codes)
+        system_prompt = transform(_apply_qsa_factor_directive, system_prompt, questionnaire_type, request.language, phase_codes)
+        system_prompt = transform(_apply_current_step_factor_scope_directive, system_prompt, questionnaire_type, phase_codes)
     model_scores_context = (
         _annotate_qsa_factor_codes(request.scores_context, request.language, questionnaire_type=questionnaire_type)
         if _is_strategy_questionnaire(questionnaire_type) else request.scores_context
@@ -251,15 +269,15 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
                 component_scores_context, questionnaire_type, request.language, phase_codes
             )
         )
-        system_prompt = _apply_current_step_score_profile_directive(
+        system_prompt = transform(_apply_current_step_score_profile_directive,
             system_prompt, questionnaire_type, request.language, component_scores_context, phase_codes, include_advice,
             factor_names=competence_factor_names(db, questionnaire_type, request.language),
         )
         if include_advice:
-            system_prompt = _apply_advice_distribution_directive(system_prompt)
-            system_prompt = _apply_certified_advice_directive(system_prompt, questionnaire_type)
+            system_prompt = transform(_apply_advice_distribution_directive, system_prompt)
+            system_prompt = transform(_apply_certified_advice_directive, system_prompt, questionnaire_type)
         elif is_follow_up and allows_advice:
-            system_prompt = _apply_follow_up_advice_directive(system_prompt)
+            system_prompt = transform(_apply_follow_up_advice_directive, system_prompt)
         else:
             component_flags = apply_advice_retrieval_policy(component_flags, "factor", request.phase)
             component_options["certified_strategy_limit"] = 0
@@ -326,17 +344,21 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         db, reading_ids=reading_ids, strategy_ids=certified_strategy_ids,
         language=request.language or "it",
     )
-    system_prompt = recommendation_blocks.apply_directive(
+    system_prompt = transform(recommendation_blocks.apply_directive,
         system_prompt, reading_candidates, strategy_candidates, idea=questionnaire_type == IDEA_INSTRUMENT,
     )
-    system_prompt += recommendation_blocks.notes_directive(
+    notes_tail = recommendation_blocks.notes_directive(
         advice_allowed=bool(component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
         idea=questionnaire_type == IDEA_INSTRUMENT,
     )
-    system_prompt += _recommendation_service.conversation_context(
+    conversation_tail = _recommendation_service.conversation_context(
         db, session_id=session_id, username=identity.get("username", ""),
         message=request.message or "", language=request.language or "it",
     )
+
+    system_prompt += notes_tail + conversation_tail
+    if short_system is not None:
+        short_system += notes_tail + conversation_tail
 
     # Assembla l'envelope canonico (Fase 5):
     #   SYSTEM = [PERSONA] [SECTION] [STUDENT] [PROFILE] [KNOWLEDGE]
@@ -429,6 +451,22 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     if essential:
         system_prompt_final += essential_directive(request.phase)
     system_prompt_final = apply_response_format(system_prompt_final, getattr(request, "response_format", "standard"))
+    from .prompt_contract import persona_context
+    def rendered(text):
+        return (text or "").replace("{{counselor_name}}", c_name or "the counsellor")
+    fragments = {
+        "directives": rendered(global_directives),
+        "persona": rendered(persona_context(c_persona, c_name).strip()) if component_flags.get("counselor", True) else "",
+        "profile": "[PROFILE]\n" + components["profile"] if components.get("profile") else "",
+        "meta": "[META SYSTEM PROMPT]\n" + components["meta_system_prompt"] if components.get("meta_system_prompt") else "",
+        "knowledge": "[KNOWLEDGE]\n" + knowledge_context if knowledge_context and component_flags.get("knowledge", True) else "",
+    }
+    ai_service.context_data = {
+        "system": system_prompt_final, "fragments": fragments,
+        "base": rendered(components.get("system_prompt", "")),
+        "short": rendered(short_system) if short_system is not None else "",
+        "prompt_key": prompt_key,
+    }
     return PreparedTurn(
         prompt_key=prompt_key,
         phase_prompt_key=phase_prompt_key,

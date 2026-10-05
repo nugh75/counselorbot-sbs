@@ -7,6 +7,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview } from '@/components/admin/PromptRequestPreview';
+import { estimateTokens } from '@/lib/context-tokens';
 import type { AdminGuidedStepQuestion } from '@/lib/guided-step-questions';
 import {
     PROMPT_MAP_LANGUAGES, badgeFor, booleanFlags, componentsValue, entryAnchor, entryText, findEntry, levelAnchor, levelCounts,
@@ -93,6 +94,7 @@ function stepTitle(step: PromptMapStep, lang: string, t: (key: string) => string
 }
 
 function entryTitle(entry: PromptMapEntry, t: (key: string) => string, tf: (key: string, fallback: string) => string) {
+    if (entry.role === 'system_prompt_short') return t('admin.promptMap.role.system_prompt_short');
     if (entry.kind === 'guided_step') return t(`admin.promptMap.field.${entry.field}`);
     if (entry.kind === 'config') return tf(`admin.config.label.${entry.key}`, t(`admin.promptMap.role.${entry.role}`));
     return t(`admin.promptMap.role.${entry.role}`);
@@ -176,6 +178,7 @@ function EntryEditor({ entry, onSaved, onCancel, componentLabels }: {
     };
 
     return <div className="mt-3 space-y-3">
+        {!isComponents && <p data-token-estimate className="text-xs text-slate-500">{t('admin.context.tokens', { count: estimateTokens(draft) })}</p>}
         {multilingual && <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
             {t('admin.promptMap.language')}
             <select value={language} onChange={event => { setLanguage(event.target.value); setDraft(entryText(entry, event.target.value)); setConfirming(false); }}
@@ -248,16 +251,20 @@ function EntryCard({ entry, highlighted, onSaved, onEditPersona, onEditQuestions
                 <UsedBySteps entry={entry} />
             </div>
             <div className="flex flex-wrap items-center gap-1">
+                {(entry.kind === 'config' || entry.kind === 'guided_step') && entry.role !== 'components' && <span data-token-estimate className="text-xs text-slate-500">{t('admin.context.tokens', { count: estimateTokens(text) })}</span>}
                 <Badge kind={badgeFor(entry)} />
                 {entry.read_only && <span className="rounded border border-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">{t('admin.promptMap.badge.readOnly')}</span>}
             </div>
         </header>
+
+        {entry.role === 'system_prompt_short' && <p className="mt-2 text-xs text-slate-500">{t('admin.context.shortHelp')}</p>}
 
         {entry.kind === 'counselor_persona' && <ul className="mt-3 space-y-2">
             {counselors.length === 0 && <li className="text-xs text-slate-500">{t('admin.promptMap.noPersona')}</li>}
             {counselors.map(counselor => <li key={counselor.id} className="flex items-start gap-3 rounded border border-slate-100 bg-slate-50 px-3 py-2">
                 <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold text-slate-700">{counselor.name}</p>
+                    <p data-token-estimate className="text-xs text-slate-500">{t('admin.context.tokens', { count: estimateTokens(counselor.persona) })}</p>
                     <p className="line-clamp-2 whitespace-pre-wrap text-xs text-slate-500">{counselor.persona || t('admin.promptMap.empty')}</p>
                 </div>
                 <button type="button" onClick={() => onEditPersona(counselor)} aria-label={`${t('admin.promptMap.edit')} · ${counselor.name}`}
@@ -390,6 +397,7 @@ function PersonaDialog({ counselor, onClose, onSaved }: { counselor: PromptMapCo
             <textarea autoFocus value={draft} onChange={event => setDraft(event.target.value)} rows={12}
                 className="mt-1 w-full rounded border border-slate-300 p-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" />
         </label>
+        <p data-token-estimate className="text-xs text-slate-500">{t('admin.context.tokens', { count: estimateTokens(draft) })}</p>
         {error && <p role="alert" className="text-xs text-red-700">{error}</p>}
         <PromptHistory scope="counselor_persona" targetKey={String(counselor.id)} currentValue={counselor.persona} onRestored={onSaved} />
     </DialogShell>;
@@ -482,6 +490,7 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
                 {editingId === row.id ? <div className="space-y-2">
                     <textarea autoFocus aria-label={t('admin.promptMap.edit')} value={editText} onChange={event => setEditText(event.target.value)} rows={3}
                         className="w-full rounded border border-slate-300 bg-white p-2 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <p data-token-estimate className="text-xs text-slate-500">{t('admin.context.tokens', { count: estimateTokens(editText) })}</p>
                     <div className="flex flex-wrap justify-end gap-2">
                         <button type="button" onClick={() => setEditingId(null)} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">{t('admin.promptMap.cancel')}</button>
                         <button type="button" disabled={busy || !editText.trim()} onClick={() => run([{ url: `${QUESTIONS_API}/${row.id}`, method: 'PUT', body: { text: editText.trim() } }])}
@@ -490,6 +499,7 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
                 </div> : <div className="flex flex-wrap items-start gap-2">
                     <p className="min-w-0 flex-1 basis-48 whitespace-pre-wrap break-words text-sm text-slate-700">
                         <span className="mr-1 font-mono text-[11px] text-slate-400">{index + 1}.</span>{row.text}
+                        <span data-token-estimate className="ml-2 text-xs text-slate-500">{t('admin.context.tokens', { count: estimateTokens(row.text) })}</span>
                         {!row.is_active && <span className="ml-2 rounded border border-slate-300 px-1 text-[10px] font-semibold uppercase text-slate-500">{t('admin.promptMap.questions.inactive')}</span>}
                     </p>
                     <div className="flex shrink-0 flex-wrap gap-1">
@@ -509,6 +519,7 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
                 <textarea value={draft} onChange={event => setDraft(event.target.value)} rows={2}
                     className="mt-1 w-full rounded border border-slate-300 bg-white p-2 text-sm font-normal text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500" />
             </label>
+            <p data-token-estimate className="text-xs text-slate-500">{t('admin.context.tokens', { count: estimateTokens(draft) })}</p>
             <div className="flex justify-end">
                 <button type="button" disabled={busy || !draft.trim()} onClick={add}
                     className="inline-flex items-center gap-1 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"><Plus aria-hidden className="h-3.5 w-3.5" />{t('admin.promptMap.questions.add')}</button>

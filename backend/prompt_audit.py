@@ -270,6 +270,12 @@ def build_prompt_audit(
     ai_service.config = {**ai_service.config, **overrides}
     counselor, c_provider, c_model, c_persona, c_disable_thinking, c_reasoning_budget, counselor_warnings = _resolve_counselor(db, request.counselor_id)
     warnings.extend(counselor_warnings)
+    if payload.model_preset_id is not None:
+        preset = db.query(models.ModelPreset).filter_by(id=payload.model_preset_id, is_active=True).first()
+        if preset is None:
+            raise HTTPException(400, "Preset di modello assente o inattivo.")
+        c_provider, c_model = preset.provider, preset.model
+        c_disable_thinking, c_reasoning_budget = bool(preset.disable_thinking), preset.reasoning_budget
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
 
     # Retain input validation warnings; preparation itself is shared with /chat.
@@ -329,6 +335,7 @@ def build_prompt_audit(
         system_prompt_final, full_message, history, context_report = fit_context(
             system_prompt_final, full_message, history,
             context_profile(ai_service.config, provider, model), plan.max_tokens,
+            context_data=getattr(ai_service, "context_data", None),
         )
     except ContextCapacityError as exc:
         warnings.append({"code": "context_capacity_exceeded", "message": str(exc)})
