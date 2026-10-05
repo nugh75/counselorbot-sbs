@@ -103,6 +103,11 @@ async function until(condition, timeout = 5000) {
     }
 }
 
+/** Apre o chiude una sezione della mappa dall'intestazione (livello o step). */
+async function toggleSection(page, anchor) {
+    await page.locator(`#${anchor} > div button[aria-expanded]`).first().click();
+}
+
 async function fixture(width = 1440) {
     const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
     const context = await browser.newContext({ viewport: { width, height: 900 } });
@@ -147,10 +152,17 @@ test('levels go from shared to step and inherited texts link to their level', as
     try {
         const { page } = f;
         const headings = await page.locator('section[aria-labelledby="prompt-map-title"] h4').allInnerTexts();
-        assert.deepEqual(headings.map(text => text.replace(/^\d\s*/, '').trim().toLowerCase()), [
-            'comune a tutte le chat guidate', 'gruppi', 'strumento questionario sulle strategie di apprendimento', 'step',
+        assert.deepEqual(headings.map(text => text.replace(/\s+/g, ' ').trim().toLowerCase()), [
+            '1 comune a tutte le chat guidate 2 voci', '2 gruppi 2 voci', '3 strumento questionario sulle strategie di apprendimento 2 voci', '4 step 3 step',
         ]);
-        assert.match(await page.locator('[data-entry-key="text_guided_conclusion"]').innerText(), /usato da 2 strumenti/);
+        // Comune e Gruppi chiusi, Strumento e Step aperti; degli step solo il primo.
+        const open = await page.locator('[data-section-open]').evaluateAll(nodes => nodes.map(node => `${node.id}:${node.dataset.sectionOpen}`));
+        assert.deepEqual(open, [
+            'pm-level-common:false', 'pm-level-group:false', 'pm-level-instrument:true', 'pm-level-step:true',
+            'pm-step-cognitive:true', 'pm-step-affective:false', 'pm-step-conclusion:false',
+        ]);
+        assert.equal(await page.locator('[data-entry-key="text_guided_conclusion"]').count(), 0);
+        assert.equal(await page.getByRole('navigation').filter({ hasText: 'Comune' }).count(), 0);
         assert.match(page.url(), /section=prompt-map/);
         assert.match(page.url(), /instrument=QSA/);
 
@@ -160,9 +172,14 @@ test('levels go from shared to step and inherited texts link to their level', as
         await step.getByRole('button', { name: /vai/ }).first().click();
         await page.waitForFunction(() => document.querySelector('[data-entry-key="prompt_factor"]')?.className.includes('ring-2'));
 
-        await page.getByRole('navigation', { name: 'Livelli' }).last().getByRole('button', { name: 'Conclusione' }).click();
-        await page.locator('#pm-step-conclusion').waitFor();
-        assert.match(await page.locator('#pm-step-conclusion').innerText(), /text_guided_conclusion/);
+        await toggleSection(page, 'pm-step-conclusion');
+        const conclusion = page.locator('#pm-step-conclusion');
+        assert.match(await conclusion.innerText(), /text_guided_conclusion/);
+        // "vai" verso un livello chiuso lo apre e ci scorre.
+        await conclusion.getByRole('button', { name: /vai/ }).click();
+        await page.waitForFunction(() => document.querySelector('[data-entry-key="text_guided_conclusion"]')?.className.includes('ring-2'));
+        assert.equal(await page.locator('#pm-level-group').getAttribute('data-section-open'), 'true');
+        assert.match(await page.locator('[data-entry-key="text_guided_conclusion"]').innerText(), /usato da 2 strumenti/);
     } finally { await f.close(); }
 });
 
@@ -170,6 +187,7 @@ test('each group names its instruments, highlights the selected one and the warn
     const f = await fixture();
     try {
         const { page, writes } = f;
+        await toggleSection(page, 'pm-level-group');
         const groups = page.locator('#pm-level-group [data-group]');
         assert.equal(await groups.count(), 2);
         const first = groups.nth(0);
@@ -229,6 +247,7 @@ test('student texts save per language with the suffixed key', async () => {
     const f = await fixture();
     try {
         const { page, writes } = f;
+        await toggleSection(page, 'pm-level-group');
         const card = page.locator('[data-entry-key="text_guided_conclusion"]');
         await card.getByRole('button', { name: 'Modifica' }).click();
         await card.getByLabel('Lingua del testo').selectOption('en');
@@ -245,6 +264,7 @@ test('counselor persona is read-only and edited in a popup with the counselor AP
     const f = await fixture();
     try {
         const { page, writes } = f;
+        await toggleSection(page, 'pm-level-common');
         const card = page.locator('[data-entry-key="counselor_persona"]');
         assert.match(await card.innerText(), /SOLA LETTURA/);
         assert.equal(await card.locator('textarea').count(), 0);
@@ -257,14 +277,33 @@ test('counselor persona is read-only and edited in a popup with the counselor AP
     } finally { await f.close(); }
 });
 
-test('mobile layout has a level bar, a step select and no horizontal scroll', async () => {
+test('mobile layout opens every section without horizontal scroll', async () => {
     const f = await fixture(390);
     try {
         const { page } = f;
-        await page.getByRole('combobox', { name: 'Step', exact: true }).selectOption('affective');
-        await page.locator('#pm-step-affective').waitFor();
+        for (const anchor of ['pm-level-common', 'pm-level-group', 'pm-step-affective', 'pm-step-conclusion']) await toggleSection(page, anchor);
+        await page.locator('[data-entry-key="guided_step:affective:prompt"]').waitFor();
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
         assert.equal(overflow, 0);
+    } finally { await f.close(); }
+});
+
+test('open and closed sections are remembered for the viewer', async () => {
+    const f = await fixture();
+    try {
+        const { page } = f;
+        await toggleSection(page, 'pm-level-common');
+        await toggleSection(page, 'pm-step-cognitive');
+        await page.reload();
+        await page.locator('[data-entry-key="prompt_factor"]').waitFor();
+        assert.equal(await page.locator('#pm-level-common').getAttribute('data-section-open'), 'true');
+        assert.equal(await page.locator('#pm-step-cognitive').getAttribute('data-section-open'), 'false');
+        assert.equal(await page.locator('[data-entry-key="guided_step:cognitive:prompt"]').count(), 0);
+        // Chiave illeggibile: si torna ai default, la pagina funziona.
+        await page.evaluate(() => localStorage.setItem('cb_prompt_map_sections', '{oops'));
+        await page.reload();
+        await page.locator('[data-entry-key="guided_step:cognitive:prompt"]').waitFor();
+        assert.equal(await page.locator('#pm-level-common').getAttribute('data-section-open'), 'false');
     } finally { await f.close(); }
 });
 
