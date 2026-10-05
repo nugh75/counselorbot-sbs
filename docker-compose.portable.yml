@@ -47,6 +47,7 @@ services:
       IDEA_SOURCES_STORAGE_DIR: /app/uploads/idea-sources
       RAG_DYNAMIC_COLLECTIONS_DIR: /app/rag-collections
       CHATGPT_CREDENTIALS_DIR: /app/chatgpt_credentials
+      CHATGPT_MACOS_HELPER_DIR: /app/chatgpt-macos
       PERSONAL_API_CREDENTIALS_DIR: /app/personal_api_credentials
     ports:
       - "127.0.0.1:${COUNSELORBOT_BACKEND_PORT:-8087}:8000"
@@ -61,6 +62,7 @@ services:
       - rag_index:/app/rag_index
       - uploads:/app/uploads
       - chatgpt_credentials:/app/chatgpt_credentials
+      - ./dist/chatgpt-macos:/app/chatgpt-macos:ro
       - personal_api_credentials:/app/personal_api_credentials
     depends_on:
       postgres:

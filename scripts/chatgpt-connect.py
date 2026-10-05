@@ -14,6 +14,7 @@ import secrets
 import sys
 import time
 import urllib.parse
+import urllib.error
 import urllib.request
 import webbrowser
 
@@ -22,13 +23,17 @@ RESOURCE = "https://api.openai.com/v1"
 SCOPES = "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct"
 
 
+class ConnectionFailure(RuntimeError):
+    """Only fixed, safe messages may be shown; never provider response bodies."""
+
+
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, *args, **kwargs):
-        raise RuntimeError("Redirect refused.")
+        raise ConnectionFailure("Il server rimanda al login Console invece di accettare il codice di associazione. Verifica il proxy del servizio.")
 
 
 def request_json(url, *, token=None, data=None, form=False):
-    headers = {"Accept": "application/json"}
+    headers = {"Accept": "application/json", "User-Agent": "Mozilla/5.0 CounselorBot-ChatGPT-Connect/1.0"}
     if token:
         headers["Authorization"] = "Bearer " + token
     body = None
@@ -36,11 +41,31 @@ def request_json(url, *, token=None, data=None, form=False):
         headers["Content-Type"] = "application/x-www-form-urlencoded" if form else "application/json"
         body = (urllib.parse.urlencode(data) if form else json.dumps(data)).encode()
     opener = urllib.request.build_opener(NoRedirect())
-    with opener.open(urllib.request.Request(url, data=body, headers=headers), timeout=30) as response:
-        result = json.loads(response.read(200000))
-        if not isinstance(result, dict):
-            raise ValueError("Expected a JSON object.")
-        return result
+    try:
+        with opener.open(urllib.request.Request(url, data=body, headers=headers), timeout=30) as response:
+            result = json.loads(response.read(200000))
+            if not isinstance(result, dict):
+                raise ValueError("Expected a JSON object.")
+            return result
+    except urllib.error.HTTPError as error:
+        code = None
+        try:
+            result = json.loads(error.read(200000))
+            code = result.get("detail") if isinstance(result, dict) else None
+        except (ValueError, OSError):
+            pass
+        safe = {
+            "chatgpt.errors.linkExpired": "Il codice di associazione è scaduto o già usato. Premi Collega ChatGPT per crearne uno nuovo.",
+            "chatgpt.errors.disabled": "Il collegamento ChatGPT è disattivato. Un amministratore può abilitarlo dall'app.",
+            "chatgpt.errors.notConfigured": "Il server deve predisporre il collegamento ChatGPT. Contatta l'amministratore.",
+            "chatgpt.errors.permission": "Il tuo account ChatGPT non ha autorizzato l'uso dei modelli in CounselorBot.",
+            "chatgpt.errors.invalidCredentials": "OpenAI non ha verificato il collegamento. Avvia una nuova associazione.",
+        }
+        if isinstance(code, str) and code in safe:
+            raise ConnectionFailure(safe[code]) from None
+        if error.code == 403:
+            raise ConnectionFailure("La richiesta è stata rifiutata dal servizio o dal proxy. Apri l'assistente grafico sul computer del browser.") from None
+        raise ConnectionFailure("Il servizio non ha completato il collegamento. Avvia una nuova associazione e riprova.") from None
 
 
 def server_origin(value):
@@ -82,7 +107,7 @@ def connect(origin, pairing_code, *, no_browser=False):
             self.send_header("Cache-Control", "no-store")
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.end_headers()
-            self.wfile.write(b"Return to the terminal to finish connecting." if valid else b"Invalid callback.")
+            self.wfile.write(b"Connection in progress. Return to CounselorBot when the helper confirms completion." if valid else b"Invalid callback.")
 
     with HTTPServer(("127.0.0.1", 0), Handler) as local:
         local.timeout = 1
@@ -97,7 +122,7 @@ def connect(origin, pairing_code, *, no_browser=False):
         if no_browser:
             print(authorize)
         elif not webbrowser.open(authorize):
-            raise RuntimeError("Browser unavailable. Retry with --no-browser.")
+            raise ConnectionFailure("Il browser non è disponibile qui. Apri lo strumento sul tuo computer, fuori da code-server, SSH o container.")
         deadline = time.monotonic() + 600
         while not callback and time.monotonic() < deadline:
             local.handle_request()
@@ -126,10 +151,13 @@ def main():
     args = parser.parse_args()
     try:
         origin = server_origin(args.server)
-        pairing_code = getpass.getpass("CounselorBot pairing code: ").strip()
+        pairing_code = getpass.getpass("Codice di associazione CounselorBot (l'incolla non viene visualizzato): ").strip()
         if not 30 <= len(pairing_code) <= 100:
-            raise ValueError("Invalid pairing code.")
+            raise ConnectionFailure("Copia tutto il codice di associazione mostrato in CounselorBot. Non inserire un token o una chiave API OpenAI.")
         connect(origin, pairing_code, no_browser=args.no_browser)
+    except ConnectionFailure as failure:
+        print(str(failure), file=sys.stderr)
+        return 1
     except (OSError, ValueError, KeyError, RuntimeError):
         # Upstream bodies/errors can contain credentials. Do not print them.
         print("Connection failed. Check the server address and start a new link in CounselorBot.", file=sys.stderr)

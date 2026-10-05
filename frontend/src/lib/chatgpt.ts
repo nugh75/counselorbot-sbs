@@ -5,6 +5,7 @@ export type ChatGPTStatus = {
     available: boolean; enabled: boolean; personal_api_enabled: boolean; reason: string | null; connected: boolean; email: string | null;
     use_subscription: boolean; model: string | null; needs_reconnect: boolean;
     pending_link: boolean; registered: boolean; revocation_pending: boolean; models: ChatGPTModel[];
+    macos_helper_available?: boolean;
 };
 
 export type ChatGPTInstallationStatus = {

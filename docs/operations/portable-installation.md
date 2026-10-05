@@ -150,6 +150,15 @@ sessione può essere verificata sul sottodominio CounselorBot. La matrice
 deve autorizzare anche questo hostname. Non basta cambiare il link login
 o collegare il container alla rete.
 
+Il proxy richiede SSO sulle pagine e sulle API personali/amministrative.
+Per il collegamento locale ChatGPT esclude soltanto i percorsi esatti
+`GET /api/chatgpt/link/parameters`, `POST /api/chatgpt/link/registration` e
+`POST /api/chatgpt/link/complete`: il backend li autorizza mediante il
+codice temporaneo Bearer. Il download macOS resta protetto dalla sessione
+Console. Non occorre un tunnel SSH per questo flusso nella configurazione
+portabile. Preparazione del ZIP universale, Gatekeeper e alternativa CLI sono
+descritti in [Abbonamento personale ChatGPT](chatgpt-subscription.md).
+
 Collaudare sul dominio pubblico:
 
 - HTTPS senza errori TLS e pagine statiche caricate.
@@ -174,7 +183,7 @@ stesso file Compose.
 La politica iniziale mantiene `external_pii_redact=true`,
 `pii_ner_enabled=true`, `external_pii_fallback=block`. Senza NER locale
 raggiungibile le chiamate a provider esterni vengono bloccate. Questa
-installazione non modifica tali valori. Quando l'operatore decide,
+installazione iniziale non modifica tali valori. Quando l'operatore decide,
 l'amministrazione offre `local` oppure `basic`: il filtro base ha limiti
 esplicitati nell'interfaccia e non garantisce anonimato. Non passare a
 `basic`, disattivare la redazione o usare `send_raw` automaticamente.
@@ -288,11 +297,40 @@ dell'installazione con agenti paralleli per AI/dipendenze, auth e infrastruttura
   unico high in `ecdsa`, senza patch; nessun percorso vulnerabile
   identificato nell'app. Evidenze e limiti nell'audit collegato sopra.
 
-Provider, modello, credenziali AI e scelta del filtro privacy restano
-in attesa dell'operatore. Nessuna chiave è stata copiata da altri servizi;
+Al termine dell'installazione iniziale, provider, modello, credenziali AI e
+scelta del filtro privacy erano in attesa dell'operatore. Nessuna chiave è stata copiata da altri servizi;
 `external_pii_redact=true`, `pii_ner_enabled=true`,
 `external_pii_fallback=block` sono stati verificati nel DB dell'app.
 La disponibilità del sito non attesta quella di chat, RAG, OCR o audio.
+
+### Aggiornamento ChatGPT e protezione base, 5 ottobre 2026
+
+Corretto il proxy di associazione e pubblicato l'assistente grafico Mac,
+scaricabile dalla pagina personale dopo il login Console. Lo ZIP universale
+è montato readonly nel backend; nessun token OpenAI va inserito manualmente.
+Il trasferimento usa soltanto i tre percorsi Bearer descritti sopra. Il login
+Console protegge ancora gli altri percorsi, incluso il download.
+
+Su richiesta esplicita dell'operatore è stato salvato **basic** tramite
+`PUT /api/admin/external-privacy`: `external_pii_redact=true`,
+`pii_ner_enabled=false`, `external_pii_fallback=block`. Il detector Ollama
+non viene chiamato. Il filtro deterministico resta attivo su messaggio,
+istruzioni e cronologia, ma può lasciare nomi e altri dati personali.
+La configurazione è stata riletta dall'API autenticata e verificata nel
+runtime con soli testi fittizi, senza inferenza esterna.
+
+Frontend e backend ricostruiti e ricreati; i tre servizi sono healthy.
+Registrazione Console applicata con backup, test nginx, reload e verifica
+idempotente. Download ZIP e identità Console verificati sul dominio pubblico,
+poi logout e revoca della sola sessione di prova. Verifiche: 140 test backend
+su DB separato, 5 test HTTP del helper, 253 unità frontend, 12 percorsi browser
+in sei lingue a 390/1440 px, 23 controlli proxy HTTP isolati, build/test nativi
+Mac, TypeScript, i18n, lint mirato e guidance passati.
+
+L'app Mac è firmata ad hoc e non notarizzata. Compilate entrambe le architetture;
+apertura verificata su Apple Silicon, non su hardware Intel. L'accesso al vero
+account ChatGPT, la selezione del modello e una risposta reale restano da
+completare dall'utente sul Mac del browser. Nessun account OpenAI usato nei test.
 
 I tre container dell'app rimangono avviati. Il container temporaneo
 di validazione e la sessione browser di prova sono stati chiusi;

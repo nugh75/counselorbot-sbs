@@ -91,20 +91,44 @@ Lo startup aggiunge `chatgpt_connections` e `chatgpt_links` al database PostgreS
 i prompt e i dati esistenti non vengono sovrascritti. L’autenticazione resta
 ai4auth. Il normale aggiornamento Docker deve ricostruire le immagini e applicare
 il nuovo montaggio persistente; questa modifica non effettua deploy. Lo strumento
-scaricabile è incluso nel backend e usa Python 3.10+ sul computer dell’utente.
+grafico macOS viene distribuito separatamente dall'immagine Linux. L'alternativa
+CLI Python è inclusa nel backend e usa Python 3.10+ sul computer dell’utente.
 
-## Collegamento sul computer dell’utente
+## Collegamento grafico sul Mac dell’utente
+
+Il percorso principale usa **CounselorBot ChatGPT**, un'app nativa per macOS
+12 o successivo, con un unico ZIP per Mac Intel e Apple Silicon. L'utente non
+deve installare Python né aprire il Terminale. L'app va aperta sul computer
+in cui usa il browser, anche quando CounselorBot gira su un server remoto.
 
 1. Accedere a CounselorBot e aprire **Area personale → Il tuo abbonamento ChatGPT**
    (`/profilo/chatgpt`), oppure la stessa voce nell’Area docenti (`/docente/chatgpt`).
-2. Premere **Collega ChatGPT**, scaricare `chatgpt-connect.py` ed eseguire il comando
-   mostrato sul proprio computer, con Python 3.10 o successivo.
-3. Inserire il codice al prompt del terminale: scade in 10 minuti; non passarlo
-   negli argomenti del comando o salvarlo in file.
+2. Premere **Collega ChatGPT**, quindi **Scarica l’assistente grafico per macOS**.
+   Aprire `CounselorBot-ChatGPT.zip` nel Finder e aprire l'app estratta.
+3. Nell'app verificare **Indirizzo di CounselorBot**, per questa installazione
+   `https://counselorbot.labform.net`. Copiare il codice dalla pagina e incollarlo
+   nel campo **Codice di associazione CounselorBot**; premere **Collega con ChatGPT**.
+   Il codice scade in 10 minuti: non salvarlo in file e non incollare token OpenAI.
 4. Completare l’accesso ufficiale nel browser. Il callback è
    `http://127.0.0.1:<porta>/auth/callback`, sul computer dell’utente.
 5. Tornare a CounselorBot, scegliere un modello disponibile per l’account e
    premere **Usa il mio abbonamento**. Il solo collegamento non abilita il piano.
+
+L'archivio si scarica da `GET /api/chatgpt/helper/macos`: richiede la sessione
+Console del proprietario e rifiuta le anteprime di ruolo. Il download è un
+attachment `application/zip` con `Cache-Control: no-store`. Quando il pacchetto
+non è disponibile, lo status personale riporta `macos_helper_available=false`,
+il download risponde 404 e la pagina mostra l'alternativa manuale.
+
+L'app è firmata ad hoc, senza Developer ID né notarizzazione Apple. Gatekeeper
+può impedirne la prima apertura. Dopo aver verificato la provenienza dal proprio
+sito CounselorBot, l'eventuale autorizzazione riguarda questa app e si esegue
+solo dall'interfaccia di macOS: **Impostazioni di Sistema → Privacy e Sicurezza
+→ Apri comunque**, seguendo le conferme; su macOS 12 il pannello è
+**Preferenze di Sistema → Sicurezza e Privacy → Generali**. Se l'organizzazione
+impedisce l'autorizzazione, rivolgersi al suo amministratore. La procedura non
+richiede comandi per disabilitare Gatekeeper o rimuovere la quarantena. Vedere
+la [guida Apple per aprire app scaricate](https://support.apple.com/it-it/102445).
 
 Il codice associa il trasferimento a un utente già autenticato. Lo strumento
 non sceglie uno username, mantiene i token solo in memoria e rifiuta redirect
@@ -114,9 +138,35 @@ CounselorBot o a localStorage. Il backend verifica firme, issuer, audience,
 nonce, identità di ritorno, client registrato e permessi di inferenza. PKCE,
 state, nonce e identificatore opaco della VM fanno parte del flusso OAuth.
 
-Se il proxy richiede un ulteriore login, lo strumento non ha quei cookie.
-Avviare il collegamento nell’interfaccia già autenticata e usare un tunnel
-verso **Next locale**, senza il proxy di autenticazione, per il comando:
+## Alternativa CLI e proxy di associazione
+
+La sezione manuale della pagina permette di scaricare `chatgpt-connect.py` e
+usare il comando mostrato, con Python 3.10 o successivo. Anche questo helper
+va eseguito sul computer dell'utente, con il browser, fuori dai container e
+dal terminale del server. Il codice viene richiesto interattivamente: non
+aggiungerlo agli argomenti del comando.
+
+Nella configurazione portabile **non serve un tunnel SSH**. Il proxy lascia
+passare soltanto tre percorsi esatti per l'associazione, autenticati dal backend
+con il codice temporaneo nell'header `Authorization: Bearer ...`:
+
+- `GET /api/chatgpt/link/parameters`;
+- `POST /api/chatgpt/link/registration`;
+- `POST /api/chatgpt/link/complete`.
+
+Questi percorsi non richiedono il cookie SSO che l'app locale non possiede.
+Non autorizzano le altre API: pagina personale, generazione del codice,
+preferenze e download macOS mantengono la sessione Console. Le eccezioni sono
+esatte, limitano i metodi e la dimensione del body, rimuovono cookie/header
+identità forniti dal client e applicano `no-store`. Codice assente, invalido o
+scaduto non concede il trasferimento. Il template è
+`infrastructure/portable/nginx-counselorbot.conf.template`; dopo un suo
+aggiornamento, riapplicarlo con `scripts/register-portable-console.mjs`.
+
+Su installazioni diverse il proxy potrebbe ancora richiedere un login anche
+ai tre percorsi di associazione. Se non viene adattato con queste eccezioni,
+avviare il collegamento nell'interfaccia autenticata e usare un tunnel verso
+**Next locale**, senza il proxy di autenticazione, per l'alternativa CLI:
 
 ```bash
 # Next dev sul server: 127.0.0.1:3107; tunnel dal computer dell’utente.
@@ -131,6 +181,36 @@ con il codice temporaneo, non sostituisce l’autenticazione alle altre API.
 In Codespaces usare l’inoltro locale di VS Code verso il frontend; non rendere
 pubblico un Codespace privato per trasferire credenziali. Eseguire lo strumento
 sul computer dell’utente, anche quando il sito è remoto.
+
+## Preparazione del pacchetto macOS da parte dell'operatore
+
+Su un Mac con strumenti Xcode/Command Line Tools e SDK macOS, eseguire:
+
+```bash
+bash scripts/build-chatgpt-macos.sh
+```
+
+Lo script esegue i test del protocollo, compila le versioni `arm64` e `x86_64`
+con target minimo macOS 12, le unisce in un'app universale, applica/verifica
+la firma ad hoc e genera `dist/chatgpt-macos/CounselorBot-ChatGPT.zip` con
+checksum SHA-256. Una distribuzione notarizzata richiede un distinto processo
+con certificato Developer ID e notarizzazione Apple; la build locale non lo
+esegue. Conservare solo sorgenti e script in Git: ZIP, app e altri binari di
+`dist` restano artefatti locali esclusi dal repository.
+
+Il Compose portabile monta `./dist/chatgpt-macos:/app/chatgpt-macos:ro` e
+imposta `CHATGPT_MACOS_HELPER_DIR=/app/chatgpt-macos`. Il backend cerca soltanto
+`CounselorBot-ChatGPT.zip` in quella directory, controllando che sia un file.
+L'override della directory è una scelta dell'operatore, non un parametro del
+download. Senza override usa `dist/chatgpt-macos` nella radice del checkout.
+Non copiare il pacchetto macOS nel Dockerfile: un clone o una build Linux può
+avviare normalmente CounselorBot senza produrre questo artefatto e riporta
+la disponibilità a `false` finché manca il ZIP.
+
+Dopo l'introduzione del mount, ricreare il backend con il Compose portabile.
+I successivi aggiornamenti del ZIP sono visibili tramite il bind readonly
+senza ricostruire l'immagine Linux. Il link autenticato della pagina personale
+serve il pacchetto dalla directory montata, senza esporre percorsi locali.
 
 ## Isolamento, scelta e quota
 
