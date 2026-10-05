@@ -177,9 +177,15 @@ Si apre l’accesso ufficiale a ChatGPT e il trasferimento delle credenziali avv
 automaticamente. L’app non è notarizzata da Apple: l’eventuale autorizzazione
 all’apertura si gestisce dalle impostazioni macOS, come indicato nel pannello.
 
-La sezione **Altri sistemi o collegamento da terminale** conserva lo strumento
-Python 3.10+. Entrambi vanno eseguiti sul computer del browser, fuori da
-code-server, SSH e container. Il backend verifica e conserva cifrate le
+La sezione **Collegamento da terminale (anche SSH)** conserva lo strumento
+Python 3.10+. Il codice incollato è visibile: premere Invio per confermare;
+`--hide-code` permette l'inserimento nascosto. L'assistente grafico va aperto
+sul computer del browser. La CLI può funzionare sullo host SSH usando
+`--no-browser --callback-port 1455`: inoltrare dal computer del browser
+`127.0.0.1:1455` alla stessa porta dello host e aprire nel browser l'URL mostrato.
+Il callback resta locale; il loopback del container code-server è separato
+da quello dello host e richiede un inoltro verso il container stesso.
+Il backend verifica e conserva cifrate le
 credenziali; non vanno incollate nell’interfaccia o nella chat. L’ingress
 portabile consente solo i tre endpoint con codice di associazione temporaneo;
 le pagine personali e le altre API continuano a richiedere il login Console.

@@ -92,7 +92,8 @@ i prompt e i dati esistenti non vengono sovrascritti. L’autenticazione resta
 ai4auth. Il normale aggiornamento Docker deve ricostruire le immagini e applicare
 il nuovo montaggio persistente; questa modifica non effettua deploy. Lo strumento
 grafico macOS viene distribuito separatamente dall'immagine Linux. L'alternativa
-CLI Python è inclusa nel backend e usa Python 3.10+ sul computer dell’utente.
+CLI Python è inclusa nel backend e usa Python 3.10+ sul computer dell’utente
+oppure su un host SSH con inoltro del callback locale verso quel computer.
 
 ## Collegamento grafico sul Mac dell’utente
 
@@ -141,12 +142,23 @@ state, nonce e identificatore opaco della VM fanno parte del flusso OAuth.
 ## Alternativa CLI e proxy di associazione
 
 La sezione manuale della pagina permette di scaricare `chatgpt-connect.py` e
-usare il comando mostrato, con Python 3.10 o successivo. Anche questo helper
-va eseguito sul computer dell'utente, con il browser, fuori dai container e
-dal terminale del server. Il codice viene richiesto interattivamente: non
-aggiungerlo agli argomenti del comando.
+usare il comando mostrato, con Python 3.10 o successivo. Il percorso più diretto
+è eseguirlo sul computer dell'utente, con il browser:
 
-Nella configurazione portabile **non serve un tunnel SSH**. Il proxy lascia
+```bash
+python3 chatgpt-connect.py --server https://counselorbot.labform.net
+```
+
+Il prompt chiede il **codice di associazione CounselorBot**, non un token o una
+chiave OpenAI. L'input è visibile per impostazione predefinita: incollare il
+codice e **premere Invio**. L'helper conferma il numero di caratteri ricevuti
+senza ripetere il codice e avvia il collegamento. Per nascondere l'input durante
+l'incolla aggiungere `--hide-code`, che usa `getpass`; premere comunque Invio
+anche se non compaiono caratteri. Non passare il codice negli argomenti del
+comando e non salvarlo in file.
+
+Nella configurazione portabile **non serve un tunnel per le API di associazione**.
+Il proxy lascia
 passare soltanto tre percorsi esatti per l'associazione, autenticati dal backend
 con il codice temporaneo nell'header `Authorization: Bearer ...`:
 
@@ -162,6 +174,47 @@ identità forniti dal client e applicano `no-store`. Codice assente, invalido o
 scaduto non concede il trasferimento. Il template è
 `infrastructure/portable/nginx-counselorbot.conf.template`; dopo un suo
 aggiornamento, riapplicarlo con `scripts/register-portable-console.mjs`.
+
+### CLI su host SSH con browser sul Mac
+
+L'helper può essere eseguito anche su un host SSH. In questo caso il browser
+si trova sul Mac mentre il listener OAuth è sull'host remoto: serve un inoltro
+SSH del **callback**, indipendente dalle API di associazione raggiungibili
+sul dominio pubblico.
+
+1. Dal Terminale del Mac in cui si aprirà il browser, avviare una shell SSH
+   interattiva mantenendo l'inoltro attivo:
+
+   ```bash
+   ssh -o ExitOnForwardFailure=yes -L 127.0.0.1:1455:127.0.0.1:1455 user@host
+   ```
+
+2. Nella shell dell'host remoto, entrare nel checkout CounselorBot ed eseguire:
+
+   ```bash
+   python3 scripts/chatgpt-connect.py --server https://counselorbot.labform.net --no-browser --callback-port 1455
+   ```
+
+3. Incollare il codice generato dalla propria pagina CounselorBot e premere
+   Invio. Copiare l'URL di accesso mostrato dall'helper e aprirlo nel browser
+   sul Mac. `--no-browser` evita il tentativo di aprire un browser sul server.
+4. Completare l'accesso lasciando aperta la connessione SSH: il browser richiama
+   `http://127.0.0.1:1455/auth/callback`, inoltrato al listener remoto sulla
+   stessa porta. Tornare alla pagina personale per scegliere e attivare il
+   modello dopo la conferma di collegamento.
+
+La porta 1455 deve essere libera sul Mac e sull'host remoto. Se va cambiata,
+usare lo stesso numero nei due lati di `-L` e in `--callback-port`.
+`ExitOnForwardFailure=yes` impedisce di proseguire con un inoltro SSH che
+non è riuscito ad aprire la porta locale.
+
+Il terminale di **code-server in un container** appartiene a un namespace di
+rete diverso: il suo `127.0.0.1:1455` non è quello dell'host SSH. Per questa
+procedura usare la shell dell'host oppure un inoltro locale di VS Code che
+raggiunga precisamente la porta del container in cui gira l'helper. Mantenere
+il listener e l'inoltro su loopback; non pubblicare il callback su Internet né
+farlo ascoltare su `0.0.0.0`. Un terminale remoto senza inoltro non può ricevere
+il callback del browser sul Mac.
 
 Su installazioni diverse il proxy potrebbe ancora richiedere un login anche
 ai tre percorsi di associazione. Se non viene adattato con queste eccezioni,
@@ -179,8 +232,9 @@ In produzione la porta di destinazione può essere quella del frontend interno
 (es. 3000): adattarla all’installazione. Il tunnel permette solo l’associazione
 con il codice temporaneo, non sostituisce l’autenticazione alle altre API.
 In Codespaces usare l’inoltro locale di VS Code verso il frontend; non rendere
-pubblico un Codespace privato per trasferire credenziali. Eseguire lo strumento
-sul computer dell’utente, anche quando il sito è remoto.
+pubblico un Codespace privato per trasferire credenziali. Questo tunnel verso
+il frontend risolve l'accesso alle API su proxy diversi; se l'helper gira
+remotamente serve anche l'inoltro del callback descritto sopra.
 
 ## Preparazione del pacchetto macOS da parte dell'operatore
 
