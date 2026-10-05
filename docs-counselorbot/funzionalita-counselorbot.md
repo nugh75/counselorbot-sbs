@@ -592,12 +592,60 @@ passo utile, senza inventare pulsanti o promettere azioni eseguite automaticamen
 
 In **Amministrazione → Configurazione & Prompt** la sezione si sceglie dal
 filtro **Sezione**, non da una fila di pulsanti. Il filtro raggruppa
-**Impostazioni** (Generale, Direttive Globali) e **Strumenti** (QSA, QSAr, ZTPI,
-Savickas, eventi significativi, obiettivi, QPCS, QPCC, QAP) e ha un campo di
+**Impostazioni** (Mappa dei prompt, Generale, Direttive Globali) e **Strumenti —
+vista classica** (QSA, QSAr, ZTPI, Savickas, eventi significativi, obiettivi,
+QPCS, QPCC, QAP, con le quattro schede storiche) e ha un campo di
 ricerca che trova anche il nome esteso dello strumento. Si usa con mouse o
 tastiera (frecce, Invio, Esc). La sezione scelta resta nell’indirizzo
 (`/admin?section=qsa`): ricaricando la pagina o condividendo il link si riapre
 la stessa sezione; un valore non riconosciuto apre Generale.
+
+### Mappa dei prompt delle chat guidate
+
+**Amministrazione → Configurazione & Prompt → Mappa dei prompt**
+(`/admin?section=prompt-map&instrument=QSA`) mostra tutti i testi che una chat
+guidata usa, dal comune al particolare, e permette di modificarli sul posto.
+Si sceglie lo strumento (tutti quelli con step guidati, Idea compresa); la pagina
+ha quattro livelli:
+
+1. **Comune a tutte le chat guidate**: la persona del counselor (sola lettura;
+   «Modifica» apre un riquadro che salva con la stessa funzione del tab Counselor,
+   con il suo storico), le sei direttive globali e i testi usati da ogni strumento,
+   come il prompt della fase Domande.
+2. **Gruppi**: testi condivisi da più strumenti (per esempio i prompt
+   dell’intervista e della sintesi dei due Eventi significativi), con l’avviso che
+   una modifica vale per tutti gli strumenti del gruppo.
+3. **Strumento**: meta prompt, prompt delle domande dello studente (per QSA e QSAr),
+   testi delle fasi Domande e Conclusione e prompt di sistema condivisi da più step.
+4. **Step**, in ordine di percorso con le fasi fisse Domande e Conclusione: nome
+   nelle sei lingue, colore, istruzione dello step, prompt di sistema proprio dello
+   step, meta prompt dello step se sovrascrive quello dello strumento, componenti
+   del contesto, note per la fase, domande suggerite (si modificano nella scheda
+   Domande suggerite step) e anteprima.
+
+Ogni testo si modifica in un solo posto, al livello a cui appartiene; agli step
+compare **ereditato**, in grigio, con il collegamento «vai» al livello giusto.
+Il livello non è scritto a mano: il server lo calcola contando quanti strumenti e
+step usano il testo, con le stesse regole della chat. Ogni voce ha un’etichetta
+di destinazione: **→ MODELLO · ingresso** (inviato quando lo studente entra nello
+step), **→ MODELLO · ogni turno**, **→ MODELLO · domande dello studente**,
+**→ STUDENTE** (mostrato, mai inviato al modello), **SOLO ADMIN** (note di lavoro)
+e **FILTRO CONTESTO** (componenti). Un testo usato da più strumenti o da più step
+chiede una conferma che elenca chi lo usa prima del salvataggio. I testi per lo
+studente si modificano lingua per lingua. Ogni salvataggio passa dalle funzioni già
+esistenti e resta nello storico delle revisioni, ripristinabile dalla voce stessa;
+uno step può ricevere un meta prompt proprio con «Sovrascrivi per questo step».
+
+L’**Anteprima di ciò che riceve il modello** di uno step usa i valori salvati e
+colora il bordo dei blocchi secondo il livello da cui provengono: grigio per il
+comune, ocra per i gruppi, petrolio per lo strumento, viola per lo step; i blocchi
+su fondo grigio arrivano dal codice o dai dati della sessione. Il turno libero dello studente usa
+lo stesso tipo di richiesta della chat, per esempio le domande sui fattori in QSA.
+
+Le quattro schede storiche restano nella vista classica di ogni strumento, che ha
+il collegamento «Apri nella mappa dei prompt». La pagina funziona anche su
+telefono: i livelli diventano una barra scorrevole e lo step si sceglie da un menu.
+Testi dell’interfaccia nelle sei lingue.
 
 ### Anteprima delle richieste dei questionari nell’amministrazione
 

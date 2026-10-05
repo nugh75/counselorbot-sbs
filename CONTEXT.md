@@ -499,6 +499,8 @@ make prompt-test Q=QSA STEP=intro COUNSELOR=7 STUDENT=barbaraambu RESP_LANG=en  
 | `GET/POST` | `/api/admin/guided-step-questions` | List/create suggested questions |
 | `PUT/DELETE` | `/api/admin/guided-step-questions/{id}` | Update/delete suggested question |
 
+Admin view: *Configurazione → Mappa dei prompt* (`?section=prompt-map&instrument=<id>`, `frontend/src/components/admin/PromptMap.tsx`) reads this map and saves through the existing APIs (`POST /admin/config`, `PUT /admin/guided-steps/{id}`, `PUT /admin/counselors/{id}`, all writing `prompt_revisions`); texts used by several instruments or steps need a confirmation. The four old tabs stay under *Strumenti — vista classica*. Layout and rules: `docs/operations/admin-prompt-map.md`.
+
 ### Admin: Instruments & Factors
 | Method | Endpoint | Description |
 |--------|----------|-------------|

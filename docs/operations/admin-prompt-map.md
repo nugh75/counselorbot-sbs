@@ -156,6 +156,18 @@ Badge e pulsanti vanno a capo; textarea a tutta larghezza; nessuno scroll orizzo
 della pagina (solo la barra dei livelli).
 ```
 
+## Schermate (ambiente dev, DB `counselorbot_test`)
+
+![Mappa dei prompt a 1440 px](img/admin-prompt-map-1440.png)
+
+![Step con anteprima colorata per livello, 1440 px](img/admin-prompt-map-step-preview-1440.png)
+
+![Mappa dei prompt a 390 px](img/admin-prompt-map-390.png)
+
+Colori dei livelli: ① comune grigio, ② gruppi ocra, ③ strumento petrolio, ④ step
+viola; nell'anteprima il bordo sinistro di ogni blocco indica il livello da cui
+proviene il testo (grigio pieno: codice o dati della sessione).
+
 ## Sviluppo e verifica
 
 - Backend: `GET /admin/prompt-map/instruments`, `GET /admin/prompt-map?instrument=<id>`
