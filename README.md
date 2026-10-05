@@ -64,6 +64,20 @@ Services:
 
 The compose file also joins the external `proxy-network` and `ai4educ-console_default` networks for reverse proxy and ai4auth integration.
 
+For Docker on macOS with the Console ingress and `counselorbot.labform.net`,
+use the standalone [portable installation](docs/operations/portable-installation.md)
+after reviewing its [pre-installation audit](docs/operations/portable-install-audit.md):
+
+```bash
+docker compose --env-file .env -f docker-compose.portable.yml up -d --build
+```
+
+The portable stack uses project `counselorbot-portable`, internal PostgreSQL,
+persistent named volumes and the Console network. It starts without Ollama;
+AI credentials and the existing blocking privacy policy await the operator's
+explicit configuration. Authentication must be verified through the Console
+adapter before the deployment is considered complete.
+
 ## Local development
 
 Backend:

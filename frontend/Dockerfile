@@ -1,4 +1,5 @@
-FROM node:22-alpine AS base
+ARG NODE_BASE_IMAGE=node:22-alpine
+FROM ${NODE_BASE_IMAGE} AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -22,6 +23,18 @@ COPY . .
 # Build argument for API URL - must be set at build time for Next.js
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ARG NEXT_PUBLIC_APP_URL=https://counselorbot-sbs.ai4educ.org
+ARG NEXT_PUBLIC_AI4AUTH_BASE=https://auth.ai4educ.org
+ARG NEXT_PUBLIC_AI4EDUC_PORTAL_URL=https://portal.ai4educ.org/
+ARG NEXT_PUBLIC_AI4EDUC_MANAGER_URL=https://manager.ai4educ.org
+ARG NEXT_PUBLIC_AI4EDUC_PROJECT_ID=counselorbot-10-step
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+ENV NEXT_PUBLIC_AI4AUTH_BASE=${NEXT_PUBLIC_AI4AUTH_BASE}
+ENV NEXT_PUBLIC_AI4EDUC_PORTAL_URL=${NEXT_PUBLIC_AI4EDUC_PORTAL_URL}
+ENV NEXT_PUBLIC_AI4EDUC_MANAGER_URL=${NEXT_PUBLIC_AI4EDUC_MANAGER_URL}
+ENV NEXT_PUBLIC_AI4EDUC_PROJECT_ID=${NEXT_PUBLIC_AI4EDUC_PROJECT_ID}
+ARG BACKEND_ORIGIN=http://backend:8000
+ENV BACKEND_ORIGIN=${BACKEND_ORIGIN}
 
 RUN npm run build
 
@@ -30,6 +43,8 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
+ARG BACKEND_ORIGIN=http://backend:8000
+ENV BACKEND_ORIGIN=${BACKEND_ORIGIN}
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
@@ -38,7 +53,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy public folder
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
