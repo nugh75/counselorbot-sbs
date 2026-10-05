@@ -174,8 +174,13 @@ async function fixture(width = 1440, { failReorder = false, failUsage = false, f
         }
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
     });
-    await page.goto(`${origin}/admin?section=prompt-map&instrument=QSA`);
-    await page.locator('[data-entry-key="prompt_factor"]').waitFor();
+    try {
+        await page.goto(`${origin}/admin?section=prompt-map&instrument=QSA`);
+        await page.locator('[data-entry-key="prompt_factor"]').waitFor();
+    } catch (error) {
+        await browser.close();
+        throw error;
+    }
     return { page, writes, previews, close: async () => { await context.close(); await browser.close(); } };
 }
 
