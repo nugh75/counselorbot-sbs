@@ -14,6 +14,7 @@ import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admi
 import { PromptFactoryAlignment, type FactoryAlignmentResult } from '@/components/admin/PromptFactoryAlignment';
 import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
 import { AI4EDUC_SECRETS_URL } from '@/lib/auth';
+import { SectionFilter, type SectionFilterGroup } from '@/components/admin/SectionFilter';
 
 // --- Types ---
 
@@ -72,6 +73,21 @@ interface CertifiedStrategyOption {
 type InstrumentSubsection = 'step-prompts' | 'system-prompts' | 'texts' | 'guided-steps';
 
 // --- Constants ---
+
+// `?section=` keeps the chosen configuration section across reloads and shared links.
+// ConfigForm renders only after the client-side auth check, so reading the URL here is safe.
+const readSectionParam = () => {
+    try { return new URLSearchParams(window.location.search).get('section') || 'general'; } catch { return 'general'; }
+};
+export const writeSectionParam = (section: string | null) => {
+    try {
+        const url = new URL(window.location.href);
+        if (section) url.searchParams.set('section', section);
+        else if (url.searchParams.has('section')) url.searchParams.delete('section');
+        else return;
+        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+    } catch { /* best effort only */ }
+};
 
 const PROVIDERS: Record<string, { label: string; models: string[] }> = {
     openai: {
@@ -1126,7 +1142,7 @@ export function ConfigForm() {
     const [savedConfigs, setSavedConfigs] = useState<ConfigItem[]>([]);
     const [savedSteps, setSavedSteps] = useState<GuidedStep[]>([]);
     const [loading, setLoading] = useState(true);
-    const [section, setSection] = useState<string>('general');
+    const [section, setSection] = useState<string>(readSectionParam);
     const [instrumentSubsection, setInstrumentSubsection] = useState<InstrumentSubsection>('step-prompts');
     const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
     const [factoryAlignmentBusy, setFactoryAlignmentBusy] = useState(false);
@@ -1163,6 +1179,7 @@ export function ConfigForm() {
 
     const openSection = (nextSection: string) => {
         setSection(nextSection);
+        writeSectionParam(nextSection === 'general' ? null : nextSection);
         if (nextSection !== 'general') {
             setInstrumentSubsection('step-prompts');
             setShowNewStepForm(false);
@@ -1715,11 +1732,29 @@ export function ConfigForm() {
         green: { border: 'border-green-400', bg: 'bg-green-50', title: 'text-green-700', dot: 'bg-green-500', ring: 'focus:ring-green-500', subBg: 'bg-green-100/50', subTitle: 'text-green-600' },
     };
 
-    const questTabs = questionnaireConfigs.map((q) => ({
-        id: q.id,
-        label: q.title.split('—')[0].trim(),
-        color: q.color,
-    }));
+    const sectionGroups: SectionFilterGroup[] = [
+        {
+            label: t('admin.config.section.groupSettings'),
+            items: [
+                { id: 'general', label: t('admin.config.section.general'), icon: <Server aria-hidden className="w-4 h-4 shrink-0 text-indigo-600" /> },
+                { id: 'directives', label: t('admin.config.section.directives'), icon: <FileText aria-hidden className="w-4 h-4 shrink-0 text-amber-600" /> },
+            ],
+        },
+        {
+            label: t('admin.config.section.groupTools'),
+            items: questionnaireConfigs.map((q) => {
+                const shortLabel = q.title.split('—')[0].trim();
+                return {
+                    id: q.id,
+                    label: shortLabel,
+                    detail: shortLabel === q.title ? undefined : q.title,
+                    icon: <span aria-hidden className={`w-2.5 h-2.5 shrink-0 rounded-full ${colorMap[q.color].dot}`} />,
+                };
+            }),
+        },
+    ];
+    // An unknown `?section=` (old link, removed instrument) falls back to the general settings.
+    const activeSection = sectionGroups.some(group => group.items.some(item => item.id === section)) ? section : 'general';
 
     const hasUnsavedChanges = hasPromptDraft || showNewStepForm || pendingPromptSaves > 0
         || configs.some(item => item.value !== savedConfigs.find(saved => saved.key === item.key)?.value)
@@ -1759,50 +1794,19 @@ export function ConfigForm() {
                 onApplied={applyFactoryResult} onBusyChange={setFactoryAlignmentBusy} />
 
             <fieldset disabled={factoryAlignmentBusy} className="contents">
-            {/* Sub-tab nav per risorsa */}
-            <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
-                <button
-                    onClick={() => openSection('general')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
-                        section === 'general'
-                            ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                >
-                    <Server className="w-4 h-4" />
-                    {t('admin.config.section.general')}
-                </button>
-                <button
-                    onClick={() => openSection('directives')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
-                        section === 'directives'
-                            ? 'bg-amber-50 border-amber-200 text-amber-700'
-                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                >
-                    <FileText className="w-4 h-4" />
-                    {t('admin.config.section.directives')}
-                </button>
-                {questTabs.map((tab) => {
-                    const c = colorMap[tab.color];
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => openSection(tab.id)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors border ${
-                                section === tab.id
-                                    ? `${c.bg} ${c.border} ${c.title}`
-                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                            }`}
-                        >
-                            <span className={`w-2.5 h-2.5 rounded-full ${c.dot}`} />
-                            {tab.label}
-                        </button>
-                    );
-                })}
+            {/* Filtro di sezione: impostazioni e strumenti raggruppati */}
+            <div className="border-b border-slate-200 pb-3">
+                <SectionFilter
+                    label={t('admin.config.section.label')}
+                    searchPlaceholder={t('admin.config.section.search')}
+                    emptyLabel={t('admin.config.section.empty')}
+                    groups={sectionGroups}
+                    value={activeSection}
+                    onChange={openSection}
+                />
             </div>
 
-            {section === 'general' && (
+            {activeSection === 'general' && (
             <div className="space-y-8">
             <ChatGPTSettingsPanel />
             {/* 1. Provider & Model Selection */}
@@ -2145,7 +2149,7 @@ export function ConfigForm() {
             </div>
             )}
 
-            {section === 'directives' && (
+            {activeSection === 'directives' && (
             <div className="space-y-6">
                 <div className="glass-panel p-6 space-y-6">
                     <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
@@ -2187,7 +2191,7 @@ export function ConfigForm() {
             )}
 
             {/* 3. Strumento attivo: prompt, testi e step separati in tab interne */}
-            {questionnaireConfigs.filter((q) => q.id === section).map((q) => {
+            {questionnaireConfigs.filter((q) => q.id === activeSection).map((q) => {
                 const c = colorMap[q.color];
                 const allKeys = [...q.systemPrompts.map(p => p.key), ...q.texts.map(t => textConfigKey(t.key))];
                 const sectionSteps = guidedSteps

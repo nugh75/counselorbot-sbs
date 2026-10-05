@@ -588,6 +588,17 @@ vincolanti. Le funzioni disabilitate o non autorizzate non vanno presentate come
 accessibili a ogni account. L’assistente deve indicare la pagina e il prossimo
 passo utile, senza inventare pulsanti o promettere azioni eseguite automaticamente.
 
+### Sezioni della configurazione
+
+In **Amministrazione → Configurazione & Prompt** la sezione si sceglie dal
+filtro **Sezione**, non da una fila di pulsanti. Il filtro raggruppa
+**Impostazioni** (Generale, Direttive Globali) e **Strumenti** (QSA, QSAr, ZTPI,
+Savickas, eventi significativi, obiettivi, QPCS, QPCC, QAP) e ha un campo di
+ricerca che trova anche il nome esteso dello strumento. Si usa con mouse o
+tastiera (frecce, Invio, Esc). La sezione scelta resta nell’indirizzo
+(`/admin?section=qsa`): ricaricando la pagina o condividendo il link si riapre
+la stessa sezione; un valore non riconosciuto apre Generale.
+
 ### Anteprima delle richieste dei questionari nell’amministrazione
 
 Nelle schede **Prompt per step** e **Step guidati** si può consultare l’anteprima

@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { chromium } from 'playwright';
 const origin = process.env.PROMPT_PREVIEW_BASE_URL || 'http://127.0.0.1:3107';
+
+// The configuration sections live in a searchable filter, not in a row of buttons.
+async function chooseSection(page, name) {
+    await page.locator('button[aria-haspopup="listbox"]').click();
+    await page.getByRole('listbox').getByRole('option', { name, exact: true }).click();
+}
 for (const width of [1440, 390]) {
  test(`preview drafts, message order and errors at ${width}px`, async () => {
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true });
@@ -25,7 +31,7 @@ for (const width of [1440, 390]) {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });
    });
    await page.goto(`${origin}/admin`);
-   await page.getByRole('button', { name: 'QSA', exact: true }).click();
+   await chooseSection(page, 'QSA');
    await page.getByRole('button', { name: 'Step guidati', exact: true }).click();
    await page.emulateMedia({ media: 'print' });
    assert.equal(await page.locator('.prompt-print-value').isVisible(), true);
@@ -61,7 +67,7 @@ for (const width of [1440, 390]) {
    if (width === 1440) {
     await page.getByRole('button', { name: 'Prompt per step', exact: true }).click();
     for (const [name, code] of instruments) {
-     await page.getByRole('button', { name, exact: true }).click();
+     await chooseSection(page, name);
      const shared = page.getByRole('region', { name: 'Anteprima della richiesta' });
      await shared.getByText('fixture-model', { exact: false }).waitFor();
      assert.equal(await shared.getByRole('combobox').count(), 1);
@@ -99,7 +105,7 @@ for (const width of [1440, 390]) {
     ]) {
      await page.evaluate(code => localStorage.setItem('cb_lang', code), code);
      await page.reload();
-     await page.getByRole('button', { name: 'QSA', exact: true }).click();
+     await chooseSection(page, 'QSA');
      const localized = page.getByRole('region', { name: title });
      await localized.getByText(modelMessages[languageIndex++], { exact: true }).waitFor();
      await localized.getByRole('combobox', { name: entry }).selectOption('reply');
