@@ -240,3 +240,12 @@ export function sortOrderChanges<Id>(ordered: SortOrderItem<Id>[]): SortOrderIte
     if (new Set(slots).size !== slots.length) slots = ordered.map((_, index) => index);
     return ordered.flatMap((item, index) => (item.sort_order === slots[index] ? [] : [{ id: item.id, sort_order: slots[index] }]));
 }
+
+/**
+ * Id di un nuovo step come lo normalizza la vista classica: minuscole, cifre e
+ * trattini. Durante la digitazione (`final = false`) i trattini finali restano.
+ */
+export function normalizeStepId(value: string, final = true): string {
+    const id = value.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    return final ? id.replace(/^-+|-+$/g, '') : id;
+}

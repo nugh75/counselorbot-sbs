@@ -10,7 +10,7 @@ import { PromptRequestPreview } from '@/components/admin/PromptRequestPreview';
 import type { AdminGuidedStepQuestion } from '@/lib/guided-step-questions';
 import {
     PROMPT_MAP_LANGUAGES, badgeFor, booleanFlags, componentsValue, entryAnchor, entryText, findEntry, levelAnchor, levelCounts,
-    levelSection, moveItem, needsSharedConfirm, saveRequest, sectionDefaultOpen, sectionsForEntry, sortOrderChanges, stepAnchor, stepSection, stepsByInstrument,
+    levelSection, moveItem, needsSharedConfirm, normalizeStepId, saveRequest, sectionDefaultOpen, sectionsForEntry, sortOrderChanges, stepAnchor, stepSection, stepsByInstrument,
     type PromptMap as PromptMapData, type PromptMapBadge, type PromptMapCounselor, type PromptMapEntry, type PromptMapInstrument,
     type PromptMapLevel, type PromptMapRef, type PromptMapStep, type PromptMapUser,
 } from '@/lib/prompt-map';
@@ -396,6 +396,9 @@ function PersonaDialog({ counselor, onClose, onSaved }: { counselor: PromptMapCo
 }
 
 const QUESTIONS_API = '/api/admin/guided-step-questions';
+const STEPS_API = '/api/admin/guided-steps';
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
+const ICON_BUTTON = 'inline-flex h-8 min-w-8 items-center justify-center rounded border border-slate-300 bg-white px-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40';
 
 /** Domande suggerite di uno step, per lingua, con le API di guided_step_questions (stessa tabella della scheda dedicata). */
 function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; stepName: string; onClose: (changed: boolean) => void }) {
@@ -435,7 +438,7 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
             for (const request of requests) {
                 const response = await apiFetch(request.url, {
                     method: request.method,
-                    ...(request.body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request.body) }),
+                    ...(request.body === undefined ? {} : { headers: JSON_HEADERS, body: JSON.stringify(request.body) }),
                 });
                 if (!response.ok) throw new Error('save');
             }
@@ -462,7 +465,6 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
     const move = (index: number, delta: number) => run(sortOrderChanges(moveItem(list, index, index + delta))
         .map(change => ({ url: `${QUESTIONS_API}/${change.id}`, method: 'PUT', body: { sort_order: change.sort_order } })));
 
-    const iconButton = 'inline-flex h-8 min-w-8 items-center justify-center rounded border border-slate-300 bg-white px-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40';
     return <DialogShell title={t('admin.promptMap.questions.title', { step: stepName })} hint={t('admin.promptMap.questions.hint')} onClose={close}
         footer={<button type="button" onClick={close} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">{t('admin.promptMap.close')}</button>}>
         <div role="group" aria-label={t('admin.promptMap.questions.languages')} className="flex flex-wrap gap-1.5">
@@ -491,13 +493,13 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
                         {!row.is_active && <span className="ml-2 rounded border border-slate-300 px-1 text-[10px] font-semibold uppercase text-slate-500">{t('admin.promptMap.questions.inactive')}</span>}
                     </p>
                     <div className="flex shrink-0 flex-wrap gap-1">
-                        <button type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} aria-label={t('admin.promptMap.questions.moveUp')} className={iconButton}><ChevronUp aria-hidden className="h-4 w-4" /></button>
-                        <button type="button" disabled={busy || index === list.length - 1} onClick={() => move(index, 1)} aria-label={t('admin.promptMap.questions.moveDown')} className={iconButton}><ChevronDown aria-hidden className="h-4 w-4" /></button>
-                        <button type="button" disabled={busy} onClick={() => { setEditingId(row.id); setEditText(row.text); setDeletingId(null); }} aria-label={t('admin.promptMap.edit')} className={iconButton}><Pencil aria-hidden className="h-3.5 w-3.5" /></button>
+                        <button type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} aria-label={t('admin.promptMap.questions.moveUp')} className={ICON_BUTTON}><ChevronUp aria-hidden className="h-4 w-4" /></button>
+                        <button type="button" disabled={busy || index === list.length - 1} onClick={() => move(index, 1)} aria-label={t('admin.promptMap.questions.moveDown')} className={ICON_BUTTON}><ChevronDown aria-hidden className="h-4 w-4" /></button>
+                        <button type="button" disabled={busy} onClick={() => { setEditingId(row.id); setEditText(row.text); setDeletingId(null); }} aria-label={t('admin.promptMap.edit')} className={ICON_BUTTON}><Pencil aria-hidden className="h-3.5 w-3.5" /></button>
                         {deletingId === row.id
                             ? <button type="button" disabled={busy} onClick={() => run([{ url: `${QUESTIONS_API}/${row.id}`, method: 'DELETE' }])}
                                 className="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white disabled:opacity-60">{t('admin.promptMap.questions.confirmDelete')}</button>
-                            : <button type="button" disabled={busy} onClick={() => setDeletingId(row.id)} aria-label={t('admin.promptMap.questions.delete')} className={`${iconButton} text-red-700`}><Trash2 aria-hidden className="h-3.5 w-3.5" /></button>}
+                            : <button type="button" disabled={busy} onClick={() => setDeletingId(row.id)} aria-label={t('admin.promptMap.questions.delete')} className={`${ICON_BUTTON} text-red-700`}><Trash2 aria-hidden className="h-3.5 w-3.5" /></button>}
                     </div>
                 </div>}
             </li>)}
@@ -532,7 +534,7 @@ function Collapsible({ anchor, open, onToggle, heading, count, hint, actions, he
     const Heading = headingLevel === 4 ? 'h4' : 'h5';
     return <section id={anchor} data-section-open={open ? 'true' : 'false'} className={`scroll-mt-4 ${className}`}>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <Heading className="min-w-0 flex-1">
+            <Heading className={actions ? 'min-w-0 basis-full sm:basis-auto sm:flex-1' : 'min-w-0 flex-1'}>
                 <button type="button" aria-expanded={open} aria-controls={open ? regionId : undefined} onClick={onToggle}
                     className="flex w-full min-w-0 items-center gap-2 rounded py-1 text-left hover:bg-slate-900/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                     <ChevronRight aria-hidden className={`h-4 w-4 shrink-0 text-slate-500 transition-transform duration-150 motion-reduce:transition-none ${open ? 'rotate-90' : ''}`} />
@@ -612,6 +614,165 @@ function StepPreview({ map, step, componentLabels }: { map: PromptMapData; step:
     </div>;
 }
 
+/** Riordino con l'API esistente (PATCH /admin/guided-steps/reorder), una sola richiesta. */
+async function saveStepOrder(ordered: { id: string; sort_order: number }[]) {
+    const changes = sortOrderChanges(ordered);
+    if (!changes.length) return;
+    const response = await apiFetch(`${STEPS_API}/reorder`, { method: 'PATCH', headers: JSON_HEADERS, body: JSON.stringify(changes) });
+    if (!response.ok) throw new Error('reorder');
+}
+
+function AddStepForm({ map, onCreated, onCancel }: { map: PromptMapData; onCreated: (stepId: string, positionFailed: boolean) => void; onCancel: () => void }) {
+    const { t, lang } = useI18n();
+    const steps = map.levels.steps.filter(step => !step.fixed);
+    const [id, setId] = useState('');
+    const [label, setLabel] = useState('');
+    const [mode, setMode] = useState('generic');
+    const [modes, setModes] = useState<string[]>([]);
+    const [before, setBefore] = useState('');
+    const [prompt, setPrompt] = useState('');
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        apiFetch(`${STEPS_API}/modes`)
+            .then(response => response.ok ? response.json() : Promise.reject(new Error('modes')))
+            .then((items: { mode: string }[]) => setModes(items.map(item => item.mode)))
+            .catch(() => setModes(['generic']));
+    }, []);
+
+    const create = async () => {
+        const stepId = normalizeStepId(id);
+        if (!stepId || !label.trim()) return;
+        if (map.levels.steps.some(step => step.id === stepId)) { setError(t('admin.promptMap.step.idTaken')); return; }
+        setBusy(true);
+        setError('');
+        try {
+            const sortOrder = steps.reduce((max, step) => Math.max(max, step.sort_order ?? 0), 0) + 1;
+            // Stessa API e stesso formato della scheda "Step guidati" (vista classica).
+            const response = await apiFetch(STEPS_API, {
+                method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({
+                    id: stepId, sort_order: sortOrder, label: label.trim(), prompt, system_prompt_mode: mode,
+                    color_theme: 'blue', questionnaire_type: map.instrument,
+                }),
+            });
+            if (!response.ok) { setError(t(response.status === 400 ? 'admin.promptMap.step.idTaken' : 'admin.promptMap.step.createError')); return; }
+            const target = before ? steps.findIndex(step => step.id === before) : -1;
+            let positionFailed = false;
+            if (target >= 0) {
+                const ordered = [...steps.map(step => ({ id: step.id, sort_order: step.sort_order ?? 0 })), { id: stepId, sort_order: sortOrder }];
+                await saveStepOrder(moveItem(ordered, ordered.length - 1, target)).catch(() => { positionFailed = true; });
+            }
+            onCreated(stepId, positionFailed);
+        } catch {
+            setError(t('admin.promptMap.step.createError'));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const field = 'mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm font-normal text-slate-800';
+    return <form aria-label={t('admin.promptMap.step.newTitle')} className="space-y-3 rounded-lg border border-dashed border-violet-300 bg-white p-3"
+        onSubmit={event => { event.preventDefault(); void create(); }}>
+        <p className="text-sm font-bold text-slate-800">{t('admin.promptMap.step.newTitle')}</p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="text-xs font-semibold text-slate-600">{t('admin.promptMap.step.id')}
+                <input required value={id} onChange={event => { setId(normalizeStepId(event.target.value, false)); setError(''); }}
+                    placeholder={`${map.instrument.toLowerCase()}-…`} className={`${field} font-mono`} />
+                <span className="mt-0.5 block font-normal text-slate-500">{t('admin.promptMap.step.idHint')}</span>
+            </label>
+            <label className="text-xs font-semibold text-slate-600">{t('admin.promptMap.step.name')}
+                <input required value={label} onChange={event => setLabel(event.target.value)} className={field} />
+            </label>
+            <label className="text-xs font-semibold text-slate-600">{t('admin.promptMap.step.mode')}
+                <select value={mode} onChange={event => setMode(event.target.value)} className={field}>
+                    {(modes.includes(mode) ? modes : [mode, ...modes]).map(item => <option key={item} value={item}>{item}</option>)}
+                </select>
+            </label>
+            <label className="text-xs font-semibold text-slate-600">{t('admin.promptMap.step.position')}
+                <select value={before} onChange={event => setBefore(event.target.value)} className={field}>
+                    <option value="">{t('admin.promptMap.step.positionEnd')}</option>
+                    {steps.map(step => <option key={step.id} value={step.id}>{t('admin.promptMap.step.positionBefore', { step: stepTitle(step, lang, t) })}</option>)}
+                </select>
+            </label>
+        </div>
+        <label className="block text-xs font-semibold text-slate-600">{t('admin.promptMap.step.prompt')}
+            <textarea value={prompt} onChange={event => setPrompt(event.target.value)} rows={3} className={`${field} font-mono text-xs`} />
+        </label>
+        {error && <p role="alert" className="text-xs text-red-700">{error}</p>}
+        <div className="flex flex-wrap justify-end gap-2">
+            <button type="button" onClick={onCancel} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700">{t('admin.promptMap.cancel')}</button>
+            <button type="submit" disabled={busy || !normalizeStepId(id) || !label.trim()}
+                className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">{busy ? t('admin.promptMap.saving') : t('admin.promptMap.step.create')}</button>
+        </div>
+    </form>;
+}
+
+interface StepUsage {
+    sessions: number;
+    messages: number;
+    suggested_questions: number;
+    session_details: { session_id: string; messages: number }[];
+}
+
+/** Conferma esplicita: uso da parte degli studenti e id dello step digitato. Prompt e revisioni restano. */
+function DeleteStepDialog({ step, stepName, onClose, onDeleted }: { step: PromptMapStep; stepName: string; onClose: () => void; onDeleted: () => void }) {
+    const { t } = useI18n();
+    const [usage, setUsage] = useState<StepUsage | null>(null);
+    const [typed, setTyped] = useState('');
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        apiFetch(`${STEPS_API}/${encodeURIComponent(step.id)}/usage`)
+            .then(response => response.ok ? response.json() : Promise.reject(new Error('usage')))
+            .then(setUsage)
+            .catch(() => setError(t('admin.promptMap.step.usageError')));
+    }, [step.id, t]);
+
+    const remove = async () => {
+        setBusy(true);
+        setError('');
+        try {
+            const response = await apiFetch(`${STEPS_API}/${encodeURIComponent(step.id)}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('delete');
+            onDeleted();
+        } catch {
+            setError(t('admin.promptMap.step.deleteError'));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return <DialogShell title={t('admin.promptMap.step.deleteTitle', { step: stepName })} onClose={() => { if (!busy) onClose(); }}
+        footer={<>
+            <button type="button" disabled={busy} onClick={onClose} className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-50">{t('admin.promptMap.cancel')}</button>
+            <button type="button" onClick={remove} disabled={busy || !usage || typed !== step.id}
+                className="rounded bg-red-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{busy ? t('admin.promptMap.saving') : t('admin.promptMap.step.deleteConfirm')}</button>
+        </>}>
+        {!usage && !error && <p className="text-xs text-slate-500">{t('admin.promptMap.loading')}</p>}
+        {usage && <div data-step-usage className={`rounded border px-3 py-2 text-sm ${usage.sessions ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+            <p className="text-xs font-bold uppercase tracking-wider">{t('admin.promptMap.step.deleteUsage')}</p>
+            <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                <li>{t('admin.promptMap.step.deleteSessions', { count: usage.sessions, messages: usage.messages })}</li>
+                {usage.suggested_questions > 0 && <li>{t('admin.promptMap.step.deleteQuestions', { count: usage.suggested_questions })}</li>}
+            </ul>
+            {usage.session_details?.length > 0 && <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded border border-slate-200 bg-white p-2 text-xs text-slate-700">
+                {usage.session_details.map(session => <li key={session.session_id} className="flex flex-wrap justify-between gap-x-3">
+                    <code data-session-id className="break-all font-mono">{session.session_id}</code>
+                    <span>{t('admin.promptMap.step.sessionMessages', { count: session.messages })}</span>
+                </li>)}
+            </ul>}
+        </div>}
+        <p className="text-xs text-slate-600">{t('admin.promptMap.step.deleteKeeps')}</p>
+        <label className="block text-xs font-semibold text-slate-600">{t('admin.promptMap.step.deleteConfirmLabel', { id: step.id })}
+            <input autoFocus value={typed} onChange={event => setTyped(event.target.value)} autoComplete="off" spellCheck={false}
+                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 font-mono text-sm font-normal text-slate-800" />
+        </label>
+        {error && <p role="alert" className="text-xs text-red-700">{error}</p>}
+    </DialogShell>;
+}
+
 export function PromptMap({ componentLabels }: { componentLabels?: Record<string, string> }) {
     const { t, lang } = useI18n();
     const name = useInstrumentName();
@@ -628,6 +789,10 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
     const [overrideFor, setOverrideFor] = useState('');
     const [questionsFor, setQuestionsFor] = useState<{ entry: PromptMapEntry; stepName: string } | null>(null);
     const [status, setStatus] = useState('');
+    const [adding, setAdding] = useState(false);
+    const [deleting, setDeleting] = useState<PromptMapStep | null>(null);
+    const [structureBusy, setStructureBusy] = useState(false);
+    const [structureError, setStructureError] = useState('');
 
     useEffect(() => {
         apiFetch('/api/admin/prompt-map/instruments')
@@ -697,11 +862,44 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
     useEffect(() => {
         if (!pendingScroll) return;
         const frame = requestAnimationFrame(() => {
-            document.getElementById(entryAnchor(pendingScroll))?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Uno step appena creato compare solo dopo il ricaricamento della mappa.
+            const target = document.getElementById(entryAnchor(pendingScroll));
+            if (!target) return;
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
             setPendingScroll('');
         });
         return () => cancelAnimationFrame(frame);
-    }, [pendingScroll, openSections]);
+    }, [pendingScroll, openSections, map]);
+
+    const movable = map ? map.levels.steps.filter(step => !step.fixed) : [];
+    const moveStep = async (index: number, delta: number) => {
+        if (!map) return;
+        setStructureBusy(true);
+        setStructureError('');
+        try {
+            await saveStepOrder(moveItem(movable.map(step => ({ id: step.id, sort_order: step.sort_order ?? 0 })), index, index + delta));
+            setStatus(t('admin.promptMap.step.moved'));
+            await load(map.instrument);
+        } catch {
+            setStructureError(t('admin.promptMap.step.moveError'));
+        } finally {
+            setStructureBusy(false);
+        }
+    };
+    const stepCreated = (stepId: string, positionFailed: boolean) => {
+        if (!map) return;
+        setAdding(false);
+        setStructureError(positionFailed ? t('admin.promptMap.step.createdAtEnd') : '');
+        setSections([stepSection(map.instrument, stepId)], true);
+        setPendingScroll(`guided_step:${stepId}:label`);
+        setStatus(t('admin.promptMap.step.created'));
+        void load(map.instrument);
+    };
+    const stepDeleted = () => {
+        setDeleting(null);
+        setStatus(t('admin.promptMap.step.deleted'));
+        if (map) void load(map.instrument);
+    };
 
     const counts = map ? levelCounts(map) : null;
     const instrumentName = map ? name(map.instrument) : '';
@@ -816,6 +1014,21 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                         return <Collapsible key={step.id} anchor={stepAnchor(step.id)} headingLevel={5} open={isOpen(section)} onToggle={() => toggle(section)}
                             className="rounded-lg border border-violet-200 bg-violet-50/30 px-3 py-1.5 sm:px-4"
                             count={t('admin.promptMap.stepEntryCount', { count: step.entries.length, inherited: step.refs.length })}
+                            actions={step.fixed ? undefined : <div className="ml-auto flex shrink-0 gap-1">
+                                {(() => {
+                                    const index = movable.findIndex(item => item.id === step.id);
+                                    const title = stepTitle(step, lang, t);
+                                    return <>
+                                        <button type="button" disabled={structureBusy || index === 0} onClick={() => void moveStep(index, -1)}
+                                            aria-label={t('admin.promptMap.step.moveUp', { step: title })} className={ICON_BUTTON}><ChevronUp aria-hidden className="h-4 w-4" /></button>
+                                        <button type="button" disabled={structureBusy || index === movable.length - 1} onClick={() => void moveStep(index, 1)}
+                                            aria-label={t('admin.promptMap.step.moveDown', { step: title })} className={ICON_BUTTON}><ChevronDown aria-hidden className="h-4 w-4" /></button>
+                                        <button type="button" disabled={structureBusy || movable.length === 1} onClick={() => setDeleting(step)}
+                                            title={movable.length === 1 ? t('admin.promptMap.step.lastStep') : undefined}
+                                            aria-label={t('admin.promptMap.step.delete', { step: title })} className={`${ICON_BUTTON} text-red-700`}><Trash2 aria-hidden className="h-3.5 w-3.5" /></button>
+                                    </>;
+                                })()}
+                            </div>}
                             heading={<span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                                 <span aria-hidden className={`h-3 w-3 shrink-0 rounded-full ${step.fixed ? 'border border-slate-400' : COLOR_DOT[step.color_theme || ''] || 'bg-slate-400'}`} />
                                 <span className="text-sm font-bold text-slate-800">{stepTitle(step, lang, t)}</span>
@@ -826,10 +1039,17 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                             <div className="pb-2">{stepBody(step)}</div>
                         </Collapsible>;
                     })}
+                    {structureError && <p role="alert" className="text-xs text-red-700">{structureError}</p>}
+                    {adding ? <AddStepForm map={map} onCreated={stepCreated} onCancel={() => setAdding(false)} />
+                        : <button type="button" onClick={() => setAdding(true)}
+                            className="inline-flex items-center gap-1 rounded border border-dashed border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800 hover:bg-violet-50">
+                            <Plus aria-hidden className="h-3.5 w-3.5" />{t('admin.promptMap.step.add')}
+                        </button>}
                 </div>
             </Collapsible>
         </div>}
 
+        {deleting && <DeleteStepDialog step={deleting} stepName={stepTitle(deleting, lang, t)} onClose={() => setDeleting(null)} onDeleted={stepDeleted} />}
         {questionsFor && <QuestionsDialog entry={questionsFor.entry} stepName={questionsFor.stepName}
             onClose={changed => { setQuestionsFor(null); if (changed) reload(); }} />}
         {persona && <PersonaDialog counselor={persona} onClose={() => setPersona(null)} onSaved={() => { setPersona(null); reload(); }} />}
