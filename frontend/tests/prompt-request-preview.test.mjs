@@ -70,7 +70,8 @@ for (const width of [1440, 390]) {
      await chooseSection(page, name);
      const shared = page.getByRole('region', { name: 'Anteprima della richiesta' });
      await shared.getByText('fixture-model', { exact: false }).waitFor();
-     assert.equal(await shared.getByRole('combobox').count(), 1);
+     // Mode and model preset remain available in the shared prompt preview.
+     assert.equal(await shared.getByRole('combobox').count(), 2);
      assert.equal(requests.filter(r => r.path.endsWith('/dry-run')).at(-1).body.questionnaire_type, code);
      assert.equal(requests.filter(r => r.path.endsWith('/dry-run')).at(-1).body.component_flags, undefined);
      if (code === 'QSA') {
