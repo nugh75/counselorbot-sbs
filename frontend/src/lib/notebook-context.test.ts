@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { readStoredNotebookContext, storeNotebookContext } from './notebook-context.ts';
+import { notebookContextPayload, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from './notebook-context.ts';
 
 // localStorage minimo (il modulo legge window.localStorage in modo difensivo).
 class MemoryStorage {
@@ -37,4 +37,26 @@ test('la scelta round-trip e il default cancella la chiave', () => {
 test('un valore corrotto nel storage torna default', () => {
     window.localStorage.setItem('cb-notebook-context', 'pluto');
     assert.equal(readStoredNotebookContext(), 'default');
+});
+
+test('la prova round-trip con il suo taccuino', () => {
+    storeNotebookContext('practice');
+    assert.equal(readStoredNotebookContext(), 'practice');
+    assert.equal(readStoredPracticeNotebookId(), null);
+    storePracticeNotebookId(42);
+    assert.equal(readStoredPracticeNotebookId(), 42);
+    window.localStorage.setItem('cb-practice-notebook-id', 'pluto');
+    assert.equal(readStoredPracticeNotebookId(), null);
+    storePracticeNotebookId(null);
+    assert.equal(readStoredPracticeNotebookId(), null);
+    storeNotebookContext('default');
+});
+
+test('il payload del turno: mai per i non docenti, mai default, id solo in prova', () => {
+    assert.deepEqual(notebookContextPayload(false, 'practice', 3), {});
+    assert.deepEqual(notebookContextPayload(true, 'default', 3), {});
+    assert.deepEqual(notebookContextPayload(true, 'teacher', 3), { notebook_context: 'teacher' });
+    assert.deepEqual(notebookContextPayload(true, 'practice', 3), { notebook_context: 'practice', practice_notebook_id: 3 });
+    // Prova senza taccuino: il server non trova nulla e svuota il profilo.
+    assert.deepEqual(notebookContextPayload(true, 'practice', null), { notebook_context: 'practice' });
 });
