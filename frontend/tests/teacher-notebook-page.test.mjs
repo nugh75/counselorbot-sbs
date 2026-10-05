@@ -60,10 +60,10 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) for (const width of [32
         assert.equal(await entry.getAttribute('href'), routePath);
         const home = f.page.locator('[data-teacher-area-home]');
         assert.deepEqual(await home.locator('a').evaluateAll(elements => elements.map(e => e.getAttribute('href'))), [
-            routePath, '/?start=OBIETTIVO_DOCENZA', '/docente/classi', '/docente/assegnazioni',
+            routePath, '/docente/taccuini-prova', '/?start=OBIETTIVO_DOCENZA', '/docente/classi', '/docente/assegnazioni',
             '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali',
             '/docente/orientamento', '/docente/somministrazioni',
-        ], 'notebook precedes DOCENZA and every other home destination');
+        ], 'notebook (then practice notebooks) precedes DOCENZA and every other home destination');
         assert.equal(await home.locator('[tabindex]').evaluateAll(elements => elements.filter(e => e.tabIndex > 0).length), 0);
         const notebookBox = await entry.boundingBox();
         const pathBox = await home.locator('a[href="/?start=OBIETTIVO_DOCENZA"]').boundingBox();
@@ -79,7 +79,10 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) for (const width of [32
         }
         assert.equal(await entry.evaluate(e => e === document.activeElement), true, 'first home control reached with Tab is notebook');
         await f.page.keyboard.press('Tab');
-        assert.equal(await home.locator('a[href="/?start=OBIETTIVO_DOCENZA"]').evaluate(e => e === document.activeElement), true, 'next Tab reaches DOCENZA');
+        assert.equal(await home.locator('a[href="/docente/taccuini-prova"]').evaluate(e => e === document.activeElement), true, 'next Tab reaches practice notebooks');
+        await f.page.keyboard.press('Tab');
+        assert.equal(await home.locator('a[href="/?start=OBIETTIVO_DOCENZA"]').evaluate(e => e === document.activeElement), true, 'then Tab reaches DOCENZA');
+        await f.page.keyboard.press('Shift+Tab');
         await f.page.keyboard.press('Shift+Tab');
         assert.equal(await entry.evaluate(e => e === document.activeElement), true);
         await f.page.keyboard.press('Enter'); await f.ready();
@@ -236,6 +239,8 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) test(`${lang}: public g
         assert.equal(await link.getAttribute('href'), routePath);
         assert.ok((await section.innerText()).includes(routePath));
         const figure = section.locator('figure').filter({ has: f.page.getByRole('img', { name: teacherAreaName(lang, 'taccuino'), exact: true }) });
+        // The screenshot is lazy: decode() waits until it is near the viewport.
+        await figure.scrollIntoViewIfNeeded();
         await figure.locator('img').evaluate(e => e.decode());
         assert.ok(await figure.locator('img').evaluate(e => e.naturalWidth > 0));
         const enlarge = figure.getByRole('button'); await enlarge.focus(); await f.page.keyboard.press('Enter');

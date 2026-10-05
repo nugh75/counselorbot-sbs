@@ -4,29 +4,32 @@
 // per chi ha il ruolo docente (guard nel chiamante): docenti, ricercatori e
 // admin passano canUseTeacherAssistant, ma la scelta riguarda chi ha un ruolo
 // docente; per tutti gli altri il backend applica il default per strumento.
+// "Prova" usa un taccuino studente di prova (PracticeNotebookPicker).
 
 import { useI18n } from '@/lib/i18n-context';
 import { Tooltip } from '@/components/ui/Tooltip';
 import type { NotebookContextChoice } from '@/lib/notebook-context';
 
-const OPTIONS: NotebookContextChoice[] = ['default', 'student', 'teacher', 'none'];
+const OPTIONS: NotebookContextChoice[] = ['default', 'student', 'teacher', 'practice', 'none'];
 
 interface NotebookContextSelectorProps {
     value: NotebookContextChoice;
     onChange: (value: NotebookContextChoice) => void;
     disabled?: boolean;
+    // La Bussola offre solo Predefinito e Prova.
+    options?: NotebookContextChoice[];
 }
 
-export function NotebookContextSelector({ value, onChange, disabled = false }: NotebookContextSelectorProps) {
+export function NotebookContextSelector({ value, onChange, disabled = false, options = OPTIONS }: NotebookContextSelectorProps) {
     const { t } = useI18n();
 
     return (
         <div
             role="radiogroup"
             aria-label={t('notebookContext.label')}
-            className="inline-flex items-center rounded-md border border-slate-200 bg-white p-0.5"
+            className="inline-flex flex-wrap items-center rounded-md border border-slate-200 bg-white p-0.5"
         >
-            {OPTIONS.map((option) => {
+            {options.map((option) => {
                 const label = t(`notebookContext.${option}`);
                 const tooltipLabel = `${t('notebookContext.label')}: ${label}`;
                 const active = option === value;

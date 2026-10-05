@@ -304,6 +304,9 @@ function GuideContent() {
                         {teacher && n === 1 && (
                             <Link href="/docente/taccuino" className="ml-3 mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{teacherAreaName(lang, 'taccuino')}</Link>
                         )}
+                        {teacher && n === 1 && (
+                            <Link href="/docente/taccuini-prova" className="ml-3 mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{teacherAreaName(lang, 'taccuini-prova')}</Link>
+                        )}
                         {sectionImages[n] && (
                             <div className="mt-6 space-y-6">
                                 {sectionImages[n].map(({ image, caption }) => <div key={image.src}>{renderFigure(image, caption, caption)}</div>)}
