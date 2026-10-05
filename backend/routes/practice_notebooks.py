@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
 from ..database import get_db
+from ..teacher_context import visible_group_for_teacher
 
 router = APIRouter()
 
@@ -31,6 +32,11 @@ def _owned(db: Session, username: str, notebook_id: int) -> models.TeacherPracti
     if notebook is None:
         raise HTTPException(status_code=404, detail="Practice notebook not found")
     return notebook
+
+
+def _visible_group_ids(db: Session, username: str, group_ids: List[int]) -> List[int]:
+    """Solo classi attive del docente o condivise con lui; le altre si scartano."""
+    return [group_id for group_id in group_ids if visible_group_for_teacher(db, username, group_id) is not None]
 
 
 @router.get("/teacher/practice-notebooks", response_model=List[schemas.PracticeNotebookResponse])
@@ -60,6 +66,7 @@ async def create_practice_notebook(
         raise HTTPException(status_code=422, detail="title is required")
     notebook = models.TeacherPracticeNotebook(
         owner_username=current_user["username"], title=payload.title, data=payload.data,
+        group_ids=_visible_group_ids(db, current_user["username"], payload.group_ids),
     )
     db.add(notebook)
     db.commit()
@@ -74,7 +81,7 @@ async def update_practice_notebook(
     current_user: dict = Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Nome, campi e archiviazione; i campi omessi restano invariati."""
+    """Nome, campi, classi e archiviazione; i campi omessi restano invariati."""
     notebook = _owned(db, current_user["username"], notebook_id)
     if payload.title is not None:
         if not payload.title:
@@ -82,6 +89,8 @@ async def update_practice_notebook(
         notebook.title = payload.title
     if payload.data is not None:
         notebook.data = payload.data
+    if payload.group_ids is not None:
+        notebook.group_ids = _visible_group_ids(db, current_user["username"], payload.group_ids)
     if payload.archived is not None:
         if payload.archived and notebook.archived_at is None:
             notebook.archived_at = datetime.now(timezone.utc)
