@@ -28,6 +28,9 @@ uploads/
 backend/graphify-out/
 graphify-out/
 
+# Mail drafts may carry credentials before they are sent — never commit
+mail/
+
 # Runtime session data (root-owned, session/PII) — never commit
 session_memory/
 
