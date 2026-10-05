@@ -18,6 +18,7 @@ from dataclasses import dataclass
 
 from . import models
 from .model_context import estimate_tokens
+from .prompt_variants import attach_variants
 from .chat_logic import (
     _instrument_meta_system_prompt,
     guided_step_follow_up_mode,
@@ -109,7 +110,7 @@ def _steps_by_instrument(db) -> dict[str, list]:
     return out
 
 
-def _instrument_uses(db, instrument: str, steps: list) -> list[_Use]:
+def _instrument_uses(db, instrument: str, steps: list, configs: dict) -> list[_Use]:
     """Chiavi di config che la chat legge per lo strumento, con ruolo e momento."""
     uses: list[_Use] = []
     for definition in GLOBAL_DIRECTIVE_DEFINITIONS:
@@ -136,20 +137,14 @@ def _instrument_uses(db, instrument: str, steps: list) -> list[_Use]:
             uses.append(_Use(follow_up_key, "follow_up_prompt", DEST_MODEL, WHEN_FOLLOW_UP,
                              instrument, step.id, LEVEL_INSTRUMENT))
         step_meta = _instrument_meta_system_prompt(db, instrument, step.id)
-        if step_meta and step_meta != instrument_meta:
+        has_variants = any(key.startswith(prompt_meta_config_key(instrument, step.id) + "__level_") for key in configs)
+        if (step_meta and step_meta != instrument_meta) or has_variants:
             uses.append(_Use(prompt_meta_config_key(instrument, step.id), "meta_step", DEST_MODEL,
                              WHEN_EVERY_TURN, instrument, step.id))
         uses.append(_Use(prompt_component_config_key(instrument, step.id), "components", DEST_CONTEXT,
                          WHEN_EVERY_TURN, instrument, step.id))
         uses.append(_Use(_guidance_key(instrument, step.id), "guidance", DEST_ADMIN, WHEN_ADMIN,
                          instrument, step.id))
-    # Short variants have the same owner and consumers as the normal prompt.
-    # Missing rows stay empty: only the administrator writes these texts.
-    uses.extend([
-        _Use(u.key + "__short", "system_prompt_short", u.destination, u.when,
-             u.instrument, u.step_id, u.min_level)
-        for u in uses if u.role in {"system_prompt", "follow_up_prompt"}
-    ])
     return uses
 
 
@@ -198,7 +193,7 @@ def _config_entry(key: str, uses: list[_Use], level: str, configs: dict, step_la
             lang: configs[f"{key}__{lang}"].value or ""
             for lang in SECONDARY_LANGS if f"{key}__{lang}" in configs
         }
-    return entry
+    return attach_variants(entry, configs) if first.destination == DEST_MODEL else entry
 
 
 def _used_by(uses: list[_Use], step_labels: dict) -> dict:
@@ -271,7 +266,7 @@ def _questions_entry(instrument: str, step_id: str, label: str, rows: list) -> d
     }
 
 
-def _persona_entry(db, instrument: str) -> dict:
+def _persona_entry(db, instrument: str, configs: dict) -> dict:
     restricted = restricted_instruments(db)
     rows = (
         db.query(models.Counselor)
@@ -280,7 +275,10 @@ def _persona_entry(db, instrument: str) -> dict:
         .all()
     )
     counselors = [
-        {"id": r.id, "name": r.name, "persona": r.persona or ""}
+        {"id": r.id, "name": r.name, "persona": r.persona or "",
+         "variants": attach_variants({"key": f"counselor_persona:{r.id}", "role": "persona",
+             "level": LEVEL_COMMON, "destination": DEST_MODEL, "when": WHEN_EVERY_TURN,
+             "shared": True, "used_by": {"instruments": [instrument], "steps": []}}, configs)["variants"]}
         for r in rows if suits(r, instrument, restricted)
     ]
     return {
@@ -316,7 +314,7 @@ def build_prompt_map(db, instrument: str) -> dict | None:
 
     uses_by_key: dict[str, list[_Use]] = defaultdict(list)
     for i in sorted(all_instruments):
-        for use in _instrument_uses(db, i, steps_by_instrument[i]):
+        for use in _instrument_uses(db, i, steps_by_instrument[i], configs):
             uses_by_key[use.key].append(use)
 
     common, instrument_level = [], []
@@ -363,7 +361,7 @@ def build_prompt_map(db, instrument: str) -> dict | None:
         entries = [
             _step_field(step, "label", DEST_STUDENT, WHEN_STUDENT, step.label),
             _step_field(step, "color_theme", DEST_STUDENT, WHEN_STUDENT, step.color_theme),
-            _step_field(step, "prompt", DEST_MODEL, WHEN_ENTRY, step.prompt),
+            attach_variants(_step_field(step, "prompt", DEST_MODEL, WHEN_ENTRY, step.prompt), configs),
             # Il contesto subito dopo i campi dello step: decide cosa riceve il modello.
             *sorted(step_entries.get(step.id, []), key=lambda e: e["role"] != "components"),
             _questions_entry(instrument, step.id, step.label, questions_by_step.get(step.id, [])),
@@ -405,7 +403,7 @@ def build_prompt_map(db, instrument: str) -> dict | None:
             "refs": list(step_refs.get(phase, [])),
         })
 
-    common.insert(0, _persona_entry(db, instrument))
+    common.insert(0, _persona_entry(db, instrument, configs))
     return {
         "instrument": instrument,
         "instruments": ordered_instruments(db),

@@ -19,6 +19,8 @@ export interface PromptMapCounselor {
     id: number;
     name: string;
     persona: string;
+    variants?: Record<string, PromptMapEntry>;
+    context_level?: string;
 }
 
 export interface PromptMapEntry {
@@ -40,6 +42,10 @@ export interface PromptMapEntry {
     read_only: boolean;
     translations?: Record<string, string>;
     effective?: Record<string, unknown>;
+    variants?: Record<string, PromptMapEntry>;
+    context_level?: string;
+    context_label?: string;
+    variant_of?: string;
 }
 
 export interface PromptMapRef {

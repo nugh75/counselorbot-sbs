@@ -32,12 +32,13 @@ def client(db):
         app.dependency_overrides[database.get_db] = previous
 
 
-def test_levels_endpoint_is_read_only_and_short_entries_start_empty(db, client):
+def test_levels_endpoint_is_read_only_and_all_prompt_variants_start_empty(db, client):
     before = (db.query(models.Config).count(), db.query(models.PromptRevision).count())
     response = client.get('/admin/model-context-levels')
     assert response.status_code == 200 and set(response.json()['levels']) == set(DEFAULT_CONTEXT_LEVELS)
-    entries = [entry for _, entry in _entries(_map(client, 'QSA')) if entry['role'] == 'system_prompt_short']
-    assert entries and all(entry['value'] == '' and not entry['stored'] for entry in entries)
+    entries = [entry for _, entry in _entries(_map(client, 'QSA')) if entry['destination'] == 'model' and entry['kind'] != 'counselor_persona']
+    assert entries and all(set(entry['variants']) == {'ristretto', 'minimo'} for entry in entries)
+    assert all(variant['value'] == '' and not variant['stored'] for entry in entries for variant in entry['variants'].values())
     assert before == (db.query(models.Config).count(), db.query(models.PromptRevision).count())
 
 
@@ -60,8 +61,8 @@ def test_short_and_normal_receive_the_same_dynamic_score_contracts(db):
                 include_history=False, create_anonymous_code=False, allow_generation=False,
                 retrieval_context={'knowledge_context':'', 'skills_blocks':{}})
     fitted, message, _, report = fit_context(prepared.system_prompt_final, prepared.full_message, prepared.history,
-                {'limits': DEFAULT_CONTEXT_LEVELS['ristretto']}, prepared.max_tokens, context_data=ai.context_data)
-    assert report['prompt_variant'] == 'short' and 'User-written concise section.' in fitted
+                {'level': 'ristretto', 'limits': DEFAULT_CONTEXT_LEVELS['ristretto']}, prepared.max_tokens, context_data=ai.context_data)
+    assert report['prompt_variant'] == 'ristretto' and 'User-written concise section.' in fitted
     assert '[LANGUAGE]' in fitted and '[TURN CONTRACT]' in fitted
     assert prepared.full_message == message
     assert '[CURRENT STEP' in fitted

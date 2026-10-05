@@ -94,7 +94,7 @@ def compare(cases, model_names, client=None, *, max_seconds=600):
     records = []
     for model in model_names:
         for case in cases:
-            for level in ("totale", "ristretto"):
+            for level in DEFAULT_CONTEXT_LEVELS:
                 cfg = {"model_context_levels": DEFAULT_CONTEXT_LEVELS,
                        "model_context_profiles": {f"ollama/{model}": {"context_tokens": 32768, "level": level}}}
                 record = {"instrument": case["instrument"], "step": case["step"], "model": model, "level": level,
@@ -154,9 +154,9 @@ def main():
     if args.prepare_only:
         records = []
         for case in cases:
-            for level in ("totale", "ristretto"):
+            for level in DEFAULT_CONTEXT_LEVELS:
                 _, _, _, report = fit_context(case["system"], case["message"], case["history"],
-                    {"limits": DEFAULT_CONTEXT_LEVELS[level]}, case["max_tokens"], context_data=case["context_data"])
+                    {"level": level, "limits": DEFAULT_CONTEXT_LEVELS[level]}, case["max_tokens"], context_data=case["context_data"])
                 records.append({"instrument": case["instrument"], "step": case["step"], "level": level, "context": report})
         result = {"synthetic": True, "quality_status": "not_run", "records": records}
     else:

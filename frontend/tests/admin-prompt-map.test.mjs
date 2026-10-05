@@ -593,26 +593,79 @@ for (const width of [1440, 390]) test(`manual model context settings preserve dr
     } finally { await f.close(); }
 });
 
-test('short prompt is administrator-owned, counts its draft and preserves shared confirmation', async () => {
-    const f = await fixture();
+function withVariants(entry) {
+    return { ...entry, variants: Object.fromEntries(['ristretto', 'minimo'].map(level => [level, {
+        ...entry, kind: 'config', key: `${entry.key}__level_${level}`, value: '', stored: false,
+        context_level: level, context_label: level === 'ristretto' ? 'Ristretto' : 'Minimo',
+        variant_of: entry.key, editor: { method: 'POST', path: '/admin/config' },
+    }])) };
+}
+
+for (const width of [1440, 390]) test(`all prompt variants save independently and protect the draft at ${width}px`, async () => {
+    const f = await fixture(width);
     try {
-        await f.page.route('**/api/admin/prompt-map?*', route => {
-            const map = structuredClone(promptMap);
-            map.levels.instrument.push(config('prompt_factor__short', '', { role: 'system_prompt_short', shared: true, used_by: { instruments: ['QSA'], steps: users(['cognitive', 'affective']) } }));
-            return route.fulfill({ json: map });
+        const map = structuredClone(promptMap);
+        const directive = withVariants(map.levels.common.find(entry => entry.key === 'directive_context'));
+        map.levels.common[1] = directive;
+        map.levels.instrument = map.levels.instrument.map(withVariants);
+        const step = map.levels.steps[0];
+        step.entries = step.entries.map(entry => entry.field === 'prompt' ? withVariants(entry) : entry);
+        await f.page.route('**/api/admin/prompt-map?*', route => route.fulfill({ json: map }));
+        await f.page.route('**/api/admin/config', async route => {
+            if (route.request().method() === 'POST') {
+                const body = route.request().postDataJSON();
+                const entries = [...map.levels.common, ...map.levels.instrument, ...map.levels.steps.flatMap(step => step.entries)];
+                const variant = entries.flatMap(entry => Object.values(entry.variants || {})).find(entry => entry.key === body.key);
+                if (variant) { variant.value = body.value; variant.stored = true; }
+            }
+            await route.fallback();
         });
         await f.page.reload();
-        const card = f.page.locator('[data-entry-key="prompt_factor__short"]');
-        await card.waitFor();
-        await card.getByRole('button', { name: 'Modifica', exact: true }).click();
-        await card.getByRole('textbox', { name: 'prompt_factor__short', exact: true }).fill('Testo breve scritto dall’amministratore.');
-        assert.ok(await card.locator('[data-token-estimate]').count() >= 2);
-        assert.equal(f.writes.length, 0);
-        await card.getByRole('button', { name: 'Salva', exact: true }).click();
-        assert.equal(f.writes.length, 0);
-        await card.getByRole('button', { name: 'Conferma: salva per tutti', exact: true }).click();
+        await toggleSection(f.page, 'pm-level-common');
+        for (const key of ['directive_context', 'prompt_meta_QSA', 'prompt_factor', 'guided_step:cognitive:prompt']) {
+            const card = f.page.locator(`[data-entry-key="${key}"]`);
+            await card.getByRole('button', { name: 'Ristretto', exact: true }).click();
+            await card.getByRole('button', { name: 'Modifica', exact: true }).click();
+            const textarea = card.getByRole('textbox', { name: `${key}__level_ristretto`, exact: true });
+            await textarea.fill(`Ristretto: ${key}`);
+            assert.equal(await card.getByRole('button', { name: 'Minimo', exact: true }).isDisabled(), true);
+            await card.getByRole('button', { name: 'Salva', exact: true }).click();
+            const confirm = card.getByRole('button', { name: 'Conferma: salva per tutti', exact: true });
+            if (await confirm.count()) await confirm.click();
+            await until(() => f.writes.some(write => write.body.key === `${key}__level_ristretto`));
+            await card.getByRole('button', { name: 'Minimo', exact: true }).click();
+            await card.getByRole('button', { name: 'Modifica', exact: true }).click();
+            assert.equal(await card.getByRole('textbox').inputValue(), '');
+            await card.getByRole('textbox').fill(`Minimo: ${key}`);
+            await card.getByRole('button', { name: 'Salva', exact: true }).click();
+            if (await confirm.count()) await confirm.click();
+            await until(() => f.writes.some(write => write.body.key === `${key}__level_minimo`));
+            await card.getByText(`Minimo: ${key}`, { exact: true }).waitFor();
+            assert.ok(f.writes.some(write => write.body.key === `${key}__level_ristretto` && write.body.value === `Ristretto: ${key}`));
+            assert.ok(f.writes.some(write => write.body.key === `${key}__level_minimo` && write.body.value === `Minimo: ${key}`));
+        }
+        assert.equal(f.writes.length, 8);
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
+        await f.page.locator('[data-entry-key="prompt_factor"]').scrollIntoViewIfNeeded();
+        await capture(f.page, `prompt-variants-${width}`);
+    } finally { await f.close(); }
+});
+
+test('counselor minimal persona uses a versioned Config row and keeps Total intact', async () => {
+    const f = await fixture();
+    try {
+        const map = structuredClone(promptMap);
+        map.levels.common[0].value[0].variants = withVariants(config('counselor_persona:7', 'Sei Iride.')).variants;
+        await f.page.route('**/api/admin/prompt-map?*', route => route.fulfill({ json: map }));
+        await f.page.reload();
+        await toggleSection(f.page, 'pm-level-common');
+        await f.page.locator('[data-entry-key="counselor_persona"]').getByRole('button', { name: 'Minimo', exact: true }).click();
+        const dialog = f.page.getByRole('dialog');
+        await dialog.getByRole('textbox').fill('Persona minima di Iride.');
+        await dialog.getByRole('button', { name: 'Salva', exact: true }).click();
         await until(() => f.writes.length === 1);
-        assert.equal(f.writes[0].body.key, 'prompt_factor__short');
-        assert.equal(f.writes[0].body.value, 'Testo breve scritto dall’amministratore.');
+        assert.equal(f.writes[0].body.key, 'counselor_persona:7__level_minimo');
+        assert.equal(f.writes[0].body.value, 'Persona minima di Iride.');
+        assert.equal(map.levels.common[0].value[0].persona, 'Sei Iride.');
     } finally { await f.close(); }
 });

@@ -44,7 +44,10 @@ def is_versioned_config_key(key: str) -> bool:
     from .prompt_config import ALL_CONFIG_TEXT_DEFINITIONS
 
     known = {item["key"] for item in ALL_CONFIG_TEXT_DEFINITIONS}
-    return key in known or key.split("__", 1)[0] in known
+    base = key.split("__", 1)[0]
+    return key in known or base in known or (
+        "__level_" in key and base.startswith(("guided_step:", "counselor_persona:", "prompt_meta_"))
+    )
 
 
 def latest(db: Session, scope: str, target_key: str) -> Optional[models.PromptRevision]:
