@@ -1,4 +1,5 @@
 """Personal SIWC accounts. No token or client-supplied user enters a reply."""
+import os
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
@@ -108,7 +109,7 @@ def installation_settings(data: InstallationSettings, username: str = Depends(cu
 
 @router.get("/user/chatgpt")
 def status(username: str = Depends(current_owner), db: Session = Depends(database.get_db)):
-    return accounts.status(db, username)
+    return {**accounts.status(db, username), "macos_helper_available": macos_helper_available()}
 
 
 @router.post("/user/chatgpt/link", dependencies=[Depends(browser_mutation)])
@@ -165,3 +166,30 @@ def disconnect(forget_registration: bool = False, username: str = Depends(curren
 def helper():
     return FileResponse(Path(__file__).resolve().parents[2] / "scripts" / "chatgpt-connect.py",
                         media_type="text/x-python", filename="chatgpt-connect.py")
+
+
+MACOS_HELPER_FILENAME = "CounselorBot-ChatGPT.zip"
+
+
+def macos_helper_path() -> Path:
+    # Only the operator can select a directory; requests never supply a path.
+    default = Path(__file__).resolve().parents[2] / "dist" / "chatgpt-macos"
+    return Path(os.getenv("CHATGPT_MACOS_HELPER_DIR") or default) / MACOS_HELPER_FILENAME
+
+
+def macos_helper_available() -> bool:
+    try:
+        return macos_helper_path().is_file()
+    except OSError:
+        return False
+
+
+@router.get("/chatgpt/helper/macos")
+def macos_helper(request: Request, username: str = Depends(current_owner)):
+    # Download is a browser operation tied to the user's Console session.
+    if not request.headers.get("Cookie"):
+        raise HTTPException(401, "chatgpt.errors.signIn")
+    if not macos_helper_available():
+        raise HTTPException(404, "chatgpt.errors.unavailable")
+    return FileResponse(macos_helper_path(), media_type="application/zip",
+                        filename=MACOS_HELPER_FILENAME, headers={"Cache-Control": "no-store"})

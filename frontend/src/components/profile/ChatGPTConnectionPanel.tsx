@@ -122,15 +122,23 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
         {status && !status.available && <Callout>{t(`chatgpt.errors.${status.reason || 'disabled'}`)}</Callout>}
         {status?.available && !link && (!status.connected || status.needs_reconnect || errorKey === 'chatgpt.errors.reconnect') && <Button type="button" disabled={busy} onClick={() => void act(async () => { setLink(await chatgptRequest<LinkCode>('/link', 'POST')); })}>{t(status.connected || status.needs_reconnect ? 'chatgpt.reconnect' : 'chatgpt.connect')}</Button>}
         {link && <div className="space-y-3 rounded-lg border border-slate-200 p-4" data-testid="chatgpt-link">
-            <p className="text-sm">{t('chatgpt.instructions')}</p>
-            <a className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/api/chatgpt/helper" download="chatgpt-connect.py">{t('chatgpt.download')}</a>
-            <p className="text-sm font-semibold">{t('chatgpt.command')}</p>
-            <code className="block break-all rounded bg-slate-50 p-3 text-sm">{command}</code>
-            <Button type="button" variant="secondary" onClick={() => void copy(command, 'command')}>{t(copied === 'command' ? 'chatgpt.copied' : 'chatgpt.copy')}</Button>
+            <p className="text-sm">{t(status.macos_helper_available ? 'chatgpt.macosInstructions' : 'chatgpt.instructions')}</p>
             <p className="text-sm font-semibold">{t('chatgpt.code')}</p>
-            <code className="block select-all break-all rounded bg-slate-50 p-3 text-sm">{link.pairing_code}</code>
+            <code data-testid="chatgpt-pairing-code" className="block select-all break-all rounded bg-slate-50 p-3 text-sm">{link.pairing_code}</code>
             <Button type="button" variant="secondary" onClick={() => void copy(link.pairing_code, 'code')}>{t(copied === 'code' ? 'chatgpt.copied' : 'chatgpt.copy')}</Button>
             <p className="text-xs text-slate-600">{t('chatgpt.remote')}</p>
+            {status.macos_helper_available && <div className="space-y-2">
+                <a className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/api/chatgpt/helper/macos" download="CounselorBot-ChatGPT.zip">{t('chatgpt.macosDownload')}</a>
+                <p className="text-xs text-slate-600">{t('chatgpt.macosSecurity')}</p>
+            </div>}
+            <details open={status.macos_helper_available ? undefined : true} className="space-y-3">
+                <summary className="cursor-pointer text-sm font-semibold">{t('chatgpt.manual')}</summary>
+                <p className="text-sm">{t('chatgpt.instructions')}</p>
+                <a className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/api/chatgpt/helper" download="chatgpt-connect.py">{t('chatgpt.download')}</a>
+                <p className="text-sm font-semibold">{t('chatgpt.command')}</p>
+                <code className="block break-all rounded bg-slate-50 p-3 text-sm">{command}</code>
+                <Button type="button" variant="secondary" onClick={() => void copy(command, 'command')}>{t(copied === 'command' ? 'chatgpt.copied' : 'chatgpt.copy')}</Button>
+            </details>
             <Button type="button" variant="secondary" disabled={busy} onClick={() => void act(async () => { await chatgptRequest('/link', 'DELETE'); setLink(undefined); await load(); })}>{t('chatgpt.cancel')}</Button>
         </div>}
         {status?.connected && <div className="space-y-3">
