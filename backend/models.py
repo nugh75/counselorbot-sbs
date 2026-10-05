@@ -703,6 +703,26 @@ class TeacherProfileRevision(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class TeacherPracticeNotebook(Base):
+    """Taccuino studente di prova: uno studente immaginario del docente.
+
+    Il docente lo sceglie dalle Opzioni di una chat guidata per allenarsi a
+    condurla. Appartiene solo al docente, non e' mai letto per altri utenti e
+    non tocca le tabelle dello studente. Modificabile in place (non e' un
+    modello del discente reale), archiviabile ed eliminabile.
+    """
+
+    __tablename__ = "teacher_practice_notebooks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_username = Column(String, nullable=False, index=True)
+    title = Column(String(120), nullable=False)
+    data = Column(JSON, nullable=False, default=dict)
+    archived_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class LearnerProfileRevision(Base):
     """Modello del discente auto-dichiarato con revisioni e bozza corrente.
 

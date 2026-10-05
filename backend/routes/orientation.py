@@ -4,6 +4,7 @@ from .. import personal_api
 
 import uuid
 from datetime import datetime, timezone
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, validator
@@ -13,6 +14,7 @@ from .. import auth, models
 from ..chat_preferences import ResponseFormat
 from ..database import get_personal_ai_db as get_db
 from ..orientation import analyze_turn, normalize_language
+from ..practice_notebooks import requested_practice_notebook
 from ..student_context import latest_learner_profile
 
 router = APIRouter()
@@ -34,12 +36,18 @@ class StartRequest(BaseModel):
     language: str = "it"
     new_session: bool = False
     counselor_id: int | None = None
+    # Taccuino di prova del docente: vale solo con "practice", per un docente
+    # proprietario del taccuino (riverificato dal server a ogni richiesta).
+    notebook_context: Literal["practice"] | None = None
+    practice_notebook_id: int | None = None
 
 
 class MessageRequest(BaseModel):
     response_format: ResponseFormat = "standard"
     message: str = Field(min_length=1, max_length=MAX_MESSAGE_CHARS)
     language: str = "it"
+    notebook_context: Literal["practice"] | None = None
+    practice_notebook_id: int | None = None
 
     @validator("message", pre=True)
     def _trim_message(cls, value):
@@ -201,12 +209,14 @@ def start_orientation(
                 db.refresh(existing)
             return _serialize(existing)
     lang = normalize_language(payload.language)
-    notebook = latest_learner_profile(db, owner)
+    practice = requested_practice_notebook(db, current_user, payload.notebook_context, payload.practice_notebook_id)
+    notebook = practice if practice is not None else latest_learner_profile(db, owner)
     opening = None
     if notebook is not None and isinstance(notebook.data, dict) and any(str(value or "").strip() for value in notebook.data.values()):
         opening = analyze_turn(
             db, "Begin the Compass conversation using the student context provided.", lang,
             counselor_id=counselor.id if counselor else None, username=owner, opening=True,
+            practice_notebook=practice,
         )
     row = models.OrientationSession(
         session_id=str(uuid.uuid4()),
@@ -243,8 +253,10 @@ def orientation_message(
     if row.status != "in_progress":
         raise HTTPException(status_code=409, detail="Orientation session already completed")
     history = list(row.messages or [])
+    practice = requested_practice_notebook(db, current_user, payload.notebook_context, payload.practice_notebook_id)
     analysis = analyze_turn(db, payload.message, payload.language, history, row.counselor_id, row.username,
-                            current_recommendations=list(row.recommendations or []), response_format=payload.response_format)
+                            current_recommendations=list(row.recommendations or []), response_format=payload.response_format,
+                            practice_notebook=practice)
     messages = (history + [
         {"role": "user", "content": payload.message},
         {"role": "assistant", "content": analysis.reply},
