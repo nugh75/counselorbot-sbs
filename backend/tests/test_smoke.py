@@ -276,6 +276,8 @@ EXPECTED_ROUTES = {
     ("GET", "/admin/config/env-status"),
     ("GET", "/admin/guided-steps"),
     ("GET", "/admin/guided-steps/modes"),
+    ("GET", "/admin/prompt-map"),
+    ("GET", "/admin/prompt-map/instruments"),
     ("POST", "/admin/guided-steps"),
     ("PUT", "/admin/guided-steps/{step_id}"),
     ("DELETE", "/admin/guided-steps/{step_id}"),
