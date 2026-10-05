@@ -15,8 +15,8 @@ from fastapi import HTTPException
 from . import models
 from .student_context import LEARNER_PROFILE_LABELS
 from .teacher_context import class_context_for_student, teacher_groups_context, teacher_notebook_context
+from .practice_notebooks import is_plan_manager, practice_notebook_context, requested_practice_notebook, simulation_notice
 from . import database, prompt_config
-from . import auth
 from .anonymous_codes import code_for_identity
 from .i18n_fields import localized
 from .ai_service import AIService
@@ -2846,17 +2846,23 @@ def build_context_envelope(
     # get_current_plan_manager: admin, ricercatori, docenti): un cambio di
     # ruolo esce dal contesto senza rifare nulla. Per tutti gli altri vale il
     # default per strumento.
-    user_is_plan_manager = bool(identity) and (
-        bool(identity.get("is_admin"))
-        or bool(identity.get("is_researcher"))
-        or auth.is_teacher(identity.get("groups"))
+    requested_notebook = getattr(request, "notebook_context", None)
+    user_is_plan_manager = is_plan_manager(identity)
+    # Taccuino di prova: solo se del richiedente e attivo. Una richiesta di
+    # prova non risolvibile (archiviato, eliminato, altrui) svuota il profilo
+    # come "none": al posto della simulazione non entra mai un taccuino reale.
+    practice_notebook = requested_practice_notebook(
+        db, identity, requested_notebook, getattr(request, "practice_notebook_id", None),
     )
-    if user_is_plan_manager and request.notebook_context in ("teacher", "student", "none"):
-        notebook_mode = request.notebook_context
+    if user_is_plan_manager and requested_notebook in ("teacher", "student", "none"):
+        notebook_mode = requested_notebook
+    elif user_is_plan_manager and requested_notebook == "practice":
+        notebook_mode = "practice" if practice_notebook is not None else "none"
     else:
         notebook_mode = DEFAULT_NOTEBOOK_CONTEXT.get(questionnaire_type, "student")
     is_docenza_chat = questionnaire_type == "OBIETTIVO_DOCENZA"
     is_teacher_notebook = notebook_mode == "teacher"
+    is_practice_notebook = notebook_mode == "practice"
     if is_teacher_notebook:
         # Contesto docente: niente taccuino/portfolio/obiettivi dello studente
         # (che per il docente sono di un'altra persona, se esistono). Al loro
@@ -2865,9 +2871,10 @@ def build_context_envelope(
         profile_context = ""
         portfolio_context = ""
         class_context = ""
-    elif notebook_mode == "none":
+    elif notebook_mode in ("none", "practice"):
         # Profilo svuotato di proposito: il resto dell'envelope (history,
-        # knowledge, skills...) non cambia.
+        # knowledge, skills...) non cambia. In prova il posto del taccuino lo
+        # prende lo studente simulato, piu' sotto.
         goal_context = ""
         profile_context = ""
         portfolio_context = ""
@@ -2912,17 +2919,30 @@ def build_context_envelope(
                 teacher_groups_context(db, username_for_context, getattr(request, "group_ids", None)) if is_docenza_chat else "",
             ) if s
         )
+    if is_practice_notebook:
+        # Studente simulato: il suo taccuino al posto di quello reale, i
+        # punteggi della sessione restano (sono quelli che il docente usa
+        # per la prova). Niente portfolio, obiettivi o classi del docente.
+        profile_block = "\n\n".join(
+            s for s in (practice_notebook_context(practice_notebook), system_prompt_scores) if s
+        )
+    simulation_block = simulation_notice(language) if is_practice_notebook else ""
     if components is not None:
+        components["simulation"] = simulation_block
         components["profile"] = profile_block
         components["cognitive_factors"] = filter_scores_by_components(message_scores_context, questionnaire_type, {"cognitive_factors": True, "affective_factors": False})
         components["affective_factors"] = filter_scores_by_components(message_scores_context, questionnaire_type, {"cognitive_factors": False, "affective_factors": True})
         components["other_scores"] = "" if _is_strategy_questionnaire(questionnaire_type) else message_scores_context
+    # Avviso di simulazione: blocco a se', prima del profilo, fuori dalle
+    # riduzioni dei livelli di contesto che accorciano [PROFILE].
+    if simulation_block:
+        parts_system.append("[SIMULATION]\n" + simulation_block)
     if profile_block:
         parts_system.append("[PROFILE]\n" + profile_block)
     if class_context:
         parts_system.append("[CONTESTO CLASSE]\n" + class_context)
 
-    reading_context = _reading_context(db, username_for_context, questionnaire_type, session_id) if _component_enabled(component_flags, "student_booklet") and not is_docenza_chat else ""
+    reading_context = _reading_context(db, username_for_context, questionnaire_type, session_id) if _component_enabled(component_flags, "student_booklet") and not is_docenza_chat and not is_practice_notebook else ""
     if components is not None:
         components["student_booklet"] = reading_context
     if reading_context:

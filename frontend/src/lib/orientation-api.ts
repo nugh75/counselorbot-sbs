@@ -42,11 +42,15 @@ export async function fetchOrientationStatus(): Promise<OrientationStatus> {
     return readJson(await apiFetch('/api/orientation/status'));
 }
 
-export async function startOrientation(language: Lang, newSession = false, counselorId?: number | null): Promise<OrientationSession> {
+// Taccuino di prova del docente (vedi notebook-context.ts): il server lo
+// onora solo per un docente proprietario, a ogni richiesta.
+type NotebookPayload = { notebook_context?: string; practice_notebook_id?: number };
+
+export async function startOrientation(language: Lang, newSession = false, counselorId?: number | null, notebook: NotebookPayload = {}): Promise<OrientationSession> {
     return readJson(await apiFetch('/api/orientation/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language, new_session: newSession, counselor_id: counselorId }),
+        body: JSON.stringify({ language, new_session: newSession, counselor_id: counselorId, ...notebook }),
     }));
 }
 
@@ -54,11 +58,11 @@ export async function fetchOrientationSession(sessionId: string): Promise<Orient
     return readJson(await apiFetch(`/api/orientation/sessions/${encodeURIComponent(sessionId)}`));
 }
 
-export async function sendOrientationMessage(sessionId: string, message: string, language: Lang, responseFormat: ResponseFormat = 'standard'): Promise<OrientationSession> {
+export async function sendOrientationMessage(sessionId: string, message: string, language: Lang, responseFormat: ResponseFormat = 'standard', notebook: NotebookPayload = {}): Promise<OrientationSession> {
     return readJson(await apiFetch(`/api/orientation/sessions/${encodeURIComponent(sessionId)}/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, language, response_format: responseFormat }),
+        body: JSON.stringify({ message, language, response_format: responseFormat, ...notebook }),
     }));
 }
 

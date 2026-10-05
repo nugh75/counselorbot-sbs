@@ -762,6 +762,66 @@ class TeacherProfileSave(BaseModel):
         return str(v).strip()[:TEACHER_PROFILE_MAX_FIELD_CHARS]
 
 
+# Taccuini studente di prova del docente: stessi campi che il taccuino reale
+# porta nel prompt (LEARNER_PROFILE_LABELS), stesso limite per campo.
+PRACTICE_NOTEBOOK_FIELDS = (
+    "age", "gender", "school_class", "school_year", "context", "goal",
+    "main_difficulty", "strengths", "weaknesses", "notes",
+)
+PRACTICE_NOTEBOOK_TITLE_MAX_CHARS = 120
+
+
+def _practice_notebook_data(value: Any) -> Dict[str, str]:
+    """Solo campi noti, testo ripulito e limitato, vuoti scartati."""
+    if not isinstance(value, dict):
+        return {}
+    data = {}
+    for key in PRACTICE_NOTEBOOK_FIELDS:
+        text = str(value.get(key) or "").strip()[:LEARNER_PROFILE_MAX_FIELD_CHARS]
+        if text:
+            data[key] = text
+    return data
+
+
+class PracticeNotebookCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=PRACTICE_NOTEBOOK_TITLE_MAX_CHARS)
+    data: Dict[str, str] = Field(default_factory=dict)
+
+    @validator("title", pre=True)
+    def _trim_title(cls, v):
+        return str(v or "").strip()[:PRACTICE_NOTEBOOK_TITLE_MAX_CHARS]
+
+    @validator("data", pre=True)
+    def _known_fields(cls, v):
+        return _practice_notebook_data(v)
+
+
+class PracticeNotebookUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=PRACTICE_NOTEBOOK_TITLE_MAX_CHARS)
+    data: Optional[Dict[str, str]] = None
+    archived: Optional[bool] = None
+
+    @validator("title", pre=True)
+    def _trim_title(cls, v):
+        return None if v is None else str(v).strip()[:PRACTICE_NOTEBOOK_TITLE_MAX_CHARS]
+
+    @validator("data", pre=True)
+    def _known_fields(cls, v):
+        return None if v is None else _practice_notebook_data(v)
+
+
+class PracticeNotebookResponse(BaseModel):
+    id: int
+    title: str
+    data: Dict[str, Any]
+    archived_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 class TeacherProfileResponse(BaseModel):
     id: int
     data: Dict[str, Any]
@@ -959,7 +1019,8 @@ class FrozenSessionCreate(BaseModel):
     guided_path: Literal["complete", "essential"] = "complete"
     conversation_id: Optional[str] = None
     reasoning_effort: Optional[str] = None
-    notebook_context: Optional[str] = None  # taccuino nel contesto: studente|docente|nessuno
+    notebook_context: Optional[str] = None  # taccuino nel contesto: studente|docente|prova|nessuno
+    practice_notebook_id: Optional[int] = None  # taccuino di prova scelto (solo con "practice")
     label: Optional[str] = Field(default=None, max_length=200)
     pdf_token: Optional[str] = None
 
@@ -981,7 +1042,7 @@ class FrozenSessionCreate(BaseModel):
 
     @validator("notebook_context", pre=True)
     def _known_notebook_context(cls, v):
-        return v if v in ("student", "teacher", "none") else None
+        return v if v in ("student", "teacher", "practice", "none") else None
 
     @validator("questionnaire_type", pre=True)
     def _known_questionnaire(cls, v):
@@ -1017,6 +1078,7 @@ class FrozenSessionDetail(FrozenSessionSummary):
     conversation_id: Optional[str] = None
     reasoning_effort: Optional[str] = None
     notebook_context: Optional[str] = None
+    practice_notebook_id: Optional[int] = None
     pdf_token: Optional[str] = None
 
 

@@ -110,7 +110,7 @@ essenziale. L’esperienza OpenCode è un’alternativa quando disponibile.
 Per chi ha ruolo docente, ricercatore o amministratore, la scelta compare in due
 testi: nella scheda **Impostazioni della conversazione** prima di avviare e nel
 menu Opzioni **dentro** la chat guidata; offre **Taccuino nel contesto**
-(predefinito, studente, docente, nessuno): quale taccuino entra nel contesto della
+(predefinito, studente, docente, prova, nessuno): quale taccuino entra nel contesto della
 chat per quello strumento. Il default resta quello storico
 — Taccuino del docente per Obiettivi per la mia classe, Taccuino dello studente per
 tutti gli altri strumenti — e «predefinito» non invia nulla al server. La scelta
@@ -119,6 +119,18 @@ sessione congelata, ed è riverificata a ogni turno dal server: senza uno di que
 ruoli vale sempre il default. Con «studente» o «nessuno» le classi della chat
 docenza restano fuori dal contesto; con «nessuno» la chat resta valida ma senza
 taccuini.
+
+Con «prova» il docente sceglie sotto il selettore uno dei suoi **Taccuini di prova**
+(studenti immaginari creati in `/docente/taccuini-prova`) e vive la chat guidata dal
+lato dello studente per allenarsi a guidarla prima delle sessioni reali. Vale per tutti
+gli strumenti guidati e per la Bussola, dove le Opzioni offrono solo «predefinito» e
+«prova». Il contesto riceve il taccuino simulato al posto dei dati del docente
+(taccuino, portfolio, obiettivi, lettura, classi; nella Bussola anche compilazioni e
+sessioni) e un’istruzione separata, nella lingua dell’interfaccia, che dice al
+modello che lo studente è simulato e che si tratta dell’allenamento del docente. Il
+server accetta solo un taccuino del docente stesso e non archiviato, riverificando il
+ruolo a ogni turno: un taccuino archiviato o eliminato non viene sostituito da dati
+reali, il contesto resta senza taccuino. Uno studente non può usare taccuini di prova.
 
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
@@ -449,7 +461,8 @@ Nel menu della header la voce verso l'area è «Area docente» con l'icona a ber
 da laurea, uguale per docenti, ricercatori e amministrazione.
 
 `/docente` è una panoramica illustrata, come l'Area personale: il primo ingresso
-è il Taccuino del docente (`/docente/taccuino`), senza form nella home. Seguono il
+è il Taccuino del docente (`/docente/taccuino`), senza form nella home, seguito dai
+**Taccuini di prova** (`/docente/taccuini-prova`). Seguono il
 percorso «Obiettivi per la mia classe» (DOCENZA) e i tre gruppi (**Classe e assegnazioni**,
 **Cataloghi**, **Somministrazioni e ricerca**), nello stesso ordine e con una voce
 per ogni pagina. L’ordine visivo coincide con quello dei collegamenti nel DOM e
@@ -474,6 +487,14 @@ selezione), e il salvataggio in corso blocca l’uscita. Docenti, ricercatori e
 amministratori conservano lo stesso accesso, comprese le anteprime di ruolo.
 Il Taccuino studente rimane distinto in `/profilo/taccuino`: un account con
 entrambi i ruoli sceglie quale pagina aprire, senza trasferimenti automatici.
+
+La pagina `/docente/taccuini-prova` raccoglie gli studenti immaginari del docente,
+senza limite di numero: ognuno ha un nome e gli stessi campi del taccuino studente
+(età, genere, classe/professione, anno o percorso, contesto, obiettivo, difficoltà,
+punti di forza e di debolezza, note). Si creano, modificano, archiviano, ripristinano
+ed eliminano (con conferma) con salvataggio esplicito; gli archiviati non compaiono
+nelle Opzioni della chat. Sono visibili solo al docente che li ha creati e non
+contengono né toccano dati di studenti reali: la pagina invita a non inserirne.
 
 Il Taccuino del docente è un’autodescrizione del ruolo e della pratica abituale,
 con sei campi **facoltativi**, nell’ordine: discipline abituali, esperienza di

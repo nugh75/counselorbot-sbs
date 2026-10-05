@@ -36,7 +36,10 @@ class ChatRequest(schemas.BaseModel):
     # lo sceglie dal popover Opzioni della chat guidata; vale solo per chi ha
     # davvero il ruolo docente (riverificato a ogni turno, come group_ids) e per
     # default le regole restano le stesse (docenza -> docente, resto -> studente).
-    notebook_context: Optional[Literal["student", "teacher", "none"]] = None
+    notebook_context: Optional[Literal["student", "teacher", "practice", "none"]] = None
+    # Taccuino studente di prova del docente (solo con notebook_context
+    # "practice"): il server verifica ruolo e proprieta' a ogni turno.
+    practice_notebook_id: Optional[int] = None
 
 
 class SiteChatRequest(schemas.BaseModel):
