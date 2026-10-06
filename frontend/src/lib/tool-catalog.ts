@@ -1,4 +1,6 @@
-import type { QuestionnaireType } from './questionnaires';
+import type { InstrumentSummary } from './instruments-api';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { QUESTIONNAIRE_LIST, buildDynamicQuestionnaireConfig, type QuestionnaireConfig, type QuestionnaireType } from './questionnaires.ts';
 
 export type ToolCategory = 'assessment' | 'guided';
 
@@ -39,8 +41,81 @@ export const TOOL_CATEGORIES: readonly ToolCategoryDefinition[] = [
 // deve avere un motivo esplicito come questo.
 export const TEACHER_AREA_INSTRUMENT_IDS: readonly QuestionnaireType[] = ['OBIETTIVO_DOCENZA'];
 
-export function isStartableQuestionnaireId(value: string): value is QuestionnaireType {
+export function isStartableQuestionnaireId(
+    value: string,
+    catalog?: InstrumentSummary[] | null,
+): value is QuestionnaireType {
+    if (!value || typeof value !== 'string') return false;
+    if (catalog) {
+        const found = catalog.find((row) => row.code === value);
+        if (found) return found.is_active !== false;
+    }
     return ACTIVE_QUESTIONNAIRE_IDS.includes(value as QuestionnaireType);
+}
+
+export function resolveActiveStudentTools(
+    catalog: InstrumentSummary[] | null,
+    lang = 'it',
+): QuestionnaireConfig[] {
+    if (catalog === null) {
+        return ACTIVE_QUESTIONNAIRE_IDS
+            .filter((id) => !(TEACHER_AREA_INSTRUMENT_IDS as readonly string[]).includes(id))
+            .map((id) => QUESTIONNAIRE_LIST.find((q) => q.id === id))
+            .filter((q): q is QuestionnaireConfig => Boolean(q));
+    }
+
+    const catalogByCode = new Map(catalog.map((c) => [c.code, c]));
+    const result: QuestionnaireConfig[] = [];
+    const addedCodes = new Set<string>();
+
+    // 1. Process standard known questionnaires
+    for (const q of QUESTIONNAIRE_LIST) {
+        if ((TEACHER_AREA_INSTRUMENT_IDS as readonly string[]).includes(q.id)) continue;
+        const row = catalogByCode.get(q.id);
+        if (row) {
+            if (row.is_active === false) continue;
+            if (row.target_audience === 'teacher') continue;
+        } else if (!ACTIVE_QUESTIONNAIRE_IDS.includes(q.id)) {
+            continue;
+        }
+        result.push(q);
+        addedCodes.add(q.id);
+    }
+
+    // 2. Append new dynamic questionnaires from catalog
+    for (const row of catalog) {
+        if (addedCodes.has(row.code)) continue;
+        if (row.is_active === false) continue;
+        if (row.target_audience === 'teacher') continue;
+        result.push(buildDynamicQuestionnaireConfig(row, lang));
+        addedCodes.add(row.code);
+    }
+
+    return result;
+}
+
+export function getDynamicToolCategories(
+    activeTools: QuestionnaireConfig[],
+    catalog?: InstrumentSummary[] | null,
+): ToolCategoryDefinition[] {
+    const catalogByCode = catalog ? new Map(catalog.map((c) => [c.code, c])) : null;
+    const assessmentIds: QuestionnaireType[] = [];
+    const guidedIds: QuestionnaireType[] = [];
+
+    for (const tool of activeTools) {
+        const row = catalogByCode?.get(tool.id);
+        const category = row?.tool_category ?? (tool.agentOnly ? 'guided' : 'assessment');
+        if (category === 'assessment') {
+            assessmentIds.push(tool.id);
+        } else {
+            guidedIds.push(tool.id);
+        }
+    }
+
+    return [
+        { id: 'assessment', questionnaireIds: assessmentIds },
+        { id: 'guided', questionnaireIds: guidedIds },
+    ];
 }
 
 export function orientationToolHref(id: string): string {

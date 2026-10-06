@@ -3,6 +3,7 @@
 // Catalogo e strumenti personali precedono le attività da riprendere.
 // Le aree personali restano nella pagina personale, non in questa home.
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { CompassEntry } from '@/components/home/CompassEntry';
@@ -11,12 +12,12 @@ import { PersonalAreaEntry } from '@/components/home/PersonalAreaEntry';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { ArrowLeft, BookOpen, RotateCcw } from 'lucide-react';
-import { QUESTIONNAIRE_LIST, QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
+import { QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
 import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
-import { TOOL_CATEGORIES } from '@/lib/tool-catalog';
+import { getDynamicToolCategories, resolveActiveStudentTools } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
 
 interface Props {
@@ -36,7 +37,18 @@ export function ReturningHome({
     const { frozen, localResume, pqbl: pqblResume, count: resumeCount } = resumeEntries;
     const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
     const formatDate = (iso: string) => new Date(iso).toLocaleDateString(lang);
-    const instrumentById = new Map(QUESTIONNAIRE_LIST.map((q) => [q.id, q]));
+
+    const activeTools = useMemo(() => {
+        return resolveActiveStudentTools(instrumentCatalog, lang);
+    }, [instrumentCatalog, lang]);
+
+    const activeInstrumentById = useMemo(() => {
+        return new Map(activeTools.map((q) => [q.id, q]));
+    }, [activeTools]);
+
+    const dynamicCategories = useMemo(() => {
+        return getDynamicToolCategories(activeTools, instrumentCatalog);
+    }, [activeTools, instrumentCatalog]);
     return (
         <div className="flex flex-col gap-5 py-2">
             <section className="order-1">
@@ -55,7 +67,7 @@ export function ReturningHome({
                 </div>
                 <div className="mt-5"><CompassEntry /></div>
                 <nav className="mt-4 flex flex-wrap gap-2" aria-label={t('base.categories.label')}>
-                    {TOOL_CATEGORIES.map((group) => (
+                    {dynamicCategories.map((group) => (
                         <a
                             key={group.id}
                             href={`#tools-${group.id}`}
@@ -78,7 +90,7 @@ export function ReturningHome({
                     </div>
                 )}
                 <div className="mt-6 space-y-8">
-                    {TOOL_CATEGORIES.map((group) => {
+                    {dynamicCategories.map((group) => {
                         const categoryImage = group.id === 'assessment'
                             ? '/images/intro/profiles.png'
                             : '/images/intro/paths.png';
@@ -99,7 +111,7 @@ export function ReturningHome({
                                 </div>
                             </div>
                             <div className="mt-3 grid gap-3 md:grid-cols-2">
-                                {group.questionnaireIds.map((id) => instrumentById.get(id)).filter((q): q is QuestionnaireConfig => Boolean(q)).map((q) => {
+                                {group.questionnaireIds.map((id) => activeInstrumentById.get(id)).filter((q): q is QuestionnaireConfig => Boolean(q)).map((q) => {
                                     const done = lastCompiledAt[q.id];
                                     const canCompleteQuestionnaire = lang !== 'it'
                                         && !q.agentOnly
@@ -112,9 +124,9 @@ export function ReturningHome({
                                                     <span className={cn('h-1.5 w-1.5 rounded-full', done ? 'bg-teal-500' : 'bg-slate-300')} />
                                                     <span className="font-bold text-slate-900">{tf(`q.${q.id}.name`, q.name)}</span>
                                                 </span>
-                                                <h3 className="mt-1 text-sm font-medium leading-snug text-slate-600">{t(`q.${q.id}.fullName`)}</h3>
+                                                <h3 className="mt-1 text-sm font-medium leading-snug text-slate-600">{tf(`q.${q.id}.fullName`, q.fullName)}</h3>
                                             </div>
-                                            <p className="grow text-sm leading-relaxed text-slate-500">{t(`q.${q.id}.description`)}</p>
+                                            <p className="grow text-sm leading-relaxed text-slate-500">{tf(`q.${q.id}.description`, q.description)}</p>
                                             <span className="font-mono text-xs text-slate-500">
                                                 {done ? t('base.instrument.doneOn', { date: formatDate(done) }) : t('base.instrument.todo')}
                                             </span>
