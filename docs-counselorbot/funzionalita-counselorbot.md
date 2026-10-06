@@ -686,6 +686,30 @@ accessibile in 3 passaggi:
    gli step iniziali (`POST /admin/guided-steps`) e associa i counselor abilitati
    (`PUT /admin/counselors/{id}`). Al termine, la mappa seleziona automaticamente il nuovo percorso.
 
+### Sandbox di collaudo per l'amministratore (Anteprima chat)
+
+La testata della Mappa dei prompt e la barra degli strumenti dell'Editor dei questionari
+includono il pulsante **Collauda chat** (`admin.promptMap.testChat` / `admin.q.testChat`),
+che consente all'amministratore di verificare immediatamente il funzionamento della
+chat guidata per lo strumento selezionato in un ambiente protetto ed effimero:
+- **Sessione effimera e isolata**: la chat di collaudo invia il flag `preview: true`
+  al backend (`POST /chat`), che disabilita il salvataggio dei log su database (`models.Log`),
+  la generazione di raccomandazioni persistenti (`models.SessionRecommendation`), l'inserimento
+  nel pool di memoria risposte condivise e il monitoraggio dei thread. I dati degli studenti
+  e le statistiche di ricerca rimangono completamente incontaminati.
+- **Supporto strumenti in bozza**: la sandbox permette di collaudare e percorrere
+  tutti gli step configurati anche quando lo strumento è ancora nello stato di bozza
+  (`is_active=false`), verificando la risposta del counselor, le domande suggerite e
+  l'avanzamento tra i passaggi prima della pubblicazione nel catalogo.
+- **Scelta del counselor e riavvio rapido**: l'amministratore può selezionare al volo
+  qualsiasi counselor configurato per osservarne lo stile di conduzione, oppure riavviare
+  la sessione azzerando istantaneamente la memoria temporanea (`DELETE /api/memory/:sessionId`).
+- **Doppia modalità di visualizzazione**: la sandbox è disponibile sia come comoda
+  finestra modale integrata direttamente nella Mappa dei prompt e nell'Editor questionari,
+  sia a schermo intero tramite la rotta dedicata `/admin/preview-chat?instrument=<CODICE>`.
+- **Protezione accessi**: l'endpoint di chat con `preview=true` e la pagina di anteprima
+  sono rigorosamente riservati agli utenti con privilegi di amministrazione (403 per non-admin).
+
 Ogni testo e la sua bozza mostrano il numero stimato di token, compresi persona
 del counselor e domande suggerite. Ogni istruzione destinata al modello ha i
 pulsanti **Totale**, **Ristretto** e **Minimo**. Sono disponibili anche le
