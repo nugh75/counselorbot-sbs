@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { ACTIVE_QUESTIONNAIRE_IDS, TEACHER_AREA_INSTRUMENT_IDS, TOOL_CATEGORIES, isStartableQuestionnaireId, orientationSkippedThisVisit, skipOrientationThisVisit } from './tool-catalog.ts';
+import { ACTIVE_QUESTIONNAIRE_IDS, TEACHER_AREA_INSTRUMENT_IDS, TOOL_CATEGORIES, isStartableQuestionnaireId, orientationSkippedThisVisit, skipOrientationThisVisit, resolveActiveStudentTools, getDynamicToolCategories } from './tool-catalog.ts';
+import type { InstrumentSummary } from './instruments-api';
 
 test('every active questionnaire appears in exactly one home category, or is the declared teacher-area exception', () => {
     const categorized = TOOL_CATEGORIES.flatMap((group) => group.questionnaireIds);
@@ -16,9 +17,109 @@ test('every active questionnaire appears in exactly one home category, or is the
     }
 });
 
-test('deep-link validation uses the shared active catalog', () => {
+test('deep-link validation uses the shared active catalog and dynamic instruments', () => {
     assert.equal(isStartableQuestionnaireId('QSA'), true);
     assert.equal(isStartableQuestionnaireId('UNKNOWN'), false);
+
+    const catalog: InstrumentSummary[] = [
+        {
+            code: 'ORIENTA_TEST',
+            name_i18n: { it: 'Orienta Test' },
+            status: 'certified',
+            report_scale_type: 'stanine',
+            item_count: 0,
+            locales: { it: 'certified' },
+            available_locales: ['it'],
+            is_active: true,
+            tool_category: 'guided',
+        },
+        {
+            code: 'DRAFT_TOOL',
+            name_i18n: { it: 'Draft Tool' },
+            status: 'draft',
+            report_scale_type: 'stanine',
+            item_count: 0,
+            locales: {},
+            available_locales: [],
+            is_active: false,
+            tool_category: 'guided',
+        },
+    ];
+
+    assert.equal(isStartableQuestionnaireId('ORIENTA_TEST', catalog), true);
+    assert.equal(isStartableQuestionnaireId('DRAFT_TOOL', catalog), false);
+    assert.equal(isStartableQuestionnaireId('NON_EXISTENT', catalog), false);
+});
+
+test('resolveActiveStudentTools includes dynamic active tools and excludes inactive or teacher tools', () => {
+    const catalog: InstrumentSummary[] = [
+        {
+            code: 'DYNAMIC_GUIDED',
+            name_i18n: { it: 'Percorso Dinamico', en: 'Dynamic Path' },
+            description_i18n: { it: 'Descrizione percorso', en: 'Path description' },
+            status: 'certified',
+            report_scale_type: 'stanine',
+            item_count: 0,
+            locales: { it: 'certified' },
+            available_locales: ['it', 'en'],
+            is_active: true,
+            tool_category: 'guided',
+            target_audience: 'student',
+            icon: 'lightbulb',
+            color_theme: 'amber',
+        },
+        {
+            code: 'DYNAMIC_INACTIVE',
+            name_i18n: { it: 'Percorso Inattivo' },
+            status: 'draft',
+            report_scale_type: 'stanine',
+            item_count: 0,
+            locales: {},
+            available_locales: [],
+            is_active: false,
+            tool_category: 'guided',
+            target_audience: 'student',
+        },
+        {
+            code: 'DYNAMIC_TEACHER',
+            name_i18n: { it: 'Strumento Docente' },
+            status: 'certified',
+            report_scale_type: 'stanine',
+            item_count: 0,
+            locales: { it: 'certified' },
+            available_locales: ['it'],
+            is_active: true,
+            tool_category: 'guided',
+            target_audience: 'teacher',
+        },
+    ];
+
+    const activeTools = resolveActiveStudentTools(catalog, 'it');
+    const ids = activeTools.map((t) => t.id);
+
+    // Dynamic active student tool is present
+    assert.equal(ids.includes('DYNAMIC_GUIDED'), true);
+    // Inactive tool is excluded for students (DoD)
+    assert.equal(ids.includes('DYNAMIC_INACTIVE'), false);
+    // Teacher-targeted tool is excluded from student catalog
+    assert.equal(ids.includes('DYNAMIC_TEACHER'), false);
+    // Static teacher tool OBIETTIVO_DOCENZA is excluded
+    assert.equal(ids.includes('OBIETTIVO_DOCENZA'), false);
+
+    // Check mapped properties
+    const guidedTool = activeTools.find((t) => t.id === 'DYNAMIC_GUIDED');
+    assert.ok(guidedTool);
+    assert.equal(guidedTool.name, 'Percorso Dinamico');
+    assert.equal(guidedTool.description, 'Descrizione percorso');
+    assert.equal(guidedTool.agentOnly, true);
+    assert.equal(guidedTool.icon, 'lightbulb');
+    assert.equal(guidedTool.color, 'bg-amber-500');
+
+    // Dynamic categorization
+    const categories = getDynamicToolCategories(activeTools, catalog);
+    const guidedGroup = categories.find((c) => c.id === 'guided');
+    assert.ok(guidedGroup);
+    assert.equal(guidedGroup.questionnaireIds.includes('DYNAMIC_GUIDED'), true);
 });
 
 function withStorage(impl: Record<string, unknown> | undefined, run: () => void) {
