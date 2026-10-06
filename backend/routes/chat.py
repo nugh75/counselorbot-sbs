@@ -5,6 +5,7 @@ import functools
 import io
 import logging
 import os
+import re
 import tempfile
 import uuid
 from typing import Literal
@@ -303,6 +304,10 @@ def guided_phase_text_keys(questionnaire_type: str) -> dict:
         intro_key, _, concl_key, _ = _INSTRUMENT_PHASE_TEXTS[questionnaire_type]
         keys["text_guided_questions_intro"] = intro_key
         keys["text_guided_conclusion"] = concl_key
+    elif questionnaire_type and questionnaire_type.upper() not in {"QSA", "GENERIC"}:
+        code_slug = re.sub(r"[^A-Za-z0-9_]+", "_", questionnaire_type.strip().lower())
+        keys["text_guided_questions_intro"] = f"text_{code_slug}_questions_intro"
+        keys["text_guided_conclusion"] = f"text_{code_slug}_conclusion"
     return keys
 
 
@@ -429,6 +434,16 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
         intro_key, intro_default, concl_key, concl_default = _INSTRUMENT_PHASE_TEXTS[questionnaire_type]
         result["text_guided_questions_intro"] = resolve_text(cfg_get, intro_key, lang, intro_default)
         result["text_guided_conclusion"] = resolve_text(cfg_get, concl_key, lang, concl_default)
+    elif questionnaire_type and questionnaire_type.upper() not in {"QSA", "GENERIC"}:
+        code_slug = re.sub(r"[^A-Za-z0-9_]+", "_", questionnaire_type.strip().lower())
+        intro_key = f"text_{code_slug}_questions_intro"
+        concl_key = f"text_{code_slug}_conclusion"
+        intro_val = resolve_text(cfg_get, intro_key, lang, "")
+        concl_val = resolve_text(cfg_get, concl_key, lang, "")
+        if intro_val:
+            result["text_guided_questions_intro"] = intro_val
+        if concl_val:
+            result["text_guided_conclusion"] = concl_val
     if questionnaire_type == "ZTPI":
         result["text_guided_questions_intro"] = _sanitize_ztpi_user_text(result["text_guided_questions_intro"], lang)
         result["text_guided_conclusion"] = _sanitize_ztpi_user_text(result["text_guided_conclusion"], lang)

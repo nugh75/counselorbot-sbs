@@ -1899,7 +1899,11 @@ def _system_prompt_key(mode: Optional[str], phase: Optional[str], step=None) -> 
     if phase in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS:
         return GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS[phase]["key"]
     if step is not None and mode not in _CONVERSATIONAL_MODES:
+        if step.system_prompt_mode and step.system_prompt_mode.startswith("prompt_"):
+            return step.system_prompt_mode
         return MODE_TO_SYSTEM_PROMPT_KEY.get(step.system_prompt_mode, "prompt_generic")
+    if mode and mode.startswith("prompt_"):
+        return mode
     return MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
 
 
@@ -2861,7 +2865,11 @@ def build_context_envelope(
     elif user_is_plan_manager and requested_notebook == "practice":
         notebook_mode = "practice" if practice_notebook is not None else "none"
     else:
-        notebook_mode = DEFAULT_NOTEBOOK_CONTEXT.get(questionnaire_type, "student")
+        inst = db.query(models.Instrument).filter(models.Instrument.code == questionnaire_type).first() if questionnaire_type else None
+        if inst and inst.target_audience == "teacher":
+            notebook_mode = "teacher"
+        else:
+            notebook_mode = DEFAULT_NOTEBOOK_CONTEXT.get(questionnaire_type, "student")
     is_docenza_chat = questionnaire_type == "OBIETTIVO_DOCENZA"
     is_teacher_notebook = notebook_mode == "teacher"
     is_practice_notebook = notebook_mode == "practice"
