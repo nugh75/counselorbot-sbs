@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 5 ottobre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 6 ottobre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
@@ -657,6 +657,12 @@ ha quattro livelli, ciascuno apribile e richiudibile dalla propria intestazione,
 senza un menu laterale. Comune e Gruppi partono chiusi; Strumento e Step sono
 aperti, con il primo step espanso. La scelta delle sezioni aperte viene conservata
 nel browser per la mappa; «vai» apre anche la sezione di destinazione.
+Il registro degli strumenti supporta strumenti e percorsi dinamici configurati
+nel database con metadati estesi (`is_active`, `tool_category`, `description_i18n`,
+`target_audience`, `icon`, `color_theme`, `interview_mode`): la mappa include
+automaticamente tutti gli strumenti registrati con risoluzione convenzionale
+dei testi, mentre il catalogo studenti filtra solo gli strumenti attivi mantenendo
+le bozze visibili agli amministratori.
 
 Ogni testo e la sua bozza mostrano il numero stimato di token, compresi persona
 del counselor e domande suggerite. Ogni istruzione destinata al modello ha i
