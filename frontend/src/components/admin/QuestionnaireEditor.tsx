@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Plus, Trash2, Save, ListChecks, Sliders, FileText, Eye } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { CreateInstrumentDialog } from '@/components/admin/CreateInstrumentDialog';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 // Le sei lingue dell'app. Non piu' le quattro che avevano una colonna dedicata:
@@ -121,8 +122,23 @@ export function QuestionnaireEditor() {
     const [versions, setVersions] = useState<ContentVersion[]>([]);
     const [ladders, setLadders] = useState<Record<string, string[]>>({});
     const [versionError, setVersionError] = useState('');
+    const [creatingInstrument, setCreatingInstrument] = useState(false);
 
     const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2500); };
+
+    const handleInstrumentCreated = async (newCode: string) => {
+        try {
+            const res = await fetch('/api/admin/instruments');
+            if (res.ok) {
+                const data: Instrument[] = await res.json();
+                setInstruments(data);
+            }
+        } catch {
+            // fallback
+        }
+        setSelected(newCode);
+        flash(t('admin.instrumentWizard.successMessage', { code: newCode }));
+    };
 
     const loadVersions = useCallback(() => {
         if (!selected) return;
@@ -286,6 +302,13 @@ export function QuestionnaireEditor() {
                         {meta.status}
                     </span>
                 )}
+                <button
+                    type="button"
+                    onClick={() => setCreatingInstrument(true)}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700"
+                >
+                    <Plus className="w-3.5 h-3.5" /> {t('admin.instrumentWizard.createInstrumentButton')}
+                </button>
                 {msg && <span className="text-sm text-indigo-600">{msg}</span>}
                 <button onClick={() => loadInstrument(selected)} className="ml-auto inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800">
                     <RefreshCw className="w-4 h-4" /> {t('admin.q.reload')}
@@ -530,6 +553,14 @@ export function QuestionnaireEditor() {
                         ))}
                     </div>
                 </div>
+            )}
+
+            {creatingInstrument && (
+                <CreateInstrumentDialog
+                    open={creatingInstrument}
+                    onClose={() => setCreatingInstrument(false)}
+                    onCreated={handleInstrumentCreated}
+                />
             )}
         </div>
     );

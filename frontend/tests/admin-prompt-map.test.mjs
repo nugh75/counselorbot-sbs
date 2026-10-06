@@ -139,6 +139,9 @@ async function fixture(width = 1440, { failReorder = false, failUsage = false, f
         if (url.pathname === '/api/admin/prompt-map') data = { ...map, instrument: url.searchParams.get('instrument') };
         if (url.pathname === '/api/admin/guided-step-questions' && request.method() === 'GET') data = questions;
         if (url.pathname === '/api/admin/guided-steps/modes') data = [{ mode: 'intro', system_prompt_key: null }, { mode: 'generic', system_prompt_key: 'prompt_generic' }, { mode: 'factor', system_prompt_key: 'prompt_factor' }];
+        if (url.pathname === '/api/admin/counselors' && request.method() === 'GET') {
+            data = [{ id: 7, name: 'Iride', slug: 'iride', is_active: true, questionnaire_types: ['QSA'] }];
+        }
         if (url.pathname.endsWith('/usage')) {
             if (failUsage) return route.fulfill({ status: 503, json: { detail: 'fixture usage failure' } });
             data = { step_id: 'affective', questionnaire_type: 'QSA', sessions: 3, messages: 12, suggested_questions: 1,
@@ -157,6 +160,9 @@ async function fixture(width = 1440, { failReorder = false, failUsage = false, f
         } else if (['POST', 'PUT', 'PATCH'].includes(request.method())) {
             data = request.postDataJSON();
             writes.push({ method: request.method(), path: url.pathname, body: data });
+            if (url.pathname === '/api/admin/instruments' && request.method() === 'POST') {
+                promptMap.instruments.push({ id: data.code, step_count: 0 });
+            }
             if (url.pathname === '/api/admin/guided-steps' && request.method() === 'POST') {
                 map.levels.steps.splice(map.levels.steps.findIndex(step => step.fixed), 0, { ...data, fixed: false, label_i18n: {}, entries: [stepField(data.id, 'label', data.label, 'student', 'student')], refs: [] });
             }
@@ -668,4 +674,63 @@ test('counselor minimal persona uses a versioned Config row and keeps Total inta
         assert.equal(f.writes[0].body.value, 'Persona minima di Iride.');
         assert.equal(map.levels.common[0].value[0].persona, 'Sei Iride.');
     } finally { await f.close(); }
+});
+
+test('wizard creates new guided chat instrument with 3 steps and enables counselor', async () => {
+    const f = await fixture();
+    try {
+        const { page } = f;
+        const createBtn = page.getByRole('button', { name: '+ Nuova Chat Guidata' });
+        await createBtn.click();
+
+        const dialog = page.getByRole('dialog');
+        await dialog.waitFor();
+
+        // Step 1: compilazione codice e nome
+        const codeInput = dialog.locator('input[placeholder="ORIENTA_TEST"]');
+        await codeInput.fill('ORIENTA_TEST');
+
+        const nameInput = dialog.locator('input[placeholder="Laboratorio di Orientamento"]');
+        await nameInput.fill('Laboratorio di Orientamento');
+
+        // Passa a Step 2
+        await dialog.getByRole('button', { name: 'Avanti' }).click();
+
+        // Step 2: verifica template selezionato (3 passi standard)
+        assert.ok(await dialog.getByText('Percorso riflessivo standard a 3 passi').isVisible());
+
+        // Passa a Step 3
+        await dialog.getByRole('button', { name: 'Avanti' }).click();
+
+        // Step 3: counselor caricati
+        assert.ok(await dialog.getByText('Iride', { exact: true }).isVisible());
+
+        // Invia creazione
+        await dialog.getByRole('button', { name: 'Crea chat guidata' }).click();
+
+        // Attendi che i write siano completati
+        await until(() => f.writes.filter(w => w.path === '/api/admin/guided-steps').length === 3);
+        await until(() => f.writes.some(w => w.path === '/api/admin/counselors/7'));
+
+        const instrumentWrite = f.writes.find(w => w.path === '/api/admin/instruments');
+        assert.ok(instrumentWrite);
+        assert.equal(instrumentWrite.body.code, 'ORIENTA_TEST');
+        assert.equal(instrumentWrite.body.name_it, 'Laboratorio di Orientamento');
+        assert.equal(instrumentWrite.body.tool_category, 'guided');
+
+        const stepWrites = f.writes.filter(w => w.path === '/api/admin/guided-steps');
+        assert.equal(stepWrites.length, 3);
+        assert.equal(stepWrites[0].body.id, 'orienta_test_intro');
+        assert.equal(stepWrites[1].body.id, 'orienta_test_explore');
+        assert.equal(stepWrites[2].body.id, 'orienta_test_synthesis');
+
+        const counselorWrite = f.writes.find(w => w.path === '/api/admin/counselors/7');
+        assert.ok(counselorWrite);
+        assert.deepEqual(counselorWrite.body.questionnaire_types, ['QSA', 'ORIENTA_TEST']);
+
+        // Il dialog si chiude
+        await dialog.waitFor({ state: 'detached' });
+    } finally {
+        await f.close();
+    }
 });
