@@ -579,6 +579,9 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     conversation_id = conversation_id_for(session_id, request.conversation_id)
     request.language = _normalize_language(request.language)
 
+    if request.preview and not bool(identity.get("is_admin")):
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono utilizzare la modalità anteprima sandbox")
+
     # 1. Retrieve Configuration and System Prompt based on Mode
     personal_api.bind_counselor(db, request.counselor_id)
     ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
@@ -743,52 +746,56 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         _details["envelope"] = pii.redact_envelope(
             build_log_envelope(system_prompt_final, full_message, history)
         )
-    log_entry = models.Log(
-        session_id=session_id,
-        conversation_id=conversation_id,
-        action="chat_message",
-        username=identity.get("username") or None,
-        email=identity.get("email") or None,
-        anonymous_research_code=code_for_identity(db, identity),
-        provider=_provider,
-        model_name=_model,
-        cost_usd=_cost_usd,
-        questionnaire_type=questionnaire_type,
-        phase=request.phase or None,
-        mode=request.mode or None,
-        details=_details,
-    )
-    db.add(log_entry)
-    response_id = shared_response_memory.create_candidate(
-        db,
-        response_content,
-        questionnaire_type,
-        request.phase or "",
-        request.language or "it",
-    )
-    if response_id:
-        log_entry.response_id = response_id
-    db.commit()
-    recommendations_for_response = _record_recommendations(
-        db,
-        session_id=session_id,
-        username=identity.get("username", "") if identity else "",
-        language=request.language or "it",
-        reading_ids=recommended["reading"],
-        strategy_ids=recommended["strategy"],
-        notes=recommendation_blocks.extract_notes(
-            raw_recommendations, response_content,
-            advice_allowed=bool(prepared.component_options["certified_strategy_limit"] and prepared.component_flags.get("certified_strategies", True)),
-        ),
-        matched_on=recommendation_meta,
-        turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
-        step_id=request.phase or "",
-        step_order=step.sort_order if step else None,
-    )
-    _watch_thread(prepared, request, db, session_id=session_id,
-                  username=identity.get("username") if identity else "",
-                  effective_message=effective_message, response_content=response_content,
-                  recommended=recommended)
+    if not request.preview:
+        log_entry = models.Log(
+            session_id=session_id,
+            conversation_id=conversation_id,
+            action="chat_message",
+            username=identity.get("username") or None,
+            email=identity.get("email") or None,
+            anonymous_research_code=code_for_identity(db, identity),
+            provider=_provider,
+            model_name=_model,
+            cost_usd=_cost_usd,
+            questionnaire_type=questionnaire_type,
+            phase=request.phase or None,
+            mode=request.mode or None,
+            details=_details,
+        )
+        db.add(log_entry)
+        response_id = shared_response_memory.create_candidate(
+            db,
+            response_content,
+            questionnaire_type,
+            request.phase or "",
+            request.language or "it",
+        )
+        if response_id:
+            log_entry.response_id = response_id
+        db.commit()
+        recommendations_for_response = _record_recommendations(
+            db,
+            session_id=session_id,
+            username=identity.get("username", "") if identity else "",
+            language=request.language or "it",
+            reading_ids=recommended["reading"],
+            strategy_ids=recommended["strategy"],
+            notes=recommendation_blocks.extract_notes(
+                raw_recommendations, response_content,
+                advice_allowed=bool(prepared.component_options["certified_strategy_limit"] and prepared.component_flags.get("certified_strategies", True)),
+            ),
+            matched_on=recommendation_meta,
+            turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
+            step_id=request.phase or "",
+            step_order=step.sort_order if step else None,
+        )
+        _watch_thread(prepared, request, db, session_id=session_id,
+                      username=identity.get("username") if identity else "",
+                      effective_message=effective_message, response_content=response_content,
+                      recommended=recommended)
+    else:
+        response_id = None
+        recommendations_for_response = {"reading": [], "strategy": []}
 
     return {
         "response": response_content,
@@ -819,6 +826,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     session_id = request.session_id or str(uuid.uuid4())
     conversation_id = conversation_id_for(session_id, request.conversation_id)
     request.language = _normalize_language(request.language)
+
+    if request.preview and not bool(identity.get("is_admin")):
+        raise HTTPException(status_code=403, detail="Solo gli amministratori possono utilizzare la modalità anteprima sandbox")
 
     # Preparazione (usa la db della richiesta, ancora aperta qui)
     personal_api.bind_counselor(db, request.counselor_id)
@@ -877,6 +887,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         usage: dict | None = None,
         recommended: dict[str, list[str]] | None = None,
     ) -> str | None:
+        if request.preview:
+            return None
         provider = getattr(ai_service, "last_provider", None) or c_provider or ai_service.config.get("active_provider", "unknown")
         model = getattr(ai_service, "last_model", None) or c_model or ai_service.config.get("model_name", "unknown")
         log_db = database.SessionLocal()
@@ -1128,28 +1140,29 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
 
             response_id = _log_stream(response_content, usage_info, recommended)
             recommendations_for_response: dict[str, list[dict]] = {"reading": [], "strategy": []}
-            recommendation_db = database.SessionLocal()
-            try:
-                recommendations_for_response = _record_recommendations(
-                    recommendation_db,
-                    session_id=session_id,
-                    username=identity.get("username", "") if identity else "",
-                    language=request.language or "it",
-                    reading_ids=recommended["reading"],
-                    strategy_ids=recommended["strategy"],
-                    notes=recommendation_blocks.extract_notes(
-                        raw_recommendations, response_content,
-                        advice_allowed=bool(prepared.component_options["certified_strategy_limit"] and prepared.component_flags.get("certified_strategies", True)),
-                    ),
-                    matched_on=recommendation_meta,
-                    turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
-                    step_id=request.phase or "",
-                    step_order=step.sort_order if step else None,
-                )
-            except Exception as exc:
-                logger.warning("Recommendation persistence failed for %s: %s", session_id, exc)
-            finally:
-                recommendation_db.close()
+            if not request.preview:
+                recommendation_db = database.SessionLocal()
+                try:
+                    recommendations_for_response = _record_recommendations(
+                        recommendation_db,
+                        session_id=session_id,
+                        username=identity.get("username", "") if identity else "",
+                        language=request.language or "it",
+                        reading_ids=recommended["reading"],
+                        strategy_ids=recommended["strategy"],
+                        notes=recommendation_blocks.extract_notes(
+                            raw_recommendations, response_content,
+                            advice_allowed=bool(prepared.component_options["certified_strategy_limit"] and prepared.component_flags.get("certified_strategies", True)),
+                        ),
+                        matched_on=recommendation_meta,
+                        turn_index=max(0, len(session_memory.get_transcript(session_id)) - 1),
+                        step_id=request.phase or "",
+                        step_order=step.sort_order if step else None,
+                    )
+                except Exception as exc:
+                    logger.warning("Recommendation persistence failed for %s: %s", session_id, exc)
+                finally:
+                    recommendation_db.close()
 
             yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': recommended['strategy'], 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value})}\n\n"
         except Exception as e:
