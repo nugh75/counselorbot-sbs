@@ -225,8 +225,14 @@ def live_prompt_rows(db: Session) -> List[tuple]:
             rows.append((SCOPE_CONFIG, cfg.key, cfg.value or ""))
     for step in db.query(models.GuidedStep).all():
         rows.append((SCOPE_GUIDED_STEP, step.id, step.prompt or ""))
+    try:
+        from .counselor_identity import ensure_counselor_schema
+        ensure_counselor_schema(db.connection())
+    except Exception:
+        pass
     for counselor in db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None)).all():
         rows.append((SCOPE_COUNSELOR_PERSONA, str(counselor.id), counselor.persona or ""))
+
     return rows
 
 

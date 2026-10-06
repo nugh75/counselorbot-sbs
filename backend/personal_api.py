@@ -146,6 +146,9 @@ def ensure_schema(connection):
     connection.execute(text("ALTER TABLE counselors ADD COLUMN IF NOT EXISTS owner_username VARCHAR"))
     connection.execute(text("CREATE INDEX IF NOT EXISTS ix_counselors_owner_username ON counselors(owner_username)"))
     connection.execute(text("ALTER TABLE pqbl_documents ADD COLUMN IF NOT EXISTS counselor_id INTEGER"))
+    from .counselor_identity import ensure_counselor_schema
+    ensure_counselor_schema(connection)
+
 
 
 def bind_counselor(db, counselor_id):
