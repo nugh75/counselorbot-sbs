@@ -93,13 +93,15 @@ def _guidance_key(instrument: str, step_id: str) -> str:
 
 
 def ordered_instruments(db) -> list[dict]:
-    """Strumenti con almeno uno step guidato, nell'ordine dell'admin."""
+    """Tutti gli strumenti registrati o con step guidati, nell'ordine dell'admin."""
     counts: dict[str, int] = defaultdict(int)
     for (questionnaire_type,) in db.query(models.GuidedStep.questionnaire_type).all():
         counts[questionnaire_type] += 1
-    ordered = [i for i in INSTRUMENT_ORDER if i in counts]
-    ordered += sorted(i for i in counts if i not in INSTRUMENT_ORDER)
-    return [{"id": i, "step_count": counts[i]} for i in ordered]
+    registered_codes = {row[0] for row in db.query(models.Instrument.code).all()}
+    all_codes = set(counts.keys()) | registered_codes
+    ordered = [i for i in INSTRUMENT_ORDER if i in all_codes]
+    ordered += sorted(i for i in all_codes if i not in INSTRUMENT_ORDER)
+    return [{"id": i, "step_count": counts.get(i, 0)} for i in ordered]
 
 
 def _steps_by_instrument(db) -> dict[str, list]:
@@ -163,10 +165,50 @@ def _level(uses: list[_Use], all_instruments: set[str]) -> str:
     return max(level, floor, key=_LEVEL_RANK.__getitem__)
 
 
+def _conventional_label_and_description(key: str) -> tuple[str, str, str | None]:
+    """Genera label, description e default per chiavi convenzionali non definite in prompt_config."""
+    label = _DEFINITION_LABELS.get(key, "")
+    desc = _DESCRIPTIONS.get(key, "")
+    default_val = _DEFAULTS.get(key)
+
+    if not label:
+        if key.startswith("prompt_meta_"):
+            inst_code = key.removeprefix("prompt_meta_")
+            label = f"Meta prompt di sistema ({inst_code})"
+            desc = f"Istruzioni di sistema e contesto per lo strumento {inst_code}"
+        elif key.startswith("prompt_") and key.endswith("_intro"):
+            inst_code = key.removeprefix("prompt_").removesuffix("_intro")
+            label = f"Prompt di benvenuto / introduzione ({inst_code})"
+            desc = f"Istruzioni per il passo iniziale di {inst_code}"
+        elif key.startswith("prompt_") and key.endswith("_meta"):
+            inst_code = key.removeprefix("prompt_").removesuffix("_meta")
+            label = f"Meta prompt ({inst_code})"
+            desc = f"Istruzioni di sistema per lo strumento {inst_code}"
+        elif key.startswith("text_") and key.endswith("_questions_intro"):
+            inst_code = key.removeprefix("text_").removesuffix("_questions_intro")
+            label = f"Introduzione fase domande ({inst_code})"
+            desc = f"Testo mostrato allo studente prima delle domande di riflessione per {inst_code}"
+        elif key.startswith("text_") and key.endswith("_conclusion"):
+            inst_code = key.removeprefix("text_").removesuffix("_conclusion")
+            label = f"Testo di conclusione ({inst_code})"
+            desc = f"Testo mostrato allo studente alla conclusione del percorso {inst_code}"
+        elif key.startswith("prompt_components_"):
+            label = f"Componenti di contesto ({key.removeprefix('prompt_components_')})"
+            desc = "Configurazione dei componenti di contesto inclusi"
+        elif key.startswith("prompt_guidance_"):
+            label = f"Linee guida ({key.removeprefix('prompt_guidance_')})"
+            desc = "Note operative dell'amministratore sulla fase"
+        else:
+            label = key.replace("_", " ").capitalize()
+
+    return label, desc, default_val
+
+
 def _config_entry(key: str, uses: list[_Use], level: str, configs: dict, step_labels: dict) -> dict:
     first = uses[0]
     row = configs.get(key)
     when = {u.when for u in uses}
+    conv_label, conv_desc, conv_default = _conventional_label_and_description(key)
     entry = {
         "key": key,
         "kind": "config",
@@ -174,12 +216,12 @@ def _config_entry(key: str, uses: list[_Use], level: str, configs: dict, step_la
         "level": level,
         "destination": first.destination,
         "when": first.when if len(when) == 1 else WHEN_EVERY_TURN,
-        "label": _DEFINITION_LABELS.get(key, ""),
+        "label": conv_label,
         # Descrizione della riga: il salvataggio (POST /admin/config) la riscrive.
-        "description": row.description if row is not None and row.description else _DESCRIPTIONS.get(key, ""),
-        "value": row.value if row is not None and row.value is not None else _DEFAULTS.get(key, ""),
+        "description": row.description if row is not None and row.description else conv_desc,
+        "value": row.value if row is not None and row.value is not None else (conv_default or ""),
         "stored": row is not None,
-        "default": _DEFAULTS.get(key),
+        "default": conv_default,
         "used_by": _used_by(uses, step_labels),
         "editor": dict(_CONFIG_EDITOR),
         "read_only": False,
@@ -298,10 +340,13 @@ def _persona_entry(db, instrument: str, configs: dict) -> dict:
 
 
 def build_prompt_map(db, instrument: str) -> dict | None:
-    """Mappa a quattro livelli per uno strumento; None se lo strumento non ha step."""
+    """Mappa a quattro livelli per uno strumento; None se lo strumento non esiste e non ha step."""
     steps_by_instrument = _steps_by_instrument(db)
-    if instrument not in steps_by_instrument:
+    is_known = db.query(models.Instrument).filter(models.Instrument.code == instrument).first() is not None
+    if instrument not in steps_by_instrument and not is_known:
         return None
+    if instrument not in steps_by_instrument:
+        steps_by_instrument[instrument] = []
     all_instruments = set(steps_by_instrument)
     configs = {row.key: row for row in db.query(models.Config).all()}
     step_labels = {
@@ -368,7 +413,7 @@ def build_prompt_map(db, instrument: str) -> dict | None:
         ]
         refs = list(step_refs.get(step.id, []))
         if not any(e["role"] == "meta_step" for e in entries):
-            refs.append({"key": meta_key, "level": level_of[meta_key], "role": "meta", "when": WHEN_EVERY_TURN,
+            refs.append({"key": meta_key, "level": level_of.get(meta_key, LEVEL_INSTRUMENT), "role": "meta", "when": WHEN_EVERY_TURN,
                          # Chiave che sovrascrive il meta prompt solo per questo step.
                          "override_key": prompt_meta_config_key(instrument, step.id)})
         steps_out.append({
