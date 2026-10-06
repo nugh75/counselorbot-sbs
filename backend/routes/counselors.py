@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database, prompt_revisions, personal_api
 from ..counselor_i18n import localized_description, localized_tagline, translate_counselor_async, translate_counselor_sync
-from ..counselor_identity import recommend_counselor
+from ..counselor_identity import get_all_approach_categories, recommend_counselor
 from ..counselor_scope import restricted_instruments, suits
 from ..reasoning_profiles import supports_reasoning
 from sqlalchemy import cast as sa_cast, String
@@ -92,6 +92,7 @@ async def list_public_counselors(
         pub.tagline_i18n = r.tagline_i18n
         pub.approach_categories = r.approach_categories or []
         pub.avatar_url = r.avatar_url or r.avatar
+        pub.approach_summary = pub.tagline or (pub.description if pub.description else None)
         preset = presets.get(r.preset_id) if r.preset_id else None
         provider = preset.provider if preset else active
         pub.model_origin = _provider_origin(provider)
@@ -106,6 +107,36 @@ async def list_public_counselors(
     # Gli adatti in cima: chi sceglie legge prima cio' che puo' usare.
     out.sort(key=lambda item: not item.suitable)
     return out
+
+
+@router.get("/counselors/public", response_model=List[schemas.CounselorPublic])
+async def list_public_counselors_alias(
+    response: Response,
+    lang: Optional[str] = Query(None),
+    questionnaire_type: Optional[str] = Query(
+        None, description="Marca come adatti i counselor che possono servire questo strumento"
+    ),
+    language: Optional[str] = Query(None, description="Filtra counselor che supportano questa lingua ('*' = tutte)"),
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    """Alias pubblico per GET /counselors."""
+    return await list_public_counselors(
+        response=response,
+        lang=lang,
+        questionnaire_type=questionnaire_type,
+        language=language,
+        db=db,
+        identity=identity,
+    )
+
+
+@router.get("/counselors/categories", response_model=List[str])
+async def list_counselor_categories(
+    db: Session = Depends(get_db),
+):
+    """Elenco di tutte le categorie censite per gli approcci dei counselor."""
+    return get_all_approach_categories(db)
 
 
 # --- Raccomandazione / Ricerca per approccio (lato utente) -------------------
