@@ -1,17 +1,53 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
   <defs>
-    <linearGradient id="grad_iride" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#A855F7" />
-      <stop offset="100%" stop-color="#7E22CE" />
+    <radialGradient id="bg_iride" cx="45%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="70%" stop-color="#115e59" />
+      <stop offset="100%" stop-color="#042f2e" />
+    </radialGradient>
+    <linearGradient id="prism_glass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#ccfbf1" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0.3" />
+    </linearGradient>
+    <linearGradient id="beam_amber_iride" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#fb923c" />
+    </linearGradient>
+    <linearGradient id="beam_teal_iride" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#14b8a6" />
+      <stop offset="100%" stop-color="#5eead4" />
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="50" fill="url(#grad_iride)" />
-  <!-- Silhouette head -->
-  <circle cx="50" cy="40" r="18" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Silhouette shoulders / bust -->
-  <path d="M 22 84 C 22 66, 34 58, 50 58 C 66 58, 78 66, 78 84 Z" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Accent initial badge -->
-  <circle cx="74" cy="28" r="14" fill="#ffffff" />
-  <circle cx="74" cy="28" r="12" fill="url(#grad_iride)" />
-  <text x="74" y="33" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">I</text>
+
+  <!-- Base medaglione -->
+  <circle cx="50" cy="50" r="48" fill="url(#bg_iride)" stroke="#14b8a6" stroke-width="1" stroke-opacity="0.35" />
+
+  <!-- Fascio di luce incidente (pensiero focalizzato da sinistra) -->
+  <polygon points="12,50 38,47 38,53 12,50" fill="#ffffff" opacity="0.9" />
+
+  <!-- Onde armoniche di ispirazione / pensiero laterale che escono a ventaglio a destra -->
+  <!-- Raggio 1: Arancio vibrante (creatività pura) -->
+  <path d="M 46 47 C 56 42, 68 34, 88 32 L 88 38 C 68 40, 56 47, 46 49 Z" fill="url(#beam_amber_iride)" />
+
+  <!-- Raggio 2: Ambra caldo (intuizione) -->
+  <path d="M 46 49 C 58 48, 70 44, 89 44 L 89 50 C 70 50, 58 52, 46 51 Z" fill="#fed7aa" opacity="0.95" />
+
+  <!-- Raggio 3: Menta / Turchese chiaro (connessione di idee) -->
+  <path d="M 46 51 C 58 54, 70 56, 89 57 L 89 63 C 70 61, 58 57, 46 53 Z" fill="url(#beam_teal_iride)" />
+
+  <!-- Raggio 4: Petrol profondo (visione sistemica) -->
+  <path d="M 46 53 C 56 59, 68 68, 86 72 L 85 77 C 66 73, 55 63, 46 55 Z" fill="#2dd4bf" opacity="0.75" />
+
+  <!-- Prisma triangolare ottico al centro -->
+  <polygon points="38,24 20,72 56,72" fill="url(#prism_glass)" stroke="#ccfbf1" stroke-width="1.5" stroke-linejoin="round" />
+  <!-- Faccetta di rifrazione interna del prisma -->
+  <polygon points="38,24 38,72 56,72" fill="#5eead4" opacity="0.2" />
+  <line x1="38" y1="24" x2="38" y2="72" stroke="#ffffff" stroke-width="1" stroke-opacity="0.7" />
+
+  <!-- Scintille di ispirazione laterale -->
+  <circle cx="78" cy="22" r="2" fill="#fb923c" />
+  <circle cx="78" cy="22" r="1" fill="#ffffff" />
+  <circle cx="82" cy="78" r="1.5" fill="#5eead4" />
+  <circle cx="28" cy="28" r="1.2" fill="#ccfbf1" opacity="0.7" />
 </svg>

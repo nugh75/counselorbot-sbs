@@ -1,17 +1,66 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
   <defs>
-    <linearGradient id="grad_nadia" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0284C7" />
-      <stop offset="100%" stop-color="#0369A1" />
+    <radialGradient id="bg_nadia" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="70%" stop-color="#115e59" />
+      <stop offset="100%" stop-color="#042f2e" />
+    </radialGradient>
+    <radialGradient id="sun_core_nadia" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#fef3c7" />
+      <stop offset="40%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </radialGradient>
+    <linearGradient id="ray_teal_nadia" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5eead4" />
+      <stop offset="100%" stop-color="#14b8a6" />
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="50" fill="url(#grad_nadia)" />
-  <!-- Silhouette head -->
-  <circle cx="50" cy="40" r="18" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Silhouette shoulders / bust -->
-  <path d="M 22 84 C 22 66, 34 58, 50 58 C 66 58, 78 66, 78 84 Z" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Accent initial badge -->
-  <circle cx="74" cy="28" r="14" fill="#ffffff" />
-  <circle cx="74" cy="28" r="12" fill="url(#grad_nadia)" />
-  <text x="74" y="33" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">N</text>
+
+  <!-- Base medaglione -->
+  <circle cx="50" cy="50" r="48" fill="url(#bg_nadia)" stroke="#14b8a6" stroke-width="1" stroke-opacity="0.35" />
+
+  <!-- Onde concentriche di diffusione e calore didattico -->
+  <circle cx="50" cy="50" r="41" fill="none" stroke="#2dd4bf" stroke-width="1" stroke-dasharray="2 4" opacity="0.25" />
+  <circle cx="50" cy="50" r="35" fill="none" stroke="#fed7aa" stroke-width="1" stroke-dasharray="3 3" opacity="0.3" />
+
+  <!-- Corona di raggi solari didattici (inclusivi e morbidi a petalo) -->
+  <!-- Raggi principali cardinali (arancio caldo) -->
+  <g fill="#f97316">
+    <!-- Alto -->
+    <path d="M 47 24 C 47 16, 53 16, 53 24 L 52 32 L 48 32 Z" />
+    <!-- Basso -->
+    <path d="M 47 76 C 47 84, 53 84, 53 76 L 52 68 L 48 68 Z" />
+    <!-- Sinistra -->
+    <path d="M 24 47 C 16 47, 16 53, 24 53 L 32 52 L 32 48 Z" />
+    <!-- Destra -->
+    <path d="M 76 47 C 84 47, 84 53, 76 53 L 68 52 L 68 48 Z" />
+  </g>
+
+  <!-- Raggi intermedi diagonali (turchese/menta armonici con la piattaforma) -->
+  <g fill="url(#ray_teal_nadia)">
+    <!-- Alto-Sinistra -->
+    <path d="M 31 31 C 25 25, 30 20, 36 26 L 39 33 L 33 37 Z" />
+    <!-- Alto-Destra -->
+    <path d="M 69 31 C 75 25, 70 20, 64 26 L 61 33 L 67 37 Z" />
+    <!-- Basso-Sinistra -->
+    <path d="M 31 69 C 25 75, 20 70, 26 64 L 33 61 L 37 67 Z" />
+    <!-- Basso-Destra -->
+    <path d="M 69 69 C 75 75, 80 70, 74 64 L 67 61 L 63 67 Z" />
+  </g>
+
+  <!-- Raggi secondari a punti luce (inclusione di tutti) -->
+  <circle cx="50" cy="12" r="1.8" fill="#fef3c7" />
+  <circle cx="50" cy="88" r="1.8" fill="#fef3c7" />
+  <circle cx="12" cy="50" r="1.8" fill="#fef3c7" />
+  <circle cx="88" cy="50" r="1.8" fill="#fef3c7" />
+
+  <!-- Alone morbido attorno al nucleo solare -->
+  <circle cx="50" cy="50" r="23" fill="#fed7aa" opacity="0.3" />
+
+  <!-- Cuore del Sole Didattico (calore, accoglienza e insegnamento) -->
+  <circle cx="50" cy="50" r="18" fill="url(#sun_core_nadia)" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.8" />
+
+  <!-- Luce interna soffusa -->
+  <ellipse cx="46" cy="45" rx="7" ry="5" fill="#ffffff" opacity="0.5" />
+  <circle cx="43" cy="42" r="2" fill="#ffffff" opacity="0.9" />
 </svg>
