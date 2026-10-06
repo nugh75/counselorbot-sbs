@@ -985,9 +985,12 @@ class Counselor(Base):
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)        # breve, mostrata all'utente (sorgente: italiano)
     description_i18n = Column(JSON, nullable=True)   # traduzioni {lang: testo}, generate via Ollama
+    tagline_i18n = Column(JSON, nullable=True)       # frase distintiva multilingua {lang: testo}
+    approach_categories = Column(JSON, nullable=False, default=list)  # categorie approccio ["filosofo", "maieutico", ...]
+    avatar_url = Column(String, nullable=True)       # url/percorso dell'illustrazione o avatar
     voice_mapping = Column(JSON, nullable=True)      # mapping {lang: voice_name}
     persona = Column(Text, nullable=True)            # prefisso al system prompt
-    avatar = Column(String, nullable=True)           # nome icona o url
+    avatar = Column(String, nullable=True)           # nome icona o url (legacy)
     preset_id = Column(Integer, nullable=True)       # -> model_presets.id (modello)
     questionnaire_types = Column(JSON, nullable=True)  # ["QSA","ZTPI",...]
     language = Column(JSON, nullable=False, default=lambda: ["*"])

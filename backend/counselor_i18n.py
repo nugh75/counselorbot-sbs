@@ -67,6 +67,25 @@ def localized_description(counselor: models.Counselor, lang: Optional[str]) -> O
     return base
 
 
+def localized_tagline(counselor: models.Counselor, lang: Optional[str]) -> Optional[str]:
+    """Frase distintiva nella lingua richiesta, con fallback all'italiano o al primo valore disponibile."""
+    i18n = counselor.tagline_i18n
+    if not i18n:
+        return None
+    if isinstance(i18n, str):
+        return i18n
+    if isinstance(i18n, dict):
+        if lang and i18n.get(lang):
+            return i18n[lang]
+        if i18n.get("it"):
+            return i18n["it"]
+        for val in i18n.values():
+            if val:
+                return str(val)
+    return None
+
+
+
 def generate_translations(
     base_url: str, model: str, text: str, context: str = ""
 ) -> Dict[str, str]:

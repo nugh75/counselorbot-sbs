@@ -10,7 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database, prompt_revisions, personal_api
-from ..counselor_i18n import localized_description, translate_counselor_async, translate_counselor_sync
+from ..counselor_i18n import localized_description, localized_tagline, translate_counselor_async, translate_counselor_sync
+from ..counselor_identity import recommend_counselor
 from ..counselor_scope import restricted_instruments, suits
 from ..reasoning_profiles import supports_reasoning
 from sqlalchemy import cast as sa_cast, String
@@ -87,6 +88,10 @@ async def list_public_counselors(
     for r in rows:
         pub = schemas.CounselorPublic.model_validate(r)
         pub.description = localized_description(r, lang)
+        pub.tagline = localized_tagline(r, lang)
+        pub.tagline_i18n = r.tagline_i18n
+        pub.approach_categories = r.approach_categories or []
+        pub.avatar_url = r.avatar_url or r.avatar
         preset = presets.get(r.preset_id) if r.preset_id else None
         provider = preset.provider if preset else active
         pub.model_origin = _provider_origin(provider)
@@ -101,6 +106,81 @@ async def list_public_counselors(
     # Gli adatti in cima: chi sceglie legge prima cio' che puo' usare.
     out.sort(key=lambda item: not item.suitable)
     return out
+
+
+# --- Raccomandazione / Ricerca per approccio (lato utente) -------------------
+@router.post("/counselors/recommend", response_model=schemas.CounselorRecommendationResponse)
+async def recommend_counselor_post(
+    payload: schemas.CounselorRecommendationRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    username = identity.get("username") if identity.get("authenticated") else None
+    return recommend_counselor(
+        db=db,
+        query=payload.query,
+        language=payload.language,
+        questionnaire_type=payload.questionnaire_type,
+        audience=payload.audience,
+        username=username,
+    )
+
+
+@router.get("/counselors/recommend", response_model=schemas.CounselorRecommendationResponse)
+async def recommend_counselor_get(
+    query: str = Query(..., description="Query di ricerca libera dell'approccio desiderato"),
+    language: Optional[str] = Query(None, description="Lingua di preferenza"),
+    questionnaire_type: Optional[str] = Query(None, description="Strumento da svolgere"),
+    audience: Optional[str] = Query(None, description="Target: studente | docente"),
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    username = identity.get("username") if identity.get("authenticated") else None
+    return recommend_counselor(
+        db=db,
+        query=query,
+        language=language,
+        questionnaire_type=questionnaire_type,
+        audience=audience,
+        username=username,
+    )
+
+
+@router.post("/counselors/search", response_model=schemas.CounselorRecommendationResponse)
+async def search_counselors_post(
+    payload: schemas.CounselorRecommendationRequest,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    username = identity.get("username") if identity.get("authenticated") else None
+    return recommend_counselor(
+        db=db,
+        query=payload.query,
+        language=payload.language,
+        questionnaire_type=payload.questionnaire_type,
+        audience=payload.audience,
+        username=username,
+    )
+
+
+@router.get("/counselors/search", response_model=schemas.CounselorRecommendationResponse)
+async def search_counselors_get(
+    query: str = Query(..., description="Query di ricerca libera dell'approccio desiderato"),
+    language: Optional[str] = Query(None, description="Lingua di preferenza"),
+    questionnaire_type: Optional[str] = Query(None, description="Strumento da svolgere"),
+    audience: Optional[str] = Query(None, description="Target: studente | docente"),
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
+    username = identity.get("username") if identity.get("authenticated") else None
+    return recommend_counselor(
+        db=db,
+        query=query,
+        language=language,
+        questionnaire_type=questionnaire_type,
+        audience=audience,
+        username=username,
+    )
 
 
 # --- Admin -----------------------------------------------------------------
@@ -135,6 +215,9 @@ async def create_counselor(
         name=name,
         description=payload.description,
         description_i18n=payload.description_i18n,
+        tagline_i18n=payload.tagline_i18n,
+        approach_categories=payload.approach_categories or [],
+        avatar_url=payload.avatar_url,
         voice_mapping=payload.voice_mapping,
         persona=payload.persona,
         avatar=payload.avatar,
