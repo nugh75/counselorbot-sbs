@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Plus, Trash2, Save, ListChecks, Sliders, FileText, Eye } from 'lucide-react';
+import { RefreshCw, Play, Plus, Trash2, Save, ListChecks, Sliders, FileText, Eye } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { CreateInstrumentDialog } from '@/components/admin/CreateInstrumentDialog';
+import { AdminChatSandboxModal } from '@/components/admin/AdminChatSandboxModal';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 // Le sei lingue dell'app. Non piu' le quattro che avevano una colonna dedicata:
@@ -123,6 +124,7 @@ export function QuestionnaireEditor() {
     const [ladders, setLadders] = useState<Record<string, string[]>>({});
     const [versionError, setVersionError] = useState('');
     const [creatingInstrument, setCreatingInstrument] = useState(false);
+    const [testingChat, setTestingChat] = useState(false);
 
     const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2500); };
 
@@ -308,6 +310,14 @@ export function QuestionnaireEditor() {
                     className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700"
                 >
                     <Plus className="w-3.5 h-3.5" /> {t('admin.instrumentWizard.createInstrumentButton')}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setTestingChat(true)}
+                    disabled={!selected}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
+                >
+                    <Play className="w-3.5 h-3.5" /> {t('admin.q.testChat')}
                 </button>
                 {msg && <span className="text-sm text-indigo-600">{msg}</span>}
                 <button onClick={() => loadInstrument(selected)} className="ml-auto inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800">
@@ -560,6 +570,15 @@ export function QuestionnaireEditor() {
                     open={creatingInstrument}
                     onClose={() => setCreatingInstrument(false)}
                     onCreated={handleInstrumentCreated}
+                />
+            )}
+            {testingChat && (
+                <AdminChatSandboxModal
+                    open={testingChat}
+                    instrumentCode={selected}
+                    instrumentName={meta?.name_en || selected}
+                    isActive={meta ? meta.status === 'validated' : true}
+                    onClose={() => setTestingChat(false)}
                 />
             )}
         </div>

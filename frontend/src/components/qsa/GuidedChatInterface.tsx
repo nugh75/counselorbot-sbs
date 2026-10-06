@@ -102,6 +102,8 @@ interface GuidedChatInterfaceProps {
     // Falso solo quando il modello del counselor e' noto come non-reasoning:
     // il selettore non avrebbe effetto e non va mostrato.
     reasoningCapable?: boolean;
+    // Modalità sandbox / collaudo admin (sessione effimera, nessun log salvato)
+    preview?: boolean;
 }
 
 interface ChatMessage {
@@ -443,7 +445,7 @@ function GuidedMessageContent({ content, locale, errorMessage }: { content: stri
 // suo per non portarsela dietro negli altri strumenti.
 const IDEA_PANEL_BOUNDS = { min: 360, max: 720, initial: 480 };
 
-export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true }: GuidedChatInterfaceProps) {
+export function GuidedChatInterface({ counselorId, scores, questionnaireType, onComplete, sessionId, locale, scoresContextOverride, onFrozen, onBack, frozenSnapshot, initialResponseLength, initialReasoningEffort, initialResponseFormat, reasoningCapable = true, preview = false }: GuidedChatInterfaceProps) {
     const { t, tf, lang: contextLang } = useI18n();
     const activeLocale = normalizeLocale(locale || contextLang);
     const { streamChat, ...continuation } = useChatContinuation();
@@ -707,6 +709,12 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const submitStrategyFeedback = async (messageIndex: number, helpful: boolean) => {
         const message = messages[messageIndex];
         if ((!message?.strategyIds?.length && !message?.responseId) || message.feedback !== undefined) return;
+        if (preview) {
+            setMessages(prev => prev.map((item, idx) => (
+                idx === messageIndex ? { ...item, feedback: helpful } : item
+            )));
+            return;
+        }
         const response = await fetch('/api/strategy-feedback', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1008,6 +1016,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
                 ...notebookPayload,
                 idea_budget: isIdea ? ideaBudget : undefined,
+                preview: preview ? true : undefined,
             }, (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
             if (result.conversation_id) setConversationId(result.conversation_id);
             adoptRecommendations(result.recommendations);
@@ -1055,6 +1064,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
                 ...notebookPayload,
                         idea_budget: isIdea ? ideaBudget : undefined,
+                        preview: preview ? true : undefined,
                     };
                 }
                 return {
@@ -1079,6 +1089,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
                 ...notebookPayload,
                     idea_budget: isIdea ? ideaBudget : undefined,
+                    preview: preview ? true : undefined,
                 };
             };
 
@@ -1277,6 +1288,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 group_ids: isDocenza && docenzaGroupIds.length ? docenzaGroupIds : undefined,
                 ...notebookPayload,
                 idea_budget: isIdea ? ideaBudget : undefined,
+                preview: preview ? true : undefined,
             };
             if (scoresContextOverride || essential) {
                 chatPayload.scores_context = scoresContextOverride ?? formatScoresForPrompt(scores);
@@ -1434,6 +1446,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // A fine turno lo stato va sul server da solo: uscire dallo strumento non
     // chiede più il gesto manuale.
     useEffect(() => {
+        if (preview) return;
         if (!shouldAutoFreeze({
             sessionId,
             messageCount: messages.length,
@@ -1448,19 +1461,20 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         // buildSnapshot legge lo stato corrente a ogni render: le dipendenze qui
         // sono quello che rende lo snapshot diverso dal precedente.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookSignature, isLoading, sessionId]);
+    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookSignature, isLoading, sessionId, preview]);
 
     // Uscita dallo strumento con un turno ancora in attesa: `pagehide` copre tab
     // chiusa, ricarica e link che lasciano la pagina (il logo dell'header è un
     // link vero); lo smontaggio copre il tasto indietro e il cambio di schermata.
     useEffect(() => {
+        if (preview) return;
         const onPageHide = () => { void flushAutoFreeze({ keepalive: true }); };
         window.addEventListener('pagehide', onPageHide);
         return () => {
             window.removeEventListener('pagehide', onPageHide);
             void flushAutoFreeze();
         };
-    }, [flushAutoFreeze]);
+    }, [flushAutoFreeze, preview]);
 
     if (!pathStarted) return <div className="mx-auto w-full max-w-md space-y-4 p-4">
         {onBack && <button type="button" onClick={onBack} className="min-h-11 text-sm text-slate-600">{t('nav.back')}</button>}
@@ -1566,7 +1580,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-slate-600">
             {/* Il congelamento sta nella barra di avanzamento, a sinistra del
                 contatore di passo: un gesto deliberato, fuori dal menu. */}
-            {currentPhase !== FIXED_CONCLUSION_ID && <Tooltip content={t('frozen.freeze')} side="top">
+            {currentPhase !== FIXED_CONCLUSION_ID && !preview && <Tooltip content={t('frozen.freeze')} side="top">
                 <button
                     type="button"
                     onClick={() => void handleFreeze()}
