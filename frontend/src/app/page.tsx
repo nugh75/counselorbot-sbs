@@ -3,7 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QUESTIONNAIRES, QuestionnaireConfig, QuestionnaireType, supportsProfileUpload } from '@/lib/questionnaires';
+import {
+    QUESTIONNAIRES,
+    QuestionnaireConfig,
+    QuestionnaireType,
+    supportsProfileUpload,
+    buildDynamicQuestionnaireConfig,
+    buildFallbackQuestionnaireConfig,
+} from '@/lib/questionnaires';
+import { fetchInstruments } from '@/lib/instruments-api';
 import { QuestionnaireSelector } from '@/components/questionnaire/QuestionnaireSelector';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { InputMethodSelector } from '@/components/qsa/InputMethodSelector';
@@ -343,8 +351,8 @@ export default function Home() {
                     setReady(true);
                     return;
                 }
-                const q = QUESTIONNAIRES[snapshot.questionnaire_type as QuestionnaireType];
-                if (!q) { setReady(true); return; }
+                const q = QUESTIONNAIRES[snapshot.questionnaire_type as QuestionnaireType]
+                    ?? buildFallbackQuestionnaireConfig(snapshot.questionnaire_type);
                 setSelectedQuestionnaire(q);
                 setSelectedInstrumentId(snapshot.questionnaire_type);
                 setSessionCounselorId(snapshot.counselor_id ?? getSelectedCounselorId());
@@ -370,8 +378,9 @@ export default function Home() {
         if (params.get('resume')) {
             const r = getResume();
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-            if (r && QUESTIONNAIRES[r.instrument as QuestionnaireType]) {
-                const q = QUESTIONNAIRES[r.instrument as QuestionnaireType];
+            if (r && isStartableQuestionnaireId(r.instrument)) {
+                const q = QUESTIONNAIRES[r.instrument as QuestionnaireType]
+                    ?? buildFallbackQuestionnaireConfig(r.instrument);
                 const profiles = getCompletedProfiles();
                 const profile = profiles.find((p) => p.sessionId === r.sessionId)
                     ?? profiles.find((p) => p.questionnaireType === r.instrument);
@@ -421,8 +430,9 @@ export default function Home() {
         // Resume chat from a test administration: /?session_id=...&instrument=...
         const resumeSession = params.get('session_id');
         const resumeInstrument = params.get('instrument') as QuestionnaireType | null;
-        if (resumeSession && resumeInstrument && QUESTIONNAIRES[resumeInstrument]) {
-            const questionnaire = QUESTIONNAIRES[resumeInstrument];
+        if (resumeSession && resumeInstrument && isStartableQuestionnaireId(resumeInstrument)) {
+            const questionnaire = QUESTIONNAIRES[resumeInstrument]
+                ?? buildFallbackQuestionnaireConfig(resumeInstrument);
             const profiles = getCompletedProfiles();
             const profile =
                 profiles.find((p) => p.questionnaireType === resumeInstrument && p.sessionId === resumeSession)
@@ -439,19 +449,41 @@ export default function Home() {
         }
 
         const requestedId = params.get('start');
-        if (!requestedId || !isStartableQuestionnaireId(requestedId)) return;
+        if (!requestedId) return;
 
-        const questionnaire = QUESTIONNAIRES[requestedId];
-        setSelectedQuestionnaire(questionnaire);
-        setSelectedInstrumentId(questionnaire.id);
-        setScores(null);
-        setScoreOrigin('new');
-        setPdfToken(undefined);
-        setSessionId('');
-        setExperience(null);
-        void prepareInstrument(questionnaire, null);
-        window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-        claimEntry();
+        entryClaimed.current = true;
+        void (async () => {
+            let questionnaire = QUESTIONNAIRES[requestedId as QuestionnaireType];
+            if (!questionnaire) {
+                try {
+                    const catalog = await fetchInstruments();
+                    const found = catalog.find((row) => row.code === requestedId && row.is_active !== false);
+                    if (found) {
+                        questionnaire = buildDynamicQuestionnaireConfig(found, lang);
+                    }
+                } catch {
+                    // ignore network errors
+                }
+            }
+            if (!questionnaire && isStartableQuestionnaireId(requestedId)) {
+                questionnaire = buildFallbackQuestionnaireConfig(requestedId);
+            }
+            if (!questionnaire) {
+                setReady(true);
+                return;
+            }
+
+            setSelectedQuestionnaire(questionnaire);
+            setSelectedInstrumentId(questionnaire.id);
+            setScores(null);
+            setScoreOrigin('new');
+            setPdfToken(undefined);
+            setSessionId('');
+            setExperience(null);
+            void prepareInstrument(questionnaire, null);
+            window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
+            claimEntry();
+        })();
     }, [identity, prepareInstrument, claimEntry, t]);
 
     // Tutti gli ingressi riusano le preferenze dell’account.

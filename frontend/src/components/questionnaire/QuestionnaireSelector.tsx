@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
@@ -8,7 +8,7 @@ import { AlertTriangle, BookOpen, Check, ChevronDown, ExternalLink } from 'lucid
 import { useI18n } from '@/lib/i18n-context';
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { STRATEGIC_COMPETENCES_URLS } from '@/lib/questionnaire-sources';
-import { ACTIVE_QUESTIONNAIRE_IDS, TEACHER_AREA_INSTRUMENT_IDS } from '@/lib/tool-catalog';
+import { resolveActiveStudentTools, TEACHER_AREA_INSTRUMENT_IDS } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
 import { BackButton } from '@/components/ui/BackButton';
 import { PersonalAreaEntry } from '@/components/home/PersonalAreaEntry';
@@ -29,16 +29,24 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
     // poi si avanza con la freccia in alto (nessuna azione "vai" per card).
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
-    const active = ACTIVE_QUESTIONNAIRE_IDS.map((id) => QUESTIONNAIRE_LIST.find((q) => q.id === id)).filter((q): q is QuestionnaireConfig => Boolean(q));
-    const upcoming = QUESTIONNAIRE_LIST.filter((q) => !ACTIVE_QUESTIONNAIRE_IDS.includes(q.id));
-    // Competenze Strategiche = strumenti con assessment sul sito / in-app; Interviste = agentOnly (Savickas).
-    const csQuestionnaires = active.filter((q) => !q.agentOnly);
+
+    const active = useMemo(() => {
+        return resolveActiveStudentTools(instrumentCatalog, lang);
+    }, [instrumentCatalog, lang]);
+
+    const activeIdSet = useMemo(() => new Set(active.map((q) => q.id)), [active]);
+    const upcoming = useMemo(() => {
+        return QUESTIONNAIRE_LIST.filter((q) => !activeIdSet.has(q.id) && !(TEACHER_AREA_INSTRUMENT_IDS as readonly string[]).includes(q.id));
+    }, [activeIdSet]);
+
+    // Competenze Strategiche = strumenti con assessment sul sito / in-app; Interviste = agentOnly (Savickas, percorsi guidati).
+    const csQuestionnaires = useMemo(() => active.filter((q) => !q.agentOnly), [active]);
     // Idea non e' un'intervista e non ha un questionario dietro: sta per conto
     // suo, e resta disponibile anche nelle lingue in cui i questionari non ci sono.
     // Gli strumenti dell'area docenti non stanno nel catalogo studente: si
     // raggiungono da /docente, il deep link resta valido.
-    const focusTools = active.filter((q) => q.id === 'IDEA');
-    const interviews = active.filter((q) => q.agentOnly && q.id !== 'IDEA' && !(TEACHER_AREA_INSTRUMENT_IDS as readonly string[]).includes(q.id));
+    const focusTools = useMemo(() => active.filter((q) => q.id === 'IDEA'), [active]);
+    const interviews = useMemo(() => active.filter((q) => q.agentOnly && q.id !== 'IDEA'), [active]);
     const isItalian = lang === 'it';
     const isAdministrationLang = instrumentCatalog?.some((row) => row.available_locales.includes(lang)) ?? false;
     const isUnavailableQuestionnaireLang = !isItalian && instrumentCatalog !== null && !isAdministrationLang;
@@ -120,11 +128,11 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                         )}
                     </div>
                     <p className="text-sm font-medium text-slate-600 mt-1">
-                        {t(`q.${q.id}.fullName`)}
+                        {tf(`q.${q.id}.fullName`, q.fullName)}
                     </p>
                 </div>
                 <p className="text-sm text-slate-500 leading-relaxed grow">
-                    {t(`q.${q.id}.description`)}
+                    {tf(`q.${q.id}.description`, q.description)}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                     {hasInAppAdministration && (
@@ -169,15 +177,15 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                     <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 text-sm text-slate-600 space-y-2">
                         <div>
                             <span className="font-semibold text-slate-800">{t('detail.focus.title')}: </span>
-                            {t(`detail.${q.id}.focus`)}
+                            {tf(`detail.${q.id}.focus`, q.description || t('detail.default.focus'))}
                         </div>
                         <div>
                             <span className="font-semibold text-slate-800">{t('detail.input.title')}: </span>
-                            {t(`detail.${q.id}.input`)}
+                            {tf(`detail.${q.id}.input`, q.agentOnly ? t('detail.default.input.agent') : t('detail.default.input.assessment'))}
                         </div>
                         <div>
                             <span className="font-semibold text-slate-800">{t('detail.path.title')}: </span>
-                            {t(`detail.${q.id}.path`)}
+                            {tf(`detail.${q.id}.path`, t('detail.default.path'))}
                         </div>
                     </div>
                 )}
