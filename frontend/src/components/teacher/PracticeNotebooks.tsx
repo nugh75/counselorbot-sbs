@@ -20,6 +20,7 @@ import {
     type PracticeNotebookData,
 } from '@/lib/practice-notebooks';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
+import { PracticeRepertoire } from './PracticeRepertoire';
 
 type Draft = { id: number | 'new'; title: string; values: PracticeNotebookData; groupIds: number[] };
 // Classi gestite dal docente (stesso elenco della chat docenza).
@@ -204,6 +205,7 @@ export function PracticeNotebooks() {
                                 <h2 className="text-base font-bold text-slate-800">{notebook.title}</h2>
                                 {summary(notebook)}
                                 {classSummary(notebook)}
+                                <PracticeRepertoire notebookId={notebook.id} />
                                 <div className="flex flex-wrap gap-2">
                                     <button type="button" disabled={busy} className={secondary}
                                         onClick={() => openDraft({ id: notebook.id, title: notebook.title, values: { ...notebook.data }, groupIds: [...notebook.group_ids] })}>{l('edit')}</button>
