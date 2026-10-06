@@ -46,6 +46,8 @@ class ChatRequest(schemas.BaseModel):
     # Taccuino studente di prova del docente (solo con notebook_context
     # "practice"): il server verifica ruolo e proprieta' a ogni turno.
     practice_notebook_id: Optional[int] = None
+    # Modalità sandbox / anteprima admin: sessione effimera, nessun log, statistica o raccomandazione persistita
+    preview: bool = False
 
 
 class SiteChatRequest(schemas.BaseModel):
