@@ -1,6 +1,5 @@
-// Catalogo strumenti letto dal backend. Sostituisce test-administrations.ts:
-// gli item vivono nel DB, non in una seconda copia dentro il bundle.
-import { apiFetch } from './auth';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { apiFetch } from './auth.ts';
 
 export interface InstrumentSummary {
     code: string;
@@ -10,6 +9,13 @@ export interface InstrumentSummary {
     item_count: number;
     locales: Record<string, string>;        // lingua -> stato di certificazione
     available_locales: string[];            // le lingue somministrabili
+    is_active?: boolean;
+    tool_category?: string;
+    description_i18n?: Record<string, string>;
+    target_audience?: string;
+    icon?: string;
+    color_theme?: string;
+    interview_mode?: string;
 }
 
 export interface InstrumentRuleFactor {
@@ -81,4 +87,11 @@ export async function fetchRules(
 
 export function instrumentName(summary: InstrumentSummary, lang: string): string {
     return summary.name_i18n[lang] ?? summary.name_i18n.en ?? summary.code;
+}
+
+export function instrumentDescription(summary: InstrumentSummary, lang: string): string {
+    return summary.description_i18n?.[lang]
+        ?? summary.description_i18n?.it
+        ?? summary.description_i18n?.en
+        ?? '';
 }

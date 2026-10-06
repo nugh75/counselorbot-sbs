@@ -6,20 +6,28 @@ import { useParams } from 'next/navigation';
 import { ExternalLink } from 'lucide-react';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
-import { QUESTIONNAIRES, QuestionnaireType } from '@/lib/questionnaires';
+import {
+    QUESTIONNAIRES,
+    QuestionnaireType,
+    QuestionnaireConfig,
+    buildDynamicQuestionnaireConfig,
+} from '@/lib/questionnaires';
 import { fetchInstruments } from '@/lib/instruments-api';
 import { useI18n } from '@/lib/i18n-context';
 import { STRATEGIC_COMPETENCES_URLS, STRATEGIC_COMPETENCES_CODE, STRATEGIC_COMPETENCES_PASSWORD } from '@/lib/questionnaire-sources';
 
-const AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'IDEA'];
+const STATIC_AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'IDEA'];
 const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
 
 export default function InstrumentDetailsPage() {
-    const { t, lang } = useI18n();
+    const { t, tf, lang } = useI18n();
     const params = useParams<{ id: string }>();
     const id = params.id as QuestionnaireType;
-    const questionnaire = AVAILABLE_INSTRUMENTS.includes(id) ? QUESTIONNAIRES[id] : null;
-    const assessmentUrl = lang === 'it' ? STRATEGIC_COMPETENCES_URLS[id] : undefined;
+
+    const staticConfig = QUESTIONNAIRES[id as keyof typeof QUESTIONNAIRES] ?? null;
+    const [questionnaire, setQuestionnaire] = useState<QuestionnaireConfig | null>(staticConfig);
+    const [loading, setLoading] = useState<boolean>(!staticConfig);
+    const assessmentUrl = lang === 'it' && id in STRATEGIC_COMPETENCES_URLS ? STRATEGIC_COMPETENCES_URLS[id] : undefined;
     // La somministrazione in-app compare solo se lo strumento e' certificato
     // nella lingua dell'interfaccia. Niente ripiego sull'inglese: il registro
     // decide, e una lingua non pronta si dice, non si sostituisce.
@@ -30,13 +38,37 @@ export default function InstrumentDetailsPage() {
         fetchInstruments()
             .then((rows) => {
                 if (cancelled) return;
-                setAvailableLocales(rows.find((r) => r.code === id)?.available_locales ?? []);
+                const found = rows.find((r) => r.code === id);
+                if (found) {
+                    setAvailableLocales(found.available_locales ?? []);
+                    if (found.is_active === false) {
+                        setQuestionnaire(null);
+                    } else if (!staticConfig) {
+                        setQuestionnaire(buildDynamicQuestionnaireConfig(found, lang));
+                    }
+                } else if (!staticConfig) {
+                    setQuestionnaire(null);
+                }
+                setLoading(false);
             })
-            .catch(() => { if (!cancelled) setAvailableLocales([]); });
+            .catch(() => {
+                if (!cancelled) {
+                    setAvailableLocales([]);
+                    setLoading(false);
+                }
+            });
         return () => { cancelled = true; };
-    }, [id]);
+    }, [id, staticConfig, lang]);
 
     const inAppAvailable = availableLocales?.includes(lang) ?? false;
+
+    if (loading) {
+        return (
+            <div className="max-w-xl mx-auto glass-panel p-8 text-center space-y-4">
+                <p className="text-sm text-slate-500" role="status">{t('base.catalog.loading')}</p>
+            </div>
+        );
+    }
 
     if (!questionnaire) {
         return (
@@ -59,23 +91,30 @@ export default function InstrumentDetailsPage() {
 
             <section className="glass-panel p-6 sm:p-8">
                 <span className="text-xs font-semibold uppercase tracking-[0.08em] text-indigo-700">{t('detail.kicker')}</span>
-                <h1 className="font-display mt-1 text-3xl font-bold text-slate-900">{questionnaire.name}</h1>
-                <p className="mt-1 text-lg text-slate-700">{t(`q.${questionnaire.id}.fullName`)}</p>
-                <p className="mt-3 text-slate-600 leading-relaxed">{t(`q.${questionnaire.id}.description`)}</p>
+                <h1 className="font-display mt-1 text-3xl font-bold text-slate-900">{tf(`q.${questionnaire.id}.name`, questionnaire.name)}</h1>
+                <p className="mt-1 text-lg text-slate-700">{tf(`q.${questionnaire.id}.fullName`, questionnaire.fullName)}</p>
+                <p className="mt-3 text-slate-600 leading-relaxed">{tf(`q.${questionnaire.id}.description`, questionnaire.description)}</p>
             </section>
 
             <div className="grid md:grid-cols-3 gap-6">
-                {(['focus', 'path', 'input'] as const).map((topic) => (
-                    <div key={topic}>
-                        <span className="block h-0.5 w-10 rounded-full bg-indigo-500" />
-                        <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
-                            {t(`detail.${topic}.title`)}
-                        </h2>
-                        <p className="mt-2 text-sm text-slate-700 leading-relaxed">
-                            {t(`detail.${questionnaire.id}.${topic}`)}
-                        </p>
-                    </div>
-                ))}
+                {(['focus', 'path', 'input'] as const).map((topic) => {
+                    const fallbackText = topic === 'focus'
+                        ? (questionnaire.description || t('detail.default.focus'))
+                        : topic === 'path'
+                        ? t('detail.default.path')
+                        : (questionnaire.agentOnly ? t('detail.default.input.agent') : t('detail.default.input.assessment'));
+                    return (
+                        <div key={topic}>
+                            <span className="block h-0.5 w-10 rounded-full bg-indigo-500" />
+                            <h2 className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                {t(`detail.${topic}.title`)}
+                            </h2>
+                            <p className="mt-2 text-sm text-slate-700 leading-relaxed">
+                                {tf(`detail.${questionnaire.id}.${topic}`, fallbackText)}
+                            </p>
+                        </div>
+                    );
+                })}
             </div>
 
             {inAppAvailable && (

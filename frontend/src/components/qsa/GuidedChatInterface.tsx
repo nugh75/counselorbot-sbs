@@ -10,7 +10,7 @@ import { AudioLanguageOption } from '@/components/ui/AudioLanguageOption';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { ZTPIFactorCode, ZTPI_FACTORS, getZTPIAlignmentColorClass } from '@/lib/ztpi-model';
-import { QUESTIONNAIRES } from '@/lib/questionnaires';
+import { QUESTIONNAIRES, getQuestionnaire } from '@/lib/questionnaires';
 import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatContinuation';
 import { ChatProviderError } from '@/lib/chat-stream';
 import { chatErrorText } from '@/lib/i18n-personal-api';
@@ -597,7 +597,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const completedRef = useRef(false);
 
     // Derived from questionnaire config
-    const questionnaire = useMemo(() => QUESTIONNAIRES[questionnaireType as keyof typeof QUESTIONNAIRES], [questionnaireType]);
+    const questionnaire = useMemo(() => getQuestionnaire(questionnaireType), [questionnaireType]);
     const invertedSet = useMemo(() => new Set(questionnaire?.invertedFactors || []), [questionnaire]);
     const formatScoresForPrompt = useMemo(
         () => buildScoresFormatter(questionnaireType, (code, fallback) => tf(`factor.${code}.name`, fallback)),
@@ -1740,7 +1740,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                             code={code}
                                             factorName={tf(
                                                 `factor.${code}.name`,
-                                                questionnaire.factors.find((factor) => factor.code === code)?.name || code,
+                                                questionnaire?.factors?.find((factor) => factor.code === code)?.name || code,
                                             )}
                                             score={score}
                                             invertedSet={invertedSet}
