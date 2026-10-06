@@ -2149,6 +2149,7 @@ def _retrieved_context(
     component_flags: dict | None = None,
     excluded_certified_strategy_ids: set[str] | None = None,
     username: str = "",
+    practice_notebook_id: int | None = None,
 ) -> tuple[str, List[str], List[str], dict[str, list[str]], List[str], dict[str, dict]]:
     """Fonti KNOWLEDGE per l'envelope: RAG (competenzestrategiche, counselorbot, questionari)
     + strategie approvate + certificate per-fattore + risposte votate.
@@ -2309,6 +2310,7 @@ def _retrieved_context(
             ),
             session_id=session_id,
             username=username,
+            practice_notebook_id=practice_notebook_id,
             knowledge_sources=rag_sources,
         )
         skills_result = skills_engine.run_skills(ctx)

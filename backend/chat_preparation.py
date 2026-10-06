@@ -67,6 +67,15 @@ IDEA_VARIANT_KEYS = {
 }
 
 
+def _practice_notebook_id(db, identity, request) -> int | None:
+    """Taccuino di prova valido per il turno (ruolo e proprieta' riverificati)."""
+    from .practice_notebooks import requested_practice_notebook
+    notebook = requested_practice_notebook(
+        db, identity, getattr(request, "notebook_context", None), getattr(request, "practice_notebook_id", None),
+    )
+    return notebook.id if notebook is not None else None
+
+
 def _apply_idea_variant_directive(system_prompt: str, ai_service, request, config_overrides=None) -> str:
     """Aggiunge la direttiva della variante scelta all'avvio della sessione Idea.
 
@@ -337,6 +346,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
             component_flags=component_flags,
             excluded_certified_strategy_ids=previous_certified_strategy_ids(db, conversation_id),
             username=identity.get("username", "") if identity else "",
+            practice_notebook_id=_practice_notebook_id(db, identity, request),
         )
     sanitize = _should_sanitize_ztpi_text(request.mode, request.phase)
     if sanitize:

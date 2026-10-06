@@ -22,6 +22,11 @@ def session_questionnaire(db: Session, session_id: str | None) -> str | None:
         result = db.query(models.FrozenSession.questionnaire_type).filter(
             models.FrozenSession.session_id == session_id,
         ).first()
+    if not result:
+        # Chat in prova: il profilo vive nel repertorio del taccuino di prova.
+        result = db.query(models.TeacherPracticeResult.questionnaire_type).filter(
+            models.TeacherPracticeResult.session_id == session_id,
+        ).first()
     return result[0] if result else None
 
 
