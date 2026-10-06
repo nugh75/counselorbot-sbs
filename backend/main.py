@@ -765,6 +765,20 @@ def _run_seed_and_migrations():
         except Exception as e:
             logger.debug(f"counselors assistant_audience migration skipped/failed: {e}")
 
+        # Migration: add tagline_i18n, approach_categories, avatar_url columns to counselors.
+        for col_clause in [
+            "ADD COLUMN tagline_i18n JSON",
+            "ADD COLUMN approach_categories JSON DEFAULT '[]'",
+            "ADD COLUMN avatar_url VARCHAR",
+        ]:
+            try:
+                with database.engine.connect() as conn:
+                    conn.execute(sa_text(f"ALTER TABLE counselors {col_clause}"))
+                    conn.commit()
+            except Exception as e:
+                logger.debug(f"counselors migration skipped/failed ({col_clause}): {e}")
+
+
         # Migration: il counselor scelto prima della Bussola resta legato alla
         # sessione, così riapertura e turni successivi usano la stessa voce.
         try:
@@ -1276,6 +1290,11 @@ def _run_seed_and_migrations():
 
         # Seed counselor per l'assistente (se non esistono già).
         _seed_assistant_counselors(db)
+
+        # Seed/backfill identità visiva, categorie di approccio e tagline dei counselor (M2.1 / Issue #61)
+        from .counselor_identity import seed_and_backfill_counselor_identities
+        seed_and_backfill_counselor_identities(db)
+
 
         # I counselor delle interviste narrative servono anche i due Evento
         # significativo e i due percorsi Obiettivo. Una tantum: una scelta
