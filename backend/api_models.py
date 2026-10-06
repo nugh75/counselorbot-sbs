@@ -127,3 +127,8 @@ class OpencodeChatRequest(schemas.BaseModel):
     seed: bool = False
     response_length: Optional[Literal["short", "medium", "long"]] = None
     response_format: ResponseFormat = "standard"
+
+
+CounselorRecommendationRequest = schemas.CounselorRecommendationRequest
+CounselorRecommendationResponse = schemas.CounselorRecommendationResponse
+
