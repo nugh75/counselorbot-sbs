@@ -399,6 +399,14 @@ class Instrument(Base):
     report_scale_type = Column(String, nullable=False, default="stanine")
     # "experimental" finché non esistono norm_thresholds validate
     status = Column(String, nullable=False, default="experimental")
+    # Dynamic Instrument Registry & visibilità studenti/bozze
+    is_active = Column(Boolean, nullable=False, default=False)
+    tool_category = Column(String, nullable=False, default="guided")
+    description_i18n = Column(JSON, nullable=True)
+    target_audience = Column(String, nullable=False, default="student")
+    icon = Column(String, nullable=False, default="compass")
+    color_theme = Column(String, nullable=False, default="blue")
+    interview_mode = Column(String, nullable=False, default="interactive")
 
 
 class Factor(Base):

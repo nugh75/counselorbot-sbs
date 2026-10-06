@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas, auth, database, pii, pii_ner
 from .. import content_version_service
 from .. import prompt_revisions
+from ..dynamic_registry import invalidate_instrument_cache
 from ..content_versions import CATALOG_CONTENT_TYPES, CONTENT_TYPES, ContentVersionError
 from ..ai_service import AIService
 from ..api_secrets import (
@@ -1717,6 +1718,7 @@ async def admin_create_instrument(instrument: schemas.InstrumentCreate, current_
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
+    invalidate_instrument_cache()
     return db_obj
 
 
@@ -1775,6 +1777,7 @@ async def admin_update_instrument(code: str, update: schemas.InstrumentUpdate, c
         setattr(db_obj, field, value)
     db.commit()
     db.refresh(db_obj)
+    invalidate_instrument_cache()
     return db_obj
 
 

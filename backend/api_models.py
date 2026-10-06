@@ -5,6 +5,12 @@ from pydantic import Field
 
 from . import schemas
 from .chat_preferences import ResponseFormat
+from .schemas import (
+    InstrumentBase,
+    InstrumentCreate,
+    InstrumentUpdate,
+    InstrumentResponse,
+)
 
 
 class ChatRequest(schemas.BaseModel):

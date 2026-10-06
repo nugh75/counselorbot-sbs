@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from .. import auth
 from ..api_models import MemoryEventRequest
+from ..dynamic_registry import DynamicInstrumentSet, HISTORIC_INSTRUMENT_CODES
 from ..memory_service import session_memory
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-MEMORY_QUESTIONNAIRE_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE", "OBIETTIVO_STUDIO", "OBIETTIVO_DOCENZA"}
+MEMORY_QUESTIONNAIRE_TYPES = DynamicInstrumentSet(HISTORIC_INSTRUMENT_CODES)
 
 
 @router.get("/memory/status/{session_id}")
