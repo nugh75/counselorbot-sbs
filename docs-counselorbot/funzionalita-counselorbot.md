@@ -497,7 +497,20 @@ chat simulata entra il contesto di quelle classi solo dove il docente ha attivat
 condivisione con gli studenti, esattamente come per uno studente iscritto (mai in Idea
 e nella Bussola); la pagina segnala le classi non condivise. Le classi sono
 riverificate a ogni turno: una classe disattivata o una condivisione revocata esce
-dal contesto. Si creano, modificano, archiviano, ripristinano
+dal contesto.
+
+Ogni taccuino di prova ha un **repertorio di prove**: profili di questionario
+(QSA, QSAr, ZTPI, QPCS, QPCC, QAP, scala 1–9) dello studente simulato, più d’uno per
+strumento. Si aggiungono a mano con lo stesso modulo della chat, generandone uno
+plausibile da ritoccare (valori casuali più frequenti al centro della scala) oppure
+arrivano dalla chat: con «Prova» attivo, i punteggi inseriti o caricati all’avvio vanno
+nel repertorio del taccuino e non tra le Compilazioni del docente. Nella schermata del
+metodo di inserimento il docente sceglie lo studente simulato (stessa scelta delle
+Opzioni) e trova i profili del suo repertorio accanto ai propri risultati salvati. I
+profili del repertorio non entrano mai nelle Compilazioni, nei confronti tra i profili
+del docente né nei dati di ricerca; in prova il confronto tra compilazioni usa il
+repertorio dello studente simulato e la Bussola conosce gli strumenti che ha già
+«compilato» (tipo e data, senza punteggi). Si creano, modificano, archiviano, ripristinano
 ed eliminano (con conferma) con salvataggio esplicito; gli archiviati non compaiono
 nelle Opzioni della chat. Sono visibili solo al docente che li ha creati e non
 contengono né toccano dati di studenti reali: la pagina invita a non inserirne.
