@@ -1,7 +1,7 @@
 // Client HTTP dei taccuini di prova del docente (vedi practice-notebooks.ts).
 
 import { apiFetch } from '@/lib/auth';
-import { parsePracticeNotebooks, practiceNotebookBody, type PracticeNotebook, type PracticeNotebookData } from '@/lib/practice-notebooks';
+import { parsePracticeNotebooks, parsePracticeResults, practiceNotebookBody, type PracticeNotebook, type PracticeNotebookData, type PracticeResult } from '@/lib/practice-notebooks';
 
 const BASE = '/api/teacher/practice-notebooks';
 
@@ -36,5 +36,17 @@ export const practiceNotebookApi = {
     },
     async remove(id: number): Promise<void> {
         await json(await apiFetch(`${BASE}/${id}`, { method: 'DELETE' }));
+    },
+    async results(id: number, questionnaireType?: string, signal?: AbortSignal): Promise<PracticeResult[]> {
+        const query = questionnaireType ? `?questionnaire_type=${encodeURIComponent(questionnaireType)}` : '';
+        return parsePracticeResults(await json<unknown>(await apiFetch(`${BASE}/${id}/results${query}`, { signal })));
+    },
+    async addResult(id: number, result: { questionnaire_type: string; scores: Record<string, number>; source: PracticeResult['source']; session_id?: string }): Promise<PracticeResult> {
+        return json(await apiFetch(`${BASE}/${id}/results`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(result),
+        }));
+    },
+    async removeResult(id: number, resultId: number): Promise<void> {
+        await json(await apiFetch(`${BASE}/${id}/results/${resultId}`, { method: 'DELETE' }));
     },
 };

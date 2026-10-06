@@ -56,3 +56,33 @@ export function practiceNotebookBody(title: string, values: PracticeNotebookData
     }
     return { title: title.trim().slice(0, PRACTICE_TITLE_MAX_CHARS), data };
 }
+
+// Repertorio di prove: profili di questionario dello studente simulato.
+export const PRACTICE_RESULT_TYPES = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'] as const;
+
+export interface PracticeResult {
+    id: number;
+    notebook_id: number;
+    questionnaire_type: string;
+    scores: Record<string, number>;
+    session_id: string;
+    source: 'manual' | 'generated' | 'chat';
+    created_at?: string | null;
+}
+
+export function parsePracticeResults(payload: unknown): PracticeResult[] {
+    if (!Array.isArray(payload)) return [];
+    return payload.filter((row): row is PracticeResult =>
+        Boolean(row) && typeof row === 'object'
+        && Number.isInteger((row as PracticeResult).id)
+        && typeof (row as PracticeResult).questionnaire_type === 'string'
+        && Boolean((row as PracticeResult).scores) && typeof (row as PracticeResult).scores === 'object',
+    );
+}
+
+// Profilo plausibile sulla scala 1-9: media di due tiri, quindi più spesso al
+// centro che agli estremi, come un profilo reale. `random` è iniettabile per i test.
+export function generatePracticeScores(codes: readonly string[], random: () => number = Math.random): Record<string, number> {
+    const roll = () => 1 + Math.floor(random() * 9);
+    return Object.fromEntries(codes.map((code) => [code, Math.round((roll() + roll()) / 2)]));
+}
