@@ -1,17 +1,54 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
   <defs>
-    <linearGradient id="grad_giulia" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#06B6D4" />
-      <stop offset="100%" stop-color="#0E7490" />
+    <radialGradient id="bg_giulia" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#0d9488" />
+      <stop offset="70%" stop-color="#0f766e" />
+      <stop offset="100%" stop-color="#042f2e" />
+    </radialGradient>
+    <linearGradient id="leaf_l_giulia" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5eead4" />
+      <stop offset="100%" stop-color="#14b8a6" />
+    </linearGradient>
+    <linearGradient id="leaf_r_giulia" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+    <linearGradient id="flower_giulia" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#ea580c" />
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="50" fill="url(#grad_giulia)" />
-  <!-- Silhouette head -->
-  <circle cx="50" cy="40" r="18" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Silhouette shoulders / bust -->
-  <path d="M 22 84 C 22 66, 34 58, 50 58 C 66 58, 78 66, 78 84 Z" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Accent initial badge -->
-  <circle cx="74" cy="28" r="14" fill="#ffffff" />
-  <circle cx="74" cy="28" r="12" fill="url(#grad_giulia)" />
-  <text x="74" y="33" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">G</text>
+
+  <!-- Base medaglione -->
+  <circle cx="50" cy="50" r="48" fill="url(#bg_giulia)" stroke="#14b8a6" stroke-width="1" stroke-opacity="0.35" />
+
+  <!-- Base terreno / semenzaio fertile curvo -->
+  <path d="M 24 82 C 34 76, 66 76, 76 82 C 68 86, 32 86, 24 82 Z" fill="#042f2e" opacity="0.5" />
+  <path d="M 24 82 C 34 76, 66 76, 76 82" stroke="#2dd4bf" stroke-width="1.2" stroke-linecap="round" opacity="0.4" fill="none" />
+
+  <!-- Stelo curvo e flessuoso di crescita -->
+  <path d="M 50 80 Q 48 62 50 44" stroke="#5eead4" stroke-width="3.5" stroke-linecap="round" fill="none" />
+
+  <!-- Foglia inferiore sinistra (sviluppo graduale) -->
+  <path d="M 49 64 C 34 64, 26 50, 36 44 C 45 44, 48 54, 49 64 Z" fill="url(#leaf_l_giulia)" />
+  <path d="M 46 59 Q 38 52 36 46" stroke="#ccfbf1" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6" />
+
+  <!-- Foglia destra superiore (slancio verso la luce) -->
+  <path d="M 51 54 C 66 54, 74 40, 64 34 C 55 34, 52 44, 51 54 Z" fill="url(#leaf_r_giulia)" />
+  <path d="M 54 49 Q 62 42 64 36" stroke="#ccfbf1" stroke-width="1" stroke-linecap="round" fill="none" opacity="0.6" />
+
+  <!-- Bocciolo / fiore apicale (sviluppo pieno del potenziale, caldo arancio/ambra) -->
+  <!-- Petalo sinistro -->
+  <path d="M 50 42 C 43 38, 41 28, 48 24 C 51 28, 51 36, 50 42 Z" fill="#f97316" />
+  <!-- Petalo destro -->
+  <path d="M 50 42 C 57 38, 59 28, 52 24 C 49 28, 49 36, 50 42 Z" fill="#ea580c" />
+  <!-- Petalo centrale / corolla splendente -->
+  <path d="M 50 40 C 46 32, 46 22, 50 18 C 54 22, 54 32, 50 40 Z" fill="url(#flower_giulia)" />
+  <!-- Centro luminoso del fiore -->
+  <circle cx="50" cy="28" r="2.2" fill="#fef3c7" />
+
+  <!-- Goccioline di linfa vitale e crescita che fluttuano attorno -->
+  <circle cx="34" cy="36" r="1.5" fill="#ccfbf1" opacity="0.8" />
+  <circle cx="68" cy="24" r="1.5" fill="#fed7aa" />
+  <circle cx="62" cy="18" r="1" fill="#ffffff" />
 </svg>

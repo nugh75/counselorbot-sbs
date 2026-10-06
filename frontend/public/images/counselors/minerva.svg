@@ -1,17 +1,59 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
   <defs>
-    <linearGradient id="grad_minerva" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7C3AED" />
-      <stop offset="100%" stop-color="#5B21B6" />
+    <radialGradient id="bg_minerva" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="70%" stop-color="#115e59" />
+      <stop offset="100%" stop-color="#042f2e" />
+    </radialGradient>
+    <linearGradient id="body_minerva" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#14b8a6" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+    <linearGradient id="accent_minerva" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#ea580c" />
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="50" fill="url(#grad_minerva)" />
-  <!-- Silhouette head -->
-  <circle cx="50" cy="40" r="18" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Silhouette shoulders / bust -->
-  <path d="M 22 84 C 22 66, 34 58, 50 58 C 66 58, 78 66, 78 84 Z" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Accent initial badge -->
-  <circle cx="74" cy="28" r="14" fill="#ffffff" />
-  <circle cx="74" cy="28" r="12" fill="url(#grad_minerva)" />
-  <text x="74" y="33" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">M</text>
+
+  <!-- Base medaglione -->
+  <circle cx="50" cy="50" r="48" fill="url(#bg_minerva)" stroke="#14b8a6" stroke-width="1" stroke-opacity="0.35" />
+
+  <!-- Alone morbido di saggezza -->
+  <circle cx="50" cy="42" r="30" fill="#2dd4bf" opacity="0.12" />
+
+  <!-- Sagoma civetta stilizzata (filosofa / riflessione profonda) -->
+  <!-- Ali e corpo -->
+  <path d="M 32 30 C 31 23, 38 21, 42 27 C 46 25, 54 25, 58 27 C 62 21, 69 23, 68 30 C 73 40, 73 58, 67 69 C 63 76, 57 78, 50 78 C 43 78, 37 76, 33 69 C 27 58, 27 40, 32 30 Z" fill="url(#body_minerva)" />
+
+  <!-- Pettorina / piumaggio chiaro riflettente -->
+  <path d="M 40 48 C 40 48, 44 68, 50 68 C 56 68, 60 48, 60 48 C 56 54, 44 54, 40 48 Z" fill="#ccfbf1" opacity="0.9" />
+  <path d="M 43 56 C 46 62, 54 62, 57 56" stroke="#0f766e" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7" />
+
+  <!-- Occhi della saggezza -->
+  <!-- Occhio sinistro -->
+  <circle cx="41" cy="39" r="8.5" fill="#ffffff" />
+  <circle cx="41" cy="39" r="6" fill="#0f766e" />
+  <circle cx="41" cy="39" r="3.2" fill="#042f2e" />
+  <circle cx="39.5" cy="37.5" r="1.3" fill="#ffffff" />
+
+  <!-- Occhio destro -->
+  <circle cx="59" cy="39" r="8.5" fill="#ffffff" />
+  <circle cx="59" cy="39" r="6" fill="#0f766e" />
+  <circle cx="59" cy="39" r="3.2" fill="#042f2e" />
+  <circle cx="57.5" cy="37.5" r="1.3" fill="#ffffff" />
+
+  <!-- Becco geometrico ambra -->
+  <polygon points="50,42 46.5,47 50,52 53.5,47" fill="url(#accent_minerva)" />
+
+  <!-- Libro / pergamena aperta su cui poggia la civetta -->
+  <path d="M 33 76 C 41 73, 47 75, 50 77 C 53 75, 59 73, 67 76 L 67 82 C 59 79, 53 81, 50 83 C 47 81, 41 79, 33 82 Z" fill="#e9f2f2" />
+  <path d="M 50 77 L 50 83" stroke="#0d9488" stroke-width="1.2" stroke-linecap="round" />
+  <!-- Nastro segnalibro ambra -->
+  <path d="M 50 83 L 53 88 L 50 87 L 47 88 Z" fill="url(#accent_minerva)" />
+
+  <!-- Stella / scintilla di pensiero filosofico -->
+  <g transform="translate(74, 20)">
+    <path d="M 0,-5 Q 0,0 5,0 Q 0,0 0,5 Q 0,0 -5,0 Q 0,0 0,-5 Z" fill="#fb923c" />
+    <circle cx="0" cy="0" r="1" fill="#ffffff" />
+  </g>
 </svg>

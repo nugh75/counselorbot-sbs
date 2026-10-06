@@ -1,17 +1,66 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
   <defs>
-    <linearGradient id="grad_bruno" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2563EB" />
-      <stop offset="100%" stop-color="#1E40AF" />
+    <radialGradient id="bg_bruno" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#0d9488" />
+      <stop offset="70%" stop-color="#0f766e" />
+      <stop offset="100%" stop-color="#115e59" />
+    </radialGradient>
+    <linearGradient id="needle_ne_light" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#f97316" />
+    </linearGradient>
+    <linearGradient id="needle_ne_dark" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#c2410c" />
+    </linearGradient>
+    <linearGradient id="needle_sw_light" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#ccfbf1" />
+    </linearGradient>
+    <linearGradient id="needle_sw_dark" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#99f6e4" />
+      <stop offset="100%" stop-color="#2dd4bf" />
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="50" fill="url(#grad_bruno)" />
-  <!-- Silhouette head -->
-  <circle cx="50" cy="40" r="18" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Silhouette shoulders / bust -->
-  <path d="M 22 84 C 22 66, 34 58, 50 58 C 66 58, 78 66, 78 84 Z" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Accent initial badge -->
-  <circle cx="74" cy="28" r="14" fill="#ffffff" />
-  <circle cx="74" cy="28" r="12" fill="url(#grad_bruno)" />
-  <text x="74" y="33" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">B</text>
+
+  <!-- Base medaglione -->
+  <circle cx="50" cy="50" r="48" fill="url(#bg_bruno)" stroke="#14b8a6" stroke-width="1" stroke-opacity="0.35" />
+
+  <!-- Linea di orizzonte rassicurante in basso -->
+  <path d="M 10 68 C 30 63, 70 73, 90 68 L 90 98 L 10 98 Z" fill="#042f2e" opacity="0.4" />
+  <path d="M 10 68 C 30 63, 70 73, 90 68" stroke="#2dd4bf" stroke-width="1.2" stroke-opacity="0.5" fill="none" />
+
+  <!-- Quadrante bussola di orientamento -->
+  <circle cx="50" cy="50" r="34" fill="#042f2e" fill-opacity="0.3" stroke="#2dd4bf" stroke-width="1.5" stroke-dasharray="3 3" />
+  <circle cx="50" cy="50" r="28" fill="#115e59" fill-opacity="0.6" stroke="#99f6e4" stroke-width="1" />
+
+  <!-- Tacche cardinali (N, S, E, O) -->
+  <line x1="50" y1="23" x2="50" y2="27" stroke="#fb923c" stroke-width="2" stroke-linecap="round" />
+  <line x1="50" y1="73" x2="50" y2="77" stroke="#99f6e4" stroke-width="1.8" stroke-linecap="round" />
+  <line x1="23" y1="50" x2="27" y2="50" stroke="#99f6e4" stroke-width="1.8" stroke-linecap="round" />
+  <line x1="73" y1="50" x2="77" y2="50" stroke="#99f6e4" stroke-width="1.8" stroke-linecap="round" />
+
+  <!-- Tacche diagonali -->
+  <circle cx="67" cy="33" r="1.5" fill="#f97316" />
+  <circle cx="33" cy="67" r="1.2" fill="#ccfbf1" opacity="0.7" />
+  <circle cx="33" cy="33" r="1.2" fill="#ccfbf1" opacity="0.7" />
+  <circle cx="67" cy="67" r="1.2" fill="#ccfbf1" opacity="0.7" />
+
+  <!-- Ago bussola direzionale (inclinato verso Nord-Est) -->
+  <!-- Punta Nord-Est (calda, orientamento al futuro e direzione) -->
+  <polygon points="50,50 45,45 68,27" fill="url(#needle_ne_light)" />
+  <polygon points="50,50 55,55 68,27" fill="url(#needle_ne_dark)" />
+
+  <!-- Punta Sud-Ovest (coda chiara) -->
+  <polygon points="50,50 45,45 32,73" fill="url(#needle_sw_dark)" />
+  <polygon points="50,50 55,55 32,73" fill="url(#needle_sw_light)" />
+
+  <!-- Perno centrale rotante -->
+  <circle cx="50" cy="50" r="5.5" fill="#ffffff" />
+  <circle cx="50" cy="50" r="4" fill="#f97316" />
+  <circle cx="50" cy="50" r="2" fill="#042f2e" />
+
+  <!-- Stella / meta all'orizzonte (Nord-Est) -->
+  <circle cx="75" cy="20" r="2" fill="#fed7aa" />
+  <circle cx="75" cy="20" r="1" fill="#ffffff" />
 </svg>

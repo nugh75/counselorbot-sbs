@@ -1,17 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
   <defs>
-    <linearGradient id="grad_clio" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#D97706" />
-      <stop offset="100%" stop-color="#92400E" />
+    <radialGradient id="bg_clio" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="70%" stop-color="#115e59" />
+      <stop offset="100%" stop-color="#042f2e" />
+    </radialGradient>
+    <linearGradient id="page_left" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e2e8f0" />
+      <stop offset="100%" stop-color="#ffffff" />
+    </linearGradient>
+    <linearGradient id="page_right" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#ccfbf1" />
+    </linearGradient>
+    <linearGradient id="ribbon_clio" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#ea580c" />
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="50" fill="url(#grad_clio)" />
-  <!-- Silhouette head -->
-  <circle cx="50" cy="40" r="18" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Silhouette shoulders / bust -->
-  <path d="M 22 84 C 22 66, 34 58, 50 58 C 66 58, 78 66, 78 84 Z" fill="#ffffff" fill-opacity="0.9" />
-  <!-- Accent initial badge -->
-  <circle cx="74" cy="28" r="14" fill="#ffffff" />
-  <circle cx="74" cy="28" r="12" fill="url(#grad_clio)" />
-  <text x="74" y="33" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">C</text>
+
+  <!-- Base medaglione -->
+  <circle cx="50" cy="50" r="48" fill="url(#bg_clio)" stroke="#14b8a6" stroke-width="1" stroke-opacity="0.35" />
+
+  <!-- Onde fluide di memoria e narrazione che fluttuano in alto -->
+  <path d="M 28 30 C 38 24, 46 34, 56 26 C 66 18, 74 28, 80 22" fill="none" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.45" />
+  <path d="M 36 24 C 44 18, 52 26, 62 20 C 70 14, 76 22, 82 18" fill="none" stroke="#99f6e4" stroke-width="1" stroke-linecap="round" opacity="0.3" />
+
+  <!-- Faville dorate del ricordo e della storia -->
+  <circle cx="72" cy="24" r="1.5" fill="#fb923c" />
+  <circle cx="56" cy="18" r="1.2" fill="#fed7aa" />
+  <circle cx="40" cy="26" r="1" fill="#ffffff" />
+
+  <!-- Copertina / base del libro aperto -->
+  <path d="M 20 66 C 32 60, 44 62, 50 67 C 56 62, 68 60, 80 66 L 79 73 C 67 67, 56 69, 50 74 C 44 69, 33 67, 21 73 Z" fill="#0d9488" />
+
+  <!-- Pagine del libro aperto (narrazione / memoria) -->
+  <!-- Pagina sinistra -->
+  <path d="M 22 62 C 32 56, 44 58, 50 64 L 50 44 C 44 38, 32 36, 22 42 Z" fill="url(#page_left)" />
+  <!-- Pagina destra -->
+  <path d="M 50 64 C 56 58, 68 56, 78 62 L 78 42 C 68 36, 56 38, 50 44 Z" fill="url(#page_right)" />
+
+  <!-- Righe di narrazione / testo stilizzato (sinistra) -->
+  <line x1="28" y1="45" x2="44" y2="42" stroke="#0f766e" stroke-width="1.2" stroke-linecap="round" opacity="0.5" />
+  <line x1="28" y1="49" x2="44" y2="46" stroke="#0f766e" stroke-width="1.2" stroke-linecap="round" opacity="0.5" />
+  <line x1="28" y1="53" x2="42" y2="50" stroke="#0f766e" stroke-width="1.2" stroke-linecap="round" opacity="0.5" />
+  <line x1="28" y1="57" x2="38" y2="55" stroke="#0f766e" stroke-width="1.2" stroke-linecap="round" opacity="0.5" />
+
+  <!-- Righe di narrazione / testo stilizzato (destra) -->
+  <line x1="56" y1="42" x2="72" y2="45" stroke="#0f766e" stroke-width="1.2" stroke-linecap="round" opacity="0.5" />
+  <line x1="56" y1="46" x2="72" y2="49" stroke="#0f766e" stroke-width="1.2" stroke-linecap="round" opacity="0.5" />
+  <line x1="56" y1="50" x2="70" y2="53" stroke="#0f766e" stroke-width="1.2" stroke-linecap="round" opacity="0.5" />
+  <line x1="56" y1="54" x2="66" y2="56" stroke="#0f766e" stroke-width="1.2" stroke-linecap="round" opacity="0.5" />
+
+  <!-- Dorso centrale / giuntura -->
+  <line x1="50" y1="43" x2="50" y2="65" stroke="#0d9488" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Nastro segnalibro caldo ambra che scende sinuoso -->
+  <path d="M 50 44 C 48 52, 53 60, 48 70 C 46 74, 47 78, 48 84 L 52 82 L 54 86 C 53 80, 52 74, 54 70 C 56 62, 51 54, 50 44 Z" fill="url(#ribbon_clio)" />
 </svg>
