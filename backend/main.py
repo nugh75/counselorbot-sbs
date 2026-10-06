@@ -436,6 +436,14 @@ def _run_seed_and_migrations():
             ("administration_plans", "ADD COLUMN school_level VARCHAR"),
             # Sessione pQBL in corso sul bot Telegram.
             ("telegram_conversation_states", "ADD COLUMN pqbl_state JSON"),
+            # Dynamic Instrument Registry & catalog metadata
+            ("instruments", "ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT false"),
+            ("instruments", "ADD COLUMN tool_category VARCHAR NOT NULL DEFAULT 'guided'"),
+            ("instruments", "ADD COLUMN description_i18n JSON"),
+            ("instruments", "ADD COLUMN target_audience VARCHAR NOT NULL DEFAULT 'student'"),
+            ("instruments", "ADD COLUMN icon VARCHAR NOT NULL DEFAULT 'compass'"),
+            ("instruments", "ADD COLUMN color_theme VARCHAR NOT NULL DEFAULT 'blue'"),
+            ("instruments", "ADD COLUMN interview_mode VARCHAR NOT NULL DEFAULT 'interactive'"),
         ]:
             try:
                 with database.engine.connect() as conn:
@@ -443,6 +451,18 @@ def _run_seed_and_migrations():
                     conn.commit()
             except Exception as e:
                 logger.debug(f"{table} migration skipped/failed ({clause}): {e}")
+
+        # Assicura che gli strumenti storici siano attivi dopo l'aggiunta della colonna
+        try:
+            with database.engine.connect() as conn:
+                conn.execute(sa_text(
+                    "UPDATE instruments SET is_active = true WHERE is_active = false AND code IN "
+                    "('QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'QPCS', 'QPCC', 'QAP', 'IDEA', "
+                    "'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA')"
+                ))
+                conn.commit()
+        except Exception as e:
+            logger.debug(f"instruments default active update skipped/failed: {e}")
 
         if database.engine.dialect.name == "postgresql":
             try:
@@ -1862,6 +1882,12 @@ def _seed_instruments_catalog(db):
             response_scale_max=spec.get("response_scale_max", 4),
             report_scale_type=spec.get("report_scale_type", "stanine"),
             status="experimental",
+            is_active=True,
+            tool_category="assessment",
+            target_audience="student",
+            icon="clipboard",
+            color_theme="blue",
+            interview_mode="interactive",
         ))
         for order, f in enumerate(spec.get("factors", [])):
             db.add(models.Factor(
