@@ -5,7 +5,9 @@
 // della Bussola («Prova»). Salvataggio esplicito, nessun autosalvataggio.
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Plus } from 'lucide-react';
+import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { learningText } from '@/lib/i18n-assignment-work';
@@ -18,8 +20,11 @@ import {
     type PracticeNotebookData,
 } from '@/lib/practice-notebooks';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
+import { PracticeRepertoire } from './PracticeRepertoire';
 
-type Draft = { id: number | 'new'; title: string; values: PracticeNotebookData };
+type Draft = { id: number | 'new'; title: string; values: PracticeNotebookData; groupIds: number[] };
+// Classi gestite dal docente (stesso elenco della chat docenza).
+type ClassGroup = { id: number; name: string; school?: string | null; context_visible_to_students?: boolean; is_active?: boolean };
 
 const primary = 'min-h-11 rounded-md bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50';
 const secondary = 'min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50';
@@ -44,6 +49,21 @@ export function PracticeNotebooks() {
         }
     }, []);
     useEffect(() => { void load(); }, [load]);
+
+    const [groups, setGroups] = useState<ClassGroup[] | null>(null);
+    const [groupsFailed, setGroupsFailed] = useState(false);
+    useEffect(() => {
+        const controller = new AbortController();
+        apiFetch('/api/admin/groups', { signal: controller.signal })
+            .then(async (response) => {
+                if (!response.ok) throw new Error('groups');
+                const rows: unknown = await response.json();
+                setGroups(Array.isArray(rows) ? (rows as ClassGroup[]).filter((group) => group.is_active !== false) : []);
+            })
+            .catch(() => { if (!controller.signal.aborted) setGroupsFailed(true); });
+        return () => controller.abort();
+    }, []);
+    const groupName = (group: ClassGroup) => group.school ? `${group.name} — ${group.school}` : group.name;
 
     const run = async (action: () => Promise<unknown>) => {
         if (busy) return false;
@@ -75,9 +95,11 @@ export function PracticeNotebooks() {
 
     const save = async () => {
         if (!draft || !draft.title.trim()) return;
+        // Senza elenco classi (errore di caricamento) le associazioni salvate restano.
+        const groupIds = groups === null ? undefined : draft.groupIds;
         const ok = await run(() => draft.id === 'new'
-            ? practiceNotebookApi.create(draft.title, draft.values)
-            : practiceNotebookApi.update(draft.id, { title: draft.title, values: draft.values }));
+            ? practiceNotebookApi.create(draft.title, draft.values, groupIds ?? [])
+            : practiceNotebookApi.update(draft.id, { title: draft.title, values: draft.values, groupIds }));
         if (ok) closeDraft();
     };
 
@@ -93,9 +115,9 @@ export function PracticeNotebooks() {
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
                 <p id="practice-notebook-title-hint" className="mt-1 text-xs text-slate-500">{l('nameHint')}</p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3">
                 {PRACTICE_NOTEBOOK_FIELDS.map((field) => (
-                    <div key={field.key} className={'multiline' in field ? 'sm:col-span-2' : ''}>
+                    <div key={field.key}>
                         <label htmlFor={`practice-notebook-${field.key}`} className="block text-xs font-semibold text-slate-600">{t(field.labelKey)}</label>
                         <textarea id={`practice-notebook-${field.key}`} rows={'multiline' in field ? 3 : 1} maxLength={PRACTICE_FIELD_MAX_CHARS}
                             value={current.values[field.key] ?? ''}
@@ -104,6 +126,25 @@ export function PracticeNotebooks() {
                     </div>
                 ))}
             </div>
+            <fieldset className="min-w-0 space-y-2">
+                <legend className="text-xs font-semibold text-slate-600">{l('classes')}</legend>
+                <p className="text-xs text-slate-500">{l('classesHint')}</p>
+                {groupsFailed && <p role="alert" className="text-xs text-red-600">{l('classesError')}</p>}
+                {groups !== null && !groups.length && <p className="text-xs text-slate-500">{l('noClasses')}</p>}
+                {groups?.map((group) => (
+                    <label key={group.id} className="flex min-h-11 items-start gap-2 text-sm text-slate-700">
+                        <input type="checkbox" className="mt-1" checked={current.groupIds.includes(group.id)}
+                            onChange={(event) => edit({ groupIds: event.target.checked
+                                ? [...current.groupIds, group.id]
+                                : current.groupIds.filter((id) => id !== group.id) })} />
+                        <span>
+                            {groupName(group)}
+                            {!group.context_visible_to_students && <span className="block text-xs text-amber-700">{l('notShared')}</span>}
+                        </span>
+                    </label>
+                ))}
+                <Link href="/docente/classi" className="inline-flex min-h-11 items-center text-xs font-semibold text-indigo-700 underline underline-offset-2">{l('manageClasses')}</Link>
+            </fieldset>
             <div className="flex flex-wrap items-center gap-3">
                 <button type="submit" disabled={busy || !current.title.trim()} className={primary}>{l('save')}</button>
                 <button type="button" disabled={busy} onClick={closeDraft} className={secondary}>{l('cancel')}</button>
@@ -111,12 +152,28 @@ export function PracticeNotebooks() {
         </form>
     );
 
+    const classSummary = (notebook: PracticeNotebook) => {
+        const linked = (groups ?? []).filter((group) => notebook.group_ids.includes(group.id));
+        if (!linked.length) return null;
+        return (
+            <div className="text-sm">
+                <p className="font-semibold text-slate-600">{l('classes')}</p>
+                <ul className="text-slate-700">
+                    {linked.map((group) => <li key={group.id}>
+                        {groupName(group)}
+                        {!group.context_visible_to_students && <span className="block text-xs text-amber-700">{l('notShared')}</span>}
+                    </li>)}
+                </ul>
+            </div>
+        );
+    };
+
     const summary = (notebook: PracticeNotebook) => {
         const filled = PRACTICE_NOTEBOOK_FIELDS.filter((field) => (notebook.data[field.key] ?? '').trim());
         if (!filled.length) return <p className="text-sm text-slate-500">{l('noFields')}</p>;
         return (
-            <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[minmax(8rem,auto)_1fr]">
-                {filled.map((field) => <div key={field.key} className="contents">
+            <dl className="grid gap-2 text-sm">
+                {filled.map((field) => <div key={field.key}>
                     <dt className="font-semibold text-slate-600">{t(field.labelKey)}</dt>
                     <dd className="whitespace-pre-line text-slate-700">{notebook.data[field.key]}</dd>
                 </div>)}
@@ -128,7 +185,7 @@ export function PracticeNotebooks() {
         <div data-practice-notebooks className="space-y-4">
             <p className="max-w-3xl text-sm text-slate-600">{l('note')}</p>
             {draft?.id === 'new' ? editor(draft) : (
-                <button type="button" disabled={busy || notebooks === null} onClick={() => openDraft({ id: 'new', title: '', values: {} })}
+                <button type="button" disabled={busy || notebooks === null} onClick={() => openDraft({ id: 'new', title: '', values: {}, groupIds: [] })}
                     className={`${primary} inline-flex items-center gap-2`}>
                     <Plus className="h-4 w-4" aria-hidden="true" />{l('create')}
                 </button>
@@ -147,9 +204,11 @@ export function PracticeNotebooks() {
                             <article className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
                                 <h2 className="text-base font-bold text-slate-800">{notebook.title}</h2>
                                 {summary(notebook)}
+                                {classSummary(notebook)}
+                                <PracticeRepertoire notebookId={notebook.id} />
                                 <div className="flex flex-wrap gap-2">
                                     <button type="button" disabled={busy} className={secondary}
-                                        onClick={() => openDraft({ id: notebook.id, title: notebook.title, values: { ...notebook.data } })}>{l('edit')}</button>
+                                        onClick={() => openDraft({ id: notebook.id, title: notebook.title, values: { ...notebook.data }, groupIds: [...notebook.group_ids] })}>{l('edit')}</button>
                                     <button type="button" disabled={busy} className={secondary}
                                         onClick={() => void run(() => practiceNotebookApi.update(notebook.id, { archived: true }))}>{l('archive')}</button>
                                 </div>

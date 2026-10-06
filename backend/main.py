@@ -542,6 +542,7 @@ def _run_seed_and_migrations():
         for table, clause in [
             ("personal_goals", "ADD COLUMN IF NOT EXISTS method JSON NOT NULL DEFAULT '[]'"),
             ("goal_resource_links", "ADD COLUMN IF NOT EXISTS role VARCHAR NOT NULL DEFAULT 'related'"),
+            ("teacher_practice_notebooks", "ADD COLUMN IF NOT EXISTS group_ids JSON NOT NULL DEFAULT '[]'"),
         ]:
             try:
                 with database.engine.connect() as conn:

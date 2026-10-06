@@ -783,9 +783,27 @@ def _practice_notebook_data(value: Any) -> Dict[str, str]:
     return data
 
 
+def _practice_group_ids(value: Any) -> List[int]:
+    """Id interi positivi, senza duplicati, nell'ordine dato."""
+    ids: List[int] = []
+    for item in value if isinstance(value, list) else []:
+        try:
+            group_id = int(item)
+        except (TypeError, ValueError):
+            continue
+        if group_id > 0 and group_id not in ids:
+            ids.append(group_id)
+    return ids
+
+
 class PracticeNotebookCreate(BaseModel):
     title: str = Field(min_length=1, max_length=PRACTICE_NOTEBOOK_TITLE_MAX_CHARS)
     data: Dict[str, str] = Field(default_factory=dict)
+    group_ids: List[int] = Field(default_factory=list)
+
+    @validator("group_ids", pre=True)
+    def _clean_group_ids(cls, v):
+        return _practice_group_ids(v)
 
     @validator("title", pre=True)
     def _trim_title(cls, v):
@@ -799,7 +817,12 @@ class PracticeNotebookCreate(BaseModel):
 class PracticeNotebookUpdate(BaseModel):
     title: Optional[str] = Field(default=None, min_length=1, max_length=PRACTICE_NOTEBOOK_TITLE_MAX_CHARS)
     data: Optional[Dict[str, str]] = None
+    group_ids: Optional[List[int]] = None
     archived: Optional[bool] = None
+
+    @validator("group_ids", pre=True)
+    def _clean_group_ids(cls, v):
+        return None if v is None else _practice_group_ids(v)
 
     @validator("title", pre=True)
     def _trim_title(cls, v):
@@ -810,13 +833,61 @@ class PracticeNotebookUpdate(BaseModel):
         return None if v is None else _practice_notebook_data(v)
 
 
+# Strumenti con punteggi per fattore (scala 1-9): gli unici con un profilo.
+PRACTICE_RESULT_TYPES = {"QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP"}
+PRACTICE_RESULT_MAX_FACTORS = 60
+
+
+class PracticeResultCreate(BaseModel):
+    questionnaire_type: str
+    scores: Dict[str, float]
+    source: Literal["manual", "generated", "chat"] = "manual"
+    session_id: Optional[str] = Field(default=None, max_length=100)
+
+    @validator("questionnaire_type")
+    def _known_type(cls, v):
+        if v not in PRACTICE_RESULT_TYPES:
+            raise ValueError("unsupported questionnaire_type")
+        return v
+
+    @validator("scores")
+    def _valid_scores(cls, v):
+        if not v or len(v) > PRACTICE_RESULT_MAX_FACTORS:
+            raise ValueError("scores required")
+        clean = {}
+        for code, value in v.items():
+            code = str(code).strip()
+            if not code or len(code) > 12 or not (1 <= float(value) <= 9):
+                raise ValueError("invalid score")
+            clean[code] = float(value)
+        return clean
+
+
+class PracticeResultResponse(BaseModel):
+    id: int
+    notebook_id: int
+    questionnaire_type: str
+    scores: Dict[str, float]
+    session_id: str
+    source: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 class PracticeNotebookResponse(BaseModel):
     id: int
     title: str
     data: Dict[str, Any]
+    group_ids: List[int] = Field(default_factory=list)
     archived_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+    @validator("group_ids", pre=True)
+    def _stored_group_ids(cls, v):
+        return _practice_group_ids(v)
 
     class Config:
         from_attributes = True

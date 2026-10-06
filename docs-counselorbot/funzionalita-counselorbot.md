@@ -491,13 +491,32 @@ entrambi i ruoli sceglie quale pagina aprire, senza trasferimenti automatici.
 La pagina `/docente/taccuini-prova` raccoglie gli studenti immaginari del docente,
 senza limite di numero: ognuno ha un nome e gli stessi campi del taccuino studente
 (età, genere, classe/professione, anno o percorso, contesto, obiettivo, difficoltà,
-punti di forza e di debolezza, note). Si creano, modificano, archiviano, ripristinano
+punti di forza e di debolezza, note), su una sola colonna. Ogni studente di prova
+può essere associato a una o più classi gestite o condivise con il docente: nella
+chat simulata entra il contesto di quelle classi solo dove il docente ha attivato la
+condivisione con gli studenti, esattamente come per uno studente iscritto (mai in Idea
+e nella Bussola); la pagina segnala le classi non condivise. Le classi sono
+riverificate a ogni turno: una classe disattivata o una condivisione revocata esce
+dal contesto.
+
+Ogni taccuino di prova ha un **repertorio di prove**: profili di questionario
+(QSA, QSAr, ZTPI, QPCS, QPCC, QAP, scala 1–9) dello studente simulato, più d’uno per
+strumento. Si aggiungono a mano con lo stesso modulo della chat, generandone uno
+plausibile da ritoccare (valori casuali più frequenti al centro della scala) oppure
+arrivano dalla chat: con «Prova» attivo, i punteggi inseriti o caricati all’avvio vanno
+nel repertorio del taccuino e non tra le Compilazioni del docente. Nella schermata del
+metodo di inserimento il docente sceglie lo studente simulato (stessa scelta delle
+Opzioni) e trova i profili del suo repertorio accanto ai propri risultati salvati. I
+profili del repertorio non entrano mai nelle Compilazioni, nei confronti tra i profili
+del docente né nei dati di ricerca; in prova il confronto tra compilazioni usa il
+repertorio dello studente simulato e la Bussola conosce gli strumenti che ha già
+«compilato» (tipo e data, senza punteggi). Si creano, modificano, archiviano, ripristinano
 ed eliminano (con conferma) con salvataggio esplicito; gli archiviati non compaiono
 nelle Opzioni della chat. Sono visibili solo al docente che li ha creati e non
 contengono né toccano dati di studenti reali: la pagina invita a non inserirne.
 
 Il Taccuino del docente è un’autodescrizione del ruolo e della pratica abituale,
-con sei campi **facoltativi**, nell’ordine: discipline abituali, esperienza di
+con sei campi **facoltativi** su una sola colonna, come il taccuino dello studente (la nota in testa alla pagina ricorda le scelte Predefinito, Studente, Docente, Prova e Nessuno), nell’ordine: discipline abituali, esperienza di
 insegnamento sintetica, come insegno di solito, panoramica dei miei incarichi e
 contesti, interessi per la mia crescita, altre informazioni sul mio ruolo.
 I campi sono raccolti in tre gruppi sempre aperti:

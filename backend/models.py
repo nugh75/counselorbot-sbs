@@ -718,9 +718,33 @@ class TeacherPracticeNotebook(Base):
     owner_username = Column(String, nullable=False, index=True)
     title = Column(String(120), nullable=False)
     data = Column(JSON, nullable=False, default=dict)
+    # Classi dello studente simulato (del docente o condivise con lui): in
+    # prova il loro contesto entra solo dove uno studente vero lo riceverebbe.
+    group_ids = Column(JSON, nullable=False, default=list)
     archived_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class TeacherPracticeResult(Base):
+    """Profilo di questionario di uno studente simulato (repertorio di prove).
+
+    Punteggi inseriti a mano, generati o arrivati da una chat in prova. Non
+    sono `QuestionnaireResult`: non entrano nelle Compilazioni del docente,
+    nei confronti tra i suoi profili ne' nei dati di ricerca. `session_id`
+    lega il profilo alle chat in prova che lo usano.
+    """
+
+    __tablename__ = "teacher_practice_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+    notebook_id = Column(Integer, nullable=False, index=True)
+    owner_username = Column(String, nullable=False, index=True)
+    questionnaire_type = Column(String, nullable=False, index=True)
+    scores = Column(JSON, nullable=False, default=dict)
+    session_id = Column(String, nullable=False, index=True)
+    source = Column(String, nullable=False, default="manual")  # manual|generated|chat
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 class LearnerProfileRevision(Base):

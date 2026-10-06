@@ -13,7 +13,7 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
     page.setDefaultTimeout(20000);
     const errors = [];
     const requests = [];
-    const store = { nextId: 2, rows: [{ id: 1, title: 'Giulia, 3ª liceo', data: { main_difficulty: 'Ansia da verifica' }, archived_at: null }] };
+    const store = { nextId: 2, nextResultId: 2, results: [], rows: [{ id: 1, title: 'Giulia, 3ª liceo', data: { main_difficulty: 'Ansia da verifica' }, group_ids: [], archived_at: null }] };
     page.on('pageerror', e => errors.push(e.message));
     await page.addInitScript(({ lang, initStorage }) => {
         localStorage.setItem('cb_lang', lang);
@@ -34,6 +34,10 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
             name: 'Docente di prova', email: 'teacher@example.invalid', groups: teacher ? ['docenti'] : ['studenti'],
         });
         if (url.pathname === '/api/user/account') return json({ setup_complete: true, notebook_completed: true });
+        if (url.pathname === '/api/admin/groups') return json([
+            { id: 31, name: '3B', school: 'Liceo Demo', context_visible_to_students: true, is_active: true },
+            { id: 32, name: '4A', school: null, context_visible_to_students: false, is_active: true },
+        ]);
         if (url.pathname === '/api/user/account-preferences') return json({ counselor_ready: true, notebook_ready: true, counselor_id: 1 });
         if (url.pathname === '/api/orientation/status') return json(compass
             ? { required: true, completed: false, in_progress_session_id: 'b1', latest_session_id: 'b1' }
@@ -44,12 +48,27 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
         if (url.pathname === '/api/teacher/practice-notebooks') {
             if (!teacher) return json({ detail: 'forbidden' }, 403);
             if (method === 'POST') {
-                const row = { id: store.nextId++, title: body.title, data: body.data, archived_at: null };
+                const row = { id: store.nextId++, title: body.title, data: body.data, group_ids: body.group_ids ?? [], archived_at: null };
                 store.rows.unshift(row);
                 return json(row, 201);
             }
             const all = url.searchParams.get('include_archived') === 'true';
             return json(store.rows.filter(row => all || !row.archived_at));
+        }
+        const resultsMatch = url.pathname.match(/^\/api\/teacher\/practice-notebooks\/(\d+)\/results(?:\/(\d+))?$/);
+        if (resultsMatch) {
+            const notebookId = Number(resultsMatch[1]);
+            if (method === 'POST') {
+                const row = { id: store.nextResultId++, notebook_id: notebookId, session_id: body.session_id || `s-${store.nextResultId}`, created_at: '2026-10-06T09:00:00Z', ...body };
+                store.results.unshift(row);
+                return json(row, 201);
+            }
+            if (method === 'DELETE') {
+                store.results = store.results.filter(row => row.id !== Number(resultsMatch[2]));
+                return json({ deleted: Number(resultsMatch[2]) });
+            }
+            const type = url.searchParams.get('questionnaire_type');
+            return json(store.results.filter(row => row.notebook_id === notebookId && (!type || row.questionnaire_type === type)));
         }
         const match = url.pathname.match(/^\/api\/teacher\/practice-notebooks\/(\d+)$/);
         if (match) {
@@ -61,6 +80,7 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
             }
             if (body.title !== undefined) row.title = body.title;
             if (body.data !== undefined) row.data = body.data;
+            if (body.group_ids !== undefined) row.group_ids = body.group_ids;
             if (body.archived !== undefined) row.archived_at = body.archived ? '2026-10-05T10:00:00Z' : null;
             return json(row);
         }
@@ -84,7 +104,7 @@ test('il docente crea, modifica, archivia, ripristina ed elimina i taccuini di p
     await page.getByRole('button', { name: 'Salva', exact: true }).click();
     await page.getByRole('heading', { name: 'Marco, adulto in formazione' }).waitFor();
     const created = requests.find(r => r.method === 'POST');
-    assert.deepEqual(created.body, { title: 'Marco, adulto in formazione', data: { strengths: 'Curioso' } });
+    assert.deepEqual(created.body, { title: 'Marco, adulto in formazione', data: { strengths: 'Curioso' }, group_ids: [] });
 
     const marco = page.locator('[data-practice-notebook="2"]');
     await marco.getByRole('button', { name: 'Modifica' }).click();
@@ -241,6 +261,123 @@ test('nella chat guidata il docente sceglie «Prova» e un taccuino: turno e sna
     const frozen = state.writes.filter(w => w.path === '/session/freeze').at(-1)?.body;
     assert.equal(frozen?.notebook_context, 'practice');
     assert.equal(frozen?.practice_notebook_id, 6);
+    assert.deepEqual(state.errors, []);
+    await page.close();
+});
+
+test('il docente associa classi a un taccuino di prova e vede quali non sono condivise', async () => {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const { errors, requests, store } = await prepare(page);
+    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    await page.locator('[data-practice-notebook="1"]').getByRole('button', { name: 'Modifica' }).click();
+    const classes = page.getByRole('group', { name: 'Classi dello studente' });
+    await classes.getByRole('checkbox', { name: /3B — Liceo Demo/ }).check();
+    await classes.getByRole('checkbox', { name: /4A/ }).check();
+    assert.ok(await classes.getByText('contesto non condiviso con gli studenti: non entra nella chat').isVisible());
+    await page.getByRole('button', { name: 'Salva', exact: true }).click();
+    await page.locator('[data-practice-notebook="1"]').getByRole('button', { name: 'Modifica' }).waitFor();
+    assert.deepEqual(requests.filter(r => r.method === 'PUT').at(-1).body.group_ids, [31, 32]);
+    assert.deepEqual(store.rows[0].group_ids, [31, 32]);
+    const card = page.locator('[data-practice-notebook="1"]');
+    assert.ok(await card.getByText('3B — Liceo Demo').isVisible());
+    assert.ok(await card.getByText('contesto non condiviso con gli studenti: non entra nella chat').isVisible());
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    assert.deepEqual(errors, []);
+    await page.close();
+});
+
+test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
+    const { errors, requests, store } = await prepare(page);
+    page.on('dialog', dialog => dialog.accept());
+    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    const repertoire = page.locator('[data-practice-notebook="1"] [data-practice-repertoire]');
+    await repertoire.getByText('Nessun profilo ancora.').waitFor();
+    await repertoire.getByRole('button', { name: 'Aggiungi profilo' }).click();
+    await repertoire.getByLabel('Strumento').selectOption('ZTPI');
+    await repertoire.getByRole('button', { name: 'Genera un profilo plausibile' }).click();
+    const first = repertoire.locator('input[type="text"], input[inputmode], input').first();
+    await first.fill('9');
+    await repertoire.locator('form').evaluate(form => form.requestSubmit());
+    await repertoire.locator('[data-practice-result]').first().waitFor();
+    const generated = requests.filter(r => r.method === 'POST' && r.path.endsWith('/results')).at(-1).body;
+    assert.equal(generated.questionnaire_type, 'ZTPI');
+    assert.equal(generated.source, 'generated');
+    assert.equal(Object.values(generated.scores)[0], 9);
+    assert.ok(Object.values(generated.scores).every(v => v >= 1 && v <= 9));
+    assert.ok(await repertoire.getByText('generato').first().isVisible());
+    // La bozza personale della compilazione non viene toccata.
+    assert.equal(await page.evaluate(() => Object.keys(localStorage).filter(k => k.includes('score')).length), 0);
+    await repertoire.locator('[data-practice-result]').first().getByRole('button', { name: 'Elimina' }).click();
+    await repertoire.getByText('Nessun profilo ancora.').waitFor();
+    assert.equal(store.results.length, 0);
+    assert.deepEqual(errors, []);
+    await page.close();
+});
+
+test('avvio in prova: scelta dello studente simulato, profilo del repertorio accanto ai propri, nessuna compilazione salvata', async () => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1050 } });
+    const state = await guidedChat(page);
+    await page.route('**/api/user/questionnaire-results', route => route.fulfill({ json: [
+        { id: 70, session_id: 'own-1', questionnaire_type: 'QSA', scores: { C1: 3 }, submitted_at: '2026-09-01T10:00:00Z' },
+    ] }));
+    await page.route('**/api/teacher/practice-notebooks/6/results*', route => route.fulfill({ json: [
+        { id: 91, notebook_id: 6, questionnaire_type: 'QSA', scores: { C1: 8, C2: 2 }, session_id: 'p-91', source: 'generated', created_at: '2026-10-05T10:00:00Z' },
+    ] }));
+    await page.goto(`${origin}/?start=QSA`, { waitUntil: 'domcontentloaded' });
+    const student = page.locator('[data-practice-student]');
+    await student.waitFor();
+    await student.getByRole('combobox').selectOption('6');
+    assert.equal(await page.evaluate(() => localStorage.getItem('cb-notebook-context')), 'practice');
+    assert.ok(await student.getByText('In prova: i punteggi che inserisci o carichi ora vanno nel repertorio di «Luca, adulto»', { exact: false }).isVisible());
+    // Entrambi gli elenchi: profili del taccuino e risultati personali.
+    await page.getByRole('button', { name: /Profili di «Luca, adulto»/ }).waitFor();
+    assert.equal(await page.locator('[data-method-practice]').count(), 1);
+    assert.equal(await page.getByRole('button', { name: /Riprendi dai dati precedenti/ }).count(), 1);
+    await page.locator('[data-method-practice]').click();
+    await page.locator('[data-method-practice] select').selectOption('91');
+    await page.getByRole('button', { name: /Continua|Avanti/ }).first().click();
+    await page.getByText('C1').first().waitFor();
+    const saves = state.writes.filter(w => w.path === '/questionnaire-result' || w.path.endsWith('/results'));
+    assert.deepEqual(saves, []);
+    assert.deepEqual(state.errors, []);
+    await page.close();
+});
+
+test('avvio in prova con punteggi nuovi: vanno nel repertorio, non tra le compilazioni', async () => {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1050 } });
+    const state = await guidedChat(page);
+    await page.addInitScript(() => {
+        localStorage.setItem('cb-notebook-context', 'practice');
+        localStorage.setItem('cb-practice-notebook-id', '6');
+    });
+    await page.route('**/api/teacher/practice-notebooks/6/results*', route => route.request().method() === 'POST'
+        ? route.fulfill({ status: 201, json: { id: 99, notebook_id: 6, ...route.request().postDataJSON() } })
+        : route.fulfill({ json: [] }));
+    await page.goto(`${origin}/?start=QSA`, { waitUntil: 'domcontentloaded' });
+    await page.locator('[data-practice-student] select').waitFor();
+    assert.equal(await page.locator('[data-practice-student] select').inputValue(), '6');
+    await page.getByRole('button', { name: /Inserimento Manuale/ }).click();
+    await page.getByRole('button', { name: 'Continua' }).first().click();
+    const inputs = page.locator('#score-form input');
+    await inputs.first().waitFor();
+    for (let i = 0; i < await inputs.count(); i++) await inputs.nth(i).fill(String((i % 9) + 1));
+    await page.getByRole('button', { name: 'Continua' }).first().click();
+    await page.getByRole('button', { name: 'Continua' }).first().click();
+    const settings = page.getByTestId('chat-settings');
+    await settings.waitFor();
+    const guided = settings.locator('button[aria-pressed]').first();
+    if (await guided.count()) await guided.click();
+    const saved = page.waitForRequest(r => r.method() === 'POST' && r.url().endsWith('/api/teacher/practice-notebooks/6/results'));
+    await page.getByRole('button', { name: 'Inizia la conversa', exact: false }).click();
+    const body = (await saved).postDataJSON();
+    // La chat si apre (QSA chiede prima il percorso): nessun salvataggio personale nel frattempo.
+    await page.waitForLoadState('networkidle');
+    assert.equal(body.source, 'chat');
+    assert.equal(body.questionnaire_type, 'QSA');
+    assert.ok(body.session_id);
+    assert.ok(Object.keys(body.scores).length > 10);
+    assert.equal(state.writes.filter(w => w.path === '/questionnaire-result').length, 0);
     assert.deepEqual(state.errors, []);
     await page.close();
 });

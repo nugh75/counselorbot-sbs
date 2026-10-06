@@ -29,6 +29,9 @@ import { IntroScreen } from '@/components/home/IntroScreen';
 import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
+import { canUseTeacherAssistant } from '@/lib/roles';
+import { readStoredNotebookContext, readStoredPracticeNotebookId } from '@/lib/notebook-context';
+import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
 import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, setActiveSessionCounselorId } from '@/lib/counselor';
 import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, getReasoningPref, getResponseLengthPref, setExperiencePref, setInputMethodPref, setReasoningPref, setResponseLengthPref } from '@/lib/session-prefs';
@@ -91,6 +94,10 @@ export default function Home() {
         questionnaire: QuestionnaireConfig; scores: Record<string, number> | null; resumeSid?: string; previousId: number | null;
     } | null>(null);
     const [scores, setScores] = useState<Record<string, number> | null>(null);
+    // Da dove arrivano i punteggi: nuovi (inseriti/caricati), un risultato
+    // personale salvato o un profilo del taccuino di prova. In prova i nuovi
+    // finiscono nel repertorio del taccuino, mai tra le Compilazioni.
+    const [scoreOrigin, setScoreOrigin] = useState<'new' | 'own' | 'practice'>('new');
     const [sessionId, setSessionId] = useState<string>('');
     const [pdfToken, setPdfToken] = useState<string | undefined>(undefined);
     const [experience, setExperience] = useState<'standard' | 'opencode' | null>(null);
@@ -308,7 +315,10 @@ export default function Home() {
             const method = getInputMethodPref();
             const hasSaved = savedResults?.some((r) => r.questionnaire_type === questionnaire.id) ?? true;
             const usable = method === 'upload' ? supportsProfileUpload(questionnaire.id) : method === 'manual';
-            if (method && usable && !hasSaved) {
+            // In prova la scelta dello studente simulato e del suo repertorio
+            // vive nella schermata del metodo: niente scorciatoia.
+            if (method && usable && !hasSaved && readStoredNotebookContext() !== 'practice') {
+                setScoreOrigin('new');
                 setStep(method === 'manual' ? 'manual-input' : 'upload-input');
                 return;
             }
@@ -398,6 +408,7 @@ export default function Home() {
         if (view === 'questionnaires' || view === 'home' || view === 'intro') {
             setSelectedQuestionnaire(null);
             setScores(null);
+            setScoreOrigin('new');
             setPdfToken(undefined);
             setSessionId('');
             setExperience(null);
@@ -434,6 +445,7 @@ export default function Home() {
         setSelectedQuestionnaire(questionnaire);
         setSelectedInstrumentId(questionnaire.id);
         setScores(null);
+        setScoreOrigin('new');
         setPdfToken(undefined);
         setSessionId('');
         setExperience(null);
@@ -447,20 +459,23 @@ export default function Home() {
         setSelectedQuestionnaire(questionnaire);
         setSelectedInstrumentId(questionnaire.id);
         setScores(null);
+        setScoreOrigin('new');
         setPdfToken(undefined);
         setSessionId('');
         setExperience(null);
         void prepareInstrument(questionnaire, null);
     };
 
-    const handleMethodSelect = (method: 'manual' | 'upload' | 'resume', resumeData?: { sessionId: string; scores: Record<string, number> }, remember = false) => {
-        if (method === 'resume') {
+    const handleMethodSelect = (method: 'manual' | 'upload' | 'resume' | 'practice', resumeData?: { sessionId: string; scores: Record<string, number> }, remember = false) => {
+        if (method === 'resume' || method === 'practice') {
             if (!resumeData) return;
             setScores(resumeData.scores);
             setSessionId(resumeData.sessionId);
+            setScoreOrigin(method === 'practice' ? 'practice' : 'own');
             setStep('dashboard');
             return;
         }
+        setScoreOrigin('new');
         setInputMethodPref(remember ? method : null);
         setStep(method === 'manual' ? 'manual-input' : 'upload-input');
     };
@@ -490,6 +505,25 @@ export default function Home() {
         const newSessionId = generateUUID();
         setSessionId(newSessionId);
         const qType = selectedQuestionnaire?.id || 'QSA';
+        // Prova del docente: il server riverifica ruolo e proprietà a ogni turno;
+        // qui decide solo dove salvare i punteggi nuovi.
+        const practiceNotebookId = canUseTeacherAssistant(identity) && readStoredNotebookContext() === 'practice'
+            ? readStoredPracticeNotebookId()
+            : null;
+        if (practiceNotebookId !== null || scoreOrigin === 'practice') {
+            if (practiceNotebookId !== null && scoreOrigin === 'new' && scores && Object.keys(scores).length) {
+                try {
+                    await practiceNotebookApi.addResult(practiceNotebookId, {
+                        questionnaire_type: qType, scores, source: 'chat', session_id: newSessionId,
+                    });
+                } catch (e) {
+                    console.error("Failed to save practice result", e);
+                }
+            }
+            setStarting(false);
+            beginInteraction(newSessionId, qType);
+            return;
+        }
         addCompletedProfile(qType, newSessionId, scores || {});
 
         // Log Audit
@@ -596,6 +630,7 @@ export default function Home() {
     const analyzeAnother = () => {
         setResume(null);
         setScores(null);
+        setScoreOrigin('new');
         setSelectedQuestionnaire(null);
         setPdfToken(undefined);
         setExperience(null);

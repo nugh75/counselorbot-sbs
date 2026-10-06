@@ -309,9 +309,9 @@ export function TeacherNotebook({ showHeading = true }: { showHeading?: boolean 
                         <legend className="w-full border-b border-slate-200 pb-2">
                             <GroupHeading className="text-sm font-semibold text-slate-800">{texts[group.title]}</GroupHeading>
                         </legend>
-                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div className="mt-3 grid gap-3">
                             {group.fields.map(([key, labelKey, placeholderKey, hintKey]) => (
-                                <div key={key} className={key === 'notes' ? 'sm:col-span-2' : ''}>
+                                <div key={key}>
                                     <label className="block text-xs font-semibold text-slate-600" htmlFor={`teacher-notebook-${key}`}>
                                         {texts[labelKey as keyof typeof texts] as string}
                                     </label>
