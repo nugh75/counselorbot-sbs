@@ -20,6 +20,7 @@ from ..visual_tools import load_workspace
 from ..ai_service import AIService
 from .. import scoring_service, recommendation_service
 from .. import content_version_service, i18n_fields
+from ..dynamic_registry import DynamicInstrumentSet
 
 router = APIRouter()
 get_db = database.get_personal_ai_db
@@ -27,10 +28,11 @@ logger = logging.getLogger(__name__)
 
 # Strumenti con risultati propri: i questionari e Idea + i due percorsi evento.
 # I percorsi Obiettivo restano fuori: la sintesi precompila gli obiettivi.
-INSTRUMENT_TYPES = (
+HISTORIC_SURVEY_TYPES = (
     "QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA",
     "EVENTO_STUDIO", "EVENTO_PROFESSIONALE",
 )
+INSTRUMENT_TYPES = DynamicInstrumentSet(HISTORIC_SURVEY_TYPES)
 
 
 def _get_owned_questionnaire_result(session_id: str, current_user: dict, db: Session) -> models.QuestionnaireResult:
@@ -238,14 +240,24 @@ def _locale_unavailable_detail(e: "scoring_service.LocaleUnavailable") -> dict:
 
 
 @router.get("/instruments")
-async def list_instruments(db: Session = Depends(get_db)):
+async def list_instruments(
+    db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity_view_as),
+):
     """Strumenti con, per ogni lingua, lo stato di certificazione.
 
     Alimenta selettore e pagina di somministrazione: quali lingue siano offerte
     non e' piu' una lista scritta a mano nel frontend.
+    Filtra gli strumenti non attivi per gli studenti/utenti non-admin, mentre
+    permette agli amministratori di vedere anche le bozze (is_active=False).
     """
+    is_admin = bool(identity.get("is_admin"))
+    query = db.query(models.Instrument)
+    if not is_admin:
+        query = query.filter(models.Instrument.is_active == True)  # noqa: E712
+
     out = []
-    for instrument in db.query(models.Instrument).order_by(models.Instrument.code).all():
+    for instrument in query.order_by(models.Instrument.code).all():
         item_count = (
             db.query(models.QuestionnaireItem)
             .filter(
@@ -259,6 +271,13 @@ async def list_instruments(db: Session = Depends(get_db)):
             "name_i18n": i18n_fields.merged_i18n(instrument, "name"),
             "status": instrument.status,
             "report_scale_type": instrument.report_scale_type,
+            "is_active": bool(instrument.is_active),
+            "tool_category": instrument.tool_category or "guided",
+            "description_i18n": instrument.description_i18n or {},
+            "target_audience": instrument.target_audience or "student",
+            "icon": instrument.icon or "compass",
+            "color_theme": instrument.color_theme or "blue",
+            "interview_mode": instrument.interview_mode or "interactive",
             "item_count": item_count,
             "locales": content_version_service.status_map(db, "instrument", instrument.code),
             "available_locales": content_version_service.served_locales(
