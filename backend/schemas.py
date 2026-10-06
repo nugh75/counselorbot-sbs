@@ -1,4 +1,5 @@
 from .chat_preferences import ResponseFormat
+from .dynamic_registry import DynamicInstrumentSet, HISTORIC_INSTRUMENT_CODES
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict, Any, Union, Literal
 from datetime import datetime
@@ -518,6 +519,13 @@ class InstrumentBase(BaseModel):
     response_labels: Optional[Dict[str, Any]] = None
     report_scale_type: str = "stanine"
     status: str = "experimental"
+    is_active: bool = False
+    tool_category: str = "guided"
+    description_i18n: Optional[Dict[str, Any]] = None
+    target_audience: str = "student"
+    icon: str = "compass"
+    color_theme: str = "blue"
+    interview_mode: str = "interactive"
 
 
 class InstrumentCreate(InstrumentBase):
@@ -535,6 +543,13 @@ class InstrumentUpdate(BaseModel):
     response_labels: Optional[Dict[str, Any]] = None
     report_scale_type: Optional[str] = None
     status: Optional[str] = None
+    is_active: Optional[bool] = None
+    tool_category: Optional[str] = None
+    description_i18n: Optional[Dict[str, Any]] = None
+    target_audience: Optional[str] = None
+    icon: Optional[str] = None
+    color_theme: Optional[str] = None
+    interview_mode: Optional[str] = None
 
 
 class InstrumentResponse(InstrumentBase):
@@ -1047,7 +1062,7 @@ class PortfolioItemResponse(BaseModel):
 
 # --- Sessioni guidate congelate ---
 
-FROZEN_SESSION_TYPES = {"QSA", "QSAr", "ZTPI", "SAVICKAS", "QPCS", "QPCC", "QAP", "IDEA", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE", "OBIETTIVO_STUDIO", "OBIETTIVO_DOCENZA"}
+FROZEN_SESSION_TYPES = DynamicInstrumentSet(HISTORIC_INSTRUMENT_CODES)
 FROZEN_SESSION_MAX_MESSAGES = 400
 FROZEN_SESSION_MAX_CONTENT_CHARS = 20000
 # Il PDF del profilo caricato per la sandbox OpenCode: il workspace rigenera
