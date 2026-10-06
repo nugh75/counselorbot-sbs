@@ -41,7 +41,16 @@ e modalità di conversazione si ricordano solo selezionando l’apposita casella
 rispettiva schermata; le preferenze già memorizzate restano valide. Idea chiede la
 modalità ogni volta e non cambia la preferenza degli altri strumenti.
 
+### Identità, categorie di approccio e raccomandazione dei counselor
+
+Ogni counselor dispone di un’identità visiva e pedagogica riconoscibile:
+- **Frase distintiva (tagline)**: breve sintesi multilingua dello stile di accompagnamento (es. chiarire sfumature con domande, spazio empatico di ascolto, azioni pratiche dirette, metodo strutturato).
+- **Categorie di approccio**: appartenenza multipla a categorie base (`filosofo`, `psicologo`, `docente`, `orientatore`, `tutor`) e tratti specifici (`maieutico`, `empatico`, `pragmatico`, `analitico`, `motivazionale`, `metodico`).
+- **Avatar e illustrazione**: riferimento visivo dedicato alla persona virtuale (`avatar_url`).
+- **Ricerca e raccomandazione per approccio**: ricerca libera in linguaggio naturale (es. «Vorrei qualcuno che mi faccia riflettere con domande...») che consiglia il counselor più adatto spiegando la motivazione, con filtri per lingua, audience e strumento.
+
 ## Bussola, Assistente e Guida
+
 
 - **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti. Non
   somministra questionari, non raccoglie punteggi e non svolge al proprio interno

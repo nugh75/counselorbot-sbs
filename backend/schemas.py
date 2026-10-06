@@ -1234,6 +1234,9 @@ class CounselorBase(BaseModel):
     name: str
     description: Optional[str] = None
     description_i18n: Optional[dict] = None
+    tagline_i18n: Optional[dict] = None
+    approach_categories: List[str] = Field(default_factory=list)
+    avatar_url: Optional[str] = None
     voice_mapping: Optional[dict] = None
     persona: Optional[str] = None
     avatar: Optional[str] = None
@@ -1255,6 +1258,9 @@ class CounselorUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     description_i18n: Optional[dict] = None
+    tagline_i18n: Optional[dict] = None
+    approach_categories: Optional[List[str]] = None
+    avatar_url: Optional[str] = None
     voice_mapping: Optional[dict] = None
     persona: Optional[str] = None
     avatar: Optional[str] = None
@@ -1284,6 +1290,10 @@ class CounselorPublic(BaseModel):
     slug: str
     name: str
     description: Optional[str] = None
+    tagline: Optional[str] = None
+    tagline_i18n: Optional[dict] = None
+    approach_categories: List[str] = Field(default_factory=list)
+    avatar_url: Optional[str] = None
     voice_mapping: Optional[dict] = None
     avatar: Optional[str] = None
     questionnaire_types: Optional[List[str]] = None
@@ -1307,6 +1317,22 @@ class CounselorPublic(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class CounselorRecommendationRequest(BaseModel):
+    query: str = Field(..., description="Richiesta libera dell'utente sullo stile o approccio cercato")
+    language: Optional[str] = Field(None, description="Lingua di preferenza (es. it, en)")
+    questionnaire_type: Optional[str] = Field(None, description="Filtro/adattabilità strumento (es. QSA, ZTPI)")
+    audience: Optional[str] = Field(None, description="Filtro audience: studente o docente")
+
+
+class CounselorRecommendationResponse(BaseModel):
+    counselor: Optional[CounselorPublic] = None
+    confidence: float = 0.0
+    explanation: str = ""
+    matched_categories: List[str] = Field(default_factory=list)
+    match_reasons: List[str] = Field(default_factory=list)
+    alternatives: List[CounselorPublic] = Field(default_factory=list)
 
 
 # --- Strategie RAG approvate (admin, override DB del Markdown versionato) ---
