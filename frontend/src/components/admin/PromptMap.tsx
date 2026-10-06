@@ -7,6 +7,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview } from '@/components/admin/PromptRequestPreview';
+import { CreateInstrumentDialog } from '@/components/admin/CreateInstrumentDialog';
 import { estimateTokens } from '@/lib/context-tokens';
 import type { AdminGuidedStepQuestion } from '@/lib/guided-step-questions';
 import {
@@ -831,6 +832,21 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
     const [deleting, setDeleting] = useState<PromptMapStep | null>(null);
     const [structureBusy, setStructureBusy] = useState(false);
     const [structureError, setStructureError] = useState('');
+    const [creatingInstrument, setCreatingInstrument] = useState(false);
+
+    const handleInstrumentCreated = async (newCode: string) => {
+        try {
+            const response = await apiFetch('/api/admin/prompt-map/instruments');
+            if (response.ok) {
+                const items: PromptMapInstrument[] = await response.json();
+                setInstruments(items);
+            }
+        } catch {
+            // keep existing list
+        }
+        setInstrument(newCode);
+        setStatus(t('admin.instrumentWizard.successMessage', { code: newCode }));
+    };
 
     useEffect(() => {
         apiFetch('/api/admin/prompt-map/instruments')
@@ -988,6 +1004,10 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                         className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
                         <RefreshCw aria-hidden className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />{t('admin.promptMap.reload')}
                     </button>
+                    <button type="button" onClick={() => setCreatingInstrument(true)}
+                        className="inline-flex items-center gap-1 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700">
+                        <Plus aria-hidden className="h-3.5 w-3.5" />{t('admin.instrumentWizard.createButton')}
+                    </button>
                 </div>
             </div>
             <details className="mt-3 text-xs" open={false}>
@@ -1091,5 +1111,12 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
         {questionsFor && <QuestionsDialog entry={questionsFor.entry} stepName={questionsFor.stepName}
             onClose={changed => { setQuestionsFor(null); if (changed) reload(); }} />}
         {persona && <PersonaDialog counselor={persona} onClose={() => setPersona(null)} onSaved={() => { setPersona(null); reload(); }} />}
+        {creatingInstrument && (
+            <CreateInstrumentDialog
+                open={creatingInstrument}
+                onClose={() => setCreatingInstrument(false)}
+                onCreated={handleInstrumentCreated}
+            />
+        )}
     </section>;
 }
