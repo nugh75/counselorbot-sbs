@@ -71,7 +71,7 @@ def teacher_notebook_context(db: Session, username: str) -> str:
     return "\n".join(lines)[:MAX_TEACHER_NOTEBOOK_CHARS]
 
 
-def _visible_group_for_teacher(db: Session, username: str, group_id: int) -> models.StudentGroup | None:
+def visible_group_for_teacher(db: Session, username: str, group_id: int) -> models.StudentGroup | None:
     """Classe visibile al docente: sua o condivisa con lui (GroupShare)."""
     group = db.get(models.StudentGroup, group_id)
     if group is None or not group.is_active:
@@ -100,7 +100,7 @@ def teacher_groups_context(db: Session, username: str, group_ids: list[int] | No
         return ""
     lines = ["## Classi di riferimento"]
     for group_id in group_ids:
-        group = _visible_group_for_teacher(db, username, group_id)
+        group = visible_group_for_teacher(db, username, group_id)
         if group is None:
             continue
         head = f"- {group.name}"
@@ -143,6 +143,25 @@ def class_context_for_student(db: Session, username: str) -> str:
         )
         .all()
     )
+    return _shared_class_context(groups)
+
+
+def class_context_for_practice(db: Session, owner: str, group_ids: list[int] | None) -> str:
+    """Contesto classe per lo studente simulato di un taccuino di prova.
+
+    Riproduce cio' che riceverebbe uno studente vero iscritto a quelle classi:
+    solo classi attive del docente (o condivise con lui, riverificato a ogni
+    turno) e solo con la condivisione del contesto attiva."""
+    if not owner or not group_ids:
+        return ""
+    groups = [
+        group for group in (visible_group_for_teacher(db, owner, group_id) for group_id in group_ids)
+        if group is not None and group.context_visible_to_students
+    ]
+    return _shared_class_context(groups)
+
+
+def _shared_class_context(groups: list[models.StudentGroup]) -> str:
     lines = ["## Contesto della classe"]
     for group in groups:
         head = f"- {group.name}"

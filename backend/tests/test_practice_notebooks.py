@@ -337,3 +337,182 @@ def test_frozen_session_keeps_the_practice_choice():
         detail = client.get("/session/frozen/practice-freeze-1").json()
         assert detail["notebook_context"] == "practice"
         assert detail["practice_notebook_id"] == 7
+
+
+# --- Classi dello studente simulato ----------------------------------------
+
+def _groups(db):
+    own_shared = models.StudentGroup(code="GR-PRC001", name="3B", owner_username="t1", description="Classe che ama il laboratorio",
+                                     context_visible_to_students=True, is_active=True)
+    own_private = models.StudentGroup(code="GR-PRC002", name="4A", owner_username="t1", description="Contesto NON condiviso",
+                                      context_visible_to_students=False, is_active=True)
+    co_taught = models.StudentGroup(code="GR-PRC003", name="5C", owner_username="t2", description="Classe in co-docenza",
+                                    context_visible_to_students=True, is_active=True)
+    foreign = models.StudentGroup(code="GR-PRC004", name="1Z", owner_username="t9", description="Classe ESTRANEA",
+                                  context_visible_to_students=True, is_active=True)
+    db.add_all([own_shared, own_private, co_taught, foreign])
+    db.commit()
+    db.add(models.GroupShare(group_id=co_taught.id, shared_with_username="t1", granted_by_username="t2"))
+    db.commit()
+    return own_shared, own_private, co_taught, foreign
+
+
+def test_api_keeps_only_the_teachers_own_or_shared_classes():
+    with artifact_session() as db:
+        own_shared, own_private, co_taught, foreign = _groups(db)
+        client = _app(db, TEACHER, practice_notebooks.router)
+        created = client.post("/teacher/practice-notebooks", json={
+            "title": "Giulia",
+            "group_ids": [own_shared.id, foreign.id, co_taught.id, own_shared.id, 999999, "x"],
+        }).json()
+        assert created["group_ids"] == [own_shared.id, co_taught.id]
+        updated = client.put(f"/teacher/practice-notebooks/{created['id']}", json={"group_ids": [own_private.id]}).json()
+        assert updated["group_ids"] == [own_private.id]
+        # Omesso: invariato.
+        assert client.put(f"/teacher/practice-notebooks/{created['id']}", json={"title": "G."}).json()["group_ids"] == [own_private.id]
+
+
+def test_practice_class_context_mirrors_what_a_real_student_receives():
+    with artifact_session() as db:
+        own_shared, own_private, co_taught, foreign = _groups(db)
+        practice = _seed_teacher(db)
+        practice.group_ids = [own_shared.id, own_private.id, co_taught.id, foreign.id]
+        db.commit()
+        request = ChatRequest(
+            message=" turno ", questionnaire_type="QSA", language="it",
+            notebook_context="practice", practice_notebook_id=practice.id,
+        )
+        system = _envelope(db, request, TEACHER, "QSA")
+        assert "[CONTESTO CLASSE]" in system
+        assert "Classe che ama il laboratorio" in system          # propria, condivisa con gli studenti
+        assert "Classe in co-docenza" in system                   # condivisa con il docente
+        assert "Contesto NON condiviso" not in system             # condivisione spenta
+        assert "Classe ESTRANEA" not in system                    # mai salvabile, mai nel contesto
+        assert system.index("[PROFILE]") < system.index("[CONTESTO CLASSE]")
+
+        # Idea non riceve il contesto classe, come per uno studente vero.
+        idea = ChatRequest(
+            message=" turno ", questionnaire_type="IDEA", language="it",
+            notebook_context="practice", practice_notebook_id=practice.id,
+        )
+        assert "[CONTESTO CLASSE]" not in _envelope(db, idea, TEACHER, "IDEA")
+
+        # Condivisione revocata o classe disattivata: esce al turno dopo.
+        db.query(models.GroupShare).filter(models.GroupShare.group_id == co_taught.id).delete()
+        own_shared.is_active = False
+        db.commit()
+        system = _envelope(db, request, TEACHER, "QSA")
+        assert "Classe in co-docenza" not in system
+        assert "Classe che ama il laboratorio" not in system
+        assert "[CONTESTO CLASSE]" not in system
+
+
+def test_teacher_student_memberships_never_enter_the_simulation():
+    """Le iscrizioni del docente come partecipante restano fuori dalla prova."""
+    with artifact_session() as db:
+        own_shared, _, _, foreign = _groups(db)
+        db.add(models.GroupMembership(group_id=foreign.id, username="t1"))
+        db.commit()
+        practice = _seed_teacher(db)
+        request = ChatRequest(
+            message=" turno ", questionnaire_type="QSA", language="it",
+            notebook_context="practice", practice_notebook_id=practice.id,
+        )
+        assert "Classe ESTRANEA" not in _envelope(db, request, TEACHER, "QSA")
+
+
+# --- Repertorio di prove ----------------------------------------------------
+
+QSA_SCORES = {"C1": 7, "C2": 4, "A1": 8}
+
+
+def test_repertoire_api_crud_validation_and_ownership():
+    with artifact_session() as db:
+        practice = _seed_teacher(db)
+        other = models.TeacherPracticeNotebook(owner_username="t2", title="Altro", data={})
+        db.add(other)
+        db.commit()
+        client = _app(db, TEACHER, practice_notebooks.router)
+        base = f"/teacher/practice-notebooks/{practice.id}/results"
+        manual = client.post(base, json={"questionnaire_type": "QSA", "scores": QSA_SCORES})
+        assert manual.status_code == 201
+        assert manual.json()["source"] == "manual" and manual.json()["session_id"]
+        generated = client.post(base, json={"questionnaire_type": "ZTPI", "scores": {"T1": 5}, "source": "generated"}).json()
+        chat = client.post(base, json={"questionnaire_type": "QSA", "scores": QSA_SCORES, "source": "chat", "session_id": "sess-1"}).json()
+        # Stessa sessione: nessun doppione.
+        again = client.post(base, json={"questionnaire_type": "QSA", "scores": QSA_SCORES, "source": "chat", "session_id": "sess-1"}).json()
+        assert again["id"] == chat["id"]
+        assert [row["id"] for row in client.get(base).json()] == [chat["id"], generated["id"], manual.json()["id"]]
+        assert {row["id"] for row in client.get(base + "?questionnaire_type=QSA").json()} == {chat["id"], manual.json()["id"]}
+        # Validazione: strumento senza punteggi, valori fuori scala, vuoto.
+        assert client.post(base, json={"questionnaire_type": "SAVICKAS", "scores": {"X": 5}}).status_code == 422
+        assert client.post(base, json={"questionnaire_type": "QSA", "scores": {"C1": 12}}).status_code == 422
+        assert client.post(base, json={"questionnaire_type": "QSA", "scores": {}}).status_code == 422
+        # Proprieta': repertorio di un altro docente invisibile.
+        assert client.get(f"/teacher/practice-notebooks/{other.id}/results").status_code == 404
+        assert client.post(f"/teacher/practice-notebooks/{other.id}/results", json={"questionnaire_type": "QSA", "scores": QSA_SCORES}).status_code == 404
+        assert client.delete(f"{base}/{generated['id']}").json() == {"deleted": generated["id"]}
+        assert client.delete(f"{base}/{generated['id']}").status_code == 404
+        # Mai tra le compilazioni del docente.
+        assert db.query(models.QuestionnaireResult).count() == 0
+        # Eliminare il taccuino elimina il suo repertorio.
+        client.delete(f"/teacher/practice-notebooks/{practice.id}")
+        assert db.query(models.TeacherPracticeResult).filter_by(notebook_id=practice.id).count() == 0
+
+
+def test_profile_comparison_reads_the_simulated_repertoire_in_practice():
+    from backend.skills.handlers import load_profile_results
+    with artifact_session() as db:
+        practice = _seed_teacher(db)
+        db.add(models.QuestionnaireResult(session_id="teacher-own", questionnaire_type="QAP", username="t1", scores={"P1": 3}))
+        db.add(models.TeacherPracticeResult(notebook_id=practice.id, owner_username="t1", questionnaire_type="QSA", scores={"C1": 2}, session_id="p-old"))
+        db.add(models.TeacherPracticeResult(notebook_id=practice.id, owner_username="t1", questionnaire_type="QSA", scores={"C1": 8}, session_id="p-new"))
+        db.commit()
+        simulated = load_profile_results(db, "p-new", "t1", "it", questionnaire_type="QSA", practice_notebook_id=practice.id)
+        assert [p["questionnaire_type"] for p in simulated] == ["QSA", "QSA"]
+        assert {p["occurrence"] for p in simulated} == {"current", "previous"}
+        # Un altro docente non legge il repertorio altrui nemmeno con l'id.
+        assert load_profile_results(db, "p-new", "t2", "it", practice_notebook_id=practice.id) == ()
+        # Fuori dalla prova restano le compilazioni del docente.
+        own = load_profile_results(db, "teacher-own", "t1", "it")
+        assert [p["questionnaire_type"] for p in own] == ["QAP"]
+
+
+def test_practice_turn_resolution_follows_role_and_ownership():
+    from backend.chat_preparation import _practice_notebook_id
+    with artifact_session() as db:
+        practice = _seed_teacher(db)
+        request = ChatRequest(message="x", questionnaire_type="QSA", notebook_context="practice", practice_notebook_id=practice.id)
+        assert _practice_notebook_id(db, TEACHER, request) == practice.id
+        assert _practice_notebook_id(db, {**STUDENT, "username": "t1"}, request) is None
+        assert _practice_notebook_id(db, TEACHER, ChatRequest(message="x", questionnaire_type="QSA")) is None
+
+
+def test_bussola_lists_the_simulated_students_instruments(monkeypatch):
+    monkeypatch.setattr(orientation, "AIService", _CapturingAI)
+    _CapturingAI.prompts = []
+    with artifact_session() as db:
+        practice = _seed_teacher(db)
+        db.add(models.QuestionnaireResult(session_id="teacher-own", questionnaire_type="QAP", username="t1", scores={"P1": 3}))
+        db.add(models.TeacherPracticeResult(notebook_id=practice.id, owner_username="t1", questionnaire_type="QSA", scores={"C1": 8}, session_id="p-1"))
+        db.commit()
+        client = _app(db, TEACHER, orientation_routes.router)
+        started = client.post("/orientation/sessions", json={"language": "it", "new_session": True}).json()
+        client.post(f"/orientation/sessions/{started['session_id']}/message", json={
+            "message": "Da dove parto?", "language": "it",
+            "notebook_context": "practice", "practice_notebook_id": practice.id,
+        })
+        prompt = _CapturingAI.prompts[-1]
+        section = prompt.split("Instruments already completed (by the simulated student)", 1)[1].split("Recommending", 1)[0]
+        assert "- QSA" in section and "QAP" not in section
+        assert "- QAP —" not in prompt          # le compilazioni del docente restano fuori
+        assert "C1" not in section              # mai i punteggi
+
+
+def test_diagram_instrument_falls_back_to_practice_session():
+    from backend.message_diagrams import session_questionnaire
+    with artifact_session() as db:
+        practice = _seed_teacher(db)
+        db.add(models.TeacherPracticeResult(notebook_id=practice.id, owner_username="t1", questionnaire_type="ZTPI", scores={"T1": 5}, session_id="p-ztpi"))
+        db.commit()
+        assert session_questionnaire(db, "p-ztpi") == "ZTPI"

@@ -107,14 +107,18 @@ interface ScoreInputFormProps {
     onSubmit: (scores: Record<string, number>) => void;
     initialScores?: Record<string, number>;
     onBack?: () => void;
+    // I taccuini di prova non toccano la bozza della compilazione personale.
+    persistDraft?: boolean;
+    // Più form nella stessa pagina (taccuini di prova): id distinti.
+    formId?: string;
 }
 
-export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack }: ScoreInputFormProps) {
+export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack, persistDraft = true, formId = 'score-form' }: ScoreInputFormProps) {
     const { t, tf } = useI18n();
     // Venticinque numeri copiati da un PDF vivevano solo dentro react-hook-form:
     // si perdevano al ricaricamento e anche solo tornando indietro di un passo,
     // perché il componente si smonta. La bozza li tiene finché non sono inviati.
-    const draft = loadScoreDraft(questionnaire.id);
+    const draft = persistDraft ? loadScoreDraft(questionnaire.id) : null;
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
         defaultValues: { scores: initialScores || draft?.scores || {} },
     });
@@ -123,6 +127,7 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack 
     // risalgono al form, quindi la bozza si legge da lì invece che dallo stato
     // interno della libreria.
     const rememberDraft = (event: FormEvent<HTMLFormElement>) => {
+        if (!persistDraft) return;
         const scores: Record<string, number> = {};
         for (const [name, value] of new FormData(event.currentTarget).entries()) {
             if (!name.startsWith('scores.') || typeof value !== 'string' || value === '') continue;
@@ -143,7 +148,7 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack 
         const scores = Object.fromEntries(
             Object.entries(data.scores).map(([code, value]) => [code, Number(value)]),
         );
-        clearScoreDraft();
+        if (persistDraft) clearScoreDraft();
         onSubmit(scores);
     };
 
@@ -161,14 +166,14 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack 
         <div className="w-full space-y-5 animate-fade-in-up">
             <div className="flex items-center gap-3">
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
-                <ForwardButton type="submit" form="score-form" label={t('score.submit')} />
+                <ForwardButton type="submit" form={formId} label={t('score.submit')} />
             </div>
             {missingCount > 0 && (
                 <p role="alert" className="max-w-4xl mx-auto rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
                     {t('score.error.summary', { count: missingCount })}
                 </p>
             )}
-            <form id="score-form" onChange={rememberDraft} onSubmit={handleSubmit(onFormSubmit)} className="max-w-4xl mx-auto space-y-4">
+            <form id={formId} onChange={rememberDraft} onSubmit={handleSubmit(onFormSubmit)} className="max-w-4xl mx-auto space-y-4">
                 <div className={cn("grid gap-x-8 gap-y-3", gridCols)}>
                     {groupedFactors.map(({ prefix, factors }) => {
                         const colorClass = PREFIX_COLOR[prefix] || 'text-slate-700';
