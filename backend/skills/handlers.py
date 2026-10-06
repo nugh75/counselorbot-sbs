@@ -77,13 +77,29 @@ def load_profile_results(
     questionnaire_type: str = "",
     per_instrument: int = PROFILE_RESULTS_PER_INSTRUMENT,
     limit: int = PROFILE_RESULTS_MAX,
+    practice_notebook_id: int | None = None,
 ) -> tuple[dict, ...]:
     """Risultati con punteggi dello stesso utente: per ogni strumento l'ultima
     compilazione e le precedenti fino a `per_instrument`, cosi' il confronto puo'
-    essere anche temporale. Lo strumento corrente viene per primo."""
+    essere anche temporale. Lo strumento corrente viene per primo.
+
+    In prova (`practice_notebook_id`, gia' verificato dal chiamante) il
+    repertorio e' quello dello studente simulato, mai le compilazioni del
+    docente."""
     if db is None:
         return ()
     owner = (username or "").strip()
+    if practice_notebook_id is not None:
+        rows = (
+            db.query(models.TeacherPracticeResult)
+            .filter(
+                models.TeacherPracticeResult.notebook_id == practice_notebook_id,
+                models.TeacherPracticeResult.owner_username == owner,
+            )
+            .order_by(models.TeacherPracticeResult.created_at.desc(), models.TeacherPracticeResult.id.desc())
+            .all()
+        )
+        return _profile_entries(db, rows, language, questionnaire_type, per_instrument, limit, date_field="created_at")
     if not owner and session_id:
         current = db.query(models.QuestionnaireResult).filter(
             models.QuestionnaireResult.session_id == session_id
@@ -98,6 +114,10 @@ def load_profile_results(
         .order_by(models.QuestionnaireResult.submitted_at.desc(), models.QuestionnaireResult.id.desc())
         .all()
     )
+    return _profile_entries(db, rows, language, questionnaire_type, per_instrument, limit)
+
+
+def _profile_entries(db, rows, language, questionnaire_type, per_instrument, limit, date_field="submitted_at") -> tuple[dict, ...]:
     # `rows` e' gia' ordinato dal piu' recente: la posizione dentro lo strumento
     # e' quindi anche la sua eta' (0 = attuale, 1 = precedente).
     latest = []
@@ -140,7 +160,7 @@ def load_profile_results(
         # (e oltre) = compilazioni anteriori dello stesso questionario.
         "occurrence": "current" if occurrences[row.id] == 0 else "previous",
         "occurrence_rank": occurrences[row.id],
-        "submitted_at": row.submitted_at.date().isoformat() if row.submitted_at else "",
+        "submitted_at": getattr(row, date_field).date().isoformat() if getattr(row, date_field) else "",
         "scores": tuple(
             {
                 "code": str(code),

@@ -419,3 +419,100 @@ def test_teacher_student_memberships_never_enter_the_simulation():
             notebook_context="practice", practice_notebook_id=practice.id,
         )
         assert "Classe ESTRANEA" not in _envelope(db, request, TEACHER, "QSA")
+
+
+# --- Repertorio di prove ----------------------------------------------------
+
+QSA_SCORES = {"C1": 7, "C2": 4, "A1": 8}
+
+
+def test_repertoire_api_crud_validation_and_ownership():
+    with artifact_session() as db:
+        practice = _seed_teacher(db)
+        other = models.TeacherPracticeNotebook(owner_username="t2", title="Altro", data={})
+        db.add(other)
+        db.commit()
+        client = _app(db, TEACHER, practice_notebooks.router)
+        base = f"/teacher/practice-notebooks/{practice.id}/results"
+        manual = client.post(base, json={"questionnaire_type": "QSA", "scores": QSA_SCORES})
+        assert manual.status_code == 201
+        assert manual.json()["source"] == "manual" and manual.json()["session_id"]
+        generated = client.post(base, json={"questionnaire_type": "ZTPI", "scores": {"T1": 5}, "source": "generated"}).json()
+        chat = client.post(base, json={"questionnaire_type": "QSA", "scores": QSA_SCORES, "source": "chat", "session_id": "sess-1"}).json()
+        # Stessa sessione: nessun doppione.
+        again = client.post(base, json={"questionnaire_type": "QSA", "scores": QSA_SCORES, "source": "chat", "session_id": "sess-1"}).json()
+        assert again["id"] == chat["id"]
+        assert [row["id"] for row in client.get(base).json()] == [chat["id"], generated["id"], manual.json()["id"]]
+        assert {row["id"] for row in client.get(base + "?questionnaire_type=QSA").json()} == {chat["id"], manual.json()["id"]}
+        # Validazione: strumento senza punteggi, valori fuori scala, vuoto.
+        assert client.post(base, json={"questionnaire_type": "SAVICKAS", "scores": {"X": 5}}).status_code == 422
+        assert client.post(base, json={"questionnaire_type": "QSA", "scores": {"C1": 12}}).status_code == 422
+        assert client.post(base, json={"questionnaire_type": "QSA", "scores": {}}).status_code == 422
+        # Proprieta': repertorio di un altro docente invisibile.
+        assert client.get(f"/teacher/practice-notebooks/{other.id}/results").status_code == 404
+        assert client.post(f"/teacher/practice-notebooks/{other.id}/results", json={"questionnaire_type": "QSA", "scores": QSA_SCORES}).status_code == 404
+        assert client.delete(f"{base}/{generated['id']}").json() == {"deleted": generated["id"]}
+        assert client.delete(f"{base}/{generated['id']}").status_code == 404
+        # Mai tra le compilazioni del docente.
+        assert db.query(models.QuestionnaireResult).count() == 0
+        # Eliminare il taccuino elimina il suo repertorio.
+        client.delete(f"/teacher/practice-notebooks/{practice.id}")
+        assert db.query(models.TeacherPracticeResult).filter_by(notebook_id=practice.id).count() == 0
+
+
+def test_profile_comparison_reads_the_simulated_repertoire_in_practice():
+    from backend.skills.handlers import load_profile_results
+    with artifact_session() as db:
+        practice = _seed_teacher(db)
+        db.add(models.QuestionnaireResult(session_id="teacher-own", questionnaire_type="QAP", username="t1", scores={"P1": 3}))
+        db.add(models.TeacherPracticeResult(notebook_id=practice.id, owner_username="t1", questionnaire_type="QSA", scores={"C1": 2}, session_id="p-old"))
+        db.add(models.TeacherPracticeResult(notebook_id=practice.id, owner_username="t1", questionnaire_type="QSA", scores={"C1": 8}, session_id="p-new"))
+        db.commit()
+        simulated = load_profile_results(db, "p-new", "t1", "it", questionnaire_type="QSA", practice_notebook_id=practice.id)
+        assert [p["questionnaire_type"] for p in simulated] == ["QSA", "QSA"]
+        assert {p["occurrence"] for p in simulated} == {"current", "previous"}
+        # Un altro docente non legge il repertorio altrui nemmeno con l'id.
+        assert load_profile_results(db, "p-new", "t2", "it", practice_notebook_id=practice.id) == ()
+        # Fuori dalla prova restano le compilazioni del docente.
+        own = load_profile_results(db, "teacher-own", "t1", "it")
+        assert [p["questionnaire_type"] for p in own] == ["QAP"]
+
+
+def test_practice_turn_resolution_follows_role_and_ownership():
+    from backend.chat_preparation import _practice_notebook_id
+    with artifact_session() as db:
+        practice = _seed_teacher(db)
+        request = ChatRequest(message="x", questionnaire_type="QSA", notebook_context="practice", practice_notebook_id=practice.id)
+        assert _practice_notebook_id(db, TEACHER, request) == practice.id
+        assert _practice_notebook_id(db, {**STUDENT, "username": "t1"}, request) is None
+        assert _practice_notebook_id(db, TEACHER, ChatRequest(message="x", questionnaire_type="QSA")) is None
+
+
+def test_bussola_lists_the_simulated_students_instruments(monkeypatch):
+    monkeypatch.setattr(orientation, "AIService", _CapturingAI)
+    _CapturingAI.prompts = []
+    with artifact_session() as db:
+        practice = _seed_teacher(db)
+        db.add(models.QuestionnaireResult(session_id="teacher-own", questionnaire_type="QAP", username="t1", scores={"P1": 3}))
+        db.add(models.TeacherPracticeResult(notebook_id=practice.id, owner_username="t1", questionnaire_type="QSA", scores={"C1": 8}, session_id="p-1"))
+        db.commit()
+        client = _app(db, TEACHER, orientation_routes.router)
+        started = client.post("/orientation/sessions", json={"language": "it", "new_session": True}).json()
+        client.post(f"/orientation/sessions/{started['session_id']}/message", json={
+            "message": "Da dove parto?", "language": "it",
+            "notebook_context": "practice", "practice_notebook_id": practice.id,
+        })
+        prompt = _CapturingAI.prompts[-1]
+        section = prompt.split("Instruments already completed (by the simulated student)", 1)[1].split("Recommending", 1)[0]
+        assert "- QSA" in section and "QAP" not in section
+        assert "- QAP —" not in prompt          # le compilazioni del docente restano fuori
+        assert "C1" not in section              # mai i punteggi
+
+
+def test_diagram_instrument_falls_back_to_practice_session():
+    from backend.message_diagrams import session_questionnaire
+    with artifact_session() as db:
+        practice = _seed_teacher(db)
+        db.add(models.TeacherPracticeResult(notebook_id=practice.id, owner_username="t1", questionnaire_type="ZTPI", scores={"T1": 5}, session_id="p-ztpi"))
+        db.commit()
+        assert session_questionnaire(db, "p-ztpi") == "ZTPI"

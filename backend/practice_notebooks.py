@@ -129,6 +129,33 @@ def requested_practice_notebook(db: Session, identity: dict | None, notebook_con
     return owned_practice_notebook(db, str((identity or {}).get("username") or ""), notebook_id)
 
 
+def practice_instruments_context(db: Session, notebook: models.TeacherPracticeNotebook | None) -> str:
+    """Strumenti gia' "compilati" dallo studente simulato: tipo e data, mai i punteggi.
+
+    Serve alla Bussola, che per uno studente vero legge le sue compilazioni."""
+    if notebook is None:
+        return ""
+    rows = (
+        db.query(models.TeacherPracticeResult.questionnaire_type, models.TeacherPracticeResult.created_at)
+        .filter(models.TeacherPracticeResult.notebook_id == notebook.id)
+        .order_by(models.TeacherPracticeResult.created_at.desc())
+        .all()
+    )
+    seen: dict[str, str] = {}
+    for qtype, created_at in rows:
+        if qtype not in seen:
+            seen[qtype] = created_at.date().isoformat() if created_at else ""
+    if not seen:
+        return ""
+    lines = ["### Instruments already completed (by the simulated student)"]
+    lines += [f"- {qtype}" + (f" ({day})" if day else "") for qtype, day in seen.items()]
+    lines.append(
+        "Recommending one of these opens its guided chat on results that already exist, "
+        "so the student does not fill it in again. You never see the scores and never interpret them."
+    )
+    return "\n".join(lines)
+
+
 def practice_notebook_context(notebook: models.TeacherPracticeNotebook | None) -> str:
     """Blocco [PROFILE] dello studente simulato: stessi campi del taccuino reale."""
     if notebook is None:

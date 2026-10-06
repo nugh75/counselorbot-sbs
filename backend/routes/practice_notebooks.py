@@ -7,8 +7,9 @@ proprietario: un id altrui risponde 404, come uno inesistente. Nessun limite
 al numero di taccuini.
 """
 
+import uuid
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -108,6 +109,74 @@ async def delete_practice_notebook(
     db: Session = Depends(get_db),
 ):
     notebook = _owned(db, current_user["username"], notebook_id)
+    db.query(models.TeacherPracticeResult).filter(
+        models.TeacherPracticeResult.notebook_id == notebook.id,
+    ).delete(synchronize_session=False)
     db.delete(notebook)
     db.commit()
     return {"deleted": notebook_id}
+
+
+# --- Repertorio di prove: profili di questionario dello studente simulato ---
+
+@router.get("/teacher/practice-notebooks/{notebook_id}/results", response_model=List[schemas.PracticeResultResponse])
+async def list_practice_results(
+    notebook_id: int,
+    questionnaire_type: Optional[str] = None,
+    current_user: dict = Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Profili del taccuino, dal piu' recente; filtrabili per strumento."""
+    notebook = _owned(db, current_user["username"], notebook_id)
+    query = db.query(models.TeacherPracticeResult).filter(models.TeacherPracticeResult.notebook_id == notebook.id)
+    if questionnaire_type:
+        query = query.filter(models.TeacherPracticeResult.questionnaire_type == questionnaire_type)
+    return query.order_by(models.TeacherPracticeResult.created_at.desc(), models.TeacherPracticeResult.id.desc()).all()
+
+
+@router.post("/teacher/practice-notebooks/{notebook_id}/results", response_model=schemas.PracticeResultResponse, status_code=201)
+async def create_practice_result(
+    notebook_id: int,
+    payload: schemas.PracticeResultCreate,
+    current_user: dict = Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Nuovo profilo: a mano, generato o dalla chat in prova (con la sua sessione).
+
+    Un secondo invio con la stessa sessione restituisce il profilo gia' salvato."""
+    notebook = _owned(db, current_user["username"], notebook_id)
+    if payload.session_id:
+        existing = db.query(models.TeacherPracticeResult).filter(
+            models.TeacherPracticeResult.notebook_id == notebook.id,
+            models.TeacherPracticeResult.session_id == payload.session_id,
+        ).first()
+        if existing is not None:
+            return existing
+    result = models.TeacherPracticeResult(
+        notebook_id=notebook.id, owner_username=notebook.owner_username,
+        questionnaire_type=payload.questionnaire_type, scores=payload.scores,
+        session_id=payload.session_id or str(uuid.uuid4()), source=payload.source,
+    )
+    db.add(result)
+    db.commit()
+    db.refresh(result)
+    return result
+
+
+@router.delete("/teacher/practice-notebooks/{notebook_id}/results/{result_id}")
+async def delete_practice_result(
+    notebook_id: int,
+    result_id: int,
+    current_user: dict = Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    notebook = _owned(db, current_user["username"], notebook_id)
+    result = db.query(models.TeacherPracticeResult).filter(
+        models.TeacherPracticeResult.id == result_id,
+        models.TeacherPracticeResult.notebook_id == notebook.id,
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Practice result not found")
+    db.delete(result)
+    db.commit()
+    return {"deleted": result_id}

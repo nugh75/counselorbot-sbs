@@ -20,7 +20,7 @@ from .chat_preferences import apply_response_format
 from . import models
 from .ai_service import AIError, AIService
 from .student_context import student_context, latest_learner_profile
-from .practice_notebooks import practice_notebook_context, simulation_notice
+from .practice_notebooks import practice_instruments_context, practice_notebook_context, simulation_notice
 from .prompt_contract import persona_context
 from .prompt_config import DEFAULT_COUNSELORBOT_CHAT_CONTEXT
 from .platform_guidance import platform_guidance_context
@@ -782,6 +782,9 @@ def analyze_turn(
             "\n[SIMULATION]\n" + simulation_notice(lang)
             + "\n\n[PROFILE]\n" + practice_notebook_context(practice_notebook) + "\n"
         )
+        instruments = practice_instruments_context(db, practice_notebook)
+        if instruments:
+            student += instruments + "\n"
     else:
         student = student_context(db, username)
         student += "\n" + goals_context(db, username)

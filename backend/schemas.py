@@ -833,6 +833,49 @@ class PracticeNotebookUpdate(BaseModel):
         return None if v is None else _practice_notebook_data(v)
 
 
+# Strumenti con punteggi per fattore (scala 1-9): gli unici con un profilo.
+PRACTICE_RESULT_TYPES = {"QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP"}
+PRACTICE_RESULT_MAX_FACTORS = 60
+
+
+class PracticeResultCreate(BaseModel):
+    questionnaire_type: str
+    scores: Dict[str, float]
+    source: Literal["manual", "generated", "chat"] = "manual"
+    session_id: Optional[str] = Field(default=None, max_length=100)
+
+    @validator("questionnaire_type")
+    def _known_type(cls, v):
+        if v not in PRACTICE_RESULT_TYPES:
+            raise ValueError("unsupported questionnaire_type")
+        return v
+
+    @validator("scores")
+    def _valid_scores(cls, v):
+        if not v or len(v) > PRACTICE_RESULT_MAX_FACTORS:
+            raise ValueError("scores required")
+        clean = {}
+        for code, value in v.items():
+            code = str(code).strip()
+            if not code or len(code) > 12 or not (1 <= float(value) <= 9):
+                raise ValueError("invalid score")
+            clean[code] = float(value)
+        return clean
+
+
+class PracticeResultResponse(BaseModel):
+    id: int
+    notebook_id: int
+    questionnaire_type: str
+    scores: Dict[str, float]
+    session_id: str
+    source: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 class PracticeNotebookResponse(BaseModel):
     id: int
     title: str
