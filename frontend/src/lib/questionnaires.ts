@@ -1,7 +1,26 @@
 // Questionnaire Configuration
 // This file defines all available questionnaires and their configurations
 
-export type QuestionnaireType = 'QSA' | 'QSAr' | 'QPCS' | 'QPCC' | 'ZTPI' | 'QAP' | 'SAVICKAS' | 'EVENTO_STUDIO' | 'EVENTO_PROFESSIONALE' | 'OBIETTIVO_STUDIO' | 'OBIETTIVO_DOCENZA' | 'IDEA';
+import type { InstrumentSummary } from './instruments-api';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { instrumentName, instrumentDescription } from './instruments-api.ts';
+
+export type QuestionnaireType =
+    | 'QSA'
+    | 'QSAr'
+    | 'QPCS'
+    | 'QPCC'
+    | 'ZTPI'
+    | 'QAP'
+    | 'SAVICKAS'
+    | 'EVENTO_STUDIO'
+    | 'EVENTO_PROFESSIONALE'
+    | 'OBIETTIVO_STUDIO'
+    | 'OBIETTIVO_DOCENZA'
+    | 'IDEA'
+    | (string & {});
+
+export type QuestionnaireIcon = 'chart' | 'clipboard' | 'target' | 'lightbulb' | 'clock' | 'compass' | 'briefcase';
 
 export interface QuestionnaireConfig {
     id: QuestionnaireType;
@@ -12,7 +31,7 @@ export interface QuestionnaireConfig {
     factors: FactorDefinition[];
     invertedFactors: string[];
     color: string;
-    icon: 'chart' | 'clipboard' | 'target' | 'lightbulb' | 'clock' | 'compass' | 'briefcase';
+    icon: QuestionnaireIcon;
     // Agent-only questionnaires are conducted entirely by the AI in chat:
     // no score-input form, no numeric factors (factors/factorPrefix empty).
     agentOnly?: boolean;
@@ -237,9 +256,78 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
 
 export const QUESTIONNAIRE_LIST = Object.values(QUESTIONNAIRES);
 
-// Helper to get questionnaire by ID
+const ALLOWED_ICONS = new Set<QuestionnaireIcon>([
+    'chart',
+    'clipboard',
+    'target',
+    'lightbulb',
+    'clock',
+    'compass',
+    'briefcase',
+]);
+
+export function tailwindColorFromTheme(colorTheme?: string): string {
+    if (!colorTheme) return 'bg-indigo-500';
+    if (colorTheme.startsWith('bg-')) return colorTheme;
+    const map: Record<string, string> = {
+        blue: 'bg-blue-500',
+        sky: 'bg-sky-500',
+        teal: 'bg-teal-500',
+        cyan: 'bg-cyan-500',
+        indigo: 'bg-indigo-500',
+        purple: 'bg-purple-500',
+        amber: 'bg-amber-500',
+        emerald: 'bg-emerald-500',
+        green: 'bg-green-500',
+        rose: 'bg-rose-500',
+    };
+    return map[colorTheme] ?? `bg-${colorTheme}-500`;
+}
+
+export function sanitizeQuestionnaireIcon(icon?: string): QuestionnaireIcon {
+    if (icon && ALLOWED_ICONS.has(icon as QuestionnaireIcon)) {
+        return icon as QuestionnaireIcon;
+    }
+    return 'compass';
+}
+
+export function buildDynamicQuestionnaireConfig(
+    summary: InstrumentSummary,
+    lang = 'it',
+): QuestionnaireConfig {
+    const isGuided = summary.tool_category === 'guided' || summary.item_count === 0 || summary.tool_category !== 'assessment';
+    return {
+        id: summary.code as QuestionnaireType,
+        name: instrumentName(summary, lang),
+        fullName: summary.name_i18n?.[lang] || summary.name_i18n?.it || summary.name_i18n?.en || summary.code,
+        description: instrumentDescription(summary, lang),
+        factorPrefix: [],
+        factors: [],
+        invertedFactors: [],
+        color: tailwindColorFromTheme(summary.color_theme),
+        icon: sanitizeQuestionnaireIcon(summary.icon),
+        agentOnly: isGuided,
+    };
+}
+
+export function buildFallbackQuestionnaireConfig(id: string): QuestionnaireConfig {
+    return {
+        id: id as QuestionnaireType,
+        name: id,
+        fullName: id,
+        description: '',
+        factorPrefix: [],
+        factors: [],
+        invertedFactors: [],
+        color: 'bg-indigo-500',
+        icon: 'compass',
+        agentOnly: true,
+    };
+}
+
+// Helper to get questionnaire by ID with fallback support
 export function getQuestionnaire(id: QuestionnaireType): QuestionnaireConfig {
-    return QUESTIONNAIRES[id];
+    return QUESTIONNAIRES[id as keyof typeof QUESTIONNAIRES] ?? buildFallbackQuestionnaireConfig(id);
 }
 
 // Instruments whose site profile can be uploaded as PDF instead of typing the scores.

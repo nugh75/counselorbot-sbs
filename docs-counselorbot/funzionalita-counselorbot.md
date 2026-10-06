@@ -105,6 +105,13 @@ alcuni fattori sono invertiti. Non si fanno diagnosi. La scheda di ciascuno stru
   `/docente`, basata sulle classi selezionate e sul Taccuino del docente. Allinea
   obiettivo, attività e valutazione; pubblicazione nel catalogo o assegnazione
   richiedono una scelta esplicita.
+- **Strumenti e percorsi personalizzati**: gli strumenti e le chat guidate create
+  e attivate dall'amministrazione compaiono dinamicamente nel catalogo attività
+  dello studente (nella sezione dei percorsi guidati o delle analisi questionari a
+  seconda della categoria), con nome, icona, tema e descrizione localizzata.
+  Dalla scheda (`/strumenti/<codice>`) è possibile visualizzarne le caratteristiche
+  e avviare la chat guidata. Gli strumenti disattivati o riservati ai docenti sono
+  esclusi dal catalogo studente.
 
 ## Chat, voce e ripresa
 
