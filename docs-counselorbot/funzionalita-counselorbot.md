@@ -46,7 +46,7 @@ modalità ogni volta e non cambia la preferenza degli altri strumenti.
 Ogni counselor dispone di un’identità visiva e pedagogica riconoscibile:
 - **Frase distintiva (tagline)**: breve sintesi multilingua dello stile di accompagnamento (es. chiarire sfumature con domande, spazio empatico di ascolto, azioni pratiche dirette, metodo strutturato).
 - **Categorie di approccio**: appartenenza multipla a categorie base (`filosofo`, `psicologo`, `docente`, `orientatore`, `tutor`) e tratti specifici (`maieutico`, `empatico`, `pragmatico`, `analitico`, `motivazionale`, `metodico`).
-- **Avatar e illustrazione**: riferimento visivo dedicato alla persona virtuale (`avatar_url`), con illustrazioni vettoriali SVG per ciascun counselor.
+- **Avatar e illustrazione**: riferimento visivo dedicato alla persona virtuale (`avatar_url`), con illustrazioni vettoriali SVG per ciascuno dei 12 counselor (Minerva, Bruno, Clio, Davide, Elena, Giulia, Iride, Luca, Marco, Nadia, Nora, Sara) disegnate nella palette di piattaforma (petrolio/turchese con accenti caldi arancio/ambra) e caratterizzate da simboli pedagogici distintivi (civetta della saggezza, bussola di orientamento, libro della narrazione, blocchi verso l'azione, cuore empatico, germoglio di crescita, prisma di luce, filo e scintilla di intuizione, cannocchiale di scoperta, sole didattico, bilancia zen e stella guida).
 - **Ricerca e raccomandazione per approccio**: ricerca libera in linguaggio naturale (es. «Vorrei qualcuno che mi faccia riflettere con domande...») che consiglia il counselor più adatto spiegando la motivazione, con filtri per lingua, audience e strumento.
 
 Nell'interfaccia utente del selettore counselor (`CounselorSelector`):
