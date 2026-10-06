@@ -65,6 +65,19 @@ Envelope del turno (modalità prova):
   con `context_visible_to_students`, con lo stesso blocco e lo stesso tetto
   (600) di `class_context_for_student`; mai in IDEA né nella Bussola. Le
   iscrizioni del docente come partecipante non entrano.
+- **Repertorio di prove** `TeacherPracticeResult` (`teacher_practice_results`,
+  tabella nuova): `notebook_id`, owner, strumento (QSA, QSAr, ZTPI, QPCS, QPCC,
+  QAP), punteggi 1–9 (≤60 fattori), `session_id`, `source`
+  (`manual|generated|chat`). API `GET/POST /teacher/practice-notebooks/{id}/results`
+  (filtro `questionnaire_type`; stesso `session_id` = idempotente) e
+  `DELETE …/results/{rid}`; eliminare il taccuino elimina il repertorio.
+  All'avvio in prova (`app/page.tsx`) i punteggi nuovi vanno qui con
+  `source=chat` e `session_id` della chat; un profilo scelto dal repertorio non
+  si duplica; nessun `POST /questionnaire-result`. Le sessioni in prova non hanno
+  un `QuestionnaireResult`: proprietà da log/snapshot, strumento dei diagrammi
+  dal repertorio. In prova `skills.handlers.load_profile_results` legge il
+  repertorio (id risolto con ruolo e proprietà in `chat_preparation`) e la
+  Bussola elenca gli strumenti del repertorio senza punteggi.
 - **API** (`auth.get_current_plan_manager`, owner verificato, altrui = 404):
   `GET /teacher/practice-notebooks[?include_archived=true]`,
   `POST /teacher/practice-notebooks`, `PUT /teacher/practice-notebooks/{id}`
@@ -110,8 +123,9 @@ Limiti:
 - Telegram e OpenCode non hanno il popover Opzioni e non offrono la scelta; la
   chat dell'Assistente non usa il taccuino.
 - La trascrizione, i punteggi e la memoria sono quelli della sessione del
-  docente (sono parte della simulazione). La skill `profile-comparison`, su una
-  richiesta esplicita di confronto tra compilazioni, legge ancora i risultati
-  salvati del docente per username, come già con `none`/`teacher`.
+  docente (sono parte della simulazione). Le sessioni in prova non compaiono
+  tra le Compilazioni: PDF e conversazione dall'Area personale non le elencano.
+- Se in prova il docente sceglie un proprio risultato salvato, la chat usa quei
+  punteggi con lo studente simulato e non li copia nel repertorio.
 - La Bussola non mostra la scelta prima di aprire una sessione: l'apertura usa
   la scelta già memorizzata nel browser (anche dalle chat guidate).
