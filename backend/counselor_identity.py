@@ -362,6 +362,7 @@ def _build_public_counselor(
     pub.tagline_i18n = r.tagline_i18n
     pub.approach_categories = r.approach_categories or []
     pub.avatar_url = r.avatar_url or r.avatar
+    pub.approach_summary = pub.tagline or (pub.description if pub.description else None)
     preset = preset_map.get(r.preset_id) if r.preset_id else None
     provider = preset.provider if preset else active_provider_val
     pub.model_origin = "local" if provider in {"ollama", "llamacpp"} else "external"
@@ -561,4 +562,19 @@ def ensure_counselor_schema(connection) -> None:
                 connection.execute(text(f"ALTER TABLE counselors {col}"))
             except Exception:
                 pass
+
+
+def get_all_approach_categories(db: Session) -> List[str]:
+    """Restituisce l'elenco ordinato di tutte le categorie censite nel sistema."""
+    cats_set: Set[str] = set(BASE_APPROACH_CATEGORIES)
+    rows = db.query(models.Counselor.approach_categories).filter(models.Counselor.is_active.is_(True)).all()
+    for (row_cats,) in rows:
+        if isinstance(row_cats, list):
+            for c in row_cats:
+                if isinstance(c, str) and c.strip():
+                    cats_set.add(c.lower().strip())
+    # Ordine: categorie base note prima, poi eventuali estensioni in ordine alfabetico
+    base_part = [c for c in BASE_APPROACH_CATEGORIES if c in cats_set]
+    extra_part = sorted([c for c in cats_set if c not in BASE_APPROACH_CATEGORIES])
+    return base_part + extra_part
 

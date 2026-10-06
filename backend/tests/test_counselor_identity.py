@@ -376,3 +376,38 @@ def test_recommendation_filters(client_env):
     )
     assert res_stud.status_code == 200
     assert res_stud.json()["counselor"]["slug"] == "english-student"
+
+
+def test_counselor_categories_and_public_alias(client_env):
+    """Verifica che /counselors/categories e /counselors/public rispondano correttamente."""
+    client, db = client_env
+    c = models.Counselor(
+        slug="ipazia",
+        name="Ipazia",
+        tagline_i18n={"it": "Riflessione critica e matematica antica."},
+        approach_categories=["filosofo", "matematico"],
+        avatar_url="/images/counselors/ipazia.svg",
+        is_active=True,
+    )
+    db.add(c)
+    db.commit()
+
+    # GET /counselors/categories
+    res_cats = client.get("/counselors/categories")
+    assert res_cats.status_code == 200
+    cats = res_cats.json()
+    assert isinstance(cats, list)
+    assert "filosofo" in cats
+    assert "matematico" in cats
+    assert "psicologo" in cats
+
+    # GET /counselors/public
+    res_pub = client.get("/counselors/public?lang=it")
+    assert res_pub.status_code == 200
+    items = res_pub.json()
+    ipazia = next((item for item in items if item["slug"] == "ipazia"), None)
+    assert ipazia is not None
+    assert ipazia["tagline"] == "Riflessione critica e matematica antica."
+    assert ipazia["approach_summary"] == "Riflessione critica e matematica antica."
+    assert ipazia["approach_categories"] == ["filosofo", "matematico"]
+    assert ipazia["avatar_url"] == "/images/counselors/ipazia.svg"

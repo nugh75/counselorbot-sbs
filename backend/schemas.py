@@ -1294,6 +1294,7 @@ class CounselorPublic(BaseModel):
     tagline_i18n: Optional[dict] = None
     approach_categories: List[str] = Field(default_factory=list)
     avatar_url: Optional[str] = None
+    approach_summary: Optional[str] = None
     voice_mapping: Optional[dict] = None
     avatar: Optional[str] = None
     questionnaire_types: Optional[List[str]] = None
