@@ -663,6 +663,21 @@ nel database con metadati estesi (`is_active`, `tool_category`, `description_i18
 automaticamente tutti gli strumenti registrati con risoluzione convenzionale
 dei testi, mentre il catalogo studenti filtra solo gli strumenti attivi mantenendo
 le bozze visibili agli amministratori.
+La testata della Mappa dei prompt e l'editor degli strumenti includono il pulsante
+**+ Nuova Chat Guidata** / **+ Nuovo Strumento**, che apre una procedura guidata
+accessibile in 3 passaggi:
+1. **Dati base**: codice identificativo univoco (slug maiuscolo, es. `ORIENTA_TEST`),
+   titolo e descrizione multilingua nelle 6 lingue, categoria (`guided` per chat
+   conversazionali o `assessment` per questionari psicometrici), destinatari
+   (`student`, `teacher`, `both`), icona, colore tema, modalità di avanzamento
+   (`interactive` o `direct`) e opzione di salvataggio iniziale come bozza (`is_active=false`).
+2. **Template passaggi**: scelta della struttura iniziale degli step tra percorso
+   riflessivo standard a 3 passi (Introduzione → Esplorazione → Sintesi), colloquio
+   tematico a passo singolo o strumento vuoto, con anteprima in tempo reale degli step generati.
+3. **Counselor e rilascio**: selezione dei counselor abilitati a condurre il percorso,
+   riepilogo della configurazione e invio coordinato che crea lo strumento (`POST /admin/instruments`),
+   gli step iniziali (`POST /admin/guided-steps`) e associa i counselor abilitati
+   (`PUT /admin/counselors/{id}`). Al termine, la mappa seleziona automaticamente il nuovo percorso.
 
 Ogni testo e la sua bozza mostrano il numero stimato di token, compresi persona
 del counselor e domande suggerite. Ogni istruzione destinata al modello ha i
