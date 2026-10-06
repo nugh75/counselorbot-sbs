@@ -1,4 +1,4 @@
-import { apiFetch } from './auth';
+import { apiFetch } from './auth.ts';
 // Selezione del counselor lato utente: persistita in localStorage e iniettata
 // come `counselor_id` nelle richieste di chat dei questionari guidati.
 
@@ -7,6 +7,11 @@ export interface PublicCounselor {
     slug: string;
     name: string;
     description?: string | null;
+    tagline?: string | null;
+    tagline_i18n?: Record<string, string> | null;
+    approach_categories?: string[] | null;
+    avatar_url?: string | null;
+    approach_summary?: string | null;
     voice_mapping?: Record<string, string> | null;
     avatar?: string | null;
     questionnaire_types?: string[] | null;
@@ -23,6 +28,22 @@ export interface PublicCounselor {
     // Il modello puo' ragionare: falso solo per le famiglie note come
     // non-reasoning.
     reasoning_capable?: boolean;
+}
+
+export interface CounselorRecommendationRequest {
+    query: string;
+    language?: string;
+    questionnaire_type?: string;
+    audience?: string;
+}
+
+export interface CounselorRecommendationResponse {
+    counselor?: PublicCounselor | null;
+    confidence: number;
+    explanation: string;
+    matched_categories: string[];
+    match_reasons: string[];
+    alternatives: PublicCounselor[];
 }
 
 const KEY = 'counselorbot_selected_counselor';
@@ -84,5 +105,63 @@ export async function fetchCounselors(
         return Array.isArray(data) ? data : [];
     } catch {
         return [];
+    }
+}
+
+/**
+ * Risolve la frase distintiva (tagline) del counselor localizzata per la lingua richiesta
+ * con fallback ordinato sulle altre lingue, su approach_summary o description.
+ */
+export function getCounselorTagline(counselor: PublicCounselor, lang?: string): string {
+    if (counselor.tagline_i18n) {
+        if (lang && counselor.tagline_i18n[lang]) {
+            return counselor.tagline_i18n[lang];
+        }
+        const fallbacks = ['it', 'en', 'es', 'fr', 'de', 'sv', 'pt'];
+        for (const fb of fallbacks) {
+            if (counselor.tagline_i18n[fb]) return counselor.tagline_i18n[fb];
+        }
+        const values = Object.values(counselor.tagline_i18n);
+        if (values.length > 0 && typeof values[0] === 'string') return values[0];
+    }
+    if (counselor.tagline) {
+        return counselor.tagline;
+    }
+    return counselor.approach_summary || counselor.description || '';
+}
+
+/**
+ * Recupera l'elenco di tutte le categorie di approccio censite dal backend.
+ * In caso di errore di rete o backend non raggiungibile, fa fallback sulle categorie base.
+ */
+export async function fetchCounselorCategories(): Promise<string[]> {
+    try {
+        const res = await apiFetch('/api/counselors/categories', { cache: 'no-store' });
+        if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) return data;
+        }
+    } catch {
+        // Ignora e usa fallback
+    }
+    return ['filosofo', 'psicologo', 'docente', 'orientatore', 'tutor'];
+}
+
+/**
+ * Interroga il motore semantico di raccomandazione per query libera sullo stile o approccio cercato.
+ */
+export async function recommendCounselor(
+    req: CounselorRecommendationRequest
+): Promise<CounselorRecommendationResponse | null> {
+    try {
+        const res = await apiFetch('/api/counselors/recommend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(req),
+        });
+        if (!res.ok) return null;
+        return (await res.json()) as CounselorRecommendationResponse;
+    } catch {
+        return null;
     }
 }
