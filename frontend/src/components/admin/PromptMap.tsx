@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDownRight, ChevronDown, ChevronRight, ChevronUp, Layers, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { ArrowDownRight, ChevronDown, ChevronRight, ChevronUp, Layers, Pencil, Play, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview } from '@/components/admin/PromptRequestPreview';
 import { CreateInstrumentDialog } from '@/components/admin/CreateInstrumentDialog';
+import { AdminChatSandboxModal } from '@/components/admin/AdminChatSandboxModal';
 import { estimateTokens } from '@/lib/context-tokens';
 import type { AdminGuidedStepQuestion } from '@/lib/guided-step-questions';
 import {
@@ -833,6 +834,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
     const [structureBusy, setStructureBusy] = useState(false);
     const [structureError, setStructureError] = useState('');
     const [creatingInstrument, setCreatingInstrument] = useState(false);
+    const [testingChat, setTestingChat] = useState(false);
 
     const handleInstrumentCreated = async (newCode: string) => {
         try {
@@ -1004,6 +1006,10 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                         className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
                         <RefreshCw aria-hidden className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />{t('admin.promptMap.reload')}
                     </button>
+                    <button type="button" onClick={() => setTestingChat(true)} disabled={!instrument}
+                        className="inline-flex items-center gap-1 rounded border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-60">
+                        <Play aria-hidden className="h-3.5 w-3.5" />{t('admin.promptMap.testChat')}
+                    </button>
                     <button type="button" onClick={() => setCreatingInstrument(true)}
                         className="inline-flex items-center gap-1 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700">
                         <Plus aria-hidden className="h-3.5 w-3.5" />{t('admin.instrumentWizard.createButton')}
@@ -1116,6 +1122,14 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                 open={creatingInstrument}
                 onClose={() => setCreatingInstrument(false)}
                 onCreated={handleInstrumentCreated}
+            />
+        )}
+        {testingChat && (
+            <AdminChatSandboxModal
+                open={testingChat}
+                instrumentCode={instrument}
+                instrumentName={name(instrument)}
+                onClose={() => setTestingChat(false)}
             />
         )}
     </section>;
