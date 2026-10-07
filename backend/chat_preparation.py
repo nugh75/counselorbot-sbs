@@ -36,7 +36,9 @@ from .chat_logic import (
     _conversational_retrieval_tail,
     _is_conversational_mode,
     _is_intro_step_mode,
+    extract_clean_student_message,
     filter_scores_by_components,
+    format_step_continuation_prompt,
     get_prompt_component_flags,
     get_prompt_component_options,
     previous_certified_strategy_ids,
@@ -305,6 +307,22 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         if _is_strategy_questionnaire(questionnaire_type) else effective_message
     )
 
+    is_step_entry = bool(getattr(request, "use_phase_prompt", False))
+    if is_step_entry:
+        step_instruction = model_message if component_flags.get("step_prompt", True) else ""
+    elif step:
+        step_prompt_text = (step.prompt or "").strip()
+        if phase_prompt_key and phase_prompt_key + ":prompt" in configs:
+            override_val = (configs[phase_prompt_key + ":prompt"] or "").strip()
+            if override_val:
+                step_prompt_text = override_val
+        if _is_strategy_questionnaire(questionnaire_type):
+            step_prompt_text = _annotate_qsa_factor_codes(step_prompt_text, request.language, questionnaire_type=questionnaire_type)
+        formatted_continuation = format_step_continuation_prompt(step_prompt_text)
+        step_instruction = formatted_continuation if component_flags.get("step_prompt", True) else ""
+    else:
+        step_instruction = ""
+
     # Punteggi nel messaggio scope-ati alla sezione corrente: il modello analizza
     # solo i fattori del suo step, non quelli di altre sezioni. Il profilo intero
     # resta persistito (update_context) per i follow-up cross-sezione.
@@ -385,6 +403,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         c_persona=c_persona, counselor_name=c_name, system_prompt=system_prompt, step_label=step_label,
         step_id=request.phase,
         questionnaire_type=questionnaire_type, effective_message=model_message,
+        step_instruction=step_instruction,
         model_scores_context=model_scores_context, message_scores_context=message_scores_context,
         knowledge_context=knowledge_context, include_scores_reference=include_analysis_context,
         component_flags=component_flags,
@@ -487,24 +506,35 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     for level, config in level_configs.items():
         persona_key = f"counselor_persona:{request.counselor_id}"
         persona = variant_text(configs, persona_key, level).strip() or c_persona
-        phase_text = model_message
-        if request.use_phase_prompt and phase_prompt_key:
-            phase_text = variant_text(configs, phase_prompt_key + ":prompt", level).strip() or model_message
+        phase_text = ""
+        if step and phase_prompt_key:
+            variant_step_prompt = variant_text(configs, phase_prompt_key + ":prompt", level).strip()
+            if not variant_step_prompt:
+                if phase_prompt_key + ":prompt" in configs and (configs[phase_prompt_key + ":prompt"] or "").strip():
+                    variant_step_prompt = (configs[phase_prompt_key + ":prompt"] or "").strip()
+                else:
+                    variant_step_prompt = (step.prompt or "").strip()
             if _is_strategy_questionnaire(questionnaire_type):
-                phase_text = _annotate_qsa_factor_codes(phase_text, request.language, questionnaire_type=questionnaire_type)
+                variant_step_prompt = _annotate_qsa_factor_codes(variant_step_prompt, request.language, questionnaire_type=questionnaire_type)
+            if is_step_entry:
+                phase_text = variant_step_prompt
+            else:
+                phase_text = format_step_continuation_prompt(variant_step_prompt)
+
+        phase_step_instruction = phase_text if component_flags.get("step_prompt", True) else ""
         meta = _instrument_meta_system_prompt(db, questionnaire_type, request.phase, config)
         persona_block = persona_context(persona, c_name).strip()
-        level_prefix = rendered("\n\n".join(instruction_parts(request, level_systems[level], phase_text,
+        level_prefix = rendered("\n\n".join(instruction_parts(request, level_systems[level], phase_step_instruction,
             persona_block, meta, component_flags)))
         level_message = full_message
-        if request.use_phase_prompt and request.mode.startswith(("qpcs-", "idea-")) and component_flags.get("step_prompt", True):
+        if is_step_entry and request.mode.startswith(("qpcs-", "idea-")) and component_flags.get("step_prompt", True):
             level_message = f"{message_scores_context}\n\n{phase_text}".strip() if message_scores_context else phase_text
         variants[level] = {
             "system": "\n\n".join(part for part in (level_prefix, remainder) if part),
             "message": level_message,
             "components": {
                 "system_prompt": rendered(level_systems[level]) if component_flags.get("system_prompt", True) else "",
-                "step_prompt": phase_text if component_flags.get("step_prompt", True) else "",
+                "step_prompt": phase_step_instruction,
                 "counselor": rendered(persona_block) if component_flags.get("counselor", True) else "",
                 "meta_system_prompt": rendered(meta),
             },
