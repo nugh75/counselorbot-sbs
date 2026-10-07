@@ -224,3 +224,33 @@ test('filterCounselorsByCategories excludes recommended counselor if it lacks so
     assert.deepEqual(filteredZero.map((c) => c.id), [1, 2]);
 });
 
+test('CounselorCover component and 16:9 rectangular layout before description in CounselorSelector', () => {
+    const selectorSrc = counselorSelectorSource();
+    const coverSrc = readFileSync(new URL('../components/questionnaire/CounselorCover.tsx', import.meta.url), 'utf8');
+
+    // 1. In CounselorSelector, CounselorCover e' importato e renderizzato
+    assert.match(selectorSrc, /import\s*\{\s*CounselorCover\s*\}\s*from\s*'\.\/CounselorCover'/);
+    assert.match(selectorSrc, /<CounselorCover[\s\S]*?src=\{c\.avatar_url\}[\s\S]*?counselor=\{c\}/);
+
+    // 2. Il vecchio avatar rotondo h-11 w-11 rounded-full e' stato rimosso dalla card
+    assert.doesNotMatch(selectorSrc, /h-11 w-11 shrink-0 rounded-full/);
+
+    // 3. Posizionamento: CounselorCover compare PRIMA di c.description
+    const coverIndex = selectorSrc.indexOf('<CounselorCover');
+    const descIndex = selectorSrc.indexOf('c.description || t(\'counselor.toneDefault\')');
+    assert.ok(coverIndex !== -1, 'CounselorCover must be present in CounselorSelector');
+    assert.ok(descIndex !== -1, 'Counselor description must be present in CounselorSelector');
+    assert.ok(coverIndex < descIndex, 'CounselorCover must be positioned BEFORE counselor description');
+
+    // 4. Anche la scheda raccomandazione usa CounselorCover
+    const recommendationBlock = selectorSrc.slice(selectorSrc.indexOf('recommendation?.counselor &&'));
+    assert.match(recommendationBlock, /<CounselorCover[\s\S]*?src=\{recommendation\.counselor\.avatar_url\}/);
+
+    // 5. CounselorCover implementa il formato 16:9, gestione onError e fallback procedurale
+    assert.match(coverSrc, /aspect-\[16\/9\]/);
+    assert.match(coverSrc, /onError=\{/);
+    assert.match(coverSrc, /ProceduralCoverFallback/);
+    assert.match(coverSrc, /Play/); // Badge video
+    assert.match(coverSrc, /getDeterministicHash/);
+});
+
