@@ -168,12 +168,12 @@ export async function recommendCounselor(
 }
 
 /**
- * Filtra e ordina i counselor in base alle categorie/tag selezionati.
+ * Filtra e ordina i counselor in base alle categorie/tag selezionati (logica AND).
  * - Se selectedCategories e' vuoto, restituisce tutti i counselor.
- * - Se ci sono tag selezionati, filtra i counselor mostrando quelli che contengono
- *   almeno uno dei tag selezionati.
- * - Ordina i filtrati per numero decrescente di tag corrispondenti (piu' match in cima),
- *   preservando la priorita' del counselor raccomandato se presente.
+ * - Se ci sono tag selezionati, include SOLO i counselor che possiedono TUTTI
+ *   i tag selezionati (match AND: countMatches === tagSet.size).
+ * - Preserva la priorita' del counselor raccomandato in cima se presente e rispondente
+ *   alla condizione AND, con ordinamento altrimenti stabile.
  */
 export function filterCounselorsByCategories(
     counselors: PublicCounselor[],
@@ -208,7 +208,7 @@ export function filterCounselorsByCategories(
         return matches;
     };
 
-    const matching = counselors.filter((c) => countMatches(c) > 0);
+    const matching = counselors.filter((c) => countMatches(c) === tagSet.size);
 
     return matching.sort((a, b) => {
         const aRec = Boolean(recommendedCounselorId != null && a.id === recommendedCounselorId);
@@ -216,7 +216,7 @@ export function filterCounselorsByCategories(
         if (aRec !== bRec) {
             return aRec ? -1 : 1;
         }
-        return countMatches(b) - countMatches(a);
+        return 0;
     });
 }
 
