@@ -5,6 +5,7 @@ import { Check, Cpu, Cloud, Search, Sparkles, X, Filter } from 'lucide-react';
 import {
     fetchCounselorCategories,
     fetchCounselors,
+    filterCounselorsByCategories,
     getCounselorTagline,
     getSelectedCounselorId,
     recommendCounselor,
@@ -45,13 +46,28 @@ export function CounselorSelector({
 
     // Categorie e filtro
     const [allCategories, setAllCategories] = useState<string[]>([]);
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
     // Ricerca per stile / approccio
     const [searchQuery, setSearchQuery] = useState('');
     const [searching, setSearching] = useState(false);
     const [searchNoMatch, setSearchNoMatch] = useState(false);
     const [recommendation, setRecommendation] = useState<CounselorRecommendationResponse | null>(null);
+
+    const toggleCategory = (cat: string) => {
+        setSelectedCategories((prev) => {
+            const normalized = cat.toLowerCase().trim();
+            const exists = prev.some((c) => c.toLowerCase().trim() === normalized);
+            if (exists) {
+                return prev.filter((c) => c.toLowerCase().trim() !== normalized);
+            }
+            return [...prev, cat];
+        });
+    };
+
+    const clearCategories = () => {
+        setSelectedCategories([]);
+    };
 
     const load = useCallback(async () => {
         setLoaded(false);
@@ -128,15 +144,14 @@ export function CounselorSelector({
         setSearchNoMatch(false);
     };
 
-    // Filtra counselor in base alla categoria attiva
+    // Filtra e ordina i counselor in base alle categorie attive
     const filteredCounselors = useMemo(() => {
-        if (!selectedCategory) return counselors;
-        return counselors.filter((c) =>
-            (c.approach_categories || []).some(
-                (cat) => cat.toLowerCase().trim() === selectedCategory.toLowerCase().trim()
-            )
+        return filterCounselorsByCategories(
+            counselors,
+            selectedCategories,
+            recommendation?.counselor?.id
         );
-    }, [counselors, selectedCategory]);
+    }, [counselors, selectedCategories, recommendation?.counselor?.id]);
 
     if (!loaded) {
         return (
@@ -409,16 +424,33 @@ export function CounselorSelector({
             {/* Filtro per categoria */}
             {allCategories.length > 0 && (
                 <div className="space-y-2">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-                        <Filter className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{t('counselor.filter.label')}</span>
+                    <div className="flex items-center justify-between gap-2 text-xs font-semibold text-slate-600">
+                        <div className="flex items-center gap-1.5">
+                            <Filter className="h-3.5 w-3.5 text-slate-400" />
+                            <span>{t('counselor.filter.label')}</span>
+                            {selectedCategories.length > 0 && (
+                                <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-2xs font-semibold text-indigo-700">
+                                    {selectedCategories.length}
+                                </span>
+                            )}
+                        </div>
+                        {selectedCategories.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={clearCategories}
+                                className="inline-flex items-center gap-1 text-2xs font-medium text-slate-500 hover:text-indigo-600 transition-colors"
+                            >
+                                <X className="h-3 w-3" />
+                                <span>{t('counselor.filter.reset')}</span>
+                            </button>
+                        )}
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                         <button
                             type="button"
-                            onClick={() => setSelectedCategory(null)}
+                            onClick={clearCategories}
                             className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                                selectedCategory === null
+                                selectedCategories.length === 0
                                     ? 'bg-indigo-600 text-white shadow-sm font-semibold'
                                     : 'border border-slate-200 bg-white text-slate-700 hover:border-indigo-200 hover:bg-slate-50 font-medium'
                             }`}
@@ -432,12 +464,15 @@ export function CounselorSelector({
                                 )
                             ).length;
                             if (count === 0) return null;
-                            const active = selectedCategory === cat;
+                            const active = selectedCategories.some(
+                                (c) => c.toLowerCase().trim() === cat.toLowerCase().trim()
+                            );
                             return (
                                 <button
                                     key={cat}
                                     type="button"
-                                    onClick={() => setSelectedCategory(active ? null : cat)}
+                                    onClick={() => toggleCategory(cat)}
+                                    aria-pressed={active}
                                     className={`rounded-full px-3 py-1 text-xs transition-colors ${
                                         active
                                             ? 'bg-indigo-600 text-white shadow-sm font-semibold'
@@ -478,14 +513,14 @@ export function CounselorSelector({
                 )}
             </div>
 
-            {groups.length === 0 && selectedCategory && (
+            {groups.length === 0 && selectedCategories.length > 0 && (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center space-y-2">
                     <p className="text-sm text-slate-600">
                         {t('counselor.filter.empty')}
                     </p>
                     <button
                         type="button"
-                        onClick={() => setSelectedCategory(null)}
+                        onClick={clearCategories}
                         className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline"
                     >
                         {t('counselor.filter.all')}

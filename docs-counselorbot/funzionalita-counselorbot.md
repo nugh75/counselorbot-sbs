@@ -52,7 +52,7 @@ Ogni counselor dispone di un’identità visiva e pedagogica riconoscibile:
 Nell'interfaccia utente del selettore counselor (`CounselorSelector`):
 - Ciascuna scheda mostra avatar, nome, frase distintiva localizzata in base alla lingua attiva, badge delle categorie di approccio e dettagli del modello AI impiegato.
 - Sopra l'elenco è presente una barra di ricerca per approccio («Che tipo di counselor vorresti?») con pulsante di ricerca e scheda di proposta che evidenzia il counselor consigliato, la motivazione e un pulsante per selezionarlo direttamente con un click.
-- Sopra le schede è disponibile un filtro rapido a chip per categorie di approccio («Tutti» e le singole categorie disponibili con conteggio), per filtrare istantaneamente i counselor visibili.
+- Sopra le schede è disponibile un filtro rapido a chip per categorie di approccio («Tutti», chip con selezione multipla e pulsante «Azzera filtri»); il selettore mostra i counselor che contengono almeno uno dei tag selezionati e li ordina per rilevanza (numero decrescente di tag corrispondenti), preservando la priorità dell'eventuale counselor raccomandato.
 
 ## Bussola, Assistente e Guida
 
