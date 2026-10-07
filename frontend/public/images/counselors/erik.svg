@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="bg_erik" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="50%" stop-color="#064e3b" />
+      <stop offset="100%" stop-color="#022c22" />
+    </linearGradient>
+    <linearGradient id="horse_erik" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="50%" stop-color="#c2410c" />
+      <stop offset="100%" stop-color="#9a3412" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="180" fill="url(#bg_erik)" />
+  <!-- Vista panoramica Dalarna: lago svedese e foreste di pini -->
+  <path d="M 0 95 Q 160 85 320 95 L 320 135 L 0 135 Z" fill="#0369a1" opacity="0.6" />
+  <!-- Silhouettes di abeti nordici sulle rive -->
+  <g fill="#064e3b">
+    <polygon points="30,95 38,70 46,95" />
+    <polygon points="48,95 55,75 62,95" />
+    <polygon points="120,95 128,72 136,95" />
+    <polygon points="260,95 270,65 280,95" />
+    <polygon points="282,95 290,72 298,95" />
+  </g>
+  <!-- Banco da lavoro in legno di betulla chiara in primo piano -->
+  <rect x="0" y="135" width="320" height="45" fill="#fef3c7" stroke="#d97706" stroke-width="1.5" />
+  <line x1="0" y1="138" x2="320" y2="138" stroke="#b45309" stroke-width="1.5" opacity="0.4" />
+  <!-- Cavallino di Dalarna intagliato (Dalahäst) al centro-destra -->
+  <g transform="translate(190, 72)">
+    <!-- Sagoma corpo cavallo -->
+    <path d="M 20 62 L 20 40 L 5 40 L 5 62 L -8 62 L -8 32 C -18 30, -22 18, -20 0 C -15 -18, -5 -25, 10 -22 C 16 -12, 14 0, 16 12 L 35 15 C 45 18, 50 30, 48 40 L 48 62 Z" fill="url(#horse_erik)" stroke="#7c2d12" stroke-width="1.5" />
+    <!-- Decorazioni floreali Kurbits tradizionali (bianco, ciano, oro) -->
+    <path d="M 10 0 C 18 2, 26 8, 30 18" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+    <circle cx="16" cy="18" r="3" fill="#38bdf8" />
+    <circle cx="26" cy="18" r="3" fill="#fef08a" />
+    <path d="M -2 -10 Q 6 -8 10 -2" fill="none" stroke="#ffffff" stroke-width="1.8" />
+  </g>
+  <!-- Scalpello da intaglio nordico sul banco -->
+  <g transform="translate(75, 148)">
+    <!-- Manico in legno tornito -->
+    <rect x="0" y="-4" width="35" height="8" rx="3" fill="#b45309" stroke="#78350f" stroke-width="1" />
+    <circle cx="35" cy="0" r="4.5" fill="#d97706" />
+    <!-- Lama in acciaio bisellata -->
+    <rect x="38" y="-3" width="28" height="6" fill="#e2e8f0" stroke="#64748b" stroke-width="0.8" />
+    <polygon points="66,-3 74,0 66,3" fill="#f8fafc" />
+  </g>
+</svg>
