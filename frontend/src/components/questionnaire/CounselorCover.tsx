@@ -377,7 +377,7 @@ export function CounselorCover({
 
     const heightClass = compact
         ? 'max-h-20 sm:max-h-24'
-        : 'max-h-24 sm:max-h-28';
+        : '';
 
     return (
         <div
