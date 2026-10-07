@@ -224,7 +224,7 @@ test('filterCounselorsByCategories excludes recommended counselor if it lacks so
     assert.deepEqual(filteredZero.map((c) => c.id), [1, 2]);
 });
 
-test('CounselorCover component and 16:9 rectangular layout before description in CounselorSelector', () => {
+test('CounselorCover component as top element in 16:9 rectangular layout in CounselorSelector', () => {
     const selectorSrc = counselorSelectorSource();
     const coverSrc = readFileSync(new URL('../components/questionnaire/CounselorCover.tsx', import.meta.url), 'utf8');
 
@@ -235,12 +235,15 @@ test('CounselorCover component and 16:9 rectangular layout before description in
     // 2. Il vecchio avatar rotondo h-11 w-11 rounded-full e' stato rimosso dalla card
     assert.doesNotMatch(selectorSrc, /h-11 w-11 shrink-0 rounded-full/);
 
-    // 3. Posizionamento: CounselorCover compare PRIMA di c.description
+    // 3. Posizionamento: CounselorCover compare PRIMA del nome (h2) e della descrizione (primo elemento assoluto in cima alla card)
     const coverIndex = selectorSrc.indexOf('<CounselorCover');
+    const nameIndex = selectorSrc.indexOf('<h2 className="text-base font-bold text-slate-900">{c.name}</h2>');
     const descIndex = selectorSrc.indexOf('c.description || t(\'counselor.toneDefault\')');
     assert.ok(coverIndex !== -1, 'CounselorCover must be present in CounselorSelector');
+    assert.ok(nameIndex !== -1, 'Counselor name must be present in CounselorSelector');
     assert.ok(descIndex !== -1, 'Counselor description must be present in CounselorSelector');
-    assert.ok(coverIndex < descIndex, 'CounselorCover must be positioned BEFORE counselor description');
+    assert.ok(coverIndex < nameIndex, 'CounselorCover must be positioned BEFORE counselor name');
+    assert.ok(nameIndex < descIndex, 'Counselor name must be positioned BEFORE counselor description');
 
     // 4. Anche la scheda raccomandazione usa CounselorCover
     const recommendationBlock = selectorSrc.slice(selectorSrc.indexOf('recommendation?.counselor &&'));
