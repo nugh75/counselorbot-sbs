@@ -1,3 +1,29 @@
+# Handoff: Selezione multi-tag per filtro categorie counselor
+Data: 2026-10-07 | Stato: Completato, verifiche superate
+
+- **Task**: Consentire la selezione multipla di tag di approccio (categorie) nella scelta del counselor.
+- **Modifiche principali**:
+  - `frontend/src/components/questionnaire/CounselorSelector.tsx`:
+    - Stato sostituito con `selectedCategories: string[]`.
+    - Chip "Tutti" azzera la selezione ed è attivo quando `selectedCategories.length === 0`.
+    - I chip di categoria effettuano il toggle multi-tag (`toggleCategory`).
+    - Aggiunto contatore badge e pulsante «Azzera filtri» (`counselor.filter.reset`) nell'intestazione del filtro.
+    - Integrata funzione `filterCounselorsByCategories`: filtro inclusivo (match su almeno un tag) e ordinamento per numero decrescente di tag corrispondenti, con priorità del counselor raccomandato se presente.
+  - `frontend/src/lib/counselor.ts`:
+    - Esportata funzione `filterCounselorsByCategories` pura e testabile.
+  - `frontend/src/lib/i18n.ts`:
+    - Aggiunta chiave `counselor.filter.reset` nelle 6 lingue (it, en, es, fr, de, sv).
+  - `frontend/src/lib/counselor-identity.test.ts`:
+    - Aggiunti test unitari per filtro vuoto, filtro singolo, multi-tag con ordinamento per match count, priorità raccomandato ed esclusione raccomandato senza match.
+  - `docs-counselorbot/funzionalita-counselorbot.md` & `docs/operations/platform-guidance-state.json`:
+    - Aggiornate le specifiche d'interfaccia e sincronizzato lo snapshot guidance.
+- **Verifiche eseguite**:
+  - `npm test --prefix frontend`: 291/291 passati (0 fail).
+  - `npm run build --prefix frontend`: build Next.js di produzione completata con successo.
+  - `make guidance-check`: documentazione sincronizzata con successo.
+
+---
+
 # Handoff: Creazione chat guidate da zero (C1-C4) & Identità visiva Counselor e ricerca per approccio (M2.1-M2.3)
 Data: 2026-10-07 | Stato: Tutte le PR mergiate su main, container di produzione rebuildati e sani
 
