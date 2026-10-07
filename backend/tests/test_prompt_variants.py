@@ -104,7 +104,8 @@ def test_step_variants_are_used_at_entry_but_never_replace_student_input(db, cli
         assert 'MINIMAL_OWNED_STEP' in message
     turn, data = prepare(db, instrument=instrument, follow_up=True)
     assert fitted(turn, data, 'minimo')[1].endswith('Student message MUST remain verbatim.')
-    assert 'MINIMAL_OWNED_STEP' not in fitted(turn, data, 'minimo')[0]
+    assert 'MINIMAL_OWNED_STEP' in fitted(turn, data, 'minimo')[0]
+    assert '[CURRENT STEP MANDATE - CONTINUATION]' in fitted(turn, data, 'minimo')[0]
     turn, data = prepare(db, instrument=instrument, include_step=False)
     assert 'MINIMAL_OWNED_STEP' not in fitted(turn, data, 'minimo')[0]
 
