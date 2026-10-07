@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="bg_luz" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#78350f" />
+      <stop offset="50%" stop-color="#c2410c" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="180" fill="url(#bg_luz)" />
+  <!-- Muro caldo di patio madrileno con pergolato e rampicanti -->
+  <g stroke="#3f6212" stroke-width="2" fill="none" opacity="0.45">
+    <path d="M 0 25 Q 80 15 160 25 T 320 20" />
+    <path d="M 30 22 C 35 32, 45 32, 40 22" fill="#65a30d" />
+    <path d="M 90 22 C 95 32, 105 32, 100 22" fill="#65a30d" />
+    <path d="M 170 24 C 175 34, 185 34, 180 24" fill="#65a30d" />
+    <path d="M 250 20 C 255 30, 265 30, 260 20" fill="#65a30d" />
+  </g>
+  <!-- Luce dorata calda del pomeriggio madrileno -->
+  <circle cx="270" cy="50" r="38" fill="#fef08a" opacity="0.3" />
+  <!-- Pavimento in cotto del patio -->
+  <rect x="0" y="132" width="320" height="48" fill="#9a3412" stroke="#7c2d12" stroke-width="1" />
+  <!-- Vasi in terracotta con rigogliose piante d'olivo e gerani -->
+  <g transform="translate(65, 95)">
+    <!-- Vaso terracotta grande -->
+    <polygon points="0,40 32,40 28,15 4,15" fill="#ea580c" stroke="#7c2d12" stroke-width="1.5" />
+    <ellipse cx="16" cy="15" rx="13" ry="3" fill="#f97316" />
+    <!-- Foglie d'olivo e verde brillante -->
+    <circle cx="16" cy="2" r="14" fill="#65a30d" opacity="0.9" />
+    <circle cx="8" cy="-5" r="9" fill="#84cc16" />
+    <circle cx="24" cy="-5" r="9" fill="#4d7c0f" />
+    <circle cx="16" cy="-4" r="3" fill="#ef4444" />
+  </g>
+  <!-- Tavolino in ferro battuto con taccuino aperto a destra -->
+  <g transform="translate(195, 105)">
+    <!-- Piano tavolino circolare -->
+    <ellipse cx="30" cy="28" rx="38" ry="10" fill="#18181b" stroke="#71717a" stroke-width="1.5" />
+    <!-- Taccuino aperto illuminato dal sole -->
+    <polygon points="15,22 30,20 45,22 45,30 30,32 15,30" fill="#fef9c3" stroke="#ca8a04" stroke-width="1" />
+    <line x1="30" y1="20" x2="30" y2="32" stroke="#a16207" stroke-width="1" />
+  </g>
+</svg>

@@ -1,43 +1,71 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
   <defs>
-    <radialGradient id="bg_elena" cx="50%" cy="45%" r="60%">
-      <stop offset="0%" stop-color="#0f766e" />
-      <stop offset="70%" stop-color="#115e59" />
-      <stop offset="100%" stop-color="#042f2e" />
+    <linearGradient id="bg_elena" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="60%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#090d16" />
+    </linearGradient>
+    <radialGradient id="lamp_glow_elena" cx="40%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#6ee7b7" stop-opacity="0.6" />
+      <stop offset="40%" stop-color="#10b981" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#047857" stop-opacity="0.0" />
     </radialGradient>
-    <linearGradient id="arm_left_elena" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#5eead4" />
-      <stop offset="100%" stop-color="#0d9488" />
-    </linearGradient>
-    <linearGradient id="arm_right_elena" x1="100%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#2dd4bf" />
-      <stop offset="100%" stop-color="#0f766e" />
-    </linearGradient>
-    <linearGradient id="heart_core_elena" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#fb923c" />
-      <stop offset="100%" stop-color="#ea580c" />
+    <linearGradient id="brass_elena" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef3c7" />
+      <stop offset="50%" stop-color="#d97706" />
+      <stop offset="100%" stop-color="#78350f" />
     </linearGradient>
   </defs>
-
-  <!-- Base medaglione -->
-  <circle cx="50" cy="50" r="48" fill="url(#bg_elena)" stroke="#14b8a6" stroke-width="1" stroke-opacity="0.35" />
-
-  <!-- Onde concentriche di empatia e accoglienza -->
-  <circle cx="50" cy="48" r="38" fill="none" stroke="#2dd4bf" stroke-width="1" stroke-dasharray="2 4" opacity="0.3" />
-  <circle cx="50" cy="48" r="32" fill="none" stroke="#99f6e4" stroke-width="1" opacity="0.2" />
-
-  <!-- Sagoma abbraccio / cuore empatico -->
-  <!-- Braccio avvolgente sinistro -->
-  <path d="M 50 78 C 34 70, 20 54, 22 38 C 24 24, 39 22, 47 32 C 50 35, 50 38, 50 42 C 48 36, 42 32, 35 34 C 28 36, 28 47, 36 57 C 42 64, 48 69, 50 78 Z" fill="url(#arm_left_elena)" />
-
-  <!-- Braccio avvolgente destro (incrocio morbido protettivo) -->
-  <path d="M 50 78 C 66 70, 80 54, 78 38 C 76 24, 61 22, 53 32 C 50 35, 50 38, 50 42 C 52 36, 58 32, 65 34 C 72 36, 72 47, 64 57 C 58 64, 52 69, 50 78 Z" fill="url(#arm_right_elena)" opacity="0.95" />
-
-  <!-- Forma interna: cuore di calore ed ascolto sincero -->
-  <path d="M 50 46 C 47 40, 40 40, 38 45 C 36 50, 42 56, 50 64 C 58 56, 64 50, 62 45 C 60 40, 53 40, 50 46 Z" fill="url(#heart_core_elena)" />
-  <circle cx="45" cy="45" r="1.5" fill="#fef3c7" opacity="0.9" />
-
-  <!-- Scintilla di serenità e presenza accogliente -->
-  <circle cx="50" cy="22" r="2.5" fill="#fef3c7" />
-  <circle cx="50" cy="22" r="1.3" fill="#f97316" />
+  <rect width="320" height="180" fill="url(#bg_elena)" />
+  <!-- Scrivania di redazione con legni caldi -->
+  <rect x="0" y="130" width="320" height="50" fill="#18181b" stroke="#27272a" stroke-width="1.5" />
+  <!-- Alone luminoso della lampada ministeriale -->
+  <polygon points="55,62 10,140 185,140" fill="url(#lamp_glow_elena)" />
+  <!-- Lampada ministeriale verde smeraldo classica -->
+  <g transform="translate(32, 50)">
+    <!-- Base circolare in ottone -->
+    <ellipse cx="25" cy="82" rx="14" ry="4" fill="url(#brass_elena)" />
+    <!-- Stelo curvo in ottone -->
+    <path d="M 25 80 L 25 35 Q 25 20 38 18" fill="none" stroke="url(#brass_elena)" stroke-width="3" stroke-linecap="round" />
+    <!-- Paralume verde smeraldo curvo -->
+    <path d="M 12 18 Q 38 4 64 18 L 62 26 Q 38 16 14 26 Z" fill="#047857" stroke="#10b981" stroke-width="1" />
+    <path d="M 14 26 Q 38 16 62 26 L 60 28 Q 38 18 16 28 Z" fill="#6ee7b7" opacity="0.8" />
+  </g>
+  <!-- Taccuino di reportage aperto -->
+  <g transform="translate(118, 95)">
+    <!-- Pagina sinistra -->
+    <polygon points="0,5 50,0 48,46 -2,50" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1" />
+    <line x1="8" y1="12" x2="42" y2="8" stroke="#94a3b8" stroke-width="1.2" stroke-linecap="round" />
+    <line x1="8" y1="20" x2="38" y2="16" stroke="#94a3b8" stroke-width="1.2" stroke-linecap="round" />
+    <line x1="8" y1="28" x2="44" y2="24" stroke="#94a3b8" stroke-width="1.2" stroke-linecap="round" />
+    <line x1="8" y1="36" x2="32" y2="33" stroke="#94a3b8" stroke-width="1.2" stroke-linecap="round" />
+    <!-- Pagina destra -->
+    <polygon points="50,0 100,5 98,50 48,46" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+    <line x1="56" y1="9" x2="90" y2="13" stroke="#047857" stroke-width="1.2" stroke-linecap="round" />
+    <line x1="56" y1="17" x2="86" y2="21" stroke="#94a3b8" stroke-width="1.2" stroke-linecap="round" />
+    <line x1="56" y1="25" x2="92" y2="29" stroke="#94a3b8" stroke-width="1.2" stroke-linecap="round" />
+    <circle cx="56" cy="35" r="2" fill="#d97706" />
+    <line x1="62" y1="35" x2="88" y2="37" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" />
+    <!-- Rilegatura centrale -->
+    <line x1="50" y1="0" x2="48" y2="46" stroke="#64748b" stroke-width="1.5" />
+  </g>
+  <!-- Penna stilografica elegante in ottone e nero -->
+  <g transform="translate(210, 138) rotate(-35)">
+    <!-- Fusto -->
+    <rect x="0" y="-3" width="55" height="6" rx="2" fill="#0f172a" stroke="#d97706" stroke-width="0.8" />
+    <!-- Anellino dorato -->
+    <rect x="15" y="-3.5" width="4" height="7" fill="url(#brass_elena)" />
+    <!-- Pennino d'oro -->
+    <path d="M 55 -2.5 L 67 0 L 55 2.5 Z" fill="url(#brass_elena)" />
+    <line x1="55" y1="0" x2="63" y2="0" stroke="#78350f" stroke-width="0.8" />
+  </g>
+  <!-- Reticolo rotativa / grafici d'inchiesta sullo sfondo -->
+  <g stroke="#38bdf8" stroke-width="0.8" opacity="0.25">
+    <line x1="235" y1="35" x2="295" y2="35" />
+    <line x1="235" y1="45" x2="305" y2="45" />
+    <line x1="235" y1="55" x2="280" y2="55" />
+    <circle cx="280" cy="55" r="3" fill="#38bdf8" />
+    <line x1="280" y1="55" x2="305" y2="75" />
+    <circle cx="305" cy="75" r="3" fill="#f59e0b" />
+  </g>
 </svg>
