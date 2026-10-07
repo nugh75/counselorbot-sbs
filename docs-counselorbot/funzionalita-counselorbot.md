@@ -723,6 +723,7 @@ chat guidata per lo strumento selezionato in un ambiente protetto ed effimero:
   sia a schermo intero tramite la rotta dedicata `/admin/preview-chat?instrument=<CODICE>`.
 - **Protezione accessi**: l'endpoint di chat con `preview=true` e la pagina di anteprima
   sono rigorosamente riservati agli utenti con privilegi di amministrazione (403 per non-admin).
+- **Verifica automatizzata e test**: i collaudi della sandbox verificano la completezza delle chiavi i18n nelle sei lingue supportate e l'isolamento dei payload effimeri.
 
 Ogni testo e la sua bozza mostrano il numero stimato di token, compresi persona
 del counselor e domande suggerite. Ogni istruzione destinata al modello ha i
