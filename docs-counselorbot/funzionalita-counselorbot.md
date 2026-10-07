@@ -1,6 +1,6 @@
 # CounselorBot: funzionalità e interfaccia attuali
 
-Aggiornato: 6 ottobre 2026. Questo è il riferimento operativo dell’Assistente
+Aggiornato: 7 ottobre 2026. Questo è il riferimento operativo dell’Assistente
 CounselorBot e della Bussola. Descrive funzioni effettivamente disponibili; la
 visibilità può dipendere dal ruolo, dalla lingua e dalla configurazione. Non è
 un elenco di azioni che l’assistente può eseguire al posto della persona.
@@ -52,7 +52,7 @@ Ogni counselor dispone di un’identità visiva e pedagogica riconoscibile:
 Nell'interfaccia utente del selettore counselor (`CounselorSelector`):
 - Ciascuna scheda mostra avatar, nome, frase distintiva localizzata in base alla lingua attiva, badge delle categorie di approccio e dettagli del modello AI impiegato.
 - Sopra l'elenco è presente una barra di ricerca per approccio («Che tipo di counselor vorresti?») con pulsante di ricerca e scheda di proposta che evidenzia il counselor consigliato, la motivazione e un pulsante per selezionarlo direttamente con un click.
-- Sopra le schede è disponibile un filtro rapido a chip per categorie di approccio («Tutti», chip con selezione multipla e pulsante «Azzera filtri»); il selettore mostra i counselor che contengono almeno uno dei tag selezionati e li ordina per rilevanza (numero decrescente di tag corrispondenti), preservando la priorità dell'eventuale counselor raccomandato.
+- Sopra le schede è disponibile un filtro rapido a chip per categorie di approccio («Tutti», chip con selezione multipla e pulsante «Azzera filtri»); il selettore mostra solo i counselor che contengono tutti i tag selezionati (logica AND), preservando la priorità dell'eventuale counselor raccomandato se rispetta tutti i filtri attivi.
 
 ## Bussola, Assistente e Guida
 

@@ -158,46 +158,69 @@ test('filterCounselorsByCategories filters by single category with case insensit
     assert.deepEqual(filtered.map((c) => c.id), [1, 3]);
 });
 
-test('filterCounselorsByCategories multi-tag filtering includes any matching tag and ranks by match count', () => {
+test('filterCounselorsByCategories multi-tag filtering requires all selected tags (AND logic)', () => {
     const list: PublicCounselor[] = [
         { id: 1, slug: 'c1', name: '1 Match', language: ['it'], approach_categories: ['filosofo'] },
-        { id: 2, slug: 'c2', name: '3 Matches', language: ['it'], approach_categories: ['filosofo', 'docente', 'tutor'] },
+        { id: 2, slug: 'c2', name: '3 Matches Full', language: ['it'], approach_categories: ['filosofo', 'docente', 'tutor'] },
         { id: 3, slug: 'c3', name: '0 Matches', language: ['it'], approach_categories: ['psicologo', 'analitico'] },
-        { id: 4, slug: 'c4', name: '2 Matches', language: ['it'], approach_categories: ['docente', 'tutor'] },
+        { id: 4, slug: 'c4', name: '2 Matches Partial', language: ['it'], approach_categories: ['docente', 'tutor'] },
+        { id: 5, slug: 'c5', name: 'All Matches + Extra', language: ['it'], approach_categories: ['filosofo', 'docente', 'tutor', 'empatico'] },
     ];
 
     const selectedTags = ['filosofo', 'docente', 'tutor'];
     const filtered = filterCounselorsByCategories(list, selectedTags);
 
-    assert.equal(filtered.length, 3);
-    // Counselor 2 ha 3 match, Counselor 4 ne ha 2, Counselor 1 ne ha 1
-    assert.deepEqual(filtered.map((c) => c.id), [2, 4, 1]);
+    // Solo i counselor con TUTTI i 3 tag (id 2 e id 5) devono essere inclusi
+    assert.equal(filtered.length, 2);
+    assert.deepEqual(filtered.map((c) => c.id), [2, 5]);
 });
 
-test('filterCounselorsByCategories preserves recommended counselor priority at top', () => {
+test('filterCounselorsByCategories returns empty array when no counselor has all selected tags', () => {
     const list: PublicCounselor[] = [
-        { id: 10, slug: 'c10', name: '3 Matches Non-rec', language: ['it'], approach_categories: ['filosofo', 'docente', 'tutor'] },
-        { id: 20, slug: 'c20', name: '1 Match Recommended', language: ['it'], approach_categories: ['tutor'] },
-        { id: 30, slug: 'c30', name: '2 Matches Non-rec', language: ['it'], approach_categories: ['docente', 'tutor'] },
+        { id: 1, slug: 'c1', name: 'Solo filosofo', language: ['it'], approach_categories: ['filosofo'] },
+        { id: 2, slug: 'c2', name: 'Solo tutor', language: ['it'], approach_categories: ['tutor'] },
+        { id: 3, slug: 'c3', name: 'Docente e psicologo', language: ['it'], approach_categories: ['docente', 'psicologo'] },
+    ];
+
+    const selectedTags = ['filosofo', 'tutor'];
+    const filtered = filterCounselorsByCategories(list, selectedTags);
+
+    assert.equal(filtered.length, 0);
+    assert.deepEqual(filtered, []);
+});
+
+test('filterCounselorsByCategories preserves recommended counselor priority at top only if it matches all tags', () => {
+    const list: PublicCounselor[] = [
+        { id: 10, slug: 'c10', name: 'Tutti i tag Non-rec', language: ['it'], approach_categories: ['filosofo', 'docente', 'tutor'] },
+        { id: 20, slug: 'c20', name: 'Tutti i tag Recommended', language: ['it'], approach_categories: ['filosofo', 'docente', 'tutor', 'maieutico'] },
+        { id: 30, slug: 'c30', name: 'Tutti i tag Non-rec 2', language: ['it'], approach_categories: ['filosofo', 'docente', 'tutor'] },
     ];
 
     const selectedTags = ['filosofo', 'docente', 'tutor'];
-    // 20 e' raccomandato
+    // id 20 ha tutti i tag ed e' raccomandato
     const filtered = filterCounselorsByCategories(list, selectedTags, 20);
 
     assert.equal(filtered.length, 3);
-    // Il raccomandato (id 20) resta prioritario in cima, poi id 10 (3 match), poi id 30 (2 match)
+    // Il raccomandato (id 20) deve apparire per primo in cima
+    assert.equal(filtered[0].id, 20);
     assert.deepEqual(filtered.map((c) => c.id), [20, 10, 30]);
 });
 
-test('filterCounselorsByCategories excludes recommended counselor if it has 0 matches for active tags', () => {
+test('filterCounselorsByCategories excludes recommended counselor if it lacks some or all selected tags', () => {
     const list: PublicCounselor[] = [
-        { id: 1, slug: 'c1', name: 'Matching Counselor', language: ['it'], approach_categories: ['filosofo'] },
-        { id: 2, slug: 'c2', name: 'Recommended Counselor', language: ['it'], approach_categories: ['psicologo'] },
+        { id: 1, slug: 'c1', name: 'Full match', language: ['it'], approach_categories: ['filosofo', 'docente'] },
+        { id: 2, slug: 'c2', name: 'Recommended Partial Match', language: ['it'], approach_categories: ['filosofo'] },
+        { id: 3, slug: 'c3', name: 'Recommended No Match', language: ['it'], approach_categories: ['psicologo'] },
     ];
 
-    const filtered = filterCounselorsByCategories(list, ['filosofo'], 2);
-    assert.equal(filtered.length, 1);
-    assert.equal(filtered[0].id, 1);
+    // id 2 e' raccomandato ma possiede solo 1 dei 2 tag selezionati -> escluso
+    const filteredPartial = filterCounselorsByCategories(list, ['filosofo', 'docente'], 2);
+    assert.equal(filteredPartial.length, 1);
+    assert.equal(filteredPartial[0].id, 1);
+
+    // id 3 e' raccomandato ma possiede 0 tag corrispondenti -> escluso
+    const filteredZero = filterCounselorsByCategories(list, ['filosofo'], 3);
+    assert.equal(filteredZero.length, 2);
+    assert.deepEqual(filteredZero.map((c) => c.id), [1, 2]);
 });
 
