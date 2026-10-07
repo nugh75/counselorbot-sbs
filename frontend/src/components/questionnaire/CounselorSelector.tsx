@@ -194,44 +194,50 @@ export function CounselorSelector({
                             : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
                 }`}
             >
-                <div className="w-full space-y-2">
-                    {/* Testata: Nome, badge modello (Cpu/Cloud), badge stato/tipo e spunta di selezione in alto a destra */}
-                    <div className="flex items-start justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-2 pr-6">
-                            <h2 className="text-base font-bold text-slate-900">{c.name}</h2>
-                            {c.is_active === false && (
-                                <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-2xs font-bold uppercase text-slate-500">
-                                    {t('counselor.unavailable')}
-                                </span>
-                            )}
-                            {c.is_active !== false && c.suitable === false && (
-                                <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-2xs font-bold uppercase text-amber-700">
-                                    {t('counselor.notForInstrument')}
-                                </span>
-                            )}
-                            {c.model_origin && (
-                                <span
-                                    title={t(c.model_origin === 'local' ? 'counselor.origin.local.hint' : 'counselor.origin.external.hint')}
-                                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-2xs font-medium text-slate-500"
-                                >
-                                    {c.model_origin === 'local'
-                                        ? <Cpu className="h-3 w-3" />
-                                        : <Cloud className="h-3 w-3" />}
-                                    {t(c.model_origin === 'local' ? 'counselor.origin.local' : 'counselor.origin.external')}
-                                </span>
-                            )}
-                            {c.model && (
-                                <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-2xs font-medium text-indigo-700">
-                                    <span>{t('counselor.modelLabel')}</span>
-                                    <span className="truncate font-mono" title={c.model}>{c.model}</span>
-                                </span>
-                            )}
-                        </div>
-
+                <div className="w-full space-y-3">
+                    {/* In cima: blocco copertina rettangolare CounselorCover (16:9) come primo elemento assoluto (stile YouTube card) con spunta di selezione in overlay */}
+                    <div className="relative w-full">
+                        <CounselorCover
+                            src={c.avatar_url}
+                            alt={c.name}
+                            counselor={c}
+                        />
                         {isSelected && !disabled && (
-                            <div className="shrink-0 rounded-full bg-indigo-600 p-1 text-white">
+                            <div className="absolute top-2 right-2 z-10 shrink-0 rounded-full bg-indigo-600 p-1 text-white shadow-md">
                                 <Check className="h-3.5 w-3.5" />
                             </div>
+                        )}
+                    </div>
+
+                    {/* Sotto la copertina: Testata con Nome counselor (h2), badge modello (Cpu/Cloud), badge tipo/stato */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-base font-bold text-slate-900">{c.name}</h2>
+                        {c.is_active === false && (
+                            <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-2xs font-bold uppercase text-slate-500">
+                                {t('counselor.unavailable')}
+                            </span>
+                        )}
+                        {c.is_active !== false && c.suitable === false && (
+                            <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-2xs font-bold uppercase text-amber-700">
+                                {t('counselor.notForInstrument')}
+                            </span>
+                        )}
+                        {c.model_origin && (
+                            <span
+                                title={t(c.model_origin === 'local' ? 'counselor.origin.local.hint' : 'counselor.origin.external.hint')}
+                                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-2xs font-medium text-slate-500"
+                            >
+                                {c.model_origin === 'local'
+                                    ? <Cpu className="h-3 w-3" />
+                                    : <Cloud className="h-3 w-3" />}
+                                {t(c.model_origin === 'local' ? 'counselor.origin.local' : 'counselor.origin.external')}
+                            </span>
+                        )}
+                        {c.model && (
+                            <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-2xs font-medium text-indigo-700">
+                                <span>{t('counselor.modelLabel')}</span>
+                                <span className="truncate font-mono" title={c.model}>{c.model}</span>
+                            </span>
                         )}
                     </div>
 
@@ -256,16 +262,7 @@ export function CounselorSelector({
                         </div>
                     )}
 
-                    {/* SUBITO PRIMA DELLA DESCRIZIONE: Copertina CounselorCover a tutta larghezza utile con aspect ratio 16:9 */}
-                    <div className="pt-1">
-                        <CounselorCover
-                            src={c.avatar_url}
-                            alt={c.name}
-                            counselor={c}
-                        />
-                    </div>
-
-                    {/* Sotto la copertina: paragrafo descrittivo */}
+                    {/* Sotto le categorie: paragrafo descrittivo */}
                     <p className="text-sm leading-relaxed text-slate-600">
                         {c.description || t('counselor.toneDefault')}
                     </p>
