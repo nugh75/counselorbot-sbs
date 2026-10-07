@@ -166,3 +166,57 @@ export async function recommendCounselor(
         return null;
     }
 }
+
+/**
+ * Filtra e ordina i counselor in base alle categorie/tag selezionati.
+ * - Se selectedCategories e' vuoto, restituisce tutti i counselor.
+ * - Se ci sono tag selezionati, filtra i counselor mostrando quelli che contengono
+ *   almeno uno dei tag selezionati.
+ * - Ordina i filtrati per numero decrescente di tag corrispondenti (piu' match in cima),
+ *   preservando la priorita' del counselor raccomandato se presente.
+ */
+export function filterCounselorsByCategories(
+    counselors: PublicCounselor[],
+    selectedCategories: string[],
+    recommendedCounselorId?: number | null,
+): PublicCounselor[] {
+    const activeTags = Array.from(
+        new Set(
+            selectedCategories
+                .map((cat) => cat.toLowerCase().trim())
+                .filter(Boolean),
+        ),
+    );
+
+    if (activeTags.length === 0) {
+        return counselors;
+    }
+
+    const tagSet = new Set(activeTags);
+
+    const countMatches = (c: PublicCounselor): number => {
+        const cats = c.approach_categories || [];
+        const counselorCatSet = new Set(
+            cats.map((cat) => cat.toLowerCase().trim()).filter(Boolean),
+        );
+        let matches = 0;
+        for (const tag of tagSet) {
+            if (counselorCatSet.has(tag)) {
+                matches++;
+            }
+        }
+        return matches;
+    };
+
+    const matching = counselors.filter((c) => countMatches(c) > 0);
+
+    return matching.sort((a, b) => {
+        const aRec = Boolean(recommendedCounselorId != null && a.id === recommendedCounselorId);
+        const bRec = Boolean(recommendedCounselorId != null && b.id === recommendedCounselorId);
+        if (aRec !== bRec) {
+            return aRec ? -1 : 1;
+        }
+        return countMatches(b) - countMatches(a);
+    });
+}
+
