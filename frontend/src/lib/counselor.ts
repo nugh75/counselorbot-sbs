@@ -1,3 +1,4 @@
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { apiFetch } from './auth.ts';
 // Selezione del counselor lato utente: persistita in localStorage e iniettata
 // come `counselor_id` nelle richieste di chat dei questionari guidati.
