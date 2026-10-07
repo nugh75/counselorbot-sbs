@@ -1,3 +1,28 @@
+# Handoff: Creazione chat guidate da zero (C1-C4) & Identità visiva Counselor e ricerca per approccio (M2.1-M2.3)
+Data: 2026-10-07 | Stato: Tutte le PR mergiate su main, container di produzione rebuildati e sani
+
+Entrambi i macro-obiettivi assegnati sono stati completati in autonomia e mergiati su `main` tramite il pilota automatico:
+
+1. **Goal 1: Creazione da zero di nuove chat guidate dall'amministrazione** (`3f4755d4-809c-44b5-ba07-d9a1cdb5a6d0`) — RAGGIUNTO
+   - **Piano**: `docs/operations/piano-creazione-chat-guidate-da-zero.md` (PR [#65](https://github.com/nugh75/counselorbot-sbs/pull/65))
+   - **C1 (Backend Core & Dynamic Registry)**: PR [#66](https://github.com/nugh75/counselorbot-sbs/pull/66) — schema DB per strumenti dinamici, `DynamicInstrumentSet`, API survey e admin.
+   - **C2 (Admin Wizard UI)**: PR [#67](https://github.com/nugh75/counselorbot-sbs/pull/67) — modale e wizard di creazione in amministrazione, supporto i18n 6 lingue.
+   - **C3 (Student Flow & Dynamic Catalog)**: PR [#68](https://github.com/nugh75/counselorbot-sbs/pull/68) — cataloghi studente e docente dinamici, avvio chat guidata per nuovi strumenti.
+   - **C4 (Admin Sandbox Preview & Rifinitura)**: PR [#70](https://github.com/nugh75/counselorbot-sbs/pull/70) — collaudo admin con sessioni effimere sandbox senza inquinare le statistiche di ricerca.
+
+2. **Goal 2: Counselor: identità visiva e ricerca per approccio** (`6d3968f9-cf9c-4b3c-a623-8fc444c61edd`, Issue #61) — RAGGIUNTO
+   - **M2.1 (Backend Model, Categories & Recommend API)**: PR [#69](https://github.com/nugh75/counselorbot-sbs/pull/69) — estensione counselor, tagline i18n, categorie multiple, endpoint raccomandazione stile/approccio.
+   - **M2.2 (Frontend Counselor Selector)**: PR [#71](https://github.com/nugh75/counselorbot-sbs/pull/71) — selettore con frase distintiva, badge di approccio, chip filtri e ricerca stile ("Che tipo di counselor vorresti?").
+   - **M2.3 (Illustrazioni Personas Palette di Piattaforma)**: PR [#72](https://github.com/nugh75/counselorbot-sbs/pull/72) — 12 illustrazioni vettoriali SVG curate nei colori della piattaforma (teal/turchese, forme morbide, accenti arancio).
+   - **Fix TypeScript Imports**: PR [#73](https://github.com/nugh75/counselorbot-sbs/pull/73) — rimozione TS5097 per la compilazione Next.js di produzione.
+
+- **Deploy & Stato Container**:
+  - `docker compose build backend frontend && docker compose up -d backend frontend` eseguito con successo.
+  - Container `counselorbot_backend` e `counselorbot_frontend` riavviati e sani (HTTP 200 su 8088 e 3000).
+  - Nginx e porte invariati (nessun comando sudo necessario).
+
+---
+
 # Handoff: varianti DB di tutti i prompt per Totale/Ristretto/Minimo
 Data: 2026-10-05 | Stato: PR #54 aperta, da revisionare
 
