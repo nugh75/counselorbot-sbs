@@ -173,6 +173,146 @@ COUNSELOR_IDENTITY_DEFAULTS: Dict[str, dict] = {
         "approach_categories": ["ricercatore", "docente", "analitico"],
         "avatar_url": "/images/counselors/minerva.svg",
     },
+    "giulio": {
+        "slug": "giulio",
+        "tagline_i18n": {
+            "it": "Ascolto attento e tempo per riflettere con calma quando il percorso si fa complesso.",
+            "en": "Attentive listening and time to reflect calmly when the learning journey becomes complex.",
+            "es": "Escucha atenta y tiempo para reflexionar con calma cuando el camino se vuelve complejo.",
+        },
+        "approach_categories": ["psicologo", "orientatore"],
+        "avatar_url": "/images/counselors/giulio.svg",
+    },
+    "bianca": {
+        "slug": "bianca",
+        "tagline_i18n": {
+            "it": "Accorda obiettivi e metodo di studio con cura e pazienza, un piccolo ritocco alla volta.",
+            "en": "Tunes study habits and goals with patience and care, one small adjustment at a time.",
+            "es": "Afina tus metas y hábitos de estudio con paciencia y esmero, un pequeño ajuste a la vez.",
+        },
+        "approach_categories": ["psicologo"],
+        "avatar_url": "/images/counselors/bianca.svg",
+    },
+    "erik": {
+        "slug": "erik",
+        "tagline_i18n": {
+            "it": "Trova la misura giusta nello studio con parole essenziali, metodo concreto e lagom.",
+            "en": "Finds the right balance in study with essential words, practical methods, and lagom.",
+            "es": "Encuentra la medida justa en el estudio con palabras esenciales, método práctico y lagom.",
+        },
+        "approach_categories": ["tutor"],
+        "avatar_url": "/images/counselors/erik.svg",
+    },
+    "carmen": {
+        "slug": "carmen",
+        "tagline_i18n": {
+            "it": "Trasforma gli errori in opportunità con calore, ritmo e la bellezza del kintsugi.",
+            "en": "Turns mistakes into opportunities with warmth, rhythm, and the beauty of kintsugi.",
+            "es": "Transforma los errores en oportunidades con calidez, ritmo y la belleza del kintsugi.",
+        },
+        "approach_categories": ["psicologo", "docente"],
+        "avatar_url": "/images/counselors/carmen.svg",
+    },
+    "otto": {
+        "slug": "otto",
+        "tagline_i18n": {
+            "it": "Esplora come ogni ingranaggio del tuo studio si incastra con metodo, precisione e pazienza.",
+            "en": "Explores how every gear of your learning fits together with method, precision, and patience.",
+            "es": "Explora cómo cada engranaje de tu estudio encaja con método, precisión y paciencia.",
+        },
+        "approach_categories": ["docente", "metodico"],
+        "avatar_url": "/images/counselors/otto.svg",
+    },
+    "teo": {
+        "slug": "teo",
+        "tagline_i18n": {
+            "it": "Consigli tra pari senza paternalismi per gestire esami, scadenze e procrastinazione.",
+            "en": "Peer-to-peer advice without lecturing to tackle exams, deadlines, and procrastination.",
+            "es": "Consejos entre iguales sin lecciones morales para gestionar exámenes y procrastinación.",
+        },
+        "approach_categories": ["psicologo", "docente", "tutor", "metodico"],
+        "avatar_url": "/images/counselors/teo.svg",
+    },
+    "sonia": {
+        "slug": "sonia",
+        "tagline_i18n": {
+            "it": "Pratiche di respiro e consapevolezza per calmare l'ansia e studiare con presenza.",
+            "en": "Mindfulness and breathing practices to calm anxiety and study with presence.",
+            "es": "Prácticas de respiración y atención plena para calmar la ansiedad y estudiar con presencia.",
+        },
+        "approach_categories": ["psicologo", "docente", "tutor"],
+        "avatar_url": "/images/counselors/sonia.svg",
+    },
+    "rocco": {
+        "slug": "rocco",
+        "tagline_i18n": {
+            "it": "Ritmo, costanza e recupero: affronta lo studio come un vero allenamento a tappe.",
+            "en": "Rhythm, consistency, and recovery: treat learning like true athletic training.",
+            "es": "Ritmo, constancia y descanso: afronta el estudio como un entrenamiento por etapas.",
+        },
+        "approach_categories": ["tutor"],
+        "avatar_url": "/images/counselors/rocco.svg",
+    },
+    "aidan": {
+        "slug": "aidan",
+        "tagline_i18n": {
+            "it": "Spiega i risultati con storie memorabili, umorismo leggero e calore amichevole.",
+            "en": "Explains results through memorable stories, gentle humour, and friendly encouragement.",
+            "es": "Explica los resultados a través de historias memorables, humor ligero y cercanía.",
+        },
+        "approach_categories": ["psicologo", "docente", "tutor"],
+        "avatar_url": "/images/counselors/aidan.svg",
+    },
+    "camille": {
+        "slug": "camille",
+        "tagline_i18n": {
+            "it": "Chiarezza cartesiana e tocco leggero per distinguere l'essenziale dal superfluo.",
+            "en": "Cartesian clarity and a light touch to separate the essential from the superfluous.",
+            "es": "Claridad cartesiana y un toque ligero para separar lo esencial de lo superfluo.",
+        },
+        "approach_categories": ["orientatore"],
+        "avatar_url": "/images/counselors/camille.svg",
+    },
+    "luz": {
+        "slug": "luz",
+        "tagline_i18n": {
+            "it": "Domande socratiche e prospettiva aperta per farti ragionare con autonomia e curiosità.",
+            "en": "Socratic questions and an open perspective to foster autonomous reflection and curiosity.",
+            "es": "Preguntas socráticas y perspectiva abierta para razonar con autonomía y curiosidad.",
+        },
+        "approach_categories": ["psicologo", "docente", "orientatore"],
+        "avatar_url": "/images/counselors/luz.svg",
+    },
+    "vera": {
+        "slug": "vera",
+        "tagline_i18n": {
+            "it": "Esplora il profilo ZTPI e i tratti personali come possibilità e risorse, senza giudizio.",
+            "en": "Explores the ZTPI profile and personal traits as resources and possibilities, without judgement.",
+            "es": "Explora el perfil ZTPI y tus rasgos temporales como recursos y posibilidades, sin juicios.",
+        },
+        "approach_categories": ["psicologo", "orientatore"],
+        "avatar_url": "/images/counselors/vera.svg",
+    },
+    "omar": {
+        "slug": "omar",
+        "tagline_i18n": {
+            "it": "Unisce i profili di diversi questionari in una mappa integrata e coerente.",
+            "en": "Connects multi-instrument assessment profiles into a single coherent roadmap.",
+            "es": "Integra los perfiles de diferentes cuestionarios en un mapa global y coherente.",
+        },
+        "approach_categories": ["psicologo", "docente", "tutor", "orientatore"],
+        "avatar_url": "/images/counselors/omar.svg",
+    },
+    "gemini": {
+        "slug": "gemini",
+        "tagline_i18n": {
+            "it": "Orientamento avanzato e sinergia digitale per esplorare percorsi e scenari futuri.",
+            "en": "Advanced orientation and digital synergy to explore future paths and scenarios.",
+            "es": "Orientación avanzada y sinergia digital para explorar trayectorias y futuros posibles.",
+        },
+        "approach_categories": ["orientatore"],
+        "avatar_url": "/images/counselors/gemini.svg",
+    },
 }
 
 # Lessico semantico per categorie e stili di counseling
