@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="bg_vera" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#581c87" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="180" fill="url(#bg_vera)" />
+  <!-- Meridiani e costellazioni della mappa temporale ZTPI -->
+  <g stroke="#c084fc" stroke-width="0.8" fill="none" opacity="0.35">
+    <circle cx="160" cy="90" r="75" stroke-dasharray="2 4" />
+    <circle cx="160" cy="90" r="45" stroke-dasharray="3 3" />
+    <line x1="40" y1="90" x2="280" y2="90" />
+    <line x1="160" y1="15" x2="160" y2="165" />
+  </g>
+  <!-- Tre dimensioni temporali ZTPI sovrapposte e interconnesse -->
+  <!-- 1. Passato (memoria ambra a sinistra) -->
+  <g transform="translate(95, 90)">
+    <circle cx="0" cy="0" r="26" fill="#f59e0b" fill-opacity="0.25" stroke="#fbbf24" stroke-width="1.5" />
+    <circle cx="0" cy="0" r="14" fill="#d97706" opacity="0.6" />
+    <circle cx="0" cy="0" r="4" fill="#fef08a" />
+  </g>
+  <!-- 2. Presente (vissuto dinamico al centro) -->
+  <g transform="translate(160, 90)">
+    <circle cx="0" cy="0" r="32" fill="#9333ea" fill-opacity="0.3" stroke="#d946ef" stroke-width="2" />
+    <circle cx="0" cy="0" r="18" fill="#c084fc" opacity="0.7" />
+    <circle cx="0" cy="0" r="6" fill="#ffffff" />
+  </g>
+  <!-- 3. Futuro (proiezione e orizzonte a destra) -->
+  <g transform="translate(225, 90)">
+    <circle cx="0" cy="0" r="26" fill="#06b6d4" fill-opacity="0.25" stroke="#38bdf8" stroke-width="1.5" />
+    <circle cx="0" cy="0" r="14" fill="#0284c7" opacity="0.6" />
+    <!-- Stella guida del futuro -->
+    <polygon points="0,-8 2,-2 8,0 2,2 0,8 -2,2 -8,0 -2,-2" fill="#ffffff" />
+  </g>
+  <!-- Filamento connettivo armonico che collega Passato, Presente e Futuro -->
+  <path d="M 95 90 C 120 70, 135 110, 160 90 C 185 70, 200 110, 225 90" fill="none" stroke="#fef08a" stroke-width="2" stroke-linecap="round" />
+  <!-- Stelle di consapevolezza psicologica -->
+  <circle cx="130" cy="45" r="2" fill="#fef08a" />
+  <circle cx="190" cy="135" r="2" fill="#fef08a" />
+  <circle cx="260" cy="40" r="2.5" fill="#fef08a" />
+</svg>
