@@ -17,6 +17,7 @@ import { counselorHelp } from '@/lib/i18n-counselor-help';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+import { CounselorCover } from './CounselorCover';
 
 // Selettore counselor lato utente. Se non ci sono counselor configurati non
 // renderizza nulla: il flusso resta identico a prima.
@@ -185,7 +186,7 @@ export function CounselorSelector({
                     if (onContinue) onContinue(c.id);
                 }}
                 disabled={disabled}
-                className={`relative rounded-lg border p-4 text-left transition-colors ${
+                className={`relative flex flex-col justify-between rounded-lg border p-4 text-left transition-colors ${
                     disabled
                         ? 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-70'
                         : isSelected
@@ -193,85 +194,91 @@ export function CounselorSelector({
                             : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
                 }`}
             >
-                <div className="flex items-start gap-3">
-                    {c.avatar_url && (
-                        <img
-                            src={c.avatar_url}
-                            alt={c.name}
-                            className="h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-white object-cover"
-                            onError={(e) => {
-                                (e.currentTarget as HTMLElement).style.display = 'none';
-                            }}
-                        />
-                    )}
-                    <div className="min-w-0 flex-1 space-y-2">
-                        <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <h2 className="text-base font-bold text-slate-900">{c.name}</h2>
-                                {c.is_active === false && (
-                                    <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-2xs font-bold uppercase text-slate-500">
-                                        {t('counselor.unavailable')}
-                                    </span>
-                                )}
-                                {c.is_active !== false && c.suitable === false && (
-                                    <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-2xs font-bold uppercase text-amber-700">
-                                        {t('counselor.notForInstrument')}
-                                    </span>
-                                )}
-                                {c.model_origin && (
-                                    <span
-                                        title={t(c.model_origin === 'local' ? 'counselor.origin.local.hint' : 'counselor.origin.external.hint')}
-                                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-2xs font-medium text-slate-500"
-                                    >
-                                        {c.model_origin === 'local'
-                                            ? <Cpu className="h-3 w-3" />
-                                            : <Cloud className="h-3 w-3" />}
-                                        {t(c.model_origin === 'local' ? 'counselor.origin.local' : 'counselor.origin.external')}
-                                    </span>
-                                )}
-                                {c.model && (
-                                    <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-2xs font-medium text-indigo-700">
-                                        <span>{t('counselor.modelLabel')}</span>
-                                        <span className="truncate font-mono" title={c.model}>{c.model}</span>
-                                    </span>
-                                )}
-                            </div>
-
-                            {tagline ? (
-                                <p className="mt-1.5 rounded border border-indigo-100 bg-indigo-50/70 px-2.5 py-1 text-xs font-medium italic text-indigo-950/90 leading-relaxed">
-                                    {`"${tagline}"`}
-                                </p>
-                            ) : null}
-
-                            {c.approach_categories && c.approach_categories.length > 0 && (
-                                <div className="mt-1.5 flex flex-wrap gap-1">
-                                    {c.approach_categories.map((cat) => (
-                                        <span
-                                            key={cat}
-                                            className="rounded-full border border-indigo-200/70 bg-indigo-50/50 px-2 py-0.5 text-2xs font-semibold text-indigo-700"
-                                        >
-                                            {formatCategoryLabel(cat, lang)}
-                                        </span>
-                                    ))}
-                                </div>
+                <div className="w-full space-y-2">
+                    {/* Testata: Nome, badge modello (Cpu/Cloud), badge stato/tipo e spunta di selezione in alto a destra */}
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2 pr-6">
+                            <h2 className="text-base font-bold text-slate-900">{c.name}</h2>
+                            {c.is_active === false && (
+                                <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-2xs font-bold uppercase text-slate-500">
+                                    {t('counselor.unavailable')}
+                                </span>
                             )}
-
-                            <p className="mt-1 text-sm leading-relaxed text-slate-600">{c.description || t('counselor.toneDefault')}</p>
+                            {c.is_active !== false && c.suitable === false && (
+                                <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-2xs font-bold uppercase text-amber-700">
+                                    {t('counselor.notForInstrument')}
+                                </span>
+                            )}
+                            {c.model_origin && (
+                                <span
+                                    title={t(c.model_origin === 'local' ? 'counselor.origin.local.hint' : 'counselor.origin.external.hint')}
+                                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-2xs font-medium text-slate-500"
+                                >
+                                    {c.model_origin === 'local'
+                                        ? <Cpu className="h-3 w-3" />
+                                        : <Cloud className="h-3 w-3" />}
+                                    {t(c.model_origin === 'local' ? 'counselor.origin.local' : 'counselor.origin.external')}
+                                </span>
+                            )}
+                            {c.model && (
+                                <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-2xs font-medium text-indigo-700">
+                                    <span>{t('counselor.modelLabel')}</span>
+                                    <span className="truncate font-mono" title={c.model}>{c.model}</span>
+                                </span>
+                            )}
                         </div>
 
-                        <div className="flex flex-wrap gap-1.5">
-                            {(c.questionnaire_types || []).slice(0, 6).map((q) => (
-                                <span key={q} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-2xs font-semibold text-slate-500">
-                                    {q}
+                        {isSelected && !disabled && (
+                            <div className="shrink-0 rounded-full bg-indigo-600 p-1 text-white">
+                                <Check className="h-3.5 w-3.5" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Tagline distintiva */}
+                    {tagline ? (
+                        <p className="rounded border border-indigo-100 bg-indigo-50/70 px-2.5 py-1 text-xs font-medium italic text-indigo-950/90 leading-relaxed">
+                            {`"${tagline}"`}
+                        </p>
+                    ) : null}
+
+                    {/* Chip delle categorie di approccio */}
+                    {c.approach_categories && c.approach_categories.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                            {c.approach_categories.map((cat) => (
+                                <span
+                                    key={cat}
+                                    className="rounded-full border border-indigo-200/70 bg-indigo-50/50 px-2 py-0.5 text-2xs font-semibold text-indigo-700"
+                                >
+                                    {formatCategoryLabel(cat, lang)}
                                 </span>
                             ))}
                         </div>
+                    )}
+
+                    {/* SUBITO PRIMA DELLA DESCRIZIONE: Copertina CounselorCover a tutta larghezza utile con aspect ratio 16:9 */}
+                    <div className="pt-1">
+                        <CounselorCover
+                            src={c.avatar_url}
+                            alt={c.name}
+                            counselor={c}
+                        />
                     </div>
+
+                    {/* Sotto la copertina: paragrafo descrittivo */}
+                    <p className="text-sm leading-relaxed text-slate-600">
+                        {c.description || t('counselor.toneDefault')}
+                    </p>
                 </div>
 
-                {isSelected && !disabled && (
-                    <div className="absolute right-3 top-3 rounded-full bg-indigo-600 p-1 text-white">
-                        <Check className="h-3.5 w-3.5" />
+                {/* Sotto la descrizione: badge degli strumenti */}
+                {(c.questionnaire_types && c.questionnaire_types.length > 0) && (
+                    <div className="mt-3 flex flex-wrap gap-1.5 pt-1">
+                        {c.questionnaire_types.slice(0, 6).map((q) => (
+                            <span key={q} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-2xs font-semibold text-slate-500">
+                                {q}
+                            </span>
+                        ))}
                     </div>
                 )}
             </button>
@@ -352,19 +359,17 @@ export function CounselorSelector({
                 {/* Scheda raccomandazione se presente */}
                 {recommendation?.counselor && (
                     <div className="rounded-lg border border-indigo-200 bg-indigo-50/80 p-4 transition-all">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div className="flex items-start gap-3">
-                                {recommendation.counselor.avatar_url && (
-                                    <img
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div className="flex flex-col sm:flex-row items-start gap-3.5 flex-1 min-w-0">
+                                <div className="w-full sm:w-44 md:w-48 shrink-0">
+                                    <CounselorCover
                                         src={recommendation.counselor.avatar_url}
                                         alt={recommendation.counselor.name}
-                                        className="h-12 w-12 shrink-0 rounded-full border border-indigo-300 bg-white object-cover"
-                                        onError={(e) => {
-                                            (e.currentTarget as HTMLElement).style.display = 'none';
-                                        }}
+                                        counselor={recommendation.counselor}
+                                        compact
                                     />
-                                )}
-                                <div className="space-y-1">
+                                </div>
+                                <div className="space-y-1.5 flex-1 min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1">
                                             <Sparkles className="h-3.5 w-3.5" />
@@ -383,7 +388,7 @@ export function CounselorSelector({
                                         {recommendation.explanation}
                                     </p>
                                     {recommendation.matched_categories.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 pt-1">
+                                        <div className="flex flex-wrap gap-1 pt-0.5">
                                             {recommendation.matched_categories.map((cat) => (
                                                 <span
                                                     key={cat}
@@ -397,7 +402,7 @@ export function CounselorSelector({
                                 </div>
                             </div>
 
-                            <div className="flex sm:flex-col items-center gap-2 shrink-0">
+                            <div className="flex md:flex-col items-center gap-2 shrink-0 self-end md:self-center">
                                 <button
                                     type="button"
                                     onClick={() => {
