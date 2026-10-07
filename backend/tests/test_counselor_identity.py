@@ -411,3 +411,22 @@ def test_counselor_categories_and_public_alias(client_env):
     assert ipazia["approach_summary"] == "Riflessione critica e matematica antica."
     assert ipazia["approach_categories"] == ["filosofo", "matematico"]
     assert ipazia["avatar_url"] == "/images/counselors/ipazia.svg"
+
+
+def test_all_26_counselor_defaults_present():
+    """Verifica che tutti i 26 counselor definiti da specifica abbiano metadati completi."""
+    canonical_slugs = [
+        "marco", "sara", "luca", "elena", "davide", "giulia", "nadia", "nora", "giulio",
+        "iride", "clio", "bruno", "minerva", "bianca", "erik", "carmen", "otto", "teo",
+        "sonia", "rocco", "aidan", "camille", "luz", "vera", "omar", "gemini",
+    ]
+    for slug in canonical_slugs:
+        assert slug in COUNSELOR_IDENTITY_DEFAULTS, f"Manca {slug} in COUNSELOR_IDENTITY_DEFAULTS"
+        data = COUNSELOR_IDENTITY_DEFAULTS[slug]
+        assert data["slug"] == slug
+        assert data["avatar_url"] == f"/images/counselors/{slug}.svg"
+        assert len(data["approach_categories"]) > 0
+        taglines = data["tagline_i18n"]
+        for lang in ["it", "en", "es"]:
+            assert lang in taglines and len(taglines[lang].strip()) > 0
+

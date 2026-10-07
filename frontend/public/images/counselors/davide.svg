@@ -1,75 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
   <defs>
-    <radialGradient id="bg_davide" cx="50%" cy="40%" r="60%">
-      <stop offset="0%" stop-color="#0d9488" />
-      <stop offset="70%" stop-color="#0f766e" />
-      <stop offset="100%" stop-color="#115e59" />
-    </radialGradient>
-    <!-- Blocco 1 (Base teal chiaro) -->
-    <linearGradient id="b1_top" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#5eead4" />
-      <stop offset="100%" stop-color="#2dd4bf" />
+    <linearGradient id="bg_davide" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="45%" stop-color="#1e293b" />
+      <stop offset="75%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#fbbf24" />
     </linearGradient>
-    <linearGradient id="b1_front" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#14b8a6" />
-      <stop offset="100%" stop-color="#0d9488" />
-    </linearGradient>
-    <!-- Blocco 2 (Intermedio petrol) -->
-    <linearGradient id="b2_top" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2dd4bf" />
-      <stop offset="100%" stop-color="#14b8a6" />
-    </linearGradient>
-    <linearGradient id="b2_front" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#0f766e" />
-      <stop offset="100%" stop-color="#115e59" />
-    </linearGradient>
-    <!-- Blocco 3 (Azione ambra/arancio) -->
-    <linearGradient id="b3_top" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fed7aa" />
-      <stop offset="100%" stop-color="#fb923c" />
-    </linearGradient>
-    <linearGradient id="b3_front" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#f97316" />
-      <stop offset="100%" stop-color="#ea580c" />
+    <linearGradient id="peak_light_davide" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#c2410c" />
     </linearGradient>
   </defs>
-
-  <!-- Base medaglione -->
-  <circle cx="50" cy="50" r="48" fill="url(#bg_davide)" stroke="#14b8a6" stroke-width="1" stroke-opacity="0.35" />
-
-  <!-- Arco / ponte dinamico verso l'azione -->
-  <path d="M 22 75 C 32 50, 52 35, 76 28" fill="none" stroke="#fed7aa" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 4" opacity="0.6" />
-  <path d="M 76 28 L 73 34 M 76 28 L 69 29" stroke="#fed7aa" stroke-width="2" stroke-linecap="round" opacity="0.8" />
-
-  <!-- Blocco 1: Base operativa (sinistra-basso) -->
-  <g>
-    <!-- Lato superiore -->
-    <polygon points="30,58 45,51 45,61 30,68" fill="#115e59" opacity="0.4" />
-    <path d="M 20 62 L 34 55 L 48 62 L 34 69 Z" fill="url(#b1_top)" />
-    <!-- Lato sinistro frontale -->
-    <path d="M 20 62 L 34 69 L 34 81 L 20 74 Z" fill="url(#b1_front)" />
-    <!-- Lato destro frontale -->
-    <path d="M 34 69 L 48 62 L 48 74 L 34 81 Z" fill="#0f766e" />
+  <rect width="320" height="180" fill="url(#bg_davide)" />
+  <!-- Sole che sorge dietro la vetta -->
+  <circle cx="255" cy="85" r="26" fill="#fef08a" opacity="0.75" />
+  <circle cx="255" cy="85" r="42" fill="#fbbf24" opacity="0.25" />
+  <!-- Catene montuose di sfondo (sagome distanti) -->
+  <polygon points="0,140 50,110 110,135 180,95 240,125 320,80 320,180 0,180" fill="#1e293b" opacity="0.6" />
+  <!-- Vetta aguzza baciata dal sole all'alba -->
+  <polygon points="160,180 230,68 300,180" fill="#0f172a" />
+  <!-- Versante illuminato della vetta -->
+  <polygon points="230,68 230,180 300,180" fill="url(#peak_light_davide)" opacity="0.9" />
+  <!-- Bandierina di traguardo sulla cima -->
+  <line x1="230" y1="68" x2="230" y2="52" stroke="#ffffff" stroke-width="1.5" />
+  <polygon points="230,52 242,57 230,62" fill="#ef4444" />
+  <!-- Creste intermedie scure in primo piano -->
+  <polygon points="0,180 0,130 65,115 130,150 170,180" fill="#0f172a" />
+  <!-- Corda da arrampicata dinamica arancione con nodi -->
+  <path d="M 20 165 C 60 130, 95 160, 140 125 C 175 100, 205 110, 230 75" fill="none" stroke="#f97316" stroke-width="2.5" stroke-dasharray="6 2" stroke-linecap="round" />
+  <!-- Moschettone in alluminio sulla corda -->
+  <g transform="translate(136, 122) rotate(25)">
+    <rect x="-4" y="-8" width="8" height="16" rx="4" fill="none" stroke="#e2e8f0" stroke-width="2" />
+    <line x1="4" y1="-3" x2="4" y2="3" stroke="#38bdf8" stroke-width="2.5" />
   </g>
-
-  <!-- Blocco 2: Costruzione intermedia (centro) -->
-  <g>
-    <path d="M 36 48 L 50 41 L 64 48 L 50 55 Z" fill="url(#b2_top)" />
-    <path d="M 36 48 L 50 55 L 50 67 L 36 60 Z" fill="url(#b2_front)" />
-    <path d="M 50 55 L 64 48 L 64 60 L 50 67 Z" fill="#042f2e" opacity="0.8" />
+  <!-- Piccozza tecnica d'alpinismo sul lato sinistro -->
+  <g transform="translate(68, 120) rotate(-40)">
+    <!-- Becca e paletta -->
+    <path d="M -16 -4 C -6 -10, 6 -10, 16 -6 L 14 -1 L -12 0 Z" fill="#cbd5e1" stroke="#94a3b8" stroke-width="0.8" />
+    <!-- Manico -->
+    <rect x="-2" y="-2" width="4" height="42" rx="1.5" fill="#38bdf8" />
+    <rect x="-2" y="24" width="4" height="14" rx="1" fill="#0f172a" />
+    <!-- Puntale -->
+    <polygon points="-2,40 2,40 0,46" fill="#cbd5e1" />
   </g>
-
-  <!-- Blocco 3: Traguardo dell'azione (alto a destra, accento arancio vibrante) -->
-  <g>
-    <path d="M 52 34 L 66 27 L 80 34 L 66 41 Z" fill="url(#b3_top)" />
-    <path d="M 52 34 L 66 41 L 66 53 L 52 46 Z" fill="url(#b3_front)" />
-    <path d="M 66 41 L 80 34 L 80 46 L 66 53 Z" fill="#c2410c" />
-  </g>
-
-  <!-- Scintilla di concretezza e slancio sopra il blocco finale -->
-  <circle cx="66" cy="18" r="3.5" fill="#fef3c7" />
-  <circle cx="66" cy="18" r="2" fill="#f97316" />
-  <line x1="66" y1="11" x2="66" y2="14" stroke="#fed7aa" stroke-width="1.5" stroke-linecap="round" />
-  <line x1="71" y1="14" x2="69" y2="16" stroke="#fed7aa" stroke-width="1.5" stroke-linecap="round" />
-  <line x1="61" y1="14" x2="63" y2="16" stroke="#fed7aa" stroke-width="1.5" stroke-linecap="round" />
 </svg>

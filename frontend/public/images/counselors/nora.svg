@@ -1,56 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
   <defs>
-    <radialGradient id="bg_nora" cx="50%" cy="45%" r="60%">
-      <stop offset="0%" stop-color="#0f766e" />
-      <stop offset="70%" stop-color="#115e59" />
-      <stop offset="100%" stop-color="#042f2e" />
-    </radialGradient>
-    <linearGradient id="gem_nora" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fb923c" />
-      <stop offset="100%" stop-color="#ea580c" />
+    <linearGradient id="bg_nora" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="60%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#0284c7" />
     </linearGradient>
-    <linearGradient id="scale_pan" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ccfbf1" />
-      <stop offset="100%" stop-color="#14b8a6" />
+    <linearGradient id="prism_nora" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#e0f2fe" stop-opacity="0.9" />
     </linearGradient>
   </defs>
-
-  <!-- Base medaglione -->
-  <circle cx="50" cy="50" r="48" fill="url(#bg_nora)" stroke="#14b8a6" stroke-width="1" stroke-opacity="0.35" />
-
-  <!-- Cerchio zen di armonia ed equanimità meditativa -->
-  <circle cx="50" cy="46" r="36" fill="none" stroke="#2dd4bf" stroke-width="1" stroke-dasharray="2 4" opacity="0.3" />
-
-  <!-- Onde calme zen alla base (serenità e fluidità) -->
-  <path d="M 16 75 C 28 71, 38 79, 50 75 C 62 71, 72 79, 84 75" fill="none" stroke="#5eead4" stroke-width="2.5" stroke-linecap="round" opacity="0.65" />
-  <path d="M 22 83 C 32 79, 42 86, 50 83 C 58 79, 68 86, 78 83" fill="none" stroke="#14b8a6" stroke-width="1.8" stroke-linecap="round" opacity="0.45" />
-
-  <!-- Fulcro centrale della bilancia (pedana stabile piramidale morbida) -->
-  <polygon points="50,44 43,68 57,68" fill="#0d9488" stroke="#2dd4bf" stroke-width="1" stroke-linejoin="round" />
-  <line x1="50" y1="46" x2="50" y2="68" stroke="#042f2e" stroke-width="1.2" opacity="0.6" />
-
-  <!-- Braccio orizzontale della bilancia (perfetto equilibrio orizzontale) -->
-  <line x1="22" y1="42" x2="78" y2="42" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" />
-  <circle cx="22" cy="42" r="2" fill="#ccfbf1" />
-  <circle cx="78" cy="42" r="2" fill="#ccfbf1" />
-
-  <!-- Piatto sinistro (sospeso in perfetto equilibrio) -->
-  <line x1="22" y1="42" x2="16" y2="56" stroke="#99f6e4" stroke-width="1" stroke-linecap="round" opacity="0.7" />
-  <line x1="22" y1="42" x2="28" y2="56" stroke="#99f6e4" stroke-width="1" stroke-linecap="round" opacity="0.7" />
-  <path d="M 14 56 C 14 62, 30 62, 30 56 Z" fill="url(#scale_pan)" />
-  <circle cx="22" cy="53" r="2.5" fill="#fef3c7" opacity="0.9" />
-
-  <!-- Piatto destro (sospeso in perfetta parità) -->
-  <line x1="78" y1="42" x2="72" y2="56" stroke="#99f6e4" stroke-width="1" stroke-linecap="round" opacity="0.7" />
-  <line x1="78" y1="42" x2="84" y2="56" stroke="#99f6e4" stroke-width="1" stroke-linecap="round" opacity="0.7" />
-  <path d="M 70 56 C 70 62, 86 62, 86 56 Z" fill="url(#scale_pan)" />
-  <circle cx="78" cy="53" r="2.5" fill="#fef3c7" opacity="0.9" />
-
-  <!-- Gemma / Perla di Serenità sul fulcro centrale (caldo arancio/ambra) -->
-  <circle cx="50" cy="42" r="5" fill="url(#gem_nora)" />
-  <circle cx="48.5" cy="40.5" r="1.5" fill="#fef3c7" />
-
-  <!-- Punti di luce di armonia meditativa -->
-  <circle cx="50" cy="20" r="1.5" fill="#fef3c7" />
-  <circle cx="50" cy="28" r="1" fill="#fed7aa" />
+  <rect width="320" height="180" fill="url(#bg_nora)" />
+  <!-- Linea d'orizzonte pura ed essenziale -->
+  <line x1="0" y1="125" x2="320" y2="125" stroke="#06b6d4" stroke-width="1.2" opacity="0.6" />
+  <!-- Assi cartesiani essenziali sul lato sinistro -->
+  <g stroke="#94a3b8" stroke-width="1" opacity="0.5">
+    <line x1="45" y1="35" x2="45" y2="155" />
+    <line x1="25" y1="135" x2="145" y2="135" />
+    <line x1="42" y1="105" x2="48" y2="105" />
+    <line x1="42" y1="75" x2="48" y2="75" />
+    <line x1="75" y1="132" x2="75" y2="138" />
+    <line x1="105" y1="132" x2="105" y2="138" />
+  </g>
+  <!-- Prisma geometrico minimale trasparente al centro -->
+  <g transform="translate(140, 65)">
+    <polygon points="25,-25 65,45 -15,45" fill="url(#prism_nora)" stroke="#e2e8f0" stroke-width="1.5" />
+    <line x1="25" y1="-25" x2="25" y2="45" stroke="#ffffff" stroke-width="1" stroke-dasharray="3 3" opacity="0.7" />
+    <circle cx="25" cy="-25" r="3" fill="#fef08a" />
+  </g>
+  <!-- Bussola cartesiana essenziale a destra -->
+  <g transform="translate(245, 90)">
+    <circle cx="0" cy="0" r="32" fill="#0f172a" stroke="#06b6d4" stroke-width="1.5" />
+    <circle cx="0" cy="0" r="28" fill="none" stroke="#38bdf8" stroke-width="0.8" stroke-dasharray="2 4" />
+    <!-- Ago sottile nord/sud -->
+    <polygon points="0,0 -4,-3 0,-24 4,-3" fill="#06b6d4" />
+    <polygon points="0,0 -4,3 0,24 4,3" fill="#94a3b8" />
+    <circle cx="0" cy="0" r="3" fill="#ffffff" />
+  </g>
 </svg>

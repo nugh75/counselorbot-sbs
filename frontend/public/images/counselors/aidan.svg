@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="bg_aidan" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="50%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="180" fill="url(#bg_aidan)" />
+  <!-- Scogliere atlantiche e oceano aperto -->
+  <path d="M 0 115 Q 120 100 200 125 L 200 180 L 0 180 Z" fill="#064e3b" opacity="0.8" />
+  <path d="M 0 135 C 80 128, 160 145, 240 135 L 240 180 L 0 180 Z" fill="#022c22" />
+  <!-- Onde spumeggianti dell'Atlantico in basso a sinistra -->
+  <path d="M 10 155 C 40 148, 70 158, 100 152" fill="none" stroke="#a7f3d0" stroke-width="1.5" opacity="0.6" />
+  <!-- Nodo celtico triskele/trifoglio intrecciato in alto a sinistra -->
+  <g transform="translate(60, 48)" stroke="#fef08a" stroke-width="2.5" fill="none" opacity="0.75">
+    <circle cx="0" cy="-10" r="10" />
+    <circle cx="-9" cy="6" r="10" />
+    <circle cx="9" cy="6" r="10" />
+  </g>
+  <!-- Cottage costiero tradizionale irlandese a destra -->
+  <g transform="translate(230, 92)">
+    <!-- Muri in pietra imbiancata -->
+    <polygon points="0,35 45,35 45,0 22,-16 0,0" fill="#f8fafc" stroke="#475569" stroke-width="1.5" />
+    <!-- Tetto in paglia/ardesia -->
+    <polygon points="-4,2 22,-18 49,2" fill="#78350f" />
+    <!-- Camino con fumo caldo -->
+    <rect x="30" y="-24" width="8" height="14" fill="#334155" />
+    <path d="M 34 -24 Q 40 -34 34 -42" fill="none" stroke="#fed7aa" stroke-width="1.5" stroke-linecap="round" opacity="0.7" />
+    <!-- Finestra accesa con luce dorata del focolare -->
+    <rect x="15" y="10" width="14" height="14" rx="1" fill="#f59e0b" stroke="#78350f" stroke-width="1" />
+    <line x1="22" y1="10" x2="22" y2="24" stroke="#78350f" stroke-width="1" />
+    <line x1="15" y1="17" x2="29" y2="17" stroke="#78350f" stroke-width="1" />
+  </g>
+</svg>
