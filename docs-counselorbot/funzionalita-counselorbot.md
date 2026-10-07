@@ -742,7 +742,11 @@ Il modello usa i testi del livello assegnato quando «Usa i testi del livello,
 se presenti» è attivo. I limiti dei blocchi restano validi: per inviare anche
 una variante meta, attiva «Includi meta prompt» nel livello; i default Ristretto
 e Minimo lo escludono. L'anteprima con preset mostra i testi scelti sia nei
-blocchi sia nei messaggi. Il testo libero dello studente non viene sostituito.
+blocchi sia nei messaggi. Il testo libero dello studente non viene sostituito:
+nei turni di follow-up la risposta dello studente resta separata dalle istruzioni
+interne e il server reinserisce il mandato personalizzato dello step come istruzione
+di continuazione, preservando tema e vincoli anche con storico ridotto senza rigenerare
+l'analisi o l'introduzione iniziale.
 
 In **Generale → Contesto per modello**, l'amministratore può rinominare e
 aggiungere livelli, modificare i tetti dei componenti e assegnare un livello
