@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node direct typescript execution requires extension
-import { getCounselorTagline, type PublicCounselor } from './counselor.ts';
+import { filterCounselorsByCategories, getCounselorTagline, type PublicCounselor } from './counselor.ts';
 // @ts-expect-error -- Node direct typescript execution requires extension
-import { formatCategoryLabel, CATEGORY_LABELS } from './i18n-counselor-identity.ts';
+import { formatCategoryLabel } from './i18n-counselor-identity.ts';
 
 const counselorSelectorSource = () =>
     readFileSync(new URL('../components/questionnaire/CounselorSelector.tsx', import.meta.url), 'utf8');
@@ -20,7 +20,7 @@ test('getCounselorTagline returns requested language and falls back correctly', 
         tagline_i18n: {
             it: 'Ti accompagna con domande calme e precise.',
             en: 'Accompanies you with calm, precise questions.',
-            es: 'Te acompaña con preguntas que ayudan a aclarar ideas.',
+            es: 'Te acompaña con domande che aiutano a chiarire le idee.',
         },
         approach_categories: ['filosofo', 'maieutico'],
         approach_summary: 'Sommario approccio maieutico',
@@ -30,7 +30,7 @@ test('getCounselorTagline returns requested language and falls back correctly', 
     // Lingua richiesta presente
     assert.equal(getCounselorTagline(counselor, 'it'), 'Ti accompagna con domande calme e precise.');
     assert.equal(getCounselorTagline(counselor, 'en'), 'Accompanies you with calm, precise questions.');
-    assert.equal(getCounselorTagline(counselor, 'es'), 'Te acompaña con preguntas que ayudan a aclarar ideas.');
+    assert.equal(getCounselorTagline(counselor, 'es'), 'Te acompaña con domande che aiutano a chiarire le idee.');
 
     // Lingua non presente nel dict: fallback su 'it' o prima lingua disponibile
     assert.equal(getCounselorTagline(counselor, 'de'), 'Ti accompagna con domande calme e precise.');
@@ -111,11 +111,15 @@ test('CounselorSelector source satisfies UI requirements and compatibility contr
     assert.match(src, /recommendation\.explanation/);
     assert.match(src, /recommendation\.matched_categories/);
 
-    // 3. Filtro per categorie di approccio (chip)
+    // 3. Filtro per categorie di approccio (chip multi-tag)
     assert.match(src, /t\('counselor\.filter\.label'\)/);
     assert.match(src, /t\('counselor\.filter\.all'\)/);
-    assert.match(src, /selectedCategory/);
+    assert.match(src, /t\('counselor\.filter\.reset'\)/);
+    assert.match(src, /selectedCategories/);
+    assert.match(src, /toggleCategory/);
+    assert.match(src, /clearCategories/);
     assert.match(src, /formatCategoryLabel/);
+    assert.match(src, /filterCounselorsByCategories/);
 
     // 4. Frase distintiva (tagline) e avatar nelle card
     assert.match(src, /getCounselorTagline\(c, lang\)/);
@@ -131,3 +135,69 @@ test('CounselorSelector source satisfies UI requirements and compatibility contr
     assert.match(src, /counselor\.modelLabel/);
     assert.match(src, /\{c\.model\}/);
 });
+
+test('filterCounselorsByCategories returns all counselors when selectedCategories is empty', () => {
+    const list: PublicCounselor[] = [
+        { id: 1, slug: 'c1', name: 'Counselor 1', language: ['it'], approach_categories: ['filosofo'] },
+        { id: 2, slug: 'c2', name: 'Counselor 2', language: ['it'], approach_categories: ['psicologo'] },
+    ];
+
+    assert.deepEqual(filterCounselorsByCategories(list, []), list);
+    assert.deepEqual(filterCounselorsByCategories(list, ['  ', '']), list);
+});
+
+test('filterCounselorsByCategories filters by single category with case insensitivity', () => {
+    const list: PublicCounselor[] = [
+        { id: 1, slug: 'c1', name: 'Counselor 1', language: ['it'], approach_categories: ['Filosofo', 'Maieutico'] },
+        { id: 2, slug: 'c2', name: 'Counselor 2', language: ['it'], approach_categories: ['Psicologo'] },
+        { id: 3, slug: 'c3', name: 'Counselor 3', language: ['it'], approach_categories: ['filosofo'] },
+    ];
+
+    const filtered = filterCounselorsByCategories(list, ['filosofo']);
+    assert.equal(filtered.length, 2);
+    assert.deepEqual(filtered.map((c) => c.id), [1, 3]);
+});
+
+test('filterCounselorsByCategories multi-tag filtering includes any matching tag and ranks by match count', () => {
+    const list: PublicCounselor[] = [
+        { id: 1, slug: 'c1', name: '1 Match', language: ['it'], approach_categories: ['filosofo'] },
+        { id: 2, slug: 'c2', name: '3 Matches', language: ['it'], approach_categories: ['filosofo', 'docente', 'tutor'] },
+        { id: 3, slug: 'c3', name: '0 Matches', language: ['it'], approach_categories: ['psicologo', 'analitico'] },
+        { id: 4, slug: 'c4', name: '2 Matches', language: ['it'], approach_categories: ['docente', 'tutor'] },
+    ];
+
+    const selectedTags = ['filosofo', 'docente', 'tutor'];
+    const filtered = filterCounselorsByCategories(list, selectedTags);
+
+    assert.equal(filtered.length, 3);
+    // Counselor 2 ha 3 match, Counselor 4 ne ha 2, Counselor 1 ne ha 1
+    assert.deepEqual(filtered.map((c) => c.id), [2, 4, 1]);
+});
+
+test('filterCounselorsByCategories preserves recommended counselor priority at top', () => {
+    const list: PublicCounselor[] = [
+        { id: 10, slug: 'c10', name: '3 Matches Non-rec', language: ['it'], approach_categories: ['filosofo', 'docente', 'tutor'] },
+        { id: 20, slug: 'c20', name: '1 Match Recommended', language: ['it'], approach_categories: ['tutor'] },
+        { id: 30, slug: 'c30', name: '2 Matches Non-rec', language: ['it'], approach_categories: ['docente', 'tutor'] },
+    ];
+
+    const selectedTags = ['filosofo', 'docente', 'tutor'];
+    // 20 e' raccomandato
+    const filtered = filterCounselorsByCategories(list, selectedTags, 20);
+
+    assert.equal(filtered.length, 3);
+    // Il raccomandato (id 20) resta prioritario in cima, poi id 10 (3 match), poi id 30 (2 match)
+    assert.deepEqual(filtered.map((c) => c.id), [20, 10, 30]);
+});
+
+test('filterCounselorsByCategories excludes recommended counselor if it has 0 matches for active tags', () => {
+    const list: PublicCounselor[] = [
+        { id: 1, slug: 'c1', name: 'Matching Counselor', language: ['it'], approach_categories: ['filosofo'] },
+        { id: 2, slug: 'c2', name: 'Recommended Counselor', language: ['it'], approach_categories: ['psicologo'] },
+    ];
+
+    const filtered = filterCounselorsByCategories(list, ['filosofo'], 2);
+    assert.equal(filtered.length, 1);
+    assert.equal(filtered[0].id, 1);
+});
+
