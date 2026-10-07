@@ -22,6 +22,7 @@ from .qsa_essential import validate_path
 from .chat_logic import (
     _annotate_qsa_factor_codes,
     _ensure_required_qsa_factor_codes,
+    extract_clean_student_message,
     prompt_component_config_key,
     prompt_meta_config_key,
     _is_strategy_questionnaire,
@@ -161,8 +162,8 @@ def _resolve_effective_message(request: ChatRequest, db: Session, warnings: list
             return request.message or "", None, step
         if not step:
             return request.message or "", None, step
-        return step.prompt, f"guided_step:{step.id}", step
-    return request.message or "", None, step
+    clean_msg = extract_clean_student_message(request.message or "", getattr(request, "memory_message", None))
+    return clean_msg, (f"guided_step:{step.id}" if step else None), step
 
 
 def _factor_codes_in(text: str) -> set[str]:

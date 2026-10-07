@@ -1974,6 +1974,42 @@ def _resolve_system_prompt(ai_service: AIService, mode: str, phase: Optional[str
     )
 
 
+_STEP_INSTRUCTIONS_PREFIX_RE = re.compile(
+    r"^CURRENT STEP INTERNAL INSTRUCTIONS\b.*?\n\nSTUDENT ANSWER:\s*",
+    re.DOTALL | re.IGNORECASE,
+)
+
+
+def extract_clean_student_message(message: str | None, memory_message: str | None = None) -> str:
+    """Estrae la risposta pulita dello studente, isolandola dalle istruzioni interne."""
+    if memory_message and memory_message.strip():
+        return memory_message.strip()
+    msg = (message or "").strip()
+    if not msg:
+        return ""
+    cleaned = _STEP_INSTRUCTIONS_PREFIX_RE.sub("", msg).strip()
+    return cleaned
+
+
+def format_step_continuation_prompt(step_prompt: str | None) -> str:
+    """Formatta il mandato dello step per i turni di follow-up / prosecuzione.
+
+    Preserva tema e vincoli dello step anche con storico ridotto, evitando che il
+    modello rigeneri l'analisi o l'introduzione iniziale.
+    """
+    clean_prompt = (step_prompt or "").strip()
+    if not clean_prompt:
+        return ""
+    return (
+        "[CURRENT STEP MANDATE - CONTINUATION]\n"
+        "The conversation is continuing on the current guided step. "
+        "Maintain the theme, questions, and constraints of this step. "
+        "Do not regenerate or restart the initial profile analysis, tables, or step introduction. "
+        "Address the student's message while respecting these step instructions:\n"
+        f"{clean_prompt}"
+    )
+
+
 def _resolve_user_message_for_chat(ai_service: AIService, request: ChatRequest, db):
     """Resolve the effective user message, optionally loading a guided-step prompt from DB."""
     if request.use_phase_prompt:
@@ -1990,7 +2026,9 @@ def _resolve_user_message_for_chat(ai_service: AIService, request: ChatRequest, 
 
         return step.prompt, f"guided_step:{step.id}"
 
-    return request.message, None
+    clean_message = extract_clean_student_message(request.message, getattr(request, "memory_message", None))
+    phase_key = f"guided_step:{request.phase}" if request.phase else None
+    return clean_message, phase_key
 
 
 def _update_markdown_memory_background(
@@ -2695,11 +2733,11 @@ def _idea_turns_used(db, session_id: str) -> int:
         return 0
 
 
-def instruction_parts(request, system_prompt, effective_message, persona, meta, component_flags):
+def instruction_parts(request, system_prompt, step_instruction, persona, meta, component_flags):
     """Canonical editable instruction prefix, also used for context variants."""
     parts = []
-    if getattr(request, "use_phase_prompt", False) and effective_message and _component_enabled(component_flags, "step_prompt"):
-        parts.append(effective_message)
+    if step_instruction and _component_enabled(component_flags, "step_prompt"):
+        parts.append(step_instruction)
     if persona and _component_enabled(component_flags, "counselor"):
         parts.append(persona.strip())
     if system_prompt and _component_enabled(component_flags, "system_prompt"):
@@ -2723,6 +2761,7 @@ def build_context_envelope(
     step_id: str | None = None,
     questionnaire_type: str,
     effective_message: str,
+    step_instruction: str = "",
     model_scores_context: str,
     message_scores_context: str,
     knowledge_context: str,
@@ -2750,11 +2789,15 @@ def build_context_envelope(
     language = request.language or "it"
     c_persona = persona_context(c_persona, counselor_name)
 
+    resolved_step_prompt = step_instruction
+    if not resolved_step_prompt and getattr(request, "use_phase_prompt", False):
+        resolved_step_prompt = effective_message
+
     # --- [SECTION] (già risolto e direttivato dal router) ---
     if not _component_enabled(component_flags, "system_prompt"):
         system_prompt = ""
     if not _component_enabled(component_flags, "step_prompt"):
-        effective_message = ""
+        resolved_step_prompt = ""
     if not _scores_enabled(component_flags, questionnaire_type):
         message_scores_context = ""
         include_scores_reference = False
@@ -2772,11 +2815,11 @@ def build_context_envelope(
         include_profile = False
     if components is not None:
         components["system_prompt"] = system_prompt
-        components["step_prompt"] = effective_message
+        components["step_prompt"] = resolved_step_prompt
         components["knowledge"] = knowledge_context
 
     meta_system_prompt = _instrument_meta_system_prompt(db, questionnaire_type, step_id, config_overrides)
-    parts_system = instruction_parts(request, system_prompt, effective_message, c_persona, meta_system_prompt, component_flags)
+    parts_system = instruction_parts(request, system_prompt, resolved_step_prompt, c_persona, meta_system_prompt, component_flags)
     if components is not None:
         components["meta_system_prompt"] = meta_system_prompt
         components["instruction_prefix"] = "\n\n".join(parts_system).replace("{{counselor_name}}", counselor_name or "the counsellor")
@@ -3038,6 +3081,7 @@ def build_context_envelope(
 
     # --- MESSAGES: history verbatim + user corrente (scores scope-ati + msg) ---
     history = session_memory.get_transcript(session_id, touch=create_anonymous_code) if include_history and include_session_memory and _component_enabled(component_flags, "history") else []
+    clean_user_message = extract_clean_student_message(effective_message, getattr(request, "memory_message", None))
     if getattr(request, "use_phase_prompt", False):
         # QPCS è un dialogo riflessivo: all'ingresso di uno step il prompt di fase
         # finisce nel system e il turno utente sarebbe solo i punteggi. Così il
@@ -3058,12 +3102,12 @@ def build_context_envelope(
         else:
             full_message = message_scores_context
     else:
-        if message_scores_context and effective_message:
-            full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{effective_message}"
+        if message_scores_context and clean_user_message:
+            full_message = f"{message_scores_context}\n\nDOMANDA DELLO STUDENTE:\n{clean_user_message}"
         elif message_scores_context:
             full_message = message_scores_context
         else:
-            full_message = effective_message
+            full_message = clean_user_message
     if components is not None:
         components["history"] = history
 
