@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from .. import auth, database, idea_sources, models
+from .. import auth, class_access, database, idea_sources, models
 from ..diagram_render import DiagramSpecError, describe, render, spec_fingerprint
 from ..idea_synthesis import synthesis_for
 from ..pdf_generator import generate_idea_map_pdf
@@ -86,6 +86,12 @@ def _require_feature(db: Session) -> None:
         raise HTTPException(status_code=404, detail="idea focus disabled")
 
 
+def _require_idea_tool(db: Session, identity: dict) -> None:
+    """Starts and changes are guarded by class access; reads, exports and
+    deletions of existing data stay open (decision 8)."""
+    class_access.require_tool(db, identity, IDEA_INSTRUMENT)
+
+
 def _owner(identity: dict) -> str:
     username = (identity or {}).get("username")
     if not username:
@@ -123,6 +129,7 @@ async def upload_reference(
 ):
     """Sostituisce il riferimento della sessione con un PDF/TXT/MD."""
     _require_feature(db)
+    _require_idea_tool(db, identity)
     owner = _owner(identity)
     if not session_id.strip() or len(session_id) > 120:
         raise HTTPException(status_code=422, detail="Sessione non valida.")
@@ -241,6 +248,7 @@ def patch_map(
 ):
     """Applica una patch e scrive una revisione nuova."""
     _require_feature(db)
+    _require_idea_tool(db, identity)
     owner = _owner(identity)
     try:
         patch = parse_patch(request.patch)
@@ -549,6 +557,7 @@ def create_branch(
 ):
     """Crea un ramo dalla diramazione in uso, o avvia la mappa se non c'e'."""
     _require_feature(db)
+    _require_idea_tool(db, identity)
     owner = _owner(identity)
     try:
         revision = create_manual_branch(db, owner, request.session_id, request.label,
@@ -593,6 +602,7 @@ def add_node_endpoint(
     poterci entrare senza passare da una frase e dalla patch del modello.
     """
     _require_feature(db)
+    _require_idea_tool(db, identity)
     owner = _owner(identity)
     try:
         revision, node_id = add_node(db, owner, request.session_id, request.label,
@@ -610,6 +620,7 @@ def edit_node_endpoint(
 ):
     """Corregge l'etichetta o il ruolo di un nodo della mappa."""
     _require_feature(db)
+    _require_idea_tool(db, identity)
     owner = _owner(identity)
     try:
         revision = edit_node(db, owner, request.session_id, request.node_id,
@@ -637,6 +648,7 @@ def arrange_branch_endpoint(
     di piu'.
     """
     _require_feature(db)
+    _require_idea_tool(db, identity)
     owner = _owner(identity)
     try:
         revision = arrange_branch(db, owner, request.session_id, request.node_id, request.op)
@@ -679,6 +691,7 @@ def reopen_branch(
     Un'idea chiusa non e' un'idea finita: si torna, si cambia, si richiude.
     """
     _require_feature(db)
+    _require_idea_tool(db, identity)
     owner = _owner(identity)
     try:
         revision = reopen(db, owner, request.session_id, request.node_id)
@@ -725,6 +738,7 @@ def move_focus(
 ):
     """Sposta il lavoro su un altro ramo."""
     _require_feature(db)
+    _require_idea_tool(db, identity)
     owner = _owner(identity)
     try:
         revision = set_focus(db, owner, request.session_id, request.node_id)
@@ -757,6 +771,7 @@ def conclude(
     dove, e la persona vede l'esito di ognuna invece di un errore solo.
     """
     _require_feature(db)
+    _require_idea_tool(db, identity)
     owner = _owner(identity)
     spec = _map_or_404(db, owner, request.session_id)
 
@@ -854,6 +869,7 @@ def search_sources(
 ):
     """Cerca fonti per il ramo. Non salva niente: propone."""
     _require_sources(db)
+    _require_idea_tool(db, identity)
     _owner(identity)
     try:
         results = idea_sources.search(
@@ -875,6 +891,7 @@ def keep_sources(
 ):
     """Attacca al ramo le fonti scelte, col PDF ad accesso aperto se c'e'."""
     _require_sources(db)
+    _require_idea_tool(db, identity)
     owner = _owner(identity)
     try:
         saved = idea_sources.keep(

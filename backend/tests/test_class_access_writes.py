@@ -117,3 +117,71 @@ def test_memory_event_rejects_another_users_session(db):
     assert _event(client, "mem-mine", "SAVICKAS").status_code == 200
     # A brand-new session id has no owner yet: the caller starts it.
     assert _event(client, "mem-new", "SAVICKAS").status_code == 200
+
+
+# --- B5: Idea starts and mutations -------------------------------------------
+
+IDEA_SESSION = "idea-s"
+IDEA_WRITES = [
+    ("post", "/idea/map/patch", {"json": {"session_id": IDEA_SESSION, "patch": {}}}),
+    ("post", "/idea/branch", {"json": {"session_id": IDEA_SESSION, "label": "Idea", "lang": "en"}}),
+    ("post", "/idea/node", {"json": {"session_id": IDEA_SESSION, "label": "Node", "role": "claim"}}),
+    ("post", "/idea/node/edit", {"json": {"session_id": IDEA_SESSION, "node_id": "n1", "label": "Edit"}}),
+    ("post", "/idea/branch/arrange", {"json": {"session_id": IDEA_SESSION, "node_id": "n1", "op": "up"}}),
+    ("post", "/idea/reopen", {"json": {"session_id": IDEA_SESSION, "node_id": "n1"}}),
+    ("post", "/idea/focus", {"json": {"session_id": IDEA_SESSION, "node_id": "n1"}}),
+    ("post", "/idea/conclude", {"json": {"session_id": IDEA_SESSION}}),
+    ("post", "/idea/sources/search", {"json": {"session_id": IDEA_SESSION, "query": "learning"}}),
+    ("post", "/idea/sources", {"json": {"session_id": IDEA_SESSION, "branch_id": "b1",
+                                        "items": [{"title": "Paper", "url": "https://example.org/p"}]}}),
+    ("post", "/idea/reference", {"data": {"session_id": IDEA_SESSION},
+                                 "files": {"file": ("ref.txt", b"Synthetic evidence", "text/plain")}}),
+]
+# Decision 8: existing data stays readable, exportable and deletable.
+IDEA_KEEPS = [
+    ("get", "/idea/map", {"params": {"session_id": IDEA_SESSION}}),
+    ("get", "/idea/branches", {"params": {"session_id": IDEA_SESSION}}),
+    ("get", "/idea/reference", {"params": {"session_id": IDEA_SESSION}}),
+    ("get", "/idea/sources", {"params": {"session_id": IDEA_SESSION}}),
+    ("delete", "/idea/reference", {"params": {"session_id": IDEA_SESSION}}),
+    ("post", "/idea/map/portfolio", {"json": {"session_id": IDEA_SESSION}}),
+    ("post", "/idea/map/notebook", {"json": {"session_id": IDEA_SESSION}}),
+]
+
+
+@pytest.fixture
+def idea_db(db):  # noqa: F811
+    db.add_all([models.Instrument(code="IDEA", is_active=True, target_audience="student", tool_category="guided"),
+                models.Config(key=idea_map.FEATURE_KEY, value="true")])
+    db.commit()
+    return db
+
+
+def _idea_client(db, identity):
+    return _with_identity(_app(idea_map.router), db, identity, database.get_personal_ai_db)
+
+
+@pytest.mark.parametrize("method,path,kwargs", IDEA_WRITES, ids=[path for _, path, _ in IDEA_WRITES])
+def test_idea_writes_are_guarded(idea_db, method, path, kwargs):
+    _group(idea_db, "a", disabled=["IDEA"], members=["anna"])
+    with patch.object(idea_map.idea_sources, "search", side_effect=AssertionError("no search")):
+        response = getattr(_idea_client(idea_db, STUDENT), method)(path, **kwargs)
+    _assert_denied(response, "tool_disabled_for_class", "IDEA")
+    for model in (models.IdeaReference, models.IdeaMapRevision, models.IdeaSource):
+        assert idea_db.query(model).count() == 0
+
+
+@pytest.mark.parametrize("method,path,kwargs", IDEA_KEEPS, ids=[f"{m} {p}" for m, p, _ in IDEA_KEEPS])
+def test_idea_reads_exports_and_deletes_stay_open(idea_db, method, path, kwargs):
+    _group(idea_db, "a", disabled=["IDEA"], members=["anna"])
+    response = getattr(_idea_client(idea_db, STUDENT), method)(path, **kwargs)
+    assert response.status_code != 403, response.text
+
+
+def test_idea_writes_work_when_enabled(idea_db):
+    client = _idea_client(idea_db, STUDENT)
+    reference = client.post("/idea/reference", data={"session_id": IDEA_SESSION},
+                            files={"file": ("ref.txt", b"Synthetic evidence", "text/plain")})
+    assert reference.status_code == 200, reference.text
+    branch = client.post("/idea/branch", json={"session_id": IDEA_SESSION, "label": "Idea", "lang": "en"})
+    assert branch.status_code == 200, branch.text
