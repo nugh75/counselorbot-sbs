@@ -592,10 +592,14 @@ filtered by classes. A platform-disabled instrument is closed for administrators
 too, except in the sandbox preview, where they test drafts. Students with no
 active class keep the platform catalog. The guard covers new chat turns (judged
 on the prompt the server actually selects, not only on the instrument the page
-declares), questionnaire submission, scoring and PDF upload, completion and
+declares, including stored short and context-level variants of an instrument
+prompt; a raw prompt selection whose instrument cannot be determined is refused
+to students), questionnaire submission, scoring and PDF upload, completion and
 progress records of guided chats, resuming a suspended session, Idea map
 changes and source searches, and OpenCode workspaces. Uploading a questionnaire
-PDF and recording guided-chat progress now require signing in. Results,
+PDF and recording guided-chat progress now require signing in; the first
+progress record of a new session binds it to its user, so another account cannot
+write to it. Results,
 conversations, PDFs, the list of suspended sessions and existing Idea maps of a
 disabled tool stay readable, exportable and deletable. `GET /user/access` returns the
 resolved tool list; the student catalog uses it from #90, and counselor fields
