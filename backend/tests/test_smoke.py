@@ -2763,14 +2763,19 @@ def test_stream_memory_contract_for_all_active_questionnaires():
         assert "- Lingua: it" in memory
         assert "Vorrei migliorare il mio metodo di studio" in memory
 
-        r = client.post("/memory/event", json={
-            "session_id": session_id,
-            "questionnaire_type": questionnaire_type,
-            "language": "it",
-            "phase": "conclusion",
-            "step_label": "Conclusione",
-            "completed_step": True,
-        })
+        # Memory events need a signed-in owner (#89 review B4).
+        main.app.dependency_overrides[auth.get_current_user] = _fake_user_identity
+        try:
+            r = client.post("/memory/event", json={
+                "session_id": session_id,
+                "questionnaire_type": questionnaire_type,
+                "language": "it",
+                "phase": "conclusion",
+                "step_label": "Conclusione",
+                "completed_step": True,
+            })
+        finally:
+            main.app.dependency_overrides.pop(auth.get_current_user, None)
         assert r.status_code == 200, r.text
         memory = session_memory.get_summary(session_id)
         assert "- Step corrente: Conclusione" in memory
