@@ -147,3 +147,14 @@ DATABASE_URL=postgresql://c2_test@127.0.0.1:18589/counselorbot_test \
 - B2–B6 and N1/N2 are covered by `test_class_access_writes.py` and the new cases
   in `test_class_access.py` (each written failing first from the reviewer's
   reproductions).
+- After merging `origin/main` b6edc29: `test_class_access.py` 61 passed, 6
+  skipped (raw `prompt_*` modes do not apply to `/chat/message`);
+  `test_class_access_writes.py` 30 passed. Related suites (settings, forum,
+  sandbox, dynamic instruments, Idea, chat continuation/preparation, thread
+  guard, Tavolo, ChatGPT): 440 passed, 1 failed = N4 sandbox mock contamination
+  (passes alone). SQLite-fixture suites need a local `char_length` shim until
+  N5 is fixed. `test_smoke.py`: 204 passed, 2 failed, identical to `origin/main`.
+- The reviewer's 16 bypass reproductions now get 403/401 (the remaining three
+  are the resolver query count, dynamic steps and the deferred Telegram N3).
+- Live on 8012: anonymous `/qsa/upload`, `/memory/event` and `/user/access` →
+  401, no upload stored; a generic chat passes the guard.
