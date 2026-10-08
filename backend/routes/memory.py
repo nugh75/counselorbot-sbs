@@ -2,6 +2,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import auth, class_access, database, models
@@ -40,13 +41,25 @@ def _require_session_owner(db: Session, session_id: str, username: str) -> None:
 
     A session with no stored owner yet (fresh client id) is started by the caller.
     """
-    for model in (models.QuestionnaireResult, models.FrozenSession, models.Log):
-        other = db.query(model.id).filter(
+    for model in (models.QuestionnaireResult, models.FrozenSession, models.Log, models.MemorySessionOwner):
+        other = db.query(model.session_id).filter(
             model.session_id == session_id, model.username.isnot(None), model.username != "",
             model.username != username,
         ).first()
         if other:
             raise HTTPException(status_code=403, detail="Session belongs to another user")
+
+
+def _bind_session_owner(db: Session, session_id: str, username: str) -> None:
+    """Claim a fresh session for the caller; a concurrent claim by another user loses."""
+    if not username or db.get(models.MemorySessionOwner, session_id):
+        return
+    db.add(models.MemorySessionOwner(session_id=session_id, username=username))
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        _require_session_owner(db, session_id, username)
 
 
 @router.post("/memory/event")
@@ -65,6 +78,7 @@ async def memory_event(
     class_access.require_tool(db, identity, request.questionnaire_type)
     if step and step.questionnaire_type != request.questionnaire_type:
         class_access.require_tool(db, identity, step.questionnaire_type)
+    _bind_session_owner(db, request.session_id, identity.get("username") or "")
 
     session_memory.record_interaction(
         request.session_id,

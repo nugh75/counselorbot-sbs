@@ -871,6 +871,20 @@ class FrozenSession(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class MemorySessionOwner(Base):
+    """Owner of a guided session started through `/memory/event` (#89 review B4-R).
+
+    Session memory lives in files without a username: the first successful
+    event binds the session id to its caller, so another user cannot write it.
+    """
+
+    __tablename__ = "memory_session_owners"
+
+    session_id = Column(String, primary_key=True)
+    username = Column(String, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class RecommendationHistory(Base):
     """Log persistente delle raccomandazioni mostrate in sidebar.
 
