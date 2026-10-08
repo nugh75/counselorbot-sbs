@@ -50,7 +50,7 @@ an `instruments` row are not affected.
 
 Same runners as `class-settings-validation.md`, on this worktree's own ports:
 synthetic Postgres on `127.0.0.1:18589`, backend on `8012`
-(`BACKEND_PORT=8012 bash scripts/dev-class-settings-backend.sh`).
+(`DEV_BACKEND_PORT=8012 bash scripts/dev-class-settings-backend.sh`).
 
 ```bash
 DATABASE_URL=postgresql://c2_test@127.0.0.1:18589/counselorbot_test \
