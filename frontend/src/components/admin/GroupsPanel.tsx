@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Check, ChevronDown, ChevronRight, Link2, Plus, Share2, Trash2, UserMinus, UserPlus, Users } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { learningText } from '@/lib/i18n-assignment-work';
@@ -17,6 +18,7 @@ import { useClassGroupEditors } from '../teacher/useClassGroupEditors';
 import { classLayoutText } from '@/lib/i18n-class-layout';
 import { Button } from '@/components/ui/Button';
 import { teacherLoadingText } from '@/lib/i18n-teacher-loading';
+import { classSettingsText } from '@/lib/i18n-class-settings';
 
 
 export function GroupsPanel() {
@@ -314,6 +316,7 @@ export function GroupsPanel() {
                                     <span className="min-w-0 break-words">{group.name}</span>
                                 </button>
                             </h3>
+                            <Link href={`/docente/classi/${group.id}`} className="inline-flex min-h-[44px] items-center text-sm font-semibold text-indigo-700">{classSettingsText(lang, 'open')}</Link>
                             <p className="break-words text-xs text-slate-500">
                                 {!group.is_active && <span>{texts.inactive}{' - '}</span>}
                                 {group.members_count} {texts.members}{' - '}{group.owner_username}

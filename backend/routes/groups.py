@@ -20,6 +20,7 @@ from sqlalchemy import or_
 from .. import auth, database, models, schemas
 from ..reading_audience import AUDIENCE_BANDS
 from ..user_names import store_user_display_name
+from ..class_tools import ALWAYS_ON, tool_catalog
 
 router = APIRouter()
 get_db = database.get_db
@@ -146,6 +147,89 @@ def _require_group_member(db: Session, group: models.StudentGroup, username: str
 
 
 # --- CRUD classi (docente/ricercatore/admin) ---------------------------------
+
+def _require_settings_group(db: Session, identity, group_id: int, *, for_update=False):
+    query = _visible_group_query(db, identity).filter(models.StudentGroup.id == group_id)
+    if for_update:
+        query = query.with_for_update()
+    group = query.first()
+    if not group:
+        raise HTTPException(status_code=403, detail="Class settings access denied")
+    return group
+
+
+def _serialize_settings(db: Session, group_id: int, settings) -> dict:
+    disabled_tools = settings.disabled_tool_keys if settings else []
+    disabled_counselors = settings.disabled_counselor_ids if settings else []
+    return {
+        "group_id": group_id,
+        "revision": settings.revision if settings else 1,
+        "disabled_tool_keys": disabled_tools,
+        "disabled_counselor_ids": disabled_counselors,
+        "default_counselor_id": settings.default_counselor_id if settings else None,
+        "tools": tool_catalog(db, disabled_tools),
+        "counselors": [{"id": row.id, "name": row.name, "avatar_url": row.avatar_url,
+                        "admin_enabled": bool(row.is_active),
+                        "enabled": bool(row.is_active) and row.id not in disabled_counselors}
+                       for row in db.query(models.Counselor).filter(
+                           models.Counselor.owner_username.is_(None)
+                       ).order_by(models.Counselor.sort_order, models.Counselor.id).all()],
+        "forum": {"students_can_open": bool(settings.forum_students_can_open) if settings else False,
+                  "premoderation": bool(settings.forum_premoderation) if settings else False},
+    }
+
+
+@router.get("/teacher/groups/{group_id}/settings")
+async def get_class_settings(
+    group_id: int,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    _require_settings_group(db, current_user, group_id)
+    return _serialize_settings(db, group_id, db.get(models.ClassSettings, group_id))
+
+
+@router.put("/teacher/groups/{group_id}/settings")
+async def put_class_settings(
+    group_id: int,
+    payload: schemas.ClassSettingsUpdate,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    # Lock the parent even before the first settings row exists. Concurrent first
+    # saves serialize here, so one wins and the other gets the usual 409.
+    _require_settings_group(db, current_user, group_id, for_update=True)
+    settings = db.get(models.ClassSettings, group_id, populate_existing=True)
+    if payload.revision != (settings.revision if settings else 1):
+        raise HTTPException(status_code=409, detail="Class settings revision mismatch")
+    catalog = tool_catalog(db, [])
+    allowed = {row["key"] for row in catalog if not row["always_on"]} - ALWAYS_ON
+    if set(payload.disabled_tool_keys) - allowed:
+        raise HTTPException(status_code=422, detail="Unknown or always-on tool key")
+    institutional = {row.id: row for row in db.query(models.Counselor).filter(
+        models.Counselor.owner_username.is_(None)
+    ).all()}
+    disabled_counselors = payload.disabled_counselor_ids
+    if disabled_counselors is None:
+        disabled_counselors = settings.disabled_counselor_ids if settings else []
+    if set(disabled_counselors) - institutional.keys():
+        raise HTTPException(status_code=422, detail="Unknown or private counselor")
+    default_id = (payload.default_counselor_id if "default_counselor_id" in payload.model_fields_set
+                  else settings.default_counselor_id if settings else None)
+    if default_id is not None and (default_id not in institutional or default_id in disabled_counselors
+                                   or not institutional[default_id].is_active):
+        raise HTTPException(status_code=422, detail="Default counselor must be enabled and institutional")
+    if settings is None:
+        settings = models.ClassSettings(group_id=group_id, revision=1)
+        db.add(settings)
+    settings.disabled_tool_keys = sorted(set(payload.disabled_tool_keys))
+    settings.disabled_counselor_ids = sorted(set(disabled_counselors))
+    settings.default_counselor_id = default_id
+    settings.revision += 1
+    settings.updated_by = _username(current_user)
+    db.commit()
+    db.refresh(settings)
+    return _serialize_settings(db, group_id, settings)
 
 @router.get("/admin/groups")
 async def list_groups(

@@ -1,6 +1,6 @@
 from .chat_preferences import ResponseFormat
 from .dynamic_registry import DynamicInstrumentSet, HISTORIC_INSTRUMENT_CODES
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, StrictInt, validator
 from typing import Optional, List, Dict, Any, Union, Literal
 from datetime import datetime
 import json
@@ -1542,6 +1542,16 @@ class TeacherNoteCreate(BaseModel):
 class GroupJoinRequest(BaseModel):
     """Codice del gruppo (piano) dall'invito del docente."""
     code: str
+
+
+class ClassSettingsUpdate(BaseModel):
+    """S1 accepts tool/counselor choices; forum and locks belong to later slices."""
+    model_config = {"extra": "forbid"}
+
+    revision: int = Field(ge=1, strict=True)
+    disabled_tool_keys: List[str]
+    disabled_counselor_ids: Optional[List[StrictInt]] = None
+    default_counselor_id: Optional[int] = Field(default=None, strict=True)
 
 
 class StudentGroupCreate(BaseModel):
