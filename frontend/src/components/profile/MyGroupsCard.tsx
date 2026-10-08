@@ -102,6 +102,7 @@ const TEXTS = {
 export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false }: { lang: string; showHeading?: boolean; canManageGroups?: boolean }) {
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const [groups, setGroups] = useState<MyGroup[]>([]);
+    const [unreadByGroup, setUnreadByGroup] = useState<Record<string, number>>({});
     const [joinCode, setJoinCode] = useState('');
     const [joinError, setJoinError] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -118,10 +119,19 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
         setLoading(true);
         setLoadError(false);
         try {
-            const res = await apiFetch('/api/user/groups');
+            const [res, unreadRes] = await Promise.all([
+                apiFetch('/api/user/groups'),
+                apiFetch('/api/user/forum/unread').catch(() => null),
+            ]);
             if (!res.ok) throw new Error('groups failed');
             const payload = await res.json();
             setGroups(Array.isArray(payload) ? payload as MyGroup[] : []);
+            if (unreadRes && unreadRes.ok) {
+                const unreadData: unknown = await unreadRes.json();
+                if (unreadData && typeof unreadData === 'object' && 'by_group' in unreadData) {
+                    setUnreadByGroup((unreadData as { by_group: Record<string, number> }).by_group || {});
+                }
+            }
         } catch {
             setLoadError(true);
         } finally {
@@ -219,8 +229,17 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                                         {texts.leave}
                                     </button>
                                 </div>
-                                <Link href={`/profilo/classi/${group.group_id}/forum`} className="mt-1 mr-4 inline-flex min-h-[44px] items-center text-sm text-indigo-700 underline underline-offset-2">
-                                    {forumText(lang, 'forum')} — {group.name}
+                                <Link href={`/profilo/classi/${group.group_id}/forum`} className="mt-1 mr-4 inline-flex min-h-[44px] items-center gap-2 text-sm text-indigo-700 underline underline-offset-2">
+                                    <span>{forumText(lang, 'forum')} — {group.name}</span>
+                                    {Boolean(unreadByGroup[group.group_id] && unreadByGroup[group.group_id] > 0) && (
+                                        <span
+                                            className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-ochre-600 px-1.5 text-xs font-semibold text-white no-underline"
+                                            aria-label={forumText(lang, 'unreadBadge').replace('{count}', String(unreadByGroup[group.group_id]))}
+                                        >
+                                            {unreadByGroup[group.group_id]}
+                                            <span className="sr-only"> {forumText(lang, 'unreadBadge').replace('{count}', String(unreadByGroup[group.group_id]))}</span>
+                                        </span>
+                                    )}
                                 </Link>
                                 {/* F30 (lotto 5A): dalla classe alle assegnazioni che la riguardano, con il filtro già impostato. */}
                                 <Link href={`/profilo/assegnazioni?group=${encodeURIComponent(group.name)}`} className="mt-1 inline-block text-sm text-indigo-700 underline underline-offset-2">
