@@ -66,15 +66,15 @@ def test_audit_is_guarded_before_the_completion_log(db):
 
 # --- B4: /memory/event --------------------------------------------------------
 
-def _event(client, session_id, questionnaire_type="QSA"):
+def _event(client, session_id, questionnaire_type="QSA", phase="p1"):
     return client.post("/memory/event", json={
-        "session_id": session_id, "questionnaire_type": questionnaire_type, "phase": "p1",
+        "session_id": session_id, "questionnaire_type": questionnaire_type, "phase": phase,
         "step_label": "Step", "completed_step": True, "user_message": "Synthetic"})
 
 
 @pytest.fixture(autouse=True)
 def _fresh_memory():
-    ids = ("mem-anon", "mem-disabled", "mem-enabled", "mem-result", "mem-chat", "mem-mine", "mem-new")
+    ids = ("mem-anon", "mem-disabled", "mem-enabled", "mem-result", "mem-chat", "mem-mine", "mem-new", "mem-fresh")
     for session_id in ids:
         session_memory.clear(session_id)
     yield
@@ -117,6 +117,18 @@ def test_memory_event_rejects_another_users_session(db):
     assert _event(client, "mem-mine", "SAVICKAS").status_code == 200
     # A brand-new session id has no owner yet: the caller starts it.
     assert _event(client, "mem-new", "SAVICKAS").status_code == 200
+
+
+def test_first_memory_event_binds_a_fresh_session(db):
+    """Review B4-R: the first successful event makes the caller the session owner."""
+    anna = _memory_client(db, STUDENT)
+    bruno = _memory_client(db, {**STUDENT, "username": "bruno"})
+    assert _event(anna, "mem-fresh", "SAVICKAS", phase="anna-1").status_code == 200
+    response = _event(bruno, "mem-fresh", "SAVICKAS", phase="bruno-1")
+    assert response.status_code == 403, response.text
+    assert session_memory.get_progress("mem-fresh")["current_phase"] == "anna-1"
+    assert _event(anna, "mem-fresh", "SAVICKAS", phase="anna-2").status_code == 200
+    assert session_memory.get_progress("mem-fresh")["current_phase"] == "anna-2"
 
 
 # --- B5: Idea starts and mutations -------------------------------------------
