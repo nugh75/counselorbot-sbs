@@ -95,17 +95,28 @@ def test_inactive_class_is_read_only(forum_api, actor):
     {"title": "Valid", "body": " "}, {"title": "Valid", "body": "B" * 4001},
     {"title": "Valid", "body": "Text", "author_display_name": "Forged"},
     {"title": "Valid", "body": "Text", "attachments": ["file"]},
+    {"title": "Nul\x00title", "body": "Text"}, {"title": "Valid", "body": "Nul\x00body"},
+    {"title": "Escape\x1b[0m", "body": "Text"}, {"title": "Valid", "body": "Form\x0cfeed"},
 ])
 def test_topic_input_limits_and_identity_cannot_be_forged(forum_api, payload):
     client, _, group_id, _ = forum_api
     assert client.post(f"/groups/{group_id}/forum/topics", json=payload).status_code == 422
 
 
-@pytest.mark.parametrize("payload", [{"body": " "}, {"body": "B" * 4001}, {"body": "Text", "author_username": "owner"}, {"body": 12}])
+@pytest.mark.parametrize("payload", [{"body": " "}, {"body": "B" * 4001}, {"body": "Text", "author_username": "owner"}, {"body": 12},
+                                     {"body": "Nul\x00body"}, {"body": "Bell\x07"}, {"body": "Unit\x1fseparator"}])
 def test_reply_input_limits(forum_api, payload):
     client, _, group_id, _ = forum_api
     topic = open_topic(client, group_id)
     assert client.post(f"/forum/topics/{topic['id']}/posts", json=payload).status_code == 422
+
+
+def test_text_keeps_newlines_tabs_and_carriage_returns(forum_api):
+    client, _, group_id, _ = forum_api
+    topic = open_topic(client, group_id)
+    reply = client.post(f"/forum/topics/{topic['id']}/posts", json={"body": "Line one\r\n\tLine two\nend"})
+    assert reply.status_code == 201
+    assert reply.json()["body"] == "Line one\r\n\tLine two\nend"
 
 
 def test_topic_and_replies_share_a_persistent_per_class_rate_limit(forum_api):
