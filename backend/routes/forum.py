@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from .. import auth, database, models
 from ..forum_schemas import ForumPostCreate, ForumTopicCreate
+from .groups import _visible_group_query
 
 router = APIRouter()
 
@@ -224,30 +225,22 @@ def _unread_counts_for_topics(db: Session, topic_ids: list[int], username: str, 
 
 def _user_forum_unread(db: Session, identity: dict) -> dict:
     username = identity["username"]
-    is_admin = bool(identity.get("is_admin"))
-    is_teacher_or_researcher = auth.is_teacher(identity.get("groups")) or bool(identity.get("is_researcher"))
+    is_teacher_or_researcher = auth.is_teacher(identity.get("groups")) or bool(identity.get("is_researcher")) or bool(identity.get("is_admin"))
 
     membership_ids = set(
         row[0] for row in db.query(models.GroupMembership.group_id)
-        .filter(models.GroupMembership.username == username)
+        .join(models.StudentGroup, models.GroupMembership.group_id == models.StudentGroup.id)
+        .filter(models.GroupMembership.username == username, models.StudentGroup.is_active.is_(True))
         .all()
     )
 
     staff_group_ids = set()
-    if is_admin:
-        staff_group_ids = set(row[0] for row in db.query(models.StudentGroup.id).all())
-    elif is_teacher_or_researcher:
-        owned_ids = set(
-            row[0] for row in db.query(models.StudentGroup.id)
-            .filter(models.StudentGroup.owner_username == username)
-            .all()
+    if is_teacher_or_researcher:
+        # Reuse _visible_group_query for staff classes; admins are scoped to own classes for unread badge
+        staff_query = _visible_group_query(db, {**identity, "is_admin": False}).filter(
+            models.StudentGroup.is_active.is_(True)
         )
-        shared_ids = set(
-            row[0] for row in db.query(models.GroupShare.group_id)
-            .filter(models.GroupShare.shared_with_username == username.lower())
-            .all()
-        )
-        staff_group_ids = owned_ids | shared_ids
+        staff_group_ids = set(row[0] for row in staff_query.with_entities(models.StudentGroup.id).all())
 
     student_group_ids = membership_ids - staff_group_ids
     all_group_ids = staff_group_ids | student_group_ids

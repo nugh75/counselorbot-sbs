@@ -573,7 +573,10 @@ overview (`/profilo`), an ochre badge displays the total unread count on the
 Classes link (`/profilo/classi`); in the classes list, each class card with unread
 messages displays an unread badge on its forum link. Within the forum view,
 topics with unread messages show an ochre indicator (`● n new`). Opening a topic
-marks it as read. In line with decision 17, notifications are strictly in-app:
+marks it as read. Badge counts are scoped to active classes where the user is
+owner, co-teacher, or member (admins included, who do not receive counts for
+unowned or unshared classes). Inactive or archived classes are excluded from
+badge totals. In line with decision 17, notifications are strictly in-app:
 no push notifications, email, or Telegram alerts are sent. All badges include
 accessible text alternatives (`sr-only` and `aria-label`).
 

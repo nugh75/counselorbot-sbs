@@ -407,3 +407,64 @@ def test_unread_count_across_multiple_classes(forum_api):
     assert unread_all["by_group"][str(group_id)] == 0
     assert unread_all["by_group"][str(other_group.id)] == 0
 
+
+def test_admin_badge_scoped_to_own_classes_only(forum_api):
+    client, db, group_id, identity = forum_api
+    # Topic created in group 1 (owned by "owner")
+    open_topic(client, group_id)
+
+    # An unrelated admin who has no own classes, shares, or memberships
+    identity.update(username="unrelated_admin", name="Unrelated Admin", is_admin=True, groups=["admin"])
+    unread = client.get("/user/forum/unread").json()
+    assert unread["total"] == 0
+    assert unread["by_group"] == {}
+
+    # Admin CAN still access and view topic detail in group 1
+    topics = client.get(f"/groups/{group_id}/forum/topics").json()["topics"]
+    assert len(topics) == 1
+
+    # When unrelated_admin creates their own class:
+    own_group = models.StudentGroup(code="GR-ADMINOWN", name="Admin class", owner_username="unrelated_admin")
+    db.add(own_group)
+    db.flush()
+    # Another user posts in this admin class:
+    other_topic = models.ForumTopic(
+        group_id=own_group.id, title="Admin Class Topic", body="Hello admin",
+        author_username="someone_else", author_display_name="Someone Else",
+    )
+    db.add(other_topic)
+    db.commit()
+
+    # Now admin sees unread count only for their own class:
+    admin_unread = client.get("/user/forum/unread").json()
+    assert admin_unread["total"] == 1
+    assert admin_unread["by_group"] == {str(own_group.id): 1}
+
+
+def test_archived_classes_excluded_from_unread_badge(forum_api):
+    client, db, group_id, identity = forum_api
+    open_topic(client, group_id)
+
+    # Student has 1 unread in active class
+    identity.update(username="student", name="Student", groups=["studenti"])
+    unread_active = client.get("/user/forum/unread").json()
+    assert unread_active["total"] == 1
+    assert unread_active["by_group"][str(group_id)] == 1
+
+    # Archive the class (is_active = False)
+    group = db.get(models.StudentGroup, group_id)
+    group.is_active = False
+    db.commit()
+
+    # Student now gets 0 total and group is excluded from by_group
+    unread_archived_student = client.get("/user/forum/unread").json()
+    assert unread_archived_student["total"] == 0
+    assert str(group_id) not in unread_archived_student["by_group"]
+
+    # Teacher/owner also gets 0 total and group excluded from by_group
+    identity.update(username="owner", name="Owner", is_admin=False, groups=["docenti"])
+    unread_archived_teacher = client.get("/user/forum/unread").json()
+    assert unread_archived_teacher["total"] == 0
+    assert str(group_id) not in unread_archived_teacher["by_group"]
+
+

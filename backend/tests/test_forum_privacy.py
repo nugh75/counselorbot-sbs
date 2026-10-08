@@ -55,7 +55,20 @@ def test_forum_import_graph_has_no_ai_rag_context_or_export_path():
                 if isinstance(node, ast.Name):
                     assert node.id not in {'__import__', 'get_personal_ai_db'}
         pending.extend(imports(name, source, nested=name in FORUM_FILES) - seen)
-    assert seen == {"backend.routes.forum", "backend.forum_schemas", "backend.auth", "backend.database", "backend.models"}
+    assert seen == {
+        "backend.routes.forum",
+        "backend.forum_schemas",
+        "backend.auth",
+        "backend.database",
+        "backend.models",
+        "backend.routes.groups",
+        "backend.schemas",
+        "backend.reading_audience",
+        "backend.user_names",
+        "backend.class_tools",
+        "backend.chat_preferences",
+        "backend.dynamic_registry",
+    }
     route = ast.parse(module_path("backend.routes.forum").read_text())
     db_references = {node.attr for node in ast.walk(route) if isinstance(node, ast.Attribute)
                      and isinstance(node.value, ast.Name) and node.value.id == 'database'}
