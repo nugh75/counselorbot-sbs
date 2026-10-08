@@ -1,5 +1,7 @@
 import type { InstrumentSummary } from './instruments-api';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { isToolAllowed, type UserAccess } from './user-access.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { QUESTIONNAIRE_LIST, buildDynamicQuestionnaireConfig, type QuestionnaireConfig, type QuestionnaireType } from './questionnaires.ts';
 
 export type ToolCategory = 'assessment' | 'guided';
@@ -56,6 +58,14 @@ export function isStartableQuestionnaireId(
 export function resolveActiveStudentTools(
     catalog: InstrumentSummary[] | null,
     lang = 'it',
+    access: UserAccess | null = null,
+): QuestionnaireConfig[] {
+    return resolvePlatformStudentTools(catalog, lang).filter((q) => isToolAllowed(access, q.id));
+}
+
+function resolvePlatformStudentTools(
+    catalog: InstrumentSummary[] | null,
+    lang: string,
 ): QuestionnaireConfig[] {
     if (catalog === null) {
         return ACTIVE_QUESTIONNAIRE_IDS

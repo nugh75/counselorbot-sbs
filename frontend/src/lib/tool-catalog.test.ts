@@ -122,6 +122,27 @@ test('resolveActiveStudentTools includes dynamic active tools and excludes inact
     assert.equal(guidedGroup.questionnaireIds.includes('DYNAMIC_GUIDED'), true);
 });
 
+test('resolveActiveStudentTools keeps only class-enabled tools when access is restricted', () => {
+    const catalog: InstrumentSummary[] = [{
+        code: 'DYN_ON', name_i18n: { it: 'Dyn On' }, status: 'certified', report_scale_type: 'stanine',
+        item_count: 0, locales: {}, available_locales: [], is_active: true, tool_category: 'guided', target_audience: 'student',
+    }, {
+        code: 'DYN_OFF', name_i18n: { it: 'Dyn Off' }, status: 'certified', report_scale_type: 'stanine',
+        item_count: 0, locales: {}, available_locales: [], is_active: true, tool_category: 'guided', target_audience: 'student',
+    }];
+    const base = { counselor_ids: null, default_counselor_id: null };
+    const restricted = { ...base, restricted: true, tool_keys: ['SAVICKAS', 'DYN_ON', 'notebook'], class_ids: [1] };
+    const ids = resolveActiveStudentTools(catalog, 'it', restricted).map((t) => t.id);
+    assert.deepEqual([...ids].sort(), ['DYN_ON', 'SAVICKAS']);
+
+    // Unrestricted access (staff, no class) and missing access change nothing.
+    const unrestricted = { ...base, restricted: false, tool_keys: [], class_ids: [] };
+    const all = resolveActiveStudentTools(catalog, 'it').map((t) => t.id);
+    assert.deepEqual(resolveActiveStudentTools(catalog, 'it', unrestricted).map((t) => t.id), all);
+    assert.equal(all.includes('DYN_OFF'), true);
+    assert.equal(all.includes('QSA'), true);
+});
+
 function withStorage(impl: Record<string, unknown> | undefined, run: () => void) {
     const kept = (globalThis as { sessionStorage?: unknown }).sessionStorage;
     (globalThis as { sessionStorage?: unknown }).sessionStorage = impl;
