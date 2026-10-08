@@ -17,7 +17,7 @@ approve it before any UI code.
 
 ## 1. Decisions (settled with the user, 2026-10-08)
 
-All 20 recommended defaults were accepted.
+21 approved decisions (decisions 1–20 approved 2026-10-08; decision 21 approved 2026-10-08).
 
 | # | Topic | Decision |
 |---|---|---|
@@ -41,6 +41,7 @@ All 20 recommended defaults were accepted.
 | 18 | Privacy | No forum content to any LLM provider, **local ones included**; out of research exports and PDFs. A deactivated class keeps its forum as a read-only archive. |
 | 19 | Link discussion → path step / assignment | Yes, optional, in a later slice. |
 | 20 | Message content | Text only (reduced Markdown), no attachments in v1. |
+| 21 | Admin override and lock ("edit + lock") | The administrator can edit the settings of **any** class (tools, counselors, forum options) from an admin page listing all classes (search/filter by teacher, institution, class name) or via direct class routes. Admin can **lock** individual items for a class (a tool, a counselor, a forum option): the item is forced on or off and teachers (owner and co-teachers) cannot change it. Admin can unlock. Every change by admin and every lock/unlock is written to an append-only audit log (`class_settings_audit_log`, who, what, old→new, when), visible to owner, co-teachers and admins. Teacher UI shows "changed by the administrator" / "locked by the administrator" on affected items (locked items not editable, with explanation). Precedence: admin global disable (`Instrument.is_active` / `Counselor.is_active`) still wins over everything; a per-class admin lock forced ON is only possible for items enabled at platform level. Minimal lock scope: locks apply only to class settings items (not to individual class path steps or forum topics/posts, where admins already have native full role editing/moderation powers). |
 
 ---
 
@@ -52,6 +53,9 @@ username). `routes/groups.py`: `_visible_group_query` / `_require_visible_group`
 give admin all groups and teachers owned + shared ones; co-teachers can already
 edit a class (`PUT /admin/groups/{id}`), only the owner deletes it. Students list
 memberships via `GET /user/groups`. No per-class setting beyond class context.
+Admin listing endpoint `GET /admin/groups` currently returns all groups for admins
+but lacks query parameters for search and filtering (by teacher/owner, institution,
+or class name).
 
 **Assignments.** `TeacherAssignment` (group or single recipient, catalog
 snapshot of `goal | strategy | reading`), `AssignmentLearningSettings`
@@ -106,6 +110,11 @@ detail route. Shared hooks: `useTeacherAccessState`, `TeacherAreaPage`,
 idempotent `ALTER TABLE` blocks in `main.py`. New tables only need models;
 new columns on existing tables need an `ALTER` entry.
 
+**Audit mechanisms.** The codebase has no generic audit log table (`PromptRevision`
+records append-only prompt edits; `Log` records chat/AI sessions and user events).
+Class settings modifications, admin overrides, and lock/unlock events therefore
+use a dedicated append-only table `class_settings_audit_log`.
+
 **Forum.** Nothing exists. Telegram groups live outside the platform.
 
 ---
@@ -114,6 +123,12 @@ new columns on existing tables need an `ALTER` entry.
 
 - **Class settings (impostazioni della classe)**: per-class choice of enabled
   tools and counselors, default counselor, forum options.
+- **Admin lock (blocco amministrativo)**: a per-class lock set by an administrator
+  on a specific tool, counselor, or forum option. Forces the item ON or OFF and
+  prevents teachers from modifying it until unlocked.
+- **Class settings audit log (registro di controllo impostazioni)**: append-only
+  history of every change to class settings made by administrators or teachers,
+  and every lock/unlock event. Visible to class owner, co-teachers, and administrators.
 - **Tool key**: stable identifier of a toggleable tool: an `Instrument.code`
   (`QSA`, `IDEA`, any dynamic code) or a personal-tool key (`tavolo`, `goals`,
   `actions`, `timeline`, `portfolio`, `pqbl`, `flashcards`, `cards`,
@@ -147,6 +162,9 @@ class_settings                       one row per group, created lazily
   default_counselor_id int NULL         must be enabled and institutional
   forum_students_can_open BOOL default false
   forum_premoderation     BOOL default false
+  locked_tool_keys     JSON dict[str, dict] default {}  # {key: {"enabled": bool, "locked_by": str, "locked_at": str}}
+  locked_counselor_ids JSON dict[str, dict] default {}  # {id_str: {"enabled": bool, "locked_by": str, "locked_at": str}}
+  locked_forum_options JSON dict[str, dict] default {}  # {option: {"value": bool, "locked_by": str, "locked_at": str}}
   revision             INT default 1    optimistic concurrency (409)
   updated_by           str, updated_at
 ```
@@ -156,6 +174,10 @@ Personal-tool registry: `backend/class_tools.py` (new) holds
 `ALWAYS_ON = {notebook, results, classes, assignments}` that can never be
 disabled. Instrument keys come from the `instruments` table (student audience
 only; `OBIETTIVO_DOCENZA` and teacher-only tools are not listed).
+
+To prevent future database migrations, slice S1 (#88) reserves the lock columns
+(`locked_tool_keys`, `locked_counselor_ids`, `locked_forum_options`) in the
+`class_settings` model definition from day one.
 
 ### 4.2 Class path (#85)
 
@@ -238,26 +260,76 @@ title ≤ 160; rendered with the existing Markdown renderer in safe mode (no raw
 HTML, no images, links `rel="nofollow noopener"`). Rate limit: 10 posts per user
 per 5 minutes per class.
 
+### 4.4 Class settings audit log (decision 21, #109)
+
+```
+class_settings_audit_log              append-only
+  id             INT PK AUTOINCREMENT
+  group_id       INT (idx), FK student_groups.id
+  actor_username STR (idx)
+  actor_role     STR ('admin' | 'teacher')
+  action         STR ('setting_change' | 'lock' | 'unlock')
+  target_kind    STR ('tool' | 'counselor' | 'forum_option' | 'settings_bulk')
+  target_id      STR (tool key, counselor id string, or forum option name)
+  old_value      JSON
+  new_value      JSON
+  reason         TEXT NULL
+  created_at     TIMESTAMP default func.now()
+```
+
+Every modification to class settings made by administrators or teachers, as well
+as every lock and unlock action performed by administrators, appends an immutable
+audit row. This log is exposed to class owners, co-teachers, and platform
+administrators.
+
 ---
 
 ## 5. API contracts
 
-### 5.1 Class settings and resolved access (#84)
+### 5.1 Class settings and resolved access (#84, #109)
 
 ```
 GET  /teacher/groups/{group_id}/settings          owner | co-teacher | admin
 → { group_id, revision,
     tools: [{ key, kind: 'instrument'|'personal', category, label_i18n,
-              admin_enabled, enabled, always_on }],
-    counselors: [{ id, name, avatar_url, admin_enabled, enabled }],   institutional only
-    default_counselor_id, forum: { students_can_open, premoderation } }
+              admin_enabled, enabled, always_on,
+              locked: bool, locked_by: str | null, locked_at: str | null,
+              changed_by_admin: bool }],
+    counselors: [{ id, name, avatar_url, admin_enabled, enabled,
+                   locked: bool, locked_by: str | null, locked_at: str | null,
+                   changed_by_admin: bool }],   institutional only
+    default_counselor_id,
+    forum: { students_can_open, students_can_open_locked: bool,
+             premoderation, premoderation_locked: bool } }
 
-PUT  /teacher/groups/{group_id}/settings
+PUT  /teacher/groups/{group_id}/settings          owner | co-teacher | admin
    { revision, disabled_tool_keys, disabled_counselor_ids,
      default_counselor_id, forum? }
-→ 200 new settings | 409 revision mismatch | 422 unknown key, always-on key,
-  or default counselor disabled/private
-   (forum fields are accepted from slice F3 on)
+→ 200 new settings | 409 revision mismatch
+  | 422 item_locked_by_admin (if teacher attempts to alter a locked item:
+        {"detail": "item_locked_by_admin", "item_kind": str, "item_id": str})
+  | 422 unknown key, always-on key, or default counselor disabled/private
+   (forum fields are accepted from slice F3 on; admins may also submit lock changes)
+
+GET  /admin/classes                                admin only
+   ?search=&owner=&institution_id=&is_active=
+→ [{ id, code, name, school, school_level, institution_id, institution_name,
+     owner_username, owner_display_name, co_teachers: [str], members_count,
+     is_active, created_at, has_custom_settings: bool, locked_items_count: int }]
+
+POST /admin/groups/{group_id}/settings/lock        admin only
+   { target_kind: 'tool' | 'counselor' | 'forum_option', target_id: str,
+     state: bool, reason?: str }
+→ 200 { status: 'locked', target_kind, target_id, state, locked_by, locked_at }
+  | 422 cannot lock ON platform-disabled item
+
+POST /admin/groups/{group_id}/settings/unlock      admin only
+   { target_kind: 'tool' | 'counselor' | 'forum_option', target_id: str, reason?: str }
+→ 200 { status: 'unlocked', target_kind, target_id }
+
+GET  /teacher/groups/{group_id}/settings/audit-log owner | co-teacher | admin
+→ [{ id, actor_username, actor_display_name, actor_role, action,
+     target_kind, target_id, old_value, new_value, reason, created_at }]
 
 GET  /user/access                                  any authenticated user
 → { restricted: bool,                 false = no class filter (no class or staff role)
@@ -269,15 +341,23 @@ GET  /user/access                                  any authenticated user
 
 Resolution (`backend/class_access.py`, one function used by every guard):
 
-1. Admin layer: instrument `is_active` and student audience; counselor
-   `is_active`. Admin-disabled → never enabled (decision 5).
-2. Staff (teacher, researcher, admin roles) or no active membership in an active
-   class → admin layer only (`restricted=false`, decisions 3 and 5).
-3. Otherwise a tool/counselor is enabled if **any** active class does not
-   disable it (decision 2). Private counselors owned by the user are always
-   added (decision 7).
-4. Default counselor: from the most recently joined active class whose default
-   is in the resolved set; else `null` (decision 6).
+1. **Admin platform layer**: instrument `is_active` and student audience;
+   counselor `is_active`. Admin-disabled globally → never enabled (decision 5,
+   decision 21). An admin per-class lock forced ON cannot override platform-level
+   disable.
+2. **Staff bypass**: staff (teacher, researcher, admin roles) or no active
+   membership in an active class → admin platform layer only (`restricted=false`,
+   decisions 3 and 5).
+3. **Class layer — Admin lock**: if an item is locked in `class_settings`:
+   - locked ON: forced enabled for that class (subject to rule 1).
+   - locked OFF: forced disabled for that class (overrides teacher choice).
+4. **Class layer — Teacher choice**: if not locked: follows
+   `disabled_tool_keys` and `disabled_counselor_ids` configured for the class.
+5. **Multi-class union for students**: a tool/counselor is enabled if **any**
+   active class of the student enables it (decision 2). Private counselors owned
+   by the user are always added (decision 7).
+6. **Default counselor**: picked from the most recently joined active class
+   whose default is in the resolved set; else `null` (decision 6).
 
 Guard: `class_access.require_tool(db, identity, tool_key)` → 403
 `{"detail": "tool_disabled_for_class", "tool": key}` (and
@@ -399,21 +479,22 @@ The existing `/docente/classi` list keeps its cards; each card gains a
 │ ← Classes                                        3B Liceo · 24 members │
 │ [ Overview ] [ Tools & counselors ] [ Class paths ] [ Forum ]          │
 ├──────────────────────────────────────────────────────────────────────┤
-│ TOOLS                                    Enabled 14 / 19   [Save] (r7)│
+│ TOOLS                Enabled 14 / 19   [Save] (r7) [Audit history →] │
 │ Students see only what is enabled here. Disabled tools keep the work  │
-│ already done readable.                                                │
+│ already done readable. Items locked by administrator cannot be changed.│
 │                                                                      │
 │ Questionnaires                         [Enable all] [Disable all]     │
 │   [x] QSA      Learning strategies                                    │
 │   [x] QSAr     Reduced QSA                                            │
-│   [ ] ZTPI     Time perspective                                       │
-│   [-] QPCS     Disabled by the administrator          (not editable)  │
+│   [ ] ZTPI     Time perspective        🔒 Locked OFF by admin         │
+│   [-] QPCS     Disabled at platform level             (not editable)  │
 │ Guided chats                                                          │
 │   [x] SAVICKAS   [x] Study event   [ ] Work event   [x] Study goal    │
-│   [x] IDEA       [x] <dynamic tool from admin>                        │
+│   [x] IDEA 🔒 Locked ON by admin   [x] <dynamic tool from admin>     │
 │ Personal area                                                         │
-│   [x] Tavolo  [x] Goals  [x] Actions  [x] Timeline  [x] Portfolio     │
-│   [ ] pQBL    [ ] Flashcards  [ ] Cards  [ ] Comparison               │
+│   [x] Tavolo ℹ️ Changed by admin  [x] Goals  [x] Actions             │
+│   [x] Timeline  [x] Portfolio  [ ] pQBL  [ ] Flashcards  [ ] Cards    │
+│   [ ] Comparison                                                      │
 │ Orientation and help                                                  │
 │   [x] Bussola  [x] Assistant                                          │
 │ Always available: Notebook · Compilazioni · Classes · Assignments     │
@@ -421,15 +502,16 @@ The existing `/docente/classi` list keeps its cards; each card gains a
 │ COUNSELORS                               Enabled 6 / 26               │
 │ [filter by category ▾] [search…]                                       │
 │   [x] (cover) Clio     maieutic          ( ) default                  │
-│   [x] (cover) Giulio   philosopher       (•) default                  │
+│   [x] (cover) Giulio   philosopher       (•) default  🔒 Locked ON    │
 │   [ ] (cover) Iride    narrative                                      │
 │ Students' private counselors are never affected.                      │
 ├──────────────────────────────────────────────────────────────────────┤
 │ FORUM OPTIONS                       (appears with slice F3)           │
 │   [ ] Students can open discussions                                   │
-│   [ ] Approve messages before they are visible                        │
+│   [ ] Approve messages before they are visible 🔒 Locked OFF by admin │
 └──────────────────────────────────────────────────────────────────────┘
  Save errors: 409 → "Settings changed elsewhere — reload" (keeps draft).
+              422 → "Item locked by administrator cannot be modified".
  Mobile: one column; category groups collapsible; sticky Save bar.
 ```
 
@@ -525,6 +607,45 @@ TOPIC
  Inactive class: banner "Archive — read only", no composer.
 ```
 
+### 8.5 Admin — all classes management and settings lock (`/admin` → Classes)
+
+The administrator accesses the full directory of classes across institutions, with
+search, filters, direct settings editing, per-item lock controls, and audit log access.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ ALL CLASSES                                  Total: 42 classes         │
+│ [Search class, code, school… 🔍] [Teacher: All ▾] [Institution: All ▾] │
+├────────────────────────────────────────────────────────────────────────┤
+│ Class      School          Teacher       Institution   Members  Status │
+│ 3B Liceo   Liceo Fermi     m.rossi       Liceo Fermi   24       active │
+│   [Edit settings & locks]  [View audit log]  [Students]                │
+│ 5A ITI     ITIS Da Vinci   g.bianchi     ITIS Da Vinci 28       active │
+│   [Edit settings & locks]  [View audit log]  [Students]                │
+│ 1C Media   IC Manzoni      l.verdi       IC Manzoni    19       active │
+│   [Edit settings & locks]  [View audit log]  [Students]                │
+└────────────────────────────────────────────────────────────────────────┘
+
+ADMIN CLASS SETTINGS MODAL / DRAWER (3B Liceo)
+┌────────────────────────────────────────────────────────────────────────┐
+│ Settings & Locks: 3B Liceo                               [Save] (r7)   │
+│ As admin, your edits override teacher defaults. Locking an item forces │
+│ it ON or OFF and prevents teachers from modifying it.                  │
+│                                                                        │
+│ Tools                                             Lock status          │
+│   [x] QSA Learning strategies                    [🔓 Lock item ▾]      │
+│   [ ] ZTPI Time perspective                      [🔒 Locked OFF] [Unlock]
+│   [x] IDEA                                       [🔒 Locked ON ] [Unlock]
+│   [-] QPCS (Disabled globally at platform level — cannot lock ON)      │
+│ Counselors                                                             │
+│   [x] Giulio (•) default                         [🔒 Locked ON ] [Unlock]
+│ Forum options                                                          │
+│   [ ] Approve messages before visible            [🔒 Locked OFF] [Unlock]
+│                                                                        │
+│ Reason for audit log: [Mandated school policy 2026/27_______________] │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## 9. Test strategy
@@ -538,10 +659,31 @@ TOPIC
   override precedence; forum permission matrix; mute/lock/premoderation;
   moderation log append-only; import-graph test that forum code never reaches
   `ai_service`; export/PDF builders never touch forum tables.
+  **Decision 21 additions**:
+  - Admin all-classes listing endpoint (`GET /admin/classes` or `GET /admin/groups`)
+    filters by teacher/owner, institution, and search query across name/code/school.
+  - Admin can update settings of any class regardless of ownership.
+  - Admin lock/unlock endpoints force an item ON or OFF and persist `locked_by`
+    and `locked_at`.
+  - Teacher `PUT /teacher/groups/{id}/settings` attempting to modify a locked
+    item returns 422 `{"detail": "item_locked_by_admin", ...}` and does not persist;
+    modifying non-locked items in the same class succeeds (200).
+  - Admin unlock clears the lock, allowing teachers to modify the item again.
+  - Precedence test: platform-level disable (`is_active=False`) wins over a per-class
+    lock forced ON; accessing the tool still returns 403 `tool_unavailable`.
+  - Audit log: every admin edit, lock, and unlock writes a `class_settings_audit_log`
+    row with actor username, actor role, old and new values.
+  - Audit log permissions: owner, co-teacher, and admin return 200; other users
+    return 403.
 - **Frontend**: unit tests for catalog filtering with `/user/access`
   (`tool-catalog.test.ts` pattern), path state rendering, forum composer
   states; browser fixtures per new page (pattern of
   `teacher-class-management-validation.md`) on dedicated 127.0.0.1 ports.
+  **Decision 21 additions**:
+  - Teacher Tools & counselors tab renders "locked by administrator" badges and
+    disables inputs for locked items with explanatory tooltips.
+  - Admin all-classes page renders class filters, settings editor, and lock toggle
+    controls.
 - **Gates per slice**: `npx tsc --noEmit`, `npm test`, `npm run i18n:check`
   (6 languages), backend tests touched, `make guidance-refresh` +
   `make guidance-check`.
@@ -560,6 +702,9 @@ TOPIC
 | Forum used for harassment between minors | Teacher moderation + mute + premoderation option + log; teacher notified via badge. No anonymous posting. |
 | Forum content leaks to LLMs through future features | Import-graph test fails the build. |
 | Concurrent teacher edits (co-teachers) | `revision` + 409 on settings and paths. |
+| Teacher confused when unable to toggle a locked setting | Clear badge "Locked by administrator" with tooltip and explanation; API returns 422 with machine-readable item details instead of silent failure. |
+| Conflict between per-class lock ON and platform-level disable | Admin UI displays warning if tool is globally inactive; resolution engine strictly enforces platform `is_active=False` priority. |
+| Audit log table bloat | Append-only table indexed by `group_id` and `created_at`; writes occur only on manual settings saves and lock/unlock operations (low volume). |
 | Scope creep from notifications/Telegram | v1 badge only (decision 17); Telegram is a separate future issue. |
 
 ---
@@ -579,7 +724,8 @@ Order and dependencies are in the issues and in the epic comment on #87.
 | S5 | #92 | feat: per-class toggles for Bussola and Assistant; Bussola recommends only enabled tools | #89 |
 | S6 | #93 | feat: per-class counselor enablement and class default counselor | #89 |
 | S7 | #94 | feat: Telegram bot respects class tool access | #89 |
-| S8 | #95 | docs: guide sections and screenshots for class settings | #90, #91, #92, #93 |
+| S8 | #109 | feat: admin class settings page with lock/unlock and audit log | #88, #89 |
+| S9 | #95 | docs: guide sections and screenshots for class settings | #90, #91, #92, #93, #109 |
 | P1 | #96 | feat: class path model and teacher builder (drafts) | #88 |
 | P2 | #97 | feat: publish class paths and student path page with self-marking | #96, #89 |
 | P3 | #98 | feat: automatic step completion and strict mode for class paths | #97 |
@@ -595,16 +741,19 @@ Order and dependencies are in the issues and in the epic comment on #87.
 
 ### Parallel lanes
 
-- **Start**: S1 (#88) alone — every lane needs the settings table, registry
-  and per-class page shell.
-- **After S1**, three independent lanes:
-  - *Access*: S2 (#89), then S3 (#90), S4 (#91), S5 (#92), S6 (#93), S7 (#94)
-    in parallel. S4, S5, S6 all append to `class_tools` and to the Tools &
-    counselors tab: run them in parallel only with a rebase-on-merge
+• Start: S1 (#88) alone — every lane needs the settings table, registry
+  and per-class page shell. S1 reserves lock columns in `class_settings`
+  to avoid later schema migrations.
+• After S1, three independent lanes:
+  • Access: S2 (#89), then S3 (#90), S4 (#91), S5 (#92), S6 (#93), S7 (#94),
+    and S8 (#109) in parallel. S4, S5, S6 all append to `class_tools` and to the
+    Tools & counselors tab: run them in parallel only with a rebase-on-merge
     discipline, or sequence S4 → S6 → S5 to avoid conflicts. S3 and S7 touch
     separate files (frontend catalog / Telegram) and are safe in parallel.
-  - *Paths*: P1 (#96) right after S1; P2 (#97) needs S2; then P3 → P4;
+    S8 (#109) adds admin all-classes management, lock/unlock controls, and the
+    audit log.
+  • Paths: P1 (#96) right after S1; P2 (#97) needs S2; then P3 → P4;
     P5 (#100) after P2 and S3 (both edit home).
-  - *Forum*: F1 (#102), then F2 (#103) and F4 (#105) in parallel; F3 (#104)
+  • Forum: F1 (#102), then F2 (#103) and F4 (#105) in parallel; F3 (#104)
     after F2 and S2; F5 (#106) after P2.
-- **Docs slices** close each lane: S8 (#95), P6 (#101), F6 (#107).
+• Docs slices close each lane: S9 (#95), P6 (#101), F6 (#107).
