@@ -549,11 +549,16 @@ be started by students (`tool_unavailable`). Then the class layer, for students
 only: if they belong to one or more active classes, a tool is available when at
 least one of those classes enables it; otherwise the start is refused with
 `tool_disabled_for_class`. Teachers, researchers and administrators are never
-filtered by classes; administrators can still test draft instruments in the
-sandbox. Students with no active class keep the platform catalog. The guard
-covers new chat turns, questionnaire submission and scoring, and resuming a
-suspended session. Results, conversations, PDFs and the list of suspended
-sessions of a disabled tool stay readable. `GET /user/access` returns the
+filtered by classes. A platform-disabled instrument is closed for administrators
+too, except in the sandbox preview, where they test drafts. Students with no
+active class keep the platform catalog. The guard covers new chat turns (judged
+on the prompt the server actually selects, not only on the instrument the page
+declares), questionnaire submission, scoring and PDF upload, completion and
+progress records of guided chats, resuming a suspended session, Idea map
+changes and source searches, and OpenCode workspaces. Uploading a questionnaire
+PDF and recording guided-chat progress now require signing in. Results,
+conversations, PDFs, the list of suspended sessions and existing Idea maps of a
+disabled tool stay readable, exportable and deletable. `GET /user/access` returns the
 resolved tool list; the student catalog uses it from #90, and counselor fields
 arrive with #93.
 

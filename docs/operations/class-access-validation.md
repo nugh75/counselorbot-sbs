@@ -1,15 +1,20 @@
 # Class access S2 (#89)
 
-Scope: `backend/class_access.py` (resolver + guard), `GET /user/access`, and the
-guard on start/write entry points. No frontend change: the student catalog reads
-`/user/access` from #90; counselor fields stay `null` until #93.
+Scope: `backend/class_access.py` (resolver + guards), `GET /user/access`, and
+the guard on start/write entry points. Frontend change limited to the request
+contract (QSA upload and memory events send the profile-preview headers via
+`apiFetch`): the student catalog reads `/user/access` from #90; counselor
+fields stay `null` until #93.
 
 ## Rules
 
 1. **Admin layer.** An instrument with `is_active=false` → 403
-   `{"detail": "tool_unavailable", "tool": "<CODE>"}` for everyone except platform
-   admins (they test drafts in the sandbox). A `target_audience != student`
-   instrument → the same 403 for non-staff users.
+   `{"detail": "tool_unavailable", "tool": "<CODE>"}` for everyone, platform
+   admins included (decision 5: global disable always wins). The only exception
+   is the admin sandbox preview (`preview: true` on `/chat` and `/chat/stream`,
+   C4), which the routes already restrict to admins: that is where drafts are
+   tested. `resolve_access` and `require_tool` therefore agree for admins too. A
+   `target_audience != student` instrument → the same 403 for non-staff users.
 2. **Staff bypass.** Teachers, researchers and admins (role markers of
    `auth.py`) are never filtered by classes.
 3. **Class layer (students).** Active memberships in active classes only. A tool
@@ -17,34 +22,94 @@ guard on start/write entry points. No frontend change: the student catalog reads
    `locked_tool_keys` first, then `disabled_tool_keys`). Otherwise 403
    `{"detail": "tool_disabled_for_class", "tool": "<key>"}`. No active class →
    admin layer only.
-4. Instrument codes match case-insensitively; the chat guard uses the guided
-   step's instrument when `phase` names a step, exactly like `prepare_chat_turn`.
-   Keys that are not catalog tools (generic chat, legacy types) pass.
+4. Instrument codes match case-insensitively. Keys that are not catalog tools
+   (generic chat, legacy types) pass.
+5. **Chat turns are authorized from the server's own selection**
+   (`require_chat_turn`). The turn's instrument is the guided step's when
+   `phase` names a step, otherwise the client's `questionnaire_type`. The
+   system prompt the server will actually use (`_system_prompt_key(mode, phase,
+   step)`, or the `/chat/message` mode map) is checked too: its owners are the
+   instruments whose default or stored guided steps use it (entry prompt or the
+   step mode's follow-up prompt) plus per-instrument config keys
+   (`prompt_meta_<CODE>…`, `prompt_components_<CODE>_…`,
+   `prompt_guidance_<CODE>_…`). If the prompt belongs to the turn's instrument,
+   the instrument guard suffices; otherwise at least one owner must be allowed.
+   `prompt_generic` has no owner. An omitted, unknown or mismatched
+   `questionnaire_type` can no longer reach a disabled instrument's prompt.
 
-Guarded: `POST /chat`, `/chat/stream`, `/chat/message`, `/questionnaire-result`,
-`/instruments/{code}/score`, and `GET /session/frozen/{id}` (the resume step).
-Not guarded (reads, decision 8): results, conversations, PDFs, the frozen list,
-freeze and delete. Personal tools, Bussola, Assistant and Telegram call
-`require_tool` in their own slices (#91, #92, #94).
+## Guard inventory
+
+Guarded (start/write):
+
+| Entry point | Instrument checked |
+|---|---|
+| `POST /chat`, `/chat/stream`, `/chat/message` | step or claim + owners of the selected prompt |
+| `POST /questionnaire-result`, `/instruments/{code}/score` | submitted instrument |
+| `GET /session/frozen/{id}` (resume) | frozen session's instrument |
+| `POST /qsa/upload` | form instrument; **authenticated user required**, checked before extraction or any stored file |
+| `POST /qsa/audit` | request instrument, before the completion log |
+| `POST /memory/event` | event instrument and the step's instrument; **authenticated user required**; 403 when the session is recorded (result, frozen session or log) under another username; a fresh session id is started by the caller |
+| Idea `POST /idea/reference`, `/idea/map/patch`, `/idea/branch`, `/idea/node`, `/idea/node/edit`, `/idea/branch/arrange`, `/idea/reopen`, `/idea/focus`, `/idea/conclude`, `/idea/sources`, `/idea/sources/search` | `IDEA` |
+| OpenCode `POST /opencode/workspace` | requested instrument, before files or the agent start |
+| OpenCode `POST /opencode/workspace/{key}/chat`, `/reset`, `/sync-memory` | instrument recorded when the workspace started |
+
+Not guarded (decision 8: existing data stays readable and removable): results,
+conversations, PDFs, the frozen list, freeze and delete; Idea reads
+(`GET /idea/map`, `/idea/map/history`, `/idea/map/image`, `/idea/map/pdf`,
+`/idea/branches`, `/idea/next-step`, `/idea/reference`, `/idea/sources`, source
+PDFs), exports of an existing map (`POST /idea/map/portfolio`,
+`/idea/map/notebook`) and deletions (`DELETE /idea/reference`, `/idea/branch`,
+`/idea/sources/{id}`); OpenCode `abort` (stopping a running turn is always
+allowed). Personal tools, Bussola, Assistant and Telegram call `require_tool`
+in their own slices (#91, #92, #94): Telegram currently writes flow results
+before its guarded chat turn (review N3, owned by #94).
 
 ## Pre-deploy check (mandatory)
 
-From this release the admin layer is enforced immediately for every student.
-On the dev environment, before the Docker rebuild, confirm that no instrument
-students use is inactive or teacher-only. Read-only:
+From this release the admin layer is enforced immediately for every student,
+and for admins outside the sandbox. On the dev environment, before the Docker
+rebuild, confirm that no instrument in use is inactive or teacher-only.
+Read-only (a single `WITH … SELECT`):
 
 ```sql
+WITH staff AS (
+    SELECT owner_username AS username FROM student_groups
+    UNION SELECT shared_with_username FROM group_shares
+    UNION SELECT ext_username FROM research_contacts WHERE ext_username IS NOT NULL
+    UNION SELECT created_by_username FROM administration_plans WHERE created_by_username IS NOT NULL
+), recent_use AS (
+    SELECT questionnaire_type AS code, username, 'result' AS source
+    FROM questionnaire_results WHERE submitted_at > now() - interval '90 days'
+    UNION ALL
+    SELECT questionnaire_type, username, 'guided'
+    FROM logs WHERE questionnaire_type IS NOT NULL AND timestamp > now() - interval '90 days'
+)
 SELECT i.code, i.is_active, i.target_audience,
-       COUNT(DISTINCT r.username) FILTER (WHERE r.submitted_at > now() - interval '90 days') AS recent_users
+       COUNT(DISTINCT u.username) FILTER (WHERE COALESCE(u.username, '') <> '') AS student_users,
+       COUNT(u.code) FILTER (WHERE COALESCE(u.username, '') = '') AS anonymous_uses,
+       COUNT(u.code) FILTER (WHERE u.source = 'guided') AS guided_uses
 FROM instruments i
-LEFT JOIN questionnaire_results r ON r.questionnaire_type = i.code
+LEFT JOIN recent_use u
+       ON lower(u.code) = lower(i.code)
+      AND NOT EXISTS (SELECT 1 FROM staff s WHERE s.username = u.username)
 WHERE NOT i.is_active OR i.target_audience <> 'student'
-GROUP BY 1, 2, 3 ORDER BY 1;
+GROUP BY 1, 2, 3 ORDER BY 1
 ```
 
-Any row with `recent_users > 0` that should stay usable must be reactivated
-(or set to student audience) by an admin before deploying. Guided chats without
-an `instruments` row are not affected.
+- `student_users`: distinct non-staff usernames with a submission or a guided
+  conversation log in the last 90 days.
+- `anonymous_uses`: submissions or logs without a username (anonymous research
+  flows): the guard returns `tool_unavailable` for them as well.
+- `guided_uses`: rows coming from guided conversation logs (instruments with
+  steps but no stored submission).
+- Staff is approximated from the database (class owners, co-teachers, synced
+  research contacts including admins, plan creators): ai4auth groups are not
+  stored. A staff account missing from those tables is counted as a student,
+  which errs on the safe side.
+
+Any row with `student_users > 0` or `anonymous_uses > 0` that should stay usable
+must be reactivated (or set to student audience) by an admin before deploying.
+Guided chats without an `instruments` row are not affected.
 
 ## Isolated verification
 
@@ -55,7 +120,8 @@ synthetic Postgres on `127.0.0.1:18589`, backend on `8012`
 ```bash
 DATABASE_URL=postgresql://c2_test@127.0.0.1:18589/counselorbot_test \
   PYTHON_DOTENV_DISABLED=1 backend/.venv/bin/python -m pytest \
-  backend/tests/test_class_access.py -q --disable-warnings
+  backend/tests/test_class_access.py backend/tests/test_class_access_writes.py \
+  -q --disable-warnings
 ```
 
 ## Results (2026-10-08)
@@ -71,3 +137,13 @@ DATABASE_URL=postgresql://c2_test@127.0.0.1:18589/counselorbot_test \
   and resume return `tool_disabled_for_class`; QSAr, teacher submission, frozen
   list, results read and delete stay 200; re-enabling restores submission;
   deleting the class returns the student to `restricted: false`.
+
+### Review fixes (PR #112, cross-model review)
+
+- B1: `mode`-selected prompts (`savickas-interview`, raw `prompt_*` keys,
+  `factor-qa` follow-ups) with an omitted, generic or different enabled claim →
+  403 on `/chat`, `/chat/stream`, `/chat/message`; enabled and generic prompts
+  stay 200.
+- B2–B6 and N1/N2 are covered by `test_class_access_writes.py` and the new cases
+  in `test_class_access.py` (each written failing first from the reviewer's
+  reproductions).
