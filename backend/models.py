@@ -1746,3 +1746,31 @@ class ForumRead(Base):
     topic_id = Column(Integer, ForeignKey("forum_topics.id", ondelete="CASCADE"), primary_key=True)
     username = Column(String, primary_key=True)
     last_read_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+# --- Class forum moderation log (#103): append-only, ids and reasons only ---
+class ForumModerationLog(Base):
+    """One row per moderation action; never updated or deleted by any route.
+
+    Rows record who did what to which target and the moderator's reason, never
+    the moderated message body. The action list covers the later F3 slice too,
+    because `create_all` cannot widen a check constraint on an existing table.
+    """
+    __tablename__ = "forum_moderation_log"
+    __table_args__ = (
+        CheckConstraint(
+            "action IN ('hide', 'restore', 'lock', 'unlock', 'pin', 'unpin', 'mute', 'unmute',"
+            " 'approve', 'reject', 'settings_change')",
+            name="forum_moderation_action",
+        ),
+        CheckConstraint("target_kind IN ('topic', 'post', 'user', 'settings')", name="forum_moderation_target_kind"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    actor_username = Column(String, nullable=False)
+    action = Column(String, nullable=False)
+    target_kind = Column(String, nullable=False)
+    target_id = Column(Integer, nullable=True)
+    reason = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

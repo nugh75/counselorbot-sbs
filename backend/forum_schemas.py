@@ -17,6 +17,7 @@ def _printable(value: str) -> str:
 
 ForumBody = Annotated[str, StringConstraints(strict=True, strip_whitespace=True, min_length=1, max_length=4000), AfterValidator(_printable)]
 ForumTitle = Annotated[str, StringConstraints(strict=True, strip_whitespace=True, min_length=1, max_length=160), AfterValidator(_printable)]
+ForumReason = Annotated[str, StringConstraints(strict=True, strip_whitespace=True, min_length=1, max_length=500), AfterValidator(_printable)]
 
 
 class ForumTopicCreate(BaseModel):
@@ -28,3 +29,13 @@ class ForumTopicCreate(BaseModel):
 class ForumPostCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     body: ForumBody
+
+
+class ForumPostUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    body: ForumBody
+
+
+class ForumHide(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: ForumReason
