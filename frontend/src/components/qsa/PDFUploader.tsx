@@ -2,6 +2,7 @@
 
 import { FileType } from 'lucide-react';
 import { useState } from 'react';
+import { apiFetch } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
@@ -70,7 +71,7 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
             // Adjust the URL if necessary based on your Next.js proxy or backend URL
             // Assuming Next.js rewrites /api -> Backend
             // If direct to backend: http://localhost:8000/qsa/upload
-            const response = await fetch('/api/qsa/upload', {
+            const response = await apiFetch('/api/qsa/upload', {
                 method: 'POST',
                 body: formData,
             });
