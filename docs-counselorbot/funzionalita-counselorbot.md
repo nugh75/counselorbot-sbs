@@ -559,7 +559,7 @@ Lists and replies are paginated. Forum content is excluded from all AI providers
 including local models, research exports, administrator result/log/training
 exports, PDFs, session ledgers and RAG indexes. Architectural privacy tests
 protect that boundary. Student-created discussions, muting, pre-approval,
-unread badges and path/assignment links are separate later slices. Six-language
+and path/assignment links are separate later slices. Six-language
 interface controls are included; the expanded forum guide and screenshots are #107.
 Titles, messages and reasons reject invisible control characters (for example
 NUL); tabs and line breaks are kept.
@@ -604,6 +604,24 @@ conversations, PDFs, the list of suspended sessions and existing Idea maps of a
 disabled tool stay readable, exportable and deletable. `GET /user/access` returns the
 resolved tool list; the student catalog uses it from #90, and counselor fields
 arrive with #93.
+
+**Class forum unread badge (F4, #105).** An in-app badge indicates unread forum
+activity across active classes. The backend (`GET /user/forum/unread`,
+`POST /forum/topics/{id}/read`) computes unread counts using the `forum_reads`
+table, counting published posts created after the user's last read timestamp
+(or since topic creation if never read). The user's own posts are excluded from
+their unread count. Hidden and pending-moderation posts are excluded for
+students and visible only to teachers and administrators. In the personal area
+overview (`/profilo`), an ochre badge displays the total unread count on the
+Classes link (`/profilo/classi`); in the classes list, each class card with unread
+messages displays an unread badge on its forum link. Within the forum view,
+topics with unread messages show an ochre indicator (`● n new`). Opening a topic
+marks it as read. Badge counts are scoped to active classes where the user is
+owner, co-teacher, or member (admins included, who do not receive counts for
+unowned or unshared classes). Inactive or archived classes are excluded from
+badge totals. In line with decision 17, notifications are strictly in-app:
+no push notifications, email, or Telegram alerts are sent. All badges include
+accessible text alternatives (`sr-only` and `aria-label`).
 
 La pagina `/docente/taccuino` si apre dall’ingresso nella home o direttamente,
 anche dopo un refresh. La freccia nell’intestazione torna a `/docente`; la bozza
@@ -753,6 +771,7 @@ ZTPI e Savickas. Le proposte AI aiutano a riflettere, non sono diagnosi o decisi
 vincolanti. Le funzioni disabilitate o non autorizzate non vanno presentate come
 accessibili a ogni account. L’assistente deve indicare la pagina e il prossimo
 passo utile, senza inventare pulsanti o promettere azioni eseguite automaticamente.
+Gli aggiornamenti tecnici delle dipendenze del server non cambiano funzioni, dati salvati o esportazioni descritti in questa guida.
 
 ### Sezioni della configurazione
 

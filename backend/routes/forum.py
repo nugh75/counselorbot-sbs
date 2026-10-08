@@ -3,12 +3,13 @@ from datetime import timedelta
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
 
 from .. import auth, database, models
 from ..forum_schemas import ForumHide, ForumPostCreate, ForumPostUpdate, ForumTopicCreate
+from .groups import _visible_group_query
 
 router = APIRouter()
 
@@ -105,9 +106,16 @@ def list_topics(group_id: int, offset: int = Query(0, ge=0), limit: int = Query(
     rows = db.query(models.ForumTopic).filter(
         models.ForumTopic.group_id == group_id, models.ForumTopic.status == "published",
     ).order_by(models.ForumTopic.pinned.desc(), models.ForumTopic.last_post_at.desc(), models.ForumTopic.id.desc()).offset(offset).limit(limit + 1).all()
+    selected = rows[:limit]
+    unread_map = _unread_counts_for_topics(db, [r.id for r in selected], identity["username"], staff)
+    topic_dicts = []
+    for row in selected:
+        item = _topic(db, row, staff, identity["username"])
+        item["unread_count"] = unread_map.get(row.id, 0)
+        topic_dicts.append(item)
     return {"group": {"id": group.id, "name": group.name, "is_active": group.is_active},
             "can_open_topic": staff and group.is_active, "can_moderate": staff,
-            "topics": [_topic(db, row, staff, identity["username"]) for row in rows[:limit]], "has_more": len(rows) > limit}
+            "topics": topic_dicts, "has_more": len(rows) > limit}
 
 
 @router.post("/groups/{group_id}/forum/topics", status_code=201)
@@ -171,6 +179,147 @@ def mark_read(topic_id: int, identity=Depends(auth.get_current_user), db: Sessio
     db.commit()
     return {"ok": True}
 
+
+def _unread_counts_for_topics(db: Session, topic_ids: list[int], username: str, is_staff: bool) -> dict[int, int]:
+    if not topic_ids:
+        return {}
+    topic_query = (
+        db.query(models.ForumTopic.id)
+        .outerjoin(
+            models.ForumRead,
+            (models.ForumRead.topic_id == models.ForumTopic.id) & (models.ForumRead.username == username),
+        )
+        .filter(
+            models.ForumTopic.id.in_(topic_ids),
+            models.ForumTopic.author_username != username,
+            models.ForumTopic.hidden_at.is_(None),
+            or_(models.ForumRead.last_read_at.is_(None), models.ForumTopic.created_at > models.ForumRead.last_read_at),
+        )
+    )
+    if is_staff:
+        topic_query = topic_query.filter(models.ForumTopic.status.in_(["published", "pending"]))
+    else:
+        topic_query = topic_query.filter(models.ForumTopic.status == "published")
+    unread_topic_ids = set(row[0] for row in topic_query.all())
+
+    post_query = (
+        db.query(models.ForumPost.topic_id, func.count(models.ForumPost.id))
+        .join(models.ForumTopic, models.ForumPost.topic_id == models.ForumTopic.id)
+        .outerjoin(
+            models.ForumRead,
+            (models.ForumRead.topic_id == models.ForumTopic.id) & (models.ForumRead.username == username),
+        )
+        .filter(
+            models.ForumTopic.id.in_(topic_ids),
+            models.ForumPost.author_username != username,
+            models.ForumPost.deleted_at.is_(None),
+            models.ForumPost.hidden_at.is_(None),
+            models.ForumTopic.hidden_at.is_(None),
+            or_(models.ForumRead.last_read_at.is_(None), models.ForumPost.created_at > models.ForumRead.last_read_at),
+        )
+    )
+    if is_staff:
+        post_query = post_query.filter(
+            models.ForumTopic.status.in_(["published", "pending"]),
+            models.ForumPost.status.in_(["published", "pending"]),
+        )
+    else:
+        post_query = post_query.filter(
+            models.ForumTopic.status == "published",
+            models.ForumPost.status == "published",
+        )
+    post_counts = dict(post_query.group_by(models.ForumPost.topic_id).all())
+
+    return {
+        tid: (1 if tid in unread_topic_ids else 0) + post_counts.get(tid, 0)
+        for tid in topic_ids
+    }
+
+
+def _user_forum_unread(db: Session, identity: dict) -> dict:
+    username = identity["username"]
+    is_teacher_or_researcher = auth.is_teacher(identity.get("groups")) or bool(identity.get("is_researcher")) or bool(identity.get("is_admin"))
+
+    membership_ids = set(
+        row[0] for row in db.query(models.GroupMembership.group_id)
+        .join(models.StudentGroup, models.GroupMembership.group_id == models.StudentGroup.id)
+        .filter(models.GroupMembership.username == username, models.StudentGroup.is_active.is_(True))
+        .all()
+    )
+
+    staff_group_ids = set()
+    if is_teacher_or_researcher:
+        # Reuse _visible_group_query for staff classes; admins are scoped to own classes for unread badge
+        staff_query = _visible_group_query(db, {**identity, "is_admin": False}).filter(
+            models.StudentGroup.is_active.is_(True)
+        )
+        staff_group_ids = set(row[0] for row in staff_query.with_entities(models.StudentGroup.id).all())
+
+    student_group_ids = membership_ids - staff_group_ids
+    all_group_ids = staff_group_ids | student_group_ids
+    by_group = {str(gid): 0 for gid in all_group_ids}
+
+    def _accumulate(group_ids: set[int], staff_mode: bool):
+        if not group_ids:
+            return
+        t_query = (
+            db.query(models.ForumTopic.group_id, func.count(models.ForumTopic.id))
+            .outerjoin(
+                models.ForumRead,
+                (models.ForumRead.topic_id == models.ForumTopic.id) & (models.ForumRead.username == username),
+            )
+            .filter(
+                models.ForumTopic.group_id.in_(group_ids),
+                models.ForumTopic.author_username != username,
+                models.ForumTopic.hidden_at.is_(None),
+                or_(models.ForumRead.last_read_at.is_(None), models.ForumTopic.created_at > models.ForumRead.last_read_at),
+            )
+        )
+        if staff_mode:
+            t_query = t_query.filter(models.ForumTopic.status.in_(["published", "pending"]))
+        else:
+            t_query = t_query.filter(models.ForumTopic.status == "published")
+        for gid, count in t_query.group_by(models.ForumTopic.group_id).all():
+            by_group[str(gid)] = by_group.get(str(gid), 0) + count
+
+        p_query = (
+            db.query(models.ForumTopic.group_id, func.count(models.ForumPost.id))
+            .join(models.ForumTopic, models.ForumPost.topic_id == models.ForumTopic.id)
+            .outerjoin(
+                models.ForumRead,
+                (models.ForumRead.topic_id == models.ForumTopic.id) & (models.ForumRead.username == username),
+            )
+            .filter(
+                models.ForumTopic.group_id.in_(group_ids),
+                models.ForumPost.author_username != username,
+                models.ForumPost.deleted_at.is_(None),
+                models.ForumPost.hidden_at.is_(None),
+                models.ForumTopic.hidden_at.is_(None),
+                or_(models.ForumRead.last_read_at.is_(None), models.ForumPost.created_at > models.ForumRead.last_read_at),
+            )
+        )
+        if staff_mode:
+            p_query = p_query.filter(
+                models.ForumTopic.status.in_(["published", "pending"]),
+                models.ForumPost.status.in_(["published", "pending"]),
+            )
+        else:
+            p_query = p_query.filter(
+                models.ForumTopic.status == "published",
+                models.ForumPost.status == "published",
+            )
+        for gid, count in p_query.group_by(models.ForumTopic.group_id).all():
+            by_group[str(gid)] = by_group.get(str(gid), 0) + count
+
+    _accumulate(staff_group_ids, staff_mode=True)
+    _accumulate(student_group_ids, staff_mode=False)
+
+    return {"total": sum(by_group.values()), "by_group": by_group}
+
+
+@router.get("/user/forum/unread")
+def user_forum_unread(identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    return _user_forum_unread(db, identity)
 
 def _author_target(db: Session, identity: dict, post_id: int):
     post, topic = _get_post(db, post_id)
@@ -294,3 +443,4 @@ def moderation_log(group_id: int, offset: int = Query(0, ge=0), limit: int = Que
                          "target_kind": row.target_kind, "target_id": row.target_id, "reason": row.reason,
                          "created_at": row.created_at} for row in rows[:limit]],
             "has_more": len(rows) > limit}
+
