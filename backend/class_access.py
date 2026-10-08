@@ -6,6 +6,9 @@ an active class then get the union of their classes' settings: a tool is
 enabled if at least one class enables it. Staff and users with no class get the
 admin layer only. Reads of existing data are never guarded (decision 8).
 """
+import re
+from types import SimpleNamespace
+
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy import func
@@ -94,12 +97,14 @@ def resolve_access(db: Session, identity) -> dict:
     }
 
 
-def require_tool(db: Session, identity, tool_key: str | None) -> None:
+def require_tool(db: Session, identity, tool_key: str | None, *, preview: bool = False) -> None:
     """Guard for every start/write entry point of a tool.
 
     Keys that are neither instruments nor personal tools (generic chat, legacy
     types) are not toggleable and pass. Instrument codes match case-insensitively
-    so a client cannot dodge the guard by changing case.
+    so a client cannot dodge the guard by changing case. The global disable binds
+    admins too, except in the admin sandbox preview (decisions 5/21, C4), which
+    the chat routes already restrict to admins.
     """
     key = (tool_key or "").strip()
     if not key or key in ALWAYS_ON:
@@ -112,8 +117,7 @@ def require_tool(db: Session, identity, tool_key: str | None) -> None:
         if not rows:
             return
         canonical = rows[0].code
-        # Platform admins configure the catalog and test drafts in the sandbox.
-        if identity.get("is_admin"):
+        if preview and identity.get("is_admin"):
             return
         for row in rows:
             if not row.is_active or (row.target_audience != "student" and not is_staff(identity)):
@@ -123,3 +127,67 @@ def require_tool(db: Session, identity, tool_key: str | None) -> None:
     classes = _active_classes(db, _username(identity))
     if classes and not any(_class_enables(settings, canonical) for _, settings in classes):
         raise ToolAccessDenied("tool_disabled_for_class", canonical)
+
+
+# Generic prompts are not instrument prompts: they never name an owner.
+GENERIC_PROMPT_KEYS = frozenset({"prompt_generic"})
+
+
+def _default_steps():
+    from . import prompt_config
+    for name, value in vars(prompt_config).items():
+        if name.startswith("DEFAULT_") and name.endswith("GUIDED_STEPS"):
+            for step in value:
+                yield SimpleNamespace(id=step.get("id"), system_prompt_mode=step.get("system_prompt_mode"),
+                                      questionnaire_type=step.get("questionnaire_type"))
+
+
+def prompt_owners(db: Session, prompt_key: str | None) -> set[str]:
+    """Instruments whose guided flow uses `prompt_key` as its system prompt.
+
+    Owners come from the default and stored guided steps (entry prompt and the
+    follow-up prompt of the step mode) and from the per-instrument config keys
+    (`prompt_meta_<CODE>`, `prompt_components_<CODE>_…`, `prompt_guidance_<CODE>_…`).
+    """
+    from .chat_logic import FOLLOW_UP_MODE_BY_STEP_MODE, MODE_TO_SYSTEM_PROMPT_KEY, guided_step_system_prompt_key
+    key = (prompt_key or "").strip()
+    if not key or key in GENERIC_PROMPT_KEYS:
+        return set()
+    owners = set()
+    for step in [*_default_steps(), *db.query(models.GuidedStep).all()]:
+        if not step.questionnaire_type:
+            continue
+        follow_up = MODE_TO_SYSTEM_PROMPT_KEY.get(FOLLOW_UP_MODE_BY_STEP_MODE.get(step.system_prompt_mode))
+        if key in (guided_step_system_prompt_key(step), follow_up):
+            owners.add(step.questionnaire_type)
+    upper = key.upper()
+    for (code,) in db.query(models.Instrument.code):
+        q = re.sub(r"[^A-Za-z0-9_-]+", "-", code.strip().upper())
+        for base in (f"PROMPT_META_{q}", f"PROMPT_COMPONENTS_{q}", f"PROMPT_GUIDANCE_{q}"):
+            if upper == base or upper.startswith(base + "_"):
+                owners.add(code)
+    return {owner for owner in owners if owner.strip().upper() != "GENERIC"}
+
+
+def require_chat_turn(db: Session, identity, instrument: str | None, prompt_key: str | None,
+                      *, preview: bool = False) -> None:
+    """Guard a model turn by its instrument and by the prompt the server selected.
+
+    The client's `questionnaire_type` and `mode` are claims: an omitted, unknown
+    or mismatched instrument must not reach a disabled instrument prompt. When
+    the prompt belongs to the turn's instrument, the instrument guard suffices;
+    otherwise at least one owner of the prompt must be allowed.
+    """
+    require_tool(db, identity, instrument, preview=preview)
+    owners = prompt_owners(db, prompt_key)
+    claimed = (instrument or "").strip().lower()
+    if not owners or claimed in {owner.lower() for owner in owners}:
+        return
+    denied = None
+    for owner in sorted(owners):
+        try:
+            require_tool(db, identity, owner, preview=preview)
+            return
+        except ToolAccessDenied as exc:
+            denied = denied or exc
+    raise denied
