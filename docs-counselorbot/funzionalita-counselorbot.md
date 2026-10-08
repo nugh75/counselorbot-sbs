@@ -519,6 +519,21 @@ in S1**: filtering ships in #89/#90. Counselor controls, forum options, class
 paths, per-class administrator locks and audit history are delivered separately;
 the Class paths and Forum tabs are unavailable in this release.
 
+**Class access guard (S2, #89).** The server now decides which tools a user may
+start, with one resolver for every entry point. First the platform layer: an
+instrument the administrator has disabled, or one reserved for teachers, cannot
+be started by students (`tool_unavailable`). Then the class layer, for students
+only: if they belong to one or more active classes, a tool is available when at
+least one of those classes enables it; otherwise the start is refused with
+`tool_disabled_for_class`. Teachers, researchers and administrators are never
+filtered by classes; administrators can still test draft instruments in the
+sandbox. Students with no active class keep the platform catalog. The guard
+covers new chat turns, questionnaire submission and scoring, and resuming a
+suspended session. Results, conversations, PDFs and the list of suspended
+sessions of a disabled tool stay readable. `GET /user/access` returns the
+resolved tool list; the student catalog uses it from #90, and counselor fields
+arrive with #93.
+
 La pagina `/docente/taccuino` si apre dall’ingresso nella home o direttamente,
 anche dopo un refresh. La freccia nell’intestazione torna a `/docente`; la bozza
 non salvata richiede conferma prima di uscire (Annulla conserva testo, focus e
