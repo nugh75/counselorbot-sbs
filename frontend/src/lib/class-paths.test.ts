@@ -1,0 +1,76 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { parseClassPath, parseClassPathStep, parseClassPaths } from './class-paths.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { classPathText, classPathsTexts } from './i18n-class-paths.ts';
+
+test('class-paths parser handles step auto-detect and self-marking', () => {
+    const autoStep = parseClassPathStep({
+        id: 1,
+        path_id: 10,
+        position: 1,
+        tool_key: 'bussola',
+        title: 'Start here',
+        auto_detect: true,
+    });
+    assert.equal(autoStep.id, 1);
+    assert.equal(autoStep.tool_key, 'bussola');
+    assert.equal(autoStep.auto_detect, true);
+    assert.equal(autoStep.can_self_mark, false);
+
+    const selfStep = parseClassPathStep({
+        position: 2,
+        tool_key: 'timeline',
+        auto_detect: false,
+    });
+    assert.equal(selfStep.auto_detect, false);
+    assert.equal(selfStep.can_self_mark, true);
+});
+
+test('class-paths parser handles full path with default recommended mode', () => {
+    const path = parseClassPath({
+        id: 42,
+        group_id: 5,
+        title: 'Start of year',
+        revision: 1,
+        created_by: 'docente',
+        steps: [
+            { id: 101, tool_key: 'QSA', position: 1, auto_detect: true },
+        ],
+    });
+    assert.equal(path.id, 42);
+    assert.equal(path.group_id, 5);
+    assert.equal(path.title, 'Start of year');
+    assert.equal(path.mode, 'recommended');
+    assert.equal(path.status, 'draft');
+    assert.equal(path.steps.length, 1);
+    assert.equal(path.steps_count, 1);
+});
+
+test('class-paths parser handles array of paths', () => {
+    const paths = parseClassPaths([
+        { id: 1, group_id: 5, title: 'Path 1', mode: 'strict', status: 'published' },
+        { id: 2, group_id: 5, title: 'Path 2', status: 'archived' },
+    ]);
+    assert.equal(paths.length, 2);
+    assert.equal(paths[0].mode, 'strict');
+    assert.equal(paths[0].status, 'published');
+    assert.equal(paths[1].status, 'archived');
+});
+
+test('class paths translations cover six languages and fallback to English', () => {
+    for (const [key, translations] of Object.entries(classPathsTexts)) {
+        assert.equal(translations.length, 6, key);
+        assert.ok(translations.every(t => t.trim().length > 0), key);
+    }
+
+    assert.equal(classPathText('en', 'pathsTitle'), 'Class paths');
+    assert.equal(classPathText('it', 'pathsTitle'), 'Percorsi di classe');
+    assert.equal(classPathText('es', 'pathsTitle'), 'Itinerarios de clase');
+    assert.equal(classPathText('fr', 'pathsTitle'), 'Parcours de classe');
+    assert.equal(classPathText('de', 'pathsTitle'), 'Klassenpfade');
+    assert.equal(classPathText('sv', 'pathsTitle'), 'Klassvägar');
+    assert.equal(classPathText('unknown', 'pathsTitle'), 'Class paths');
+});
+
