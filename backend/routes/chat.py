@@ -594,7 +594,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     # client's claim, and the selected prompt's instrument is guarded too.
     class_access.require_chat_turn(db, identity, step.questionnaire_type if step else request.questionnaire_type,
                                    _system_prompt_key(request.mode, request.phase, step),
-                                   preview=bool(request.preview))
+                                   preview=bool(request.preview), mode=request.mode)
     _apply_step_reasoning(ai_service, step)
     is_first_step = False
     if request.use_phase_prompt and step:
@@ -847,7 +847,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     # client's claim, and the selected prompt's instrument is guarded too.
     class_access.require_chat_turn(db, identity, step.questionnaire_type if step else request.questionnaire_type,
                                    _system_prompt_key(request.mode, request.phase, step),
-                                   preview=bool(request.preview))
+                                   preview=bool(request.preview), mode=request.mode)
     _apply_step_reasoning(ai_service, step)
     is_first_step = False
     if request.use_phase_prompt and step:

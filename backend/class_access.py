@@ -150,7 +150,9 @@ def prompt_owners(db: Session, prompt_key: str | None) -> set[str]:
     (`prompt_meta_<CODE>`, `prompt_components_<CODE>_…`, `prompt_guidance_<CODE>_…`).
     """
     from .chat_logic import FOLLOW_UP_MODE_BY_STEP_MODE, MODE_TO_SYSTEM_PROMPT_KEY, guided_step_system_prompt_key
-    key = (prompt_key or "").strip()
+    from .prompt_variants import base_key
+    # A stored variant is the same instrument prompt at another context level.
+    key = base_key((prompt_key or "").strip())
     if not key or key in GENERIC_PROMPT_KEYS:
         return set()
     owners = set()
@@ -169,18 +171,34 @@ def prompt_owners(db: Session, prompt_key: str | None) -> set[str]:
     return {owner for owner in owners if owner.strip().upper() != "GENERIC"}
 
 
+def _ownerless_prompt_keys(db: Session) -> set[str]:
+    """Prompts the server selects without an instrument: generic, known modes, guided phases, steps."""
+    from .chat_logic import GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS, MODE_TO_SYSTEM_PROMPT_KEY, guided_step_system_prompt_key
+    keys = {*GENERIC_PROMPT_KEYS, *MODE_TO_SYSTEM_PROMPT_KEY.values()}
+    keys.update(definition["key"] for definition in GUIDED_PHASE_SYSTEM_PROMPT_DEFINITIONS.values())
+    keys.update(guided_step_system_prompt_key(step) for step in [*_default_steps(), *db.query(models.GuidedStep).all()])
+    return keys
+
+
 def require_chat_turn(db: Session, identity, instrument: str | None, prompt_key: str | None,
-                      *, preview: bool = False) -> None:
+                      *, preview: bool = False, mode: str | None = None) -> None:
     """Guard a model turn by its instrument and by the prompt the server selected.
 
     The client's `questionnaire_type` and `mode` are claims: an omitted, unknown
     or mismatched instrument must not reach a disabled instrument prompt. When
     the prompt belongs to the turn's instrument, the instrument guard suffices;
-    otherwise at least one owner of the prompt must be allowed.
+    otherwise at least one owner of the prompt must be allowed. A raw `prompt_*`
+    `mode` whose owner cannot be resolved fails closed for students.
     """
+    from .prompt_variants import base_key
     require_tool(db, identity, instrument, preview=preview)
     owners = prompt_owners(db, prompt_key)
     claimed = (instrument or "").strip().lower()
+    key = (prompt_key or "").strip()
+    raw = key.startswith("prompt_") and key == (mode or "").strip()
+    if not owners and raw and not is_staff(identity) and not (preview and identity.get("is_admin")) \
+            and base_key(key) not in _ownerless_prompt_keys(db):
+        raise ToolAccessDenied("tool_unavailable", key)
     if not owners or claimed in {owner.lower() for owner in owners}:
         return
     denied = None
