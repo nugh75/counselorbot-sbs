@@ -96,6 +96,9 @@ function ForumDiscussion({ groupId, topicId, onBack, onForbidden, onDraft }: {
     const [offset, setOffset] = useState(0);
     const resource = useTeacherResource(`/api/forum/topics/${topicId}?offset=${offset}`, parseForumDetail);
     const detail = resource.data;
+    useEffect(() => {
+        void apiFetch(`/api/forum/topics/${topicId}/read`, { method: 'POST' }).catch(() => {});
+    }, [topicId]);
     if (resource.forbidden || (detail && detail.topic.group_id !== groupId)) return <Callout variant="danger">{l('forbidden')}</Callout>;
     if (!detail) return <Callout variant={resource.failed ? 'danger' : 'info'}>
         <p>{l(resource.failed ? 'loadError' : 'loading')}</p>
@@ -151,7 +154,16 @@ export function ForumView({ groupId, student = false }: { groupId: number; stude
             {!listing.topics.length && <p className="text-sm text-slate-600">{l('empty')}</p>}
             <ul className="divide-y divide-slate-200">{listing.topics.map(topic => <li key={topic.id}>
                 <button type="button" className="block min-h-[44px] w-full space-y-1 py-3 text-left" onClick={() => navigate(topic.id)}>
-                    <span className="block break-words font-semibold text-indigo-700">{topic.pinned && `📌 ${l('pinned')} · `}{topic.locked && '🔒 '}{topic.title || l('hidden')}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="block break-words font-semibold text-indigo-700">{topic.pinned && `📌 ${l('pinned')} · `}{topic.locked && '🔒 '}{topic.title || l('hidden')}</span>
+                        {Boolean(topic.unread_count && topic.unread_count > 0) && (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ochre-700" aria-label={l('unreadMarker').replace('{count}', String(topic.unread_count))}>
+                                <span className="h-2 w-2 rounded-full bg-ochre-500" aria-hidden="true" />
+                                <span>{l('unreadMarker').replace('{count}', String(topic.unread_count))}</span>
+                                <span className="sr-only"> ({l('unreadMarker').replace('{count}', String(topic.unread_count))})</span>
+                            </span>
+                        )}
+                    </div>
                     <span className="block text-sm text-slate-600">{topic.author_display_name} · {topic.replies_count} {l('replies')}{topic.locked && ` · ${l('closed')}`}</span>
                 </button>
             </li>)}</ul>
