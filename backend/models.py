@@ -1691,6 +1691,54 @@ class TavoloImage(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+# ==============================================================================
+# Percorsi di classe (Class paths) — Issue #96 / Epic #87
+# ==============================================================================
+
+
+class ClassPath(Base):
+    """Percorso di classe: sequenza ordinata di strumenti/attività per una classe.
+
+    Stato: 'draft' (bozza), 'published' (pubblicato), 'archived' (archiviato).
+    Modalità di avanzamento: 'recommended' (consigliato, saltabile) o 'strict' (vincolante).
+    """
+
+    __tablename__ = "class_paths"
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), index=True, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    mode = Column(String, nullable=False, default="recommended")  # recommended | strict
+    status = Column(String, nullable=False, default="draft")  # draft | published | archived
+    published_at = Column(DateTime(timezone=True), nullable=True)
+    created_by = Column(String, nullable=False)
+    revision = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    archived_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class ClassPathStep(Base):
+    """Singolo passo di un percorso di classe associato a uno strumento o attività.
+
+    I passi eliminati mantengono `removed_at` valorizzato (soft-remove) per
+    preservare la cronologia e i progressi svolti dagli studenti.
+    """
+
+    __tablename__ = "class_path_steps"
+
+    id = Column(Integer, primary_key=True, index=True)
+    path_id = Column(Integer, ForeignKey("class_paths.id", ondelete="CASCADE"), index=True, nullable=False)
+    position = Column(Integer, nullable=False)  # 1-indexed
+    tool_key = Column(String, nullable=False)
+    title = Column(String, nullable=True)
+    instructions = Column(Text, nullable=True)
+    due_date = Column(Date, nullable=True)
+    removed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 # --- Class forum (#102): separate from sessions, profiles and AI context ---
 class ForumTopic(Base):
     __tablename__ = "forum_topics"
