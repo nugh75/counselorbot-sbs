@@ -515,10 +515,30 @@ layout and a sticky Save bar are supported. Saving is explicit. A concurrent
 change (409) keeps the local draft and offers Reload with discard confirmation;
 other failures also keep the draft. Missing settings mean everything enabled,
 and newly added tools are enabled automatically. **Student access is unchanged
-in S1**: filtering ships in #89/#90. Counselor controls, forum options, class
-paths, per-class administrator locks and audit history are delivered separately;
-the Class paths tab is unavailable in this release. The Forum tab is delivered
-by F1 (#102), described below.
+in S1**: filtering ships in #89/#90. Counselor controls,
+per-class administrator locks and audit history are delivered separately.
+The Class paths tab is delivered by P1 (#96) and the Forum tab is delivered by F1 (#102),
+both described below.
+
+**Class paths builder (P1, #96).** The **Class paths** tab on `/docente/classi/{id}`
+provides the teacher-side builder for sequenced class learning paths (`class_paths`
+and `class_path_steps`). The class owner, co-teachers and administrators can create
+draft paths, define title and description, choose the progression mode (`recommended`
+suggested sequence vs `strict` linear prerequisite order), and assemble steps. Each
+step references an instrument key enabled for the class (excluding always-on tools
+and administrator-disabled instruments; invalid tools are rejected with HTTP 422),
+with optional step title overrides, student instructions and due dates.
+The step builder supports position numbering, reordering via up/down buttons (and
+keyboard), removal (`[×]`), and displays a self-marking indicator (`⚑`) for tools
+without automated completion detection (such as personal-area tools). Steps are
+renumbered sequentially by array order and omitted step IDs are soft-removed
+(`removed_at`). Concurrent edits are guarded by a revision counter: an HTTP 409
+conflict preserves the local draft and prompts the teacher to reload. Paths can be
+archived, restored, or deleted. Path authorization fails closed with HTTP 403
+(access denied) for unknown path IDs and unauthorized teachers alike, preventing
+existence oracles. All interfaces and messages are translated across
+the 6 platform languages. **Draft-only in P1**: student-side publishing, progression
+enforcement and student progress tracking ship in P2 (#97).
 
 **Class forum (F1, #102).** Teachers open the Forum tab on
 `/docente/classi/{id}`; students open the forum link in their Classes list,
@@ -541,6 +561,7 @@ exports, PDFs, session ledgers and RAG indexes. Architectural privacy tests
 protect that boundary. Moderation, student-created discussions, unread badges,
 and path/assignment links are separate later slices. Six-language interface
 controls are included; the expanded forum guide and screenshots are #107.
+
 
 La pagina `/docente/taccuino` si apre dall’ingresso nella home o direttamente,
 anche dopo un refresh. La freccia nell’intestazione torna a `/docente`; la bozza

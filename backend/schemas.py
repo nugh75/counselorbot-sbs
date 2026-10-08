@@ -2,7 +2,7 @@ from .chat_preferences import ResponseFormat
 from .dynamic_registry import DynamicInstrumentSet, HISTORIC_INSTRUMENT_CODES
 from pydantic import BaseModel, Field, StrictInt, validator
 from typing import Optional, List, Dict, Any, Union, Literal
-from datetime import datetime
+from datetime import date, datetime
 import json
 import re
 
@@ -1818,3 +1818,89 @@ class OrientationDirectoryResponse(BaseModel):
     institution: Optional[InstitutionPublic] = None
     referrals: List[Dict[str, Any]] = Field(default_factory=list)
     events: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+# ==============================================================================
+# Percorsi di classe (Class paths) — Issue #96 / Epic #87
+# ==============================================================================
+
+
+class ClassPathStepInput(BaseModel):
+    id: Optional[int] = None
+    tool_key: str
+    title: Optional[str] = None
+    instructions: Optional[str] = None
+    due_date: Optional[date] = None
+
+
+class ClassPathStepResponse(BaseModel):
+    id: int
+    path_id: int
+    position: int
+    tool_key: str
+    title: Optional[str] = None
+    instructions: Optional[str] = None
+    due_date: Optional[date] = None
+    auto_detect: bool = False
+    can_self_mark: bool = True
+
+    class Config:
+        from_attributes = True
+
+
+class ClassPathCreate(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    title: str
+    description: Optional[str] = None
+    mode: str = "recommended"  # recommended | strict
+
+
+class ClassPathUpdate(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    revision: int = Field(ge=1, strict=True)
+    title: str
+    description: Optional[str] = None
+    mode: str = "recommended"
+    steps: List[ClassPathStepInput] = Field(default_factory=list)
+
+
+class ClassPathResponse(BaseModel):
+    id: int
+    group_id: int
+    title: str
+    description: Optional[str] = None
+    mode: str
+    status: str
+    published_at: Optional[datetime] = None
+    created_by: str
+    revision: int
+    steps: List[ClassPathStepResponse] = Field(default_factory=list)
+    steps_count: int = 0
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ClassPathSummary(BaseModel):
+    id: int
+    group_id: int
+    title: str
+    description: Optional[str] = None
+    mode: str
+    status: str
+    published_at: Optional[datetime] = None
+    created_by: str
+    revision: int
+    steps_count: int = 0
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
