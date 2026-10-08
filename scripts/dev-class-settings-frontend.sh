@@ -2,8 +2,11 @@
 # Worktree-only teacher preview on 3107; all API calls go to test backend 8002.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-if ss -H -ltn 'sport = :3107' | read -r _; then
-    echo 'Port 3107 is occupied; leave the existing process untouched' >&2
+port="${PORT:-3107}"
+backend_port="${BACKEND_PORT:-8002}"
+backend_origin="${BACKEND_ORIGIN:-http://127.0.0.1:$backend_port}"
+if ss -H -ltn "sport = :$port" | read -r _; then
+    echo "Port $port is occupied; leave the existing process untouched" >&2
     exit 1
 fi
 # Next loads .env files automatically. Take a fresh explicit source snapshot
@@ -32,7 +35,8 @@ PY_STAGE
 )
 cd "$class_settings_stage"
 exec env -i PATH="$PATH" HOME="$HOME" \
-    BACKEND_ORIGIN=http://127.0.0.1:8002 DEV_AUTH_USER=class-settings.fixture \
+    BACKEND_ORIGIN="$backend_origin" DEV_AUTH_USER=class-settings.fixture \
     DEV_AUTH_GROUPS=docenti DEV_AUTH_SECRET=dev-local-only \
     NEXT_TELEMETRY_DISABLED=1 \
-    npm run dev -- --webpack --hostname 127.0.0.1 --port 3107
+    npm run dev -- --webpack --hostname 127.0.0.1 --port "$port"
+
