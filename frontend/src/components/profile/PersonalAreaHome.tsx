@@ -11,9 +11,11 @@ import { personalAreaDescription, personalAreaName, personalAreaText } from '@/l
 import { forumText } from '@/lib/i18n-forum';
 import { personalAreaGroups, personalAreaImages, personalResumeItems, type ResumeAssignment } from '@/lib/personal-area';
 import type { PersonalGoal } from '@/lib/goals';
+import { enabledResumeItems, personalSlugEnabled, type UserAccess } from '@/lib/personal-tool-access';
+import { usePersonalToolAccess } from '@/lib/use-personal-tool-access';
 import { Button } from '@/components/ui/Button';
 
-function PersonalResume() {
+function PersonalResume({ access }: { access: UserAccess | null }) {
     const { lang } = useI18n();
     const [goals, setGoals] = useState<PersonalGoal[]>([]);
     const [assignments, setAssignments] = useState<ResumeAssignment[]>([]);
@@ -42,7 +44,7 @@ function PersonalResume() {
         return () => controller.abort();
     }, [attempt]);
 
-    const items = personalResumeItems(goals, assignments);
+    const items = enabledResumeItems(personalResumeItems(goals, assignments), access);
     if (!loading && !failed && !items.length) return null;
     return <section aria-labelledby="personal-resume-title" className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
         <h2 id="personal-resume-title" className="font-bold text-slate-900">{l('resume')}</h2>
@@ -69,6 +71,10 @@ function PersonalResume() {
 export function PersonalAreaHome() {
     const { lang } = useI18n();
     const [unreadTotal, setUnreadTotal] = useState(0);
+    const access = usePersonalToolAccess();
+    const groups = personalAreaGroups
+        .map(group => ({ id: group.id, slugs: group.slugs.filter(slug => personalSlugEnabled(access, slug)) }))
+        .filter(group => group.slugs.length > 0);
 
     useEffect(() => {
         let active = true;
@@ -83,8 +89,8 @@ export function PersonalAreaHome() {
     }, []);
 
     return <div className="space-y-6" data-personal-area-home>
-        <PersonalResume />
-        {personalAreaGroups.map(group => <section key={group.id} aria-labelledby={`personal-group-${group.id}`}>
+        <PersonalResume access={access} />
+        {groups.map(group => <section key={group.id} aria-labelledby={`personal-group-${group.id}`}>
             <h2 id={`personal-group-${group.id}`} className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">{personalAreaText(lang, group.id)}</h2>
             <nav aria-labelledby={`personal-group-${group.id}`} className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
                 {group.slugs.map(slug => <Link key={slug} href={`/profilo/${slug}`} aria-labelledby={`personal-link-${slug}`} aria-describedby={`personal-description-${slug}`}

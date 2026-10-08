@@ -3,6 +3,7 @@ import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
 import { personalAreaGroups, personalAreaImages } from '../src/lib/personal-area.ts';
 import { personalAreaName, personalAreaText, personalAreaDescription } from '../src/lib/i18n-personal-area.ts';
+import { personalToolAccessText } from '../src/lib/personal-tool-access.ts';
 
 const origin = process.env.PERSONAL_AREA_BASE_URL || 'http://127.0.0.1:3000';
 let browser;
@@ -133,3 +134,29 @@ test('forum unread count displays accessible badge on Classes entry in personal 
     } finally { await f.context.close(); }
 });
 
+
+test('class-disabled personal tools leave the home and overview, direct URLs explain why', async () => {
+    const f = await fixture('en', true);
+    const access = { restricted: true, tool_keys: ['goals', 'timeline', 'portfolio', 'notebook', 'results', 'classes', 'assignments'], counselor_ids: null, default_counselor_id: null, class_ids: [7] };
+    await f.page.route('**/api/user/access', route => route.fulfill({ json: access }));
+    try {
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'networkidle' });
+        const home = f.page.locator('[data-personal-area-home]');
+        await home.getByRole('link', { name: personalAreaName('en', 'obiettivi'), exact: true }).waitFor();
+        const hrefs = await home.locator('nav a').evaluateAll(links => links.map(link => link.getAttribute('href')));
+        for (const slug of ['azioni', 'pqbl', 'flashcard', 'carte', 'confronto', 'tavolo']) assert.ok(!hrefs.includes(`/profilo/${slug}`), slug);
+        for (const slug of ['taccuino', 'compilazioni', 'obiettivi', 'timeline', 'portfolio', 'assegnazioni', 'classi']) assert.ok(hrefs.includes(`/profilo/${slug}`), slug);
+        // The study group has only disabled tools: its heading goes too.
+        assert.equal(await home.getByRole('heading', { name: personalAreaText('en', 'study'), exact: true }).count(), 0);
+        const resume = f.page.getByRole('region', { name: personalAreaText('en', 'resume'), exact: true });
+        await resume.waitFor();
+        assert.equal(await resume.getByRole('link', { name: /Azione da riprendere/ }).count(), 0, 'actions are off');
+        await f.page.goto(`${origin}/profilo/portfolio`, { waitUntil: 'networkidle' });
+        await f.page.locator('[data-personal-area-header]').waitFor();
+        assert.equal(await f.page.getByText(personalToolAccessText('en', 'disabledTitle'), { exact: true }).count(), 0);
+        await f.page.route('**/api/user/flashcards', route => route.fulfill({ json: { revision: 0, workspace: { decks: [] } } }));
+        await f.page.goto(`${origin}/profilo/flashcard`, { waitUntil: 'networkidle' });
+        await f.page.getByText(personalToolAccessText('en', 'disabledTitle'), { exact: true }).waitFor();
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
