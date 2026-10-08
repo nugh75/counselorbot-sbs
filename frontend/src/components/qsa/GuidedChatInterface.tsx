@@ -880,7 +880,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const recordMemoryEvent = async (phaseId: string, completedStep: boolean, userMessage = '') => {
         if (!sessionId || !phaseId) return;
         try {
-            await fetch('/api/memory/event', {
+            await apiFetch('/api/memory/event', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

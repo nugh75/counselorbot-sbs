@@ -581,6 +581,30 @@ co-teachers and administrators, also in archived classes. The log never stores
 message text and has no edit or delete operation. Repeating an action that is
 already in effect is refused and not logged.
 
+**Class access guard (S2, #89).** The server now decides which tools a user may
+start, with one resolver for every entry point. First the platform layer: an
+instrument the administrator has disabled, or one reserved for teachers, cannot
+be started by students (`tool_unavailable`). Then the class layer, for students
+only: if they belong to one or more active classes, a tool is available when at
+least one of those classes enables it; otherwise the start is refused with
+`tool_disabled_for_class`. Teachers, researchers and administrators are never
+filtered by classes. A platform-disabled instrument is closed for administrators
+too, except in the sandbox preview, where they test drafts. Students with no
+active class keep the platform catalog. The guard covers new chat turns (judged
+on the prompt the server actually selects, not only on the instrument the page
+declares, including stored short and context-level variants of an instrument
+prompt; a raw prompt selection whose instrument cannot be determined is refused
+to students), questionnaire submission, scoring and PDF upload, completion and
+progress records of guided chats, resuming a suspended session, Idea map
+changes and source searches, and OpenCode workspaces. Uploading a questionnaire
+PDF and recording guided-chat progress now require signing in; the first
+progress record of a new session binds it to its user, so another account cannot
+write to it. Results,
+conversations, PDFs, the list of suspended sessions and existing Idea maps of a
+disabled tool stay readable, exportable and deletable. `GET /user/access` returns the
+resolved tool list; the student catalog uses it from #90, and counselor fields
+arrive with #93.
+
 **Class forum unread badge (F4, #105).** An in-app badge indicates unread forum
 activity across active classes. The backend (`GET /user/forum/unread`,
 `POST /forum/topics/{id}/read`) computes unread counts using the `forum_reads`

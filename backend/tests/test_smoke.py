@@ -225,6 +225,7 @@ def _seed_minimal_qsa():
                 name_es="QSA ES",
                 response_scale_min=1,
                 response_scale_max=4,
+                is_active=True,
             ))
         if not db.query(models.Factor).filter(
             models.Factor.instrument_code == "QSA",
@@ -2762,14 +2763,19 @@ def test_stream_memory_contract_for_all_active_questionnaires():
         assert "- Lingua: it" in memory
         assert "Vorrei migliorare il mio metodo di studio" in memory
 
-        r = client.post("/memory/event", json={
-            "session_id": session_id,
-            "questionnaire_type": questionnaire_type,
-            "language": "it",
-            "phase": "conclusion",
-            "step_label": "Conclusione",
-            "completed_step": True,
-        })
+        # Memory events need a signed-in owner (#89 review B4).
+        main.app.dependency_overrides[auth.get_current_user] = _fake_user_identity
+        try:
+            r = client.post("/memory/event", json={
+                "session_id": session_id,
+                "questionnaire_type": questionnaire_type,
+                "language": "it",
+                "phase": "conclusion",
+                "step_label": "Conclusione",
+                "completed_step": True,
+            })
+        finally:
+            main.app.dependency_overrides.pop(auth.get_current_user, None)
         assert r.status_code == 200, r.text
         memory = session_memory.get_summary(session_id)
         assert "- Step corrente: Conclusione" in memory
@@ -4171,6 +4177,7 @@ def test_validation_raw_response_export():
                 name_es="QSA ES",
                 response_scale_min=1,
                 response_scale_max=4,
+                is_active=True,
             ))
         if not db.query(models.Factor).filter(
             models.Factor.instrument_code == "QSA",
@@ -4238,6 +4245,7 @@ def test_anonymous_research_code_is_persisted_and_forced_on_validation_save():
                 name_es="QSA ES",
                 response_scale_min=1,
                 response_scale_max=4,
+                is_active=True,
             ))
         if not db.query(models.Factor).filter(
             models.Factor.instrument_code == "QSA",
@@ -5242,7 +5250,7 @@ def test_instrument_catalog_crud_and_scoring():
     # Crea uno strumento minimale con scala 1-5 (per esercitare reverse non-1-4).
     r = client.post("/admin/instruments", json={
         "code": "TST", "name_en": "Test", "response_scale_min": 1,
-        "response_scale_max": 5, "report_scale_type": "stanine", "status": "experimental",
+        "response_scale_max": 5, "report_scale_type": "stanine", "status": "experimental", "is_active": True,
     })
     assert r.status_code == 200, r.text
 
@@ -5302,7 +5310,7 @@ def test_instrument_catalog_crud_and_scoring():
 def test_instrument_scoring_uses_validated_norms():
     client.post("/admin/instruments", json={
         "code": "TSN", "name_en": "TestNorm", "response_scale_min": 1,
-        "response_scale_max": 4, "status": "experimental",
+        "response_scale_max": 4, "status": "experimental", "is_active": True,
     })
     client.post("/admin/instruments/TSN/factors", json={
         "instrument_code": "TSN", "code": "G1", "orientation": "resource", "label_en": "G1",

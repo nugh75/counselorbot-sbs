@@ -13,6 +13,11 @@ def variant_key(key: str, level: str) -> str:
     return f"{key}__level_{encoded}"
 
 
+def base_key(key: str) -> str:
+    """The prompt a stored variant (`__level_*` or legacy `__short`) belongs to."""
+    return key.rsplit("__level_", 1)[0] if "__level_" in key else key.removesuffix("__short")
+
+
 def variant_levels(config: dict) -> dict:
     # The three standard editors remain available even before assignment.
     return {**DEFAULT_CONTEXT_LEVELS, **context_levels(config)}
@@ -32,7 +37,7 @@ def variant_text(config: dict, key: str, level: str) -> str:
 def level_config(config: dict, level: str) -> dict:
     result = dict(config)
     if level != "totale":
-        bases = {key.rsplit("__level_", 1)[0] if "__level_" in key else key.removesuffix("__short") for key in config}
+        bases = {base_key(key) for key in config}
         for key in bases:
             value = variant_text(config, key, level)
             if value.strip():
