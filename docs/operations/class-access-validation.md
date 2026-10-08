@@ -158,3 +158,23 @@ DATABASE_URL=postgresql://c2_test@127.0.0.1:18589/counselorbot_test \
   are the resolver query count, dynamic steps and the deferred Telegram N3).
 - Live on 8012: anonymous `/qsa/upload`, `/memory/event` and `/user/access` →
   401, no upload stored; a generic chat passes the guard.
+
+### Fix round 2 (PR #112 re-review B1-R, B4-R)
+
+- Prompt variants: stored variants (`<key>__level_<level>`, legacy
+  `<key>__short`) resolve to their base prompt (`prompt_variants.base_key`)
+  before the owner lookup, so a raw variant selector on `/chat` or
+  `/chat/stream` is guarded like its instrument prompt. A raw `prompt_*` `mode`
+  with no resolvable owner (not generic, not a known mode, guided phase or step
+  prompt) now fails closed for students: 403 `tool_unavailable`. Staff and the
+  admin sandbox preview keep the previous behaviour. `/chat/message` maps only
+  known modes and cannot select variants.
+- Session binding: the first successful `/memory/event` for a fresh session id
+  writes a row in the new `memory_session_owners` table (`session_id` primary
+  key, `username`; created by `create_all`, no change to existing tables).
+  Later events from another user get 403 and write nothing; the owner continues.
+- Tests (written failing first): `test_class_access.py` +10,
+  `test_class_access_writes.py` +1; both suites 102 passed, 6 skipped. Related
+  settings/variants/context-level/chat/sandbox suites: 92 passed plus the three
+  known N5 SQLite fixture errors (3 passed with the `char_length` shim); focused
+  `test_smoke.py` memory/chat/Idea/OpenCode: 32 passed.
