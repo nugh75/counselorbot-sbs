@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from .. import auth, database, models, model_pricing
+from .. import auth, class_access, database, models, model_pricing
 from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService, AIError
 from ..chat_continuation import continuation_message
@@ -589,6 +589,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
+    # Same instrument prepare_chat_turn uses: the step wins over the client's claim.
+    class_access.require_tool(db, identity, step.questionnaire_type if step else request.questionnaire_type)
     _apply_step_reasoning(ai_service, step)
     is_first_step = False
     if request.use_phase_prompt and step:
@@ -837,6 +839,8 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
+    # Same instrument prepare_chat_turn uses: the step wins over the client's claim.
+    class_access.require_tool(db, identity, step.questionnaire_type if step else request.questionnaire_type)
     _apply_step_reasoning(ai_service, step)
     is_first_step = False
     if request.use_phase_prompt and step:
@@ -1203,6 +1207,7 @@ async def chat_message(
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
 ):
+    class_access.require_tool(db, identity, questionnaire_type)
     resolved_conversation_id = conversation_id_for(session_id, conversation_id)
     language = _normalize_language(language)
     # 1. Retrieve Configuration and System Prompt based on Mode
