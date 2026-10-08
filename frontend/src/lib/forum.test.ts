@@ -24,6 +24,7 @@ test('parseForumTopic parses topic with or without unread_count', () => {
     const raw = {
         id: 1, group_id: 10, title: 'Test Title', body: 'Body', author_display_name: 'Author',
         created_at: '2026-10-08T12:00:00Z', edited_at: null, hidden: false, deleted: false,
+        hidden_reason: null, own: false,
         pinned: false, locked: false, last_post_at: '2026-10-08T12:00:00Z', replies_count: 3,
         unread_count: 2,
     };
@@ -51,4 +52,38 @@ test('every forum message has six nonempty language strings', () => {
         assert.equal(values.length, 6);
         for (const value of values) assert.ok(value.trim().length > 0);
     }
+});
+
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { forumClosedNotice, forumPostActions, parseForumLog, parseForumPost } from './forum.ts';
+
+const reply = { id: 1, author_display_name: 'Anna', body: 'Text', hidden: false, deleted: false,
+    hidden_reason: null, own: false, created_at: '2026-10-08T10:00:00Z', edited_at: null };
+
+test('a closed discussion explains archive first, then a hidden topic, then a lock', () => {
+    assert.equal(forumClosedNotice(false, { hidden: true, locked: true }), 'archive');
+    assert.equal(forumClosedNotice(true, { hidden: true, locked: false }), 'hiddenTopic');
+    assert.equal(forumClosedNotice(true, { hidden: true, locked: true }), 'hiddenTopic');
+    assert.equal(forumClosedNotice(true, { hidden: false, locked: true }), 'closed');
+});
+
+test('reply controls follow authorship, moderation role, hiding, deletion and archive', () => {
+    const none = { edit: false, delete: false, hide: false, restore: false };
+    assert.deepEqual(forumPostActions({ ...reply, own: true }, { moderator: false, active: true }), { ...none, edit: true, delete: true });
+    assert.deepEqual(forumPostActions({ ...reply, own: true, hidden: true }, { moderator: false, active: true }), { ...none, delete: true });
+    assert.deepEqual(forumPostActions(reply, { moderator: true, active: true }), { ...none, hide: true });
+    assert.deepEqual(forumPostActions({ ...reply, hidden: true }, { moderator: true, active: true }), { ...none, restore: true });
+    assert.deepEqual(forumPostActions({ ...reply, own: true, deleted: true }, { moderator: true, active: true }), none);
+    assert.deepEqual(forumPostActions({ ...reply, own: true }, { moderator: true, active: false }), none);
+    assert.deepEqual(forumPostActions(reply, { moderator: false, active: true }), none);
+});
+
+test('forum parsers require moderation fields and reject malformed log entries', () => {
+    assert.equal(parseForumPost(reply).own, false);
+    assert.throws(() => parseForumPost({ ...reply, own: undefined }));
+    assert.throws(() => parseForumPost({ ...reply, hidden_reason: 3 }));
+    const entry = { id: 1, actor_username: 'owner', action: 'hide', target_kind: 'post', target_id: 4, reason: 'Off topic', created_at: '2026-10-08T10:00:00Z' };
+    assert.deepEqual(parseForumLog({ entries: [entry], has_more: false }).entries, [entry]);
+    assert.throws(() => parseForumLog({ entries: [{ ...entry, reason: 7 }], has_more: false }));
+    assert.throws(() => parseForumLog({ entries: [], has_more: 'no' }));
 });

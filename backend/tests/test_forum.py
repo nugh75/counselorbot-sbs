@@ -57,18 +57,34 @@ def test_discussion_and_reply_are_readable_with_identity_snapshots(forum_api):
     ("non-member", False, False, False), ("other-teacher", False, False, False),
     ("former-member", False, False, False), ("student", True, True, False),
     ("owner", True, True, True), ("co-teacher", True, True, True), ("admin", True, True, True),
+    ("cross-class-student", False, False, False), ("researcher-owner", True, True, True),
+    ("researcher-shared", True, True, True), ("researcher-unrelated", False, False, False),
 ])
 def test_permission_matrix(forum_api, actor, read, reply, open_allowed):
     client, db, group_id, identity = forum_api
     topic = open_topic(client, group_id)
+    if actor == "cross-class-student":
+        # Membership elsewhere must not grant access by guessing ids (IDOR).
+        other = models.StudentGroup(code="GR-C4CROSS", name="Other class", owner_username="other-teacher")
+        db.add(other)
+        db.flush()
+        db.add(models.GroupMembership(group_id=other.id, username=actor))
+        db.commit()
+    elif actor == "researcher-owner":
+        db.get(models.StudentGroup, group_id).owner_username = actor
+        db.commit()
+    elif actor == "researcher-shared":
+        db.add(models.GroupShare(group_id=group_id, shared_with_username=actor, granted_by_username="owner"))
+        db.commit()
     if actor == "former-member":
         db.add(models.GroupMembership(group_id=group_id, username=actor))
         db.commit()
         identity.update(username=actor, groups=["studenti"])
         membership = client.get("/user/groups").json()[0]["membership_id"]
         assert client.delete(f"/user/groups/{membership}").status_code == 200
-    identity.update(username=actor, name=actor, is_admin=actor == "admin",
-                    groups=["docenti"] if actor in {"owner", "co-teacher", "other-teacher"} else ["studenti"])
+    identity.update(username=actor, name=actor, is_admin=actor == "admin", is_researcher=actor.startswith("researcher"),
+                    groups=["docenti"] if actor in {"owner", "co-teacher", "other-teacher"} else
+                    ["ricercatori"] if actor.startswith("researcher") else ["studenti"])
     assert client.get(f"/groups/{group_id}/forum/topics").status_code == (200 if read else 403)
     assert client.get(f"/forum/topics/{topic['id']}").status_code == (200 if read else 403)
     assert client.post(f"/forum/topics/{topic['id']}/posts", json={"body": "Reply"}).status_code == (201 if reply else 403)
@@ -95,17 +111,28 @@ def test_inactive_class_is_read_only(forum_api, actor):
     {"title": "Valid", "body": " "}, {"title": "Valid", "body": "B" * 4001},
     {"title": "Valid", "body": "Text", "author_display_name": "Forged"},
     {"title": "Valid", "body": "Text", "attachments": ["file"]},
+    {"title": "Nul\x00title", "body": "Text"}, {"title": "Valid", "body": "Nul\x00body"},
+    {"title": "Escape\x1b[0m", "body": "Text"}, {"title": "Valid", "body": "Form\x0cfeed"},
 ])
 def test_topic_input_limits_and_identity_cannot_be_forged(forum_api, payload):
     client, _, group_id, _ = forum_api
     assert client.post(f"/groups/{group_id}/forum/topics", json=payload).status_code == 422
 
 
-@pytest.mark.parametrize("payload", [{"body": " "}, {"body": "B" * 4001}, {"body": "Text", "author_username": "owner"}, {"body": 12}])
+@pytest.mark.parametrize("payload", [{"body": " "}, {"body": "B" * 4001}, {"body": "Text", "author_username": "owner"}, {"body": 12},
+                                     {"body": "Nul\x00body"}, {"body": "Bell\x07"}, {"body": "Unit\x1fseparator"}])
 def test_reply_input_limits(forum_api, payload):
     client, _, group_id, _ = forum_api
     topic = open_topic(client, group_id)
     assert client.post(f"/forum/topics/{topic['id']}/posts", json=payload).status_code == 422
+
+
+def test_text_keeps_newlines_tabs_and_carriage_returns(forum_api):
+    client, _, group_id, _ = forum_api
+    topic = open_topic(client, group_id)
+    reply = client.post(f"/forum/topics/{topic['id']}/posts", json={"body": "Line one\r\n\tLine two\nend"})
+    assert reply.status_code == 201
+    assert reply.json()["body"] == "Line one\r\n\tLine two\nend"
 
 
 def test_topic_and_replies_share_a_persistent_per_class_rate_limit(forum_api):
