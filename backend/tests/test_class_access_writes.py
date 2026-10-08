@@ -185,3 +185,67 @@ def test_idea_writes_work_when_enabled(idea_db):
     assert reference.status_code == 200, reference.text
     branch = client.post("/idea/branch", json={"session_id": IDEA_SESSION, "label": "Idea", "lang": "en"})
     assert branch.status_code == 200, branch.text
+
+
+# --- B6: OpenCode workspace -------------------------------------------------
+
+def _opencode(db, tmp_path, monkeypatch, identity=STUDENT):
+    from backend.routes import opencode
+    monkeypatch.setattr(opencode, "OPENCODE_WS_ROOT", str(tmp_path / "workspaces"))
+    return opencode, _with_identity(_app(opencode.router), db, identity, opencode.get_db)
+
+
+def _workspace(opencode, tmp_path, questionnaire_type="QSA"):
+    """A workspace created earlier for `questionnaire_type`, as the start route records it."""
+    import json
+    key = opencode.workspace_key("ws-existing")
+    ws_dir = tmp_path / "workspaces" / key
+    ws_dir.mkdir(parents=True)
+    (ws_dir / ".opencode-meta").write_text(json.dumps({"locale": "en", "questionnaire_type": questionnaire_type}))
+    (ws_dir / ".workspace.json").write_text(json.dumps({"workspace_id": "ws-existing",
+                                                        "questionnaire_type": questionnaire_type}))
+    return key
+
+
+def test_opencode_start_is_guarded(db, tmp_path, monkeypatch):
+    _group(db, "a", disabled=["QSA"], members=["anna"])
+    opencode, client = _opencode(db, tmp_path, monkeypatch)
+    with patch.object(opencode, "_require_direct_chat"), \
+            patch.object(opencode, "_start_opencode_api", new=AsyncMock(return_value={"url": "x"})) as start:
+        response = client.post("/opencode/workspace", json={"workspace_id": "ws-disabled-qsa",
+                                                             "questionnaire_type": "QSA", "scores": {}, "locale": "en"})
+    _assert_denied(response, "tool_disabled_for_class", "QSA")
+    start.assert_not_called()
+    assert not (tmp_path / "workspaces").exists() or not any((tmp_path / "workspaces").iterdir())
+
+
+@pytest.mark.parametrize("action", ["chat", "reset", "sync-memory"])
+def test_opencode_workspace_actions_are_guarded(db, tmp_path, monkeypatch, action):
+    _group(db, "a", disabled=["QSA"], members=["anna"])
+    opencode, client = _opencode(db, tmp_path, monkeypatch)
+    key = _workspace(opencode, tmp_path)
+    body = {"message": "Hi", "session_id": "ses_x"} if action == "chat" else None
+    with patch.object(opencode, "_require_direct_chat"), \
+            patch.object(opencode, "_get_api_instance", side_effect=AssertionError("no agent")), \
+            patch.object(opencode.session_memory, "sync_external_notes") as sync:
+        response = client.post(f"/opencode/workspace/{key}/{action}", json=body)
+    _assert_denied(response, "tool_disabled_for_class", "QSA")
+    sync.assert_not_called()
+
+
+def test_opencode_abort_stays_allowed(db, tmp_path, monkeypatch):
+    _group(db, "a", disabled=["QSA"], members=["anna"])
+    opencode, client = _opencode(db, tmp_path, monkeypatch)
+    key = _workspace(opencode, tmp_path)
+    with patch.object(opencode, "_get_api_instance", return_value=None):
+        response = client.post(f"/opencode/workspace/{key}/abort")
+    assert response.status_code == 503, response.text
+
+
+def test_opencode_sync_memory_works_when_enabled(db, tmp_path, monkeypatch):
+    opencode, client = _opencode(db, tmp_path, monkeypatch)
+    key = _workspace(opencode, tmp_path)
+    with patch.object(opencode.session_memory, "sync_external_notes") as sync:
+        response = client.post(f"/opencode/workspace/{key}/sync-memory")
+    assert response.status_code == 200, response.text
+    sync.assert_called_once()

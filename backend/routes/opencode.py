@@ -32,7 +32,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from ..chat_preferences import apply_response_format
-from .. import auth, database, models, pii
+from .. import auth, class_access, database, models, pii
 from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService
 from ..api_models import ChatRequest, OpencodeChatRequest, OpencodeWorkspaceRequest
@@ -671,6 +671,7 @@ async def create_opencode_workspace(
     identity: dict = Depends(auth.get_current_user),
 ):
     _require_direct_chat(db, identity, request.locale or "it")
+    class_access.require_tool(db, identity, request.questionnaire_type)
     if not _WORKSPACE_ID_RE.match(request.workspace_id):
         raise HTTPException(status_code=400, detail="workspace_id non valido")
     if request.pdf_token and not _PDF_TOKEN_RE.match(request.pdf_token):
@@ -876,6 +877,19 @@ async def create_opencode_workspace(
         }
 
 
+def _workspace_instrument(key: str) -> str:
+    """Instrument recorded when the workspace was started; abort needs no check."""
+    for name in (".opencode-meta", ".workspace.json"):
+        try:
+            with open(os.path.join(OPENCODE_WS_ROOT, key, name), encoding="utf-8") as fh:
+                value = json.load(fh).get("questionnaire_type")
+        except (OSError, ValueError, AttributeError):
+            continue
+        if value:
+            return str(value)
+    return ""
+
+
 def _workspace_session_id(key: str) -> str:
     path = os.path.join(OPENCODE_WS_ROOT, key, ".opencode-session")
     try:
@@ -898,6 +912,7 @@ async def chat_opencode(
     _require_direct_chat(db, identity)
     if not _KEY_RE.match(key):
         raise HTTPException(status_code=400, detail="Workspace key non valida")
+    class_access.require_tool(db, identity, _workspace_instrument(key))
     config = _get_api_instance(key)
     if not config:
         raise HTTPException(status_code=503, detail="OpenCode grafico non disponibile")
@@ -1127,9 +1142,11 @@ async def abort_opencode(
 async def reset_opencode(
     key: str,
     identity: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
 ):
     if not _KEY_RE.match(key):
         raise HTTPException(status_code=400, detail="Workspace key non valida")
+    class_access.require_tool(db, identity, _workspace_instrument(key))
     config = _get_api_instance(key)
     if not config:
         raise HTTPException(status_code=503, detail="OpenCode grafico non disponibile")
@@ -1154,9 +1171,11 @@ async def reset_opencode(
 async def sync_opencode_memory(
     key: str,
     identity: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
 ):
     if not _KEY_RE.match(key):
         raise HTTPException(status_code=400, detail="Workspace key non valida")
+    class_access.require_tool(db, identity, _workspace_instrument(key))
     ws_dir = os.path.join(OPENCODE_WS_ROOT, key)
     metadata_path = os.path.join(ws_dir, ".workspace.json")
     notes_path = os.path.join(ws_dir, "appunti.md")
