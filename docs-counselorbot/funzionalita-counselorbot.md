@@ -558,9 +558,28 @@ publications (discussions plus replies) per user per class in five minutes.
 Lists and replies are paginated. Forum content is excluded from all AI providers,
 including local models, research exports, administrator result/log/training
 exports, PDFs, session ledgers and RAG indexes. Architectural privacy tests
-protect that boundary. Moderation (#103), student-created discussions, and
-path/assignment links are separate later slices. Six-language interface
-controls are included; the expanded forum guide and screenshots are #107.
+protect that boundary. Student-created discussions, muting, pre-approval,
+and path/assignment links are separate later slices. Six-language
+interface controls are included; the expanded forum guide and screenshots are #107.
+Titles, messages and reasons reject invisible control characters (for example
+NUL); tabs and line breaks are kept.
+
+**Forum moderation (F2, #103).** Class owners, co-teachers and administrators
+moderate from the open discussion: Pin/Unpin (pinned discussions stay on top),
+Close discussion/Reopen discussion (closed discussions accept no replies), and
+Hide…/Restore for the discussion and for each reply. Hiding requires a reason of
+up to 500 characters. Students see "Message hidden by the teacher" in place of
+the text; moderators keep seeing the text with "Hidden: “reason”". A hidden
+discussion accepts no replies and tells students it was hidden by the teacher.
+Authors can edit their own replies (marked "edited") and delete them after a
+confirmation: "Message deleted" stays in place for everyone, moderators
+included. Hidden replies can be deleted but not edited; replies in a closed
+discussion cannot be edited. Archived classes allow no moderation, edits or
+deletions. Every moderation action is appended to the Moderation log (who,
+action, discussion or message number, reason, time), visible only to owners,
+co-teachers and administrators, also in archived classes. The log never stores
+message text and has no edit or delete operation. Repeating an action that is
+already in effect is refused and not logged.
 
 **Class forum unread badge (F4, #105).** An in-app badge indicates unread forum
 activity across active classes. The backend (`GET /user/forum/unread`,
