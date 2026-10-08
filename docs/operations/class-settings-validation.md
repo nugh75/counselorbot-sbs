@@ -40,6 +40,11 @@ DATABASE_URL=postgresql://c1_test@127.0.0.1:18588/counselorbot_test \
 bash scripts/dev-class-settings-frontend.sh
 ```
 
+The runners also accept `DEV_BACKEND_PORT` and `DEV_FRONTEND_PORT` (defaults
+8002/3107). The frontend accepts `DEV_AUTH_USER` and `DEV_AUTH_GROUPS` for
+synthetic identities. Assign dedicated ports when using parallel worktrees;
+for F1 (#102), use 8032/3137 as documented in `class-forum-validation.md`.
+
 These runners use the worktree venv and a clean process environment, never source
 `.env`, and never use the main checkout. The frontend takes an explicit source
 snapshot under the ignored venv so Next cannot load the existing development

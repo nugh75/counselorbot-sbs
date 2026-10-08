@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
 import { StickyActions } from '@/components/ui/StickyActions';
+import { ForumView } from '@/components/forum/ForumView';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { useTeacherAccessState } from './useTeacherAccessState';
 import { useTeacherResource } from './useTeacherResource';
@@ -133,7 +134,7 @@ function ClassDetail({ groupId }: { groupId: number }) {
     const l = (key: TextKey) => classSettingsText(lang, key);
     const groups = useTeacherResource('/api/admin/groups', parseClassGroups);
     const settings = useTeacherResource(`/api/teacher/groups/${groupId}/settings`, parseClassSettings);
-    const [tab, setTab] = useState<'overview' | 'toolsTab'>('overview');
+    const [tab, setTab] = useState<'overview' | 'toolsTab' | 'forum'>('overview');
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const group = groups.data?.find(row => row.id === groupId);
     if (groups.forbidden || settings.forbidden) return <TeacherForbidden />;
@@ -148,17 +149,17 @@ function ClassDetail({ groupId }: { groupId: number }) {
             <div><h1 className="break-words text-2xl font-bold text-slate-800">{group.name}</h1><p className="text-sm text-slate-600">{group.members_count} {l('members')}{group.school && ` · ${group.school}`}</p></div>
         </header>
         <div role="tablist" aria-label={group.name} className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
-            {(['overview', 'toolsTab'] as const).map((key, index) => <button key={key} ref={node => { tabRefs.current[index] = node; }}
+            {(['overview', 'toolsTab', 'paths', 'forum'] as const).map((key, index) => key === 'paths' ? <button type="button" role="tab" key={key} disabled aria-selected={false} title={l('later')}
+                className="min-h-[44px] rounded-md px-4 text-sm text-slate-500">{l(key)}</button> : <button key={key} ref={node => { tabRefs.current[index] = node; }}
                 id={`class-tab-${key}`} type="button" role="tab" aria-selected={tab === key} aria-controls={`class-panel-${key}`}
                 tabIndex={tab === key ? 0 : -1} onClick={() => setTab(key)}
                 onKeyDown={event => {
                     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                     event.preventDefault();
-                    const next = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - index;
-                    setTab(next === 0 ? 'overview' : 'toolsTab'); tabRefs.current[next]?.focus();
+                    const enabled = [0, 1, 3];
+                    const next = event.key === 'Home' ? 0 : event.key === 'End' ? 3 : enabled[(enabled.indexOf(index) + (event.key === 'ArrowRight' ? 1 : 2)) % 3];
+                    setTab((['overview', 'toolsTab', 'paths', 'forum'] as const)[next] as 'overview' | 'toolsTab' | 'forum'); tabRefs.current[next]?.focus();
                 }} className={`min-h-[44px] rounded-md px-4 text-sm font-semibold ${tab === key ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}>{l(key)}</button>)}
-            {(['paths', 'forum'] as const).map(key => <button type="button" role="tab" key={key} disabled aria-selected={false} title={l('later')}
-                className="min-h-[44px] rounded-md px-4 text-sm text-slate-500">{l(key)}</button>)}
         </div>
         <div id="class-panel-overview" role="tabpanel" aria-labelledby="class-tab-overview" hidden={tab !== 'overview'} tabIndex={0}>
             <Card><p className="font-mono text-sm text-slate-600">{group.code}</p>
@@ -169,6 +170,9 @@ function ClassDetail({ groupId }: { groupId: number }) {
         </div>
         <div id="class-panel-toolsTab" role="tabpanel" aria-labelledby="class-tab-toolsTab" hidden={tab !== 'toolsTab'} tabIndex={0}>
             <ClassToolsEditor initial={settings.data} onReload={() => { void settings.reload(); }} />
+        </div>
+        <div id="class-panel-forum" role="tabpanel" aria-labelledby="class-tab-forum" hidden={tab !== 'forum'} tabIndex={0}>
+            <ForumView groupId={groupId} />
         </div>
     </div>;
 }
