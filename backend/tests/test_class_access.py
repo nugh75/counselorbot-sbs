@@ -151,8 +151,9 @@ def test_guard_admin_layer(db):
     for identity in (STUDENT, ANONYMOUS):
         assert _denied(db, identity, "DOCENZA").detail == "tool_unavailable"
     class_access.require_tool(db, TEACHER, "DOCENZA")
-    # Platform admins configure the catalog and test drafts in the sandbox.
-    class_access.require_tool(db, ADMIN, "OFF")
+    # Global disable wins for admins too, except in the sandbox preview.
+    assert _denied(db, ADMIN, "OFF").detail == "tool_unavailable"
+    class_access.require_tool(db, ADMIN, "OFF", preview=True)
 
 
 def test_guard_ignores_non_catalog_keys(db):
@@ -237,7 +238,6 @@ def test_chat_routes_guard_disabled_tools(db):
     (STUDENT, "SAVICKAS"),      # enabled by the second class
     (TEACHER, "QSA"),           # staff bypass
     (TEACHER, "DOCENZA"),       # teacher-only tool for staff
-    (ADMIN, "OFF"),             # admin tests drafts
 ])
 def test_chat_routes_allow_enabled_tools(db, identity, questionnaire_type):
     _group(db, "a", disabled=["QSA", "SAVICKAS"], members=["anna", "prof", "root"])
@@ -251,6 +251,64 @@ def test_chat_routes_allow_enabled_tools(db, identity, questionnaire_type):
         streamed = _stream(client, questionnaire_type)
         assert streamed.status_code == 200, streamed.text
         assert "streamed reply" in streamed.text
+
+
+def test_admin_follows_global_disable_outside_the_sandbox(db):
+    assert "OFF" not in class_access.resolve_access(db, ADMIN)["tool_keys"]
+    with _client(db, ADMIN) as client, \
+            patch.object(chat.AIService, "get_response", return_value="draft reply"), \
+            patch.object(chat.AIService, "stream_response", side_effect=_mock_stream):
+        _assert_denied(_chat(client, "OFF", preview=False), "tool_unavailable", "OFF")
+        _assert_denied(_stream(client, "OFF"), "tool_unavailable", "OFF")
+        # The sandbox preview is how admins test drafts (decision 21).
+        assert _chat(client, "OFF", preview=True).status_code == 200
+        assert _stream(client, "OFF", preview=True).status_code == 200
+
+
+def _chat_any(client, route, body):
+    if route == "/chat/message":
+        return client.post(route, params=body)
+    return client.post(route, json=body)
+
+
+@pytest.mark.parametrize("route", ["/chat", "/chat/stream", "/chat/message"])
+@pytest.mark.parametrize("claim", [None, "GENERIC", "QSA"])
+@pytest.mark.parametrize("mode", ["savickas-interview", "prompt_savickas_interview", "prompt_meta_SAVICKAS"])
+def test_prompt_selection_cannot_bypass_the_guard(db, route, claim, mode):
+    """The prompt the server selects decides the instrument, not the client claim."""
+    if route == "/chat/message" and mode.startswith("prompt_"):
+        pytest.skip("/chat/message maps only known modes; raw prompt keys fall back to generic")
+    _group(db, "a", disabled=["SAVICKAS"], members=["anna"])
+    body = {"message": "Hi", "mode": mode, "session_id": "sess-mode"}
+    if claim is not None:
+        body["questionnaire_type"] = claim
+    with _client(db, STUDENT) as client, patch.object(chat.AIService, "get_response") as reply, \
+            patch.object(chat.AIService, "stream_response") as stream:
+        _assert_denied(_chat_any(client, route, body), "tool_disabled_for_class", "SAVICKAS")
+        reply.assert_not_called()
+        stream.assert_not_called()
+
+
+@pytest.mark.parametrize("route", ["/chat", "/chat/stream", "/chat/message"])
+def test_follow_up_prompt_belongs_to_its_instrument(db, route):
+    _group(db, "a", disabled=["QSA"], members=["anna"])
+    with _client(db, STUDENT) as client, patch.object(chat.AIService, "get_response") as reply, \
+            patch.object(chat.AIService, "stream_response") as stream:
+        _assert_denied(_chat_any(client, route, {"message": "Hi", "mode": "factor-qa", "session_id": "s"}),
+                       "tool_disabled_for_class", "QSA")
+        reply.assert_not_called()
+        stream.assert_not_called()
+
+
+@pytest.mark.parametrize("route", ["/chat", "/chat/stream", "/chat/message"])
+@pytest.mark.parametrize("mode", ["savickas-interview", "generic", "unknown-mode"])
+def test_enabled_or_generic_prompts_still_work(db, route, mode):
+    _group(db, "a", disabled=["QSA"], members=["anna"])
+    with _client(db, STUDENT) as client, \
+            patch.object(chat.AIService, "get_response", return_value="plain reply"), \
+            patch.object(chat.AIService, "stream_response", side_effect=_mock_stream):
+        response = _chat_any(client, route, {"message": "Hi", "mode": mode, "session_id": "s-ok"})
+        assert response.status_code == 200, response.text
 
 
 def test_private_counselor_is_not_filtered_by_class(db):
