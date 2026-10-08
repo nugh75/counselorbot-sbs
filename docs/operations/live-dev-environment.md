@@ -6,6 +6,15 @@ modifiche dal browser del Mac, **senza toccare i container di produzione**
 
 ## Comandi
 
+### Class settings S1 (#88), secret-free worktree verification
+
+Use `scripts/dev-class-settings-backend.sh` (:8002, explicit local
+`counselorbot_test` URL) and `scripts/dev-class-settings-frontend.sh` (:3107,
+source snapshot without environment files). These runners never source `.env`
+or use the main checkout. Check ports first and stop only your own processes.
+Synthetic database setup, tests, SSH access and shutdown:
+[class-settings-validation.md](class-settings-validation.md).
+
 ### Differenziazione prompt (fixture admin)
 
 `scripts/dev-context-frontend.sh`: frontend su `127.0.0.1:3165`, porta controllata

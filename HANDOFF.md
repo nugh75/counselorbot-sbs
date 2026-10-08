@@ -1027,3 +1027,27 @@ symlink alla copia in /tmp, come nella sezione precedente. Nessun intervento
 sul Codespace dell’utente: aggiornare la nuova PR/main dopo il merge e riavviare
 una volta per caricare il codice; poi l’attivazione dal pannello non richiede
 ulteriori riavvii. Nessun merge o deploy da parte dell’agente.
+
+# Handoff: class settings S1 (#88, epic #87)
+
+Branch: `feature/class-settings-tools-tab-84`, base `d34fa1b`, dedicated worktree
+`c1-class-settings-88`. S1 implements lazy settings storage and reserved lock
+columns, the DB-driven student tool registry, owner/co-teacher/admin GET/PUT with
+optimistic revisions, and the approved per-class teacher Tools section. Student
+filtering, counselor controls, forum/path implementations and lock endpoints/UI
+remain separate slices. No merge, sudo or production deployment.
+
+Validation and exact isolated start/stop commands:
+`docs/operations/class-settings-validation.md`. PostgreSQL settings tests,
+existing group smoke tests, TypeScript, 295 unit tests, i18n, targeted lint,
+12 settings browser tests, 34 class-management browser tests and the actual
+8002/3107 save/readback flow passed. The isolated production frontend build
+passed. Six class-list screenshots and six-language teacher guide text updated.
+All owned dev processes and the ephemeral synthetic Postgres instance stopped.
+
+Two registered findings remain outside S1: fresh dependency installation selects
+SQLAlchemy 2.1 without its default psycopg driver (confirmed; verification used
+2.0.54), and fresh startup does not populate historical guided Instrument rows
+(suspected; live tests explicitly register synthetic guided metadata). The
+isolated runner and reserved-key collision findings are resolved. No bug report
+was left unregistered. Task closure follows successful draft PR creation.
