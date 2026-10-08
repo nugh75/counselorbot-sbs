@@ -1689,3 +1689,60 @@ class TavoloImage(Base):
     content_type = Column(String, nullable=False)
     created_by = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+# --- Class forum (#102): separate from sessions, profiles and AI context ---
+class ForumTopic(Base):
+    __tablename__ = "forum_topics"
+    __table_args__ = (
+        CheckConstraint("char_length(title) BETWEEN 1 AND 160", name="forum_topic_title_length"),
+        CheckConstraint("char_length(body) BETWEEN 1 AND 4000", name="forum_topic_body_length"),
+        CheckConstraint("status IN ('published', 'pending')", name="forum_topic_status"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(160), nullable=False)
+    body = Column(Text, nullable=False)
+    author_username = Column(String, nullable=False, index=True)
+    author_display_name = Column(String, nullable=False)
+    status = Column(String, nullable=False, default="published")
+    pinned = Column(Boolean, nullable=False, default=False)
+    locked = Column(Boolean, nullable=False, default=False)
+    hidden_at = Column(DateTime(timezone=True), nullable=True)
+    hidden_by = Column(String, nullable=True)
+    hidden_reason = Column(Text, nullable=True)
+    link_kind = Column(String, nullable=True)
+    link_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    edited_at = Column(DateTime(timezone=True), nullable=True)
+    last_post_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class ForumPost(Base):
+    __tablename__ = "forum_posts"
+    __table_args__ = (
+        CheckConstraint("char_length(body) BETWEEN 1 AND 4000", name="forum_post_body_length"),
+        CheckConstraint("status IN ('published', 'pending')", name="forum_post_status"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    topic_id = Column(Integer, ForeignKey("forum_topics.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_username = Column(String, nullable=False, index=True)
+    author_display_name = Column(String, nullable=False)
+    body = Column(Text, nullable=False)
+    status = Column(String, nullable=False, default="published")
+    hidden_at = Column(DateTime(timezone=True), nullable=True)
+    hidden_by = Column(String, nullable=True)
+    hidden_reason = Column(Text, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    edited_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class ForumRead(Base):
+    __tablename__ = "forum_reads"
+
+    topic_id = Column(Integer, ForeignKey("forum_topics.id", ondelete="CASCADE"), primary_key=True)
+    username = Column(String, primary_key=True)
+    last_read_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())

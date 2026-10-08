@@ -517,7 +517,30 @@ other failures also keep the draft. Missing settings mean everything enabled,
 and newly added tools are enabled automatically. **Student access is unchanged
 in S1**: filtering ships in #89/#90. Counselor controls, forum options, class
 paths, per-class administrator locks and audit history are delivered separately;
-the Class paths and Forum tabs are unavailable in this release.
+the Class paths tab is unavailable in this release. The Forum tab is delivered
+by F1 (#102), described below.
+
+**Class forum (F1, #102).** Teachers open the Forum tab on
+`/docente/classi/{id}`; students open the forum link in their Classes list,
+leading to `/profilo/classi/{id}/forum`. Class owners, co-teachers and
+administrators can open discussions and reply. Current members can read and
+reply; non-members, former members and unrelated teachers cannot access the
+forum. Leaving a class removes access while preserving earlier messages with
+the display name captured from the authenticated identity at posting time.
+Inactive classes retain a read-only archive with no composer.
+
+Discussions have a title of up to 160 characters and messages of up to 4000
+characters. Content is text only: reduced Markdown permits emphasis, lists,
+quotations, code and HTTP(S) links; raw HTML, images and attachments are not
+rendered. Links use `nofollow noopener noreferrer`. Publishing is explicit;
+failed sends and rate limits preserve the draft. The persistent limit is 10
+publications (discussions plus replies) per user per class in five minutes.
+Lists and replies are paginated. Forum content is excluded from all AI providers,
+including local models, research exports, administrator result/log/training
+exports, PDFs, session ledgers and RAG indexes. Architectural privacy tests
+protect that boundary. Moderation, student-created discussions, unread badges,
+and path/assignment links are separate later slices. Six-language interface
+controls are included; the expanded forum guide and screenshots are #107.
 
 **Class access guard (S2, #89).** The server now decides which tools a user may
 start, with one resolver for every entry point. First the platform layer: an

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/auth';
+import { forumText } from '@/lib/i18n-forum';
 import { learningText, } from '@/lib/i18n-assignment-work';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { Users, Loader2 } from 'lucide-react';
@@ -218,6 +219,9 @@ export function MyGroupsCard({ lang, showHeading = true, canManageGroups = false
                                         {texts.leave}
                                     </button>
                                 </div>
+                                <Link href={`/profilo/classi/${group.group_id}/forum`} className="mt-1 mr-4 inline-flex min-h-[44px] items-center text-sm text-indigo-700 underline underline-offset-2">
+                                    {forumText(lang, 'forum')} — {group.name}
+                                </Link>
                                 {/* F30 (lotto 5A): dalla classe alle assegnazioni che la riguardano, con il filtro già impostato. */}
                                 <Link href={`/profilo/assegnazioni?group=${encodeURIComponent(group.name)}`} className="mt-1 inline-block text-sm text-indigo-700 underline underline-offset-2">
                                     {learningText(lang, 'assignmentPage')} — {group.name}
