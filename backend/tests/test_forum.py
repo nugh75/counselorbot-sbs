@@ -57,18 +57,34 @@ def test_discussion_and_reply_are_readable_with_identity_snapshots(forum_api):
     ("non-member", False, False, False), ("other-teacher", False, False, False),
     ("former-member", False, False, False), ("student", True, True, False),
     ("owner", True, True, True), ("co-teacher", True, True, True), ("admin", True, True, True),
+    ("cross-class-student", False, False, False), ("researcher-owner", True, True, True),
+    ("researcher-shared", True, True, True), ("researcher-unrelated", False, False, False),
 ])
 def test_permission_matrix(forum_api, actor, read, reply, open_allowed):
     client, db, group_id, identity = forum_api
     topic = open_topic(client, group_id)
+    if actor == "cross-class-student":
+        # Membership elsewhere must not grant access by guessing ids (IDOR).
+        other = models.StudentGroup(code="GR-C4CROSS", name="Other class", owner_username="other-teacher")
+        db.add(other)
+        db.flush()
+        db.add(models.GroupMembership(group_id=other.id, username=actor))
+        db.commit()
+    elif actor == "researcher-owner":
+        db.get(models.StudentGroup, group_id).owner_username = actor
+        db.commit()
+    elif actor == "researcher-shared":
+        db.add(models.GroupShare(group_id=group_id, shared_with_username=actor, granted_by_username="owner"))
+        db.commit()
     if actor == "former-member":
         db.add(models.GroupMembership(group_id=group_id, username=actor))
         db.commit()
         identity.update(username=actor, groups=["studenti"])
         membership = client.get("/user/groups").json()[0]["membership_id"]
         assert client.delete(f"/user/groups/{membership}").status_code == 200
-    identity.update(username=actor, name=actor, is_admin=actor == "admin",
-                    groups=["docenti"] if actor in {"owner", "co-teacher", "other-teacher"} else ["studenti"])
+    identity.update(username=actor, name=actor, is_admin=actor == "admin", is_researcher=actor.startswith("researcher"),
+                    groups=["docenti"] if actor in {"owner", "co-teacher", "other-teacher"} else
+                    ["ricercatori"] if actor.startswith("researcher") else ["studenti"])
     assert client.get(f"/groups/{group_id}/forum/topics").status_code == (200 if read else 403)
     assert client.get(f"/forum/topics/{topic['id']}").status_code == (200 if read else 403)
     assert client.post(f"/forum/topics/{topic['id']}/posts", json={"body": "Reply"}).status_code == (201 if reply else 403)
