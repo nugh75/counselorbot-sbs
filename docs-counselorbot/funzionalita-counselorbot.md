@@ -534,7 +534,9 @@ without automated completion detection (such as personal-area tools). Steps are
 renumbered sequentially by array order and omitted step IDs are soft-removed
 (`removed_at`). Concurrent edits are guarded by a revision counter: an HTTP 409
 conflict preserves the local draft and prompts the teacher to reload. Paths can be
-archived, restored, or deleted. All interfaces and messages are translated across
+archived, restored, or deleted. Path authorization fails closed with HTTP 403
+(access denied) for unknown path IDs and unauthorized teachers alike, preventing
+existence oracles. All interfaces and messages are translated across
 the 6 platform languages. **Draft-only in P1**: student-side publishing, progression
 enforcement and student progress tracking ship in P2 (#97).
 

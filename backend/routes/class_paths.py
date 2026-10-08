@@ -1,22 +1,23 @@
-"""Percorsi di classe (Class paths) — Gestione docente (Bozze).
+"""Class paths — Teacher management (Drafts).
 
-Consente al docente di creare e gestire percorsi di classe composti da step ordinati
-scelti tra gli strumenti attualmente abilitati per la classe.
+Allows teachers to create and manage class paths composed of ordered steps
+selected from the tools currently enabled for the class.
 """
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, or_
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
 from ..class_tools import ALWAYS_ON, tool_catalog
+from .groups import _is_admin, _username, _visible_group_query
 
 router = APIRouter()
 get_db = database.get_db
 
 
-# Strumenti personali che NON hanno completamento automatico (lo studente segna come fatto).
+# Personal tools that do not support auto-detection (students self-mark as completed).
 SELF_MARK_PERSONAL_KEYS = frozenset({
     "actions",
     "timeline",
@@ -27,38 +28,13 @@ SELF_MARK_PERSONAL_KEYS = frozenset({
     "assistant",
 })
 
-# Strumenti personali con completamento automatico.
+# Personal tools that support auto-detection.
 AUTO_DETECT_PERSONAL_KEYS = frozenset({
     "bussola",
     "tavolo",
     "goals",
     "pqbl",
 })
-
-
-def _username(identity) -> Optional[str]:
-    value = (identity.get("username") if isinstance(identity, dict) else getattr(identity, "username", "")) or ""
-    return str(value).strip() or None
-
-
-def _is_admin(identity) -> bool:
-    return bool(identity.get("is_admin") if isinstance(identity, dict) else getattr(identity, "is_admin", False))
-
-
-def _visible_group_query(db: Session, identity):
-    query = db.query(models.StudentGroup)
-    if _is_admin(identity):
-        return query
-    username = _username(identity)
-    shared_ids = db.query(models.GroupShare.group_id).filter(
-        models.GroupShare.shared_with_username == (username or "").lower()
-    )
-    return query.filter(
-        or_(
-            models.StudentGroup.owner_username == username,
-            models.StudentGroup.id.in_(shared_ids),
-        )
-    )
 
 
 def _require_visible_group(db: Session, identity, group_id: int, *, for_update: bool = False) -> models.StudentGroup:
@@ -71,8 +47,25 @@ def _require_visible_group(db: Session, identity, group_id: int, *, for_update: 
     return group
 
 
+def _require_visible_path(
+    db: Session,
+    identity,
+    path_id: int,
+    *,
+    for_update: bool = False,
+) -> models.ClassPath:
+    query = db.query(models.ClassPath).filter(models.ClassPath.id == path_id)
+    if for_update:
+        query = query.with_for_update()
+    path = query.first()
+    if not path:
+        raise HTTPException(status_code=403, detail="Class path access denied")
+    _require_visible_group(db, identity, path.group_id, for_update=for_update)
+    return path
+
+
 def is_auto_detect_tool(db: Session, tool_key: str) -> bool:
-    """Verifica se uno strumento supporta il completamento automatico (plan §4.2)."""
+    """Check whether a tool supports automatic completion detection (plan §4.2)."""
     key_lower = tool_key.lower()
     if key_lower in SELF_MARK_PERSONAL_KEYS:
         return False
@@ -87,7 +80,7 @@ def is_auto_detect_tool(db: Session, tool_key: str) -> bool:
 
 
 def get_class_enabled_tool_keys(db: Session, group_id: int) -> set[str]:
-    """Insieme delle chiavi strumento attualmente abilitate per la classe (escluse always_on)."""
+    """Return tool keys currently enabled for the class (excluding always_on tools)."""
     settings = db.get(models.ClassSettings, group_id)
     disabled_keys = settings.disabled_tool_keys if settings else []
     catalog = tool_catalog(db, disabled_keys)
@@ -140,7 +133,7 @@ def _serialize_path(db: Session, path: models.ClassPath, *, include_steps: bool 
     }
 
 
-# --- Endpoints gestione percorsi di classe (Docente / Ricercatore / Admin) ---
+# --- Class path management endpoints (Teacher / Researcher / Admin) ---
 
 
 @router.get("/teacher/groups/{group_id}/paths")
@@ -149,7 +142,7 @@ async def list_class_paths(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Elenco di tutti i percorsi di una classe (bozze, pubblicati, archiviati)."""
+    """List all paths for a class (drafts, published, archived)."""
     _require_visible_group(db, current_user, group_id)
     paths = (
         db.query(models.ClassPath)
@@ -167,7 +160,7 @@ async def create_class_path(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Crea una nuova bozza di percorso di classe."""
+    """Create a new class path draft."""
     _require_visible_group(db, current_user, group_id, for_update=True)
     title = (payload.title or "").strip()
     if not title:
@@ -197,11 +190,8 @@ async def get_class_path(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Dettaglio di un percorso di classe con i relativi passi attivi ordinati."""
-    path = db.get(models.ClassPath, path_id)
-    if not path:
-        raise HTTPException(status_code=404, detail="Percorso di classe non trovato")
-    _require_visible_group(db, current_user, path.group_id)
+    """Retrieve details for a class path including active ordered steps."""
+    path = _require_visible_path(db, current_user, path_id)
     return _serialize_path(db, path, include_steps=True)
 
 
@@ -212,16 +202,8 @@ async def update_class_path(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Aggiorna metadati e passi di un percorso di classe (con controllo revisione e tool abilitati)."""
-    path = (
-        db.query(models.ClassPath)
-        .filter(models.ClassPath.id == path_id)
-        .with_for_update()
-        .first()
-    )
-    if not path:
-        raise HTTPException(status_code=404, detail="Percorso di classe non trovato")
-    _require_visible_group(db, current_user, path.group_id, for_update=True)
+    """Update metadata and steps for a class path (with revision check and tool validation)."""
+    path = _require_visible_path(db, current_user, path_id, for_update=True)
 
     if payload.revision != path.revision:
         raise HTTPException(status_code=409, detail="Class path revision mismatch")
@@ -234,7 +216,7 @@ async def update_class_path(
     if mode not in ("recommended", "strict"):
         raise HTTPException(status_code=422, detail="Mode must be 'recommended' or 'strict'")
 
-    # Controllo che ogni strumento nei passi sia abilitato per la classe (plan §5.2)
+    # Verify that each tool in the steps is enabled for the class (plan §5.2)
     enabled_tool_keys = get_class_enabled_tool_keys(db, path.group_id)
     for step_input in payload.steps:
         if step_input.tool_key not in enabled_tool_keys:
@@ -243,7 +225,7 @@ async def update_class_path(
                 detail=f"Tool '{step_input.tool_key}' is not enabled for this class",
             )
 
-    # Gestione passi: soft-remove per gli ID assenti e riordino per indice nell'array
+    # Manage steps: soft-remove missing IDs and reorder by array index
     existing_steps = (
         db.query(models.ClassPathStep)
         .filter(
@@ -255,12 +237,12 @@ async def update_class_path(
     existing_by_id = {s.id: s for s in existing_steps}
     submitted_ids = {s.id for s in payload.steps if s.id is not None}
 
-    # Soft-remove dei passi mancanti
+    # Soft-remove omitted steps
     for s in existing_steps:
         if s.id not in submitted_ids:
             s.removed_at = func.now()
 
-    # Aggiornamento o inserimento dei passi nell'ordine fornito
+    # Update or insert steps in the provided order
     for position, step_input in enumerate(payload.steps, start=1):
         step_title = (step_input.title or "").strip() or None
         step_instructions = (step_input.instructions or "").strip() or None
@@ -272,7 +254,7 @@ async def update_class_path(
             step.instructions = step_instructions
             step.due_date = step_input.due_date
         elif step_input.id is not None:
-            # Controllo se appartiene a questo percorso ed era stato precedentemente rimosso
+            # Check if the step belongs to this path and was previously removed
             archived_step = (
                 db.query(models.ClassPathStep)
                 .filter(models.ClassPathStep.id == step_input.id, models.ClassPathStep.path_id == path.id)
@@ -313,11 +295,8 @@ async def archive_class_path(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Archivia un percorso di classe."""
-    path = db.get(models.ClassPath, path_id)
-    if not path:
-        raise HTTPException(status_code=404, detail="Percorso di classe non trovato")
-    _require_visible_group(db, current_user, path.group_id, for_update=True)
+    """Archive a class path."""
+    path = _require_visible_path(db, current_user, path_id, for_update=True)
     path.status = "archived"
     path.archived_at = func.now()
     path.revision += 1
@@ -332,11 +311,8 @@ async def restore_class_path(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Ripristina un percorso archiviato allo stato precedente."""
-    path = db.get(models.ClassPath, path_id)
-    if not path:
-        raise HTTPException(status_code=404, detail="Percorso di classe non trovato")
-    _require_visible_group(db, current_user, path.group_id, for_update=True)
+    """Restore an archived class path to its previous status."""
+    path = _require_visible_path(db, current_user, path_id, for_update=True)
     path.status = "draft" if path.published_at is None else "published"
     path.archived_at = None
     path.revision += 1
@@ -351,11 +327,8 @@ async def delete_class_path(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Elimina definitivamente una bozza di percorso di classe."""
-    path = db.get(models.ClassPath, path_id)
-    if not path:
-        raise HTTPException(status_code=404, detail="Percorso di classe non trovato")
-    _require_visible_group(db, current_user, path.group_id, for_update=True)
+    """Permanently delete a class path draft."""
+    path = _require_visible_path(db, current_user, path_id, for_update=True)
     db.query(models.ClassPathStep).filter(models.ClassPathStep.path_id == path.id).delete()
     db.delete(path)
     db.commit()
