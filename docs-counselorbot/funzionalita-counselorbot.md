@@ -605,6 +605,26 @@ disabled tool stay readable, exportable and deletable. `GET /user/access` return
 resolved tool list; the student catalog uses it from #90, and counselor fields
 arrive with #93.
 
+**Personal-area tools per class (S4, #91).** In the **Personal area** section of
+the Tools & counselors tab, teachers can turn off Tavolo, Goals, Actions,
+Timeline, Portfolio, pQBL, Flashcards, Cards and Comparison for a class.
+Notebook, completed questionnaires, Classes and Assignments are always on and
+cannot be disabled (HTTP 422). Students whose classes all turn a tool off no
+longer see its link in the personal area (`/profilo`); a group with no remaining
+tool disappears, and the "Continue your work" overview leaves out goals or
+activities when Goals or Actions are off. Opening a disabled tool by its address
+keeps the page readable and shows the notice "Tool turned off by your class".
+The server refuses new work with `tool_disabled_for_class`: creating, editing,
+renaming and saving a Tavolo and its AI help; creating or editing goals, their
+links, reviews and activities (activities also need Actions); creating or
+editing Portfolio works and their images, copying a timeline or an Idea map
+into the Portfolio; pQBL upload, new sessions, answers and final tests;
+saving Flashcards; timeline milestones saved from a chat. Actions, Cards,
+Comparison and Timeline share one saved workspace: a save is refused only when
+it changes the part of a disabled tool, so the others keep working. Reading,
+exporting (PDF) and deleting existing work stay available. Assignment goals
+created from a teacher assignment stay available, because Assignments are always on.
+
 **Class forum unread badge (F4, #105).** An in-app badge indicates unread forum
 activity across active classes. The backend (`GET /user/forum/unread`,
 `POST /forum/topics/{id}/read`) computes unread counts using the `forum_reads`
