@@ -502,6 +502,23 @@ il catalogo comune richiede revisione amministrativa. Possono assegnare a una pe
 o a tutto un gruppo, anche vuoto: i nuovi iscritti ricevono le assegnazioni attive.
 La gestione dei gruppi è distinta dall’iscrizione personale a un gruppo.
 
+**Class settings (S1, #88).** Each class card has an **Open class** link to
+`/docente/classi/{id}`. The page has an Overview and a **Tools & counselors**
+tab; this release delivers the tools section only. The owner, co-teachers and
+administrators can save class choices for student questionnaires, guided chats
+(including dynamic instruments), Idea, significant-event chats, Study goal,
+personal-area tools, Compass and Assistant. Platform-disabled instruments are
+visible with a lock and cannot be toggled. Notebook, completed questionnaires,
+classes and assignments are always available. Category actions affect only
+editable tools; keyboard controls, collapsible categories, one-column mobile
+layout and a sticky Save bar are supported. Saving is explicit. A concurrent
+change (409) keeps the local draft and offers Reload with discard confirmation;
+other failures also keep the draft. Missing settings mean everything enabled,
+and newly added tools are enabled automatically. **Student access is unchanged
+in S1**: filtering ships in #89/#90. Counselor controls, forum options, class
+paths, per-class administrator locks and audit history are delivered separately;
+the Class paths and Forum tabs are unavailable in this release.
+
 La pagina `/docente/taccuino` si apre dall’ingresso nella home o direttamente,
 anche dopo un refresh. La freccia nell’intestazione torna a `/docente`; la bozza
 non salvata richiede conferma prima di uscire (Annulla conserva testo, focus e

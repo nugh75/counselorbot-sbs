@@ -1241,6 +1241,26 @@ class StudentGroup(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class ClassSettings(Base):
+    """Lazy class deny-lists; missing rows keep every tool enabled."""
+
+    __tablename__ = "class_settings"
+
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), primary_key=True)
+    disabled_tool_keys = Column(JSON, nullable=False, default=list)
+    disabled_counselor_ids = Column(JSON, nullable=False, default=list)
+    default_counselor_id = Column(Integer, nullable=True)
+    forum_students_can_open = Column(Boolean, nullable=False, default=False)
+    forum_premoderation = Column(Boolean, nullable=False, default=False)
+    # Reserved for #109; S1 exposes no per-class lock editing.
+    locked_tool_keys = Column(JSON, nullable=False, default=dict)
+    locked_counselor_ids = Column(JSON, nullable=False, default=dict)
+    locked_forum_options = Column(JSON, nullable=False, default=dict)
+    revision = Column(Integer, nullable=False, default=1)
+    updated_by = Column(String, nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class GroupMembership(Base):
     """Appartenenza di uno studente a una classe (link invito o codice classe)."""
 
