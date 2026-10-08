@@ -747,6 +747,7 @@ ZTPI e Savickas. Le proposte AI aiutano a riflettere, non sono diagnosi o decisi
 vincolanti. Le funzioni disabilitate o non autorizzate non vanno presentate come
 accessibili a ogni account. L’assistente deve indicare la pagina e il prossimo
 passo utile, senza inventare pulsanti o promettere azioni eseguite automaticamente.
+Gli aggiornamenti tecnici delle dipendenze del server non cambiano funzioni, dati salvati o esportazioni descritti in questa guida.
 
 ### Sezioni della configurazione
 
