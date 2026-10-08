@@ -4,7 +4,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 FORUM_FILES = {"backend.routes.forum", "backend.forum_schemas"}
-FORUM_SYMBOLS = {"ForumTopic", "ForumPost", "ForumRead", "forum_topics", "forum_posts", "forum_reads"}
+FORUM_SYMBOLS = {"ForumTopic", "ForumPost", "ForumRead", "ForumModerationLog",
+                 "forum_topics", "forum_posts", "forum_reads", "forum_moderation_log"}
 
 
 def module_path(name):
@@ -115,6 +116,6 @@ def test_exports_and_pdf_do_not_query_or_include_forum_content():
                                              summary_text='Synthetic summary', messages=[], language='en')
             payloads = [research.body, logs.body, training.body, pdf.getvalue()]
             assert all(b'FORUM_PRIVATE_' not in payload for payload in payloads)
-            assert all(not any(table in statement for table in ['forum_topics', 'forum_posts', 'forum_reads']) for statement in statements)
+            assert all(not any(table in statement for table in ['forum_topics', 'forum_posts', 'forum_reads', 'forum_moderation_log']) for statement in statements)
         finally:
             event.remove(connection, 'before_cursor_execute', record_sql)
