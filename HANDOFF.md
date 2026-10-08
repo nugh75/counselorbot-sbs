@@ -1051,3 +1051,18 @@ SQLAlchemy 2.1 without its default psycopg driver (confirmed; verification used
 (suspected; live tests explicitly register synthetic guided metadata). The
 isolated runner and reserved-key collision findings are resolved. No bug report
 was left unregistered. Task closure follows successful draft PR creation.
+
+
+# Handoff: class forum F1 (#102, epic #87)
+
+Branch: `feature/class-forum-core-86`, base `22f5894`, dedicated worktree
+`c4-class-forum-102`. Only F1: class/forum tables and HTTP routes, teacher Forum
+tab, student class-forum page, safe reduced Markdown, persistent rate limiting,
+identity snapshots and inactive read-only archive. Moderation, student-opening
+options and unread badges remain separate slices. No production deployment,
+sudo, merge or ready-for-review transition.
+
+Validation and reproducible secret-free commands:
+`docs/operations/class-forum-validation.md`. Draft PR and task closure follow
+successful tests and dev verification. Future slices must retain the import,
+export and PDF privacy gates: no forum data reaches any local or external LLM.
