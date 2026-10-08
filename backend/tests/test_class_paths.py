@@ -276,5 +276,63 @@ def test_archive_restore_and_delete_class_path(class_paths_api):
     assert del_res.status_code == 200
     assert del_res.json()["ok"] is True
 
-    # 404 after deletion
-    assert client.get(f"/teacher/paths/{path_id}").status_code == 404
+    # 403 after deletion (no 404 existence oracle)
+    del_get = client.get(f"/teacher/paths/{path_id}")
+    assert del_get.status_code == 403
+    assert del_get.json()["detail"] == "Class path access denied"
+
+
+def test_path_access_denied_oracle_prevention(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    db.add(models.GroupShare(group_id=group_id, shared_with_username="co-teacher", granted_by_username="owner"))
+    db.commit()
+
+    created = client.post(
+        f"/teacher/groups/{group_id}/paths",
+        json={"title": "Oracle Guard Path", "mode": "recommended"},
+    ).json()
+    path_id = created["id"]
+    unknown_path_id = 999_999
+
+    # 1. Unknown path id -> 403 "Class path access denied" (no 404 oracle across all endpoints)
+    unknown_get = client.get(f"/teacher/paths/{unknown_path_id}")
+    assert unknown_get.status_code == 403
+    assert unknown_get.json()["detail"] == "Class path access denied"
+
+    unknown_put = client.put(f"/teacher/paths/{unknown_path_id}", json={"revision": 1, "title": "X", "steps": []})
+    assert unknown_put.status_code == 403
+    assert unknown_put.json()["detail"] == "Class path access denied"
+
+    unknown_arch = client.post(f"/teacher/paths/{unknown_path_id}/archive")
+    assert unknown_arch.status_code == 403
+    assert unknown_arch.json()["detail"] == "Class path access denied"
+
+    unknown_restore = client.post(f"/teacher/paths/{unknown_path_id}/restore")
+    assert unknown_restore.status_code == 403
+    assert unknown_restore.json()["detail"] == "Class path access denied"
+
+    unknown_del = client.delete(f"/teacher/paths/{unknown_path_id}")
+    assert unknown_del.status_code == 403
+    assert unknown_del.json()["detail"] == "Class path access denied"
+
+    # 2. Other teacher accessing existing path -> 403 "Class path access denied"
+    identity.update(username="other-teacher", is_admin=False, groups=["docenti"])
+    other_get = client.get(f"/teacher/paths/{path_id}")
+    assert other_get.status_code == 403
+    assert other_get.json()["detail"] == "Class path access denied"
+
+    other_put = client.put(f"/teacher/paths/{path_id}", json={"revision": 1, "title": "X", "steps": []})
+    assert other_put.status_code == 403
+    assert other_put.json()["detail"] == "Class path access denied"
+
+    # 3. Owner / Co-teacher / Admin -> 200
+    for allowed_role in ["owner", "co-teacher", "admin"]:
+        identity.update(
+            username=allowed_role,
+            is_admin=(allowed_role == "admin"),
+            groups=["docenti"],
+        )
+        res = client.get(f"/teacher/paths/{path_id}")
+        assert res.status_code == 200
+        assert res.json()["id"] == path_id
+
