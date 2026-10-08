@@ -1318,6 +1318,7 @@ async def audit_qsa(
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
 ):
+    class_access.require_tool(db, identity, request.questionnaire_type)
     # Log completion for QSA-family profile analyses.
     log_entry = models.Log(
         session_id=request.session_id,
@@ -1342,7 +1343,10 @@ async def upload_qsa_document(
     file: UploadFile = File(...),
     questionnaire_type: str = Form("QSA"),
     db: Session = Depends(database.get_db),
+    identity: dict = Depends(auth.get_current_user),
 ):
+    # Identity and tool access before any extraction or stored file.
+    class_access.require_tool(db, identity, questionnaire_type)
     temp_dir = ".tmp"
     os.makedirs(temp_dir, exist_ok=True)
     suffix = os.path.splitext(file.filename or "")[1].lower()
