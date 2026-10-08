@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from .. import auth, database, models, model_pricing
+from .. import auth, class_access, database, models, model_pricing
 from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService, AIError
 from ..chat_continuation import continuation_message
@@ -90,6 +90,7 @@ from ..chat_logic import (
     _sanitize_ztpi_step_label,
     _sanitize_ztpi_user_text,
     _should_sanitize_ztpi_text,
+    _system_prompt_key,
     _strip_generic_acknowledgement,
     _student_visible_response,
     _update_markdown_memory_background,
@@ -589,6 +590,11 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
+    # Same instrument and prompt prepare_chat_turn uses: the step wins over the
+    # client's claim, and the selected prompt's instrument is guarded too.
+    class_access.require_chat_turn(db, identity, step.questionnaire_type if step else request.questionnaire_type,
+                                   _system_prompt_key(request.mode, request.phase, step),
+                                   preview=bool(request.preview), mode=request.mode)
     _apply_step_reasoning(ai_service, step)
     is_first_step = False
     if request.use_phase_prompt and step:
@@ -837,6 +843,11 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     _apply_counselor_overrides(ai_service, c_disable_thinking, c_reasoning_budget)
     _apply_reasoning_effort(ai_service, request.reasoning_effort)
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == request.phase).first() if request.phase else None
+    # Same instrument and prompt prepare_chat_turn uses: the step wins over the
+    # client's claim, and the selected prompt's instrument is guarded too.
+    class_access.require_chat_turn(db, identity, step.questionnaire_type if step else request.questionnaire_type,
+                                   _system_prompt_key(request.mode, request.phase, step),
+                                   preview=bool(request.preview), mode=request.mode)
     _apply_step_reasoning(ai_service, step)
     is_first_step = False
     if request.use_phase_prompt and step:
@@ -1203,12 +1214,13 @@ async def chat_message(
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
 ):
+    prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
+    class_access.require_chat_turn(db, identity, questionnaire_type, prompt_key)
     resolved_conversation_id = conversation_id_for(session_id, conversation_id)
     language = _normalize_language(language)
     # 1. Retrieve Configuration and System Prompt based on Mode
     ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
 
-    prompt_key = MODE_TO_SYSTEM_PROMPT_KEY.get(mode, "prompt_generic")
     system_prompt = ai_service.config.get(
         prompt_key,
         SYSTEM_PROMPT_DEFAULTS.get(prompt_key, DEFAULT_SYSTEM_PROMPT_GENERIC),
@@ -1306,6 +1318,7 @@ async def audit_qsa(
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
 ):
+    class_access.require_tool(db, identity, request.questionnaire_type)
     # Log completion for QSA-family profile analyses.
     log_entry = models.Log(
         session_id=request.session_id,
@@ -1330,7 +1343,10 @@ async def upload_qsa_document(
     file: UploadFile = File(...),
     questionnaire_type: str = Form("QSA"),
     db: Session = Depends(database.get_db),
+    identity: dict = Depends(auth.get_current_user),
 ):
+    # Identity and tool access before any extraction or stored file.
+    class_access.require_tool(db, identity, questionnaire_type)
     temp_dir = ".tmp"
     os.makedirs(temp_dir, exist_ok=True)
     suffix = os.path.splitext(file.filename or "")[1].lower()

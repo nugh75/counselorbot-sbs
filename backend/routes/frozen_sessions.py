@@ -9,7 +9,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import auth, database, models, schemas
+from .. import auth, class_access, database, models, schemas
 
 router = APIRouter()
 get_db = database.get_db
@@ -130,7 +130,11 @@ async def get_frozen_session(
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
-    return _detail(_owned(db, session_id, current_user))
+    row = _owned(db, session_id, current_user)
+    # Fetching the snapshot is the resume step: blocked once the tool is off
+    # (decision 8). The list and delete stay available.
+    class_access.require_tool(db, current_user, row.questionnaire_type)
+    return _detail(row)
 
 
 @router.delete("/session/frozen/{session_id}")
