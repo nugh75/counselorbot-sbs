@@ -412,3 +412,29 @@ def test_user_access_requires_authentication(db):
     app.include_router(class_access_routes.router)
     with TestClient(app) as client:
         assert client.get("/user/access").status_code == 401
+
+
+# --- Pre-deploy check (docs/operations/class-access-validation.md) ----------
+
+def test_pre_deploy_sql_counts_guided_and_anonymous_use_and_skips_staff(db):
+    from pathlib import Path
+    from sqlalchemy import text
+
+    doc = Path(__file__).resolve().parents[2] / "docs/operations/class-access-validation.md"
+    sql = doc.read_text().split("```sql\n", 1)[1].split("```", 1)[0]
+    assert sql.lstrip().upper().startswith(("SELECT", "WITH")) and ";" not in sql.rstrip().rstrip(";")
+    db.add(models.Instrument(code="GUIDED_OFF", is_active=False, target_audience="student", tool_category="guided"))
+    _group(db, "a", members=["anna"])  # owner "prof" is staff
+    db.add_all([
+        models.QuestionnaireResult(session_id="anon-off", questionnaire_type="OFF", username=None),
+        models.QuestionnaireResult(session_id="prof-off", questionnaire_type="OFF", username="prof"),
+        models.Log(session_id="guided", action="chat_message", questionnaire_type="guided_off", username="anna",
+                   details={}),
+        models.Log(session_id="guided-prof", action="chat_message", questionnaire_type="GUIDED_OFF",
+                   username="prof", details={}),
+    ])
+    db.commit()
+    rows = {row.code: row for row in db.execute(text(sql)).mappings().all()}
+    assert (rows["OFF"]["student_users"], rows["OFF"]["anonymous_uses"]) == (0, 1)
+    assert (rows["GUIDED_OFF"]["student_users"], rows["GUIDED_OFF"]["guided_uses"]) == (1, 1)
+    assert rows["DOCENZA"]["student_users"] == 0
