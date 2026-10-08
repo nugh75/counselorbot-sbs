@@ -25,6 +25,7 @@ import { classPickerText } from '@/lib/i18n-class-picker';
 import { guideAudienceText, type GuideAudienceKey } from '@/lib/i18n-guide-audiences';
 import { guideImages } from '@/lib/guide-images';
 import { teacherAreaName } from '@/lib/i18n-teacher-area';
+import { classSettingsText } from '@/lib/i18n-class-settings';
 
 const TEACHER_ROUTES = ['/docente', '/docente', '/docente', '/docente', '/docente', '/docente', '/bussola'];
 
@@ -301,6 +302,11 @@ function GuideContent() {
                         {teacher && (
                             <Link href={TEACHER_ROUTES[n - 1]} className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{l('open')}</Link>
                         )}
+                        {teacher && n === 2 && <div className="mt-4 text-sm leading-relaxed text-slate-600">
+                            <h3 className="font-semibold text-slate-900">{classSettingsText(lang, 'toolsTab')}</h3>
+                            <p className="mt-1.5">{classSettingsText(lang, 'guide')}</p>
+                            <Link href="/docente/classi" className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{classSettingsText(lang, 'back')}</Link>
+                        </div>}
                         {teacher && n === 1 && (
                             <Link href="/docente/taccuino" className="ml-3 mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{teacherAreaName(lang, 'taccuino')}</Link>
                         )}
