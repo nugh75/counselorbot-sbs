@@ -300,6 +300,50 @@ def test_follow_up_prompt_belongs_to_its_instrument(db, route):
         stream.assert_not_called()
 
 
+@pytest.mark.parametrize("route", ["/chat", "/chat/stream"])
+@pytest.mark.parametrize("mode", [
+    "prompt_savickas_interview__short",
+    "prompt_savickas_interview__level_ristretto",
+    "prompt_savickas_interview__level_minimo",
+    "prompt_meta_SAVICKAS__level_ristretto",
+])
+def test_stored_prompt_variants_belong_to_their_instrument(db, route, mode):
+    """Review B1-R: a raw variant selector is owned by its base prompt's instrument."""
+    _group(db, "a", disabled=["SAVICKAS"], members=["anna"])
+    db.add(models.Config(key=mode, value="Synthetic SAVICKAS variant"))
+    db.commit()
+    body = {"message": "Hi", "mode": mode, "session_id": "sess-variant", "questionnaire_type": "QSA"}
+    with _client(db, STUDENT) as client, patch.object(chat.AIService, "get_response") as reply, \
+            patch.object(chat.AIService, "stream_response") as stream:
+        _assert_denied(_chat_any(client, route, body), "tool_disabled_for_class", "SAVICKAS")
+        reply.assert_not_called()
+        stream.assert_not_called()
+
+
+@pytest.mark.parametrize("route", ["/chat", "/chat/stream"])
+def test_unowned_raw_prompt_selector_fails_closed_for_students(db, route):
+    """Review B1-R: a raw `prompt_*` key with no resolvable owner is not a student's to select."""
+    body = {"message": "Hi", "mode": "prompt_unowned_custom__level_x", "session_id": "sess-raw"}
+    with _client(db, STUDENT) as client, patch.object(chat.AIService, "get_response") as reply, \
+            patch.object(chat.AIService, "stream_response") as stream:
+        _assert_denied(_chat_any(client, route, body), "tool_unavailable", "prompt_unowned_custom__level_x")
+        reply.assert_not_called()
+        stream.assert_not_called()
+    with _client(db, STUDENT) as client, \
+            patch.object(chat.AIService, "get_response", return_value="plain reply"), \
+            patch.object(chat.AIService, "stream_response", side_effect=_mock_stream):
+        # Generic prompts and the prompts of known modes have no owner by design.
+        for mode in ("prompt_generic", "prompt_generic__short"):
+            response = _chat_any(client, route, {**body, "mode": mode})
+            assert response.status_code == 200, response.text
+    for identity, preview in ((TEACHER, False), (ADMIN, True)):
+        with _client(db, identity) as client, \
+                patch.object(chat.AIService, "get_response", return_value="plain reply"), \
+                patch.object(chat.AIService, "stream_response", side_effect=_mock_stream):
+            response = _chat_any(client, route, {**body, "preview": preview})
+            assert response.status_code == 200, response.text
+
+
 @pytest.mark.parametrize("route", ["/chat", "/chat/stream", "/chat/message"])
 @pytest.mark.parametrize("mode", ["savickas-interview", "generic", "unknown-mode"])
 def test_enabled_or_generic_prompts_still_work(db, route, mode):
