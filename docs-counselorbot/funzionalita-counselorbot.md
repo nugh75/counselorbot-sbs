@@ -515,9 +515,29 @@ layout and a sticky Save bar are supported. Saving is explicit. A concurrent
 change (409) keeps the local draft and offers Reload with discard confirmation;
 other failures also keep the draft. Missing settings mean everything enabled,
 and newly added tools are enabled automatically. **Student access is unchanged
-in S1**: filtering ships in #89/#90. Counselor controls, forum options, class
-paths, per-class administrator locks and audit history are delivered separately;
-the Class paths and Forum tabs are unavailable in this release.
+in S1**: filtering ships in #89/#90. Counselor controls, forum options,
+per-class administrator locks and audit history are delivered separately;
+the Forum tab remains unavailable in this release; the Class paths tab is enabled by P1 (#96).
+
+**Class paths builder (P1, #96).** The **Class paths** tab on `/docente/classi/{id}`
+provides the teacher-side builder for sequenced class learning paths (`class_paths`
+and `class_path_steps`). The class owner, co-teachers and administrators can create
+draft paths, define title and description, choose the progression mode (`recommended`
+suggested sequence vs `strict` linear prerequisite order), and assemble steps. Each
+step references an instrument key enabled for the class (excluding always-on tools
+and administrator-disabled instruments; invalid tools are rejected with HTTP 422),
+with optional step title overrides, student instructions and due dates.
+The step builder supports position numbering, reordering via up/down buttons (and
+keyboard), removal (`[×]`), and displays a self-marking indicator (`⚑`) for tools
+without automated completion detection (such as personal-area tools). Steps are
+renumbered sequentially by array order and omitted step IDs are soft-removed
+(`removed_at`). Concurrent edits are guarded by a revision counter: an HTTP 409
+conflict preserves the local draft and prompts the teacher to reload. Paths can be
+archived, restored, or deleted. All interfaces and messages are translated across
+the 6 platform languages. **Draft-only in P1**: student-side publishing, progression
+enforcement and student progress tracking ship in P2 (#97).
+
+
 
 La pagina `/docente/taccuino` si apre dall’ingresso nella home o direttamente,
 anche dopo un refresh. La freccia nell’intestazione torna a `/docente`; la bozza

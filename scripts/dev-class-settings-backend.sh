@@ -10,8 +10,9 @@ url = urlsplit(os.environ['DATABASE_URL'])
 if url.scheme != 'postgresql' or url.path != '/counselorbot_test' or url.hostname not in {'127.0.0.1', 'localhost'}:
     raise SystemExit('Only a local dedicated counselorbot_test database is allowed')
 PY
-if ss -H -ltn 'sport = :8002' | read -r _; then
-    echo 'Port 8002 is occupied; leave the existing process untouched' >&2
+port="${PORT:-8002}"
+if ss -H -ltn "sport = :$port" | read -r _; then
+    echo "Port $port is occupied; leave the existing process untouched" >&2
     exit 1
 fi
 exec env -i PATH="$PATH" HOME="$HOME" DATABASE_URL="$DATABASE_URL" \
@@ -20,4 +21,5 @@ exec env -i PATH="$PATH" HOME="$HOME" DATABASE_URL="$DATABASE_URL" \
     SESSION_MEMORY_DIR="$PWD/backend/.venv/class-settings-memory" \
     RAG_INDEX_DIR="$PWD/backend/.venv/class-settings-rag" \
     COUNSELORBOT_DOCS_DIR="$PWD/docs-counselorbot" \
-    backend/.venv/bin/uvicorn backend.main:app --reload --host 127.0.0.1 --port 8002
+    backend/.venv/bin/uvicorn backend.main:app --reload --host 127.0.0.1 --port "$port"
+
