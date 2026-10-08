@@ -9,7 +9,7 @@ from fastapi.responses import Response
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, auth, database
+from .. import models, schemas, auth, class_access, database
 from ..anonymous_codes import get_or_create_anonymous_research_code
 from ..validation_export import build_validation_csv, validation_query, validation_summary
 from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
@@ -207,6 +207,7 @@ async def submit_questionnaire_result(
     db: Session = Depends(get_db),
 ):
     """Salva i risultati di un questionario completato (endpoint pubblico)."""
+    class_access.require_tool(db, identity, result.questionnaire_type)
     username = identity.get("username") if identity.get("authenticated") else None
 
     data = result.model_dump()
@@ -311,6 +312,7 @@ async def score_instrument(
     Sostituisce il calcolo nel browser (PROGETTO §10.5). Ritorna il profilo completo;
     se save=True salva uno QuestionnaireResult con i punteggi stanine mappati.
     """
+    class_access.require_tool(db, identity, code)
     try:
         profile = scoring_service.compute_profile(db, code, payload.locale, payload.answers)
     except scoring_service.LocaleUnavailable as e:
