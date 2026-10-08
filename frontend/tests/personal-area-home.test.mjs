@@ -116,3 +116,20 @@ test('a pending overview request never blocks the illustrated navigation', async
         assert.deepEqual(f.errors, []);
     } finally { release(); await f.context.close(); }
 });
+
+test('forum unread count displays accessible badge on Classes entry in personal area', async () => {
+    const f = await fixture('it');
+    await f.page.route('**/api/user/forum/unread', async route => {
+        await route.fulfill({ json: { total: 4, by_group: { '102': 4 } } });
+    });
+    try {
+        await f.page.goto(`${origin}/profilo`, { waitUntil: 'networkidle' });
+        const home = f.page.locator('[data-personal-area-home]');
+        await home.waitFor();
+        const badge = home.getByLabel('4 non letti', { exact: true });
+        await badge.waitFor();
+        assert.ok((await badge.innerText()).includes('4'));
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+

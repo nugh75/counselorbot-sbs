@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
 
-const origin = new URL(process.env.FORUM_BASE_URL || 'http://127.0.0.1:3137').origin;
+const origin = new URL(process.env.FORUM_BASE_URL || process.env.CLASS_FORUM_BASE_URL || 'http://127.0.0.1:3137').origin;
 let browser;
 before(async () => { browser = await chromium.launch({ headless: true }); });
 after(async () => { await browser?.close(); });
@@ -48,6 +48,9 @@ async function fixture({ teacher = false, archive = false, lang = 'en', width = 
         }
         else if (url.pathname.includes('/forum/')) {
             if (request.method() === 'POST') {
+                if (url.pathname.endsWith('/read')) {
+                    return route.fulfill({ status: 200, json: { ok: true } });
+                }
                 state.writes.push(request.postDataJSON());
                 if (state.held) await state.held;
                 if (state.failure) return route.fulfill({ status: state.failure, json: { detail: 'PRIVATE DEBUG MESSAGE' } });
@@ -200,6 +203,40 @@ test('late response after an account change exposes no old discussion content', 
     } finally { release?.(); await f.context.close(); }
 });
 
+test('unread marker renders on topic and opening topic triggers mark read', async () => {
+    let readCalled = false;
+    const context = await browser.newContext({ viewport: { width: 390, height: 850 } });
+    await context.addInitScript(() => localStorage.setItem('cb_lang', 'en'));
+    const page = await context.newPage(); page.setDefaultTimeout(15000);
+    const unreadTopic = { ...topic, unread_count: 3 };
+    await page.route('**/*', async route => {
+        const url = new URL(route.request().url());
+        if (url.origin !== origin) return route.abort();
+        if (!url.pathname.startsWith('/api/')) return route.continue();
+        if (url.pathname === '/api/auth/me') return route.fulfill({ json: { authenticated: true, username: 'fixture', name: 'Fixture', groups: ['studenti'], is_admin: false } });
+        if (url.pathname === '/api/admin/groups') return route.fulfill({ json: [{ id: 102, name: 'Synthetic class', code: 'GR-C4TEST', owner_username: 'fixture', is_active: true, members_count: 1 }] });
+        if (url.pathname === '/api/user/account-preferences') return route.fulfill({ json: { setup_completed: true, counselor_ready: true, notebook_ready: true } });
+        if (url.pathname === '/api/orientation/status') return route.fulfill({ json: { required: false } });
+        if (url.pathname.includes('/groups/102/forum/topics')) {
+            return route.fulfill({ json: { group: { id: 102, name: 'Synthetic class', is_active: true }, can_open_topic: false, topics: [unreadTopic], has_more: false } });
+        }
+        if (url.pathname === '/api/forum/topics/102/read') {
+            readCalled = true;
+            return route.fulfill({ json: { ok: true } });
+        }
+        if (url.pathname === '/api/forum/topics/102') {
+            return route.fulfill({ json: { topic: unreadTopic, posts: [], can_reply: true, has_more: false } });
+        }
+        return route.fulfill({ json: [] });
+    });
+    try {
+        await page.goto(`${origin}/profilo/classi/102/forum`, { waitUntil: 'networkidle' });
+        await page.getByText('3 new', { exact: true }).waitFor();
+        await page.getByRole('button', { name: /Read your QSA/ }).click();
+        await page.getByRole('heading', { name: 'Read your QSA', exact: true }).waitFor();
+        assert.equal(readCalled, true);
+    } finally { await context.close(); }
+});
 const seeded = (state, rows) => { for (const row of rows) state.posts.push({ ...topic, title: undefined, own: false, ...row }); };
 
 test('teacher hides and restores a reply with a reason, pins and closes, then reads the log', async () => {
@@ -316,3 +353,4 @@ for (const lang of ['de', 'fr']) {
         } finally { await f.context.close(); }
     });
 }
+
