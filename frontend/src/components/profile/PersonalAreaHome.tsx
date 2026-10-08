@@ -8,6 +8,7 @@ import { ArrowRight } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { personalAreaDescription, personalAreaName, personalAreaText } from '@/lib/i18n-personal-area';
+import { forumText } from '@/lib/i18n-forum';
 import { personalAreaGroups, personalAreaImages, personalResumeItems, type ResumeAssignment } from '@/lib/personal-area';
 import type { PersonalGoal } from '@/lib/goals';
 import { Button } from '@/components/ui/Button';
@@ -67,6 +68,20 @@ function PersonalResume() {
 
 export function PersonalAreaHome() {
     const { lang } = useI18n();
+    const [unreadTotal, setUnreadTotal] = useState(0);
+
+    useEffect(() => {
+        let active = true;
+        void apiFetch('/api/user/forum/unread').then(async res => {
+            if (!res.ok) return;
+            const data: unknown = await res.json();
+            if (active && data && typeof data === 'object' && typeof (data as { total?: unknown }).total === 'number') {
+                setUnreadTotal((data as { total: number }).total);
+            }
+        }).catch(() => {});
+        return () => { active = false; };
+    }, []);
+
     return <div className="space-y-6" data-personal-area-home>
         <PersonalResume />
         {personalAreaGroups.map(group => <section key={group.id} aria-labelledby={`personal-group-${group.id}`}>
@@ -76,7 +91,18 @@ export function PersonalAreaHome() {
                     className="group flex min-h-24 items-center gap-3 rounded-xl px-2 py-3 transition-colors hover:bg-slate-50 sm:gap-4">
                     <Image src={personalAreaImages[slug]} alt="" width={72} height={72} sizes="(min-width: 768px) 72px, 64px" className="h-16 w-16 shrink-0 rounded-md object-contain md:h-18 md:w-18" />
                     <span className="min-w-0 flex-1">
-                        <span id={`personal-link-${slug}`} className="block font-bold text-slate-900 group-hover:text-indigo-700">{personalAreaName(lang, slug)}</span>
+                        <span id={`personal-link-${slug}`} className="flex items-center gap-2 font-bold text-slate-900 group-hover:text-indigo-700">
+                            <span>{personalAreaName(lang, slug)}</span>
+                            {slug === 'classi' && unreadTotal > 0 && (
+                                <span
+                                    className="inline-flex min-h-[20px] min-w-[20px] items-center justify-center rounded-full bg-ochre-600 px-1.5 text-xs font-semibold text-white"
+                                    aria-label={forumText(lang, 'unreadBadge').replace('{count}', String(unreadTotal))}
+                                >
+                                    {unreadTotal}
+                                    <span className="sr-only"> {forumText(lang, 'unreadBadge').replace('{count}', String(unreadTotal))}</span>
+                                </span>
+                            )}
+                        </span>
                         <span id={`personal-description-${slug}`} className="mt-1 block text-sm leading-relaxed text-slate-600">{personalAreaDescription(lang, slug)}</span>
                     </span>
                     <ArrowRight className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />

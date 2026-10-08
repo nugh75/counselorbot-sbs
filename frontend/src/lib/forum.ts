@@ -15,6 +15,7 @@ export interface ForumTopic extends ForumPost {
     locked: boolean;
     last_post_at: string;
     replies_count: number;
+    unread_count?: number;
 }
 
 export interface ForumList {
@@ -29,6 +30,11 @@ export interface ForumDetail {
     posts: ForumPost[];
     can_reply: boolean;
     has_more: boolean;
+}
+
+export interface ForumUnread {
+    total: number;
+    by_group: Record<string, number>;
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -52,6 +58,9 @@ export function parseForumTopic(value: unknown): ForumTopic {
         || typeof row.pinned !== 'boolean' || typeof row.locked !== 'boolean' || !Number.isInteger(row.replies_count)) {
         throw new Error('Invalid forum topic');
     }
+    if (row.unread_count !== undefined && !Number.isInteger(row.unread_count)) {
+        throw new Error('Invalid forum topic');
+    }
     return row as unknown as ForumTopic;
 }
 
@@ -69,6 +78,19 @@ export function parseForumDetail(value: unknown): ForumDetail {
     const row = record(value);
     if (!Array.isArray(row.posts) || typeof row.can_reply !== 'boolean' || typeof row.has_more !== 'boolean') throw new Error('Invalid discussion');
     return { topic: parseForumTopic(row.topic), posts: row.posts.map(parseForumPost), can_reply: row.can_reply, has_more: row.has_more };
+}
+
+export function parseForumUnread(value: unknown): ForumUnread {
+    const row = record(value);
+    if (!Number.isInteger(row.total) || !row.by_group || typeof row.by_group !== 'object' || Array.isArray(row.by_group)) {
+        throw new Error('Invalid forum unread response');
+    }
+    const by_group: Record<string, number> = {};
+    for (const [k, v] of Object.entries(row.by_group as Record<string, unknown>)) {
+        if (!Number.isInteger(v)) throw new Error('Invalid forum unread response');
+        by_group[k] = Number(v);
+    }
+    return { total: row.total as number, by_group };
 }
 
 export function forumDraftValid(body: string, title?: string): boolean {
