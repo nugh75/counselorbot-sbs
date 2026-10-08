@@ -14,6 +14,7 @@ import { Callout } from '@/components/ui/Callout';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { ForumView } from '@/components/forum/ForumView';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
+import { ClassPathsTab } from './ClassPathsTab';
 import { useTeacherAccessState } from './useTeacherAccessState';
 import { useTeacherResource } from './useTeacherResource';
 import { parseClassGroups } from './class-group-types';
@@ -134,7 +135,7 @@ function ClassDetail({ groupId }: { groupId: number }) {
     const l = (key: TextKey) => classSettingsText(lang, key);
     const groups = useTeacherResource('/api/admin/groups', parseClassGroups);
     const settings = useTeacherResource(`/api/teacher/groups/${groupId}/settings`, parseClassSettings);
-    const [tab, setTab] = useState<'overview' | 'toolsTab' | 'forum'>('overview');
+    const [tab, setTab] = useState<'overview' | 'toolsTab' | 'paths' | 'forum'>('overview');
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const group = groups.data?.find(row => row.id === groupId);
     if (groups.forbidden || settings.forbidden) return <TeacherForbidden />;
@@ -143,22 +144,21 @@ function ClassDetail({ groupId }: { groupId: number }) {
         <p>{l('loadError')}</p>
         <Button variant="secondary" onClick={() => { void groups.reload(); void settings.reload(); }}>{l('reload')}</Button>
     </Callout>;
+    const activeTabs = ['overview', 'toolsTab', 'paths', 'forum'] as const;
     return <div className="space-y-5">
         <header className="flex flex-wrap items-center justify-between gap-3">
             <Link href="/docente/classi" className="inline-flex min-h-[44px] items-center gap-2 text-sm text-indigo-700"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
             <div><h1 className="break-words text-2xl font-bold text-slate-800">{group.name}</h1><p className="text-sm text-slate-600">{group.members_count} {l('members')}{group.school && ` · ${group.school}`}</p></div>
         </header>
         <div role="tablist" aria-label={group.name} className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
-            {(['overview', 'toolsTab', 'paths', 'forum'] as const).map((key, index) => key === 'paths' ? <button type="button" role="tab" key={key} disabled aria-selected={false} title={l('later')}
-                className="min-h-[44px] rounded-md px-4 text-sm text-slate-500">{l(key)}</button> : <button key={key} ref={node => { tabRefs.current[index] = node; }}
+            {activeTabs.map((key, index) => <button key={key} ref={node => { tabRefs.current[index] = node; }}
                 id={`class-tab-${key}`} type="button" role="tab" aria-selected={tab === key} aria-controls={`class-panel-${key}`}
                 tabIndex={tab === key ? 0 : -1} onClick={() => setTab(key)}
                 onKeyDown={event => {
                     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                     event.preventDefault();
-                    const enabled = [0, 1, 3];
-                    const next = event.key === 'Home' ? 0 : event.key === 'End' ? 3 : enabled[(enabled.indexOf(index) + (event.key === 'ArrowRight' ? 1 : 2)) % 3];
-                    setTab((['overview', 'toolsTab', 'paths', 'forum'] as const)[next] as 'overview' | 'toolsTab' | 'forum'); tabRefs.current[next]?.focus();
+                    const next = event.key === 'Home' ? 0 : event.key === 'End' ? activeTabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + activeTabs.length) % activeTabs.length;
+                    setTab(activeTabs[next]); tabRefs.current[next]?.focus();
                 }} className={`min-h-[44px] rounded-md px-4 text-sm font-semibold ${tab === key ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}>{l(key)}</button>)}
         </div>
         <div id="class-panel-overview" role="tabpanel" aria-labelledby="class-tab-overview" hidden={tab !== 'overview'} tabIndex={0}>
@@ -171,10 +171,14 @@ function ClassDetail({ groupId }: { groupId: number }) {
         <div id="class-panel-toolsTab" role="tabpanel" aria-labelledby="class-tab-toolsTab" hidden={tab !== 'toolsTab'} tabIndex={0}>
             <ClassToolsEditor initial={settings.data} onReload={() => { void settings.reload(); }} />
         </div>
+        <div id="class-panel-paths" role="tabpanel" aria-labelledby="class-tab-paths" hidden={tab !== 'paths'} tabIndex={0}>
+            <ClassPathsTab groupId={groupId} classSettings={settings.data} />
+        </div>
         <div id="class-panel-forum" role="tabpanel" aria-labelledby="class-tab-forum" hidden={tab !== 'forum'} tabIndex={0}>
             <ForumView groupId={groupId} />
         </div>
     </div>;
+
 }
 
 export function ClassSettingsPage({ groupId }: { groupId: number }) {

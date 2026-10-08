@@ -109,6 +109,7 @@ from .routes import flashcards as flashcards_routes
 from .routes import institutions as institutions_routes
 from .routes import institution_categories as institution_categories_routes
 from .routes import orientation_referrals as orientation_referrals_routes
+from .routes import class_paths as class_paths_routes
 
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
@@ -1993,3 +1994,4 @@ app.include_router(institutions_routes.router)
 app.include_router(institution_categories_routes.router)
 app.include_router(orientation_referrals_routes.router)
 app.include_router(prompt_experiments_routes.router)
+app.include_router(class_paths_routes.router)
