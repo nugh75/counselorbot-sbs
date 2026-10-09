@@ -291,7 +291,7 @@ external link is not completion. The questionnaire step is done only after the
 result, guided entry and step evidence are committed together. Save failures retain
 the account/path/step draft for retry. A future teacher-confirmed import matched to
 the student and exact administration can complete it without chat; no import UI is
-available yet. An optional results deep dive remains separate. Existing tool steps
+available yet. An optional results deep dive remains a separate step. Existing tool steps
 keep their previous completion rules. To change a published target, remove its step
 and add a new one; reordering retains identity and activation time.
 
@@ -310,3 +310,17 @@ is done when that entry is recorded. If the language is no longer available, the
 student sees a clear message and no other language is used instead. Students'
 result history shows whether a result was captured in CounselorBot or imported by a
 teacher; older results say that the capture method was not recorded.
+
+
+### Optional guided results deep dive
+
+After saving a path that contains a questionnaire administration, open "Guided
+results deep dive" in the path builder, select the administration step under
+"Results from step" and add the step; it must come after that administration.
+Save and publish as usual. The deep dive is optional: leave it out when you only
+need the administration. Students start it once their administration result is
+recorded and talk about that result in a guided chat; the step is done only when
+they complete the final guided step of that session. Removing the deep dive does
+not undo the administration. To remove an administration that has a deep dive,
+remove the deep dive first. A teacher override on the administration does not
+provide a result to discuss, so the student cannot start the deep dive from it.
