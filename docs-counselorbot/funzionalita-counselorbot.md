@@ -1422,7 +1422,7 @@ locale and step activation time. A future teacher-confirmed import for that stud
 and administration may complete the questionnaire step without opening guided chat:
 this is distinct committed import evidence, never a source label, upload or preview.
 The importer itself is not available in this release. A results deep dive is a
-separate future step, not implied by entering scores. Published target identity is
+separate optional step, never implied by entering scores. Published target identity is
 immutable; replace a step rather than reusing its ID for another target. A step
 removed before its first publication and restored on a published path is activated
 when restored, so only evidence recorded after that moment completes it. Teacher
@@ -1475,3 +1475,38 @@ always assigned by the server: requests that try to set `source`, `capture_metho
 `source_system` or `source_record_id` are rejected. The standalone in-app
 questionnaire records the same `item_runner` provenance, but on its own it never
 completes an administration step. Research counts include each in-app result once.
+
+
+### Optional guided deep dive on an administration result
+
+A class path may add a `guided_results_chat` step after a questionnaire
+administration step of the same path. The teacher chooses it in the path builder
+under "Guided results deep dive" by selecting a saved, earlier administration step;
+each administration step can have at most one deep dive. Its Add step action uses the
+lucide plus icon with a text label, like the administration section. The server rejects a deep
+dive placed before its administration (`results_step_order`), one that points to
+another path, a tool step or an unsaved step (`results_step_invalid`) and a second
+deep dive on the same administration (`duplicate_results_chat`). Removing an
+administration while its deep dive stays in the path is a conflict
+(`results_step_referenced`); remove the deep dive first. The linked administration
+is part of the immutable target once the step is activated. Omitting the step keeps
+the deep dive optional; removing it later never undoes the administration step.
+
+The student opens the step once the administration is complete. CounselorBot binds
+a new, server-issued guided session to that student, deep-dive step and the result
+that completes the administration (guided entry or a confirmed import); starting
+again resumes the same session, also under concurrent requests. Without a recorded
+result, including when only a teacher override marks the administration done, the
+deep dive cannot start (`results_step_incomplete`). Strict paths keep the step
+locked until the earlier steps are done.
+
+The step is done only when the server records the final guided turn of that bound
+session for the same student and questionnaire, after the step was activated. The
+streamed and non-streamed chat share the same marker. Score entry, the guided-entry
+session itself, another student's turn on the session, a failed or truncated stream,
+preview turns and markers of other sessions never count. If the bound result is
+deleted or its administration evidence is invalidated, the deep dive returns to not
+done. Teacher progress shows the completion kind `guided_results_chat`; student and
+teacher progress name the step as a deep dive on its administration. The database
+upgrade adds `class_path_steps.results_step_id`, widens the step target check and
+creates `class_path_deep_dive_sessions`; it is replay-safe and keeps existing steps.

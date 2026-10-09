@@ -1842,6 +1842,15 @@ class ClassPath(Base):
     archived_at = Column(DateTime(timezone=True), nullable=True)
 
 
+STEP_TARGET_CHECK = (
+    "(step_type = 'tool' AND tool_key IS NOT NULL AND administration_plan_id IS NULL AND results_step_id IS NULL) OR "
+    "(step_type = 'questionnaire_administration' AND tool_key IS NULL AND administration_plan_id IS NOT NULL "
+    "AND results_step_id IS NULL) OR "
+    "(step_type = 'guided_results_chat' AND tool_key IS NULL AND administration_plan_id IS NULL "
+    "AND results_step_id IS NOT NULL)"
+)
+
+
 class ClassPathStep(Base):
     """Singolo passo di un percorso di classe associato a uno strumento o attività.
 
@@ -1854,13 +1863,12 @@ class ClassPathStep(Base):
     id = Column(Integer, primary_key=True, index=True)
     path_id = Column(Integer, ForeignKey("class_paths.id", ondelete="CASCADE"), index=True, nullable=False)
     position = Column(Integer, nullable=False)  # 1-indexed
-    __table_args__ = (CheckConstraint(
-        "(step_type = 'tool' AND tool_key IS NOT NULL AND administration_plan_id IS NULL) OR "
-        "(step_type = 'questionnaire_administration' AND tool_key IS NULL AND administration_plan_id IS NOT NULL)",
-        name="class_path_step_target"),)
+    __table_args__ = (CheckConstraint(STEP_TARGET_CHECK, name="class_path_step_target"),)
     step_type = Column(String(40), nullable=False, default="tool", server_default="tool")
     tool_key = Column(String, nullable=True)
     administration_plan_id = Column(Integer, ForeignKey("administration_plans.id", ondelete="RESTRICT"), nullable=True)
+    # Deep dive: an earlier administration step of the same path (checked on save).
+    results_step_id = Column(Integer, ForeignKey("class_path_steps.id"), nullable=True)
     active_from = Column(DateTime(timezone=True), nullable=True)
     title = Column(String, nullable=True)
     instructions = Column(Text, nullable=True)
@@ -2026,6 +2034,23 @@ class QuestionnaireImportConfirmation(Base):
     confirmed_by = Column(String, nullable=False)
     confirmed_at = Column(DateTime(timezone=True), nullable=False)
     invalidated_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class ClassPathDeepDiveSession(Base):
+    """Server-issued guided session bound to one student, deep-dive step and result.
+
+    Completion is resolved on read from the final guided-turn marker of this
+    exact session; no marker is synthesized and the session is never reused.
+    """
+    __tablename__ = "class_path_deep_dive_sessions"
+    __table_args__ = (UniqueConstraint("step_id", "username", "result_id", name="uq_deep_dive_step_result"),
+                      UniqueConstraint("session_id", name="uq_deep_dive_session"),)
+    id = Column(Integer, primary_key=True)
+    step_id = Column(Integer, ForeignKey("class_path_steps.id", ondelete="CASCADE"), nullable=False, index=True)
+    username = Column(String, nullable=False, index=True)
+    result_id = Column(Integer, ForeignKey("questionnaire_results.id", ondelete="CASCADE"), nullable=False)
+    session_id = Column(String(64), nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=False)
 
 
 class ClassPathStepEvidence(Base):

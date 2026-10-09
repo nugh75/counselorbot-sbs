@@ -8,6 +8,7 @@ import { ArrowDown, ArrowUp, ArrowLeft, Archive, ArchiveRestore, CheckCircle2, C
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
 import { parseClassPath, parseClassPaths, pathStepTools, type ClassPath, type ClassPathStep } from '@/lib/class-paths';
+import { deepDiveSources } from '@/lib/results-deep-dive';
 import { classPathText, classPathsTexts } from '@/lib/i18n-class-paths';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
 import { useI18n } from '@/lib/i18n-context';
@@ -98,10 +99,20 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
             target_summary:{...target,institution_name:''}}]);
         setSelectedAdministration('');setNotice(null);
     };
+    // A deep dive follows a saved administration step: the server binds it by step ID.
+    const [selectedResultsStep,setSelectedResultsStep] = useState('');
+    const addDeepDiveStep = () => {
+        const source=steps.find(step=>step.id===Number(selectedResultsStep));
+        if (!source?.id) return;
+        setSteps(current=>[...current,{position:current.length+1,step_type:'guided_results_chat',
+            results_step_id:source.id,tool_key:'',auto_detect:true,can_self_mark:false,
+            target_summary:source.target_summary}]);
+        setSelectedResultsStep('');setNotice(null);
+    };
     const [selectedToolKey, setSelectedToolKey] = useState<string>('');
 
     const [busy, setBusy] = useState(false);
-    const [notice, setNotice] = useState<'saved' | 'published' | 'conflict' | 'tool_disabled' | 'error' | null>(null);
+    const [notice, setNotice] = useState<'saved' | 'published' | 'conflict' | 'tool_disabled' | 'deep_dive_referenced' | 'deep_dive_invalid' | 'error' | null>(null);
     const [forbidden, setForbidden] = useState(false);
 
     const mounted = useRef(false);
@@ -199,7 +210,8 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                     id: s.id,
                     step_type: s.step_type || 'tool',
                     ...(s.step_type === 'questionnaire_administration'
-                        ? {administration_plan_id:s.administration_plan_id} : {tool_key:s.tool_key}),
+                        ? {administration_plan_id:s.administration_plan_id}
+                        : s.step_type === 'guided_results_chat' ? {results_step_id:s.results_step_id} : {tool_key:s.tool_key}),
                     title: s.title ? s.title.trim() : null,
                     instructions: s.instructions ? s.instructions.trim() : null,
                     due_date: s.due_date || null,
@@ -218,12 +230,13 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                 setForbidden(true);
                 return false;
             }
-            if (response.status === 409) {
-                setNotice('conflict');
-                return false;
-            }
-            if (response.status === 422) {
-                setNotice('tool_disabled');
+            if (response.status === 409 || response.status === 422) {
+                // Deep-dive reference errors keep the draft editable; revision conflicts need a reload.
+                const detail = (await response.json().catch(() => null))?.detail;
+                if (!isCurrent()) return false;
+                if (detail === 'results_step_referenced') setNotice('deep_dive_referenced');
+                else if (['results_step_invalid', 'results_step_order', 'duplicate_results_chat'].includes(detail)) setNotice('deep_dive_invalid');
+                else setNotice(response.status === 409 ? 'conflict' : 'tool_disabled');
                 return false;
             }
             if (!response.ok) throw new Error('Save failed');
@@ -449,11 +462,14 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                 ) : (
                     <div className="space-y-3">
                         {steps.map((step, index) => {
+                            const source = steps.find(row => row.id !== undefined && row.id === step.results_step_id);
                             const name = step.step_type === 'questionnaire_administration'
                                 ? `${a('administration')} · ${step.target_summary?.code || step.administration_plan_id}`
-                                : toolLabel(step.tool_key, classSettings.tools, lang);
+                                : step.step_type === 'guided_results_chat'
+                                    ? `${a('deepDive')} · ${a('deepDiveFrom')} #${source?.position ?? '?'}`
+                                    : toolLabel(step.tool_key, classSettings.tools, lang);
                             // Students see this step as not available: say so here too.
-                            const unavailable = !enabledTools.some(t => t.key === step.tool_key);
+                            const unavailable = (step.step_type ?? 'tool') === 'tool' && !enabledTools.some(t => t.key === step.tool_key);
                             return (
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${index}`}
@@ -584,6 +600,17 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                     </div><p className="text-sm text-slate-600">{a('rule')}</p>
                     <p className="text-sm text-slate-600">{a('teacherInAppGuide')}</p>
                 </div>
+                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
+                    <h3 className="font-semibold">{a('deepDive')}</h3>
+                    <div className="flex flex-wrap gap-2">
+                        <label>{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>setSelectedResultsStep(event.target.value)} className="ml-2 rounded border p-2">
+                            <option value="">{a('choose')}</option>
+                            {deepDiveSources(steps).map(step=><option key={step.id} value={step.id}>{`#${step.position} · ${step.target_summary?.code || step.administration_plan_id}`}</option>)}
+                        </select></label>
+                        <Button variant="secondary" disabled={busy || !selectedResultsStep} onClick={addDeepDiveStep}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
+                    </div>
+                    <p className="text-sm text-slate-600">{a('deepDiveRule')}</p>
+                </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
                     <select
                         value={selectedToolKey}
@@ -630,6 +657,11 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                         {notice === 'conflict' && (
                             <p role="alert" className="text-red-600 font-medium">
                                 {l('conflictNotice')}
+                            </p>
+                        )}
+                        {(notice === 'deep_dive_referenced' || notice === 'deep_dive_invalid') && (
+                            <p role="alert" className="text-red-600 font-medium">
+                                {a(notice === 'deep_dive_referenced' ? 'deepDiveReferenced' : 'deepDiveInvalid')}
                             </p>
                         )}
                         {notice === 'tool_disabled' && (
