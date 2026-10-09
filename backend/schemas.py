@@ -1936,6 +1936,13 @@ class StudentClassPath(BaseModel):
         from_attributes = True
 
 
+class ClassPathProgressOverride(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    state: Literal["done", "not_done", "clear"]
+    reason: Optional[str] = Field(default=None, max_length=500)
+
+
 class ClassPathProgressResponse(BaseModel):
     ok: bool = True
     step_id: int
