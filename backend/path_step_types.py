@@ -2,8 +2,9 @@
 
 TF3 registers tool and Italian administration; TF4 adds in-app administrations
 in other served locales; TF5 adds the optional guided deep dive on the result of
-an earlier administration step. Later slices extend these branches together
-with their strict input target and database constraint.
+an earlier administration step; TF6 adds whole-class goal assignments, completed
+by the student's explicit current submission. Later slices extend these branches
+together with their strict input target and database constraint.
 """
 
 from fastapi import HTTPException
@@ -66,6 +67,34 @@ def administration_target(
     return plan, institution
 
 
+ASSIGNMENT_TOOL_KEY = "assignments"
+
+
+def assignment_target(db: Session, group_id: int, assignment_id: int, *, for_update=False):
+    """Path v1 accepts only live whole-class goal assignments of the same class."""
+    query = db.query(models.TeacherAssignment).filter_by(id=assignment_id)
+    if for_update:
+        query = query.populate_existing().with_for_update()
+    assignment = query.first()
+    if not assignment or assignment.group_id != group_id:
+        raise HTTPException(422, "assignment_class_mismatch")
+    if assignment.recipient_username is not None:
+        raise HTTPException(422, "assignment_targeted")
+    if assignment.source_kind != "goal":
+        raise HTTPException(422, "assignment_not_goal")
+    if assignment.revoked_at is not None:
+        raise HTTPException(409, "assignment_revoked")
+    group = db.get(models.StudentGroup, group_id)
+    if not group or not group.is_active:
+        raise HTTPException(409, "assignment_class_inactive")
+    return assignment
+
+
+def assignment_href(assignment_id):
+    # The standalone assignment page opens this hash: one workflow, one submission.
+    return f"/profilo/assegnazioni#assignment-{assignment_id}"
+
+
 def validate_step_input(db, path, value):
     from .routes.class_paths import get_class_enabled_tool_keys
 
@@ -76,11 +105,18 @@ def validate_step_input(db, path, value):
             )
     elif value.step_type == "questionnaire_administration":
         administration_target(db, path.group_id, value.administration_plan_id)
+    elif value.step_type == "assignment":
+        # Lock the row so a concurrent revocation is seen before this save commits.
+        assignment_target(db, path.group_id, value.assignment_id, for_update=True)
 
 
 def validate_composition(db, path, steps):
-    """A deep dive follows its saved administration step of this path, once."""
+    """A deep dive follows its saved administration step of this path, once;
+    an assignment is a target of at most one step of the path."""
     positions = {value.id: index for index, value in enumerate(steps) if value.id}
+    assignments = [value.assignment_id for value in steps if value.step_type == "assignment"]
+    if len(assignments) != len(set(assignments)):
+        raise HTTPException(422, "duplicate_assignment_step")
     linked = set()
     for index, value in enumerate(steps):
         if value.step_type != "guided_results_chat":
@@ -109,6 +145,7 @@ def target_identity(value):
         "tool": "tool_key",
         "questionnaire_administration": "administration_plan_id",
         "guided_results_chat": "results_step_id",
+        "assignment": "assignment_id",
     }[value.step_type]
     return value.step_type, getattr(value, target)
 
@@ -126,6 +163,7 @@ def apply_step_target(step, value):
     step.results_step_id = (
         value.results_step_id if value.step_type == "guided_results_chat" else None
     )
+    step.assignment_id = value.assignment_id if value.step_type == "assignment" else None
 
 
 def results_step(db, step):
@@ -158,6 +196,8 @@ def step_descriptor(db, path, step):
             "start_href": get_tool_start_href(step.tool_key),
             "instrument_code": step.tool_key,
         }
+    if step.step_type == "assignment":
+        return assignment_descriptor(db, path, step)
     deep_dive = step.step_type == "guided_results_chat"
     source = results_step(db, step) if deep_dive else step
     try:
@@ -195,6 +235,67 @@ def step_descriptor(db, path, step):
     }
 
 
+def assignment_descriptor(db, path, step):
+    try:
+        assignment = assignment_target(db, path.group_id, step.assignment_id)
+    except HTTPException as error:
+        return {
+            "available": False,
+            "availability_reason": error.detail,
+            "auto_detect": True,
+            "target_summary": None,
+            "start_href": None,
+            "instrument_code": ASSIGNMENT_TOOL_KEY,
+        }
+    settings = db.get(models.AssignmentLearningSettings, assignment.id)
+    # Delivered snapshot only: later catalog edits or deletions never rewrite it.
+    return {
+        "available": True,
+        "availability_reason": None,
+        "auto_detect": True,
+        "instrument_code": ASSIGNMENT_TOOL_KEY,
+        "start_href": assignment_href(assignment.id),
+        "target_summary": {
+            "id": assignment.id,
+            "title": assignment.snapshot.get("title", ""),
+            "attachments": [
+                {"kind": item.get("kind"), "title": item.get("title", "")}
+                for item in assignment.attachments or []
+            ],
+            "intent": settings.intent if settings else "proposal",
+            "due_date": settings.due_date.isoformat() if settings and settings.due_date else None,
+        },
+    }
+
+
+def assignment_evidence(db, path, step, username):
+    """The student's current explicit submission, made after the step's activation."""
+    if step.active_from is None:
+        return None
+    try:
+        assignment = assignment_target(db, path.group_id, step.assignment_id)
+    except HTTPException:
+        return None
+    if not db.query(models.GroupMembership.id).filter_by(
+        group_id=assignment.group_id, username=username
+    ).first():
+        return None
+    work = (
+        db.query(models.AssignmentWork)
+        .filter_by(assignment_id=assignment.id, username=username)
+        .first()
+    )
+    # Planning, private reflections and teacher feedback alone never count.
+    if (
+        work
+        and work.submission is not None
+        and work.submitted_at is not None
+        and work.submitted_at >= step.active_from
+    ):
+        return {"kind": "assignment_submission", "at": work.submitted_at}
+    return None
+
+
 def completion_evidence(db, path, step, username):
     if step.step_type == "tool":
         return (
@@ -204,6 +305,8 @@ def completion_evidence(db, path, step, username):
         )
     if step.step_type == "guided_results_chat":
         return deep_dive_evidence(db, step, username)
+    if step.step_type == "assignment":
+        return assignment_evidence(db, path, step, username)
     return next(administration_evidence(db, step, username), None)
 
 
