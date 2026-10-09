@@ -596,6 +596,21 @@ interface controls are included; the expanded forum guide and screenshots are #1
 Titles, messages and reasons reject invisible control characters (for example
 NUL); tabs and line breaks are kept. Character lengths for titles and messages are validated on publication.
 
+**Forum resource links (F5, #106).** When opening a class discussion, a class
+teacher or administrator may select an optional link to a step of a published
+class path or an active assignment addressed to the whole class. Targets must
+belong to that class; drafts, removed steps, archived paths, revoked assignments
+and individual assignments cannot be selected. The discussion shows the resource
+name and opens the student path step or assignment details; teachers open their
+class paths tab or sent assignments. A removed, archived, revoked or deleted
+resource becomes plain unavailable text without an active link. Hidden topics do
+not expose resource metadata to students. The path step and assignment details
+show “Discuss in the class forum” for each linked discussion. These links open
+the exact topic and are returned only to current class members, class teachers
+and administrators. Leaving the class immediately removes access. No forum
+content enters AI contexts, research exports or PDFs. Composer controls and the
+class sections of the public guide describe this behavior in all six languages.
+
 **Forum moderation (F2, #103).** Class owners, co-teachers and administrators
 moderate from the open discussion: Pin/Unpin (pinned discussions stay on top),
 Close discussion/Reopen discussion (closed discussions accept no replies), and
@@ -1154,3 +1169,32 @@ Un salvataggio esplicito dell’amministratore rende il testo protetto anche se
 coincide con la versione di fabbrica. I testi aggiornati dal pulsante rimangono
 riconoscibili come fabbrica per gli allineamenti successivi. La conferma aggiorna
 gli editor della pagina; non richiama un LLM e non richiede comandi nel terminale.
+
+
+## Class administration, locks and settings history (#109)
+
+Administrators open Administration → Classes or `/admin/classi` to search all
+classes by name, code or school and filter by owner, institution and active
+status. Each entry shows owner/co-teachers, institution, member count, custom
+settings and lock count. Settings are also reachable at `/admin/classi/{id}`.
+
+The shared Tools & counselors editor saves changes explicitly. Administrators
+can force any editable tool or institutional counselor ON or OFF with an
+immediate per-item lock, optionally recording a reason. Save or reload a pending
+draft before using lock controls. Unlock keeps the last value and returns control
+to teachers. A locked item must be changed through the lock controls or unlocked
+before an ordinary save. Platform-level disable still takes priority over a class
+lock ON; a globally disabled item cannot be newly locked ON. Always-available
+items and private counselors cannot be locked.
+
+Owners and co-teachers see locked items with disabled inputs, a badge and actor/
+time tooltip; category buttons preserve locks. Items last changed by an admin
+show a separate badge. Every actual settings change, lock and unlock is recorded
+with actor, timestamp, old/new values and optional reason in Change history,
+visible only to the class owner, co-teachers and admins. Concurrent changes reject
+stale saves while preserving the browser draft. No-op saves add no audit entry.
+
+Forum option values and locks (student discussion opening and premoderation)
+are stored and displayed with an explicit future-release notice. Their effect
+on forum discussions, and teacher editing of these options, remain the separate
+F3 slice; this release does not activate either forum behavior.

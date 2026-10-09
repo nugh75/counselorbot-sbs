@@ -30,8 +30,10 @@ def as_student(identity):
 def test_settings_put_accepts_forum_options_and_logs_each_change(forum_api):
     client, db, group_id, _ = forum_api
     saved = save_settings(client, group_id, students_can_open=True)
-    assert saved["forum"] == {"students_can_open": True, "students_can_open_locked": False,
-                              "premoderation": False, "premoderation_locked": False}
+    assert {key: saved["forum"][key] for key in ("students_can_open", "students_can_open_locked",
+                                                  "premoderation", "premoderation_locked")} == {
+        "students_can_open": True, "students_can_open_locked": False,
+        "premoderation": False, "premoderation_locked": False}
     saved = save_settings(client, group_id, premoderation=True)
     assert saved["forum"]["premoderation"] is True
     assert saved["forum"]["students_can_open"] is True
@@ -72,14 +74,26 @@ def test_forum_tool_key_is_listed_and_logged_when_switched(forum_api):
 def test_admin_lock_wins_over_the_teacher_forum_option(forum_api):
     client, db, group_id, identity = forum_api
     save_settings(client, group_id, students_can_open=True)
-    db.get(models.ClassSettings, group_id).locked_forum_options = {
-        "students_can_open": {"value": False, "locked_by": "admin", "locked_at": "2026-10-09T00:00:00Z"}}
-    db.commit()
+    act_as(identity, "admin")
+    locked = client.post(f"/admin/groups/{group_id}/settings/lock", json={
+        "target_kind": "forum_option", "target_id": "students_can_open", "state": False})
+    assert locked.status_code == 200, locked.text
     forum = client.get(f"/teacher/groups/{group_id}/settings").json()["forum"]
     assert forum["students_can_open"] is False and forum["students_can_open_locked"] is True
-    # Saving the locked (effective) value does not overwrite the teacher's own choice.
-    save_settings(client, group_id, students_can_open=False)
-    assert db.get(models.ClassSettings, group_id, populate_existing=True).forum_students_can_open is True
+    # S8 model (#109): a teacher save that contradicts the lock is refused.
+    act_as(identity, "owner")
+    path = f"/teacher/groups/{group_id}/settings"
+    current = client.get(path).json()
+    denied = client.put(path, json={"revision": current["revision"], "disabled_tool_keys": [],
+                                    "forum": {"students_can_open": True, "premoderation": False}})
+    assert denied.status_code == 422 and denied.json()["item_id"] == "students_can_open"
+    save_settings(client, group_id, students_can_open=False, premoderation=True)
+    audit = db.query(models.ClassSettingsAuditLog).filter_by(group_id=group_id, target_kind="forum_option").all()
+    assert [(row.action, row.target_id, row.new_value) for row in audit] == [
+        ("setting_change", "students_can_open", {"value": True}),
+        ("lock", "students_can_open", {"value": False, "locked": True}),
+        ("setting_change", "premoderation", {"value": True}),
+    ]
     as_student(identity)
     assert client.post(f"/groups/{group_id}/forum/topics", json={"title": "T", "body": "B"}).status_code == 403
 

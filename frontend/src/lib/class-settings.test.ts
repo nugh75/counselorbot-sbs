@@ -59,3 +59,13 @@ test('an unusable stored default is not offered; filters combine category and na
     assert.deepEqual(filterClassCounselors(counselors, 'maieutic', ' IRI ').map(row => row.id), [3]);
     assert.deepEqual(filterClassCounselors(counselors, '', 'g').map(row => row.id), [2]);
 });
+
+test('lock metadata survives parsing and malformed locks cannot enable controls', () => {
+    const tool = { key: 'QSA', kind: 'instrument', category: 'assessment', label_i18n: {}, admin_enabled: true, enabled: false, always_on: false,
+        locked: true, locked_enabled: false, locked_by: 'admin', locked_at: '2026-10-09T09:00:00Z' };
+    const base = { group_id: 1, revision: 2, tools: [tool], disabled_tool_keys: ['QSA'] };
+    assert.equal(parseClassSettings(base).tools[0].locked, true);
+    for (const metadata of [{ locked: 'true' }, { locked_enabled: 'false' }, { locked_by: 42 }]) {
+        assert.throws(() => parseClassSettings({ ...base, tools: [{ ...tool, ...metadata }] }), /Invalid class settings/);
+    }
+});

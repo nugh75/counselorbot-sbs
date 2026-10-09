@@ -61,10 +61,57 @@ def _post(row, moderator=False, username=None):
     return result
 
 
+def _step_targets(db: Session, group_id: int):
+    return db.query(models.ClassPathStep, models.ClassPath).join(
+        models.ClassPath, models.ClassPath.id == models.ClassPathStep.path_id,
+    ).filter(models.ClassPath.group_id == group_id)
+
+
+def _assignment_targets(db: Session, group_id: int):
+    # Class-wide assignments only: every member reads the discussion, so a
+    # link to an individual assignment would disclose who received it.
+    return db.query(models.TeacherAssignment).filter(
+        models.TeacherAssignment.group_id == group_id, models.TeacherAssignment.recipient_username.is_(None),
+    )
+
+
+def _open_steps(query):
+    return query.filter(models.ClassPath.status == "published", models.ClassPathStep.removed_at.is_(None))
+
+
+def _open_assignments(query):
+    return query.filter(models.TeacherAssignment.revoked_at.is_(None))
+
+
+def _target(kind: str, row, path=None):
+    if kind == "path_step":
+        return {"kind": kind, "id": row.id, "title": row.title, "tool_key": row.tool_key, "path_title": path.title}
+    return {"kind": kind, "id": row.id, "title": (row.snapshot or {}).get("title"), "tool_key": None, "path_title": None}
+
+
+def _link(db: Session, topic):
+    """Resolved on read: archived paths, removed steps and revoked assignments become unavailable."""
+    if topic.link_kind is None:
+        return None
+    if topic.link_kind == "path_step":
+        found = _step_targets(db, topic.group_id).filter(models.ClassPathStep.id == topic.link_id).first()
+        if found:
+            step, path = found
+            return {**_target("path_step", step, path), "available": path.status == "published" and step.removed_at is None}
+    else:
+        row = _assignment_targets(db, topic.group_id).filter(models.TeacherAssignment.id == topic.link_id).first()
+        if row:
+            return {**_target("assignment", row), "available": row.revoked_at is None}
+    return {"kind": topic.link_kind, "id": topic.link_id, "available": False, "title": None, "tool_key": None, "path_title": None}
+
+
 def _topic(db: Session, row, moderator=False, username=None):
+    # Pending topics (#104) stay private to their author and moderators.
+    visible = moderator or (not row.hidden_at and (row.status == "published" or row.author_username == username))
     return {
         **_post(row, moderator, username), "group_id": row.group_id,
-        "title": row.title if moderator or (not row.hidden_at and (row.status == "published" or row.author_username == username)) else None,
+        "title": row.title if visible else None,
+        "link": _link(db, row) if visible else None,
         "pinned": row.pinned, "locked": row.locked, "last_post_at": row.last_post_at,
         "replies_count": db.query(models.ForumPost).filter(
             models.ForumPost.topic_id == row.id, models.ForumPost.status == "published",
@@ -166,14 +213,54 @@ def create_topic(group_id: int, payload: ForumTopicCreate,
     status = _student_write(db, identity, group_id, staff)
     if not staff and not forum_option(db.get(models.ClassSettings, group_id), "students_can_open")[0]:
         raise HTTPException(403, "forum_topic_staff_only")
+    if payload.link_kind is not None:
+        # Only teachers link discussions (plan decision 19), to current targets of this
+        # class; this keeps holding once students may open discussions (#104).
+        if not staff:
+            raise HTTPException(403, "forum_moderator_only")
+        if payload.link_kind == "path_step":
+            target = _open_steps(_step_targets(db, group_id)).filter(models.ClassPathStep.id == payload.link_id)
+        else:
+            target = _open_assignments(_assignment_targets(db, group_id)).filter(models.TeacherAssignment.id == payload.link_id)
+        if target.first() is None:
+            raise HTTPException(422, "forum_link_invalid")
     now = _rate_limit(db, group_id, identity["username"])
     row = models.ForumTopic(group_id=group.id, title=payload.title, body=payload.body, status=status,
+                            link_kind=payload.link_kind, link_id=payload.link_id,
                             created_at=now, last_post_at=now,
                             author_username=identity["username"], author_display_name=identity.get("name") or identity["username"])
     db.add(row)
     db.commit()
     db.refresh(row)
     return _topic(db, row, staff, identity["username"])
+
+
+@router.get("/groups/{group_id}/forum/link-targets")
+def link_targets(group_id: int, identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    _, staff = _access(db, identity, group_id)
+    if not staff:
+        raise HTTPException(403, "forum_moderator_only")
+    steps = _open_steps(_step_targets(db, group_id)).order_by(
+        models.ClassPath.id, models.ClassPathStep.position, models.ClassPathStep.id).all()
+    assignments = _open_assignments(_assignment_targets(db, group_id)).order_by(models.TeacherAssignment.id.desc()).all()
+    return {"targets": [_target("path_step", step, path) for step, path in steps]
+            + [_target("assignment", row) for row in assignments]}
+
+
+@router.get("/user/forum/links")
+def user_forum_links(identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    # Current memberships and class staff only: the resource views must never
+    # expose a discussion the viewer cannot read.
+    memberships = db.query(models.GroupMembership.group_id).filter(models.GroupMembership.username == identity["username"])
+    visible = models.ForumTopic.group_id.in_(memberships)
+    if identity.get("is_admin") or auth.is_teacher(identity.get("groups")) or identity.get("is_researcher"):
+        staff_groups = _visible_group_query(db, identity).with_entities(models.StudentGroup.id)
+        visible = or_(visible, models.ForumTopic.group_id.in_(staff_groups))
+    rows = db.query(models.ForumTopic).filter(
+        visible, models.ForumTopic.status == "published",
+        models.ForumTopic.hidden_at.is_(None), models.ForumTopic.link_kind.isnot(None),
+    ).order_by(models.ForumTopic.id.desc()).all()
+    return {"links": [{"kind": row.link_kind, "id": row.link_id, "topic_id": row.id, "group_id": row.group_id} for row in rows]}
 
 
 @router.get("/forum/topics/{topic_id}")

@@ -70,14 +70,14 @@ test('live F3 options, pending privacy, approve/reject, timed mute and forum dis
         await page.getByRole('button', { name: 'Discussions', exact: true }).click();
         await page.getByRole('button', { name: 'Pending (1)', exact: true }).click();
         await page.getByRole('button', { name: 'Reject', exact: true }).click();
-        await page.getByLabel('Reason', { exact: false }).fill('Off topic');
+        await page.getByLabel(/^Reason \(visible to teachers/).fill('Off topic');
         await page.getByRole('button', { name: 'Reject', exact: true }).last().click();
         await page.getByText('Pending (0)', { exact: true }).waitFor();
         await page.getByRole('button', { name: 'Discussions', exact: true }).click();
         await page.getByRole('button', { name: /F3 discussion/ }).click();
         const article = page.locator('article').filter({ hasText: 'F3 private pending' });
         await article.getByRole('button', { name: 'Mute author', exact: true }).click();
-        await article.getByLabel('Reason', { exact: false }).fill('Please pause');
+        await article.getByLabel(/^Reason \(visible to teachers/).fill('Please pause');
         await article.getByLabel('Until (optional)', { exact: true }).fill('2099-01-01T12:00');
         await article.getByRole('button', { name: 'Mute', exact: true }).click();
         await article.getByRole('button', { name: 'Mute author', exact: true }).waitFor();

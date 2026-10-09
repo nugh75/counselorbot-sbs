@@ -28,6 +28,56 @@ export interface ForumTopic extends ForumPost {
     last_post_at: string;
     replies_count: number;
     unread_count?: number;
+    link?: ForumTarget & { available: boolean } | null;
+}
+
+export interface ForumTarget {
+    kind: 'path_step' | 'assignment';
+    id: number;
+    title: string | null;
+    tool_key: string | null;
+    path_title: string | null;
+}
+
+export interface ForumDiscussionLink {
+    kind: ForumTarget['kind']; id: number; topic_id: number; group_id: number;
+}
+
+function positiveId(value: unknown): boolean {
+    return Number.isSafeInteger(value) && Number(value) > 0;
+}
+
+function parseForumTarget(value: unknown): ForumTarget {
+    const row = record(value);
+    if (!['path_step', 'assignment'].includes(String(row.kind)) || !positiveId(row.id)
+        || !['title', 'tool_key', 'path_title'].every(key => row[key] === null || typeof row[key] === 'string')) {
+        throw new Error('Invalid forum target');
+    }
+    return row as unknown as ForumTarget;
+}
+
+export function parseForumTargets(value: unknown): { targets: ForumTarget[] } {
+    const row = record(value);
+    if (!Array.isArray(row.targets)) throw new Error('Invalid forum targets');
+    return { targets: row.targets.map(parseForumTarget) };
+}
+
+export function parseForumDiscussionLinks(value: unknown): { links: ForumDiscussionLink[] } {
+    const row = record(value);
+    if (!Array.isArray(row.links)) throw new Error('Invalid forum links');
+    return { links: row.links.map(value => {
+        const link = record(value);
+        if (!['path_step', 'assignment'].includes(String(link.kind))
+            || !['id', 'topic_id', 'group_id'].every(key => positiveId(link[key]))) throw new Error('Invalid forum link');
+        return link as unknown as ForumDiscussionLink;
+    }) };
+}
+
+export function forumTargetHref(link: ForumTarget & { available: boolean }, staffGroupId?: number): string | undefined {
+    if (!link.available) return undefined;
+    if (staffGroupId !== undefined) return link.kind === 'path_step'
+        ? `/docente/classi/${staffGroupId}?tab=paths` : `/docente/assegnazioni#assignment-${link.id}`;
+    return link.kind === 'path_step' ? `/profilo/percorsi#class-step-${link.id}` : `/profilo/assegnazioni#assignment-${link.id}`;
 }
 
 export interface ForumList extends ForumState {
@@ -94,6 +144,10 @@ export function parseForumTopic(value: unknown): ForumTopic {
     }
     if (row.unread_count !== undefined && !Number.isInteger(row.unread_count)) {
         throw new Error('Invalid forum topic');
+    }
+    if (row.link !== undefined && row.link !== null) {
+        parseForumTarget(row.link);
+        if (typeof record(row.link).available !== 'boolean') throw new Error('Invalid forum target availability');
     }
     return row as unknown as ForumTopic;
 }
