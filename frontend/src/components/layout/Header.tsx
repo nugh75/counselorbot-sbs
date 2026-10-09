@@ -19,6 +19,8 @@ import { LANGUAGES } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
 import { resumeLabel } from '@/lib/resume-label';
+import { useUserAccess } from '@/lib/use-user-access';
+import { isToolAllowed } from '@/lib/user-access';
 import { useI18n } from '@/lib/i18n-context';
 import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
@@ -37,6 +39,7 @@ const SEPARATOR = 'mx-1 h-5 w-px shrink-0 bg-slate-200 dark:bg-slate-700';
 
 export function Header() {
     const { t } = useI18n();
+    const { access, loading: accessLoading } = useUserAccess();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
     // Le voci "Riprendi" vivono qui e servono due rendering: l'icona su schermi
     // >= xl e il menu mobile. Un solo fetch, lo stesso elenco.
@@ -49,7 +52,7 @@ export function Header() {
     const accountLabel = identity?.name || identity?.email || identity?.username;
     // Console ai4educ: admin -> manager, tutti gli altri (incl. caricamento) -> portale.
     const consoleUrl = identity?.is_admin ? AI4EDUC_MANAGER_URL : AI4EDUC_PORTAL_URL;
-    const canOpenAssistant = canUseAssistant(identity);
+    const canOpenAssistant = canUseAssistant(identity) && !accessLoading && isToolAllowed(access, 'assistant');
     const canOpenResearchConsole = canUseResearchConsole(identity);
     const canOpenPersonalPage = canUsePersonalPage(identity);
 
@@ -64,7 +67,7 @@ export function Header() {
     // di ruolo (Area docente, Amministrazione) stanno solo nel menu.
     const workItems: SecondaryItem[] = [];
     const accountItems: SecondaryItem[] = [];
-    if (isAuthenticated) {
+    if (isAuthenticated && !accessLoading && isToolAllowed(access, 'bussola')) {
         workItems.push({ key: 'orientation', href: '/bussola', icon: Compass, label: t('orientation.landing.open') });
     }
     if (canOpenAssistant) {

@@ -4,6 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { useUserAccess } from '@/lib/use-user-access';
+import { isToolAllowed } from '@/lib/user-access';
 
 const activities = [
     { key: 'compass', image: 'compass', title: 'app.intro.action.compass.label', action: 'app.intro.action.compass.open', anchor: null },
@@ -25,6 +27,7 @@ export function IntroScreen({
     onOpenTools?: (anchor?: string) => void;
 }) {
     const { t } = useI18n();
+    const { access, loading } = useUserAccess();
 
     return (
         <div className="mx-auto max-w-4xl space-y-7 py-4" data-testid="intro-screen">
@@ -36,7 +39,7 @@ export function IntroScreen({
             <section aria-labelledby="intro-start-title" className="space-y-4">
                 <h2 id="intro-start-title" className="font-display text-xl font-semibold text-slate-900">{t('app.intro.entry.choose')}</h2>
                 <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
-                    {activities.map((activity) => (
+                    {activities.filter(activity => activity.key !== 'compass' || (!loading && isToolAllowed(access, 'bussola'))).map((activity) => (
                         <article key={activity.key} className="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-5">
                             <div className="flex items-center gap-4 sm:flex-col sm:items-start sm:gap-3">
                                 <Image
