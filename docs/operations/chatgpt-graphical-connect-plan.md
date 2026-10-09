@@ -14,7 +14,7 @@ Issue [#82](https://github.com/nugh75/counselorbot-sbs/issues/82) aims to enable
 In **Phase 1**, we conducted a technical investigation into whether an entirely browser-only flow (such as RFC 8628 OAuth 2.0 Device Code authorization or direct web redirect callback) is possible using OpenAI's official Sign in with ChatGPT (SIWC) protocol and token sharing preview. 
 
 ### Key Findings
-1. **No Browser-Only Flow Supported:** The official OpenAI authentication issuer (`https://auth.openai.com`) **does not support the Device Authorization Grant (RFC 8628)** (`device_authorization_endpoint: None`). Furthermore, OpenAI's dynamic client registration mechanism (`client_id=dynamic_agent_client`) strictly requires loopback HTTP redirects to `http://127.0.0.1:<port>/auth/callback`. External web redirect URIs (`https://...`) are rejected by OpenAI for dynamic clients.
+1. **No Browser-Only Flow Supported:** The official OpenAI authentication issuer (`https://auth.openai.com`) **does not support the Device Authorization Grant (RFC 8628)** (`device_authorization_endpoint: null`, verified 2026-10-09). The existing helper registers through `client_id=dynamic_agent_client` with a loopback redirect `http://127.0.0.1:<port>/auth/callback`; whether OpenAI also rejects external `https://` redirect URIs for dynamic clients is **unverified** (see §2.2).
 2. **Browser Sandbox Barrier:** Web browsers cannot bind TCP loopback ports due to security sandboxing. Without a local process listening on `127.0.0.1`, OpenAI's OAuth redirect fails with `ERR_CONNECTION_REFUSED`.
 3. **Recommended Path:** A **guided graphical wizard** in `ChatGPTConnectionPanel.tsx` coupled with **native helpers for macOS and Windows** (downloadable with one click and requiring zero terminal/Python commands), retaining the Python CLI as an advanced fallback.
 
@@ -23,11 +23,11 @@ In **Phase 1**, we conducted a technical investigation into whether an entirely 
 ## 2. Investigation: Feasibility of a Browser-Only Flow
 
 ### 2.1 Analysis of Official OpenID Configuration
-We inspected the live OpenID Connect discovery document at `https://auth.openai.com/.well-known/openid-configuration`:
+We inspected the live OpenID Connect discovery document at `https://auth.openai.com/.well-known/openid-configuration` (checked 2026-10-09):
 - **Issuer:** `https://auth.openai.com`
 - **Supported Response Types:** `["code"]`
 - **Supported Grant Types:** `["authorization_code", "refresh_token"]`
-- **Device Authorization Endpoint:** `None` (missing entirely from configuration)
+- **Device Authorization Endpoint:** `null`
 
 RFC 8628 Device Authorization Flow (which allows a user to open an authorization URL on any device, enter an 8-character user code, and have the server poll for token issuance) is **not implemented** by OpenAI for ChatGPT sign-in.
 
@@ -35,9 +35,11 @@ RFC 8628 Device Authorization Flow (which allows a user to open an authorization
 OpenAI's Token Sharing Preview for Open Source introduces dynamic agent registration using `client_id=dynamic_agent_client`.
 Under this protocol:
 1. The client must supply `client_id=dynamic_agent_client`, `agent_name_hint=CounselorBot`, `ext_agent_host_id=<host_id>`, and PKCE parameters (`code_challenge`, `code_challenge_method=S256`).
-2. **Loopback Restriction:** The `redirect_uri` parameter is validated strictly by `auth.openai.com`. It **must** match the pattern `http://127.0.0.1:<port>/auth/callback`.
-3. Supplying a remote HTTPS callback (such as `https://counselorbot.labform.net/api/chatgpt/auth/callback`) with `dynamic_agent_client` results in an immediate OAuth authorization rejection (`invalid_request` or `unsafe_url`).
-4. OpenAI only permits remote web redirect URIs for pre-registered corporate partners with confidential OAuth client IDs and client secrets. This is not available for self-hosted open-source school deployments.
+2. **Loopback Redirect (observed):** The existing helper (`scripts/chatgpt-connect.py`) sends `redirect_uri=http://127.0.0.1:<port>/auth/callback`, and this is the flow known to work end to end.
+3. **Unverified / based on documentation:** Supplying a remote HTTPS callback (such as `https://counselorbot.labform.net/api/chatgpt/auth/callback`) with `dynamic_agent_client` is expected to be rejected by the authorization server. This was not tested and no response was captured; treat it as an assumption, not a finding.
+4. **Unverified / based on documentation:** Remote web redirect URIs are expected to be reserved for registered partners with confidential OAuth clients, which a self-hosted school deployment cannot obtain. No source is cited here; confirm before relying on it.
+
+What is verified: no device-code flow exists (§2.1), and the only working flow today is the loopback one. A remote-redirect browser-only flow would become possible only if points 3-4 proved false; a single authorization request with an HTTPS `redirect_uri` would settle it and can be run at the start of phase 2 without changing the recommended design.
 
 ### 2.3 Evaluation of Manual Address-Bar Copy Fallback
 If CounselorBot opened the OAuth URL with `redirect_uri=http://127.0.0.1:1455/auth/callback` in a popup or new tab without a local listener running:
@@ -54,7 +56,14 @@ According to OpenAI's Token Sharing Open Source preview documentation:
 - **Plan Types:** Plus and Pro personal accounts. (Enterprise, Edu, and Business accounts are not verified or supported in the preview).
 - **Token Transfer:** The preview requires secure loopback token transfer so credentials remain strictly on the user's personal machine before being safely encrypted and stored.
 
-**Verdict:** A pure browser-only flow is technically unsupported by OpenAI SIWC. The project must use a **guided graphical wizard with native OS helpers**.
+**Verdict:** No browser-only flow is available with the verified protocol (no device code; loopback redirect only, see §2.2 for the unverified points). The project should use a **guided graphical wizard with native OS helpers**.
+
+### 2.5 Scope Limitation: Devices That Cannot Connect
+The helper must run as a local process that listens on `127.0.0.1`. That rules out:
+- **Chromebooks** (ChromeOS without a Linux container the user is allowed to enable): no native helper, no browser-only flow.
+- **Mobile devices** (iOS and Android): no native helper, no browser-only flow.
+
+Users on these devices **cannot connect their ChatGPT subscription at all**. They keep using the institution model. The wizard must detect these platforms and say so plainly instead of offering a download that cannot work (for example: *"Il collegamento ChatGPT richiede un computer Windows, macOS o Linux."*).
 
 ---
 
@@ -66,8 +75,9 @@ To eliminate Python downloads and terminal usage for non-technical users, Counse
 | :--- | :--- | :--- | :--- |
 | **macOS** | Native Swift App (`CounselorBot-ChatGPT.zip`) served from `/api/chatgpt/helper/macos` | Retain & integrate into wizard | Download ZIP, open app, paste code, click connect. No Python. |
 | **Windows** | Python CLI only (blocks students/teachers without Python) | Standalone Windows Helper (`CounselorBot-ChatGPT-Windows.zip`) served from `/api/chatgpt/helper/windows` | Download ZIP, double-click `.exe`, paste code, click connect. No Python. |
-| **Linux** | Python CLI (`chatgpt-connect.py`) | Retain Python script; optionally provide standalone binary package | Download or run script. |
+| **Linux** | Python CLI (`chatgpt-connect.py`) | Retain Python script (no standalone package) | Download and run script. |
 | **SSH / Server** | Supported via `--no-browser --callback-port` | Retained under collapsible "Advanced / Manual" tab | Full SSH port-forwarding instructions preserved. |
+| **ChromeOS / iOS / Android** | Not supported | Not supported (see §2.5) | Wizard explains that a desktop computer is required. |
 
 ### 3.1 Windows Native Helper Implementation Options
 1. **PyInstaller Single-File Executable (Recommended):**
@@ -82,6 +92,19 @@ To eliminate Python downloads and terminal usage for non-technical users, Counse
    - Lightweight, standalone binary.
    - Drawback: Requires additional toolchain maintenance compared to Python PyInstaller.
 
+### 3.2 Code Signing & Distribution Trust (Phase 2 Risk)
+A helper that users cannot launch is no better than a terminal command. Unsigned binaries are the main threat to the "zero terminal" goal:
+- **Windows:** an unsigned PyInstaller `.exe` downloaded from the web carries the Mark of the Web. Microsoft Defender SmartScreen shows "Windows protected your PC" and hides the run option behind "More info". School antivirus and endpoint policies often quarantine unsigned PyInstaller binaries outright (the bootloader is a frequent false-positive signature), and managed machines may block unsigned executables by policy (AppLocker / WDAC).
+- **macOS:** the existing Swift helper faces Gatekeeper. Without a Developer ID signature and Apple notarization, macOS refuses to open it on first launch and the user must override it in System Settings → Privacy & Security.
+
+**Requirement (one of):**
+1. **Signing (preferred):** a Windows code-signing certificate (OV or EV; EV or an established OV reputation is what reduces SmartScreen warnings) and an Apple Developer Program membership for Developer ID signing and notarization. The build scripts (`scripts/build-chatgpt-windows.sh`, `scripts/build-chatgpt-macos.sh`) sign the artifacts when the credentials are present.
+2. **Documented operator workaround:** if no certificate is available, the operator documentation and the wizard state the exact unblock steps per OS ("More info → Run anyway"; "Open anyway" in Privacy & Security), and schools are told to allow-list the helper hash or publisher in their antivirus/endpoint policy. This keeps the feature usable but does not meet the zero-friction goal for locked-down school machines.
+
+**Cost and ownership:** certificates are a recurring cost (code-signing certificates are typically a few hundred euros per year; Apple Developer Program is 99 USD per year) and require an identity: the project owner or the hosting institution must hold them, keep the private keys out of the repository and CI logs, and renew them. Who owns them is a decision for the project owner before the Windows helper ships; the plan does not assume it.
+
+**Risk:** without signing or an agreed allow-list, many school users will be unable to run the helper and will fall back to the Python CLI or give up. Tracked as a phase-2 acceptance criterion (§9).
+
 ---
 
 ## 4. Recommended Design: Guided Graphical Wizard
@@ -91,7 +114,7 @@ The new interface transforms `ChatGPTConnectionPanel.tsx` into a 4-state visual 
 ### 4.1 Four Core States
 1. **State 1: Not Connected (`not_connected`)**
    - Displays clear introductory copy: explains personal ChatGPT connection, privacy preservation, zero API billing, and independent model access.
-   - Auto-detects client OS via `navigator.userAgent` to present the optimal helper option.
+   - Auto-detects client OS via `navigator.userAgent` to present the optimal helper option; on ChromeOS, iOS and Android it shows the scope limitation (§2.5) and no connect button.
    - Primary Action: **"Collega ChatGPT"** (`POST /api/user/chatgpt/link`).
 2. **State 2: Waiting for Sign-in (`waiting_for_sign_in`)**
    - Active pairing code displayed in an accessible, highlighted card with 1-click copy.
@@ -166,9 +189,7 @@ The following security properties are strictly maintained and must not be altere
   - Serves `CounselorBot-ChatGPT-Windows.zip` (containing the standalone Windows executable).
   - Requires authenticated session, returns `application/zip` with `Cache-Control: no-store`.
   - Returns 404 if operator has not built/provided the Windows helper.
-- `GET /api/chatgpt/helper/linux`:
-  - Serves `CounselorBot-ChatGPT-Linux.tar.gz` (if standalone Linux distribution is enabled).
-- Extended response for `GET /api/user/chatgpt`:
+- Extended response for `GET /api/user/chatgpt`: the route handler `status()` in `backend/routes/chatgpt.py` (line 112) already merges `"macos_helper_available": macos_helper_available()` into the payload from `chatgpt_connections.status()`; phase 2 adds `"windows_helper_available": windows_helper_available()` in the same merge. `backend/chatgpt_connections.py` is not changed. Linux keeps the Python CLI, so there is no Linux flag.
   ```json
   {
     "available": true,
@@ -176,7 +197,6 @@ The following security properties are strictly maintained and must not be altere
     "connected": false,
     "macos_helper_available": true,
     "windows_helper_available": true,
-    "linux_helper_available": false,
     "email": null,
     "use_subscription": false,
     "model": null,
@@ -204,7 +224,7 @@ The following security properties are strictly maintained and must not be altere
 |  |  senza usare il terminale.                                      |  |
 |  +-----------------------------------------------------------------+  |
 |                                                                       |
-|  [ Inizia collegamento ]                                              |
+|  [ Collega ChatGPT ]                                                  |
 |                                                                       |
 |  > Termini e privacy: le tue chat restano su CounselorBot.           |
 +-----------------------------------------------------------------------+
@@ -217,7 +237,7 @@ The following security properties are strictly maintained and must not be altere
 |                                                                       |
 |  +-----------------------------------------------------------------+  |
 |  |  PASSO 1: Scarica l'assistente per il tuo computer              |  |
-|  |  [ Scarica per Windows (ZIP) ]   (oppure: macOS / Linux)        |  |
+|  |  [ Scarica per Windows (ZIP) ]   (oppure: macOS / Python)       |  |
 |  +-----------------------------------------------------------------+  |
 |  |  PASSO 2: Inserisci il codice di associazione                   |  |
 |  |                                                                 |  |
@@ -308,6 +328,7 @@ The following security properties are strictly maintained and must not be altere
    - Copy button writes pairing code to clipboard.
    - Cancel button cleanly resets panel to State 1.
    - Helper download links adapt to detected OS.
+   - ChromeOS / iOS / Android user agents show the unsupported-device message and no connect button.
    - Successful pairing -> model selector populated -> save preference.
    - Error injection (expired code / timeout) -> verify error alert and "Riprova" button resumes pairing.
 
@@ -317,14 +338,27 @@ The following security properties are strictly maintained and must not be altere
 
 Once this Phase 1 design plan is approved by the user, Phase 2 will execute the following steps:
 1. **Backend:**
-   - Implement `windows_helper_available()` and `GET /api/chatgpt/helper/windows` in `backend/routes/chatgpt.py`.
-   - Update `status()` payload in `backend/chatgpt_connections.py` with `windows_helper_available`.
+   - Implement `windows_helper_available()` and `GET /api/chatgpt/helper/windows` in `backend/routes/chatgpt.py`, next to `macos_helper_available()` and `GET /api/chatgpt/helper/macos`.
+   - Merge `"windows_helper_available": windows_helper_available()` into the route handler `status()` in `backend/routes/chatgpt.py:112`, next to `macos_helper_available()`. `chatgpt_connections.status()` stays unchanged.
    - Add backend tests in `backend/tests/test_chatgpt_windows_helper.py`.
-2. **Windows Helper Packaging:**
+2. **Windows Helper Packaging & Signing:**
    - Create Windows standalone helper build script (`scripts/build-chatgpt-windows.sh`) and operator documentation.
+   - Apply the signing requirement of §3.2 (sign when credentials are present; otherwise document the operator workaround).
 3. **Frontend:**
-   - Refactor `ChatGPTConnectionPanel.tsx` into the guided 4-state graphical wizard with OS auto-detection.
+   - Refactor `ChatGPTConnectionPanel.tsx` into the guided 4-state graphical wizard with OS auto-detection, including the unsupported-device message for ChromeOS, iOS and Android (§2.5).
    - Add internationalized strings across all 6 language dictionaries in `frontend/src/lib/i18n-chatgpt.ts` and `backend/chatgpt_i18n.json`.
    - Update Playwright test suite in `frontend/tests/chatgpt-subscription.test.mjs`.
 4. **Documentation & Validation:**
    - Update `docs/operations/chatgpt-subscription.md`, product guide, and run `make guidance-refresh` / `make guidance-check`.
+
+### 9.1 Phase 2 Acceptance Criteria (Distribution Trust)
+- On a clean Windows 10/11 machine with default Defender settings, the downloaded helper starts either without a SmartScreen block (signed build) or with the documented, tested unblock steps shown in the wizard and the operator guide.
+- On macOS, the helper opens either without a Gatekeeper refusal (Developer ID signed and notarized) or with documented, tested override steps.
+- The owner of the signing certificates and the yearly cost are recorded in the operator documentation, or the decision to ship unsigned with the workaround is recorded explicitly.
+- ChromeOS, iOS and Android users see the scope-limitation message and no download button.
+
+### 9.2 Phase 2 Slicing
+Phase 2 will be split by a planner into 2-3 issues, not created as part of this plan:
+1. Backend + Windows packaging/signing (helper endpoint, status flag, build script, signing or workaround).
+2. Frontend 4-state wizard (panel, OS detection, unsupported-device message, i18n, Playwright).
+3. Documentation (operator guide, product guide, guidance refresh); may be folded into the first two.
