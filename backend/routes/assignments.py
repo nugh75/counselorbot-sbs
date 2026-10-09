@@ -16,9 +16,17 @@ from .groups import _require_visible_group, _visible_group_query
 router = APIRouter()
 
 
-class AssignmentWrite(Strict):
-    source_kind: Literal['goal', 'strategy', 'reading']
+class AttachmentWrite(Strict):
+    source_kind: Literal['strategy', 'reading']
     source_id: int = Field(gt=0)
+
+
+class AssignmentWrite(Strict):
+    # A published catalog goal is always the anchor; strategies and readings can
+    # only travel with it as optional attachments.
+    source_kind: Literal['goal'] = 'goal'
+    source_id: int = Field(gt=0)
+    attachments: list[AttachmentWrite] = Field(default_factory=list, max_length=20)
     group_id: int = Field(gt=0)
     recipient_username: str | None = Field(default=None, min_length=1, max_length=200)
     instructions: str = Field(default='', max_length=3000)
@@ -29,41 +37,49 @@ class AssignmentWrite(Strict):
     response_prompt: str = Field(default='', max_length=1500)
 
 
+def _localized(row, field, language):
+    values = getattr(row, field + '_i18n', None) or {}
+    for candidate in dict.fromkeys([language, 'it', 'en', 'es', 'fr', 'de', 'sv']):
+        value = values.get(candidate) or getattr(row, f'{field}_{candidate}', None)
+        if value:
+            return value
+    return ''
+
+
+def _goal_snapshot(db, payload):
+    row = db.get(models.GoalCatalogEntry, payload.source_id)
+    if row is None or row.status != 'published' or row.group_id not in (None, payload.group_id):
+        raise HTTPException(404, 'Published content unavailable for this group')
+    data = row.data
+    return dict(title=data['title'], description=data.get('description', ''),
+                details='\n\n'.join(filter(None, [data.get('criteria'), data.get('suggestions')])),
+                language=data.get('language', 'it'), version=row.version, kind='goal')
+
+
+def _attachment_snapshot(db, attachment, language):
+    """Minimal public fields only: an invalid attachment returns a safe 404."""
+    if attachment.source_kind == 'strategy':
+        row = db.get(models.CertifiedStrategy, attachment.source_id)
+        if row is None or row.status != 'certified' or not row.is_active:
+            raise HTTPException(404, 'Attachment unavailable')
+        return dict(kind='strategy', source_id=row.id, title=_localized(row, 'name', language) or row.slug)
+    row = db.get(models.CertifiedReading, attachment.source_id)
+    if row is None or row.status != 'certified' or not row.is_active:
+        raise HTTPException(404, 'Attachment unavailable')
+    return dict(kind='reading', source_id=row.id, title=row.title)
+
+
 def _snapshot(db, payload):
     """Only server-owned public fields are delivered; later catalog edits cannot rewrite them."""
-    if payload.source_kind == 'goal':
-        row = db.get(models.GoalCatalogEntry, payload.source_id)
-        if row is None or row.status != 'published' or row.group_id not in (None, payload.group_id):
-            raise HTTPException(404, 'Published content unavailable for this group')
-        data = row.data
-        return dict(title=data['title'], description=data.get('description', ''),
-                    details='\n\n'.join(filter(None, [data.get('criteria'), data.get('suggestions')])),
-                    language=data.get('language', 'it'), version=row.version, kind='goal')
-    model = models.CertifiedStrategy if payload.source_kind == 'strategy' else models.CertifiedReading
-    row = db.get(model, payload.source_id)
-    if row is None or row.status != 'certified' or not row.is_active:
-        raise HTTPException(404, 'Published content unavailable')
-
-    def localized(field):
-        values = getattr(row, field + '_i18n', None) or {}
-        for language in dict.fromkeys([payload.language, 'it', 'en', 'es', 'fr', 'de', 'sv']):
-            value = values.get(language) or getattr(row, f'{field}_{language}', None)
-            if value:
-                return value
-        return ''
-
-    if payload.source_kind == 'strategy':
-        return dict(title=localized('name') or row.slug, description=localized('description'),
-                    details=localized('recommended_when'), source_reference=row.source_reference or '', kind='strategy')
-    return dict(title=row.title, description=localized('synopsis') or localized('summary'),
-                details=localized('why'), kind=row.kind, creators=row.creators or [], year=row.year,
-                where_to_find=row.where_to_find or '', content_warning=row.content_warning or '',
-                source_reference=row.source_reference or '')
+    goal = _goal_snapshot(db, payload)
+    goal['attachments'] = [_attachment_snapshot(db, item, payload.language) for item in payload.attachments]
+    return goal
 
 
 def _record(row, recipient_count=None, settings=None):
     data = {key: getattr(row, key) for key in ('id', 'author_username', 'author_name', 'group_id',
-            'group_name', 'source_kind', 'source_id', 'snapshot', 'instructions', 'created_at', 'revoked_at')}
+            'group_name', 'source_kind', 'source_id', 'snapshot', 'attachments', 'instructions', 'created_at', 'revoked_at')}
+    data['attachments'] = row.attachments or []
     # The recipient list / individual target is available only to the sender.
     if recipient_count is not None:
         data.update(recipient_username=row.recipient_username, recipient_count=recipient_count)
@@ -101,8 +117,9 @@ def targets(db: Session = Depends(database.get_db), user=Depends(auth.get_curren
 def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), user=Depends(auth.get_current_plan_manager)):
     group = _managed_group(db, user, payload.group_id)
     values = payload.model_dump(mode='json')
-    # Preserve retries from clients predating the additive learning settings.
-    for field, default in [('intent', 'proposal'), ('due_date', None), ('response_prompt', '')]:
+    # Preserve retries from clients predating the additive learning settings
+    # and attachments: a request without them keeps the same hash as before.
+    for field, default in [('intent', 'proposal'), ('due_date', None), ('response_prompt', ''), ('attachments', [])]:
         if values[field] == default:
             values.pop(field)
     digest = hashlib.sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
@@ -124,7 +141,8 @@ def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), use
     row = models.TeacherAssignment(author_username=user['username'], author_name=user.get('name') or user['username'],
         group_id=group.id, group_name=group.name, recipient_username=payload.recipient_username,
         source_kind=payload.source_kind, source_id=payload.source_id, snapshot=snapshot,
-        instructions=payload.instructions, request_id=payload.request_id, request_hash=digest)
+        attachments=snapshot['attachments'], instructions=payload.instructions,
+        request_id=payload.request_id, request_hash=digest)
     db.add(row); db.flush()
     settings = models.AssignmentLearningSettings(assignment_id=row.id, intent=payload.intent,
         due_date=payload.due_date, response_prompt=payload.response_prompt)

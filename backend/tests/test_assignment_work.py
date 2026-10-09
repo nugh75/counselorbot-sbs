@@ -12,7 +12,8 @@ from backend.visual_tools import load_workspace, save_workspace, SavePersonalWor
 
 
 def assign_and_plan(c, who, group, sources, **options):
-    result = c.post('/teacher/assignments', json=body(group, sources['reading'], 'reading', **options))
+    options.setdefault('attachments', [{'source_kind': 'reading', 'source_id': sources['reading'].id}])
+    result = c.post('/teacher/assignments', json=body(group, sources['goal'], **options))
     assert result.status_code == 201, result.text
     assignment = result.json()
     as_student(who)
@@ -169,11 +170,11 @@ def test_students_and_other_teachers_cannot_read_or_write_others_work(setup):
 
 def test_legacy_settings_and_request_retries(setup):
     db, c, who, group, _, sources = setup
-    payload = body(group, sources['strategy'], 'strategy')
+    payload = body(group, sources['goal'])
     first = c.post('/teacher/assignments', json=payload).json()
     settings = db.get(models.AssignmentLearningSettings, first['id'])
     db.delete(settings)
-    old_payload = AssignmentWrite(**payload).model_dump(exclude={'intent', 'due_date', 'response_prompt'})
+    old_payload = AssignmentWrite(**payload).model_dump(exclude={'intent', 'due_date', 'response_prompt', 'attachments'})
     db.get(models.TeacherAssignment, first['id']).request_hash = hashlib.sha256(json.dumps(old_payload, sort_keys=True).encode()).hexdigest()
     db.commit()
     response = c.post('/teacher/assignments', json=payload)

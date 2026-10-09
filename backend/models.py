@@ -584,6 +584,8 @@ class TeacherAssignment(Base):
     source_kind = Column(String, nullable=False)
     source_id = Column(Integer, nullable=False)
     snapshot = Column(JSON, nullable=False)
+    # Optional add-ons delivered with the goal: [{source_kind, source_id, title}].
+    attachments = Column(JSON, nullable=True, default=list)
     instructions = Column(Text, nullable=False, default="")
     request_id = Column(String, nullable=False)
     request_hash = Column(String, nullable=False)
