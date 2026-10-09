@@ -675,7 +675,8 @@ fields from #93.
 **Telegram bot and class access (S7, #94).** The Telegram bot uses the same
 resolved access as the web. `/strumenti` and `/nuovo` list only the instruments
 the linked student may start; `/counselor` lists only the counselors their
-classes allow. Choosing a disabled instrument, confirming scores, typing scores
+classes allow. When no instrument is left, the menu says so («No instruments are
+enabled for your class at the moment»). Choosing a disabled instrument, confirming scores, typing scores
 or messages, `/pqbl`, pQBL answers and uploads, «Resume», «Next» and `/stato`
 are refused when the class (or the platform) disables the tool: the bot answers
 «This instrument is not enabled for your class» (or «currently unavailable» for
