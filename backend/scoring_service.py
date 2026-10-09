@@ -178,6 +178,15 @@ def _assert_locale_available(db: Session, instrument_code: str, locale: str) -> 
     return statuses[locale]
 
 
+def locale_available(db: Session, instrument_code: str, locale: str) -> bool:
+    """True when this exact instrument locale can be administered in app."""
+    try:
+        _assert_locale_available(db, instrument_code, locale)
+    except ScoringError:
+        return False
+    return True
+
+
 def _label_for(factor: models.Factor, locale: str) -> str:
     # Nessun ripiego sull'inglese: un fattore senza etichetta nella lingua servita
     # mostra il codice, che e' neutro. L'inglese sarebbe una schermata mista.
