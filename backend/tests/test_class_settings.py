@@ -4,7 +4,7 @@ import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
@@ -50,7 +50,10 @@ def test_absent_settings_enable_all_and_include_only_student_instruments(setting
     assert tools["OFF"]["enabled"] is False
     assert {row["key"] for row in body["tools"] if row["always_on"]} == {"notebook", "results", "classes", "assignments"}
     assert body["default_counselor_id"] is None
-    assert body["forum"] == {"students_can_open": False, "premoderation": False}
+    assert body["forum"] == {"students_can_open": False, "premoderation": False,
+                             "students_can_open_locked": False, "students_can_open_lock": None,
+                             "students_can_open_changed_by_admin": False, "premoderation_locked": False,
+                             "premoderation_lock": None, "premoderation_changed_by_admin": False}
     assert db.query(models.ClassSettings).count() == 0, "GET must not create settings"
 
 
@@ -146,7 +149,8 @@ def test_future_forum_and_lock_writes_are_not_accepted(settings_api, changes):
 
 
 @pytest.mark.parametrize("existing", [False, True])
-def test_concurrent_saves_have_one_winner_even_before_first_settings_row(existing):
+@pytest.mark.parametrize("admin_lock", [False, True])
+def test_concurrent_saves_have_one_winner_even_before_first_settings_row(existing, admin_lock):
     """Independent committed connections exercise the real Postgres row lock."""
     url = os.environ['DATABASE_URL']
     assert database.engine.url.database == 'counselorbot_test'
@@ -172,9 +176,11 @@ def test_concurrent_saves_have_one_winner_even_before_first_settings_row(existin
         app = FastAPI()
         app.include_router(groups.router)
         app.dependency_overrides[database.get_db] = test_db
-        app.dependency_overrides[auth.get_current_user] = lambda: {
-            'username': 'owner', 'groups': ['docenti'], 'is_admin': False, 'authenticated': True,
-        }
+        def identity(request: Request):
+            is_admin = request.headers.get('X-Synthetic-Admin') == '1'
+            return {'username': 'root' if is_admin else 'owner', 'groups': ['docenti'],
+                    'is_admin': is_admin, 'authenticated': True}
+        app.dependency_overrides[auth.get_current_user] = identity
         path = f'/teacher/groups/{group_id}/settings'
         with TestClient(app) as client:
             start = Barrier(2)
@@ -183,10 +189,25 @@ def test_concurrent_saves_have_one_winner_even_before_first_settings_row(existin
                 # backend workers do; a shared loop would serialize sync SQL.
                 with TestClient(app) as writer:
                     start.wait(timeout=10)
+                    if admin_lock and key == 'goals':
+                        return writer.post(f'/admin/groups/{group_id}/settings/lock',
+                                           headers={'X-Synthetic-Admin': '1'},
+                                           json={'target_kind': 'tool', 'target_id': 'tavolo', 'state': True})
                     return writer.put(path, json={'revision': 1, 'disabled_tool_keys': [key]})
 
             with ThreadPoolExecutor(max_workers=2) as pool:
                 results = list(pool.map(save, ['tavolo', 'goals']))
+            if admin_lock:
+                assert results[1].status_code == 200
+                assert results[0].status_code in {200, 409}
+                latest = client.get(path).json()
+                tavolo = next(row for row in latest['tools'] if row['key'] == 'tavolo')
+                assert tavolo['enabled'] is True and tavolo['locked'] is True
+                assert 'tavolo' not in latest['disabled_tool_keys']
+                assert latest['revision'] == (3 if results[0].status_code == 200 else 2)
+                log = client.get(path + '/audit-log').json()
+                assert log[0]['action'] == 'lock'
+                return
             assert sorted(response.status_code for response in results) == [200, 409]
             winner = next(response.json() for response in results if response.status_code == 200)
             latest = client.get(path).json()

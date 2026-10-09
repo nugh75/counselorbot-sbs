@@ -1544,7 +1544,17 @@ class GroupJoinRequest(BaseModel):
     code: str
 
 
-class ClassSettingsUpdate(BaseModel):
+class ClassSettingsReason(BaseModel):
+    reason: Optional[str] = Field(default=None, max_length=500)
+
+    @validator("reason")
+    def validate_settings_reason(cls, value):
+        if value and re.search(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", value):
+            raise ValueError("Control characters are not allowed")
+        return value
+
+
+class ClassSettingsUpdate(ClassSettingsReason):
     """S1 accepts tool/counselor choices; forum and locks belong to later slices."""
     model_config = {"extra": "forbid"}
 
@@ -1552,6 +1562,18 @@ class ClassSettingsUpdate(BaseModel):
     disabled_tool_keys: List[str]
     disabled_counselor_ids: Optional[List[StrictInt]] = None
     default_counselor_id: Optional[int] = Field(default=None, strict=True)
+
+
+class ClassSettingsLockTarget(ClassSettingsReason):
+    """Admin lock/unlock target (#109)."""
+    model_config = {"extra": "forbid"}
+
+    target_kind: Literal["tool", "counselor", "forum_option"]
+    target_id: str = Field(min_length=1, max_length=100)
+
+
+class ClassSettingsLock(ClassSettingsLockTarget):
+    state: bool = Field(strict=True)
 
 
 class StudentGroupCreate(BaseModel):
