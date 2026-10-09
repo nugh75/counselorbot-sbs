@@ -9,7 +9,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, auth, database, prompt_revisions, personal_api
+from .. import models, schemas, auth, database, prompt_revisions, personal_api, class_access
 from ..counselor_i18n import localized_description, localized_tagline, translate_counselor_async, translate_counselor_sync
 from ..counselor_identity import get_all_approach_categories, recommend_counselor
 from ..counselor_scope import restricted_instruments, suits
@@ -71,6 +71,10 @@ async def list_public_counselors(
         .filter(models.Counselor.is_active.is_(True))
         .order_by(models.Counselor.sort_order.asc(), models.Counselor.id.asc())
     )
+    # Restricted students see only the counselors their classes allow (#93).
+    allowed = class_access.allowed_counselor_ids(db, identity)
+    if allowed is not None:
+        q = q.filter(models.Counselor.id.in_(allowed))
     if language:
         # Filter counselors whose language list contains '*' (all) or the specific code.
         # The language column stores a JSON array as text; we match by string pattern.
@@ -154,6 +158,7 @@ async def recommend_counselor_post(
         questionnaire_type=payload.questionnaire_type,
         audience=payload.audience,
         username=username,
+        allowed_ids=class_access.allowed_counselor_ids(db, identity),
     )
 
 
@@ -174,6 +179,7 @@ async def recommend_counselor_get(
         questionnaire_type=questionnaire_type,
         audience=audience,
         username=username,
+        allowed_ids=class_access.allowed_counselor_ids(db, identity),
     )
 
 
@@ -191,6 +197,7 @@ async def search_counselors_post(
         questionnaire_type=payload.questionnaire_type,
         audience=payload.audience,
         username=username,
+        allowed_ids=class_access.allowed_counselor_ids(db, identity),
     )
 
 
@@ -211,6 +218,7 @@ async def search_counselors_get(
         questionnaire_type=questionnaire_type,
         audience=audience,
         username=username,
+        allowed_ids=class_access.allowed_counselor_ids(db, identity),
     )
 
 
