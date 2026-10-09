@@ -672,6 +672,22 @@ fields from #93.
 
 **Class-filtered student catalog (S3, #90).** The student interface now gates all tool entry points using the resolved access from `GET /user/access`. Cached once per browser session in sessionStorage and in-memory, the resolved access filters tools on top of `resolveActiveStudentTools`. Students in restricted classes see only tools enabled for their classes across the home questionnaire selector and ReturningHome cards; disabled tools produce no cards and are omitted from upcoming sections. Navigating directly to `/strumenti/[id]` for a disabled tool presents a dedicated 'not enabled for your class' panel with a button back to the catalog. Deep links via `?start=` or `?q=` targeting a disabled tool notify the student with a clear toast warning and fall back to the catalog. Frozen sessions for disabled tools are hidden from the header Resume menu and ReturningHome; attempting a direct resume link triggers an informative error toast and safely returns to the catalog. Unrestricted students and staff continue to see the complete catalog without filtering.
 
+**Telegram bot and class access (S7, #94).** The Telegram bot uses the same
+resolved access as the web. `/strumenti` and `/nuovo` list only the instruments
+the linked student may start; `/counselor` lists only the counselors their
+classes allow. When no instrument is left, the menu says so («No instruments are
+enabled for your class at the moment»). Choosing a disabled instrument, confirming scores, typing scores
+or messages, `/pqbl`, pQBL answers and uploads, «Resume», «Next» and `/stato`
+are refused when the class (or the platform) disables the tool: the bot answers
+«This instrument is not enabled for your class» (or «currently unavailable» for
+a platform-disabled instrument) in the student's language and closes the flow,
+so a disabled session cannot be resumed; `/start` no longer offers «Resume» for
+it. The check runs before anything is written: confirmed scores of a disabled
+instrument are not saved. A group link proposes its instrument only when it is
+enabled. Students without a class keep the platform catalog; administrators are
+not filtered by classes, and an instrument disabled on the platform is closed in
+the bot for everyone (the bot has no admin preview).
+
 **Personal-area tools per class (S4, #91).** In the **Personal area** section of
 the Tools & counselors tab, teachers can turn off Tavolo, Goals, Actions,
 Timeline, Portfolio, pQBL, Flashcards, Cards and Comparison for a class.
