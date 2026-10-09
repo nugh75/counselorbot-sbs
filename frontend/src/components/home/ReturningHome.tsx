@@ -3,7 +3,7 @@
 // Catalogo e strumenti personali precedono le attività da riprendere.
 // Le aree personali restano nella pagina personale, non in questa home.
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { CompassEntry } from '@/components/home/CompassEntry';
@@ -11,7 +11,7 @@ import { resumeLabel } from '@/lib/resume-label';
 import { PersonalAreaEntry } from '@/components/home/PersonalAreaEntry';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { ArrowLeft, BookOpen, RotateCcw } from 'lucide-react';
+import { ArrowLeft, BookOpen, ChevronRight, RotateCcw } from 'lucide-react';
 import { QuestionnaireConfig, QuestionnaireType } from '@/lib/questionnaires';
 import { useI18n } from '@/lib/i18n-context';
 import { cn } from '@/lib/utils';
@@ -20,18 +20,27 @@ import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { getDynamicToolCategories, resolveActiveStudentTools } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
 import { useUserAccess } from '@/lib/use-user-access';
+import { ClassPathHeroCard } from '@/components/profile/ClassPathHeroCard';
+import { parseStudentClassPaths, selectCurrentClassPath, type StudentClassPath } from '@/lib/class-paths';
+import { classPathText } from '@/lib/i18n-class-paths';
+import { useCollapsedCatalog } from '@/lib/use-collapsed-catalog';
+import { apiFetch } from '@/lib/auth';
 
 interface Props {
     // Ultima compilazione per strumento, in ISO; assente = mai compilato.
     lastCompiledAt: Partial<Record<QuestionnaireType, string>>;
     onStartInstrument: (questionnaire: QuestionnaireConfig) => void;
     onOpenIntro: () => void;
+    paths?: StudentClassPath[] | null;
+    onRefreshPaths?: () => Promise<void> | void;
 }
 
 export function ReturningHome({
     lastCompiledAt,
     onStartInstrument,
     onOpenIntro,
+    paths,
+    onRefreshPaths,
 }: Props) {
     const { t, tf, lang } = useI18n();
     const resumeEntries = useResumeEntries();
@@ -39,6 +48,46 @@ export function ReturningHome({
     const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
     const { access } = useUserAccess();
     const formatDate = (iso: string) => new Date(iso).toLocaleDateString(lang);
+
+    const [internalPaths, setInternalPaths] = useState<StudentClassPath[] | null>(paths ?? null);
+
+    useEffect(() => {
+        if (paths !== undefined) {
+            setInternalPaths(paths);
+            return;
+        }
+        let alive = true;
+        apiFetch('/api/user/paths')
+            .then((res) => (res.ok ? res.json() : []))
+            .then((data) => {
+                if (alive) setInternalPaths(parseStudentClassPaths(data));
+            })
+            .catch(() => {
+                if (alive) setInternalPaths([]);
+            });
+        return () => { alive = false; };
+    }, [paths]);
+
+    const handleReloadPaths = async () => {
+        if (onRefreshPaths) {
+            await onRefreshPaths();
+        } else {
+            try {
+                const res = await apiFetch('/api/user/paths');
+                if (res.ok) {
+                    const data = await res.json();
+                    setInternalPaths(parseStudentClassPaths(data));
+                }
+            } catch {
+                // ignore
+            }
+        }
+    };
+
+    const activePaths = internalPaths ?? paths ?? [];
+    const currentPath = useMemo(() => selectCurrentClassPath(activePaths), [activePaths]);
+    const hasActivePath = Boolean(currentPath);
+    const { isOpen: catalogOpen, toggle: toggleCatalog, isCollapsible } = useCollapsedCatalog('cb_home_catalog_open', hasActivePath);
 
     const activeTools = useMemo(() => {
         return resolveActiveStudentTools(instrumentCatalog, lang, access);
@@ -53,6 +102,53 @@ export function ReturningHome({
     }, [activeTools, instrumentCatalog]);
     return (
         <div className="flex flex-col gap-5 py-2">
+            {currentPath && (
+                <section aria-labelledby="home-class-path-title">
+                    <h2 id="home-class-path-title" className="sr-only">
+                        {classPathText(lang, 'yourClassPath')}
+                    </h2>
+                    <ClassPathHeroCard
+                        path={currentPath}
+                        totalPathsCount={activePaths.length}
+                        onReload={handleReloadPaths}
+                    />
+                </section>
+            )}
+
+            {isCollapsible && (
+                <button
+                    type="button"
+                    onClick={toggleCatalog}
+                    aria-expanded={catalogOpen}
+                    aria-controls="home-catalog-section"
+                    data-testid="toggle-catalog-btn"
+                    className="group flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white p-4 text-left transition-colors hover:border-indigo-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 dark:border-slate-800 dark:bg-slate-900"
+                >
+                    <div className="flex min-w-0 items-center gap-3">
+                        <ChevronRight
+                            className={cn("h-5 w-5 shrink-0 text-slate-500 transition-transform dark:text-slate-400", catalogOpen && "rotate-90")}
+                            aria-hidden
+                        />
+                        <div className="flex min-w-0 flex-wrap items-baseline gap-2">
+                            <span className="font-bold text-slate-900 group-hover:text-indigo-700 dark:text-white dark:group-hover:text-indigo-400">
+                                {classPathText(lang, 'allTools')}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                                {classPathText(lang, 'allToolsCollapsedHelp')}
+                            </span>
+                        </div>
+                    </div>
+                    <span className="shrink-0 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                        {catalogOpen ? classPathText(lang, 'hideCatalog') : classPathText(lang, 'showCatalog')}
+                    </span>
+                </button>
+            )}
+
+            <div
+                id="home-catalog-section"
+                hidden={isCollapsible && !catalogOpen}
+                className="flex flex-col gap-5"
+            >
             <section className="order-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-3">
@@ -205,6 +301,7 @@ export function ReturningHome({
             )}
 
 
+            </div>
             </div>
         </div>
     );
