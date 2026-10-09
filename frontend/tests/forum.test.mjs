@@ -218,14 +218,14 @@ test('unread marker renders on topic and opening topic triggers mark read', asyn
         if (url.pathname === '/api/user/account-preferences') return route.fulfill({ json: { setup_completed: true, counselor_ready: true, notebook_ready: true } });
         if (url.pathname === '/api/orientation/status') return route.fulfill({ json: { required: false } });
         if (url.pathname.includes('/groups/102/forum/topics')) {
-            return route.fulfill({ json: { group: { id: 102, name: 'Synthetic class', is_active: true }, can_open_topic: false, topics: [unreadTopic], has_more: false } });
+            return route.fulfill({ json: { group: { id: 102, name: 'Synthetic class', is_active: true }, can_open_topic: false, can_moderate: false, topics: [unreadTopic], has_more: false } });
         }
         if (url.pathname === '/api/forum/topics/102/read') {
             readCalled = true;
             return route.fulfill({ json: { ok: true } });
         }
         if (url.pathname === '/api/forum/topics/102') {
-            return route.fulfill({ json: { topic: unreadTopic, posts: [], can_reply: true, has_more: false } });
+            return route.fulfill({ json: { topic: unreadTopic, posts: [], can_reply: true, can_moderate: false, has_more: false } });
         }
         return route.fulfill({ json: [] });
     });
