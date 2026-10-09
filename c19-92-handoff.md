@@ -11,7 +11,8 @@ open one draft PR. Review is optional; merge and deployment are not authorized.
 - Branch: `feature/class-bussola-assistant-toggles-84`.
 - Verified base/default HEAD: `b604e22c86c4102d35265c8c7f07cc8820e286f8`.
 - Prerequisites #112, #123 and #124 are MERGED and ancestors of the base.
-- Task: `8628398c-ee18-4b1d-ae7c-851e5552f99f`; currently open during delivery.
+- Task: `8628398c-ee18-4b1d-ae7c-851e5552f99f`; delivery complete.
+  Journal auto-closure is the final action after this handoff is pushed.
 - No other agents, successor tasks, main-checkout changes, production actions,
   secrets/environment-file access or destructive Git operations.
 
@@ -24,7 +25,8 @@ open one draft PR. Review is optional; merge and deployment are not authorized.
 - [x] Preserve integrated resolver inheritance, union, locks, staff and ownership.
 - [x] Update feature reference, six-language Guide and guidance manifest.
 - [x] Finish all required checks and review the staged implementation diff.
-- [ ] Push, publish the draft PR, notify the project and close the journal task.
+- [x] Push and open draft PR #125 on the CounselorBot board, with `Closes #92`.
+- [x] Attempt the mandatory project notification; no mobile delivery (see below).
 
 ## Validation
 - TypeScript, 334 frontend unit tests, i18n (3273 keys / six languages), touched-file
@@ -46,8 +48,10 @@ open one draft PR. Review is optional; merge and deployment are not authorized.
 Backend orientation analysis/routes and Assistant guard; PostgreSQL orientation
 fixtures and support tests; frontend Header, Compass/Assistant pages, home/goals
 entries, localized Guide; product reference, guidance manifest, validation docs.
-Implementation commit: `ac5bc32` (`feat: enforce class access for Compass and
-Assistant`). PR reference and notification will be recorded after publication.
+Commits: `ac5bc32` (feature), `221b457` (validation documentation), followed by
+this delivery handoff update. Draft PR: https://github.com/nugh75/counselorbot-sbs/pull/125.
+Notification CLI returned exit 0 but mobile delivery was disabled because
+`NTFY_TOPIC` is not configured. No delivery is claimed.
 
 ## Registered bugs
 All entries are local Diario records; registration does not imply a GitHub issue.
@@ -71,7 +75,8 @@ All entries are local Diario records; registration does not imply a GitHub issue
 - Guidance tests assumed unconditional QSA and only static one-segment routes:
   updated to the enabled starting rule and dynamic-route normalization.
 - Separate dev/build snapshots avoid Next build interference and environment files.
-- Remaining blockers: none. Publication and journal closure are the final steps.
+- Remaining blockers: none. Eight suspected dependency advisories remain
+  outside #92; no review, merge or deployment was performed.
 
 ## Decision Log
 - Reuse existing catalog keys and resolver; no new access abstraction or schema.
@@ -88,4 +93,6 @@ Own dev processes stopped after cwd verification:
 Frontend validation container stopped; loopback 3175 is free.
 The synthetic PostgreSQL container was stopped with
 `docker stop c19-bussola-92-postgres`; all owned dev processes are stopped.
-PR notification and journal closure will be recorded after publication.
+Final journal command, executed after this handoff is pushed:
+`node /home/nugh75/ai4educ-console/scripts/journal-cli.mjs update-task counselorbot-sbs 8628398c-ee18-4b1d-ae7c-851e5552f99f --state fatto --agent-name c19-bussola-assistant-92`.
+Review/merge remain with the user; no successor is authorized.
