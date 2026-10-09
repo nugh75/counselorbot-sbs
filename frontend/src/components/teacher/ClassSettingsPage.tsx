@@ -23,6 +23,7 @@ import { ClassPathsTab } from './ClassPathsTab';
 import { useTeacherAccessState } from './useTeacherAccessState';
 import { useTeacherResource } from './useTeacherResource';
 import { parseClassGroups } from './class-group-types';
+import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
 
 type TextKey = keyof typeof classSettingsTexts;
 const categories = ['assessment', 'guided', 'personal', 'support', 'forum'] as const;
@@ -274,7 +275,9 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
     </div>;
 }
 
-function ClassDetail({ groupId, admin }: { groupId: number; admin: boolean }) {
+// `adminRoute`: aperta da /admin/classi/{id}. Un admin che è anche docente può
+// aprire la stessa classe da /docente/classi/{id}: «indietro» torna da dove è venuto.
+function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: boolean; adminRoute: boolean }) {
     const { lang } = useI18n();
     const l = (key: TextKey) => classSettingsText(lang, key);
     const groups = useTeacherResource('/api/admin/groups', parseClassGroups);
@@ -291,12 +294,12 @@ function ClassDetail({ groupId, admin }: { groupId: number; admin: boolean }) {
     </Callout>;
     const activeTabs = ['overview', 'toolsTab', 'paths', 'forum', 'audit'] as const;
     return <div className="space-y-5">
-        {!admin && group.institution_id && <nav aria-label={instituteText(lang, 'classes')} className="flex flex-wrap gap-2 text-sm">
+        {!adminRoute && group.institution_id && <nav aria-label={instituteText(lang, 'classes')} className="flex flex-wrap gap-2 text-sm">
             <Link href="/docente/istituti" className="text-indigo-700">{instituteText(lang, 'title')}</Link><span aria-hidden>→</span>
             <Link href={`/docente/istituti/${group.institution_id}`} className="text-indigo-700">{group.institution_name ?? instituteText(lang, 'classes')}</Link><span aria-hidden>→</span><span>{group.name}</span>
         </nav>}
         <header className="flex flex-wrap items-center justify-between gap-3">
-            <Link href={admin ? "/admin/classi" : "/docente/classi"} className="inline-flex min-h-[44px] items-center gap-2 text-sm text-indigo-700"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
+            <Link href={adminRoute ? ADMIN_CLASSES_HREF : "/docente/classi"} className="inline-flex min-h-[44px] items-center gap-2 text-sm text-indigo-700"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
             <div><h1 className="break-words text-2xl font-bold text-slate-800">{group.name}</h1><p className="text-sm text-slate-600">{group.members_count} {l('members')}{group.school && ` · ${group.school}`}</p></div>
         </header>
         <div role="tablist" aria-label={group.name} className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
@@ -339,5 +342,5 @@ export function ClassSettingsPage({ groupId, adminOnly = false }: { groupId: num
     useEffect(() => { let active = true; void getIdentity().then(identity => { if (active) setAdmin(identity?.is_admin === true); }); return () => { active = false; }; }, []);
     if (state === 'loading' || admin === null) return <TeacherLoading />;
     if (state === 'forbidden' || (adminOnly && !admin)) return <TeacherForbidden />;
-    return <div className="min-h-screen bg-slate-50"><section className="page-wide px-4 py-8"><ClassDetail key={groupId} groupId={groupId} admin={admin} /></section></div>;
+    return <div className="min-h-screen bg-slate-50"><section className="page-wide px-4 py-8"><ClassDetail key={groupId} groupId={groupId} admin={admin} adminRoute={adminOnly} /></section></div>;
 }

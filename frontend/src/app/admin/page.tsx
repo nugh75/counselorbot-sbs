@@ -40,15 +40,16 @@ import { getRealIdentity } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 import { canUseResearchConsole } from '@/lib/roles';
+import { adminTabUrl, DEFAULT_ADMIN_TAB, parseAdminTab, type AdminTab } from '@/lib/admin-navigation';
 
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'assistantManager' | 'config' | 'logs' | 'costs' | 'presets' | 'benchmark' | 'promptExperiments' | 'counselors' | 'approvedStrategies' | 'toolBriefs' | 'threadGuard' | 'certifiedStrategies' | 'certifiedReadings' | 'orientationReferrals' | 'skills' | 'assistantQuestions' | 'guidedStepQuestions' | 'promptExport' | 'ragDocs' | 'tavoloImages' | 'audio' | 'surveys' | 'results' | 'questionnaires' | 'validation' | 'researchContacts' | 'administrationPlans' | 'groupsClasses' | 'usersSummary' | 'training' | 'pqbl' | 'rolePreview';
 
 export default function AdminPage() {
     const router = useRouter();
     const { t, lang } = useI18n();
-    const [activeTab, setActiveTab] = useState<AdminTab>('config');
+    const [activeTab, setActiveTab] = useState<AdminTab>(() =>
+        (typeof window !== 'undefined' && parseAdminTab(window.location.search)) || DEFAULT_ADMIN_TAB);
     const [classAdmin, setClassAdmin] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [authState, setAuthState] = useState<'loading' | 'admin' | 'forbidden'>('loading');
@@ -127,8 +128,13 @@ export default function AdminPage() {
     const activeItem = navGroups.flatMap((group) => group.items).find((item) => item.id === activeTab);
 
     // `?section=` belongs to the configuration tab: drop it elsewhere so a reload does not reopen it.
+    // `?tab=` mirrors the active tab, so reload, history back and deep links reopen it.
     useEffect(() => {
         if (activeTab !== 'config') writeSectionParam(null);
+        try {
+            const next = adminTabUrl(window.location.href, activeTab);
+            if (next) window.history.replaceState(window.history.state, '', next);
+        } catch { /* best effort only */ }
     }, [activeTab]);
 
     useEffect(() => {
@@ -177,7 +183,10 @@ export default function AdminPage() {
                             <p className="text-sm text-slate-500 mt-1">CounselorBot · {activeItem?.label}</p>
                         </div>
                     </div>
-                    <BackButton variant="labelled" href="/" label={t('nav.home')} />
+                    <div className="flex flex-wrap gap-2">
+                        <BackButton variant="labelled" href="/docente" label={t('nav.teacherPanel')} />
+                        <BackButton variant="labelled" href="/" label={t('nav.home')} />
+                    </div>
                 </div>
 
                 <div className="glass-panel mb-5 p-3 xl:hidden">

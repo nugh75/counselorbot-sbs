@@ -29,6 +29,7 @@ import { guideImages } from '@/lib/guide-images';
 import { teacherAreaName } from '@/lib/i18n-teacher-area';
 import { classSettingsText } from '@/lib/i18n-class-settings';
 import { forumText } from '@/lib/i18n-forum';
+import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
 
 const TEACHER_ROUTES = ['/docente', '/docente/classi', '/docente', '/docente', '/docente', '/docente', '/bussola', '/docente/classi'];
 
@@ -340,7 +341,7 @@ function GuideContent() {
                             {isAdminUser && <div className="mt-4" id="guide-admin-class-settings">
                                 <h3 className="font-semibold text-slate-900">{classSettingsText(lang, 'adminClasses')}</h3>
                                 <p className="mt-1.5">{l('classSettingsAdmin')}</p>
-                                <Link href="/admin/classi" className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{classSettingsText(lang, 'adminEdit')}</Link>
+                                <Link href={ADMIN_CLASSES_HREF} className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{classSettingsText(lang, 'adminEdit')}</Link>
                             </div>}
                         </div>}
                         {teacher && n === 1 && (
