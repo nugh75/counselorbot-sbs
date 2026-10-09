@@ -28,7 +28,7 @@ import { teacherAreaName } from '@/lib/i18n-teacher-area';
 import { classSettingsText } from '@/lib/i18n-class-settings';
 import { forumText } from '@/lib/i18n-forum';
 
-const TEACHER_ROUTES = ['/docente', '/docente', '/docente', '/docente', '/docente', '/docente', '/bussola'];
+const TEACHER_ROUTES = ['/docente', '/docente', '/docente', '/docente', '/docente', '/docente', '/bussola', '/docente/classi'];
 
 export default function GuidePage() {
     return <Suspense><GuideContent /></Suspense>;
@@ -64,10 +64,10 @@ function GuideContent() {
     const teacher = audience === 'teacher';
     const showAudienceSelector = params.get('audience') !== 'student' && isTeacherUser;
     const l = (key: GuideAudienceKey) => guideAudienceText(lang, key);
-    const sections = Array.from({ length: teacher ? 7 : 15 }, (_, i) => i + 1);
+    const sections = Array.from({ length: teacher ? 8 : 16 }, (_, i) => i + 1);
     const sectionId = (n: number) => `guide-${teacher ? 'teacher-' : ''}section-${n}`;
     const sectionTitle = (n: number) => teacher ? l(`teacher${n}Title` as GuideAudienceKey) : t(`guide.section${n}.title`);
-    const sectionBody = (n: number) => (teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`) + (n === 1 ? ` ${classSettingsText(lang, 'studentSupportGuide')}` : '') + (n === 12 ? ` ${categoryText(lang, 'guideDirectory')}` : '')) + ((teacher && n === 2) || (!teacher && n === 15) ? ` ${forumText(lang, 'guideLinks')}` : '');
+    const sectionBody = (n: number) => (teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`) + (n === 1 ? ` ${classSettingsText(lang, 'studentSupportGuide')}` : '') + (n === 12 ? ` ${categoryText(lang, 'guideDirectory')}` : '')) + ((teacher && n === 8) || (!teacher && n === 16) ? ` ${forumText(lang, 'guideLinks')}` : '');
     const images = guideImages[lang];
     const spotIllustrations: Record<number, string> = teacher ? {
         1: '/images/platform/feedback-docente.png',
@@ -104,6 +104,7 @@ function GuideContent() {
             { image: images['study-event'], caption: t('guide.section10.title') },
             { image: images['professional-event'], caption: t('guide.section11.title') },
         ],
+        8: [{ image: images['teacher-forum'], caption: l('teacher8Title') }],
     } : {
         1: [{ image: images['access'], caption: t('guide.section1.title') }],
         2: [{ image: images['introduction'], caption: t('guide.section2.title') }],
@@ -126,6 +127,7 @@ function GuideContent() {
         13: [{ image: images['calendar'], caption: t('guide.section13.title') }],
         14: [{ image: images['received-assignments'], caption: t('guide.section14.title') }],
         15: [{ image: images['personal-groups'], caption: t('guide.section15.title') }],
+        16: [{ image: images['class-forum'], caption: t('guide.section16.title') }],
     };
     const chatControls = [
         { key: 'options', icon: <MoreVertical className="h-4 w-4" aria-hidden="true" /> },

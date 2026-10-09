@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { chromium } from 'playwright';
 import { guideAudienceText } from '../src/lib/i18n-guide-audiences.ts';
+import { forumText } from '../src/lib/i18n-forum.ts';
 
 const origin = new URL(process.env.GUIDE_BASE_URL || 'http://127.0.0.1:3000').origin;
 let browser;
@@ -21,7 +22,8 @@ for (const [lang, width, dark] of [['it', 1440, false], ['en', 390, false], ['es
             if (url.origin !== origin) return route.abort();
             if (!url.pathname.startsWith('/api/')) return route.continue();
             if (request.method() !== 'GET') writes.push(url.pathname);
-            return route.fulfill({ json: url.pathname === '/api/auth/me' ? { authenticated: false, groups: [], is_admin: false } : [] });
+            // The audience selector is shown only to teachers, researchers and admins.
+            return route.fulfill({ json: url.pathname === '/api/auth/me' ? { authenticated: true, username: 'teacher.demo', groups: ['docenti'], is_admin: false } : [] });
         });
         const l = key => guideAudienceText(lang, key);
         try {
@@ -30,18 +32,22 @@ for (const [lang, width, dark] of [['it', 1440, false], ['en', 390, false], ['es
             const teacher = chooser.getByRole('link', { name: l('teacher'), exact: true });
             const student = chooser.getByRole('link', { name: l('student'), exact: true });
             assert.equal(await teacher.getAttribute('aria-current'), 'page');
-            assert.equal(await page.locator('li[id^="guide-teacher-section-"]').count(), 7);
+            assert.equal(await page.locator('li[id^="guide-teacher-section-"]').count(), 8);
             assert.equal(await page.locator('li[id^="guide-section-"]').count(), 0);
             assert.equal(await page.locator('#guide-teacher-section-5 h2').innerText(), l('teacher5Title'));
-            for (let n = 1; n <= 7; n++) {
+            for (let n = 1; n <= 8; n++) {
                 const section = page.locator(`#guide-teacher-section-${n}`);
-                assert.ok((await section.locator('p').innerText()).length > 100);
+                assert.ok((await section.locator('p').first().innerText()).length > 100);
                 assert.ok(await section.locator('figure').count() > 0, `Missing screenshot: teacher section ${n}`);
                 await page.locator(`a[href="#guide-teacher-section-${n}"]`).click();
                 assert.equal(new URL(page.url()).hash, `#guide-teacher-section-${n}`);
             }
             const figures = page.locator('figure');
-            assert.equal(await figures.count(), 10); // S16 adds the dedicated teacher notebook screenshot.
+            assert.equal(await figures.count(), 12); // Teacher sections 1-7 show 11 screenshots; F6 adds the class forum one.
+            const teacherForum = page.locator('#guide-teacher-section-8');
+            assert.equal(await teacherForum.locator('h2').innerText(), l('teacher8Title'));
+            assert.ok((await teacherForum.locator('p').first().innerText()).includes(forumText(lang, 'guideLinks')));
+            assert.equal(await teacherForum.locator('a[href="/docente/classi"]').count(), 1);
             for (const figure of await figures.all()) {
                 const thumbnail = figure.locator('img');
                 await thumbnail.scrollIntoViewIfNeeded();
@@ -65,10 +71,16 @@ for (const [lang, width, dark] of [['it', 1440, false], ['en', 390, false], ['es
             await student.focus(); await page.keyboard.press('Enter');
             await page.locator('#guide-section-15').waitFor({ state: 'attached' });
             assert.equal(new URL(page.url()).searchParams.get('audience'), 'student');
-            assert.equal(await student.getAttribute('aria-current'), 'page');
+            // The explicit student view hides the audience selector.
+            assert.equal(await chooser.getByRole('link').count(), 0);
+            assert.equal(await page.locator('li[id^="guide-section-"]').count(), 16);
             assert.equal(await page.locator('#guide-section-15 p').innerText(), l('personalGroups'));
+            const studentForum = page.locator('#guide-section-16');
+            assert.ok((await studentForum.locator('p').first().innerText()).includes(forumText(lang, 'guideLinks')));
+            assert.equal(await studentForum.locator('figure').count(), 1);
             await page.reload({ waitUntil: 'networkidle' });
-            assert.equal(await student.getAttribute('aria-current'), 'page');
+            await page.locator('#guide-section-16').waitFor({ state: 'attached' });
+            assert.equal(await chooser.getByRole('link').count(), 0);
             await page.goBack({ waitUntil: 'networkidle' });
             await page.locator('#guide-teacher-section-1').waitFor({ state: 'attached' });
             assert.equal(await teacher.getAttribute('aria-current'), 'page');
