@@ -116,6 +116,11 @@ Your private edits do not update the shared copy. You can withdraw the response,
 which also removes its feedback from this flow while keeping your personal work.
 A teacher revoking an assignment likewise does not delete your activities or diary.
 
+A class path can include an assignment as a step. Starting the step opens the same
+assignment on this page: there is one assignment and one shared response. The step
+is done when you explicitly share your response; planning, private notes and teacher
+feedback do not complete it. Withdrawing the response returns the step to not done.
+
 ## Groups and what teachers can see
 
 **My groups/classes** (`/profilo/classi`) lists the groups you have joined. An
