@@ -275,3 +275,22 @@ the saved preference. Administrative activation prepares key protection
 automatically, without server commands. Choosing personal APIs switches off
 ChatGPT subscription use, and vice versa; both credentials remain saved. No automatic system-key fallback occurs when
 an active personal connection fails.
+
+
+### Italian administration steps
+
+In a class, open Paths and create or select an Italian questionnaire administration.
+The research view opens the same administration, not a copy. Save the path draft
+and publish explicitly. Institute credentials must already be configured in Institutes.
+Give students the external institute code and password separately; the password is
+write-only and cannot be recovered here.
+
+Students open competenzestrategiche.it, enter their factor scores, verify their
+institute credentials, and choose to use the scores in guided chat. Opening the
+external link is not completion. The questionnaire step is done only after the
+result, guided entry and step evidence are committed together. Save failures retain
+the account/path/step draft for retry. A future teacher-confirmed import matched to
+the student and exact administration can complete it without chat; no import UI is
+available yet. An optional results deep dive remains separate. Existing tool steps
+keep their previous completion rules. To change a published target, remove its step
+and add a new one; reordering retains identity and activation time.

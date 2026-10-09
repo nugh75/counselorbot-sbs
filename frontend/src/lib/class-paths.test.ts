@@ -327,3 +327,20 @@ test('path steps offer only the tools the class enables, as students resolve the
     ];
     assert.deepEqual(pathStepTools(tools).map(t => t.key), ['QSA', 'goals']);
 });
+
+test('typed administration targets and activation survive teacher and student parsing', () => {
+    const payload = {id:12,path_id:1,position:1,step_type:'questionnaire_administration',tool_key:null,
+        administration_plan_id:3,active_from:'2026-10-09T20:00:00Z',auto_detect:true,can_self_mark:false,
+        target_summary:{id:3,code:'AP-SYN',title:'Synthetic',instrument_code:'QSA',locale:'it',institution_name:'Synthetic'},
+        completion_kind:'confirmed_import',state:'done',source:'automatic',start_href:'/profilo/percorsi/1/12'};
+    const teacher=parseClassPathStep(payload);
+    const student=parseStudentClassPathStep(payload);
+    assert.equal(teacher.step_type,'questionnaire_administration');
+    assert.equal(teacher.administration_plan_id,3);
+    assert.equal(teacher.active_from,'2026-10-09T20:00:00Z');
+    assert.equal(student.target_summary?.code,'AP-SYN');
+    assert.equal(student.completion_kind,'confirmed_import');
+    assert.equal(student.start_href,'/profilo/percorsi/1/12');
+    assert.equal(student.can_self_mark,false);
+    assert.equal(parseClassPathStep({tool_key:'QSA'}).step_type,'tool');
+});

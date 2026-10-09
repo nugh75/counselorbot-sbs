@@ -266,6 +266,11 @@ class QuestionnaireResult(Base):
     username = Column(String, nullable=True, index=True)
     administration_plan_id = Column(Integer, index=True, nullable=True)
     research_contact_id = Column(Integer, index=True, nullable=True)
+    source = Column(String(24), nullable=False, default="in-app", server_default="in-app")
+    capture_method = Column(String(32), nullable=False, default="legacy_unknown", server_default="legacy_unknown")
+    source_system = Column(String(64), nullable=True)
+    source_record_id = Column(String, nullable=True)
+    locale = Column(String(8), nullable=True)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -352,6 +357,7 @@ class AdministrationPlan(Base):
     institution_link_state = Column(String(32), nullable=False, default="unlinked", server_default="unlinked")
     reconciliation_reason = Column(String(64), nullable=True)
     revision = Column(Integer, nullable=False, default=1, server_default="1")
+    delivery_mode = Column(String(32), nullable=False, default="in_app", server_default="in_app")
     # Legacy duplicates read only by migration/reconciliation; no writer sets them.
     institution_code = Column(String(50), nullable=True, index=True)
     institution_password = Column(String(100), nullable=True)
@@ -1848,7 +1854,14 @@ class ClassPathStep(Base):
     id = Column(Integer, primary_key=True, index=True)
     path_id = Column(Integer, ForeignKey("class_paths.id", ondelete="CASCADE"), index=True, nullable=False)
     position = Column(Integer, nullable=False)  # 1-indexed
-    tool_key = Column(String, nullable=False)
+    __table_args__ = (CheckConstraint(
+        "(step_type = 'tool' AND tool_key IS NOT NULL AND administration_plan_id IS NULL) OR "
+        "(step_type = 'questionnaire_administration' AND tool_key IS NULL AND administration_plan_id IS NOT NULL)",
+        name="class_path_step_target"),)
+    step_type = Column(String(40), nullable=False, default="tool", server_default="tool")
+    tool_key = Column(String, nullable=True)
+    administration_plan_id = Column(Integer, ForeignKey("administration_plans.id", ondelete="RESTRICT"), nullable=True)
+    active_from = Column(DateTime(timezone=True), nullable=True)
     title = Column(String, nullable=True)
     instructions = Column(Text, nullable=True)
     due_date = Column(Date, nullable=True)
@@ -1980,3 +1993,55 @@ class ForumModerationLog(Base):
     target_id = Column(Integer, nullable=True)
     reason = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class QuestionnaireGuidedEntry(Base):
+    """Durable student acceptance; no historical entries are synthesized."""
+    __tablename__ = "questionnaire_guided_entries"
+    __table_args__ = (UniqueConstraint("username", "request_id", name="uq_guided_entry_request"),
+                     UniqueConstraint("username", "session_id", name="uq_guided_entry_session"),)
+    id = Column(Integer, primary_key=True)
+    result_id = Column(Integer, ForeignKey("questionnaire_results.id", ondelete="CASCADE"), nullable=False)
+    username = Column(String, nullable=False, index=True)
+    session_id = Column(String, nullable=False)
+    request_id = Column(String(64), nullable=False)
+    step_id = Column(Integer, ForeignKey("class_path_steps.id", ondelete="CASCADE"), nullable=True)
+    accepted_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class QuestionnaireImportConfirmation(Base):
+    """Completion contract for future teacher imports; no public writer in TF3.
+
+    The future importer must create this with the result and step evidence in the
+    same committed transaction after teacher/student matching and authorization.
+    A source label or upload/preview is never a confirmation.
+    """
+    __tablename__ = "questionnaire_import_confirmations"
+    __table_args__ = (UniqueConstraint("result_id", name="uq_import_confirmation_result"),)
+    id = Column(Integer, primary_key=True)
+    result_id = Column(Integer, ForeignKey("questionnaire_results.id", ondelete="CASCADE"), nullable=False)
+    administration_plan_id = Column(Integer, ForeignKey("administration_plans.id", ondelete="RESTRICT"), nullable=False)
+    username = Column(String, nullable=False)
+    batch_id = Column(String, nullable=False)
+    confirmed_by = Column(String, nullable=False)
+    confirmed_at = Column(DateTime(timezone=True), nullable=False)
+    invalidated_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class ClassPathStepEvidence(Base):
+    """Exact automatic linkage, independent of explicit teacher/student marks."""
+    __tablename__ = "class_path_step_evidence"
+    __table_args__ = (
+        UniqueConstraint("step_id", "username", "result_id", "kind", name="uq_path_result_evidence"),
+        CheckConstraint("(kind = 'guided_entry' AND guided_entry_id IS NOT NULL AND import_confirmation_id IS NULL) OR "
+                        "(kind = 'confirmed_import' AND import_confirmation_id IS NOT NULL AND guided_entry_id IS NULL)",
+                        name="path_evidence_kind"),)
+    id = Column(Integer, primary_key=True)
+    step_id = Column(Integer, ForeignKey("class_path_steps.id", ondelete="CASCADE"), nullable=False, index=True)
+    username = Column(String, nullable=False, index=True)
+    kind = Column(String(32), nullable=False)
+    result_id = Column(Integer, ForeignKey("questionnaire_results.id", ondelete="CASCADE"), nullable=False)
+    guided_entry_id = Column(Integer, ForeignKey("questionnaire_guided_entries.id", ondelete="CASCADE"), nullable=True)
+    import_confirmation_id = Column(Integer, ForeignKey("questionnaire_import_confirmations.id", ondelete="CASCADE"), nullable=True)
+    recorded_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    invalidated_at = Column(DateTime(timezone=True), nullable=True)

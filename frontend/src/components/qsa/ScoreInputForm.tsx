@@ -109,11 +109,14 @@ interface ScoreInputFormProps {
     onBack?: () => void;
     // I taccuini di prova non toccano la bozza della compilazione personale.
     persistDraft?: boolean;
+    onDraftChange?: (scores: Record<string, number>) => void;
+    submitLabel?: string;
+    submitDisabled?: boolean;
     // Più form nella stessa pagina (taccuini di prova): id distinti.
     formId?: string;
 }
 
-export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack, persistDraft = true, formId = 'score-form' }: ScoreInputFormProps) {
+export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack, persistDraft = true, onDraftChange, submitLabel, submitDisabled = false, formId = 'score-form' }: ScoreInputFormProps) {
     const { t, tf } = useI18n();
     // Venticinque numeri copiati da un PDF vivevano solo dentro react-hook-form:
     // si perdevano al ricaricamento e anche solo tornando indietro di un passo,
@@ -127,14 +130,15 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack,
     // risalgono al form, quindi la bozza si legge da lì invece che dallo stato
     // interno della libreria.
     const rememberDraft = (event: FormEvent<HTMLFormElement>) => {
-        if (!persistDraft) return;
+        if (!persistDraft && !onDraftChange) return;
         const scores: Record<string, number> = {};
         for (const [name, value] of new FormData(event.currentTarget).entries()) {
             if (!name.startsWith('scores.') || typeof value !== 'string' || value === '') continue;
             const parsed = Number(value);
             if (!Number.isNaN(parsed)) scores[name.slice('scores.'.length)] = parsed;
         }
-        if (Object.keys(scores).length === 0) return;
+        onDraftChange?.(scores);
+        if (!persistDraft || Object.keys(scores).length === 0) return;
         saveScoreDraft({ instrument: questionnaire.id, scores, savedAt: new Date().toISOString() });
     };
 
@@ -166,7 +170,7 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack,
         <div className="w-full space-y-5 animate-fade-in-up">
             <div className="flex items-center gap-3">
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
-                <ForwardButton type="submit" form={formId} label={t('score.submit')} />
+                <ForwardButton type="submit" form={formId} disabled={submitDisabled} label={submitLabel || t('score.submit')} />
             </div>
             {missingCount > 0 && (
                 <p role="alert" className="max-w-4xl mx-auto rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">

@@ -9,7 +9,7 @@ import { parsePlanInstitutionOptions, planInstitutionField, type PlanInstitution
 import { credentialText, type CredentialTextKey } from '@/lib/i18n-institution-credentials';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
 
-type LocaleCode = 'en' | 'es' | 'sv';
+type LocaleCode = 'it' | 'en' | 'es' | 'sv';
 
 interface ResearchContact {
     id: number;
@@ -91,6 +91,7 @@ const EMPTY: FormState = {
 const LANDING_BASE = process.env.NEXT_PUBLIC_AI4AUTH_BASE || 'https://auth.ai4educ.org';
 const INSTRUMENTS = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'];
 const LOCALES: { value: LocaleCode; label: string }[] = [
+    { value: 'it', label: 'Italiano (competenzestrategiche.it)' },
     { value: 'en', label: 'English' },
     { value: 'es', label: 'Español' },
     { value: 'sv', label: 'Svenska' },
