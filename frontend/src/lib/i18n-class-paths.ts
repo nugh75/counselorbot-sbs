@@ -46,9 +46,31 @@ export const classPathsTexts = {
     discard: ['Scartare le modifiche non salvate al percorso di classe?', 'Discard unsaved changes to this class path?', '¿Descartar los cambios no guardados en este itinerario de clase?', 'Abandonner les modifications non enregistrées pour ce parcours de classe ?', 'Ungespeicherte Änderungen an diesem Klassenpfad verwerfen?', 'Kasta osparade ändringar i denna klassväg?'],
     dirty: ['Modifiche non salvate', 'Unsaved changes', 'Cambios sin guardar', 'Modifications non enregistrées', 'Ungespeicherte Änderungen', 'Osparade ändringar'],
     reload: ['Ricarica', 'Reload', 'Recargar', 'Recharger', 'Neu laden', 'Ladda om'],
+    publish: ['Pubblica', 'Publish', 'Publicar', 'Publier', 'Veröffentlichen', 'Publicera'],
+    publishing: ['Pubblicazione in corso…', 'Publishing…', 'Publicando…', 'Publication en cours…', 'Wird veröffentlicht…', 'Publicerar…'],
+    publishedSuccess: ['Percorso pubblicato', 'Path published', 'Itinerario publicado', 'Parcours publié', 'Pfad veröffentlicht', 'Klassväg publicerad'],
+    start: ['Inizia', 'Start', 'Comenzar', 'Commencer', 'Starten', 'Starta'],
+    markDone: ['Segna come completato', 'Mark as done', 'Marcar como hecho', 'Marquer comme terminé', 'Als erledigt markieren', 'Markera som klar'],
+    markUndone: ['Segna come non completato', 'Mark as not done', 'Marcar como no hecho', 'Marquer comme non terminé', 'Als nicht erledigt markieren', 'Markera som inte klar'],
+    completed: ['Completato', 'Completed', 'Completado', 'Terminé', 'Erledigt', 'Klar'],
+    notAvailable: ['Non disponibile', 'Not available', 'No disponible', 'Non disponible', 'Nicht verfügbar', 'Inte tillgänglig'],
+    unlocksAfter: ['Si sblocca dopo il passo {n}', 'Unlocks after step {n}', 'Se desbloquea tras el paso {n}', 'Se débloque après l’étape {n}', 'Wird nach Schritt {n} freigeschaltet', 'Låses upp efter steg {n}'],
+    progressCount: ['{done} di {total} completati', '{done} of {total} done', '{done} de {total} completados', '{done} sur {total} terminés', '{done} von {total} erledigt', '{done} av {total} klara'],
+    current: ['In corso', 'Current', 'En curso', 'En cours', 'Aktuell', 'Pågående'],
+    sourceTeacher: ['fonte: docente', 'source: teacher', 'fuente: profesorado', 'source : enseignant', 'Quelle: Lehrkraft', 'källa: lärare'],
+    sourceStudent: ['fonte: studente', 'source: student', 'fuente: estudiante', 'source : élève', 'Quelle: Schüler', 'källa: elev'],
+    studentPathsEmpty: ['Nessun percorso di classe disponibile al momento.', 'No class paths available at this moment.', 'No hay itinerarios de clase disponibles en este momento.', 'Aucun parcours de classe disponible pour le moment.', 'Derzeit sind keine Klassenpfade verfügbar.', 'Inga klassvägar tillgängliga just nu.'],
+    yourClassPath: ['Il tuo percorso di classe', 'Your class path', 'Tu itinerario de clase', 'Ton parcours de classe', 'Dein Klassenpfad', 'Din klassväg'],
+    dueOn: ['Scadenza {date}', 'Due {date}', 'Vence {date}', 'Échéance {date}', 'Fällig am {date}', 'Förfaller {date}'],
+    recommendedBadge: ['Consigliato', 'Recommended', 'Recomendado', 'Recommandé', 'Empfohlen', 'Rekommenderat'],
+    strictBadge: ['Vincolante', 'Strict', 'Estricto', 'Strict', 'Verbindlich', 'Strikt'],
+    loadingPaths: ['Caricamento dei percorsi…', 'Loading class paths…', 'Cargando itinerarios…', 'Chargement des parcours…', 'Klassenpfade werden geladen…', 'Laddar klassvägar…'],
+    loadError: ['Impossibile caricare i percorsi di classe.', 'Could not load class paths.', 'No se pudieron cargar los itinerarios de clase.', 'Impossible de charger les parcours de classe.', 'Klassenpfade konnten nicht geladen werden.', 'Kunde inte ladda klassvägar.'],
 } as const satisfies Record<string, readonly [string, string, string, string, string, string]>;
 
-export function classPathText(lang: string, key: keyof typeof classPathsTexts): string {
+export type PathTextKey = keyof typeof classPathsTexts;
+
+export function classPathText(lang: string, key: PathTextKey): string {
     const index = ['it', 'en', 'es', 'fr', 'de', 'sv'].indexOf(lang);
     return classPathsTexts[key][index < 0 ? 1 : index];
 }
