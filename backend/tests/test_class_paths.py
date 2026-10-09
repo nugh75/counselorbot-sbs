@@ -560,6 +560,26 @@ def test_path_availability_matches_the_class_access_resolver(class_paths_api):
     assert {s["tool_key"]: s["state"] != "unavailable" for s in steps} == expected
 
 
+
+def test_full_view_keeps_the_class_path_on_the_class_settings(class_paths_api):
+    """In the full view (#146) the path stays visible and follows its class's own settings."""
+    client, db, group_id, identity = class_paths_api
+    db.add(models.GroupMembership(group_id=group_id, username="student_lia"))
+    db.add(models.AccountPreferences(username="student_lia", class_view="all"))
+    db.commit()
+    path_id = client.post(f"/teacher/groups/{group_id}/paths", json={"title": "Full view"}).json()["id"]
+    client.put(f"/teacher/paths/{path_id}", json={"revision": 1, "title": "Full view", "steps": [
+        {"tool_key": key} for key in ("QSA", "timeline")]})
+    client.post(f"/teacher/paths/{path_id}/publish")
+    db.add(models.ClassSettings(group_id=group_id, updated_by="owner", disabled_tool_keys=["timeline"]))
+    db.commit()
+
+    identity.update({"username": "student_lia", "groups": [], "is_admin": False, "is_researcher": False,
+                     "authenticated": True})
+    paths = client.get("/user/paths").json()
+    assert [p["id"] for p in paths] == [path_id]
+    assert {s["tool_key"]: s["state"] != "unavailable" for s in paths[0]["steps"]} == {"QSA": True, "timeline": False}
+
 def test_student_self_mark_endpoints_and_restrictions(class_paths_api):
     client, db, group_id, identity = class_paths_api
 

@@ -439,7 +439,8 @@ def test_user_access_contract(db):
     group = _group(db, "a", disabled=["QSA", "flashcards"], members=["anna"])
     with _client(db, STUDENT) as client:
         body = client.get("/user/access").json()
-    assert set(body) == {"restricted", "tool_keys", "counselor_ids", "default_counselor_id", "class_ids"}
+    assert set(body) == {"restricted", "tool_keys", "counselor_ids", "default_counselor_id", "class_ids",
+                         "view", "classes"}
     assert body["restricted"] is True
     assert body["class_ids"] == [group.id]
     assert "QSA" not in body["tool_keys"] and "flashcards" not in body["tool_keys"]
