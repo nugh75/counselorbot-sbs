@@ -10,10 +10,12 @@ Note e messaggi del docente vivono qui, sulla classe.
 import re
 import secrets
 import string
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
@@ -163,7 +165,7 @@ def _require_settings_group(db: Session, identity, group_id: int, *, for_update=
 def _serialize_settings(db: Session, group_id: int, settings) -> dict:
     disabled_tools = settings.disabled_tool_keys if settings else []
     disabled_counselors = settings.disabled_counselor_ids if settings else []
-    return {
+    result = {
         "group_id": group_id,
         "revision": settings.revision if settings else 1,
         "disabled_tool_keys": disabled_tools,
@@ -179,6 +181,187 @@ def _serialize_settings(db: Session, group_id: int, settings) -> dict:
                        ).order_by(models.Counselor.sort_order, models.Counselor.id).all()],
         "forum": _serialize_forum_options(settings),
     }
+    latest = {}
+    for row in db.query(models.ClassSettingsAuditLog).filter_by(group_id=group_id).order_by(models.ClassSettingsAuditLog.id.desc()):
+        if row.action != "unlock":
+            latest.setdefault((row.target_kind, row.target_id), row.actor_role == "admin")
+    for kind, rows, column, id_key in (
+        ("tool", result["tools"], "locked_tool_keys", "key"),
+        ("counselor", result["counselors"], "locked_counselor_ids", "id"),
+    ):
+        locks = (getattr(settings, column) or {}) if settings else {}
+        for row in rows:
+            target = str(row[id_key])
+            lock = locks.get(target)
+            row.update(locked=bool(lock), locked_enabled=lock["enabled"] if lock else None,
+                       locked_by=lock.get("locked_by") if lock else None,
+                       locked_at=lock.get("locked_at") if lock else None,
+                       changed_by_admin=latest.get((kind, target), False))
+            if lock:
+                row["enabled"] = row["admin_enabled"] and lock["enabled"]
+    locks = settings.locked_forum_options or {} if settings else {}
+    for key in ("students_can_open", "premoderation"):
+        result["forum"][f"{key}_locked"] = key in locks
+        result["forum"][f"{key}_lock"] = locks.get(key)
+        result["forum"][f"{key}_changed_by_admin"] = latest.get(("forum_option", key), False)
+    return result
+
+
+def _audit_setting(db, group_id, identity, action, kind, target, old, new, reason=None):
+    db.add(models.ClassSettingsAuditLog(
+        group_id=group_id, actor_username=_username(identity),
+        actor_display_name=identity.get("name") or _username(identity),
+        actor_role="admin" if _is_admin(identity) else "teacher", action=action,
+        target_kind=kind, target_id=str(target), old_value=old, new_value=new,
+        reason=reason.strip() or None if reason else None,
+    ))
+
+
+def _locked_response(kind, target):
+    return JSONResponse(status_code=422, content={"detail": "item_locked_by_admin",
+                                                "item_kind": kind, "item_id": str(target)})
+
+
+def _require_class_admin(identity):
+    # The legacy active-admin dependency also admits researchers.
+    if not _is_admin(identity):
+        raise HTTPException(403, "Class administration requires an administrator")
+
+
+@router.get("/admin/classes")
+async def list_admin_classes(search: str = "", owner: str = "", institution_id: Optional[int] = None,
+                             is_active: Optional[bool] = None,
+                             current_user=Depends(auth.get_current_user), db: Session = Depends(get_db)):
+    _require_class_admin(current_user)
+    query = db.query(models.StudentGroup)
+    if search.strip():
+        needle = "%" + search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        query = query.filter(or_(*(column.ilike(needle, escape="\\") for column in (
+            models.StudentGroup.name, models.StudentGroup.code, models.StudentGroup.school))))
+    if owner:
+        query = query.filter(models.StudentGroup.owner_username == owner)
+    if institution_id is not None:
+        query = query.filter(models.StudentGroup.institution_id == institution_id)
+    if is_active is not None:
+        query = query.filter(models.StudentGroup.is_active == is_active)
+    groups = query.order_by(models.StudentGroup.name, models.StudentGroup.id).all()
+    ids = [group.id for group in groups]
+    settings = {row.group_id: row for row in db.query(models.ClassSettings).filter(models.ClassSettings.group_id.in_(ids))}
+    names = {row.username: row.display_name for row in db.query(models.UserDisplayName).filter(
+        models.UserDisplayName.username.in_([group.owner_username for group in groups]))}
+    institutions = {row.id: row.name for row in db.query(models.Institution).filter(
+        models.Institution.id.in_([group.institution_id for group in groups if group.institution_id]))}
+    shares = {}
+    for row in db.query(models.GroupShare).filter(models.GroupShare.group_id.in_(ids)).order_by(models.GroupShare.shared_with_username):
+        shares.setdefault(row.group_id, []).append(row.shared_with_username)
+    counts = dict(db.query(models.GroupMembership.group_id, func.count(models.GroupMembership.id)).filter(
+        models.GroupMembership.group_id.in_(ids)).group_by(models.GroupMembership.group_id).all())
+    result = []
+    for group in groups:
+        row = settings.get(group.id)
+        result.append({"id": group.id, "name": group.name, "code": group.code, "school": group.school,
+                       "school_level": group.school_level, "institution_id": group.institution_id,
+                       "institution_name": institutions.get(group.institution_id),
+                       "owner_username": group.owner_username, "owner_display_name": names.get(group.owner_username),
+                       "co_teachers": shares.get(group.id, []), "members_count": counts.get(group.id, 0),
+                       "is_active": group.is_active, "created_at": group.created_at,
+                       "has_custom_settings": bool(row and (row.disabled_tool_keys or row.disabled_counselor_ids
+                            or row.default_counselor_id or row.forum_students_can_open or row.forum_premoderation)),
+                       "locked_items_count": sum(len(getattr(row, column) or {}) for column in (
+                           "locked_tool_keys", "locked_counselor_ids", "locked_forum_options")) if row else 0})
+    return result
+
+
+@router.get("/teacher/groups/{group_id}/settings/audit-log")
+async def class_settings_audit_log(group_id: int, current_user=Depends(auth.get_current_plan_manager),
+                                  db: Session = Depends(get_db)):
+    _require_settings_group(db, current_user, group_id)
+    return [{key: getattr(row, key) for key in ("id", "actor_username", "actor_display_name", "actor_role",
+             "action", "target_kind", "target_id", "old_value", "new_value", "reason", "created_at")}
+            for row in db.query(models.ClassSettingsAuditLog).filter_by(group_id=group_id)
+            .order_by(models.ClassSettingsAuditLog.id.desc()).all()]
+
+
+def _lock_target(db, payload):
+    if payload.target_kind == "tool":
+        row = next((row for row in tool_catalog(db, []) if row["key"] == payload.target_id and not row["always_on"]), None)
+        if row:
+            return "locked_tool_keys", "enabled", row["admin_enabled"]
+    elif payload.target_kind == "counselor":
+        if payload.target_id.isascii() and payload.target_id.isdecimal() and str(int(payload.target_id)) == payload.target_id and 0 < int(payload.target_id) <= 2147483647:
+            row = db.query(models.Counselor).filter_by(id=int(payload.target_id), owner_username=None).first()
+            if row:
+                return "locked_counselor_ids", "enabled", bool(row.is_active)
+    elif payload.target_id in {"students_can_open", "premoderation"}:
+        return "locked_forum_options", "value", True
+    raise HTTPException(422, "Unknown or non-editable lock target")
+
+
+def _item_state(settings, kind, target):
+    if kind == "tool":
+        return target not in (settings.disabled_tool_keys or [])
+    if kind == "counselor":
+        return int(target) not in (settings.disabled_counselor_ids or [])
+    return bool(getattr(settings, "forum_" + target))
+
+
+@router.post("/admin/groups/{group_id}/settings/lock")
+async def lock_class_setting(group_id: int, payload: schemas.ClassSettingsLock,
+                             current_user=Depends(auth.get_current_user), db: Session = Depends(get_db)):
+    _require_class_admin(current_user)
+    _require_settings_group(db, current_user, group_id, for_update=True)
+    column, value_key, platform_enabled = _lock_target(db, payload)
+    if payload.state and not platform_enabled:
+        raise HTTPException(422, "cannot_lock_on_platform_disabled")
+    settings = db.get(models.ClassSettings, group_id, populate_existing=True)
+    if settings is None:
+        settings = models.ClassSettings(group_id=group_id, revision=1, updated_by=_username(current_user))
+        db.add(settings)
+        db.flush()
+    locks = dict(getattr(settings, column) or {})
+    old = {value_key: _item_state(settings, payload.target_kind, payload.target_id), "locked": payload.target_id in locks}
+    now = datetime.now(timezone.utc).isoformat()
+    locks[payload.target_id] = {value_key: payload.state, "locked_by": _username(current_user), "locked_at": now}
+    setattr(settings, column, locks)
+    if payload.target_kind in {"tool", "counselor"}:
+        deny_column = "disabled_tool_keys" if payload.target_kind == "tool" else "disabled_counselor_ids"
+        target = payload.target_id if payload.target_kind == "tool" else int(payload.target_id)
+        disabled = set(getattr(settings, deny_column) or [])
+        disabled.discard(target) if payload.state else disabled.add(target)
+        setattr(settings, deny_column, sorted(disabled))
+        if payload.target_kind == "counselor" and not payload.state and settings.default_counselor_id == target:
+            _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "default_counselor_id",
+                           target, None, payload.reason)
+            settings.default_counselor_id = None
+    else:
+        setattr(settings, "forum_" + payload.target_id, payload.state)
+    _audit_setting(db, group_id, current_user, "lock", payload.target_kind, payload.target_id,
+                   old, {value_key: payload.state, "locked": True}, payload.reason)
+    settings.revision += 1
+    settings.updated_by = _username(current_user)
+    db.commit()
+    return {"status": "locked", "target_kind": payload.target_kind, "target_id": payload.target_id,
+            "state": payload.state, "locked_by": _username(current_user), "locked_at": now}
+
+
+@router.post("/admin/groups/{group_id}/settings/unlock")
+async def unlock_class_setting(group_id: int, payload: schemas.ClassSettingsLockTarget,
+                               current_user=Depends(auth.get_current_user), db: Session = Depends(get_db)):
+    _require_class_admin(current_user)
+    _require_settings_group(db, current_user, group_id, for_update=True)
+    column, value_key, _ = _lock_target(db, payload)
+    settings = db.get(models.ClassSettings, group_id, populate_existing=True)
+    locks = dict(getattr(settings, column) or {}) if settings else {}
+    if payload.target_id not in locks:
+        raise HTTPException(404, "Class settings lock not found")
+    old = locks.pop(payload.target_id)
+    setattr(settings, column, locks)
+    _audit_setting(db, group_id, current_user, "unlock", payload.target_kind, payload.target_id,
+                   {value_key: old[value_key], "locked": True}, {value_key: old[value_key], "locked": False}, payload.reason)
+    settings.revision += 1
+    settings.updated_by = _username(current_user)
+    db.commit()
+    return {"status": "unlocked", "target_kind": payload.target_kind, "target_id": payload.target_id}
 
 
 def _serialize_forum_options(settings) -> dict:
@@ -232,6 +415,17 @@ async def put_class_settings(
         disabled_counselors = settings.disabled_counselor_ids if settings else []
     if set(disabled_counselors) - institutional.keys():
         raise HTTPException(status_code=422, detail="Unknown or private counselor")
+    for kind, locks, disabled in (
+        ("tool", settings.locked_tool_keys if settings else {}, set(payload.disabled_tool_keys)),
+        ("counselor", settings.locked_counselor_ids if settings else {}, {str(id) for id in disabled_counselors}),
+    ):
+        for target, lock in (locks or {}).items():
+            if lock["enabled"] != (target not in disabled):
+                return _locked_response(kind, target)
+    if payload.forum is not None:
+        for target, lock in ((settings.locked_forum_options or {}) if settings else {}).items():
+            if target in FORUM_OPTIONS and lock["value"] != getattr(payload.forum, target):
+                return _locked_response("forum_option", target)
     default_id = (payload.default_counselor_id if "default_counselor_id" in payload.model_fields_set
                   else settings.default_counselor_id if settings else None)
     if default_id is not None and (default_id not in institutional or default_id in disabled_counselors
@@ -242,13 +436,26 @@ async def put_class_settings(
                                 locked_forum_options=settings.locked_forum_options) if settings else None)
     previous_tools = list(settings.disabled_tool_keys or []) if settings else []
     if settings is None:
-        settings = models.ClassSettings(group_id=group_id, revision=1)
+        settings = models.ClassSettings(group_id=group_id, revision=1, updated_by=_username(current_user))
         db.add(settings)
+        db.flush()
+    for kind, old_disabled, new_disabled in (
+        ("tool", set(settings.disabled_tool_keys or []), set(payload.disabled_tool_keys)),
+        ("counselor", set(settings.disabled_counselor_ids or []), set(disabled_counselors)),
+    ):
+        for target in sorted(old_disabled ^ new_disabled):
+            _audit_setting(db, group_id, current_user, "setting_change", kind, target,
+                           {"enabled": target not in old_disabled}, {"enabled": target not in new_disabled}, payload.reason)
+    if default_id != settings.default_counselor_id:
+        _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "default_counselor_id",
+                       settings.default_counselor_id, default_id, payload.reason)
     if payload.forum is not None:
-        # A locked option keeps the teacher's stored value for when admin unlocks it.
         for name in FORUM_OPTIONS:
-            if not forum_option(settings, name)[1]:
-                setattr(settings, f"forum_{name}", getattr(payload.forum, name))
+            old, new = bool(getattr(settings, f"forum_{name}")), getattr(payload.forum, name)
+            if old != new:
+                _audit_setting(db, group_id, current_user, "setting_change", "forum_option", name,
+                               {"value": old}, {"value": new}, payload.reason)
+                setattr(settings, f"forum_{name}", new)
     settings.disabled_tool_keys = sorted(set(payload.disabled_tool_keys))
     settings.disabled_counselor_ids = sorted(set(disabled_counselors))
     settings.default_counselor_id = default_id

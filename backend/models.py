@@ -1266,13 +1266,35 @@ class ClassSettings(Base):
     default_counselor_id = Column(Integer, nullable=True)
     forum_students_can_open = Column(Boolean, nullable=False, default=False)
     forum_premoderation = Column(Boolean, nullable=False, default=False)
-    # Reserved for #109; S1 exposes no per-class lock editing.
+    # Admin locks (#109): {key: {"enabled"|"value": bool, "locked_by", "locked_at"}}.
     locked_tool_keys = Column(JSON, nullable=False, default=dict)
     locked_counselor_ids = Column(JSON, nullable=False, default=dict)
     locked_forum_options = Column(JSON, nullable=False, default=dict)
     revision = Column(Integer, nullable=False, default=1)
     updated_by = Column(String, nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class ClassSettingsAuditLog(Base):
+    """Append-only history of class settings changes and admin locks (#109).
+
+    No route updates or deletes rows; they disappear only with the class.
+    """
+
+    __tablename__ = "class_settings_audit_log"
+
+    id = Column(Integer, primary_key=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), index=True, nullable=False)
+    actor_username = Column(String, index=True, nullable=False)
+    actor_display_name = Column(String, nullable=True)
+    actor_role = Column(String, nullable=False)        # admin | teacher
+    action = Column(String, nullable=False)            # setting_change | lock | unlock
+    target_kind = Column(String, nullable=False)       # tool | counselor | forum_option | settings_bulk
+    target_id = Column(String, nullable=False)
+    old_value = Column(JSON, nullable=True)
+    new_value = Column(JSON, nullable=True)
+    reason = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
 
 class GroupMembership(Base):

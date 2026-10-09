@@ -1552,8 +1552,18 @@ class ClassForumOptions(BaseModel):
     premoderation: StrictBool
 
 
-class ClassSettingsUpdate(BaseModel):
-    """Tool/counselor choices and, from F3, forum options; locks belong to #109."""
+class ClassSettingsReason(BaseModel):
+    reason: Optional[str] = Field(default=None, max_length=500)
+
+    @validator("reason")
+    def validate_settings_reason(cls, value):
+        if value and re.search(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", value):
+            raise ValueError("Control characters are not allowed")
+        return value
+
+
+class ClassSettingsUpdate(ClassSettingsReason):
+    """Tool/counselor choices and, from F3, forum options; admin locks (#109) win."""
     model_config = {"extra": "forbid"}
 
     revision: int = Field(ge=1, strict=True)
@@ -1561,6 +1571,18 @@ class ClassSettingsUpdate(BaseModel):
     disabled_counselor_ids: Optional[List[StrictInt]] = None
     default_counselor_id: Optional[int] = Field(default=None, strict=True)
     forum: Optional[ClassForumOptions] = None
+
+
+class ClassSettingsLockTarget(ClassSettingsReason):
+    """Admin lock/unlock target (#109)."""
+    model_config = {"extra": "forbid"}
+
+    target_kind: Literal["tool", "counselor", "forum_option"]
+    target_id: str = Field(min_length=1, max_length=100)
+
+
+class ClassSettingsLock(ClassSettingsLockTarget):
+    state: bool = Field(strict=True)
 
 
 class StudentGroupCreate(BaseModel):

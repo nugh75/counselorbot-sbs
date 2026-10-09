@@ -2,8 +2,10 @@
 
 Scope: `forum` class tool key, "students can open discussions" and
 "approve messages before they are visible" options, moderator mutes and the
-pending queue. Admin lock UI and routes are #109; F3 only honours an existing
-`locked_forum_options` entry (lock wins, the teacher's stored value is kept).
+pending queue. Forum options follow the S8 admin lock model (#109): a locked
+option shows its lock value, a teacher save that contradicts it is 422
+`item_locked_by_admin`, and every option change is also written to
+`class_settings_audit_log` (`target_kind: forum_option`).
 
 ## API contract
 

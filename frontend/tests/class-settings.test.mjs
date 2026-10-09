@@ -28,15 +28,28 @@ async function fixture({ lang = 'en', width = 390, settingsFailure = null, role 
     await context.addInitScript(lang => { localStorage.setItem('cb_lang', lang); }, lang);
     const page = await context.newPage();
     page.setDefaultTimeout(12000);
-    const state = { settings: structuredClone(settings), writes: [], failure: null, readFailure: settingsFailure, held: null, errors: [] };
+    const state = { settings: structuredClone(settings), writes: [], failure: null, readFailure: settingsFailure, held: null, errors: [], lockWrites: [], lockFailure: null };
     page.on('pageerror', error => state.errors.push(error.message));
     await page.route('**/*', async route => {
         const request = route.request(); const url = new URL(request.url());
         if (url.origin !== origin) return route.abort();
         if (!url.pathname.startsWith('/api/')) return route.continue();
         let data = [];
-        if (url.pathname === '/api/auth/me') data = { authenticated: true, username: 'fixture', name: 'Fixture', groups: [role], is_admin: false };
+        if (url.pathname === '/api/auth/me') data = { authenticated: true, username: 'fixture', name: 'Fixture', groups: [role], is_admin: role === 'admins' };
         else if (url.pathname === '/api/admin/groups') data = [group];
+        else if (url.pathname.endsWith('/settings/lock') || url.pathname.endsWith('/settings/unlock')) {
+            const body = request.postDataJSON(); state.lockWrites.push(body);
+            if (state.lockFailure) return route.fulfill({ status: state.lockFailure, json: { detail: 'PRIVATE DETAIL' } });
+            const locked = url.pathname.endsWith('/lock');
+            state.settings.revision += 1;
+            state.settings.tools = state.settings.tools.map(row => row.key !== body.target_id ? row : {
+                ...row, locked, locked_enabled: locked ? body.state : null, locked_by: locked ? 'admin' : null,
+                locked_at: locked ? '2026-10-09T09:00:00Z' : null, changed_by_admin: true, enabled: locked ? body.state : row.enabled,
+            });
+            if (locked) state.settings.disabled_tool_keys = body.state ? state.settings.disabled_tool_keys.filter(key => key !== body.target_id)
+                : [...new Set([...state.settings.disabled_tool_keys, body.target_id])];
+            data = { status: locked ? 'locked' : 'unlocked' };
+        }
         else if (url.pathname.endsWith('/settings')) {
             if (request.method() === 'PUT') {
                 const body = request.postDataJSON(); state.writes.push(body);
@@ -235,6 +248,68 @@ test('Counselors section fits a 320px screen without horizontal scroll', async (
     try {
         await f.page.getByRole('tab', { name: 'Werkzeuge und Counselors', exact: true }).click();
         await f.page.getByRole('region', { name: 'Counselors' }).waitFor();
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    } finally { await f.context.close(); }
+});
+
+test('teacher sees lock badges, cannot toggle locks and category actions preserve them', async () => {
+    const settings = structuredClone(initial);
+    settings.tools[0] = { ...settings.tools[0], locked: true, locked_enabled: true, locked_by: 'admin', locked_at: '2026-10-09T09:00:00Z' };
+    const f = await fixture({ settings });
+    try {
+        await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
+        const qsa = f.page.getByRole('checkbox', { name: 'QSA', exact: true });
+        assert.equal(await qsa.isDisabled(), true);
+        await f.page.getByText('Locked by administrator · Enabled', { exact: true }).waitFor();
+        const category = f.page.locator('details').filter({ has: f.page.locator('summary').filter({ hasText: /^Questionnaires$/ }) });
+        assert.equal(await category.getByRole('button', { name: 'Disable all', exact: true }).isDisabled(), true);
+        assert.equal(await qsa.isChecked(), true);
+        assert.equal(await f.page.getByRole('button', { name: 'Lock OFF', exact: true }).count(), 0);
+        await f.page.getByRole('tab', { name: 'Change history', exact: true }).click();
+        await f.page.getByText('No changes recorded', { exact: true }).waitFor();
+        assert.deepEqual(f.state.writes, []);
+    } finally { await f.context.close(); }
+});
+
+test('admin locks require clean drafts; failed writes retain state and reason; unlock is explicit', async () => {
+    const f = await fixture({ role: 'admins' });
+    try {
+        await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
+        const qsa = f.page.getByRole('checkbox', { name: 'QSA', exact: true });
+        const controls = f.page.getByRole('group', { name: 'Settings & locks: QSA', exact: true });
+        await qsa.uncheck();
+        assert.equal(await controls.getByRole('button', { name: 'Lock OFF', exact: true }).isDisabled(), true);
+        await qsa.check();
+        await f.page.getByLabel('Reason (optional)', { exact: true }).fill('Synthetic policy');
+        f.state.lockFailure = 500;
+        await controls.getByRole('button', { name: 'Lock OFF', exact: true }).click();
+        await f.page.getByRole('alert').filter({ hasText: 'Could not save' }).waitFor();
+        assert.equal(await qsa.isChecked(), true);
+        assert.equal(await f.page.getByLabel('Reason (optional)', { exact: true }).inputValue(), 'Synthetic policy');
+        assert.equal(await f.page.getByText('PRIVATE DETAIL').count(), 0);
+        f.state.lockFailure = null;
+        await controls.getByRole('button', { name: 'Lock OFF', exact: true }).click();
+        await f.page.getByText('Locked by administrator · Disabled', { exact: true }).waitFor();
+        assert.equal(await qsa.isDisabled(), true);
+        assert.equal(await qsa.isChecked(), false);
+        assert.deepEqual(f.state.lockWrites.at(-1), { target_kind: 'tool', target_id: 'QSA', state: false, reason: 'Synthetic policy' });
+        await controls.getByRole('button', { name: 'Unlock', exact: true }).click();
+        await f.page.getByText('Changed by administrator', { exact: true }).waitFor();
+        assert.equal(await qsa.isDisabled(), false);
+        assert.equal(await qsa.isChecked(), false);
+        assert.deepEqual(f.state.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('admin counselor names retain a readable row at 320px beside lock controls', async () => {
+    const f = await fixture({ role: 'admins', width: 320, settings: { ...initial, counselors } });
+    try {
+        await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
+        const label = f.page.getByRole('checkbox', { name: 'Clio', exact: true }).locator('..');
+        const box = await label.boundingBox();
+        const row = await label.locator('..').boundingBox();
+        // The name takes its own full line instead of shrinking beside the lock buttons.
+        assert.ok(box.width >= row.width - 20, `Counselor label collapsed to ${box.width}px of ${row.width}px`);
         assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     } finally { await f.context.close(); }
 });

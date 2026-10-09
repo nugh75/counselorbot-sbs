@@ -1,4 +1,24 @@
-export interface ClassTool {
+export interface ClassItemLock {
+    locked?: boolean;
+    locked_enabled?: boolean | null;
+    locked_by?: string | null;
+    locked_at?: string | null;
+    changed_by_admin?: boolean;
+}
+
+export type ClassLockKind = 'tool' | 'counselor' | 'forum_option';
+export interface ClassForum {
+    students_can_open: boolean;
+    premoderation: boolean;
+    students_can_open_locked?: boolean;
+    premoderation_locked?: boolean;
+    students_can_open_lock?: { value: boolean; locked_by: string; locked_at: string } | null;
+    premoderation_lock?: { value: boolean; locked_by: string; locked_at: string } | null;
+    students_can_open_changed_by_admin?: boolean;
+    premoderation_changed_by_admin?: boolean;
+}
+
+export interface ClassTool extends ClassItemLock {
     key: string;
     kind: 'instrument' | 'personal';
     category: 'assessment' | 'guided' | 'personal' | 'support' | 'forum' | 'always_on';
@@ -10,7 +30,7 @@ export interface ClassTool {
 }
 
 // Institutional counselors only: students' private counselors are never listed.
-export interface ClassCounselor {
+export interface ClassCounselor extends ClassItemLock {
     id: number;
     name: string;
     avatar_url?: string | null;
@@ -19,14 +39,7 @@ export interface ClassCounselor {
     enabled: boolean;
 }
 
-export interface ClassForumOptions {
-    students_can_open: boolean;
-    premoderation: boolean;
-    students_can_open_locked: boolean;
-    premoderation_locked: boolean;
-}
-
-export const defaultForumOptions: ClassForumOptions = {
+export const defaultForumOptions: ClassForum = {
     students_can_open: false, premoderation: false, students_can_open_locked: false, premoderation_locked: false,
 };
 
@@ -38,7 +51,16 @@ export interface ClassSettings {
     disabled_counselor_ids: number[];
     default_counselor_id: number | null;
     counselors: ClassCounselor[];
-    forum?: ClassForumOptions;
+    forum?: ClassForum;
+}
+
+function validLock(row: ClassItemLock): boolean {
+    return (row.locked === undefined || typeof row.locked === 'boolean')
+        && (row.locked_enabled == null || typeof row.locked_enabled === 'boolean')
+        && (row.locked_by == null || typeof row.locked_by === 'string')
+        && (row.locked_at == null || typeof row.locked_at === 'string')
+        && (row.changed_by_admin === undefined || typeof row.changed_by_admin === 'boolean')
+        && (!row.locked || typeof row.locked_enabled === 'boolean');
 }
 
 export function parseClassSettings(payload: unknown): ClassSettings {
@@ -47,12 +69,12 @@ export function parseClassSettings(payload: unknown): ClassSettings {
         || !Array.isArray(row.disabled_tool_keys) || !row.disabled_tool_keys.every(key => typeof key === 'string')
         || !Array.isArray(row.tools) || !row.tools.every(tool => tool && typeof tool.key === 'string'
             && typeof tool.admin_enabled === 'boolean' && typeof tool.enabled === 'boolean'
-            && typeof tool.always_on === 'boolean' && tool.label_i18n && typeof tool.label_i18n === 'object')
+            && validLock(tool) && typeof tool.always_on === 'boolean' && tool.label_i18n && typeof tool.label_i18n === 'object')
         || (row.disabled_counselor_ids !== undefined && (!Array.isArray(row.disabled_counselor_ids)
             || !row.disabled_counselor_ids.every(id => Number.isInteger(id))))
         || (row.default_counselor_id != null && !Number.isInteger(row.default_counselor_id))
         || (row.counselors !== undefined && (!Array.isArray(row.counselors) || !row.counselors.every(counselor =>
-            counselor && Number.isInteger(counselor.id) && typeof counselor.name === 'string'
+            counselor && validLock(counselor) && Number.isInteger(counselor.id) && typeof counselor.name === 'string'
             && typeof counselor.admin_enabled === 'boolean' && typeof counselor.enabled === 'boolean')))) {
         throw new Error('Invalid class settings');
     }
