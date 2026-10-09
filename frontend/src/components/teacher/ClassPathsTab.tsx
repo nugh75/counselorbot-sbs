@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { administrationStepText } from '@/lib/i18n-administration-steps';
 import { ArrowDown, ArrowUp, ArrowLeft, Archive, CheckCircle2, Circle, Plus, Trash2, X } from 'lucide-react';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
@@ -49,6 +51,43 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
     const [description, setDescription] = useState(path.description || '');
     const [mode, setMode] = useState<'recommended' | 'strict'>(path.mode);
     const [steps, setSteps] = useState<ClassPathStep[]>(path.steps);
+    const [administrations, setAdministrations] = useState<{id:number;title:string;code:string;locale:string;instrument_code:string}[]>([]);
+    const [administrationError,setAdministrationError] = useState(false);
+    const [selectedAdministration,setSelectedAdministration] = useState('');
+    const [administrationTitle,setAdministrationTitle] = useState('');
+    const [administrationInstrument,setAdministrationInstrument] = useState('QSA');
+    const a = (key: Parameters<typeof administrationStepText>[1]) => administrationStepText(lang,key);
+    const loadAdministrations = async () => {
+        try {
+            const response = await apiFetch(`/api/teacher/groups/${path.group_id}/administrations`);
+            if (!response.ok) throw new Error('administrations');
+            setAdministrations(await response.json());setAdministrationError(false);
+        } catch {setAdministrationError(true);}
+    };
+    useEffect(() => {void loadAdministrations();}, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const createAdministration = async () => {
+        if (busy || !administrationTitle.trim()) return;
+        if (account.current !== getViewAsAccount()?.username) {setForbidden(true);return;}
+        setBusy(true);
+        try {
+            const response = await apiFetch(`/api/teacher/groups/${path.group_id}/administrations`,{
+                method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:administrationTitle.trim(),
+                    instrument_code:administrationInstrument,locale:'it',status:'active'}),
+            });
+            if (!response.ok) throw new Error('create administration');
+            const created = await response.json();
+            setAdministrations(current=>[created,...current]);setSelectedAdministration(String(created.id));
+            setAdministrationTitle('');setAdministrationError(false);
+        } catch {setAdministrationError(true);} finally {setBusy(false);}
+    };
+    const addAdministrationStep = () => {
+        const target=administrations.find(row=>row.id===Number(selectedAdministration));
+        if (!target) return;
+        setSteps(current=>[...current,{position:current.length+1,step_type:'questionnaire_administration',
+            administration_plan_id:target.id,tool_key:'',auto_detect:true,can_self_mark:false,
+            target_summary:{...target,institution_name:''}}]);
+        setSelectedAdministration('');setNotice(null);
+    };
     const [selectedToolKey, setSelectedToolKey] = useState<string>('');
 
     const [busy, setBusy] = useState(false);
@@ -148,7 +187,9 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                 mode,
                 steps: steps.map(s => ({
                     id: s.id,
-                    tool_key: s.tool_key,
+                    step_type: s.step_type || 'tool',
+                    ...(s.step_type === 'questionnaire_administration'
+                        ? {administration_plan_id:s.administration_plan_id} : {tool_key:s.tool_key}),
                     title: s.title ? s.title.trim() : null,
                     instructions: s.instructions ? s.instructions.trim() : null,
                     due_date: s.due_date || null,
@@ -383,7 +424,9 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                 ) : (
                     <div className="space-y-3">
                         {steps.map((step, index) => {
-                            const name = toolLabel(step.tool_key, classSettings.tools, lang);
+                            const name = step.step_type === 'questionnaire_administration'
+                                ? `${a('administration')} · ${step.target_summary?.code || step.administration_plan_id}`
+                                : toolLabel(step.tool_key, classSettings.tools, lang);
                             // Students see this step as not available: say so here too.
                             const unavailable = !enabledTools.some(t => t.key === step.tool_key);
                             return (
@@ -492,6 +535,25 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                     </div>
                 )}
 
+                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
+                    <h3 className="font-semibold">{a('administration')}</h3>
+                    <Link href="/docente/somministrazioni" className="text-indigo-700 underline">{a('research')}</Link>
+                    {administrationError && <Callout variant="danger">{a('error')} <Button variant="secondary" onClick={()=>void loadAdministrations()}>{a('retry')}</Button></Callout>}
+                    <div className="flex flex-wrap gap-2">
+                        <label>{a('choose')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="ml-2 rounded border p-2">
+                            <option value="">{a('choose')}</option>
+                            {administrations.filter(row=>row.locale==='it').map(row=><option key={row.id} value={row.id}>{row.code} · {row.title}</option>)}
+                        </select></label>
+                        <Button variant="secondary" disabled={busy || !selectedAdministration} onClick={addAdministrationStep}>{l('addStep')}</Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <label>{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="ml-2 rounded border p-2" /></label>
+                        <label>{a('instrument')}<select value={administrationInstrument} onChange={event=>setAdministrationInstrument(event.target.value)} className="ml-2 rounded border p-2">
+                            {['QSA','QSAr','ZTPI','QPCS','QPCC','QAP'].map(code=><option key={code}>{code}</option>)}
+                        </select></label>
+                        <Button disabled={busy || !administrationTitle.trim()} onClick={()=>void createAdministration()}>{a('create')}</Button>
+                    </div><p className="text-sm text-slate-600">{a('rule')}</p>
+                </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
                     <select
                         value={selectedToolKey}
