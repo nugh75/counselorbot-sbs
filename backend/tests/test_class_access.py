@@ -444,7 +444,8 @@ def test_user_access_contract(db):
     assert body["class_ids"] == [group.id]
     assert "QSA" not in body["tool_keys"] and "flashcards" not in body["tool_keys"]
     assert "SAVICKAS" in body["tool_keys"]
-    assert body["counselor_ids"] is None and body["default_counselor_id"] is None
+    # No counselors in this fixture: restricted students get an empty list, never null (#93).
+    assert body["counselor_ids"] == [] and body["default_counselor_id"] is None
 
     with _client(db, TEACHER) as client:
         staff = client.get("/user/access").json()
