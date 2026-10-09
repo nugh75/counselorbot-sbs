@@ -45,7 +45,7 @@ async function fixture({ lang = 'it', width = 390, scale = 1, roles = ['docenti'
             if (failure) return route.fulfill({ status: failure, json: { detail: 'PRIVATE DETAIL' } });
             data = snapshot;
         }
-        else if (url.pathname === '/api/institutions') {
+        else if (url.pathname === '/api/teacher/institutions') {
             if (state.holdInstitutions) await state.holdInstitutions;
             if (state.institutionsFailure) return route.fulfill({ status: state.institutionsFailure, json: {} });
             data = [{ id: 5, name: 'Istituto Demo' }];

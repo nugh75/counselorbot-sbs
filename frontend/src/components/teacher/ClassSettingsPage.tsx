@@ -7,6 +7,7 @@ import { apiFetch, getIdentity, getViewAsAccount } from '@/lib/auth';
 import { defaultForumOptions, effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, type ClassCounselor, type ClassSettings, type ClassTool, type ClassLockKind } from '@/lib/class-settings';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
+import { instituteText } from '@/lib/i18n-teacher-institutes';
 import { forumText } from '@/lib/i18n-forum';
 import { useI18n } from '@/lib/i18n-context';
 import { useDraftGuard } from '@/lib/use-draft-guard';
@@ -290,6 +291,10 @@ function ClassDetail({ groupId, admin }: { groupId: number; admin: boolean }) {
     </Callout>;
     const activeTabs = ['overview', 'toolsTab', 'paths', 'forum', 'audit'] as const;
     return <div className="space-y-5">
+        {!admin && group.institution_id && <nav aria-label={instituteText(lang, 'classes')} className="flex flex-wrap gap-2 text-sm">
+            <Link href="/docente/istituti" className="text-indigo-700">{instituteText(lang, 'title')}</Link><span aria-hidden>→</span>
+            <Link href={`/docente/istituti/${group.institution_id}`} className="text-indigo-700">{group.institution_name ?? instituteText(lang, 'classes')}</Link><span aria-hidden>→</span><span>{group.name}</span>
+        </nav>}
         <header className="flex flex-wrap items-center justify-between gap-3">
             <Link href={admin ? "/admin/classi" : "/docente/classi"} className="inline-flex min-h-[44px] items-center gap-2 text-sm text-indigo-700"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
             <div><h1 className="break-words text-2xl font-bold text-slate-800">{group.name}</h1><p className="text-sm text-slate-600">{group.members_count} {l('members')}{group.school && ` · ${group.school}`}</p></div>

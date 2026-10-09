@@ -5,6 +5,7 @@ export interface StudentGroup {
     school: string | null;
     school_level: string | null;
     institution_id: number | null;
+    institution_name?: string | null;
     description: string | null;
     methodologies: string | null;
     context_visible_to_students: boolean;

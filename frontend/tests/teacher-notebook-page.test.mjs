@@ -60,7 +60,7 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) for (const width of [32
         assert.equal(await entry.getAttribute('href'), routePath);
         const home = f.page.locator('[data-teacher-area-home]');
         assert.deepEqual(await home.locator('a').evaluateAll(elements => elements.map(e => e.getAttribute('href'))), [
-            routePath, '/docente/taccuini-prova', '/?start=OBIETTIVO_DOCENZA', '/docente/classi', '/docente/assegnazioni',
+            routePath, '/docente/taccuini-prova', '/?start=OBIETTIVO_DOCENZA', '/docente/istituti', '/docente/classi', '/docente/assegnazioni',
             '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali',
             '/docente/orientamento', '/docente/somministrazioni',
         ], 'notebook (then practice notebooks) precedes DOCENZA and every other home destination');

@@ -51,7 +51,7 @@ export function ClassGroupPicker({ close, onNavigationState }: {
     const texts = classGroupTexts[lang as keyof typeof classGroupTexts] ?? classGroupTexts.en;
     const l = (key: Parameters<typeof classPickerText>[1]) => classPickerText(lang, key);
     const groups = useTeacherResource('/api/admin/groups', parseClassGroups);
-    const institutions = useTeacherResource('/api/institutions', parseInstitutions);
+    const institutions = useTeacherResource('/api/teacher/institutions', parseInstitutions);
     const editors = useClassGroupEditors(groups.data, groups.reload);
     const [selected, setSelected] = useState('');
     const [transition, setTransition] = useState<{ run: () => void; restore: () => void } | null>(null);

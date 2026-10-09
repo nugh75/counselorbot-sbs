@@ -64,6 +64,13 @@ export async function fetchInstitutions(): Promise<Institution[]> {
     return res.json();
 }
 
+// Class association uses explicit memberships, separate from the public directory.
+export async function fetchTeacherInstitutions(): Promise<Institution[]> {
+    const res = await apiFetch('/api/teacher/institutions');
+    if (!res.ok) throw new Error(`teacher institutions: ${res.status}`);
+    return res.json();
+}
+
 export async function fetchOrientationDirectory(lang: Lang): Promise<OrientationDirectory> {
     const res = await apiFetch(`/api/orientation-directory?lang=${lang}`);
     if (!res.ok) throw new Error(`orientation-directory: ${res.status}`);

@@ -46,6 +46,7 @@ export function ClassGroupEditor({ group, institutions, editors, disabled = fals
                 <select value={group.institution_id == null ? '' : String(group.institution_id)} aria-label={texts.institutionLabel} disabled={!ready || disabled || state.busy} title={texts.institutionHint}
                     onChange={event => void editors.setInstitution(group.id, event.target.value)} className={inputClass}>
                     <option value="">{texts.institutionNone}</option>
+                    {group.institution_id && !institutions.some(row => row.id === group.institution_id) && <option value={group.institution_id}>{group.institution_name ?? texts.institutionLabel}</option>}
                     {institutions.map(institution => <option key={institution.id} value={String(institution.id)}>{institution.name}</option>)}
                 </select>
             </label>

@@ -1267,9 +1267,8 @@ class StudentGroup(Base):
     # Fascia della classe: secondaria | universita | adulti. Serve a filtrare le
     # letture certificate quando lo studente non ha compilato il taccuino.
     school_level = Column(String, nullable=True)
-    # Istituto della classe: fallback quando lo studente non lo ha scelto nel
-    # taccuino. Nessuna FK dichiarata, come per le altre relazioni del modulo.
-    institution_id = Column(Integer, index=True, nullable=True)
+    # Institute membership and class permissions are independent.
+    institution_id = Column(Integer, ForeignKey("institutions.id"), index=True, nullable=True)
     owner_username = Column(String, index=True, nullable=False)  # docente/ricercatore
     # Contesto classe: descrizione e metodologie scritte dal docente. Con
     # context_visible_to_students il docente condivide il blocco con gli
@@ -1505,6 +1504,8 @@ class Institution(Base):
     website_url = Column(String, nullable=True)
     orientation_page_url = Column(String, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
+    created_by = Column(String, nullable=True)  # Legacy administrator records have no creator.
+    revision = Column(Integer, nullable=False, default=1, server_default="1")
     # Codice univoco (es. 'liceo-galilei') usato nell'URL di somministrazione
     institution_code = Column(String(50), unique=True, nullable=True, index=True)
     # Password hashed bcrypt; vuota significa istituto senza autenticazione.
@@ -1514,7 +1515,7 @@ class Institution(Base):
 
 
 class InstitutionTeacher(Base):
-    """Admin-granted membership; a self-declared school never grants access."""
+    """Explicit creator, self-join or administrator membership; never inferred."""
 
     __tablename__ = "institution_teachers"
     __table_args__ = (UniqueConstraint("institution_id", "username", name="uq_institution_teacher"),)
