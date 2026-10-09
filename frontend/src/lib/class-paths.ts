@@ -1,8 +1,35 @@
-export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat" | "assignment";
+export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat" | "assignment" | "forum";
 
 function parseStepType(value: unknown): ClassPathStepType {
     return value === 'questionnaire_administration' || value === 'guided_results_chat' || value === 'assignment'
-        ? value : 'tool';
+        || value === 'forum' ? value : 'tool';
+}
+
+// TF7: the exact class discussion of a forum step, as identifiers and lock state only.
+export interface ForumStepSummary {
+    id: number;
+    group_id: number;
+    locked: boolean;
+}
+
+// What the student can do now in that discussion (no forum text ever travels here).
+export interface ForumStepState {
+    pending: boolean;
+    hidden: boolean;
+    locked: boolean;
+    muted: boolean;
+}
+
+function parseForumSummary(value: unknown): ForumStepSummary | null {
+    if (!value || typeof value !== 'object') return null;
+    const raw = value as Record<string, unknown>;
+    return {id: Number(raw.id), group_id: Number(raw.group_id), locked: Boolean(raw.locked)};
+}
+
+export function parseForumStepState(value: unknown): ForumStepState | null {
+    if (!value || typeof value !== 'object') return null;
+    const raw = value as Record<string, unknown>;
+    return {pending: Boolean(raw.pending), hidden: Boolean(raw.hidden), locked: Boolean(raw.locked), muted: Boolean(raw.muted)};
 }
 
 // Delivered snapshot of a whole-class goal assignment, as a path step shows it.
@@ -30,13 +57,16 @@ export function parseAssignmentSummary(value: unknown): AssignmentStepSummary | 
     };
 }
 
-// Assignment steps carry their own summary; target_summary stays administration-shaped.
+// Assignment and forum steps carry their own summary; target_summary stays administration-shaped.
 function typedTarget(raw: Record<string, unknown>, stepType: ClassPathStepType) {
     const assignment = stepType === 'assignment';
+    const forum = stepType === 'forum';
     return {
         assignment_id: assignment && raw.assignment_id != null ? Number(raw.assignment_id) : null,
         assignment_summary: assignment ? parseAssignmentSummary(raw.target_summary) : null,
-        target_summary: assignment ? null : raw.target_summary as ClassPathStep['target_summary'],
+        topic_id: forum && raw.topic_id != null ? Number(raw.topic_id) : null,
+        forum_summary: forum ? parseForumSummary(raw.target_summary) : null,
+        target_summary: assignment || forum ? null : raw.target_summary as ClassPathStep['target_summary'],
     };
 }
 
@@ -50,6 +80,8 @@ export interface ClassPathStep {
     results_step_id?: number | null;
     assignment_id?: number | null;
     assignment_summary?: AssignmentStepSummary | null;
+    topic_id?: number | null;
+    forum_summary?: ForumStepSummary | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
     completion_kind?: string | null;
@@ -143,6 +175,8 @@ export interface StudentClassPathStep {
     results_step_id?: number | null;
     assignment_id?: number | null;
     assignment_summary?: AssignmentStepSummary | null;
+    topic_id?: number | null;
+    forum_summary?: ForumStepSummary | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
     completion_kind?: string | null;
@@ -153,6 +187,7 @@ export interface StudentClassPathStep {
     source?: 'student' | 'teacher' | 'automatic' | null;
     start_href?: string | null;
     can_self_mark: boolean;
+    forum_state?: ForumStepState | null;
 }
 
 export interface StudentClassPath {
@@ -192,6 +227,7 @@ export function parseStudentClassPathStep(input: unknown): StudentClassPathStep 
         source,
         start_href: raw.start_href ? String(raw.start_href) : null,
         can_self_mark: Boolean(raw.can_self_mark),
+        forum_state: stepType === 'forum' ? parseForumStepState(raw.forum_state) : null,
     };
 }
 

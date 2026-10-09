@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import insert
 from .. import auth, database, models
 from ..class_access import class_tool_enabled, forum_option, require_class_tool
 from ..forum_schemas import ForumHide, ForumMuteCreate, ForumPostCreate, ForumPostUpdate, ForumTopicCreate
-from .groups import _visible_group_query
+from ..group_visibility import _visible_group_query
 
 router = APIRouter()
 

@@ -18,6 +18,8 @@ import { parseForumDiscussionLinks } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
+import { pathForumText } from '@/lib/i18n-path-forum';
+import { forumStepNotice } from '@/lib/path-forum';
 
 export function StudentClassPathsPage() {
     const { lang } = useI18n();
@@ -251,6 +253,13 @@ export function StudentClassPathsPage() {
                                                     {step.step_type === 'assignment' && !isUnavailable && (
                                                         <p className="text-xs text-slate-500">{pathAssignmentText(lang, 'studentRule')}</p>
                                                     )}
+                                                    {step.step_type === 'forum' && !isUnavailable && (() => {
+                                                        const notice = forumStepNotice(step.forum_state, isDone);
+                                                        return (<>
+                                                            <p className="text-xs text-slate-500">{pathForumText(lang, 'studentRule')}</p>
+                                                            {notice && <p role="status" className="text-xs font-medium text-slate-700">{pathForumText(lang, `notice_${notice}`)}</p>}
+                                                        </>);
+                                                    })()}
                                                     <ForumDiscussionLinks links={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
                                                         kind="path_step" targetId={step.id} />
 

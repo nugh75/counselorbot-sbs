@@ -1844,13 +1844,15 @@ class ClassPath(Base):
 
 STEP_TARGET_CHECK = (
     "(step_type = 'tool' AND tool_key IS NOT NULL AND administration_plan_id IS NULL AND results_step_id IS NULL "
-    "AND assignment_id IS NULL) OR "
+    "AND assignment_id IS NULL AND topic_id IS NULL) OR "
     "(step_type = 'questionnaire_administration' AND tool_key IS NULL AND administration_plan_id IS NOT NULL "
-    "AND results_step_id IS NULL AND assignment_id IS NULL) OR "
+    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NULL) OR "
     "(step_type = 'guided_results_chat' AND tool_key IS NULL AND administration_plan_id IS NULL "
-    "AND results_step_id IS NOT NULL AND assignment_id IS NULL) OR "
+    "AND results_step_id IS NOT NULL AND assignment_id IS NULL AND topic_id IS NULL) OR "
     "(step_type = 'assignment' AND tool_key IS NULL AND administration_plan_id IS NULL "
-    "AND results_step_id IS NULL AND assignment_id IS NOT NULL)"
+    "AND results_step_id IS NULL AND assignment_id IS NOT NULL AND topic_id IS NULL) OR "
+    "(step_type = 'forum' AND tool_key IS NULL AND administration_plan_id IS NULL "
+    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NOT NULL)"
 )
 
 
@@ -1874,6 +1876,9 @@ class ClassPathStep(Base):
     results_step_id = Column(Integer, ForeignKey("class_path_steps.id"), nullable=True)
     # Assignment step: a whole-class goal assignment of the same class (checked on save).
     assignment_id = Column(Integer, ForeignKey("teacher_assignments.id", ondelete="RESTRICT"), nullable=True)
+    # Forum step: a published discussion of the same class (checked on save). The
+    # default NO ACTION still lets a class deletion cascade to topics and steps.
+    topic_id = Column(Integer, ForeignKey("forum_topics.id"), nullable=True)
     active_from = Column(DateTime(timezone=True), nullable=True)
     title = Column(String, nullable=True)
     instructions = Column(Text, nullable=True)
