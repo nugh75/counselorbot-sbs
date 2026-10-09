@@ -250,6 +250,8 @@ class QuestionnaireResultCreate(BaseModel):
     username: Optional[str] = None
     administration_plan_id: Optional[int] = None
     research_contact_id: Optional[int] = None
+    # Local institution verification grant; validated, never stored.
+    institution_grant: Optional[str] = None
 
 
 class QuestionnaireResultResponse(BaseModel):
@@ -429,8 +431,11 @@ class AdministrationPlanBase(BaseModel):
     notes: Optional[str] = None
     status: str = "planned"
     researchers: List[AdministrationPlanResearcherInput] = Field(default_factory=list)
-    institution_code: Optional[str] = Field(default=None, max_length=50)
-    institution_password: Optional[str] = Field(default=None, max_length=100)
+    institution_id: Optional[int] = None
+    # Legacy credential fields are accepted only to be rejected without echo:
+    # the institute is the single credential source.
+    institution_code: Any = None
+    institution_password: Any = None
 
 
 class AdministrationPlanCreate(AdministrationPlanBase):
@@ -448,8 +453,10 @@ class AdministrationPlanUpdate(BaseModel):
     notes: Optional[str] = None
     status: Optional[str] = None
     researchers: Optional[List[AdministrationPlanResearcherInput]] = None
-    institution_code: Optional[str] = Field(default=None, max_length=50)
-    institution_password: Optional[str] = Field(default=None, max_length=100)
+    institution_id: Optional[int] = None
+    revision: int = Field(ge=1)
+    institution_code: Any = None
+    institution_password: Any = None
 
 
 class AdministrationPlanResponse(BaseModel):
@@ -465,7 +472,14 @@ class AdministrationPlanResponse(BaseModel):
     location: Optional[str] = None
     notes: Optional[str] = None
     status: str
+    institution_id: Optional[int] = None
+    institution_name: Optional[str] = None
     institution_code: Optional[str] = None
+    institution_credentials_configured: bool = False
+    institution_link_state: str = "unlinked"
+    reconciliation_reason: Optional[str] = None
+    legacy_institution_code: Optional[str] = None
+    revision: int = 1
     created_by_username: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -700,6 +714,8 @@ class ScoreRequest(BaseModel):
     version_label: Optional[str] = "draft"
     response_metadata: Optional[Dict[str, Any]] = None
     duration_seconds: Optional[int] = None
+    # Local institution verification grant; validated, never stored.
+    institution_grant: Optional[str] = None
 
 
 # --- Learner profile (modello del discente auto-dichiarato) ---
@@ -1714,7 +1730,7 @@ class InstitutionBase(BaseModel):
     orientation_page_url: Optional[str] = None
     is_active: bool = True
     institution_code: Optional[str] = Field(default=None, max_length=50, pattern=r"^[A-Za-z0-9-]+$")
-    # hashed_password non entra nel payload (solo admin lo imposta); il campo serve per la risposta al listing interno.
+    # hashed_password never enters payloads or responses.
 
 
 class InstitutionCreate(InstitutionBase):
@@ -1733,7 +1749,8 @@ class InstitutionUpdate(BaseModel):
 class InstitutionResponse(InstitutionBase):
     needs_admin_review: bool = False
     id: int
-    hashed_password: Optional[str] = None
+    # Readiness only: neither the password nor its hash is ever serialized.
+    credentials_configured: bool = False
 
     class Config:
         from_attributes = True

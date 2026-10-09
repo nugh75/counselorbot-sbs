@@ -48,13 +48,13 @@ for (const [lang, width, dark] of [['it', 1440, false], ['en', 390, false], ['es
                 assert.equal(new URL(page.url()).hash, `#guide-teacher-section-${n}`);
             }
             const figures = page.locator('figure');
-            assert.equal(await figures.count(), 15); // Institutes join the class and forum screenshots.
+            assert.equal(await figures.count(), 16); // Institutes and credentials join the class and forum screenshots.
             const settings = page.locator('#guide-teacher-section-2');
-            for (const key of ['teacherInstitutesBody', 'classSettingsTeacher', 'classSettingsAccess', 'classSettingsCounselors', 'classSettingsHistory', 'classPathDistinction']) {
+            for (const key of ['teacherInstitutesBody', 'teacherInstituteCredentialsBody', 'classSettingsTeacher', 'classSettingsAccess', 'classSettingsCounselors', 'classSettingsHistory', 'classPathDistinction']) {
                 assert.ok((await settings.innerText()).includes(l(key)), `Missing class guidance: ${key}`);
                 if (lang !== 'en') assert.notEqual(l(key), guideAudienceText('en', key), `English placeholder: ${key}`);
             }
-            assert.equal(await settings.locator('figure').count(), 5);
+            assert.equal(await settings.locator('figure').count(), 6);
             assert.equal(await page.locator('#guide-admin-class-settings').count(), 0);
             const teacherForum = page.locator('#guide-teacher-section-8');
             assert.equal(await teacherForum.locator('h2').innerText(), l('teacher8Title'));
@@ -131,7 +131,7 @@ for (const [lang, width] of [['it', 1440], ['en', 390], ['es', 390], ['fr', 1440
             if (lang !== 'en') assert.notEqual(text, guideAudienceText('en', 'classSettingsAdmin'));
             assert.equal(await admin.getByRole('link', { name: classSettingsText(lang, 'adminEdit'), exact: true }).getAttribute('href'), '/admin/classi');
             const figures = page.locator('#guide-teacher-section-2 figure');
-            assert.equal(await figures.count(), 8);
+            assert.equal(await figures.count(), 9); // Includes the institute credentials screenshot (#149).
             for (const key of ['adminClasses', 'adminEdit', 'audit']) {
                 const figure = figures.filter({ has: page.getByRole('img', { name: classSettingsText(lang, key), exact: true }) });
                 assert.equal(await figure.count(), 1);

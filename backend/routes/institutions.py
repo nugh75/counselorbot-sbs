@@ -8,12 +8,13 @@ import re
 import unicodedata
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
-from .. import auth, database, models, schemas
+from .. import administration_context, auth, database, models, schemas
 from ..institution_access import require_institution_admin, teacher_institutions, require_teacher, require_institution_teacher
 
 router = APIRouter()
@@ -35,8 +36,9 @@ class InstitutionTeacherCreate(BaseModel):
 
 
 class InstitutionSetPassword(BaseModel):
+    # Raw hashes are refused: only a verified plaintext entry produces a verifier.
+    model_config = ConfigDict(extra="forbid")
     plain_password: str | None = None
-    hashed_password: str | None = None
 
 
 class InstitutionTeacherResponse(BaseModel):
@@ -72,7 +74,8 @@ def _teacher_response(db: Session, row: models.Institution) -> dict:
     count = db.query(models.InstitutionTeacher).filter_by(institution_id=row.id, is_active=True).count()
     return {**schemas.InstitutionPublic.model_validate(row).model_dump(),
             "is_active": row.is_active, "revision": row.revision, "created_by": row.created_by,
-            "credentials_configured": bool(row.institution_code and row.hashed_password),
+            "institution_code": row.institution_code,
+            "credentials_configured": row.credentials_configured,
             "member_count": count, "needs_admin_review": count > 2}
 
 
@@ -164,6 +167,52 @@ async def update_teacher_institution(institution_id: int, payload: TeacherInstit
         setattr(row, key, str(value) if value is not None and key.endswith("_url") else value)
     row.revision += 1
     db.commit()
+    return _teacher_response(db, row)
+
+
+CREDENTIAL_FIELDS = {"institution_code", "password", "revision"}
+
+
+@router.put("/teacher/institutions/{institution_id}/credentials")
+async def replace_teacher_institution_credentials(institution_id: int, request: Request,
+                                                  current_user: dict = Depends(auth.get_current_user),
+                                                  db: Session = Depends(get_db)):
+    """Write-only replacement of the externally issued code and password.
+
+    The body is parsed by hand so that no validation error can echo the secret.
+    """
+    require_institution_teacher(db, current_user, institution_id)
+    try:
+        payload = await request.json()
+    except ValueError:
+        payload = None
+    if not isinstance(payload, dict) or set(payload) != CREDENTIAL_FIELDS:
+        raise HTTPException(status_code=422, detail="invalid_credentials_payload")
+    revision = payload["revision"]
+    if not isinstance(revision, int) or isinstance(revision, bool) or revision < 1:
+        raise HTTPException(status_code=422, detail="invalid_credentials_payload")
+    code = administration_context.normalize_code(payload["institution_code"])
+    if code is None:
+        raise HTTPException(status_code=422, detail="invalid_institution_code")
+    password = payload["password"]
+    if not administration_context.valid_password(password):
+        raise HTTPException(status_code=422, detail="invalid_institution_password")
+    # Serialize writers of the same normalized code across institutes, then lock the row.
+    db.execute(text("SELECT pg_advisory_xact_lock(149, hashtext(:code))"), {"code": code.lower()})
+    row = require_institution_teacher(db, current_user, institution_id, lock=True)
+    if row.revision != revision:
+        raise HTTPException(status_code=409, detail="institution_revision_conflict")
+    if administration_context.code_taken(db, code, row.id):
+        raise HTTPException(status_code=409, detail="institution_code_conflict")
+    row.institution_code = code
+    row.hashed_password = models.get_password_hash(password)
+    row.revision += 1
+    row.credentials_revision += 1
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="institution_code_conflict")
     return _teacher_response(db, row)
 
 
@@ -303,10 +352,14 @@ async def update_institution(
     db: Session = Depends(get_db),
 ):
     row = _fetch(db, institution_id, lock=True)
+    previous_code = row.institution_code
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(row, key, value)
     _validate(row)
     row.revision += 1
+    if row.institution_code != previous_code:
+        # Outstanding verification grants were bound to the previous code.
+        row.credentials_revision += 1
     db.commit()
     db.refresh(row)
     return row
@@ -334,11 +387,12 @@ async def set_institution_password(
     current_user: dict = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
+    if payload.plain_password is not None and not administration_context.valid_password(payload.plain_password):
+        raise HTTPException(status_code=422, detail="invalid_institution_password")
     row = _fetch(db, institution_id, lock=True)
     row.revision += 1
-    if payload.hashed_password is not None:
-        row.hashed_password = payload.hashed_password
-    elif payload.plain_password is not None:
+    row.credentials_revision += 1
+    if payload.plain_password is not None:
         row.hashed_password = models.get_password_hash(payload.plain_password)
     else:
         row.hashed_password = None

@@ -93,7 +93,8 @@ test('the runner holds its submit while the scoring call is in flight', () => {
         'utf8',
     );
     assert.match(source, /setSubmitting\(true\)/);
-    assert.match(source, /disabled=\{submitting\}/);
+    // A pending institute verification also holds the submit (#149).
+    assert.match(source, /disabled=\{submitting(?: \|\| verification !== null)?\}/);
 });
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.

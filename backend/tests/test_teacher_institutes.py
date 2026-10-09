@@ -61,7 +61,8 @@ def test_creation_is_active_atomic_and_owned_by_authenticated_teacher(api):
     assert [row['id'] for row in client.get('/teacher/institutions').json()] == [school['id']]
     assert client.get('/teacher/institutions', headers={'x-test-user': 'second'}).json() == []
     assert client.get(f"/teacher/institutions/{school['id']}", headers={'x-test-user': 'second'}).status_code == 403
-    assert not {'hashed_password', 'institution_code'} & school.keys()
+    # Members read the external code once entered (#149); the verifier never leaves the server.
+    assert 'hashed_password' not in school and school['institution_code'] is None
 
 
 def create(client, **values):

@@ -1302,8 +1302,8 @@ Members edit institute name, type and public website/orientation URLs with an
 explicit Save and revision check. A failed save keeps the local draft; a stale
 revision returns a conflict, allowing the teacher to cancel and reload the latest
 data. The directory contains selection metadata and join availability, without
-credentials or other teachers' identities. Members see only whether external
-credentials are configured. This slice does not add a credential editor.
+credentials or other teachers' identities. Members see the external code and
+whether credentials are configured; the credential editor is described in #149.
 
 Open an institute to create a class with that institute preselected, or explicitly
 link an existing unlinked class that you manage. Institute membership is required
@@ -1323,3 +1323,65 @@ The teacher guide includes institute and notebook-first home screenshots in all
 six interface languages. A failed creation, including a transaction conflict,
 keeps the new institute draft and offers a retry; only a stale metadata revision
 reports that another teacher changed an existing institute.
+
+## Institute-owned credentials and canonical administration references (#149)
+
+The code and password issued by competenzestrategiche.it belong to the institute,
+the single credential source. In **Teacher area → Institutes** a member teacher
+chooses **Enter external credentials** (or **Replace external credentials**),
+types the code and password and saves with a revision check. The code is trimmed
+and compared case-insensitively; it must be unique across institutes. The
+password is never trimmed or transformed and is limited to 72 UTF-8 bytes. It is
+write-only: CounselorBot stores only a bcrypt verifier, never returns the password
+or hash in any response (teacher or administrator), and cannot show it again.
+Teachers give students the external login separately. A stale revision or a code
+used by another institute returns a conflict and keeps the typed code. The
+administrator password reset accepts only a plaintext entry, never a raw hash.
+
+Administration plans no longer store their own code or password: create/edit
+requests carrying `institution_code` or `institution_password` are rejected
+without echoing the value. The plan editor (research view and teacher
+**Administrations**) selects an institute instead; lists and edits round-trip its
+id, name, code and credential readiness. Administrators may link any active
+institute; other plan managers only institutes they belong to. If the plan's
+class belongs to an institute, the plan must reference the same one. Plan edits
+require the current `revision`; a concurrent edit returns 409 and the draft stays
+in the form. Institute membership never grants visibility of research plans.
+
+Plans have three states. **Unlinked** is the explicit no-institute research mode
+and keeps the previous behavior. **Linked** plans require local institution
+verification before any result is accepted. **Needs reconciliation** marks legacy
+rows that could not be mapped safely; they accept no results until staff select an
+institute (or explicitly no institute) and tick the confirmation in the editor.
+Saving unrelated fields never resolves reconciliation silently.
+
+Before results of a linked plan are saved, the authenticated participant enters
+the institute code and password. `POST /user/administrations/{id}/verify-institution`
+checks them against the institute verifier and returns a 30-minute grant bound to
+that user, plan, institute and credential revision; only its SHA-256 digest is
+stored, and the browser keeps it in memory and sends it in the request body, never
+in a URL or storage. Ten failed attempts per user and plan in 15 minutes are
+throttled. The grant proves a local check only: nothing is verified, submitted or
+read on competenzestrategiche.it. Saved scoring (`/instruments/{code}/score`) and
+manual scores (`/questionnaire-result`) share one contract and fail before any
+result or validation row is written when the grant is missing, invalid, expired,
+issued to another user or plan, or older than a credential change, when the
+instrument differs from the plan, or when the institute has no credentials.
+Standalone results without a plan are unchanged. Telegram score entry cannot carry
+a grant, so it refuses institute-linked plans with a localized message. Passwords
+or grants sent inside research metadata are dropped and never stored. The in-app
+questionnaire runner asks for the code and password when the server requires
+them, keeps the answers and saves once after verification.
+
+Startup migration `20261009_institute_credentials` adds the plan institute
+reference, link state, reconciliation reason, revision and the institute
+credential revision, then classifies each legacy plan once, using only the exact
+institute code (never school names). Plans without a legacy code become unlinked.
+An unknown, duplicated or inactive code, or a class linked to another institute,
+needs reconciliation. An existing institute verifier stays canonical; matching
+legacy duplicates are scrubbed and different ones need reconciliation. An empty
+institute slot is filled only from one consistent plaintext legacy value; competing
+or hash-like values require teacher re-entry. Logs report counts only. Unresolved
+legacy plan values remain until reconciliation; dropping the duplicate legacy
+columns is left to a later reviewed migration. The bcrypt helper now uses the
+`bcrypt` package directly, because passlib 1.7.4 cannot initialise bcrypt 4.1+.
