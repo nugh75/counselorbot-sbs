@@ -55,6 +55,7 @@ import { ReasoningSelector, type ReasoningEffort } from '@/components/ui/Reasoni
 import { fetchAccountPreferences, saveAccountPreferences } from '@/lib/account-preferences';
 import { isStartableQuestionnaireId } from '@/lib/tool-catalog';
 import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-history';
+import { parseStudentClassPaths, type StudentClassPath } from '@/lib/class-paths';
 
 
 type Step = 'intro' | 'base' | 'questionnaire-select' | 'counselor-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'chat-settings' | 'interaction' | 'completed' | 'farewell';
@@ -127,6 +128,21 @@ export default function Home() {
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
     const [notebookUpdatedAt, setNotebookUpdatedAt] = useState<string | null | undefined>(undefined);
+    const [studentPaths, setStudentPaths] = useState<StudentClassPath[] | null>(null);
+
+    const loadStudentPaths = useCallback(async () => {
+        try {
+            const res = await apiFetch('/api/user/paths');
+            if (res.ok) {
+                const data = await res.json();
+                setStudentPaths(parseStudentClassPaths(data));
+            } else {
+                setStudentPaths([]);
+            }
+        } catch {
+            setStudentPaths([]);
+        }
+    }, []);
     // Schermata iniziale decisa: un link diretto (?frozen, ?start, ...) la
     // rivendica subito, altrimenti si sceglie fra intro e percorso quando i
     // dati dello studente sono arrivati.
@@ -155,8 +171,9 @@ export default function Home() {
             .then((res) => (res.ok ? res.json() : null))
             .then((rev: { created_at?: string } | null) => { if (alive) setNotebookUpdatedAt(rev?.created_at ?? null); })
             .catch(() => { if (alive) setNotebookUpdatedAt(null); });
+        void loadStudentPaths();
         return () => { alive = false; };
-    }, [identity]);
+    }, [identity, loadStudentPaths]);
 
     // Un'entrata di cronologia per ogni passo, dal secondo in poi: la prima è
     // quella con cui la pagina è stata aperta e va lasciata al browser.
@@ -230,28 +247,32 @@ export default function Home() {
         })();
     };
 
-    // Dove si torna a percorso finito: al percorso se c'è una storia, alla
-    // presentazione se è la prima volta.
+    // Dove si torna a percorso finito: al percorso se c'è una storia o un percorso di classe,
+    // alla presentazione se è la prima volta senza percorsi.
     const homeStep = (): Step => (
-        hasCompletedQuestionnaires || notebookUpdatedAt ? 'base' : 'intro'
+        hasCompletedQuestionnaires || notebookUpdatedAt || (studentPaths?.length ?? 0) > 0 ? 'base' : 'intro'
     );
 
     // Dove si ricade quando uno strumento non è consentito: al catalogo
     // strumenti (o al percorso se c'è già storia).
     const catalogStep = (): Step => (
-        hasCompletedQuestionnaires || notebookUpdatedAt ? 'base' : 'questionnaire-select'
+        hasCompletedQuestionnaires || notebookUpdatedAt || (studentPaths?.length ?? 0) > 0 ? 'base' : 'questionnaire-select'
     );
 
-    // Nessun link diretto: la presentazione iniziale è l'unica landing page
-    // per tutti gli accessi; la schermata strumenti non viene più usata come
-    // porta d'ingresso automatica per i secondi utilizzi.
+    // Schermata iniziale: se lo studente appartiene a una classe con percorsi pubblicati,
+    // atterra direttamente sulla schermata base con il percorso hero in evidenza;
+    // altrimenti atterra sulla presentazione iniziale.
     useEffect(() => {
         if (ready || entryClaimed.current) return;
         if (!identity?.authenticated) return;
-        if (savedResults === null || notebookUpdatedAt === undefined) return;
-        setStep('intro');
+        if (savedResults === null || notebookUpdatedAt === undefined || studentPaths === null) return;
+        if (studentPaths.length > 0) {
+            setStep('base');
+        } else {
+            setStep('intro');
+        }
         setReady(true);
-    }, [ready, identity, savedResults, notebookUpdatedAt]);
+    }, [ready, identity, savedResults, notebookUpdatedAt, studentPaths]);
 
     // Apre la chat con la modalità già scelta in passato; Idea fa eccezione,
     // perché mappa grafica e OpenCode devono restare una scelta esplicita.
@@ -877,6 +898,8 @@ export default function Home() {
                             lastCompiledAt={lastCompiledAt}
                             onStartInstrument={handleQuestionnaireSelect}
                             onOpenIntro={() => setStep('intro')}
+                            paths={studentPaths}
+                            onRefreshPaths={loadStudentPaths}
                         />
                     )}
 

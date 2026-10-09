@@ -67,6 +67,12 @@ export const classPathsTexts = {
     strictBadge: ['Vincolante', 'Strict', 'Estricto', 'Strict', 'Verbindlich', 'Strikt'],
     loadingPaths: ['Caricamento dei percorsi…', 'Loading class paths…', 'Cargando itinerarios…', 'Chargement des parcours…', 'Klassenpfade werden geladen…', 'Laddar klassvägar…'],
     loadError: ['Impossibile caricare i percorsi di classe.', 'Could not load class paths.', 'No se pudieron cargar los itinerarios de clase.', 'Impossible de charger les parcours de classe.', 'Klassenpfade konnten nicht geladen werden.', 'Kunde inte ladda klassvägar.'],
+    seeAllClassPaths: ['Vedi tutti i percorsi di classe →', 'See all class paths →', 'Ver todos los itinerarios de clase →', 'Voir tous les parcours de classe →', 'Alle Klassenpfade ansehen →', 'Visa alla klassvägar →'],
+    allTools: ['Tutti gli strumenti', 'All tools', 'Todas las herramientas', 'Tous les outils', 'Alle Werkzeuge', 'Alla verktyg'],
+    allToolsCollapsedHelp: ['(catalogo collassato, solo strumenti abilitati per le tue classi)', '(collapsed catalog, only tools enabled for your classes)', '(catálogo colapsado, solo herramientas habilitadas para tus clases)', '(catalogue réduit, uniquement les outils activés pour vos classes)', '(eingeklappter Katalog, nur für deine Klassen aktivierte Werkzeuge)', '(hopfälld katalog, endast verktyg aktiverade för dina klasser)'],
+    allPersonalTools: ['Tutti gli strumenti dell’area personale', 'All personal area tools', 'Todas las herramientas del área personal', 'Tous les outils de l’espace personnel', 'Alle Werkzeuge des persönlichen Bereichs', 'Alla verktyg i det personliga området'],
+    showCatalog: ['Mostra catalogo strumenti', 'Show tool catalog', 'Mostrar catálogo de herramientas', 'Afficher le catalogue d’outils', 'Werkzeugkatalog anzeigen', 'Visa verktygskatalog'],
+    hideCatalog: ['Nascondi catalogo strumenti', 'Hide tool catalog', 'Ocultar catálogo de herramientas', 'Masquer le catalogue d’outils', 'Werkzeugkatalog ausblenden', 'Dölj verktygskatalog'],
 } as const satisfies Record<string, readonly [string, string, string, string, string, string]>;
 
 export type PathTextKey = keyof typeof classPathsTexts;
