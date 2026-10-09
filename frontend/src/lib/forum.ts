@@ -10,6 +10,14 @@ export interface ForumPost {
     own: boolean;
     created_at: string;
     edited_at: string | null;
+    status?: 'published' | 'pending';
+    author_username?: string;
+}
+
+export interface ForumState {
+    forum_enabled?: boolean;
+    premoderated?: boolean;
+    mute?: { until: string | null } | null;
 }
 
 export interface ForumTopic extends ForumPost {
@@ -22,15 +30,16 @@ export interface ForumTopic extends ForumPost {
     unread_count?: number;
 }
 
-export interface ForumList {
+export interface ForumList extends ForumState {
     group: { id: number; name: string; is_active: boolean };
     can_open_topic: boolean;
     can_moderate: boolean;
     topics: ForumTopic[];
     has_more: boolean;
+    pending_count?: number;
 }
 
-export interface ForumDetail {
+export interface ForumDetail extends ForumState {
     topic: ForumTopic;
     posts: ForumPost[];
     can_reply: boolean;
@@ -68,10 +77,12 @@ export function parseForumPost(value: unknown): ForumPost {
     if (!Number.isInteger(row.id) || typeof row.author_display_name !== 'string' || typeof row.created_at !== 'string'
         || (row.body !== null && typeof row.body !== 'string') || typeof row.hidden !== 'boolean' || typeof row.deleted !== 'boolean'
         || (row.hidden_reason !== null && typeof row.hidden_reason !== 'string') || typeof row.own !== 'boolean'
-        || (row.edited_at !== null && typeof row.edited_at !== 'string')) {
+        || (row.edited_at !== null && typeof row.edited_at !== 'string')
+        || (row.status !== undefined && row.status !== 'published' && row.status !== 'pending')
+        || (row.author_username !== undefined && typeof row.author_username !== 'string')) {
         throw new Error('Invalid forum post');
     }
-    return row as unknown as ForumPost;
+    return { ...row, status: row.status ?? 'published' } as unknown as ForumPost;
 }
 
 export function parseForumTopic(value: unknown): ForumTopic {
@@ -94,7 +105,8 @@ export function parseForumList(value: unknown): ForumList {
         || typeof row.has_more !== 'boolean' || !Array.isArray(row.topics)) {
         throw new Error('Invalid forum list');
     }
-    return { group: group as unknown as ForumList['group'], can_open_topic: row.can_open_topic, can_moderate: row.can_moderate,
+    if (row.pending_count !== undefined && (!Number.isInteger(row.pending_count) || Number(row.pending_count) < 0)) throw new Error('Invalid pending count');
+    return { ...parseForumState(row), pending_count: Number(row.pending_count ?? 0), group: group as unknown as ForumList['group'], can_open_topic: row.can_open_topic, can_moderate: row.can_moderate,
         has_more: row.has_more, topics: row.topics.map(parseForumTopic) };
 }
 
@@ -102,8 +114,38 @@ export function parseForumDetail(value: unknown): ForumDetail {
     const row = record(value);
     if (!Array.isArray(row.posts) || typeof row.can_reply !== 'boolean' || typeof row.can_moderate !== 'boolean'
         || typeof row.has_more !== 'boolean') throw new Error('Invalid discussion');
-    return { topic: parseForumTopic(row.topic), posts: row.posts.map(parseForumPost), can_reply: row.can_reply,
+    return { ...parseForumState(row), topic: parseForumTopic(row.topic), posts: row.posts.map(parseForumPost), can_reply: row.can_reply,
         can_moderate: row.can_moderate, has_more: row.has_more };
+}
+
+function parseForumState(row: Record<string, unknown>): ForumState {
+    if ((row.forum_enabled !== undefined && typeof row.forum_enabled !== 'boolean')
+        || (row.premoderated !== undefined && typeof row.premoderated !== 'boolean')) throw new Error('Invalid forum state');
+    const mute = row.mute == null ? null : record(row.mute);
+    if (mute && mute.until !== null && typeof mute.until !== 'string') throw new Error('Invalid mute');
+    return { forum_enabled: row.forum_enabled !== false, premoderated: row.premoderated === true,
+        mute: mute as { until: string | null } | null };
+}
+
+export function parseForumPending(value: unknown) {
+    const row = record(value);
+    if (!Array.isArray(row.topics) || !Array.isArray(row.posts) || typeof row.has_more !== 'boolean') throw new Error('Invalid pending queue');
+    return { topics: row.topics.map(parseForumTopic), posts: row.posts.map(value => {
+        const post = record(value);
+        if (!Number.isInteger(post.topic_id) || typeof post.topic_title !== 'string') throw new Error('Invalid pending post');
+        return { ...parseForumPost(post), topic_id: post.topic_id as number, topic_title: post.topic_title };
+    }), has_more: row.has_more };
+}
+
+export function parseForumMutes(value: unknown) {
+    const row = record(value);
+    if (!Array.isArray(row.mutes)) throw new Error('Invalid mute list');
+    return { mutes: row.mutes.map(value => {
+        const mute = record(value);
+        if (!Number.isInteger(mute.id) || typeof mute.username !== 'string' || typeof mute.reason !== 'string'
+            || (mute.until !== null && typeof mute.until !== 'string')) throw new Error('Invalid mute');
+        return mute as unknown as { id: number; username: string; reason: string; until: string | null };
+    }) };
 }
 
 export function parseForumLog(value: unknown): ForumLog {
@@ -132,8 +174,8 @@ export function forumPostActions(post: ForumPost, { moderator, active }: { moder
     return {
         edit: open && post.own && !post.hidden,
         delete: open && post.own,
-        hide: open && moderator && !post.hidden,
-        restore: open && moderator && post.hidden,
+        hide: open && moderator && !post.hidden && post.status !== 'pending',
+        restore: open && moderator && post.hidden && post.status !== 'pending',
     };
 }
 
