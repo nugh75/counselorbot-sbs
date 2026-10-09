@@ -1,7 +1,7 @@
 from .chat_preferences import ResponseFormat
 from .dynamic_registry import DynamicInstrumentSet, HISTORIC_INSTRUMENT_CODES
 from pydantic import BaseModel, Field, StrictBool, StrictInt, validator
-from typing import Optional, List, Dict, Any, Union, Literal
+from typing import Annotated, Optional, List, Dict, Any, Union, Literal
 from datetime import date, datetime
 import json
 import re
@@ -255,6 +255,11 @@ class QuestionnaireResultCreate(BaseModel):
 
 
 class QuestionnaireResultResponse(BaseModel):
+    source: str = "in-app"
+    capture_method: str = "legacy_unknown"
+    source_system: Optional[str] = None
+    source_record_id: Optional[str] = None
+    locale: Optional[str] = None
     id: int
     session_id: str
     questionnaire_type: str
@@ -475,6 +480,7 @@ class AdministrationPlanResponse(BaseModel):
     institution_id: Optional[int] = None
     institution_name: Optional[str] = None
     institution_code: Optional[str] = None
+    delivery_mode: str = "in_app"
     institution_credentials_configured: bool = False
     institution_link_state: str = "unlinked"
     reconciliation_reason: Optional[str] = None
@@ -1883,19 +1889,39 @@ class OrientationDirectoryResponse(BaseModel):
 # ==============================================================================
 
 
-class ClassPathStepInput(BaseModel):
-    id: Optional[int] = None
-    tool_key: str
+class PathStepFields(BaseModel):
+    model_config = {"extra": "forbid"}
+    id: Optional[int] = Field(default=None, gt=0)
     title: Optional[str] = None
     instructions: Optional[str] = None
     due_date: Optional[date] = None
+
+
+class ClassPathStepInput(PathStepFields):
+    step_type: Literal["tool"] = "tool"
+    tool_key: str = Field(min_length=1)
+
+
+class AdministrationPathStepInput(PathStepFields):
+    step_type: Literal["questionnaire_administration"]
+    administration_plan_id: int = Field(gt=0)
+
+
+TypedPathStepInput = Annotated[Union[ClassPathStepInput, AdministrationPathStepInput], Field(discriminator="step_type")]
 
 
 class ClassPathStepResponse(BaseModel):
     id: int
     path_id: int
     position: int
-    tool_key: str
+    tool_key: Optional[str] = None
+    step_type: str = "tool"
+    administration_plan_id: Optional[int] = None
+    active_from: Optional[datetime] = None
+    target_summary: Optional[dict] = None
+    availability_reason: Optional[str] = None
+    completion_kind: Optional[str] = None
+    completion_at: Optional[datetime] = None
     title: Optional[str] = None
     instructions: Optional[str] = None
     due_date: Optional[date] = None
@@ -1921,7 +1947,11 @@ class ClassPathUpdate(BaseModel):
     title: str
     description: Optional[str] = None
     mode: str = "recommended"
-    steps: List[ClassPathStepInput] = Field(default_factory=list)
+    steps: List[TypedPathStepInput] = Field(default_factory=list)
+
+    @validator("steps", pre=True)
+    def legacy_step_type(cls, value):
+        return [{"step_type": "tool", **row} if isinstance(row, dict) else row for row in value]
 
 
 class ClassPathResponse(BaseModel):
@@ -1965,7 +1995,14 @@ class ClassPathSummary(BaseModel):
 
 class StudentClassPathStep(BaseModel):
     id: int
-    tool_key: str
+    tool_key: Optional[str] = None
+    step_type: str = "tool"
+    administration_plan_id: Optional[int] = None
+    active_from: Optional[datetime] = None
+    target_summary: Optional[dict] = None
+    availability_reason: Optional[str] = None
+    completion_kind: Optional[str] = None
+    completion_at: Optional[datetime] = None
     title: Optional[str] = None
     instructions: Optional[str] = None
     due_date: Optional[date] = None
@@ -2008,3 +2045,12 @@ class ClassPathProgressResponse(BaseModel):
     source: Optional[str] = None
 
 
+
+
+class AdministrationGuidedEntryInput(BaseModel):
+    model_config = {"extra": "forbid"}
+    request_id: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9-]+$")
+    session_id: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9-]+$")
+    scores: Optional[Dict[str, StrictInt]] = None
+    result_id: Optional[int] = Field(default=None, gt=0)
+    institution_grant: str = Field(min_length=1, max_length=256)

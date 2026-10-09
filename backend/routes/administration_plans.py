@@ -247,6 +247,7 @@ def _serialize_plan(db: Session, plan: models.AdministrationPlan) -> dict:
         "group_id": plan.group_id,
         "group_name": _group_name(db, plan.group_id),
         "locale": plan.locale,
+        "delivery_mode": plan.delivery_mode,
         "school_level": plan.school_level,
         "scheduled_at": plan.scheduled_at,
         "location": plan.location,
@@ -387,6 +388,7 @@ async def create_administration_plan(
         instrument_code=(payload.instrument_code or "QSA").strip() or "QSA",
         group_id=group_id,
         locale=_normalize_locale(payload.locale),
+        delivery_mode="external_it" if _normalize_locale(payload.locale) == "it" else "in_app",
         school_level=_valid_level(payload.school_level),
         scheduled_at=payload.scheduled_at,
         location=_clean(payload.location),
@@ -412,13 +414,23 @@ async def update_administration_plan(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    _reject_legacy_credentials(payload)
     _require_visible_plan(db, current_user, plan_id)
+    return await _update_plan_after_access(plan_id, payload, current_user, db)
+
+
+async def _update_plan_after_access(plan_id, payload, current_user, db):
+    _reject_legacy_credentials(payload)
     plan = (db.query(models.AdministrationPlan).filter(models.AdministrationPlan.id == plan_id)
             .populate_existing().with_for_update().one())
     if plan.revision != payload.revision:
         raise HTTPException(status_code=409, detail="administration_revision_conflict")
     updates = payload.model_dump(exclude_unset=True, exclude={"revision", "institution_code", "institution_password"})
+    linked_step = db.query(models.ClassPathStep.id).filter(
+        models.ClassPathStep.administration_plan_id == plan.id,
+        models.ClassPathStep.active_from.is_not(None)).first()
+    if linked_step and any(key in updates and updates[key] != getattr(plan, key)
+                           for key in ("instrument_code", "locale", "group_id", "institution_id")):
+        raise HTTPException(409, "activated_administration_target_immutable")
     if "title" in updates:
         title = _clean(updates["title"])
         if not title:
@@ -430,6 +442,7 @@ async def update_administration_plan(
         plan.group_id = _validate_group_attach(db, current_user, updates["group_id"])
     if "locale" in updates:
         plan.locale = _normalize_locale(updates["locale"])
+        plan.delivery_mode = "external_it" if plan.locale == "it" else "in_app"
     if "school_level" in updates:
         plan.school_level = _valid_level(updates["school_level"])
     if "scheduled_at" in updates:
@@ -471,6 +484,8 @@ async def delete_administration_plan(
     # Non-admin (docenti/ricercatori): elimina solo chi ha creato il piano.
     if not _is_admin(current_user) and plan.created_by_username != _username(current_user):
         raise HTTPException(status_code=403, detail="Solo il creatore del piano puo' eliminarlo")
+    if db.query(models.ClassPathStep.id).filter_by(administration_plan_id=plan.id).first():
+        raise HTTPException(409, "administration_referenced_by_path")
     if _responses_count(db, plan.id):
         raise HTTPException(
             status_code=409,
@@ -597,3 +612,49 @@ async def get_plan_student_conversation(
     if not result:
         raise HTTPException(status_code=404, detail="Sessione non trovata in questo piano")
     return _session_conversation_messages(db, session_id)
+
+
+@router.get("/teacher/groups/{group_id}/administrations")
+async def list_class_administrations(group_id: int, current_user=Depends(auth.get_current_plan_manager),
+                                     db: Session = Depends(get_db)):
+    from .class_paths import _require_visible_group
+    _require_visible_group(db, current_user, group_id)
+    return [_serialize_plan(db, row) for row in db.query(models.AdministrationPlan).filter_by(group_id=group_id)
+            .order_by(models.AdministrationPlan.id.desc()).all()]
+
+
+@router.post("/teacher/groups/{group_id}/administrations", response_model=schemas.AdministrationPlanResponse)
+async def create_class_administration(group_id: int, payload: schemas.AdministrationPlanCreate,
+                                      current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    from .class_paths import _require_visible_group
+    group = _require_visible_group(db, current_user, group_id, for_update=True)
+    if group.institution_id is None:
+        raise HTTPException(status_code=409, detail="class_institution_required")
+    if ((payload.group_id is not None and payload.group_id != group.id)
+            or (payload.institution_id is not None and payload.institution_id != group.institution_id)):
+        raise HTTPException(status_code=422, detail="administration_class_context_mismatch")
+    bound = payload.model_copy(update={"group_id":group.id, "institution_id":group.institution_id})
+    return await create_administration_plan(bound, current_user, db)
+
+
+@router.get("/teacher/administrations/{plan_id}", response_model=schemas.AdministrationPlanResponse)
+async def get_teacher_administration(plan_id: int, current_user=Depends(auth.get_current_plan_manager),
+                                     db: Session = Depends(get_db)):
+    from .class_paths import _require_visible_group
+    plan = db.get(models.AdministrationPlan, plan_id)
+    if not plan or not plan.group_id:
+        raise HTTPException(status_code=404, detail="administration_not_found")
+    _require_visible_group(db, current_user, plan.group_id)
+    return _serialize_plan(db, plan)
+
+
+@router.put("/teacher/administrations/{plan_id}", response_model=schemas.AdministrationPlanResponse)
+async def update_teacher_administration(plan_id: int, payload: schemas.AdministrationPlanUpdate,
+                                        current_user=Depends(auth.get_current_plan_manager), db: Session=Depends(get_db)):
+    plan = db.get(models.AdministrationPlan, plan_id)
+    if not plan or not plan.group_id:
+        raise HTTPException(404, "administration_not_found")
+    from .class_paths import _require_visible_group
+    _require_visible_group(db, current_user, plan.group_id)
+    # Reuse the canonical editor after class-scoped authorization, without widening research reads.
+    return await _update_plan_after_access(plan_id, payload, current_user, db)

@@ -160,7 +160,7 @@ export function StudentClassPathsPage() {
                                 const isDone = step.state === 'done';
                                 const isLocked = step.state === 'locked';
                                 const isUnavailable = step.state === 'unavailable';
-                                const toolDisplayName = resolveClassPathToolName(step.tool_key, lang);
+                                const toolDisplayName = step.target_summary ? `${step.target_summary.instrument_code} · ${step.target_summary.code}` : resolveClassPathToolName(step.tool_key, lang);
                                 const titleDisplay = step.title ? step.title : toolDisplayName;
                                 const isActionBusy = actionStepId === step.id;
 
