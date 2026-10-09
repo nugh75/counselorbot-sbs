@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
 from ..class_access import resolve_access
+from ..class_path_completion import has_automatic_evidence
 from ..class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, tool_catalog
 from .groups import _is_admin, _username, _visible_group_query
 
@@ -481,7 +482,7 @@ async def list_student_class_paths(
             else []
         )
 
-        # Resolution: teacher mark > student mark > not done (plan §4.2)
+        # Resolution: teacher mark > student mark > automatic evidence > not done (plan §4.2)
         marks: dict[int, models.ClassPathProgress] = {}
         for pr in progress_rows:
             if pr.step_id not in marks or pr.source == "teacher":
@@ -505,6 +506,9 @@ async def list_student_class_paths(
                 if mark:
                     step_state = mark.state
                     step_source = mark.source
+                elif auto and has_automatic_evidence(db, step.tool_key, username, path.published_at):
+                    step_state = "done"
+                    step_source = "automatic"
                 else:
                     step_state = "not_done"
                     step_source = None
@@ -523,7 +527,6 @@ async def list_student_class_paths(
 
         available_steps = [s for s in serialized_steps if s["state"] != "unavailable"]
         total = len(available_steps)
-        done = sum(1 for s in available_steps if s["state"] == "done")
 
         next_step_id = None
         for s in available_steps:
@@ -531,14 +534,19 @@ async def list_student_class_paths(
                 next_step_id = s["id"]
                 break
 
-        # In strict mode, lock later steps after the first undone step
+        # Strict mode: a step counts only once every earlier step is done, so
+        # every step after the first undone one renders locked (path only:
+        # tool access is unchanged).
         if path.mode == "strict" and next_step_id is not None:
             found_next = False
             for s in available_steps:
-                if found_next and s["state"] != "done":
+                if found_next:
                     s["state"] = "locked"
+                    s["source"] = None
                 if s["id"] == next_step_id:
                     found_next = True
+
+        done = sum(1 for s in available_steps if s["state"] == "done")
 
         result.append({
             "id": path.id,

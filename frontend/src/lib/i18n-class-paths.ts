@@ -58,6 +58,7 @@ export const classPathsTexts = {
     progressCount: ['{done} di {total} completati', '{done} of {total} done', '{done} de {total} completados', '{done} sur {total} terminés', '{done} von {total} erledigt', '{done} av {total} klara'],
     current: ['In corso', 'Current', 'En curso', 'En cours', 'Aktuell', 'Pågående'],
     sourceTeacher: ['fonte: docente', 'source: teacher', 'fuente: profesorado', 'source : enseignant', 'Quelle: Lehrkraft', 'källa: lärare'],
+    sourceAutomatic: ['rilevato automaticamente', 'detected automatically', 'detectado automáticamente', 'détecté automatiquement', 'automatisch erkannt', 'upptäckt automatiskt'],
     sourceStudent: ['fonte: studente', 'source: student', 'fuente: estudiante', 'source : élève', 'Quelle: Schüler', 'källa: elev'],
     studentPathsEmpty: ['Nessun percorso di classe disponibile al momento.', 'No class paths available at this moment.', 'No hay itinerarios de clase disponibles en este momento.', 'Aucun parcours de classe disponible pour le moment.', 'Derzeit sind keine Klassenpfade verfügbar.', 'Inga klassvägar tillgängliga just nu.'],
     yourClassPath: ['Il tuo percorso di classe', 'Your class path', 'Tu itinerario de clase', 'Ton parcours de classe', 'Dein Klassenpfad', 'Din klassväg'],

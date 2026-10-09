@@ -685,3 +685,367 @@ def test_strict_mode_and_resolution_precedence(class_paths_api):
     assert steps3[0]["source"] == "teacher"
 
 
+
+
+# --- Automatic completion and strict mode (#98, plan §4.2) -------------------
+
+from contextlib import contextmanager  # noqa: E402
+from datetime import datetime, timedelta, timezone  # noqa: E402
+from unittest.mock import patch  # noqa: E402
+
+from sqlalchemy.orm import Session  # noqa: E402
+
+from backend import class_access, class_path_completion  # noqa: E402
+from backend.diagram_render import DiagramEdge, DiagramNode, DiagramSpec  # noqa: E402
+from backend.dynamic_registry import set_session_factory  # noqa: E402
+from backend.routes import chat  # noqa: E402
+
+PUBLISHED_AT = datetime(2026, 10, 1, 9, 0, tzinfo=timezone.utc)
+BEFORE = PUBLISHED_AT - timedelta(days=1)
+AFTER = PUBLISHED_AT + timedelta(hours=1)
+STUDENT = "student_auto"
+
+
+def _published_path(client, db, group_id, identity, steps, *, mode="recommended"):
+    """Publish a path with the given tool keys and pin `published_at` (transaction-safe)."""
+    identity.update(username="owner", groups=["docenti"], is_admin=False, is_researcher=False)
+    created = client.post(f"/teacher/groups/{group_id}/paths", json={"title": "Auto", "mode": mode}).json()
+    put = client.put(
+        f"/teacher/paths/{created['id']}",
+        json={"revision": 1, "title": "Auto", "mode": mode,
+              "steps": [{"tool_key": key} for key in steps]},
+    ).json()
+    client.post(f"/teacher/paths/{created['id']}/publish")
+    path = db.get(models.ClassPath, created["id"])
+    path.published_at = PUBLISHED_AT
+    if not db.query(models.GroupMembership).filter_by(group_id=group_id, username=STUDENT).first():
+        db.add(models.GroupMembership(group_id=group_id, username=STUDENT))
+    db.commit()
+    identity.update(username=STUDENT, groups=[], is_admin=False, is_researcher=False)
+    return created["id"], [s["id"] for s in put["steps"]]
+
+
+def _student_path(client, path_id):
+    return next(p for p in client.get("/user/paths").json() if p["id"] == path_id)
+
+
+def _focused_spec():
+    return DiagramSpec(
+        type="mindmap", title="Open a study group",
+        nodes=[DiagramNode(id="n0", label="Study group", role="idea"),
+               DiagramNode(id="n1", label="Find members", role="task")],
+        edges=[DiagramEdge(source="n0", target="n1")],
+    ).model_dump(mode="json")
+
+
+def _unfocused_spec():
+    return DiagramSpec(
+        type="mindmap", title="Loose notes",
+        nodes=[DiagramNode(id="n0", label="Something"), DiagramNode(id="n1", label="Other")],
+        edges=[DiagramEdge(source="n0", target="n1")],
+    ).model_dump(mode="json")
+
+
+def _evidence(kind, when):
+    """One evidence row per tool kind, created at `when` (plan §4.2 table)."""
+    if kind == "QSA":
+        return models.QuestionnaireResult(session_id="s-qsa", questionnaire_type="QSA",
+                                          username=STUDENT, scores={}, submitted_at=when)
+    if kind == "SAVICKAS":
+        return models.Log(session_id="s-sav", action="guided_chat_completed",
+                          questionnaire_type="SAVICKAS", username=STUDENT, timestamp=when)
+    if kind == "IDEA":
+        return models.IdeaMapRevision(session_id="s-idea", username=STUDENT,
+                                      spec=_focused_spec(), created_at=when)
+    if kind == "bussola":
+        return models.OrientationSession(session_id=f"s-bus-{when.isoformat()}", username=STUDENT,
+                                         status="completed", completed_at=when)
+    if kind == "tavolo":
+        return models.Tavolo(id=f"t-{when.isoformat()}", username=STUDENT, title="Desk", saved_at=when)
+    if kind == "goals":
+        return models.PersonalGoal(username=STUDENT, title="Read daily", created_at=when)
+    if kind == "pqbl":
+        return models.Log(session_id="s-pqbl", action="pqbl_session_completed",
+                          username=STUDENT, timestamp=when)
+    raise AssertionError(kind)
+
+
+AUTO_KINDS = ["QSA", "SAVICKAS", "IDEA", "bussola", "tavolo", "goals", "pqbl"]
+
+
+@pytest.mark.parametrize("kind", AUTO_KINDS)
+def test_evidence_before_published_at_is_ignored(class_paths_api, kind):
+    client, db, group_id, identity = class_paths_api
+    path_id, _ = _published_path(client, db, group_id, identity, [kind])
+    db.add(_evidence(kind, BEFORE))
+    db.commit()
+
+    step = _student_path(client, path_id)["steps"][0]
+    assert step["state"] == "not_done"
+    assert step["source"] is None
+
+
+@pytest.mark.parametrize("kind", AUTO_KINDS)
+def test_evidence_after_published_at_completes_the_step(class_paths_api, kind):
+    client, db, group_id, identity = class_paths_api
+    path_id, _ = _published_path(client, db, group_id, identity, [kind])
+    db.add(_evidence(kind, AFTER))
+    db.commit()
+
+    path = _student_path(client, path_id)
+    assert path["steps"][0]["state"] == "done"
+    assert path["steps"][0]["source"] == "automatic"
+    assert path["steps"][0]["can_self_mark"] is False
+    assert (path["done"], path["total"]) == (1, 1)
+    assert path["next_step_id"] is None
+
+
+def test_evidence_of_another_student_or_tool_does_not_count(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, _ = _published_path(client, db, group_id, identity, ["QSA", "SAVICKAS"])
+    db.add_all([
+        models.QuestionnaireResult(session_id="x", questionnaire_type="QSA", username="someone_else",
+                                   scores={}, submitted_at=AFTER),
+        models.QuestionnaireResult(session_id="y", questionnaire_type="ZTPI", username=STUDENT,
+                                   scores={}, submitted_at=AFTER),
+        models.Log(session_id="z", action="guided_chat_completed", questionnaire_type="QSA",
+                   username=STUDENT, timestamp=AFTER),
+        models.Log(session_id="w", action="chat_message", questionnaire_type="SAVICKAS",
+                   username=STUDENT, timestamp=AFTER),
+    ])
+    db.commit()
+
+    assert [s["state"] for s in _student_path(client, path_id)["steps"]] == ["not_done", "not_done"]
+
+
+def test_idea_map_counts_only_when_focused(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, _ = _published_path(client, db, group_id, identity, ["IDEA"])
+    db.add(models.IdeaMapRevision(session_id="s-idea", username=STUDENT,
+                                  spec=_unfocused_spec(), created_at=AFTER))
+    db.commit()
+    assert _student_path(client, path_id)["steps"][0]["state"] == "not_done"
+
+    db.add(models.IdeaMapRevision(session_id="s-idea", username=STUDENT,
+                                  spec=_focused_spec(), created_at=AFTER + timedelta(minutes=5)))
+    db.commit()
+    assert _student_path(client, path_id)["steps"][0]["state"] == "done"
+
+
+def test_unfinished_bussola_and_draft_tavolo_do_not_count(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, _ = _published_path(client, db, group_id, identity, ["bussola", "tavolo"])
+    db.add_all([
+        models.OrientationSession(session_id="s-open", username=STUDENT, status="in_progress",
+                                  created_at=AFTER, completed_at=None),
+        models.Tavolo(id="t-draft", username=STUDENT, created_at=AFTER, saved_at=None),
+    ])
+    db.commit()
+
+    assert [s["state"] for s in _student_path(client, path_id)["steps"]] == ["not_done", "not_done"]
+
+
+def test_teacher_mark_beats_student_mark_beats_automatic(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, (goal_step,) = _published_path(client, db, group_id, identity, ["goals"])
+    db.add(_evidence("goals", AFTER))
+    db.add(models.ClassPathProgress(step_id=goal_step, username=STUDENT, state="not_done",
+                                    source="student", actor_username=STUDENT))
+    db.commit()
+    step = _student_path(client, path_id)["steps"][0]
+    assert (step["state"], step["source"]) == ("not_done", "student")
+
+    db.add(models.ClassPathProgress(step_id=goal_step, username=STUDENT, state="done",
+                                    source="teacher", actor_username="owner"))
+    db.commit()
+    step = _student_path(client, path_id)["steps"][0]
+    assert (step["state"], step["source"]) == ("done", "teacher")
+
+    teacher = db.query(models.ClassPathProgress).filter_by(step_id=goal_step, source="teacher").one()
+    teacher.state = "not_done"
+    db.commit()
+    step = _student_path(client, path_id)["steps"][0]
+    assert (step["state"], step["source"]) == ("not_done", "teacher")
+
+
+def test_strict_mode_counts_a_step_only_after_earlier_steps(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, (s1, s2, s3) = _published_path(
+        client, db, group_id, identity, ["timeline", "goals", "actions"], mode="strict")
+    # Later steps have evidence / a self-mark, the first does not.
+    db.add(_evidence("goals", AFTER))
+    db.commit()
+    assert client.post(f"/user/paths/{path_id}/steps/{s3}/done").status_code == 200
+
+    path = _student_path(client, path_id)
+    assert [s["state"] for s in path["steps"]] == ["not_done", "locked", "locked"]
+    assert [s["source"] for s in path["steps"]] == [None, None, None]
+    assert (path["done"], path["total"], path["next_step_id"]) == (0, 3, s1)
+
+    assert client.post(f"/user/paths/{path_id}/steps/{s1}/done").status_code == 200
+    path = _student_path(client, path_id)
+    assert [s["state"] for s in path["steps"]] == ["done", "done", "done"]
+    assert [s["source"] for s in path["steps"]] == ["student", "automatic", "student"]
+    assert (path["done"], path["next_step_id"]) == (3, None)
+
+
+def test_recommended_mode_counts_steps_out_of_order(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, (s1, s2, s3) = _published_path(
+        client, db, group_id, identity, ["timeline", "goals", "actions"])
+    db.add(_evidence("goals", AFTER))
+    db.commit()
+    assert client.post(f"/user/paths/{path_id}/steps/{s3}/done").status_code == 200
+
+    path = _student_path(client, path_id)
+    assert [s["state"] for s in path["steps"]] == ["not_done", "done", "done"]
+    assert (path["done"], path["next_step_id"]) == (2, s1)
+
+
+def test_strict_mode_skips_unavailable_steps(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, (s1, s2, s3) = _published_path(
+        client, db, group_id, identity, ["QSA", "goals", "actions"], mode="strict")
+    db.add(models.ClassSettings(group_id=group_id, disabled_tool_keys=["QSA"], updated_by="owner"))
+    db.add(_evidence("goals", AFTER))
+    db.commit()
+
+    path = _student_path(client, path_id)
+    assert [s["state"] for s in path["steps"]] == ["unavailable", "done", "not_done"]
+    assert (path["done"], path["total"], path["next_step_id"]) == (1, 2, s3)
+
+
+def test_strict_lock_does_not_change_tool_access(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, _ = _published_path(client, db, group_id, identity, ["timeline", "QSA"], mode="strict")
+    assert _student_path(client, path_id)["steps"][1]["state"] == "locked"
+
+    student = dict(identity)
+    access = class_access.resolve_access(db, student)
+    assert "QSA" in access["tool_keys"]
+    class_access.require_tool(db, student, "QSA")
+
+
+# --- guided_chat_completed marker -------------------------------------------
+
+def _guided_steps(db):
+    db.add_all([
+        models.GuidedStep(id="sav-1", sort_order=1, label="Start", prompt="Start",
+                          system_prompt_mode="generic", questionnaire_type="SAVICKAS"),
+        models.GuidedStep(id="sav-2", sort_order=2, label="Close", prompt="Close",
+                          system_prompt_mode="generic", questionnaire_type="SAVICKAS"),
+    ])
+    db.commit()
+
+
+def _markers(db, session_id=None):
+    query = db.query(models.Log).filter(models.Log.action == "guided_chat_completed")
+    if session_id:
+        query = query.filter(models.Log.session_id == session_id)
+    return query.all()
+
+
+def test_marker_written_only_on_the_last_step_once_per_session(class_paths_api):
+    _, db, _, _ = class_paths_api
+    _guided_steps(db)
+
+    def record(session_id, phase):
+        written = class_path_completion.record_guided_chat_completion(
+            db, session_id=session_id, username=STUDENT, phase=phase)
+        db.commit()
+        return written
+
+    assert record("sess-1", "sav-1") is False
+    assert _markers(db) == []
+
+    assert record("sess-1", "sav-2") is True
+    assert record("sess-1", "sav-2") is False      # same session, another turn
+    assert record("sess-1", "sav-2") is False      # resumed session, later turn
+    markers = _markers(db)
+    assert len(markers) == 1
+    assert (markers[0].questionnaire_type, markers[0].username, markers[0].phase) == (
+        "SAVICKAS", STUDENT, "sav-2")
+
+    assert record("sess-2", "sav-2") is True       # a new session is a new completion
+    assert len(_markers(db)) == 2
+
+
+def test_marker_needs_a_user_and_a_known_step(class_paths_api):
+    _, db, _, _ = class_paths_api
+    _guided_steps(db)
+    for username, phase in [("", "sav-2"), (None, "sav-2"), (STUDENT, ""), (STUDENT, "missing")]:
+        assert class_path_completion.record_guided_chat_completion(
+            db, session_id="sess-x", username=username, phase=phase) is False
+    db.commit()
+    assert _markers(db) == []
+
+
+@contextmanager
+def _chat_client(db, identity):
+    app = FastAPI()
+    app.include_router(chat.router)
+    app.add_exception_handler(class_access.ToolAccessDenied, class_access.tool_access_denied_handler)
+
+    def override_db():
+        yield db
+
+    app.dependency_overrides[database.get_db] = override_db
+    app.dependency_overrides[auth.get_identity_view_as] = lambda: identity
+    app.dependency_overrides[auth.get_current_user] = lambda: identity
+
+    def fresh_session():
+        return Session(bind=db.connection(), join_transaction_mode="create_savepoint")
+
+    set_session_factory(fresh_session)
+    try:
+        with patch.object(database, "SessionLocal", fresh_session), TestClient(app) as client:
+            yield client
+    finally:
+        set_session_factory(None)
+
+
+def _mock_stream(*_args, **_kwargs):
+    yield {"type": "delta", "text": "streamed reply"}
+
+
+@pytest.mark.parametrize("route", ["/chat", "/chat/stream"])
+def test_chat_turn_on_last_step_writes_marker_once_even_when_resumed(class_paths_api, route):
+    _, db, _, _ = class_paths_api
+    _guided_steps(db)
+    student = {"username": STUDENT, "groups": ["studenti"], "is_admin": False,
+               "is_researcher": False, "authenticated": True}
+
+    def turn(client, phase, session_id="sess-chat"):
+        response = client.post(route, json={"message": "Hi", "questionnaire_type": "SAVICKAS",
+                                            "session_id": session_id, "phase": phase})
+        assert response.status_code == 200, response.text
+        return response
+
+    with patch.object(chat.AIService, "get_response", return_value="plain reply"), \
+            patch.object(chat.AIService, "stream_response", side_effect=_mock_stream):
+        with _chat_client(db, student) as client:
+            turn(client, "sav-1")
+            assert _markers(db) == []
+            turn(client, "sav-2")
+            turn(client, "sav-2")
+        # Resumed later in a new client (page reload): same session, no new marker.
+        with _chat_client(db, student) as client:
+            turn(client, "sav-2")
+
+    markers = _markers(db, "sess-chat")
+    assert len(markers) == 1
+    assert markers[0].questionnaire_type == "SAVICKAS"
+
+
+def test_preview_turn_writes_no_marker(class_paths_api):
+    _, db, _, _ = class_paths_api
+    _guided_steps(db)
+    admin = {"username": "root", "groups": ["admins"], "is_admin": True,
+             "is_researcher": False, "authenticated": True}
+    with patch.object(chat.AIService, "get_response", return_value="plain reply"), \
+            _chat_client(db, admin) as client:
+        response = client.post("/chat", json={"message": "Hi", "questionnaire_type": "SAVICKAS",
+                                              "session_id": "sess-prev", "phase": "sav-2",
+                                              "preview": True})
+        assert response.status_code == 200, response.text
+    assert _markers(db) == []
