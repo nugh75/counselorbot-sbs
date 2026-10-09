@@ -14,6 +14,8 @@ import { assignmentSaveError, assignmentStepInput, parsePathAssignments, selecta
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 import type { AssignmentStepSummary } from '@/lib/class-paths';
 import { AssignmentDialog } from './AssignmentButton';
+import { forumSaveError, forumStepInput, pathForumTopics, selectablePathForumTopics, type PathForumTopic } from '@/lib/path-forum';
+import { pathForumText } from '@/lib/i18n-path-forum';
 import { classPathText, classPathsTexts } from '@/lib/i18n-class-paths';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
 import { useI18n } from '@/lib/i18n-context';
@@ -25,7 +27,7 @@ import { StickyActions } from '@/components/ui/StickyActions';
 import { ClassPathProgressPanel } from './ClassPathProgress';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
-import { parseForumDiscussionLinks } from '@/lib/forum';
+import { parseForumDiscussionLinks, parseForumList } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 
 type PathTextKey = keyof typeof classPathsTexts;
@@ -136,10 +138,30 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
         setSteps(current => [...current, assignmentStepInput(target, current.length + 1)]);
         setSelectedAssignment(''); setNotice(null);
     };
+    // TF7: an exact published discussion of this class, read from the forum API.
+    const f = (key: Parameters<typeof pathForumText>[1]) => pathForumText(lang, key);
+    const [forumTopics, setForumTopics] = useState<PathForumTopic[]>([]);
+    const [forumLoadError, setForumLoadError] = useState(false);
+    const [selectedTopic, setSelectedTopic] = useState('');
+    const loadForumTopics = async () => {
+        try {
+            const response = await apiFetch(`/api/groups/${path.group_id}/forum/topics?limit=100`);
+            if (!response.ok) throw new Error('forum topics');
+            setForumTopics(pathForumTopics(parseForumList(await response.json()).topics));
+            setForumLoadError(false);
+        } catch {setForumLoadError(true);}
+    };
+    useEffect(() => {void loadForumTopics();}, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const addForumStep = () => {
+        const target = forumTopics.find(row => row.id === Number(selectedTopic));
+        if (!target) return;
+        setSteps(current => [...current, forumStepInput(target, path.group_id, current.length + 1)]);
+        setSelectedTopic(''); setNotice(null);
+    };
     const [selectedToolKey, setSelectedToolKey] = useState<string>('');
 
     const [busy, setBusy] = useState(false);
-    const [notice, setNotice] = useState<'saved' | 'published' | 'conflict' | 'tool_disabled' | 'deep_dive_referenced' | 'deep_dive_invalid' | 'assignment_invalid' | 'error' | null>(null);
+    const [notice, setNotice] = useState<'saved' | 'published' | 'conflict' | 'tool_disabled' | 'deep_dive_referenced' | 'deep_dive_invalid' | 'assignment_invalid' | 'forum_invalid' | 'error' | null>(null);
     const [forbidden, setForbidden] = useState(false);
 
     const mounted = useRef(false);
@@ -239,7 +261,8 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                     ...(s.step_type === 'questionnaire_administration'
                         ? {administration_plan_id:s.administration_plan_id}
                         : s.step_type === 'guided_results_chat' ? {results_step_id:s.results_step_id}
-                            : s.step_type === 'assignment' ? {assignment_id:s.assignment_id} : {tool_key:s.tool_key}),
+                            : s.step_type === 'assignment' ? {assignment_id:s.assignment_id}
+                                : s.step_type === 'forum' ? {topic_id:s.topic_id} : {tool_key:s.tool_key}),
                     title: s.title ? s.title.trim() : null,
                     instructions: s.instructions ? s.instructions.trim() : null,
                     due_date: s.due_date || null,
@@ -265,6 +288,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                 if (detail === 'results_step_referenced') setNotice('deep_dive_referenced');
                 else if (['results_step_invalid', 'results_step_order', 'duplicate_results_chat'].includes(detail)) setNotice('deep_dive_invalid');
                 else if (assignmentSaveError(detail)) setNotice('assignment_invalid');
+                else if (forumSaveError(detail)) setNotice('forum_invalid');
                 else setNotice(response.status === 409 ? 'conflict' : 'tool_disabled');
                 return false;
             }
@@ -312,7 +336,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
             } else {
                 // A revoked or otherwise invalid assignment target names itself; the draft stays.
                 const detail = (await response.json().catch(() => null))?.detail;
-                setNotice(assignmentSaveError(detail) ? 'assignment_invalid' : 'error');
+                setNotice(assignmentSaveError(detail) ? 'assignment_invalid' : forumSaveError(detail) ? 'forum_invalid' : 'error');
             }
         } catch {
             setNotice('error');
@@ -500,11 +524,15 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                     ? `${a('deepDive')} · ${a('deepDiveFrom')} #${source?.position ?? '?'}`
                                     : step.step_type === 'assignment'
                                         ? `${p('assignment')} · ${step.assignment_summary?.title || `#${step.assignment_id}`}`
-                                        : toolLabel(step.tool_key, classSettings.tools, lang);
+                                        : step.step_type === 'forum'
+                                            ? `${f('forum')} · ${forumTopics.find(row => row.id === step.topic_id)?.title || `#${step.topic_id}`}${step.forum_summary?.locked ? ` · ${f('locked')}` : ''}`
+                                            : toolLabel(step.tool_key, classSettings.tools, lang);
                             // Students see this step as not available: say so here too.
                             const unavailable = ((step.step_type ?? 'tool') === 'tool' && !enabledTools.some(t => t.key === step.tool_key))
                                 // A saved assignment step loses its summary once revoked or otherwise unavailable.
-                                || (step.step_type === 'assignment' && step.id !== undefined && !step.assignment_summary);
+                                || (step.step_type === 'assignment' && step.id !== undefined && !step.assignment_summary)
+                                // Likewise a saved forum step whose discussion was hidden or whose forum is off.
+                                || (step.step_type === 'forum' && step.id !== undefined && !step.forum_summary);
                             return (
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${index}`}
@@ -662,6 +690,19 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                     {creatingAssignment && createPortal(<AssignmentDialog classId={path.group_id} close={()=>setCreatingAssignment(false)}
                         saved={created=>void loadPathAssignments(created.id)} />, document.body)}
                 </div>
+                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
+                    <h3 className="font-semibold">{f('forum')}</h3>
+                    {forumLoadError && <Callout variant="danger">{f('loadError')} <Button variant="secondary" onClick={()=>void loadForumTopics()}>{f('retry')}</Button></Callout>}
+                    {!forumLoadError && !forumTopics.length && <p className="text-sm text-slate-600">{f('empty')}</p>}
+                    <div className="flex flex-wrap gap-2">
+                        <label>{f('choose')}<select value={selectedTopic} onChange={event=>setSelectedTopic(event.target.value)} className="ml-2 rounded border p-2">
+                            <option value="">{f('choose')}</option>
+                            {selectablePathForumTopics(forumTopics, steps).map(row=><option key={row.id} value={row.id}>{row.locked ? `${row.title} · ${f('locked')}` : row.title}</option>)}
+                        </select></label>
+                        <Button variant="secondary" disabled={busy || !selectedTopic} onClick={addForumStep}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
+                    </div>
+                    <p className="text-sm text-slate-600">{f('rule')}</p>
+                </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
                     <select
                         value={selectedToolKey}
@@ -712,6 +753,9 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                         )}
                         {notice === 'assignment_invalid' && (
                             <p role="alert" className="text-red-600 font-medium">{p('invalid')}</p>
+                        )}
+                        {notice === 'forum_invalid' && (
+                            <p role="alert" className="text-red-600 font-medium">{f('invalid')}</p>
                         )}
                         {(notice === 'deep_dive_referenced' || notice === 'deep_dive_invalid') && (
                             <p role="alert" className="text-red-600 font-medium">

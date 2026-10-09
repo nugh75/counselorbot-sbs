@@ -1,6 +1,8 @@
 import type { Lang } from "./i18n";
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
 import { pathAssignmentText } from "./i18n-path-assignments.ts";
+// @ts-expect-error -- Node's TypeScript runner requires the extension.
+import { pathForumText } from "./i18n-path-forum.ts";
 const languages: readonly Lang[] = ["it", "en", "es", "fr", "de", "sv"];
 export const administrationStepTexts = {
   teacherGuide: [
@@ -363,6 +365,8 @@ export function typedStepTargetLabel(
     assignment_summary?: { title: string } | null;
   },
 ): string | null {
+  // Forum steps carry no discussion title: path views never hold forum text.
+  if (step.step_type === "forum") return pathForumText(lang, "forum");
   if (step.step_type === "assignment")
     return step.assignment_summary
       ? `${pathAssignmentText(lang, "assignment")} · ${step.assignment_summary.title}`
