@@ -16,6 +16,26 @@ export function isToolAllowed(access: UserAccess | null | undefined, key: string
     return access.tool_keys.includes(key);
 }
 
+// `counselor_ids` already holds the student's private counselors (decision 7).
+export function isCounselorAllowed(access: UserAccess | null | undefined, id: number): boolean {
+    if (!access || !access.restricted || !access.counselor_ids) return true;
+    return access.counselor_ids.includes(id);
+}
+
+// Counselor for a resumed session (#93): its own if still allowed, otherwise the
+// class default, otherwise the account counselor; null means the student picks.
+export function resumeCounselor(
+    access: UserAccess | null | undefined,
+    sessionId: number | null,
+    accountId: number | null,
+): { id: number | null; replaced: boolean } | null {
+    const current = sessionId ?? accountId;
+    if (current == null || isCounselorAllowed(access, current)) return { id: current, replaced: false };
+    const fallback = [access?.default_counselor_id ?? null, accountId]
+        .find((id): id is number => id != null && isCounselorAllowed(access, id));
+    return fallback == null ? null : { id: fallback, replaced: true };
+}
+
 const SESSION_CACHE_PREFIX = 'cb_user_access';
 
 function getSessionStorage(): Storage | null {

@@ -584,6 +584,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     if request.preview and not bool(identity.get("is_admin")):
         raise HTTPException(status_code=403, detail="Solo gli amministratori possono utilizzare la modalità anteprima sandbox")
 
+    class_access.require_counselor(db, identity, request.counselor_id)
     # 1. Retrieve Configuration and System Prompt based on Mode
     personal_api.bind_counselor(db, request.counselor_id)
     ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)
@@ -840,6 +841,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     if request.preview and not bool(identity.get("is_admin")):
         raise HTTPException(status_code=403, detail="Solo gli amministratori possono utilizzare la modalità anteprima sandbox")
 
+    class_access.require_counselor(db, identity, request.counselor_id)
     # Preparazione (usa la db della richiesta, ancora aperta qui)
     personal_api.bind_counselor(db, request.counselor_id)
     ai_service = AIService(db, username=identity.get("username") if identity.get("authenticated") else None)

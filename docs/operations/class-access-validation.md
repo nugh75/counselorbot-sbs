@@ -4,7 +4,7 @@ Scope: `backend/class_access.py` (resolver + guards), `GET /user/access`, and
 the guard on start/write entry points. Frontend change limited to the request
 contract (QSA upload and memory events send the profile-preview headers via
 `apiFetch`): the student catalog reads `/user/access` from #90; counselor
-fields stay `null` until #93.
+fields are filled by #93 (see "Counselors (#93)" below).
 
 ## Rules
 
@@ -63,6 +63,26 @@ PDFs), exports of an existing map (`POST /idea/map/portfolio`,
 allowed). Personal tools, Bussola, Assistant and Telegram call `require_tool`
 in their own slices (#91, #92, #94): Telegram currently writes flow results
 before its guarded chat turn (review N3, owned by #94).
+
+## Counselors (#93)
+
+`resolve_access` adds `counselor_ids` and `default_counselor_id` for restricted
+students (both `null` otherwise). A counselor is allowed when it is active and
+institutional and at least one active class enables it (admin lock in
+`locked_counselor_ids`, keyed by the id as a string, first; then
+`disabled_counselor_ids`), plus the student's own active private counselors.
+The default is the one of the most recently joined class whose default is
+allowed. `require_counselor` refuses other counselors on `POST /chat` and
+`/chat/stream` with 403 `{"detail": "counselor_disabled_for_class",
+"counselor_id": <id>}`; `GET /counselors` (and `/counselors/public`, recommend,
+search) list only allowed counselors; `PUT /user/account-preferences` answers
+422, and `GET` substitutes the class default (or `counselor_ready: false`) when
+the stored counselor is not allowed, without overwriting it. Compass
+(`/orientation/sessions`) and Assistant (`/site-chat`) take the counselor
+selected by the client and are not counselor-guarded here; their class toggles
+belong to #92. Tests: `backend/tests/test_class_counselors.py`; browser
+fixtures `frontend/tests/class-settings.test.mjs` (teacher section) and
+`frontend/tests/student-class-counselors.test.mjs` (resume fallback, selector).
 
 ## Pre-deploy check (mandatory)
 

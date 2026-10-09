@@ -20,12 +20,15 @@ const initial = { group_id: 88, revision: 1, disabled_tool_keys: [], disabled_co
         ...['notebook', 'results', 'classes', 'assignments'].map(key => tool(key, 'always_on', true, true, true)),
     ] };
 
-async function fixture({ lang = 'en', width = 390, settingsFailure = null, role = 'docenti' } = {}) {
+const counselor = (id, name, approach_categories, admin_enabled = true) => ({ id, name, avatar_url: null, approach_categories, admin_enabled, enabled: admin_enabled });
+const counselors = [counselor(1, 'Clio', ['tutor']), counselor(2, 'Giulio', ['filosofo']), counselor(3, 'Iride', ['tutor']), counselor(4, 'Retired', ['tutor'], false)];
+
+async function fixture({ lang = 'en', width = 390, settingsFailure = null, role = 'docenti', settings = initial } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 850 } });
     await context.addInitScript(lang => { localStorage.setItem('cb_lang', lang); }, lang);
     const page = await context.newPage();
     page.setDefaultTimeout(12000);
-    const state = { settings: structuredClone(initial), writes: [], failure: null, readFailure: settingsFailure, held: null, errors: [] };
+    const state = { settings: structuredClone(settings), writes: [], failure: null, readFailure: settingsFailure, held: null, errors: [] };
     page.on('pageerror', error => state.errors.push(error.message));
     await page.route('**/*', async route => {
         const request = route.request(); const url = new URL(request.url());
@@ -40,6 +43,8 @@ async function fixture({ lang = 'en', width = 390, settingsFailure = null, role 
                 if (state.held) await state.held;
                 if (state.failure) return route.fulfill({ status: state.failure, json: { detail: 'PRIVATE DETAIL' } });
                 state.settings = { ...state.settings, disabled_tool_keys: body.disabled_tool_keys, revision: state.settings.revision + 1,
+                    disabled_counselor_ids: body.disabled_counselor_ids ?? state.settings.disabled_counselor_ids,
+                    default_counselor_id: body.default_counselor_id ?? null,
                     tools: state.settings.tools.map(row => ({ ...row, enabled: row.admin_enabled && !body.disabled_tool_keys.includes(row.key) })) };
             } else if (state.readFailure) return route.fulfill({ status: state.readFailure, json: {} });
             data = state.settings;
@@ -63,7 +68,7 @@ test('Tools tab has accessible toggles and saves only on explicit Save', async (
         assert.deepEqual(f.state.writes, []);
         await f.page.getByRole('button', { name: 'Save', exact: true }).click();
         await f.page.getByText('Settings saved', { exact: true }).waitFor();
-        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: ['QSA'] }]);
+        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: ['QSA'], disabled_counselor_ids: [], default_counselor_id: null }]);
         await f.page.reload({ waitUntil: 'networkidle' });
         await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
         assert.equal(await f.page.getByRole('checkbox', { name: 'QSA', exact: true }).isChecked(), false);
@@ -188,5 +193,47 @@ test('class list offers Open class', async () => {
         assert.equal(await link.getAttribute('href'), '/docente/classi/88');
         await link.click();
         await f.page.getByRole('tab', { name: 'Overview', exact: true }).waitFor();
+    } finally { await f.context.close(); }
+});
+
+test('Counselors: toggles, filters and one optional class default saved together', async () => {
+    const f = await fixture({ settings: { ...initial, counselors, default_counselor_id: 4 } });
+    try {
+        await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
+        const section = f.page.getByRole('region', { name: 'Counselors' });
+        await section.getByText('Enabled 3 / 4').waitFor();
+        // A platform-disabled stored default is not offered as current choice.
+        assert.equal(await section.getByRole('radio', { name: 'No class default' }).isChecked(), true);
+        assert.equal(await section.getByRole('checkbox', { name: 'Retired' }).isDisabled(), true);
+        assert.equal(await section.getByRole('radio', { name: 'Class default: Retired' }).isDisabled(), true);
+        await section.getByRole('radio', { name: 'Class default: Giulio' }).check();
+        await section.getByRole('checkbox', { name: 'Giulio' }).uncheck();
+        assert.equal(await section.getByRole('radio', { name: 'No class default' }).isChecked(), true, 'disabling the default clears it');
+        assert.equal(await section.getByRole('radio', { name: 'Class default: Giulio' }).isDisabled(), true);
+        await section.getByRole('radio', { name: 'Class default: Clio' }).check();
+        await section.getByLabel('Category').selectOption('tutor');
+        assert.equal(await section.getByRole('checkbox', { name: 'Giulio' }).count(), 0);
+        await section.getByLabel('Search counselors').fill('iri');
+        assert.equal(await section.getByRole('checkbox').count(), 1);
+        await section.getByLabel('Search counselors').fill('zzz');
+        await section.getByText('No counselor matches the filters.').waitFor();
+        assert.deepEqual(f.state.writes, []);
+        await f.page.getByRole('button', { name: 'Save', exact: true }).click();
+        await f.page.getByText('Settings saved', { exact: true }).waitFor();
+        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: [], disabled_counselor_ids: [2], default_counselor_id: 1 }]);
+        await f.page.reload({ waitUntil: 'networkidle' });
+        await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
+        assert.equal(await f.page.getByRole('radio', { name: 'Class default: Clio' }).isChecked(), true);
+        assert.equal(await f.page.getByRole('checkbox', { name: 'Giulio' }).isChecked(), false);
+        assert.deepEqual(f.state.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('Counselors section fits a 320px screen without horizontal scroll', async () => {
+    const f = await fixture({ width: 320, lang: 'de', settings: { ...initial, counselors } });
+    try {
+        await f.page.getByRole('tab', { name: 'Werkzeuge und Counselors', exact: true }).click();
+        await f.page.getByRole('region', { name: 'Counselors' }).waitFor();
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     } finally { await f.context.close(); }
 });

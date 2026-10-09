@@ -169,6 +169,7 @@ def _serialize_settings(db: Session, group_id: int, settings) -> dict:
         "default_counselor_id": settings.default_counselor_id if settings else None,
         "tools": tool_catalog(db, disabled_tools),
         "counselors": [{"id": row.id, "name": row.name, "avatar_url": row.avatar_url,
+                        "approach_categories": row.approach_categories or [],
                         "admin_enabled": bool(row.is_active),
                         "enabled": bool(row.is_active) and row.id not in disabled_counselors}
                        for row in db.query(models.Counselor).filter(
