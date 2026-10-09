@@ -1133,6 +1133,12 @@ def test_teacher_progress_marks_strict_and_unavailable_cells(class_paths_api):
     assert [c["state"] for c in row["cells"]] == ["unavailable", "not_done", "locked"]
     assert (row["done"], row["total"]) == (0, 2)
 
+    # A teacher mark on a locked step is kept and shown, but still waits for step 2.
+    assert _override(client, path_id, action_step, STUDENT, "done", reason="Oral check").status_code == 200
+    locked = _progress(client, path_id)["students"][0]["cells"][2]
+    assert (locked["state"], locked["source"], locked["teacher_state"]) == ("locked", None, "done")
+    assert (locked["actor"], locked["reason"]) == ("owner", "Oral check")
+
 
 def test_teacher_override_beats_student_and_automatic_and_clear_restores(class_paths_api):
     client, db, group_id, identity = class_paths_api

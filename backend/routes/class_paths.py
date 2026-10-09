@@ -506,8 +506,9 @@ def _require_published(path: models.ClassPath) -> None:
 
 
 def _teacher_cell(cell: dict) -> dict:
-    mark = cell["mark"]
+    # The teacher's own mark stays visible on locked or unavailable cells.
     teacher = cell["teacher"]
+    mark = teacher or cell["mark"]
     return {
         "step_id": cell["step"].id,
         "state": cell["state"],
