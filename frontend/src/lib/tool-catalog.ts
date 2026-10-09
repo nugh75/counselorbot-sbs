@@ -46,8 +46,10 @@ export const TEACHER_AREA_INSTRUMENT_IDS: readonly QuestionnaireType[] = ['OBIET
 export function isStartableQuestionnaireId(
     value: string,
     catalog?: InstrumentSummary[] | null,
+    access?: UserAccess | null,
 ): value is QuestionnaireType {
     if (!value || typeof value !== 'string') return false;
+    if (!isToolAllowed(access, value)) return false;
     if (catalog) {
         const found = catalog.find((row) => row.code === value);
         if (found) return found.is_active !== false;
