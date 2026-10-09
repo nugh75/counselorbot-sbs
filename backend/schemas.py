@@ -1912,7 +1912,7 @@ class StudentClassPathStep(BaseModel):
     instructions: Optional[str] = None
     due_date: Optional[date] = None
     state: str = "not_done"  # 'done' | 'not_done' | 'locked' | 'unavailable'
-    source: Optional[str] = None  # 'student' | 'teacher' | None
+    source: Optional[str] = None  # 'student' | 'teacher' | 'automatic' | None
     start_href: Optional[str] = None
     can_self_mark: bool = True
 
