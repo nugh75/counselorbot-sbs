@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
 from ..class_access import class_enables, resolve_access
-from ..path_step_types import (step_descriptor, completion_evidence, validate_step_input, apply_step_target, administration_target)
+from ..path_step_types import (step_descriptor, completion_evidence, validate_step_input, validate_composition,
+                               apply_step_target, administration_target)
 from ..class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, tool_catalog
 from .groups import _is_admin, _username, _visible_group_query
 
@@ -143,6 +144,7 @@ def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:
     return {
         "step_type": step.step_type,
         "administration_plan_id": step.administration_plan_id,
+        "results_step_id": step.results_step_id,
         "active_from": step.active_from,
         "target_summary": descriptor["target_summary"],
         "availability_reason": descriptor["availability_reason"],
@@ -356,6 +358,7 @@ async def update_class_path(
 
     for step_input in payload.steps:
         validate_step_input(db, path, step_input)
+    validate_composition(db, path, payload.steps)
     ids = [row.id for row in payload.steps if row.id is not None]
     if len(ids) != len(set(ids)):
         raise HTTPException(422, "duplicate_step_id")
@@ -422,6 +425,7 @@ async def update_class_path(
                 step_type=step_input.step_type,
                 tool_key=step_input.tool_key if step_input.step_type == "tool" else None,
                 administration_plan_id=step_input.administration_plan_id if step_input.step_type == "questionnaire_administration" else None,
+                results_step_id=step_input.results_step_id if step_input.step_type == "guided_results_chat" else None,
                 active_from=datetime.now(timezone.utc) if path.status == "published" else None,
                 title=step_title,
                 instructions=step_instructions,
@@ -900,6 +904,9 @@ async def launch_step(path_id: int, step_id: int, current_user=Depends(auth.get_
     path, step, descriptor = require_step_launch(db, current_user, path_id, step_id)
     if step.step_type == "tool":
         return {"step_type":"tool", "start_href":descriptor["start_href"]}
+    if step.step_type == "guided_results_chat":
+        return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id,
+                "results_step_id":step.results_step_id, "start_href":descriptor["start_href"]}
     from ..path_step_types import EXTERNAL_IT_HREF
     plan, institution = administration_target(db, path.group_id, step.administration_plan_id)
     return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id, "administration_plan_id":plan.id,
@@ -923,3 +930,10 @@ async def score_step(path_id: int, step_id: int, payload: schemas.Administration
                      current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
     from ..questionnaire_entry import score_in_app_step
     return score_in_app_step(db, current_user, path_id, step_id, payload)
+
+
+@router.post("/user/paths/{path_id}/steps/{step_id}/deep-dive")
+async def start_deep_dive(path_id: int, step_id: int,
+                          current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
+    from ..results_deep_dive import start_results_deep_dive
+    return start_results_deep_dive(db, current_user, path_id, step_id)
