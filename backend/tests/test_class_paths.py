@@ -530,6 +530,36 @@ def test_student_paths_unavailable_tool_rule(class_paths_api):
     assert fail_qsa.json()["detail"] == "Tool is not available"
 
 
+def test_path_availability_matches_the_class_access_resolver(class_paths_api):
+    """Paths tab and student view answer like /user/access (bug 838e6852)."""
+    from backend.class_access import resolve_access
+    client, db, group_id, identity = class_paths_api
+    db.add(models.GroupMembership(group_id=group_id, username="student_lia"))
+    db.commit()
+    path_id = client.post(f"/teacher/groups/{group_id}/paths", json={"title": "Aligned"}).json()["id"]
+    client.put(f"/teacher/paths/{path_id}", json={"revision": 1, "title": "Aligned", "steps": [
+        {"tool_key": key} for key in ("QSA", "SAVICKAS", "timeline", "bussola")]})
+    client.post(f"/teacher/paths/{path_id}/publish")
+
+    # Teacher deny-list plus an admin lock that switches a tool off.
+    db.add(models.ClassSettings(group_id=group_id, updated_by="owner", disabled_tool_keys=["timeline"],
+                                locked_tool_keys={"SAVICKAS": {"enabled": False}}))
+    db.commit()
+
+    student = {"username": "student_lia", "groups": [], "is_admin": False, "is_researcher": False,
+               "authenticated": True}
+    allowed = set(resolve_access(db, student)["tool_keys"])
+    expected = {key: key in allowed for key in ("QSA", "SAVICKAS", "timeline", "bussola")}
+    assert expected == {"QSA": True, "SAVICKAS": False, "timeline": False, "bussola": True}
+
+    teacher = client.get(f"/teacher/paths/{path_id}/progress").json()
+    assert {s["tool_key"]: s["available"] for s in teacher["steps"]} == expected
+
+    identity.update(student)
+    steps = client.get("/user/paths").json()[0]["steps"]
+    assert {s["tool_key"]: s["state"] != "unavailable" for s in steps} == expected
+
+
 def test_student_self_mark_endpoints_and_restrictions(class_paths_api):
     client, db, group_id, identity = class_paths_api
 
