@@ -2,23 +2,30 @@ from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text
 from sqlalchemy.sql import func
 from .database import Base
 
-from passlib.context import CryptContext
+import bcrypt
 
-_pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# bcrypt directly: passlib 1.7.4 cannot initialise its bcrypt backend with bcrypt>=4.1.
+BCRYPT_MAX_BYTES = 72
 
 
 def get_password_hash(password: str) -> str:
-    '''Crittografia della password con bcrypt.'''
-    return _pwd_ctx.hash(password)
+    '''Crittografia della password con bcrypt; rifiuta invece di troncare oltre 72 byte.'''
+    data = password.encode("utf-8")
+    if len(data) > BCRYPT_MAX_BYTES:
+        raise ValueError("password longer than 72 bytes")
+    return bcrypt.hashpw(data, bcrypt.gensalt()).decode("ascii")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     '''Verifica che una password corrispondano a un hash bcrypt.'''
-    if not hashed_password:
+    if not hashed_password or not isinstance(plain_password, str):
+        return False
+    data = plain_password.encode("utf-8")
+    if len(data) > BCRYPT_MAX_BYTES:
         return False
     try:
-        return _pwd_ctx.verify(plain_password, hashed_password)
-    except Exception:
+        return bcrypt.checkpw(data, hashed_password.encode("utf-8"))
+    except ValueError:
         return False
 
 class User(Base):
