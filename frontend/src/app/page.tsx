@@ -47,7 +47,7 @@ import type { ResponseFormat } from '@/lib/chat-preferences';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
 import { deleteFrozenSession, getFrozenSession, FrozenSessionAccessError, type FrozenSessionDetail } from '@/lib/frozen-session';
-import { fetchUserAccess, isToolAllowed } from '@/lib/user-access';
+import { fetchUserAccess, isToolAllowed, resumeCounselor } from '@/lib/user-access';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
@@ -388,12 +388,19 @@ export default function Home() {
                         setReady(true);
                         return;
                     }
+                    const counselor = resumeCounselor(access, snapshot.counselor_id ?? null, getSelectedCounselorId());
+                    if (!counselor) {
+                        toast.info(t('session.counselorChoose'));
+                        router.replace(`/counselor?next=${encodeURIComponent(`/?frozen=${frozenParam}`)}`);
+                        return;
+                    }
+                    if (counselor.replaced) toast.info(t('session.counselorReplaced'));
                     const q = QUESTIONNAIRES[snapshot.questionnaire_type as QuestionnaireType]
                         ?? buildFallbackQuestionnaireConfig(snapshot.questionnaire_type);
                     setSelectedQuestionnaire(q);
                     setSelectedInstrumentId(snapshot.questionnaire_type);
-                    setSessionCounselorId(snapshot.counselor_id ?? getSelectedCounselorId());
-                    if (snapshot.counselor_id != null) setSelectedCounselorId(snapshot.counselor_id);
+                    setSessionCounselorId(counselor.id);
+                    if (counselor.id != null) setSelectedCounselorId(counselor.id);
                     setSessionId(snapshot.session_id);
                     setScores(snapshot.scores || {});
                     // La sandbox OpenCode si congela come la chat guidata: riaprirla
@@ -439,6 +446,13 @@ export default function Home() {
                         return;
                     }
                     if (isStartableQuestionnaireId(r.instrument, null, access)) {
+                        const counselor = resumeCounselor(access, r.counselorId ?? null, getSelectedCounselorId());
+                        if (!counselor) {
+                            toast.info(t('session.counselorChoose'));
+                            router.replace(`/counselor?next=${encodeURIComponent('/?resume=1')}`);
+                            return;
+                        }
+                        if (counselor.replaced) toast.info(t('session.counselorReplaced'));
                         const q = QUESTIONNAIRES[r.instrument as QuestionnaireType]
                             ?? buildFallbackQuestionnaireConfig(r.instrument);
                         const profiles = getCompletedProfiles();
@@ -447,8 +461,8 @@ export default function Home() {
                         // Restore the persisted external session when entering the page.
                         setSelectedQuestionnaire(q);
                         setSelectedInstrumentId(r.instrument);
-                        setSessionCounselorId(r.counselorId ?? getSelectedCounselorId());
-                        if (r.counselorId != null) setSelectedCounselorId(r.counselorId);
+                        setSessionCounselorId(counselor.id);
+                        if (counselor.id != null) setSelectedCounselorId(counselor.id);
                         setSessionId(r.sessionId);
                         setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
                         setExperience(r.experience);

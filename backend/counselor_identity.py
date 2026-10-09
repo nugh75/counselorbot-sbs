@@ -544,6 +544,7 @@ def recommend_counselor(
     questionnaire_type: Optional[str] = None,
     audience: Optional[str] = None,
     username: Optional[str] = None,
+    allowed_ids: Optional[set[int]] = None,
 ) -> schemas.CounselorRecommendationResponse:
     """Calcola la corrispondenza tra la query libera e i counselor disponibili.
 
@@ -561,6 +562,8 @@ def recommend_counselor(
         )
     else:
         q_db = q_db.filter(models.Counselor.owner_username.is_(None))
+    if allowed_ids is not None:
+        q_db = q_db.filter(models.Counselor.id.in_(allowed_ids))
 
     if language:
         lang_text = sa_cast(models.Counselor.language, String)
