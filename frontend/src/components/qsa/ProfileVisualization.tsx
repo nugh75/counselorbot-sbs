@@ -8,6 +8,7 @@ import {
     ZTPI_BTP_NEAR,
     analyzeZTPIScore
 } from '@/lib/ztpi-model';
+import { ArrowLeftRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
 interface ProfileVisualizationProps {
@@ -146,6 +147,7 @@ function ZoneBand({ outcome, label, width, divider }: { outcome: Outcome; label:
 }
 
 function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interpretation }: ScoreBarProps) {
+    const { t } = useI18n();
     const markerPosition = ((score - 1) / 8) * 100;
     const isZTPI = questionnaireId === 'ZTPI' && code.startsWith('T');
     const ztpiCode = code as ZTPIFactorCode;
@@ -156,7 +158,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
             <div className="col-start-1 row-start-1 min-w-0 sm:w-44 sm:flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-slate-700">{code}</span>
-                    {isInverted && <span className="text-2xs text-slate-500">↔</span>}
+                    {isInverted && <ArrowLeftRight className="h-3 w-3 text-slate-500" aria-label={t('profile.invertedScale')} role="img" />}
                 </div>
                 <div className="text-xs text-slate-500 leading-tight break-words" title={factorName}>
                     {factorName}
@@ -363,7 +365,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                 ))}
                 {questionnaire.invertedFactors.length > 0 && (
                     <div className="flex items-center gap-1 text-slate-500">
-                        <span>↔</span>
+                        <ArrowLeftRight className="h-3 w-3" aria-hidden />
                         <span>= {t('profile.invertedScale')}</span>
                     </div>
                 )}
