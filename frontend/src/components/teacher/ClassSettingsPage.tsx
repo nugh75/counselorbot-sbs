@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Lock } from 'lucide-react';
-import { apiFetch, getViewAsAccount } from '@/lib/auth';
-import { effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, type ClassCounselor, type ClassSettings, type ClassTool } from '@/lib/class-settings';
+import { apiFetch, getIdentity, getViewAsAccount } from '@/lib/auth';
+import { effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, type ClassCounselor, type ClassSettings, type ClassTool, type ClassLockKind } from '@/lib/class-settings';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
 import { useI18n } from '@/lib/i18n-context';
@@ -15,6 +15,8 @@ import { Callout } from '@/components/ui/Callout';
 import { StickyActions } from '@/components/ui/StickyActions';
 import { ForumView } from '@/components/forum/ForumView';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
+import { ClassSettingLock } from './ClassSettingLock';
+import { ClassSettingsAudit } from './ClassSettingsAudit';
 import { ClassPathsTab } from './ClassPathsTab';
 import { useTeacherAccessState } from './useTeacherAccessState';
 import { useTeacherResource } from './useTeacherResource';
@@ -25,7 +27,8 @@ const categories = ['assessment', 'guided', 'personal', 'support'] as const;
 const sameIds = (a: readonly (string | number)[], b: readonly (string | number)[]) =>
     JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
 
-function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggle, onDefault }: {
+function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggle, onDefault, admin, lockDisabled, onLock }: {
+    admin: boolean; lockDisabled: boolean; onLock: (kind: ClassLockKind, id: string, state: boolean | null) => void;
     counselors: ClassCounselor[]; disabled: number[]; defaultId: number | null; busy: boolean;
     onToggle: (id: number, enabled: boolean) => void; onDefault: (id: number | null) => void;
 }) {
@@ -60,9 +63,9 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
                         disabled={busy} onChange={() => onDefault(null)} />{l('counselorNoDefault')}
                 </label>
                 {rows.map(row => <div key={row.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md p-2">
-                    <label className="flex min-h-[44px] min-w-0 flex-1 items-center gap-3 text-sm text-slate-700">
+                    <label className="flex min-h-[44px] min-w-0 flex-[1_1_14rem] items-center gap-3 text-sm text-slate-700">
                         <input type="checkbox" className="h-5 w-5 shrink-0 accent-indigo-600" aria-label={row.name}
-                            checked={isEnabled(row)} disabled={busy || !row.admin_enabled}
+                            checked={isEnabled(row)} disabled={busy || !row.admin_enabled || row.locked} title={row.locked ? l('locked') : undefined}
                             aria-describedby={!row.admin_enabled ? `counselor-disabled-${row.id}` : undefined}
                             onChange={event => onToggle(row.id, event.target.checked)} />
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -72,6 +75,8 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
                             {!row.admin_enabled && <span id={`counselor-disabled-${row.id}`} className="mt-1 flex items-center gap-1 text-xs text-slate-500"><Lock className="h-4 w-4 shrink-0" aria-hidden />{l('platformDisabled')}</span>}
                         </span>
                     </label>
+                    <ClassSettingLock item={row} label={row.name} admin={admin} disabled={lockDisabled}
+                        onChange={state => onLock('counselor', String(row.id), state)} />
                     <label className="flex min-h-[44px] items-center gap-2 text-sm text-slate-600">
                         <input type="radio" name="class-default-counselor" className="h-5 w-5 accent-indigo-600"
                             aria-label={`${l('counselorDefault')}: ${row.name}`} checked={defaultId === row.id}
@@ -85,7 +90,7 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
     </Card>;
 }
 
-function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onReload: () => void }) {
+function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings; onReload: () => void; admin: boolean }) {
     const { lang } = useI18n();
     const l = (key: TextKey) => classSettingsText(lang, key);
     const [settings, setSettings] = useState(initial);
@@ -93,8 +98,9 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
     const [disabledCounselors, setDisabledCounselors] = useState(initial.disabled_counselor_ids);
     const [defaultCounselor, setDefaultCounselor] = useState(effectiveDefaultCounselor(initial));
     const [busy, setBusy] = useState(false);
-    const [notice, setNotice] = useState<'saved' | 'error' | 'conflict' | 'invalid' | null>(null);
+    const [notice, setNotice] = useState<'saved' | 'error' | 'conflict' | 'invalid' | 'lockedError' | null>(null);
     const [forbidden, setForbidden] = useState(false);
+    const [reason, setReason] = useState('');
     const pending = useRef<AbortController | null>(null);
     const mounted = useRef(false);
     const account = useRef(getViewAsAccount()?.username);
@@ -112,7 +118,7 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
         ? l(tool.key as TextKey) : tool.label_i18n[lang] || tool.label_i18n.en || tool.label_i18n.it || tool.key;
     const change = (rows: ClassTool[], enabled: boolean) => {
         if (pending.current) return;
-        const editable = rows.filter(tool => tool.admin_enabled && !tool.always_on).map(tool => tool.key);
+        const editable = rows.filter(tool => tool.admin_enabled && !tool.always_on && !tool.locked).map(tool => tool.key);
         setDisabled(previous => enabled ? previous.filter(key => !editable.includes(key)) : [...new Set([...previous, ...editable])].sort());
         if (notice === 'saved') setNotice(null);
     };
@@ -143,7 +149,7 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
                 method: 'PUT', signal: controller.signal, headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     revision: settings.revision, disabled_tool_keys: disabled,
-                    disabled_counselor_ids: disabledCounselors, default_counselor_id: defaultCounselor,
+                    disabled_counselor_ids: disabledCounselors, default_counselor_id: defaultCounselor, ...(reason.trim() ? { reason: reason.trim() } : {}),
                 }),
             });
             if (!current()) return;
@@ -151,14 +157,14 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
                 setForbidden(true); return;
             }
             if (response.status === 409) { setNotice('conflict'); return; }
-            if (response.status === 422) { setNotice('invalid'); return; }
+            if (response.status === 422) { const body = await response.json(); setNotice(body.detail === 'item_locked_by_admin' ? 'lockedError' : 'invalid'); return; }
             if (!response.ok) throw new Error('Save failed');
             const next = parseClassSettings(await response.json());
             if (next.group_id !== settings.group_id) throw new Error('Wrong class');
             if (current() && account.current === getViewAsAccount()?.username) {
                 setSettings(next); setDisabled(next.disabled_tool_keys);
                 setDisabledCounselors(next.disabled_counselor_ids); setDefaultCounselor(effectiveDefaultCounselor(next));
-                setNotice('saved');
+                setNotice('saved'); setReason('');
             }
         } catch {
             if (current()) setNotice('error');
@@ -169,6 +175,23 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
             }
         }
     };
+    const changeLock = async (kind: ClassLockKind, id: string, state: boolean | null) => {
+        if (pending.current || dirty || !admin) return;
+        if (account.current !== getViewAsAccount()?.username) { setForbidden(true); return; }
+        const controller = new AbortController();
+        pending.current = controller; setBusy(true); setNotice(null);
+        try {
+            const response = await apiFetch(`/api/admin/groups/${settings.group_id}/settings/${state === null ? 'unlock' : 'lock'}`, {
+                method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target_kind: kind, target_id: id, ...(state === null ? {} : { state }), ...(reason.trim() ? { reason: reason.trim() } : {}) }),
+            });
+            if (!mounted.current || controller.signal.aborted) return;
+            if (account.current !== getViewAsAccount()?.username || [401, 403].includes(response.status)) { setForbidden(true); return; }
+            if (!response.ok) { setNotice(response.status === 422 ? 'invalid' : 'error'); return; }
+            onReload();
+        } catch { if (mounted.current && !controller.signal.aborted) setNotice('error'); }
+        finally { if (mounted.current && !controller.signal.aborted) { pending.current = null; setBusy(false); } }
+    };
     if (forbidden) return <TeacherForbidden />;
     return <div className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -176,6 +199,10 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
             <p className="text-sm text-slate-600">{l('enabled')} {tools.filter(isEnabled).length} / {tools.length} <span className="font-mono">{`(r${settings.revision})`}</span></p>
         </div>
         <Callout>{l('staged')}</Callout>
+        {admin && <Callout>{l('adminHint')}</Callout>}
+        {admin && <label className="flex flex-col gap-1 text-sm text-slate-700">{l('reason')}
+            <input maxLength={500} value={reason} disabled={busy} onChange={event => setReason(event.target.value)} className="min-h-[44px] rounded-md border border-slate-300 px-3" />
+        </label>}
         {categories.map(category => {
             const rows = tools.filter(tool => tool.category === category);
             if (!rows.length) return null;
@@ -183,32 +210,50 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
                 <details open>
                     <summary className="min-h-[44px] cursor-pointer font-semibold text-slate-800">{l(category)}</summary>
                     <div className="mb-3 flex flex-wrap gap-2">
-                        <Button variant="secondary" disabled={busy || !rows.some(tool => tool.admin_enabled)} onClick={() => change(rows, true)}>{l('enableAll')}</Button>
-                        <Button variant="secondary" disabled={busy || !rows.some(tool => tool.admin_enabled)} onClick={() => change(rows, false)}>{l('disableAll')}</Button>
+                        <Button variant="secondary" disabled={busy || !rows.some(tool => tool.admin_enabled && !tool.locked)} onClick={() => change(rows, true)}>{l('enableAll')}</Button>
+                        <Button variant="secondary" disabled={busy || !rows.some(tool => tool.admin_enabled && !tool.locked)} onClick={() => change(rows, false)}>{l('disableAll')}</Button>
                     </div>
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                        {rows.map(tool => <label key={tool.key} className="flex min-h-[44px] min-w-0 items-start gap-3 rounded-md p-2 text-sm text-slate-700">
+                        {rows.map(tool => <div key={tool.key} className="min-w-0 space-y-1 rounded-md p-2 text-sm text-slate-700">
+                            <label className="flex min-h-[44px] min-w-0 items-start gap-3">
                             <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-indigo-600" aria-label={label(tool)}
-                                checked={isEnabled(tool)} disabled={busy || !tool.admin_enabled}
+                                checked={isEnabled(tool)} disabled={busy || !tool.admin_enabled || tool.locked} title={tool.locked ? l('locked') : undefined}
                                 aria-describedby={!tool.admin_enabled ? `tool-disabled-${tool.key}` : undefined}
                                 onChange={event => change([tool], event.target.checked)} />
                             <span className="min-w-0 break-words">{tool.kind === 'instrument' && label(tool) !== tool.key && <span className="mr-2 font-mono text-xs">{tool.key}</span>}{label(tool)}
                                 {!tool.admin_enabled && <span id={`tool-disabled-${tool.key}`} className="mt-1 flex items-center gap-1 text-xs text-slate-500"><Lock className="h-4 w-4 shrink-0" aria-hidden />{l('platformDisabled')}</span>}
                             </span>
-                        </label>)}
+                            </label>
+                            <ClassSettingLock item={tool} label={label(tool)} admin={admin} disabled={busy || dirty}
+                                onChange={state => void changeLock('tool', tool.key, state)} />
+                        </div>)}
                     </div>
                 </details>
             </Card>;
         })}
         <p className="text-sm text-slate-600">{l('always')}: {settings.tools.filter(tool => tool.always_on).map(label).join(' · ')}</p>
         {settings.counselors.length > 0 && <ClassCounselorsSection counselors={settings.counselors} disabled={disabledCounselors}
-            defaultId={defaultCounselor} busy={busy} onToggle={toggleCounselor} onDefault={chooseDefault} />}
+            defaultId={defaultCounselor} busy={busy} admin={admin} lockDisabled={busy || dirty} onLock={(kind, id, state) => void changeLock(kind, id, state)} onToggle={toggleCounselor} onDefault={chooseDefault} />}
+        {settings.forum && <Card><h2 className="mb-2 font-bold text-slate-800">{l('forum')}</h2>
+            <p className="mb-3 text-sm text-slate-600">{l('forumPending')}</p>
+            {(['students_can_open', 'premoderation'] as const).map(key => {
+                const item = settings.forum!;
+                const metadata = item[`${key}_lock`];
+                const title = l(key === 'premoderation' ? 'premoderation' : 'studentsCanOpen');
+                return <div key={key} className="mb-3 space-y-1"><p className="text-sm text-slate-700">{title}: {l(item[key] ? 'enabled' : 'disabled')}</p>
+                    <ClassSettingLock label={title} admin={admin} disabled={busy || dirty}
+                        item={{ admin_enabled: true, locked: item[`${key}_locked`], locked_enabled: metadata?.value,
+                            locked_by: metadata?.locked_by, locked_at: metadata?.locked_at }}
+                        onChange={state => void changeLock('forum_option', key, state)} />
+                </div>;
+            })}
+        </Card>}
         <StickyActions>
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
                 <div className="min-w-0 flex-1 text-sm">
                     {notice && <p role={notice === 'saved' ? 'status' : 'alert'} className={notice === 'saved' ? 'text-emerald-700' : 'text-red-600'}>{l(notice)}</p>}
                     {dirty && <p className="text-slate-600">{l('dirty')}</p>}
-                    {(notice === 'conflict' || notice === 'invalid') && <Button variant="secondary" disabled={busy} onClick={reload}>{l('reload')}</Button>}
+                    {(notice === 'conflict' || notice === 'invalid' || notice === 'lockedError') && <Button variant="secondary" disabled={busy} onClick={reload}>{l('reload')}</Button>}
                 </div>
                 <Button disabled={busy || !dirty || notice === 'conflict'} onClick={() => void save()}>{l(busy ? 'saving' : 'save')}</Button>
             </div>
@@ -216,12 +261,12 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
     </div>;
 }
 
-function ClassDetail({ groupId }: { groupId: number }) {
+function ClassDetail({ groupId, admin }: { groupId: number; admin: boolean }) {
     const { lang } = useI18n();
     const l = (key: TextKey) => classSettingsText(lang, key);
     const groups = useTeacherResource('/api/admin/groups', parseClassGroups);
     const settings = useTeacherResource(`/api/teacher/groups/${groupId}/settings`, parseClassSettings);
-    const [tab, setTab] = useState<'overview' | 'toolsTab' | 'paths' | 'forum'>('overview');
+    const [tab, setTab] = useState<'overview' | 'toolsTab' | 'paths' | 'forum' | 'audit'>('overview');
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const group = groups.data?.find(row => row.id === groupId);
     if (groups.forbidden || settings.forbidden) return <TeacherForbidden />;
@@ -230,10 +275,10 @@ function ClassDetail({ groupId }: { groupId: number }) {
         <p>{l('loadError')}</p>
         <Button variant="secondary" onClick={() => { void groups.reload(); void settings.reload(); }}>{l('reload')}</Button>
     </Callout>;
-    const activeTabs = ['overview', 'toolsTab', 'paths', 'forum'] as const;
+    const activeTabs = ['overview', 'toolsTab', 'paths', 'forum', 'audit'] as const;
     return <div className="space-y-5">
         <header className="flex flex-wrap items-center justify-between gap-3">
-            <Link href="/docente/classi" className="inline-flex min-h-[44px] items-center gap-2 text-sm text-indigo-700"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
+            <Link href={admin ? "/admin/classi" : "/docente/classi"} className="inline-flex min-h-[44px] items-center gap-2 text-sm text-indigo-700"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
             <div><h1 className="break-words text-2xl font-bold text-slate-800">{group.name}</h1><p className="text-sm text-slate-600">{group.members_count} {l('members')}{group.school && ` · ${group.school}`}</p></div>
         </header>
         <div role="tablist" aria-label={group.name} className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
@@ -255,7 +300,10 @@ function ClassDetail({ groupId }: { groupId: number }) {
             </Card>
         </div>
         <div id="class-panel-toolsTab" role="tabpanel" aria-labelledby="class-tab-toolsTab" hidden={tab !== 'toolsTab'} tabIndex={0}>
-            <ClassToolsEditor initial={settings.data} onReload={() => { void settings.reload(); }} />
+            <ClassToolsEditor admin={admin} initial={settings.data} onReload={() => { void settings.reload(); }} />
+        </div>
+        <div id="class-panel-audit" role="tabpanel" aria-labelledby="class-tab-audit" hidden={tab !== 'audit'} tabIndex={0}>
+            {tab === 'audit' && <ClassSettingsAudit key={settings.data.revision} settings={settings.data} />}
         </div>
         <div id="class-panel-paths" role="tabpanel" aria-labelledby="class-tab-paths" hidden={tab !== 'paths'} tabIndex={0}>
             <ClassPathsTab groupId={groupId} classSettings={settings.data} />
@@ -267,9 +315,11 @@ function ClassDetail({ groupId }: { groupId: number }) {
 
 }
 
-export function ClassSettingsPage({ groupId }: { groupId: number }) {
+export function ClassSettingsPage({ groupId, adminOnly = false }: { groupId: number; adminOnly?: boolean }) {
     const { state } = useTeacherAccessState();
-    if (state === 'loading') return <TeacherLoading />;
-    if (state === 'forbidden') return <TeacherForbidden />;
-    return <div className="min-h-screen bg-slate-50"><section className="page-wide px-4 py-8"><ClassDetail key={groupId} groupId={groupId} /></section></div>;
+    const [admin, setAdmin] = useState<boolean | null>(null);
+    useEffect(() => { let active = true; void getIdentity().then(identity => { if (active) setAdmin(identity?.is_admin === true); }); return () => { active = false; }; }, []);
+    if (state === 'loading' || admin === null) return <TeacherLoading />;
+    if (state === 'forbidden' || (adminOnly && !admin)) return <TeacherForbidden />;
+    return <div className="min-h-screen bg-slate-50"><section className="page-wide px-4 py-8"><ClassDetail key={groupId} groupId={groupId} admin={admin} /></section></div>;
 }
