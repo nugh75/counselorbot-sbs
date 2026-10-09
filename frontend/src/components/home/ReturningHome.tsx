@@ -19,6 +19,7 @@ import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries } fro
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { getDynamicToolCategories, resolveActiveStudentTools } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
+import { useUserAccess } from '@/lib/use-user-access';
 
 interface Props {
     // Ultima compilazione per strumento, in ISO; assente = mai compilato.
@@ -36,11 +37,12 @@ export function ReturningHome({
     const resumeEntries = useResumeEntries();
     const { frozen, localResume, pqbl: pqblResume, count: resumeCount } = resumeEntries;
     const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
+    const { access } = useUserAccess();
     const formatDate = (iso: string) => new Date(iso).toLocaleDateString(lang);
 
     const activeTools = useMemo(() => {
-        return resolveActiveStudentTools(instrumentCatalog, lang);
-    }, [instrumentCatalog, lang]);
+        return resolveActiveStudentTools(instrumentCatalog, lang, access);
+    }, [instrumentCatalog, lang, access]);
 
     const activeInstrumentById = useMemo(() => {
         return new Map(activeTools.map((q) => [q.id, q]));
