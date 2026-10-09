@@ -28,7 +28,7 @@ import { teacherAreaName } from '@/lib/i18n-teacher-area';
 import { classSettingsText } from '@/lib/i18n-class-settings';
 import { forumText } from '@/lib/i18n-forum';
 
-const TEACHER_ROUTES = ['/docente', '/docente', '/docente', '/docente', '/docente', '/docente', '/bussola', '/docente/classi'];
+const TEACHER_ROUTES = ['/docente', '/docente/classi', '/docente', '/docente', '/docente', '/docente', '/bussola', '/docente/classi'];
 
 export default function GuidePage() {
     return <Suspense><GuideContent /></Suspense>;
@@ -95,7 +95,17 @@ function GuideContent() {
     };
     const sectionImages: Record<number, { image: StaticImageData; caption: string }[]> = teacher ? {
         1: [{ image: images['teacher-area'], caption: l('teacher1Title') }, { image: images['teacher-notebook'], caption: teacherAreaName(lang, 'taccuino') }, { image: images['teacher-class-picker'], caption: classPickerText(lang, 'title') }],
-        2: [{ image: images['teacher-groups'], caption: l('teacher2Title') }, { image: images['institution-categories'], caption: categoryText(lang, 'title') }],
+        2: [
+            { image: images['teacher-groups'], caption: l('teacher2Title') },
+            { image: images['class-overview'], caption: classSettingsText(lang, 'overview') },
+            { image: images['class-tools'], caption: classSettingsText(lang, 'toolsTab') },
+            { image: images['institution-categories'], caption: categoryText(lang, 'title') },
+            ...(isAdminUser ? [
+                { image: images['admin-classes'], caption: classSettingsText(lang, 'adminClasses') },
+                { image: images['admin-locks'], caption: classSettingsText(lang, 'adminEdit') },
+                { image: images['admin-audit'], caption: classSettingsText(lang, 'audit') },
+            ] : []),
+        ],
         3: [{ image: images['teacher-catalog'], caption: l('teacher3Title') }],
         4: [{ image: images['teacher-assignment'], caption: l('teacher4Title') }],
         5: [{ image: images['teacher-feedback'], caption: l('teacher5Title') }],
@@ -307,8 +317,18 @@ function GuideContent() {
                         )}
                         {teacher && n === 2 && <div className="mt-4 text-sm leading-relaxed text-slate-600">
                             <h3 className="font-semibold text-slate-900">{classSettingsText(lang, 'toolsTab')}</h3>
-                            <p className="mt-1.5">{classSettingsText(lang, 'guide')} {classSettingsText(lang, 'supportGuide')} {classSettingsText(lang, 'adminGuide')}</p>
+                            <p className="mt-1.5">{l('classSettingsTeacher')}</p>
+                            <p className="mt-1.5">{classSettingsText(lang, 'supportGuide')}</p>
+                            <p className="mt-1.5">{l('classSettingsAccess')}</p>
+                            <p className="mt-1.5">{l('classSettingsCounselors')}</p>
+                            <p className="mt-1.5">{l('classSettingsHistory')}</p>
+                            <p className="mt-1.5">{l('classPathDistinction')}</p>
                             <Link href="/docente/classi" className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{classSettingsText(lang, 'back')}</Link>
+                            {isAdminUser && <div className="mt-4" id="guide-admin-class-settings">
+                                <h3 className="font-semibold text-slate-900">{classSettingsText(lang, 'adminClasses')}</h3>
+                                <p className="mt-1.5">{l('classSettingsAdmin')}</p>
+                                <Link href="/admin/classi" className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{classSettingsText(lang, 'adminEdit')}</Link>
+                            </div>}
                         </div>}
                         {teacher && n === 1 && (
                             <Link href="/docente/taccuino" className="ml-3 mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{teacherAreaName(lang, 'taccuino')}</Link>
@@ -327,8 +347,10 @@ function GuideContent() {
                                 <p>{counselorHelp(lang).local}</p>
                                 <p>{counselorHelp(lang).external}</p>
                                 <p>{counselorHelp(lang).tools}</p>
+                                <p>{l('classSettingsCounselors')}</p>
                             </div>
                         )}
+                        {!teacher && n === 5 && <p className="mt-4 max-w-prose text-sm leading-relaxed text-slate-600">{l('classSettingsAccess')}</p>}
                         {!teacher && n === 7 && (
                             <div className="mt-6 space-y-6 border-t border-slate-100 pt-6">
                                 {renderFigure(chatOverview, t('guide.chat.overviewAlt'), t('guide.chat.overviewCaption'))}

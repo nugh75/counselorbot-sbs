@@ -12,6 +12,7 @@ import { learningText } from '../src/lib/i18n-assignment-work.ts';
 import { emptyWorkspace } from '../src/lib/visual-tools.ts';
 import { visualLabel } from '../src/lib/i18n-visual-tools.ts';
 import { classPickerText } from '../src/lib/i18n-class-picker.ts';
+import { classSettingsText } from '../src/lib/i18n-class-settings.ts';
 import { notebookLinkText } from '../src/lib/teacher-notebook-links.ts';
 
 const origin = new URL(process.env.GUIDE_BASE_URL || 'http://127.0.0.1:3000').origin;
@@ -26,7 +27,7 @@ const samples = {
     de: ['Mein Lernen organisieren', 'Lernwerkstatt', 'Probiere zwei kurze Wiederholungen aus.', 'Beschreibe, was funktioniert hat und was du ändern würdest.', 'Ich habe das Wiederholen auf zwei Tage verteilt.', 'Vergleiche beim nächsten Mal auch, woran du dich ohne Notizen erinnerst.'],
     sv: ['Planera mina studier', 'Studieverkstad', 'Prova två korta repetitionspass.', 'Beskriv vad som fungerade och vad du skulle ändra.', 'Jag fördelade repetitionen över två dagar.', 'Jämför nästa gång också vad du minns utan anteckningar.'],
 };
-const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories', 'teacher-class-picker', 'teacher-notebook', 'class-forum', 'teacher-forum'];
+const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories', 'teacher-class-picker', 'teacher-notebook', 'class-forum', 'teacher-forum', 'class-overview', 'class-tools', 'admin-classes', 'admin-locks', 'admin-audit'];
 const browser = await chromium.launch({ headless: true });
 try {
     for (const lang of captureLocales) {
@@ -36,10 +37,35 @@ try {
         page.setDefaultTimeout(15000);
         const errors = [];
         let teacher = false;
+        let admin = false;
+        let classSettingsCapture = process.env.GUIDE_SCREENS === 'class-settings';
         let authenticated = false;
         page.on('pageerror', error => errors.push(error.message));
         await page.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); }, lang);
         const group = { id: 91, name: groupName, code: 'DEMO-3B', school: '', school_level: 'secondaria', institution_id: null, description: instructions, methodologies: null, context_visible_to_students: false, owner_username: 'teacher.demo', is_active: true, members_count: 2, created_at: '2026-09-21T08:00:00Z' };
+        const labels = key => Object.fromEntries(locales.map(locale => [locale, classSettingsText(locale, key)]));
+        const tool = (key, category, enabled = true, admin_enabled = true, locked = false) => ({
+            key, category, kind: ['QSA', 'ZTPI', 'QPCS', 'SAVICKAS'].includes(key) ? 'instrument' : 'personal',
+            label_i18n: ['QSA', 'ZTPI', 'QPCS', 'SAVICKAS'].includes(key) ? Object.fromEntries(locales.map(locale => [locale, key])) : labels(key),
+            enabled, admin_enabled, always_on: category === 'always_on', locked,
+            locked_enabled: locked ? enabled : null, locked_by: locked ? 'admin.demo' : null,
+            locked_at: locked ? '2026-10-09T08:00:00Z' : null, changed_by_admin: locked || key === 'goals',
+        });
+        const settings = {
+            group_id: 91, revision: 7, disabled_tool_keys: ['ZTPI'], disabled_counselor_ids: [3], default_counselor_id: 2,
+            tools: [tool('QSA', 'assessment'), tool('ZTPI', 'assessment', false, true, true),
+                tool('QPCS', 'assessment', false, false), tool('SAVICKAS', 'guided'), tool('goals', 'personal'),
+                tool('bussola', 'support'), tool('assistant', 'support'), tool('forum', 'forum'),
+                ...['notebook', 'results', 'classes', 'assignments'].map(key => tool(key, 'always_on'))],
+            counselors: ['Clio', 'Giulio', 'Iride'].map((name, i) => ({
+                id: i + 1, name, avatar_url: null, approach_categories: ['tutor'], admin_enabled: true, enabled: i !== 2,
+                locked: i === 1, locked_enabled: i === 1 ? true : null,
+                locked_by: i === 1 ? 'admin.demo' : null, locked_at: i === 1 ? '2026-10-09T08:00:00Z' : null,
+                changed_by_admin: i === 1,
+            })),
+            forum: { students_can_open: true, premoderation: false, premoderation_locked: true,
+                premoderation_lock: { value: false, locked_by: 'admin.demo', locked_at: '2026-10-09T08:00:00Z' } },
+        };
         const goal = { id: 1, title, motivation: instructions, criteria: responsePrompt, reflection: '', status: 'active', priority: 2, review_date: '2026-10-15', shared_group_id: null, revision: 1, catalog_id: null, catalog_snapshot: {}, links: [], parent_ids: [], method: [], origin: null, reviews: [], checks: [] };
         const assignment = { id: 1, author_name: 'Alex · Demo', group_name: groupName, source_kind: 'goal', recipient_username: null, recipient_count: 2, instructions, created_at: '2026-09-21T08:00:00Z', revoked_at: null, snapshot: { title, description: '', details: '' }, intent: 'requested', due_date: '2026-10-15', response_prompt: responsePrompt };
         const catalog = [{ id: 1, author_username: 'teacher.demo', group_id: 91, status: 'published', version: 1, data: { title, description: instructions, criteria: responsePrompt, suggestions: '', area: '', audience: '', language: lang } }];
@@ -61,8 +87,21 @@ try {
             assert.equal(request.method(), 'GET', `Screenshot attempted a write: ${url.pathname}`);
             let data = [];
             const path = url.pathname.slice(4);
-            if (path === '/auth/me') data = { authenticated, is_admin: false, is_researcher: false, username: authenticated ? (teacher ? 'teacher.demo' : 'student.demo') : null, name: authenticated ? 'Alex · Demo' : null, groups: authenticated ? [teacher ? 'docenti' : 'studenti'] : [] };
-            else if (path === '/counselors') data = ['Clio', 'Giulio', 'Iride'].map((name, i) => ({ id: i + 1, name, slug: name.toLowerCase(), language: locales, is_active: true, suitable: true, model_origin: 'local' }));
+            if (path === '/auth/me') data = { authenticated, is_admin: admin, is_researcher: false, username: authenticated ? (teacher ? 'teacher.demo' : 'student.demo') : null, name: authenticated ? (admin ? 'Admin · Demo' : teacher ? 'Prof. Demo' : 'Alex · Demo') : null, groups: authenticated ? [admin ? 'admins' : teacher ? 'docenti' : 'studenti'] : [] };
+            else if (path === '/counselors') data = (classSettingsCapture && !teacher ? ['Clio', 'Giulio'] : ['Clio', 'Giulio', 'Iride']).map((name, i) => ({ id: i + 1, name, slug: name.toLowerCase(), language: locales, is_active: true, suitable: true, model_origin: 'local' }));
+            else if (path === '/user/access') data = { restricted: classSettingsCapture && !teacher,
+                tool_keys: ['QSA', 'SAVICKAS', 'goals', 'bussola', 'assistant', 'forum'], counselor_ids: [1, 2],
+                default_counselor_id: 2, class_ids: [91] };
+            else if (path === '/admin/classes') data = [{ ...group, institution_name: groupName, institution_id: 1,
+                owner_display_name: 'Prof. Demo', co_teachers: [], has_custom_settings: true, locked_items_count: 3 }];
+            else if (path === '/teacher/groups/91/settings/audit-log') data = [
+                { id: 3, actor_username: 'admin.demo', actor_display_name: 'Admin · Demo', actor_role: 'admin', action: 'unlock',
+                    target_kind: 'tool', target_id: 'goals', old_value: { enabled: true, locked: true }, new_value: { enabled: true, locked: false }, reason: instructions, created_at: '2026-10-09T08:15:00Z' },
+                { id: 2, actor_username: 'admin.demo', actor_display_name: 'Admin · Demo', actor_role: 'admin', action: 'lock',
+                    target_kind: 'tool', target_id: 'ZTPI', old_value: { enabled: true, locked: false }, new_value: { enabled: false, locked: true }, reason: instructions, created_at: '2026-10-09T08:00:00Z' },
+                { id: 1, actor_username: 'teacher.demo', actor_display_name: 'Prof. Demo', actor_role: 'teacher', action: 'setting_change',
+                    target_kind: 'counselor', target_id: '3', old_value: { enabled: true }, new_value: { enabled: false }, reason: null, created_at: '2026-10-09T07:45:00Z' },
+            ];
             else if (path === '/user/learner-profile') data = { id: 1, data: { goal: title, context: groupName, notes: response }, source: 'manual', created_at: '2026-09-23T08:00:00Z' };
             else if (path === '/user/teacher-notebook') data = null;
             else if (path === '/user/timeline') data = { revision: 1, workspace };
@@ -109,7 +148,7 @@ try {
                 premoderated: false,
                 mute: null,
             };
-            else if (path === '/teacher/groups/91/settings') data = {
+            else if (path === '/teacher/groups/91/settings') data = classSettingsCapture ? settings : {
                 group_id: 91, revision: 1, disabled_tool_keys: [], tools: [], disabled_counselor_ids: [],
                 default_counselor_id: null, counselors: [], forum: { students_can_open: true, premoderation: false },
             };
@@ -142,12 +181,22 @@ try {
                 }
                 await page.evaluate(() => window.scrollTo(0, 0));
             }
+            await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
+            const fullClassPage = ['class-overview', 'class-tools', 'admin-classes', 'admin-locks', 'admin-audit'].includes(name);
+            if (fullClassPage) {
+                // A tall viewport keeps the real sticky Save bar at the end without obscuring rows.
+                await page.evaluate(() => window.scrollTo(0, 0));
+                await page.setViewportSize({ width: 1440, height: await page.evaluate(() => document.documentElement.scrollHeight) });
+                await page.evaluate(() => window.scrollTo(0, 0));
+                locator = null;
+            }
             await page.evaluate(() => document.fonts.ready);
             await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
             assert.deepEqual(errors, []);
             assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
             if (name === 'orientation') await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
-            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(['activities', 'personal-area', 'teacher-area', 'teacher-groups', 'teacher-notebook', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
+            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(fullClassPage || ['activities', 'personal-area', 'teacher-area', 'teacher-groups', 'teacher-notebook', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
+            if (fullClassPage) await page.setViewportSize({ width: 1440, height: 1000 });
             console.log(`${lang}/${name}`);
         }
         async function captureNotebook() {
@@ -164,7 +213,45 @@ try {
             await capture('teacher-class-picker', popup);
             await page.keyboard.press('Escape');
         }
-        if (['teacher-class-picker', 'teacher-notebook'].includes(process.env.GUIDE_SCREENS)) {
+        async function captureClassSettings() {
+            classSettingsCapture = true;
+            authenticated = true; teacher = false;
+            await go('/counselor');
+            await page.getByText('Clio', { exact: true }).first().waitFor();
+            assert.equal(await page.getByText('Iride', { exact: true }).count(), 0);
+            await capture('counselors');
+            await go('/?view=home');
+            await capture('tool-selection', page.locator('#tools-assessment'));
+            teacher = true;
+            await go('/docente/classi');
+            await page.getByRole('heading', { name: groupName, exact: true }).waitFor();
+            await capture('teacher-groups');
+            await go('/docente/classi/91');
+            await page.locator('#class-tab-overview[aria-selected="true"]').waitFor();
+            await capture('class-overview', page.locator('main section').first());
+            await page.locator('#class-tab-toolsTab').click();
+            await page.getByRole('radio', { name: classSettingsText(lang, 'counselorDefault') + ': Giulio', exact: true }).waitFor();
+            assert.equal(await page.getByRole('checkbox', { name: 'ZTPI', exact: true }).isDisabled(), true);
+            await capture('class-tools', page.locator('main section').first());
+            admin = true;
+            await go('/admin/classi');
+            await page.getByRole('heading', { name: classSettingsText(lang, 'adminClasses'), exact: true }).waitFor();
+            await page.getByRole('article').waitFor();
+            await capture('admin-classes', page.locator('main.page-wide'));
+            await go('/admin/classi/91');
+            await page.locator('#class-tab-toolsTab').click();
+            await page.getByRole('button', { name: classSettingsText(lang, 'unlock'), exact: true }).first().waitFor();
+            await capture('admin-locks', page.locator('main section').first());
+            await page.locator('#class-tab-audit').click();
+            await page.getByText('Admin · Demo (admin.demo)', { exact: false }).first().waitFor();
+            await capture('admin-audit', page.locator('main section').first());
+        }
+        if (classSettingsCapture) {
+            await captureClassSettings();
+            await context.close();
+            continue;
+        }
+        if (['teacher-class-picker' , 'teacher-notebook'].includes(process.env.GUIDE_SCREENS)) {
             authenticated = true; teacher = true;
             await go('/docente');
             await capture('teacher-area');
@@ -282,6 +369,7 @@ try {
         await page.locator('#assignment-1').getByRole('button', { name: learningText(lang, 'submissions'), exact: true }).click();
         await page.locator('#assignment-1').getByRole('textbox').waitFor();
         await capture('teacher-feedback', page.locator('#assignment-1'));
+        await captureClassSettings();
         await context.close();
     }
     const imports = locales.flatMap(lang => names.map((name, i) => `import ${lang}${i} from '../../public/guide/${lang}/${name}.png';`));
