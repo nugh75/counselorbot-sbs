@@ -1757,8 +1757,8 @@ class ClassPathStep(Base):
 class ForumTopic(Base):
     __tablename__ = "forum_topics"
     __table_args__ = (
-        CheckConstraint("char_length(title) BETWEEN 1 AND 160", name="forum_topic_title_length"),
-        CheckConstraint("char_length(body) BETWEEN 1 AND 4000", name="forum_topic_body_length"),
+        CheckConstraint("length(title) BETWEEN 1 AND 160", name="forum_topic_title_length"),
+        CheckConstraint("length(body) BETWEEN 1 AND 4000", name="forum_topic_body_length"),
         CheckConstraint("status IN ('published', 'pending')", name="forum_topic_status"),
     )
 
@@ -1784,7 +1784,7 @@ class ForumTopic(Base):
 class ForumPost(Base):
     __tablename__ = "forum_posts"
     __table_args__ = (
-        CheckConstraint("char_length(body) BETWEEN 1 AND 4000", name="forum_post_body_length"),
+        CheckConstraint("length(body) BETWEEN 1 AND 4000", name="forum_post_body_length"),
         CheckConstraint("status IN ('published', 'pending')", name="forum_post_status"),
     )
 
