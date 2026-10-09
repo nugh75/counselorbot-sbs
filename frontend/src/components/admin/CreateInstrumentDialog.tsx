@@ -9,6 +9,8 @@ import {
     ChevronLeft,
     ChevronRight,
     ClipboardList,
+    ChevronDown,
+    ChevronUp,
     Clock,
     Compass,
     Lightbulb,
@@ -385,7 +387,8 @@ export function CreateInstrumentDialog({ open, onClose, onCreated }: CreateInstr
                                     className="flex w-full items-center justify-between text-xs font-semibold text-slate-700 hover:text-indigo-600"
                                 >
                                     <span>{t('admin.instrumentWizard.translationsToggle')}</span>
-                                    <span className="text-[11px] font-normal text-slate-500">
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-normal text-slate-500">
+                                        {showTranslations ? <ChevronUp className="h-3.5 w-3.5" aria-hidden /> : <ChevronDown className="h-3.5 w-3.5" aria-hidden />}
                                         {showTranslations ? t('admin.instrumentWizard.collapseTranslations') : t('admin.instrumentWizard.expandTranslations')}
                                     </span>
                                 </button>

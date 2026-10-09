@@ -221,8 +221,8 @@ export function ApprovedStrategiesPanel() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <button type="button" onClick={() => void refresh()} className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 hover:bg-slate-50">
-                        <RefreshCw className="h-4 w-4" /> {t('common.refresh')}
+                    <button type="button" onClick={() => void refresh()} aria-label={t('common.refresh')} title={t('common.refresh')} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+                        <RefreshCw className="h-4 w-4" aria-hidden />
                     </button>
                     {editingId === null && (
                         <button type="button" onClick={startNew} className="inline-flex h-9 items-center gap-2 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700">

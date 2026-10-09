@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { translate, type Lang } from '@/lib/i18n';
@@ -68,8 +69,8 @@ export function ExperienceReview({ event, locale, onPatch }: { event: TimelineEv
             <label className="block text-sm">{b('eventBooklet.field.try')}<textarea rows={2} maxLength={1000} className={field} value={review.try_next} onChange={e => patch({ try_next: e.target.value })} /></label>
             <label className="block text-sm">{b('eventBooklet.field.howWhen')}<textarea rows={2} maxLength={1000} className={field} value={review.how_when} onChange={e => patch({ how_when: e.target.value })} /></label>
             {nextStep && <div className="flex flex-wrap gap-3">
-                <Button type="button" variant="secondary" onClick={() => { setDialogSaved(false); setTarget({ kind: 'create', origin: { kind: 'event', target_id: event.id }, prefill: { title: nextStep } }); }}>{goalText(locale, 'toNewGoal')}</Button>
-                <Link className="inline-flex min-h-11 items-center text-indigo-700 underline" href={`/profilo/azioni?new=1&title=${encodeURIComponent(nextStep)}`}>{goalText(locale, 'toNewAction')}</Link>
+                <Button type="button" variant="secondary" onClick={() => { setDialogSaved(false); setTarget({ kind: 'create', origin: { kind: 'event', target_id: event.id }, prefill: { title: nextStep } }); }}><ArrowRight className="h-4 w-4" aria-hidden />{goalText(locale, 'toNewGoal')}</Button>
+                <Link className="inline-flex min-h-11 items-center gap-1 text-indigo-700 underline" href={`/profilo/azioni?new=1&title=${encodeURIComponent(nextStep)}`}><ArrowRight className="h-4 w-4" aria-hidden />{goalText(locale, 'toNewAction')}</Link>
             </div>}
         </div>
         {target && <GoalDialog target={target} goals={goals} groups={groups} saved={dialogSaved}

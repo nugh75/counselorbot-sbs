@@ -74,8 +74,8 @@ export function ToolBriefsPanel() {
                     <h2 className="text-lg font-bold text-slate-900">{t('admin.toolBriefs.title')}</h2>
                     <p className="mt-1 text-sm leading-relaxed text-slate-500">{t('admin.toolBriefs.subtitle')}</p>
                 </div>
-                <Button variant="secondary" onClick={() => void load()}>
-                    <RefreshCw className="h-4 w-4" /> {t('admin.toolBriefs.reload')}
+                <Button variant="secondary" className="w-11 px-0" onClick={() => void load()} aria-label={t('admin.toolBriefs.reload')} title={t('admin.toolBriefs.reload')}>
+                    <RefreshCw className="h-4 w-4" aria-hidden />
                 </Button>
             </div>
 

@@ -8,6 +8,7 @@ import {
     ZTPI_BTP_NEAR,
     analyzeZTPIScore
 } from '@/lib/ztpi-model';
+import { ArrowLeftRight, Circle, Triangle } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 
 interface ProfileVisualizationProps {
@@ -36,26 +37,31 @@ type Translator = (key: string, vars?: Record<string, string | number>) => strin
 // `glyph` e' il secondo canale: prima la fascia buona e quella da far crescere
 // si distinguevano solo per tinta, e con una discromatopsia rosso-verde — circa
 // l'8% degli uomini — la schermata dei risultati perdeva la sua distinzione
-// principale. Il triangolo, il punto e il triangolo rovesciato dicono lo stesso
-// esito senza colore, e compaiono uguali nella barra e nella legenda.
+// principale. Il triangolo, il punto e il triangolo rovesciato (icone lucide) dicono
+// lo stesso esito senza colore, e compaiono uguali nella barra e nella legenda.
 // `band` e `bandText` sono variabili CSS, non hex: cosi' il tema scuro le
 // ridefinisce dal remap centrale invece di restare fuori (vedi globals.css).
 const OUTCOME_TONE = {
     strength: {
-        mark: '#22c55e', text: '#166534', chip: '#f0fdf4', glyph: '\u25b2',
+        mark: '#22c55e', text: '#166534', chip: '#f0fdf4', icon: Triangle, iconClass: 'fill-current',
         band: 'var(--zone-strength-band)', bandText: 'var(--zone-strength-text)',
     },
     adequate: {
-        mark: '#eab308', text: '#854d0e', chip: '#fefce8', glyph: '\u25cf',
+        mark: '#eab308', text: '#854d0e', chip: '#fefce8', icon: Circle, iconClass: 'fill-current',
         band: 'var(--zone-adequate-band)', bandText: 'var(--zone-adequate-text)',
     },
     growth: {
-        mark: '#ef4444', text: '#991b1b', chip: '#fef2f2', glyph: '\u25bd',
+        mark: '#ef4444', text: '#991b1b', chip: '#fef2f2', icon: Triangle, iconClass: 'rotate-180',
         band: 'var(--zone-growth-band)', bandText: 'var(--zone-growth-text)',
     },
 } as const;
 
 type Outcome = keyof typeof OUTCOME_TONE;
+
+function OutcomeGlyph({ tone }: { tone: (typeof OUTCOME_TONE)[Outcome] }) {
+    const Icon = tone.icon;
+    return <Icon className={cn('h-2.5 w-2.5 shrink-0', tone.iconClass)} aria-hidden="true" />;
+}
 type Interpretation = { label: string; color: string; zone: 'low' | 'mid' | 'high'; tone: (typeof OUTCOME_TONE)[Outcome] };
 
 const read = (label: string, outcome: Outcome, zone: 'low' | 'mid' | 'high'): Interpretation =>
@@ -139,13 +145,14 @@ function ZoneBand({ outcome, label, width, divider }: { outcome: Outcome; label:
             className={cn('flex items-center justify-center gap-1 text-2xs font-semibold', divider && 'border-l border-slate-200')}
             style={{ width, backgroundColor: tone.band, color: tone.bandText }}
         >
-            <span aria-hidden="true">{tone.glyph}</span>
+            <OutcomeGlyph tone={tone} />
             {label}
         </div>
     );
 }
 
 function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interpretation }: ScoreBarProps) {
+    const { t } = useI18n();
     const markerPosition = ((score - 1) / 8) * 100;
     const isZTPI = questionnaireId === 'ZTPI' && code.startsWith('T');
     const ztpiCode = code as ZTPIFactorCode;
@@ -156,7 +163,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
             <div className="col-start-1 row-start-1 min-w-0 sm:w-44 sm:flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-slate-700">{code}</span>
-                    {isInverted && <span className="text-2xs text-slate-500">↔</span>}
+                    {isInverted && <ArrowLeftRight className="h-3 w-3 text-slate-500" aria-label={t('profile.invertedScale')} role="img" />}
                 </div>
                 <div className="text-xs text-slate-500 leading-tight break-words" title={factorName}>
                     {factorName}
@@ -203,7 +210,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
                         color: interpretation.tone.text,
                     }}
                 >
-                    <span aria-hidden="true">{interpretation.tone.glyph}</span>
+                    <OutcomeGlyph tone={interpretation.tone} />
                     {score}
                 </span>
                 <div className="text-2xs text-slate-500 mt-0.5">
@@ -356,14 +363,14 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                             style={{ backgroundColor: OUTCOME_TONE[outcome].band, color: OUTCOME_TONE[outcome].bandText }}
                             aria-hidden="true"
                         >
-                            {OUTCOME_TONE[outcome].glyph}
+                            <OutcomeGlyph tone={OUTCOME_TONE[outcome]} />
                         </span>
                         <span className="text-slate-600">{label}</span>
                     </div>
                 ))}
                 {questionnaire.invertedFactors.length > 0 && (
                     <div className="flex items-center gap-1 text-slate-500">
-                        <span>↔</span>
+                        <ArrowLeftRight className="h-3 w-3" aria-hidden />
                         <span>= {t('profile.invertedScale')}</span>
                     </div>
                 )}
