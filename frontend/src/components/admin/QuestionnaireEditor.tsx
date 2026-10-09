@@ -320,8 +320,8 @@ export function QuestionnaireEditor() {
                     <Play className="w-3.5 h-3.5" /> {t('admin.q.testChat')}
                 </button>
                 {msg && <span className="text-sm text-indigo-600">{msg}</span>}
-                <button onClick={() => loadInstrument(selected)} className="ml-auto inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800">
-                    <RefreshCw className="w-4 h-4" /> {t('admin.q.reload')}
+                <button type="button" onClick={() => loadInstrument(selected)} aria-label={t('admin.q.reload')} title={t('admin.q.reload')} className="tap-icon ml-auto rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-800">
+                    <RefreshCw className="w-4 h-4" aria-hidden />
                 </button>
             </div>
 

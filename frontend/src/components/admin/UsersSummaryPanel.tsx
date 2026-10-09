@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Building2, RefreshCw, School, Search, UserCheck, Users } from 'lucide-react';
+import { Building2, Check, RefreshCw, School, Search, UserCheck, Users } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 
@@ -400,7 +400,7 @@ export function UsersSummaryPanel() {
                                                     <span className="font-medium text-slate-800">{user.display_name}</span>
                                                     <span className="block text-2xs text-slate-500">{user.username}</span>
                                                 </td>
-                                                <td className="px-3 py-2.5 text-slate-600">{user.in_logs ? '✓' : '—'}</td>
+                                                <td className="px-3 py-2.5 text-slate-600">{user.in_logs ? <Check className="h-4 w-4 text-emerald-700" role="img" aria-label={texts.inLogs} /> : '—'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
