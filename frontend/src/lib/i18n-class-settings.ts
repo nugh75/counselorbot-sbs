@@ -44,6 +44,15 @@ export const classSettingsTexts = {
     results: ['Compilazioni', 'Completed questionnaires', 'Cuestionarios completados', 'Questionnaires remplis', 'Ausgefüllte Fragebögen', 'Ifyllda frågeformulär'],
     classes: ['Classi', 'Classes', 'Clases', 'Classes', 'Klassen', 'Klasser'],
     assignments: ['Assegnazioni', 'Assignments', 'Tareas asignadas', 'Travaux assignés', 'Aufträge', 'Tilldelade uppgifter'],
+    counselors: ['Counselor', 'Counselors', 'Counselors', 'Counselors', 'Counselors', 'Counselors'],
+    counselorDefaultHint: ['Chi ha un counselor disattivato continua con il predefinito della classe; senza predefinito sceglie tra quelli abilitati.', 'Students whose counselor is turned off continue with the class default; without one they choose among the enabled counselors.', 'Quien tenga un counselor desactivado continúa con el predeterminado de la clase; sin él, elige entre los habilitados.', 'Les étudiants dont le counselor est désactivé continuent avec celui par défaut de la classe ; sinon, ils choisissent parmi les counselors activés.', 'Lernende, deren Counselor deaktiviert ist, machen mit dem Standard der Klasse weiter; ohne Standard wählen sie unter den freigeschalteten.', 'Elever vars counselor är avstängd fortsätter med klassens standard; utan standard väljer de bland de aktiverade.'],
+    counselorCategory: ['Categoria', 'Category', 'Categoría', 'Catégorie', 'Kategorie', 'Kategori'],
+    counselorAllCategories: ['Tutte le categorie', 'All categories', 'Todas las categorías', 'Toutes les catégories', 'Alle Kategorien', 'Alla kategorier'],
+    counselorSearch: ['Cerca counselor', 'Search counselors', 'Buscar counselors', 'Rechercher des counselors', 'Counselors suchen', 'Sök counselors'],
+    counselorDefault: ['Predefinito della classe', 'Class default', 'Predeterminado de la clase', 'Par défaut de la classe', 'Standard der Klasse', 'Klassens standard'],
+    counselorNoDefault: ['Nessun predefinito', 'No class default', 'Sin predeterminado', 'Aucun par défaut', 'Kein Standard', 'Ingen standard'],
+    counselorNoMatch: ['Nessun counselor corrisponde ai filtri.', 'No counselor matches the filters.', 'Ningún counselor coincide con los filtros.', 'Aucun counselor ne correspond aux filtres.', 'Kein Counselor entspricht den Filtern.', 'Ingen counselor matchar filtren.'],
+    counselorsPrivate: ['I counselor privati degli studenti non sono mai interessati.', 'Students’ private counselors are never affected.', 'Los counselors privados de los estudiantes nunca se ven afectados.', 'Les counselors privés des étudiants ne sont jamais concernés.', 'Private Counselors der Lernenden sind nie betroffen.', 'Elevernas privata counselors påverkas aldrig.'],
 } as const satisfies Record<string, readonly [string, string, string, string, string, string]>;
 
 export function classSettingsText(lang: string, key: keyof typeof classSettingsTexts): string {
