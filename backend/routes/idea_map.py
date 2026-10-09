@@ -378,6 +378,7 @@ def map_to_portfolio(
 ):
     """Salva la mappa come lavoro nel portfolio, con il disegno allegato."""
     _require_feature(db)
+    class_access.require_tool(db, identity, "portfolio")
     owner = _owner(identity)
     spec = _map_or_404(db, owner, request.session_id)
     return _keep_in_portfolio(db, owner, spec, request.lang)

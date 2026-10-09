@@ -609,6 +609,26 @@ arrive with #93.
 
 **Class-filtered student catalog (S3, #90).** The student interface now gates all tool entry points using the resolved access from `GET /user/access`. Cached once per browser session in sessionStorage and in-memory, the resolved access filters tools on top of `resolveActiveStudentTools`. Students in restricted classes see only tools enabled for their classes across the home questionnaire selector and ReturningHome cards; disabled tools produce no cards and are omitted from upcoming sections. Navigating directly to `/strumenti/[id]` for a disabled tool presents a dedicated 'not enabled for your class' panel with a button back to the catalog. Deep links via `?start=` or `?q=` targeting a disabled tool notify the student with a clear toast warning and fall back to the catalog. Frozen sessions for disabled tools are hidden from the header Resume menu and ReturningHome; attempting a direct resume link triggers an informative error toast and safely returns to the catalog. Unrestricted students and staff continue to see the complete catalog without filtering.
 
+**Personal-area tools per class (S4, #91).** In the **Personal area** section of
+the Tools & counselors tab, teachers can turn off Tavolo, Goals, Actions,
+Timeline, Portfolio, pQBL, Flashcards, Cards and Comparison for a class.
+Notebook, completed questionnaires, Classes and Assignments are always on and
+cannot be disabled (HTTP 422). Students whose classes all turn a tool off no
+longer see its link in the personal area (`/profilo`); a group with no remaining
+tool disappears, and the "Continue your work" overview leaves out goals or
+activities when Goals or Actions are off. Opening a disabled tool by its address
+keeps the page readable and shows the notice "Tool turned off by your class".
+The server refuses new work with `tool_disabled_for_class`: creating, editing,
+renaming and saving a Tavolo and its AI help; creating or editing goals, their
+links, reviews and activities (activities also need Actions); creating or
+editing Portfolio works and their images, copying a timeline or an Idea map
+into the Portfolio; pQBL upload, new sessions, answers and final tests;
+saving Flashcards; timeline milestones saved from a chat. Actions, Cards,
+Comparison and Timeline share one saved workspace: a save is refused only when
+it changes the part of a disabled tool, so the others keep working. Reading,
+exporting (PDF) and deleting existing work stay available. Assignment goals
+created from a teacher assignment stay available, because Assignments are always on.
+
 **Class forum unread badge (F4, #105).** An in-app badge indicates unread forum
 activity across active classes. The backend (`GET /user/forum/unread`,
 `POST /forum/topics/{id}/read`) computes unread counts using the `forum_reads`

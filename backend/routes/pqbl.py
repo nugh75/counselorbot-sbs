@@ -29,7 +29,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPExcepti
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from .. import auth, database, models
+from .. import auth, class_access, database, models
 from ..anonymous_codes import code_for_identity, get_or_create_anonymous_research_code
 from ..ai_service import AIService, AIError
 from ..api_models import PqblAnswerRequest, PqblFinalTestRequest, PqblQuestionUpdate, PqblSessionCreate
@@ -317,6 +317,7 @@ async def upload_pqbl_document(
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity),
 ):
+    class_access.require_tool(db, identity, "pqbl")
     if size not in ALLOWED_SESSION_SIZES:
         raise HTTPException(status_code=400, detail=f"Numero domande non valido: scegli tra {ALLOWED_SESSION_SIZES}.")
     suffix = os.path.splitext(file.filename or "")[1].lower()
@@ -468,6 +469,7 @@ async def create_pqbl_session(
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity),
 ):
+    class_access.require_tool(db, identity, "pqbl")
     if request.mode not in ("learning", "final_test"):
         raise HTTPException(status_code=400, detail="Modalità non valida (learning | final_test).")
     doc = db.query(models.PqblDocument).filter(models.PqblDocument.id == request.document_id).first()
@@ -513,7 +515,10 @@ async def answer_pqbl_question(
     session_id: str,
     request: PqblAnswerRequest,
     db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity),
 ):
+    # Continuing a session is a new write: blocked once the class disables pQBL.
+    class_access.require_tool(db, identity, "pqbl")
     session = _get_session_or_404(db, session_id)
     if session.mode != "learning":
         raise HTTPException(status_code=400, detail="Nel test finale usa l'invio unico (/final-test).")
@@ -566,9 +571,12 @@ async def submit_pqbl_final_test(
     session_id: str,
     request: PqblFinalTestRequest,
     db: Session = Depends(get_db),
+    identity: dict = Depends(auth.get_identity),
 ):
     """Submit unico del test finale (R7): una risposta per domanda, feedback
     solo dopo l'invio, non ripetibile."""
+    # Continuing a session is a new write: blocked once the class disables pQBL.
+    class_access.require_tool(db, identity, "pqbl")
     session = _get_session_or_404(db, session_id)
     if session.mode != "final_test":
         raise HTTPException(status_code=400, detail="Questa sessione non è un test finale.")
