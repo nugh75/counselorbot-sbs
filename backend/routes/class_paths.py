@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from .. import auth, database, models, schemas
 from ..class_access import class_enables, resolve_access
 from ..path_step_types import (step_descriptor, completion_evidence, validate_step_input, validate_composition,
-                               apply_step_target, administration_target)
+                               apply_step_target, administration_target, forum_student_state)
 from ..class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, tool_catalog
 from .groups import _is_admin, _username, _visible_group_query
 
@@ -146,6 +146,7 @@ def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:
         "administration_plan_id": step.administration_plan_id,
         "results_step_id": step.results_step_id,
         "assignment_id": step.assignment_id,
+        "topic_id": step.topic_id,
         "active_from": step.active_from,
         "target_summary": descriptor["target_summary"],
         "availability_reason": descriptor["availability_reason"],
@@ -428,6 +429,7 @@ async def update_class_path(
                 administration_plan_id=step_input.administration_plan_id if step_input.step_type == "questionnaire_administration" else None,
                 results_step_id=step_input.results_step_id if step_input.step_type == "guided_results_chat" else None,
                 assignment_id=step_input.assignment_id if step_input.step_type == "assignment" else None,
+                topic_id=step_input.topic_id if step_input.step_type == "forum" else None,
                 active_from=datetime.now(timezone.utc) if path.status == "published" else None,
                 title=step_title,
                 instructions=step_instructions,
@@ -718,8 +720,11 @@ async def list_student_class_paths(
     for path in paths:
         steps = _active_steps(db, path.id)
         descriptors = {s.id: step_descriptor(db, path, s) for s in steps}
-        available = {s.id: descriptors[s.id]["available"] and
-                     (descriptors[s.id]["instrument_code"] or "").lower() in user_tools_lower for s in steps}
+        # The forum follows its own class setting only (checked by the
+        # descriptor), never the union of the student's classes or tool view.
+        available = {s.id: descriptors[s.id]["available"] and (
+                     s.step_type == "forum"
+                     or (descriptors[s.id]["instrument_code"] or "").lower() in user_tools_lower) for s in steps}
         auto = {s.id: descriptors[s.id]["auto_detect"] for s in steps}
         marks = _load_marks(db, [s.id for s in steps], [username])
         cells, done, total, next_step_id = _resolve_cells(
@@ -746,6 +751,8 @@ async def list_student_class_paths(
                     "source": cell["source"],
                     "start_href": descriptors[cell["step"].id]["start_href"],
                     "can_self_mark": available[cell["step"].id] and not auto[cell["step"].id],
+                    "forum_state": forum_student_state(db, path, cell["step"], username)
+                    if cell["step"].step_type == "forum" and available[cell["step"].id] else None,
                 }
                 for cell in cells
             ],
@@ -893,8 +900,10 @@ def require_step_launch(db, identity, path_id, step_id, *, for_update=False):
     descriptor = step_descriptor(db, path, step)
     if not available[step.id]:
         raise HTTPException(409, descriptor["availability_reason"])
-    from ..class_access import require_tool
-    require_tool(db, identity, descriptor["instrument_code"])
+    if step.step_type != "forum":
+        # The forum descriptor already applied this class's own forum setting.
+        from ..class_access import require_tool
+        require_tool(db, identity, descriptor["instrument_code"])
     cells, *_ = _resolve_cells(db, path, steps, username, available=available, auto=auto, marks=marks)
     if next(cell for cell in cells if cell["step"].id == step_id)["state"] == "locked":
         raise HTTPException(409, "class_path_step_locked")
@@ -913,6 +922,10 @@ async def launch_step(path_id: int, step_id: int, current_user=Depends(auth.get_
         # Opening the assignment is not evidence: only its explicit submission is.
         return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id,
                 "assignment_id":step.assignment_id, "start_href":descriptor["start_href"]}
+    if step.step_type == "forum":
+        # Opening the discussion is not evidence: only a published reply there is.
+        return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id,
+                "topic_id":step.topic_id, "group_id":path.group_id, "start_href":descriptor["start_href"]}
     from ..path_step_types import EXTERNAL_IT_HREF
     plan, institution = administration_target(db, path.group_id, step.administration_plan_id)
     return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id, "administration_plan_id":plan.id,

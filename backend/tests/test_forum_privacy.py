@@ -6,6 +6,15 @@ ROOT = Path(__file__).resolve().parents[1]
 FORUM_FILES = {"backend.routes.forum", "backend.forum_schemas"}
 FORUM_SYMBOLS = {"ForumTopic", "ForumPost", "ForumRead", "ForumModerationLog", "ForumMute",
                  "forum_topics", "forum_posts", "forum_reads", "forum_moderation_log", "forum_mutes"}
+# TF7 (#154): the one named metadata reader for class-path forum steps. It may
+# name only these columns, never a whole forum row, and only path_step_types
+# imports it. Titles, bodies, display names and moderation reasons stay out.
+METADATA_READER = Path("forum_completion.py")
+METADATA_COLUMNS = {
+    "ForumTopic": {"id", "group_id", "status", "hidden_at", "locked"},
+    "ForumPost": {"id", "topic_id", "author_username", "status", "hidden_at", "deleted_at", "created_at"},
+    "ForumMute": {"id", "group_id", "username", "lifted_at", "until"},
+}
 
 
 def module_path(name):
@@ -92,8 +101,15 @@ def test_no_non_forum_consumer_can_read_forum_models_or_tables():
             and any(kw.arg == 'action' and isinstance(kw.value, ast.Constant)
                     and kw.value.value == 'settings_change' for kw in node.keywords)
         }
+        # The named reader: `models.<Forum model>.<allowed column>` and nothing else.
+        metadata_columns = {
+            id(node.value) for node in ast.walk(tree) if relative == METADATA_READER
+            and isinstance(node, ast.Attribute) and isinstance(node.value, ast.Attribute)
+            and isinstance(node.value.value, ast.Name) and node.value.value.id == 'models'
+            and node.attr in METADATA_COLUMNS.get(node.value.attr, set())
+        }
         for node in ast.walk(tree):
-            if id(node) in metadata_log_constructors:
+            if id(node) in metadata_log_constructors or id(node) in metadata_columns:
                 continue
             value = node.id if isinstance(node, ast.Name) else node.attr if isinstance(node, ast.Attribute) else node.name if isinstance(node, ast.alias) else node.value if isinstance(node, ast.Constant) else None
             if isinstance(value, str) and any(token in value for token in FORUM_SYMBOLS):
@@ -103,6 +119,41 @@ def test_no_non_forum_consumer_can_read_forum_models_or_tables():
         if relative != Path('main.py') and imports(name, path.read_text(), nested=True) & FORUM_FILES:
             violations.append(f'{relative}:forum import')
     assert not violations, f'Forum data reached a non-forum consumer: {violations}'
+
+
+def test_forum_metadata_reader_is_isolated_from_ai_rag_context_and_exports():
+    reader = ROOT / METADATA_READER
+    source = reader.read_text()
+    assert imports("backend.forum_completion", source, nested=True) == {"backend.models"}
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, (ast.Import, ast.ImportFrom)) and not getattr(node, 'level', 0):
+            modules = [alias.name for alias in node.names] if isinstance(node, ast.Import) else [node.module or '']
+            assert all(item.split('.')[0] == 'sqlalchemy' for item in modules), modules
+    graph = {}
+    for path in ROOT.rglob('*.py'):
+        relative = path.relative_to(ROOT)
+        if relative.parts[0] in {'tests', '.venv'}:
+            continue
+        name = 'backend.' + '.'.join(relative.with_suffix('').parts)
+        graph[name] = imports(name, path.read_text(), nested=True)
+    importers = {name for name, targets in graph.items() if "backend.forum_completion" in targets}
+    assert importers == {"backend.path_step_types"}
+    # Everything that can load the reader, at any depth: class paths and their
+    # administration seams only, never chat, RAG, context builders, exports or PDFs.
+    reach, changed = {"backend.forum_completion"}, True
+    while changed:
+        found = {name for name, targets in graph.items() if name not in reach and targets & reach}
+        reach |= found
+        changed = bool(found)
+    assert reach == {
+        "backend.forum_completion",
+        "backend.path_step_types",
+        "backend.routes.class_paths",
+        "backend.results_deep_dive",
+        "backend.questionnaire_entry",
+        "backend.routes.administration_plans",
+        "backend.main",
+    }
 
 
 def test_exports_and_pdf_do_not_query_or_include_forum_content():
