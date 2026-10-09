@@ -38,30 +38,36 @@ def body(group, source, kind='goal', **overrides):
     return {**dict(source_kind=kind, source_id=source.id, group_id=group.id, request_id='assignment-request-1'), **overrides}
 
 
+def attachment(source, kind):
+    return {'source_kind': kind, 'source_id': source.id}
+
+
 def as_student(who, username='alice'):
     who.update(username=username, name=username, groups=['studenti'], is_admin=False)
 
 
-@pytest.mark.parametrize('kind', ['goal', 'strategy', 'reading'])
 @pytest.mark.parametrize('individual', [False, True])
-def test_delivery_to_current_group_or_individual_and_separate_personal_goals(setup, kind, individual):
+def test_delivery_to_current_group_or_individual_and_separate_personal_goals(setup, individual):
     db, c, who, group, other, sources = setup
-    payload = body(group, sources[kind], kind, recipient_username='alice' if individual else None, instructions='Leggi e annota una domanda')
+    payload = body(group, sources['goal'], recipient_username='alice' if individual else None,
+                   instructions='Leggi e annota una domanda',
+                   attachments=[attachment(sources['strategy'], 'strategy'), attachment(sources['reading'], 'reading')])
     response = c.post('/teacher/assignments', json=payload)
     assert response.status_code == 201, response.text
     sent = response.json()
     assert sent['recipient_count'] == (1 if individual else 2)
     assert sent['author_name'] == 'Docente Uno'
+    assert sent['snapshot']['title'] == 'Organizzare lo studio'
+    assert [item['kind'] for item in sent['attachments']] == ['strategy', 'reading']
+    assert [item['title'] for item in sent['snapshot']['attachments']] == ['Ripasso distribuito', 'Film del catalogo']
     assert c.get('/teacher/assignments').json()[0]['id'] == sent['id']
     as_student(who)
     received = c.get('/user/assignments').json()
     assert len(received) == 1
     assert received[0]['instructions'] == payload['instructions']
+    assert received[0]['snapshot']['title'] == 'Organizzare lo studio'
+    assert [item['kind'] for item in received[0]['attachments']] == ['strategy', 'reading']
     assert 'recipient_username' not in received[0] and 'recipient_count' not in received[0]
-    assert received[0]['snapshot']['title']
-    if kind == 'reading':
-        assert received[0]['snapshot']['where_to_find'] == 'Biblioteca'
-        assert received[0]['snapshot']['content_warning'] == 'Temi sensibili'
     assert db.query(models.PersonalGoal).count() == 0
     as_student(who, 'bob')
     assert len(c.get('/user/assignments').json()) == (0 if individual else 1)
@@ -69,10 +75,54 @@ def test_delivery_to_current_group_or_individual_and_separate_personal_goals(set
     assert c.get('/user/assignments').json() == []
 
 
+def test_goal_is_mandatory_and_attachments_are_optional(setup):
+    db, c, who, group, other, sources = setup
+    # The goal id is required by the request schema.
+    assert c.post('/teacher/assignments', json=dict(group_id=group.id, request_id='missing-goal')).status_code == 422
+    # Strategies and readings can no longer be the primary source.
+    assert c.post('/teacher/assignments', json=body(group, sources['strategy'], 'strategy')).status_code == 422
+    assert c.post('/teacher/assignments', json=body(group, sources['reading'], 'reading')).status_code == 422
+    # A published goal alone is enough: attachments stay optional.
+    plain = c.post('/teacher/assignments', json=body(group, sources['goal'], request_id='plain-goal'))
+    assert plain.status_code == 201, plain.text
+    assert plain.json()['attachments'] == []
+    assert plain.json()['snapshot']['attachments'] == []
+    assert db.query(models.TeacherAssignment).count() == 1
+
+
+def test_invalid_attachment_is_rejected(setup):
+    db, c, who, group, other, sources = setup
+    def post(item, request_id):
+        return c.post('/teacher/assignments', json=body(group, sources['goal'],
+            request_id=request_id, attachments=[item]))
+    sources['strategy'].status = 'draft'; db.commit()
+    assert post(attachment(sources['strategy'], 'strategy'), 'invalid-strategy-draft').status_code == 404
+    sources['strategy'].status = 'certified'; sources['strategy'].is_active = False; db.commit()
+    assert post(attachment(sources['strategy'], 'strategy'), 'invalid-strategy-inactive').status_code == 404
+    sources['strategy'].is_active = True
+    sources['reading'].status = 'draft'; db.commit()
+    assert post(attachment(sources['reading'], 'reading'), 'invalid-reading-draft').status_code == 404
+    sources['reading'].status = 'certified'; db.commit()
+    assert post({'source_kind': 'strategy', 'source_id': 999999}, 'invalid-missing').status_code == 404
+    assert db.query(models.TeacherAssignment).count() == 0
+
+
+def test_attachments_are_part_of_the_idempotency_hash(setup):
+    db, c, who, group, other, sources = setup
+    base = body(group, sources['goal'], request_id='attachment-hash',
+                attachments=[attachment(sources['strategy'], 'strategy')])
+    first = c.post('/teacher/assignments', json=base)
+    assert first.status_code == 201, first.text
+    assert c.post('/teacher/assignments', json=base).json()['id'] == first.json()['id']
+    changed = {**base, 'attachments': [attachment(sources['reading'], 'reading')]}
+    assert c.post('/teacher/assignments', json=changed).status_code == 409
+    assert db.query(models.TeacherAssignment).count() == 1
+
+
 def test_role_group_membership_and_target_isolation(setup):
     db, c, who, group, other, sources = setup
     assert [g['id'] for g in c.get('/teacher/assignment-targets').json()] == [group.id]
-    assert c.post('/teacher/assignments', json=body(other, sources['strategy'], 'strategy')).status_code == 404
+    assert c.post('/teacher/assignments', json=body(other, sources['goal'])).status_code == 404
     assert c.post('/teacher/assignments', json=body(group, sources['goal'], recipient_username='eve')).status_code == 422
     as_student(who)
     assert c.post('/teacher/assignments', json=body(group, sources['goal'])).status_code == 403
@@ -107,20 +157,23 @@ def test_snapshots_retries_and_revocation(setup):
 
 def test_publication_and_group_scope(setup):
     db, c, who, group, other, sources = setup
-    for kind, source in sources.items():
-        source.status = 'draft'; db.commit()
-        assert c.post('/teacher/assignments', json=body(group, source, kind)).status_code == 404
+    sources['goal'].status = 'draft'; db.commit()
+    assert c.post('/teacher/assignments', json=body(group, sources['goal'])).status_code == 404
     sources['goal'].status = 'published'; sources['goal'].group_id = other.id; db.commit()
     assert c.post('/teacher/assignments', json=body(group, sources['goal'])).status_code == 404
+    sources['goal'].group_id = group.id
     sources['strategy'].status = 'certified'; sources['strategy'].is_active = False; db.commit()
-    assert c.post('/teacher/assignments', json=body(group, sources['strategy'], 'strategy')).status_code == 404
+    assert c.post('/teacher/assignments', json=body(group, sources['goal'], request_id='inactive-attachment',
+        attachments=[attachment(sources['strategy'], 'strategy')])).status_code == 404
     assert db.query(models.TeacherAssignment).count() == 0
 
 
 @pytest.mark.parametrize('individual', [False, True])
 def test_membership_changes_and_group_deactivation(setup, individual):
     db, c, who, group, other, sources = setup
-    assert c.post('/teacher/assignments', json=body(group, sources['goal'], recipient_username='bob' if individual else None)).status_code == 201
+    payload = body(group, sources['goal'], recipient_username='bob' if individual else None,
+                   attachments=[attachment(sources['reading'], 'reading')])
+    assert c.post('/teacher/assignments', json=payload).status_code == 201
     db.add(models.GroupMembership(group_id=group.id, username='late'))
     db.query(models.GroupMembership).filter_by(group_id=group.id, username='alice').delete(); db.commit()
     as_student(who, 'late')
@@ -135,19 +188,20 @@ def test_membership_changes_and_group_deactivation(setup, individual):
     assert c.post('/teacher/assignments', json=body(group, sources['goal'], request_id='another-request')).status_code == 404
 
 
-@pytest.mark.parametrize('kind', ['goal', 'strategy', 'reading'])
-def test_empty_class_assignment_reaches_later_members_until_revoked(setup, kind):
+@pytest.mark.parametrize('with_attachments', [False, True])
+def test_empty_class_assignment_reaches_later_members_until_revoked(setup, with_attachments):
     db, c, who, group, other, sources = setup
     db.query(models.GroupMembership).filter_by(group_id=group.id).delete(); db.commit()
     assert c.get('/teacher/assignment-targets').json() == [dict(id=group.id, name=group.name, participants=[])]
-    payload = body(group, sources[kind], kind, instructions='Preparato prima delle iscrizioni')
+    extra = dict(attachments=[attachment(sources['reading'], 'reading')]) if with_attachments else {}
+    payload = body(group, sources['goal'], instructions='Preparato prima delle iscrizioni', **extra)
     response = c.post('/teacher/assignments', json=payload)
     assert response.status_code == 201, response.text
     first = response.json()
     assert first['recipient_count'] == 0
     assert c.get('/teacher/assignments').json()[0]['id'] == first['id']
     assert c.post('/teacher/assignments', json=payload).json()['id'] == first['id']
-    assert c.post('/teacher/assignments', json=body(group, sources[kind], kind,
+    assert c.post('/teacher/assignments', json=body(group, sources['goal'],
         recipient_username='alice', request_id='individual-empty')).status_code == 422
     assert db.query(models.AssignmentRecipient).count() == 0
     as_student(who, 'late')

@@ -20,6 +20,9 @@ def main():
         db.add_all([
             models.GoalCatalogEntry(author_username='teacher', group_id=school.id, status='published',
                                     data=dict(title='Pianificare lo studio', description='Definisci un piccolo passo', language='it')),
+            # Common goal, assignable to any managed group (#143).
+            models.GoalCatalogEntry(author_username='admin', group_id=None, status='published',
+                                    data=dict(title='Obiettivo comune', description='Per ogni gruppo', language='it')),
             models.CertifiedStrategy(slug='browser-review', name_it='Ripasso distribuito', description_it='Ripassa in tre giornate', status='certified'),
             models.CertifiedReading(slug='browser-film', title='Film per riflettere', kind='film', status='certified',
                                     why_i18n={'it': 'Confronta le scelte dei protagonisti'}, where_to_find='Biblioteca'),
