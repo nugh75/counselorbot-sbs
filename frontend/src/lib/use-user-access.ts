@@ -11,7 +11,7 @@ export function useUserAccess() {
 
     useEffect(() => {
         let active = true;
-        fetchUserAccess({ forceRefresh: version > 0 })
+        fetchUserAccess()
             .then((result) => {
                 if (active) {
                     setAccess(result);
