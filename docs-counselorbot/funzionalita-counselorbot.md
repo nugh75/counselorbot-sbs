@@ -1136,3 +1136,32 @@ Un salvataggio esplicito dell’amministratore rende il testo protetto anche se
 coincide con la versione di fabbrica. I testi aggiornati dal pulsante rimangono
 riconoscibili come fabbrica per gli allineamenti successivi. La conferma aggiorna
 gli editor della pagina; non richiama un LLM e non richiede comandi nel terminale.
+
+
+## Class administration, locks and settings history (#109)
+
+Administrators open Administration → Classes or `/admin/classi` to search all
+classes by name, code or school and filter by owner, institution and active
+status. Each entry shows owner/co-teachers, institution, member count, custom
+settings and lock count. Settings are also reachable at `/admin/classi/{id}`.
+
+The shared Tools & counselors editor saves changes explicitly. Administrators
+can force any editable tool or institutional counselor ON or OFF with an
+immediate per-item lock, optionally recording a reason. Save or reload a pending
+draft before using lock controls. Unlock keeps the last value and returns control
+to teachers. A locked item must be changed through the lock controls or unlocked
+before an ordinary save. Platform-level disable still takes priority over a class
+lock ON; a globally disabled item cannot be newly locked ON. Always-available
+items and private counselors cannot be locked.
+
+Owners and co-teachers see locked items with disabled inputs, a badge and actor/
+time tooltip; category buttons preserve locks. Items last changed by an admin
+show a separate badge. Every actual settings change, lock and unlock is recorded
+with actor, timestamp, old/new values and optional reason in Change history,
+visible only to the class owner, co-teachers and admins. Concurrent changes reject
+stale saves while preserving the browser draft. No-op saves add no audit entry.
+
+Forum option values and locks (student discussion opening and premoderation)
+are stored and displayed with an explicit future-release notice. Their effect
+on forum discussions, and teacher editing of these options, remain the separate
+F3 slice; this release does not activate either forum behavior.
