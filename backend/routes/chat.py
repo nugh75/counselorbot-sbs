@@ -35,6 +35,7 @@ from ..idea_map import (
 from ..memory_service import session_memory
 from ..reasoning_profiles import effort_overrides
 from ..chat_preparation import prepare_chat_turn
+from ..class_path_completion import record_guided_chat_completion
 from ..strategy_memory import shared_response_memory
 from .. import recommendation_blocks
 from .. import event_booklet
@@ -769,6 +770,9 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
             details=_details,
         )
         db.add(log_entry)
+        record_guided_chat_completion(db, session_id=session_id,
+                                      username=identity.get("username") if identity else None,
+                                      phase=request.phase)
         response_id = shared_response_memory.create_candidate(
             db,
             response_content,
@@ -956,6 +960,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 details=_details,
             )
             log_db.add(log_entry)
+            record_guided_chat_completion(log_db, session_id=session_id,
+                                          username=identity.get("username") if identity else None,
+                                          phase=request.phase)
             response_id = shared_response_memory.create_candidate(
                 log_db,
                 response_content,
