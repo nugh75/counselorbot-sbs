@@ -380,9 +380,11 @@ POST   /teacher/paths/{path_id}/publish | /archive | /restore
 GET    /teacher/paths/{path_id}/progress
 → { steps:[...], students:[{ username, display_name,
       cells:[{ step_id, state:'done'|'not_done'|'locked'|'unavailable',
-               source:'auto'|'student'|'teacher'|null, at }] , done, total }] }
+               source:'automatic'|'student'|'teacher'|null, at, actor, reason,
+               teacher_state:'done'|'not_done'|null }] , done, total }] }
+       steps also carry available and done_count; current members only; 422 on drafts
 PUT    /teacher/paths/{path_id}/steps/{step_id}/progress/{username}
-       { state: 'done'|'not_done'|'clear' }               teacher override
+       { state: 'done'|'not_done'|'clear', reason? (≤500) }  teacher override
 
 GET    /user/paths          published paths of the user's active classes
 → [{ id, group_name, title, mode, steps:[{ id, tool_key, title, instructions,

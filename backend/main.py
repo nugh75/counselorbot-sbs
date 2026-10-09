@@ -448,6 +448,8 @@ def _run_seed_and_migrations():
             ("instruments", "ADD COLUMN icon VARCHAR NOT NULL DEFAULT 'compass'"),
             ("instruments", "ADD COLUMN color_theme VARCHAR NOT NULL DEFAULT 'blue'"),
             ("instruments", "ADD COLUMN interview_mode VARCHAR NOT NULL DEFAULT 'interactive'"),
+            # Optional note on a teacher's class path progress override (#99).
+            ("class_path_progress", "ADD COLUMN reason TEXT"),
         ]:
             try:
                 with database.engine.connect() as conn:
