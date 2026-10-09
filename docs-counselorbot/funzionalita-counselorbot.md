@@ -517,14 +517,23 @@ della navigazione da tastiera. Ogni voce apre una pagina dedicata con il ritorno
 all’Area docenti: `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
 della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
 link alla pagina dedicata con filtro già impostato),
-`/docente/assegnazioni` (elenco delle assegnazioni effettuate con destinatari e restituzioni, revoca con conferma in linea sulla scheda), `/docente/catalogo-obiettivi`, `/docente/strategie`,
+`/docente/assegnazioni` (pagina di sola assegnazione: da «Nuova assegnazione» si
+sceglie un obiettivo pubblicato del catalogo — obbligatorio — per il gruppo o la
+classe, si possono allegare facoltativamente strategie e materiali e si indicano
+istruzioni, finalità, scadenza e richiesta di restituzione; l’elenco mostra invii,
+destinatari e restituzioni, con revoca a conferma in linea sulla scheda e gli
+allegati visibili nel dettaglio), `/docente/catalogo-obiettivi` (solo creazione e
+gestione del catalogo: le voci pubblicate non si assegnano da qui), `/docente/strategie`,
 `/docente/materiali`, `/docente/orientamento` (solo docenti) e
 `/docente/somministrazioni`. Le pagine applicano lo stesso controllo di accesso
 della panoramica. Il Taccuino del docente descrive il ruolo professionale ed entra nel
 percorso OBIETTIVO_DOCENZA, distinto dal Taccuino personale. I docenti pubblicano
 strategie e materiali direttamente; pubblicano obiettivi nei propri gruppi, mentre
-il catalogo comune richiede revisione amministrativa. Possono assegnare a una persona
-o a tutto un gruppo, anche vuoto: i nuovi iscritti ricevono le assegnazioni attive.
+il catalogo comune richiede revisione amministrativa. Ogni assegnazione è ancorata
+a un obiettivo pubblicato del catalogo, obbligatorio per il gruppo o la classe
+scelti; strategie e materiali si aggiungono solo come allegati facoltativi. Si
+assegna a una persona o a tutto un gruppo, anche vuoto: i nuovi iscritti ricevono
+le assegnazioni attive.
 La gestione dei gruppi è distinta dall’iscrizione personale a un gruppo.
 
 **Class settings and guide (S1–S9, #88–#95, #109).** From Teacher area →

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { AssignmentWork, AssignmentSubmissions } from './AssignmentWork';
+import { NewAssignmentButton } from './AssignmentButton';
 import { useTeacherResource } from './useTeacherResource';
 import { parseForumDiscussionLinks } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
@@ -19,6 +20,7 @@ export interface Assignment {
     id: number; author_name: string; group_name: string; source_kind: 'goal' | 'strategy' | 'reading';
     recipient_username?: string | null; recipient_count?: number; instructions: string; created_at: string; revoked_at: string | null;
     progress?: { planned: boolean; shared: boolean; feedback_available: boolean };
+    attachments?: { kind: 'strategy' | 'reading'; source_id: number; title: string }[];
     snapshot: { title: string; description: string; details: string; creators?: string[]; year?: number; content_warning?: string; where_to_find?: string; source_reference?: string };
 }
 
@@ -94,6 +96,7 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
     [rows, groupFilter, kindFilter, intentFilter, statusFilter]);
     return <section aria-label={l(teacher ? 'sent' : 'received')} className="space-y-4">
         {showHeading && <h2 className="text-xl font-bold text-slate-900">{l(teacher ? 'sent' : 'received')}</h2>}
+        {teacher && <NewAssignmentButton />}
         {!teacher && <Callout variant="info" className="text-sm">{w('visibility')}</Callout>}
         {loading && <p role="status" className="text-sm text-slate-500">{l('loading')}</p>}
         {failed && <Callout variant="danger" title={l('error')} className="text-sm">
@@ -156,6 +159,10 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
                     {row.snapshot.creators?.length ? <p>{row.snapshot.creators.join(', ')}{row.snapshot.year ? ` · ${row.snapshot.year}` : ''}</p> : null}
                     {row.snapshot.description && <p className="whitespace-pre-wrap">{row.snapshot.description}</p>}
                     {row.snapshot.details && <p className="whitespace-pre-wrap text-sm">{row.snapshot.details}</p>}
+                    {row.attachments?.length ? <div className="text-sm">
+                        <p className="font-semibold">{l('attachments')}</p>
+                        <ul className="list-disc ps-5">{row.attachments.map(item => <li key={`${item.kind}:${item.source_id}`}>{l(item.kind)} · {item.title}</li>)}</ul>
+                    </div> : null}
                     {row.snapshot.where_to_find && <p className="whitespace-pre-wrap text-sm">{l('where')}: {row.snapshot.where_to_find}</p>}
                     {row.snapshot.source_reference && <p className="whitespace-pre-wrap text-sm text-slate-600">{l('source')}: {row.snapshot.source_reference}</p>}
                     {!teacher && <AssignmentWork assignmentId={row.id} authorName={row.author_name} onDraftStateChange={onDraftStateChange} />}
