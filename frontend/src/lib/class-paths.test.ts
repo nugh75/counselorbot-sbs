@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { parseClassPath, parseClassPathStep, parseClassPaths } from './class-paths.ts';
+import { parseClassPath, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths } from './class-paths.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { classPathText, classPathsTexts } from './i18n-class-paths.ts';
 
@@ -59,6 +59,72 @@ test('class-paths parser handles array of paths', () => {
     assert.equal(paths[1].status, 'archived');
 });
 
+test('student class-paths parser handles step states, availability and self-marking', () => {
+    const step = parseStudentClassPathStep({
+        id: 11,
+        path_id: 2,
+        position: 1,
+        tool_key: 'taccuino',
+        title: 'Step 1',
+        instructions: 'Scrivi qualcosa',
+        due_date: '2026-10-31',
+        state: 'not_done',
+        source: null,
+        start_href: '/taccuino',
+        can_self_mark: true,
+    });
+    assert.equal(step.id, 11);
+    assert.equal(step.state, 'not_done');
+    assert.equal(step.start_href, '/taccuino');
+    assert.equal(step.can_self_mark, true);
+
+    const unavailStep = parseStudentClassPathStep({
+        id: 12,
+        path_id: 2,
+        position: 2,
+        tool_key: 'bussola',
+        title: null,
+        instructions: null,
+        due_date: null,
+        state: 'unavailable',
+        source: null,
+        start_href: null,
+        can_self_mark: false,
+    });
+    assert.equal(unavailStep.state, 'unavailable');
+    assert.equal(unavailStep.can_self_mark, false);
+});
+
+test('student class-paths parser handles full path payload and array', () => {
+    const raw = {
+        id: 2,
+        group_id: 7,
+        group_name: '3B',
+        title: 'Percorso Autunno',
+        description: 'Un percorso per riflettere',
+        mode: 'strict',
+        steps: [
+            { id: 11, path_id: 2, position: 1, tool_key: 'taccuino', title: null, instructions: null, due_date: null, state: 'done', source: 'student', start_href: '/taccuino', can_self_mark: true },
+            { id: 12, path_id: 2, position: 2, tool_key: 'pqbl', title: null, instructions: null, due_date: null, state: 'not_done', source: null, start_href: '/pqbl', can_self_mark: false },
+        ],
+        next_step_id: 12,
+        done: 1,
+        total: 2,
+    };
+    const path = parseStudentClassPath(raw);
+    assert.equal(path.id, 2);
+    assert.equal(path.group_name, '3B');
+    assert.equal(path.mode, 'strict');
+    assert.equal(path.next_step_id, 12);
+    assert.equal(path.done, 1);
+    assert.equal(path.total, 2);
+    assert.equal(path.steps.length, 2);
+
+    const list = parseStudentClassPaths([raw]);
+    assert.equal(list.length, 1);
+    assert.equal(list[0].id, 2);
+});
+
 test('class paths translations cover six languages and fallback to English', () => {
     for (const [key, translations] of Object.entries(classPathsTexts)) {
         assert.equal(translations.length, 6, key);
@@ -72,5 +138,10 @@ test('class paths translations cover six languages and fallback to English', () 
     assert.equal(classPathText('de', 'pathsTitle'), 'Klassenpfade');
     assert.equal(classPathText('sv', 'pathsTitle'), 'Klassvägar');
     assert.equal(classPathText('unknown', 'pathsTitle'), 'Class paths');
+
+    assert.equal(classPathText('it', 'current'), 'In corso');
+    assert.equal(classPathText('en', 'current'), 'Current');
+    assert.equal(classPathText('it', 'markDone'), 'Segna come completato');
+    assert.equal(classPathText('it', 'notAvailable'), 'Non disponibile');
 });
 
