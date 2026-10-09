@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from .. import auth, models, schemas, personal_api
+from .. import auth, class_access, models, schemas, personal_api
 from ..database import get_db
 from ..memory_service import session_memory
 
@@ -259,7 +259,8 @@ class AccountPreferencesSave(BaseModel):
     complete_setup: bool = False
 
 
-def _account_preferences(db: Session, username: str):
+def _account_preferences(db: Session, identity: dict):
+    username = identity["username"]
     prefs = db.get(models.AccountPreferences, username)
     counselor_id = prefs.counselor_id if prefs else None
     if prefs is None:
@@ -276,12 +277,20 @@ def _account_preferences(db: Session, username: str):
             if frozen:
                 counselor_id = (frozen.data or {}).get("counselor_id")
     counselor = personal_api.visible_counselor(db, counselor_id, username) if counselor_id else None
+    counselor_ready = bool(counselor and counselor.is_active)
+    allowed, class_default = class_access.counselor_access(db, identity)
+    if allowed is not None and counselor_id not in allowed:
+        # The class does not allow it (#93): its default stands in, otherwise the
+        # selector opens. The stored choice is kept for when the class changes.
+        counselor_ready = class_default is not None
+        if counselor_ready:
+            counselor_id = class_default
     revision = _latest_revision(db, username)
     notebook_ready = bool((prefs and prefs.notebook_completed) or
                           (revision and any(str(v or "").strip() for v in revision.data.values())))
     return {
         "counselor_id": counselor_id,
-        "counselor_ready": bool(counselor and counselor.is_active),
+        "counselor_ready": counselor_ready,
         "notebook_ready": notebook_ready,
         "setup_completed": bool(prefs and prefs.notebook_completed),
     }
@@ -290,7 +299,7 @@ def _account_preferences(db: Session, username: str):
 @router.get("/user/account-preferences")
 async def get_account_preferences(current_user: dict = Depends(auth.get_current_user),
                                   db: Session = Depends(get_db)):
-    return _account_preferences(db, current_user["username"])
+    return _account_preferences(db, current_user)
 
 
 @router.put("/user/account-preferences")
@@ -298,11 +307,14 @@ async def save_account_preferences(payload: AccountPreferencesSave,
                                    current_user: dict = Depends(auth.get_current_user),
                                    db: Session = Depends(get_db)):
     username = current_user["username"]
-    state = _account_preferences(db, username)
+    state = _account_preferences(db, current_user)
     counselor_id = payload.counselor_id if payload.counselor_id is not None else state["counselor_id"]
     counselor = personal_api.visible_counselor(db, counselor_id, username) if counselor_id else None
     if not counselor or not counselor.is_active:
         raise HTTPException(status_code=422, detail="Choose an active counselor")
+    allowed = class_access.allowed_counselor_ids(db, current_user)
+    if allowed is not None and counselor_id not in allowed:
+        raise HTTPException(status_code=422, detail="counselor_disabled_for_class")
     if payload.complete_setup and not state["notebook_ready"]:
         raise HTTPException(status_code=422, detail="Complete the notebook first")
     prefs = db.get(models.AccountPreferences, username)
@@ -312,4 +324,4 @@ async def save_account_preferences(payload: AccountPreferencesSave,
     prefs.counselor_id = counselor_id
     prefs.notebook_completed = state["notebook_ready"]
     db.commit()
-    return _account_preferences(db, username)
+    return _account_preferences(db, current_user)

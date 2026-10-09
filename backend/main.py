@@ -98,7 +98,7 @@ from .routes import assignments as assignments_routes
 from .routes import assignment_work as assignment_work_routes
 from .routes import frozen_sessions as frozen_sessions_routes
 from .routes import class_access as class_access_routes
-from .class_access import ToolAccessDenied, tool_access_denied_handler
+from .class_access import CounselorAccessDenied, ToolAccessDenied, counselor_access_denied_handler, tool_access_denied_handler
 from .routes import idea_map as idea_map_routes
 from .routes import skills as skills_routes
 from .routes import diagram as diagram_routes
@@ -1991,6 +1991,7 @@ app.include_router(assignment_work_routes.router)
 app.include_router(frozen_sessions_routes.router)
 app.include_router(class_access_routes.router)
 app.add_exception_handler(ToolAccessDenied, tool_access_denied_handler)
+app.add_exception_handler(CounselorAccessDenied, counselor_access_denied_handler)
 app.include_router(idea_map_routes.router)
 app.include_router(institutions_routes.router)
 app.include_router(institution_categories_routes.router)

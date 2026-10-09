@@ -133,6 +133,7 @@ def test_counselor_validation_and_tools_only_save_preserves_other_settings(setti
     assert saved["default_counselor_id"] == enabled.id
     assert saved["disabled_counselor_ids"] == [disabled.id]
     assert {row["id"] for row in saved["counselors"]} == {enabled.id, disabled.id}
+    assert all(row["approach_categories"] == [] for row in saved["counselors"])
 
 
 @pytest.mark.parametrize("changes", [{"forum": {"students_can_open": True}},
