@@ -7,6 +7,8 @@ psycopg2-binary
 python-jose[cryptography]
 cryptography
 passlib[bcrypt]
+# Imported directly for institute verifiers; passlib 1.7.4 cannot drive bcrypt>=4.1.
+bcrypt>=4.1,<6
 argon2-cffi
 edge-tts
 python-multipart
