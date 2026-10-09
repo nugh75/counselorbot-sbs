@@ -1589,8 +1589,9 @@ Path responses carry only identifiers and states. The step's target summary is
 `{id, group_id, locked}`, without the discussion title. `/user/paths` adds
 `forum_state` with four booleans (`pending`, `hidden`, `locked`, `muted`) so the
 student page explains the next move: awaiting approval, discussion locked, forum
-muted, or a hidden reply that no longer counts. Progress exposes the completion
-kind `forum_reply` and its time, never message text, titles or names.
+muted, or a hidden reply that no longer counts. When several apply the page shows
+one notice, in that order, and a done step shows none. Progress exposes the
+completion kind `forum_reply` and its time, never message text, titles or names.
 
 Forum privacy (class-centred plan decision 18) is unchanged: forum content never
 reaches the AI, RAG, context, research exports or PDFs. `backend/forum_completion.py`
