@@ -1,5 +1,6 @@
 'use client';
 
+import { ArrowRight } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 
@@ -82,8 +83,8 @@ export function ContentLanguageStatus({
                 <div className="flex flex-wrap gap-1.5">
                     {ladder.filter((status) => status !== version.status).map((status) => (
                         <button key={status} type="button" onClick={() => void changeStatus(status)}
-                            className="rounded border border-slate-300 px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-50">
-                            → {status}
+                            className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-50">
+                            <ArrowRight className="h-3 w-3" aria-hidden />{status}
                         </button>
                     ))}
                 </div>

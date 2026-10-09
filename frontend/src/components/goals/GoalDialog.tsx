@@ -79,7 +79,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     const otherDraft = actionDraft || checkDraft || Boolean(selection) || Boolean(evidenceChoice) || Boolean(parentChoice);
     useEffect(() => { onDirty(dirty); return () => onDirty(false); }, [dirty, onDirty]);
     useDraftGuard(dirty, l('discard'));
-    // «→ nuova azione» torna al popup col modulo azione precompilato: consumato al primo
+    // «nuova azione» torna al popup col modulo azione precompilato: consumato al primo
     // mount, prima che il pannello perda il target (GoalsPanel apre subito `edit:{id}` on `onTarget`).
     const actionPrefill = target.kind === 'edit' ? target.prefill?.action : undefined;
     useEffect(() => {
