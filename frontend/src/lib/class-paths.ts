@@ -78,7 +78,7 @@ export interface StudentClassPathStep {
     instructions?: string | null;
     due_date?: string | null;
     state: 'done' | 'not_done' | 'locked' | 'unavailable';
-    source?: 'student' | 'teacher' | null;
+    source?: 'student' | 'teacher' | 'automatic' | null;
     start_href?: string | null;
     can_self_mark: boolean;
 }
@@ -102,7 +102,7 @@ export function parseStudentClassPathStep(input: unknown): StudentClassPathStep 
     const stateStr = String(raw.state || 'not_done');
     const state = (stateStr === 'done' || stateStr === 'locked' || stateStr === 'unavailable') ? stateStr : 'not_done';
     const sourceStr = raw.source ? String(raw.source) : null;
-    const source = (sourceStr === 'student' || sourceStr === 'teacher') ? sourceStr : null;
+    const source = (sourceStr === 'student' || sourceStr === 'teacher' || sourceStr === 'automatic') ? sourceStr : null;
     return {
         id: Number(raw.id),
         tool_key: String(raw.tool_key || ''),
@@ -139,3 +139,10 @@ export function parseStudentClassPaths(input: unknown): StudentClassPath[] {
     return input.map(parseStudentClassPath);
 }
 
+
+/** Step number (1-based, as rendered) that strict-mode locked steps wait for: the current step. */
+export function lockedStepUnlockNumber(path: Pick<StudentClassPath, 'steps' | 'next_step_id'>): number | null {
+    if (path.next_step_id == null) return null;
+    const index = path.steps.findIndex(step => step.id === path.next_step_id);
+    return index >= 0 ? index + 1 : null;
+}
