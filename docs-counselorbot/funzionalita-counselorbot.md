@@ -1385,3 +1385,48 @@ or hash-like values require teacher re-entry. Logs report counts only. Unresolve
 legacy plan values remain until reconciliation; dropping the duplicate legacy
 columns is left to a later reviewed migration. The bcrypt helper now uses the
 `bcrypt` package directly, because passlib 1.7.4 cannot initialise bcrypt 4.1+.
+
+
+### Italian questionnaire administration in class paths
+
+Teachers can create or select an Italian administration in the class Paths tab.
+The class and research views reference the same administration ID; the server
+resolves the class and institute. The institute owns the external code and
+write-only password verifier. Students open competenzestrategiche.it and log in
+with the institute code and password supplied separately by their teacher; the
+password cannot be retrieved from CounselorBot.
+
+A `questionnaire_administration` step is distinct from a legacy `tool` step.
+Opening the external link does not complete it. Students enter all questionnaire
+factor scores, locally verify institute credentials, and explicitly use the scores
+in guided chat. The server commits the result, guided entry and exact step evidence
+atomically and returns their acknowledgement before the chat opens. Manual Italian
+scores have source `in-app`, capture method `manual_scores`, and source system
+`competenzestrategiche.it`; this does not verify external submission. Failed saves
+retain the scoped browser draft and retry identity. Drafts belong to the account,
+path and step; passwords and verification grants are never saved with them.
+
+Completion requires the authenticated student, exact administration, instrument,
+locale and step activation time. A future teacher-confirmed import for that student
+and administration may complete the questionnaire step without opening guided chat:
+this is distinct committed import evidence, never a source label, upload or preview.
+The importer itself is not available in this release. A results deep dive is a
+separate future step, not implied by entering scores. Published target identity is
+immutable; replace a step rather than reusing its ID for another target. Teacher
+progress overrides retain precedence, and unavailable steps never grant access.
+Existing tool-key steps and their explicit marks remain supported. Historical
+results are `in-app` with unknown capture method; no historical guided entries are
+invented.
+
+Concurrent guided-entry retries are serialized for the path and exact administration;
+identical retries reuse the original acknowledgement, while changed retry content
+is rejected. Current class settings and administration availability are checked again
+at the write, even after switching between All tools and a class view.
+
+The Italian score form validates its fields before the explicit guided-entry save.
+Its action stays disabled until an institute grant and a counselor are available;
+a failed save leaves the form and scoped draft available for retry.
+
+The public teacher guide describes creating/selecting the Italian administration
+in the class Paths tab, its shared research identity, explicit save/publication and
+replacement of activated targets in all six interface languages.
