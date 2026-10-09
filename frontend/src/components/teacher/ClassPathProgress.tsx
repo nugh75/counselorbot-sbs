@@ -83,7 +83,7 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
         return source ? `${state} (${source})` : state;
     };
     const stepName = (step: ClassPathProgressStep, index: number) =>
-        `${l('stepLabel').replace('{n}', String(index + 1))} · ${step.title || toolName(step.tool_key)}`;
+        `${l('stepLabel').replace('{n}', String(index + 1))} · ${step.title || step.target_summary?.code || toolName(step.tool_key)}`;
     const formatDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(lang) : '');
 
     const students = filterProgressStudents(progress, filter, todayIso());

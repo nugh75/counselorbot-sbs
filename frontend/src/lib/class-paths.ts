@@ -3,6 +3,11 @@ export interface ClassPathStep {
     path_id?: number;
     position: number;
     tool_key: string;
+    step_type?: "tool" | "questionnaire_administration";
+    administration_plan_id?: number | null;
+    active_from?: string | null;
+    target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
+    completion_kind?: string | null;
     title?: string | null;
     instructions?: string | null;
     due_date?: string | null;
@@ -43,6 +48,11 @@ export function parseClassPathStep(input: unknown): ClassPathStep {
         path_id: raw.path_id != null ? Number(raw.path_id) : undefined,
         position: Number(raw.position || 1),
         tool_key: String(raw.tool_key || ''),
+        step_type: raw.step_type === 'questionnaire_administration' ? 'questionnaire_administration' : 'tool',
+        administration_plan_id: raw.administration_plan_id != null ? Number(raw.administration_plan_id) : null,
+        active_from: raw.active_from ? String(raw.active_from) : null,
+        target_summary: raw.target_summary as ClassPathStep['target_summary'],
+        completion_kind: raw.completion_kind ? String(raw.completion_kind) : null,
         title: raw.title ? String(raw.title) : null,
         instructions: raw.instructions ? String(raw.instructions) : null,
         due_date: raw.due_date ? String(raw.due_date) : null,
@@ -81,6 +91,11 @@ export function parseClassPaths(input: unknown): ClassPath[] {
 export interface StudentClassPathStep {
     id: number;
     tool_key: string;
+    step_type?: "tool" | "questionnaire_administration";
+    administration_plan_id?: number | null;
+    active_from?: string | null;
+    target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
+    completion_kind?: string | null;
     title?: string | null;
     instructions?: string | null;
     due_date?: string | null;
@@ -113,6 +128,11 @@ export function parseStudentClassPathStep(input: unknown): StudentClassPathStep 
     return {
         id: Number(raw.id),
         tool_key: String(raw.tool_key || ''),
+        step_type: raw.step_type === 'questionnaire_administration' ? 'questionnaire_administration' : 'tool',
+        administration_plan_id: raw.administration_plan_id != null ? Number(raw.administration_plan_id) : null,
+        active_from: raw.active_from ? String(raw.active_from) : null,
+        target_summary: raw.target_summary as ClassPathStep['target_summary'],
+        completion_kind: raw.completion_kind ? String(raw.completion_kind) : null,
         title: raw.title ? String(raw.title) : null,
         instructions: raw.instructions ? String(raw.instructions) : null,
         due_date: raw.due_date ? String(raw.due_date) : null,
