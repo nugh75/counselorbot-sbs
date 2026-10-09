@@ -5,6 +5,8 @@ import { CalendarDays, Check, Copy, FileText, Link2, MapPin, Pencil, Plus, QrCod
 import QRCode from 'qrcode';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
+import { parsePlanInstitutionOptions, planInstitutionField, type PlanInstitutionOption } from '@/lib/administration-plans';
+import { credentialText, type CredentialTextKey } from '@/lib/i18n-institution-credentials';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
 
 type LocaleCode = 'en' | 'es' | 'sv';
@@ -38,7 +40,14 @@ interface AdministrationPlan {
     school_level: string | null;
     scheduled_at: string | null;
     location: string | null;
+    institution_id: number | null;
+    institution_name: string | null;
     institution_code: string | null;
+    institution_credentials_configured: boolean;
+    institution_link_state: 'linked' | 'unlinked' | 'needs_reconciliation';
+    reconciliation_reason: string | null;
+    legacy_institution_code: string | null;
+    revision: number;
     notes: string | null;
     status: string;
     created_at: string;
@@ -55,8 +64,8 @@ type FormState = {
     school_level: string;
     scheduled_at: string;
     location: string;
-    institution_code: string;
-    institution_password: string;
+    institution_id: string;
+    confirm_reconciliation: boolean;
     notes: string;
     status: string;
     contact_ids: number[];
@@ -71,8 +80,8 @@ const EMPTY: FormState = {
     school_level: '',
     scheduled_at: '',
     location: '',
-    institution_code: '',
-    institution_password: '',
+    institution_id: '',
+    confirm_reconciliation: false,
     notes: '',
     status: 'planned',
     contact_ids: [],
@@ -138,8 +147,16 @@ function QrThumb({ value, size = 88 }: { value: string; size?: number }) {
     return <img src={src} alt="QR" width={size} height={size} className="shrink-0 rounded-md border border-slate-200 bg-white" />;
 }
 
+const PLAN_ERRORS: Record<string, CredentialTextKey> = {
+    administration_revision_conflict: 'revisionConflict',
+    institution_link_forbidden: 'linkForbidden',
+    administration_institution_mismatch: 'reason_class_institution_mismatch',
+    institution_inactive: 'reason_institution_inactive',
+};
+
 export function AdministrationPlansPanel() {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
+    const c = (key: CredentialTextKey) => credentialText(lang, key);
     const [plans, setPlans] = useState<AdministrationPlan[]>([]);
     const [contacts, setContacts] = useState<ResearchContact[]>([]);
     const [loading, setLoading] = useState(true);
@@ -222,6 +239,18 @@ export function AdministrationPlansPanel() {
             .catch(() => { /* select classi vuoto */ });
     }, []);
 
+    // Institutes the actor may link (all active for administrators, memberships otherwise).
+    const [institutes, setInstitutes] = useState<PlanInstitutionOption[] | null>(null);
+    const [institutesFailed, setInstitutesFailed] = useState(false);
+    useEffect(() => {
+        apiFetch('/api/admin/administration-plans/institution-options')
+            .then(async (res) => {
+                if (!res.ok) throw new Error('institution options failed');
+                setInstitutes(parsePlanInstitutionOptions(await res.json()));
+            })
+            .catch(() => setInstitutesFailed(true));
+    }, []);
+
     const [studentsOpenId, setStudentsOpenId] = useState<number | null>(null);
 
     const startNew = () => {
@@ -239,8 +268,8 @@ export function AdministrationPlansPanel() {
             school_level: plan.school_level ?? '',
             scheduled_at: toDateTimeLocal(plan.scheduled_at),
             location: plan.location || '',
-            institution_code: plan.institution_code || '',
-            institution_password: '',
+            institution_id: plan.institution_id ? String(plan.institution_id) : '',
+            confirm_reconciliation: false,
             notes: plan.notes || '',
             status: plan.status,
             contact_ids: plan.researchers
@@ -270,6 +299,8 @@ export function AdministrationPlansPanel() {
         }));
     };
 
+    const editingPlan = typeof editingId === 'number' ? plans.find((plan) => plan.id === editingId) ?? null : null;
+
     const save = async () => {
         if (!form.title.trim()) {
             setMessage(t('admin.ap.error.titleRequired'));
@@ -289,8 +320,8 @@ export function AdministrationPlansPanel() {
             school_level: form.school_level || null,
             scheduled_at: toApiDateTime(form.scheduled_at),
             location: optional(form.location),
-            institution_code: form.institution_code || null,
-            institution_password: form.institution_password || null,
+            ...planInstitutionField(form.institution_id, editingPlan, form.confirm_reconciliation),
+            ...(editingPlan ? { revision: editingPlan.revision } : {}),
             notes: optional(form.notes),
             status: form.status,
             researchers: [
@@ -306,7 +337,13 @@ export function AdministrationPlansPanel() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
             });
-            if (!res.ok) throw new Error(await res.text());
+            if (!res.ok) {
+                // Keep the draft in the form: 409/403/422 are recoverable without retyping.
+                const detail = (await res.json().catch(() => null))?.detail;
+                const key = typeof detail === 'string' ? PLAN_ERRORS[detail] : undefined;
+                if (key) { setMessage(c(key)); return; }
+                throw new Error(`plan save failed: ${res.status}`);
+            }
             cancel();
             await refresh();
         } catch (e) {
@@ -482,32 +519,38 @@ export function AdministrationPlansPanel() {
                 </section>
 
                 <section className="rounded-md border border-slate-200 bg-white p-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('admin.ap.section.institution')}</h3>
-                    <p className="text-xs text-slate-600 mt-2">{t('admin.ap.section.institution.help')}</p>
-                    <div className="mt-3 grid gap-3 md:grid-cols-2">
-                        <label className="text-xs font-semibold uppercase text-slate-500">
-                            {t('admin.ap.institutionCode')}
-                            <input
-                                className={inputCls}
-                                type="text"
-                                value={form.institution_code}
-                                onChange={(event) => setForm({ ...form, institution_code: event.target.value })}
-                                placeholder={t('admin.ap.institutionCodePlaceholder')}
-                                maxLength={50}
-                            />
+                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">{c('planInstitute')}</h3>
+                    <p className="text-xs text-slate-600 mt-2">{c('planInstituteHelp')}</p>
+                    {editingPlan?.institution_link_state === 'needs_reconciliation' && (
+                        <div role="status" className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+                            <p className="font-semibold">{c('needsReconciliation')}</p>
+                            {editingPlan.reconciliation_reason && <p>{c(`reason_${editingPlan.reconciliation_reason}` as CredentialTextKey)}</p>}
+                            {editingPlan.legacy_institution_code && <p>{c('legacyCode')}: <span className="font-mono">{editingPlan.legacy_institution_code}</span></p>}
+                        </div>
+                    )}
+                    <label className="mt-3 block text-xs font-semibold uppercase text-slate-500">
+                        {c('planInstitute')}
+                        <select className={inputCls} value={form.institution_id} disabled={institutes === null && !institutesFailed}
+                            onChange={(event) => setForm({ ...form, institution_id: event.target.value })}>
+                            <option value="">{c('noInstitute')}</option>
+                            {editingPlan?.institution_id && !institutes?.some((row) => row.id === editingPlan.institution_id) && (
+                                <option value={String(editingPlan.institution_id)}>{editingPlan.institution_name ?? `#${editingPlan.institution_id}`}</option>
+                            )}
+                            {institutes?.map((row) => (
+                                <option key={row.id} value={String(row.id)}>
+                                    {row.name}{row.institution_code ? ` (${row.institution_code})` : ''}{row.credentials_configured ? '' : ` — ${c('credentialsMissing')}`}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    {institutesFailed && <p role="alert" className="mt-2 text-xs text-red-700">{c('institutesLoadError')}</p>}
+                    {editingPlan?.institution_link_state === 'needs_reconciliation' && (
+                        <label className="mt-2 flex items-start gap-2 text-sm text-slate-700">
+                            <input type="checkbox" checked={form.confirm_reconciliation}
+                                onChange={(event) => setForm({ ...form, confirm_reconciliation: event.target.checked })} />
+                            {c('confirmReconciliation')}
                         </label>
-                        <label className="text-xs font-semibold uppercase text-slate-500">
-                            {t('admin.ap.institutionPassword')}
-                            <input
-                                className={inputCls}
-                                type="password"
-                                value={form.institution_password}
-                                onChange={(event) => setForm({ ...form, institution_password: event.target.value })}
-                                placeholder={t('admin.ap.institutionPasswordPlaceholder')}
-                                maxLength={100}
-                            />
-                        </label>
-                    </div>
+                    )}
                 </section>
                 <section className="rounded-md border border-slate-200 bg-white p-3">
                     <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('admin.ap.section.researchers')}</h3>
@@ -675,6 +718,14 @@ export function AdministrationPlansPanel() {
                                         </span>
                                     </div>
                                     <p className="mt-1 text-xs text-slate-500">{t('admin.ap.createdOn')} {formatDateTime(plan.created_at)}</p>
+                                    <p className="mt-1 text-xs text-slate-600">
+                                        {c('planInstitute')}: {plan.institution_name
+                                            ? <span className="font-semibold">{plan.institution_name}{plan.institution_code ? ` (${plan.institution_code})` : ''}{plan.institution_credentials_configured ? '' : ` — ${c('credentialsMissing')}`}</span>
+                                            : c('noInstitute')}
+                                    </p>
+                                    {plan.institution_link_state === 'needs_reconciliation' && (
+                                        <span className="mt-1 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">{c('needsReconciliation')}</span>
+                                    )}
                                 </div>
                                 <div className="flex gap-1">
                                     <button type="button" onClick={() => startEdit(plan)} className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900" title={t('admin.ap.action.edit')}>
