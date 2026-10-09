@@ -604,8 +604,8 @@ progress record of a new session binds it to its user, so another account cannot
 write to it. Results,
 conversations, PDFs, the list of suspended sessions and existing Idea maps of a
 disabled tool stay readable, exportable and deletable. `GET /user/access` returns the
-resolved tool list; the student catalog uses it from #90, and counselor fields
-arrive with #93.
+resolved tool list; the student catalog uses it from #90, and the counselor
+fields from #93.
 
 **Class-filtered student catalog (S3, #90).** The student interface now gates all tool entry points using the resolved access from `GET /user/access`. Cached once per browser session in sessionStorage and in-memory, the resolved access filters tools on top of `resolveActiveStudentTools`. Students in restricted classes see only tools enabled for their classes across the home questionnaire selector and ReturningHome cards; disabled tools produce no cards and are omitted from upcoming sections. Navigating directly to `/strumenti/[id]` for a disabled tool presents a dedicated 'not enabled for your class' panel with a button back to the catalog. Deep links via `?start=` or `?q=` targeting a disabled tool notify the student with a clear toast warning and fall back to the catalog. Frozen sessions for disabled tools are hidden from the header Resume menu and ReturningHome; attempting a direct resume link triggers an informative error toast and safely returns to the catalog. Unrestricted students and staff continue to see the complete catalog without filtering.
 
@@ -628,6 +628,32 @@ Comparison and Timeline share one saved workspace: a save is refused only when
 it changes the part of a disabled tool, so the others keep working. Reading,
 exporting (PDF) and deleting existing work stay available. Assignment goals
 created from a teacher assignment stay available, because Assignments are always on.
+
+**Counselors per class and class default (S6, #93).** The **Counselors**
+section of the Tools & counselors tab lists the institutional counselors with a
+toggle each, a category filter and a name search, and one optional **Class
+default** (or **No class default**). A counselor turned off for the class
+cannot be the default; turning off the current default clears it, and a
+platform-disabled counselor is shown locked. The server accepts a default only
+if it is institutional and enabled (otherwise HTTP 422). For a student in at
+least one active class, a counselor is available when at least one of the
+student's classes enables it; counselors disabled by the administrator never
+are, and the student's own private counselors (personal API) always are.
+`GET /user/access` now returns `counselor_ids` (null when the student is not
+filtered) and `default_counselor_id`, taken from the most recently joined class
+whose default is available. `GET /counselors` and the counselor search list
+only available counselors for these students; `/chat` and `/chat/stream`
+refuse any other counselor with HTTP 403 `counselor_disabled_for_class`, and
+saving it as the account counselor is refused with 422. When the student's
+account counselor is no longer available, the class default takes its place
+(the stored choice is kept and comes back if the class changes); without a
+default, the next start opens the counselor selector with only the available
+counselors. A suspended session whose counselor is no longer available resumes
+with the class default, or with the account counselor if that one is
+available, and a notice says so; otherwise the student chooses a counselor and
+then returns to the session. Teachers, researchers and administrators are never
+filtered. Compass and Assistant follow the selected counselor; their own class
+toggles arrive with #92.
 
 **Class forum unread badge (F4, #105).** An in-app badge indicates unread forum
 activity across active classes. The backend (`GET /user/forum/unread`,
