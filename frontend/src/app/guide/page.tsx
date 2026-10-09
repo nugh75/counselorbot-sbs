@@ -304,7 +304,7 @@ function GuideContent() {
                         )}
                         {teacher && n === 2 && <div className="mt-4 text-sm leading-relaxed text-slate-600">
                             <h3 className="font-semibold text-slate-900">{classSettingsText(lang, 'toolsTab')}</h3>
-                            <p className="mt-1.5">{classSettingsText(lang, 'guide')} {classSettingsText(lang, 'supportGuide')}</p>
+                            <p className="mt-1.5">{classSettingsText(lang, 'guide')} {classSettingsText(lang, 'supportGuide')} {classSettingsText(lang, 'adminGuide')}</p>
                             <Link href="/docente/classi" className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{classSettingsText(lang, 'back')}</Link>
                         </div>}
                         {teacher && n === 1 && (

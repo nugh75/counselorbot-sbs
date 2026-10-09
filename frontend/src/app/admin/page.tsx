@@ -25,6 +25,7 @@ import { TrainingDatasetPanel } from '@/components/admin/TrainingDatasetPanel';
 import { PqblAdminPanel } from '@/components/admin/PqblAdminPanel';
 import { ResearchContactsPanel } from '@/components/admin/ResearchContactsPanel';
 import { AdministrationPlansPanel } from '@/components/admin/AdministrationPlansPanel';
+import { AdminClassesPanel } from '@/components/admin/AdminClassesPanel';
 import { GroupsPanel } from '@/components/admin/GroupsPanel';
 import { AssistantQuestionsPanel } from '@/components/admin/AssistantQuestionsPanel';
 import { AssistantAdminPanel } from '@/components/admin/AssistantAdminPanel';
@@ -48,6 +49,7 @@ export default function AdminPage() {
     const router = useRouter();
     const { t, lang } = useI18n();
     const [activeTab, setActiveTab] = useState<AdminTab>('config');
+    const [classAdmin, setClassAdmin] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [authState, setAuthState] = useState<'loading' | 'admin' | 'forbidden'>('loading');
     const navGroups: {
@@ -132,6 +134,7 @@ export default function AdminPage() {
     useEffect(() => {
         getRealIdentity().then((id) => {
             setAuthState(canUseResearchConsole(id) ? 'admin' : 'forbidden');
+            setClassAdmin(id?.is_admin === true);
         });
     }, []);
 
@@ -285,7 +288,7 @@ export default function AdminPage() {
                         {activeTab === 'questionnaires' && <QuestionnaireEditor />}
                         {activeTab === 'researchContacts' && <ResearchContactsPanel />}
                         {activeTab === 'administrationPlans' && <AdministrationPlansPanel />}
-                        {activeTab === 'groupsClasses' && <GroupsPanel />}
+                        {activeTab === 'groupsClasses' && <div className="space-y-6">{classAdmin && <AdminClassesPanel />}<GroupsPanel /></div>}
                         {activeTab === 'usersSummary' && <UsersSummaryPanel />}
                         {activeTab === 'training' && <TrainingDatasetPanel />}
                         {activeTab === 'pqbl' && <PqblAdminPanel />}
