@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, ChevronDown, ChevronRight, Link2, Plus, Share2, Trash2, UserMinus, UserPlus, Users } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Link2, Plus, Route, Share2, Trash2, UserMinus, UserPlus, Users } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { apiFetch } from '@/lib/auth';
@@ -317,6 +317,7 @@ export function GroupsPanel() {
                                 </button>
                             </h3>
                             <Link href={`/docente/classi/${group.id}`} className="inline-flex min-h-[44px] items-center text-sm font-semibold text-indigo-700">{classSettingsText(lang, 'open')}</Link>
+                            <Link href={`/docente/classi/${group.id}/?tab=paths`} className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-indigo-700">{texts.percorsiPath} <Route className="h-3.5 w-3.5" /></Link>
                             <p className="break-words text-xs text-slate-500">
                                 {!group.is_active && <span>{texts.inactive}{' - '}</span>}
                                 {group.members_count} {texts.members}{' - '}{group.owner_username}
