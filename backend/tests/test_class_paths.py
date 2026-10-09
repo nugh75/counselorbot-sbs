@@ -336,3 +336,352 @@ def test_path_access_denied_oracle_prevention(class_paths_api):
         assert res.status_code == 200
         assert res.json()["id"] == path_id
 
+
+def test_publish_and_archive_restore_boundary(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    created = client.post(
+        f"/teacher/groups/{group_id}/paths",
+        json={"title": "Publish Path", "mode": "recommended"},
+    ).json()
+    path_id = created["id"]
+    assert created["status"] == "draft"
+    assert created["published_at"] is None
+
+    # 1. Publish sets status and records published_at
+    pub_res = client.post(f"/teacher/paths/{path_id}/publish")
+    assert pub_res.status_code == 200
+    pub_data = pub_res.json()
+    assert pub_data["status"] == "published"
+    assert pub_data["published_at"] is not None
+    original_published_at = pub_data["published_at"]
+
+    # 2. Archive sets status to archived but preserves published_at
+    arch_res = client.post(f"/teacher/paths/{path_id}/archive")
+    assert arch_res.status_code == 200
+    arch_data = arch_res.json()
+    assert arch_data["status"] == "archived"
+    assert arch_data["published_at"] == original_published_at
+    assert arch_data["archived_at"] is not None
+
+    # 3. Restore restores back to published (decision 11 boundary kept)
+    rest_res = client.post(f"/teacher/paths/{path_id}/restore")
+    assert rest_res.status_code == 200
+    rest_data = rest_res.json()
+    assert rest_data["status"] == "published"
+    assert rest_data["published_at"] == original_published_at
+    assert rest_data["archived_at"] is None
+
+    # 4. Re-publish is idempotent and retains first published_at
+    pub_again = client.post(f"/teacher/paths/{path_id}/publish")
+    assert pub_again.status_code == 200
+    assert pub_again.json()["published_at"] == original_published_at
+
+
+def test_student_paths_visibility_and_membership(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+
+    # Create second group
+    group2 = models.StudentGroup(code="GR-PATH02", name="Other Group", owner_username="owner")
+    db.add(group2)
+    db.commit()
+
+    # Create published path in group 1
+    p1 = client.post(
+        f"/teacher/groups/{group_id}/paths",
+        json={"title": "Class 1 Path", "mode": "recommended"},
+    ).json()
+    client.put(
+        f"/teacher/paths/{p1['id']}",
+        json={
+            "revision": 1,
+            "title": "Class 1 Path",
+            "steps": [{"tool_key": "bussola", "title": "Bussola Orientation"}],
+        },
+    )
+    client.post(f"/teacher/paths/{p1['id']}/publish")
+
+    # Create draft path in group 1
+    p1_draft = client.post(
+        f"/teacher/groups/{group_id}/paths",
+        json={"title": "Class 1 Draft", "mode": "recommended"},
+    ).json()
+
+    # Create published path in group 2
+    p2 = client.post(
+        f"/teacher/groups/{group2.id}/paths",
+        json={"title": "Class 2 Path", "mode": "recommended"},
+    ).json()
+    client.put(
+        f"/teacher/paths/{p2['id']}",
+        json={
+            "revision": 1,
+            "title": "Class 2 Path",
+            "steps": [{"tool_key": "timeline", "title": "Milestones"}],
+        },
+    )
+    client.post(f"/teacher/paths/{p2['id']}/publish")
+
+    # Enroll student in group 1 only
+    db.add(models.GroupMembership(group_id=group_id, username="student_anna"))
+    db.commit()
+
+    # Switch identity to student_anna
+    identity.update(username="student_anna", groups=[], is_admin=False, is_researcher=False)
+
+    # GET /user/paths
+    res = client.get("/user/paths")
+    assert res.status_code == 200
+    paths = res.json()
+    # Student sees ONLY group 1's published path; NOT draft, NOT group 2 (non-member)
+    assert len(paths) == 1
+    assert paths[0]["id"] == p1["id"]
+    assert paths[0]["title"] == "Class 1 Path"
+    assert paths[0]["group_id"] == group_id
+    assert paths[0]["group_name"] == "Class Path Test Group"
+    assert paths[0]["done"] == 0
+    assert paths[0]["total"] == 1
+    assert len(paths[0]["steps"]) == 1
+    assert paths[0]["steps"][0]["tool_key"] == "bussola"
+    assert paths[0]["steps"][0]["state"] == "not_done"
+    assert paths[0]["steps"][0]["can_self_mark"] is False  # Bussola has auto-detect
+    assert paths[0]["next_step_id"] == paths[0]["steps"][0]["id"]
+
+    # Teacher archives group 1's path
+    identity.update(username="owner", groups=["docenti"], is_admin=False)
+    client.post(f"/teacher/paths/{p1['id']}/archive")
+
+    # Student now sees 0 paths (archived paths disappear for students)
+    identity.update(username="student_anna", groups=[], is_admin=False)
+    res_archived = client.get("/user/paths")
+    assert res_archived.status_code == 200
+    assert res_archived.json() == []
+
+
+def test_student_paths_unavailable_tool_rule(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+
+    # Enroll student
+    db.add(models.GroupMembership(group_id=group_id, username="student_marco"))
+    db.commit()
+
+    # Create published path with 3 steps: bussola, QSA, timeline
+    created = client.post(
+        f"/teacher/groups/{group_id}/paths",
+        json={"title": "Multi-tool path", "mode": "recommended"},
+    ).json()
+    path_id = created["id"]
+    put_res = client.put(
+        f"/teacher/paths/{path_id}",
+        json={
+            "revision": 1,
+            "title": "Multi-tool path",
+            "steps": [
+                {"tool_key": "bussola", "title": "Step 1: Compass"},
+                {"tool_key": "QSA", "title": "Step 2: QSA"},
+                {"tool_key": "timeline", "title": "Step 3: Timeline"},
+            ],
+        },
+    ).json()
+    client.post(f"/teacher/paths/{path_id}/publish")
+    step_ids = [s["id"] for s in put_res["steps"]]
+
+    # Student initially sees 3 available steps: done=0, total=3
+    identity.update(username="student_marco", groups=[], is_admin=False)
+    res = client.get("/user/paths")
+    assert res.status_code == 200
+    p = res.json()[0]
+    assert p["total"] == 3
+    assert p["done"] == 0
+    assert [s["state"] for s in p["steps"]] == ["not_done", "not_done", "not_done"]
+
+    # Teacher disables QSA for the class in class_settings
+    identity.update(username="owner", groups=["docenti"])
+    settings = models.ClassSettings(group_id=group_id, disabled_tool_keys=["QSA"], updated_by="owner")
+    db.add(settings)
+    db.commit()
+
+    # Student reads paths again: QSA is now unavailable and excluded from total!
+    identity.update(username="student_marco", groups=[])
+    res_disabled = client.get("/user/paths")
+    assert res_disabled.status_code == 200
+    p_disabled = res_disabled.json()[0]
+    # Total is now 2 (QSA is excluded from count!)
+    assert p_disabled["total"] == 2
+    assert p_disabled["done"] == 0
+    qsa_step = next(s for s in p_disabled["steps"] if s["tool_key"] == "QSA")
+    assert qsa_step["state"] == "unavailable"
+    assert qsa_step["can_self_mark"] is False
+
+    # Student self-marks timeline (Step 3) as done
+    mark_res = client.post(f"/user/paths/{path_id}/steps/{step_ids[2]}/done")
+    assert mark_res.status_code == 200
+    assert mark_res.json()["state"] == "done"
+
+    # Read back: done=1, total=2; next step is step 1 (bussola)
+    res_after_mark = client.get("/user/paths")
+    p_after_mark = res_after_mark.json()[0]
+    assert p_after_mark["done"] == 1
+    assert p_after_mark["total"] == 2
+    assert p_after_mark["next_step_id"] == step_ids[0]
+
+    # Attempting to self-mark unavailable QSA step is rejected (422)
+    fail_qsa = client.post(f"/user/paths/{path_id}/steps/{step_ids[1]}/done")
+    assert fail_qsa.status_code == 422
+    assert fail_qsa.json()["detail"] == "Tool is not available"
+
+
+def test_student_self_mark_endpoints_and_restrictions(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+
+    # Enroll student_lucia
+    db.add(models.GroupMembership(group_id=group_id, username="student_lucia"))
+    db.commit()
+
+    # Create published path with auto-detect (bussola) and self-mark (timeline)
+    p = client.post(
+        f"/teacher/groups/{group_id}/paths",
+        json={"title": "Self Mark Tests", "mode": "recommended"},
+    ).json()
+    path_id = p["id"]
+    put_data = client.put(
+        f"/teacher/paths/{path_id}",
+        json={
+            "revision": 1,
+            "title": "Self Mark Tests",
+            "steps": [
+                {"tool_key": "bussola", "title": "Bussola"},
+                {"tool_key": "timeline", "title": "Timeline"},
+            ],
+        },
+    ).json()
+    client.post(f"/teacher/paths/{path_id}/publish")
+    bussola_step_id = put_data["steps"][0]["id"]
+    timeline_step_id = put_data["steps"][1]["id"]
+
+    # 1. Non-member student receives 403 on self-mark endpoints
+    identity.update(username="outsider", groups=[], is_admin=False)
+    outsider_post = client.post(f"/user/paths/{path_id}/steps/{timeline_step_id}/done")
+    assert outsider_post.status_code == 403
+    assert outsider_post.json()["detail"] == "Class path access denied"
+
+    outsider_del = client.delete(f"/user/paths/{path_id}/steps/{timeline_step_id}/done")
+    assert outsider_del.status_code == 403
+    assert outsider_del.json()["detail"] == "Class path access denied"
+
+    # 2. Member student calls done on auto-detect step -> 422
+    identity.update(username="student_lucia", groups=[])
+    auto_post = client.post(f"/user/paths/{path_id}/steps/{bussola_step_id}/done")
+    assert auto_post.status_code == 422
+    assert "automatic completion" in auto_post.json()["detail"]
+
+    # 3. Member student marks timeline done -> 200
+    mark_done = client.post(f"/user/paths/{path_id}/steps/{timeline_step_id}/done")
+    assert mark_done.status_code == 200
+    assert mark_done.json() == {
+        "ok": True,
+        "step_id": timeline_step_id,
+        "state": "done",
+        "source": "student",
+    }
+
+    # Verify state in /user/paths
+    paths_data = client.get("/user/paths").json()
+    t_step = next(s for s in paths_data[0]["steps"] if s["id"] == timeline_step_id)
+    assert t_step["state"] == "done"
+    assert t_step["source"] == "student"
+
+    # 4. Member student unmarks timeline -> 200
+    unmark = client.delete(f"/user/paths/{path_id}/steps/{timeline_step_id}/done")
+    assert unmark.status_code == 200
+    assert unmark.json() == {
+        "ok": True,
+        "step_id": timeline_step_id,
+        "state": "not_done",
+        "source": None,
+    }
+
+    paths_data2 = client.get("/user/paths").json()
+    t_step2 = next(s for s in paths_data2[0]["steps"] if s["id"] == timeline_step_id)
+    assert t_step2["state"] == "not_done"
+    assert t_step2["source"] is None
+
+
+def test_strict_mode_and_resolution_precedence(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+
+    db.add(models.GroupMembership(group_id=group_id, username="student_sara"))
+    db.commit()
+
+    # Create path with strict mode: step 1 (bussola), step 2 (timeline), step 3 (actions)
+    p = client.post(
+        f"/teacher/groups/{group_id}/paths",
+        json={"title": "Strict Mode Path", "mode": "strict"},
+    ).json()
+    path_id = p["id"]
+    put_data = client.put(
+        f"/teacher/paths/{path_id}",
+        json={
+            "revision": 1,
+            "title": "Strict Mode Path",
+            "mode": "strict",
+            "steps": [
+                {"tool_key": "bussola", "title": "Step 1"},
+                {"tool_key": "timeline", "title": "Step 2"},
+                {"tool_key": "actions", "title": "Step 3"},
+            ],
+        },
+    ).json()
+    client.post(f"/teacher/paths/{path_id}/publish")
+    s1_id = put_data["steps"][0]["id"]
+    s2_id = put_data["steps"][1]["id"]
+    s3_id = put_data["steps"][2]["id"]
+
+    identity.update(username="student_sara", groups=[])
+    paths = client.get("/user/paths").json()
+    steps = paths[0]["steps"]
+    # In strict mode: step 1 is next_step_id; steps 2 and 3 are locked!
+    assert paths[0]["next_step_id"] == s1_id
+    assert steps[0]["state"] == "not_done"
+    assert steps[1]["state"] == "locked"
+    assert steps[2]["state"] == "locked"
+
+    # Teacher explicitly marks Step 1 as done in class_path_progress
+    db.add(
+        models.ClassPathProgress(
+            step_id=s1_id,
+            username="student_sara",
+            state="done",
+            source="teacher",
+            actor_username="owner",
+        )
+    )
+    db.commit()
+
+    # Now step 1 is done, step 2 is unlocked (next_step_id), step 3 is locked
+    paths2 = client.get("/user/paths").json()
+    steps2 = paths2[0]["steps"]
+    assert paths2[0]["next_step_id"] == s2_id
+    assert steps2[0]["state"] == "done"
+    assert steps2[0]["source"] == "teacher"
+    assert steps2[1]["state"] == "not_done"
+    assert steps2[2]["state"] == "locked"
+
+    # Teacher mark takes precedence over student mark (resolution rule §4.2):
+    # Student marked not_done, but teacher marked done -> remains done
+    db.add(
+        models.ClassPathProgress(
+            step_id=s1_id,
+            username="student_sara",
+            state="not_done",
+            source="student",
+            actor_username="student_sara",
+        )
+    )
+    db.commit()
+
+    paths3 = client.get("/user/paths").json()
+    steps3 = paths3[0]["steps"]
+    assert steps3[0]["state"] == "done"
+    assert steps3[0]["source"] == "teacher"
+
+
