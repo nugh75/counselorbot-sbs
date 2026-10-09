@@ -66,7 +66,7 @@ function GuideContent() {
     const sections = Array.from({ length: teacher ? 7 : 15 }, (_, i) => i + 1);
     const sectionId = (n: number) => `guide-${teacher ? 'teacher-' : ''}section-${n}`;
     const sectionTitle = (n: number) => teacher ? l(`teacher${n}Title` as GuideAudienceKey) : t(`guide.section${n}.title`);
-    const sectionBody = (n: number) => teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`) + (n === 12 ? ` ${categoryText(lang, 'guideDirectory')}` : '');
+    const sectionBody = (n: number) => teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`) + (n === 1 ? ` ${classSettingsText(lang, 'studentSupportGuide')}` : '') + (n === 12 ? ` ${categoryText(lang, 'guideDirectory')}` : '');
     const images = guideImages[lang];
     const spotIllustrations: Record<number, string> = teacher ? {
         1: '/images/platform/feedback-docente.png',
@@ -304,7 +304,7 @@ function GuideContent() {
                         )}
                         {teacher && n === 2 && <div className="mt-4 text-sm leading-relaxed text-slate-600">
                             <h3 className="font-semibold text-slate-900">{classSettingsText(lang, 'toolsTab')}</h3>
-                            <p className="mt-1.5">{classSettingsText(lang, 'guide')}</p>
+                            <p className="mt-1.5">{classSettingsText(lang, 'guide')} {classSettingsText(lang, 'supportGuide')}</p>
                             <Link href="/docente/classi" className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{classSettingsText(lang, 'back')}</Link>
                         </div>}
                         {teacher && n === 1 && (

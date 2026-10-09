@@ -11,6 +11,8 @@ import { ChatContinuation, useChatContinuation } from '@/components/ui/ChatConti
 import { ai4authLoginUrl, getIdentity, getViewAsAccount, type Identity } from '@/lib/auth';
 import { canUseAssistant, canUseTeacherAssistant } from '@/lib/roles';
 import { useI18n } from '@/lib/i18n-context';
+import { useUserAccess } from '@/lib/use-user-access';
+import { isToolAllowed } from '@/lib/user-access';
 import { fetchAssistantQuestions, type AssistantQuestionsByTopic } from '@/lib/assistant-questions';
 import { fetchCounselors, getSelectedCounselorId } from '@/lib/counselor';
 import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
@@ -122,6 +124,7 @@ const docUrl = (source: string, collection: string) =>
 export default function AssistentePage() {
     const { streamChat, ...continuation } = useChatContinuation();
     const { t, lang } = useI18n();
+    const { access, loading: accessLoading } = useUserAccess();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
     const [audience, setAudience] = useState<Audience>('studente');
     const [collection, setCollection] = useState<Collection>('competenzestrategiche');
@@ -372,7 +375,7 @@ export default function AssistentePage() {
         setPreview(null);
     };
 
-    if (identity === undefined) {
+    if (identity === undefined || accessLoading) {
         return (
             <div className="page-narrow">
                 <div className="glass-panel p-8 text-center text-sm text-slate-500">{t('assistant.loadingAccess')}</div>
@@ -398,13 +401,13 @@ export default function AssistentePage() {
         );
     }
 
-    if (!canUseAssistant(identity)) {
+    if (!canUseAssistant(identity) || !isToolAllowed(access, 'assistant')) {
         return (
             <div className="page-narrow">
                 <div className="glass-panel p-8 text-center space-y-4">
                     <ShieldAlert className="mx-auto h-10 w-10 text-amber-600" />
                     <h1 className="text-2xl font-bold text-slate-900">{t('assistant.deniedTitle')}</h1>
-                    <p className="text-sm text-slate-600">{t('assistant.deniedBody')}</p>
+                    <p className="text-sm text-slate-600">{t(!canUseAssistant(identity) ? 'assistant.deniedBody' : 'detail.disabledForClass.body')}</p>
                 </div>
             </div>
         );
