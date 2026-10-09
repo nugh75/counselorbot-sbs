@@ -344,3 +344,18 @@ test('typed administration targets and activation survive teacher and student pa
     assert.equal(student.can_self_mark,false);
     assert.equal(parseClassPathStep({tool_key:'QSA'}).step_type,'tool');
 });
+
+test('deep-dive steps keep their bound administration step for teacher and student', () => {
+    const payload = {id:13,path_id:1,position:2,step_type:'guided_results_chat',tool_key:null,
+        administration_plan_id:null,results_step_id:12,auto_detect:true,can_self_mark:false,
+        target_summary:{id:3,code:'AP-SYN',title:'Synthetic',instrument_code:'QSA',locale:'it',institution_name:'Synthetic'},
+        completion_kind:'guided_results_chat',state:'done',source:'automatic',start_href:'/profilo/percorsi/1/13/approfondimento'};
+    const teacher=parseClassPathStep(payload);
+    const student=parseStudentClassPathStep(payload);
+    assert.equal(teacher.step_type,'guided_results_chat');
+    assert.equal(teacher.results_step_id,12);
+    assert.equal(student.step_type,'guided_results_chat');
+    assert.equal(student.results_step_id,12);
+    assert.equal(student.completion_kind,'guided_results_chat');
+    assert.equal(parseClassPathStep({step_type:'forged',tool_key:'QSA'}).step_type,'tool');
+});

@@ -1,10 +1,17 @@
+export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat";
+
+function parseStepType(value: unknown): ClassPathStepType {
+    return value === 'questionnaire_administration' || value === 'guided_results_chat' ? value : 'tool';
+}
+
 export interface ClassPathStep {
     id?: number;
     path_id?: number;
     position: number;
     tool_key: string;
-    step_type?: "tool" | "questionnaire_administration";
+    step_type?: ClassPathStepType;
     administration_plan_id?: number | null;
+    results_step_id?: number | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
     completion_kind?: string | null;
@@ -48,8 +55,9 @@ export function parseClassPathStep(input: unknown): ClassPathStep {
         path_id: raw.path_id != null ? Number(raw.path_id) : undefined,
         position: Number(raw.position || 1),
         tool_key: String(raw.tool_key || ''),
-        step_type: raw.step_type === 'questionnaire_administration' ? 'questionnaire_administration' : 'tool',
+        step_type: parseStepType(raw.step_type),
         administration_plan_id: raw.administration_plan_id != null ? Number(raw.administration_plan_id) : null,
+        results_step_id: raw.results_step_id != null ? Number(raw.results_step_id) : null,
         active_from: raw.active_from ? String(raw.active_from) : null,
         target_summary: raw.target_summary as ClassPathStep['target_summary'],
         completion_kind: raw.completion_kind ? String(raw.completion_kind) : null,
@@ -91,8 +99,9 @@ export function parseClassPaths(input: unknown): ClassPath[] {
 export interface StudentClassPathStep {
     id: number;
     tool_key: string;
-    step_type?: "tool" | "questionnaire_administration";
+    step_type?: ClassPathStepType;
     administration_plan_id?: number | null;
+    results_step_id?: number | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
     completion_kind?: string | null;
@@ -128,8 +137,9 @@ export function parseStudentClassPathStep(input: unknown): StudentClassPathStep 
     return {
         id: Number(raw.id),
         tool_key: String(raw.tool_key || ''),
-        step_type: raw.step_type === 'questionnaire_administration' ? 'questionnaire_administration' : 'tool',
+        step_type: parseStepType(raw.step_type),
         administration_plan_id: raw.administration_plan_id != null ? Number(raw.administration_plan_id) : null,
+        results_step_id: raw.results_step_id != null ? Number(raw.results_step_id) : null,
         active_from: raw.active_from ? String(raw.active_from) : null,
         target_summary: raw.target_summary as ClassPathStep['target_summary'],
         completion_kind: raw.completion_kind ? String(raw.completion_kind) : null,
