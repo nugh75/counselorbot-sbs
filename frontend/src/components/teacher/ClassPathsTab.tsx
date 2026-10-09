@@ -16,6 +16,8 @@ import { StickyActions } from '@/components/ui/StickyActions';
 import { ClassPathProgressPanel } from './ClassPathProgress';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
+import { parseForumDiscussionLinks } from '@/lib/forum';
+import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 
 type PathTextKey = keyof typeof classPathsTexts;
 type SettingsTextKey = keyof typeof classSettingsTexts;
@@ -40,6 +42,7 @@ interface PathEditorProps {
 function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: PathEditorProps) {
     const { lang } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
+    const discussions = useTeacherResource('/api/user/forum/links', parseForumDiscussionLinks);
 
     const [currentPath, setCurrentPath] = useState<ClassPath>(path);
     const [title, setTitle] = useState(path.title);
@@ -403,6 +406,8 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                     </div>
 
                                     <div className="min-w-0 flex-1 space-y-2">
+                                        <ForumDiscussionLinks links={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
+                                            kind="path_step" targetId={step.id ?? 0} />
                                         <input
                                             type="text"
                                             value={step.title || ''}

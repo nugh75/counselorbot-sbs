@@ -13,10 +13,14 @@ import { toast } from '@/components/ui/Toast';
 import { classPathText, type PathTextKey } from '@/lib/i18n-class-paths';
 import { lockedStepUnlockNumber, parseStudentClassPaths, type StudentClassPath, type StudentClassPathStep } from '@/lib/class-paths';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
+import { useTeacherResource } from '@/components/teacher/useTeacherResource';
+import { parseForumDiscussionLinks } from '@/lib/forum';
+import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 
 export function StudentClassPathsPage() {
     const { lang } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
+    const discussions = useTeacherResource('/api/user/forum/links', parseForumDiscussionLinks);
 
     const [paths, setPaths] = useState<StudentClassPath[]>([]);
     const [loading, setLoading] = useState(true);
@@ -175,6 +179,7 @@ export function StudentClassPathsPage() {
                                 return (
                                     <div
                                         key={step.id}
+                                        id={`class-step-${step.id}`}
                                         className={`rounded-xl border p-4 transition-colors ${containerClasses}`}
                                     >
                                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -241,6 +246,8 @@ export function StudentClassPathsPage() {
                                                             {step.instructions}
                                                         </p>
                                                     )}
+                                                    <ForumDiscussionLinks links={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
+                                                        kind="path_step" targetId={step.id} />
 
                                                     {isLocked && (
                                                         <p className="text-xs italic text-slate-500">

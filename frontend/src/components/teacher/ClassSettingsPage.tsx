@@ -221,7 +221,8 @@ function ClassDetail({ groupId }: { groupId: number }) {
     const l = (key: TextKey) => classSettingsText(lang, key);
     const groups = useTeacherResource('/api/admin/groups', parseClassGroups);
     const settings = useTeacherResource(`/api/teacher/groups/${groupId}/settings`, parseClassSettings);
-    const [tab, setTab] = useState<'overview' | 'toolsTab' | 'paths' | 'forum'>('overview');
+    const [tab, setTab] = useState<'overview' | 'toolsTab' | 'paths' | 'forum'>(() =>
+        typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'paths' ? 'paths' : 'overview');
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const group = groups.data?.find(row => row.id === groupId);
     if (groups.forbidden || settings.forbidden) return <TeacherForbidden />;
