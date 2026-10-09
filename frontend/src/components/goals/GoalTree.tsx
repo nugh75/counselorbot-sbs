@@ -1,6 +1,6 @@
 'use client';
 import { useState, type ReactNode } from 'react';
-import { ChevronDown, ChevronRight, Plus, Users } from 'lucide-react';
+import { ChevronDown, ChevronRight, CornerDownRight, Link2, Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
 import { goalFormat, goalText, type GoalTextKey } from '@/lib/i18n-goals';
@@ -27,8 +27,8 @@ export function GoalTree({ goals, forest, groups, onOpen, onAddChild }: Props) {
                 <span className="text-sm text-slate-600">{l(goal.status as GoalTextKey)}{goal.review_date && ` · ${l('reviewDate')}: ${goal.review_date}`}{total > 0 && ` · ${done}/${total} ${l('subgoalsDone')}`}</span>
                 {shares.length > 0 && <span className="inline-flex items-center gap-1 text-sm text-slate-600"><Users className="h-4 w-4" aria-hidden /><span className="sr-only">{l('share')}:</span>{shares.join(', ')}</span>}
                 <Button type="button" variant="ghost" aria-label={`${l('addSubgoal')}: ${goal.title}`} onClick={() => onAddChild(goal.id)}><Plus className="h-5 w-5" aria-hidden /></Button>
-                {node.otherParents.length > 0 && <p className="basis-full pl-13 text-xs text-slate-500">⧉ {l('alsoUnder')}: {node.otherParents.map(parent => parent.title).join(', ')}</p>}
-                {node.depth >= 4 && <p className="basis-full pl-13 text-xs text-slate-500">↳ {goalFormat(lang, 'level', { n: node.depth + 1 })}</p>}
+                {node.otherParents.length > 0 && <p className="flex basis-full items-center gap-1 pl-13 text-xs text-slate-500"><Link2 className="h-3 w-3 shrink-0" aria-hidden />{l('alsoUnder')}: {node.otherParents.map(parent => parent.title).join(', ')}</p>}
+                {node.depth >= 4 && <p className="flex basis-full items-center gap-1 pl-13 text-xs text-slate-500"><CornerDownRight className="h-3 w-3 shrink-0" aria-hidden />{goalFormat(lang, 'level', { n: node.depth + 1 })}</p>}
             </div>
             {open && node.children.length > 0 && <ul className={`space-y-1 ${node.depth < 3 ? 'pl-3 sm:pl-6' : ''}`}>{node.children.map(render)}</ul>}
         </li>;

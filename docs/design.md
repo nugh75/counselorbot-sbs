@@ -103,7 +103,8 @@ sono stati dell'interfaccia ma **esiti di misura**: forza `#22c55e`, adeguato
 Quelli sono i colori del **segno** (la tacca sulla barra). Il testo delle fasce e
 del badge del punteggio passa dai token `--zone-*` in `globals.css`, con
 override scuro: come hex inline restavano fuori dal remap e leggevano 2.5-3.7:1.
-Ogni esito porta anche un **glifo** (▲ forza, ● adeguato, ▽ crescita) nella
+Ogni esito porta anche un **glifo** (icone lucide: triangolo pieno forza, cerchio
+pieno adeguato, triangolo rovesciato crescita) nella
 barra, nel badge e nella legenda: il colore non è mai l'unico canale.
 
 Fuori da queste liste (`teal`, `rose`, `purple`, `violet`, `blue`, `cyan`,
@@ -278,6 +279,13 @@ aggiunge alla primitiva.
 | `FlowStepper` | il passo attivo è ocra, i fatti sono petrol, i futuri slate |
 | `Toast`, `Tooltip`, `Skeleton`, `StickyActions` | stati transitori |
 | `CompassMark` | il mark, statico nell'header |
+
+**Icone.** Solo SVG di `lucide-react`: niente emoji né glifi testuali (`+`, `→`,
+`✓`, `▲`) nelle etichette o negli stati. Le azioni dal significato evidente
+(aggiungi, modifica, elimina, chiudi, sposta, archivia, ricarica) sono pulsanti a
+sola icona con `aria-label` e `title` (o `Tooltip`) presi dall'i18n; un'etichetta
+breve resta solo dove l'icona da sola sarebbe ambigua: azioni principali di
+pagina e conferme distruttive.
 
 ---
 

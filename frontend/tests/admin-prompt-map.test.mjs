@@ -680,7 +680,7 @@ test('wizard creates new guided chat instrument with 3 steps and enables counsel
     const f = await fixture();
     try {
         const { page } = f;
-        const createBtn = page.getByRole('button', { name: '+ Nuova Chat Guidata' });
+        const createBtn = page.getByRole('button', { name: 'Nuova Chat Guidata' });
         await createBtn.click();
 
         const dialog = page.getByRole('dialog');

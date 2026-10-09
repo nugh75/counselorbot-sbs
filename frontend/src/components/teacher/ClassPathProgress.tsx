@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Check, Lock } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
 import {
     filterProgressStudents,
@@ -135,6 +136,8 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
                 onClick={() => select(student, cell.step_id)}
                 className={cellClass(cell, isSelected)}
             >
+                {cell.state === 'done' && <Check className="h-3.5 w-3.5" aria-hidden />}
+                {cell.state === 'locked' && <Lock className="h-3.5 w-3.5" aria-hidden />}
                 {progressCellCode(cell)}
             </button>
         );
@@ -236,7 +239,11 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
                 </>
             )}
 
-            <p className="text-xs text-slate-500">{l('progressLegend')}</p>
+            <p className="flex flex-wrap items-center gap-x-1 text-xs text-slate-500">
+                <Check className="h-3 w-3" aria-hidden />{`= ${l('completed')} ·`}
+                <Lock className="h-3 w-3" aria-hidden />{`= ${l('stateLocked')} ·`}
+                <span>{l('progressLegend')}</span>
+            </p>
             <p className="text-xs text-slate-500">{l('precedenceHint')}</p>
 
             {selectedStudent && selectedStep && selectedCell ? (

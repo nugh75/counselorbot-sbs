@@ -193,7 +193,7 @@ export function AdminChatSandbox({
                             >
                                 {counselors.map((c) => (
                                     <option key={c.id} value={c.id}>
-                                        {c.name} {c.suitable ? '' : '⚠️'}
+                                        {c.suitable ? c.name : `${c.name} (${t('admin.sandbox.notSuitable')})`}
                                     </option>
                                 ))}
                             </select>

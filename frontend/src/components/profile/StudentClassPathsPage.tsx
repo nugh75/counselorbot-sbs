@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Circle, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Circle, Lock, AlertCircle, ArrowRight, Play } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { Card } from '@/components/ui/Card';
@@ -189,7 +189,7 @@ export function StudentClassPathsPage() {
                                                 <div className="mt-0.5 shrink-0 flex items-center justify-center">
                                                     {isCurrent ? (
                                                         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ochre-600 font-bold text-xs text-white">
-                                                            ▶
+                                                            <Play className="h-3.5 w-3.5 fill-current" aria-hidden />
                                                         </span>
                                                     ) : isDone ? (
                                                         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">

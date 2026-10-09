@@ -229,8 +229,8 @@ function DocumentsTab() {
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <p className="text-sm text-slate-500">{t('admin.pqbl.docs.count', { n: docs.length })}</p>
-                <button onClick={load} className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                    <RefreshCw className="w-3.5 h-3.5" /> {t('admin.pqbl.refresh')}
+                <button type="button" onClick={load} aria-label={t('admin.pqbl.refresh')} title={t('admin.pqbl.refresh')} className="tap-icon rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+                    <RefreshCw className="w-3.5 h-3.5" aria-hidden />
                 </button>
             </div>
 
@@ -424,8 +424,8 @@ function AnalyticsTab() {
     return (
         <div className="space-y-5">
             <div className="flex justify-end">
-                <button onClick={load} className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
-                    <RefreshCw className="w-3.5 h-3.5" /> {t('admin.pqbl.refresh')}
+                <button type="button" onClick={load} aria-label={t('admin.pqbl.refresh')} title={t('admin.pqbl.refresh')} className="tap-icon rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+                    <RefreshCw className="w-3.5 h-3.5" aria-hidden />
                 </button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Pencil, Trash2, Check, X, Languages } from 'lucide-react';
+import { ArrowRight, Plus, Pencil, Trash2, Check, X, Languages } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { ContentLanguageStatus } from './ContentLanguageStatus';
 
@@ -280,7 +280,7 @@ export function CertifiedStrategiesPanel() {
             {/* Fattori collegati, raggruppati per strumento */}
             <div className="mt-4">
                 <div className="mb-1 text-xs font-medium text-slate-500">{t('admin.certified.factors')}
-                    {derivedQTypes.length > 0 && <span className="ml-2 font-normal text-slate-500">→ {derivedQTypes.join(', ')}</span>}
+                    {derivedQTypes.length > 0 && <span className="ml-2 inline-flex items-center gap-1 font-normal text-slate-500"><ArrowRight className="h-3 w-3" aria-hidden />{derivedQTypes.join(', ')}</span>}
                 </div>
                 <div className="space-y-2">
                     {Object.entries(factorsByInstrument).map(([code, factors]) => (

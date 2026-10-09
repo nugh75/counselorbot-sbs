@@ -322,10 +322,10 @@ test('goal method mixes a certified and a personal strategy, reusable on a secon
         await page.getByRole('button', { name: 'Salva', exact: true }).click();
         await page.getByRole('dialog').getByRole('heading', { name: title, exact: true }).waitFor();
         await page.getByRole('region', { name: 'Metodo' }).waitFor();
-        await page.getByLabel('Scegli una strategia', { exact: true }).selectOption({ label: '✦ Autoverifica pianificata' });
+        await page.getByLabel('Scegli una strategia', { exact: true }).selectOption({ label: 'Autoverifica pianificata' });
         await page.getByText('Autoverifica pianificata').first().waitFor();
         await page.getByLabel('Scrivi una mia strategia', { exact: true }).fill('Racconto la lezione a voce');
-        await page.getByRole('button', { name: '+', exact: true }).click();
+        await page.getByRole('button', { name: 'Aggiungi strategia', exact: true }).click();
         await page.getByText('Racconto la lezione a voce').first().waitFor();
         await page.getByRole('button', { name: 'Salva', exact: true }).click();
         await page.getByRole('status').filter({ hasText: 'Salvato.' }).waitFor();
@@ -364,10 +364,10 @@ test('a dated check reaches the board and needs a progress before done', async (
         await page.getByLabel('Obiettivo', { exact: true }).fill(checkTitle);
         await page.getByRole('button', { name: 'Salva', exact: true }).click();
         await page.getByRole('dialog').getByRole('heading', { name: checkTitle, exact: true }).waitFor();
-        await page.getByText('+ Controllo', { exact: true }).first().click();
+        await page.getByText('Controllo', { exact: true }).first().click();
         await page.getByLabel('Cosa farò').last().fill('Ripasso capitoli 1-3');
         await page.getByLabel('Data facoltativa').last().fill('2026-10-20');
-        await page.getByRole('dialog').locator('details', { hasText: '+ Controllo' }).getByRole('button').last().click();
+        await page.getByRole('dialog').locator('details', { hasText: 'Controllo' }).getByRole('button').last().click();
         await page.getByText('Ripasso capitoli 1-3').first().waitFor();
         await page.getByRole('button', { name: 'Chiudi', exact: true }).click();
         // The check, with its date, shows up on the action board…
@@ -402,7 +402,7 @@ test('review with outcome yes closes the goal, shows the balance and the ◆ mil
         await page.getByLabel('Cosa ho capito?').fill('Ripetere ad alta voce funziona.');
         await page.getByRole('button', { name: 'Chiudi l’obiettivo', exact: true }).click();
         await page.getByText('Ripetere ad alta voce funziona.').first().waitFor();
-        await page.getByRole('button', { name: '→ nuova azione', exact: true }).waitFor();
+        await page.getByRole('button', { name: 'nuova azione', exact: true }).waitFor();
         const state = await (await fetch(`${api}/user/goals`, { headers: { 'x-test-user': username } })).json();
         const closed = state.find(r => r.title === rvTitle);
         assert.equal(closed.status, 'completed');

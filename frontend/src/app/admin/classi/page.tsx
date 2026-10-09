@@ -1,5 +1,8 @@
-import { AdminClassesPanel } from '@/components/admin/AdminClassesPanel';
+import { redirect } from 'next/navigation';
+import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
 
+// La directory delle classi vive nella scheda «Gruppi e classi» della console
+// admin, con la sua navigazione: qui resta solo il vecchio indirizzo.
 export default function AdminClassesPage() {
-    return <main className="page-wide px-4 py-8"><AdminClassesPanel /></main>;
+    redirect(ADMIN_CLASSES_HREF);
 }

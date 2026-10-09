@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
 import { goalText, type GoalTextKey } from '@/lib/i18n-goals';
@@ -54,9 +55,9 @@ export function GoalReviewStep({ goal, onDone, onCancel, onNavigate, onDirty, on
             </div>
             {done && <div className="space-y-2 rounded-md border border-slate-200 p-3">
                 <p role="status" className="text-indigo-700">{l('saved')}</p>
-                <div><Button type="button" variant="secondary" onClick={() => onNavigate({ kind: 'create', prefill: { title: form.next_step.slice(0, 160) } })}>{l('toNewGoal')}</Button></div>
-                <div><Button type="button" variant="secondary" onClick={() => onNavigate({ kind: 'edit', id: goal.id, prefill: { action: form.next_step.slice(0, 160) } })}>{l('toNewAction')}</Button></div>
-                <Link className="block text-sm text-indigo-700 underline" href={`/profilo/taccuino?note=${encodeURIComponent(form.change)}`}>{l('toNotebook')}</Link>
+                <div><Button type="button" variant="secondary" onClick={() => onNavigate({ kind: 'create', prefill: { title: form.next_step.slice(0, 160) } })}><ArrowRight className="h-4 w-4" aria-hidden />{l('toNewGoal')}</Button></div>
+                <div><Button type="button" variant="secondary" onClick={() => onNavigate({ kind: 'edit', id: goal.id, prefill: { action: form.next_step.slice(0, 160) } })}><ArrowRight className="h-4 w-4" aria-hidden />{l('toNewAction')}</Button></div>
+                <Link className="inline-flex items-center gap-1 text-sm text-indigo-700 underline" href={`/profilo/taccuino?note=${encodeURIComponent(form.change)}`}><ArrowRight className="h-4 w-4" aria-hidden />{l('toNotebook')}</Link>
             </div>}
         </div>
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 bg-white p-4 sm:px-6">
