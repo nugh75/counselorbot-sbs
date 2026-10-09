@@ -10,12 +10,12 @@ export const administrationStepTexts = {
     "Öppna Vägar i klassen: skapa eller välj en italiensk enkätomgång, lägg till den som ett steg, spara och publicera. Forskningsvyn använder samma ID och revision. Ersätt steget med ett nytt för att ändra ett publicerat mål.",
   ],
   administration: [
-    "Somministrazione italiana",
-    "Italian administration",
-    "Administración italiana",
-    "Passation italienne",
-    "Italienische Durchführung",
-    "Italiensk enkätomgång",
+    "Somministrazione del questionario",
+    "Questionnaire administration",
+    "Administración del cuestionario",
+    "Passation du questionnaire",
+    "Fragebogen-Durchführung",
+    "Enkätomgång",
   ],
   create: [
     "Crea somministrazione",
@@ -51,12 +51,12 @@ export const administrationStepTexts = {
     "Öppna forskningsvyn",
   ],
   choose: [
-    "Seleziona somministrazione IT",
-    "Select IT administration",
-    "Seleccionar administración IT",
-    "Choisir une passation IT",
-    "IT-Durchführung auswählen",
-    "Välj IT-enkätomgång",
+    "Seleziona somministrazione",
+    "Select administration",
+    "Seleccionar administración",
+    "Choisir une passation",
+    "Durchführung auswählen",
+    "Välj enkätomgång",
   ],
   external: [
     "Apri competenzestrategiche.it",
@@ -138,6 +138,127 @@ export const administrationStepTexts = {
     "Counselor auswählen",
     "Välj en vägledare",
   ],
+  teacherInAppGuide: [
+    "Per le altre lingue scegli la lingua della somministrazione: sono offerte solo le lingue in cui il questionario è disponibile nell’app. Lo studente risponde agli item dentro CounselorBot nella lingua del piano, il risultato viene salvato una sola volta e lo studente lo porta nella chat guidata senza ridigitare i punteggi. Il solo invio del questionario non completa il passo.",
+    "For other languages choose the administration language: only languages in which the questionnaire is available in the app are offered. The student answers the items inside CounselorBot in the plan language, the result is saved once and the student brings it into guided chat without retyping scores. Submitting the questionnaire alone does not complete the step.",
+    "Para los demás idiomas elige el idioma de la administración: solo se ofrecen los idiomas en los que el cuestionario está disponible en la app. El estudiante responde a los ítems dentro de CounselorBot en el idioma del plan, el resultado se guarda una sola vez y el estudiante lo lleva al chat guiado sin volver a escribir las puntuaciones. Enviar el cuestionario por sí solo no completa el paso.",
+    "Pour les autres langues, choisissez la langue de la passation : seules les langues dans lesquelles le questionnaire est disponible dans l’application sont proposées. L’élève répond aux items dans CounselorBot dans la langue du plan, le résultat est enregistré une seule fois et l’élève l’apporte dans le chat guidé sans ressaisir les scores. L’envoi du questionnaire seul ne termine pas l’étape.",
+    "Für andere Sprachen wählst du die Sprache der Durchführung: Angeboten werden nur Sprachen, in denen der Fragebogen in der App verfügbar ist. Lernende beantworten die Items in CounselorBot in der Sprache des Plans, das Ergebnis wird einmal gespeichert und ohne erneutes Eintippen der Werte in den geführten Chat übernommen. Das Absenden des Fragebogens allein schließt den Schritt nicht ab.",
+    "För andra språk väljer du enkätomgångens språk: bara språk där enkäten finns tillgänglig i appen erbjuds. Eleven besvarar frågorna i CounselorBot på planens språk, resultatet sparas en gång och eleven tar med det till den guidade chatten utan att skriva in poängen igen. Att bara skicka in enkäten slutför inte steget.",
+  ],
+  locale: ["Lingua", "Language", "Idioma", "Langue", "Sprache", "Språk"],
+  inAppHint: [
+    "Il questionario si compila qui, nella lingua della somministrazione.",
+    "You complete the questionnaire here, in the administration language.",
+    "El cuestionario se completa aquí, en el idioma de la administración.",
+    "Le questionnaire se remplit ici, dans la langue de la passation.",
+    "Der Fragebogen wird hier in der Sprache der Durchführung ausgefüllt.",
+    "Enkäten fylls i här, på enkätomgångens språk.",
+  ],
+  localeUnavailable: [
+    "Questo questionario non è disponibile nella lingua della somministrazione. Non viene proposta un’altra lingua: avvisa il docente.",
+    "This questionnaire is not available in the administration language. No other language is offered instead: tell your teacher.",
+    "Este cuestionario no está disponible en el idioma de la administración. No se ofrece otro idioma en su lugar: avisa al docente.",
+    "Ce questionnaire n’est pas disponible dans la langue de la passation. Aucune autre langue n’est proposée à la place : prévenez l’enseignant.",
+    "Dieser Fragebogen ist in der Sprache der Durchführung nicht verfügbar. Es wird keine andere Sprache ersatzweise angeboten: Sag der Lehrkraft Bescheid.",
+    "Enkäten finns inte på enkätomgångens språk. Inget annat språk erbjuds i stället: meddela läraren.",
+  ],
+  answerAll: [
+    "Rispondi a tutti gli item, poi salva il risultato.",
+    "Answer every item, then save the result.",
+    "Responde a todos los ítems y luego guarda el resultado.",
+    "Répondez à tous les items, puis enregistrez le résultat.",
+    "Beantworte alle Items und speichere dann das Ergebnis.",
+    "Besvara alla frågor och spara sedan resultatet.",
+  ],
+  saveResult: [
+    "Salva il risultato",
+    "Save result",
+    "Guardar resultado",
+    "Enregistrer le résultat",
+    "Ergebnis speichern",
+    "Spara resultatet",
+  ],
+  resultSaved: [
+    "Risultato salvato. Il passo non è ancora completato: portalo nella chat guidata, senza ridigitare i punteggi.",
+    "Result saved. The step is not done yet: bring it into guided chat, without retyping scores.",
+    "Resultado guardado. El paso aún no está completado: llévalo al chat guiado, sin volver a escribir las puntuaciones.",
+    "Résultat enregistré. L’étape n’est pas encore terminée : apportez-le dans le chat guidé, sans ressaisir les scores.",
+    "Ergebnis gespeichert. Der Schritt ist noch nicht abgeschlossen: Übernimm es in den geführten Chat, ohne die Werte erneut einzutippen.",
+    "Resultatet är sparat. Steget är inte klart än: ta med det till den guidade chatten utan att skriva in poängen igen.",
+  ],
+  enterSaved: [
+    "Porta il risultato nella chat guidata",
+    "Bring the result into guided chat",
+    "Llevar el resultado al chat guiado",
+    "Apporter le résultat dans le chat guidé",
+    "Ergebnis in den geführten Chat übernehmen",
+    "Ta med resultatet till guidad chatt",
+  ],
+  provenanceInApp: [
+    "Registrato in CounselorBot",
+    "Captured in CounselorBot",
+    "Registrado en CounselorBot",
+    "Enregistré dans CounselorBot",
+    "In CounselorBot erfasst",
+    "Registrerat i CounselorBot",
+  ],
+  provenanceImported: [
+    "Importato dal docente",
+    "Imported by the teacher",
+    "Importado por el docente",
+    "Importé par l’enseignant",
+    "Von der Lehrkraft importiert",
+    "Importerat av läraren",
+  ],
+  captureItemRunner: [
+    "questionario nell’app",
+    "in-app questionnaire",
+    "cuestionario en la app",
+    "questionnaire dans l’application",
+    "Fragebogen in der App",
+    "enkät i appen",
+  ],
+  captureManualScores: [
+    "punteggi inseriti a mano",
+    "scores entered by hand",
+    "puntuaciones introducidas a mano",
+    "scores saisis à la main",
+    "Werte von Hand eingegeben",
+    "poäng inmatade för hand",
+  ],
+  captureTelegramScores: [
+    "punteggi inviati da Telegram",
+    "scores sent from Telegram",
+    "puntuaciones enviadas desde Telegram",
+    "scores envoyés depuis Telegram",
+    "Werte über Telegram gesendet",
+    "poäng skickade från Telegram",
+  ],
+  captureFileImport: [
+    "import da file",
+    "file import",
+    "importación de archivo",
+    "import de fichier",
+    "Dateiimport",
+    "filimport",
+  ],
+  captureNoScores: [
+    "senza punteggi",
+    "no scores",
+    "sin puntuaciones",
+    "sans scores",
+    "ohne Werte",
+    "utan poäng",
+  ],
+  captureUnknown: [
+    "modalità di raccolta non registrata",
+    "capture method not recorded",
+    "método de registro no consignado",
+    "mode de saisie non enregistré",
+    "Erfassungsart nicht gespeichert",
+    "insamlingssätt inte registrerat",
+  ],
 } as const;
 export function administrationStepText(
   lang: string,
@@ -145,4 +266,24 @@ export function administrationStepText(
 ): string {
   const index = languages.indexOf(lang as Lang);
   return administrationStepTexts[key][index < 0 ? 1 : index];
+}
+
+const captureKeys: Record<string, keyof typeof administrationStepTexts> = {
+  item_runner: "captureItemRunner",
+  manual_scores: "captureManualScores",
+  telegram_scores: "captureTelegramScores",
+  csv_import: "captureFileImport",
+  json_import: "captureFileImport",
+  no_scores: "captureNoScores",
+};
+
+// Unknown or historical capture methods stay "not recorded": never guess an origin.
+export function resultProvenanceText(
+  lang: string,
+  result: { source?: string | null; capture_method?: string | null },
+): string {
+  const origin =
+    result.source === "imported" ? "provenanceImported" : "provenanceInApp";
+  const capture = captureKeys[result.capture_method ?? ""] ?? "captureUnknown";
+  return `${administrationStepText(lang, origin)} · ${administrationStepText(lang, capture)}`;
 }

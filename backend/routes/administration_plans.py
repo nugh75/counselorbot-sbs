@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from .. import administration_context, auth, database, models, schemas
+from .. import administration_context, auth, database, models, schemas, scoring_service
 from ..reading_audience import AUDIENCE_BANDS
 from ..user_names import store_user_display_name
 
@@ -614,6 +614,14 @@ async def get_plan_student_conversation(
     return _session_conversation_messages(db, session_id)
 
 
+def _require_class_locale(db: Session, instrument_code: Optional[str], locale: Optional[str]) -> None:
+    """Class administrations outside Italian run in app: only served locales are offered."""
+    code = (instrument_code or "QSA").strip() or "QSA"
+    normalized = _normalize_locale(locale)
+    if normalized != "it" and not scoring_service.locale_available(db, code, normalized):
+        raise HTTPException(status_code=422, detail="administration_locale_unavailable")
+
+
 @router.get("/teacher/groups/{group_id}/administrations")
 async def list_class_administrations(group_id: int, current_user=Depends(auth.get_current_plan_manager),
                                      db: Session = Depends(get_db)):
@@ -633,6 +641,7 @@ async def create_class_administration(group_id: int, payload: schemas.Administra
     if ((payload.group_id is not None and payload.group_id != group.id)
             or (payload.institution_id is not None and payload.institution_id != group.institution_id)):
         raise HTTPException(status_code=422, detail="administration_class_context_mismatch")
+    _require_class_locale(db, payload.instrument_code, payload.locale)
     bound = payload.model_copy(update={"group_id":group.id, "institution_id":group.institution_id})
     return await create_administration_plan(bound, current_user, db)
 
@@ -656,5 +665,7 @@ async def update_teacher_administration(plan_id: int, payload: schemas.Administr
         raise HTTPException(404, "administration_not_found")
     from .class_paths import _require_visible_group
     _require_visible_group(db, current_user, plan.group_id)
+    if payload.locale is not None or payload.instrument_code is not None:
+        _require_class_locale(db, payload.instrument_code or plan.instrument_code, payload.locale or plan.locale)
     # Reuse the canonical editor after class-scoped authorization, without widening research reads.
     return await _update_plan_after_access(plan_id, payload, current_user, db)
