@@ -3,6 +3,7 @@
 Allows teachers to create and manage class paths composed of ordered steps
 selected from the tools currently enabled for the class.
 """
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
 from ..class_access import class_enables, resolve_access
-from ..class_path_completion import has_automatic_evidence
+from ..path_step_types import (step_descriptor, completion_evidence, validate_step_input, apply_step_target, administration_target)
 from ..class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, tool_catalog
 from .groups import _is_admin, _username, _visible_group_query
 
@@ -86,7 +87,7 @@ def is_tool_available_for_class(db: Session, group_id: int, tool_key: str) -> bo
 def _require_visible_group(db: Session, identity, group_id: int, *, for_update: bool = False) -> models.StudentGroup:
     query = _visible_group_query(db, identity).filter(models.StudentGroup.id == group_id)
     if for_update:
-        query = query.with_for_update()
+        query = query.populate_existing().with_for_update()
     group = query.first()
     if not group:
         raise HTTPException(status_code=403, detail="Class path access denied")
@@ -102,7 +103,7 @@ def _require_visible_path(
 ) -> models.ClassPath:
     query = db.query(models.ClassPath).filter(models.ClassPath.id == path_id)
     if for_update:
-        query = query.with_for_update()
+        query = query.populate_existing().with_for_update()
     path = query.first()
     if not path:
         raise HTTPException(status_code=403, detail="Class path access denied")
@@ -137,8 +138,14 @@ def get_class_enabled_tool_keys(db: Session, group_id: int) -> set[str]:
 
 
 def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:
-    auto = is_auto_detect_tool(db, step.tool_key)
+    descriptor = step_descriptor(db, db.get(models.ClassPath, step.path_id), step)
+    auto = descriptor["auto_detect"]
     return {
+        "step_type": step.step_type,
+        "administration_plan_id": step.administration_plan_id,
+        "active_from": step.active_from,
+        "target_summary": descriptor["target_summary"],
+        "availability_reason": descriptor["availability_reason"],
         "id": step.id,
         "path_id": step.path_id,
         "position": step.position,
@@ -233,17 +240,18 @@ def _resolve_cells(
         by_source = marks.get((step.id, username), {})
         teacher = by_source.get("teacher")
         mark = None
+        evidence = None
         if not available[step.id]:
             state, source = "unavailable", None
         else:
-            mark = teacher or by_source.get("student")
+            mark = teacher or (by_source.get("student") if step.step_type == "tool" else None)
             if mark:
                 state, source = mark.state, mark.source
-            elif auto[step.id] and has_automatic_evidence(db, step.tool_key, username, path.published_at):
+            elif auto[step.id] and (evidence := completion_evidence(db, path, step, username)):
                 state, source = "done", "automatic"
             else:
                 state, source = "not_done", None
-        cells.append({"step": step, "state": state, "source": source, "mark": mark, "teacher": teacher})
+        cells.append({"step": step, "state": state, "source": source, "mark": mark, "teacher": teacher, "evidence": evidence})
 
     available_cells = [c for c in cells if c["state"] != "unavailable"]
     next_step_id = next((c["step"].id for c in available_cells if c["state"] != "done"), None)
@@ -346,14 +354,20 @@ async def update_class_path(
     if mode not in ("recommended", "strict"):
         raise HTTPException(status_code=422, detail="Mode must be 'recommended' or 'strict'")
 
-    # Verify that each tool in the steps is enabled for the class (plan §5.2)
-    enabled_tool_keys = get_class_enabled_tool_keys(db, path.group_id)
     for step_input in payload.steps:
-        if step_input.tool_key not in enabled_tool_keys:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Tool '{step_input.tool_key}' is not enabled for this class",
-            )
+        validate_step_input(db, path, step_input)
+    ids = [row.id for row in payload.steps if row.id is not None]
+    if len(ids) != len(set(ids)):
+        raise HTTPException(422, "duplicate_step_id")
+    # Validate every identity before mutating any row.
+    for value in payload.steps:
+        if value.id is not None:
+            step = db.query(models.ClassPathStep).filter_by(id=value.id, path_id=path.id).first()
+            if not step:
+                raise HTTPException(422, "step_path_mismatch")
+            from ..path_step_types import target_identity
+            if step.active_from is not None and target_identity(step) != target_identity(value):
+                raise HTTPException(409, "activated_step_target_immutable")
 
     # Manage steps: soft-remove missing IDs and reorder by array index
     existing_steps = (
@@ -379,7 +393,7 @@ async def update_class_path(
         if step_input.id is not None and step_input.id in existing_by_id:
             step = existing_by_id[step_input.id]
             step.position = position
-            step.tool_key = step_input.tool_key
+            apply_step_target(step, step_input)
             step.title = step_title
             step.instructions = step_instructions
             step.due_date = step_input.due_date
@@ -393,7 +407,9 @@ async def update_class_path(
             if archived_step:
                 archived_step.removed_at = None
                 archived_step.position = position
-                archived_step.tool_key = step_input.tool_key
+                apply_step_target(archived_step, step_input)
+                if archived_step.active_from is None and path.status == "published":
+                    archived_step.active_from = datetime.now(timezone.utc)
                 archived_step.title = step_title
                 archived_step.instructions = step_instructions
                 archived_step.due_date = step_input.due_date
@@ -403,7 +419,10 @@ async def update_class_path(
             new_step = models.ClassPathStep(
                 path_id=path.id,
                 position=position,
-                tool_key=step_input.tool_key,
+                step_type=step_input.step_type,
+                tool_key=step_input.tool_key if step_input.step_type == "tool" else None,
+                administration_plan_id=step_input.administration_plan_id if step_input.step_type == "questionnaire_administration" else None,
+                active_from=datetime.now(timezone.utc) if path.status == "published" else None,
                 title=step_title,
                 instructions=step_instructions,
                 due_date=step_input.due_date,
@@ -427,9 +446,16 @@ async def publish_class_path(
 ):
     """Publish a class path (records published_at once on first publication)."""
     path = _require_visible_path(db, current_user, path_id, for_update=True)
+    activation = datetime.now(timezone.utc)
+    for step in _active_steps(db, path.id):
+        descriptor = step_descriptor(db, path, step)
+        if not descriptor["available"]:
+            raise HTTPException(409, descriptor["availability_reason"])
+        if step.active_from is None:
+            step.active_from = activation
     path.status = "published"
     if path.published_at is None:
-        path.published_at = func.now()
+        path.published_at = activation
     path.archived_at = None
     path.revision += 1
     db.commit()
@@ -500,6 +526,8 @@ def _teacher_cell(cell: dict) -> dict:
     teacher = cell["teacher"]
     mark = teacher or cell["mark"]
     return {
+        "completion_kind": cell["evidence"]["kind"] if cell["evidence"] else None,
+        "completion_at": cell["evidence"]["at"] if cell["evidence"] else None,
         "step_id": cell["step"].id,
         "state": cell["state"],
         "source": cell["source"],
@@ -512,8 +540,9 @@ def _teacher_cell(cell: dict) -> dict:
 
 def _path_context(db: Session, path: models.ClassPath, usernames: list[str]):
     steps = _active_steps(db, path.id)
-    available = {s.id: is_tool_available_for_class(db, path.group_id, s.tool_key) for s in steps}
-    auto = {s.id: is_auto_detect_tool(db, s.tool_key) for s in steps}
+    descriptors = {s.id: step_descriptor(db, path, s) for s in steps}
+    available = {s.id: descriptors[s.id]["available"] for s in steps}
+    auto = {s.id: descriptors[s.id]["auto_detect"] for s in steps}
     marks = _load_marks(db, [s.id for s in steps], usernames)
     return steps, available, auto, marks
 
@@ -605,7 +634,7 @@ async def override_class_path_progress(
     )
     if not member:
         raise HTTPException(status_code=404, detail="Student is not a member of this class")
-    if payload.state != "clear" and not is_tool_available_for_class(db, path.group_id, step.tool_key):
+    if payload.state != "clear" and not step_descriptor(db, path, step)["available"]:
         raise HTTPException(status_code=422, detail="Tool is not available")
 
     row = (
@@ -682,13 +711,10 @@ async def list_student_class_paths(
     result = []
     for path in paths:
         steps = _active_steps(db, path.id)
-        available = {
-            s.id: is_tool_available_for_class(db, path.group_id, s.tool_key) and (
-                s.tool_key.strip().lower() in user_tools_lower or s.tool_key in user_tools
-            )
-            for s in steps
-        }
-        auto = {s.id: is_auto_detect_tool(db, s.tool_key) for s in steps}
+        descriptors = {s.id: step_descriptor(db, path, s) for s in steps}
+        available = {s.id: descriptors[s.id]["available"] and
+                     (descriptors[s.id]["instrument_code"] or "").lower() in user_tools_lower for s in steps}
+        auto = {s.id: descriptors[s.id]["auto_detect"] for s in steps}
         marks = _load_marks(db, [s.id for s in steps], [username])
         cells, done, total, next_step_id = _resolve_cells(
             db, path, steps, username, available=available, auto=auto, marks=marks)
@@ -702,6 +728,9 @@ async def list_student_class_paths(
             "mode": path.mode,
             "steps": [
                 {
+                    **_serialize_step(db, cell["step"]),
+                    "completion_kind": cell["evidence"]["kind"] if cell["evidence"] else None,
+                    "completion_at": cell["evidence"]["at"] if cell["evidence"] else None,
                     "id": cell["step"].id,
                     "tool_key": cell["step"].tool_key,
                     "title": cell["step"].title,
@@ -709,7 +738,7 @@ async def list_student_class_paths(
                     "due_date": cell["step"].due_date,
                     "state": cell["state"],
                     "source": cell["source"],
-                    "start_href": get_tool_start_href(cell["step"].tool_key),
+                    "start_href": descriptors[cell["step"].id]["start_href"],
                     "can_self_mark": available[cell["step"].id] and not auto[cell["step"].id],
                 }
                 for cell in cells
@@ -761,10 +790,10 @@ def _require_student_step_access(
     if not step:
         raise HTTPException(status_code=404, detail="Class path step not found")
 
-    if not is_tool_available_for_class(db, path.group_id, step.tool_key):
+    if not step_descriptor(db, path, step)["available"]:
         raise HTTPException(status_code=422, detail="Tool is not available")
 
-    if is_auto_detect_tool(db, step.tool_key):
+    if step.step_type != "tool" or is_auto_detect_tool(db, step.tool_key):
         raise HTTPException(
             status_code=422,
             detail="Step has automatic completion and cannot be self-marked",
@@ -837,3 +866,52 @@ async def unmark_step_done(
 
     return {"ok": True, "step_id": step.id, "state": "not_done", "source": None}
 
+
+
+def require_step_launch(db, identity, path_id, step_id, *, for_update=False):
+    """Authorization/order seam shared by launch and administration entry writers."""
+    username = _username(identity)
+    query = db.query(models.ClassPath).filter_by(id=path_id, status="published")
+    if for_update:
+        query = query.populate_existing().with_for_update()
+    path = query.first()
+    if not username or not path:
+        raise HTTPException(403, "class_path_access_denied")
+    group = db.get(models.StudentGroup, path.group_id)
+    if not group or not group.is_active or not db.query(models.GroupMembership.id).filter_by(group_id=group.id, username=username).first():
+        raise HTTPException(403, "class_path_access_denied")
+    steps, available, auto, marks = _path_context(db, path, [username])
+    step = next((row for row in steps if row.id == step_id), None)
+    if not step:
+        raise HTTPException(404, "class_path_step_not_found")
+    descriptor = step_descriptor(db, path, step)
+    if not available[step.id]:
+        raise HTTPException(409, descriptor["availability_reason"])
+    from ..class_access import require_tool
+    require_tool(db, identity, descriptor["instrument_code"])
+    cells, *_ = _resolve_cells(db, path, steps, username, available=available, auto=auto, marks=marks)
+    if next(cell for cell in cells if cell["step"].id == step_id)["state"] == "locked":
+        raise HTTPException(409, "class_path_step_locked")
+    return path, step, descriptor
+
+
+@router.post("/user/paths/{path_id}/steps/{step_id}/launch")
+async def launch_step(path_id: int, step_id: int, current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
+    path, step, descriptor = require_step_launch(db, current_user, path_id, step_id)
+    if step.step_type == "tool":
+        return {"step_type":"tool", "start_href":descriptor["start_href"]}
+    from ..path_step_types import EXTERNAL_IT_HREF
+    plan, institution = administration_target(db, path.group_id, step.administration_plan_id)
+    return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id, "administration_plan_id":plan.id,
+            "instrument_code":plan.instrument_code, "locale":plan.locale, "external_href":EXTERNAL_IT_HREF,
+            "score_factors":[{"code":factor.code, "label_i18n":factor.label_i18n or {}, "label_it":factor.label_it,
+                              "label_en":factor.label_en} for factor in db.query(models.Factor).filter_by(
+                                  instrument_code=plan.instrument_code).order_by(models.Factor.sort_order, models.Factor.id)],
+            "institution":{"id":institution.id, "name":institution.name, "institution_code":institution.institution_code}}
+
+
+@router.post("/user/paths/{path_id}/steps/{step_id}/guided-entry")
+async def guided_entry(path_id: int, step_id: int, payload: schemas.AdministrationGuidedEntryInput,
+                       current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
+    from ..questionnaire_entry import accept_guided_entry
+    return accept_guided_entry(db, current_user, path_id, step_id, payload)
