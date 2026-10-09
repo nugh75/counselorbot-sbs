@@ -9,8 +9,10 @@ import {
   administrationDraftKey,
   commitAdministrationEntry,
   parseAdministrationLaunch,
+  scoreAdministrationStep,
   type AdministrationLaunch,
   type AdministrationEntryAck,
+  type AdministrationResult,
 } from "@/lib/administration-entry";
 import { parseVerificationGrant } from "@/lib/institution-credentials";
 import {
@@ -21,6 +23,7 @@ import { fetchInstruments } from "@/lib/instruments-api";
 import { getSelectedCounselorId } from "@/lib/counselor";
 import { ScoreInputForm } from "@/components/qsa/ScoreInputForm";
 import { GuidedChatInterface } from "@/components/qsa/GuidedChatInterface";
+import { InAppAdministrationRunner } from "@/components/administration/InAppAdministrationRunner";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Callout } from "@/components/ui/Callout";
@@ -41,10 +44,15 @@ export function AdministrationStepFlow({
   const [questionnaire, setQuestionnaire] =
     useState<QuestionnaireConfig | null>(null);
   const [error, setError] = useState(false);
+  const [localeUnavailable, setLocaleUnavailable] = useState(false);
   const [busy, setBusy] = useState(false);
   const [password, setPassword] = useState("");
   const [grant, setGrant] = useState<string | null>(null);
   const [scores, setScores] = useState<Record<string, number> | null>(null);
+  // In-app: answers and the saved runner result survive reloads; the result is never retyped.
+  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [saved, setSaved] = useState<AdministrationResult | null>(null);
+  const runnerSession = useRef<string | null>(null);
   const [ack, setAck] = useState<AdministrationEntryAck | null>(null);
   const [reload, setReload] = useState(0);
   const owner = useRef<string | null>(null);
@@ -54,17 +62,31 @@ export function AdministrationStepFlow({
   );
   const accountMatches = async () =>
     owner.current === (await getIdentity())?.username;
-  const remember = (values: Record<string, number>) => {
-    setScores(values);
+  const persist = (draft: Record<string, unknown>) => {
     if (draftKey.current)
       try {
         sessionStorage.setItem(
           draftKey.current,
-          JSON.stringify({ scores: values, retryIds: retryIds.current }),
+          JSON.stringify({ retryIds: retryIds.current, ...draft }),
         );
       } catch {}
   };
-  useDraftGuard(!!scores && !ack, l("back"), { blocked: busy });
+  const remember = (values: Record<string, number>) => {
+    setScores(values);
+    persist({ scores: values });
+  };
+  const rememberRunner = (
+    values: Record<number, number>,
+    result: AdministrationResult | null = saved,
+  ) => {
+    setAnswers(values);
+    persist({ answers: values, runnerSession: runnerSession.current, saved: result });
+  };
+  useDraftGuard(
+    (!!scores || Object.keys(answers).length > 0 || !!saved) && !ack,
+    l("back"),
+    { blocked: busy },
+  );
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -82,7 +104,12 @@ export function AdministrationStepFlow({
           `/api/user/paths/${pathId}/steps/${stepId}/launch`,
           { method: "POST" },
         );
-        if (!response.ok) throw new Error("launch");
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          if (body?.detail === "administration_locale_unavailable" && !cancelled)
+            setLocaleUnavailable(true);
+          throw new Error("launch");
+        }
         const target = parseAdministrationLaunch(await response.json());
         const rows = await fetchInstruments();
         const instrument = rows.find(
@@ -114,11 +141,15 @@ export function AdministrationStepFlow({
               sessionStorage.getItem(draftKey.current) || "null",
             );
             if (stored?.scores) setScores(stored.scores);
+            if (stored?.answers) setAnswers(stored.answers);
+            if (stored?.runnerSession) runnerSession.current = stored.runnerSession;
+            if (stored?.saved) setSaved(stored.saved);
             if (stored?.retryIds) retryIds.current = stored.retryIds;
           } catch {}
           setLaunch(target);
           setQuestionnaire(config);
           setError(false);
+          setLocaleUnavailable(false);
         }
       } catch {
         if (!cancelled) setError(true);
@@ -156,24 +187,51 @@ export function AdministrationStepFlow({
       setBusy(false);
     }
   };
-  const enter = async (values: Record<string, number>) => {
+  const enter = async (
+    body: { scores: Record<string, number> } | { result_id: number },
+    sessionId?: string,
+  ) => {
     if (!grant || busy || !(await accountMatches())) return;
     setBusy(true);
     setError(false);
     retryIds.current ??= {
-      session_id: crypto.randomUUID(),
+      // In-app entry reuses the saved result's session so chat and result stay together.
+      session_id: sessionId ?? crypto.randomUUID(),
       request_id: crypto.randomUUID(),
     };
-    remember(values);
+    if ("scores" in body) remember(body.scores);
+    else rememberRunner(answers);
     try {
-      const saved = await commitAdministrationEntry(apiFetch, pathId, stepId, {
+      const committed = await commitAdministrationEntry(apiFetch, pathId, stepId, {
         ...retryIds.current,
-        scores: values,
+        ...body,
         institution_grant: grant,
       });
       if (await accountMatches()) {
-        setAck(saved);
+        setAck(committed);
         if (draftKey.current) sessionStorage.removeItem(draftKey.current);
+      }
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const saveRunner = async (values: Record<number, number>) => {
+    if (!grant || busy || !(await accountMatches())) return;
+    setBusy(true);
+    setError(false);
+    runnerSession.current ??= crypto.randomUUID();
+    rememberRunner(values);
+    try {
+      const { result } = await scoreAdministrationStep(apiFetch, pathId, stepId, {
+        session_id: runnerSession.current,
+        answers: values,
+        institution_grant: grant,
+      });
+      if (await accountMatches()) {
+        setSaved(result);
+        rememberRunner(values, result);
       }
     } catch {
       setError(true);
@@ -196,7 +254,10 @@ export function AdministrationStepFlow({
     <div className="space-y-4">
       <Link href="/profilo/percorsi">{l("back")}</Link>
       <h1 className="text-xl font-semibold">{l("administration")}</h1>
-      {error && (
+      {localeUnavailable && (
+        <Callout variant="danger">{l("localeUnavailable")}</Callout>
+      )}
+      {error && !localeUnavailable && (
         <Callout variant="danger">
           {l("error")}{" "}
           <Button
@@ -207,8 +268,63 @@ export function AdministrationStepFlow({
           </Button>
         </Callout>
       )}
-      {!launch || !questionnaire ? (
+      {localeUnavailable ? null : !launch || !questionnaire ? (
         <p>{l("loading")}</p>
+      ) : launch.delivery_mode === "in_app" ? (
+        <>
+          <Card className="space-y-3 p-4">
+            <p>
+              {launch.instrument_code} · {launch.locale.toUpperCase()} ·{" "}
+              {launch.institution.name} · {launch.institution.institution_code}
+            </p>
+            <p>{l("inAppHint")}</p>
+            <p className="text-sm text-slate-600">{l("rule")}</p>
+            {!grant && (
+              <>
+                <label className="block">
+                  {l("password")}
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="ml-2 rounded border border-slate-300 p-2"
+                  />
+                </label>
+                <Button disabled={busy || !password} onClick={() => void verify()}>
+                  {l("verify")}
+                </Button>
+              </>
+            )}
+          </Card>
+          {grant && !saved && (
+            <InAppAdministrationRunner
+              instrumentCode={launch.instrument_code}
+              locale={launch.locale}
+              answers={answers}
+              disabled={busy}
+              onChange={(values) => rememberRunner(values)}
+              onSubmit={(values) => void saveRunner(values)}
+            />
+          )}
+          {saved && (
+            <Card className="space-y-3 p-4">
+              <p role="status">{l("resultSaved")}</p>
+              <Button
+                disabled={busy || !grant || !getSelectedCounselorId()}
+                onClick={() => void enter({ result_id: saved.id }, saved.session_id)}
+              >
+                {l("enterSaved")}
+              </Button>
+              {!grant && <p className="text-sm text-slate-600">{l("verify")}</p>}
+            </Card>
+          )}
+          {!getSelectedCounselorId() && (
+            <Link href={`/counselor?next=${encodeURIComponent(`/profilo/percorsi/${pathId}/${stepId}`)}`}>
+              {l("counselor")}
+            </Link>
+          )}
+        </>
       ) : (
         <>
           <Card className="space-y-3 p-4">
@@ -217,7 +333,7 @@ export function AdministrationStepFlow({
               {launch.institution.institution_code}
             </p>
             <a
-              href={launch.external_href}
+              href={launch.external_href ?? undefined}
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-indigo-700 underline"
@@ -247,7 +363,7 @@ export function AdministrationStepFlow({
             onDraftChange={remember}
             submitLabel={l("enter")}
           submitDisabled={busy || !grant || !getSelectedCounselorId()}
-          onSubmit={(values) => {remember(values);void enter(values);}}
+          onSubmit={(values) => {remember(values);void enter({ scores: values });}}
           />
           {!getSelectedCounselorId() && (
             <Link href={`/counselor?next=${encodeURIComponent(`/profilo/percorsi/${pathId}/${stepId}`)}`}>

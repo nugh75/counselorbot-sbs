@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { administrationStepText } from '@/lib/i18n-administration-steps';
+import { fetchInstruments } from '@/lib/instruments-api';
 import { ArrowDown, ArrowUp, ArrowLeft, Archive, CheckCircle2, Circle, Plus, Trash2, X } from 'lucide-react';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
@@ -51,7 +52,10 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
     const [description, setDescription] = useState(path.description || '');
     const [mode, setMode] = useState<'recommended' | 'strict'>(path.mode);
     const [steps, setSteps] = useState<ClassPathStep[]>(path.steps);
-    const [administrations, setAdministrations] = useState<{id:number;title:string;code:string;locale:string;instrument_code:string}[]>([]);
+    const [administrations, setAdministrations] = useState<{id:number;title:string;code:string;locale:string;instrument_code:string;delivery_mode?:string}[]>([]);
+    // Italian runs on the external site; other languages only where the app serves that instrument locale.
+    const [servedLocales, setServedLocales] = useState<Record<string,string[]>>({});
+    const [administrationLocale,setAdministrationLocale] = useState('it');
     const [administrationError,setAdministrationError] = useState(false);
     const [selectedAdministration,setSelectedAdministration] = useState('');
     const [administrationTitle,setAdministrationTitle] = useState('');
@@ -65,6 +69,12 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
         } catch {setAdministrationError(true);}
     };
     useEffect(() => {void loadAdministrations();}, []); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        fetchInstruments().then(rows=>setServedLocales(Object.fromEntries(rows.map(row=>[row.code,row.available_locales]))))
+            .catch(()=>setAdministrationError(true));
+    }, []);
+    const localeOptions = (code: string) => ['it', ...(servedLocales[code] || []).filter(locale=>locale!=='it')];
+    const offered = (row: {locale:string;instrument_code:string}) => localeOptions(row.instrument_code).includes(row.locale);
     const createAdministration = async () => {
         if (busy || !administrationTitle.trim()) return;
         if (account.current !== getViewAsAccount()?.username) {setForbidden(true);return;}
@@ -72,7 +82,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
         try {
             const response = await apiFetch(`/api/teacher/groups/${path.group_id}/administrations`,{
                 method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:administrationTitle.trim(),
-                    instrument_code:administrationInstrument,locale:'it',status:'active'}),
+                    instrument_code:administrationInstrument,locale:administrationLocale,status:'active'}),
             });
             if (!response.ok) throw new Error('create administration');
             const created = await response.json();
@@ -542,17 +552,21 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                     <div className="flex flex-wrap gap-2">
                         <label>{a('choose')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="ml-2 rounded border p-2">
                             <option value="">{a('choose')}</option>
-                            {administrations.filter(row=>row.locale==='it').map(row=><option key={row.id} value={row.id}>{row.code} · {row.title}</option>)}
+                            {administrations.filter(offered).map(row=><option key={row.id} value={row.id}>{row.code} · {row.title} · {row.locale.toUpperCase()}</option>)}
                         </select></label>
                         <Button variant="secondary" disabled={busy || !selectedAdministration} onClick={addAdministrationStep}>{l('addStep')}</Button>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <label>{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="ml-2 rounded border p-2" /></label>
-                        <label>{a('instrument')}<select value={administrationInstrument} onChange={event=>setAdministrationInstrument(event.target.value)} className="ml-2 rounded border p-2">
+                        <label>{a('instrument')}<select value={administrationInstrument} onChange={event=>{setAdministrationInstrument(event.target.value);setAdministrationLocale('it');}} className="ml-2 rounded border p-2">
                             {['QSA','QSAr','ZTPI','QPCS','QPCC','QAP'].map(code=><option key={code}>{code}</option>)}
+                        </select></label>
+                        <label>{a('locale')}<select value={administrationLocale} onChange={event=>setAdministrationLocale(event.target.value)} className="ml-2 rounded border p-2">
+                            {localeOptions(administrationInstrument).map(locale=><option key={locale} value={locale}>{locale.toUpperCase()}</option>)}
                         </select></label>
                         <Button disabled={busy || !administrationTitle.trim()} onClick={()=>void createAdministration()}>{a('create')}</Button>
                     </div><p className="text-sm text-slate-600">{a('rule')}</p>
+                    <p className="text-sm text-slate-600">{a('teacherInAppGuide')}</p>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
                     <select

@@ -31,6 +31,7 @@ import {
     NotebookPen, UsersRound, Send, FolderOpen, ClipboardList, Compass, Route, Table2, GraduationCap, BookOpen,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { resultProvenanceText } from '@/lib/i18n-administration-steps';
 import remarkGfm from 'remark-gfm';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList,
@@ -43,6 +44,9 @@ interface QuestionnaireResult {
     questionnaire_type: string;
     scores: Record<string, number> | null;
     submitted_at: string;
+    source?: string | null;
+    capture_method?: string | null;
+    locale?: string | null;
 }
 
 type PersonalSection = 'combined' | 'assignments' | 'notebook' | 'groups' | 'telegram' | 'portfolio' | 'sessions' | 'orientation' | 'timeline' | 'tavolo' | 'flashcards' | 'pqbl';
@@ -582,6 +586,10 @@ export default function ProfilePage() {
                                                 {t('profile.submittedOn', { date: new Date(selectedSession.submitted_at).toLocaleString(lang) })}
                                             </span>
                                         </div>
+                                        <p className="text-xs text-slate-500">
+                                            {resultProvenanceText(lang, selectedSession)}
+                                            {selectedSession.locale ? ` · ${selectedSession.locale.toUpperCase()}` : ''}
+                                        </p>
                                         <p className="text-xs font-mono text-slate-500">
                                             {t('history.session')} ID: {selectedSession.session_id}
                                         </p>
