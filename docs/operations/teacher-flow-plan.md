@@ -24,8 +24,11 @@ administration is one object available through research and classroom views.
   their scores are then entered in the guided chat. Other available questionnaire
   languages use the in-app runner, then explicitly enter the scores into chat.
 - New questionnaire administration steps finish when valid questionnaire data are
-  durably accepted into guided chat, not when a link opens or a survey is merely
-  submitted. A results deep dive is a separate optional step in the composition.
+  durably accepted into CounselorBot through guided chat or a confirmed teacher
+  import matched to that student and the exact plan/administration of the step.
+  An imported result does not require the student to open guided chat first.
+  Link opening or ordinary runner submission alone does not qualify. A results
+  deep dive is a separate optional step in the composition.
 - Assignment steps reuse catalog goals, attachments and `TeacherAssignment` and
   finish on the student's explicit submission. Standalone assignments remain supported.
 - Forum steps point to the exact discussion chosen by the teacher and finish when
@@ -34,8 +37,9 @@ administration is one object available through research and classroom views.
 - Administrator-authored path presets and CSV/API imports are future work. The
   model must preserve a place for template lineage and result provenance.
 - Future imports populate the student's existing compilations/history with imported
-  entries. Import alone does not complete a questionnaire step under the retained
-  default: data must enter guided chat. The owner may revisit that default.
+  entries and also complete a matching questionnaire step when the teacher-confirmed
+  import is valid for that student and administration. This is the owner's final
+  decision of 2026-10-09, replacing the earlier guided-entry-only default.
 
 ## 2. Current state and evidence
 
@@ -110,11 +114,13 @@ with one type-specific target. A **Questionnaire result** is the saved student
 profile, with provenance independent of how it is later used. **Guided entry**
 records the student's explicit acceptance of a result into a guided-chat session;
 it is not a claim that CounselorBot verified an external submission. A **Completion
-evidence** record binds such acceptance or a guided deep dive to the exact step.
+evidence** record binds guided entry, a teacher-confirmed imported result or a guided
+deep dive to the exact step. Import confirmation is its own evidence kind and never
+pretends that a guided-chat session occurred.
 
 | Step type | Required target | Completion policy |
 |---|---|---|
-| `questionnaire_administration` | `administration_plan_id` | Guided entry of valid results for that administration. |
+| `questionnaire_administration` | `administration_plan_id` | Valid data accepted through guided chat or a confirmed teacher import matched to the student and this administration. |
 | `guided_results_chat` | Earlier questionnaire administration step in the same path | Server-recorded final guided turn tied to that step's result. |
 | `assignment` | `assignment_id` | Explicit current submission for that assignment. |
 | `forum` | `topic_id` | Published qualifying reply in that exact discussion. |
@@ -137,7 +143,7 @@ local. Research and class callers use the same administration interface.
 | ClassPathStep | `step_type`, nullable `tool_key`, administration/assignment/topic FKs, `results_step_id`, `active_from` | Exactly the required target for the declared type; referenced results step belongs to this path and precedes it. Reordering preserves IDs. Removed IDs are not reused for a different target. |
 | QuestionnaireResult | `source` (`in-app` or `imported`), `capture_method`, `source_system`, optional `source_record_id`, `locale` | Source means how data reached CounselorBot; manual IT score entry is `in-app`, `capture_method=manual_scores`, `source_system=competenzestrategiche.it`. Future CSV/API ingestion uses `imported`. Student requests cannot assert imported origin. |
 | QuestionnaireGuidedEntry (new) | Result FK, authenticated student, guided session, accepted timestamp; optional step FK | Unique result/student/session/step acceptance; standalone entries have no step. Scoped request idempotency also prevents duplicate results on retry. |
-| ClassPathStepEvidence (new) | Step FK, username, evidence kind, guided-entry/session reference, recorded timestamp, invalidation timestamp | Stores linkage and timestamps, not questionnaire scores or forum bodies. New automatic evidence remains separate from explicit progress overrides. |
+| ClassPathStepEvidence (new) | Step FK, username, evidence kind, result reference, guided-entry/session reference or confirmed-import/batch reference, recorded timestamp, invalidation timestamp | Guided-entry and confirmed-import evidence are distinct. Import evidence needs no chat session; it binds the matched student and exact administration. Stores linkage and timestamps, not scores or forum bodies; remains separate from explicit overrides. |
 | ClassPathProgress | Keep existing marks and precedence | Retain actor/reason and history. Manual student marking is only allowed for tool types already permitting it. |
 | Future path lineage | Reserve versioned template identity in the model contract | No preset tables, endpoints or editor now. Future instantiation copies a definition and resolves targets in the destination class; it must not share live class-specific references. |
 
@@ -171,7 +177,9 @@ Typed target identity is immutable after first activation. To change a type or
 target, soft-remove the old step and create a new ID; reordering and text/due-date
 editing retain identity. Existing pre-path results can be explicitly accepted into
 a new guided session after activation; creation of the original result alone is
-insufficient. Result deletion removes/invalidates associated evidence. Keep legacy
+insufficient. A confirmed import after activation also qualifies for the exact
+student and administration; its external assessment date need not be recent.
+Result deletion removes/invalidates associated evidence. Keep legacy
 tool behavior unchanged rather than retroactively resetting existing progress.
 
 ## 5. Credential and institution-context contract
@@ -241,6 +249,9 @@ localized behavior. Explicitly reject disabled tools on every path start/write.
 Strict ordering gates launch and step-associated writes; it does not ban standalone
 use of a tool, assignment or forum. Evidence created after activation can satisfy a
 later step once predecessors complete, following the existing strict-path rule.
+Future teacher imports are plan-level ingestion: they may populate history and
+provide matching evidence while a step is locked; strict progress still waits for
+predecessors, and the import never bypasses class/target availability rules.
 Changing All tools/class view cannot bypass a specific path's class settings.
 
 ## 7. UI placement and ASCII structure
@@ -286,7 +297,7 @@ PATH BUILDER: Orientation for 3B
   1. Questionnaire administration: QSA / Italian
      Administration [AP-... existing v / Create]
      Institute [My institute]  Delivery [External questionnaire]
-     Rule: completed when scores are saved into guided chat
+     Rule: guided score entry OR confirmed import for this student/administration
   2. Guided results chat (optional addition)
      Results from [step 1 v]  Rule: final guided turn completed
   3. Assignment
@@ -306,6 +317,7 @@ STUDENT: QSA administration / AP-... / My institute
   2 [Enter questionnaire scores]    Preserve draft on save failure
   3 [Use scores in guided chat]     Server confirms durable acceptance
   Step done: scores accepted; follow-up chat remains a separate step
+  Future alternative: teacher confirms matched import -> step done without opening chat
 
 NON-ITALIAN AVAILABLE QUESTIONNAIRE
   [Complete in app] -> saved profile -> [Use scores in guided chat]
@@ -336,8 +348,8 @@ to clear an override. An override does not authorize access to an unavailable ta
 
 | Type | Qualifying evidence | Does not count / lifecycle |
 |---|---|---|
-| Questionnaire administration, IT | Authenticated student's valid score profile for the exact plan/instrument/locale, accepted into their guided session and bound to this step after activation | External link, local draft, failed save, another plan, anonymous/practice result, direct result POST alone. Later optional deep dive is not required. |
-| Questionnaire administration, other languages | Exact in-app scored result for the plan, followed by explicit guided entry acknowledgement after activation | Questionnaire submission without guided entry; an unavailable locale must not fall back to IT or another locale. |
+| Questionnaire administration, IT | Valid result for the exact student/plan/instrument/locale, accepted through guided chat or a confirmed teacher import matched to that student and administration after activation | External link, unconfirmed upload/preview, failed save, unmatched student, another plan, anonymous/practice result, direct result POST alone. A qualifying import requires no chat opening; the separate deep dive is not completed. |
+| Questionnaire administration, other languages | Exact in-app scored result followed by guided entry, or a valid confirmed teacher import for the exact matched student and plan, after activation | Ordinary runner submission alone, unconfirmed/unmatched import or another plan. An unavailable locale must not fall back to a different locale. |
 | Guided results chat | Final guided turn marker for the step's bound student session and the preceding administration result, after this step's activation | A score-entry event, unrelated chat, old final marker, cancelled/failed turn. Teacher omission of this step is how the deep dive stays optional in the composition. |
 | Assignment | `AssignmentWork.submission` present and `submitted_at` after activation for the referenced, non-revoked assignment and current eligible student | Opening, planning, private reflection, feedback or a different assignment. Withdrawal removes automatic completion. Path v1 supports whole-class goal assignments; targeted deliveries remain standalone. |
 | Forum | Student-authored published reply in the specified same-class published topic, after activation, with neither hidden nor deleted post | Reading, replying elsewhere, pending moderation, hidden/deleted reply. Approval qualifies the existing reply; hiding/deleting it removes evidence unless another qualifying reply remains. Topic lock blocks new replies but does not erase earlier qualifying evidence; hidden/unpublished topic becomes unavailable. |
@@ -346,8 +358,9 @@ to clear an override. An override does not authorize access to an unavailable ta
 Owner decisions confirmed on 2026-10-09: forum completion requires a published post
 in the indicated thread; assignment completion requires explicit student submission;
 the second institute teacher self-joins from the existing-institute list. These are
-settled decisions, not pending review questions. Import-only completion remains the
-separate revisitable default described in section 12.
+settled decisions, not pending review questions. The final import decision also
+allows a confirmed matched import to complete the questionnaire step without chat
+entry, as specified in section 12.
 
 Do not make identical tool/instrument codes the step identity. Repeated administrations
 must have different plan targets. Duplicate automatic targets in one path are rejected
@@ -428,21 +441,29 @@ manual scores enter guided chat with committed result/entry/evidence acknowledge
 Progress remains undone on link opening or failed persistence. Introduce the typed
 envelope, stable activation/target identity and guided-entry tables with legacy steps
 backfilled as `tool`. Support provenance fields from this first new result writer.
+The completion model also recognizes future confirmed-import evidence for the exact
+student/administration; importer UI/parser implementation remains future issue #157.
 
 Tests: IT path -> external handoff fixture -> manual scores -> server completion;
 another plan/student/practice result rejected; score validation, retry idempotency,
 409/422/5xx draft retention; class and research show one plan ID; upgrade retains old
 IDs/marks/tool completion; secret-free fixture only, no live external submission.
+Synthetic completion-contract evidence also covers a confirmed import for the exact
+student/administration without a chat session; preview, unmatched/wrong-plan and
+failed-import evidence never qualifies. No importer parser or UI is implemented.
 
 ### TF4 — in-app administration and guided entry
 
 DoD: available non-IT languages complete in app, persist the exact plan result and
 offer guided entry using those scores without retyping or duplicating the result.
-Only guided entry finishes the new step. Results/history show accurate provenance;
-future imported sources are representable but import creation is not exposed.
+Guided entry completes the in-app flow; future confirmed teacher imports also
+complete matching steps without chat opening. Results/history show accurate provenance;
+future import evidence is representable but import creation is not exposed here.
 
 Tests: capability-available and unavailable language fixtures; scoring -> result ->
-guided entry with plan, locale and student binding; submission alone stays undone;
+guided entry with plan, locale and student binding; ordinary runner submission alone
+stays undone; synthetic future confirmed-import evidence completes the matching step
+without chat, while a source label alone does not;
 standalone runner regression, forged origin rejection, repeated acceptance, old
 results with unknown capture method, research counts/exports without new secrets.
 
@@ -520,7 +541,7 @@ environment. Merge, deploy and runtime verification remain separate actions.
 | Results assigned to wrong administration or repeated step | Server-bound plan/result/student/session/step evidence; immutable activated target; no forged imported provenance. |
 | Existing assessment path progress changes retroactively | Legacy steps remain `tool`; do not fabricate guided-entry timestamps. |
 | Forum privacy tests weakened for completion | Allow only constrained metadata fields through a named module and test all downstream AI/export consumers. |
-| Owner decisions confused with revisitable import defaults | Record published forum posts, explicit assignment submission and second-teacher self-join as decisions; flag import-to-chat completion separately as a default the owner may revisit. |
+| Earlier import default survives the final owner decision | Recognize guided entry OR a confirmed teacher import for the matched student and exact administration. Keep import evidence distinct from chat evidence, and keep the importer outside the current milestone. |
 | Concurrent UX and view-switcher work | Recheck #138/#139/#140/#147 and current main at each slice; integrate delivered work rather than duplicating it. |
 
 Out of scope: application implementation in this PR; administrator duplicate-merge
@@ -529,9 +550,9 @@ new questionnaire translations/validation; administrator-authored path presets;
 CSV import UI/jobs; competenzestrategiche.it API keys, connectors, SSO or automatic
 credential delivery. No new vendor/API capability is assumed.
 
-The future file-import contract is specified in section 12. Import alone does not
-complete a questionnaire step under the retained default; the owner has kept this
-default on 2026-10-09 and may revisit whether explicit student guided entry is required.
+The future file-import contract is specified in section 12. A confirmed teacher
+import matched to the student and exact administration completes the questionnaire
+step without opening guided chat, under the final owner decision of 2026-10-09.
 Future templates have versioned source definitions and class-local instantiation;
 admin editing a template must not mutate already published paths.
 
@@ -545,8 +566,9 @@ Owner decisions recorded on 2026-10-09:
    list and self-joins, without administrator action or invitation. Aim for two
    teachers per institute; duplicates are handled later by the administrator.
 4. Future imported results appear as imported entries in the student's compilations/
-   history. Import alone does not complete the questionnaire step under the retained
-   guided-entry default, which the owner may revisit.
+   history and also complete the matching questionnaire step through a confirmed
+   teacher import for that student and administration. No guided-chat opening is
+   required; this final decision supersedes the earlier revisitable default.
 
 Before implementation, review these ASCII structures with the owner and confirm the
 assigned model separately for every task. No future model was chosen by this plan.
@@ -601,6 +623,9 @@ compilations/history views used for in-app results, clearly identified as import
 Do not confine it to a teacher-only import log or require a guided chat to make the
 history entry visible. Existing in-app entries remain intact; idempotent re-import
 adds no duplicate history entry. Path-step progress is a separate concern.
+The final owner decision also makes a confirmed import qualifying questionnaire-step
+evidence for the matched student and exact plan/administration; history visibility
+does not by itself complete unrelated steps.
 
 ### Contract and questionnaire-specific factor mappings
 
@@ -714,6 +739,7 @@ These entities are future contracts, not additional migrations for TF1-TF8.
 | ExternalStudentMatch | Provider, institute/class, stable external student key, matched account, confirming teacher/time, revision | Unique within that scope; no name-only key, no access to other classes, and no historical result reassignment. |
 | QuestionnaireImportBatch | Institute/class, teacher, provider, mapping versions, confirmed timestamp, counts and commit request ID | Durable minimal audit and idempotent request identity; omit raw file, excluded names and full source rows. |
 | QuestionnaireResult provenance | Existing proposed source fields plus mapping/batch identity, external instrument/attempt context and normalized payload fingerprint | `source=imported`, `source_system=competenzestrategiche.it`, `capture_method=json_import` or `csv_import`, exact external record ID and server-resolved student. |
+| Confirmed-import completion evidence | Result and committed-batch identity, matched student, exact administration, qualifying step and confirmation timestamp | Server-created only after successful teacher confirmation; distinct from guided-entry evidence, no chat session required. Idempotent re-import does not add duplicate evidence or refresh its timestamp. |
 | ExternalResultIdentity | Provider, institute, instrument, external record ID, result ID, matched student, payload fingerprint | Scoped database uniqueness and transactional checks make re-import idempotent across filenames, row order and concurrent batches. |
 
 Retain external record identity exactly, with its documented namespace. Scope includes
@@ -735,6 +761,9 @@ import time and administration so the student does not select an arbitrary lates
 The student's existing compilations/history reader includes both in-app and imported
 results with source labels; commit makes the imported entry visible without creating
 a synthetic compilation session, guided-entry acknowledgement or chat transcript.
+When that committed result matches a questionnaire step's student and administration,
+the same transaction records confirmed-import completion evidence for the applicable
+step. Unlinked history entries do not complete arbitrary steps of the same instrument.
 
 Proposed interface: class-scoped preview upload, preview mapping/matching revisions,
 explicit commit with request ID, and cancel/delete preview. Preview writes no durable
@@ -744,7 +773,8 @@ imported and excluded counts. Concurrent identity or revision conflicts roll bac
 that selected commit and require a refreshed preview. Do not accept client-supplied
 username/provenance as authority. Standalone imports may omit a plan; associating
 them later with a questionnaire step requires explicit compatible administration
-selection, never automatic attachment to all matching instrument steps.
+selection and audited teacher confirmation before creating matching import evidence,
+never automatic attachment to all steps of the same instrument.
 
 ### Teacher and student flow (ASCII)
 
@@ -770,13 +800,14 @@ TEACHER: Institute -> Class -> Questionnaire results -> Import (future)
   New: N | Already imported: N | Conflicts: N | Excluded: N
   [Remember confirmed stable-ID matches] [Confirm import] [Cancel]
   Confirmation -> scoped atomic save -> raw upload deleted
+  Matching student + exact administration -> questionnaire-step import evidence
 
 STUDENT: Existing compilations/history
   Result: imported / competenzestrategiche.it / <questionnaire> / <date>
   Visible immediately after confirmed import; existing in-app entries stay present
-  [Use this result in guided chat]
-  Proposed rule: successful guided-entry acknowledgement -> questionnaire step done
-  Import alone -> result available; step still awaiting guided entry
+  Matching questionnaire step: done after teacher-confirmed import; no chat needed
+  [Use this result in guided chat]     Optional; separate deep dive still needs its turn
+  Unconfirmed/unmatched/wrong-administration import: no step completion
 ```
 
 ### Privacy, retention and risks
@@ -807,28 +838,35 @@ use invented student identities and sanitized export fixtures only.
 Risks requiring explicit handling: incorrect student match; identical names; missing
 stable IDs; changed factor catalog/export headers; QSA/QSAr code collision; raw scores
 mistaken for stanines; cross-institute identity leakage; retry/concurrent overwrite;
-stale roster after preview; temporary uploads surviving failure; ambiguity between
-file ingestion and guided-chat completion. Unknown external schemas are a future
-implementation prerequisite, not evidence that the vendor supports a specific format.
+stale roster after preview; temporary uploads surviving failure; confusing unconfirmed
+file ingestion with qualifying confirmed-import evidence. Unknown external schemas
+are a future implementation prerequisite, not evidence that the vendor supports a
+specific format.
 
-### Path-step completion and owner questions
+### Final path-step completion decision and remaining future questions
 
-**Retained default, kept by the owner on 2026-10-09 and revisitable: import does not
-count as questionnaire-step completion.** It creates a visible entry in the student's
-compilations/history with imported provenance. The student must select that
-result and explicitly enter it into their guided-chat session; only the server's
-durable guided-entry acknowledgement for the exact student, administration and path
-step satisfies section 8. Merely opening the chat screen is insufficient. Guided
-entry must occur after step activation; an earlier external assessment may be used
-when explicitly selected. The original external date and import date never fabricate
-a guided-entry timestamp or complete a separate results-deep-dive step.
+**Final owner decision (2026-10-09):** a questionnaire step is done when its data
+enter CounselorBot through either guided chat or a confirmed teacher import matched
+to that student and the plan/administration of the step. **An imported result does
+not require the student to open guided chat first.** This replaces the earlier
+guided-entry-only/revisitable default.
 
-**Revisit flag:** the owner may later reconsider whether a teacher-confirmed import
-itself should count as data entering guided chat. For now, implement the retained
-student-guided-entry default and do not create guided-entry evidence from an import
-job. A future change requires an explicit owner decision on consent/session binding,
-activation timing and the UI meaning of done; it is not a pending decision blocking
-this specification.
+Successful import confirmation creates the student's imported history entry and
+distinct `confirmed_import` completion evidence for an eligible matching step in the
+same transaction. Validate teacher/class/institute authority, current student matching,
+scores, instrument/locale, exact administration and target availability server-side;
+the source label alone or a browser-supplied plan ID is insufficient. Upload, preview,
+unmatched rows, failed commit and a different administration do not count. An unlinked
+import remains history-only until its compatible administration association is
+explicitly confirmed and audited by the teacher.
+
+Retain section 8's activation and strict-order rules: use the actual qualifying
+teacher-confirmation timestamp after activation, not the external assessment date;
+an earlier assessment may be imported after activation. Re-import is idempotent and
+does not fabricate a new confirmation time. Result/evidence deletion or invalidation
+removes automatic completion, with existing explicit override precedence retained.
+Never synthesize guided-entry timestamps, chat sessions or final-turn markers for
+imports. A separate results-deep-dive step still requires its own completed guided turn.
 
 Other owner questions before future implementation: provide sanitized representative
 JSON/CSV exports and clarify stable student/result IDs and factor report scales;
