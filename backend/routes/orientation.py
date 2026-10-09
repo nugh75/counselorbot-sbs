@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from .. import auth, models
 from ..chat_preferences import ResponseFormat
+from ..class_access import is_staff, require_tool, resolve_access
 from ..database import get_personal_ai_db as get_db
 from ..orientation import analyze_turn, normalize_language
 from ..practice_notebooks import requested_practice_notebook
@@ -61,14 +62,24 @@ def _owner(current_user: dict) -> str:
     return str(current_user.get("username") or "").strip()
 
 
-def _serialize(row: models.OrientationSession) -> dict:
+def _recommendable_tools(db: Session, identity: dict) -> set[str]:
+    allowed = set(resolve_access(db, identity)["tool_keys"])
+    if is_staff(identity):
+        # Staff may also use active teacher instruments; class restrictions never apply.
+        allowed.update(code for (code,) in db.query(models.Instrument.code).filter(
+            models.Instrument.is_active.is_(True), models.Instrument.target_audience == "teacher"))
+    return allowed
+
+
+def _serialize(row: models.OrientationSession, allowed_tool_ids: set[str] | None = None) -> dict:
     return {
         "session_id": row.session_id,
         "language": row.language,
         "counselor_id": row.counselor_id,
         "status": row.status,
         "messages": list(row.messages or []),
-        "recommendations": list(row.recommendations or []),
+        "recommendations": [item for item in (row.recommendations or [])
+                            if allowed_tool_ids is None or item.get("id") in allowed_tool_ids],
         "created_at": row.created_at,
         "updated_at": row.updated_at,
         "completed_at": row.completed_at,
@@ -150,7 +161,8 @@ def orientation_status(
     return {
         "eligible": eligible,
         "completed": completed is not None,
-        "required": bool(eligible and completed is None and not legacy_exempt),
+        "required": bool(eligible and completed is None and not legacy_exempt
+                         and "bussola" in resolve_access(db, current_user)["tool_keys"]),
         "legacy_exempt": legacy_exempt,
         "in_progress_session_id": in_progress.session_id if in_progress else None,
         "latest_session_id": latest.session_id if latest else None,
@@ -191,6 +203,7 @@ def start_orientation(
     current_user: dict = Depends(auth.get_current_user),
     db: Session = Depends(get_db),
 ):
+    require_tool(db, current_user, "bussola")
     owner = _owner(current_user)
     counselor = _active_counselor(db, payload.counselor_id)
     if not payload.new_session:
@@ -207,7 +220,7 @@ def start_orientation(
                 existing.messages = messages[-MAX_MESSAGES:]
                 db.commit()
                 db.refresh(existing)
-            return _serialize(existing)
+            return _serialize(existing, _recommendable_tools(db, current_user))
     lang = normalize_language(payload.language)
     practice = requested_practice_notebook(db, current_user, payload.notebook_context, payload.practice_notebook_id)
     notebook = practice if practice is not None else latest_learner_profile(db, owner)
@@ -217,6 +230,7 @@ def start_orientation(
             db, "Begin the Compass conversation using the student context provided.", lang,
             counselor_id=counselor.id if counselor else None, username=owner, opening=True,
             practice_notebook=practice,
+            allowed_tool_ids=_recommendable_tools(db, current_user),
         )
     row = models.OrientationSession(
         session_id=str(uuid.uuid4()),
@@ -250,25 +264,29 @@ def orientation_message(
     db: Session = Depends(get_db),
 ):
     row = _owned_session(db, _owner(current_user), session_id)
+    require_tool(db, current_user, "bussola")
     if row.status != "in_progress":
         raise HTTPException(status_code=409, detail="Orientation session already completed")
     history = list(row.messages or [])
+    allowed = _recommendable_tools(db, current_user)
+    previous = [item for item in (row.recommendations or []) if item.get("id") in allowed]
     practice = requested_practice_notebook(db, current_user, payload.notebook_context, payload.practice_notebook_id)
     analysis = analyze_turn(db, payload.message, payload.language, history, row.counselor_id, row.username,
-                            current_recommendations=list(row.recommendations or []), response_format=payload.response_format,
-                            practice_notebook=practice)
+                            current_recommendations=previous, response_format=payload.response_format,
+                            practice_notebook=practice, allowed_tool_ids=allowed)
     messages = (history + [
         {"role": "user", "content": payload.message},
         {"role": "assistant", "content": analysis.reply},
     ])[-MAX_MESSAGES:]
     row.language = normalize_language(payload.language)
     row.messages = messages
+    row.recommendations = previous
     if analysis.state_action == "clear":
         row.recommendations = []
     elif analysis.state_action == "replace":
         row.recommendations = analysis.recommendations
     elif analysis.state_action == "merge":
-        row.recommendations = _merged_recommendations(row.recommendations, analysis.recommendations)
+        row.recommendations = _merged_recommendations(previous, analysis.recommendations)
     db.commit()
     db.refresh(row)
     return _serialize(row)
@@ -281,6 +299,7 @@ def complete_orientation(
     db: Session = Depends(get_db),
 ):
     row = _owned_session(db, _owner(current_user), session_id)
+    require_tool(db, current_user, "bussola")
     if not row.recommendations:
         raise HTTPException(status_code=409, detail="Write at least one message before completing orientation")
     row.status = "completed"

@@ -20,6 +20,7 @@ from starlette.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from ..chat_preferences import apply_response_format
+from ..class_access import require_tool
 from ..platform_guidance import GUIDE_DIRECTIVE, GUIDE_FILENAME, read_platform_guide
 from .. import auth, database, models, model_pricing
 from ..chat_continuation import continuation_message
@@ -334,6 +335,7 @@ async def site_chat_stream(
     thinking, infine {"done": true, "response": <full>, "session_id": ...,
     "sources": [...]}. Errori: {"error": "..."}.
     """
+    require_tool(db, current_user, "assistant")
     session_id = request.session_id or str(uuid.uuid4())
     conversation_id = conversation_id_for(session_id, request.conversation_id)
     collection = _normalize_collection(request.collection)

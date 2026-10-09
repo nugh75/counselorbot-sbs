@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { List, Network, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
+import { useUserAccess } from '@/lib/use-user-access';
+import { isToolAllowed } from '@/lib/user-access';
 import { goalText, type GoalTextKey } from '@/lib/i18n-goals';
 import { goalApi, type CatalogEntry, type GoalGroup, type GoalOrigin, type PersonalGoal } from '@/lib/goals';
 import { buildForest, visibleGoals } from '@/lib/goal-network';
@@ -37,6 +39,7 @@ const createTargetFromSearch = (search: URLSearchParams): DialogTarget => {
 };
 
 export function GoalsPanel() {
+    const { access, loading: accessLoading } = useUserAccess();
     const { lang } = useI18n(); const l = (key: GoalTextKey) => goalText(lang, key);
     const [goals, setGoals] = useState<PersonalGoal[]>([]); const [catalog, setCatalog] = useState<CatalogEntry[]>([]); const [groups, setGroups] = useState<GoalGroup[]>([]);
     const [loading, setLoading] = useState(true); const [error, setError] = useState<unknown>(null);
@@ -83,7 +86,7 @@ export function GoalsPanel() {
             {!goals.length && !error && <p className="py-3">{l('empty')}</p>}
             <div className={view === 'map' ? 'lg:hidden' : ''}><GoalTree goals={goals} forest={forest} groups={groups} onOpen={openGoal} onAddChild={id => open({ kind: 'create', parentId: id })} /></div>
             {view === 'map' && goals.length > 0 && <GoalMap goals={shown} all={goals} onOpen={openGoal} />}
-            <Link className="block py-3 text-sm text-indigo-700 underline" href="/bussola">{l('unsure')}</Link>
+            {!accessLoading && isToolAllowed(access, 'bussola') && <Link className="block py-3 text-sm text-indigo-700 underline" href="/bussola">{l('unsure')}</Link>}
         </>}
         {catalogOpen && <GoalCatalogDialog catalog={catalog} onClose={() => setCatalogOpen(false)} onPick={entry => { setCatalogOpen(false); open({ kind: 'create', source: entry }); }} />}
         {target && <GoalDialog target={target} goals={goals} groups={groups} saved={saved}

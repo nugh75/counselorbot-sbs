@@ -34,6 +34,8 @@ import { NotebookContextSelector } from '@/components/qsa/NotebookContextSelecto
 import { PracticeNotebookPicker } from '@/components/qsa/PracticeNotebookPicker';
 import { getIdentity } from '@/lib/auth';
 import { canUseTeacherAssistant } from '@/lib/roles';
+import { useUserAccess } from '@/lib/use-user-access';
+import { isToolAllowed } from '@/lib/user-access';
 import { notebookContextPayload, readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId, type NotebookContextChoice } from '@/lib/notebook-context';
 
 function safeNextHref(): string | null {
@@ -56,6 +58,8 @@ function toolDescription(id: string, t: (key: string) => string): string {
 export default function BussolaPage() {
     const { t, lang } = useI18n();
     const router = useRouter();
+    const { access, loading: accessLoading } = useUserAccess();
+    const canWrite = !accessLoading && isToolAllowed(access, 'bussola');
     const [session, setSession] = useState<OrientationSession | null>(null);
     const [responseFormat, setResponseFormat] = useResponseFormat(`compass:${session?.session_id ?? 'new'}`);
     const [latestSessionId, setLatestSessionId] = useState<string | null>(null);
@@ -98,7 +102,7 @@ export default function BussolaPage() {
         setError('');
         try {
             const row = await fetchOrientationSession(sessionId);
-            if (row.status === 'in_progress' && !row.counselor_id) {
+            if (canWrite && row.status === 'in_progress' && !row.counselor_id) {
                 const prefs = await fetchAccountPreferences();
                 if (!prefs.counselor_ready || !prefs.counselor_id) {
                     router.push('/counselor?next=%2Fbussola');
@@ -113,7 +117,7 @@ export default function BussolaPage() {
         } finally {
             setLoading(false);
         }
-    }, [lang, router, t]);
+    }, [canWrite, lang, router, t]);
 
     const createSession = useCallback(async (newSession: boolean, counselorId: number, notebook: Parameters<typeof startOrientation>[3] = {}) => {
         setLoading(true);
@@ -129,7 +133,7 @@ export default function BussolaPage() {
     }, [lang, t]);
 
     const startConversation = async () => {
-        if (loading) return;
+        if (loading || !canWrite) return;
         setLoading(true);
         try {
             const prefs = await fetchAccountPreferences();
@@ -152,14 +156,14 @@ export default function BussolaPage() {
                 if (!active) return;
                 setLatestSessionId(status.latest_session_id ?? null);
                 setOrientationRequired(status.required);
-                if (status.required) {
+                if (status.required && canWrite) {
                     if (status.in_progress_session_id) await openSession(status.in_progress_session_id);
                     else {
                         setAtFork(true);
                         setLoading(false);
                     }
                 } else {
-                    setAtFork(!status.latest_session_id);
+                    setAtFork(canWrite && !status.latest_session_id);
                     setLoading(false);
                 }
             } catch {
@@ -170,7 +174,7 @@ export default function BussolaPage() {
             }
         })();
         return () => { active = false; };
-    }, [openSession, t]);
+    }, [canWrite, openSession, t]);
 
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -179,7 +183,7 @@ export default function BussolaPage() {
     const submitMessage = async (event: Pick<FormEvent, 'preventDefault'>, audioMessage?: string) => {
         event.preventDefault();
         const message = (audioMessage ?? input).trim();
-        if (!session || !message || sending || (audioBusy && audioMessage === undefined) || session.status === 'completed') return;
+        if (!canWrite || !session || !message || sending || (audioBusy && audioMessage === undefined) || session.status === 'completed') return;
         setInput('');
         setSending(true);
         setError('');
@@ -290,7 +294,7 @@ export default function BussolaPage() {
                     <div className="flex items-center gap-3"><Compass className="h-6 w-6 text-indigo-600" /><p className="text-sm leading-relaxed text-slate-600">{t('orientation.subtitle')}</p></div>
                     <div className="flex flex-wrap gap-2">
                         {latestSessionId && <Button type="button" variant="secondary" onClick={() => void openSession(latestSessionId)}>{t('orientation.landing.latest')}</Button>}
-                        <Button type="button" variant="accent" onClick={() => void startConversation()}>{t('orientation.landing.new')}</Button>
+                        {canWrite && <Button type="button" variant="accent" onClick={() => void startConversation()}>{t('orientation.landing.new')}</Button>}
                         {orientationRequired && <Button type="button" variant="ghost" onClick={skipToTools}>{t('orientation.landing.skip')}</Button>}
                     </div>
                 </section>
@@ -336,7 +340,7 @@ export default function BussolaPage() {
                             </div>
                         )}
                         {errorNote && <div className="border-t border-slate-100 px-4 py-3 sm:px-6">{errorNote}</div>}
-                        {session.status === 'in_progress' && (
+                        {canWrite && session.status === 'in_progress' && (
                             <form onSubmit={submitMessage} className="border-t border-slate-100 bg-slate-50/70 p-3 sm:p-4">
                                 {!sending && (
                                     <details className="mb-2 text-xs text-slate-600">
@@ -391,7 +395,7 @@ export default function BussolaPage() {
                         </div>
                     )}
 
-                    {session.status === 'in_progress' && session.recommendations.length > 0 && (
+                    {session.status === 'in_progress' && session.recommendations.length > 0 && canWrite && (
                         <div className="flex justify-start">
                             <Button type="button" size="lg" onClick={() => void finish()} disabled={completing}>
                                 {completing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{t('orientation.complete')}
@@ -409,7 +413,7 @@ export default function BussolaPage() {
                                 {nextHref && <Link href={nextHref} className="inline-flex min-h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm text-slate-700 transition-colors hover:bg-slate-50">{t('orientation.continue')}</Link>}
                             </div>
                             <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                                <Button type="button" variant="ghost" onClick={() => void startConversation()} className="ml-auto text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</Button>
+                                {canWrite && <Button type="button" variant="ghost" onClick={() => void startConversation()} className="ml-auto text-indigo-700 hover:bg-indigo-50">{t('orientation.landing.new')}</Button>}
                             </div>
                         </section>
                     )}
@@ -419,18 +423,22 @@ export default function BussolaPage() {
             )}
 
             {!session && errorNote}
+            {!accessLoading && !canWrite && <p className="text-sm text-slate-600" role="status">{t('session.disabledForClass')}</p>}
         </div>
     );
 }
 
 function RecommendationSection({ session, onPick }: { session: OrientationSession; onPick: (id: string) => void }) {
     const { t } = useI18n();
+    const { access, loading } = useUserAccess();
+    const recommendations = session.recommendations.filter(item => isToolAllowed(access, item.id));
+    if (loading || recommendations.length === 0) return null;
     return (
         <section>
             <h2 className="font-display text-2xl font-bold text-slate-900">{t('orientation.recommendations.title')}</h2>
             <p className="mt-1 text-sm leading-relaxed text-slate-500">{t('orientation.recommendations.subtitle')}</p>
             <div className="mt-4 grid gap-4 lg:grid-cols-3">
-                {session.recommendations.map((item, index) => (
+                {recommendations.map((item, index) => (
                     <article key={item.id} className={`flex flex-col rounded-xl border bg-white p-5 shadow-sm ${index === 0 ? 'border-indigo-300 ring-1 ring-indigo-100' : 'border-slate-200'}`}>
                         <div className="flex items-center justify-between gap-3"><span className="font-mono text-xs font-semibold text-ochre-600">{String(index + 1).padStart(2, '0')}</span>{index === 0 && <Compass className="h-5 w-5 text-indigo-600" />}</div>
                         <h3 className="mt-3 text-lg font-bold text-slate-900">{toolName(item.id, t)}</h3>
