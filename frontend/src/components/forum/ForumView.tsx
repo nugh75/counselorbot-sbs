@@ -5,7 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import { forumClosedNotice, forumDraftValid, forumLink, forumPostActions, parseForumDetail, parseForumList, parseForumLog, parseForumPost,
-    parseForumTopic, type ForumPost, type ForumTopic } from '@/lib/forum';
+    parseForumTopic, parseForumTargets, forumTargetHref, type ForumPost, type ForumTopic, type ForumTarget } from '@/lib/forum';
+import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { forumText, type forumTexts } from '@/lib/i18n-forum';
 import { useI18n } from '@/lib/i18n-context';
 import { useDraftGuard } from '@/lib/use-draft-guard';
@@ -91,16 +92,42 @@ function ForumMessage({ post, moderator = false, active = false, busy = false, o
     </article>;
 }
 
-function ForumComposer({ path, topic, onPublished, onForbidden, onDraft, onCancel }: {
+function targetLabel(target: ForumTarget, lang: string) {
+    const title = target.title || (target.tool_key ? resolveClassPathToolName(target.tool_key, lang) : forumText(lang, 'linkedResource'));
+    return target.path_title ? `${target.path_title} · ${title}` : title;
+}
+
+function ForumLinkPicker({ groupId, value, busy, onChange }: { groupId: number; value: string; busy: boolean; onChange: (value: string) => void }) {
+    const { lang } = useI18n();
+    const resource = useTeacherResource(`/api/groups/${groupId}/forum/link-targets`, parseForumTargets);
+    return <div className="space-y-2">
+        <label className="block text-sm font-semibold text-slate-700">{forumText(lang, 'linkOptional')}
+            <select value={value} disabled={busy || resource.loading || !resource.data || resource.forbidden}
+                onChange={event => onChange(event.target.value)} className="mt-1 block min-h-[44px] w-full rounded-md border border-slate-300 bg-white p-2">
+                <option value="">{forumText(lang, 'noLink')}</option>
+                {resource.data?.targets.map(target => <option key={`${target.kind}:${target.id}`} value={`${target.kind}:${target.id}`}>
+                    {targetLabel(target, lang)}
+                </option>)}
+            </select>
+        </label>
+        {resource.loading && <p role="status" className="text-sm text-slate-500">{forumText(lang, 'loading')}</p>}
+        {(resource.failed || resource.forbidden) && <Callout variant="danger">{forumText(lang, 'linkLoadError')}
+            <Button type="button" variant="secondary" disabled={busy} onClick={() => void resource.reload()}>{forumText(lang, 'retry')}</Button>
+        </Callout>}
+    </div>;
+}
+
+function ForumComposer({ path, topic, linkGroupId, onPublished, onForbidden, onDraft, onCancel }: {
     path: string; topic: boolean; onPublished: (id: number) => void; onForbidden: () => void;
-    onDraft: (dirty: boolean, busy: boolean) => void; onCancel?: () => void;
+    onDraft: (dirty: boolean, busy: boolean) => void; onCancel?: () => void; linkGroupId?: number;
 }) {
     const { lang } = useI18n(); const l = (key: TextKey) => forumText(lang, key);
     const [body, setBody] = useState(''); const [title, setTitle] = useState('');
+    const [link, setLink] = useState('');
     const [busy, setBusy] = useState(false); const [error, setNotice] = useState<TextKey | null>(null);
     const pending = useRef<AbortController | null>(null); const active = useRef(false);
     const account = useRef(getViewAsAccount()?.username);
-    const dirty = body.length > 0 || title.length > 0;
+    const dirty = body.length > 0 || title.length > 0 || link.length > 0;
     useDraftGuard(dirty || busy, l('discard'), { blocked: busy });
     useEffect(() => { onDraft(dirty, busy); }, [dirty, busy, onDraft]);
     useEffect(() => {
@@ -114,8 +141,10 @@ function ForumComposer({ path, topic, onPublished, onForbidden, onDraft, onCance
         setBusy(true); setNotice(null);
         const current = () => active.current && !controller.signal.aborted;
         try {
+            const [link_kind, id] = link.split(':');
             const response = await apiFetch(path, { method: 'POST', signal: controller.signal,
-                headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(topic ? { title, body } : { body }) });
+                headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(topic
+                    ? { title, body, ...(link ? { link_kind, link_id: Number(id) } : {}) } : { body }) });
             if (!current()) return;
             if (account.current !== getViewAsAccount()?.username || response.status === 401) { onForbidden(); return; }
             if (response.status === 429) { setNotice('rateLimit'); return; }
@@ -126,7 +155,7 @@ function ForumComposer({ path, topic, onPublished, onForbidden, onDraft, onCance
             const saved = topic ? parseForumTopic(payload) : parseForumPost(payload);
             if (!current()) return;
             if (account.current !== getViewAsAccount()?.username) { onForbidden(); return; }
-            setBody(''); setTitle(''); onDraft(false, false); onPublished(saved.id);
+            setBody(''); setTitle(''); setLink(''); onDraft(false, false); onPublished(saved.id);
         } catch { if (current()) setNotice('sendError'); }
         finally { if (current()) { pending.current = null; setBusy(false); } }
     };
@@ -141,6 +170,7 @@ function ForumComposer({ path, topic, onPublished, onForbidden, onDraft, onCance
                 className="mt-1 block w-full rounded-md border border-slate-300 bg-white p-3 text-base font-normal" />
             <span className="font-mono text-xs text-slate-500">{body.length} / 4000</span>
         </label>
+        {topic && linkGroupId !== undefined && <ForumLinkPicker groupId={linkGroupId} value={link} busy={busy} onChange={setLink} />}
         <p className="text-xs text-slate-500">{l('safeText')}</p>
         {error && <p role="alert" className="text-sm text-red-700">{l(error)}</p>}
         <div className="flex flex-wrap gap-2">
@@ -195,9 +225,14 @@ function ForumDiscussion({ groupId, groupActive, topicId, onBack, onForbidden, o
         {resource.failed && <Button variant="secondary" onClick={() => void resource.reload()}>{l('retry')}</Button>}
     </Callout>;
     const moderate = detail.can_moderate && groupActive;
+    const targetHref = detail.topic.link ? forumTargetHref(detail.topic.link, detail.can_moderate ? groupId : undefined) : undefined;
     return <Card className="space-y-4">
         <Button variant="secondary" onClick={onBack}>{l('back')}</Button>
         <h3 className="break-words text-lg font-bold text-slate-800">{detail.topic.title || l('hidden')}{detail.topic.pinned && ` · ${l('pinned')}`}</h3>
+        {detail.topic.link && <p className="break-words text-sm text-slate-600">{l('linkedResource')}: {' '}
+            {targetHref ? <Link href={targetHref} className="text-indigo-700 underline">
+                {targetLabel(detail.topic.link, lang)}</Link> : <span>{targetLabel(detail.topic.link, lang)} · {l('linkUnavailable')}</span>}
+        </p>}
         {moderate && <TopicModeration topic={detail.topic} busy={acting} onAction={act} />}
         {actionError && <p role="alert" className="text-sm text-red-700">{l('actionError')}</p>}
         <ForumMessage post={detail.topic} />
@@ -246,7 +281,10 @@ function ForumLogView({ groupId, onBack }: { groupId: number; onBack: () => void
 
 export function ForumView({ groupId, student = false }: { groupId: number; student?: boolean }) {
     const { lang } = useI18n(); const l = (key: TextKey) => forumText(lang, key);
-    const [view, setView] = useState<number | 'list' | 'new' | 'log'>('list');
+    const [view, setView] = useState<number | 'list' | 'new' | 'log'>(() => {
+        const topic = typeof window === 'undefined' ? 0 : Number(new URLSearchParams(window.location.search).get('topic'));
+        return Number.isSafeInteger(topic) && topic > 0 ? topic : 'list';
+    });
     const [offset, setOffset] = useState(0); const [forbidden, setForbidden] = useState(false);
     const draft = useRef({ dirty: false, busy: false });
     const onDraft = useCallback((dirty: boolean, busy: boolean) => { draft.current = { dirty, busy }; }, []);
@@ -274,7 +312,8 @@ export function ForumView({ groupId, student = false }: { groupId: number; stude
         </div>
         {!listing.group.is_active && <Callout variant="warning">{l('archive')}</Callout>}
         {resource.failed && <Callout variant="danger">{l('loadError')} <Button variant="secondary" onClick={() => void resource.reload()}>{l('retry')}</Button></Callout>}
-        {view === 'new' && listing.can_open_topic && <Card><ForumComposer path={`/api/groups/${groupId}/forum/topics`} topic onDraft={onDraft}
+        {view === 'new' && listing.can_open_topic && <Card><ForumComposer path={`/api/groups/${groupId}/forum/topics`} topic
+            linkGroupId={listing.can_moderate ? groupId : undefined} onDraft={onDraft}
             onForbidden={() => setForbidden(true)} onCancel={() => navigate('list')} onPublished={id => { setView(id); void resource.reload(); }} /></Card>}
         {view === 'log' && listing.can_moderate && <ForumLogView groupId={groupId} onBack={() => navigate('list')} />}
         {typeof view === 'number' && <ForumDiscussion key={view} groupId={groupId} groupActive={listing.group.is_active} topicId={view} onBack={() => navigate('list')} onDraft={onDraft} onForbidden={() => setForbidden(true)} />}

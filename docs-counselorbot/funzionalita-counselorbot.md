@@ -596,6 +596,21 @@ interface controls are included; the expanded forum guide and screenshots are #1
 Titles, messages and reasons reject invisible control characters (for example
 NUL); tabs and line breaks are kept. Character lengths for titles and messages are validated on publication.
 
+**Forum resource links (F5, #106).** When opening a class discussion, a class
+teacher or administrator may select an optional link to a step of a published
+class path or an active assignment addressed to the whole class. Targets must
+belong to that class; drafts, removed steps, archived paths, revoked assignments
+and individual assignments cannot be selected. The discussion shows the resource
+name and opens the student path step or assignment details; teachers open their
+class paths tab or sent assignments. A removed, archived, revoked or deleted
+resource becomes plain unavailable text without an active link. Hidden topics do
+not expose resource metadata to students. The path step and assignment details
+show “Discuss in the class forum” for each linked discussion. These links open
+the exact topic and are returned only to current class members, class teachers
+and administrators. Leaving the class immediately removes access. No forum
+content enters AI contexts, research exports or PDFs. Composer controls and the
+class sections of the public guide describe this behavior in all six languages.
+
 **Forum moderation (F2, #103).** Class owners, co-teachers and administrators
 moderate from the open discussion: Pin/Unpin (pinned discussions stay on top),
 Close discussion/Reopen discussion (closed discussions accept no replies), and
