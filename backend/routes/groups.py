@@ -11,6 +11,7 @@ import re
 import secrets
 import string
 from datetime import datetime, timezone
+from types import SimpleNamespace
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,6 +24,7 @@ from .. import auth, database, models, schemas
 from ..reading_audience import AUDIENCE_BANDS
 from ..user_names import store_user_display_name
 from ..class_tools import ALWAYS_ON, tool_catalog
+from ..class_access import FORUM_OPTIONS, forum_option
 
 router = APIRouter()
 get_db = database.get_db
@@ -177,8 +179,7 @@ def _serialize_settings(db: Session, group_id: int, settings) -> dict:
                        for row in db.query(models.Counselor).filter(
                            models.Counselor.owner_username.is_(None)
                        ).order_by(models.Counselor.sort_order, models.Counselor.id).all()],
-        "forum": {"students_can_open": bool(settings.forum_students_can_open) if settings else False,
-                  "premoderation": bool(settings.forum_premoderation) if settings else False},
+        "forum": _serialize_forum_options(settings),
     }
     latest = {}
     for row in db.query(models.ClassSettingsAuditLog).filter_by(group_id=group_id).order_by(models.ClassSettingsAuditLog.id.desc()):
@@ -363,6 +364,22 @@ async def unlock_class_setting(group_id: int, payload: schemas.ClassSettingsLock
     return {"status": "unlocked", "target_kind": payload.target_kind, "target_id": payload.target_id}
 
 
+def _serialize_forum_options(settings) -> dict:
+    result = {}
+    for name in FORUM_OPTIONS:
+        result[name], result[f"{name}_locked"] = forum_option(settings, name)
+    return result
+
+
+def _forum_settings_log(previous, settings, previous_tools) -> list[str]:
+    """Readable `option: on|off` lines for the forum moderation log (ids and names only)."""
+    changes = [f"{name}: {'on' if forum_option(settings, name)[0] else 'off'}" for name in FORUM_OPTIONS
+               if forum_option(previous, name)[0] != forum_option(settings, name)[0]]
+    if ("forum" in previous_tools) != ("forum" in settings.disabled_tool_keys):
+        changes.insert(0, f"forum: {'off' if 'forum' in settings.disabled_tool_keys else 'on'}")
+    return changes
+
+
 @router.get("/teacher/groups/{group_id}/settings")
 async def get_class_settings(
     group_id: int,
@@ -405,11 +422,19 @@ async def put_class_settings(
         for target, lock in (locks or {}).items():
             if lock["enabled"] != (target not in disabled):
                 return _locked_response(kind, target)
+    if payload.forum is not None:
+        for target, lock in ((settings.locked_forum_options or {}) if settings else {}).items():
+            if target in FORUM_OPTIONS and lock["value"] != getattr(payload.forum, target):
+                return _locked_response("forum_option", target)
     default_id = (payload.default_counselor_id if "default_counselor_id" in payload.model_fields_set
                   else settings.default_counselor_id if settings else None)
     if default_id is not None and (default_id not in institutional or default_id in disabled_counselors
                                    or not institutional[default_id].is_active):
         raise HTTPException(status_code=422, detail="Default counselor must be enabled and institutional")
+    previous = (SimpleNamespace(forum_students_can_open=settings.forum_students_can_open,
+                                forum_premoderation=settings.forum_premoderation,
+                                locked_forum_options=settings.locked_forum_options) if settings else None)
+    previous_tools = list(settings.disabled_tool_keys or []) if settings else []
     if settings is None:
         settings = models.ClassSettings(group_id=group_id, revision=1, updated_by=_username(current_user))
         db.add(settings)
@@ -424,11 +449,22 @@ async def put_class_settings(
     if default_id != settings.default_counselor_id:
         _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "default_counselor_id",
                        settings.default_counselor_id, default_id, payload.reason)
+    if payload.forum is not None:
+        for name in FORUM_OPTIONS:
+            old, new = bool(getattr(settings, f"forum_{name}")), getattr(payload.forum, name)
+            if old != new:
+                _audit_setting(db, group_id, current_user, "setting_change", "forum_option", name,
+                               {"value": old}, {"value": new}, payload.reason)
+                setattr(settings, f"forum_{name}", new)
     settings.disabled_tool_keys = sorted(set(payload.disabled_tool_keys))
     settings.disabled_counselor_ids = sorted(set(disabled_counselors))
     settings.default_counselor_id = default_id
     settings.revision += 1
     settings.updated_by = _username(current_user)
+    # Forum switches are moderation-relevant: they also go to the forum log (#104).
+    for change in _forum_settings_log(previous, settings, previous_tools):
+        db.add(models.ForumModerationLog(group_id=group_id, actor_username=_username(current_user),
+                                         action="settings_change", target_kind="settings", reason=change))
     db.commit()
     db.refresh(settings)
     return _serialize_settings(db, group_id, settings)
