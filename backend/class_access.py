@@ -71,7 +71,7 @@ def _active_classes(db: Session, username: str) -> list[tuple[int, models.ClassS
     return classes
 
 
-def _class_enables(settings: models.ClassSettings | None, key: str) -> bool:
+def class_enables(settings: models.ClassSettings | None, key: str) -> bool:
     """Admin lock first (decision 21), then the teacher's deny-list."""
     if settings is None:
         return True
@@ -129,7 +129,7 @@ def resolve_access(db: Session, identity) -> dict:
     counselor_ids, default_counselor_id = None, None
     if classes:
         tool_keys = [key for key in admin_keys
-                     if key in ALWAYS_ON or any(_class_enables(settings, key) for _, settings in classes)]
+                     if key in ALWAYS_ON or any(class_enables(settings, key) for _, settings in classes)]
         counselor_ids, default_counselor_id = _counselor_access(db, username, classes)
     else:
         tool_keys = admin_keys
@@ -170,7 +170,7 @@ def require_tool(db: Session, identity, tool_key: str | None, *, preview: bool =
     if is_staff(identity):
         return
     classes = _active_classes(db, _username(identity))
-    if classes and not any(_class_enables(settings, canonical) for _, settings in classes):
+    if classes and not any(class_enables(settings, canonical) for _, settings in classes):
         raise ToolAccessDenied("tool_disabled_for_class", canonical)
 
 
@@ -194,7 +194,7 @@ def require_class_tool(db: Session, identity, group_id: int, tool_key: str) -> N
 
 
 def class_tool_enabled(db: Session, identity, group_id: int, tool_key: str) -> bool:
-    return is_staff(identity) or _class_enables(db.get(models.ClassSettings, group_id), tool_key)
+    return is_staff(identity) or class_enables(db.get(models.ClassSettings, group_id), tool_key)
 
 
 FORUM_OPTIONS = ("students_can_open", "premoderation")
