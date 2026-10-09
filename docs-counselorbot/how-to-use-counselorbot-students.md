@@ -141,6 +141,11 @@ administration language, the step says so and does not switch language. Your
 result history shows whether each result was captured in CounselorBot or imported
 by your teacher.
 
+Your teacher may add a guided results deep dive after the questionnaire step. Open
+it once the questionnaire step is done: the chat starts from the result already
+recorded, without retyping scores. The step is done only when you complete the
+final guided step; if you leave, starting again resumes the same session.
+
 ## Practise from a PDF and keep your work
 
 **pQBL** (`/profilo/pqbl`) generates practice questions and formative feedback from a study
