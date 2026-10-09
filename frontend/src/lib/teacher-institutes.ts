@@ -4,6 +4,8 @@ export interface TeacherInstitute extends Institution {
     revision: number;
     is_active: boolean;
     created_by: string | null;
+    // External code is visible to members; the password and its verifier never are.
+    institution_code: string | null;
     credentials_configured: boolean;
     member_count: number;
     needs_admin_review: boolean;

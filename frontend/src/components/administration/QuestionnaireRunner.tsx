@@ -19,6 +19,15 @@ import {
     loadAdministrationDraft,
     saveAdministrationDraft,
 } from '@/lib/compilation-draft';
+import { credentialText, type CredentialTextKey } from '@/lib/i18n-institution-credentials';
+import {
+    contextFailure,
+    parseVerificationGrant,
+    verificationRequest,
+    verifyFailure,
+    withInstitutionGrant,
+    type VerificationRequest,
+} from '@/lib/institution-credentials';
 
 const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
 
@@ -132,6 +141,13 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
     const [loginHref, setLoginHref] = useState('/login');
     // Invio in corso: il comando resta fermo finché lo scoring non risponde.
     const [submitting, setSubmitting] = useState(false);
+    // Institute verification: the grant lives only in memory, never in URLs or storage.
+    const [verification, setVerification] = useState<VerificationRequest | null>(null);
+    const [grant, setGrant] = useState<string | null>(null);
+    const [institutionCode, setInstitutionCode] = useState('');
+    const [institutionPassword, setInstitutionPassword] = useState('');
+    const [verifyError, setVerifyError] = useState<CredentialTextKey | null>(null);
+    const [verifying, setVerifying] = useState(false);
     // Bozza ritrovata all'ingresso: lo si dice, non lo si fa di nascosto.
     const [restoredDraft, setRestoredDraft] = useState(false);
     const [metadata, setMetadata] = useState({
@@ -275,8 +291,9 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
         );
     }
 
-    const submit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    const submit = async (event?: FormEvent<HTMLFormElement>, grantOverride?: string) => {
+        event?.preventDefault();
+        if (verification && !grantOverride) return;
         if (codeRequiresLogin) {
             setError(t('admin.run.meta.loginRequired'));
             return;
@@ -310,7 +327,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
             const res = await apiFetch(`/api/instruments/${instrument}/score`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                body: JSON.stringify(withInstitutionGrant({
                     session_id: newSessionId,
                     locale: lang,
                     answers,
@@ -333,12 +350,25 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                         consent: metadata.consent,
                     },
                     duration_seconds: durationSeconds,
-                }),
+                }, grantOverride ?? grant)),
             });
             if (!res.ok) {
                 if (res.status === 401) {
                     setCodeRequiresLogin(true);
                     setError(t('admin.run.meta.loginRequired'));
+                    return;
+                }
+                // Known administration context never falls back to a standalone save.
+                const failure = await res.json().catch(() => null);
+                const request = verificationRequest(res.status, failure);
+                if (request) {
+                    setGrant(null);
+                    setInstitutionCode(request.institutionCode ?? '');
+                    setVerification(request);
+                    return;
+                }
+                if (contextFailure(failure)) {
+                    setError(credentialText(lang, 'verifyUnavailable'));
                     return;
                 }
                 throw new Error(`score failed: ${res.status}`);
@@ -357,6 +387,35 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
             setError(t('admin.run.loadError'));
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const verifyInstitution = async () => {
+        if (!verification || verifying) return;
+        setVerifying(true);
+        setVerifyError(null);
+        try {
+            const res = await apiFetch(`/api/user/administrations/${verification.planId}/verify-institution`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ institution_code: institutionCode, password: institutionPassword }),
+            });
+            if (!res.ok) {
+                const failure = verifyFailure(res.status, await res.json().catch(() => null));
+                setVerifyError(failure === 'failed' ? 'verifyFailed' : failure === 'throttled' ? 'verifyThrottled'
+                    : failure === 'unavailable' ? 'verifyUnavailable' : 'verifyError');
+                return;
+            }
+            const issued = parseVerificationGrant(await res.json());
+            setInstitutionPassword('');
+            setGrant(issued.grant);
+            setVerification(null);
+            await submit(undefined, issued.grant);
+        } catch (e) {
+            console.error('Institution verification failed', e);
+            setVerifyError('verifyError');
+        } finally {
+            setVerifying(false);
         }
     };
 
@@ -703,6 +762,46 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                     </fieldset>
                 ))}
 
+                {verification && (
+                    <fieldset className="space-y-3 rounded-md border border-amber-300 bg-amber-50 p-4" disabled={verifying}>
+                        <legend className="px-1 text-sm font-bold text-slate-900">{credentialText(lang, 'verifyTitle')}</legend>
+                        <p className="text-sm text-slate-700">
+                            {credentialText(lang, 'verifyIntro', { institute: verification.institutionName || verification.institutionCode || '' })}
+                        </p>
+                        <div className="grid gap-3 md:grid-cols-2">
+                            <label className="block text-xs font-semibold uppercase text-slate-500">
+                                {credentialText(lang, 'codeLabel')}
+                                <input
+                                    value={institutionCode}
+                                    autoComplete="off"
+                                    onChange={(event) => setInstitutionCode(event.target.value)}
+                                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                />
+                            </label>
+                            <label className="block text-xs font-semibold uppercase text-slate-500">
+                                {credentialText(lang, 'password')}
+                                <input
+                                    type="password"
+                                    value={institutionPassword}
+                                    autoComplete="off"
+                                    onChange={(event) => setInstitutionPassword(event.target.value)}
+                                    onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void verifyInstitution(); } }}
+                                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                                />
+                            </label>
+                        </div>
+                        <p className="text-xs text-slate-600">{credentialText(lang, 'verifyNotice')}</p>
+                        {verifyError && <p role="alert" className="text-sm font-medium text-red-700">{credentialText(lang, verifyError)}</p>}
+                        <button
+                            type="button"
+                            disabled={verifying || !institutionCode.trim() || !institutionPassword}
+                            onClick={() => void verifyInstitution()}
+                            className="rounded-md bg-amber-700 px-5 py-2 text-sm font-semibold text-white hover:bg-amber-800 disabled:opacity-60"
+                        >
+                            {credentialText(lang, 'verifyAction')}
+                        </button>
+                    </fieldset>
+                )}
                 {error && (
                     <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
                         {error}
@@ -711,7 +810,7 @@ export function QuestionnaireRunner({ instrument }: QuestionnaireRunnerProps) {
                 <div className="flex justify-end pt-2">
                     <button
                         type="submit"
-                        disabled={submitting}
+                        disabled={submitting || verification !== null}
                         className="rounded-md bg-indigo-600 px-7 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {submitting ? t('admin.run.submitting') : t('admin.run.submit')}
