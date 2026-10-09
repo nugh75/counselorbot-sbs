@@ -17,12 +17,15 @@ type ReadingRow = { id: number; title: string; status: string; is_active: boolea
 type AttachmentOption = { kind: 'strategy' | 'reading'; id: number; title: string };
 const input = 'w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
 
-function AssignmentDialog({ close, saved }: { close: () => void; saved: () => void }) {
+// TF6 (#153): the path builder opens the same dialog for its class only. A fixed
+// class delivers to the whole class, the only kind a path step can reference.
+type Created = { id: number };
+export function AssignmentDialog({ close, saved, classId }: { close: () => void; saved: (created: Created) => void; classId?: number }) {
     const { lang } = useI18n(); const l = (key: Parameters<typeof assignmentText>[1]) => assignmentText(lang, key);
     const dialog = useRef<HTMLDialogElement>(null); const heading = useId();
     const [groups, setGroups] = useState<Group[]>([]); const [goals, setGoals] = useState<GoalEntry[]>([]);
     const [attachments, setAttachments] = useState<AttachmentOption[]>([]);
-    const [groupId, setGroupId] = useState(''); const [goalId, setGoalId] = useState('');
+    const [groupId, setGroupId] = useState(classId ? String(classId) : ''); const [goalId, setGoalId] = useState('');
     const [selectedAttachments, setSelectedAttachments] = useState<string[]>([]);
     const [recipient, setRecipient] = useState(''); const [instructions, setInstructions] = useState('');
     const [intent, setIntent] = useState('proposal'); const [dueDate, setDueDate] = useState(''); const [responsePrompt, setResponsePrompt] = useState('');
@@ -72,16 +75,18 @@ function AssignmentDialog({ close, saved }: { close: () => void; saved: () => vo
             try {
                 const res = await apiFetch('/api/teacher/assignments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, request_id: request.current.id }) });
                 if (!res.ok) throw new Error('assignment failed');
-                window.dispatchEvent(new Event('teacher-assignments-changed')); saved(); close();
+                const created: Created = await res.json();
+                window.dispatchEvent(new Event('teacher-assignments-changed')); saved(created); close();
             } catch { setFailed(true); } finally { setBusy(false); }
         }}>
             <fieldset disabled={busy || loading} className="space-y-4">
-                <label className="block text-sm font-medium">{l('group')}<select aria-label={l('group')} autoFocus required className={input} value={groupId} onChange={e => { setGroupId(e.target.value); setRecipient(''); }}><option value="">{l('choose')}</option>{groups.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
+                <label className="block text-sm font-medium">{l('group')}<select aria-label={l('group')} autoFocus required disabled={classId !== undefined} className={input} value={groupId} onChange={e => { setGroupId(e.target.value); setRecipient(''); }}><option value="">{l('choose')}</option>{groups.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
                 <label className="block text-sm font-medium">{l('goal')}<select aria-label={l('goal')} required className={input} value={goalId} onChange={e => setGoalId(e.target.value)}><option value="">{l('chooseGoal')}</option>{visibleGoals.map(row => <option key={row.id} value={row.id}>{row.data.title}</option>)}</select></label>
-                {group && <>
+                {group && classId === undefined && <>
                     <label className="block text-sm font-medium">{l('recipient')}<select aria-label={l('recipient')} className={input} value={recipient} onChange={e => setRecipient(e.target.value)}><option value="">{l('all')} ({group.participants.length})</option>{group.participants.map(person => <option key={person.username} value={person.username}>{person.name} ({person.username})</option>)}</select></label>
                     <p className="text-sm text-slate-600">{l('recipients')}: {recipient ? 1 : group.participants.length}. {!recipient && l('current')}</p>
                 </>}
+                {group && classId !== undefined && <p className="text-sm text-slate-600">{l('recipients')}: {l('all')} ({group.participants.length}). {l('current')}</p>}
                 <label className="block text-sm font-medium">{l('attachments')}<select multiple aria-label={l('attachments')} size={Math.min(6, Math.max(2, attachments.length))} className={input} value={selectedAttachments} onChange={e => setSelectedAttachments(Array.from(e.target.selectedOptions, option => option.value))}>{attachments.map(item => <option key={`${item.kind}:${item.id}`} value={`${item.kind}:${item.id}`}>{l(item.kind)} · {item.title}</option>)}</select></label>
                 <label className="block text-sm font-medium">{l('instructions')}<textarea rows={3} maxLength={3000} className={input} value={instructions} onChange={e => setInstructions(e.target.value)} /></label>
                 <label className="block text-sm font-medium">{learningText(lang, 'intent')}<select className={input} value={intent} onChange={e => setIntent(e.target.value)}>{(['proposal', 'requested'] as const).map(value => <option key={value} value={value}>{learningText(lang, value)}</option>)}</select></label>
