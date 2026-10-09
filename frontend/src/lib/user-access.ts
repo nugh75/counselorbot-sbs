@@ -98,14 +98,12 @@ export function getCachedUserAccess(): UserAccess | null {
 
 // Guests and network failures fall back to the unfiltered catalog: the server
 // guards stay authoritative for every start or write.
-// Caches GET /user/access once per browser session.
-export async function fetchUserAccess(options?: { forceRefresh?: boolean }): Promise<UserAccess | null> {
+// Always asks the server, so a class change reaches the student on the next
+// page (bug 838e6852); concurrent callers share one request. The stored copy
+// only seeds the first render (`getCachedUserAccess`).
+export async function fetchUserAccess(): Promise<UserAccess | null> {
+    if (inFlightAccess) return inFlightAccess;
     const key = getSessionCacheKey();
-    if (!options?.forceRefresh) {
-        const cached = getCachedUserAccess();
-        if (cached) return cached;
-        if (inFlightAccess) return inFlightAccess;
-    }
 
     inFlightAccess = (async () => {
         try {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { filterProgressStudents, lockedStepUnlockNumber, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths, selectCurrentClassPath } from './class-paths.ts';
+import { filterProgressStudents, lockedStepUnlockNumber, pathStepTools, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths, selectCurrentClassPath } from './class-paths.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { classPathText, classPathsTexts } from './i18n-class-paths.ts';
 
@@ -315,4 +315,15 @@ test('new class paths placement translations exist in all six languages', () => 
             assert.ok(val && val.length > 0, `${key} in ${lang}`);
         }
     }
+});
+
+test('path steps offer only the tools the class enables, as students resolve them (bug 838e6852)', () => {
+    const tools = [
+        { key: 'QSA', enabled: true, always_on: false },
+        { key: 'ZTPI', enabled: false, always_on: false },
+        { key: 'bussola', enabled: false, always_on: false },
+        { key: 'goals', enabled: true, always_on: false },
+        { key: 'notebook', enabled: true, always_on: true },
+    ];
+    assert.deepEqual(pathStepTools(tools).map(t => t.key), ['QSA', 'goals']);
 });

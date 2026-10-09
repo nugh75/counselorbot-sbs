@@ -84,38 +84,51 @@ test('getCachedUserAccess returns stored access from sessionStorage', () => {
     });
 });
 
-test('fetchUserAccess caches results in sessionStorage once fetched', async () => {
+test('fetchUserAccess revalidates so class changes reach the student (bug 838e6852)', async () => {
     const store = memoryStorage();
     await withStorage(store, async () => {
         clearUserAccessCache();
         let fetchCount = 0;
-        const fakeData: UserAccess = {
+        const before: UserAccess = {
             restricted: true,
             tool_keys: ['QSA', 'SAVICKAS'],
-            counselor_ids: null,
+            counselor_ids: [1, 2],
             default_counselor_id: null,
             class_ids: [5],
         };
+        // The teacher then disables SAVICKAS and counselor 2 for the class.
+        const after: UserAccess = { ...before, tool_keys: ['QSA'], counselor_ids: [1] };
+        let current = before;
 
         const originalFetch = globalThis.fetch;
         (globalThis as { fetch: typeof originalFetch }).fetch = (async () => {
             fetchCount++;
+            const body = current;
             return {
                 ok: true,
                 status: 200,
-                json: async () => fakeData,
+                json: async () => body,
             } as Response;
         }) as typeof originalFetch;
 
         try {
             const first = await fetchUserAccess();
-            assert.deepEqual(first, fakeData);
+            assert.deepEqual(first, before);
             assert.equal(fetchCount, 1);
+            assert.deepEqual(getCachedUserAccess(), before);
 
-            // Second fetch should use the cached session value, not triggering network call
+            current = after;
             const second = await fetchUserAccess();
-            assert.deepEqual(second, fakeData);
-            assert.equal(fetchCount, 1);
+            assert.deepEqual(second, after);
+            assert.equal(fetchCount, 2);
+            // The seed for the next first render follows the latest answer.
+            assert.deepEqual(getCachedUserAccess(), after);
+
+            // Concurrent callers share one request.
+            const [a, b] = await Promise.all([fetchUserAccess(), fetchUserAccess()]);
+            assert.deepEqual(a, after);
+            assert.deepEqual(b, after);
+            assert.equal(fetchCount, 3);
         } finally {
             (globalThis as { fetch: typeof originalFetch }).fetch = originalFetch;
             clearUserAccessCache();
