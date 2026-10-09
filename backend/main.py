@@ -607,6 +607,7 @@ def _run_seed_and_migrations():
             ("personal_goals", "ADD COLUMN IF NOT EXISTS method JSON NOT NULL DEFAULT '[]'"),
             ("goal_resource_links", "ADD COLUMN IF NOT EXISTS role VARCHAR NOT NULL DEFAULT 'related'"),
             ("teacher_practice_notebooks", "ADD COLUMN IF NOT EXISTS group_ids JSON NOT NULL DEFAULT '[]'"),
+            ("account_preferences", "ADD COLUMN IF NOT EXISTS class_view VARCHAR"),
         ]:
             try:
                 with database.engine.connect() as conn:

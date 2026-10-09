@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { BookOpen, Bot, ClipboardList, Compass, GraduationCap, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, type LucideIcon } from 'lucide-react';
+import { ClassViewSwitcher } from './ClassViewSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
@@ -140,6 +141,9 @@ export function Header() {
                             </div>
                         ) : (
                             <>
+                                {/* Vista attiva dello studente con classi (#146). */}
+                                {isAuthenticated && <ClassViewSwitcher className="hidden lg:flex" />}
+
                                 {/* I quattro ingressi principali, poi il menu a tre punti. */}
                                 {workInline}
 
@@ -311,6 +315,9 @@ function HeaderMenu({
                                 {accountLabel}
                             </div>
                         </div>
+                    )}
+                    {accountLabel && (
+                        <ClassViewSwitcher labelled className="border-b border-slate-100 px-3 py-2 dark:border-slate-700 lg:hidden" />
                     )}
                     {items.map((item) => {
                         const Icon = item.icon;

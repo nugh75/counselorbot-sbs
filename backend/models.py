@@ -36,6 +36,8 @@ class AccountPreferences(Base):
     username = Column(String, primary_key=True)
     counselor_id = Column(Integer, nullable=True)
     notebook_completed = Column(Boolean, nullable=False, default=False)
+    # Student view (#146): NULL = class view, "all" = full view, "<group id>" = one class.
+    class_view = Column(String, nullable=True)
 
 
 class ChatGPTConnection(Base):
