@@ -5,6 +5,10 @@ One resolver backs every guard. The admin platform layer comes first
 an active class then get the union of their classes' settings: a tool is
 enabled if at least one class enables it. Staff and users with no class get the
 admin layer only. Reads of existing data are never guarded (decision 8).
+
+A student with classes picks the active view (#146): the class view (default,
+the union above), one class only, or the full view, which drops the class layer
+from every guard. The choice lives in `AccountPreferences.class_view`.
 """
 import re
 from types import SimpleNamespace
@@ -71,6 +75,54 @@ def _active_classes(db: Session, username: str) -> list[tuple[int, models.ClassS
     return classes
 
 
+FULL_VIEW = "all"
+CLASS_VIEW = "classes"
+
+
+def _scoped_classes(db: Session, username: str, classes) -> tuple[list, str | int]:
+    """Classes that filter access under the stored view, and the effective view.
+
+    A stale choice (class left or deactivated) falls back to the class view.
+    """
+    prefs = db.get(models.AccountPreferences, username) if classes else None
+    stored = (prefs.class_view or "") if prefs else ""
+    if stored == FULL_VIEW:
+        return [], FULL_VIEW
+    if stored.isdigit():
+        chosen = [item for item in classes if item[0] == int(stored)]
+        if chosen:
+            return chosen, chosen[0][0]
+    return classes, CLASS_VIEW
+
+
+def _view_classes(db: Session, identity) -> list:
+    """Classes that filter `identity` right now; empty means no class layer."""
+    if is_staff(identity):
+        return []
+    username = _username(identity)
+    return _scoped_classes(db, username, _active_classes(db, username))[0]
+
+
+def save_view(db: Session, identity, view: str | int) -> None:
+    """Store the active view; only a student with an active class may choose one."""
+    username = _username(identity)
+    classes = [] if is_staff(identity) else _active_classes(db, username)
+    if not classes:
+        raise HTTPException(status_code=400, detail="no_class")
+    if isinstance(view, int) and view not in {group_id for group_id, _ in classes}:
+        raise HTTPException(status_code=400, detail="class_not_joined")
+    prefs = db.get(models.AccountPreferences, username) or models.AccountPreferences(username=username)
+    prefs.class_view = None if view == CLASS_VIEW else str(view)
+    db.add(prefs)
+    db.commit()
+
+
+def class_names(db: Session, group_ids: list[int]) -> list[dict]:
+    names = dict(db.query(models.StudentGroup.id, models.StudentGroup.name)
+                 .filter(models.StudentGroup.id.in_(group_ids))) if group_ids else {}
+    return [{"id": group_id, "name": names.get(group_id, "")} for group_id in group_ids]
+
+
 def class_enables(settings: models.ClassSettings | None, key: str) -> bool:
     """Admin lock first (decision 21), then the teacher's deny-list."""
     if settings is None:
@@ -125,7 +177,8 @@ def resolve_access(db: Session, identity) -> dict:
     """GET /user/access payload; counselor fields are null when not restricted."""
     admin_keys = _admin_tool_keys(db)
     username = _username(identity)
-    classes = [] if is_staff(identity) else _active_classes(db, username)
+    memberships = [] if is_staff(identity) else _active_classes(db, username)
+    classes, view = _scoped_classes(db, username, memberships)
     counselor_ids, default_counselor_id = None, None
     if classes:
         tool_keys = [key for key in admin_keys
@@ -138,7 +191,10 @@ def resolve_access(db: Session, identity) -> dict:
         "tool_keys": tool_keys,
         "counselor_ids": counselor_ids,
         "default_counselor_id": default_counselor_id,
-        "class_ids": [group_id for group_id, _ in classes],
+        # Every active class, whatever the view: class path and forum follow membership.
+        "class_ids": [group_id for group_id, _ in memberships],
+        "view": view,
+        "classes": class_names(db, [group_id for group_id, _ in memberships]),
     }
 
 
@@ -169,7 +225,7 @@ def require_tool(db: Session, identity, tool_key: str | None, *, preview: bool =
                 raise ToolAccessDenied("tool_unavailable", row.code)
     if is_staff(identity):
         return
-    classes = _active_classes(db, _username(identity))
+    classes = _view_classes(db, identity)
     if classes and not any(class_enables(settings, canonical) for _, settings in classes):
         raise ToolAccessDenied("tool_disabled_for_class", canonical)
 
@@ -210,13 +266,10 @@ def forum_option(settings: models.ClassSettings | None, name: str) -> tuple[bool
 
 def counselor_access(db: Session, identity) -> tuple[set[int] | None, int | None]:
     """(allowed counselor ids, class default); (None, None) means not filtered."""
-    if is_staff(identity):
-        return None, None
-    username = _username(identity)
-    classes = _active_classes(db, username)
+    classes = _view_classes(db, identity)
     if not classes:
         return None, None
-    ids, default = _counselor_access(db, username, classes)
+    ids, default = _counselor_access(db, _username(identity), classes)
     return set(ids), default
 
 

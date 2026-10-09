@@ -9,7 +9,15 @@ export interface UserAccess {
     counselor_ids: number[] | null;
     default_counselor_id: number | null;
     class_ids: number[];
+    // Student view (#146): 'classes' (default), 'all' (full view) or one class id.
+    // Optional: a cached payload from before the switcher has neither.
+    view?: 'all' | 'classes' | number;
+    classes?: { id: number; name: string }[];
 }
+
+// Fired on window after the student switches view, so every mounted
+// `useUserAccess` follows without a reload.
+export const USER_ACCESS_CHANGED = 'cb-user-access-changed';
 
 export function isToolAllowed(access: UserAccess | null | undefined, key: string): boolean {
     if (!access || !access.restricted) return true;
@@ -96,6 +104,18 @@ export function getCachedUserAccess(): UserAccess | null {
     return null;
 }
 
+export function setCachedUserAccess(access: UserAccess, key = getSessionCacheKey()): void {
+    memoryCache = { key, access };
+    const storage = getSessionStorage();
+    if (storage) {
+        try {
+            storage.setItem(key, JSON.stringify(access));
+        } catch {
+            // ignore session storage quota/security errors
+        }
+    }
+}
+
 // Guests and network failures fall back to the unfiltered catalog: the server
 // guards stay authoritative for every start or write.
 // Always asks the server, so a class change reaches the student on the next
@@ -110,15 +130,7 @@ export async function fetchUserAccess(): Promise<UserAccess | null> {
             const res = await apiFetch('/api/user/access');
             if (!res.ok) return null;
             const access = (await res.json()) as UserAccess;
-            memoryCache = { key, access };
-            const storage = getSessionStorage();
-            if (storage) {
-                try {
-                    storage.setItem(key, JSON.stringify(access));
-                } catch {
-                    // ignore session storage quota/security errors
-                }
-            }
+            setCachedUserAccess(access, key);
             return access;
         } catch {
             return null;

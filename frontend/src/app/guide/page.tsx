@@ -320,6 +320,7 @@ function GuideContent() {
                             <p className="mt-1.5">{l('classSettingsTeacher')}</p>
                             <p className="mt-1.5">{classSettingsText(lang, 'supportGuide')}</p>
                             <p className="mt-1.5">{l('classSettingsAccess')}</p>
+                            <p className="mt-1.5">{l('classViewSwitch')}</p>
                             <p className="mt-1.5">{l('classSettingsCounselors')}</p>
                             <p className="mt-1.5">{l('classSettingsHistory')}</p>
                             <p className="mt-1.5">{l('classPathDistinction')}</p>
@@ -350,7 +351,10 @@ function GuideContent() {
                                 <p>{l('classSettingsCounselors')}</p>
                             </div>
                         )}
-                        {!teacher && n === 5 && <p className="mt-4 max-w-prose text-sm leading-relaxed text-slate-600">{l('classSettingsAccess')}</p>}
+                        {!teacher && n === 5 && <div className="mt-4 max-w-prose space-y-1.5 text-sm leading-relaxed text-slate-600">
+                            <p>{l('classSettingsAccess')}</p>
+                            <p>{l('classViewSwitch')}</p>
+                        </div>}
                         {!teacher && n === 7 && (
                             <div className="mt-6 space-y-6 border-t border-slate-100 pt-6">
                                 {renderFigure(chatOverview, t('guide.chat.overviewAlt'), t('guide.chat.overviewCaption'))}
