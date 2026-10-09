@@ -578,7 +578,8 @@ is no longer allowed, the next start uses an allowed class default suitable for
 the tool, when available, or requests a choice among allowed counselors. With
 none available, the student contacts the teacher.
 
-Administrators use `/admin/classi` (Administration → Classes) to search by name,
+Administrators use Administration → Groups and classes (`/admin?tab=groupsClasses`;
+the old `/admin/classi` address redirects there) to search by name,
 code or school and filter by owner, institution and active state. **Settings &
 locks** opens `/admin/classi/{id}`. Individual tools, counselors and forum
 options can be locked ON/OFF or unlocked; locks apply immediately and require a
@@ -1262,10 +1263,13 @@ gli editor della pagina; non richiama un LLM e non richiede comandi nel terminal
 
 ## Class administration, locks and settings history (#109)
 
-Administrators open Administration → Classes or `/admin/classi` to search all
+Administrators open Administration → Groups and classes (`/admin?tab=groupsClasses`,
+also reached from `/admin/classi`) to search all
 classes by name, code or school and filter by owner, institution and active
 status. Each entry shows owner/co-teachers, institution, member count, custom
-settings and lock count. Settings are also reachable at `/admin/classi/{id}`.
+settings and lock count. Settings are also reachable at `/admin/classi/{id}`, whose Back link returns to
+the admin classes tab (the teacher route `/docente/classi/{id}` returns to
+`/docente/classi`). The admin header also links back to the teacher area.
 
 The shared Tools & counselors editor saves changes explicitly. Administrators
 can force any editable tool or institutional counselor ON or OFF with an
