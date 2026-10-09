@@ -562,7 +562,7 @@ protect that boundary. Student-created discussions, muting, pre-approval,
 and path/assignment links are separate later slices. Six-language
 interface controls are included; the expanded forum guide and screenshots are #107.
 Titles, messages and reasons reject invisible control characters (for example
-NUL); tabs and line breaks are kept.
+NUL); tabs and line breaks are kept. Character lengths for titles and messages are validated on publication.
 
 **Forum moderation (F2, #103).** Class owners, co-teachers and administrators
 moderate from the open discussion: Pin/Unpin (pinned discussions stay on top),
