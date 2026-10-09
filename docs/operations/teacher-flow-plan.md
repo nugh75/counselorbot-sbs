@@ -511,9 +511,9 @@ new questionnaire translations/validation; administrator-authored path presets;
 CSV import UI/jobs; competenzestrategiche.it API keys, connectors, SSO or automatic
 credential delivery. No new vendor/API capability is assumed.
 
-Future model contract: an import creates a provenance-labelled result with external
-record identity and idempotent ingestion; it does not automatically mark a path done.
-Explicit result selection and guided entry still bind it to a student and step.
+The future file-import contract is specified in section 12. Import alone does not
+complete a questionnaire step under the proposed default; the owner must review
+whether explicit student guided entry remains required.
 Future templates have versioned source definitions and class-local instantiation;
 admin editing a template must not mutate already published paths.
 
@@ -563,3 +563,254 @@ match their prepared specifications; eight journal tasks have the requested goal
 assignee, branch, optional review and dependency IDs; `make guidance-check` and the
 guidance check against the source baseline pass. Six suspected defects were saved
 in the journal, including two local-only records. No registration was rejected.
+
+## 12. Future: competenzestrategiche.it results import
+
+Amendment requested on 2026-10-09. **Future only: outside milestone #6 and its eight
+ordered slices; do not launch this work.** This section specifies file ingestion;
+it does not activate an import feature or imply an available vendor API. The teacher
+downloads a JSON or CSV export from competenzestrategiche.it and explicitly imports
+factor-level results into an authorized class. No vendor credentials/API keys are
+stored in the file-import workflow.
+
+### Contract and questionnaire-specific factor mappings
+
+The source contains student identifiers/names and **scores per factor**, not answers
+to questionnaire items. The teacher selects their active institute, class, instrument,
+locale and, when applicable, the exact administration. A file containing several
+instruments or administrations is partitioned into explicit preview groups; each
+group has its own mapping and target context. A guessed instrument is only a
+suggestion requiring confirmation. Mixed or unidentified rows are excluded until
+their context is resolved; the server never attributes them by column resemblance.
+
+Current factor definitions are questionnaire-scoped in
+`backend/models.py:434-456`; the scorer retrieves them per instrument in
+`backend/scoring_service.py:225-229`. Profile storage uses factor-code scores
+(`backend/scoring_service.py:323-325`). The baseline frontend definitions in
+`frontend/src/lib/questionnaires.ts:49-115` provide the following planning inventory:
+
+| Questionnaire | Baseline CounselorBot factor codes | Mapping contract |
+|---|---|---|
+| QSA | C1, C2, C3, C4, C5, C6, C7, A1, A2, A3, A4, A5, A6, A7 | Separate QSA map and factor-set fingerprint. |
+| QSAr | C1r, C2r, C3r, C4r, A1r, A2r, A3r, A4r | Separate QSAr map; never reuse QSA targets or drop the r suffix. |
+| ZTPI | T1, T2, T3, T4, T5 | Separate ZTPI map and report-scale declaration. |
+| QPCS | S1, S2, S3, S4, S5 | Separate QPCS map and factor-set fingerprint. |
+| QPCC | K1, K2, K3, K4, K5 | Separate QPCC map and factor-set fingerprint. |
+| QAP | AD1, AD2, AD3, AD4 | Separate QAP map and factor-set fingerprint. |
+
+These are source-baseline codes, not a fixed future import whitelist. Validate every
+mapping against the server's selected instrument factor set at preview **and commit**.
+Future supported instruments require their own mappings; a changed factor set makes
+an older map stale until reviewed. Questionnaire availability and import capability
+are separate: an external IT export does not require an IT in-app item runner, but
+the profile/guided-chat contract must support the selected instrument and scores.
+
+Each immutable mapping version identifies provider, instrument code, external export
+schema/version, locale/report scale, expected factor-set fingerprint and entries of
+`external CSV column or JSON key/path -> CounselorBot factor code`. CSV dialect,
+encoding and decimal format, or JSON row/factor container paths, are part of that
+version. Identifier/name/record-id columns are declared separately from factor columns.
+For wide CSV/JSON there is one record per questionnaire result; a documented long
+CSV form may group factor rows by external student, record, instrument and attempt,
+rejecting duplicate or inconsistent factors within a group.
+
+Exact external headers/keys cannot be listed honestly without representative exports;
+none were supplied for this amendment. A mapping preview lets the teacher select a
+known version or explicitly map detected fields to the selected factor set. Preview
+changes are provisional; a successful confirmed commit stores an immutable scoped
+version. Reusing a version never mutates its old entries. Do not infer equivalence
+from translated labels, column position or shared prefixes. For example, an external
+QSAr field selected for C1r must target C1r even if its label resembles QSA C1.
+
+Before any durable result, student-link or reusable mapping write, preview reports:
+
+- Unknown factor fields and unknown target codes; declared non-factor metadata fields
+  are shown separately. The teacher must resolve an unknown field or explicitly
+  classify it as unused metadata; never silently discard a score column.
+- Missing required factors per record, blank/non-numeric/non-finite/out-of-range
+  scores, duplicate headers/keys/factors, incompatible instrument or report scale,
+  ambiguous export grouping and duplicate/conflicting external records.
+- Exact expected vs mapped factor sets. Every factor has one source value; two
+  source fields cannot silently collapse to the same target. Invalid/incomplete rows
+  remain unselected and cannot be committed; valid rows may form an explicit subset.
+- Missing external record IDs, unresolved student identities, stale class membership
+  and conflicts with previous imported records. Show imported/reimported/skipped/
+  excluded counts and selected recipients before confirmation.
+
+Use the instrument's report-scale contract, not its item-response scale. An imported
+factor score is already an aggregate: no item reverse scoring or speculative
+renorming. If the export supplies raw scores but the guided profile expects stanines,
+block those rows until a documented versioned conversion using validated norms is
+available. Retain declared input/output scales and conversion version if conversion
+is later supported; do not silently round or approximate.
+
+### Student matching and remembered identities
+
+The teacher is responsible for matching every external student to a **current
+student of the selected class**. Names and external identifiers do not grant an
+account association. Suggestions may use exact saved external-ID matches and local,
+deterministic name comparison against that class roster. No uploaded identity is
+sent to an LLM, third-party matching service or institute-wide/global account search.
+
+Every new import displays suggested and remembered matches with their reason; the
+teacher explicitly confirms each selected external student, including remembered
+matches. Rows for the same unambiguous external student may share one confirmed
+selection. Distinct students with the same name require manual resolution. Do not
+merge different external IDs just because their normalized names coincide.
+
+Unmatched, ambiguous or explicitly excluded rows are left out, with an exclusion
+count; they do not create accounts or questionnaire results. A selected account must
+still belong to the class at commit. Several attempts for one confirmed student may
+be imported as separate results when their external record IDs differ. Several
+external identities pointing to one account require explicit review rather than
+automatic collapse. A remembered mapping can be replaced only by an explicit audited
+teacher confirmation; this changes later imports and never reassigns old results.
+
+Remember provider/institute/class-scoped external student ID -> account mappings
+after successful confirmation, with confirming teacher and revision. If the export
+has no stable student ID, names may produce suggestions but do not become durable
+identity keys; a teacher must manually match again unless a reliable provider ID
+has been established. Reuse is limited to teachers authorized for both that class
+and institute; revoked access and departed students invalidate reuse. Expose removal
+of a remembered link without deleting the already imported profile.
+
+### Future data model and preview/commit interface
+
+These entities are future contracts, not additional migrations for TF1-TF8.
+
+| Entity | Proposed fields | Invariant |
+|---|---|---|
+| ExternalFactorMappingVersion | Provider, institute scope, instrument, export schema/version, mapping version, factor-set fingerprint, field/path map, parser format, input/output score scales, creator/time | Immutable after commit; exact factor set and compatible scales; no student names or credentials in the shared map. |
+| QuestionnaireImportPreview | Random preview ID, authenticated teacher, institute/class, target plan/instrument, roster and mapping revisions, expiry, selected row hashes | Temporary class-scoped state, not a durable result; commit rechecks all permissions, mappings and identities. |
+| ExternalStudentMatch | Provider, institute/class, stable external student key, matched account, confirming teacher/time, revision | Unique within that scope; no name-only key, no access to other classes, and no historical result reassignment. |
+| QuestionnaireImportBatch | Institute/class, teacher, provider, mapping versions, confirmed timestamp, counts and commit request ID | Durable minimal audit and idempotent request identity; omit raw file, excluded names and full source rows. |
+| QuestionnaireResult provenance | Existing proposed source fields plus mapping/batch identity, external instrument/attempt context and normalized payload fingerprint | `source=imported`, `source_system=competenzestrategiche.it`, `capture_method=json_import` or `csv_import`, exact external record ID and server-resolved student. |
+| ExternalResultIdentity | Provider, institute, instrument, external record ID, result ID, matched student, payload fingerprint | Scoped database uniqueness and transactional checks make re-import idempotent across filenames, row order and concurrent batches. |
+
+Retain external record identity exactly, with its documented namespace. Scope includes
+instrument because vendor identifiers may only be unique per questionnaire; any
+additional export namespace must be declared by the mapping. The file hash or row
+number is not an external record ID. If exports lack a stable result ID, preview
+flags the rows and excludes them until the owner chooses a documented stable source
+identity policy. Never invent a provider ID or claim idempotency from a filename.
+
+For an identical scoped identity, matched account and normalized payload, re-import
+returns the existing result as already imported. A changed payload, different student,
+different administration association or changed interpretation/mapping is a preview
+conflict, not an overwrite. A mapping version may be recorded on the new batch without
+rewriting unchanged historical provenance; semantic changes require review. Correction
+or replacement requires a future explicit audited resolution contract. Existing
+`in-app` results remain independent and unchanged, even for the same student/instrument.
+When selecting a result for guided chat, show source, assessment date when supplied,
+import time and administration so the student does not select an arbitrary latest row.
+
+Proposed interface: class-scoped preview upload, preview mapping/matching revisions,
+explicit commit with request ID, and cancel/delete preview. Preview writes no durable
+results or reusable matches. Commit is atomic for the explicitly selected valid
+subset, revalidates current roster/permissions/target and returns created, already
+imported and excluded counts. Concurrent identity or revision conflicts roll back
+that selected commit and require a refreshed preview. Do not accept client-supplied
+username/provenance as authority. Standalone imports may omit a plan; associating
+them later with a questionnaire step requires explicit compatible administration
+selection, never automatic attachment to all matching instrument steps.
+
+### Teacher and student flow (ASCII)
+
+```text
+TEACHER: Institute -> Class -> Questionnaire results -> Import (future)
+  [Questionnaire v] [Administration v / Unlinked] [JSON or CSV file]
+          |
+          v
+  FACTOR PREVIEW
+  [Export schema v] [Mapping version v / Map fields]
+  External column/key       CounselorBot factor       Validation
+  <detected field>          <factor of this instrument> missing/valid/error
+  Unknown fields [resolve / explicitly unused]  Missing factors [row excluded]
+          |
+          v
+  STUDENT MATCHING (only current roster of this class)
+  External student    Suggested account     Reason          [Confirm] [Exclude]
+  <file identity>     <class student v>     saved/exact/manual   [ ]
+  Unmatched identities stay excluded; no account creation
+          |
+          v
+  FINAL PREVIEW
+  New: N | Already imported: N | Conflicts: N | Excluded: N
+  [Remember confirmed stable-ID matches] [Confirm import] [Cancel]
+  Confirmation -> scoped atomic save -> raw upload deleted
+
+STUDENT: My questionnaire results
+  Result: imported / competenzestrategiche.it / <questionnaire> / <date>
+  [Use this result in guided chat]
+  Proposed rule: successful guided-entry acknowledgement -> questionnaire step done
+  Import alone -> result available; step still awaiting guided entry
+```
+
+### Privacy, retention and risks
+
+An upload can contain names of minors and identifiers outside CounselorBot. Require
+the authorized teacher's class and institute context for upload, preview, remembered
+links and commit; recheck access on every read/write, including co-teachers. Institute
+membership alone is insufficient. No cross-class match suggestions. Student reads
+show only their own imported results, and research visibility continues to follow
+the existing explicit administration permissions rather than exposing uploaded names.
+
+Use bounded temporary storage: delete the raw file and identity-bearing parsed preview
+after commit, cancel or expiry, including abandoned/failed imports. Proposed maximum
+preview lifetime: 24 hours, configurable shorter; automatic cleanup on expiry and
+crash recovery. Do not include temporary uploads in backups, logs, telemetry, RAG,
+LLM context or research/PDF exports. Keep only the validated result/provenance,
+minimal batch audit and explicitly confirmed stable-ID links under normal account/
+class retention. Revocation blocks reads immediately; deletion of remembered links
+must be available independently of result retention. The exact retention default
+needs owner review before implementation.
+
+Set documented file/row/field/depth limits, strict encoding/dialect parsing and schema
+validation. Never evaluate JSON content, spreadsheet formulas or source values.
+Escape untrusted labels in the preview; sanitize any later report export. Do not
+persist unused columns or excluded identities in result metadata. Evidence/tests
+use invented student identities and sanitized export fixtures only.
+
+Risks requiring explicit handling: incorrect student match; identical names; missing
+stable IDs; changed factor catalog/export headers; QSA/QSAr code collision; raw scores
+mistaken for stanines; cross-institute identity leakage; retry/concurrent overwrite;
+stale roster after preview; temporary uploads surviving failure; ambiguity between
+file ingestion and guided-chat completion. Unknown external schemas are a future
+implementation prerequisite, not evidence that the vendor supports a specific format.
+
+### Path-step completion and owner questions
+
+**Proposed default: import does not count as questionnaire-step completion.** It
+creates an available result with imported provenance. The student must select that
+result and explicitly enter it into their guided-chat session; only the server's
+durable guided-entry acknowledgement for the exact student, administration and path
+step satisfies section 8. Merely opening the chat screen is insufficient. Guided
+entry must occur after step activation; an earlier external assessment may be used
+when explicitly selected. The original external date and import date never fabricate
+a guided-entry timestamp or complete a separate results-deep-dive step.
+
+**Owner question:** should a teacher-confirmed import itself be considered the data
+entering guided chat, or should the student still explicitly enter/select it there?
+Until resolved, do not create guided-entry evidence from an import job. Choosing
+import-as-completion would amend the settled completion rule and requires an explicit
+owner decision on consent/session binding, activation timing and the UI meaning of done.
+
+Other owner questions before future implementation: provide sanitized representative
+JSON/CSV exports and clarify stable student/result IDs and factor report scales;
+approve the proposed 24-hour maximum preview retention; define whether corrected
+external records may create audited replacement versions or always require manual
+conflict resolution. These questions do not add a ninth milestone slice or authorize
+launching the future task.
+
+Future tracking: [#157 — Import competenzestrategiche.it factor results with teacher-confirmed student matching](https://github.com/nugh75/counselorbot-sbs/issues/157), labelled `future`, with **no milestone**.
+Journal task: `3b65aa9b-8edd-4aae-aa19-173684b832ba`, title ending in `future, model to confirm`, assignee codex,
+review optional and no branch/dependency. Neither belongs to the milestone #6
+execution chain; closure of this planning task does not unblock or authorize the
+future task. Implementation requires a separate owner instruction.
+
+Amendment validation: 42 source references checked; all six listed factor sets match
+the baseline definitions; future issue #157 has the `future` label and no milestone;
+milestone #6 still contains exactly #148-#155. The future journal task is pending,
+with the requested goal/assignee/review and no execution-chain dependency. Guidance
+and diff checks cover this documentation-only amendment; no import was implemented
+or launched and no additional defect was observed during this amendment.
