@@ -429,6 +429,8 @@ class AdministrationPlanBase(BaseModel):
     notes: Optional[str] = None
     status: str = "planned"
     researchers: List[AdministrationPlanResearcherInput] = Field(default_factory=list)
+    institution_code: Optional[str] = Field(default=None, max_length=50)
+    institution_password: Optional[str] = Field(default=None, max_length=100)
 
 
 class AdministrationPlanCreate(AdministrationPlanBase):
@@ -446,6 +448,8 @@ class AdministrationPlanUpdate(BaseModel):
     notes: Optional[str] = None
     status: Optional[str] = None
     researchers: Optional[List[AdministrationPlanResearcherInput]] = None
+    institution_code: Optional[str] = Field(default=None, max_length=50)
+    institution_password: Optional[str] = Field(default=None, max_length=100)
 
 
 class AdministrationPlanResponse(BaseModel):
@@ -461,6 +465,7 @@ class AdministrationPlanResponse(BaseModel):
     location: Optional[str] = None
     notes: Optional[str] = None
     status: str
+    institution_code: Optional[str] = None
     created_by_username: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
@@ -1708,6 +1713,8 @@ class InstitutionBase(BaseModel):
     website_url: Optional[str] = None
     orientation_page_url: Optional[str] = None
     is_active: bool = True
+    institution_code: Optional[str] = Field(default=None, max_length=50, pattern=r"^[A-Za-z0-9-]+$")
+    # hashed_password non entra nel payload (solo admin lo imposta); il campo serve per la risposta al listing interno.
 
 
 class InstitutionCreate(InstitutionBase):
@@ -1720,10 +1727,12 @@ class InstitutionUpdate(BaseModel):
     website_url: Optional[str] = None
     orientation_page_url: Optional[str] = None
     is_active: Optional[bool] = None
+    institution_code: Optional[str] = Field(default=None, max_length=50, pattern=r"^[A-Za-z0-9-]+")
 
 
 class InstitutionResponse(InstitutionBase):
     id: int
+    hashed_password: Optional[str] = None
 
     class Config:
         from_attributes = True

@@ -2,6 +2,25 @@ from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text
 from sqlalchemy.sql import func
 from .database import Base
 
+from passlib.context import CryptContext
+
+_pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def get_password_hash(password: str) -> str:
+    '''Crittografia della password con bcrypt.'''
+    return _pwd_ctx.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    '''Verifica che una password corrispondano a un hash bcrypt.'''
+    if not hashed_password:
+        return False
+    try:
+        return _pwd_ctx.verify(plain_password, hashed_password)
+    except Exception:
+        return False
+
 class User(Base):
     __tablename__ = "users"
 
@@ -317,6 +336,9 @@ class AdministrationPlan(Base):
     location = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     status = Column(String, nullable=False, default="planned", index=True)
+    # Autenticazione istituzionale: codice + password dell'istituto che somministra.
+    institution_code = Column(String(50), nullable=True, index=True)
+    institution_password = Column(String(100), nullable=True)
     created_by_username = Column(String, nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -1479,6 +1501,10 @@ class Institution(Base):
     website_url = Column(String, nullable=True)
     orientation_page_url = Column(String, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
+    # Codice univoco (es. 'liceo-galilei') usato nell'URL di somministrazione
+    institution_code = Column(String(50), unique=True, nullable=True, index=True)
+    # Password hashed bcrypt; vuota significa istituto senza autenticazione.
+    hashed_password = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

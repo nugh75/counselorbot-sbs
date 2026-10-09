@@ -56,6 +56,23 @@ def _valid_level(value) -> str | None:
     return level
 
 
+def _validate_institution_for_plan(db: Session, payload) -> str:
+    '''Validazione dell'esistenza dell'istituto. Se il piano ha un codice istruzione, lo validiamo contro il catalogo.'''
+    institution_code = str(payload.institution_code or "").strip() or None
+    if not institution_code:
+        return None
+    institution = db.query(models.Institution).filter(
+        func.lower(models.Institution.institution_code) == institution_code.lower()
+    ).first()
+    if not institution:
+        raise HTTPException(status_code=422, detail="Istituzione non registrata")
+    password = str(payload.institution_password or "").strip() if hasattr(payload, 'institution_password') else None
+    if password:
+        if not institution.hashed_password or not models.verify_password(password, institution.hashed_password):
+            raise HTTPException(status_code=422, detail="Codice o password dell'istituto non validi")
+    return institution_code
+
+
 def _normalize_locale(value: Optional[str]) -> str:
     locale = (value or "en").strip().lower()
     return locale or "en"
@@ -289,6 +306,8 @@ async def create_administration_plan(
         raise HTTPException(status_code=409, detail="Codice piano gia' esistente")
 
     store_user_display_name(db, current_user)
+    # Validazione codice istruzione se presente.
+    valid_code = _validate_institution_for_plan(db, payload)
     plan = models.AdministrationPlan(
         code=code,
         title=title,
@@ -300,6 +319,8 @@ async def create_administration_plan(
         location=_clean(payload.location),
         notes=_clean(payload.notes),
         status=_normalize_status(payload.status),
+        institution_code=valid_code,
+        institution_password=(payload.institution_password or "").strip() if payload.institution_password else None,
         created_by_username=_username(current_user),
     )
     db.add(plan)
@@ -340,6 +361,13 @@ async def update_administration_plan(
         plan.notes = _clean(updates["notes"])
     if "status" in updates:
         plan.status = _normalize_status(updates["status"])
+    # Validazione codice istruzione se presente.
+    if payload.institution_code or payload.institution_password:
+        _validate_institution_for_plan(db, payload)
+        if payload.institution_code:
+            plan.institution_code = (payload.institution_code or "").strip() or None
+        if payload.institution_password is not None:
+            plan.institution_password = (payload.institution_password or "").strip() or None
     if payload.researchers is not None:
         _replace_researchers(db, plan.id, payload.researchers)
 

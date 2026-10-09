@@ -38,6 +38,7 @@ interface AdministrationPlan {
     school_level: string | null;
     scheduled_at: string | null;
     location: string | null;
+    institution_code: string | null;
     notes: string | null;
     status: string;
     created_at: string;
@@ -54,6 +55,8 @@ type FormState = {
     school_level: string;
     scheduled_at: string;
     location: string;
+    institution_code: string;
+    institution_password: string;
     notes: string;
     status: string;
     contact_ids: number[];
@@ -68,6 +71,8 @@ const EMPTY: FormState = {
     school_level: '',
     scheduled_at: '',
     location: '',
+    institution_code: '',
+    institution_password: '',
     notes: '',
     status: 'planned',
     contact_ids: [],
@@ -234,6 +239,8 @@ export function AdministrationPlansPanel() {
             school_level: plan.school_level ?? '',
             scheduled_at: toDateTimeLocal(plan.scheduled_at),
             location: plan.location || '',
+            institution_code: plan.institution_code || '',
+            institution_password: '',
             notes: plan.notes || '',
             status: plan.status,
             contact_ids: plan.researchers
@@ -282,6 +289,8 @@ export function AdministrationPlansPanel() {
             school_level: form.school_level || null,
             scheduled_at: toApiDateTime(form.scheduled_at),
             location: optional(form.location),
+            institution_code: form.institution_code || null,
+            institution_password: form.institution_password || null,
             notes: optional(form.notes),
             status: form.status,
             researchers: [
@@ -472,6 +481,34 @@ export function AdministrationPlansPanel() {
                     </div>
                 </section>
 
+                <section className="rounded-md border border-slate-200 bg-white p-3">
+                    <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('admin.ap.section.institution')}</h3>
+                    <p className="text-xs text-slate-600 mt-2">{t('admin.ap.section.institution.help')}</p>
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        <label className="text-xs font-semibold uppercase text-slate-500">
+                            {t('admin.ap.institutionCode')}
+                            <input
+                                className={inputCls}
+                                type="text"
+                                value={form.institution_code}
+                                onChange={(event) => setForm({ ...form, institution_code: event.target.value })}
+                                placeholder={t('admin.ap.institutionCodePlaceholder')}
+                                maxLength={50}
+                            />
+                        </label>
+                        <label className="text-xs font-semibold uppercase text-slate-500">
+                            {t('admin.ap.institutionPassword')}
+                            <input
+                                className={inputCls}
+                                type="password"
+                                value={form.institution_password}
+                                onChange={(event) => setForm({ ...form, institution_password: event.target.value })}
+                                placeholder={t('admin.ap.institutionPasswordPlaceholder')}
+                                maxLength={100}
+                            />
+                        </label>
+                    </div>
+                </section>
                 <section className="rounded-md border border-slate-200 bg-white p-3">
                     <h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('admin.ap.section.researchers')}</h3>
                     <div className="mt-3 grid gap-3 lg:grid-cols-2">

@@ -31,6 +31,11 @@ class InstitutionTeacherCreate(BaseModel):
         return value
 
 
+class InstitutionSetPassword(BaseModel):
+    plain_password: str | None = None
+    hashed_password: str | None = None
+
+
 class InstitutionTeacherResponse(BaseModel):
     id: int
     institution_id: int
@@ -193,3 +198,22 @@ async def delete_institution(
     row.is_active = False
     db.commit()
     return {"status": "deactivated", "id": institution_id}
+
+
+@router.put("/admin/institutions/{institution_id}/password", response_model=schemas.InstitutionResponse)
+async def set_institution_password(
+    institution_id: int,
+    payload: InstitutionSetPassword,
+    current_user: dict = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    row = _fetch(db, institution_id)
+    if payload.hashed_password is not None:
+        row.hashed_password = payload.hashed_password
+    elif payload.plain_password is not None:
+        row.hashed_password = models.get_password_hash(payload.plain_password)
+    else:
+        row.hashed_password = None
+    db.commit()
+    db.refresh(row)
+    return row
