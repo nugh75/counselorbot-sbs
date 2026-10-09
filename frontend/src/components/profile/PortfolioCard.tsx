@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FolderOpen, ImagePlus, Loader2, Maximize2, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
+import { ArrowRight, FolderOpen, ImagePlus, Loader2, Maximize2, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import { toast } from '@/components/ui/Toast';
@@ -485,9 +485,9 @@ export function PortfolioCard() {
                                 )}
                                 <div>
                                     <button type="button" onClick={() => { setGoalLinkFor(previous => previous === item.id ? null : item.id); setGoalChoice(''); setGoalLinkError(''); }}
-                                        className="min-h-11 rounded-md px-2 text-xs font-semibold text-indigo-700 underline hover:text-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                        className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-xs font-semibold text-indigo-700 underline hover:text-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                         aria-expanded={goalLinkFor === item.id}>
-                                        → {t('portfolio.linkToGoal')}
+                                        <ArrowRight className="h-3.5 w-3.5" aria-hidden />{t('portfolio.linkToGoal')}
                                     </button>
                                     {goalLinkFor === item.id && (
                                         <div className="mt-2 space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3">

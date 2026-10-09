@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch, getIdentity, withViewAsHeaders } from '@/lib/auth';
 import { notebookAutosave, type NotebookAutosave, type NotebookData, type NotebookRevision, type SaveStatus } from '@/lib/notebook-autosave';
-import { AlertCircle, History, Pencil, Trash2, X } from 'lucide-react';
+import { AlertCircle, ArrowRight, History, Pencil, Trash2, X } from 'lucide-react';
 import { PencilButton } from '@/components/ui/PencilButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { BackButton } from '@/components/ui/BackButton';
@@ -107,7 +107,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [validationError, setValidationError] = useState('');
 
-    // Ponte «→ Rendi obiettivo la difficoltà» (C2): solo nella pagina personale
+    // Ponte «Rendi obiettivo la difficoltà» (C2): solo nella pagina personale
     // (variant 'edit'), non nel percorso guidato di intake/revisione.
     const showGoalBridge = variant === 'edit';
     const noteAppliedRef = useRef(false);
@@ -504,9 +504,12 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                     <div className="flex flex-wrap items-center gap-3">
                         <Button
                             variant="secondary"
+                            className="w-11 px-0"
                             onClick={() => setEditing(true)}
+                            aria-label={t('lp.edit')}
+                            title={t('lp.edit')}
                         >
-                            <Pencil className="w-4 h-4" /> {t('lp.edit')}
+                            <Pencil className="w-4 h-4" aria-hidden />
                         </Button>
                         <Button
                             variant="secondary"
@@ -524,9 +527,11 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                             <Button
                                 variant="ghost"
                                 onClick={() => setConfirmDelete(true)}
-                                className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                                className="w-11 px-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                aria-label={t('lp.delete')}
+                                title={t('lp.delete')}
                             >
-                                <Trash2 className="w-4 h-4" /> {t('lp.delete')}
+                                <Trash2 className="w-4 h-4" aria-hidden />
                             </Button>
                         )}
                         {saved && <span className="text-sm text-emerald-600">{t('lp.saved')}</span>}
@@ -562,6 +567,7 @@ export function LearnerProfileCard({ variant, sessionId, onDone, requireInitial 
                             setGoalTarget({ kind: 'create', origin: { kind: 'notebook', target_id: 'current' }, prefill: { motivation: form.values } });
                         }}
                     >
+                        <ArrowRight className="h-4 w-4" aria-hidden />
                         {t('lp.bridge.difficultyToGoal')}
                     </Button>
                 </div>
