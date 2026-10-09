@@ -3,8 +3,9 @@
 Scope: `GET /admin/classes` (search by name/code/school, filters by owner,
 institution and active status), `POST /admin/groups/{id}/settings/lock` and
 `/unlock`, the append-only `class_settings_audit_log` table and
-`GET /teacher/groups/{id}/settings/audit-log`. UI: `/admin/classi`, the
-Classes block in Administration → Groups/classes, and `/admin/classi/{id}`,
+`GET /teacher/groups/{id}/settings/audit-log`. UI: the Classes block in
+Administration → Groups and classes (`/admin?tab=groupsClasses`; `/admin/classi`
+redirects there), and `/admin/classi/{id}`,
 which reuses the teacher settings editor with lock controls and Change history.
 
 Rules:
