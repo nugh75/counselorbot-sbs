@@ -146,3 +146,116 @@ export function lockedStepUnlockNumber(path: Pick<StudentClassPath, 'steps' | 'n
     const index = path.steps.findIndex(step => step.id === path.next_step_id);
     return index >= 0 ? index + 1 : null;
 }
+
+export type ProgressCellState = 'done' | 'not_done' | 'locked' | 'unavailable';
+export type ProgressSource = 'automatic' | 'student' | 'teacher';
+export type ProgressFilter = 'all' | 'late' | 'not_started';
+
+export interface ClassPathProgressStep extends ClassPathStep {
+    id: number;
+    available: boolean;
+    done_count: number;
+}
+
+export interface ClassPathProgressCell {
+    step_id: number;
+    state: ProgressCellState;
+    source: ProgressSource | null;
+    at: string | null;
+    actor: string | null;
+    reason: string | null;
+    /** The teacher's own mark, shown even when strict mode locks the cell. */
+    teacher_state: 'done' | 'not_done' | null;
+}
+
+export interface ClassPathProgressStudent {
+    username: string;
+    display_name: string;
+    cells: ClassPathProgressCell[];
+    done: number;
+    total: number;
+}
+
+export interface ClassPathProgress {
+    path_id: number;
+    mode: 'recommended' | 'strict';
+    steps: ClassPathProgressStep[];
+    students: ClassPathProgressStudent[];
+}
+
+function optionalString(value: unknown): string | null {
+    return value ? String(value) : null;
+}
+
+function parseProgressCell(input: unknown): ClassPathProgressCell {
+    const raw = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
+    const state = raw.state === 'done' || raw.state === 'locked' || raw.state === 'unavailable' ? raw.state : 'not_done';
+    const source = raw.source === 'automatic' || raw.source === 'student' || raw.source === 'teacher' ? raw.source : null;
+    const teacherState = raw.teacher_state === 'done' || raw.teacher_state === 'not_done' ? raw.teacher_state : null;
+    return {
+        step_id: Number(raw.step_id),
+        state,
+        source,
+        at: optionalString(raw.at),
+        actor: optionalString(raw.actor),
+        reason: optionalString(raw.reason),
+        teacher_state: teacherState,
+    };
+}
+
+export function parseClassPathProgress(input: unknown): ClassPathProgress {
+    const raw = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
+    const steps = Array.isArray(raw.steps) ? raw.steps : [];
+    const students = Array.isArray(raw.students) ? raw.students : [];
+    return {
+        path_id: Number(raw.path_id),
+        mode: raw.mode === 'strict' ? 'strict' : 'recommended',
+        steps: steps.map(step => {
+            const record = step as Record<string, unknown>;
+            return {
+                ...parseClassPathStep(step),
+                id: Number(record.id),
+                available: record.available !== false,
+                done_count: Number(record.done_count || 0),
+            };
+        }),
+        students: students.map(student => {
+            const record = (student && typeof student === 'object' ? student : {}) as Record<string, unknown>;
+            const username = String(record.username || '');
+            return {
+                username,
+                display_name: String(record.display_name || username),
+                cells: Array.isArray(record.cells) ? record.cells.map(parseProgressCell) : [],
+                done: Number(record.done || 0),
+                total: Number(record.total || 0),
+            };
+        }),
+    };
+}
+
+/** `today` is an ISO date (YYYY-MM-DD): a step is late once its due date has passed. */
+export function filterProgressStudents(
+    progress: ClassPathProgress,
+    filter: ProgressFilter,
+    today: string,
+): ClassPathProgressStudent[] {
+    if (filter === 'not_started') return progress.students.filter(student => student.done === 0);
+    if (filter === 'late') {
+        const due = new Map(progress.steps.map(step => [step.id, step.due_date || null]));
+        return progress.students.filter(student => student.cells.some(cell => {
+            const date = due.get(cell.step_id);
+            return cell.state !== 'done' && cell.state !== 'unavailable' && date != null && date < today;
+        }));
+    }
+    return progress.students;
+}
+
+const SOURCE_CODES: Record<ProgressSource, string> = { automatic: 'a', student: 's', teacher: 't' };
+
+/** Compact matrix label: ✓/· plus a = automatic, s = student, t = teacher. */
+export function progressCellCode(cell: ClassPathProgressCell): string {
+    if (cell.state === 'unavailable') return '—';
+    if (cell.state === 'locked') return '🔒';
+    const code = cell.source ? SOURCE_CODES[cell.source] : '';
+    return `${cell.state === 'done' ? '✓' : '·'}${code}`;
+}

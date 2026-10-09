@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { lockedStepUnlockNumber, parseClassPath, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths } from './class-paths.ts';
+import { filterProgressStudents, lockedStepUnlockNumber, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths } from './class-paths.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { classPathText, classPathsTexts } from './i18n-class-paths.ts';
 
@@ -175,4 +175,72 @@ test('strict locked steps unlock after the current step, not the previous one', 
 test('class paths translations name the automatic source in six languages', () => {
     assert.equal(classPathText('en', 'sourceAutomatic'), 'detected automatically');
     assert.equal(classPathText('it', 'sourceAutomatic'), 'rilevato automaticamente');
+});
+
+const progressPayload = {
+    path_id: 7, group_id: 1, title: 'Start of year', mode: 'strict', status: 'published',
+    published_at: '2026-10-01T09:00:00+00:00',
+    steps: [
+        { id: 1, position: 1, tool_key: 'goals', due_date: '2026-10-05', auto_detect: true, available: true, done_count: 1 },
+        { id: 2, position: 2, tool_key: 'timeline', due_date: '2026-10-20', auto_detect: false, available: true, done_count: 1 },
+        { id: 3, position: 3, tool_key: 'QSA', due_date: '2026-10-01', available: false, done_count: 0 },
+    ],
+    students: [
+        {
+            username: 'anna', display_name: 'Anna', done: 2, total: 2,
+            cells: [
+                { step_id: 1, state: 'done', source: 'automatic', at: null },
+                { step_id: 2, state: 'done', source: 'teacher', at: '2026-10-08T10:00:00Z', actor: 'owner', reason: 'Seen in class', teacher_state: 'done' },
+                { step_id: 3, state: 'unavailable', source: null },
+            ],
+        },
+        {
+            username: 'marco', display_name: 'Marco', done: 0, total: 2,
+            cells: [
+                { step_id: 1, state: 'not_done', source: 'teacher', teacher_state: 'not_done' },
+                { step_id: 2, state: 'locked', source: 'robot' },
+                { step_id: 3, state: 'unavailable', source: null },
+            ],
+        },
+        {
+            username: 'sara', display_name: 'Sara', done: 0, total: 2,
+            cells: [
+                { step_id: 1, state: 'not_done', source: null },
+                { step_id: 2, state: 'not_done', source: null },
+                { step_id: 3, state: 'unavailable', source: null },
+            ],
+        },
+    ],
+};
+
+test('teacher progress parser keeps sources, overrides and unknown values safe', () => {
+    const progress = parseClassPathProgress(progressPayload);
+    assert.equal(progress.mode, 'strict');
+    assert.deepEqual(progress.steps.map(s => [s.id, s.available, s.done_count]), [[1, true, 1], [2, true, 1], [3, false, 0]]);
+    const [anna, marco] = progress.students;
+    assert.equal(anna.cells[1].source, 'teacher');
+    assert.equal(anna.cells[1].reason, 'Seen in class');
+    assert.equal(anna.cells[1].teacher_state, 'done');
+    assert.equal(anna.cells[0].teacher_state, null);
+    assert.equal(marco.cells[1].state, 'locked');
+    assert.equal(marco.cells[1].source, null);
+    assert.equal(parseClassPathProgress({}).students.length, 0);
+});
+
+test('teacher progress filters late and not started students', () => {
+    const progress = parseClassPathProgress(progressPayload);
+    const names = (filter: 'all' | 'late' | 'not_started', today: string) =>
+        filterProgressStudents(progress, filter, today).map(s => s.username);
+    assert.deepEqual(names('all', '2026-10-09'), ['anna', 'marco', 'sara']);
+    // Step 1 was due 10/05: Marco and Sara are late; unavailable step 3 never counts.
+    assert.deepEqual(names('late', '2026-10-09'), ['marco', 'sara']);
+    assert.deepEqual(names('late', '2026-10-05'), []);
+    // Not started = no step done yet, whatever the marks say.
+    assert.deepEqual(names('not_started', '2026-10-09'), ['marco', 'sara']);
+});
+
+test('progress cell codes use the a/s/t legend', () => {
+    const [anna, marco] = parseClassPathProgress(progressPayload).students;
+    assert.deepEqual(anna.cells.map(progressCellCode), ['✓a', '✓t', '—']);
+    assert.deepEqual(marco.cells.map(progressCellCode), ['·t', '🔒', '—']);
 });

@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
 import { StickyActions } from '@/components/ui/StickyActions';
+import { ClassPathProgressPanel } from './ClassPathProgress';
 import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
 
@@ -503,6 +504,13 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                 <p className="text-xs text-slate-500">{l('selfMarkHelp')}</p>
                 <p className="text-xs text-slate-400">{l('onlyEnabledHelp')}</p>
             </Card>
+
+            {currentPath.published_at && (
+                <ClassPathProgressPanel
+                    pathId={currentPath.id}
+                    toolName={key => toolLabel(key, classSettings.tools, lang)}
+                />
+            )}
 
             <StickyActions>
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
