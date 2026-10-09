@@ -14,9 +14,10 @@ class path. Students complete each step using that step's actual evidence rule.
 The teacher can also create assignments outside paths. A questionnaire
 administration is one object available through research and classroom views.
 
-- Institute creation requires no administrator approval. Duplicate institutes are
-  handled by the administrator later; a similar name never grants access to an
-  existing institute. Typically there is one teacher, at most two.
+- The first teacher creates an institute without administrator approval. A second
+  teacher selects it from the existing-institute list and explicitly self-joins,
+  without an invitation or administrator step. Typically there are one or two
+  teachers per institute; duplicate institutes are handled by the administrator later.
 - The institute owns the external code and password verifier. Administration plans
   reference that institute; they do not own another set of credentials.
 - Italian validated questionnaires are completed on competenzestrategiche.it;
@@ -25,12 +26,16 @@ administration is one object available through research and classroom views.
 - New questionnaire administration steps finish when valid questionnaire data are
   durably accepted into guided chat, not when a link opens or a survey is merely
   submitted. A results deep dive is a separate optional step in the composition.
-- Assignment steps reuse catalog goals, attachments and `TeacherAssignment`.
-  Standalone assignments remain supported.
-- Forum steps point to the exact discussion chosen by the teacher. Other tool
-  steps retain existing completion behavior.
+- Assignment steps reuse catalog goals, attachments and `TeacherAssignment` and
+  finish on the student's explicit submission. Standalone assignments remain supported.
+- Forum steps point to the exact discussion chosen by the teacher and finish when
+  the student's post is published; a post pending moderation does not count.
+  Other tool steps retain existing completion behavior.
 - Administrator-authored path presets and CSV/API imports are future work. The
   model must preserve a place for template lineage and result provenance.
+- Future imports populate the student's existing compilations/history with imported
+  entries. Import alone does not complete a questionnaire step under the retained
+  default: data must enter guided chat. The owner may revisit that default.
 
 ## 2. Current state and evidence
 
@@ -40,7 +45,7 @@ This review used source inspection and GitHub metadata, not live application tes
 | Area | Evidence | Consequence |
 |---|---|---|
 | Institute creation | `backend/routes/institutions.py:48-53,153-170`; `backend/institution_access.py:15-35` | Teachers list active memberships; institute creation is currently administrator-facing. |
-| Institute membership | `backend/models.py:1514-1527`; `backend/routes/institutions.py:69-114` | Reuse the membership table; make creator membership atomic with creation. Explicit grants to existing institutes remain separate. |
+| Institute membership | `backend/models.py:1514-1527`; `backend/routes/institutions.py:69-114` | Reuse the membership table; make creator membership atomic with creation and add explicit second-teacher self-join from the institute directory. |
 | Institute credentials | `backend/models.py:1488-1511` | Institute already owns a unique code and password verifier; external credentials are supplied by the teacher. |
 | Administration association | `backend/models.py:321-344`; `backend/routes/administration_plans.py:204-243,295-331` | There is already one plan with an optional class and research contacts. Add a canonical institute reference rather than another administration model. |
 | Administration validation | `backend/routes/survey.py:97-133`; `backend/routes/administration_plans.py:59-73` | Replace the legacy credential check with a shared, blocking institution-context contract. Sensitive diagnostic details remain in the local journal. |
@@ -83,7 +88,10 @@ these slices. This milestone owns the domain integration, not a second restyle.
 An **Institute** is an active school/university record and the sole owner of external
 questionnaire credentials. **Institute membership** permits institute management;
 it is not inferred from a student notebook, a class's free-text school name or
-knowledge of an external password. Creator membership is immediately valid.
+knowledge of an external password. Creator membership is immediately valid. The
+second teacher explicitly selects an active existing institute and self-joins;
+that selection creates immediate membership without an invitation or admin approval.
+Names alone never silently associate an account with an institute.
 
 A **Class** has its own owner, co-teachers, current members and tool settings, and
 may reference an institute. Existing classes without an institute remain usable;
@@ -123,7 +131,7 @@ local. Research and class callers use the same administration interface.
 | Entity | Planned additions/changes | Constraints and compatibility |
 |---|---|---|
 | Institution | Creator/audit identity and `revision`; retain code and verifier | Teacher creation inserts institute + active membership in one transaction. Server allocates a collision-safe slug. Code is external, never generated by CounselorBot. |
-| InstitutionTeacher | Reuse membership and audit fields | Unique institute/user. New institutes allow up to two active teachers; preserve existing memberships above that count and flag them for admin review rather than revoking access. Second-teacher grants use the existing admin workflow in v1. |
+| InstitutionTeacher | Reuse membership and audit fields | Unique institute/user. New institutes allow up to two active teachers; preserve existing memberships above that count and flag them for admin review rather than revoking access. The second teacher self-joins through explicit directory selection; serialize capacity checks and membership insertion to prevent concurrent overfilling. |
 | StudentGroup | Validate existing `institution_id`; add FK after orphan remediation | Only authorized institute members may set/change the institute; ordinary authorized class co-teachers can still edit other fields. Free-text school is display metadata. |
 | AdministrationPlan | `institution_id` FK, `delivery_mode` (`external_it` or `in_app`), `revision`, readiness/reconciliation state | Class and plan institutes must agree. Research-only legacy rows may remain unlinked and marked needs-reconciliation. No duplicate credential writer. |
 | ClassPathStep | `step_type`, nullable `tool_key`, administration/assignment/topic FKs, `results_step_id`, `active_from` | Exactly the required target for the declared type; referenced results step belongs to this path and precedes it. Reordering preserves IDs. Removed IDs are not reused for a different target. |
@@ -205,6 +213,8 @@ contracts; reuse existing handlers and response shapes where compatible.
 | Interface | Intended behavior |
 |---|---|
 | `GET/POST /teacher/institutions` | List manageable institutes; atomically create active institute and creator membership. Teacher role required; a researcher alone cannot create. |
+| `GET /teacher/institutions/directory` | List/search active existing institutes for authenticated teachers, exposing only selection metadata and join availability, not credentials or other teachers' personal data. |
+| `POST /teacher/institutions/{id}/join` | Immediately self-join the selected active institute as the authenticated teacher. No invitation, administrator step or credential requirement. Idempotent for an active member; transactional capacity checks reject a third active teacher without a partial write. |
 | `GET/PUT /teacher/institutions/{id}` | Scoped metadata editor with revision; 409 preserves local draft. |
 | `PUT /teacher/institutions/{id}/credentials` | Write-only code/password replacement on the institute, with revision and safe readiness response. |
 | Existing class create/update routes | Validate institute existence, activity and actor eligibility when attaching/changing it; preserve class-scoped ownership/sharing rules. |
@@ -253,6 +263,8 @@ TEACHER AREA
     Orientation
 
 Institutes                                      [+ Create institute]
+  Existing institutes [Search/select institute v] [Join selected institute]
+  Second teacher: immediate self-join; no invitation or administrator step
   My institute   [Edit] [External credentials: configured/missing]
   [Classes in this institute] [+ Create class]
   Duplicate warning: administrator handles reconciliation later
@@ -331,10 +343,11 @@ to clear an override. An override does not authorize access to an unavailable ta
 | Forum | Student-authored published reply in the specified same-class published topic, after activation, with neither hidden nor deleted post | Reading, replying elsewhere, pending moderation, hidden/deleted reply. Approval qualifies the existing reply; hiding/deleting it removes evidence unless another qualifying reply remains. Topic lock blocks new replies but does not erase earlier qualifying evidence; hidden/unpublished topic becomes unavailable. |
 | Other tool | Existing evaluator: assessment result, guided final marker, focused IDEA map, Bussola completion, saved Tavolo, goal creation, pQBL completion; existing self-mark types unchanged | Preserve legacy timing and tool rules; do not infer typed administration completion from the old evaluator. |
 
-Forum publication rather than pending submission, assignment explicit submission,
-and second-teacher admin granting are planner defaults, not additional settled
-owner decisions. They are listed as review questions below; the issues expose these
-defaults so implementation does not invent policy silently.
+Owner decisions confirmed on 2026-10-09: forum completion requires a published post
+in the indicated thread; assignment completion requires explicit student submission;
+the second institute teacher self-joins from the existing-institute list. These are
+settled decisions, not pending review questions. Import-only completion remains the
+separate revisitable default described in section 12.
 
 Do not make identical tool/instrument codes the step identity. Repeated administrations
 must have different plan targets. Duplicate automatic targets in one path are rejected
@@ -354,7 +367,7 @@ Class progress may show a completion boolean; research datasets never gain forum
 
 Each slice includes persistence/migration **where needed**, authorized handlers,
 working teacher/student UI, relevant integration tests and documentation. Each is
-demoable in isolation after its blockers. All are AFK with the stated defaults;
+demoable in isolation after its blockers. All are AFK under the recorded decisions;
 owner review/merge and launch-time model confirmation remain required. This planner
 does not select future agents' models. One dedicated implementation branch/PR per
 slice, created from updated main after its blockers merge.
@@ -380,14 +393,19 @@ journal dependencies explicitly. The CLI supports one predecessor per task.
 DoD: an authenticated teacher creates an active institute with immediate creator
 membership, edits scoped metadata and creates/links a class from that context.
 Add the Institutes entry and institute -> class breadcrumb while retaining notebook
-placement. Existing institute association is never self-granted. Second membership
-uses administrator grant and the new-record two-teacher limit; grandfather existing
-larger memberships. Existing unlinked classes keep working.
+placement. The second teacher selects an active institute from the existing-institute
+directory and self-joins immediately, without invitation or administrator action.
+Enforce the new-record two-teacher limit transactionally and grandfather existing
+larger memberships. Class attachment requires creator/self-join membership rather
+than implicitly joining through a class edit. Existing unlinked classes keep working.
 
 Tests: synthetic PostgreSQL atomic rollback, simultaneous slug/membership creation,
-teacher/researcher/student/admin role matrix, unauthorized/nonexistent/inactive
-institute attachment, class co-teacher vs institute manager rights, preserved old
-classes; browser create -> reload -> class, draft failure and six-language labels.
+teacher-only directory/self-join, idempotent repeat join, concurrent second/third joins,
+capacity rejection without partial writes, inactive/nonexistent institute rejection,
+teacher/researcher/student/admin role matrix, unauthorized institute attachment,
+class co-teacher vs institute manager rights, preserved old classes; browser first
+teacher creates -> second teacher selects/self-joins -> reload -> class, draft failure
+and six-language labels. No invitation or administrator action is part of that journey.
 
 ### TF2 — canonical credentials and existing administrations
 
@@ -495,14 +513,14 @@ environment. Merge, deploy and runtime verification remain separate actions.
 
 | Risk | Handling |
 |---|---|
-| Institute self-creation changes the old admin-only trust model | Grant only on creating a new institute; preserve explicit existing-institute membership and separate class visibility. |
-| Duplicate name vs unique external code | Similar names may coexist; exact canonical code conflicts return actionable 409 and admin reconciliation, never access to another institute. |
+| Institute creation/self-join changes the old admin-only trust model | Membership is created by the first teacher or explicit second-teacher directory selection; enforce role/activity/capacity atomically and preserve independent class visibility. |
+| Duplicate name vs unique external code | Similar names may coexist; exact canonical code conflicts return actionable 409 and admin reconciliation. A collision never automatically joins an institute; an explicit directory selection can self-join it. |
 | Hash mistaken for recoverable external login | Separate credential distribution; no password read-back/autofill or claims of remote verification. |
 | Legacy mapping and DDL failure | Repeatable migration, safe counters, reconciliation state and blocking writer checks; no silent best-effort schema success. |
 | Results assigned to wrong administration or repeated step | Server-bound plan/result/student/session/step evidence; immutable activated target; no forged imported provenance. |
 | Existing assessment path progress changes retroactively | Legacy steps remain `tool`; do not fabricate guided-entry timestamps. |
 | Forum privacy tests weakened for completion | Allow only constrained metadata fields through a named module and test all downstream AI/export consumers. |
-| Planner defaults mistaken for final product decisions | Keep the three questions below in issue bodies and PR; owner can change them before implementation. |
+| Owner decisions confused with revisitable import defaults | Record published forum posts, explicit assignment submission and second-teacher self-join as decisions; flag import-to-chat completion separately as a default the owner may revisit. |
 | Concurrent UX and view-switcher work | Recheck #138/#139/#140/#147 and current main at each slice; integrate delivered work rather than duplicating it. |
 
 Out of scope: application implementation in this PR; administrator duplicate-merge
@@ -512,19 +530,23 @@ CSV import UI/jobs; competenzestrategiche.it API keys, connectors, SSO or automa
 credential delivery. No new vendor/API capability is assumed.
 
 The future file-import contract is specified in section 12. Import alone does not
-complete a questionnaire step under the proposed default; the owner must review
-whether explicit student guided entry remains required.
+complete a questionnaire step under the retained default; the owner has kept this
+default on 2026-10-09 and may revisit whether explicit student guided entry is required.
 Future templates have versioned source definitions and class-local instantiation;
 admin editing a template must not mutate already published paths.
 
-Non-blocking owner review questions (planner defaults already stated):
+Owner decisions recorded on 2026-10-09:
 
-1. Should a forum reply pending moderation finish the step immediately? Default:
-   only published replies qualify; show awaiting approval meanwhile.
-2. Is explicit assignment submission the correct completion event? Default: yes;
-   teacher feedback is not required and private planning is insufficient.
-3. Should the creating teacher invite the second institute teacher? Default: retain
-   administrator-granted second membership in v1; creation itself needs no approval.
+1. A forum step completes when the student's post in the indicated thread is
+   published; pending moderation does not qualify.
+2. An assignment step completes on the student's explicit submission; teacher
+   feedback is not required and private planning is insufficient.
+3. The first teacher creates the institute; the second selects it from the existing
+   list and self-joins, without administrator action or invitation. Aim for two
+   teachers per institute; duplicates are handled later by the administrator.
+4. Future imported results appear as imported entries in the student's compilations/
+   history. Import alone does not complete the questionnaire step under the retained
+   guided-entry default, which the owner may revisit.
 
 Before implementation, review these ASCII structures with the owner and confirm the
 assigned model separately for every task. No future model was chosen by this plan.
@@ -572,6 +594,13 @@ it does not activate an import feature or imply an available vendor API. The tea
 downloads a JSON or CSV export from competenzestrategiche.it and explicitly imports
 factor-level results into an authorized class. No vendor credentials/API keys are
 stored in the file-import workflow.
+
+**Owner-confirmed purpose (2026-10-09):** populate the student's compilation history
+already present in CounselorBot. Each committed imported result appears in the same
+compilations/history views used for in-app results, clearly identified as imported.
+Do not confine it to a teacher-only import log or require a guided chat to make the
+history entry visible. Existing in-app entries remain intact; idempotent re-import
+adds no duplicate history entry. Path-step progress is a separate concern.
 
 ### Contract and questionnaire-specific factor mappings
 
@@ -703,6 +732,9 @@ or replacement requires a future explicit audited resolution contract. Existing
 `in-app` results remain independent and unchanged, even for the same student/instrument.
 When selecting a result for guided chat, show source, assessment date when supplied,
 import time and administration so the student does not select an arbitrary latest row.
+The student's existing compilations/history reader includes both in-app and imported
+results with source labels; commit makes the imported entry visible without creating
+a synthetic compilation session, guided-entry acknowledgement or chat transcript.
 
 Proposed interface: class-scoped preview upload, preview mapping/matching revisions,
 explicit commit with request ID, and cancel/delete preview. Preview writes no durable
@@ -739,8 +771,9 @@ TEACHER: Institute -> Class -> Questionnaire results -> Import (future)
   [Remember confirmed stable-ID matches] [Confirm import] [Cancel]
   Confirmation -> scoped atomic save -> raw upload deleted
 
-STUDENT: My questionnaire results
+STUDENT: Existing compilations/history
   Result: imported / competenzestrategiche.it / <questionnaire> / <date>
+  Visible immediately after confirmed import; existing in-app entries stay present
   [Use this result in guided chat]
   Proposed rule: successful guided-entry acknowledgement -> questionnaire step done
   Import alone -> result available; step still awaiting guided entry
@@ -780,8 +813,9 @@ implementation prerequisite, not evidence that the vendor supports a specific fo
 
 ### Path-step completion and owner questions
 
-**Proposed default: import does not count as questionnaire-step completion.** It
-creates an available result with imported provenance. The student must select that
+**Retained default, kept by the owner on 2026-10-09 and revisitable: import does not
+count as questionnaire-step completion.** It creates a visible entry in the student's
+compilations/history with imported provenance. The student must select that
 result and explicitly enter it into their guided-chat session; only the server's
 durable guided-entry acknowledgement for the exact student, administration and path
 step satisfies section 8. Merely opening the chat screen is insufficient. Guided
@@ -789,11 +823,12 @@ entry must occur after step activation; an earlier external assessment may be us
 when explicitly selected. The original external date and import date never fabricate
 a guided-entry timestamp or complete a separate results-deep-dive step.
 
-**Owner question:** should a teacher-confirmed import itself be considered the data
-entering guided chat, or should the student still explicitly enter/select it there?
-Until resolved, do not create guided-entry evidence from an import job. Choosing
-import-as-completion would amend the settled completion rule and requires an explicit
-owner decision on consent/session binding, activation timing and the UI meaning of done.
+**Revisit flag:** the owner may later reconsider whether a teacher-confirmed import
+itself should count as data entering guided chat. For now, implement the retained
+student-guided-entry default and do not create guided-entry evidence from an import
+job. A future change requires an explicit owner decision on consent/session binding,
+activation timing and the UI meaning of done; it is not a pending decision blocking
+this specification.
 
 Other owner questions before future implementation: provide sanitized representative
 JSON/CSV exports and clarify stable student/result IDs and factor report scales;
