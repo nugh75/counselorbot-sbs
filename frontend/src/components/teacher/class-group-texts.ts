@@ -47,6 +47,7 @@ export const classGroupTexts = {
         shareSelectUsers: 'Seleziona utenti da aggiungere',
         shareAlreadyShared: 'gia\' condivisa',
         shareNoUsers: 'Nessun utente disponibile.',
+        percorsiPath: 'Percorsi',
     },
     en: {
         title: "Groups and classes I manage",
@@ -95,6 +96,7 @@ export const classGroupTexts = {
         shareSelectUsers: 'Select users to add',
         shareAlreadyShared: 'already shared',
         shareNoUsers: 'No users available.',
+        percorsiPath: 'Paths',
     },
     es: {
         title: "Grupos y clases que gestiono",
@@ -120,6 +122,7 @@ export const classGroupTexts = {
         error: 'La operación ha fallado.', shareTitle: 'Compartida con', shareBtn: 'Añadir seleccionados', sharedWith: 'Compartida con',
         removeShare: 'Quitar', noShares: 'No compartida con nadie.', shareError: 'No se pudo compartir.',
         shareSelectUsers: 'Selecciona usuarios para añadir', shareAlreadyShared: 'ya compartida', shareNoUsers: 'No hay usuarios disponibles.',
+        percorsiPath: 'Itinerarios',
     },
     fr: {
         title: "Groupes et classes que je gère",
@@ -145,6 +148,7 @@ export const classGroupTexts = {
         error: 'L’opération a échoué.', shareTitle: 'Partagée avec', shareBtn: 'Ajouter la sélection', sharedWith: 'Partagée avec',
         removeShare: 'Retirer', noShares: 'Partagée avec personne.', shareError: 'Échec du partage.',
         shareSelectUsers: 'Sélectionnez les utilisateurs à ajouter', shareAlreadyShared: 'déjà partagée', shareNoUsers: 'Aucun utilisateur disponible.',
+        percorsiPath: 'Parcours',
     },
     de: {
         title: "Gruppen und Klassen, die ich verwalte",
@@ -170,6 +174,7 @@ export const classGroupTexts = {
         error: 'Der Vorgang ist fehlgeschlagen.', shareTitle: 'Geteilt mit', shareBtn: 'Ausgewählte hinzufügen', sharedWith: 'Geteilt mit',
         removeShare: 'Entfernen', noShares: 'Mit niemandem geteilt.', shareError: 'Teilen fehlgeschlagen.',
         shareSelectUsers: 'Hinzuzufügende Benutzer auswählen', shareAlreadyShared: 'bereits geteilt', shareNoUsers: 'Keine Benutzer verfügbar.',
+        percorsiPath: 'Pfade',
     },
     sv: {
         title: "Grupper och klasser jag hanterar",
@@ -195,5 +200,6 @@ export const classGroupTexts = {
         error: 'Åtgärden misslyckades.', shareTitle: 'Delad med', shareBtn: 'Lägg till valda', sharedWith: 'Delad med',
         removeShare: 'Ta bort', noShares: 'Inte delad med någon.', shareError: 'Delningen misslyckades.',
         shareSelectUsers: 'Välj användare att lägga till', shareAlreadyShared: 'redan delad', shareNoUsers: 'Inga användare tillgängliga.',
+        percorsiPath: 'Sökvägar',
     },
 };
