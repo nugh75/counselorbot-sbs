@@ -6,7 +6,7 @@ import { Check, ChevronDown, ChevronRight, Link2, Plus, Route, Share2, Trash2, U
 import { useI18n } from '@/lib/i18n-context';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { apiFetch } from '@/lib/auth';
-import { fetchInstitutions, type Institution } from '@/lib/referrals-api';
+import { fetchTeacherInstitutions, type Institution } from '@/lib/referrals-api';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
 import { GroupAssignments } from '../teacher/GroupAssignments';
 import { useTeacherResource } from '../teacher/useTeacherResource';
@@ -21,7 +21,7 @@ import { teacherLoadingText } from '@/lib/i18n-teacher-loading';
 import { classSettingsText } from '@/lib/i18n-class-settings';
 
 
-export function GroupsPanel() {
+export function GroupsPanel({ institutionId }: { institutionId?: number } = {}) {
     const { lang, t } = useI18n();
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
     const { data: groups, loading, failed, forbidden, reload: load } = useTeacherResource('/api/admin/groups', parseClassGroups);
@@ -29,7 +29,7 @@ export function GroupsPanel() {
     const [newName, setNewName] = useState('');
     const [newSchool, setNewSchool] = useState('');
     const [newLevel, setNewLevel] = useState('');
-    const [newInstitutionId, setNewInstitutionId] = useState('');
+    const [newInstitutionId, setNewInstitutionId] = useState(institutionId ? String(institutionId) : '');
     const [institutions, setInstitutions] = useState<Institution[]>([]);
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState('');
@@ -44,10 +44,11 @@ export function GroupsPanel() {
     const editors = useClassGroupEditors(groups, load);
     const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
     const operationBusy = busy || editors.busy;
+    const visibleGroups = groups?.filter(group => institutionId === undefined || group.institution_id === institutionId);
 
     useEffect(() => { setOrigin(window.location.origin); }, []);
     useEffect(() => {
-        fetchInstitutions().then(setInstitutions).catch(() => setInstitutions([]));
+        fetchTeacherInstitutions().then(setInstitutions).catch(() => setInstitutions([]));
     }, []);
     useEffect(() => {
         apiFetch('/api/telegram/bot-info')
@@ -153,14 +154,14 @@ export function GroupsPanel() {
                     name: newName.trim(),
                     school: newSchool.trim() || null,
                     school_level: newLevel || null,
-                    institution_id: newInstitutionId ? Number(newInstitutionId) : null,
+                    institution_id: institutionId ?? (newInstitutionId ? Number(newInstitutionId) : null),
                 }),
             });
             if (!res.ok) throw new Error('create failed');
             setNewName('');
             setNewSchool('');
             setNewLevel('');
-            setNewInstitutionId('');
+            setNewInstitutionId(institutionId ? String(institutionId) : '');
             setCreating(false);
             load();
         } catch {
@@ -259,6 +260,7 @@ export function GroupsPanel() {
                     <label className="min-w-0 text-xs font-semibold text-slate-600">{texts.institutionLabel}
                         <select
                             value={newInstitutionId}
+                            disabled={institutionId !== undefined}
                             onChange={(event) => setNewInstitutionId(event.target.value)}
                             title={texts.institutionHint}
                             aria-label={texts.institutionLabel}
@@ -297,10 +299,10 @@ export function GroupsPanel() {
                 <button type="button" disabled={loading} onClick={() => void load()}
                     className="min-h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t('setup.retry')}</button>
             </div>}
-            {!loading && !failed && groups?.length === 0 && <p className="text-sm text-slate-500">{texts.empty}</p>}
+            {!loading && !failed && visibleGroups?.length === 0 && <p className="text-sm text-slate-500">{texts.empty}</p>}
 
             <div className="space-y-3">
-                {(groups || []).map((group) => (
+                {(visibleGroups || []).map((group) => (
                     <section key={group.id} className={`min-w-0 rounded-md border border-slate-200 bg-white p-4 ${group.is_active ? '' : 'opacity-60'}`}>
                         <div className="min-w-0">
                             <h3 className="font-bold text-slate-800">

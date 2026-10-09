@@ -1280,3 +1280,46 @@ Forum option values and locks (student discussion opening and premoderation)
 are stored and displayed with an explicit future-release notice. Their effect
 on forum discussions, and teacher editing of these options, remain the separate
 F3 slice; this release does not activate either forum behavior.
+
+## Teacher institutes and class association (#148)
+
+The Notebook remains the first entry in the Teacher area. **Institutes** is the
+first entry under Classroom, followed by the existing Classes and Assignments.
+A teacher creates an immediately active school or university with an explicit
+Save. The same transaction creates their active institute membership. The server
+allocates a unique slug; similar institute names can coexist. Check the existing
+list before creating an institute; administrators reconcile duplicates later.
+
+A second authenticated teacher searches the existing active institutes, selects
+one and explicitly chooses **Join selected institute**. Membership is immediate:
+no invitation, institute password or administrator approval is needed. Selecting
+a name or knowing a code never creates membership. The two-teacher capacity is
+checked under a PostgreSQL row lock; repeated joins are idempotent. Existing
+memberships above two teachers remain valid and are flagged for administrator
+review. A full or inactive institute cannot accept another teacher.
+
+Members edit institute name, type and public website/orientation URLs with an
+explicit Save and revision check. A failed save keeps the local draft; a stale
+revision returns a conflict, allowing the teacher to cancel and reload the latest
+data. The directory contains selection metadata and join availability, without
+credentials or other teachers' identities. Members see only whether external
+credentials are configured. This slice does not add a credential editor.
+
+Open an institute to create a class with that institute preselected, or explicitly
+link an existing unlinked class that you manage. Institute membership is required
+when attaching or changing an institute; class owner/co-teacher permissions still
+apply independently. An institute member cannot see another teacher's classes
+without a class share. A co-teacher may edit other class fields without institute
+management rights. Classes without an institute continue to work. Institute and
+class breadcrumbs provide the route back to the selected context; existing class
+bookmarks, notebook placement and research administration routes remain available.
+
+Startup adds institute creator/revision columns and the class-to-institute foreign
+key. Legacy orphaned institute IDs become unlinked classes without deleting class
+records, membership, or free-text school metadata. No external imports, presets,
+questionnaire administration or path-step completion behavior is added here.
+
+The teacher guide includes institute and notebook-first home screenshots in all
+six interface languages. A failed creation, including a transaction conflict,
+keeps the new institute draft and offers a retry; only a stale metadata revision
+reports that another teacher changed an existing institute.
