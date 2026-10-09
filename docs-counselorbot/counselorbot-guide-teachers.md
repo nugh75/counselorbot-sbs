@@ -294,3 +294,19 @@ the student and exact administration can complete it without chat; no import UI 
 available yet. An optional results deep dive remains separate. Existing tool steps
 keep their previous completion rules. To change a published target, remove its step
 and add a new one; reordering retains identity and activation time.
+
+
+### In-app administration steps in other languages
+
+In the class Paths tab, choose the questionnaire and its administration language.
+Italian administrations use competenzestrategiche.it; other languages run inside
+CounselorBot and the selector offers only the languages in which the questionnaire
+is available in the app. Add the administration as a step, save and publish.
+
+Students verify the institute credentials, answer the items in the administration
+language and save the result. Saving alone does not complete the step: students
+bring the saved result into guided chat without retyping their scores, and the step
+is done when that entry is recorded. If the language is no longer available, the
+student sees a clear message and no other language is used instead. Students'
+result history shows whether a result was captured in CounselorBot or imported by a
+teacher; older results say that the capture method was not recorded.

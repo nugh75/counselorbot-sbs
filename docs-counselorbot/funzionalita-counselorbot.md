@@ -1432,3 +1432,35 @@ a failed save leaves the form and scoped draft available for retry.
 The public teacher guide describes creating/selecting the Italian administration
 in the class Paths tab, its shared research identity, explicit save/publication and
 replacement of activated targets in all six interface languages.
+
+
+### In-app questionnaire administration in other languages
+
+A class administration in a language other than Italian runs inside CounselorBot
+(`delivery_mode=in_app`). When creating it, teachers can choose only the languages
+in which that questionnaire is currently served in the app (pilot or validated
+locale); any other language is refused with `administration_locale_unavailable`.
+If a language is withdrawn later, the step becomes unavailable with the same reason
+and the student sees a clear message: no other language is offered as a fallback.
+
+After verifying the institute credentials, the student answers the items in the
+plan language. The step-scoped runner computes the profile on the server and saves
+exactly one result bound to the student, administration and locale, with source
+`in-app`, capture method `item_runner` and source system `counselorbot`. Saving the
+result does not complete the step. The student then brings that saved result into
+guided chat: the guided entry references the result itself, reuses its session and
+never accepts retyped scores for an in-app plan. Retries of the same submission
+return the same result; a different submission on the same session is rejected.
+Strict path order, class settings and institute grants are checked at each write.
+
+A future teacher-confirmed import matched to the student and exact administration
+can also complete the step without guided chat; an imported source label alone,
+an upload or a preview never does. The importer is not available in this release.
+
+Result history shows how each result reached CounselorBot: captured in CounselorBot
+(in-app questionnaire, scores entered by hand, Telegram) or imported by the teacher.
+Older results keep the honest label "capture method not recorded". Provenance is
+always assigned by the server: requests that try to set `source`, `capture_method`,
+`source_system` or `source_record_id` are rejected. The standalone in-app
+questionnaire records the same `item_runner` provenance, but on its own it never
+completes an administration step. Research counts include each in-app result once.
