@@ -14,7 +14,7 @@ from fastapi.responses import Response
 from sqlalchemy import func, or_, nullslast
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, auth, database
+from .. import models, schemas, auth, class_access, database
 
 router = APIRouter()
 get_db = database.get_db
@@ -112,6 +112,7 @@ async def create_portfolio_item(
     db: Session = Depends(get_db),
 ):
     """Crea un nuovo lavoro nel portfolio."""
+    class_access.require_tool(db, current_user, "portfolio")
     item = models.PortfolioItem(
         username=current_user["username"],
         title=payload.title,
@@ -144,6 +145,7 @@ async def update_portfolio_item(
     db: Session = Depends(get_db),
 ):
     """Aggiorna i campi forniti del lavoro (gli altri restano invariati)."""
+    class_access.require_tool(db, current_user, "portfolio")
     item = _owned_item(db, item_id, current_user)
     updates = payload.model_dump(exclude_unset=True)
     if "title" in updates and not (updates["title"] or "").strip():
@@ -183,6 +185,7 @@ async def upload_portfolio_image(
     db: Session = Depends(get_db),
 ):
     """Carica un'immagine e la allega al lavoro."""
+    class_access.require_tool(db, current_user, "portfolio")
     item = _owned_item(db, item_id, current_user)
     content_type = (file.content_type or "").lower()
     ext = ALLOWED_IMAGE_TYPES.get(content_type)

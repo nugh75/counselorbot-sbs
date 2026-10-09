@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from pydantic import Field, field_validator
 from sqlalchemy.orm import Session
 
-from .. import auth, database
+from .. import auth, class_access, database
 from ..goals import Strict
 from ..personal_timeline import ensure_personal_timeline
 from ..visual_tools import EventReview, SavePersonalWorkspace, load_workspace, save_workspace
@@ -32,6 +32,7 @@ class MilestoneCreate(Strict):
 
 @router.post('/user/timeline/milestones', status_code=201)
 def create_milestone(payload: MilestoneCreate, db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
+    class_access.require_tool(db, user, 'timeline')
     ensure_personal_timeline(db, user['username'])
     event_id = 'chat-' + hashlib.sha256(f"{user['username']}:{payload.request_id}".encode()).hexdigest()[:24]
     state = load_workspace(db, None, user['username'])

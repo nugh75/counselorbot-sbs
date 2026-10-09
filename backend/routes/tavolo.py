@@ -26,7 +26,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from sqlalchemy.orm import Session
 
-from .. import auth, database, models, personal_api
+from .. import auth, class_access, database, models, personal_api
 from ..ai_service import AIService, AIError
 from ..message_diagrams import session_owner
 from ..tavolo import (
@@ -269,6 +269,12 @@ def _require_feature(db: Session) -> None:
         raise HTTPException(status_code=404, detail="tavolo disabled")
 
 
+def _require_writable(db: Session, identity: dict) -> None:
+    """Writes and AI help also need the class toggle; reads and delete do not (decision 8)."""
+    _require_feature(db)
+    class_access.require_tool(db, identity, "tavolo")
+
+
 def _owner(identity: dict) -> str:
     username = (identity or {}).get("username")
     if not username:
@@ -354,7 +360,7 @@ async def create_tavolo(
     interpretato da un modello, e allora arriva come proposta, tratteggiata,
     da accettare pezzo per pezzo.
     """
-    _require_feature(db)
+    _require_writable(db, identity)
     owner = _owner(identity)
     if request.session_id:
         session_owner(db, request.session_id, identity)
@@ -523,7 +529,7 @@ def write_tavolo(
     identity: dict = Depends(auth.get_identity_view_as),
 ):
     """Una mossa della persona: sposta, rinomina, collega, toglie."""
-    _require_feature(db)
+    _require_writable(db, identity)
     tavolo = _mine(db, tavolo_id, identity)
     revision = _current(db, tavolo_id)
     _fresh(revision, request.base_index)
@@ -543,7 +549,7 @@ def rename_tavolo(
     db: Session = Depends(get_db),
     identity: dict = Depends(auth.get_identity_view_as),
 ):
-    _require_feature(db)
+    _require_writable(db, identity)
     tavolo = _mine(db, tavolo_id, identity)
     revision = _current(db, tavolo_id)
     tavolo.title = request.title
@@ -581,7 +587,7 @@ async def help_tavolo(
     identity: dict = Depends(auth.get_identity_view_as),
 ):
     """Guidance about this table; never writes a graph or accepts proposals."""
-    _require_feature(db)
+    _require_writable(db, identity)
     table = _mine(db, tavolo_id, identity)
     graph = _graph_of(_current(db, tavolo_id))
     task = _table_request(graph, json.dumps({
@@ -621,7 +627,7 @@ def settle_tavolo(
     identity: dict = Depends(auth.get_identity_view_as),
 ):
     """Accetta o scarta cio' che il modello ha proposto. Solo qui si promuove."""
-    _require_feature(db)
+    _require_writable(db, identity)
     tavolo = _mine(db, tavolo_id, identity)
     revision = _current(db, tavolo_id)
     _fresh(revision, request.base_index)
@@ -642,7 +648,7 @@ async def suggest_tavolo(
     identity: dict = Depends(auth.get_identity_view_as),
 ):
     """Chiede al modello delle mosse. Entrano in sospeso, non nel tavolo."""
-    _require_feature(db)
+    _require_writable(db, identity)
     if request.intent not in INTENTS:
         raise HTTPException(status_code=422, detail="intento sconosciuto")
     tavolo = _mine(db, tavolo_id, identity)
@@ -676,7 +682,7 @@ async def compose_tavolo(
 ):
     """Uno schema intero da un prompt. Arriva tutto in sospeso, come ogni mossa
     del modello: la persona lo tiene in blocco o lo scarta in blocco."""
-    _require_feature(db)
+    _require_writable(db, identity)
     if request.preset is not None and request.preset not in PRESETS:
         raise HTTPException(status_code=422, detail="genere sconosciuto")
     tavolo = _mine(db, tavolo_id, identity)
@@ -723,7 +729,7 @@ def save_tavolo(
     identity: dict = Depends(auth.get_identity_view_as),
 ):
     """Da' un nome al tavolo e lo stacca dalla sessione: da qui si riprende."""
-    _require_feature(db)
+    _require_writable(db, identity)
     tavolo = _mine(db, tavolo_id, identity)
     revision = _current(db, tavolo_id)
     tavolo.title = request.title
@@ -747,7 +753,7 @@ async def capture_tavolo(
     salva. Se la cattura fallisce il tavolo resta salvato lo stesso, con la sua
     resa a parole: e' l'immagine a essere facoltativa, non il contenuto.
     """
-    _require_feature(db)
+    _require_writable(db, identity)
     tavolo = _mine(db, tavolo_id, identity)
     payload = await file.read(MAX_CAPTURE_BYTES + 1)
     await file.close()

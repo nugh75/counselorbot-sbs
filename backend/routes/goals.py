@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
-from .. import auth, database, models
+from .. import auth, class_access, database, models
 from ..goals import (ActionCreate, CatalogWrite, GoalCreate, GoalWrite, LinkWrite, ParentWrite, ReviewWrite,
                      catalog_dict, catalog_visible, goal_dict, membership_ids, owned_goal,
                      resources, validate_share, lock_network, descendant_ids,
@@ -95,6 +95,7 @@ def list_resources(db: Session = Depends(database.get_db), user=Depends(auth.get
 
 @router.post('/user/goals', status_code=201)
 def create_goal(payload: GoalCreate, db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
+    class_access.require_tool(db, user, 'goals')
     if payload.request_id:
         key = int.from_bytes(hashlib.sha256(f"goal:{user['username']}:{payload.request_id}".encode()).digest()[:8], 'big', signed=True)
         if db.get_bind().dialect.name == 'postgresql':
@@ -131,6 +132,7 @@ def create_goal(payload: GoalCreate, db: Session = Depends(database.get_db), use
 
 @router.put('/user/goals/{goal_id}')
 def update_goal(goal_id: int, payload: GoalWrite, db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
+    class_access.require_tool(db, user, 'goals')
     row = owned_goal(db, user['username'], goal_id, payload.revision)
     validate_share(db, user['username'], payload.shared_group_id)
     validate_method(db, user['username'], payload.method)
@@ -179,6 +181,7 @@ def delete_goal(goal_id: int, revision: int = Query(ge=1), db: Session = Depends
 
 @router.post('/user/goals/{goal_id}/parents')
 def add_parent(goal_id: int, payload: ParentWrite, db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
+    class_access.require_tool(db, user, 'goals')
     lock_network(db, user['username'])
     row = owned_goal(db, user['username'], goal_id, payload.revision)
     owned_goal(db, user['username'], payload.parent_id)
@@ -205,6 +208,7 @@ def remove_parent(goal_id: int, parent_id: int, revision: int = Query(ge=1), db:
 
 @router.post('/user/goals/{goal_id}/links')
 def link_resource(goal_id: int, payload: LinkWrite, db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
+    class_access.require_tool(db, user, 'goals')
     row = owned_goal(db, user['username'], goal_id, payload.revision)
     role = payload.role or default_role(payload.kind)
     if role not in ALLOWED_ROLES[payload.kind]:
@@ -238,6 +242,7 @@ def unlink_resource(goal_id: int, link_id: int, revision: int = Query(ge=1), db:
 
 @router.post('/user/goals/{goal_id}/reviews')
 def review_goal(goal_id: int, payload: ReviewWrite, db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
+    class_access.require_tool(db, user, 'goals')
     ensure_personal_timeline(db, user['username'])
     row = owned_goal(db, user['username'], goal_id, payload.revision)
     review = models.GoalReview(goal_id=goal_id, **payload.model_dump(exclude={'revision'}))
@@ -251,6 +256,8 @@ def review_goal(goal_id: int, payload: ReviewWrite, db: Session = Depends(databa
 
 @router.post('/user/goals/{goal_id}/actions')
 def create_action(goal_id: int, payload: ActionCreate, db: Session = Depends(database.get_db), user=Depends(auth.get_current_user)):
+    class_access.require_tool(db, user, 'goals')
+    class_access.require_tool(db, user, 'actions')
     # Import before starting the atomic goal/workspace transaction.
     ensure_personal_timeline(db, user['username'])
     row = owned_goal(db, user['username'], goal_id)

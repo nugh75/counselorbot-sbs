@@ -7,11 +7,15 @@ import { ArrowLeft } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { personalAreaDescription, personalAreaName, personalAreaText } from '@/lib/i18n-personal-area';
 import { personalAreaImages, type PersonalAreaSlug } from '@/lib/personal-area';
+import { personalSlugEnabled, personalToolAccessText } from '@/lib/personal-tool-access';
+import { usePersonalToolAccess } from '@/lib/use-personal-tool-access';
+import { Callout } from '@/components/ui/Callout';
 
 // Used by Orientamento and Obiettivi. Editable pages need their exit guards before adoption.
 export function PersonalAreaHeader({ slug }: { slug: PersonalAreaSlug }) {
     const { lang } = useI18n();
     const heading = useRef<HTMLHeadingElement>(null);
+    const access = usePersonalToolAccess();
     const l = (key: Parameters<typeof personalAreaText>[1]) => personalAreaText(lang, key);
     const control = 'inline-flex min-h-[44px] items-center gap-2 rounded-lg px-3 text-sm font-medium hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 dark:hover:bg-slate-800';
 
@@ -27,6 +31,9 @@ export function PersonalAreaHeader({ slug }: { slug: PersonalAreaSlug }) {
                 <h1 ref={heading} tabIndex={-1} className="text-2xl font-bold tracking-tight focus:outline-none sm:self-end">{personalAreaName(lang, slug)}</h1>
                 <p className="col-span-2 text-sm text-slate-600 sm:col-span-1 sm:self-start dark:text-slate-400">{personalAreaDescription(lang, slug)}</p>
             </div>
+            {!personalSlugEnabled(access, slug) && <Callout title={personalToolAccessText(lang, 'disabledTitle')}>
+                {personalToolAccessText(lang, 'disabledBody')}
+            </Callout>}
         </header>
     );
 }

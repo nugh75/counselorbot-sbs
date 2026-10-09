@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from .. import auth, database
+from .. import auth, class_access, database
 from ..flashcards import SaveFlashcards, load_flashcards, save_flashcards
 
 router = APIRouter()
@@ -16,4 +16,5 @@ def read_flashcards(db: Session = Depends(database.get_db), identity: dict = Dep
 @router.put('/user/flashcards')
 def write_flashcards(update: SaveFlashcards, db: Session = Depends(database.get_db),
                      identity: dict = Depends(auth.get_current_user)):
+    class_access.require_tool(db, identity, 'flashcards')
     return save_flashcards(db, identity['username'], update)
