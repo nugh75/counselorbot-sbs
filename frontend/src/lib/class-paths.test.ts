@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { filterProgressStudents, lockedStepUnlockNumber, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths } from './class-paths.ts';
+import { filterProgressStudents, lockedStepUnlockNumber, parseClassPath, parseClassPathProgress, progressCellCode, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths, selectCurrentClassPath } from './class-paths.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { classPathText, classPathsTexts } from './i18n-class-paths.ts';
 
@@ -243,4 +243,76 @@ test('progress cell codes use the a/s/t legend', () => {
     const [anna, marco] = parseClassPathProgress(progressPayload).students;
     assert.deepEqual(anna.cells.map(progressCellCode), ['✓a', '✓t', '—']);
     assert.deepEqual(marco.cells.map(progressCellCode), ['·t', '🔒', '—']);
+});
+
+test('selectCurrentClassPath returns null on empty list and handles single path', () => {
+    assert.equal(selectCurrentClassPath([]), null);
+
+    const single = parseStudentClassPath({
+        id: 1, group_id: 1, group_name: '3B', title: 'Single Path', mode: 'recommended',
+        steps: [{ id: 10, tool_key: 'bussola', state: 'not_done' }],
+        done: 0, total: 1,
+    });
+    assert.equal(selectCurrentClassPath([single]), single);
+});
+
+test('selectCurrentClassPath prioritizes path with nearest upcoming due date', () => {
+    const pathLater = parseStudentClassPath({
+        id: 1, group_id: 1, group_name: '3B', title: 'Due Later', mode: 'recommended',
+        steps: [
+            { id: 10, tool_key: 'bussola', state: 'not_done', due_date: '2026-10-31' },
+        ],
+        done: 0, total: 1,
+    });
+
+    const pathSooner = parseStudentClassPath({
+        id: 2, group_id: 1, group_name: '3B', title: 'Due Sooner', mode: 'recommended',
+        steps: [
+            { id: 20, tool_key: 'QSA', state: 'not_done', due_date: '2026-10-15' },
+        ],
+        done: 0, total: 1,
+    });
+
+    const pathNoDue = parseStudentClassPath({
+        id: 3, group_id: 1, group_name: '3B', title: 'No Due Date', mode: 'recommended',
+        steps: [
+            { id: 30, tool_key: 'taccuino', state: 'not_done', due_date: null },
+        ],
+        done: 0, total: 1,
+    });
+
+    // Sooner (15/10) beats Later (31/10) beats NoDue
+    assert.equal(selectCurrentClassPath([pathLater, pathSooner, pathNoDue])?.id, 2);
+    assert.equal(selectCurrentClassPath([pathNoDue, pathLater])?.id, 1);
+});
+
+test('selectCurrentClassPath prioritizes incomplete paths over completed ones regardless of past due dates', () => {
+    const completedPath = parseStudentClassPath({
+        id: 1, group_id: 1, group_name: '3B', title: 'Completed Past', mode: 'recommended',
+        steps: [
+            { id: 10, tool_key: 'bussola', state: 'done', due_date: '2026-10-01' },
+        ],
+        done: 1, total: 1,
+    });
+
+    const incompletePath = parseStudentClassPath({
+        id: 2, group_id: 1, group_name: '3B', title: 'Incomplete Future', mode: 'recommended',
+        steps: [
+            { id: 20, tool_key: 'goals', state: 'not_done', due_date: '2026-10-25' },
+        ],
+        done: 0, total: 1,
+    });
+
+    assert.equal(selectCurrentClassPath([completedPath, incompletePath])?.id, 2);
+});
+
+test('new class paths placement translations exist in all six languages', () => {
+    const keys = ['seeAllClassPaths', 'allTools', 'allToolsCollapsedHelp', 'allPersonalTools', 'showCatalog', 'hideCatalog'] as const;
+    for (const key of keys) {
+        assert.equal(classPathsTexts[key].length, 6, key);
+        for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv'] as const) {
+            const val = classPathText(lang, key);
+            assert.ok(val && val.length > 0, `${key} in ${lang}`);
+        }
+    }
 });

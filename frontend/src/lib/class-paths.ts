@@ -259,3 +259,66 @@ export function progressCellCode(cell: ClassPathProgressCell): string {
     const code = cell.source ? SOURCE_CODES[cell.source] : '';
     return `${cell.state === 'done' ? '✓' : '·'}${code}`;
 }
+
+/**
+ * Selects the primary class path to highlight in hero cards (home and personal area).
+ * Selection rule:
+ * 1. Incomplete paths precede completed paths.
+ * 2. Among paths with identical completion state, the one with the nearest upcoming due date
+ *    (earliest due_date on an incomplete step) comes first.
+ * 3. Fallback to earliest due date on any step if none on incomplete.
+ * 4. Breaks ties by path id ascending.
+ */
+export function selectCurrentClassPath(paths: StudentClassPath[]): StudentClassPath | null {
+    if (!paths.length) return null;
+    if (paths.length === 1) return paths[0];
+
+    const getNearestIncompleteDueDate = (path: StudentClassPath): string | null => {
+        let nearest: string | null = null;
+        for (const step of path.steps) {
+            if (step.state !== 'done' && step.due_date) {
+                if (!nearest || step.due_date < nearest) {
+                    nearest = step.due_date;
+                }
+            }
+        }
+        return nearest;
+    };
+
+    const getNearestAnyDueDate = (path: StudentClassPath): string | null => {
+        let nearest: string | null = null;
+        for (const step of path.steps) {
+            if (step.due_date) {
+                if (!nearest || step.due_date < nearest) {
+                    nearest = step.due_date;
+                }
+            }
+        }
+        return nearest;
+    };
+
+    const sorted = [...paths].sort((a, b) => {
+        const aAllDone = a.total > 0 && a.done >= a.total;
+        const bAllDone = b.total > 0 && b.done >= b.total;
+
+        if (aAllDone !== bAllDone) {
+            return aAllDone ? 1 : -1;
+        }
+
+        const aDue = getNearestIncompleteDueDate(a) ?? getNearestAnyDueDate(a);
+        const bDue = getNearestIncompleteDueDate(b) ?? getNearestAnyDueDate(b);
+
+        if (aDue && bDue) {
+            const cmp = aDue.localeCompare(bDue);
+            if (cmp !== 0) return cmp;
+        } else if (aDue && !bDue) {
+            return -1;
+        } else if (!aDue && bDue) {
+            return 1;
+        }
+
+        return a.id - b.id;
+    });
+
+    return sorted[0];
+}
