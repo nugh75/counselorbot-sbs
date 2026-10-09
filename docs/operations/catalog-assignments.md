@@ -1,8 +1,11 @@
 # Cataloghi e assegnazioni dei docenti
 
 Nell’Area docenti (`/docente`), **Cataloghi** riunisce obiettivi, strategie e
-libri, film e altri materiali. Ogni voce pubblicata e attiva ha **Assegna**.
-Le bozze sono modificabili, ma non assegnabili.
+libri, film e altri materiali. Il Catalogo obiettivi serve a creare e gestire le
+proposte; le bozze sono modificabili, ma solo gli obiettivi pubblicati si possono
+assegnare. L’assegnazione si crea da **Assegnazione** (`/docente/assegnazioni`):
+ogni invio è ancorato a un obiettivo pubblicato del catalogo, scelto per il gruppo
+o la classe, con strategie e materiali allegabili facoltativamente.
 
 Il docente sceglie un gruppo o una classe che gestisce, direttamente o tramite
 condivisione, poi una persona oppure l’intero gruppo. Può aggiungere indicazioni.
@@ -12,8 +15,9 @@ trova le assegnazioni della classe ancora attive. La revoca le ritira anche per
 gli iscritti futuri. Le assegnazioni individuali restano riservate alla persona
 selezionata, che deve già essere iscritta.
 
-**Assegnazioni effettuate** mostra gli invii del docente, il destinatario o il
-gruppo, il numero di destinatari e il contenuto consegnato. **Revoca assegnazione**
+**Assegnazione** mostra gli invii del docente, il destinatario o il gruppo, il
+numero di destinatari e il contenuto consegnato, con gli allegati facoltativi nel
+dettaglio. **Nuova assegnazione** apre il modulo di invio. **Revoca assegnazione**
 ritira la consegna da tutti i destinatari dell’invio. Un altro docente non può
 revocare invii altrui. Ripetere la revoca non produce ulteriori effetti.
 
@@ -68,6 +72,9 @@ obiettivi e delle restituzioni resta una scelta separata.
 
 - Tabelle additive `teacher_assignments` e `assignment_recipients`, create dal
   consueto `Base.metadata.create_all` all’avvio; nessuna migrazione distruttiva.
+  La colonna JSON `attachments` su `teacher_assignments` (facoltativa, predefinita
+  a lista vuota) è aggiunta da una `ALTER TABLE` idempotente all’avvio: le
+  assegnazioni esistenti continuano a funzionare senza allegati.
 - Le assegnazioni all’intero gruppo sono visibili in base alle iscrizioni attuali,
   senza dipendere dalle righe di consegna salvate al momento dell’invio. Questa
   regola vale anche per le assegnazioni di gruppo già esistenti; non richiede
@@ -78,6 +85,11 @@ obiettivi e delle restituzioni resta una scelta separata.
 - Un obiettivo pubblicato per un gruppo è assegnabile solo a quel gruppo. Gli
   obiettivi comuni pubblicati sono visibili e assegnabili dai docenti, che possono
   duplicarli ma non modificarne l’originale se non ne sono autori.
+- Gli allegati facoltativi sono strategie certificate e attive oppure materiali
+  certificati e attivi. Un allegato non valido al momento dell’invio restituisce
+  404 con un messaggio sicuro, senza testo grezzo; lo snapshot conserva tipo e
+  titolo pubblico minimo dell’allegato, così le modifiche successive al catalogo
+  non riscrivono il contenuto già ricevuto.
 - Ogni invio conserva uno snapshot del catalogo: modifiche o eliminazioni
   successive della fonte non cambiano il contenuto già ricevuto.
 - L’elenco personale filtra destinatario, appartenenza attuale e gruppo attivo.
@@ -114,12 +126,15 @@ obiettivi e delle restituzioni resta una scelta separata.
 | GET | `/teacher/assignments/{id}/submissions` | Sole restituzioni condivise dagli iscritti attuali |
 | PUT | `/teacher/assignments/{id}/submissions/{username}/feedback` | Riscontro dell’autore dell’assegnazione |
 
-POST richiede `source_kind` (`goal`, `strategy`, `reading`), `source_id`,
-`group_id`, `request_id`. `recipient_username: null` indica tutto il gruppo;
-un nome utente seleziona una sola persona. Facoltativi: `instructions` (massimo
-3000 caratteri), `language` (traduzione disponibile del materiale), `intent`
-(`proposal`, predefinito, oppure `requested`), `due_date` e `response_prompt`
-(massimo 1500 caratteri). I retry dei vecchi client mantengono lo stesso hash.
+POST richiede un obiettivo pubblicato: `source_kind` è `goal`, con `source_id`
+dell’obiettivo e `group_id`; `request_id` è obbligatorio. Gli allegati facoltativi
+sono la lista `attachments` di `{source_kind: "strategy"|"reading", source_id}`.
+`recipient_username: null` indica tutto il gruppo; un nome utente seleziona una
+sola persona. Facoltativi: `instructions` (massimo 3000 caratteri), `language`
+(traduzione disponibile del materiale), `intent` (`proposal`, predefinito, oppure
+`requested`), `due_date` e `response_prompt` (massimo 1500 caratteri). I retry dei
+vecchi client mantengono lo stesso hash; gli allegati entrano nell’hash di
+idempotenza, così cambiare gli allegati con lo stesso `request_id` restituisce 409.
 
 Le scritture del lavoro richiedono `revision`; la riflessione anche
 `workspace_revision`; il collegamento `goal_id` e `goal_revision`. La condivisione
@@ -138,8 +153,9 @@ riceve `text` (massimo 3000 caratteri) e facoltativamente `portfolio_id` e
   `ASSIGNMENTS_BASE_URL` e `ASSIGNMENTS_API_URL` cambiano gli indirizzi.
   Assegnazioni e cataloghi usano API reali nella fixture; gli altri servizi sono
   simulati. Test desktop/mobile, invio/ricezione/revoca e interfaccia in sei lingue.
-  I casi di classe vuota assegnano strategie e film prima delle iscrizioni,
-  poi verificano la ricezione dopo l’ingresso tramite l’API reale `/groups/join`.
+  I casi di classe vuota assegnano un obiettivo con strategia e film allegati
+  prima delle iscrizioni, poi verificano la ricezione dopo l’ingresso tramite
+  l’API reale `/groups/join`.
 - `tests/teacher-catalogs.test.mjs`: regressioni di pubblicazione e partecipazione
   personale rispetto alla gestione, con API simulate.
 - `backend/tests/test_assignment_work.py`: workspace unico, retry, conflitti,

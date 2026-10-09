@@ -70,7 +70,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
 // 2. Ogni sottopagina mostra la sua intestazione e il pannello atteso
 for (const [slug, h1, marker] of [
     ['classi', 'Gruppi e classi', 'Gruppi e classi che gestisco'],
-    ['assegnazioni', 'Assegnazioni effettuate', 'Assegnazioni effettuate'],
+    ['assegnazioni', 'Assegnazione', 'Assegnazione'],
     ['somministrazioni', 'Piani di somministrazione', 'Piani di somministrazione'],
 ]) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });

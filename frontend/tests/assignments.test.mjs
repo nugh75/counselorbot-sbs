@@ -44,15 +44,17 @@ for (const width of [1440, 390]) {
         const marker = `Indicazione browser ${width} ${Date.now().toString(36)}`;
         try {
             for (const scenario of [
-                { path: '/docente/catalogo-obiettivi', title: 'Pianificare lo studio', group: 'Classe 3B', recipient: 'alice' },
-                { path: '/docente/strategie', title: 'Ripasso distribuito', group: 'Classe 3B', recipient: '' },
-                { path: '/docente/materiali', title: 'Film per riflettere', group: 'Gruppo adulti', recipient: '' },
+                { group: 'Classe 3B', goal: 'Pianificare lo studio', attachment: '', recipient: 'alice' },
+                { group: 'Classe 3B', goal: 'Obiettivo comune', attachment: 'Strategia · Ripasso distribuito', recipient: '' },
+                { group: 'Gruppo adulti', goal: 'Obiettivo comune', attachment: 'Libro, film o altro materiale · Film per riflettere', recipient: '' },
             ]) {
-                await page.goto(`${origin}${scenario.path}`);
-                await page.getByRole('button', { name: 'Assegna', exact: true }).first().click();
-                const dialog = page.getByRole('dialog', { name: `Assegna: ${scenario.title}`, exact: true });
+                await page.goto(`${origin}/docente/assegnazioni`);
+                await page.getByRole('button', { name: 'Nuova assegnazione', exact: true }).click();
+                const dialog = page.getByRole('dialog', { name: 'Nuova assegnazione', exact: true });
                 await dialog.getByLabel('Gruppo o classe', { exact: true }).selectOption({ label: scenario.group });
+                await dialog.getByLabel('Obiettivo', { exact: true }).selectOption({ label: scenario.goal });
                 await dialog.getByLabel('Destinatario', { exact: true }).selectOption(scenario.recipient);
+                if (scenario.attachment) await dialog.getByLabel('Allegati (facoltativi)', { exact: true }).selectOption({ label: scenario.attachment });
                 await dialog.getByLabel('Indicazioni del docente (facoltative)').fill(marker);
                 assert.ok(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth), 'dialog fits the viewport');
                 await dialog.getByRole('button', { name: 'Conferma assegnazione' }).click();
@@ -63,14 +65,16 @@ for (const width of [1440, 390]) {
             const forBob = (await received('bob')).filter(row => row.instructions === marker);
             const forEve = (await received('eve')).filter(row => row.instructions === marker);
             assert.equal(forAlice.length, 3);
-            assert.deepEqual(forBob.map(row => row.source_kind), ['strategy']);
-            assert.deepEqual(forEve.map(row => row.source_kind), ['reading']);
+            assert.deepEqual(forBob.map(row => row.source_kind), ['goal']);
+            assert.deepEqual(forBob[0].attachments.map(item => item.kind), ['strategy']);
+            assert.deepEqual(forEve.map(row => row.source_kind), ['goal']);
+            assert.deepEqual(forEve[0].attachments.map(item => item.kind), ['reading']);
             const learner = await pageFor('alice', width);
             try {
                 await learner.page.goto(`${origin}/profilo`);
                 await learner.page.getByRole('link', { name: /Assegnazioni/ }).first().click();
                 await learner.page.getByRole('heading', { name: 'Assegnazioni', exact: true }).first().waitFor();
-                await learner.page.getByRole('heading', { name: 'Film per riflettere', exact: true }).first().waitFor();
+                await learner.page.getByRole('heading', { name: 'Obiettivo comune', exact: true }).first().waitFor();
                 // Lista breve (F27): il mittente compare aprendo il dettaglio.
                 assert.ok(await learner.page.getByRole('button', { name: 'Dettagli', exact: true }).count() >= 3);
                 await learner.page.getByRole('button', { name: 'Dettagli', exact: true }).first().click();
@@ -81,9 +85,9 @@ for (const width of [1440, 390]) {
                 assert.deepEqual(learner.errors, []);
             } finally { await learner.context.close(); }
             await page.goto(`${origin}/docente/assegnazioni`);
-            const sent = page.getByRole('region', { name: 'Assegnazioni effettuate', exact: true });
+            const sent = page.getByRole('region', { name: 'Assegnazione', exact: true });
             await sent.locator('article').filter({ hasText: marker }).first().waitFor();
-            const film = sent.locator('article').filter({ hasText: marker }).filter({ has: page.getByRole('heading', { name: 'Film per riflettere' }) });
+            const film = sent.locator('article').filter({ hasText: marker }).filter({ hasText: 'Film per riflettere' });
             // Lotto 5B: la conferma di revoca è in linea (ConfirmInline), non più window.confirm.
             await film.getByRole('button', { name: 'Revoca assegnazione' }).click();
             await film.getByRole('button', { name: 'Sì', exact: true }).click();
@@ -115,14 +119,16 @@ for (const width of [1440, 390]) {
         const marker = `Classe vuota ${width} ${Date.now().toString(36)}`;
         const username = `late-${width}`;
         try {
-            for (const catalogPath of ['/docente/strategie', '/docente/materiali']) {
-                await page.goto(`${origin}${catalogPath}`);
-                await page.getByRole('button', { name: 'Assegna', exact: true }).first().click();
+            for (const attachment of ['Strategia · Ripasso distribuito', 'Libro, film o altro materiale · Film per riflettere']) {
+                await page.goto(`${origin}/docente/assegnazioni`);
+                await page.getByRole('button', { name: 'Nuova assegnazione', exact: true }).click();
                 const dialog = page.getByRole('dialog');
                 await dialog.getByLabel('Gruppo o classe', { exact: true }).selectOption({ label: `Classe vuota ${width}` });
+                await dialog.getByLabel('Obiettivo', { exact: true }).selectOption({ label: 'Obiettivo comune' });
                 const recipient = dialog.getByLabel('Destinatario', { exact: true });
                 assert.deepEqual(await recipient.locator('option').allTextContents(), ['Intero gruppo o classe (0)']);
                 await dialog.getByText(/anche per chi si iscriverà in seguito/).waitFor();
+                await dialog.getByLabel('Allegati (facoltativi)', { exact: true }).selectOption({ label: attachment });
                 await dialog.getByLabel('Indicazioni del docente (facoltative)').fill(marker);
                 assert.ok(await dialog.getByRole('button', { name: 'Conferma assegnazione' }).isEnabled());
                 assert.ok(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth));
@@ -131,7 +137,7 @@ for (const width of [1440, 390]) {
                 await page.getByRole('status').filter({ hasText: 'Assegnazione inviata.' }).waitFor();
             }
             await page.goto(`${origin}/docente/assegnazioni`);
-            const sent = page.getByRole('region', { name: 'Assegnazioni effettuate', exact: true });
+            const sent = page.getByRole('region', { name: 'Assegnazione', exact: true });
             const deliveries = sent.locator('article').filter({ hasText: marker });
             await deliveries.nth(1).waitFor();
             assert.equal(await deliveries.getByText('Destinatari: Intero gruppo o classe (0)', { exact: true }).count(), 2);
@@ -142,19 +148,21 @@ for (const width of [1440, 390]) {
             });
             assert.equal(join.status, 200, await join.text());
             const receivedAfterJoin = await received(username);
-            assert.deepEqual(receivedAfterJoin.map(row => row.source_kind).sort(), ['reading', 'strategy']);
+            assert.deepEqual(receivedAfterJoin.map(row => row.source_kind).sort(), ['goal', 'goal']);
+            assert.deepEqual(receivedAfterJoin.flatMap(row => row.attachments.map(item => item.kind)).sort(), ['reading', 'strategy']);
             assert.ok(receivedAfterJoin.every(row => row.instructions === marker));
             const learner = await pageFor(username, width);
             try {
                 await learner.page.goto(`${origin}/profilo/assegnazioni`);
-                await learner.page.getByRole('heading', { name: 'Film per riflettere', exact: true }).waitFor();
-                await learner.page.getByRole('heading', { name: 'Ripasso distribuito', exact: true }).waitFor();
+                await learner.page.getByRole('heading', { name: 'Obiettivo comune', exact: true }).first().waitFor();
+                await learner.page.getByText('Film per riflettere', { exact: false }).first().waitFor();
+                await learner.page.getByText('Ripasso distribuito', { exact: false }).first().waitFor();
                 assert.deepEqual(learner.errors, []);
             } finally { await learner.context.close(); }
             await page.reload();
             await deliveries.nth(1).waitFor();
             assert.equal(await deliveries.getByText('Destinatari: Intero gruppo o classe (1)', { exact: true }).count(), 2);
-            const film = deliveries.filter({ has: page.getByRole('heading', { name: 'Film per riflettere' }) });
+            const film = deliveries.filter({ hasText: 'Film per riflettere' });
             // Lotto 5B: la conferma di revoca è in linea (ConfirmInline), non più window.confirm.
             await film.getByRole('button', { name: 'Revoca assegnazione' }).click();
             await film.getByRole('button', { name: 'Sì', exact: true }).click();
@@ -178,10 +186,12 @@ for (const width of [1440, 390]) {
         try {
             const goal = await call('/user/goals', 'alice', { title: `Obiettivo ${marker}`, motivation: 'Scelta personale' });
             const portfolio = await call('/user/portfolio', 'alice', { title: `Lavoro ${marker}`, description: 'Solo il testo scelto per la restituzione' });
-            await teacher.page.goto(`${origin}/docente/strategie`);
-            await teacher.page.getByRole('button', { name: 'Assegna', exact: true }).first().click();
+            await teacher.page.goto(`${origin}/docente/assegnazioni`);
+            await teacher.page.getByRole('button', { name: 'Nuova assegnazione', exact: true }).click();
             const dialog = teacher.page.getByRole('dialog');
             await dialog.getByLabel('Gruppo o classe', { exact: true }).selectOption({ label: 'Classe 3B' });
+            await dialog.getByLabel('Obiettivo', { exact: true }).selectOption({ label: 'Pianificare lo studio' });
+            await dialog.getByLabel('Allegati (facoltativi)', { exact: true }).selectOption({ label: 'Strategia · Ripasso distribuito' });
             await dialog.getByLabel('Tipo di assegnazione').selectOption('requested');
             await dialog.getByLabel('Scadenza (facoltativa)').fill('2026-10-15');
             await dialog.getByLabel('Che cosa restituire').fill('Racconta come hai provato la strategia');

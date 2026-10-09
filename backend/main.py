@@ -485,6 +485,9 @@ def _run_seed_and_migrations():
             ("instruments", "ADD COLUMN interview_mode VARCHAR NOT NULL DEFAULT 'interactive'"),
             # Optional note on a teacher's class path progress override (#99).
             ("class_path_progress", "ADD COLUMN reason TEXT"),
+            # Optional catalog add-ons (strategies/readings) delivered with a goal
+            # assignment (#143). Existing rows default to an empty list.
+            ("teacher_assignments", "ADD COLUMN attachments JSON DEFAULT '[]'::json"),
         ]:
             try:
                 with database.engine.connect() as conn:
