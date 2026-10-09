@@ -27,6 +27,13 @@ export interface ClassPath {
     archived_at?: string | null;
 }
 
+// Tools a path step may use: the ones the class enables, which is what the
+// server accepts on save and what students can start (bug 838e6852).
+// Always-on tools are never steps.
+export function pathStepTools<T extends { enabled: boolean; always_on: boolean }>(tools: T[]): T[] {
+    return tools.filter(t => t.enabled && !t.always_on);
+}
+
 export function parseClassPathStep(input: unknown): ClassPathStep {
     if (!input || typeof input !== 'object') throw new Error('Invalid step payload');
     const raw = input as Record<string, unknown>;

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowLeft, Archive, CheckCircle2, Circle, Plus, Trash2, X } from 'lucide-react';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
-import { parseClassPath, parseClassPaths, type ClassPath, type ClassPathStep } from '@/lib/class-paths';
+import { parseClassPath, parseClassPaths, pathStepTools, type ClassPath, type ClassPathStep } from '@/lib/class-paths';
 import { classPathText, classPathsTexts } from '@/lib/i18n-class-paths';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
 import { useI18n } from '@/lib/i18n-context';
@@ -68,9 +68,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
     }, []);
 
     // Enabled tools for this class
-    const enabledTools = classSettings.tools.filter(
-        t => !t.always_on && t.admin_enabled && !classSettings.disabled_tool_keys.includes(t.key)
-    );
+    const enabledTools = pathStepTools(classSettings.tools);
 
     const dirty =
         title !== currentPath.title ||
@@ -386,6 +384,8 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                     <div className="space-y-3">
                         {steps.map((step, index) => {
                             const name = toolLabel(step.tool_key, classSettings.tools, lang);
+                            // Students see this step as not available: say so here too.
+                            const unavailable = !enabledTools.some(t => t.key === step.tool_key);
                             return (
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${index}`}
@@ -400,6 +400,11 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                             {!step.auto_detect && (
                                                 <span className="mt-0.5 inline-block rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800">
                                                     {l('selfMarkBadge')}
+                                                </span>
+                                            )}
+                                            {unavailable && (
+                                                <span className="mt-0.5 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
+                                                    {l('notAvailable')}
                                                 </span>
                                             )}
                                         </div>
