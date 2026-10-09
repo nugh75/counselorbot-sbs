@@ -10,6 +10,8 @@ import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { STRATEGIC_COMPETENCES_URLS } from '@/lib/questionnaire-sources';
 import { resolveActiveStudentTools, TEACHER_AREA_INSTRUMENT_IDS } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
+import { useUserAccess } from '@/lib/use-user-access';
+import { isToolAllowed } from '@/lib/user-access';
 import { BackButton } from '@/components/ui/BackButton';
 import { PersonalAreaEntry } from '@/components/home/PersonalAreaEntry';
 import { ForwardButton } from '@/components/ui/ForwardButton';
@@ -29,15 +31,20 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
     // poi si avanza con la freccia in alto (nessuna azione "vai" per card).
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
+    const { access } = useUserAccess();
 
     const active = useMemo(() => {
-        return resolveActiveStudentTools(instrumentCatalog, lang);
-    }, [instrumentCatalog, lang]);
+        return resolveActiveStudentTools(instrumentCatalog, lang, access);
+    }, [instrumentCatalog, lang, access]);
 
     const activeIdSet = useMemo(() => new Set(active.map((q) => q.id)), [active]);
     const upcoming = useMemo(() => {
-        return QUESTIONNAIRE_LIST.filter((q) => !activeIdSet.has(q.id) && !(TEACHER_AREA_INSTRUMENT_IDS as readonly string[]).includes(q.id));
-    }, [activeIdSet]);
+        return QUESTIONNAIRE_LIST.filter(
+            (q) => isToolAllowed(access, q.id)
+                && !activeIdSet.has(q.id)
+                && !(TEACHER_AREA_INSTRUMENT_IDS as readonly string[]).includes(q.id)
+        );
+    }, [activeIdSet, access]);
 
     // Competenze Strategiche = strumenti con assessment sul sito / in-app; Interviste = agentOnly (Savickas, percorsi guidati).
     const csQuestionnaires = useMemo(() => active.filter((q) => !q.agentOnly), [active]);

@@ -607,6 +607,8 @@ disabled tool stay readable, exportable and deletable. `GET /user/access` return
 resolved tool list; the student catalog uses it from #90, and counselor fields
 arrive with #93.
 
+**Class-filtered student catalog (S3, #90).** The student interface now gates all tool entry points using the resolved access from `GET /user/access`. Cached once per browser session in sessionStorage and in-memory, the resolved access filters tools on top of `resolveActiveStudentTools`. Students in restricted classes see only tools enabled for their classes across the home questionnaire selector and ReturningHome cards; disabled tools produce no cards and are omitted from upcoming sections. Navigating directly to `/strumenti/[id]` for a disabled tool presents a dedicated 'not enabled for your class' panel with a button back to the catalog. Deep links via `?start=` or `?q=` targeting a disabled tool notify the student with a clear toast warning and fall back to the catalog. Frozen sessions for disabled tools are hidden from the header Resume menu and ReturningHome; attempting a direct resume link triggers an informative error toast and safely returns to the catalog. Unrestricted students and staff continue to see the complete catalog without filtering.
+
 **Personal-area tools per class (S4, #91).** In the **Personal area** section of
 the Tools & counselors tab, teachers can turn off Tavolo, Goals, Actions,
 Timeline, Portfolio, pQBL, Flashcards, Cards and Comparison for a class.

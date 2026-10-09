@@ -5,10 +5,12 @@
 // ognuno teneva il proprio stato, il menu mobile conosceva solo il resume
 // locale e le sessioni congelate restavano irraggiungibili da telefono.
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { getResume, subscribeToResume, type ResumePoint } from '@/lib/resume';
 import { listFrozenSessions, subscribeToFrozenSessions, type FrozenSessionSummary } from '@/lib/frozen-session';
 import { hasPqblProgress, subscribeToPqblProgress } from '@/lib/pqbl-progress';
+import { isToolAllowed } from '@/lib/user-access';
+import { useUserAccess } from '@/lib/use-user-access';
 
 export interface ResumeEntries {
     frozen: FrozenSessionSummary[];
@@ -23,6 +25,7 @@ export interface ResumeEntries {
 }
 
 export function useResumeEntries(enabled = true): ResumeEntries {
+    const { access } = useUserAccess();
     const hasLocalResume = useSyncExternalStore(
         subscribeToResume,
         () => (getResume() ? '1' : null),
@@ -72,7 +75,26 @@ export function useResumeEntries(enabled = true): ResumeEntries {
         return () => { alive = false; unsubscribe(); };
     }, [attempt, enabled]);
 
-    return { frozen, localResume, pqbl, error, loading, retry, count: frozen.length + (localResume ? 1 : 0) + (pqbl ? 1 : 0) };
+    const allowedFrozen = useMemo(() => {
+        if (!access || !access.restricted) return frozen;
+        return frozen.filter((row) => isToolAllowed(access, row.questionnaire_type));
+    }, [frozen, access]);
+
+    const allowedLocalResume = useMemo(() => {
+        if (!localResume) return null;
+        if (!access || !access.restricted) return localResume;
+        return isToolAllowed(access, localResume.instrument) ? localResume : null;
+    }, [localResume, access]);
+
+    return {
+        frozen: allowedFrozen,
+        localResume: allowedLocalResume,
+        pqbl,
+        error,
+        loading,
+        retry,
+        count: allowedFrozen.length + (allowedLocalResume ? 1 : 0) + (pqbl ? 1 : 0),
+    };
 }
 
 // Riprendere ricarica la pagina: la home legge lo snapshot dai query param al

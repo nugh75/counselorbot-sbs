@@ -13,6 +13,8 @@ import {
     buildDynamicQuestionnaireConfig,
 } from '@/lib/questionnaires';
 import { fetchInstruments } from '@/lib/instruments-api';
+import { useUserAccess } from '@/lib/use-user-access';
+import { isToolAllowed } from '@/lib/user-access';
 import { useI18n } from '@/lib/i18n-context';
 import { STRATEGIC_COMPETENCES_URLS, STRATEGIC_COMPETENCES_CODE, STRATEGIC_COMPETENCES_PASSWORD } from '@/lib/questionnaire-sources';
 
@@ -27,6 +29,7 @@ export default function InstrumentDetailsPage() {
     const staticConfig = QUESTIONNAIRES[id as keyof typeof QUESTIONNAIRES] ?? null;
     const [questionnaire, setQuestionnaire] = useState<QuestionnaireConfig | null>(staticConfig);
     const [loading, setLoading] = useState<boolean>(!staticConfig);
+    const { access, loading: accessLoading } = useUserAccess();
     const assessmentUrl = lang === 'it' && id in STRATEGIC_COMPETENCES_URLS ? STRATEGIC_COMPETENCES_URLS[id] : undefined;
     // La somministrazione in-app compare solo se lo strumento e' certificato
     // nella lingua dell'interfaccia. Niente ripiego sull'inglese: il registro
@@ -61,11 +64,24 @@ export default function InstrumentDetailsPage() {
     }, [id, staticConfig, lang]);
 
     const inAppAvailable = availableLocales?.includes(lang) ?? false;
+    const isClassDisabled = Boolean(access?.restricted && !isToolAllowed(access, id));
 
-    if (loading) {
+    if (loading || accessLoading) {
         return (
             <div className="max-w-xl mx-auto glass-panel p-8 text-center space-y-4">
                 <p className="text-sm text-slate-500" role="status">{t('base.catalog.loading')}</p>
+            </div>
+        );
+    }
+
+    if (isClassDisabled) {
+        return (
+            <div className="max-w-xl mx-auto glass-panel p-8 text-center space-y-4">
+                <h1 className="text-xl font-bold text-slate-900">{t('detail.disabledForClass.title')}</h1>
+                <p className="text-slate-600">{t('detail.disabledForClass.body')}</p>
+                <div className="flex items-center justify-center gap-3">
+                    <PreviousPageButton fallbackHref={QUESTIONNAIRE_SELECTION_HREF} />
+                </div>
             </div>
         );
     }
