@@ -1771,6 +1771,7 @@ class ClassPathProgress(Base):
     state = Column(String, nullable=False)  # 'done' | 'not_done'
     source = Column(String, nullable=False)  # 'student' | 'teacher'
     actor_username = Column(String, nullable=False)
+    reason = Column(Text, nullable=True)  # optional note on a teacher override
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 

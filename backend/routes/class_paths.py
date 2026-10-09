@@ -189,6 +189,90 @@ def _serialize_path(db: Session, path: models.ClassPath, *, include_steps: bool 
     }
 
 
+def _active_steps(db: Session, path_id: int) -> list[models.ClassPathStep]:
+    return (
+        db.query(models.ClassPathStep)
+        .filter(
+            models.ClassPathStep.path_id == path_id,
+            models.ClassPathStep.removed_at.is_(None),
+        )
+        .order_by(models.ClassPathStep.position.asc(), models.ClassPathStep.id.asc())
+        .all()
+    )
+
+
+def _load_marks(
+    db: Session,
+    step_ids: list[int],
+    usernames: list[str],
+) -> dict[tuple[int, str], dict[str, models.ClassPathProgress]]:
+    """Explicit marks keyed by (step_id, username), then by source."""
+    if not step_ids or not usernames:
+        return {}
+    rows = (
+        db.query(models.ClassPathProgress)
+        .filter(
+            models.ClassPathProgress.step_id.in_(step_ids),
+            models.ClassPathProgress.username.in_(usernames),
+        )
+        .all()
+    )
+    marks: dict[tuple[int, str], dict[str, models.ClassPathProgress]] = {}
+    for row in rows:
+        marks.setdefault((row.step_id, row.username), {})[row.source] = row
+    return marks
+
+
+def _resolve_cells(
+    db: Session,
+    path: models.ClassPath,
+    steps: list[models.ClassPathStep],
+    username: str,
+    *,
+    available: dict[int, bool],
+    auto: dict[int, bool],
+    marks: dict[tuple[int, str], dict[str, models.ClassPathProgress]],
+) -> tuple[list[dict], int, int, Optional[int]]:
+    """Resolve one student's steps; returns (cells, done, total, next_step_id).
+
+    Resolution per step: teacher mark > student mark > automatic evidence >
+    not done (plan §4.2). Unavailable steps are excluded from the ratio.
+    """
+    cells = []
+    for step in steps:
+        by_source = marks.get((step.id, username), {})
+        teacher = by_source.get("teacher")
+        mark = None
+        if not available[step.id]:
+            state, source = "unavailable", None
+        else:
+            mark = teacher or by_source.get("student")
+            if mark:
+                state, source = mark.state, mark.source
+            elif auto[step.id] and has_automatic_evidence(db, step.tool_key, username, path.published_at):
+                state, source = "done", "automatic"
+            else:
+                state, source = "not_done", None
+        cells.append({"step": step, "state": state, "source": source, "mark": mark, "teacher": teacher})
+
+    available_cells = [c for c in cells if c["state"] != "unavailable"]
+    next_step_id = next((c["step"].id for c in available_cells if c["state"] != "done"), None)
+
+    # Strict mode: a step counts only once every earlier step is done, so
+    # every step after the first undone one renders locked (path only:
+    # tool access is unchanged).
+    if path.mode == "strict" and next_step_id is not None:
+        found_next = False
+        for c in available_cells:
+            if found_next:
+                c["state"], c["source"], c["mark"] = "locked", None, None
+            if c["step"].id == next_step_id:
+                found_next = True
+
+    done = sum(1 for c in available_cells if c["state"] == "done")
+    return cells, done, len(available_cells), next_step_id
+
+
 # --- Class path management endpoints (Teacher / Researcher / Admin) ---
 
 
@@ -416,6 +500,152 @@ async def delete_class_path(
     return {"ok": True, "deleted": path_id}
 
 
+def _require_published(path: models.ClassPath) -> None:
+    if path.published_at is None:
+        raise HTTPException(status_code=422, detail="Class path is not published")
+
+
+def _teacher_cell(cell: dict) -> dict:
+    mark = cell["mark"]
+    teacher = cell["teacher"]
+    return {
+        "step_id": cell["step"].id,
+        "state": cell["state"],
+        "source": cell["source"],
+        "at": mark.created_at.isoformat() if mark and mark.created_at else None,
+        "actor": mark.actor_username if mark else None,
+        "reason": mark.reason if mark else None,
+        "teacher_state": teacher.state if teacher else None,
+    }
+
+
+def _path_context(db: Session, path: models.ClassPath, usernames: list[str]):
+    steps = _active_steps(db, path.id)
+    available = {s.id: is_tool_available_for_class(db, path.group_id, s.tool_key) for s in steps}
+    auto = {s.id: is_auto_detect_tool(db, s.tool_key) for s in steps}
+    marks = _load_marks(db, [s.id for s in steps], usernames)
+    return steps, available, auto, marks
+
+
+@router.get("/teacher/paths/{path_id}/progress")
+async def get_class_path_progress(
+    path_id: int,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Students × steps matrix of a published path; current members only (plan §5.2)."""
+    path = _require_visible_path(db, current_user, path_id)
+    _require_published(path)
+
+    usernames = [
+        row.username
+        for row in db.query(models.GroupMembership.username)
+        .filter(models.GroupMembership.group_id == path.group_id)
+        .distinct()
+        .order_by(models.GroupMembership.username)
+        .all()
+    ]
+    names = dict(
+        db.query(models.UserDisplayName.username, models.UserDisplayName.display_name)
+        .filter(models.UserDisplayName.username.in_(usernames))
+        .all()
+    ) if usernames else {}
+    steps, available, auto, marks = _path_context(db, path, usernames)
+
+    done_count = {s.id: 0 for s in steps}
+    students = []
+    for username in usernames:
+        cells, done, total, _next = _resolve_cells(
+            db, path, steps, username, available=available, auto=auto, marks=marks)
+        for cell in cells:
+            if cell["state"] == "done":
+                done_count[cell["step"].id] += 1
+        students.append({
+            "username": username,
+            "display_name": names.get(username) or username,
+            "cells": [_teacher_cell(c) for c in cells],
+            "done": done,
+            "total": total,
+        })
+
+    return {
+        "path_id": path.id,
+        "group_id": path.group_id,
+        "title": path.title,
+        "mode": path.mode,
+        "status": path.status,
+        "published_at": path.published_at.isoformat() if path.published_at else None,
+        "steps": [
+            {**_serialize_step(db, s), "available": available[s.id], "done_count": done_count[s.id]}
+            for s in steps
+        ],
+        "students": students,
+    }
+
+
+@router.put("/teacher/paths/{path_id}/steps/{step_id}/progress/{username}")
+async def override_class_path_progress(
+    path_id: int,
+    step_id: int,
+    username: str,
+    payload: schemas.ClassPathProgressOverride,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Teacher mark/unmark of a step for one student, or `clear` to drop the override."""
+    path = _require_visible_path(db, current_user, path_id, for_update=True)
+    _require_published(path)
+
+    step = (
+        db.query(models.ClassPathStep)
+        .filter(
+            models.ClassPathStep.id == step_id,
+            models.ClassPathStep.path_id == path.id,
+            models.ClassPathStep.removed_at.is_(None),
+        )
+        .first()
+    )
+    if not step:
+        raise HTTPException(status_code=404, detail="Class path step not found")
+    member = (
+        db.query(models.GroupMembership.id)
+        .filter(models.GroupMembership.group_id == path.group_id, models.GroupMembership.username == username)
+        .first()
+    )
+    if not member:
+        raise HTTPException(status_code=404, detail="Student is not a member of this class")
+    if payload.state != "clear" and not is_tool_available_for_class(db, path.group_id, step.tool_key):
+        raise HTTPException(status_code=422, detail="Tool is not available")
+
+    row = (
+        db.query(models.ClassPathProgress)
+        .filter(
+            models.ClassPathProgress.step_id == step.id,
+            models.ClassPathProgress.username == username,
+            models.ClassPathProgress.source == "teacher",
+        )
+        .first()
+    )
+    if payload.state == "clear":
+        if row:
+            db.delete(row)
+    else:
+        if not row:
+            row = models.ClassPathProgress(step_id=step.id, username=username, source="teacher")
+            db.add(row)
+        row.state = payload.state
+        row.actor_username = _username(current_user) or ""
+        row.reason = (payload.reason or "").strip() or None
+        row.created_at = func.now()
+    db.commit()
+
+    steps, available, auto, marks = _path_context(db, path, [username])
+    cells, _done, _total, _next = _resolve_cells(
+        db, path, steps, username, available=available, auto=auto, marks=marks)
+    cell = next(c for c in cells if c["step"].id == step.id)
+    return {"username": username, **_teacher_cell(cell)}
+
+
 # --- Student endpoints (/user/paths) ---
 
 
@@ -460,93 +690,17 @@ async def list_student_class_paths(
 
     result = []
     for path in paths:
-        steps = (
-            db.query(models.ClassPathStep)
-            .filter(
-                models.ClassPathStep.path_id == path.id,
-                models.ClassPathStep.removed_at.is_(None),
+        steps = _active_steps(db, path.id)
+        available = {
+            s.id: is_tool_available_for_class(db, path.group_id, s.tool_key) and (
+                s.tool_key.strip().lower() in user_tools_lower or s.tool_key in user_tools
             )
-            .order_by(models.ClassPathStep.position.asc(), models.ClassPathStep.id.asc())
-            .all()
-        )
-
-        step_ids = [s.id for s in steps]
-        progress_rows = (
-            db.query(models.ClassPathProgress)
-            .filter(
-                models.ClassPathProgress.username == username,
-                models.ClassPathProgress.step_id.in_(step_ids),
-            )
-            .all()
-            if step_ids
-            else []
-        )
-
-        # Resolution: teacher mark > student mark > automatic evidence > not done (plan §4.2)
-        marks: dict[int, models.ClassPathProgress] = {}
-        for pr in progress_rows:
-            if pr.step_id not in marks or pr.source == "teacher":
-                marks[pr.step_id] = pr
-
-        serialized_steps = []
-        for step in steps:
-            key_lower = step.tool_key.strip().lower()
-            tool_avail = is_tool_available_for_class(db, path.group_id, step.tool_key) and (
-                key_lower in user_tools_lower or step.tool_key in user_tools
-            )
-
-            if not tool_avail:
-                step_state = "unavailable"
-                step_source = None
-                can_self_mark = False
-            else:
-                auto = is_auto_detect_tool(db, step.tool_key)
-                can_self_mark = not auto
-                mark = marks.get(step.id)
-                if mark:
-                    step_state = mark.state
-                    step_source = mark.source
-                elif auto and has_automatic_evidence(db, step.tool_key, username, path.published_at):
-                    step_state = "done"
-                    step_source = "automatic"
-                else:
-                    step_state = "not_done"
-                    step_source = None
-
-            serialized_steps.append({
-                "id": step.id,
-                "tool_key": step.tool_key,
-                "title": step.title,
-                "instructions": step.instructions,
-                "due_date": step.due_date,
-                "state": step_state,
-                "source": step_source,
-                "start_href": get_tool_start_href(step.tool_key),
-                "can_self_mark": can_self_mark,
-            })
-
-        available_steps = [s for s in serialized_steps if s["state"] != "unavailable"]
-        total = len(available_steps)
-
-        next_step_id = None
-        for s in available_steps:
-            if s["state"] != "done":
-                next_step_id = s["id"]
-                break
-
-        # Strict mode: a step counts only once every earlier step is done, so
-        # every step after the first undone one renders locked (path only:
-        # tool access is unchanged).
-        if path.mode == "strict" and next_step_id is not None:
-            found_next = False
-            for s in available_steps:
-                if found_next:
-                    s["state"] = "locked"
-                    s["source"] = None
-                if s["id"] == next_step_id:
-                    found_next = True
-
-        done = sum(1 for s in available_steps if s["state"] == "done")
+            for s in steps
+        }
+        auto = {s.id: is_auto_detect_tool(db, s.tool_key) for s in steps}
+        marks = _load_marks(db, [s.id for s in steps], [username])
+        cells, done, total, next_step_id = _resolve_cells(
+            db, path, steps, username, available=available, auto=auto, marks=marks)
 
         result.append({
             "id": path.id,
@@ -555,7 +709,20 @@ async def list_student_class_paths(
             "title": path.title,
             "description": path.description,
             "mode": path.mode,
-            "steps": serialized_steps,
+            "steps": [
+                {
+                    "id": cell["step"].id,
+                    "tool_key": cell["step"].tool_key,
+                    "title": cell["step"].title,
+                    "instructions": cell["step"].instructions,
+                    "due_date": cell["step"].due_date,
+                    "state": cell["state"],
+                    "source": cell["source"],
+                    "start_href": get_tool_start_href(cell["step"].tool_key),
+                    "can_self_mark": available[cell["step"].id] and not auto[cell["step"].id],
+                }
+                for cell in cells
+            ],
             "next_step_id": next_step_id,
             "done": done,
             "total": total,
