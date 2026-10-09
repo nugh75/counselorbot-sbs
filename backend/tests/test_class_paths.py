@@ -1049,3 +1049,163 @@ def test_preview_turn_writes_no_marker(class_paths_api):
                                               "preview": True})
         assert response.status_code == 200, response.text
     assert _markers(db) == []
+
+
+# --- Teacher progress view and overrides (#99, plan §5.2) -------------------
+
+
+def _as_owner(identity):
+    identity.update(username="owner", groups=["docenti"], is_admin=False, is_researcher=False)
+
+
+def _progress(client, path_id):
+    response = client.get(f"/teacher/paths/{path_id}/progress")
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def _override(client, path_id, step_id, username, state, reason=None):
+    body = {"state": state}
+    if reason is not None:
+        body["reason"] = reason
+    return client.put(f"/teacher/paths/{path_id}/steps/{step_id}/progress/{username}", json=body)
+
+
+def test_teacher_progress_matrix_lists_current_members_with_sources(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, (goal_step, timeline_step, qsa_step) = _published_path(
+        client, db, group_id, identity, ["goals", "timeline", "QSA"])
+    db.add_all([
+        models.GroupMembership(group_id=group_id, username="student_b"),
+        models.UserDisplayName(username="student_b", display_name="Bea B."),
+        _evidence("goals", AFTER),
+        models.ClassPathProgress(step_id=timeline_step, username="student_b", state="done",
+                                 source="student", actor_username="student_b"),
+        # A former member keeps their marks but is not listed.
+        models.ClassPathProgress(step_id=timeline_step, username="gone", state="done",
+                                 source="student", actor_username="gone"),
+    ])
+    db.commit()
+    _as_owner(identity)
+
+    body = _progress(client, path_id)
+    assert body["path_id"] == path_id
+    assert body["mode"] == "recommended"
+    assert [s["id"] for s in body["steps"]] == [goal_step, timeline_step, qsa_step]
+    assert [s["done_count"] for s in body["steps"]] == [1, 1, 0]
+    assert all(s["available"] for s in body["steps"])
+
+    students = {s["username"]: s for s in body["students"]}
+    assert set(students) == {STUDENT, "student_b"}
+    assert students["student_b"]["display_name"] == "Bea B."
+    assert students[STUDENT]["display_name"] == STUDENT
+
+    auto = students[STUDENT]
+    assert [(c["step_id"], c["state"], c["source"]) for c in auto["cells"]] == [
+        (goal_step, "done", "automatic"),
+        (timeline_step, "not_done", None),
+        (qsa_step, "not_done", None),
+    ]
+    assert (auto["done"], auto["total"]) == (1, 3)
+    marked = students["student_b"]
+    assert marked["cells"][1]["source"] == "student"
+    assert marked["cells"][1]["at"] is not None
+    assert (marked["done"], marked["total"]) == (1, 3)
+
+
+def test_teacher_progress_requires_a_published_path(class_paths_api):
+    client, _db, group_id, _ = class_paths_api
+    draft = client.post(f"/teacher/groups/{group_id}/paths", json={"title": "Draft"}).json()
+    assert client.get(f"/teacher/paths/{draft['id']}/progress").status_code == 422
+
+
+def test_teacher_progress_marks_strict_and_unavailable_cells(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, (qsa_step, goal_step, action_step) = _published_path(
+        client, db, group_id, identity, ["QSA", "goals", "actions"], mode="strict")
+    db.add(models.ClassSettings(group_id=group_id, disabled_tool_keys=["QSA"], updated_by="owner"))
+    db.commit()
+    _as_owner(identity)
+
+    body = _progress(client, path_id)
+    assert [s["available"] for s in body["steps"]] == [False, True, True]
+    (row,) = body["students"]
+    assert [c["state"] for c in row["cells"]] == ["unavailable", "not_done", "locked"]
+    assert (row["done"], row["total"]) == (0, 2)
+
+
+def test_teacher_override_beats_student_and_automatic_and_clear_restores(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, (goal_step, timeline_step) = _published_path(
+        client, db, group_id, identity, ["goals", "timeline"])
+    db.add(_evidence("goals", AFTER))
+    db.commit()
+    assert client.post(f"/user/paths/{path_id}/steps/{timeline_step}/done").status_code == 200
+    _as_owner(identity)
+
+    res = _override(client, path_id, goal_step, STUDENT, "not_done", reason="Copied from a friend")
+    assert res.status_code == 200, res.text
+    assert (res.json()["state"], res.json()["source"]) == ("not_done", "teacher")
+    res = _override(client, path_id, timeline_step, STUDENT, "not_done")
+    assert res.status_code == 200
+
+    cells = _progress(client, path_id)["students"][0]["cells"]
+    assert [(c["state"], c["source"]) for c in cells] == [("not_done", "teacher"), ("not_done", "teacher")]
+    assert cells[0]["reason"] == "Copied from a friend"
+    assert cells[0]["actor"] == "owner"
+    assert cells[0]["at"] is not None
+
+    row = db.query(models.ClassPathProgress).filter_by(step_id=goal_step, source="teacher").one()
+    assert (row.username, row.actor_username, row.reason) == (STUDENT, "owner", "Copied from a friend")
+
+    # The student sees the teacher's decision.
+    identity.update(username=STUDENT, groups=[])
+    steps = _student_path(client, path_id)["steps"]
+    assert [(s["state"], s["source"]) for s in steps] == [("not_done", "teacher"), ("not_done", "teacher")]
+
+    # Overwriting keeps one teacher row per (step, student).
+    _as_owner(identity)
+    assert _override(client, path_id, goal_step, STUDENT, "done").status_code == 200
+    assert db.query(models.ClassPathProgress).filter_by(step_id=goal_step, source="teacher").count() == 1
+    assert _progress(client, path_id)["students"][0]["cells"][0]["reason"] is None
+
+    # Clearing falls back to the student mark and to automatic evidence.
+    assert _override(client, path_id, goal_step, STUDENT, "clear").json()["source"] == "automatic"
+    cleared = _override(client, path_id, timeline_step, STUDENT, "clear").json()
+    assert (cleared["state"], cleared["source"]) == ("done", "student")
+    assert db.query(models.ClassPathProgress).filter_by(source="teacher").count() == 0
+
+
+def test_teacher_override_validation(class_paths_api):
+    client, db, group_id, identity = class_paths_api
+    path_id, (qsa_step, goal_step) = _published_path(client, db, group_id, identity, ["QSA", "goals"])
+    other_path, (other_step,) = _published_path(client, db, group_id, identity, ["goals"])
+    db.add(models.ClassSettings(group_id=group_id, disabled_tool_keys=["QSA"], updated_by="owner"))
+    db.commit()
+    _as_owner(identity)
+
+    assert _override(client, path_id, goal_step, STUDENT, "maybe").status_code == 422
+    assert _override(client, path_id, goal_step, STUDENT, "done", reason="x" * 501).status_code == 422
+    assert _override(client, path_id, goal_step, "not_a_member", "done").status_code == 404
+    assert _override(client, path_id, other_step, STUDENT, "done").status_code == 404
+    assert _override(client, path_id, qsa_step, STUDENT, "done").status_code == 422
+    assert _override(client, path_id, qsa_step, STUDENT, "clear").status_code == 200
+
+    draft = client.post(f"/teacher/groups/{group_id}/paths", json={"title": "Draft"}).json()
+    put = client.put(f"/teacher/paths/{draft['id']}",
+                     json={"revision": 1, "title": "Draft", "steps": [{"tool_key": "goals"}]}).json()
+    assert _override(client, draft["id"], put["steps"][0]["id"], STUDENT, "done").status_code == 422
+
+
+@pytest.mark.parametrize("role", ["co-teacher", "admin", "other-teacher", "student"])
+def test_teacher_progress_permissions(class_paths_api, role):
+    client, db, group_id, identity = class_paths_api
+    db.add(models.GroupShare(group_id=group_id, shared_with_username="co-teacher", granted_by_username="owner"))
+    db.commit()
+    path_id, (goal_step,) = _published_path(client, db, group_id, identity, ["goals"])
+    identity.update(username=role, is_admin=(role == "admin"),
+                    groups=["studenti" if role == "student" else "docenti"])
+
+    expected = 200 if role in {"co-teacher", "admin"} else 403
+    assert client.get(f"/teacher/paths/{path_id}/progress").status_code == expected
+    assert _override(client, path_id, goal_step, STUDENT, "done").status_code == expected
