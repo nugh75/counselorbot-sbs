@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { parseClassPath, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths } from './class-paths.ts';
+import { lockedStepUnlockNumber, parseClassPath, parseClassPathStep, parseClassPaths, parseStudentClassPath, parseStudentClassPathStep, parseStudentClassPaths } from './class-paths.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { classPathText, classPathsTexts } from './i18n-class-paths.ts';
 
@@ -145,3 +145,34 @@ test('class paths translations cover six languages and fallback to English', () 
     assert.equal(classPathText('it', 'notAvailable'), 'Non disponibile');
 });
 
+
+test('student class-paths parser keeps the automatic completion source', () => {
+    const auto = parseStudentClassPathStep({ id: 1, tool_key: 'goals', state: 'done', source: 'automatic', can_self_mark: false });
+    assert.equal(auto.state, 'done');
+    assert.equal(auto.source, 'automatic');
+    const unknown = parseStudentClassPathStep({ id: 2, tool_key: 'goals', state: 'done', source: 'robot' });
+    assert.equal(unknown.source, null);
+});
+
+test('strict locked steps unlock after the current step, not the previous one', () => {
+    const path = parseStudentClassPath({
+        id: 3, group_id: 1, group_name: '3B', title: 'Strict', mode: 'strict',
+        steps: [
+            { id: 21, tool_key: 'bussola', state: 'done', source: 'automatic' },
+            { id: 22, tool_key: 'QSA', state: 'unavailable' },
+            { id: 23, tool_key: 'timeline', state: 'not_done' },
+            { id: 24, tool_key: 'goals', state: 'locked' },
+            { id: 25, tool_key: 'actions', state: 'locked' },
+        ],
+        next_step_id: 23, done: 1, total: 4,
+    });
+    assert.equal(lockedStepUnlockNumber(path), 3);
+    assert.deepEqual(path.steps.map(s => s.state), ['done', 'unavailable', 'not_done', 'locked', 'locked']);
+    assert.equal(lockedStepUnlockNumber({ ...path, next_step_id: null }), null);
+    assert.equal(lockedStepUnlockNumber({ ...path, next_step_id: 999 }), null);
+});
+
+test('class paths translations name the automatic source in six languages', () => {
+    assert.equal(classPathText('en', 'sourceAutomatic'), 'detected automatically');
+    assert.equal(classPathText('it', 'sourceAutomatic'), 'rilevato automaticamente');
+});
