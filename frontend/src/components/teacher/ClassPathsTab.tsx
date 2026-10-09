@@ -48,7 +48,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
     const [selectedToolKey, setSelectedToolKey] = useState<string>('');
 
     const [busy, setBusy] = useState(false);
-    const [notice, setNotice] = useState<'saved' | 'conflict' | 'tool_disabled' | 'error' | null>(null);
+    const [notice, setNotice] = useState<'saved' | 'published' | 'conflict' | 'tool_disabled' | 'error' | null>(null);
     const [forbidden, setForbidden] = useState(false);
 
     const mounted = useRef(false);
@@ -97,7 +97,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
             s.position = i + 1;
         });
         setSteps(nextSteps);
-        if (notice === 'saved') setNotice(null);
+        if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
     const handleAddStep = () => {
@@ -120,14 +120,15 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
         };
         setSteps([...steps, newStep]);
         setSelectedToolKey('');
-        if (notice === 'saved') setNotice(null);
+        if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
-    const handleSave = async () => {
-        if (pending.current || !dirty || notice === 'conflict') return;
+    const handleSave = async (): Promise<boolean> => {
+        if (pending.current || notice === 'conflict') return false;
+        if (!dirty) return true;
         if (account.current !== getViewAsAccount()?.username) {
             setForbidden(true);
-            return;
+            return false;
         }
 
         const controller = new AbortController();
@@ -159,18 +160,18 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                 body: JSON.stringify(payload),
             });
 
-            if (!isCurrent()) return;
+            if (!isCurrent()) return false;
             if (response.status === 401 || response.status === 403) {
                 setForbidden(true);
-                return;
+                return false;
             }
             if (response.status === 409) {
                 setNotice('conflict');
-                return;
+                return false;
             }
             if (response.status === 422) {
                 setNotice('tool_disabled');
-                return;
+                return false;
             }
             if (!response.ok) throw new Error('Save failed');
 
@@ -182,13 +183,44 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
             setSteps(next.steps);
             setNotice('saved');
             onUpdated(next);
+            return true;
         } catch {
             if (isCurrent()) setNotice('error');
+            return false;
         } finally {
             if (isCurrent()) {
                 pending.current = null;
                 setBusy(false);
             }
+        }
+    };
+
+    const handlePublish = async () => {
+        if (busy || notice === 'conflict') return;
+        if (dirty) {
+            const ok = await handleSave();
+            if (!ok) return;
+        }
+        setBusy(true);
+        setNotice(null);
+        try {
+            const response = await apiFetch(`/api/teacher/paths/${currentPath.id}/publish`, {
+                method: 'POST',
+            });
+            if (response.ok) {
+                const next = parseClassPath(await response.json());
+                setCurrentPath(next);
+                setNotice('published');
+                onUpdated(next);
+            } else if (response.status === 401 || response.status === 403) {
+                setForbidden(true);
+            } else {
+                setNotice('error');
+            }
+        } catch {
+            setNotice('error');
+        } finally {
+            setBusy(false);
         }
     };
 
@@ -278,7 +310,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                         value={title}
                         onChange={e => {
                             setTitle(e.target.value);
-                            if (notice === 'saved') setNotice(null);
+                            if (notice === 'saved' || notice === 'published') setNotice(null);
                         }}
                         placeholder={l('titlePlaceholder')}
                         className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-600 focus:outline-none"
@@ -295,7 +327,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                         value={description}
                         onChange={e => {
                             setDescription(e.target.value);
-                            if (notice === 'saved') setNotice(null);
+                            if (notice === 'saved' || notice === 'published') setNotice(null);
                         }}
                         placeholder={l('descriptionPlaceholder')}
                         className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-600 focus:outline-none"
@@ -313,7 +345,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                 checked={mode === 'recommended'}
                                 onChange={() => {
                                     setMode('recommended');
-                                    if (notice === 'saved') setNotice(null);
+                                    if (notice === 'saved' || notice === 'published') setNotice(null);
                                 }}
                                 className="mt-1 h-4 w-4 accent-indigo-600"
                             />
@@ -327,7 +359,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                 checked={mode === 'strict'}
                                 onChange={() => {
                                     setMode('strict');
-                                    if (notice === 'saved') setNotice(null);
+                                    if (notice === 'saved' || notice === 'published') setNotice(null);
                                 }}
                                 className="mt-1 h-4 w-4 accent-indigo-600"
                             />
@@ -377,7 +409,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                                 const next = [...steps];
                                                 next[index].title = e.target.value;
                                                 setSteps(next);
-                                                if (notice === 'saved') setNotice(null);
+                                                if (notice === 'saved' || notice === 'published') setNotice(null);
                                             }}
                                             placeholder={l('stepTitlePlaceholder')}
                                             className="block w-full rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
@@ -389,7 +421,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                                 const next = [...steps];
                                                 next[index].instructions = e.target.value;
                                                 setSteps(next);
-                                                if (notice === 'saved') setNotice(null);
+                                                if (notice === 'saved' || notice === 'published') setNotice(null);
                                             }}
                                             placeholder={l('stepInstructionsPlaceholder')}
                                             className="block w-full rounded border border-slate-300 px-2.5 py-1.5 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
@@ -404,7 +436,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                                 const next = [...steps];
                                                 next[index].due_date = e.target.value || null;
                                                 setSteps(next);
-                                                if (notice === 'saved') setNotice(null);
+                                                if (notice === 'saved' || notice === 'published') setNotice(null);
                                             }}
                                             aria-label={`${name} ${l('dueHeader')}`}
                                             className="block w-full rounded border border-slate-300 px-2 py-1 text-xs text-slate-800 focus:border-indigo-600 focus:outline-none"
@@ -480,6 +512,11 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                 {l('saved')}
                             </p>
                         )}
+                        {notice === 'published' && (
+                            <p role="status" className="text-emerald-700 font-medium">
+                                {l('publishedSuccess')}
+                            </p>
+                        )}
                         {notice === 'conflict' && (
                             <p role="alert" className="text-red-600 font-medium">
                                 {l('conflictNotice')}
@@ -503,8 +540,11 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                 {l('reload')}
                             </Button>
                         )}
-                        <Button disabled={busy || !dirty || notice === 'conflict'} onClick={() => void handleSave()}>
+                        <Button variant="secondary" disabled={busy || !dirty || notice === 'conflict'} onClick={() => void handleSave()}>
                             {busy ? l('saving') : l('saveDraft')}
+                        </Button>
+                        <Button variant="accent" disabled={busy || notice === 'conflict'} onClick={() => void handlePublish()}>
+                            {busy ? l('publishing') : l('publish')}
                         </Button>
                     </div>
                 </div>
