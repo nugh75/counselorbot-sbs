@@ -46,7 +46,8 @@ import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, get
 import type { ResponseFormat } from '@/lib/chat-preferences';
 import { setSelectedInstrumentId } from '@/lib/instrument';
 import { getResume, setResume } from '@/lib/resume';
-import { deleteFrozenSession, getFrozenSession, type FrozenSessionDetail } from '@/lib/frozen-session';
+import { deleteFrozenSession, getFrozenSession, FrozenSessionAccessError, type FrozenSessionDetail } from '@/lib/frozen-session';
+import { fetchUserAccess, isToolAllowed } from '@/lib/user-access';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
@@ -235,6 +236,12 @@ export default function Home() {
         hasCompletedQuestionnaires || notebookUpdatedAt ? 'base' : 'intro'
     );
 
+    // Dove si ricade quando uno strumento non è consentito: al catalogo
+    // strumenti (o al percorso se c'è già storia).
+    const catalogStep = (): Step => (
+        hasCompletedQuestionnaires || notebookUpdatedAt ? 'base' : 'questionnaire-select'
+    );
+
     // Nessun link diretto: la presentazione iniziale è l'unica landing page
     // per tutti gli accessi; la schermata strumenti non viene più usata come
     // porta d'ingresso automatica per i secondi utilizzi.
@@ -345,32 +352,54 @@ export default function Home() {
             entryClaimed.current = true;
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             void (async () => {
-                const snapshot = await getFrozenSession(frozenParam);
-                if (!snapshot) {
-                    toast.error(t('toast.error'));
+                try {
+                    const snapshot = await getFrozenSession(frozenParam);
+                    if (!snapshot) {
+                        toast.error(t('toast.error'));
+                        setStep(homeStep());
+                        setReady(true);
+                        return;
+                    }
+                    const access = await fetchUserAccess();
+                    if (!isToolAllowed(access, snapshot.questionnaire_type)) {
+                        toast.error(t('session.disabledForClass'));
+                        setStep(catalogStep());
+                        setReady(true);
+                        return;
+                    }
+                    const q = QUESTIONNAIRES[snapshot.questionnaire_type as QuestionnaireType]
+                        ?? buildFallbackQuestionnaireConfig(snapshot.questionnaire_type);
+                    setSelectedQuestionnaire(q);
+                    setSelectedInstrumentId(snapshot.questionnaire_type);
+                    setSessionCounselorId(snapshot.counselor_id ?? getSelectedCounselorId());
+                    if (snapshot.counselor_id != null) setSelectedCounselorId(snapshot.counselor_id);
+                    setSessionId(snapshot.session_id);
+                    setScores(snapshot.scores || {});
+                    // La sandbox OpenCode si congela come la chat guidata: riaprirla
+                    // in modalità guidata mostrerebbe un percorso che non è il suo.
+                    setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
+                    if (snapshot.response_length) setResponseLength(snapshot.response_length);
+                    if (snapshot.reasoning_effort) setReasoningEffort(snapshot.reasoning_effort);
+                    // La sandbox rigenera `documento.md` a ogni apertura: senza il
+                    // token il PDF del profilo sparirebbe dal workspace.
+                    setPdfToken(snapshot.pdf_token || undefined);
+                    setFrozenSnapshot(snapshot);
+                    setStep('interaction');
                     setReady(true);
-                    return;
+                } catch (err) {
+                    if (err instanceof FrozenSessionAccessError && err.detail === 'tool_disabled_for_class') {
+                        toast.error(t('session.disabledForClass'));
+                        setStep(catalogStep());
+                    } else if (err instanceof FrozenSessionAccessError && err.detail === 'tool_unavailable') {
+                        toast.error(t('session.toolUnavailable'));
+                        setStep(catalogStep());
+                    } else {
+                        toast.error(t('toast.error'));
+                        setStep(homeStep());
+                    }
+                    setReady(true);
                 }
-                const q = QUESTIONNAIRES[snapshot.questionnaire_type as QuestionnaireType]
-                    ?? buildFallbackQuestionnaireConfig(snapshot.questionnaire_type);
-                setSelectedQuestionnaire(q);
-                setSelectedInstrumentId(snapshot.questionnaire_type);
-                setSessionCounselorId(snapshot.counselor_id ?? getSelectedCounselorId());
-                if (snapshot.counselor_id != null) setSelectedCounselorId(snapshot.counselor_id);
-                setSessionId(snapshot.session_id);
-                setScores(snapshot.scores || {});
-                // La sandbox OpenCode si congela come la chat guidata: riaprirla
-                // in modalità guidata mostrerebbe un percorso che non è il suo.
-                setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
-                if (snapshot.response_length) setResponseLength(snapshot.response_length);
-                if (snapshot.reasoning_effort) setReasoningEffort(snapshot.reasoning_effort);
-                // La sandbox rigenera `documento.md` a ogni apertura: senza il
-                // token il PDF del profilo sparirebbe dal workspace.
-                setPdfToken(snapshot.pdf_token || undefined);
-                setFrozenSnapshot(snapshot);
-                setStep('interaction');
-                setReady(true);
-            })().catch(() => { toast.error(t('toast.error')); setReady(true); });
+            })();
             return;
         }
 
@@ -378,33 +407,61 @@ export default function Home() {
         if (params.get('resume')) {
             const r = getResume();
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-            if (r && isStartableQuestionnaireId(r.instrument)) {
-                const q = QUESTIONNAIRES[r.instrument as QuestionnaireType]
-                    ?? buildFallbackQuestionnaireConfig(r.instrument);
-                const profiles = getCompletedProfiles();
-                const profile = profiles.find((p) => p.sessionId === r.sessionId)
-                    ?? profiles.find((p) => p.questionnaireType === r.instrument);
-                // Restore the persisted external session when entering the page.
-                setSelectedQuestionnaire(q);
-                setSelectedInstrumentId(r.instrument);
-                setSessionCounselorId(r.counselorId ?? getSelectedCounselorId());
-                if (r.counselorId != null) setSelectedCounselorId(r.counselorId);
-                setSessionId(r.sessionId);
-                setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
-                setExperience(r.experience);
-                // Prefer the owned server snapshot: it retains the essential path and format.
+            if (r) {
                 entryClaimed.current = true;
-                void getFrozenSession(r.sessionId).then(snapshot => {
-                    if (snapshot) {
-                        setFrozenSnapshot(snapshot);
-                        setScores(snapshot.scores || {});
-                        setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
-                        if (snapshot.response_length) setResponseLength(snapshot.response_length);
-                        if (snapshot.reasoning_effort) setReasoningEffort(snapshot.reasoning_effort);
+                void (async () => {
+                    const access = await fetchUserAccess();
+                    if (!isToolAllowed(access, r.instrument)) {
+                        toast.error(t('session.disabledForClass'));
+                        setStep(catalogStep());
+                        setReady(true);
+                        return;
                     }
-                    setStep('interaction');
-                    setReady(true);
-                }).catch(() => { toast.error(t('toast.error')); setReady(true); });
+                    if (isStartableQuestionnaireId(r.instrument, null, access)) {
+                        const q = QUESTIONNAIRES[r.instrument as QuestionnaireType]
+                            ?? buildFallbackQuestionnaireConfig(r.instrument);
+                        const profiles = getCompletedProfiles();
+                        const profile = profiles.find((p) => p.sessionId === r.sessionId)
+                            ?? profiles.find((p) => p.questionnaireType === r.instrument);
+                        // Restore the persisted external session when entering the page.
+                        setSelectedQuestionnaire(q);
+                        setSelectedInstrumentId(r.instrument);
+                        setSessionCounselorId(r.counselorId ?? getSelectedCounselorId());
+                        if (r.counselorId != null) setSelectedCounselorId(r.counselorId);
+                        setSessionId(r.sessionId);
+                        setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
+                        setExperience(r.experience);
+                        // Prefer the owned server snapshot: it retains the essential path and format.
+                        try {
+                            const snapshot = await getFrozenSession(r.sessionId);
+                            if (snapshot) {
+                                setFrozenSnapshot(snapshot);
+                                setScores(snapshot.scores || {});
+                                setExperience(snapshot.experience === 'opencode' ? 'opencode' : 'standard');
+                                if (snapshot.response_length) setResponseLength(snapshot.response_length);
+                                if (snapshot.reasoning_effort) setReasoningEffort(snapshot.reasoning_effort);
+                            }
+                            setStep('interaction');
+                            setReady(true);
+                        } catch (err) {
+                            if (err instanceof FrozenSessionAccessError && err.detail === 'tool_disabled_for_class') {
+                                toast.error(t('session.disabledForClass'));
+                                setStep(catalogStep());
+                                setReady(true);
+                            } else if (err instanceof FrozenSessionAccessError && err.detail === 'tool_unavailable') {
+                                toast.error(t('session.toolUnavailable'));
+                                setStep(catalogStep());
+                                setReady(true);
+                            } else {
+                                toast.error(t('toast.error'));
+                                setReady(true);
+                            }
+                        }
+                    } else {
+                        setStep(homeStep());
+                        setReady(true);
+                    }
+                })();
                 return;
             }
         }
@@ -412,7 +469,7 @@ export default function Home() {
         // `view=home` arriva dal bivio della Bussola: chi sceglie gli strumenti
         // deve trovare il catalogo di chi torna, non la presentazione, anche se
         // è la prima volta e non ha ancora compilato nulla.
-        const view = params.get('view') || (!params.get('start') && !params.get('session_id')
+        const view = params.get('view') || (!params.get('start') && !params.get('q') && !params.get('session_id')
             ? ({ 'questionnaire-select': 'questionnaires', base: 'home', intro: 'intro' } as Record<string, string>)[window.history.state?.cbPageStep] : null);
         if (view === 'questionnaires' || view === 'home' || view === 'intro') {
             setSelectedQuestionnaire(null);
@@ -430,29 +487,57 @@ export default function Home() {
         // Resume chat from a test administration: /?session_id=...&instrument=...
         const resumeSession = params.get('session_id');
         const resumeInstrument = params.get('instrument') as QuestionnaireType | null;
-        if (resumeSession && resumeInstrument && isStartableQuestionnaireId(resumeInstrument)) {
-            const questionnaire = QUESTIONNAIRES[resumeInstrument]
-                ?? buildFallbackQuestionnaireConfig(resumeInstrument);
-            const profiles = getCompletedProfiles();
-            const profile =
-                profiles.find((p) => p.questionnaireType === resumeInstrument && p.sessionId === resumeSession)
-                ?? profiles.find((p) => p.questionnaireType === resumeInstrument);
-            setSelectedQuestionnaire(questionnaire);
-            setSelectedInstrumentId(questionnaire.id);
-            setSessionId(resumeSession);
-            setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
-            setExperience(null);
-            void prepareInstrument(questionnaire, profile?.scores ?? {}, resumeSession);
+        if (resumeSession && resumeInstrument) {
+            entryClaimed.current = true;
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-            claimEntry();
+            void (async () => {
+                const access = await fetchUserAccess();
+                if (!isToolAllowed(access, resumeInstrument)) {
+                    toast.error(t('session.disabledForClass'));
+                    setStep(catalogStep());
+                    claimEntry();
+                    setReady(true);
+                    return;
+                }
+                if (isStartableQuestionnaireId(resumeInstrument, null, access)) {
+                    const questionnaire = QUESTIONNAIRES[resumeInstrument]
+                        ?? buildFallbackQuestionnaireConfig(resumeInstrument);
+                    const profiles = getCompletedProfiles();
+                    const profile =
+                        profiles.find((p) => p.questionnaireType === resumeInstrument && p.sessionId === resumeSession)
+                        ?? profiles.find((p) => p.questionnaireType === resumeInstrument);
+                    setSelectedQuestionnaire(questionnaire);
+                    setSelectedInstrumentId(questionnaire.id);
+                    setSessionId(resumeSession);
+                    setScores(profile?.scores && Object.keys(profile.scores).length ? profile.scores : {});
+                    setExperience(null);
+                    void prepareInstrument(questionnaire, profile?.scores ?? {}, resumeSession);
+                    claimEntry();
+                } else {
+                    setStep(homeStep());
+                    claimEntry();
+                    setReady(true);
+                }
+            })();
             return;
         }
 
-        const requestedId = params.get('start');
+        const requestedId = params.get('start') || params.get('q');
         if (!requestedId) return;
 
         entryClaimed.current = true;
         void (async () => {
+            const access = await fetchUserAccess();
+            if (!isToolAllowed(access, requestedId)) {
+                // Disabled tool: deep link falls back to the catalog with warning
+                toast.error(t('session.disabledForClass'));
+                window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
+                setStep(catalogStep());
+                claimEntry();
+                setReady(true);
+                return;
+            }
+
             let questionnaire = QUESTIONNAIRES[requestedId as QuestionnaireType];
             if (!questionnaire) {
                 try {
@@ -465,10 +550,13 @@ export default function Home() {
                     // ignore network errors
                 }
             }
-            if (!questionnaire && isStartableQuestionnaireId(requestedId)) {
+            if (!questionnaire && isStartableQuestionnaireId(requestedId, null, access)) {
                 questionnaire = buildFallbackQuestionnaireConfig(requestedId);
             }
             if (!questionnaire) {
+                window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
+                setStep(hasCompletedQuestionnaires || notebookUpdatedAt ? 'base' : 'questionnaire-select');
+                claimEntry();
                 setReady(true);
                 return;
             }
