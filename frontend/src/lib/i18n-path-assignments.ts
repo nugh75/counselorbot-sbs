@@ -69,7 +69,7 @@ export const pathAssignmentTexts = {
     "Erledigt, wenn du deine Arbeit aus der Zuweisung einreichst. Private Notizen werden nicht geteilt.",
     "Klart när du lämnar in ditt arbete från tilldelningen. Privata anteckningar delas inte.",
   ],
-} satisfies Record<string, readonly string[]>;
+} as const satisfies Record<string, readonly string[]>;
 
 export type PathAssignmentTextKey = keyof typeof pathAssignmentTexts;
 

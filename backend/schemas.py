@@ -1930,8 +1930,14 @@ class AssignmentPathStepInput(PathStepFields):
     assignment_id: int = Field(gt=0)
 
 
+class ForumPathStepInput(PathStepFields):
+    step_type: Literal["forum"]
+    topic_id: int = Field(gt=0)
+
+
 TypedPathStepInput = Annotated[
-    Union[ClassPathStepInput, AdministrationPathStepInput, GuidedResultsChatStepInput, AssignmentPathStepInput],
+    Union[ClassPathStepInput, AdministrationPathStepInput, GuidedResultsChatStepInput, AssignmentPathStepInput,
+          ForumPathStepInput],
     Field(discriminator="step_type"),
 ]
 
@@ -1945,6 +1951,7 @@ class ClassPathStepResponse(BaseModel):
     administration_plan_id: Optional[int] = None
     results_step_id: Optional[int] = None
     assignment_id: Optional[int] = None
+    topic_id: Optional[int] = None
     active_from: Optional[datetime] = None
     target_summary: Optional[dict] = None
     availability_reason: Optional[str] = None
@@ -2028,6 +2035,7 @@ class StudentClassPathStep(BaseModel):
     administration_plan_id: Optional[int] = None
     results_step_id: Optional[int] = None
     assignment_id: Optional[int] = None
+    topic_id: Optional[int] = None
     active_from: Optional[datetime] = None
     target_summary: Optional[dict] = None
     availability_reason: Optional[str] = None
@@ -2040,6 +2048,8 @@ class StudentClassPathStep(BaseModel):
     source: Optional[str] = None  # 'student' | 'teacher' | 'automatic' | None
     start_href: Optional[str] = None
     can_self_mark: bool = True
+    # Forum steps only: what the student can do now, as booleans (no forum text).
+    forum_state: Optional[Dict[str, bool]] = None
 
     class Config:
         from_attributes = True

@@ -26,21 +26,13 @@ from ..reading_audience import AUDIENCE_BANDS
 from ..user_names import store_user_display_name
 from ..class_tools import ALWAYS_ON, tool_catalog
 from ..class_access import FORUM_OPTIONS, forum_option
+from ..group_visibility import _is_admin, _username, _visible_group_query
 
 router = APIRouter()
 get_db = database.get_db
 
 GROUP_CODE_RE = re.compile(r"^GR-[A-Z0-9][A-Z0-9-]{2,28}$")
 CODE_ALPHABET = string.ascii_uppercase + string.digits
-
-
-def _username(identity) -> Optional[str]:
-    value = (identity.get("username") if isinstance(identity, dict) else getattr(identity, "username", "")) or ""
-    return str(value).strip() or None
-
-
-def _is_admin(identity) -> bool:
-    return bool(identity.get("is_admin") if isinstance(identity, dict) else getattr(identity, "is_admin", False))
 
 
 def _generate_code(db: Session) -> str:
@@ -50,23 +42,6 @@ def _generate_code(db: Session) -> str:
         if not db.query(models.StudentGroup).filter(models.StudentGroup.code == code).first():
             return code
     raise HTTPException(status_code=500, detail="Impossibile generare un codice classe univoco")
-
-
-def _visible_group_query(db: Session, identity):
-    query = db.query(models.StudentGroup)
-    if _is_admin(identity):
-        return query
-    username = _username(identity)
-    # Proprietario o condivisa (shared_with_username e' salvato lowercase)
-    shared_ids = db.query(models.GroupShare.group_id).filter(
-        models.GroupShare.shared_with_username == (username or "").lower()
-    )
-    return query.filter(
-        or_(
-            models.StudentGroup.owner_username == username,
-            models.StudentGroup.id.in_(shared_ids),
-        )
-    )
 
 
 def _require_visible_group(db: Session, identity, group_id: int) -> models.StudentGroup:

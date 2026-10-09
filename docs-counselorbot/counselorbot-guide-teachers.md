@@ -349,3 +349,26 @@ reports the revoked assignment; replace the step with another assignment. Your
 manual mark on the progress table still takes precedence, and clearing it returns
 to the submission state. Progress shows only whether and when work was submitted,
 never its content.
+
+
+### Forum discussions as path steps
+
+In the path builder, the "Forum discussion" section lists the published discussions
+of this class that are not hidden. Open the discussion first from the class Forum
+tab, then select it here and add it as a step. Each discussion can appear once per
+path. Discussions of another class, hidden discussions and messages still awaiting
+approval cannot be path steps.
+
+Students open the discussion from the path step. The step is done when their own
+reply in that discussion is published after the step becomes active. Reading the
+discussion, replying in another discussion or the opening message do not complete
+it. If the class forum uses premoderation, the reply counts once you approve it;
+until then the student sees that it is awaiting approval. If you hide or reject the
+reply, or the student deletes it, the step returns to not done unless another
+published reply remains; restoring the reply brings the completion back. Locking
+the discussion keeps the replies already published but stops new ones, and muting a
+student stops them from replying: in both cases the student sees why and is asked
+to contact you, and you can mark the step manually. Hiding the discussion, archiving
+the class or switching the class forum off makes the step unavailable and blocks
+publishing; the class forum setting applies whatever tool view the student uses.
+Progress shows only whether and when a reply was published, never its text.

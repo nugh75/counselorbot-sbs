@@ -330,6 +330,7 @@ function GuideContent() {
                             <p className="mt-1.5">{l('teacherInAppAdministrationBody')}</p>
                             <p className="mt-1.5">{l('teacherResultsDeepDiveBody')}</p>
                             <p className="mt-1.5">{l('teacherPathAssignmentBody')}</p>
+                            <p className="mt-1.5">{l('teacherPathForumBody')}</p>
                             <Link href="/docente/istituti" className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{teacherAreaName(lang, 'istituti')}</Link>
                             <h3 className="font-semibold text-slate-900">{classSettingsText(lang, 'toolsTab')}</h3>
                             <p className="mt-1.5">{l('classSettingsTeacher')}</p>

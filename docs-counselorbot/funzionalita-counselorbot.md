@@ -1550,3 +1550,57 @@ its time only, never the submitted text. Whole-class delivery follows current cl
 membership, also for students who join later. The database upgrade adds
 `class_path_steps.assignment_id` (restricting deletion of a referenced assignment)
 and widens the step target check; it is replay-safe and keeps existing steps.
+
+
+### Exact class discussions as class-path steps
+
+A class path may add a `forum` step that references one discussion of the class
+forum by `topic_id`. In the path builder the "Forum discussion" section lists the
+published, visible discussions of this class, read through the forum's own topic
+list; the teacher selects one and adds it as a step, once per path. On save and
+publish the server accepts only a discussion of the same class
+(`forum_topic_class_mismatch`), published and not hidden (`forum_topic_unavailable`),
+in an active class (`forum_class_inactive`) whose own forum setting is on
+(`forum_disabled_for_class`); the same discussion cannot appear twice in a path
+(`duplicate_forum_step`). A rejected save writes nothing and the builder keeps the
+draft. The discussion row is locked during the path save, so a concurrent hide
+applies after it. The referenced discussion is part of the immutable target once
+the step is activated; reordering keeps the step identity and activation time.
+
+The step opens `/profilo/classi/{class}/forum?topic={id}`; launching or reading the
+discussion is not evidence. The step is done when the current class member has
+their own reply in that exact discussion that is published, neither hidden nor
+deleted, and written at or after the step's activation. A reply awaiting
+moderation does not count; approving it completes the step. Hiding, rejecting or
+deleting the reply removes the completion unless another qualifying reply remains;
+restoring it brings the completion back, because completion is resolved on read.
+Under premoderation an author edit returns the reply to pending until it is
+approved again. Replies in other discussions, by other people, the opening message
+of the discussion and replies written before activation never count. Locking the
+discussion blocks new replies but keeps earlier completions. Hiding the discussion,
+archiving the class or switching the class forum off makes the step unavailable:
+it leaves the progress ratio, cannot be launched or overridden, and blocks
+publication; restoring brings back availability and the existing replies. The class
+forum setting decides even when the student uses the All tools view or views
+another class. Students cannot self-mark the step; teacher marks keep their
+precedence.
+
+Path responses carry only identifiers and states. The step's target summary is
+`{id, group_id, locked}`, without the discussion title. `/user/paths` adds
+`forum_state` with four booleans (`pending`, `hidden`, `locked`, `muted`) so the
+student page explains the next move: awaiting approval, discussion locked, forum
+muted, or a hidden reply that no longer counts. When several apply the page shows
+one notice, in that order, and a done step shows none. Progress exposes the
+completion kind `forum_reply` and its time, never message text, titles or names.
+
+Forum privacy (class-centred plan decision 18) is unchanged: forum content never
+reaches the AI, RAG, context, research exports or PDFs. `backend/forum_completion.py`
+is the only module outside the forum boundary that reads forum tables, and it may
+name only identifier, author, status and timestamp columns, never a whole row.
+`backend/path_step_types.py` is its single consumer, and the privacy tests pin every
+module that can load it to the class-path routes and their administration seams.
+The forum's class-visibility helper moved to `backend/group_visibility.py`, so the
+forum router no longer imports the class-management router. The database upgrade
+adds `class_path_steps.topic_id` (deleting a referenced discussion is refused,
+while deleting the whole class still cascades) and widens the step target check;
+it is replay-safe and keeps existing steps.

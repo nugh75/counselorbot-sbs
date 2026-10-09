@@ -206,6 +206,7 @@ import_module("backend.migrations.20261009_institute_credentials").migrate(datab
 import_module("backend.migrations.20261009_typed_administration_steps").migrate(database.engine)
 import_module("backend.migrations.20261009_guided_results_chat_steps").migrate(database.engine)
 import_module("backend.migrations.20261009_assignment_steps").migrate(database.engine)
+import_module("backend.migrations.20261010_forum_steps").migrate(database.engine)
 
 
 @asynccontextmanager

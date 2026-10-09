@@ -121,6 +121,13 @@ assignment on this page: there is one assignment and one shared response. The st
 is done when you explicitly share your response; planning, private notes and teacher
 feedback do not complete it. Withdrawing the response returns the step to not done.
 
+A class path can also include a discussion of your class forum. Starting the step
+opens that discussion. The step is done when your reply there is published: if
+your teacher approves messages first, the step shows that your reply is awaiting
+approval. A reply the teacher hides or you delete no longer counts. If the
+discussion is locked or you cannot post in the class forum, the step says so; ask
+your teacher how to complete it.
+
 ## Groups and what teachers can see
 
 **My groups/classes** (`/profilo/classi`) lists the groups you have joined. An
