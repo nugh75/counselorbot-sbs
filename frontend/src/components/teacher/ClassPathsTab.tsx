@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { administrationStepText } from '@/lib/i18n-administration-steps';
 import { fetchInstruments } from '@/lib/instruments-api';
-import { ArrowDown, ArrowUp, ArrowLeft, Archive, CheckCircle2, Circle, Plus, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowLeft, Archive, ArchiveRestore, CheckCircle2, Circle, Flag, Plus, Trash2, X } from 'lucide-react';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
 import { parseClassPath, parseClassPaths, pathStepTools, type ClassPath, type ClassPathStep } from '@/lib/class-paths';
@@ -342,12 +342,27 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                         <span className="font-mono text-xs">{`(r${currentPath.revision})`}</span>
 
                     </span>
-                    <Button variant="secondary" disabled={busy} onClick={handleArchiveOrRestore}>
-                        {currentPath.status === 'archived' ? l('restore') : l('archive')}
+                    <Button
+                        variant="secondary"
+                        className="w-11 px-0"
+                        disabled={busy}
+                        onClick={handleArchiveOrRestore}
+                        aria-label={currentPath.status === 'archived' ? l('restore') : l('archive')}
+                        title={currentPath.status === 'archived' ? l('restore') : l('archive')}
+                    >
+                        {currentPath.status === 'archived'
+                            ? <ArchiveRestore className="h-4 w-4" aria-hidden />
+                            : <Archive className="h-4 w-4" aria-hidden />}
                     </Button>
-                    <Button variant="secondary" disabled={busy} onClick={handleDelete}>
+                    <Button
+                        variant="secondary"
+                        className="w-11 px-0 text-red-600"
+                        disabled={busy}
+                        onClick={handleDelete}
+                        aria-label={l('deleteDraft')}
+                        title={l('deleteDraft')}
+                    >
                         <Trash2 className="h-4 w-4" aria-hidden />
-                        {l('deleteDraft')}
                     </Button>
                 </div>
             </div>
@@ -451,7 +466,8 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                         <div className="min-w-0 flex-1">
                                             <p className="break-words text-sm font-semibold text-slate-800">{name}</p>
                                             {!step.auto_detect && (
-                                                <span className="mt-0.5 inline-block rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800">
+                                                <span className="mt-0.5 inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800">
+                                                    <Flag className="h-3 w-3" aria-hidden />
                                                     {l('selfMarkBadge')}
                                                 </span>
                                             )}
@@ -554,7 +570,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                             <option value="">{a('choose')}</option>
                             {administrations.filter(offered).map(row=><option key={row.id} value={row.id}>{row.code} · {row.title} · {row.locale.toUpperCase()}</option>)}
                         </select></label>
-                        <Button variant="secondary" disabled={busy || !selectedAdministration} onClick={addAdministrationStep}>{l('addStep')}</Button>
+                        <Button variant="secondary" disabled={busy || !selectedAdministration} onClick={addAdministrationStep}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         <label>{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="ml-2 rounded border p-2" /></label>
@@ -587,7 +603,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                     </Button>
                 </div>
 
-                <p className="text-xs text-slate-500">{l('selfMarkHelp')}</p>
+                <p className="flex items-center gap-1 text-xs text-slate-500"><Flag className="h-3 w-3 shrink-0" aria-hidden />{l('selfMarkHelp')}</p>
                 <p className="text-xs text-slate-400">{l('onlyEnabledHelp')}</p>
             </Card>
 

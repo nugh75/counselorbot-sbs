@@ -241,8 +241,8 @@ test('teacher progress filters late and not started students', () => {
 
 test('progress cell codes use the a/s/t legend', () => {
     const [anna, marco] = parseClassPathProgress(progressPayload).students;
-    assert.deepEqual(anna.cells.map(progressCellCode), ['✓a', '✓t', '—']);
-    assert.deepEqual(marco.cells.map(progressCellCode), ['·t', '🔒', '—']);
+    assert.deepEqual(anna.cells.map(progressCellCode), ['a', 't', '—']);
+    assert.deepEqual(marco.cells.map(progressCellCode), ['·t', '', '—']);
 });
 
 test('selectCurrentClassPath returns null on empty list and handles single path', () => {
