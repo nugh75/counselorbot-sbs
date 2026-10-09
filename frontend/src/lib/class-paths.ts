@@ -70,3 +70,72 @@ export function parseClassPaths(input: unknown): ClassPath[] {
     if (!Array.isArray(input)) return [];
     return input.map(parseClassPath);
 }
+
+export interface StudentClassPathStep {
+    id: number;
+    tool_key: string;
+    title?: string | null;
+    instructions?: string | null;
+    due_date?: string | null;
+    state: 'done' | 'not_done' | 'locked' | 'unavailable';
+    source?: 'student' | 'teacher' | null;
+    start_href?: string | null;
+    can_self_mark: boolean;
+}
+
+export interface StudentClassPath {
+    id: number;
+    group_id: number;
+    group_name: string;
+    title: string;
+    description?: string | null;
+    mode: 'recommended' | 'strict';
+    steps: StudentClassPathStep[];
+    next_step_id?: number | null;
+    done: number;
+    total: number;
+}
+
+export function parseStudentClassPathStep(input: unknown): StudentClassPathStep {
+    if (!input || typeof input !== 'object') throw new Error('Invalid student step payload');
+    const raw = input as Record<string, unknown>;
+    const stateStr = String(raw.state || 'not_done');
+    const state = (stateStr === 'done' || stateStr === 'locked' || stateStr === 'unavailable') ? stateStr : 'not_done';
+    const sourceStr = raw.source ? String(raw.source) : null;
+    const source = (sourceStr === 'student' || sourceStr === 'teacher') ? sourceStr : null;
+    return {
+        id: Number(raw.id),
+        tool_key: String(raw.tool_key || ''),
+        title: raw.title ? String(raw.title) : null,
+        instructions: raw.instructions ? String(raw.instructions) : null,
+        due_date: raw.due_date ? String(raw.due_date) : null,
+        state,
+        source,
+        start_href: raw.start_href ? String(raw.start_href) : null,
+        can_self_mark: Boolean(raw.can_self_mark),
+    };
+}
+
+export function parseStudentClassPath(input: unknown): StudentClassPath {
+    if (!input || typeof input !== 'object') throw new Error('Invalid student class path payload');
+    const raw = input as Record<string, unknown>;
+    const steps = Array.isArray(raw.steps) ? raw.steps.map(parseStudentClassPathStep) : [];
+    return {
+        id: Number(raw.id),
+        group_id: Number(raw.group_id),
+        group_name: String(raw.group_name || ''),
+        title: String(raw.title || ''),
+        description: raw.description ? String(raw.description) : null,
+        mode: raw.mode === 'strict' ? 'strict' : 'recommended',
+        steps,
+        next_step_id: raw.next_step_id != null ? Number(raw.next_step_id) : null,
+        done: Number(raw.done || 0),
+        total: Number(raw.total || 0),
+    };
+}
+
+export function parseStudentClassPaths(input: unknown): StudentClassPath[] {
+    if (!Array.isArray(input)) return [];
+    return input.map(parseStudentClassPath);
+}
+
