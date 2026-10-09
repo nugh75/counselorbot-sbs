@@ -259,6 +259,70 @@ export const administrationStepTexts = {
     "Erfassungsart nicht gespeichert",
     "insamlingssätt inte registrerat",
   ],
+  deepDive: [
+    "Approfondimento guidato dei risultati",
+    "Guided results deep dive",
+    "Profundización guiada de los resultados",
+    "Approfondissement guidé des résultats",
+    "Geführte Vertiefung der Ergebnisse",
+    "Guidad fördjupning av resultaten",
+  ],
+  deepDiveFrom: [
+    "Risultati del passo",
+    "Results from step",
+    "Resultados del paso",
+    "Résultats de l’étape",
+    "Ergebnisse aus Schritt",
+    "Resultat från steg",
+  ],
+  deepDiveRule: [
+    "Facoltativo. Lo studente apre una chat guidata sul risultato registrato nel passo di somministrazione scelto; il passo è fatto solo quando il server registra l’ultimo turno guidato di quella sessione. Salva il percorso dopo aver aggiunto la somministrazione per poterla collegare. Togliere l’approfondimento non annulla la somministrazione.",
+    "Optional. The student opens a guided chat on the result recorded by the chosen administration step; the step is done only when the server records the final guided turn of that session. Save the path after adding the administration so you can link it. Removing the deep dive does not undo the administration.",
+    "Opcional. El estudiante abre un chat guiado sobre el resultado registrado en el paso de administración elegido; el paso se completa solo cuando el servidor registra el último turno guiado de esa sesión. Guarda el itinerario después de añadir la administración para poder vincularla. Quitar la profundización no anula la administración.",
+    "Facultatif. L’élève ouvre une discussion guidée sur le résultat enregistré par l’étape de passation choisie ; l’étape n’est terminée que lorsque le serveur enregistre le dernier tour guidé de cette session. Enregistrez le parcours après avoir ajouté la passation pour pouvoir la lier. Retirer l’approfondissement n’annule pas la passation.",
+    "Optional. Lernende öffnen einen geführten Chat zum Ergebnis des gewählten Durchführungsschritts; der Schritt ist erst erledigt, wenn der Server die letzte geführte Runde dieser Sitzung speichert. Speichere den Pfad nach dem Hinzufügen der Durchführung, um sie zu verknüpfen. Das Entfernen der Vertiefung macht die Durchführung nicht rückgängig.",
+    "Valfritt. Eleven öppnar en vägledd chatt om resultatet från det valda enkätsteget; steget är klart först när servern registrerar den sista vägledda omgången i den sessionen. Spara vägen efter att du lagt till enkätomgången så att du kan koppla den. Att ta bort fördjupningen ångrar inte enkätomgången.",
+  ],
+  deepDiveReferenced: [
+    "Un approfondimento usa questa somministrazione: rimuovi prima l’approfondimento.",
+    "A deep dive uses this administration: remove the deep dive first.",
+    "Una profundización usa esta administración: quita primero la profundización.",
+    "Un approfondissement utilise cette passation : retirez d’abord l’approfondissement.",
+    "Eine Vertiefung nutzt diese Durchführung: Entferne zuerst die Vertiefung.",
+    "En fördjupning använder den här enkätomgången: ta bort fördjupningen först.",
+  ],
+  deepDiveInvalid: [
+    "L’approfondimento deve seguire una somministrazione salvata di questo percorso, una sola volta.",
+    "The deep dive must follow a saved administration of this path, once.",
+    "La profundización debe seguir a una administración guardada de este itinerario, una sola vez.",
+    "L’approfondissement doit suivre une passation enregistrée de ce parcours, une seule fois.",
+    "Die Vertiefung muss einmal auf eine gespeicherte Durchführung dieses Pfads folgen.",
+    "Fördjupningen måste följa en sparad enkätomgång i den här vägen, en gång.",
+  ],
+  deepDiveIntro: [
+    "Approfondisci in chat guidata il risultato già registrato nel passo di somministrazione. Il passo è fatto solo quando completi l’ultimo passo guidato; se esci, riprendi la stessa sessione.",
+    "Explore in guided chat the result already recorded by the administration step. The step is done only when you complete the final guided step; if you leave, you resume the same session.",
+    "Profundiza en un chat guiado el resultado ya registrado en el paso de administración. El paso se completa solo cuando terminas el último paso guiado; si sales, retomas la misma sesión.",
+    "Approfondissez en discussion guidée le résultat déjà enregistré par l’étape de passation. L’étape n’est terminée que lorsque vous achevez la dernière étape guidée ; si vous partez, vous reprenez la même session.",
+    "Vertiefe im geführten Chat das Ergebnis, das der Durchführungsschritt bereits gespeichert hat. Der Schritt ist erst erledigt, wenn du den letzten geführten Schritt abschließt; wenn du gehst, setzt du dieselbe Sitzung fort.",
+    "Fördjupa i en vägledd chatt resultatet som enkätsteget redan har registrerat. Steget är klart först när du slutför det sista vägledda steget; om du lämnar fortsätter du i samma session.",
+  ],
+  deepDiveStart: [
+    "Avvia o riprendi l’approfondimento",
+    "Start or resume the deep dive",
+    "Iniciar o retomar la profundización",
+    "Commencer ou reprendre l’approfondissement",
+    "Vertiefung starten oder fortsetzen",
+    "Starta eller fortsätt fördjupningen",
+  ],
+  deepDiveIncomplete: [
+    "Completa prima il passo di somministrazione collegato: serve un risultato registrato.",
+    "Complete the linked administration step first: a recorded result is required.",
+    "Completa primero el paso de administración vinculado: se necesita un resultado registrado.",
+    "Terminez d’abord l’étape de passation liée : un résultat enregistré est nécessaire.",
+    "Schließe zuerst den verknüpften Durchführungsschritt ab: Ein gespeichertes Ergebnis ist nötig.",
+    "Slutför först det kopplade enkätsteget: ett registrerat resultat krävs.",
+  ],
 } as const;
 export function administrationStepText(
   lang: string,
@@ -286,4 +350,19 @@ export function resultProvenanceText(
     result.source === "imported" ? "provenanceImported" : "provenanceInApp";
   const capture = captureKeys[result.capture_method ?? ""] ?? "captureUnknown";
   return `${administrationStepText(lang, origin)} · ${administrationStepText(lang, capture)}`;
+}
+
+// Typed steps are named by their target; a deep dive also says what kind of step it is.
+export function typedStepTargetLabel(
+  lang: string,
+  step: {
+    step_type?: string;
+    target_summary?: { instrument_code: string; code: string } | null;
+  },
+): string | null {
+  if (!step.target_summary) return null;
+  const target = `${step.target_summary.instrument_code} · ${step.target_summary.code}`;
+  return step.step_type === "guided_results_chat"
+    ? `${administrationStepText(lang, "deepDive")} · ${target}`
+    : target;
 }

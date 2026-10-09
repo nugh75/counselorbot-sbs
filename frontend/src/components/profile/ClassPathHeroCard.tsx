@@ -15,6 +15,7 @@ import {
     type StudentClassPathStep,
 } from '@/lib/class-paths';
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
+import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
 
 interface Props {
     path: StudentClassPath;
@@ -115,7 +116,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                     const isDone = step.state === 'done';
                     const isLocked = step.state === 'locked';
                     const isUnavailable = step.state === 'unavailable';
-                    const toolDisplayName = step.target_summary ? `${step.target_summary.instrument_code} · ${step.target_summary.code}` : resolveClassPathToolName(step.tool_key, lang);
+                    const toolDisplayName = typedStepTargetLabel(lang, step) ?? resolveClassPathToolName(step.tool_key, lang);
                     const titleDisplay = step.title ? step.title : toolDisplayName;
                     const isActionBusy = actionStepId === step.id;
 
