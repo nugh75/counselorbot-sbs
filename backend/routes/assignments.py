@@ -152,6 +152,16 @@ def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), use
     return _record(row, len(recipients), settings)
 
 
+@router.get('/teacher/groups/{group_id}/path-assignments')
+def path_targets(group_id: int, db: Session = Depends(database.get_db), user=Depends(auth.get_current_plan_manager)):
+    """Whole-class goal assignments of this class that a path step can reference (TF6)."""
+    group = _managed_group(db, user, group_id)
+    rows = db.query(models.TeacherAssignment).filter(models.TeacherAssignment.group_id == group.id,
+        models.TeacherAssignment.recipient_username.is_(None), models.TeacherAssignment.source_kind == 'goal',
+        models.TeacherAssignment.revoked_at.is_(None)).order_by(models.TeacherAssignment.id.desc()).all()
+    return [_record(row, _recipient_count(db, row), db.get(models.AssignmentLearningSettings, row.id)) for row in rows]
+
+
 @router.get('/teacher/assignments')
 def sent(db: Session = Depends(database.get_db), user=Depends(auth.get_current_plan_manager)):
     visible = _visible_group_query(db, user).filter(models.StudentGroup.is_active.is_(True)).with_entities(models.StudentGroup.id)

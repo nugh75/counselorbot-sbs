@@ -3,6 +3,16 @@
 from sqlalchemy import text
 from .. import models
 
+# Frozen TF5 target check: later slices widen it in their own migration, after
+# adding their column, so this one must not read the current model constant.
+TF5_STEP_TARGET_CHECK = (
+    "(step_type = 'tool' AND tool_key IS NOT NULL AND administration_plan_id IS NULL AND results_step_id IS NULL) OR "
+    "(step_type = 'questionnaire_administration' AND tool_key IS NULL AND administration_plan_id IS NOT NULL "
+    "AND results_step_id IS NULL) OR "
+    "(step_type = 'guided_results_chat' AND tool_key IS NULL AND administration_plan_id IS NULL "
+    "AND results_step_id IS NOT NULL)"
+)
+
 
 def migrate(engine):
     if engine.dialect.name != "postgresql":
@@ -31,7 +41,7 @@ def migrate(engine):
             connection.execute(
                 text(
                     "ALTER TABLE class_path_steps ADD CONSTRAINT class_path_step_target "
-                    f"CHECK ({models.STEP_TARGET_CHECK})"
+                    f"CHECK ({TF5_STEP_TARGET_CHECK})"
                 )
             )
         models.ClassPathDeepDiveSession.__table__.create(connection, checkfirst=True)

@@ -1843,11 +1843,14 @@ class ClassPath(Base):
 
 
 STEP_TARGET_CHECK = (
-    "(step_type = 'tool' AND tool_key IS NOT NULL AND administration_plan_id IS NULL AND results_step_id IS NULL) OR "
+    "(step_type = 'tool' AND tool_key IS NOT NULL AND administration_plan_id IS NULL AND results_step_id IS NULL "
+    "AND assignment_id IS NULL) OR "
     "(step_type = 'questionnaire_administration' AND tool_key IS NULL AND administration_plan_id IS NOT NULL "
-    "AND results_step_id IS NULL) OR "
+    "AND results_step_id IS NULL AND assignment_id IS NULL) OR "
     "(step_type = 'guided_results_chat' AND tool_key IS NULL AND administration_plan_id IS NULL "
-    "AND results_step_id IS NOT NULL)"
+    "AND results_step_id IS NOT NULL AND assignment_id IS NULL) OR "
+    "(step_type = 'assignment' AND tool_key IS NULL AND administration_plan_id IS NULL "
+    "AND results_step_id IS NULL AND assignment_id IS NOT NULL)"
 )
 
 
@@ -1869,6 +1872,8 @@ class ClassPathStep(Base):
     administration_plan_id = Column(Integer, ForeignKey("administration_plans.id", ondelete="RESTRICT"), nullable=True)
     # Deep dive: an earlier administration step of the same path (checked on save).
     results_step_id = Column(Integer, ForeignKey("class_path_steps.id"), nullable=True)
+    # Assignment step: a whole-class goal assignment of the same class (checked on save).
+    assignment_id = Column(Integer, ForeignKey("teacher_assignments.id", ondelete="RESTRICT"), nullable=True)
     active_from = Column(DateTime(timezone=True), nullable=True)
     title = Column(String, nullable=True)
     instructions = Column(Text, nullable=True)
