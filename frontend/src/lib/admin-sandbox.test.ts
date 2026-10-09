@@ -15,6 +15,7 @@ const REQUIRED_SANDBOX_KEYS = [
     'admin.sandbox.openFullscreen',
     'admin.sandbox.backToAdmin',
     'admin.sandbox.selectCounselor',
+    'admin.sandbox.notSuitable',
     'admin.sandbox.draftBadge',
     'admin.sandbox.activeBadge',
     'admin.sandbox.noSteps',

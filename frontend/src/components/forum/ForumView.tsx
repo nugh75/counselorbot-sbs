@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Lock, Pin } from 'lucide-react';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import { forumClosedNotice, forumDraftValid, forumLink, forumPostActions, parseForumDetail, parseForumList, parseForumLog, parseForumPost,
     parseForumMutes, parseForumPending, parseForumTopic, parseForumTargets, forumTargetHref, type ForumPost, type ForumTopic, type ForumTarget } from '@/lib/forum';
@@ -428,7 +429,7 @@ export function ForumView({ groupId, student = false }: { groupId: number; stude
             <ul className="divide-y divide-slate-200">{listing.topics.map(topic => <li key={topic.id}>
                 <button type="button" className="block min-h-[44px] w-full space-y-1 py-3 text-left" onClick={() => navigate(topic.id)}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="block break-words font-semibold text-indigo-700">{topic.pinned && `📌 ${l('pinned')} · `}{topic.locked && '🔒 '}{topic.title || l('hidden')}</span>
+                        <span className="block break-words font-semibold text-indigo-700">{topic.pinned && <><Pin className="mr-1 inline h-3.5 w-3.5 align-baseline" aria-hidden />{`${l('pinned')} · `}</>}{topic.locked && <><Lock className="mr-1 inline h-3.5 w-3.5 align-baseline" aria-hidden /><span className="sr-only">{l('closed')} </span></>}{topic.title || l('hidden')}</span>
                         {topic.status === 'pending' && <span className="text-xs font-semibold text-amber-800">{l('pending')}</span>}
                         {Boolean(topic.unread_count && topic.unread_count > 0) && (
                             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-ochre-700" aria-label={l('unreadMarker').replace('{count}', String(topic.unread_count))}>

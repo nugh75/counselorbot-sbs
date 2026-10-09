@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Loader2, Save } from 'lucide-react';
+import { ArrowRight, Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
@@ -27,7 +27,7 @@ type ReadingRow = {
 /**
  * «La mia lettura» di una compilazione (lotto C1): sostituisce la parte
  * riflessiva del libretto con forza, aree da far crescere, una nota e il
- * ponte «→ Rendi obiettivo» verso l'origine `reading` (GoalDialog, B3).
+ * ponte «Rendi obiettivo» verso l'origine `reading` (GoalDialog, B3).
  * Le aree resa obiettivo restano le salvate: la bozza non crea ponti.
  */
 export function ResultReadingCard({ sessionId, questionnaireType, scores, onDraftStateChange }: {
@@ -187,6 +187,7 @@ export function ResultReadingCard({ sessionId, questionnaireType, scores, onDraf
                                         variant="secondary"
                                         onClick={() => { setDialogSaved(false); setTarget({ kind: 'create', origin: { kind: 'reading', target_id: sessionId }, prefill: { title: area.replace(/^\S+ - /, '').slice(0, 160), motivation: savedReading?.note } }); }}
                                     >
+                                        <ArrowRight className="h-4 w-4" aria-hidden />
                                         {l('toGoal')}
                                     </Button>
                                 </li>

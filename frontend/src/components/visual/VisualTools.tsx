@@ -3,7 +3,7 @@ import { AssignmentSource } from '@/components/teacher/AssignmentSource';
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, ArrowRight, GitCommitHorizontal, Columns3, Download, Folder, FolderPlus, Image as ImageIcon, LayoutList, Layers, MessageSquare, Pencil, Plus, RotateCcw, Save, Sparkles, Trash2, Undo2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock, GitCommitHorizontal, Columns3, Download, Folder, FolderPlus, Image as ImageIcon, LayoutList, Layers, MessageSquare, Pencil, Plus, RotateCcw, Save, Sparkles, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PreviousPageButton } from '@/components/ui/PreviousPageButton';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -354,14 +354,14 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                     const diary = /^\/profilo\/assegnazioni#assignment-\d+$/.test(action.source || '') ? work.timeline?.events.find(event => event.action_ids.includes(action.id)) : undefined;
                                     return <article key={action.id} id={personal ? `action-${action.id}` : undefined} tabIndex={personal ? -1 : undefined} className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-3">
                                     {personal && editingActionId !== action.id ? <>
-                                        <h4 className="break-words font-semibold text-slate-900">{action.kind === 'check' && <span className="mr-1 font-semibold" aria-hidden="true">◷</span>}{action.title}</h4>
+                                        <h4 className="break-words font-semibold text-slate-900">{action.kind === 'check' && <Clock className="mr-1 inline h-4 w-4 align-text-bottom" aria-hidden="true" />}{action.title}</h4>
                                         <p className="mt-1 text-xs text-slate-500">{l(action.stage)}{action.kind && action.kind !== 'activity' ? ` · ${l(action.kind)}` : ''}</p>
                                         <div className="mt-2 flex flex-wrap items-center gap-2">
-                                            <Button type="button" variant="secondary" className="min-h-11 gap-2 px-3" aria-label={`${l('editAction')}: ${action.title}`} onClick={() => setEditingActionId(action.id)}><Pencil className="h-4 w-4" aria-hidden="true" />{l('editAction')}</Button>
+                                            <Tooltip content={l('editAction')}><Button type="button" variant="secondary" className={buttonClass} aria-label={`${l('editAction')}: ${action.title}`} onClick={() => setEditingActionId(action.id)}><Pencil className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                                             {removeButton(action.title, () => edit(removeAction(work, action.id)))}
                                         </div>
                                     </> : <>
-                                    <label className="block text-sm">{action.kind === 'check' && <span className="mr-1 font-semibold" aria-hidden="true">◷</span>}{l('titleField')}<input data-workspace-field required maxLength={160} value={action.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, title: e.target.value } : a) })} /></label>
+                                    <label className="block text-sm">{action.kind === 'check' && <Clock className="mr-1 inline h-4 w-4 align-text-bottom" aria-hidden="true" />}{l('titleField')}<input data-workspace-field required maxLength={160} value={action.title} className={`${inputClass} mt-1 font-semibold`} onChange={e => edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, title: e.target.value } : a) })} /></label>
                                     {personal && <ActionDateSummary action={action} locale={locale} />}
                                     <label className="mt-3 block text-sm">{l('move')}<select id={`${id}-action-${action.id}`} aria-label={`${l('move')}: ${action.title}`} value={action.stage} className={`${inputClass} mt-1 min-h-[44px]`} onChange={e => { edit({ ...work, actions: work.actions.map(a => a.id === action.id ? { ...a, stage: e.target.value as ActionStage } : a) }); focusMoved(`${id}-action-${action.id}`); }}>{stages.map(s => <option key={s} value={s} disabled={s === 'done' && action.kind === 'check' && !action.progress}>{l(s)}</option>)}</select></label>{action.kind === 'check' && !action.progress && <p role="status" className="mt-1 text-xs text-slate-500">{l('checkNeedsProgress')}</p>}
                                     <details open={personal && editingActionId === action.id ? true : undefined} className="mt-2"><summary className="min-h-[44px] cursor-pointer py-3 text-sm font-medium text-indigo-700">{l('detail')} · {action.kind === 'check' ? l('observe') : l('reflection')}</summary>
@@ -517,7 +517,7 @@ function WorkspaceView({ sessionId = '', personal = false, legacySession, locale
                                             aria-label={l('addImage')}
                                         >
                                             <ImageIcon className="h-4 w-4 shrink-0 text-slate-400 group-hover/card:text-indigo-600" aria-hidden="true" />
-                                            <span>+ {l('addImage')}</span>
+                                            <span>{l('addImage')}</span>
                                         </button>
                                     )}
 

@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Activity, CalendarDays, Flag, Plus, Target, Trash2, Unlink } from 'lucide-react';
+import { Activity, CalendarDays, Circle, CircleDot, Clock, Diamond, Flag, Plus, Square, Target, Trash2, Unlink } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
@@ -20,7 +20,7 @@ import { InstitutionTimelineDates } from './InstitutionTimelineDates';
 import { ExperienceReview } from './ExperienceReview';
 import { datePeriod, eventDates, localToday, validTimelineDates, type TimelineDates } from '@/lib/timeline-dates';
 import { filterItems, splitByToday, timelineItems, type TimelineItem, type TimelineItemKind } from '@/lib/timeline-items';
-import { TIMELINE_GLYPHS, timelineGlyph } from '@/lib/timeline-legend';
+import { TIMELINE_GLYPHS, timelineGlyph, type TimelineGlyph } from '@/lib/timeline-legend';
 import type { SavedWorkspace, TimelineEvent, VisualWorkspace } from '@/lib/visual-tools';
 
 const field = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
@@ -31,6 +31,8 @@ const KIND_ICON: Record<TimelineItemKind, typeof Flag> = { milestone: Flag, acti
 const KIND_LABEL: Record<TimelineItemKind, string> = { milestone: 'milestone', action: 'kindAction', goal: 'kindGoal', appointment: 'kindAppointment' };
 // Legend order mirrors `TIMELINE_GLYPHS`: past milestone, a goal's balance, check action, other action, review date.
 const GLYPH_LABELS = ['glyphMilestone', 'glyphGoalReview', 'glyphActionCheck', 'glyphAction', 'glyphReviewDate'];
+const GLYPH_ICON: Record<TimelineGlyph, typeof Flag> = { milestone: Circle, 'goal-review': Diamond, check: Clock, action: Square, 'review-date': CircleDot };
+const GlyphIcon = ({ glyph }: { glyph: TimelineGlyph }) => { const Icon = GLYPH_ICON[glyph]; return <Icon className={`h-3.5 w-3.5 ${glyph === 'milestone' || glyph === 'goal-review' ? 'fill-current' : ''}`} aria-hidden="true" />; };
 const isGoalReview = (id: string) => id.startsWith('goal-review-');
 type Preview = { title: string; description: string; preview_hash: string };
 type SnapshotPayload = { revision: number; event_ids: string[]; title: string; reflection: string; language: string };
@@ -212,7 +214,7 @@ export function PersonalTimeline({ locale }: { locale: string }) {
                 const goalId = event.source.startsWith('goal:') ? event.source.slice(5) : '';
                 return <li key={item.key} id={`timeline-${item.key}`} tabIndex={-1} className={`relative min-w-0 rounded-xl border border-slate-200 bg-white p-3 ${isHighlight ? 'ring-2 ring-ochre-500' : ''}`}>
                     <span className="flex min-w-0 items-start gap-2">
-                        <span aria-hidden="true" className="mt-0.5 shrink-0 text-ochre-600">{timelineGlyph({ kind: 'event', id: event.id })}</span>
+                        <span aria-hidden="true" className="mt-1 shrink-0 text-ochre-600"><GlyphIcon glyph={timelineGlyph({ kind: 'event', id: event.id })} /></span>
                         <span className="min-w-0">
                             <span className="block break-words font-medium">{event.title}</span>
                             <span className="block text-xs text-slate-600">{kindName('milestone')}</span>
@@ -266,7 +268,7 @@ export function PersonalTimeline({ locale }: { locale: string }) {
             </details>
         </div>
         <ul aria-label={l('timelineLegend')} className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
-            {TIMELINE_GLYPHS.map((glyph, index) => <li key={glyph} className="flex items-center gap-1"><span aria-hidden="true">{glyph}</span>{l(GLYPH_LABELS[index])}</li>)}
+            {TIMELINE_GLYPHS.map((glyph, index) => <li key={glyph} className="flex items-center gap-1"><GlyphIcon glyph={glyph} />{l(GLYPH_LABELS[index])}</li>)}
         </ul>
         {issue && <p role="alert" className="text-sm text-red-800">{l(issue)}{(issue === 'conflict' || issue === 'saveError') && <> <Button type="button" variant="secondary" onClick={() => { if (issue === 'conflict' && window.confirm(l('reloadConfirm'))) void load(); else if (issue === 'saveError') void save(); }}>{l('retry')}</Button></>}</p>}
 
@@ -348,7 +350,7 @@ function MilestoneEditor({ event, locale, open, onOpen, onPatch, onRemove, onSav
                 {event.tense === 'past' && <ExperienceReview event={event} locale={locale} onPatch={review => onPatch({ review })} />}
                 <div className="flex flex-wrap gap-2">
                     <Tooltip content={l('personalSave')}><Button type="button" variant="secondary" className="min-h-11 px-4" disabled={busy} onClick={onSave}>{l('personalSave')}</Button></Tooltip>
-                    <Tooltip content={`${l('remove')}: ${event.title}`}><Button type="button" variant="ghost" size="md" className="gap-1.5" aria-label={`${l('remove')}: ${event.title}`} onClick={onRemove}><Trash2 className="h-4 w-4" aria-hidden="true" />{l('remove')}</Button></Tooltip>
+                    <Tooltip content={`${l('remove')}: ${event.title}`}><Button type="button" variant="ghost" size="md" className="w-11 px-0" aria-label={`${l('remove')}: ${event.title}`} onClick={onRemove}><Trash2 className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                 </div>
                 <section aria-label={l('linkPortfolio')} className="min-w-0 space-y-2">
                     {event.portfolio.map(p => <div key={p.id} className="flex items-center justify-between gap-2 rounded-md bg-slate-50 p-2 text-sm">{p.title ? <a className="min-w-0 break-words text-indigo-700 underline" href={`/profilo/portfolio#portfolio-${p.id}`} target="_blank" rel="noopener noreferrer">{p.title}</a> : <span>{l('unavailable')}</span>}<Tooltip content={`${l('unlink')}: ${p.title || l('unavailable')}`}><Button type="button" variant="ghost" className={iconButton} aria-label={`${l('unlink')}: ${p.title || l('unavailable')}`} disabled={pending} onClick={() => onPatch({ portfolio: event.portfolio.filter(item => item.id !== p.id) })}><Unlink className="h-4 w-4" aria-hidden="true" /></Button></Tooltip></div>)}

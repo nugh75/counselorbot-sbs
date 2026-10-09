@@ -289,12 +289,13 @@ export function filterProgressStudents(
 
 const SOURCE_CODES: Record<ProgressSource, string> = { automatic: 'a', student: 's', teacher: 't' };
 
-/** Compact matrix label: ✓/· plus a = automatic, s = student, t = teacher. */
+/** Compact matrix label: a = automatic, s = student, t = teacher; · marks a step not done.
+ * Done and locked states are drawn as icons next to this text. */
 export function progressCellCode(cell: ClassPathProgressCell): string {
     if (cell.state === 'unavailable') return '—';
-    if (cell.state === 'locked') return '🔒';
+    if (cell.state === 'locked') return '';
     const code = cell.source ? SOURCE_CODES[cell.source] : '';
-    return `${cell.state === 'done' ? '✓' : '·'}${code}`;
+    return `${cell.state === 'done' ? '' : '·'}${code}`;
 }
 
 /**

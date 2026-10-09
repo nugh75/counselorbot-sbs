@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Play, Plus, Trash2, Save, ListChecks, Sliders, FileText, Eye } from 'lucide-react';
+import { ArrowRight, RefreshCw, Play, Plus, Trash2, Save, ListChecks, Sliders, FileText, Eye } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { CreateInstrumentDialog } from '@/components/admin/CreateInstrumentDialog';
 import { AdminChatSandboxModal } from '@/components/admin/AdminChatSandboxModal';
@@ -320,8 +320,8 @@ export function QuestionnaireEditor() {
                     <Play className="w-3.5 h-3.5" /> {t('admin.q.testChat')}
                 </button>
                 {msg && <span className="text-sm text-indigo-600">{msg}</span>}
-                <button onClick={() => loadInstrument(selected)} className="ml-auto inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800">
-                    <RefreshCw className="w-4 h-4" /> {t('admin.q.reload')}
+                <button type="button" onClick={() => loadInstrument(selected)} aria-label={t('admin.q.reload')} title={t('admin.q.reload')} className="tap-icon ml-auto rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-800">
+                    <RefreshCw className="w-4 h-4" aria-hidden />
                 </button>
             </div>
 
@@ -637,8 +637,8 @@ function LanguageStatusBar({
                 <div className="flex flex-wrap items-center gap-1.5">
                     {ladder.filter((s) => s !== version.status).map((s) => (
                         <button key={s} onClick={() => promote(s)}
-                            className="rounded border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-100">
-                            → {s}
+                            className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-100">
+                            <ArrowRight className="h-3 w-3" aria-hidden />{s}
                         </button>
                     ))}
                 </div>
