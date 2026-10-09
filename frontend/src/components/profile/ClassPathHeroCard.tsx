@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Lock, AlertCircle, ArrowRight, Play } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { Card } from '@/components/ui/Card';
@@ -143,7 +143,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                                                 className="flex h-7 w-7 items-center justify-center rounded-full bg-ochre-600 text-xs font-bold text-white shadow-xs"
                                                 aria-label={l('current')}
                                             >
-                                                ▶
+                                                <Play className="h-3.5 w-3.5 fill-current" aria-hidden />
                                             </span>
                                         ) : isDone ? (
                                             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300">
@@ -276,6 +276,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                             ? `${l('seeAllClassPaths')} (${totalPathsCount})`
                             : l('seeAllClassPaths')}
                     </span>
+                    <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
             </div>
         </Card>
