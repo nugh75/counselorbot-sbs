@@ -22,12 +22,12 @@ test('the Italian anchors match the plan brief verbatim', () => {
     assert.equal(readingText('it', 'strengths'), 'Punti di forza da valorizzare');
     assert.equal(readingText('it', 'growth'), 'Da far crescere');
     assert.equal(readingText('it', 'note'), 'Cosa mi dice di me');
-    assert.equal(readingText('it', 'toGoal'), '→ Rendi obiettivo');
+    assert.equal(readingText('it', 'toGoal'), 'Rendi obiettivo');
     assert.equal(readingText('it', 'born'), 'Obiettivi nati da qui');
 });
 
 test('the English anchors match the plan brief', () => {
     assert.equal(readingText('en', 'title'), 'My reading');
-    assert.equal(readingText('en', 'toGoal'), '→ Make it a goal');
+    assert.equal(readingText('en', 'toGoal'), 'Make it a goal');
     assert.equal(readingText('en', 'born'), 'Goals born from here');
 });
