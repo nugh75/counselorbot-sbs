@@ -30,6 +30,18 @@ async def tool_access_denied_handler(_request, exc: ToolAccessDenied) -> JSONRes
     return JSONResponse(status_code=403, content={"detail": exc.detail, "tool": exc.tool})
 
 
+class CounselorAccessDenied(HTTPException):
+    """403 with the refused counselor id; plain 403 if no handler is set."""
+
+    def __init__(self, counselor_id):
+        super().__init__(status_code=403, detail="counselor_disabled_for_class")
+        self.counselor_id = counselor_id
+
+
+async def counselor_access_denied_handler(_request, exc: CounselorAccessDenied) -> JSONResponse:
+    return JSONResponse(status_code=403, content={"detail": exc.detail, "counselor_id": exc.counselor_id})
+
+
 def _username(identity) -> str:
     return str(identity.get("username") or "").strip() if identity.get("authenticated") else ""
 
@@ -69,6 +81,36 @@ def _class_enables(settings: models.ClassSettings | None, key: str) -> bool:
     return key not in (settings.disabled_tool_keys or [])
 
 
+def _class_enables_counselor(settings: models.ClassSettings | None, counselor_id: int) -> bool:
+    """Same precedence as tools; lock keys are counselor ids as strings."""
+    if settings is None:
+        return True
+    lock = (settings.locked_counselor_ids or {}).get(str(counselor_id))
+    if isinstance(lock, dict) and "enabled" in lock:
+        return bool(lock["enabled"])
+    return counselor_id not in (settings.disabled_counselor_ids or [])
+
+
+def _counselor_access(db: Session, username: str, classes) -> tuple[list[int], int | None]:
+    """Allowed counselor ids (institutional union, then own private ones) and the class default.
+
+    Admin-inactive counselors are never allowed (decision 5). The default is the
+    one of the most recently joined class whose default is in the union
+    (decision 6); private counselors are never a class default (decision 7).
+    """
+    active = models.Counselor.is_active.is_(True)
+    order = (models.Counselor.sort_order, models.Counselor.id)
+    institutional = [cid for (cid,) in db.query(models.Counselor.id).filter(
+        models.Counselor.owner_username.is_(None), active).order_by(*order)
+        if any(_class_enables_counselor(settings, cid) for _, settings in classes)]
+    allowed = set(institutional)
+    default = next((settings.default_counselor_id for _, settings in classes
+                    if settings is not None and settings.default_counselor_id in allowed), None)
+    private = [cid for (cid,) in db.query(models.Counselor.id).filter(
+        models.Counselor.owner_username == username, active).order_by(*order)] if username else []
+    return institutional + private, default
+
+
 def _admin_tool_keys(db: Session) -> list[str]:
     reserved = [*PERSONAL_TOOL_KEYS, *ALWAYS_ON]
     codes = [code for (code,) in db.query(models.Instrument.code).filter(
@@ -80,19 +122,22 @@ def _admin_tool_keys(db: Session) -> list[str]:
 
 
 def resolve_access(db: Session, identity) -> dict:
-    """GET /user/access payload. Counselor fields stay null until S6 (#93)."""
+    """GET /user/access payload; counselor fields are null when not restricted."""
     admin_keys = _admin_tool_keys(db)
-    classes = [] if is_staff(identity) else _active_classes(db, _username(identity))
+    username = _username(identity)
+    classes = [] if is_staff(identity) else _active_classes(db, username)
+    counselor_ids, default_counselor_id = None, None
     if classes:
         tool_keys = [key for key in admin_keys
                      if key in ALWAYS_ON or any(_class_enables(settings, key) for _, settings in classes)]
+        counselor_ids, default_counselor_id = _counselor_access(db, username, classes)
     else:
         tool_keys = admin_keys
     return {
         "restricted": bool(classes),
         "tool_keys": tool_keys,
-        "counselor_ids": None,
-        "default_counselor_id": None,
+        "counselor_ids": counselor_ids,
+        "default_counselor_id": default_counselor_id,
         "class_ids": [group_id for group_id, _ in classes],
     }
 
@@ -127,6 +172,34 @@ def require_tool(db: Session, identity, tool_key: str | None, *, preview: bool =
     classes = _active_classes(db, _username(identity))
     if classes and not any(_class_enables(settings, canonical) for _, settings in classes):
         raise ToolAccessDenied("tool_disabled_for_class", canonical)
+
+
+def counselor_access(db: Session, identity) -> tuple[set[int] | None, int | None]:
+    """(allowed counselor ids, class default); (None, None) means not filtered."""
+    if is_staff(identity):
+        return None, None
+    username = _username(identity)
+    classes = _active_classes(db, username)
+    if not classes:
+        return None, None
+    ids, default = _counselor_access(db, username, classes)
+    return set(ids), default
+
+
+def allowed_counselor_ids(db: Session, identity) -> set[int] | None:
+    return counselor_access(db, identity)[0]
+
+
+def require_counselor(db: Session, identity, counselor_id: int | None) -> None:
+    """Guard for chat routes: a restricted student may only talk to an allowed counselor.
+
+    No counselor means the generic assistant and always passes.
+    """
+    if counselor_id is None:
+        return
+    allowed = allowed_counselor_ids(db, identity)
+    if allowed is not None and counselor_id not in allowed:
+        raise CounselorAccessDenied(counselor_id)
 
 
 # Generic prompts are not instrument prompts: they never name an owner.

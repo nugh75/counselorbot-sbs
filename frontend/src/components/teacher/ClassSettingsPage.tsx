@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Lock } from 'lucide-react';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
-import { parseClassSettings, type ClassSettings, type ClassTool } from '@/lib/class-settings';
+import { effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, type ClassCounselor, type ClassSettings, type ClassTool } from '@/lib/class-settings';
+import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
 import { useI18n } from '@/lib/i18n-context';
 import { useDraftGuard } from '@/lib/use-draft-guard';
@@ -21,12 +22,76 @@ import { parseClassGroups } from './class-group-types';
 
 type TextKey = keyof typeof classSettingsTexts;
 const categories = ['assessment', 'guided', 'personal', 'support'] as const;
+const sameIds = (a: readonly (string | number)[], b: readonly (string | number)[]) =>
+    JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+
+function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggle, onDefault }: {
+    counselors: ClassCounselor[]; disabled: number[]; defaultId: number | null; busy: boolean;
+    onToggle: (id: number, enabled: boolean) => void; onDefault: (id: number | null) => void;
+}) {
+    const { lang } = useI18n();
+    const l = (key: TextKey) => classSettingsText(lang, key);
+    const [category, setCategory] = useState('');
+    const [query, setQuery] = useState('');
+    const isEnabled = (row: ClassCounselor) => row.admin_enabled && !disabled.includes(row.id);
+    const options = [...new Set(counselors.flatMap(row => row.approach_categories))].sort();
+    const rows = filterClassCounselors(counselors, category, query);
+    return <Card>
+        <section aria-labelledby="class-counselors-heading" className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 id="class-counselors-heading" className="text-lg font-bold text-slate-800">{l('counselors')}</h2>
+                <p className="text-sm text-slate-600">{l('enabled')} {counselors.filter(isEnabled).length} / {counselors.length}</p>
+            </div>
+            <p className="text-sm text-slate-600">{l('counselorDefaultHint')}</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">{l('counselorCategory')}
+                    <select className="min-h-[44px] rounded-md border border-slate-300 bg-white px-2" value={category} onChange={event => setCategory(event.target.value)}>
+                        <option value="">{l('counselorAllCategories')}</option>
+                        {options.map(option => <option key={option} value={option}>{formatCategoryLabel(option, lang)}</option>)}
+                    </select>
+                </label>
+                <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">{l('counselorSearch')}
+                    <input type="search" className="min-h-[44px] rounded-md border border-slate-300 px-2" value={query} onChange={event => setQuery(event.target.value)} />
+                </label>
+            </div>
+            <div role="radiogroup" aria-label={l('counselorDefault')} className="space-y-1">
+                <label className="flex min-h-[44px] items-center gap-3 rounded-md p-2 text-sm text-slate-700">
+                    <input type="radio" name="class-default-counselor" className="h-5 w-5 accent-indigo-600" checked={defaultId === null}
+                        disabled={busy} onChange={() => onDefault(null)} />{l('counselorNoDefault')}
+                </label>
+                {rows.map(row => <div key={row.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md p-2">
+                    <label className="flex min-h-[44px] min-w-0 flex-1 items-center gap-3 text-sm text-slate-700">
+                        <input type="checkbox" className="h-5 w-5 shrink-0 accent-indigo-600" aria-label={row.name}
+                            checked={isEnabled(row)} disabled={busy || !row.admin_enabled}
+                            aria-describedby={!row.admin_enabled ? `counselor-disabled-${row.id}` : undefined}
+                            onChange={event => onToggle(row.id, event.target.checked)} />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        {row.avatar_url && <img src={row.avatar_url} alt="" className="h-8 w-14 shrink-0 rounded object-cover" />}
+                        <span className="min-w-0 break-words"><span className="font-medium">{row.name}</span>
+                            {row.approach_categories.length > 0 && <span className="ml-2 text-xs text-slate-500">{row.approach_categories.map(item => formatCategoryLabel(item, lang)).join(' · ')}</span>}
+                            {!row.admin_enabled && <span id={`counselor-disabled-${row.id}`} className="mt-1 flex items-center gap-1 text-xs text-slate-500"><Lock className="h-4 w-4 shrink-0" aria-hidden />{l('platformDisabled')}</span>}
+                        </span>
+                    </label>
+                    <label className="flex min-h-[44px] items-center gap-2 text-sm text-slate-600">
+                        <input type="radio" name="class-default-counselor" className="h-5 w-5 accent-indigo-600"
+                            aria-label={`${l('counselorDefault')}: ${row.name}`} checked={defaultId === row.id}
+                            disabled={busy || !isEnabled(row)} onChange={() => onDefault(row.id)} />{l('counselorDefault')}
+                    </label>
+                </div>)}
+            </div>
+            {rows.length === 0 && <p className="text-sm text-slate-600">{l('counselorNoMatch')}</p>}
+            <p className="text-sm text-slate-600">{l('counselorsPrivate')}</p>
+        </section>
+    </Card>;
+}
 
 function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onReload: () => void }) {
     const { lang } = useI18n();
     const l = (key: TextKey) => classSettingsText(lang, key);
     const [settings, setSettings] = useState(initial);
     const [disabled, setDisabled] = useState(initial.disabled_tool_keys);
+    const [disabledCounselors, setDisabledCounselors] = useState(initial.disabled_counselor_ids);
+    const [defaultCounselor, setDefaultCounselor] = useState(effectiveDefaultCounselor(initial));
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<'saved' | 'error' | 'conflict' | 'invalid' | null>(null);
     const [forbidden, setForbidden] = useState(false);
@@ -37,7 +102,9 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
         mounted.current = true;
         return () => { mounted.current = false; pending.current?.abort(); };
     }, []);
-    const dirty = JSON.stringify([...disabled].sort()) !== JSON.stringify([...settings.disabled_tool_keys].sort());
+    const dirty = !sameIds(disabled, settings.disabled_tool_keys)
+        || !sameIds(disabledCounselors, settings.disabled_counselor_ids)
+        || defaultCounselor !== effectiveDefaultCounselor(settings);
     useDraftGuard(dirty || busy, l('discard'), { blocked: busy });
     const tools = settings.tools.filter(tool => !tool.always_on);
     const isEnabled = (tool: ClassTool) => tool.admin_enabled && !disabled.includes(tool.key);
@@ -47,6 +114,18 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
         if (pending.current) return;
         const editable = rows.filter(tool => tool.admin_enabled && !tool.always_on).map(tool => tool.key);
         setDisabled(previous => enabled ? previous.filter(key => !editable.includes(key)) : [...new Set([...previous, ...editable])].sort());
+        if (notice === 'saved') setNotice(null);
+    };
+    const toggleCounselor = (id: number, enabled: boolean) => {
+        if (pending.current) return;
+        setDisabledCounselors(previous => enabled ? previous.filter(item => item !== id) : [...new Set([...previous, id])].sort((a, b) => a - b));
+        // A disabled counselor cannot stay the class default.
+        if (!enabled) setDefaultCounselor(current => current === id ? null : current);
+        if (notice === 'saved') setNotice(null);
+    };
+    const chooseDefault = (id: number | null) => {
+        if (pending.current) return;
+        setDefaultCounselor(id);
         if (notice === 'saved') setNotice(null);
     };
     const reload = () => {
@@ -62,7 +141,10 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
         try {
             const response = await apiFetch(`/api/teacher/groups/${settings.group_id}/settings`, {
                 method: 'PUT', signal: controller.signal, headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ revision: settings.revision, disabled_tool_keys: disabled }),
+                body: JSON.stringify({
+                    revision: settings.revision, disabled_tool_keys: disabled,
+                    disabled_counselor_ids: disabledCounselors, default_counselor_id: defaultCounselor,
+                }),
             });
             if (!current()) return;
             if (account.current !== getViewAsAccount()?.username || response.status === 401 || response.status === 403) {
@@ -74,7 +156,9 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
             const next = parseClassSettings(await response.json());
             if (next.group_id !== settings.group_id) throw new Error('Wrong class');
             if (current() && account.current === getViewAsAccount()?.username) {
-                setSettings(next); setDisabled(next.disabled_tool_keys); setNotice('saved');
+                setSettings(next); setDisabled(next.disabled_tool_keys);
+                setDisabledCounselors(next.disabled_counselor_ids); setDefaultCounselor(effectiveDefaultCounselor(next));
+                setNotice('saved');
             }
         } catch {
             if (current()) setNotice('error');
@@ -117,6 +201,8 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
             </Card>;
         })}
         <p className="text-sm text-slate-600">{l('always')}: {settings.tools.filter(tool => tool.always_on).map(label).join(' · ')}</p>
+        {settings.counselors.length > 0 && <ClassCounselorsSection counselors={settings.counselors} disabled={disabledCounselors}
+            defaultId={defaultCounselor} busy={busy} onToggle={toggleCounselor} onDefault={chooseDefault} />}
         <StickyActions>
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
                 <div className="min-w-0 flex-1 text-sm">

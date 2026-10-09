@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { isToolAllowed, fetchUserAccess, getCachedUserAccess, clearUserAccessCache, type UserAccess } from './user-access.ts';
+import { isToolAllowed, isCounselorAllowed, resumeCounselor, fetchUserAccess, getCachedUserAccess, clearUserAccessCache, type UserAccess } from './user-access.ts';
 
 function withStorage(impl: Record<string, unknown> | undefined, run: () => void | Promise<void>) {
     const kept = (globalThis as { sessionStorage?: unknown }).sessionStorage;
@@ -121,4 +121,26 @@ test('fetchUserAccess caches results in sessionStorage once fetched', async () =
             clearUserAccessCache();
         }
     });
+});
+
+const classAccess: UserAccess = { restricted: true, tool_keys: [], counselor_ids: [1, 5], default_counselor_id: 1, class_ids: [10] };
+
+test('counselor access follows the class resolution and fails open', () => {
+    assert.equal(isCounselorAllowed(null, 2), true);
+    assert.equal(isCounselorAllowed({ ...classAccess, restricted: false, counselor_ids: null }, 2), true);
+    assert.equal(isCounselorAllowed({ ...classAccess, counselor_ids: null }, 2), true);
+    assert.equal(isCounselorAllowed(classAccess, 5), true);
+    assert.equal(isCounselorAllowed(classAccess, 2), false);
+});
+
+test('resumed sessions keep an allowed counselor, else the class default, else the account one, else ask', () => {
+    assert.deepEqual(resumeCounselor(classAccess, 5, 1), { id: 5, replaced: false });
+    assert.deepEqual(resumeCounselor(classAccess, null, 5), { id: 5, replaced: false });
+    assert.deepEqual(resumeCounselor(classAccess, null, null), { id: null, replaced: false });
+    assert.deepEqual(resumeCounselor(classAccess, 2, 5), { id: 1, replaced: true });
+    const noDefault = { ...classAccess, default_counselor_id: null };
+    assert.deepEqual(resumeCounselor(noDefault, 2, 5), { id: 5, replaced: true });
+    assert.equal(resumeCounselor(noDefault, 2, 2), null);
+    assert.equal(resumeCounselor(noDefault, 2, null), null);
+    assert.deepEqual(resumeCounselor(null, 2, null), { id: 2, replaced: false });
 });
