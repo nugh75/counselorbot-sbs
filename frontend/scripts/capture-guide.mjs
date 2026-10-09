@@ -26,7 +26,7 @@ const samples = {
     de: ['Mein Lernen organisieren', 'Lernwerkstatt', 'Probiere zwei kurze Wiederholungen aus.', 'Beschreibe, was funktioniert hat und was du ändern würdest.', 'Ich habe das Wiederholen auf zwei Tage verteilt.', 'Vergleiche beim nächsten Mal auch, woran du dich ohne Notizen erinnerst.'],
     sv: ['Planera mina studier', 'Studieverkstad', 'Prova två korta repetitionspass.', 'Beskriv vad som fungerade och vad du skulle ändra.', 'Jag fördelade repetitionen över två dagar.', 'Jämför nästa gång också vad du minns utan anteckningar.'],
 };
-const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories', 'teacher-class-picker', 'teacher-notebook'];
+const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories', 'teacher-class-picker', 'teacher-notebook', 'class-forum', 'teacher-forum'];
 const browser = await chromium.launch({ headless: true });
 try {
     for (const lang of captureLocales) {
@@ -83,6 +83,38 @@ try {
             else if (path === '/user/assignments' || path === '/teacher/assignments') data = [assignment];
             else if (path === '/teacher/assignment-targets') data = [{ id: 91, name: groupName, participants: [{ username: 'student.demo', name: 'Sam · Demo' }, { username: 'student2.demo', name: 'Robin · Demo' }] }];
             else if (path === '/teacher/assignments/1/submissions') data = [{ username: 'student.demo', revision: 1, submission: { text: response }, submitted_at: '2026-09-22T08:00:00Z', feedback, feedback_at: '2026-09-22T09:00:00Z' }];
+            else if (path.startsWith('/groups/91/forum/topics')) data = {
+                group: { id: 91, name: groupName, is_active: true },
+                can_open_topic: true,
+                can_moderate: teacher,
+                topics: [
+                    {
+                        id: 1, group_id: 91, title, pinned: true, locked: false,
+                        author_display_name: 'Prof. Demo', author_username: 'teacher.demo', body: instructions,
+                        created_at: '2026-09-21T08:00:00Z', edited_at: null, hidden: false, deleted: false, hidden_reason: null,
+                        own: teacher, status: 'published', replies_count: 3, unread_count: 2, last_post_at: '2026-09-22T10:00:00Z',
+                        link: { kind: 'path_step', id: 1, title: groupName, tool_key: 'QSA', path_title: title, available: true },
+                    },
+                    {
+                        id: 2, group_id: 91, title: responsePrompt, pinned: false, locked: false,
+                        author_display_name: 'Alex · Demo', author_username: 'student.demo', body: response,
+                        created_at: '2026-09-22T09:00:00Z', edited_at: null, hidden: false, deleted: false, hidden_reason: null,
+                        own: !teacher, status: 'published', replies_count: 2, unread_count: 0, last_post_at: '2026-09-22T09:30:00Z',
+                        link: null,
+                    },
+                ],
+                has_more: false,
+                pending_count: teacher ? 1 : 0,
+                forum_enabled: true,
+                premoderated: false,
+                mute: null,
+            };
+            else if (path === '/teacher/groups/91/settings') data = {
+                group_id: 91, revision: 1, disabled_tool_keys: [], tools: [], disabled_counselor_ids: [],
+                default_counselor_id: null, counselors: [], forum: { students_can_open: true, premoderation: false },
+            };
+            else if (path === '/user/forum/unread') data = { total: 2, by_group: { '91': 2 } };
+            else if (path === '/user/forum/links') data = { links: [] };
             return route.fulfill({ json: data });
         });
         mkdirSync(`public/guide/${lang}`, { recursive: true });
@@ -183,6 +215,19 @@ try {
             await context.close();
             continue;
         }
+        if (process.env.GUIDE_SCREENS === 'forum') {
+            authenticated = true; teacher = false;
+            await go('/profilo/classi/91/forum');
+            await page.getByRole('heading', { level: 1 }).first().waitFor();
+            await capture('class-forum', page.locator('section').first());
+            teacher = true;
+            await go('/docente/classi/91');
+            await page.locator('#class-tab-forum').click();
+            await page.locator('#class-panel-forum').waitFor();
+            await capture('teacher-forum', page.locator('section').first());
+            await context.close();
+            continue;
+        }
         await go('/'); await capture('access');
         authenticated = true;
         await go('/counselor'); await page.getByText('Clio', { exact: true }).first().waitFor(); await capture('counselors');
@@ -194,6 +239,9 @@ try {
         await go('/profilo/timeline?event=guide-event'); await capture('calendar', page.locator('#timeline-milestone-guide-event'));
         await go('/profilo/assegnazioni'); await capture('received-assignments');
         await go('/profilo/classi'); await capture('personal-groups');
+        await go('/profilo/classi/91/forum');
+        await page.getByRole('heading', { level: 1 }).first().waitFor();
+        await capture('class-forum', page.locator('section').first());
         await go('/'); await capture('introduction');
         await go('/?view=home'); await capture('activities');
         await go('/profilo/pqbl'); await capture('pdf-study');
@@ -213,6 +261,10 @@ try {
         await go('/docente/classi');
         const groupCard = page.locator('section').filter({ has: page.getByRole('heading', { name: groupName, exact: true }) }).last();
         await capture('teacher-groups', groupCard.locator('..').locator('..'));
+        await go('/docente/classi/91');
+        await page.locator('#class-tab-forum').click();
+        await page.locator('#class-panel-forum').waitFor();
+        await capture('teacher-forum', page.locator('section').first());
         await go('/docente/catalogo-obiettivi');
         const catalogSection = page.getByRole('region', { name: goalText(lang, 'catalog'), exact: true });
         await catalogSection.getByRole('heading', { name: title, exact: true }).waitFor();
