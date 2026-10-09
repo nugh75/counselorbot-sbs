@@ -36,6 +36,7 @@ export const forumTexts = {
     closed: ['Questa discussione è chiusa.', 'This discussion is closed.', 'Esta discusión está cerrada.', 'Cette discussion est fermée.', 'Diese Diskussion ist geschlossen.', 'Den här diskussionen är stängd.'],
     pinned: ['In evidenza', 'Pinned', 'Fijada', 'Épinglée', 'Angeheftet', 'Fäst'],
     replies: ['risposte', 'replies', 'respuestas', 'réponses', 'Antworten', 'svar'],
+    replyOne: ['risposta', 'reply', 'respuesta', 'réponse', 'Antwort', 'svar'],
     title: ['Titolo', 'Title', 'Título', 'Titre', 'Titel', 'Titel'],
     body: ['Testo', 'Text', 'Texto', 'Texte', 'Text', 'Text'],
     reply: ['Risposta', 'Reply', 'Respuesta', 'Réponse', 'Antwort', 'Svar'],

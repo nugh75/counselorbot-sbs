@@ -439,7 +439,7 @@ export function ForumView({ groupId, student = false }: { groupId: number; stude
                         )}
                     </div>
                     {topic.hidden && topic.hidden_reason !== null && <span className="block text-sm font-semibold text-amber-800">{l('hiddenWithReason')}: “{topic.hidden_reason}”</span>}
-                    <span className="block text-sm text-slate-600">{topic.author_display_name} · {topic.replies_count} {l('replies')}{topic.locked && ` · ${l('closed')}`}</span>
+                    <span className="block text-sm text-slate-600">{topic.author_display_name} · {topic.replies_count} {l(topic.replies_count === 1 ? 'replyOne' : 'replies')}{topic.locked && ` · ${l('closed')}`}</span>
                 </button>
             </li>)}</ul>
             <div className="flex gap-2">

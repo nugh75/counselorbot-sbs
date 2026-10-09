@@ -587,7 +587,8 @@ quotations, code and HTTP(S) links; raw HTML, images and attachments are not
 rendered. Links use `nofollow noopener noreferrer`. Publishing is explicit;
 failed sends and rate limits preserve the draft. The persistent limit is 10
 publications (discussions plus replies) per user per class in five minutes.
-Lists and replies are paginated. Forum content is excluded from all AI providers,
+Lists and replies are paginated; the topic list shows the reply count with a
+singular label for one reply. Forum content is excluded from all AI providers,
 including local models, research exports, administrator result/log/training
 exports, PDFs, session ledgers and RAG indexes. Architectural privacy tests
 protect that boundary. Student-created discussions, muting, pre-approval,
