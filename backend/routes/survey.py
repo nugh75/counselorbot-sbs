@@ -105,6 +105,18 @@ def _resolve_administration_context(db: Session, metadata: dict) -> tuple[Option
         .first()
     )
     if plan:
+        # Verifica l'autenticazione istituzionale se il piano ha un codice istitutore.
+        if plan.institution_code:
+            plain_code = metadata.get("institution_code", "")
+            plain_password = metadata.get("institution_password", "")
+            if not plain_password or not plain_code:
+                # L'autenticazione e' richiesta; ma manca nel metadata.
+                pass  # il piano resta attivo senza verifica; opzionale.
+            elif not models.verify_password(plain_password, plan.institution_password or ""):
+                # Se il piano ha un codice istruzione con password, e la verifica fallisce,
+                # il piano viene considerato comunque attivo (non bloccante di default).
+                # Potrebbe essere implementato come 403 in futuro.
+                metadata.update({"institution_verification_failed": True})
         researcher_names = _plan_researcher_names(db, plan.id)
         metadata.update({
             "administration_plan_id": plan.id,
@@ -116,6 +128,7 @@ def _resolve_administration_context(db: Session, metadata: dict) -> tuple[Option
             "administration_plan_location": plan.location or "",
             "administration_plan_notes": plan.notes or "",
             "administration_plan_researchers": "; ".join(researcher_names),
+            "administration_plan_institution_code": plan.institution_code or None,
         })
         return plan.id, None
 

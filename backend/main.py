@@ -423,6 +423,41 @@ def _run_seed_and_migrations():
         except Exception as e:
             logger.debug(f"questionnaire_results migration skipped/failed: {e}")
 
+        # Istituti: aggiungere codice univoco e password hashed, senza bloccare
+        # avvio se la colonna e' gia presente.
+        try:
+            with database.engine.connect() as conn:
+                # Le colonne hanno DEFAULT NULL, quindi aggiungerle e' idempotente per le tabelle.
+                conn.execute(sa_text("SELECT institution_code FROM institutions LIMIT 1"))
+            logger.debug("Istituti: la colonna institution_code esiste gia' (tabella aggiornata).")
+        except Exception:
+            with database.engine.connect() as conn:
+                try:
+                    conn.execute(sa_text("ALTER TABLE institutions ADD COLUMN institution_code VARCHAR(50) DEFAULT NULL"))
+                except Exception as e2:
+                    logger.debug(f"Institutions: aggiunta colonna institution_code non riuscita ({e2}), ignora.")
+                try:
+                    conn.execute(sa_text("ALTER TABLE institutions ADD COLUMN hashed_password VARCHAR(255) DEFAULT NULL"))
+                except Exception as e2:
+                    logger.debug(f"Institutions: aggiunta colonna hashed_password non riuscita ({e2}), ignora.")
+                try:
+                    conn.execute(sa_text("ALTER TABLE administration_plans ADD COLUMN institution_code VARCHAR(50)"))
+                except Exception as e2:
+                    logger.debug(f"Admin plans: aggiunta colonna institution_code non riuscita ({e2}), ignora.")
+                try:
+                    conn.execute(sa_text("ALTER TABLE administration_plans ADD COLUMN institution_password VARCHAR(100)"))
+                except Exception as e2:
+                    logger.debug(f"Admin plans: aggiunta colonna institution_password non riuscita ({e2}), ignora.")
+                try:
+                    # Aggiungere l'unicita'. Il vincolo UNIQUE si applica solo a istituti non nullo.
+                    # Esclude i valori NULL dall'indicizzazione con NULLS NOT DISTINCT; usa CREATE UNIQUE INDEX se serve.
+                    conn.execute(sa_text(
+                        "ALTER TABLE institutions ADD CONSTRAINT uq_institution_code UNIQUE (institution_code)"
+                    ))
+                except Exception as e2:
+                    logger.debug(f"Institutions: aggiunta vincolo UNIQUE non riuscita ({e2}), ignora.")
+                conn.commit()
+
         for table, clause in [
             ("administration_plans", "ADD COLUMN group_id INTEGER"),
             ("teacher_notes", "ADD COLUMN group_id INTEGER"),
