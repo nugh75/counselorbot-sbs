@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Cpu, Cloud, Search, Sparkles, X, Filter } from 'lucide-react';
+import { Check, Cpu, Cloud, Search, Sparkles, X, Filter, Loader2 } from 'lucide-react';
 import {
     fetchCounselorCategories,
     fetchCounselors,
@@ -333,7 +333,7 @@ export function CounselorSelector({
                         />
                         {searching && (
                             <div className="absolute right-3 top-2.5 text-xs text-slate-400">
-                                <span className="animate-spin inline-block mr-1">⌛</span>
+                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                             </div>
                         )}
                     </div>
@@ -414,7 +414,7 @@ export function CounselorSelector({
                                     }`}
                                 >
                                     {selected === recommendation.counselor.id
-                                        ? `✓ ${recommendation.counselor.name} (${t('counselor.search.selected')})`
+                                        ? <><Check className="mr-1 inline h-4 w-4 align-text-bottom" aria-hidden />{`${recommendation.counselor.name} (${t('counselor.search.selected')})`}</>
                                         : `${t('counselor.search.selectAction')} (${recommendation.counselor.name})`}
                                 </button>
                             </div>

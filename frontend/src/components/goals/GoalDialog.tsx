@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowDown, ArrowUp, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Clock, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useI18n } from '@/lib/i18n-context';
 import { goalFormat, goalText, type GoalTextKey } from '@/lib/i18n-goals';
@@ -79,7 +79,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
     const otherDraft = actionDraft || checkDraft || Boolean(selection) || Boolean(evidenceChoice) || Boolean(parentChoice);
     useEffect(() => { onDirty(dirty); return () => onDirty(false); }, [dirty, onDirty]);
     useDraftGuard(dirty, l('discard'));
-    // «→ nuova azione» torna al popup col modulo azione precompilato: consumato al primo
+    // «nuova azione» torna al popup col modulo azione precompilato: consumato al primo
     // mount, prima che il pannello perda il target (GoalsPanel apre subito `edit:{id}` on `onTarget`).
     const actionPrefill = target.kind === 'edit' ? target.prefill?.action : undefined;
     useEffect(() => {
@@ -170,7 +170,7 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
         <Button type="button" variant="ghost" disabled={busy || dirty} onClick={() => unlink(link)}>{l('unlink')}</Button>
     </div>;
     const checkRow = (row: GoalResource) => <div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 p-3">
-        <div className="min-w-0 flex-1"><p className="text-xs text-slate-500">◷{row.date && ` · ${row.date}`}{row.stage === 'done' && row.progress && ` · ${l(('progress_' + row.progress) as GoalTextKey)}`}</p>{row.available && row.href ? <Link className="break-words font-medium text-indigo-700 underline" href={row.href}>{row.title}</Link> : <span>{l('unavailable')}</span>}</div>
+        <div className="min-w-0 flex-1"><p className="flex items-center gap-1 text-xs text-slate-500"><Clock className="h-3 w-3 shrink-0" aria-hidden />{row.date && ` · ${row.date}`}{row.stage === 'done' && row.progress && ` · ${l(('progress_' + row.progress) as GoalTextKey)}`}</p>{row.available && row.href ? <Link className="break-words font-medium text-indigo-700 underline" href={row.href}>{row.title}</Link> : <span>{l('unavailable')}</span>}</div>
         <Button type="button" variant="ghost" disabled={busy || dirty} onClick={() => unlink(row)}>{l('unlink')}</Button>
     </div>;
     const goalRow = (row: PersonalGoal, icon: React.ReactNode, extra?: React.ReactNode) => <li key={row.id} className="flex items-center gap-2 rounded-md bg-slate-50 px-2">
@@ -219,12 +219,12 @@ function GoalDialogBody({ target, goal, goals, groups, saved, onDirty, onNavigat
             </section>}
             {goal && <section className="space-y-2"><h3 className="font-bold">{l('howICheck')}</h3>
                 <ul className="space-y-2">{goal.checks.map(checkRow)}</ul>
-                <details className="rounded-md border border-slate-200 p-3"><summary className="cursor-pointer py-2 font-semibold">{l('addCheck')}</summary>
+                <details className="rounded-md border border-slate-200 p-3"><summary className="cursor-pointer py-2 font-semibold"><Plus className="mr-1 inline h-4 w-4 align-text-bottom" aria-hidden />{l('addCheck')}</summary>
                     <form className="mt-3" onSubmit={e => { e.preventDefault(); checkRequest.current ||= crypto.randomUUID(); void run(() => goalApi<PersonalGoal>(`${base}/actions`, 'POST', { ...check, kind: 'check', revision: goal.revision, request_id: checkRequest.current })); }}><fieldset disabled={busy || fieldsDirty || actionDraft || Boolean(selection) || Boolean(evidenceChoice) || Boolean(parentChoice)} className="space-y-3">
                         <Field label={l('actionTitle')}><input className={input} required maxLength={160} value={check.title} onChange={e => setCheck({ ...check, title: e.target.value })} /></Field>
                         <Field label={l('detail')}><textarea className={input} maxLength={1000} value={check.detail} onChange={e => setCheck({ ...check, detail: e.target.value })} /></Field>
                         <Field label={l('date')}><input className={input} type="date" required value={check.date} onChange={e => setCheck({ ...check, date: e.target.value })} /></Field>
-                        <Button type="submit">{l('addCheck')}</Button>
+                        <Button type="submit"><Plus className="h-4 w-4" aria-hidden />{l('addCheck')}</Button>
                     </fieldset></form>
                 </details>
             </section>}

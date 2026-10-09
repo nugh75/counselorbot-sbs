@@ -151,7 +151,7 @@ export function FlashcardsPage() {
                         return <article key={deck.id} className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
                             <button type="button" className="min-h-11 text-left" aria-label={`${l('study')}: ${deck.title}`} onClick={() => openDeckForStudy(deck)}>
                                 <h3 className="break-words font-semibold text-slate-900">{deck.title} <span className="font-mono text-sm text-slate-500">{deck.cards.length}</span></h3>
-                                <p className="mt-1 text-xs text-slate-500"><span className="text-emerald-600">✔ {progress.known}</span> · <span className="text-amber-600">↻ {progress.review}</span> · {progress.fresh}</p>
+                                <p className="mt-1 flex items-center gap-1 text-xs text-slate-500"><span className="inline-flex items-center gap-0.5 text-emerald-600"><Check className="h-3 w-3" aria-hidden="true" /><span className="sr-only">{l('knownLabel')}</span>{progress.known}</span> · <span className="inline-flex items-center gap-0.5 text-amber-600"><RotateCcw className="h-3 w-3" aria-hidden="true" /><span className="sr-only">{l('reviewLabel')}</span>{progress.review}</span> · {progress.fresh}</p>
                             </button>
                             <div className="mt-2 flex flex-wrap items-center gap-2 self-end">
                                 <Tooltip content={l('study')}><Button type="button" variant="secondary" className="min-h-11 gap-1 px-3" aria-label={`${l('study')}: ${deck.title}`} disabled={!deck.cards.length} onClick={() => { openDeck(deck); startStudy(deck); }}>{l('study')}</Button></Tooltip>
@@ -195,7 +195,7 @@ export function FlashcardsPage() {
                                     <Button type="button" variant="ghost" className="h-8 w-8 p-0" aria-label={l('removeImage')} onClick={() => setDraftImage('')}><X className="h-4 w-4" aria-hidden="true" /></Button>
                                 </div>
                             ) : (
-                                <button type="button" onClick={() => setPickingImageId('draft')} className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-white px-3 text-sm text-slate-500 hover:border-indigo-300 hover:text-indigo-700" aria-label={l('addImage')}><ImageIcon className="h-4 w-4 shrink-0" aria-hidden="true" />+ {l('addImage')}</button>
+                                <button type="button" onClick={() => setPickingImageId('draft')} className="flex min-h-11 items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-white px-3 text-sm text-slate-500 hover:border-indigo-300 hover:text-indigo-700" aria-label={l('addImage')}><ImageIcon className="h-4 w-4 shrink-0" aria-hidden="true" />{l('addImage')}</button>
                             )}
                             <Tooltip content={l('addCard')}><Button aria-label={l('addCard')} type="submit" className={buttonClass} disabled={!draftFront.trim() || !draftBack.trim() || currentDeck.cards.length >= 200}><Plus className="h-4 w-4" aria-hidden="true" /></Button></Tooltip>
                         </div>
@@ -206,8 +206,8 @@ export function FlashcardsPage() {
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{currentDeck.cards.map(card => <article key={card.id} className="group/card flex flex-col rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                         <div className="mb-2 flex items-center justify-between gap-2">
                             <button type="button" onClick={() => edit(updateCard(workRef.current, currentDeck.id, card.id, { status: card.status === 'known' ? 'review' : card.status === 'review' ? null : 'known' }))} aria-label={l('statusNone')}
-                                className={`rounded-full px-2 py-0.5 text-xs font-medium ${card.status === 'known' ? 'bg-emerald-100 text-emerald-700' : card.status === 'review' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
-                                {card.status === 'known' ? `✔ ${l('knownLabel')}` : card.status === 'review' ? `↻ ${l('reviewLabel')}` : l('statusNone')}
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${card.status === 'known' ? 'bg-emerald-100 text-emerald-700' : card.status === 'review' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                                {card.status === 'known' ? <><Check className="h-3 w-3" aria-hidden="true" />{l('knownLabel')}</> : card.status === 'review' ? <><RotateCcw className="h-3 w-3" aria-hidden="true" />{l('reviewLabel')}</> : l('statusNone')}
                             </button>
                             <div className="flex items-center gap-1">
                                 <button type="button" onClick={() => setPickingImageId(card.id)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:border-indigo-300 hover:text-indigo-700" aria-label={card.image ? l('changeImage') : l('addImage')} title={card.image ? l('changeImage') : l('addImage')}>
@@ -282,8 +282,8 @@ function StudyView({ study, deck, card, onFlip, onAnswer, onExit, onRestart }: {
         return <section className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
             <h3 className="text-lg font-bold text-slate-900">{l('sessionDone')}</h3>
             <p className="mt-3 flex items-center justify-center gap-6 text-sm">
-                <span className="text-emerald-600">✔ {l('knownLabel')}: {study.known}</span>
-                <span className="text-amber-600">↻ {l('reviewLabel')}: {study.review}</span>
+                <span className="inline-flex items-center gap-1 text-emerald-600"><Check className="h-4 w-4" aria-hidden="true" />{l('knownLabel')}: {study.known}</span>
+                <span className="inline-flex items-center gap-1 text-amber-600"><RotateCcw className="h-4 w-4" aria-hidden="true" />{l('reviewLabel')}: {study.review}</span>
             </p>
             {reviewLeft.length > 0 && <p className="mt-2 break-words text-sm text-slate-600">{l('reviewLabel')}: {reviewLeft.map(c => c.front).join(', ')}</p>}
             <div className="mt-4 flex flex-wrap justify-center gap-2">

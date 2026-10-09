@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDownRight, ChevronDown, ChevronRight, ChevronUp, Layers, Pencil, Play, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { AlertTriangle, ArrowDownRight, ArrowRight, ChevronDown, ChevronRight, ChevronUp, Layers, Pencil, Play, Plus, RefreshCw, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
 import { PromptHistory } from '@/components/admin/PromptHistory';
@@ -62,7 +62,8 @@ export const writeInstrumentParam = (instrument: string | null) => {
 
 function Badge({ kind }: { kind: PromptMapBadge }) {
     const { t } = useI18n();
-    return <span className={`inline-flex items-center whitespace-nowrap rounded border px-1.5 py-0.5 text-[10px] font-bold tracking-wide ${BADGE_STYLE[kind]}`}>
+    return <span className={`inline-flex items-center gap-0.5 whitespace-nowrap rounded border px-1.5 py-0.5 text-[10px] font-bold tracking-wide ${BADGE_STYLE[kind]}`}>
+        {(kind.startsWith('model-') || kind === 'student') && <ArrowRight aria-hidden className="h-2.5 w-2.5" />}
         {t(`admin.promptMap.badge.${kind}`)}
     </span>;
 }
@@ -290,9 +291,9 @@ function EntryCard({ entry: baseEntry, highlighted, onSaved, onEditPersona, onEd
                     {counselor.variants && <VariantButtons variants={counselor.variants} selected="totale"
                         onSelect={level => onEditPersona({ ...counselor, context_level: level })} />}
                 </div>
-                <button type="button" onClick={() => onEditPersona(counselor)} aria-label={`${t('admin.promptMap.edit')} · ${counselor.name}`}
-                    className="inline-flex shrink-0 items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                    <Pencil aria-hidden className="h-3 w-3" />{t('admin.promptMap.edit')}
+                <button type="button" onClick={() => onEditPersona(counselor)} aria-label={`${t('admin.promptMap.edit')} · ${counselor.name}`} title={t('admin.promptMap.edit')}
+                    className="tap-icon shrink-0 rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
+                    <Pencil aria-hidden className="h-3.5 w-3.5" />
                 </button>
             </li>)}
         </ul>}
@@ -301,8 +302,9 @@ function EntryCard({ entry: baseEntry, highlighted, onSaved, onEditPersona, onEd
             {Object.keys(questions).length === 0 ? <p>{t('admin.promptMap.noQuestions')}</p>
                 : <p>{Object.entries(questions).map(([code, items]) => `${code.toUpperCase()} ${items.length}`).join(' · ')}</p>}
             {onEditQuestions && <button type="button" onClick={() => onEditQuestions(entry)}
-                className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                <Pencil aria-hidden className="h-3 w-3" />{t('admin.promptMap.editQuestions')}
+                aria-label={t('admin.promptMap.editQuestions')} title={t('admin.promptMap.editQuestions')}
+                className="tap-icon rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
+                <Pencil aria-hidden className="h-3.5 w-3.5" />
             </button>}
         </div>}
 
@@ -322,8 +324,9 @@ function EntryCard({ entry: baseEntry, highlighted, onSaved, onEditPersona, onEd
 
         {!entry.read_only && entry.kind !== 'step_questions' && !editing && <div className="mt-2 flex justify-end">
             <button type="button" onClick={() => setEditing(true)}
-                className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                <Pencil aria-hidden className="h-3 w-3" />{t('admin.promptMap.edit')}
+                aria-label={t('admin.promptMap.edit')} title={t('admin.promptMap.edit')}
+                className="tap-icon rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
+                <Pencil aria-hidden className="h-3.5 w-3.5" />
             </button>
         </div>}
         {editing && <EntryEditor entry={entry} componentLabels={componentLabels} onCancel={close} onSaved={() => { close(); onSaved(); }} />}
@@ -532,13 +535,13 @@ function QuestionsDialog({ entry, stepName, onClose }: { entry: PromptMapEntry; 
                         {!row.is_active && <span className="ml-2 rounded border border-slate-300 px-1 text-[10px] font-semibold uppercase text-slate-500">{t('admin.promptMap.questions.inactive')}</span>}
                     </p>
                     <div className="flex shrink-0 flex-wrap gap-1">
-                        <button type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} aria-label={t('admin.promptMap.questions.moveUp')} className={ICON_BUTTON}><ChevronUp aria-hidden className="h-4 w-4" /></button>
-                        <button type="button" disabled={busy || index === list.length - 1} onClick={() => move(index, 1)} aria-label={t('admin.promptMap.questions.moveDown')} className={ICON_BUTTON}><ChevronDown aria-hidden className="h-4 w-4" /></button>
-                        <button type="button" disabled={busy} onClick={() => { setEditingId(row.id); setEditText(row.text); setDeletingId(null); }} aria-label={t('admin.promptMap.edit')} className={ICON_BUTTON}><Pencil aria-hidden className="h-3.5 w-3.5" /></button>
+                        <button type="button" disabled={busy || index === 0} onClick={() => move(index, -1)} aria-label={t('admin.promptMap.questions.moveUp')} title={t('admin.promptMap.questions.moveUp')} className={ICON_BUTTON}><ChevronUp aria-hidden className="h-4 w-4" /></button>
+                        <button type="button" disabled={busy || index === list.length - 1} onClick={() => move(index, 1)} aria-label={t('admin.promptMap.questions.moveDown')} title={t('admin.promptMap.questions.moveDown')} className={ICON_BUTTON}><ChevronDown aria-hidden className="h-4 w-4" /></button>
+                        <button type="button" disabled={busy} onClick={() => { setEditingId(row.id); setEditText(row.text); setDeletingId(null); }} aria-label={t('admin.promptMap.edit')} title={t('admin.promptMap.edit')} className={ICON_BUTTON}><Pencil aria-hidden className="h-3.5 w-3.5" /></button>
                         {deletingId === row.id
                             ? <button type="button" disabled={busy} onClick={() => run([{ url: `${QUESTIONS_API}/${row.id}`, method: 'DELETE' }])}
                                 className="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white disabled:opacity-60">{t('admin.promptMap.questions.confirmDelete')}</button>
-                            : <button type="button" disabled={busy} onClick={() => setDeletingId(row.id)} aria-label={t('admin.promptMap.questions.delete')} className={`${ICON_BUTTON} text-red-700`}><Trash2 aria-hidden className="h-3.5 w-3.5" /></button>}
+                            : <button type="button" disabled={busy} onClick={() => setDeletingId(row.id)} aria-label={t('admin.promptMap.questions.delete')} title={t('admin.promptMap.questions.delete')} className={`${ICON_BUTTON} text-red-700`}><Trash2 aria-hidden className="h-3.5 w-3.5" /></button>}
                     </div>
                 </div>}
             </li>)}
@@ -1003,8 +1006,9 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                         </select>
                     </label>
                     <button type="button" onClick={() => instrument && void load(instrument)} disabled={loading}
-                        className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
-                        <RefreshCw aria-hidden className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />{t('admin.promptMap.reload')}
+                        aria-label={t('admin.promptMap.reload')} title={t('admin.promptMap.reload')}
+                        className="tap-icon rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+                        <RefreshCw aria-hidden className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
                     </button>
                     <button type="button" onClick={() => setTestingChat(true)} disabled={!instrument}
                         className="inline-flex items-center gap-1 rounded border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-60">
@@ -1054,7 +1058,7 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                                 {shortName(id)}
                             </li>)}
                         </ul>
-                        <p className="mt-2 text-xs text-amber-800">⚠ {t('admin.promptMap.groupWarning', { instruments: group.instruments.map(shortName).join(' · ') })}</p>
+                        <p className="mt-2 flex items-start gap-1 text-xs text-amber-800"><AlertTriangle aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0" />{t('admin.promptMap.groupWarning', { instruments: group.instruments.map(shortName).join(' · ') })}</p>
                         <div className="mt-3 space-y-3">{group.entries.map(entry => card(entry))}</div>
                     </div>)}
                 </div>
@@ -1084,9 +1088,9 @@ export function PromptMap({ componentLabels }: { componentLabels?: Record<string
                                     const title = stepTitle(step, lang, t);
                                     return <>
                                         <button type="button" disabled={structureBusy || index === 0} onClick={() => void moveStep(index, -1)}
-                                            aria-label={t('admin.promptMap.step.moveUp', { step: title })} className={ICON_BUTTON}><ChevronUp aria-hidden className="h-4 w-4" /></button>
+                                            aria-label={t('admin.promptMap.step.moveUp', { step: title })} title={t('admin.promptMap.step.moveUp', { step: title })} className={ICON_BUTTON}><ChevronUp aria-hidden className="h-4 w-4" /></button>
                                         <button type="button" disabled={structureBusy || index === movable.length - 1} onClick={() => void moveStep(index, 1)}
-                                            aria-label={t('admin.promptMap.step.moveDown', { step: title })} className={ICON_BUTTON}><ChevronDown aria-hidden className="h-4 w-4" /></button>
+                                            aria-label={t('admin.promptMap.step.moveDown', { step: title })} title={t('admin.promptMap.step.moveDown', { step: title })} className={ICON_BUTTON}><ChevronDown aria-hidden className="h-4 w-4" /></button>
                                         <button type="button" disabled={structureBusy || movable.length === 1} onClick={() => setDeleting(step)}
                                             title={movable.length === 1 ? t('admin.promptMap.step.lastStep') : undefined}
                                             aria-label={t('admin.promptMap.step.delete', { step: title })} className={`${ICON_BUTTON} text-red-700`}><Trash2 aria-hidden className="h-3.5 w-3.5" /></button>
