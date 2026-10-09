@@ -1412,7 +1412,9 @@ and administration may complete the questionnaire step without opening guided ch
 this is distinct committed import evidence, never a source label, upload or preview.
 The importer itself is not available in this release. A results deep dive is a
 separate future step, not implied by entering scores. Published target identity is
-immutable; replace a step rather than reusing its ID for another target. Teacher
+immutable; replace a step rather than reusing its ID for another target. A step
+removed before its first publication and restored on a published path is activated
+when restored, so only evidence recorded after that moment completes it. Teacher
 progress overrides retain precedence, and unavailable steps never grant access.
 Existing tool-key steps and their explicit marks remain supported. Historical
 results are `in-app` with unknown capture method; no historical guided entries are
