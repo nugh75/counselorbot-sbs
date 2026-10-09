@@ -1,7 +1,43 @@
-export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat";
+export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat" | "assignment";
 
 function parseStepType(value: unknown): ClassPathStepType {
-    return value === 'questionnaire_administration' || value === 'guided_results_chat' ? value : 'tool';
+    return value === 'questionnaire_administration' || value === 'guided_results_chat' || value === 'assignment'
+        ? value : 'tool';
+}
+
+// Delivered snapshot of a whole-class goal assignment, as a path step shows it.
+export interface AssignmentStepSummary {
+    id: number;
+    title: string;
+    attachments: {kind: string; title: string}[];
+    intent?: string;
+    due_date?: string | null;
+}
+
+export function parseAssignmentSummary(value: unknown): AssignmentStepSummary | null {
+    if (!value || typeof value !== 'object') return null;
+    const raw = value as Record<string, unknown>;
+    const attachments = Array.isArray(raw.attachments) ? raw.attachments : [];
+    return {
+        id: Number(raw.id),
+        title: String(raw.title || ''),
+        attachments: attachments.filter(item => item && typeof item === 'object').map(item => {
+            const row = item as Record<string, unknown>;
+            return {kind: String(row.kind || ''), title: String(row.title || '')};
+        }),
+        intent: raw.intent ? String(raw.intent) : undefined,
+        due_date: raw.due_date ? String(raw.due_date) : null,
+    };
+}
+
+// Assignment steps carry their own summary; target_summary stays administration-shaped.
+function typedTarget(raw: Record<string, unknown>, stepType: ClassPathStepType) {
+    const assignment = stepType === 'assignment';
+    return {
+        assignment_id: assignment && raw.assignment_id != null ? Number(raw.assignment_id) : null,
+        assignment_summary: assignment ? parseAssignmentSummary(raw.target_summary) : null,
+        target_summary: assignment ? null : raw.target_summary as ClassPathStep['target_summary'],
+    };
 }
 
 export interface ClassPathStep {
@@ -12,6 +48,8 @@ export interface ClassPathStep {
     step_type?: ClassPathStepType;
     administration_plan_id?: number | null;
     results_step_id?: number | null;
+    assignment_id?: number | null;
+    assignment_summary?: AssignmentStepSummary | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
     completion_kind?: string | null;
@@ -50,16 +88,17 @@ export function parseClassPathStep(input: unknown): ClassPathStep {
     if (!input || typeof input !== 'object') throw new Error('Invalid step payload');
     const raw = input as Record<string, unknown>;
     const auto = Boolean(raw.auto_detect);
+    const stepType = parseStepType(raw.step_type);
     return {
         id: raw.id != null ? Number(raw.id) : undefined,
         path_id: raw.path_id != null ? Number(raw.path_id) : undefined,
         position: Number(raw.position || 1),
         tool_key: String(raw.tool_key || ''),
-        step_type: parseStepType(raw.step_type),
+        step_type: stepType,
         administration_plan_id: raw.administration_plan_id != null ? Number(raw.administration_plan_id) : null,
         results_step_id: raw.results_step_id != null ? Number(raw.results_step_id) : null,
         active_from: raw.active_from ? String(raw.active_from) : null,
-        target_summary: raw.target_summary as ClassPathStep['target_summary'],
+        ...typedTarget(raw, stepType),
         completion_kind: raw.completion_kind ? String(raw.completion_kind) : null,
         title: raw.title ? String(raw.title) : null,
         instructions: raw.instructions ? String(raw.instructions) : null,
@@ -102,6 +141,8 @@ export interface StudentClassPathStep {
     step_type?: ClassPathStepType;
     administration_plan_id?: number | null;
     results_step_id?: number | null;
+    assignment_id?: number | null;
+    assignment_summary?: AssignmentStepSummary | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
     completion_kind?: string | null;
@@ -134,14 +175,15 @@ export function parseStudentClassPathStep(input: unknown): StudentClassPathStep 
     const state = (stateStr === 'done' || stateStr === 'locked' || stateStr === 'unavailable') ? stateStr : 'not_done';
     const sourceStr = raw.source ? String(raw.source) : null;
     const source = (sourceStr === 'student' || sourceStr === 'teacher' || sourceStr === 'automatic') ? sourceStr : null;
+    const stepType = parseStepType(raw.step_type);
     return {
         id: Number(raw.id),
         tool_key: String(raw.tool_key || ''),
-        step_type: parseStepType(raw.step_type),
+        step_type: stepType,
         administration_plan_id: raw.administration_plan_id != null ? Number(raw.administration_plan_id) : null,
         results_step_id: raw.results_step_id != null ? Number(raw.results_step_id) : null,
         active_from: raw.active_from ? String(raw.active_from) : null,
-        target_summary: raw.target_summary as ClassPathStep['target_summary'],
+        ...typedTarget(raw, stepType),
         completion_kind: raw.completion_kind ? String(raw.completion_kind) : null,
         title: raw.title ? String(raw.title) : null,
         instructions: raw.instructions ? String(raw.instructions) : null,

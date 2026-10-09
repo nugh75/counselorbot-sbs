@@ -1,4 +1,6 @@
 import type { Lang } from "./i18n";
+// @ts-expect-error -- Node's TypeScript runner requires the extension.
+import { pathAssignmentText } from "./i18n-path-assignments.ts";
 const languages: readonly Lang[] = ["it", "en", "es", "fr", "de", "sv"];
 export const administrationStepTexts = {
   teacherGuide: [
@@ -358,8 +360,13 @@ export function typedStepTargetLabel(
   step: {
     step_type?: string;
     target_summary?: { instrument_code: string; code: string } | null;
+    assignment_summary?: { title: string } | null;
   },
 ): string | null {
+  if (step.step_type === "assignment")
+    return step.assignment_summary
+      ? `${pathAssignmentText(lang, "assignment")} · ${step.assignment_summary.title}`
+      : null;
   if (!step.target_summary) return null;
   const target = `${step.target_summary.instrument_code} · ${step.target_summary.code}`;
   return step.step_type === "guided_results_chat"

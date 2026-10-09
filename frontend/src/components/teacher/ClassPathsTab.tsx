@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { administrationStepText } from '@/lib/i18n-administration-steps';
 import { fetchInstruments } from '@/lib/instruments-api';
@@ -9,6 +10,10 @@ import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
 import { parseClassPath, parseClassPaths, pathStepTools, type ClassPath, type ClassPathStep } from '@/lib/class-paths';
 import { deepDiveSources } from '@/lib/results-deep-dive';
+import { assignmentSaveError, assignmentStepInput, parsePathAssignments, selectablePathAssignments } from '@/lib/path-assignments';
+import { pathAssignmentText } from '@/lib/i18n-path-assignments';
+import type { AssignmentStepSummary } from '@/lib/class-paths';
+import { AssignmentDialog } from './AssignmentButton';
 import { classPathText, classPathsTexts } from '@/lib/i18n-class-paths';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
 import { useI18n } from '@/lib/i18n-context';
@@ -109,10 +114,32 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
             target_summary:source.target_summary}]);
         setSelectedResultsStep('');setNotice(null);
     };
+    // TF6: a whole-class goal assignment of this class, existing or created here.
+    const p = (key: Parameters<typeof pathAssignmentText>[1]) => pathAssignmentText(lang, key);
+    const [pathAssignments, setPathAssignments] = useState<AssignmentStepSummary[]>([]);
+    const [assignmentLoadError, setAssignmentLoadError] = useState(false);
+    const [selectedAssignment, setSelectedAssignment] = useState('');
+    const [creatingAssignment, setCreatingAssignment] = useState(false);
+    const loadPathAssignments = async (select?: number) => {
+        try {
+            const response = await apiFetch(`/api/teacher/groups/${path.group_id}/path-assignments`);
+            if (!response.ok) throw new Error('path assignments');
+            setPathAssignments(parsePathAssignments(await response.json()));
+            setAssignmentLoadError(false);
+            if (select) setSelectedAssignment(String(select));
+        } catch {setAssignmentLoadError(true);}
+    };
+    useEffect(() => {void loadPathAssignments();}, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const addAssignmentStep = () => {
+        const target = pathAssignments.find(row => row.id === Number(selectedAssignment));
+        if (!target) return;
+        setSteps(current => [...current, assignmentStepInput(target, current.length + 1)]);
+        setSelectedAssignment(''); setNotice(null);
+    };
     const [selectedToolKey, setSelectedToolKey] = useState<string>('');
 
     const [busy, setBusy] = useState(false);
-    const [notice, setNotice] = useState<'saved' | 'published' | 'conflict' | 'tool_disabled' | 'deep_dive_referenced' | 'deep_dive_invalid' | 'error' | null>(null);
+    const [notice, setNotice] = useState<'saved' | 'published' | 'conflict' | 'tool_disabled' | 'deep_dive_referenced' | 'deep_dive_invalid' | 'assignment_invalid' | 'error' | null>(null);
     const [forbidden, setForbidden] = useState(false);
 
     const mounted = useRef(false);
@@ -211,7 +238,8 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                     step_type: s.step_type || 'tool',
                     ...(s.step_type === 'questionnaire_administration'
                         ? {administration_plan_id:s.administration_plan_id}
-                        : s.step_type === 'guided_results_chat' ? {results_step_id:s.results_step_id} : {tool_key:s.tool_key}),
+                        : s.step_type === 'guided_results_chat' ? {results_step_id:s.results_step_id}
+                            : s.step_type === 'assignment' ? {assignment_id:s.assignment_id} : {tool_key:s.tool_key}),
                     title: s.title ? s.title.trim() : null,
                     instructions: s.instructions ? s.instructions.trim() : null,
                     due_date: s.due_date || null,
@@ -236,6 +264,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                 if (!isCurrent()) return false;
                 if (detail === 'results_step_referenced') setNotice('deep_dive_referenced');
                 else if (['results_step_invalid', 'results_step_order', 'duplicate_results_chat'].includes(detail)) setNotice('deep_dive_invalid');
+                else if (assignmentSaveError(detail)) setNotice('assignment_invalid');
                 else setNotice(response.status === 409 ? 'conflict' : 'tool_disabled');
                 return false;
             }
@@ -281,7 +310,9 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
             } else if (response.status === 401 || response.status === 403) {
                 setForbidden(true);
             } else {
-                setNotice('error');
+                // A revoked or otherwise invalid assignment target names itself; the draft stays.
+                const detail = (await response.json().catch(() => null))?.detail;
+                setNotice(assignmentSaveError(detail) ? 'assignment_invalid' : 'error');
             }
         } catch {
             setNotice('error');
@@ -467,9 +498,13 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                 ? `${a('administration')} · ${step.target_summary?.code || step.administration_plan_id}`
                                 : step.step_type === 'guided_results_chat'
                                     ? `${a('deepDive')} · ${a('deepDiveFrom')} #${source?.position ?? '?'}`
-                                    : toolLabel(step.tool_key, classSettings.tools, lang);
+                                    : step.step_type === 'assignment'
+                                        ? `${p('assignment')} · ${step.assignment_summary?.title || `#${step.assignment_id}`}`
+                                        : toolLabel(step.tool_key, classSettings.tools, lang);
                             // Students see this step as not available: say so here too.
-                            const unavailable = (step.step_type ?? 'tool') === 'tool' && !enabledTools.some(t => t.key === step.tool_key);
+                            const unavailable = ((step.step_type ?? 'tool') === 'tool' && !enabledTools.some(t => t.key === step.tool_key))
+                                // A saved assignment step loses its summary once revoked or otherwise unavailable.
+                                || (step.step_type === 'assignment' && step.id !== undefined && !step.assignment_summary);
                             return (
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${index}`}
@@ -611,6 +646,22 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                     </div>
                     <p className="text-sm text-slate-600">{a('deepDiveRule')}</p>
                 </div>
+                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
+                    <h3 className="font-semibold">{p('assignment')}</h3>
+                    {assignmentLoadError && <Callout variant="danger">{p('loadError')} <Button variant="secondary" onClick={()=>void loadPathAssignments()}>{p('retry')}</Button></Callout>}
+                    {!assignmentLoadError && !pathAssignments.length && <p className="text-sm text-slate-600">{p('empty')}</p>}
+                    <div className="flex flex-wrap gap-2">
+                        <label>{p('choose')}<select value={selectedAssignment} onChange={event=>setSelectedAssignment(event.target.value)} className="ml-2 rounded border p-2">
+                            <option value="">{p('choose')}</option>
+                            {selectablePathAssignments(pathAssignments, steps).map(row=><option key={row.id} value={row.id}>{row.attachments.length ? `${row.title} · ${row.attachments.map(item=>item.title).join(', ')}` : row.title}</option>)}
+                        </select></label>
+                        <Button variant="secondary" disabled={busy || !selectedAssignment} onClick={addAssignmentStep}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
+                        <Button variant="secondary" disabled={busy} onClick={()=>setCreatingAssignment(true)}>{p('create')}</Button>
+                    </div>
+                    <p className="text-sm text-slate-600">{p('rule')}</p>
+                    {creatingAssignment && createPortal(<AssignmentDialog classId={path.group_id} close={()=>setCreatingAssignment(false)}
+                        saved={created=>void loadPathAssignments(created.id)} />, document.body)}
+                </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
                     <select
                         value={selectedToolKey}
@@ -658,6 +709,9 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                             <p role="alert" className="text-red-600 font-medium">
                                 {l('conflictNotice')}
                             </p>
+                        )}
+                        {notice === 'assignment_invalid' && (
+                            <p role="alert" className="text-red-600 font-medium">{p('invalid')}</p>
                         )}
                         {(notice === 'deep_dive_referenced' || notice === 'deep_dive_invalid') && (
                             <p role="alert" className="text-red-600 font-medium">
