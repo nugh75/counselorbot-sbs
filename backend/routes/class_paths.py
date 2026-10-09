@@ -10,7 +10,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models, schemas
-from ..class_access import resolve_access
+from ..class_access import class_enables, resolve_access
 from ..class_path_completion import has_automatic_evidence
 from ..class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, tool_catalog
 from .groups import _is_admin, _username, _visible_group_query
@@ -61,36 +61,26 @@ def get_tool_start_href(tool_key: str) -> str:
 
 
 def is_tool_available_for_class(db: Session, group_id: int, tool_key: str) -> bool:
-    """Check whether a tool is active and enabled for the given class."""
+    """Check whether a tool is active and enabled for the given class.
+
+    The class rule is the access resolver's (`class_access`), so the paths tab
+    and the student view agree with /user/access (bug 838e6852).
+    """
     key_lower = (tool_key or "").strip().lower()
     if key_lower in ALWAYS_ON:
         return True
-
-    settings = db.get(models.ClassSettings, group_id)
     if key_lower in PERSONAL_TOOL_KEYS:
-        if settings:
-            lock = (settings.locked_tool_keys or {}).get(key_lower)
-            if isinstance(lock, dict) and "enabled" in lock:
-                return bool(lock["enabled"])
-            if key_lower in (settings.disabled_tool_keys or []):
-                return False
-        return True
-
-    instrument = (
-        db.query(models.Instrument)
-        .filter(func.lower(models.Instrument.code) == key_lower)
-        .first()
-    )
-    if not instrument or not instrument.is_active or instrument.target_audience != "student":
-        return False
-    if settings:
-        lock = (settings.locked_tool_keys or {}).get(instrument.code)
-        if isinstance(lock, dict) and "enabled" in lock:
-            return bool(lock["enabled"])
-        if instrument.code in (settings.disabled_tool_keys or []):
+        canonical = key_lower
+    else:
+        instrument = (
+            db.query(models.Instrument)
+            .filter(func.lower(models.Instrument.code) == key_lower)
+            .first()
+        )
+        if not instrument or not instrument.is_active or instrument.target_audience != "student":
             return False
-    return True
-
+        canonical = instrument.code
+    return class_enables(db.get(models.ClassSettings, group_id), canonical)
 
 
 def _require_visible_group(db: Session, identity, group_id: int, *, for_update: bool = False) -> models.StudentGroup:
