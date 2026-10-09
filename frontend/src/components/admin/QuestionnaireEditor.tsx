@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Play, Plus, Trash2, Save, ListChecks, Sliders, FileText, Eye } from 'lucide-react';
+import { ArrowRight, RefreshCw, Play, Plus, Trash2, Save, ListChecks, Sliders, FileText, Eye } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { CreateInstrumentDialog } from '@/components/admin/CreateInstrumentDialog';
 import { AdminChatSandboxModal } from '@/components/admin/AdminChatSandboxModal';
@@ -637,8 +637,8 @@ function LanguageStatusBar({
                 <div className="flex flex-wrap items-center gap-1.5">
                     {ladder.filter((s) => s !== version.status).map((s) => (
                         <button key={s} onClick={() => promote(s)}
-                            className="rounded border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-100">
-                            → {s}
+                            className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-100">
+                            <ArrowRight className="h-3 w-3" aria-hidden />{s}
                         </button>
                     ))}
                 </div>
