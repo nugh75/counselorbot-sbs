@@ -585,7 +585,9 @@ draft paths, define title and description, choose the progression mode (`recomme
 suggested sequence vs `strict` linear prerequisite order), and assemble steps. Each
 step references an instrument key enabled for the class (excluding always-on tools
 and administrator-disabled instruments; invalid tools are rejected with HTTP 422),
-with optional step title overrides, student instructions and due dates.
+with optional step title overrides, student instructions and due dates. A step whose
+tool the class later disables shows a «Not available» badge in the builder, as students
+see it in their path.
 The step builder supports position numbering, reordering via up/down buttons (and
 keyboard), removal (`[×]`), and displays a self-marking indicator (`⚑`) for tools
 without automated completion detection (such as personal-area tools). Steps are
@@ -704,7 +706,7 @@ disabled tool stay readable, exportable and deletable. `GET /user/access` return
 resolved tool list; the student catalog uses it from #90, and the counselor
 fields from #93.
 
-**Class-filtered student catalog (S3, #90).** The student interface now gates all tool entry points using the resolved access from `GET /user/access`. Cached once per browser session in sessionStorage and in-memory, the resolved access filters tools on top of `resolveActiveStudentTools`. Students in restricted classes see only tools enabled for their classes across the home questionnaire selector and ReturningHome cards; disabled tools produce no cards and are omitted from upcoming sections. Navigating directly to `/strumenti/[id]` for a disabled tool presents a dedicated 'not enabled for your class' panel with a button back to the catalog. Deep links via `?start=` or `?q=` targeting a disabled tool notify the student with a clear toast warning and fall back to the catalog. Frozen sessions for disabled tools are hidden from the header Resume menu and ReturningHome; attempting a direct resume link triggers an informative error toast and safely returns to the catalog. Unrestricted students and staff continue to see the complete catalog without filtering.
+**Class-filtered student catalog (S3, #90).** The student interface now gates all tool entry points using the resolved access from `GET /user/access`. The resolved access is asked again on every page (concurrent requests are shared; the copy kept in sessionStorage only seeds the first render), so a tool or counselor the teacher disables for the class disappears from the student's catalog, menu and start flows on the next page, without closing the browser (bug 838e6852). It filters tools on top of `resolveActiveStudentTools`. Students in restricted classes see only tools enabled for their classes across the home questionnaire selector and ReturningHome cards; disabled tools produce no cards and are omitted from upcoming sections. Navigating directly to `/strumenti/[id]` for a disabled tool presents a dedicated 'not enabled for your class' panel with a button back to the catalog. Deep links via `?start=` or `?q=` targeting a disabled tool notify the student with a clear toast warning and fall back to the catalog. Frozen sessions for disabled tools are hidden from the header Resume menu and ReturningHome; attempting a direct resume link triggers an informative error toast and safely returns to the catalog. Unrestricted students and staff continue to see the complete catalog without filtering.
 
 **Telegram bot and class access (S7, #94).** The Telegram bot uses the same
 resolved access as the web. `/strumenti` and `/nuovo` list only the instruments
