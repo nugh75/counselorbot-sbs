@@ -10,11 +10,11 @@ const topic = { id: 102, group_id: 102, title: 'Read your QSA', body: '**Welcome
     created_at: '2026-10-08T10:00:00Z', edited_at: null, hidden: false, deleted: false, hidden_reason: null, own: false,
     pinned: false, locked: false, last_post_at: '2026-10-08T10:00:00Z', replies_count: 0 };
 
-async function fixture({ teacher = false, archive = false, lang = 'en', width = 390, failure = null } = {}) {
+async function fixture({ teacher = false, archive = false, lang = 'en', width = 390, failure = null, targets = [], link = null } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 850 } });
     await context.addInitScript(lang => localStorage.setItem('cb_lang', lang), lang);
     const page = await context.newPage(); page.setDefaultTimeout(15000);
-    const state = { topics: [structuredClone(topic)], posts: [], writes: [], failure, held: null, readFailure: null, errors: [],
+    const state = { topics: [structuredClone({ ...topic, link })], posts: [], writes: [], failure, held: null, readFailure: null, errors: [],
         actions: [], actionFailure: null, log: [] };
     // Students never receive hidden text or reasons, mirroring the API.
     const view = row => teacher || !row.hidden ? row : { ...row, body: null, title: row.title === undefined ? undefined : null, hidden_reason: null };
@@ -29,6 +29,7 @@ async function fixture({ teacher = false, archive = false, lang = 'en', width = 
         else if (url.pathname.endsWith('/settings')) data = { group_id: 102, revision: 1, disabled_tool_keys: [], disabled_counselor_ids: [], default_counselor_id: null, tools: [], counselors: [], forum: { students_can_open: false, premoderation: false } };
         else if (url.pathname === '/api/user/account-preferences') data = { setup_completed: true, counselor_ready: true, notebook_ready: true };
         else if (url.pathname === '/api/orientation/status') data = { required: false };
+        else if (url.pathname.endsWith('/forum/link-targets')) data = { targets };
         else if (url.pathname.endsWith('/forum/log')) data = { entries: state.log, has_more: false };
         else if (url.pathname.startsWith('/api/teacher/forum/') || url.pathname.startsWith('/api/forum/posts/')) {
             const body = request.postData() ? request.postDataJSON() : null;
@@ -55,7 +56,8 @@ async function fixture({ teacher = false, archive = false, lang = 'en', width = 
                 if (state.held) await state.held;
                 if (state.failure) return route.fulfill({ status: state.failure, json: { detail: 'PRIVATE DEBUG MESSAGE' } });
                 if (url.pathname.endsWith('/topics')) {
-                    data = { ...topic, ...request.postDataJSON(), id: 103 }; state.topics.push(data);
+                    const input = request.postDataJSON();
+                    data = { ...topic, ...input, link: input.link_kind ? { ...targets.find(t => t.kind === input.link_kind && t.id === input.link_id), available: true } : null, id: 103 }; state.topics.push(data);
                 } else {
                     data = { ...topic, ...request.postDataJSON(), id: state.posts.length + 1, author_display_name: 'Student Snapshot', own: true }; state.posts.push(data);
                 }
@@ -218,14 +220,14 @@ test('unread marker renders on topic and opening topic triggers mark read', asyn
         if (url.pathname === '/api/user/account-preferences') return route.fulfill({ json: { setup_completed: true, counselor_ready: true, notebook_ready: true } });
         if (url.pathname === '/api/orientation/status') return route.fulfill({ json: { required: false } });
         if (url.pathname.includes('/groups/102/forum/topics')) {
-            return route.fulfill({ json: { group: { id: 102, name: 'Synthetic class', is_active: true }, can_open_topic: false, topics: [unreadTopic], has_more: false } });
+            return route.fulfill({ json: { group: { id: 102, name: 'Synthetic class', is_active: true }, can_open_topic: false, can_moderate: false, topics: [unreadTopic], has_more: false } });
         }
         if (url.pathname === '/api/forum/topics/102/read') {
             readCalled = true;
             return route.fulfill({ json: { ok: true } });
         }
         if (url.pathname === '/api/forum/topics/102') {
-            return route.fulfill({ json: { topic: unreadTopic, posts: [], can_reply: true, has_more: false } });
+            return route.fulfill({ json: { topic: unreadTopic, posts: [], can_reply: true, can_moderate: false, has_more: false } });
         }
         return route.fulfill({ json: [] });
     });
@@ -354,3 +356,76 @@ for (const lang of ['de', 'fr']) {
     });
 }
 
+
+const linkedStep = { kind: 'path_step', id: 7, title: 'Reading QSA', tool_key: 'QSA', path_title: 'Start of year' };
+const linkedAssignment = { kind: 'assignment', id: 8, title: 'Read chapter 2', tool_key: null, path_title: null };
+
+for (const target of [linkedStep, linkedAssignment]) {
+    test(`teacher selects ${target.kind}; a rejected send keeps the entire linked draft`, async () => {
+        const f = await fixture({ teacher: true, targets: [target], failure: 422 });
+        try {
+            await f.page.getByRole('button', { name: 'New discussion', exact: true }).click();
+            await f.page.getByLabel('Title', { exact: false }).fill('Linked discussion');
+            await f.page.getByLabel('Text', { exact: false }).fill('A linked draft');
+            const select = f.page.getByLabel('Optional link');
+            await select.selectOption(`${target.kind}:${target.id}`);
+            await f.page.getByRole('button', { name: 'Send', exact: true }).click();
+            await f.page.getByText('Could not send. Your draft is preserved.', { exact: true }).waitFor();
+            assert.equal(await select.inputValue(), `${target.kind}:${target.id}`);
+            assert.equal(await f.page.getByLabel('Text', { exact: false }).inputValue(), 'A linked draft');
+            assert.deepEqual(f.state.writes[0], { title: 'Linked discussion', body: 'A linked draft', link_kind: target.kind, link_id: target.id });
+            f.state.failure = null;
+            await f.page.getByRole('button', { name: 'Send', exact: true }).click();
+            await f.page.getByRole('heading', { name: 'Linked discussion', exact: true }).waitFor();
+            const anchor = f.page.getByRole('link', { name: new RegExp(target.title) });
+            assert.equal(await anchor.getAttribute('href'), target.kind === 'path_step' ? '/docente/classi/102?tab=paths' : '/docente/assegnazioni#assignment-8');
+            assert.deepEqual(f.state.errors, []);
+        } finally { await f.context.close(); }
+    });
+    test(`${target.kind} opens from a direct forum URL and unavailable targets remain text`, async () => {
+        const f = await fixture({ link: { ...target, available: true } });
+        try {
+            await f.page.goto(`${origin}/profilo/classi/102/forum?topic=102`);
+            await f.page.getByRole('heading', { name: 'Read your QSA', exact: true }).waitFor();
+            assert.equal(await f.page.getByRole('link', { name: new RegExp(target.title) }).getAttribute('href'), target.kind === 'path_step'
+                ? '/profilo/percorsi#class-step-7' : '/profilo/assegnazioni#assignment-8');
+            f.state.topics[0].link.available = false;
+            await f.page.reload();
+            await f.page.getByText(/Unavailable/).waitFor();
+            assert.equal(await f.page.getByRole('link', { name: new RegExp(target.title) }).count(), 0);
+            assert.deepEqual(f.state.errors, []);
+        } finally { await f.context.close(); }
+    });
+}
+
+test('a class path step links to its exact forum discussion', async () => {
+    const f = await fixture({ link: { ...linkedStep, available: true } });
+    try {
+        await f.page.route('**/api/user/paths', route => route.fulfill({ json: [{ id: 1, group_id: 102, group_name: 'Synthetic class', title: 'Start of year',
+            mode: 'recommended', steps: [{ id: 7, tool_key: 'QSA', title: 'Reading QSA', state: 'not_done', can_self_mark: false }], done: 0, total: 1 }] }));
+        await f.page.route('**/api/user/forum/links', route => route.fulfill({ json: { links: [{ kind: 'path_step', id: 7, topic_id: 102, group_id: 102 }] } }));
+        await f.page.goto(`${origin}/profilo/percorsi`);
+        const link = f.page.getByRole('link', { name: 'Discuss in the class forum', exact: true });
+        assert.equal(await link.getAttribute('href'), '/profilo/classi/102/forum?topic=102');
+        await link.click();
+        await f.page.getByRole('heading', { name: 'Read your QSA', exact: true }).waitFor();
+        assert.deepEqual(f.state.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('a received assignment links to its exact forum discussion', async () => {
+    const f = await fixture({ link: { ...linkedAssignment, available: true } });
+    try {
+        await f.page.route('**/api/user/assignments', route => route.fulfill({ json: [{ id: 8, author_name: 'Teacher', group_name: 'Synthetic class',
+            source_kind: 'reading', instructions: '', created_at: topic.created_at, revoked_at: null,
+            snapshot: { title: 'Read chapter 2', description: '', details: '' } }] }));
+        await f.page.route('**/api/user/forum/links', route => route.fulfill({ json: { links: [{ kind: 'assignment', id: 8, topic_id: 102, group_id: 102 }] } }));
+        await f.page.goto(`${origin}/profilo/assegnazioni`);
+        await f.page.getByRole('button', { name: 'Details', exact: true }).click();
+        const link = f.page.getByRole('link', { name: 'Discuss in the class forum', exact: true });
+        assert.equal(await link.getAttribute('href'), '/profilo/classi/102/forum?topic=102');
+        await link.click();
+        await f.page.getByRole('heading', { name: 'Read your QSA', exact: true }).waitFor();
+        assert.deepEqual(f.state.errors, []);
+    } finally { await f.context.close(); }
+});
