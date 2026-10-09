@@ -17,6 +17,7 @@ import { useTeacherResource } from '@/components/teacher/useTeacherResource';
 import { parseForumDiscussionLinks } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
+import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 
 export function StudentClassPathsPage() {
     const { lang } = useI18n();
@@ -246,6 +247,9 @@ export function StudentClassPathsPage() {
                                                         <p className="text-sm text-slate-600">
                                                             {step.instructions}
                                                         </p>
+                                                    )}
+                                                    {step.step_type === 'assignment' && !isUnavailable && (
+                                                        <p className="text-xs text-slate-500">{pathAssignmentText(lang, 'studentRule')}</p>
                                                     )}
                                                     <ForumDiscussionLinks links={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
                                                         kind="path_step" targetId={step.id} />
