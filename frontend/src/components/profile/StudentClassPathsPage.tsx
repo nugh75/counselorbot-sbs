@@ -12,24 +12,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import { classPathText, type PathTextKey } from '@/lib/i18n-class-paths';
 import { lockedStepUnlockNumber, parseStudentClassPaths, type StudentClassPath, type StudentClassPathStep } from '@/lib/class-paths';
-import { personalAreaName } from '@/lib/i18n-personal-area';
-import { QUESTIONNAIRES } from '@/lib/questionnaires';
-
-function resolveToolName(toolKey: string, lang: any): string {
-    const key = toolKey.toLowerCase();
-    try {
-        const personal = personalAreaName(lang, key as any);
-        if (personal) return personal;
-    } catch {
-        // Not a personal area slug
-    }
-    const upper = toolKey.toUpperCase();
-    if (upper in QUESTIONNAIRES) {
-        const q = QUESTIONNAIRES[upper as keyof typeof QUESTIONNAIRES];
-        return q?.fullName || q?.name || toolKey;
-    }
-    return toolKey;
-}
+import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 
 export function StudentClassPathsPage() {
     const { lang } = useI18n();
@@ -173,7 +156,7 @@ export function StudentClassPathsPage() {
                                 const isDone = step.state === 'done';
                                 const isLocked = step.state === 'locked';
                                 const isUnavailable = step.state === 'unavailable';
-                                const toolDisplayName = resolveToolName(step.tool_key, lang);
+                                const toolDisplayName = resolveClassPathToolName(step.tool_key, lang);
                                 const titleDisplay = step.title ? step.title : toolDisplayName;
                                 const isActionBusy = actionStepId === step.id;
 
