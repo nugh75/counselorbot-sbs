@@ -345,7 +345,14 @@ class AdministrationPlan(Base):
     location = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     status = Column(String, nullable=False, default="planned", index=True)
-    # Autenticazione istituzionale: codice + password dell'istituto che somministra.
+    # Canonical institute reference: the institute owns the external credentials.
+    institution_id = Column(Integer, ForeignKey("institutions.id", name="fk_administration_plan_institution"),
+                            index=True, nullable=True)
+    # linked | unlinked (explicit no-institute mode) | needs_reconciliation (legacy rows).
+    institution_link_state = Column(String(32), nullable=False, default="unlinked", server_default="unlinked")
+    reconciliation_reason = Column(String(64), nullable=True)
+    revision = Column(Integer, nullable=False, default=1, server_default="1")
+    # Legacy duplicates read only by migration/reconciliation; no writer sets them.
     institution_code = Column(String(50), nullable=True, index=True)
     institution_password = Column(String(100), nullable=True)
     created_by_username = Column(String, nullable=True, index=True)
@@ -1517,8 +1524,44 @@ class Institution(Base):
     institution_code = Column(String(50), unique=True, nullable=True, index=True)
     # Password hashed bcrypt; vuota significa istituto senza autenticazione.
     hashed_password = Column(String(255), nullable=True)
+    # Bumped on every code/password change: verification grants bind to it.
+    credentials_revision = Column(Integer, nullable=False, default=1, server_default="1")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    @property
+    def credentials_configured(self) -> bool:
+        return bool(self.institution_code and self.hashed_password)
+
+
+class InstitutionVerificationGrant(Base):
+    """Short-lived proof of local code/password verification for one user and plan.
+
+    Only a SHA-256 digest of the bearer token is stored. It proves a local check
+    against the institute verifier, never issuance or completion at the external site.
+    """
+
+    __tablename__ = "institution_verification_grants"
+
+    id = Column(Integer, primary_key=True)
+    token_hash = Column(String(64), nullable=False, unique=True)
+    username = Column(String(255), nullable=False, index=True)
+    administration_plan_id = Column(Integer, ForeignKey("administration_plans.id", ondelete="CASCADE"), nullable=False)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False)
+    credentials_revision = Column(Integer, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class InstitutionVerificationAttempt(Base):
+    """Failed verification attempts, used only to throttle guessing."""
+
+    __tablename__ = "institution_verification_attempts"
+
+    id = Column(Integer, primary_key=True)
+    username = Column(String(255), nullable=False, index=True)
+    administration_plan_id = Column(Integer, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
 
 class InstitutionTeacher(Base):

@@ -11,11 +11,11 @@ import re
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import BackgroundTasks
+from fastapi import BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from . import class_access, database, models
+from . import administration_context, class_access, database, models
 from .api_models import ChatRequest
 from .chat_logic import _ensure_questionnaire_guided_steps, strip_markdown
 from .diagram_blocks import extract as extract_diagrams
@@ -218,6 +218,22 @@ BOT_TEXTS = {
         "fr": "Cet instrument n'est pas activé pour votre classe.",
         "de": "Dieses Instrument ist für Ihre Klasse nicht freigeschaltet.",
         "sv": "Detta verktyg är inte aktiverat för din klass.",
+    },
+    "institution_verification_required": {
+        "it": "Questa somministrazione richiede il codice e la password del tuo istituto. Apri la web app per verificarli e salvare i punteggi.",
+        "en": "This administration requires your institute code and password. Open the web app to verify them and save your scores.",
+        "es": "Esta administración requiere el código y la contraseña de tu instituto. Abre la aplicación web para verificarlos y guardar tus puntuaciones.",
+        "fr": "Cette passation exige le code et le mot de passe de ton établissement. Ouvre l'application web pour les vérifier et enregistrer tes scores.",
+        "de": "Diese Durchführung erfordert den Code und das Passwort deiner Schule. Öffne die Web-App, um sie zu prüfen und deine Werte zu speichern.",
+        "sv": "Den här administreringen kräver din skolas kod och lösenord. Öppna webbappen för att verifiera dem och spara dina poäng.",
+    },
+    "administration_unavailable": {
+        "it": "Questa somministrazione non può ricevere risultati in questo momento. Chiedi al tuo docente.",
+        "en": "This administration cannot accept results right now. Please ask your teacher.",
+        "es": "Esta administración no puede recibir resultados en este momento. Pregunta a tu docente.",
+        "fr": "Cette passation ne peut pas recevoir de résultats pour le moment. Demande à ton enseignant.",
+        "de": "Diese Durchführung kann derzeit keine Ergebnisse annehmen. Bitte frage deine Lehrkraft.",
+        "sv": "Den här administreringen kan inte ta emot resultat just nu. Fråga din lärare.",
     },
     "tool_unavailable": {
         "it": "Questo strumento non è al momento disponibile.",
@@ -682,6 +698,17 @@ async def _start_flow(db: Session, state: models.TelegramConversationState) -> N
     if state.questionnaire_type in SCORE_QUESTIONNAIRES:
         link = get_active_link(db, state.telegram_user_id)
         plan_id, contact_id = plan_context_for_result(db, state.username, state.questionnaire_type, link)
+        try:
+            # Telegram cannot carry a verification grant: institute-backed plans refuse here.
+            administration_context.require_result_context(db, plan_id, state.username, None, state.questionnaire_type)
+        except HTTPException as exc:
+            chat_id, language = state.telegram_chat_id, state.language
+            _reset_state(state)
+            db.commit()
+            key = ("institution_verification_required" if exc.detail.get("code") == "institution_verification_required"
+                   else "administration_unavailable")
+            await telegram_bot.send_message(chat_id, _t(key, language))
+            return
         db.add(models.QuestionnaireResult(
             session_id=state.session_id,
             questionnaire_type=state.questionnaire_type,
