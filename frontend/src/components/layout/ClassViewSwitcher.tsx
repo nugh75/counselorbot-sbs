@@ -55,7 +55,7 @@ export function ClassViewSwitcher({ labelled = false, className }: { labelled?: 
                     aria-invalid={failed || undefined}
                     onChange={(event) => onChange(event.target.value)}
                     className={cn(
-                        'min-h-[44px] w-full min-w-0 truncate rounded-full border border-slate-200 bg-slate-50 py-1 pl-8 pr-7 text-sm font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 lg:min-h-0 lg:max-w-48 xl:max-w-56',
+                        'min-h-[44px] w-full min-w-0 truncate rounded-full border border-slate-200 bg-slate-50 py-1 pl-8 pr-7 text-sm font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 lg:min-h-0 lg:max-w-56',
                         failed && 'border-red-400 dark:border-red-500',
                     )}
                 >
