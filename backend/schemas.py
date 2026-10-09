@@ -1920,7 +1920,15 @@ class AdministrationPathStepInput(PathStepFields):
     administration_plan_id: int = Field(gt=0)
 
 
-TypedPathStepInput = Annotated[Union[ClassPathStepInput, AdministrationPathStepInput], Field(discriminator="step_type")]
+class GuidedResultsChatStepInput(PathStepFields):
+    step_type: Literal["guided_results_chat"]
+    results_step_id: int = Field(gt=0)
+
+
+TypedPathStepInput = Annotated[
+    Union[ClassPathStepInput, AdministrationPathStepInput, GuidedResultsChatStepInput],
+    Field(discriminator="step_type"),
+]
 
 
 class ClassPathStepResponse(BaseModel):
@@ -1930,6 +1938,7 @@ class ClassPathStepResponse(BaseModel):
     tool_key: Optional[str] = None
     step_type: str = "tool"
     administration_plan_id: Optional[int] = None
+    results_step_id: Optional[int] = None
     active_from: Optional[datetime] = None
     target_summary: Optional[dict] = None
     availability_reason: Optional[str] = None
@@ -2011,6 +2020,7 @@ class StudentClassPathStep(BaseModel):
     tool_key: Optional[str] = None
     step_type: str = "tool"
     administration_plan_id: Optional[int] = None
+    results_step_id: Optional[int] = None
     active_from: Optional[datetime] = None
     target_summary: Optional[dict] = None
     availability_reason: Optional[str] = None

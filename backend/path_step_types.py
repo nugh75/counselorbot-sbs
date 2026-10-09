@@ -1,15 +1,16 @@
 """Shared typed-step builder/availability/launch/completion boundary.
 
 TF3 registers tool and Italian administration; TF4 adds in-app administrations
-in other served locales. Later slices extend these branches together with their
-strict input target and database constraint.
+in other served locales; TF5 adds the optional guided deep dive on the result of
+an earlier administration step. Later slices extend these branches together
+with their strict input target and database constraint.
 """
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from . import models, administration_context, scoring_service
 from .class_access import class_enables
-from .class_path_completion import has_automatic_evidence
+from .class_path_completion import GUIDED_CHAT_COMPLETED, has_automatic_evidence
 
 ADMINISTRATION_QUESTIONNAIRES = frozenset({"QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP"})
 EXTERNAL_IT_HREF = "https://www.competenzestrategiche.it/"
@@ -73,15 +74,43 @@ def validate_step_input(db, path, value):
             raise HTTPException(
                 422, f"Tool '{value.tool_key}' is not enabled for this class"
             )
-    else:
+    elif value.step_type == "questionnaire_administration":
         administration_target(db, path.group_id, value.administration_plan_id)
 
 
+def validate_composition(db, path, steps):
+    """A deep dive follows its saved administration step of this path, once."""
+    positions = {value.id: index for index, value in enumerate(steps) if value.id}
+    linked = set()
+    for index, value in enumerate(steps):
+        if value.step_type != "guided_results_chat":
+            continue
+        if value.results_step_id in linked:
+            raise HTTPException(422, "duplicate_results_chat")
+        linked.add(value.results_step_id)
+        stored = (
+            db.query(models.ClassPathStep)
+            .filter_by(id=value.results_step_id, path_id=path.id)
+            .first()
+        )
+        if not stored or stored.step_type != "questionnaire_administration":
+            raise HTTPException(422, "results_step_invalid")
+        if value.results_step_id not in positions:
+            raise HTTPException(409, "results_step_referenced")
+        position = positions[value.results_step_id]
+        if steps[position].step_type != "questionnaire_administration":
+            raise HTTPException(422, "results_step_invalid")
+        if position > index:
+            raise HTTPException(422, "results_step_order")
+
+
 def target_identity(value):
-    return (
-        value.step_type,
-        value.tool_key if value.step_type == "tool" else value.administration_plan_id,
-    )
+    target = {
+        "tool": "tool_key",
+        "questionnaire_administration": "administration_plan_id",
+        "guided_results_chat": "results_step_id",
+    }[value.step_type]
+    return value.step_type, getattr(value, target)
 
 
 def apply_step_target(step, value):
@@ -94,6 +123,22 @@ def apply_step_target(step, value):
         if value.step_type == "questionnaire_administration"
         else None
     )
+    step.results_step_id = (
+        value.results_step_id if value.step_type == "guided_results_chat" else None
+    )
+
+
+def results_step(db, step):
+    """The deep dive's administration step while it is still active in its path."""
+    source = db.get(models.ClassPathStep, step.results_step_id)
+    if (
+        source
+        and source.path_id == step.path_id
+        and source.removed_at is None
+        and source.step_type == "questionnaire_administration"
+    ):
+        return source
+    return None
 
 
 def step_descriptor(db, path, step):
@@ -113,9 +158,13 @@ def step_descriptor(db, path, step):
             "start_href": get_tool_start_href(step.tool_key),
             "instrument_code": step.tool_key,
         }
+    deep_dive = step.step_type == "guided_results_chat"
+    source = results_step(db, step) if deep_dive else step
     try:
+        if source is None:
+            raise HTTPException(409, "results_step_unavailable")
         plan, institute = administration_target(
-            db, path.group_id, step.administration_plan_id
+            db, path.group_id, source.administration_plan_id
         )
     except HTTPException as error:
         return {
@@ -131,7 +180,8 @@ def step_descriptor(db, path, step):
         "availability_reason": None,
         "auto_detect": True,
         "instrument_code": plan.instrument_code,
-        "start_href": f"/profilo/percorsi/{path.id}/{step.id}",
+        "start_href": f"/profilo/percorsi/{path.id}/{step.id}"
+        + ("/approfondimento" if deep_dive else ""),
         "target_summary": {
             "id": plan.id,
             "code": plan.code,
@@ -140,6 +190,7 @@ def step_descriptor(db, path, step):
             "locale": plan.locale,
             "institution_name": institute.name,
             "delivery_mode": plan.delivery_mode,
+            **({"results_step_id": source.id} if deep_dive else {}),
         },
     }
 
@@ -151,8 +202,46 @@ def completion_evidence(db, path, step, username):
             if has_automatic_evidence(db, step.tool_key, username, path.published_at)
             else None
         )
-    if step.active_from is None:
+    if step.step_type == "guided_results_chat":
+        return deep_dive_evidence(db, step, username)
+    return next(administration_evidence(db, step, username), None)
+
+
+def deep_dive_evidence(db, step, username):
+    """Final guided-turn marker of a session bound to a still-qualifying result."""
+    source = results_step(db, step)
+    if step.active_from is None or source is None:
         return None
+    qualifying = {row["result_id"] for row in administration_evidence(db, source, username)}
+    for binding in (
+        db.query(models.ClassPathDeepDiveSession)
+        .filter_by(step_id=step.id, username=username)
+        .order_by(models.ClassPathDeepDiveSession.id)
+    ):
+        if binding.result_id not in qualifying or binding.started_at < step.active_from:
+            continue
+        result = db.get(models.QuestionnaireResult, binding.result_id)
+        final_turn = (
+            db.query(models.Log.timestamp)
+            .filter(
+                models.Log.action == GUIDED_CHAT_COMPLETED,
+                models.Log.session_id == binding.session_id,
+                models.Log.username == username,
+                models.Log.questionnaire_type == result.questionnaire_type,
+                models.Log.timestamp >= binding.started_at,
+            )
+            .order_by(models.Log.id)
+            .first()
+        )
+        if final_turn:
+            return {"kind": "guided_results_chat", "at": final_turn[0], "result_id": result.id}
+    return None
+
+
+def administration_evidence(db, step, username):
+    """Yield each valid completion of an administration step, oldest first."""
+    if step.active_from is None:
+        return
     plan = db.get(models.AdministrationPlan, step.administration_plan_id)
     for evidence in (
         db.query(models.ClassPathStepEvidence)
@@ -181,7 +270,7 @@ def completion_evidence(db, path, step, username):
                 and entry.accepted_at >= step.active_from
                 and evidence.recorded_at >= step.active_from
             ):
-                return {"kind": "guided_entry", "at": entry.accepted_at}
+                yield {"kind": "guided_entry", "at": entry.accepted_at, "result_id": result.id}
         elif evidence.kind == "confirmed_import" and result.source == "imported":
             confirmation = db.get(
                 models.QuestionnaireImportConfirmation, evidence.import_confirmation_id
@@ -197,8 +286,11 @@ def completion_evidence(db, path, step, username):
                 and confirmation.confirmed_at >= step.active_from
                 and evidence.recorded_at >= step.active_from
             ):
-                return {"kind": "confirmed_import", "at": confirmation.confirmed_at}
-    return None
+                yield {
+                    "kind": "confirmed_import",
+                    "at": confirmation.confirmed_at,
+                    "result_id": result.id,
+                }
 
 
 def valid_scores(db, instrument_code, scores):
