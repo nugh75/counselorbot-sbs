@@ -11,7 +11,7 @@ import { Callout } from '@/components/ui/Callout';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { toast } from '@/components/ui/Toast';
 import { classPathText, type PathTextKey } from '@/lib/i18n-class-paths';
-import { parseStudentClassPaths, type StudentClassPath, type StudentClassPathStep } from '@/lib/class-paths';
+import { lockedStepUnlockNumber, parseStudentClassPaths, type StudentClassPath, type StudentClassPathStep } from '@/lib/class-paths';
 import { personalAreaName } from '@/lib/i18n-personal-area';
 import { QUESTIONNAIRES } from '@/lib/questionnaires';
 
@@ -261,7 +261,7 @@ export function StudentClassPathsPage() {
 
                                                     {isLocked && (
                                                         <p className="text-xs italic text-slate-500">
-                                                            {l('unlocksAfter').replace('{n}', String(stepNumber - 1))}
+                                                            {l('unlocksAfter').replace('{n}', String(lockedStepUnlockNumber(path) ?? stepNumber - 1))}
                                                         </p>
                                                     )}
 
@@ -271,7 +271,7 @@ export function StudentClassPathsPage() {
                                                         )}
                                                         {isDone && step.source && (
                                                             <span>
-                                                                {step.source === 'teacher' ? l('sourceTeacher') : l('sourceStudent')}
+                                                                {step.source === 'teacher' ? l('sourceTeacher') : step.source === 'automatic' ? l('sourceAutomatic') : l('sourceStudent')}
                                                             </span>
                                                         )}
                                                     </div>
