@@ -12,12 +12,16 @@ import {
     type InstrumentSummary,
 } from '@/lib/instruments-api';
 
+import { useUserAccess } from '@/lib/use-user-access';
+import { isToolAllowed } from '@/lib/user-access';
+
 const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
 
 export default function TestAdministrationsPage() {
     const { t, lang } = useI18n();
     const [instruments, setInstruments] = useState<InstrumentSummary[] | null>(null);
     const [failed, setFailed] = useState(false);
+    const { access } = useUserAccess();
 
     useEffect(() => {
         let cancelled = false;
@@ -26,6 +30,8 @@ export default function TestAdministrationsPage() {
             .catch(() => { if (!cancelled) setFailed(true); });
         return () => { cancelled = true; };
     }, []);
+
+    const visibleInstruments = (instruments ?? []).filter((inst) => isToolAllowed(access, inst.code));
 
     return (
         <div className="page-narrow space-y-6">
@@ -60,7 +66,7 @@ export default function TestAdministrationsPage() {
             )}
 
             <div className="grid gap-4 sm:grid-cols-2">
-                {(instruments ?? []).map((instrument) => {
+                {visibleInstruments.map((instrument) => {
                     const available = instrument.available_locales.includes(lang);
                     return (
                         <section key={instrument.code} className="glass-panel p-5 space-y-4">

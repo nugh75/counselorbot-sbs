@@ -98,6 +98,19 @@ export async function freezeSession(snapshot: FrozenSessionSnapshot, options: Fr
     notifyFrozenSessionsChanged();
 }
 
+export class FrozenSessionAccessError extends Error {
+    detail: string;
+    tool?: string;
+    status: number;
+    constructor(detail: string, tool?: string, status = 403) {
+        super(detail);
+        this.name = 'FrozenSessionAccessError';
+        this.detail = detail;
+        this.tool = tool;
+        this.status = status;
+    }
+}
+
 export async function listFrozenSessions(): Promise<FrozenSessionSummary[]> {
     const res = await apiFetch('/api/session/frozen');
     if (!res.ok) throw new Error(`Frozen sessions unavailable (${res.status})`);
@@ -107,6 +120,20 @@ export async function listFrozenSessions(): Promise<FrozenSessionSummary[]> {
 export async function getFrozenSession(sessionId: string): Promise<FrozenSessionDetail | null> {
     const res = await apiFetch(`/api/session/frozen/${encodeURIComponent(sessionId)}`);
     if (res.status === 404) return null;
+    if (res.status === 403) {
+        let detail = 'forbidden';
+        let tool: string | undefined;
+        try {
+            const body = await res.json();
+            if (body && typeof body === 'object') {
+                if (typeof body.detail === 'string') detail = body.detail;
+                if (typeof body.tool === 'string') tool = body.tool;
+            }
+        } catch {
+            // ignore JSON parse error
+        }
+        throw new FrozenSessionAccessError(detail, tool, 403);
+    }
     if (!res.ok) throw new Error(`Frozen session unavailable (${res.status})`);
     return (await res.json()) as FrozenSessionDetail;
 }
