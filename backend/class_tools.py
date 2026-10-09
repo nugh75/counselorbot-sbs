@@ -16,6 +16,8 @@ PERSONAL_TOOL_KEYS = {
     "comparison": ("personal", "comparison"),
     "bussola": ("support", "bussola"),
     "assistant": ("support", "assistant"),
+    # Class tool: switches the class forum off for students (F3, #104).
+    "forum": ("forum", "forum"),
 }
 ALWAYS_ON = frozenset({"notebook", "results", "classes", "assignments"})
 

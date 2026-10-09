@@ -1,6 +1,6 @@
 from .chat_preferences import ResponseFormat
 from .dynamic_registry import DynamicInstrumentSet, HISTORIC_INSTRUMENT_CODES
-from pydantic import BaseModel, Field, StrictInt, validator
+from pydantic import BaseModel, Field, StrictBool, StrictInt, validator
 from typing import Optional, List, Dict, Any, Union, Literal
 from datetime import date, datetime
 import json
@@ -1544,14 +1544,23 @@ class GroupJoinRequest(BaseModel):
     code: str
 
 
+class ClassForumOptions(BaseModel):
+    """Both forum options are sent together (F3, #104)."""
+    model_config = {"extra": "forbid"}
+
+    students_can_open: StrictBool
+    premoderation: StrictBool
+
+
 class ClassSettingsUpdate(BaseModel):
-    """S1 accepts tool/counselor choices; forum and locks belong to later slices."""
+    """Tool/counselor choices and, from F3, forum options; locks belong to #109."""
     model_config = {"extra": "forbid"}
 
     revision: int = Field(ge=1, strict=True)
     disabled_tool_keys: List[str]
     disabled_counselor_ids: Optional[List[StrictInt]] = None
     default_counselor_id: Optional[int] = Field(default=None, strict=True)
+    forum: Optional[ClassForumOptions] = None
 
 
 class StudentGroupCreate(BaseModel):

@@ -50,7 +50,8 @@ def test_absent_settings_enable_all_and_include_only_student_instruments(setting
     assert tools["OFF"]["enabled"] is False
     assert {row["key"] for row in body["tools"] if row["always_on"]} == {"notebook", "results", "classes", "assignments"}
     assert body["default_counselor_id"] is None
-    assert body["forum"] == {"students_can_open": False, "premoderation": False}
+    assert body["forum"] == {"students_can_open": False, "premoderation": False,
+                             "students_can_open_locked": False, "premoderation_locked": False}
     assert db.query(models.ClassSettings).count() == 0, "GET must not create settings"
 
 
