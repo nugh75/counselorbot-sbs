@@ -54,6 +54,7 @@ const labels = {
 } satisfies Record<string, Localized>;
 
 const names = {
+    istituti: ['Istituti', 'Institutes', 'Institutos', 'Établissements', 'Einrichtungen', 'Lärosäten'],
     taccuino: labels.notebook,
     'taccuini-prova': ['Taccuini di prova', 'Practice notebooks', 'Cuadernos de práctica', 'Carnets d’entraînement', 'Übungs-Notizbücher', 'Övningsanteckningsböcker'],
     classi: ['Gruppi e classi', 'Groups and classes', 'Grupos y clases', 'Groupes et classes', 'Gruppen und Klassen', 'Grupper och klasser'],
@@ -66,6 +67,7 @@ const names = {
 } satisfies Record<TeacherAreaSlug, Localized>;
 
 const descriptions = {
+    istituti: ['Crea un istituto o scegli quello esistente e aderisci. Poi gestisci le tue classi.', 'Create an institute or select an existing one and join. Then manage your classes.', 'Crea un instituto o selecciona uno existente y únete. Después gestiona tus clases.', 'Créez un établissement ou choisissez-en un et rejoignez-le. Gérez ensuite vos classes.', 'Erstellen Sie eine Einrichtung oder wählen Sie eine bestehende und treten Sie bei. Verwalten Sie dann Ihre Klassen.', 'Skapa ett lärosäte eller välj ett befintligt och gå med. Hantera sedan dina klasser.'],
     'taccuini-prova': [
         'Crea studenti immaginari e usali nelle chat guidate per allenarti prima delle sessioni reali.',
         'Create imaginary students and use them in guided chats to practise before real sessions.',

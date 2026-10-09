@@ -20,6 +20,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
+from ..institution_access import require_institution_teacher
 from .. import auth, database, models, schemas
 from ..reading_audience import AUDIENCE_BANDS
 from ..user_names import store_user_display_name
@@ -96,6 +97,7 @@ def _serialize_group(db: Session, group: models.StudentGroup) -> dict:
         "school": group.school,
         "school_level": group.school_level,
         "institution_id": group.institution_id,
+        "institution_name": (db.get(models.Institution, group.institution_id).name if group.institution_id else None),
         "description": group.description,
         "methodologies": group.methodologies,
         "context_visible_to_students": bool(group.context_visible_to_students),
@@ -492,6 +494,8 @@ async def create_group(
         raise HTTPException(status_code=400, detail="Codice classe non valido: formato GR-XXXXXX")
     if db.query(models.StudentGroup).filter(models.StudentGroup.code == code).first():
         raise HTTPException(status_code=409, detail="Codice classe gia' esistente")
+    if payload.institution_id is not None:
+        require_institution_teacher(db, current_user, payload.institution_id, lock=True)
     store_user_display_name(db, current_user)
     school = (payload.school or "").strip() or None
     level = _valid_level(payload.school_level)
@@ -516,6 +520,11 @@ async def update_group(
 ):
     group = _require_visible_group(db, current_user, group_id)
     updates = payload.model_dump(exclude_unset=True)
+    if "institution_id" in updates and updates["institution_id"] != group.institution_id:
+        # A co-teacher can edit class metadata without gaining institute rights.
+        target = updates["institution_id"] if updates["institution_id"] is not None else group.institution_id
+        if target is not None:
+            require_institution_teacher(db, current_user, target, lock=True)
     if "name" in updates:
         name = (updates["name"] or "").strip()
         if not name:

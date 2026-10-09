@@ -1731,6 +1731,7 @@ class InstitutionUpdate(BaseModel):
 
 
 class InstitutionResponse(InstitutionBase):
+    needs_admin_review: bool = False
     id: int
     hashed_password: Optional[str] = None
 

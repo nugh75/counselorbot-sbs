@@ -375,3 +375,11 @@ system/history e ripristini la risposta, mentre la modalità locale resta blocca
 anche con un flag globale vecchio nel worker. Nuova rotta provata sul backend
 dev 8002: startup completo e 401 senza identità. Processi locali fermati a fine
 sessione; nessuna modifica alle impostazioni o al server del Codespace dell’utente.
+
+## Teacher institutes (#148)
+
+Use `scripts/dev-teacher-institutes.sh backend|frontend` from the dedicated worktree.
+The isolated synthetic PostgreSQL cluster uses 18648; dev uses 8148/3148, avoiding
+the pre-existing 8002/3107 services. The frontend is a secret-free source snapshot.
+Commands, SSH tunnel, tests, migration and exact shutdown steps are documented in
+[teacher-institutes-validation.md](teacher-institutes-validation.md).

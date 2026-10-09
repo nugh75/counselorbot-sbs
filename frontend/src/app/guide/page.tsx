@@ -3,6 +3,7 @@
 // Public, localized guide. The audience query selects documentation, not permissions.
 
 import Link from 'next/link';
+import { instituteGuideImages } from '@/lib/guide-institutes';
 import { usePersonalAIFeatures } from '@/lib/use-personal-ai-features';
 import { personalAPIText } from '@/lib/i18n-personal-api';
 import personalAPIImage from '../../../public/guide/api-personali.png';
@@ -96,6 +97,7 @@ function GuideContent() {
     const sectionImages: Record<number, { image: StaticImageData; caption: string }[]> = teacher ? {
         1: [{ image: images['teacher-area'], caption: l('teacher1Title') }, { image: images['teacher-notebook'], caption: teacherAreaName(lang, 'taccuino') }, { image: images['teacher-class-picker'], caption: classPickerText(lang, 'title') }],
         2: [
+            { image: instituteGuideImages[lang], caption: teacherAreaName(lang, 'istituti') },
             { image: images['teacher-groups'], caption: l('teacher2Title') },
             { image: images['class-overview'], caption: classSettingsText(lang, 'overview') },
             { image: images['class-tools'], caption: classSettingsText(lang, 'toolsTab') },
@@ -316,6 +318,9 @@ function GuideContent() {
                             <Link href={TEACHER_ROUTES[n - 1]} className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{l('open')}</Link>
                         )}
                         {teacher && n === 2 && <div className="mt-4 text-sm leading-relaxed text-slate-600">
+                            <h3 className="font-semibold text-slate-900">{teacherAreaName(lang, 'istituti')}</h3>
+                            <p className="mt-1.5">{l('teacherInstitutesBody')}</p>
+                            <Link href="/docente/istituti" className="inline-flex min-h-11 items-center font-semibold text-indigo-700 underline">{teacherAreaName(lang, 'istituti')}</Link>
                             <h3 className="font-semibold text-slate-900">{classSettingsText(lang, 'toolsTab')}</h3>
                             <p className="mt-1.5">{l('classSettingsTeacher')}</p>
                             <p className="mt-1.5">{classSettingsText(lang, 'supportGuide')}</p>
