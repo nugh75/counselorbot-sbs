@@ -198,3 +198,26 @@ DATABASE_URL=postgresql://c2_test@127.0.0.1:18589/counselorbot_test \
   settings/variants/context-level/chat/sandbox suites: 92 passed plus the three
   known N5 SQLite fixture errors (3 passed with the `char_length` shim); focused
   `test_smoke.py` memory/chat/Idea/OpenCode: 32 passed.
+
+## Student view after a class change (bug 838e6852)
+
+- Frontend: `fetchUserAccess` (`frontend/src/lib/user-access.ts`) used to
+  return the `sessionStorage` copy of `/user/access` for the whole browser
+  session, and nothing cleared it. A tool or counselor the teacher disabled
+  stayed in the student's catalog, navigation and start flows until the tab
+  was closed; only the server guards refused it. It now always asks the
+  server (concurrent callers share one request); the stored copy only seeds
+  the first render, so each page shows the current class settings.
+- Paths tab: steps whose tool the class no longer enables carry the same
+  "Not available" badge students see, and the step picker uses
+  `pathStepTools`, the set the server accepts on save.
+- Backend: `class_paths.is_tool_available_for_class` (paths tab progress,
+  student `/user/paths`, self-marks, teacher overrides) applies the
+  resolver's `class_access.class_enables` instead of its own copy of the
+  lock/deny-list rule.
+- Unchanged by design: a student in several classes gets the union (decision
+  in the module docstring), and staff are not filtered, so testing as a staff
+  account shows every tool.
+- Tests (written failing first where behaviour changed):
+  `user-access.test.ts` revalidation, `class-paths.test.ts` step tools,
+  `test_class_paths.py::test_path_availability_matches_the_class_access_resolver`.
