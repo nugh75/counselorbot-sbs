@@ -592,7 +592,7 @@ including local models, research exports, administrator result/log/training
 exports, PDFs, session ledgers and RAG indexes. Architectural privacy tests
 protect that boundary. Student-created discussions, muting, pre-approval,
 and path/assignment links are separate later slices. Six-language
-interface controls are included; the expanded forum guide and screenshots are #107.
+interface controls are included; the guide sections and screenshots arrived with F6 (#107).
 Titles, messages and reasons reject invisible control characters (for example
 NUL); tabs and line breaks are kept. Character lengths for titles and messages are validated on publication.
 
@@ -609,7 +609,7 @@ show “Discuss in the class forum” for each linked discussion. These links op
 the exact topic and are returned only to current class members, class teachers
 and administrators. Leaving the class immediately removes access. No forum
 content enters AI contexts, research exports or PDFs. Composer controls and the
-class sections of the public guide describe this behavior in all six languages.
+forum sections of the public guide describe this behavior in all six languages.
 
 **Forum moderation (F2, #103).** Class owners, co-teachers and administrators
 moderate from the open discussion: Pin/Unpin (pinned discussions stay on top),
@@ -733,6 +733,20 @@ available, and a notice says so; otherwise the student chooses a counselor and
 then returns to the session. Teachers, researchers and administrators are never
 filtered. Compass and Assistant follow the selected counselor; their own class
 toggles arrive with #92.
+
+**Class forum guide (F6, #107).** The public guide (`/guide`) has a student
+section “Class forum” (16) and a teacher section “Class forum and moderation”
+(8), in all six languages, each with a screenshot of the forum list built from
+synthetic data. The student section explains where to open the forum, when
+students can open discussions, text-only formatting, editing and deleting own
+messages, the posting limit, pre-approval, hidden messages, closed discussions,
+mute, a disabled forum, read-only archives and the unread badges. The teacher
+section covers the Forum tab, pin/close/hide/restore, the Forum switch and
+options in Tools & counselors with administrator locks, “Pending (n)”, “Mute
+author” and “Muted students”, and the Moderation log. Both sections then explain
+discussion links to path steps and assignments, and state that no AI model,
+local ones included, reads the forum and that messages stay out of research
+exports, session records and PDFs. The teacher section links to the Classes page.
 
 **Class forum unread badge (F4, #105).** An in-app badge indicates unread forum
 activity across active classes. The backend (`GET /user/forum/unread`,
