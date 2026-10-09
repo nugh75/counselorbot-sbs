@@ -4,8 +4,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 FORUM_FILES = {"backend.routes.forum", "backend.forum_schemas"}
-FORUM_SYMBOLS = {"ForumTopic", "ForumPost", "ForumRead", "ForumModerationLog",
-                 "forum_topics", "forum_posts", "forum_reads", "forum_moderation_log"}
+FORUM_SYMBOLS = {"ForumTopic", "ForumPost", "ForumRead", "ForumModerationLog", "ForumMute",
+                 "forum_topics", "forum_posts", "forum_reads", "forum_moderation_log", "forum_mutes"}
 
 
 def module_path(name):
@@ -67,6 +67,7 @@ def test_forum_import_graph_has_no_ai_rag_context_or_export_path():
         "backend.reading_audience",
         "backend.user_names",
         "backend.class_tools",
+        "backend.class_access",
         "backend.chat_preferences",
         "backend.dynamic_registry",
     }
@@ -84,7 +85,21 @@ def test_no_non_forum_consumer_can_read_forum_models_or_tables():
         if relative.parts[0] in {'tests', '.venv'} or str(relative) in allowed:
             continue
         tree = ast.parse(path.read_text())
+        # Class settings may append metadata-only option changes to the log.
+        # Permit only this constructor, never log queries or content consumers.
+        metadata_log_constructors = {
+            id(node.func) for node in ast.walk(tree) if relative == Path('routes/groups.py')
+            and isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name) and node.func.value.id == 'models'
+            and node.func.attr == 'ForumModerationLog'
+            and not node.args and {kw.arg for kw in node.keywords} == {
+                'group_id', 'actor_username', 'action', 'target_kind', 'reason'}
+            and any(kw.arg == 'action' and isinstance(kw.value, ast.Constant)
+                    and kw.value.value == 'settings_change' for kw in node.keywords)
+        }
         for node in ast.walk(tree):
+            if id(node) in metadata_log_constructors:
+                continue
             value = node.id if isinstance(node, ast.Name) else node.attr if isinstance(node, ast.Attribute) else node.name if isinstance(node, ast.alias) else node.value if isinstance(node, ast.Constant) else None
             if isinstance(value, str) and any(token in value for token in FORUM_SYMBOLS):
                 violations.append(f'{relative}:{node.lineno}')

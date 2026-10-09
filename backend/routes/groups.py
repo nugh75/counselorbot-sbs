@@ -10,6 +10,7 @@ Note e messaggi del docente vivono qui, sulla classe.
 import re
 import secrets
 import string
+from types import SimpleNamespace
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -21,6 +22,7 @@ from .. import auth, database, models, schemas
 from ..reading_audience import AUDIENCE_BANDS
 from ..user_names import store_user_display_name
 from ..class_tools import ALWAYS_ON, tool_catalog
+from ..class_access import FORUM_OPTIONS, forum_option
 
 router = APIRouter()
 get_db = database.get_db
@@ -175,9 +177,24 @@ def _serialize_settings(db: Session, group_id: int, settings) -> dict:
                        for row in db.query(models.Counselor).filter(
                            models.Counselor.owner_username.is_(None)
                        ).order_by(models.Counselor.sort_order, models.Counselor.id).all()],
-        "forum": {"students_can_open": bool(settings.forum_students_can_open) if settings else False,
-                  "premoderation": bool(settings.forum_premoderation) if settings else False},
+        "forum": _serialize_forum_options(settings),
     }
+
+
+def _serialize_forum_options(settings) -> dict:
+    result = {}
+    for name in FORUM_OPTIONS:
+        result[name], result[f"{name}_locked"] = forum_option(settings, name)
+    return result
+
+
+def _forum_settings_log(previous, settings, previous_tools) -> list[str]:
+    """Readable `option: on|off` lines for the forum moderation log (ids and names only)."""
+    changes = [f"{name}: {'on' if forum_option(settings, name)[0] else 'off'}" for name in FORUM_OPTIONS
+               if forum_option(previous, name)[0] != forum_option(settings, name)[0]]
+    if ("forum" in previous_tools) != ("forum" in settings.disabled_tool_keys):
+        changes.insert(0, f"forum: {'off' if 'forum' in settings.disabled_tool_keys else 'on'}")
+    return changes
 
 
 @router.get("/teacher/groups/{group_id}/settings")
@@ -220,14 +237,27 @@ async def put_class_settings(
     if default_id is not None and (default_id not in institutional or default_id in disabled_counselors
                                    or not institutional[default_id].is_active):
         raise HTTPException(status_code=422, detail="Default counselor must be enabled and institutional")
+    previous = (SimpleNamespace(forum_students_can_open=settings.forum_students_can_open,
+                                forum_premoderation=settings.forum_premoderation,
+                                locked_forum_options=settings.locked_forum_options) if settings else None)
+    previous_tools = list(settings.disabled_tool_keys or []) if settings else []
     if settings is None:
         settings = models.ClassSettings(group_id=group_id, revision=1)
         db.add(settings)
+    if payload.forum is not None:
+        # A locked option keeps the teacher's stored value for when admin unlocks it.
+        for name in FORUM_OPTIONS:
+            if not forum_option(settings, name)[1]:
+                setattr(settings, f"forum_{name}", getattr(payload.forum, name))
     settings.disabled_tool_keys = sorted(set(payload.disabled_tool_keys))
     settings.disabled_counselor_ids = sorted(set(disabled_counselors))
     settings.default_counselor_id = default_id
     settings.revision += 1
     settings.updated_by = _username(current_user)
+    # Forum switches are moderation-relevant: they also go to the forum log (#104).
+    for change in _forum_settings_log(previous, settings, previous_tools):
+        db.add(models.ForumModerationLog(group_id=group_id, actor_username=_username(current_user),
+                                         action="settings_change", target_kind="settings", reason=change))
     db.commit()
     db.refresh(settings)
     return _serialize_settings(db, group_id, settings)

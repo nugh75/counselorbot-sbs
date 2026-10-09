@@ -1825,6 +1825,24 @@ class ForumPost(Base):
     edited_at = Column(DateTime(timezone=True), nullable=True)
 
 
+class ForumMute(Base):
+    """A moderator's mute of one student in one class (F3, #104).
+
+    Active while `lifted_at` is null and `until` is null or in the future; rows
+    are never deleted, so the mute history stays next to the moderation log.
+    """
+    __tablename__ = "forum_mutes"
+
+    id = Column(Integer, primary_key=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    username = Column(String, nullable=False, index=True)
+    muted_by = Column(String, nullable=False)
+    reason = Column(Text, nullable=False)
+    until = Column(DateTime(timezone=True), nullable=True)
+    lifted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class ForumRead(Base):
     __tablename__ = "forum_reads"
 

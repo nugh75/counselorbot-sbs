@@ -174,6 +174,31 @@ def require_tool(db: Session, identity, tool_key: str | None, *, preview: bool =
         raise ToolAccessDenied("tool_disabled_for_class", canonical)
 
 
+def require_class_tool(db: Session, identity, group_id: int, tool_key: str) -> None:
+    """Guard for a tool that lives inside one class (the forum, F3 #104).
+
+    Unlike `require_tool`, only that class's own setting counts: another class
+    enabling its forum must not open this one (no union).
+    """
+    if not class_tool_enabled(db, identity, group_id, tool_key):
+        raise ToolAccessDenied("tool_disabled_for_class", tool_key)
+
+
+def class_tool_enabled(db: Session, identity, group_id: int, tool_key: str) -> bool:
+    return is_staff(identity) or _class_enables(db.get(models.ClassSettings, group_id), tool_key)
+
+
+FORUM_OPTIONS = ("students_can_open", "premoderation")
+
+
+def forum_option(settings: models.ClassSettings | None, name: str) -> tuple[bool, bool]:
+    """(effective value, locked) of a forum option; an admin lock wins (decision 21)."""
+    lock = (settings.locked_forum_options or {}).get(name) if settings is not None else None
+    if isinstance(lock, dict) and "value" in lock:
+        return bool(lock["value"]), True
+    return bool(getattr(settings, f"forum_{name}", False)) if settings is not None else False, False
+
+
 def counselor_access(db: Session, identity) -> tuple[set[int] | None, int | None]:
     """(allowed counselor ids, class default); (None, None) means not filtered."""
     if is_staff(identity):
