@@ -1,6 +1,6 @@
 from .chat_preferences import ResponseFormat
 from .dynamic_registry import DynamicInstrumentSet, HISTORIC_INSTRUMENT_CODES
-from pydantic import BaseModel, Field, StrictBool, StrictInt, validator
+from pydantic import BaseModel, Field, StrictBool, StrictInt, model_validator, validator
 from typing import Annotated, Optional, List, Dict, Any, Union, Literal
 from datetime import date, datetime
 import json
@@ -242,8 +242,21 @@ class StrategyFeedbackCreate(BaseModel):
     helpful: bool
 
 
+# Provenance describes how data reached CounselorBot and is assigned by the server.
+RESULT_PROVENANCE_FIELDS = ("source", "capture_method", "source_system", "source_record_id")
+
+
+class ServerAssignedProvenance(BaseModel):
+    @model_validator(mode="before")
+    @classmethod
+    def reject_client_provenance(cls, data):
+        if isinstance(data, dict) and any(key in data for key in RESULT_PROVENANCE_FIELDS):
+            raise ValueError("Result provenance is assigned by the server")
+        return data
+
+
 # QuestionnaireResult
-class QuestionnaireResultCreate(BaseModel):
+class QuestionnaireResultCreate(ServerAssignedProvenance):
     session_id: str
     questionnaire_type: str
     scores: Optional[Dict[str, Any]] = None
@@ -711,7 +724,7 @@ class ContentVersionPromoteRequest(BaseModel):
     target_status: str
 
 
-class ScoreRequest(BaseModel):
+class ScoreRequest(ServerAssignedProvenance):
     session_id: str
     locale: str
     answers: Dict[int, int]
@@ -2045,6 +2058,14 @@ class ClassPathProgressResponse(BaseModel):
     source: Optional[str] = None
 
 
+
+
+class AdministrationRunnerInput(BaseModel):
+    """In-app item answers for one administration step; provenance is server-assigned."""
+    model_config = {"extra": "forbid"}
+    session_id: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9-]+$")
+    answers: Dict[int, StrictInt] = Field(min_length=1)
+    institution_grant: str = Field(min_length=1, max_length=256)
 
 
 class AdministrationGuidedEntryInput(BaseModel):

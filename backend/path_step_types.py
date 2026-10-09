@@ -1,17 +1,32 @@
 """Shared typed-step builder/availability/launch/completion boundary.
 
-TF3 registers only tool and Italian administration. Later slices extend these
-branches together with their strict input target and database constraint.
+TF3 registers tool and Italian administration; TF4 adds in-app administrations
+in other served locales. Later slices extend these branches together with their
+strict input target and database constraint.
 """
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from . import models, administration_context
+from . import models, administration_context, scoring_service
 from .class_access import class_enables
 from .class_path_completion import has_automatic_evidence
 
-ITALIAN_QUESTIONNAIRES = frozenset({"QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP"})
+ADMINISTRATION_QUESTIONNAIRES = frozenset({"QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP"})
 EXTERNAL_IT_HREF = "https://www.competenzestrategiche.it/"
+
+
+def delivery_unavailable(db: Session, plan) -> str | None:
+    """Italian plans are external; other locales run in app only where served."""
+    if plan.instrument_code not in ADMINISTRATION_QUESTIONNAIRES:
+        return "administration_delivery_unavailable"
+    if plan.delivery_mode == "external_it" and plan.locale == "it":
+        return None
+    if plan.delivery_mode == "in_app" and plan.locale != "it":
+        # Never fall back to another locale: the exact plan locale must be served.
+        if scoring_service.locale_available(db, plan.instrument_code, plan.locale):
+            return None
+        return "administration_locale_unavailable"
+    return "administration_delivery_unavailable"
 
 
 def administration_target(
@@ -31,12 +46,8 @@ def administration_target(
         or group.institution_id != plan.institution_id
     ):
         raise HTTPException(409, "administration_institution_mismatch")
-    if (
-        plan.locale != "it"
-        or plan.delivery_mode != "external_it"
-        or plan.instrument_code not in ITALIAN_QUESTIONNAIRES
-    ):
-        raise HTTPException(422, "administration_delivery_unavailable")
+    if reason := delivery_unavailable(db, plan):
+        raise HTTPException(422, reason)
     if plan.status not in {"planned", "active"}:
         raise HTTPException(409, "administration_inactive")
     institution = administration_context.require_institution_backed(db, plan)

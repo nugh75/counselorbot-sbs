@@ -129,6 +129,18 @@ the assigning teacher. Private drafts and linked goals are not exposed through
 that assignment flow. Do not assume everything in the Personal area is either
 shared or hidden: these permissions apply to different content.
 
+### Questionnaire steps in a class path
+
+A class path can include a questionnaire administration. In Italian you complete
+it on competenzestrategiche.it and enter your scores; in other languages you answer
+the items here, in the administration language. In both cases you first verify the
+institute code and password your teacher gives you. After saving an in-app result,
+bring it into guided chat: you do not retype the scores, and the step is done only
+once that entry is recorded. If the questionnaire is not available in the
+administration language, the step says so and does not switch language. Your
+result history shows whether each result was captured in CounselorBot or imported
+by your teacher.
+
 ## Practise from a PDF and keep your work
 
 **pQBL** (`/profilo/pqbl`) generates practice questions and formative feedback from a study

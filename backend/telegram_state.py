@@ -716,6 +716,8 @@ async def _start_flow(db: Session, state: models.TelegramConversationState) -> N
             username=state.username,
             administration_plan_id=plan_id,
             research_contact_id=contact_id,
+            source="in-app",
+            capture_method="telegram_scores",
         ))
     db.commit()
     steps = _steps(db, state.questionnaire_type)

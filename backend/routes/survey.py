@@ -221,6 +221,8 @@ async def submit_questionnaire_result(
 
     data = result.model_dump(exclude={"institution_grant"})
     data["username"] = username
+    # Typed scores (or an empty agent-only start); the external origin is not proven.
+    data.update(source="in-app", capture_method="manual_scores" if result.scores else "no_scores")
 
     db_result = models.QuestionnaireResult(**data)
     db.add(db_result)
@@ -349,6 +351,10 @@ async def score_instrument(
             username=username,
             administration_plan_id=administration_plan_id,
             research_contact_id=research_contact_id,
+            locale=payload.locale,
+            source="in-app",
+            capture_method="item_runner",
+            source_system="counselorbot",
         ))
         if payload.save_validation:
             db.add(models.ValidationResponse(
