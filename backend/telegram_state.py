@@ -15,7 +15,7 @@ from fastapi import BackgroundTasks
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from . import database, models
+from . import class_access, database, models
 from .api_models import ChatRequest
 from .chat_logic import _ensure_questionnaire_guided_steps, strip_markdown
 from .diagram_blocks import extract as extract_diagrams
@@ -211,6 +211,46 @@ BOT_TEXTS = {
     "btn_confirm": {"it": "Conferma", "en": "Confirm"},
     "btn_redo": {"it": "Correggi", "en": "Fix"},
     "btn_cancel": {"it": "Annulla", "en": "Cancel"},
+    "tool_disabled_for_class": {
+        "it": "Questo strumento non è abilitato per la tua classe.",
+        "en": "This instrument is not enabled for your class.",
+        "es": "Este instrumento no está habilitado para tu clase.",
+        "fr": "Cet instrument n'est pas activé pour votre classe.",
+        "de": "Dieses Instrument ist für Ihre Klasse nicht freigeschaltet.",
+        "sv": "Detta verktyg är inte aktiverat för din klass.",
+    },
+    "tool_unavailable": {
+        "it": "Questo strumento non è al momento disponibile.",
+        "en": "This instrument is currently unavailable.",
+        "es": "Este instrumento no está disponible actualmente.",
+        "fr": "Cet instrument n'est pas disponible actuellement.",
+        "de": "Dieses Instrument ist derzeit nicht verfügbar.",
+        "sv": "Detta verktyg är för närvarande inte tillgängligt.",
+    },
+    "no_instruments_available": {
+        "it": "Nessuno strumento è abilitato per la tua classe al momento.",
+        "en": "No instruments are enabled for your class at the moment.",
+        "es": "Ningún instrumento está habilitado para tu clase en este momento.",
+        "fr": "Aucun instrument n'est activé pour votre classe pour le moment.",
+        "de": "Derzeit ist für Ihre Klasse kein Instrument freigeschaltet.",
+        "sv": "Inga verktyg är aktiverade för din klass just nu.",
+    },
+    "counselor_disabled_for_class": {
+        "it": "Questo counselor non è abilitato per la tua classe.",
+        "en": "This counselor is not enabled for your class.",
+        "es": "Este consejero no está habilitado para tu clase.",
+        "fr": "Ce conseiller n'est pas activé pour votre classe.",
+        "de": "Dieser Counselor ist für Ihre Klasse nicht freigeschaltet.",
+        "sv": "Denna vägledare är inte aktiverad för din klass.",
+    },
+    "error": {
+        "it": "Si è verificato un errore. Riprova più tardi.",
+        "en": "An error occurred. Please try again later.",
+        "es": "Ocurrió un error. Por favor inténtalo de nuevo más tarde.",
+        "fr": "Une erreur s'est produite. Veuillez réessayer plus tard.",
+        "de": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
+        "sv": "Ett fel uppstod. Försök igen senare.",
+    },
 }
 
 SCORE_EXAMPLES = {
@@ -506,16 +546,43 @@ def _steps(db: Session, questionnaire_type: str) -> list[models.GuidedStep]:
     )
 
 
-def _identity_for(username: str) -> dict:
+def _identity_for(username: str, db: Session | None = None, *, is_admin: bool | None = None) -> dict:
+    admin = False
+    if is_admin is not None:
+        admin = is_admin
+    elif db is not None and username:
+        user = db.query(models.User).filter(models.User.username == username).first()
+        if user and user.is_admin:
+            admin = True
     return {
         "email": "",
         "username": username,
         "name": username,
-        "groups": [],
-        "is_admin": False,
+        "groups": ["admins"] if admin else [],
+        "is_admin": admin,
         "is_researcher": False,
-        "authenticated": True,
+        "authenticated": bool(username),
     }
+
+
+async def _deny_tool(db: Session, state: models.TelegramConversationState, tool_key: str | None,
+                     *, reset: bool = True) -> bool:
+    """Same resolved class access as the web guards (#94): refuse before any write.
+
+    Sends the localized reason and, with `reset`, drops the flow so a disabled
+    session cannot be resumed. Returns True when the tool is refused.
+    """
+    try:
+        class_access.require_tool(db, _identity_for(state.username, db), tool_key)
+    except class_access.ToolAccessDenied as exc:
+        chat_id, language = state.telegram_chat_id, state.language
+        if reset:
+            _reset_state(state)
+            db.commit()
+        key = "tool_unavailable" if exc.detail == "tool_unavailable" else "tool_disabled_for_class"
+        await telegram_bot.send_message(chat_id, _t(key, language))
+        return True
+    return False
 
 
 def _interactive_mode(questionnaire_type: str, step: models.GuidedStep | None) -> str:
@@ -552,7 +619,7 @@ async def _call_chat(db: Session, state: models.TelegramConversationState, *, me
         idea_variant=IDEA_DEFAULT_VARIANT if state.questionnaire_type == "IDEA" else None,
     )
     try:
-        result = await chat_endpoint(request, BackgroundTasks(), db, _identity_for(state.username))
+        result = await chat_endpoint(request, BackgroundTasks(), db, _identity_for(state.username, db))
     except Exception:
         logger.exception("Telegram: errore pipeline chat (session %s)", state.session_id)
         return None
@@ -607,6 +674,9 @@ async def _run_step(db: Session, state: models.TelegramConversationState, step: 
 
 
 async def _start_flow(db: Session, state: models.TelegramConversationState) -> None:
+    if await _deny_tool(db, state, state.questionnaire_type):
+        return
+
     state.session_id = str(uuid.uuid4())
     state.conversation_id = None
     if state.questionnaire_type in SCORE_QUESTIONNAIRES:
@@ -631,6 +701,9 @@ async def _start_flow(db: Session, state: models.TelegramConversationState) -> N
 
 
 async def _advance_step(db: Session, state: models.TelegramConversationState) -> None:
+    if await _deny_tool(db, state, state.questionnaire_type):
+        return
+
     steps = _steps(db, state.questionnaire_type)
     ids = [s.id for s in steps]
     try:
@@ -665,13 +738,17 @@ def _counselor_name(db: Session, counselor_id: int | None, language: str) -> str
     return _t("counselor_default", language)
 
 
-def _counselor_keyboard(db: Session, language: str) -> list[list[dict]]:
+def _counselor_keyboard(db: Session, language: str, username: str | None = None) -> list[list[dict]]:
     counselors = (
         db.query(models.Counselor).filter(models.Counselor.owner_username.is_(None))
         .filter(models.Counselor.is_active.is_(True))
         .order_by(models.Counselor.id)
         .all()
     )
+    if username:
+        allowed = class_access.allowed_counselor_ids(db, _identity_for(username, db))
+        if allowed is not None:
+            counselors = [c for c in counselors if c.id in allowed]
     rows: list[list[dict]] = []
     row: list[dict] = []
     for counselor in counselors:
@@ -687,6 +764,9 @@ def _counselor_keyboard(db: Session, language: str) -> list[list[dict]]:
 
 def _choose_instrument_text(db: Session, state: models.TelegramConversationState, language: str) -> str:
     counselor = _counselor_name(db, state.counselor_id, language)
+    available = _available_questionnaires(db, state.username)
+    if not available:
+        return f"{_t('no_instruments_available', language)}\n{_t('counselor_line', language, name=counselor)}"
     return f"{_t('choose_instrument', language)}\n{_t('counselor_line', language, name=counselor)}"
 
 
@@ -695,7 +775,7 @@ def _instrument_label(qtype: str) -> str:
     return qtype.capitalize() if qtype in ("SAVICKAS", "IDEA") else qtype
 
 
-def _available_questionnaires(db: Session) -> tuple[str, ...]:
+def _bot_questionnaires(db: Session) -> tuple[str, ...]:
     """Idea compare solo se il suo feature flag e' acceso, come nel web."""
     from .routes.idea_map import feature_enabled as idea_enabled
 
@@ -704,9 +784,15 @@ def _available_questionnaires(db: Session) -> tuple[str, ...]:
     return tuple(q for q in ALL_QUESTIONNAIRES if q != "IDEA")
 
 
-def _instrument_keyboard(db: Session) -> list[list[dict]]:
+def _available_questionnaires(db: Session, username: str | None = None) -> tuple[str, ...]:
+    """Bot instruments the user may start now: the resolved class access of the web (#94)."""
+    identity = _identity_for(username or "", db)
+    return tuple(q for q in _bot_questionnaires(db) if class_access.can_access_tool(db, identity, q))
+
+
+def _instrument_keyboard(db: Session, username: str | None = None) -> list[list[dict]]:
     rows, row = [], []
-    for qtype in _available_questionnaires(db):
+    for qtype in _available_questionnaires(db, username):
         row.append({"text": _instrument_label(qtype), "callback_data": f"instr:{qtype}"})
         if len(row) == 2:
             rows.append(row)
@@ -737,6 +823,9 @@ async def _prompt_scores(db: Session, state: models.TelegramConversationState) -
 
 
 async def _handle_scores_text(db: Session, state: models.TelegramConversationState, text: str) -> None:
+    if await _deny_tool(db, state, state.questionnaire_type):
+        return
+
     qtype = state.questionnaire_type
     codes = allowed_factor_codes(db, qtype)
     parsed, extra, invalid = parse_scores(text, codes)
@@ -779,6 +868,9 @@ def step_instructions_message(questionnaire_type: str, step_prompt: str | None, 
 
 
 async def _handle_free_text(db: Session, state: models.TelegramConversationState, text: str) -> None:
+    if await _deny_tool(db, state, state.questionnaire_type):
+        return
+
     steps = {s.id: s for s in _steps(db, state.questionnaire_type)}
     step = steps.get(state.step_id)
     mode = _interactive_mode(state.questionnaire_type, step)
@@ -839,13 +931,14 @@ async def _do_link(db: Session, sender: dict, chat_id: int, language: str,
     if group_label:
         message = f"{message}\n{_t('group_enrolled', language, label=group_label)}"
     if group_instrument:
-        # Propone subito lo strumento del gruppo: un tap e si passa ai punteggi
-        # (con l'elenco dei fattori attesi per QUELLO strumento).
-        message = f"{message}\n{_t('group_instrument', language, qtype=group_instrument)}"
-        keyboard = [[{
-            "text": _t("btn_start_instrument", language, qtype=group_instrument),
-            "callback_data": f"instr:{group_instrument}",
-        }]]
+        if class_access.can_access_tool(db, _identity_for(username, db), group_instrument):
+            # Propone subito lo strumento del gruppo: un tap e si passa ai punteggi
+            # (con l'elenco dei fattori attesi per QUELLO strumento).
+            message = f"{message}\n{_t('group_instrument', language, qtype=group_instrument)}"
+            keyboard = [[{
+                "text": _t("btn_start_instrument", language, qtype=group_instrument),
+                "callback_data": f"instr:{group_instrument}",
+            }]]
     await telegram_bot.send_message(chat_id, message, keyboard=keyboard)
 
 
@@ -881,6 +974,8 @@ def _pqbl_document_keyboard(documents: list[models.PqblDocument]) -> list[list[d
 
 
 async def _pqbl_offer_documents(db: Session, state: models.TelegramConversationState) -> None:
+    if await _deny_tool(db, state, "pqbl", reset=False):
+        return
     documents = _pqbl_ready_documents(db, state.username)
     language = state.language
     if not documents:
@@ -933,10 +1028,14 @@ async def _pqbl_start_session(db: Session, state: models.TelegramConversationSta
     from .api_models import PqblSessionCreate
     from .routes.pqbl import create_pqbl_session, get_pqbl_session_questions
 
+    if await _deny_tool(db, state, "pqbl", reset=False):
+        return
+    identity = _identity_for(state.username, db)
+
     try:
         created = await create_pqbl_session(
             PqblSessionCreate(document_id=document_id, mode="learning"),
-            db, _identity_for(state.username),
+            db, identity,
         )
         fetched = await get_pqbl_session_questions(created["session_id"], db)
     except Exception:
@@ -967,6 +1066,9 @@ async def _pqbl_handle_answer(db: Session, state: models.TelegramConversationSta
     from .api_models import PqblAnswerRequest
     from .routes.pqbl import answer_pqbl_question
 
+    if await _deny_tool(db, state, "pqbl"):
+        return
+
     payload = state.pqbl_state or {}
     session_id = payload.get("session_id")
     if not session_id:
@@ -975,6 +1077,7 @@ async def _pqbl_handle_answer(db: Session, state: models.TelegramConversationSta
     try:
         result = await answer_pqbl_question(
             session_id, PqblAnswerRequest(question_id=question_id, option_key=option_key), db,
+            _identity_for(state.username, db),
         )
     except Exception:
         logger.exception("Telegram pQBL: risposta rifiutata (sessione %s)", session_id)
@@ -1034,6 +1137,10 @@ async def _pqbl_handle_pdf(db: Session, state: models.TelegramConversationState,
 
     language = state.language
     chat_id = state.telegram_chat_id
+    if await _deny_tool(db, state, "pqbl", reset=False):
+        return
+    identity = _identity_for(state.username, db)
+
     filename = document.get("file_name") or "documento.pdf"
     if not filename.lower().endswith(".pdf") and document.get("mime_type") != "application/pdf":
         await telegram_bot.send_message(chat_id, _t("pqbl_not_pdf", language))
@@ -1053,7 +1160,7 @@ async def _pqbl_handle_pdf(db: Session, state: models.TelegramConversationState,
             background,
             UploadFile(file=io.BytesIO(content), filename=filename),
             10, state.counselor_id or 0, "",
-            db, _identity_for(state.username),
+            db, identity,
         )
     except Exception:
         logger.exception("Telegram pQBL: upload fallito per %s", filename)
@@ -1180,7 +1287,11 @@ async def _handle_message(db: Session, message: dict) -> None:
         db.commit()
         keyboard = [[{"text": _t("btn_new", language), "callback_data": "flow:new"}]]
         if state.state == "in_step":
-            keyboard[0].append({"text": _t("btn_resume", language), "callback_data": "flow:resume"})
+            if class_access.can_access_tool(db, _identity_for(state.username, db), state.questionnaire_type):
+                keyboard[0].append({"text": _t("btn_resume", language), "callback_data": "flow:resume"})
+            else:
+                _reset_state(state)
+                db.commit()
         name = sender.get("first_name") or link.username
         await telegram_bot.send_message(chat_id, _t("welcome_linked", language, name=name), keyboard=keyboard)
         return
@@ -1189,7 +1300,7 @@ async def _handle_message(db: Session, message: dict) -> None:
         _reset_state(state)
         state.state = "choose_instrument"
         db.commit()
-        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard(db))
+        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard(db, state.username))
         return
 
     if command == "/pqbl":
@@ -1199,17 +1310,21 @@ async def _handle_message(db: Session, message: dict) -> None:
 
     if command == "/counselor":
         db.commit()
-        await telegram_bot.send_message(chat_id, _t("counselor_choose", language), keyboard=_counselor_keyboard(db, language))
+        await telegram_bot.send_message(chat_id, _t("counselor_choose", language), keyboard=_counselor_keyboard(db, language, state.username))
         return
 
     if command == "/stato":
         db.commit()
         counselor_line = _t("counselor_line", language, name=_counselor_name(db, state.counselor_id, language))
         if state.state == "pqbl":
+            if await _deny_tool(db, state, "pqbl"):
+                return
             payload = state.pqbl_state or {}
             done, total = (payload.get("index") or 0), len(payload.get("queue") or [])
             await telegram_bot.send_message(chat_id, f"pQBL {done}/{total}\n{counselor_line}")
         elif state.state == "in_step" and state.step_id:
+            if await _deny_tool(db, state, state.questionnaire_type):
+                return
             steps = {s.id: s for s in _steps(db, state.questionnaire_type)}
             step = steps.get(state.step_id)
             label = resolve_step_label(step, language) if step else state.step_id
@@ -1267,7 +1382,7 @@ async def _handle_callback(db: Session, callback: dict) -> None:
         _reset_state(state)
         state.state = "choose_instrument"
         db.commit()
-        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard(db))
+        await telegram_bot.send_message(chat_id, _choose_instrument_text(db, state, language), keyboard=_instrument_keyboard(db, state.username))
         return
 
     if data.startswith("couns:"):
@@ -1275,6 +1390,13 @@ async def _handle_callback(db: Session, callback: dict) -> None:
             counselor_id = int(data.split(":", 1)[1])
         except ValueError:
             return
+        identity = _identity_for(state.username, db)
+        if counselor_id:
+            try:
+                class_access.require_counselor(db, identity, counselor_id)
+            except class_access.CounselorAccessDenied:
+                await telegram_bot.send_message(chat_id, _t("counselor_disabled_for_class", language))
+                return
         state.counselor_id = counselor_id or None
         db.commit()
         name = _counselor_name(db, state.counselor_id, language)
@@ -1284,6 +1406,8 @@ async def _handle_callback(db: Session, callback: dict) -> None:
     if data == "flow:resume":
         db.commit()
         if state.state == "in_step" and state.step_id:
+            if await _deny_tool(db, state, state.questionnaire_type):
+                return
             steps = {s.id: s for s in _steps(db, state.questionnaire_type)}
             step = steps.get(state.step_id)
             label = resolve_step_label(step, language) if step else state.step_id
@@ -1306,7 +1430,9 @@ async def _handle_callback(db: Session, callback: dict) -> None:
 
     if data.startswith("instr:"):
         qtype = data.split(":", 1)[1]
-        if qtype not in _available_questionnaires(db):
+        if qtype not in _bot_questionnaires(db):
+            return
+        if await _deny_tool(db, state, qtype, reset=False):
             return
         _reset_state(state)
         state.questionnaire_type = qtype
@@ -1325,6 +1451,8 @@ async def _handle_callback(db: Session, callback: dict) -> None:
         return
 
     if data == "scores:redo":
+        if await _deny_tool(db, state, state.questionnaire_type):
+            return
         state.state = "enter_scores"
         state.scores = {}
         db.commit()
