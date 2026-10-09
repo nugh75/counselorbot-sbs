@@ -62,14 +62,9 @@ def test_forum_import_graph_has_no_ai_rag_context_or_export_path():
         "backend.auth",
         "backend.database",
         "backend.models",
-        "backend.routes.groups",
-        "backend.schemas",
-        "backend.reading_audience",
-        "backend.user_names",
+        "backend.group_visibility",
         "backend.class_tools",
         "backend.class_access",
-        "backend.chat_preferences",
-        "backend.dynamic_registry",
     }
     route = ast.parse(module_path("backend.routes.forum").read_text())
     db_references = {node.attr for node in ast.walk(route) if isinstance(node, ast.Attribute)
