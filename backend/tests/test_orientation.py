@@ -4,9 +4,7 @@ from __future__ import annotations
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
 from backend import auth, database, models, orientation
 from backend.student_context import student_context
@@ -15,31 +13,22 @@ from backend.ai_service import _requests_json_response
 from backend.orientation import _clean_analysis, _tools_named_in, analyze_turn, fallback_analysis
 from backend.routes import orientation as orientation_routes
 from backend.routes.orientation import _merged_recommendations
+from backend.tests.artifact_database import artifact_session
 
 
-_engine = create_engine(
-    "sqlite://",
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-_Session = sessionmaker(bind=_engine, autoflush=False, autocommit=False)
-for table in (
-    models.ModelPreset.__table__,
-    models.Counselor.__table__,
-    models.QuestionnaireResult.__table__,
-    models.LearnerProfileRevision.__table__,
-    models.OrientationSession.__table__,
-    models.PersonalGoal.__table__,
-    models.StudentBooklet.__table__,
-    models.ResultReading.__table__,
-    # La Bussola legge anche sessioni congelate e portfolio per sapere che cosa
-    # lo studente ha gia' fatto (student_context).
-    models.FrozenSession.__table__,
-    models.PortfolioItem.__table__,
-    models.Factor.__table__,
-    models.OrientationToolBrief.__table__,
-):
-    table.create(bind=_engine, checkfirst=True)
+@pytest.fixture(autouse=True)
+def isolated_postgres(monkeypatch):
+    with artifact_session() as db:
+        factory = sessionmaker(bind=db.get_bind(), autoflush=False, join_transaction_mode="create_savepoint")
+        monkeypatch.setitem(globals(), "_Session", factory)
+        monkeypatch.setattr(orientation, "AIService", _FakeAIService)
+        # Route recommendations use the integrated active instrument registry.
+        db.add_all([models.Instrument(code=code, is_active=True, target_audience="student")
+                    for code in orientation.TOOL_IDS if code != "pqbl"])
+        db.commit()
+        _FakeAIService.override = None
+        yield
+
 
 _identity = {
     "username": "orientation.student",
@@ -92,11 +81,9 @@ class _FakeAIService:
         }"""
 
 
-orientation.AIService = _FakeAIService
-
 app = FastAPI()
 app.include_router(orientation_routes.router)
-app.dependency_overrides[database.get_db] = _get_db
+app.dependency_overrides[database.get_personal_ai_db] = _get_db
 app.dependency_overrides[auth.get_current_user] = _get_identity
 client = TestClient(app)
 
@@ -870,9 +857,9 @@ def test_prompt_makes_qsa_the_starting_tool(monkeypatch):
     finally:
         db.close()
     assert 'STARTING TOOL' in prompt
-    assert 'the first recommendation is always QSA' in prompt
+    assert 'use QSA as the first recommendation' in prompt
     assert 'only when the student explicitly asks for the shorter or reduced version' in prompt
-    assert 'use "merge" with QSA first' in prompt
+    assert 'use "merge" with the enabled starting questionnaire first' in prompt
     assert 'ask about their area of interest and explain the options yourself' not in prompt
 
 

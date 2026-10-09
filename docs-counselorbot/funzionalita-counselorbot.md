@@ -61,6 +61,26 @@ Nell'interfaccia utente del selettore counselor (`CounselorSelector`):
 
 ## Bussola, Assistente e Guida
 
+Class availability applies to Compass (`bussola`) and Assistant (`assistant`).
+Teachers configure them under **Orientation and help** in the class tools section.
+For students, a feature is available if any active class enables it; staff and users
+without active classes retain their existing access. Disabled entries disappear
+from the header/menu and Compass home cards. Disabling Compass also removes the
+new-student orientation requirement, without marking orientation completed.
+The server rejects new Compass sessions, messages and completion writes, and
+Assistant chat requests, with HTTP 403 when the respective class feature is disabled.
+Existing Compass sessions remain readable with their saved conversation and history.
+Assistant role eligibility still applies; role denial and class unavailability
+keep their respective explanations.
+
+Compass recommendation cards always use the student's resolved enabled tools,
+including model JSON, free text, offline ranking, opening messages and existing
+cards carried into a new turn. Disabled cards cannot be started. The starting
+questionnaire is QSA when enabled, or enabled QSAr when the shorter version is
+requested; if the preferred questionnaire is disabled, the first enabled one in
+catalog order is used. When no questionnaire is enabled, no starting-tool card is
+shown. The Guide remains available independently of these class toggles.
+
 
 - **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti. Non
   somministra questionari, non raccoglie punteggi e non svolge al proprio interno

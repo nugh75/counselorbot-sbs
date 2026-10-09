@@ -15,6 +15,10 @@ or use the main checkout. Check ports first and stop only your own processes.
 Synthetic database setup, tests, SSH access and shutdown:
 [class-settings-validation.md](class-settings-validation.md).
 
+Compass/Assistant class access (#92) uses the same secret-free runners with
+dedicated C19 ports and an ephemeral synthetic PostgreSQL database:
+[class-support-access-validation.md](class-support-access-validation.md).
+
 ### Differenziazione prompt (fixture admin)
 
 `scripts/dev-context-frontend.sh`: frontend su `127.0.0.1:3165`, porta controllata
