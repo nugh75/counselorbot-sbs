@@ -319,6 +319,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. |
 | Analisi combinata dei profili | `/profilo/analisi-combinata` | Generare una lettura integrata di almeno due strumenti tra QSA, QSAr e ZTPI. Si apre dal gruppo Conoscermi e riflettere e non compare più sotto i singoli risultati. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. Lista breve con filtri (gruppo, tipo, finalità richiesta/proposta, stato) e un solo dettaglio aperto alla volta; pianificazione con spiegazione del lavoro personale; anteprima di restituzione con destinatario esplicito e copia fissa. La revoca conferma in linea sulla scheda. |
+| Percorsi di classe | `/profilo/percorsi` | Seguire i percorsi di apprendimento strutturati pubblicati dai docenti per la propria classe; barra di avanzamento, evidenziazione ocra del solo passo corrente, completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. |
 | Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito; collegamenti contestuali alle assegnazioni del gruppo; messaggi generali del docente leggibili direttamente nella pagina; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
@@ -537,8 +538,9 @@ conflict preserves the local draft and prompts the teacher to reload. Paths can 
 archived, restored, or deleted. Path authorization fails closed with HTTP 403
 (access denied) for unknown path IDs and unauthorized teachers alike, preventing
 existence oracles. All interfaces and messages are translated across
-the 6 platform languages. **Draft-only in P1**: student-side publishing, progression
-enforcement and student progress tracking ship in P2 (#97).
+the 6 platform languages.
+
+**Class paths publishing and student view (P2, #97).** Teachers can publish paths via a sticky `[Publish]` button on `/docente/classi/{id}` (calling `POST /teacher/paths/{path_id}/publish`), which sets status to `published` and marks `published_at` on first publication. Teachers can also archive and restore paths. Students enrolled in active classes view published paths at `/profilo/percorsi` (accessible from the first group «Conoscermi e riflettere» in the personal area, `/profilo`). The layout strictly follows identity guidelines: ochre is used exclusively for the current active step (`▶`, ochre badge, `Button variant="accent"` for `[Inizia]`), with petrol for primary structure and slate for neutrals. Each published path card displays class name, title, description, and overall progress count and progress bar (`done of total done`). In strict mode (`strict`), future steps are locked (displaying `🔒 Si sblocca dopo il passo {n}`) until preceding steps are finished. Steps whose tool is disabled for the student's class are displayed as unavailable and excluded from both total and done counts. For tools without automatic detection, students can mark and unmark steps as completed (`POST / DELETE /user/paths/{path_id}/steps/{step_id}/done`). Attempts to self-mark unavailable or auto-detect tools are rejected with HTTP 422. Progress resolution guarantees teacher precedence over student self-marks. Non-members receive HTTP 403 without existence oracles. All interfaces and notices are fully translated into the 6 platform languages.
 
 **Class forum (F1, #102).** Teachers open the Forum tab on
 `/docente/classi/{id}`; students open the forum link in their Classes list,
@@ -562,7 +564,7 @@ protect that boundary. Student-created discussions, muting, pre-approval,
 and path/assignment links are separate later slices. Six-language
 interface controls are included; the expanded forum guide and screenshots are #107.
 Titles, messages and reasons reject invisible control characters (for example
-NUL); tabs and line breaks are kept.
+NUL); tabs and line breaks are kept. Character lengths for titles and messages are validated on publication.
 
 **Forum moderation (F2, #103).** Class owners, co-teachers and administrators
 moderate from the open discussion: Pin/Unpin (pinned discussions stay on top),

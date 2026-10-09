@@ -1753,12 +1753,34 @@ class ClassPathStep(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class ClassPathProgress(Base):
+    """Explicit progress mark for a student on a class path step.
+
+    Resolution per (step, student): teacher mark > student mark > automatic evidence > not done.
+    Only explicit marks are stored (plan §4.2).
+    """
+
+    __tablename__ = "class_path_progress"
+    __table_args__ = (
+        UniqueConstraint("step_id", "username", "source", name="uq_class_path_progress"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    step_id = Column(Integer, ForeignKey("class_path_steps.id", ondelete="CASCADE"), index=True, nullable=False)
+    username = Column(String, index=True, nullable=False)
+    state = Column(String, nullable=False)  # 'done' | 'not_done'
+    source = Column(String, nullable=False)  # 'student' | 'teacher'
+    actor_username = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+
 # --- Class forum (#102): separate from sessions, profiles and AI context ---
 class ForumTopic(Base):
     __tablename__ = "forum_topics"
     __table_args__ = (
-        CheckConstraint("char_length(title) BETWEEN 1 AND 160", name="forum_topic_title_length"),
-        CheckConstraint("char_length(body) BETWEEN 1 AND 4000", name="forum_topic_body_length"),
+        CheckConstraint("length(title) BETWEEN 1 AND 160", name="forum_topic_title_length"),
+        CheckConstraint("length(body) BETWEEN 1 AND 4000", name="forum_topic_body_length"),
         CheckConstraint("status IN ('published', 'pending')", name="forum_topic_status"),
     )
 
@@ -1784,7 +1806,7 @@ class ForumTopic(Base):
 class ForumPost(Base):
     __tablename__ = "forum_posts"
     __table_args__ = (
-        CheckConstraint("char_length(body) BETWEEN 1 AND 4000", name="forum_post_body_length"),
+        CheckConstraint("length(body) BETWEEN 1 AND 4000", name="forum_post_body_length"),
         CheckConstraint("status IN ('published', 'pending')", name="forum_post_status"),
     )
 

@@ -23,6 +23,7 @@ const labels = {
 } satisfies Record<string, Localized>;
 
 const names = {
+    percorsi: ['Percorsi di classe', 'Class paths', 'Recorridos de clase', 'Parcours de classe', 'Klassenwege', 'Klassvägar'],
     'analisi-combinata': ["Analisi Combinata dei Profili", "Combined Profile Analysis", "Análisis de Perfil Combinado", "Analyse de Profil Combiné", "Kombinierte Profilanalyse", "Kombinerad profilanalys"],
     obiettivi: ['Obiettivi', 'Goals', 'Objetivos', 'Objectifs', 'Ziele', 'Mål'],
     azioni: ['Azioni', 'Actions', 'Acciones', 'Actions', 'Aktionen', 'Åtgärder'],
@@ -43,6 +44,7 @@ const names = {
 } satisfies Record<PersonalAreaSlug, Localized>;
 
 const descriptions = {
+    percorsi: ['Segui le tappe proposte dai tuoi docenti per la tua classe.', 'Follow the steps proposed by your teachers for your class.', 'Sigue los pasos propuestos por tus profesores para tu clase.', 'Suivez les étapes proposées par vos enseignants pour votre classe.', 'Folge den von deinen Lehrkräften vorgeschlagenen Schritten für deine Klasse.', 'Följ stegen som föreslagits av dina lärare för din klass.'],
     'analisi-combinata': ["Lettura integrata tra gli strumenti compilati (QSA, QSAr, ZTPI)", "Integrated reading across your completed instruments (QSA, QSAr, ZTPI)", "Lectura integrada de los instrumentos completados (QSA, QSAr, ZTPI)", "Lecture intégrée des instruments complétés (QSA, QSAr, ZTPI)", "Integrierte Lesart der ausgefüllten Instrumente (QSA, QSAr, ZTPI)", "Integrerad läsning av dina ifyllda instrument (QSA, QSAr, ZTPI)"],
     obiettivi: ['Scegli che cosa vuoi raggiungere e il prossimo passo.', 'Choose what you want to achieve and your next step.', 'Elige qué quieres alcanzar y tu próximo paso.', 'Choisis ce que tu veux atteindre et ta prochaine étape.', 'Wähle, was du erreichen möchtest und deinen nächsten Schritt.', 'Välj vad du vill uppnå och ditt nästa steg.'],
     azioni: ['Organizza quello che vuoi fare, stai facendo o hai provato.', 'Organize what you want to do, are doing or have tried.', 'Organiza lo que quieres hacer, estás haciendo o has probado.', 'Organise ce que tu veux faire, fais ou as essayé.', 'Ordne, was du tun möchtest, gerade tust oder ausprobiert hast.', 'Ordna det du vill göra, gör eller har provat.'],
