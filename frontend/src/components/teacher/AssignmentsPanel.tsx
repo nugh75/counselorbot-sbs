@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
 import { AssignmentWork, AssignmentSubmissions } from './AssignmentWork';
+import { useTeacherResource } from './useTeacherResource';
+import { parseForumDiscussionLinks } from '@/lib/forum';
+import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 
 // F31: l'interfaccia è esportata per il blocco "Assegnazioni della classe"
 // dentro la scheda gruppo di /docente/classi (GroupAssignments).
@@ -31,6 +34,7 @@ const chip = 'inline-flex items-center rounded-full border px-2 py-0.5 text-xs f
 export function AssignmentsPanel({ teacher = false, showHeading = true }: { teacher?: boolean; showHeading?: boolean }) {
     const { lang } = useI18n(); const l = (key: Parameters<typeof assignmentText>[1]) => assignmentText(lang, key);
     const w = (key: Parameters<typeof learningText>[1]) => learningText(lang, key);
+    const discussions = useTeacherResource('/api/user/forum/links', parseForumDiscussionLinks);
     const [rows, setRows] = useState<Assignment[]>([]); const [loading, setLoading] = useState(true); const [failed, setFailed] = useState(false); const [busy, setBusy] = useState<number | null>(null);
     // F27: filtri gruppo, tipo, finalità (richiesta/proposta) e stato. Con almeno
     // tre schede sono la prima riga della schermata: barra di inquiry, non una
@@ -139,6 +143,8 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
                     </div>
                 </div>
                 {open && <>
+                    <ForumDiscussionLinks links={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
+                        kind="assignment" targetId={row.id} />
                     {row.response_prompt && <p className="whitespace-pre-wrap text-sm"><strong>{w('responsePrompt')}: </strong>{row.response_prompt}</p>}
                     <p className="text-sm text-slate-600">{l('from')}: {row.author_name}</p>
                     {teacher && <p className="text-sm text-slate-600">{l('recipients')}: {row.recipient_username || l('all')} ({row.recipient_count})</p>}
