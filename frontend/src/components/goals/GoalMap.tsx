@@ -3,6 +3,7 @@ import { memo, useMemo } from 'react';
 import { Background, Controls, Handle, Position, ReactFlow, type Edge, type Node, type NodeProps } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import Dagre from '@dagrejs/dagre';
+import { Users } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { goalText, type GoalTextKey } from '@/lib/i18n-goals';
 import type { PersonalGoal } from '@/lib/goals';
@@ -12,11 +13,12 @@ type GoalNodeData = { goal: PersonalGoal; detail: string; shared: boolean; onOpe
 const WIDTH = 220; const HEIGHT = 76;
 
 const GoalNode = memo(function GoalNode({ data }: NodeProps<Node<GoalNodeData>>) {
+    const { lang } = useI18n();
     return <div style={{ width: WIDTH }}>
         <Handle type="target" position={Position.Top} isConnectable={false} />
         <button type="button" onClick={() => data.onOpen(data.goal.id)} className="block w-full rounded-lg border border-slate-300 bg-white p-2 text-left shadow-sm hover:border-indigo-400 focus-visible:outline-2 focus-visible:outline-cyan-600">
             <span className="line-clamp-2 break-words text-sm font-semibold">{data.goal.title}</span>
-            <span className="block text-xs text-slate-600">{data.detail}{data.shared && ' · 👥'}</span>
+            <span className="flex items-center gap-1 text-xs text-slate-600">{data.detail}{data.shared && <> · <Users className="h-3 w-3" aria-hidden /><span className="sr-only">{goalText(lang, 'sharedMark')}</span></>}</span>
         </button>
         <Handle type="source" position={Position.Bottom} isConnectable={false} />
     </div>;
