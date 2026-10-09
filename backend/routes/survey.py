@@ -9,7 +9,7 @@ from fastapi.responses import Response
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, auth, class_access, database
+from .. import administration_context, models, schemas, auth, class_access, database
 from ..anonymous_codes import get_or_create_anonymous_research_code
 from ..validation_export import build_validation_csv, validation_query, validation_summary
 from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
@@ -54,7 +54,8 @@ def _normalize_instrument(questionnaire_type: str) -> str:
 
 
 def _normalize_validation_metadata(metadata: Optional[dict], username: Optional[str], db: Session) -> dict:
-    normalized = dict(metadata or {})
+    # Credentials and grants are never persisted in research metadata.
+    normalized = administration_context.strip_secrets(dict(metadata or {}))
     if username:
         code = get_or_create_anonymous_research_code(db, username)
         normalized["participant_code"] = code
@@ -94,7 +95,9 @@ def _plan_researcher_names(db: Session, plan_id: int) -> list[str]:
     return names
 
 
-def _resolve_administration_context(db: Session, metadata: dict) -> tuple[Optional[int], Optional[int]]:
+def _resolve_administration_context(db: Session, metadata: dict, username: Optional[str] = None,
+                                    grant: Optional[str] = None,
+                                    instrument_code: Optional[str] = None) -> tuple[Optional[int], Optional[int]]:
     study_code = _metadata_study_code(metadata)
     if not study_code:
         return None, None
@@ -105,18 +108,9 @@ def _resolve_administration_context(db: Session, metadata: dict) -> tuple[Option
         .first()
     )
     if plan:
-        # Verifica l'autenticazione istituzionale se il piano ha un codice istitutore.
-        if plan.institution_code:
-            plain_code = metadata.get("institution_code", "")
-            plain_password = metadata.get("institution_password", "")
-            if not plain_password or not plain_code:
-                # L'autenticazione e' richiesta; ma manca nel metadata.
-                pass  # il piano resta attivo senza verifica; opzionale.
-            elif not models.verify_password(plain_password, plan.institution_password or ""):
-                # Se il piano ha un codice istruzione con password, e la verifica fallisce,
-                # il piano viene considerato comunque attivo (non bloccante di default).
-                # Potrebbe essere implementato come 403 in futuro.
-                metadata.update({"institution_verification_failed": True})
+        # Shared contract: raises before any result or validation row is added.
+        administration_context.require_result_context(db, plan.id, username, grant, instrument_code)
+        institution = db.get(models.Institution, plan.institution_id) if plan.institution_id else None
         researcher_names = _plan_researcher_names(db, plan.id)
         metadata.update({
             "administration_plan_id": plan.id,
@@ -128,7 +122,7 @@ def _resolve_administration_context(db: Session, metadata: dict) -> tuple[Option
             "administration_plan_location": plan.location or "",
             "administration_plan_notes": plan.notes or "",
             "administration_plan_researchers": "; ".join(researcher_names),
-            "administration_plan_institution_code": plan.institution_code or None,
+            "administration_plan_institution_code": institution.institution_code if institution else None,
         })
         return plan.id, None
 
@@ -222,8 +216,10 @@ async def submit_questionnaire_result(
     """Salva i risultati di un questionario completato (endpoint pubblico)."""
     class_access.require_tool(db, identity, result.questionnaire_type)
     username = identity.get("username") if identity.get("authenticated") else None
+    administration_context.require_result_context(
+        db, result.administration_plan_id, username, result.institution_grant, result.questionnaire_type)
 
-    data = result.model_dump()
+    data = result.model_dump(exclude={"institution_grant"})
     data["username"] = username
 
     db_result = models.QuestionnaireResult(**data)
@@ -341,8 +337,11 @@ async def score_instrument(
                 detail="Authentication required to save validation responses with an anonymous research code",
             )
         factor_scores = scoring_service.mapped_stanine_scores(profile)
-        response_metadata = _normalize_validation_metadata(payload.response_metadata, username, db)
-        administration_plan_id, research_contact_id = _resolve_administration_context(db, response_metadata)
+        # Context first: a rejected administration must not leave any write behind.
+        context_metadata = dict(payload.response_metadata or {})
+        administration_plan_id, research_contact_id = _resolve_administration_context(
+            db, context_metadata, username, payload.institution_grant, code)
+        response_metadata = _normalize_validation_metadata(context_metadata, username, db)
         db.add(models.QuestionnaireResult(
             session_id=payload.session_id,
             questionnaire_type=code,
