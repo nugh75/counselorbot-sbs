@@ -64,11 +64,12 @@ test('Tools tab has accessible toggles and saves only on explicit Save', async (
         await qsa.focus(); await f.page.keyboard.press('Space');
         assert.equal(await qsa.isChecked(), false);
         assert.equal(await f.page.getByRole('checkbox', { name: /OFF/ }).isDisabled(), true);
-        assert.equal(await f.page.getByRole('checkbox').count(), 5);
+        // Five tools plus the two F3 forum options.
+        assert.equal(await f.page.getByRole('checkbox').count(), 7);
         assert.deepEqual(f.state.writes, []);
         await f.page.getByRole('button', { name: 'Save', exact: true }).click();
         await f.page.getByText('Settings saved', { exact: true }).waitFor();
-        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: ['QSA'], disabled_counselor_ids: [], default_counselor_id: null }]);
+        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: ['QSA'], disabled_counselor_ids: [], default_counselor_id: null, forum: { students_can_open: false, premoderation: false } }]);
         await f.page.reload({ waitUntil: 'networkidle' });
         await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
         assert.equal(await f.page.getByRole('checkbox', { name: 'QSA', exact: true }).isChecked(), false);
@@ -220,7 +221,7 @@ test('Counselors: toggles, filters and one optional class default saved together
         assert.deepEqual(f.state.writes, []);
         await f.page.getByRole('button', { name: 'Save', exact: true }).click();
         await f.page.getByText('Settings saved', { exact: true }).waitFor();
-        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: [], disabled_counselor_ids: [2], default_counselor_id: 1 }]);
+        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: [], disabled_counselor_ids: [2], default_counselor_id: 1, forum: { students_can_open: false, premoderation: false } }]);
         await f.page.reload({ waitUntil: 'networkidle' });
         await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
         assert.equal(await f.page.getByRole('radio', { name: 'Class default: Clio' }).isChecked(), true);

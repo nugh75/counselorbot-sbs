@@ -2,6 +2,16 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { effectiveDefaultCounselor, filterClassCounselors, parseClassSettings } from './class-settings.ts';
+
+test('forum options keep administrator lock flags and reject malformed values', () => {
+    const base = { group_id: 104, revision: 1, tools: [], disabled_tool_keys: [] };
+    const forum = { students_can_open: true, premoderation: false, students_can_open_locked: true, premoderation_locked: false };
+    assert.deepEqual(parseClassSettings({ ...base, forum }).forum, forum);
+    assert.equal(parseClassSettings(base).forum?.students_can_open, false);
+    for (const malformed of [{ ...forum, premoderation: 'yes' }, { ...forum, students_can_open_locked: 1 }, false]) {
+        assert.throws(() => parseClassSettings({ ...base, forum: malformed }));
+    }
+});
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { classSettingsText, classSettingsTexts } from './i18n-class-settings.ts';
 

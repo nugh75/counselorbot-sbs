@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Lock } from 'lucide-react';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
-import { effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, type ClassCounselor, type ClassSettings, type ClassTool } from '@/lib/class-settings';
+import { defaultForumOptions, effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, type ClassCounselor, type ClassSettings, type ClassTool } from '@/lib/class-settings';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
+import { forumText } from '@/lib/i18n-forum';
 import { useI18n } from '@/lib/i18n-context';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { Button } from '@/components/ui/Button';
@@ -21,7 +22,7 @@ import { useTeacherResource } from './useTeacherResource';
 import { parseClassGroups } from './class-group-types';
 
 type TextKey = keyof typeof classSettingsTexts;
-const categories = ['assessment', 'guided', 'personal', 'support'] as const;
+const categories = ['assessment', 'guided', 'personal', 'support', 'forum'] as const;
 const sameIds = (a: readonly (string | number)[], b: readonly (string | number)[]) =>
     JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
 
@@ -92,6 +93,7 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
     const [disabled, setDisabled] = useState(initial.disabled_tool_keys);
     const [disabledCounselors, setDisabledCounselors] = useState(initial.disabled_counselor_ids);
     const [defaultCounselor, setDefaultCounselor] = useState(effectiveDefaultCounselor(initial));
+    const [forum, setForum] = useState(initial.forum ?? defaultForumOptions);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<'saved' | 'error' | 'conflict' | 'invalid' | null>(null);
     const [forbidden, setForbidden] = useState(false);
@@ -104,7 +106,9 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
     }, []);
     const dirty = !sameIds(disabled, settings.disabled_tool_keys)
         || !sameIds(disabledCounselors, settings.disabled_counselor_ids)
-        || defaultCounselor !== effectiveDefaultCounselor(settings);
+        || defaultCounselor !== effectiveDefaultCounselor(settings)
+        || forum.students_can_open !== (settings.forum ?? defaultForumOptions).students_can_open
+        || forum.premoderation !== (settings.forum ?? defaultForumOptions).premoderation;
     useDraftGuard(dirty || busy, l('discard'), { blocked: busy });
     const tools = settings.tools.filter(tool => !tool.always_on);
     const isEnabled = (tool: ClassTool) => tool.admin_enabled && !disabled.includes(tool.key);
@@ -144,6 +148,7 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
                 body: JSON.stringify({
                     revision: settings.revision, disabled_tool_keys: disabled,
                     disabled_counselor_ids: disabledCounselors, default_counselor_id: defaultCounselor,
+                    forum: { students_can_open: forum.students_can_open, premoderation: forum.premoderation },
                 }),
             });
             if (!current()) return;
@@ -158,6 +163,7 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
             if (current() && account.current === getViewAsAccount()?.username) {
                 setSettings(next); setDisabled(next.disabled_tool_keys);
                 setDisabledCounselors(next.disabled_counselor_ids); setDefaultCounselor(effectiveDefaultCounselor(next));
+                setForum(next.forum ?? defaultForumOptions);
                 setNotice('saved');
             }
         } catch {
@@ -203,6 +209,15 @@ function ClassToolsEditor({ initial, onReload }: { initial: ClassSettings; onRel
         <p className="text-sm text-slate-600">{l('always')}: {settings.tools.filter(tool => tool.always_on).map(label).join(' · ')}</p>
         {settings.counselors.length > 0 && <ClassCounselorsSection counselors={settings.counselors} disabled={disabledCounselors}
             defaultId={defaultCounselor} busy={busy} onToggle={toggleCounselor} onDefault={chooseDefault} />}
+        <Card>
+            <h2 className="text-lg font-bold text-slate-800">{forumText(lang, 'options')}</h2>
+            {(['students_can_open', 'premoderation'] as const).map(name => <label key={name} className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
+                <input type="checkbox" className="h-5 w-5 accent-indigo-600" checked={forum[name]} disabled={busy || forum[`${name}_locked`]}
+                    onChange={event => { if (!pending.current) { setForum(previous => ({ ...previous, [name]: event.target.checked })); setNotice(null); } }} />
+                {forumText(lang, name === 'students_can_open' ? 'studentsCanOpen' : 'premoderationOption')}
+                {forum[`${name}_locked`] && <span className="flex items-center gap-1"><Lock className="h-4 w-4" aria-hidden />{forumText(lang, 'lockedOption')}</span>}
+            </label>)}
+        </Card>
         <StickyActions>
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
                 <div className="min-w-0 flex-1 text-sm">
