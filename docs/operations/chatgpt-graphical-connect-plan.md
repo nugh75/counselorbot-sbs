@@ -362,3 +362,12 @@ Phase 2 will be split by a planner into 2-3 issues, not created as part of this 
 1. Backend + Windows packaging/signing (helper endpoint, status flag, build script, signing or workaround).
 2. Frontend 4-state wizard (panel, OS detection, unsupported-device message, i18n, Playwright).
 3. Documentation (operator guide, product guide, guidance refresh); may be folded into the first two.
+
+### 9.3 Phase 2 Issues
+Created 2026-10-09 in milestone [ChatGPT graphical connection (#82)](https://github.com/nugh75/counselorbot-sbs/milestone/4). The owner suspended the code-signing decision: the helpers ship unsigned with the documented SmartScreen / Gatekeeper workaround, and signing is a separate follow-up. Documentation (slice 3 of §9.2) is folded into the first two issues.
+
+| Order | Issue | Scope | Depends on |
+| :--- | :--- | :--- | :--- |
+| 1 | [#133](https://github.com/nugh75/counselorbot-sbs/issues/133) | Standalone Windows helper (unsigned), `GET /api/chatgpt/helper/windows`, `windows_helper_available`, build script, Compose mount, minimal download link, operator docs with the SmartScreen workaround and the recorded decision | — |
+| 2 | [#134](https://github.com/nugh75/counselorbot-sbs/issues/134) | Guided 4-state wizard, OS detection, unsupported-device message, i18n in 6 languages, Playwright, user and product guide | #133 |
+| — | [#135](https://github.com/nugh75/counselorbot-sbs/issues/135) | Code signing for Windows and macOS helpers | Owner decision (blocked), #133 |
