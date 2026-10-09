@@ -199,6 +199,11 @@ except Exception as exc:  # pragma: no cover - dipende dalla concorrenza dei wor
     models.Base.metadata.create_all(bind=database.engine, checkfirst=True)
 
 
+# Run before ORM reads: create_all cannot add columns/constraints to legacy tables.
+from importlib import import_module
+import_module("backend.migrations.20261009_teacher_institutes").migrate(database.engine)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Precarica il modello Ollama in memoria all'avvio (evita cold start)
