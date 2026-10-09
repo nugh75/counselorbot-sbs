@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import insert
 
 from .. import auth, database, models
-from ..forum_schemas import ForumHide, ForumPostCreate, ForumPostUpdate, ForumTopicCreate
+from ..class_access import class_tool_enabled, forum_option, require_class_tool
+from ..forum_schemas import ForumHide, ForumMuteCreate, ForumPostCreate, ForumPostUpdate, ForumTopicCreate
 from .groups import _visible_group_query
 
 router = APIRouter()
@@ -45,15 +46,19 @@ def _post(row, moderator=False, username=None):
     # tombstone for everyone, moderators included.
     hidden = row.hidden_at is not None
     deleted = getattr(row, "deleted_at", None) is not None
-    visible = not deleted and (moderator or not hidden)
-    return {
+    visible = not deleted and (moderator or not hidden) and (
+        row.status == "published" or moderator or row.author_username == username)
+    result = {
         "id": row.id, "author_display_name": row.author_display_name,
         "body": row.body if visible else None,
         "hidden": hidden, "deleted": deleted,
         "hidden_reason": row.hidden_reason if moderator and hidden and not deleted else None,
         "own": username is not None and row.author_username == username,
-        "created_at": row.created_at, "edited_at": row.edited_at,
+        "created_at": row.created_at, "edited_at": row.edited_at, "status": row.status,
     }
+    if moderator:
+        result["author_username"] = row.author_username
+    return result
 
 
 def _step_targets(db: Session, group_id: int):
@@ -101,7 +106,8 @@ def _link(db: Session, topic):
 
 
 def _topic(db: Session, row, moderator=False, username=None):
-    visible = moderator or not row.hidden_at
+    # Pending topics (#104) stay private to their author and moderators.
+    visible = moderator or (not row.hidden_at and (row.status == "published" or row.author_username == username))
     return {
         **_post(row, moderator, username), "group_id": row.group_id,
         "title": row.title if visible else None,
@@ -115,16 +121,49 @@ def _topic(db: Session, row, moderator=False, username=None):
 
 def _get_topic(db: Session, topic_id: int):
     topic = db.get(models.ForumTopic, topic_id, populate_existing=True)
-    if not topic or topic.status != "published":
+    if not topic or topic.status not in {"published", "pending"}:
         raise HTTPException(403, "forum_access_denied")
     return topic
 
 
 def _get_post(db: Session, post_id: int):
     post = db.get(models.ForumPost, post_id, populate_existing=True)
-    if not post or post.status != "published":
+    if not post or post.status not in {"published", "pending"}:
         raise HTTPException(403, "forum_access_denied")
     return post, _get_topic(db, post.topic_id)
+
+
+def _visible_status(model, staff, username):
+    if staff:
+        return model.status.in_(["published", "pending"])
+    return or_(model.status == "published", (model.status == "pending") & (model.author_username == username))
+
+
+def _active_mutes(db, group_id, username=None):
+    query = db.query(models.ForumMute).filter(
+        models.ForumMute.group_id == group_id, models.ForumMute.lifted_at.is_(None),
+        or_(models.ForumMute.until.is_(None), models.ForumMute.until > func.statement_timestamp()))
+    return query.filter(models.ForumMute.username == username) if username is not None else query
+
+
+def _forum_state(db, identity, group_id, staff):
+    settings = db.get(models.ClassSettings, group_id)
+    mute = None if staff else _active_mutes(db, group_id, identity["username"]).first()
+    return {"forum_enabled": class_tool_enabled(db, identity, group_id, "forum"),
+            "premoderated": forum_option(settings, "premoderation")[0],
+            "mute": {"until": mute.until} if mute else None}
+
+
+def _student_write(db, identity, group_id, staff):
+    require_class_tool(db, identity, group_id, "forum")
+    if not staff and _active_mutes(db, group_id, identity["username"]).first():
+        raise HTTPException(403, "forum_muted")
+    return "pending" if not staff and forum_option(db.get(models.ClassSettings, group_id), "premoderation")[0] else "published"
+
+
+def _check_pending_visibility(topic, staff, username):
+    if topic.status == "pending" and not staff and topic.author_username != username:
+        raise HTTPException(403, "forum_access_denied")
 
 
 def _rate_limit(db: Session, group_id: int, username: str):
@@ -150,7 +189,7 @@ def list_topics(group_id: int, offset: int = Query(0, ge=0), limit: int = Query(
                 identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     group, staff = _access(db, identity, group_id)
     rows = db.query(models.ForumTopic).filter(
-        models.ForumTopic.group_id == group_id, models.ForumTopic.status == "published",
+        models.ForumTopic.group_id == group_id, _visible_status(models.ForumTopic, False, identity["username"]),
     ).order_by(models.ForumTopic.pinned.desc(), models.ForumTopic.last_post_at.desc(), models.ForumTopic.id.desc()).offset(offset).limit(limit + 1).all()
     selected = rows[:limit]
     unread_map = _unread_counts_for_topics(db, [r.id for r in selected], identity["username"], staff)
@@ -159,8 +198,11 @@ def list_topics(group_id: int, offset: int = Query(0, ge=0), limit: int = Query(
         item = _topic(db, row, staff, identity["username"])
         item["unread_count"] = unread_map.get(row.id, 0)
         topic_dicts.append(item)
-    return {"group": {"id": group.id, "name": group.name, "is_active": group.is_active},
-            "can_open_topic": staff and group.is_active, "can_moderate": staff,
+    state = _forum_state(db, identity, group_id, staff)
+    can_open = staff or forum_option(db.get(models.ClassSettings, group_id), "students_can_open")[0]
+    return {"group": {"id": group.id, "name": group.name, "is_active": group.is_active}, **state,
+            "can_open_topic": bool(can_open and group.is_active and state["forum_enabled"] and not state["mute"]), "can_moderate": staff,
+            "pending_count": _pending_count(db, group_id) if staff else 0,
             "topics": topic_dicts, "has_more": len(rows) > limit}
 
 
@@ -168,7 +210,8 @@ def list_topics(group_id: int, offset: int = Query(0, ge=0), limit: int = Query(
 def create_topic(group_id: int, payload: ForumTopicCreate,
                  identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     group, staff = _access(db, identity, group_id, write=True)
-    if not staff:
+    status = _student_write(db, identity, group_id, staff)
+    if not staff and not forum_option(db.get(models.ClassSettings, group_id), "students_can_open")[0]:
         raise HTTPException(403, "forum_topic_staff_only")
     if payload.link_kind is not None:
         # Only teachers link discussions (plan decision 19), to current targets of this
@@ -182,7 +225,7 @@ def create_topic(group_id: int, payload: ForumTopicCreate,
         if target.first() is None:
             raise HTTPException(422, "forum_link_invalid")
     now = _rate_limit(db, group_id, identity["username"])
-    row = models.ForumTopic(group_id=group.id, title=payload.title, body=payload.body,
+    row = models.ForumTopic(group_id=group.id, title=payload.title, body=payload.body, status=status,
                             link_kind=payload.link_kind, link_id=payload.link_id,
                             created_at=now, last_post_at=now,
                             author_username=identity["username"], author_display_name=identity.get("name") or identity["username"])
@@ -225,13 +268,16 @@ def topic_detail(topic_id: int, offset: int = Query(0, ge=0), limit: int = Query
                  identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     topic = _get_topic(db, topic_id)
     group, staff = _access(db, identity, topic.group_id)
+    _check_pending_visibility(topic, staff, identity["username"])
     posts = db.query(models.ForumPost).filter(
-        models.ForumPost.topic_id == topic_id, models.ForumPost.status == "published",
+        models.ForumPost.topic_id == topic_id, _visible_status(models.ForumPost, staff, identity["username"]),
     ).order_by(models.ForumPost.id).offset(offset).limit(limit + 1).all()
     username = identity["username"]
+    state = _forum_state(db, identity, topic.group_id, staff)
     return {"topic": _topic(db, topic, staff, username), "posts": [_post(row, staff, username) for row in posts[:limit]],
-            "has_more": len(posts) > limit, "can_moderate": staff,
-            "can_reply": bool(group.is_active and not topic.locked and not topic.hidden_at)}
+            "has_more": len(posts) > limit, "can_moderate": staff, **state,
+            "can_reply": bool(group.is_active and topic.status == "published" and not topic.locked and not topic.hidden_at
+                              and state["forum_enabled"] and not state["mute"])}
 
 
 @router.post("/forum/topics/{topic_id}/posts", status_code=201)
@@ -239,15 +285,17 @@ def create_post(topic_id: int, payload: ForumPostCreate,
                 identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     topic = _get_topic(db, topic_id)
     _, staff = _access(db, identity, topic.group_id, write=True)
+    status = _student_write(db, identity, topic.group_id, staff)
     # Refresh after the class lock: concurrent moderation can close the topic.
     db.refresh(topic)
     if topic.locked or topic.hidden_at or topic.status != "published":
         raise HTTPException(403, "forum_topic_closed")
     now = _rate_limit(db, topic.group_id, identity["username"])
-    row = models.ForumPost(topic_id=topic.id, body=payload.body, author_username=identity["username"],
+    row = models.ForumPost(topic_id=topic.id, body=payload.body, status=status, author_username=identity["username"],
                            created_at=now,
                            author_display_name=identity.get("name") or identity["username"])
-    topic.last_post_at = now
+    if status == "published":
+        topic.last_post_at = now
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -257,7 +305,8 @@ def create_post(topic_id: int, payload: ForumPostCreate,
 @router.post("/forum/topics/{topic_id}/read")
 def mark_read(topic_id: int, identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     topic = _get_topic(db, topic_id)
-    _access(db, identity, topic.group_id)
+    _, staff = _access(db, identity, topic.group_id)
+    _check_pending_visibility(topic, staff, identity["username"])
     statement = insert(models.ForumRead).values(topic_id=topic_id, username=identity["username"], last_read_at=func.statement_timestamp())
     db.execute(statement.on_conflict_do_update(
         index_elements=["topic_id", "username"], set_={"last_read_at": statement.excluded.last_read_at},
@@ -424,11 +473,13 @@ def _author_target(db: Session, identity: dict, post_id: int):
 def edit_post(post_id: int, payload: ForumPostUpdate,
               identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     post, topic, staff = _author_target(db, identity, post_id)
+    status = _student_write(db, identity, topic.group_id, staff)
     if post.hidden_at is not None:
         raise HTTPException(409, "forum_post_hidden")
     if topic.locked or topic.hidden_at:
         raise HTTPException(403, "forum_topic_closed")
     post.body = payload.body
+    post.status = status
     post.edited_at = db.scalar(func.statement_timestamp())
     db.commit()
     db.refresh(post)
@@ -446,7 +497,7 @@ def delete_post(post_id: int, identity=Depends(auth.get_current_user), db: Sessi
     return _post(post, staff, identity["username"])
 
 
-def _moderation_target(db: Session, identity: dict, kind: str, target_id: int):
+def _moderation_target(db: Session, identity: dict, kind: str, target_id: int, *, pending=False):
     if kind == "topics":
         target = topic = _get_topic(db, target_id)
     else:
@@ -456,6 +507,8 @@ def _moderation_target(db: Session, identity: dict, kind: str, target_id: int):
         raise HTTPException(403, "forum_moderator_only")
     # Refresh after the class lock so concurrent moderators see each other.
     db.refresh(target)
+    if not pending and target.status != "published":
+        raise HTTPException(409, "forum_pending")
     if getattr(target, "deleted_at", None) is not None:
         raise HTTPException(409, "forum_post_deleted")
     return target, topic
@@ -529,3 +582,113 @@ def moderation_log(group_id: int, offset: int = Query(0, ge=0), limit: int = Que
                          "target_kind": row.target_kind, "target_id": row.target_id, "reason": row.reason,
                          "created_at": row.created_at} for row in rows[:limit]],
             "has_more": len(rows) > limit}
+
+
+def _pending_queries(db, group_id):
+    topics = db.query(models.ForumTopic).filter(models.ForumTopic.group_id == group_id,
+        models.ForumTopic.status == "pending", models.ForumTopic.hidden_at.is_(None))
+    posts = db.query(models.ForumPost).join(models.ForumTopic).filter(models.ForumTopic.group_id == group_id,
+        models.ForumTopic.status == "published", models.ForumTopic.hidden_at.is_(None),
+        models.ForumPost.status == "pending", models.ForumPost.hidden_at.is_(None), models.ForumPost.deleted_at.is_(None))
+    return topics, posts
+
+
+def _pending_count(db, group_id):
+    topics, posts = _pending_queries(db, group_id)
+    return topics.count() + posts.count()
+
+
+@router.get("/teacher/groups/{group_id}/forum/pending")
+def pending_messages(group_id: int, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100),
+                     identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    _, staff = _access(db, identity, group_id)
+    if not staff:
+        raise HTTPException(403, "forum_moderator_only")
+    topic_query, post_query = _pending_queries(db, group_id)
+    topics = topic_query.order_by(models.ForumTopic.id).offset(offset).limit(limit + 1).all()
+    posts = post_query.order_by(models.ForumPost.id).offset(offset).limit(limit + 1).all()
+    return {"topics": [_topic(db, row, True, identity["username"]) for row in topics[:limit]],
+            "posts": [{**_post(row, True, identity["username"]), "topic_id": row.topic_id,
+                       "topic_title": db.get(models.ForumTopic, row.topic_id).title} for row in posts[:limit]],
+            "has_more": len(topics) > limit or len(posts) > limit}
+
+
+def _pending_target(db, identity, kind, target_id):
+    target, topic = _moderation_target(db, identity, kind, target_id, pending=True)
+    if target.status != "pending" or target.hidden_at is not None:
+        raise HTTPException(409, "forum_not_pending")
+    if kind == "posts" and (topic.status != "published" or topic.hidden_at is not None):
+        raise HTTPException(409, "forum_topic_closed")
+    return target, topic
+
+
+@router.post("/teacher/forum/{kind}/{target_id}/approve")
+def approve(kind: Literal["topics", "posts"], target_id: int,
+            identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    target, topic = _pending_target(db, identity, kind, target_id)
+    target.status = "published"
+    topic.last_post_at = _log(db, identity, topic.group_id, "approve", kind[:-1], target.id)
+    return _moderated(db, identity, kind, target)
+
+
+@router.post("/teacher/forum/{kind}/{target_id}/reject")
+def reject(kind: Literal["topics", "posts"], target_id: int, payload: ForumHide,
+           identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    target, topic = _pending_target(db, identity, kind, target_id)
+    target.hidden_at = _log(db, identity, topic.group_id, "reject", kind[:-1], target.id, payload.reason)
+    target.hidden_by, target.hidden_reason = identity["username"], payload.reason
+    return _moderated(db, identity, kind, target)
+
+
+def _mute(row):
+    return {"id": row.id, "username": row.username, "reason": row.reason, "until": row.until,
+            "muted_by": row.muted_by, "created_at": row.created_at, "lifted_at": row.lifted_at}
+
+
+@router.get("/teacher/groups/{group_id}/forum/mutes")
+def list_mutes(group_id: int, identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    _, staff = _access(db, identity, group_id)
+    if not staff:
+        raise HTTPException(403, "forum_moderator_only")
+    return {"mutes": [_mute(row) for row in _active_mutes(db, group_id).order_by(models.ForumMute.id).all()]}
+
+
+@router.post("/teacher/groups/{group_id}/forum/mutes", status_code=201)
+def create_mute(group_id: int, payload: ForumMuteCreate,
+                identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    group, staff = _access(db, identity, group_id, write=True)
+    if not staff:
+        raise HTTPException(403, "forum_moderator_only")
+    member = db.query(models.GroupMembership.id).filter(models.GroupMembership.group_id == group_id,
+        models.GroupMembership.username == payload.username).first()
+    shared = db.query(models.GroupShare.id).filter(models.GroupShare.group_id == group_id,
+        models.GroupShare.shared_with_username == payload.username.lower()).first()
+    if not member or payload.username == group.owner_username or shared:
+        raise HTTPException(422, "forum_mute_student_only")
+    if _active_mutes(db, group_id, payload.username).first():
+        raise HTTPException(409, "forum_already_muted")
+    row = models.ForumMute(group_id=group_id, username=payload.username, muted_by=identity["username"],
+                           reason=payload.reason, until=payload.until)
+    db.add(row)
+    db.flush()
+    _log(db, identity, group_id, "mute", "user", row.id, payload.reason)
+    db.commit()
+    db.refresh(row)
+    return _mute(row)
+
+
+@router.delete("/teacher/groups/{group_id}/forum/mutes/{mute_id}")
+def lift_mute(group_id: int, mute_id: int,
+              identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    _, staff = _access(db, identity, group_id, write=True)
+    if not staff:
+        raise HTTPException(403, "forum_moderator_only")
+    row = db.get(models.ForumMute, mute_id, populate_existing=True)
+    if not row or row.group_id != group_id:
+        raise HTTPException(403, "forum_access_denied")
+    if row.lifted_at is not None:
+        raise HTTPException(409, "forum_not_muted")
+    row.lifted_at = _log(db, identity, group_id, "unmute", "user", row.id)
+    db.commit()
+    db.refresh(row)
+    return _mute(row)

@@ -628,6 +628,24 @@ co-teachers and administrators, also in archived classes. The log never stores
 message text and has no edit or delete operation. Repeating an action that is
 already in effect is refused and not logged.
 
+**Forum options, mute and pre-approval (F3, #104).** The Tools & counselors tab
+of `/docente/classi/{id}` has a Forum switch (category Forum) and a Forum
+options block: "Students can open discussions" and "Approve messages before
+they are visible", both off by default and saved with the other settings. An
+option locked by the administrator shows "Locked by administrator" and cannot be
+changed. With the Forum switched off, students of that class keep reading
+earlier discussions but cannot open discussions, reply or edit ("The forum is
+disabled for this class"); only that class's own setting counts. With
+pre-approval on, new student discussions, replies and edits stay pending:
+the author sees them with "Your message will be visible after approval", other
+students do not see them. Moderators open "Pending (n)" from the forum list and
+Approve, or Reject with a reason. Moderators can "Mute author…" on a student's
+message, with a reason and an optional end date; a muted student cannot post or
+edit in that class ("You cannot post until…") but can still read and delete own
+messages. "Muted students" lists active mutes with Unmute. Moderators' own
+messages are never held. Approve, reject, mute, unmute and every change to the
+forum options or switch are added to the Moderation log, without message text.
+
 **Class access guard (S2, #89).** The server now decides which tools a user may
 start, with one resolver for every entry point. First the platform layer: an
 instrument the administrator has disabled, or one reserved for teachers, cannot

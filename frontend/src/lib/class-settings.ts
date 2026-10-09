@@ -14,12 +14,14 @@ export interface ClassForum {
     premoderation_locked?: boolean;
     students_can_open_lock?: { value: boolean; locked_by: string; locked_at: string } | null;
     premoderation_lock?: { value: boolean; locked_by: string; locked_at: string } | null;
+    students_can_open_changed_by_admin?: boolean;
+    premoderation_changed_by_admin?: boolean;
 }
 
 export interface ClassTool extends ClassItemLock {
     key: string;
     kind: 'instrument' | 'personal';
-    category: 'assessment' | 'guided' | 'personal' | 'support' | 'always_on';
+    category: 'assessment' | 'guided' | 'personal' | 'support' | 'forum' | 'always_on';
     label_key?: string;
     label_i18n: Record<string, string>;
     admin_enabled: boolean;
@@ -36,6 +38,10 @@ export interface ClassCounselor extends ClassItemLock {
     admin_enabled: boolean;
     enabled: boolean;
 }
+
+export const defaultForumOptions: ClassForum = {
+    students_can_open: false, premoderation: false, students_can_open_locked: false, premoderation_locked: false,
+};
 
 export interface ClassSettings {
     group_id: number;
@@ -72,8 +78,15 @@ export function parseClassSettings(payload: unknown): ClassSettings {
             && typeof counselor.admin_enabled === 'boolean' && typeof counselor.enabled === 'boolean')))) {
         throw new Error('Invalid class settings');
     }
+    if (row.forum !== undefined && (!row.forum || typeof row.forum !== 'object' || Array.isArray(row.forum)
+        || typeof row.forum.students_can_open !== 'boolean' || typeof row.forum.premoderation !== 'boolean'
+        || (row.forum.students_can_open_locked !== undefined && typeof row.forum.students_can_open_locked !== 'boolean')
+        || (row.forum.premoderation_locked !== undefined && typeof row.forum.premoderation_locked !== 'boolean'))) {
+        throw new Error('Invalid forum options');
+    }
     return {
         ...row,
+        forum: { ...defaultForumOptions, ...row.forum },
         disabled_counselor_ids: row.disabled_counselor_ids ?? [],
         default_counselor_id: row.default_counselor_id ?? null,
         counselors: (row.counselors ?? []).map(counselor => ({

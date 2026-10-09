@@ -70,10 +70,36 @@ test('every forum message has six nonempty language strings', () => {
 });
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { forumClosedNotice, forumPostActions, parseForumLog, parseForumPost } from './forum.ts';
+import { forumClosedNotice, forumPostActions, parseForumDetail, parseForumList, parseForumLog, parseForumMutes, parseForumPending, parseForumPost } from './forum.ts';
 
 const reply = { id: 1, author_display_name: 'Anna', body: 'Text', hidden: false, deleted: false,
     hidden_reason: null, own: false, created_at: '2026-10-08T10:00:00Z', edited_at: null };
+
+test('forum reads preserve disabled, muted and pending state instead of offering a composer', () => {
+    const topic = { ...reply, status: 'pending', group_id: 1, title: 'Question', pinned: false, locked: false,
+        last_post_at: reply.created_at, replies_count: 0 };
+    const state = { forum_enabled: false, premoderated: true, mute: { until: null }, can_moderate: false, has_more: false };
+    const list = parseForumList({ ...state, group: { id: 1, name: 'Class', is_active: true }, topics: [topic], can_open_topic: false, pending_count: 0 });
+    assert.equal(list.forum_enabled, false);
+    assert.deepEqual(list.mute, { until: null });
+    assert.equal(list.topics[0].status, 'pending');
+    const detail = parseForumDetail({ ...state, topic, posts: [{ ...reply, status: 'pending', own: true }], can_reply: false });
+    assert.equal(detail.premoderated, true);
+    assert.equal(detail.posts[0].status, 'pending');
+    assert.throws(() => parseForumPost({ ...reply, status: 'rejected' }));
+    assert.throws(() => parseForumDetail({ ...state, topic, posts: [], can_reply: false, mute: {} }));
+});
+
+test('pending messages use approval controls; rejected messages cannot be restored through F2', () => {
+    assert.equal(forumPostActions({ ...reply, status: 'pending' }, { moderator: true, active: true }).hide, false);
+    assert.equal(forumPostActions({ ...reply, status: 'pending', hidden: true }, { moderator: true, active: true }).restore, false);
+    const queue = parseForumPending({ topics: [], posts: [{ ...reply, status: 'pending', topic_id: 1, topic_title: 'Question' }], has_more: true });
+    assert.equal(queue.posts[0].topic_title, 'Question');
+    assert.equal(queue.has_more, true);
+    assert.throws(() => parseForumPending({ topics: [], posts: [reply], has_more: false }));
+    assert.deepEqual(parseForumMutes({ mutes: [{ id: 1, username: 'student', reason: 'Reason', until: null }] }).mutes[0].until, null);
+    assert.throws(() => parseForumMutes({ mutes: [{ id: 1, username: 'student', reason: 'Reason', until: 12 }] }));
+});
 
 test('a closed discussion explains archive first, then a hidden topic, then a lock', () => {
     assert.equal(forumClosedNotice(false, { hidden: true, locked: true }), 'archive');

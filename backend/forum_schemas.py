@@ -1,8 +1,9 @@
 """Text-only forum inputs; clients cannot choose authors or moderation state."""
 import re
+from datetime import datetime, timezone
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import AfterValidator, AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
 
 # C0 controls other than tab, newline and carriage return: NUL cannot be stored
 # by PostgreSQL and the others are invisible or terminal-escape noise.
@@ -48,3 +49,17 @@ class ForumPostUpdate(BaseModel):
 class ForumHide(BaseModel):
     model_config = ConfigDict(extra="forbid")
     reason: ForumReason
+
+
+class ForumMuteCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    username: Annotated[str, StringConstraints(strict=True, strip_whitespace=True, min_length=1, max_length=255), AfterValidator(_printable)]
+    reason: ForumReason
+    until: AwareDatetime | None = None
+
+    @field_validator("until")
+    @classmethod
+    def future_end(cls, value):
+        if value is not None and value <= datetime.now(timezone.utc):
+            raise ValueError("mute end must be in the future")
+        return value
