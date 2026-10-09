@@ -3,15 +3,18 @@
 L'elenco pubblico serve al select del taccuino. Espone solo nome, tipo e le
 pagine istituzionali: nulla che riguardi le persone.
 """
-from typing import List
+from typing import List, Literal
+import re
+import unicodedata
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 from .. import auth, database, models, schemas
-from ..institution_access import require_institution_admin, teacher_institutions
+from ..institution_access import require_institution_admin, teacher_institutions, require_teacher, require_institution_teacher
 
 router = APIRouter()
 get_db = database.get_db
@@ -45,12 +48,123 @@ class InstitutionTeacherResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-@router.get("/teacher/institutions", response_model=List[schemas.InstitutionPublic])
-async def my_institutions(
-    current_user: dict = Depends(auth.get_current_user),
-    db: Session = Depends(get_db),
-):
-    return teacher_institutions(db, current_user).all()
+class TeacherInstitutionCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1, max_length=200)
+    kind: Literal["school", "university"] = "school"
+    website_url: HttpUrl | None = None
+    orientation_page_url: HttpUrl | None = None
+
+    @field_validator("name")
+    @classmethod
+    def clean_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value or any(ord(char) < 32 for char in value):
+            raise ValueError("Invalid institute name")
+        return value
+
+
+class TeacherInstitutionUpdate(TeacherInstitutionCreate):
+    revision: int = Field(ge=1)
+
+
+def _teacher_response(db: Session, row: models.Institution) -> dict:
+    count = db.query(models.InstitutionTeacher).filter_by(institution_id=row.id, is_active=True).count()
+    return {**schemas.InstitutionPublic.model_validate(row).model_dump(),
+            "is_active": row.is_active, "revision": row.revision, "created_by": row.created_by,
+            "credentials_configured": bool(row.institution_code and row.hashed_password),
+            "member_count": count, "needs_admin_review": count > 2}
+
+
+@router.get("/teacher/institutions")
+async def my_institutions(current_user: dict = Depends(auth.get_current_user), db: Session = Depends(get_db)):
+    return [_teacher_response(db, row) for row in teacher_institutions(db, current_user).all()]
+
+
+@router.post("/teacher/institutions", status_code=201)
+async def create_teacher_institution(payload: TeacherInstitutionCreate,
+                                     current_user: dict = Depends(auth.get_current_user),
+                                     db: Session = Depends(get_db)):
+    username = require_teacher(current_user)
+    stem = unicodedata.normalize("NFKD", payload.name).encode("ascii", "ignore").decode().lower()
+    stem = re.sub(r"[^a-z0-9]+", "-", stem).strip("-")[:80] or "institute"
+    # A server-generated suffix lets duplicate names coexist without silent joining.
+    row = models.Institution(name=payload.name, kind=payload.kind, slug=f"{stem}-{uuid.uuid4().hex}",
+                             website_url=str(payload.website_url) if payload.website_url else None,
+                             orientation_page_url=str(payload.orientation_page_url) if payload.orientation_page_url else None,
+                             is_active=True, created_by=username, revision=1)
+    try:
+        db.add(row)
+        db.flush()
+        db.add(models.InstitutionTeacher(institution_id=row.id, username=username,
+                                         created_by=username, updated_by=username, is_active=True))
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="institution_creation_conflict")
+    return _teacher_response(db, row)
+
+
+@router.get("/teacher/institutions/directory")
+async def teacher_directory(q: str = "", offset: int = 0, current_user: dict = Depends(auth.get_current_user),
+                            db: Session = Depends(get_db)):
+    username = require_teacher(current_user)
+    query = db.query(models.Institution).filter_by(is_active=True)
+    if q.strip():
+        query = query.filter(models.Institution.name.ilike(f"%{q.strip()}%"))
+    result = []
+    for row in query.order_by(models.Institution.name, models.Institution.id).offset(max(0, offset)).limit(100):
+        count = db.query(models.InstitutionTeacher).filter_by(institution_id=row.id, is_active=True).count()
+        joined = db.query(models.InstitutionTeacher).filter_by(institution_id=row.id, username=username, is_active=True).first() is not None
+        result.append({**schemas.InstitutionPublic.model_validate(row).model_dump(),
+                       "joined": joined, "can_join": not joined and count < 2})
+    return result
+
+
+@router.post("/teacher/institutions/{institution_id}/join")
+async def join_teacher_institution(institution_id: int, current_user: dict = Depends(auth.get_current_user),
+                                   db: Session = Depends(get_db)):
+    username = require_teacher(current_user)
+    row = db.query(models.Institution).filter_by(id=institution_id).with_for_update().first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="institution_not_found")
+    if not row.is_active:
+        raise HTTPException(status_code=409, detail="institution_inactive")
+    membership = db.query(models.InstitutionTeacher).filter_by(institution_id=row.id, username=username).first()
+    if membership is None or not membership.is_active:
+        count = db.query(models.InstitutionTeacher).filter_by(institution_id=row.id, is_active=True).count()
+        if count >= 2:
+            raise HTTPException(status_code=409, detail="institution_capacity_reached")
+        if membership is None:
+            membership = models.InstitutionTeacher(institution_id=row.id, username=username, created_by=username)
+            db.add(membership)
+        membership.is_active = True
+        membership.updated_by = username
+    db.commit()
+    return _teacher_response(db, row)
+
+
+@router.get("/teacher/institutions/{institution_id}")
+async def get_teacher_institution(institution_id: int, current_user: dict = Depends(auth.get_current_user),
+                                  db: Session = Depends(get_db)):
+    return _teacher_response(db, require_institution_teacher(db, current_user, institution_id))
+
+
+@router.put("/teacher/institutions/{institution_id}")
+async def update_teacher_institution(institution_id: int, payload: TeacherInstitutionUpdate,
+                                     current_user: dict = Depends(auth.get_current_user),
+                                     db: Session = Depends(get_db)):
+    require_institution_teacher(db, current_user, institution_id)
+    row = db.query(models.Institution).filter_by(id=institution_id).populate_existing().with_for_update().one()
+    # Recheck under the lock: revocation/deactivation must bind this write.
+    require_institution_teacher(db, current_user, institution_id)
+    if row.revision != payload.revision:
+        raise HTTPException(status_code=409, detail="institution_revision_conflict")
+    for key, value in payload.model_dump(exclude={"revision"}).items():
+        setattr(row, key, str(value) if value is not None and key.endswith("_url") else value)
+    row.revision += 1
+    db.commit()
+    return _teacher_response(db, row)
 
 
 @router.get("/admin/institutions/{institution_id}/teachers", response_model=List[InstitutionTeacherResponse])
@@ -73,13 +187,19 @@ async def associate_institution_teacher(
     current_user: dict = Depends(require_institution_admin),
     db: Session = Depends(get_db),
 ):
-    institution = _fetch(db, institution_id)
+    institution = db.query(models.Institution).filter_by(id=institution_id).with_for_update().first()
+    if institution is None:
+        raise HTTPException(status_code=404, detail="Istituto non trovato")
     if not institution.is_active:
         raise HTTPException(status_code=409, detail="L'istituto è disattivato")
     actor = str(current_user.get("username") or "").strip()
     if not actor:
         raise HTTPException(status_code=403, detail="Amministratore non identificato")
     row = db.query(models.InstitutionTeacher).filter_by(institution_id=institution_id, username=payload.username).first()
+    if row is None or not row.is_active:
+        count = db.query(models.InstitutionTeacher).filter_by(institution_id=institution_id, is_active=True).count()
+        if count >= 2:
+            raise HTTPException(status_code=409, detail="institution_capacity_reached")
     if row is None:
         row = models.InstitutionTeacher(institution_id=institution_id, username=payload.username, created_by=actor)
         db.add(row)
@@ -101,6 +221,7 @@ async def revoke_institution_teacher(
     current_user: dict = Depends(require_institution_admin),
     db: Session = Depends(get_db),
 ):
+    db.query(models.Institution).filter_by(id=institution_id).with_for_update().first()
     _fetch(db, institution_id)
     actor = str(current_user.get("username") or "").strip()
     if not actor:
@@ -114,8 +235,9 @@ async def revoke_institution_teacher(
     return {"status": "revoked", "id": row.id}
 
 
-def _fetch(db: Session, institution_id: int) -> models.Institution:
-    row = db.query(models.Institution).filter(models.Institution.id == institution_id).first()
+def _fetch(db: Session, institution_id: int, *, lock: bool = False) -> models.Institution:
+    query = db.query(models.Institution).filter(models.Institution.id == institution_id)
+    row = (query.with_for_update() if lock else query).first()
     if row is None:
         raise HTTPException(status_code=404, detail="Istituto non trovato")
     return row
@@ -147,7 +269,10 @@ async def admin_list_institutions(
     current_user: dict = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    return db.query(models.Institution).order_by(models.Institution.name.asc()).all()
+    rows = db.query(models.Institution).order_by(models.Institution.name.asc()).all()
+    for row in rows:
+        row.needs_admin_review = db.query(models.InstitutionTeacher).filter_by(institution_id=row.id, is_active=True).count() > 2
+    return rows
 
 
 @router.post("/admin/institutions", response_model=schemas.InstitutionResponse)
@@ -177,10 +302,11 @@ async def update_institution(
     current_user: dict = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    row = _fetch(db, institution_id)
+    row = _fetch(db, institution_id, lock=True)
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(row, key, value)
     _validate(row)
+    row.revision += 1
     db.commit()
     db.refresh(row)
     return row
@@ -194,8 +320,9 @@ async def delete_institution(
 ):
     """Disattiva invece di cancellare: le righe del taccuino citano lo slug,
     e cancellarlo renderebbe illeggibile la storia gia' scritta."""
-    row = _fetch(db, institution_id)
+    row = _fetch(db, institution_id, lock=True)
     row.is_active = False
+    row.revision += 1
     db.commit()
     return {"status": "deactivated", "id": institution_id}
 
@@ -207,7 +334,8 @@ async def set_institution_password(
     current_user: dict = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    row = _fetch(db, institution_id)
+    row = _fetch(db, institution_id, lock=True)
+    row.revision += 1
     if payload.hashed_password is not None:
         row.hashed_password = payload.hashed_password
     elif payload.plain_password is not None:

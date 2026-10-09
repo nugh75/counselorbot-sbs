@@ -12,12 +12,17 @@ async def require_institution_admin(identity: dict = Depends(auth.get_current_us
     return identity
 
 
-def teacher_institutions(db: Session, identity: dict):
+def require_teacher(identity: dict) -> str:
     if not auth.is_teacher(identity.get("groups")):
         raise HTTPException(status_code=403, detail="Accesso riservato ai docenti")
     username = str(identity.get("username") or "").strip()
     if not username:
         raise HTTPException(status_code=403, detail="Account docente non identificato")
+    return username
+
+
+def teacher_institutions(db: Session, identity: dict):
+    username = require_teacher(identity)
     return (
         db.query(models.Institution)
         .join(models.InstitutionTeacher, models.InstitutionTeacher.institution_id == models.Institution.id)
@@ -28,8 +33,11 @@ def teacher_institutions(db: Session, identity: dict):
     )
 
 
-def require_institution_teacher(db: Session, identity: dict, institution_id: int):
-    institution = teacher_institutions(db, identity).filter(models.Institution.id == institution_id).first()
+def require_institution_teacher(db: Session, identity: dict, institution_id: int, *, lock: bool = False):
+    query = teacher_institutions(db, identity).filter(models.Institution.id == institution_id)
+    if lock:
+        query = query.populate_existing().with_for_update(of=(models.Institution, models.InstitutionTeacher))
+    institution = query.first()
     if institution is None:
         raise HTTPException(status_code=403, detail="Docente non abilitato per questo istituto")
     return institution
