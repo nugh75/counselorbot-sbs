@@ -174,6 +174,15 @@ def require_tool(db: Session, identity, tool_key: str | None, *, preview: bool =
         raise ToolAccessDenied("tool_disabled_for_class", canonical)
 
 
+def can_access_tool(db: Session, identity, tool_key: str | None, *, preview: bool = False) -> bool:
+    """Return True if require_tool succeeds, False if ToolAccessDenied is raised."""
+    try:
+        require_tool(db, identity, tool_key, preview=preview)
+        return True
+    except ToolAccessDenied:
+        return False
+
+
 def require_class_tool(db: Session, identity, group_id: int, tool_key: str) -> None:
     """Guard for a tool that lives inside one class (the forum, F3 #104).
 
