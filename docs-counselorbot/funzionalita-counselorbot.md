@@ -1510,3 +1510,43 @@ done. Teacher progress shows the completion kind `guided_results_chat`; student 
 teacher progress name the step as a deep dive on its administration. The database
 upgrade adds `class_path_steps.results_step_id`, widens the step target check and
 creates `class_path_deep_dive_sessions`; it is replay-safe and keeps existing steps.
+
+
+### Goal assignments as class-path steps
+
+A class path may add an `assignment` step that references one `TeacherAssignment`
+by `assignment_id`. The teacher selects an existing assignment in the path builder
+or creates one there with the usual assignment form, fixed to the class and
+delivered to the whole class: a published catalog goal is the anchor and certified
+strategies and readings are optional attachments. The server builds the delivered
+snapshot, so later catalog edits or deletions never change what the step shows.
+`GET /teacher/groups/{id}/path-assignments` lists the eligible assignments of the
+class to its teachers; the existing `request_id` makes a retried creation return the
+same assignment.
+
+On save and publish the server accepts only an assignment of the same class
+(`assignment_class_mismatch`), delivered to the whole class rather than to chosen
+students (`assignment_targeted`), anchored to a catalog goal (`assignment_not_goal`),
+not revoked (`assignment_revoked`) and in an active class
+(`assignment_class_inactive`); the same assignment cannot appear twice in a path
+(`duplicate_assignment_step`). A rejected save writes nothing and the builder keeps
+the draft. Targeted assignments stay available on the standalone Assignments page.
+The saved assignment row is locked during the path save, so a concurrent revocation
+applies after it. The referenced assignment is part of the immutable target once
+the step is activated; reordering keeps the step identity and activation time.
+
+The path step and the standalone page open the same assignment and share one
+`AssignmentWork` state. The step's link is `/profilo/assegnazioni#assignment-{id}`;
+launching it is not evidence. The step is done when the current class member has a
+current explicit submission (`submission` present) whose `submitted_at` is at or
+after the step's activation. Opening, planning, private reflections and teacher
+feedback do not count, and feedback is not required. Withdrawing the submission
+removes the automatic completion; a new submission restores it. A revoked assignment
+makes the step unavailable: it leaves the progress ratio, cannot be launched or
+overridden, and blocks publication until the step is replaced. Teacher marks keep
+their precedence and clearing them returns to the submission state. Students cannot
+self-mark the step. Progress exposes the completion kind `assignment_submission` and
+its time only, never the submitted text. Whole-class delivery follows current class
+membership, also for students who join later. The database upgrade adds
+`class_path_steps.assignment_id` (restricting deletion of a referenced assignment)
+and widens the step target check; it is replay-safe and keeps existing steps.

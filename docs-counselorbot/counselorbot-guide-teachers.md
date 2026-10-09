@@ -324,3 +324,28 @@ they complete the final guided step of that session. Removing the deep dive does
 not undo the administration. To remove an administration that has a deep dive,
 remove the deep dive first. A teacher override on the administration does not
 provide a result to discuss, so the student cannot start the deep dive from it.
+
+
+### Goal assignments as path steps
+
+In the path builder, the "Assignment" section lists the whole-class goal
+assignments of this class that are still active. Select one and add it as a step,
+or choose "Create class assignment": the usual assignment form opens for this class
+only, with a catalog goal and optional strategies and readings, and is delivered to
+the whole class. Then select the new assignment and add the step. Each assignment
+can appear once per path. Assignments to individual students, assignments of
+another class, revoked assignments and older assignments without a catalog goal
+cannot be path steps; they keep working on the Assignments page.
+
+The step and the Assignments page show the same assignment, with one submission:
+students open it from the path and work in the usual assignment workflow. The step
+is done when the student explicitly submits their work after the step becomes
+active. Opening the assignment, planning it, private reflections and your feedback
+do not complete it, and your feedback is not required. A submission sent before the
+step was published counts only after the student withdraws and submits again. If
+the student withdraws the submission, the step returns to not done. If you revoke
+the assignment, the step becomes unavailable for everyone and publishing the path
+reports the revoked assignment; replace the step with another assignment. Your
+manual mark on the progress table still takes precedence, and clearing it returns
+to the submission state. Progress shows only whether and when work was submitted,
+never its content.

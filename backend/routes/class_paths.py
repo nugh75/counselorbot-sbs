@@ -145,6 +145,7 @@ def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:
         "step_type": step.step_type,
         "administration_plan_id": step.administration_plan_id,
         "results_step_id": step.results_step_id,
+        "assignment_id": step.assignment_id,
         "active_from": step.active_from,
         "target_summary": descriptor["target_summary"],
         "availability_reason": descriptor["availability_reason"],
@@ -426,6 +427,7 @@ async def update_class_path(
                 tool_key=step_input.tool_key if step_input.step_type == "tool" else None,
                 administration_plan_id=step_input.administration_plan_id if step_input.step_type == "questionnaire_administration" else None,
                 results_step_id=step_input.results_step_id if step_input.step_type == "guided_results_chat" else None,
+                assignment_id=step_input.assignment_id if step_input.step_type == "assignment" else None,
                 active_from=datetime.now(timezone.utc) if path.status == "published" else None,
                 title=step_title,
                 instructions=step_instructions,
@@ -907,6 +909,10 @@ async def launch_step(path_id: int, step_id: int, current_user=Depends(auth.get_
     if step.step_type == "guided_results_chat":
         return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id,
                 "results_step_id":step.results_step_id, "start_href":descriptor["start_href"]}
+    if step.step_type == "assignment":
+        # Opening the assignment is not evidence: only its explicit submission is.
+        return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id,
+                "assignment_id":step.assignment_id, "start_href":descriptor["start_href"]}
     from ..path_step_types import EXTERNAL_IT_HREF
     plan, institution = administration_target(db, path.group_id, step.administration_plan_id)
     return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id, "administration_plan_id":plan.id,
