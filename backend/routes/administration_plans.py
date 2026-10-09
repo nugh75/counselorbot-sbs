@@ -5,11 +5,11 @@ import secrets
 import string
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from .. import auth, database, models, schemas
+from .. import administration_context, auth, database, models, schemas
 from ..reading_audience import AUDIENCE_BANDS
 from ..user_names import store_user_display_name
 
@@ -56,21 +56,36 @@ def _valid_level(value) -> str | None:
     return level
 
 
-def _validate_institution_for_plan(db: Session, payload) -> str:
-    '''Validazione dell'esistenza dell'istituto. Se il piano ha un codice istruzione, lo validiamo contro il catalogo.'''
-    institution_code = str(payload.institution_code or "").strip() or None
-    if not institution_code:
+def _reject_legacy_credentials(payload) -> None:
+    """Plans reference the institute; they never own a second set of credentials."""
+    if payload.institution_code is not None or payload.institution_password is not None:
+        raise HTTPException(status_code=422, detail="administration_credentials_moved_to_institution")
+
+
+def _active_member(db: Session, identity, institution_id: int) -> bool:
+    username = _username(identity)
+    return bool(username) and db.query(models.InstitutionTeacher).filter_by(
+        institution_id=institution_id, username=username, is_active=True).first() is not None
+
+
+def _validate_institution_link(db: Session, identity, institution_id: Optional[int]) -> Optional[int]:
+    """Administrators may link any active institute; others need active membership."""
+    if institution_id is None:
         return None
-    institution = db.query(models.Institution).filter(
-        func.lower(models.Institution.institution_code) == institution_code.lower()
-    ).first()
-    if not institution:
-        raise HTTPException(status_code=422, detail="Istituzione non registrata")
-    password = str(payload.institution_password or "").strip() if hasattr(payload, 'institution_password') else None
-    if password:
-        if not institution.hashed_password or not models.verify_password(password, institution.hashed_password):
-            raise HTTPException(status_code=422, detail="Codice o password dell'istituto non validi")
-    return institution_code
+    institution = db.get(models.Institution, institution_id)
+    if institution is None:
+        raise HTTPException(status_code=422, detail="institution_not_found")
+    if not _is_admin(identity) and not _active_member(db, identity, institution_id):
+        raise HTTPException(status_code=403, detail="institution_link_forbidden")
+    if not institution.is_active:
+        raise HTTPException(status_code=409, detail="institution_inactive")
+    return institution.id
+
+
+def _require_class_agreement(db: Session, group_id: Optional[int], institution_id: Optional[int]) -> None:
+    group = db.get(models.StudentGroup, group_id) if group_id else None
+    if group is not None and group.institution_id is not None and group.institution_id != institution_id:
+        raise HTTPException(status_code=422, detail="administration_institution_mismatch")
 
 
 def _normalize_locale(value: Optional[str]) -> str:
@@ -222,6 +237,8 @@ def _validate_group_attach(db: Session, identity, group_id: Optional[int]) -> Op
 
 
 def _serialize_plan(db: Session, plan: models.AdministrationPlan) -> dict:
+    institution = db.get(models.Institution, plan.institution_id) if plan.institution_id else None
+    reconciling = plan.institution_link_state == "needs_reconciliation"
     return {
         "id": plan.id,
         "code": plan.code,
@@ -235,6 +252,15 @@ def _serialize_plan(db: Session, plan: models.AdministrationPlan) -> dict:
         "location": plan.location,
         "notes": plan.notes,
         "status": plan.status,
+        "institution_id": plan.institution_id,
+        "institution_name": institution.name if institution else None,
+        # Canonical code from the institute; the legacy plan copy is shown only for reconciliation.
+        "institution_code": institution.institution_code if institution else None,
+        "institution_credentials_configured": administration_context.credentials_configured(institution),
+        "institution_link_state": plan.institution_link_state,
+        "reconciliation_reason": plan.reconciliation_reason,
+        "legacy_institution_code": plan.institution_code if reconciling else None,
+        "revision": plan.revision,
         "created_by_username": plan.created_by_username,
         "created_at": plan.created_at,
         "updated_at": plan.updated_at,
@@ -292,6 +318,51 @@ async def list_administration_plans(
     return [_serialize_plan(db, plan) for plan in plans]
 
 
+@router.get("/admin/administration-plans/institution-options")
+async def list_plan_institution_options(
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Institutes the actor may link: all active ones for administrators, memberships otherwise."""
+    query = db.query(models.Institution).filter(models.Institution.is_active.is_(True))
+    if not _is_admin(current_user):
+        query = query.join(models.InstitutionTeacher, models.InstitutionTeacher.institution_id == models.Institution.id
+                           ).filter(models.InstitutionTeacher.username == (_username(current_user) or ""),
+                                    models.InstitutionTeacher.is_active.is_(True))
+    return [
+        {"id": row.id, "name": row.name, "institution_code": row.institution_code,
+         "credentials_configured": row.credentials_configured}
+        for row in query.order_by(models.Institution.name, models.Institution.id).all()
+    ]
+
+
+@router.post("/user/administrations/{plan_id}/verify-institution")
+async def verify_administration_institution(
+    plan_id: int,
+    request: Request,
+    current_user: dict = Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Check transient code/password against the plan's institute and issue a scoped grant.
+
+    The body is parsed by hand so validation errors never echo the password.
+    """
+    username = _username(current_user)
+    if not username:
+        raise HTTPException(status_code=401, detail="authentication_required")
+    plan = db.get(models.AdministrationPlan, plan_id)
+    if plan is None:
+        raise HTTPException(status_code=404, detail="administration_not_found")
+    try:
+        payload = await request.json()
+    except ValueError:
+        payload = None
+    if not isinstance(payload, dict):
+        payload = {}
+    return administration_context.issue_grant(
+        db, username, plan, payload.get("institution_code"), payload.get("password"))
+
+
 @router.post("/admin/administration-plans", response_model=schemas.AdministrationPlanResponse)
 async def create_administration_plan(
     payload: schemas.AdministrationPlanCreate,
@@ -305,22 +376,25 @@ async def create_administration_plan(
     if db.query(models.AdministrationPlan).filter(models.AdministrationPlan.code == code).first():
         raise HTTPException(status_code=409, detail="Codice piano gia' esistente")
 
+    _reject_legacy_credentials(payload)
+    institution_id = _validate_institution_link(db, current_user, payload.institution_id)
+    group_id = _validate_group_attach(db, current_user, payload.group_id)
+    _require_class_agreement(db, group_id, institution_id)
     store_user_display_name(db, current_user)
-    # Validazione codice istruzione se presente.
-    valid_code = _validate_institution_for_plan(db, payload)
     plan = models.AdministrationPlan(
         code=code,
         title=title,
         instrument_code=(payload.instrument_code or "QSA").strip() or "QSA",
-        group_id=_validate_group_attach(db, current_user, payload.group_id),
+        group_id=group_id,
         locale=_normalize_locale(payload.locale),
         school_level=_valid_level(payload.school_level),
         scheduled_at=payload.scheduled_at,
         location=_clean(payload.location),
         notes=_clean(payload.notes),
         status=_normalize_status(payload.status),
-        institution_code=valid_code,
-        institution_password=(payload.institution_password or "").strip() if payload.institution_password else None,
+        institution_id=institution_id,
+        institution_link_state="linked" if institution_id else "unlinked",
+        revision=1,
         created_by_username=_username(current_user),
     )
     db.add(plan)
@@ -338,8 +412,13 @@ async def update_administration_plan(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    plan = _require_visible_plan(db, current_user, plan_id)
-    updates = payload.model_dump(exclude_unset=True)
+    _reject_legacy_credentials(payload)
+    _require_visible_plan(db, current_user, plan_id)
+    plan = (db.query(models.AdministrationPlan).filter(models.AdministrationPlan.id == plan_id)
+            .populate_existing().with_for_update().one())
+    if plan.revision != payload.revision:
+        raise HTTPException(status_code=409, detail="administration_revision_conflict")
+    updates = payload.model_dump(exclude_unset=True, exclude={"revision", "institution_code", "institution_password"})
     if "title" in updates:
         title = _clean(updates["title"])
         if not title:
@@ -361,16 +440,22 @@ async def update_administration_plan(
         plan.notes = _clean(updates["notes"])
     if "status" in updates:
         plan.status = _normalize_status(updates["status"])
-    # Validazione codice istruzione se presente.
-    if payload.institution_code or payload.institution_password:
-        _validate_institution_for_plan(db, payload)
-        if payload.institution_code:
-            plan.institution_code = (payload.institution_code or "").strip() or None
-        if payload.institution_password is not None:
-            plan.institution_password = (payload.institution_password or "").strip() or None
+    if "institution_id" in updates:
+        # Unchanged links do not re-check membership, so co-editors keep editing other fields;
+        # confirming a legacy candidate during reconciliation always does.
+        if updates["institution_id"] != plan.institution_id or plan.institution_link_state == "needs_reconciliation":
+            plan.institution_id = _validate_institution_link(db, current_user, updates["institution_id"])
+        # An explicit institute choice (or explicit no-institute) resolves legacy reconciliation.
+        plan.institution_link_state = "linked" if plan.institution_id else "unlinked"
+        plan.reconciliation_reason = None
+        plan.institution_code = None
+        plan.institution_password = None
+    if "group_id" in updates or "institution_id" in updates:
+        _require_class_agreement(db, plan.group_id, plan.institution_id)
     if payload.researchers is not None:
         _replace_researchers(db, plan.id, payload.researchers)
 
+    plan.revision += 1
     db.commit()
     db.refresh(plan)
     return _serialize_plan(db, plan)

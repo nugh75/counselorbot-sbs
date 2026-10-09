@@ -1112,6 +1112,7 @@ def test_administration_plans_crud():
     assert any(row["id"] == plan_id for row in listed.json())
 
     updated = client.put(f"/admin/administration-plans/{plan_id}", json={
+        "revision": plan["revision"],
         "location": "Aula 2",
         "status": "active",
         "researchers": [{"research_contact_id": contact_id}],
@@ -5870,9 +5871,10 @@ def test_group_membership_web_flow():
     alice = client.post("/admin/research-contacts", json={
         "name": "Alice Del", "email": "alice.del@example.test",
     }).json()
-    client.put(f"/admin/administration-plans/{plan['id']}", json={
+    assert client.put(f"/admin/administration-plans/{plan['id']}", json={
+        "revision": plan["revision"],
         "researchers": [{"research_contact_id": alice["id"]}],
-    })
+    }).status_code == 200
     manager_override = main.app.dependency_overrides.get(auth.get_current_plan_manager)
     try:
         main.app.dependency_overrides[auth.get_current_plan_manager] = lambda: _identity(

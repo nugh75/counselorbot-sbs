@@ -202,6 +202,7 @@ except Exception as exc:  # pragma: no cover - dipende dalla concorrenza dei wor
 # Run before ORM reads: create_all cannot add columns/constraints to legacy tables.
 from importlib import import_module
 import_module("backend.migrations.20261009_teacher_institutes").migrate(database.engine)
+import_module("backend.migrations.20261009_institute_credentials").migrate(database.engine)
 
 
 @asynccontextmanager
