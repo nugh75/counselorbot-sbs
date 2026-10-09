@@ -551,8 +551,8 @@ new work and frozen-session resume are blocked for disabled tools.
 
 **Student view switcher (#146).** Class settings are a recommended view, not a
 hard block. A student with at least one active class gets an **Active view**
-selector in the top bar (inline from `lg`, in the three-dot menu on smaller
-screens): **All tools** shows every tool and counselor the platform offers to
+selector in the top bar (inline from `lg`, where long class names are truncated
+and the open list shows them in full; in the three-dot menu on smaller screens): **All tools** shows every tool and counselor the platform offers to
 students (global disables and teacher-only tools still apply); the class view is
 the default — with one class it is that class, with several **My classes** keeps
 the union above and each class can be chosen alone (only its settings count).
