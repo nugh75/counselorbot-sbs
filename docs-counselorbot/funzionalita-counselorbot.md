@@ -527,23 +527,47 @@ il catalogo comune richiede revisione amministrativa. Possono assegnare a una pe
 o a tutto un gruppo, anche vuoto: i nuovi iscritti ricevono le assegnazioni attive.
 La gestione dei gruppi è distinta dall’iscrizione personale a un gruppo.
 
-**Class settings (S1, #88).** Each class card has an **Open class** link to
-`/docente/classi/{id}`. The page has an Overview and a **Tools & counselors**
-tab; this release delivers the tools section only. The owner, co-teachers and
-administrators can save class choices for student questionnaires, guided chats
-(including dynamic instruments), Idea, significant-event chats, Study goal,
-personal-area tools, Compass and Assistant. Platform-disabled instruments are
-visible with a lock and cannot be toggled. Notebook, completed questionnaires,
-classes and assignments are always available. Category actions affect only
-editable tools; keyboard controls, collapsible categories, one-column mobile
-layout and a sticky Save bar are supported. Saving is explicit. A concurrent
-change (409) keeps the local draft and offers Reload with discard confirmation;
-other failures also keep the draft. Missing settings mean everything enabled,
-and newly added tools are enabled automatically. **Student access is unchanged
-in S1**: filtering ships in #89/#90. Counselor controls,
-per-class administrator locks and audit history are delivered separately.
-The Class paths tab is delivered by P1 (#96) and the Forum tab is delivered by F1 (#102),
-both described below.
+**Class settings and guide (S1–S9, #88–#95, #109).** From Teacher area →
+Classes, **Open class** opens `/docente/classi/{id}`. Overview shows class
+context; **Tools & counselors** lets owners, co-teachers and administrators
+choose student questionnaires, guided chats (including dynamic instruments),
+personal tools, Compass, Assistant and the class forum. Saves are explicit;
+category actions change only editable items. Errors retain drafts; a concurrent
+save requires Reload with discard confirmation. New classes and tools default
+enabled. Notebook, completed questionnaires, Classes and Assignments remain
+available. Effective student access is the union of active classes, with global
+disables taking precedence; no active class means the platform catalog applies.
+Staff are exempt from class filtering. Previously saved work stays readable;
+new work and frozen-session resume are blocked for disabled tools.
+
+Institutional counselors can be enabled individually with a class default.
+Private counselors are exempt from class filters. If the saved account counselor
+is no longer allowed, the next start uses an allowed class default suitable for
+the tool, when available, or requests a choice among allowed counselors. With
+none available, the student contacts the teacher.
+
+Administrators use `/admin/classi` (Administration → Classes) to search by name,
+code or school and filter by owner, institution and active state. **Settings &
+locks** opens `/admin/classi/{id}`. Individual tools, counselors and forum
+options can be locked ON/OFF or unlocked; locks apply immediately and require a
+clean draft. Global disables prevent forcing an item ON. The teacher sees
+administrator-change and lock badges and cannot edit locked items. **Change
+history** is a read-only, append-only audit of teacher/admin changes and admin
+lock/unlock events, with actor, timestamp, old/new values and optional reason,
+visible to owner, co-teachers and administrators. Forum moderation has its own
+separate log. Settings locks do not apply to class-path steps or forum messages.
+
+The six-language public guide retains its existing eight teacher and sixteen
+student sections, including the class forum guide (#107). Teacher section 2
+covers the class page, Tools & counselors, access, defaults, locks and history;
+its administrator-only subsection covers all classes and lock/unlock controls.
+Student sections 4 and 5 explain missing counselors and tools, and section 1
+retains Compass/Assistant guidance. Genuine UI screenshots use synthetic,
+read-only API fixtures in Italian, English, Spanish, French, German and Swedish
+(`frontend/public/guide/{it,en,es,fr,de,sv}/`). Regenerate the eight affected
+screens per language with `GUIDE_SCREENS=class-settings` and
+`frontend/scripts/capture-guide.mjs`. Class paths are distinct from the guided
+path inside one instrument: a strict step lock does not disable its catalog tool.
 
 **Class paths builder (P1, #96).** The **Class paths** tab on `/docente/classi/{id}`
 provides the teacher-side builder for sequenced class learning paths (`class_paths`
