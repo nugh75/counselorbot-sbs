@@ -1904,3 +1904,42 @@ class ClassPathSummary(BaseModel):
     class Config:
         from_attributes = True
 
+
+class StudentClassPathStep(BaseModel):
+    id: int
+    tool_key: str
+    title: Optional[str] = None
+    instructions: Optional[str] = None
+    due_date: Optional[date] = None
+    state: str = "not_done"  # 'done' | 'not_done' | 'locked' | 'unavailable'
+    source: Optional[str] = None  # 'student' | 'teacher' | None
+    start_href: Optional[str] = None
+    can_self_mark: bool = True
+
+    class Config:
+        from_attributes = True
+
+
+class StudentClassPath(BaseModel):
+    id: int
+    group_id: int
+    group_name: str
+    title: str
+    description: Optional[str] = None
+    mode: str
+    steps: List[StudentClassPathStep] = Field(default_factory=list)
+    next_step_id: Optional[int] = None
+    done: int = 0
+    total: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class ClassPathProgressResponse(BaseModel):
+    ok: bool = True
+    step_id: int
+    state: str
+    source: Optional[str] = None
+
+
