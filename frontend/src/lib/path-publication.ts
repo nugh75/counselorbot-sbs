@@ -10,6 +10,7 @@ export type UnavailableAction =
     | 'results_step'
     | 'assignment'
     | 'forum'
+    | 'meeting'
     | 'class_inactive'
     | 'other';
 
@@ -38,6 +39,8 @@ const ACTIONS: Record<string, UnavailableAction> = {
     assignment_revoked: 'assignment',
     forum_topic_class_mismatch: 'forum',
     forum_topic_unavailable: 'forum',
+    meeting_cancelled: 'meeting',
+    meeting_class_mismatch: 'meeting',
     assignment_class_inactive: 'class_inactive',
     forum_class_inactive: 'class_inactive',
 };

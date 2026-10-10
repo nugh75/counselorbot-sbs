@@ -35,6 +35,9 @@ import { pathPublicationText, unavailableActionText } from '@/lib/i18n-path-publ
 import { pathTemplateText } from '@/lib/i18n-path-templates';
 import { PathTemplateUpdate } from './PathTemplateUpdate';
 import { StepKindPicker } from './StepKindPicker';
+import { ClassMeetingsManager } from './ClassMeetingsManager';
+import { classMeetingText } from '@/lib/i18n-class-meetings';
+import { meetingWhen } from '@/lib/class-meetings';
 import { stepKindText, type StepKindTextKey } from '@/lib/i18n-step-kinds';
 import { guidedChatKeys, isLegacyQuestionnaireTool, isPersonalTool, type StepKind } from '@/lib/path-step-kinds';
 
@@ -308,7 +311,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                         ? {administration_plan_id:s.administration_plan_id}
                         : s.step_type === 'guided_results_chat' ? {results_step_id:s.results_step_id}
                             : s.step_type === 'assignment' ? {assignment_id:s.assignment_id}
-                                : s.step_type === 'forum' ? {topic_id:s.topic_id} : {tool_key:s.tool_key}),
+                                : s.step_type === 'forum' ? {topic_id:s.topic_id}
+                                    : s.step_type === 'meeting' ? {meeting_id:s.meeting_id} : {tool_key:s.tool_key}),
                     title: s.title ? s.title.trim() : null,
                     instructions: s.instructions ? s.instructions.trim() : null,
                     due_date: s.due_date || null,
@@ -605,7 +609,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             <Card className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
                     <h3 className="text-base font-semibold text-slate-800">
-                        {`${l('pathsTitle')} (${steps.length} ${l('stepsCount')})`}
+                        {`${l('stepsHeading')} (${steps.length})`}
                     </h3>
                 </div>
 
@@ -632,13 +636,17 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                         ? `${p('assignment')} · ${step.assignment_summary?.title || `#${step.assignment_id}`}`
                                         : step.step_type === 'forum'
                                             ? `${f('forum')} · ${forumTopics.find(row => row.id === step.topic_id)?.title || `#${step.topic_id}`}${step.forum_summary?.locked ? ` · ${f('locked')}` : ''}`
+                                            : step.step_type === 'meeting'
+                                            ? `${classMeetingText(lang, 'meeting')} · ${step.meeting_summary ? `${step.meeting_summary.title} · ${meetingWhen(step.meeting_summary, lang)}` : `#${step.meeting_id}`}`
                                             : toolLabel(step.tool_key, classSettings.tools, lang);
                             // Students see this step as not available: say so here too.
                             const unavailable = ((step.step_type ?? 'tool') === 'tool' && !usableKeys.has(step.tool_key))
                                 // A saved assignment step loses its summary once revoked or otherwise unavailable.
                                 || (step.step_type === 'assignment' && step.id !== undefined && !step.assignment_summary)
                                 // Likewise a saved forum step whose discussion was hidden or whose forum is off.
-                                || (step.step_type === 'forum' && step.id !== undefined && !step.forum_summary);
+                                || (step.step_type === 'forum' && step.id !== undefined && !step.forum_summary)
+                                // And a saved meeting step whose meeting was cancelled.
+                                || (step.step_type === 'meeting' && step.id !== undefined && !step.meeting_summary);
                             // The server reason of a saved step says what to fix; a local check covers unsaved tools.
                             const action = pending ? null : unavailableAction(step.availability_reason || (unavailable ? 'tool_disabled_for_class' : null));
                             return (
@@ -767,33 +775,39 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                         <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
                             <StepKindPicker lang={lang} value={kind} onChange={setKind} />
                             {kind === 'questionnaire' && <div className="space-y-3">
-                            <Link href="/docente/somministrazioni" className="text-indigo-700 underline">{a('research')}</Link>
+                            <Link href="/docente/somministrazioni" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-indigo-700 hover:underline">
+                                <ExternalLink className="h-4 w-4" aria-hidden />{a('research')}</Link>
                             {institutionId == null && <Callout variant="warning">{pub('noInstitute')}{' '}
                                 <Link href="/docente/istituti" className="font-semibold text-indigo-700 underline">{pub('goToInstitutes')}</Link></Callout>}
                             {administrationError && <Callout variant="danger">{a('error')} <Button variant="secondary" onClick={()=>void loadAdministrations()}>{a('retry')}</Button></Callout>}
-                            <div className="flex flex-wrap gap-2">
-                                <label>{a('choose')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="ml-2 rounded border p-2">
+                            <div className="flex flex-wrap items-end gap-2">
+                                <label className="block w-full text-sm sm:w-auto">{a('existing')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     <option value="">{a('choose')}</option>
                                     {administrations.filter(offered).map(row=><option key={row.id} value={row.id}>{row.code} · {row.title} · {row.locale.toUpperCase()}</option>)}
                                 </select></label>
                                 <Button variant="secondary" disabled={busy || !selectedAdministration} onClick={() => {addAdministrationStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                                <label>{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="ml-2 rounded border p-2" /></label>
-                                <label>{a('instrument')}<select value={administrationInstrument} onChange={event=>{setAdministrationInstrument(event.target.value);setAdministrationLocale('it');}} className="ml-2 rounded border p-2">
+                            <h4 className="text-sm font-semibold">{a('createNew')}</h4>
+                            <div className="flex flex-wrap items-end gap-2">
+                                <label className="block w-full text-sm sm:w-auto">{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto" /></label>
+                                <label className="block w-full text-sm sm:w-auto">{a('instrument')}<select value={administrationInstrument} onChange={event=>{setAdministrationInstrument(event.target.value);setAdministrationLocale('it');}} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     {['QSA','QSAr','ZTPI','QPCS','QPCC','QAP'].map(code=><option key={code}>{code}</option>)}
                                 </select></label>
-                                <label>{a('locale')}<select value={administrationLocale} onChange={event=>setAdministrationLocale(event.target.value)} className="ml-2 rounded border p-2">
+                                <label className="block w-full text-sm sm:w-auto">{a('locale')}<select value={administrationLocale} onChange={event=>setAdministrationLocale(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     {localeOptions(administrationInstrument).map(locale=><option key={locale} value={locale}>{locale.toUpperCase()}</option>)}
                                 </select></label>
                                 <Button disabled={busy || !administrationTitle.trim()} onClick={()=>void createAdministration()}>{a('create')}</Button>
-                            </div><p className="text-sm text-slate-600">{a('rule')}</p>
-                            <p className="text-sm text-slate-600">{a('teacherInAppGuide')}</p>
+                            </div>
+                            <details className="text-sm text-slate-600">
+                                <summary className="cursor-pointer font-medium text-slate-700">{a('howDone')}</summary>
+                                <p className="mt-1">{a('rule')}</p>
+                                <p className="mt-1">{a('teacherInAppGuide')}</p>
+                            </details>
                             </div>}
                             {kind === 'guided_chat' && <div className="space-y-3">
                                 <h4 className="text-sm font-semibold">{k('chatOnResults')}</h4>
                             <div className="flex flex-wrap gap-2">
-                                <label>{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>setSelectedResultsStep(event.target.value)} className="ml-2 rounded border p-2">
+                                <label className="block w-full text-sm sm:w-auto">{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>setSelectedResultsStep(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     <option value="">{a('choose')}</option>
                                     {deepDiveSources(steps).map(step=><option key={step.id} value={step.id}>{`#${step.position} · ${step.target_summary?.code || step.administration_plan_id}`}</option>)}
                                 </select></label>
@@ -803,8 +817,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <h4 className="text-sm font-semibold">{k('chatStandalone')}</h4>
                                 {chatKeys.length === 0 ? <p className="text-sm text-slate-600">{k('noChats')}</p> : (
                                     <div className="flex flex-wrap gap-2">
-                                        <label>{k('chatStandalone')}<select value={selectedChatKey} onChange={event=>setSelectedChatKey(event.target.value)} className="ml-2 rounded border p-2">
-                                            <option value="">{a('choose')}</option>
+                                        <label><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>setSelectedChatKey(event.target.value)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                            <option value="">{k('chooseGuidedPath')}</option>
                                             {chatKeys.map(key => <option key={key} value={key}>{toolLabel(key, classSettings.tools, lang)}</option>)}
                                         </select></label>
                                         <Button variant="secondary" disabled={busy || !selectedChatKey} onClick={() => {handleAddStep(selectedChatKey);closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
@@ -815,7 +829,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             {assignmentLoadError && <Callout variant="danger">{p('loadError')} <Button variant="secondary" onClick={()=>void loadPathAssignments()}>{p('retry')}</Button></Callout>}
                             {!assignmentLoadError && !pathAssignments.length && <p className="text-sm text-slate-600">{p('empty')}</p>}
                             <div className="flex flex-wrap gap-2">
-                                <label>{p('choose')}<select value={selectedAssignment} onChange={event=>setSelectedAssignment(event.target.value)} className="ml-2 rounded border p-2">
+                                <label className="block w-full text-sm sm:w-auto">{p('choose')}<select value={selectedAssignment} onChange={event=>setSelectedAssignment(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     <option value="">{p('choose')}</option>
                                     {selectablePathAssignments(pathAssignments, steps).map(row=><option key={row.id} value={row.id}>{row.attachments.length ? `${row.title} · ${row.attachments.map(item=>item.title).join(', ')}` : row.title}</option>)}
                                 </select></label>
@@ -848,11 +862,20 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 </div>
                                 <p className="text-sm text-slate-600">{k('toolHelp')}</p>
                             </div>}
+                            {kind === 'meeting' && <ClassMeetingsManager lang={lang} groupId={path.group_id} addLabel={l('addStep')}
+                                usedIds={steps.flatMap(step => step.step_type === 'meeting' && step.meeting_id ? [step.meeting_id] : [])}
+                                onAdd={meeting => {
+                                    setSteps(current => [...current, {position: current.length + 1, step_type: 'meeting', meeting_id: meeting.id,
+                                        meeting_summary: meeting, tool_key: '', auto_detect: true, can_self_mark: false, title: null,
+                                        instructions: null, due_date: null}]);
+                                    setNotice(null);
+                                    closeAdd();
+                                }} />}
                             {kind === 'discussion' && <div className="space-y-3">
                             {forumLoadError && <Callout variant="danger">{f('loadError')} <Button variant="secondary" onClick={()=>void loadForumTopics()}>{f('retry')}</Button></Callout>}
                             {!forumLoadError && !forumTopics.length && <p className="text-sm text-slate-600">{f('empty')}</p>}
                             <div className="flex flex-wrap gap-2">
-                                <label>{f('choose')}<select value={selectedTopic} onChange={event=>setSelectedTopic(event.target.value)} className="ml-2 rounded border p-2">
+                                <label className="block w-full text-sm sm:w-auto">{f('choose')}<select value={selectedTopic} onChange={event=>setSelectedTopic(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     <option value="">{f('choose')}</option>
                                     {selectablePathForumTopics(forumTopics, steps).map(row=><option key={row.id} value={row.id}>{row.locked ? `${row.title} · ${f('locked')}` : row.title}</option>)}
                                 </select></label>
@@ -1050,11 +1073,11 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
                                 <div>
                                     <h3 className="text-base font-semibold text-slate-800">{p.title}</h3>
                                     <p className="text-xs text-slate-500">
-                                        {`${p.status === 'published' ? l('publishedBadge') : l('draftBadge')} · ${p.steps_count} ${l('stepsCount')} · ${p.mode === 'strict' ? l('orderStrict') : l('orderRecommended')}`}
+                                        {`${p.status === 'published' ? l('publishedBadge') : l('draftBadge')} · ${p.steps_count} ${l(p.steps_count === 1 ? 'stepCountOne' : 'stepsCount')} · ${p.mode === 'strict' ? l('orderStrict') : l('orderRecommended')}`}
                                     </p>
                                 </div>
                             </div>
-                            <Button variant="secondary" onClick={() => setSelectedPathId(p.id)}>
+                            <Button variant="secondary" className="ml-8 sm:ml-0" onClick={() => setSelectedPathId(p.id)}>
                                 {l('open')}
                             </Button>
                         </Card>
@@ -1078,7 +1101,7 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
                                             <div>
                                                 <h3 className="text-sm font-semibold text-slate-700">{p.title}</h3>
                                                 <p className="text-xs text-slate-400">
-                                                    {`${l('archivedBadge')} · ${p.steps_count} ${l('stepsCount')}`}
+                                                    {`${l('archivedBadge')} · ${p.steps_count} ${l(p.steps_count === 1 ? 'stepCountOne' : 'stepsCount')}`}
                                                 </p>
 
                                             </div>

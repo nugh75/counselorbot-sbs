@@ -304,8 +304,9 @@ h1.text-3xl {
   letter-spacing: -0.02em;
 }
 
-/* Accessibilità: anello di focus visibile da tastiera su elementi interattivi. */
-:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+/* Accessibilità: anello di focus visibile da tastiera su elementi interattivi.
+   I titoli messi a fuoco dal codice (tabindex="-1") non mostrano l'anello. */
+:where(a, button, input, textarea, select, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
   outline: 2px solid var(--console-primary);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
@@ -821,3 +822,5 @@ h1.text-3xl {
 /* #174: a tool page opened inside an activity popup shows only its content. */
 html[data-embedded] .console-header { display: none; }
 html[data-embedded] main#contenuto { padding-top: 1rem; }
+/* The popup already names the tool: no back link, illustration or title again. */
+html[data-embedded] [data-personal-area-header] > div { display: none; }

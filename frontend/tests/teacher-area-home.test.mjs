@@ -42,10 +42,16 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
     const { errors } = await prepare(page);
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
-    await page.getByRole('heading', { name: 'Percorso guidato: obiettivi per la mia classe', exact: true }).waitFor();
-    // tre intestazioni di gruppo in ordine
+    await page.getByRole('link', { name: 'Percorso guidato: obiettivi per la mia classe', exact: true }).waitFor();
+    // intestazioni di gruppo in ordine; i due taccuini affiancati prima dei gruppi
     const h2 = await page.getByRole('heading', { level: 2 }).allTextContents();
-    assert.deepEqual(h2.slice(0, 3), ['Percorso guidato: obiettivi per la mia classe', 'Classe e assegnazioni', 'Cataloghi']);
+    assert.deepEqual(h2.slice(0, 2), ['Classe e assegnazioni', 'Cataloghi']);
+    const notebooks = await Promise.all(['Taccuino del docente', 'Taccuini di prova'].map(name =>
+        page.getByRole('link', { name, exact: true }).boundingBox()));
+    assert.ok(Math.abs(notebooks[0].y - notebooks[1].y) < 2 && notebooks[1].x > notebooks[0].x, 'notebooks side by side');
+    // il percorso guidato apre i cataloghi, prima del catalogo degli obiettivi
+    const catalogs = await page.locator('nav[aria-labelledby="teacher-group-catalogs"] a').evaluateAll(rows => rows.map(row => row.getAttribute('href')));
+    assert.deepEqual(catalogs.slice(0, 2), ['/?start=OBIETTIVO_DOCENZA', '/docente/catalogo-obiettivi']);
     // link illustrati
     for (const href of ['/docente/classi', '/docente/percorsi', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
         assert.equal(await page.locator(`nav a[href="${href}"]`).count(), 1, `link ${href}`);
@@ -70,7 +76,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
 // 2. Ogni sottopagina mostra la sua intestazione e il pannello atteso
 for (const [slug, h1, marker] of [
     ['classi', 'Gruppi e classi', 'Gruppi e classi che gestisco'],
-    ['assegnazioni', 'Assegnazione', 'Assegnazione'],
+    ['assegnazioni', 'Assegnazioni', 'Nuova assegnazione'],
     ['percorsi', 'Percorsi di classe', 'Non hai ancora classi: creane una in Gruppi e classi per preparare un percorso.'],
     ['somministrazioni', 'Piani di somministrazione', 'Piani di somministrazione'],
 ]) {
@@ -81,7 +87,7 @@ for (const [slug, h1, marker] of [
     await page.getByText(marker, { exact: true }).first().waitFor();
     // Torna all'Area docenti
     await page.getByRole('link', { name: 'Area docenti' }).first().click();
-    await page.getByRole('heading', { name: 'Percorso guidato: obiettivi per la mia classe', exact: true }).waitFor();
+    await page.getByRole('link', { name: 'Percorso guidato: obiettivi per la mia classe', exact: true }).waitFor();
     assert.deepEqual(errors, []);
     await page.close();
 }
@@ -115,7 +121,7 @@ for (const [slug, marker] of [
     const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
     const { errors } = await prepare(page, { teacher: false, researcher: true });
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
-    await page.getByRole('heading', { name: 'Percorso guidato: obiettivi per la mia classe', exact: true }).waitFor();
+    await page.getByRole('link', { name: 'Percorso guidato: obiettivi per la mia classe', exact: true }).waitFor();
     assert.equal(await page.locator('a[href="/docente/somministrazioni"]').count(), 1);
     assert.equal(await page.locator('a[href="/docente/orientamento"]').count(), 0);
     assert.equal(await page.locator('[data-teacher-area-home] a').first().getAttribute('href'), '/docente/taccuino');
