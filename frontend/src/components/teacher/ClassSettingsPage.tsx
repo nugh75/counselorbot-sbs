@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Lock } from 'lucide-react';
 import { apiFetch, getIdentity, getViewAsAccount } from '@/lib/auth';
 import { defaultForumOptions, effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, type ClassCounselor, type ClassSettings, type ClassTool, type ClassLockKind } from '@/lib/class-settings';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
@@ -295,8 +295,8 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
     const activeTabs = ['overview', 'toolsTab', 'paths', 'forum', 'audit'] as const;
     return <div className="space-y-5">
         {!adminRoute && group.institution_id && <nav aria-label={instituteText(lang, 'classes')} className="flex flex-wrap gap-2 text-sm">
-            <Link href="/docente/istituti" className="text-indigo-700">{instituteText(lang, 'title')}</Link><span aria-hidden>→</span>
-            <Link href={`/docente/istituti/${group.institution_id}`} className="text-indigo-700">{group.institution_name ?? instituteText(lang, 'classes')}</Link><span aria-hidden>→</span><span>{group.name}</span>
+            <Link href="/docente/istituti" className="text-indigo-700">{instituteText(lang, 'title')}</Link><ChevronRight className="h-4 w-4 self-center text-slate-400" aria-hidden />
+            <Link href={`/docente/istituti/${group.institution_id}`} className="text-indigo-700">{group.institution_name ?? instituteText(lang, 'classes')}</Link><ChevronRight className="h-4 w-4 self-center text-slate-400" aria-hidden /><span>{group.name}</span>
         </nav>}
         <header className="flex flex-wrap items-center justify-between gap-3">
             <Link href={adminRoute ? ADMIN_CLASSES_HREF : "/docente/classi"} className="inline-flex min-h-[44px] items-center gap-2 text-sm text-indigo-700"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
@@ -327,7 +327,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
             {tab === 'audit' && <ClassSettingsAudit key={settings.data.revision} settings={settings.data} />}
         </div>
         <div id="class-panel-paths" role="tabpanel" aria-labelledby="class-tab-paths" hidden={tab !== 'paths'} tabIndex={0}>
-            <ClassPathsTab groupId={groupId} classSettings={settings.data} />
+            <ClassPathsTab groupId={groupId} classSettings={settings.data} institutionId={group.institution_id ?? null} />
         </div>
         <div id="class-panel-forum" role="tabpanel" aria-labelledby="class-tab-forum" hidden={tab !== 'forum'} tabIndex={0}>
             <ForumView groupId={groupId} />

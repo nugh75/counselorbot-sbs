@@ -5,7 +5,8 @@ import { CalendarDays, Check, Copy, FileText, Link2, MapPin, Pencil, Plus, QrCod
 import QRCode from 'qrcode';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
-import { parsePlanInstitutionOptions, planInstitutionField, type PlanInstitutionOption } from '@/lib/administration-plans';
+import { parsePlanInstitutionOptions, planIdFromHash, planInstitutionField, type PlanInstitutionOption } from '@/lib/administration-plans';
+import Link from 'next/link';
 import { credentialText, type CredentialTextKey } from '@/lib/i18n-institution-credentials';
 import { PlanStudentsPanel } from './PlanStudentsPanel';
 
@@ -155,7 +156,7 @@ const PLAN_ERRORS: Record<string, CredentialTextKey> = {
     institution_inactive: 'reason_institution_inactive',
 };
 
-export function AdministrationPlansPanel() {
+export function AdministrationPlansPanel({ classHref, classLinkLabel }: { classHref?: (groupId: number) => string; classLinkLabel?: string } = {}) {
     const { t, lang } = useI18n();
     const c = (key: CredentialTextKey) => credentialText(lang, key);
     const [plans, setPlans] = useState<AdministrationPlan[]>([]);
@@ -196,6 +197,18 @@ export function AdministrationPlansPanel() {
     useEffect(() => {
         void refresh();
     }, [refresh]);
+
+    // A classroom link (#plan-<id>) opens the same plan here once the list is loaded.
+    const [focusedPlanId, setFocusedPlanId] = useState<number | null>(null);
+    useEffect(() => {
+        if (loading || typeof window === 'undefined') return;
+        const id = planIdFromHash(window.location.hash);
+        const node = id ? document.getElementById(`plan-${id}`) : null;
+        if (!node) return;
+        setFocusedPlanId(id);
+        node.scrollIntoView({ block: 'start' });
+        node.focus();
+    }, [loading]);
 
     const filteredPlans = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -706,7 +719,8 @@ export function AdministrationPlansPanel() {
                     editingId === plan.id ? (
                         <div key={plan.id} className="xl:col-span-2">{renderForm()}</div>
                     ) : (
-                        <section key={plan.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                        <section key={plan.id} id={`plan-${plan.id}`} tabIndex={-1}
+                            className={`rounded-lg border bg-white p-4 shadow-sm ${focusedPlanId === plan.id ? 'border-indigo-400 ring-2 ring-indigo-200' : 'border-slate-200'}`}>
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
@@ -806,6 +820,12 @@ export function AdministrationPlansPanel() {
                                         {plan.group_name && (
                                             <p className="mt-2 text-xs text-slate-500">
                                                 {t('admin.ap.class')}: <span className="font-semibold">{plan.group_name}</span>
+                                                {classHref && plan.group_id != null && classLinkLabel && (
+                                                    // Research and classroom views manage the same plan row.
+                                                    <Link href={classHref(plan.group_id)} className="ml-2 inline-flex min-h-[44px] items-center font-semibold text-indigo-700 underline">
+                                                        {classLinkLabel}
+                                                    </Link>
+                                                )}
                                             </p>
                                         )}
                                         <div className="mt-2 flex flex-wrap gap-2">
