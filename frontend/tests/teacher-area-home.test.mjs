@@ -53,7 +53,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     const catalogs = await page.locator('nav[aria-labelledby="teacher-group-catalogs"] a').evaluateAll(rows => rows.map(row => row.getAttribute('href')));
     assert.deepEqual(catalogs.slice(0, 2), ['/?start=OBIETTIVO_DOCENZA', '/docente/catalogo-obiettivi']);
     // link illustrati
-    for (const href of ['/docente/classi', '/docente/percorsi', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
+    for (const href of ['/docente/classi', '/docente/percorsi', '/docente/incontri', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
         assert.equal(await page.locator(`nav a[href="${href}"]`).count(), 1, `link ${href}`);
     }
     assert.ok(await page.locator('[data-teacher-area-home] img').first().isVisible());
@@ -78,6 +78,7 @@ for (const [slug, h1, marker] of [
     ['classi', 'Gruppi e classi', 'Gruppi e classi che gestisco'],
     ['assegnazioni', 'Assegnazioni', 'Nuova assegnazione'],
     ['percorsi', 'Percorsi di classe', 'Non hai ancora classi: creane una in Gruppi e classi per preparare un percorso.'],
+    ['incontri', 'Incontri', 'Non hai ancora classi o gruppi: creane uno in Gruppi e classi per organizzare un incontro.'],
     ['somministrazioni', 'Piani di somministrazione', 'Piani di somministrazione'],
 ]) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
