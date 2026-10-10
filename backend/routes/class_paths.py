@@ -15,7 +15,7 @@ from ..class_access import class_enables, resolve_access
 from ..path_step_types import (step_descriptor, completion_evidence, validate_step_input, validate_composition,
                                apply_step_target, administration_target, forum_student_state,
                                publication_problems)
-from ..class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, tool_catalog
+from ..class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, builtin_guided_paths, tool_catalog
 from .groups import _is_admin, _username, _visible_group_query
 
 router = APIRouter()
@@ -74,6 +74,8 @@ def is_tool_available_for_class(db: Session, group_id: int, tool_key: str) -> bo
         return True
     if key_lower in PERSONAL_TOOL_KEYS:
         canonical = key_lower
+    elif key_lower.upper() in builtin_guided_paths(db):
+        return True
     else:
         instrument = (
             db.query(models.Instrument)
@@ -120,7 +122,7 @@ def is_auto_detect_tool(db: Session, tool_key: str) -> bool:
         return False
     if key_lower in AUTO_DETECT_PERSONAL_KEYS:
         return True
-    if tool_key.upper() == "IDEA":
+    if tool_key.upper() == "IDEA" or tool_key.upper() in builtin_guided_paths(db):
         return True
     instrument = db.query(models.Instrument).filter(models.Instrument.code == tool_key).first()
     if instrument:
@@ -136,7 +138,7 @@ def get_class_enabled_tool_keys(db: Session, group_id: int) -> set[str]:
     return {
         row["key"] for row in catalog
         if row["enabled"] and not row.get("always_on", False) and row["key"] not in ALWAYS_ON
-    }
+    } | set(builtin_guided_paths(db))
 
 
 def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:
