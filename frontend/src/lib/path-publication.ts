@@ -17,6 +17,8 @@ const ACTIONS: Record<string, UnavailableAction> = {
     tool_unavailable: 'platform_tool',
     tool_disabled_for_class: 'class_tool',
     forum_disabled_for_class: 'class_tool',
+    // #174: an activity names a tool the class has switched off.
+    assignment_tool_unavailable: 'class_tool',
     administration_institution_mismatch: 'institute',
     institution_inactive: 'institute',
     institution_credentials_missing: 'institute',
