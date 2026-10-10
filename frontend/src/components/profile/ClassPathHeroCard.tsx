@@ -62,12 +62,12 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
     return (
         <Card
             data-testid="class-path-hero-card"
-            className="space-y-6 border-2 border-ochre-300/80 bg-linear-to-b from-ochre-50/40 to-white shadow-sm dark:border-ochre-800/60 dark:from-ochre-950/20 dark:to-slate-900"
+            className="space-y-6 border-indigo-200 shadow-sm dark:border-indigo-800"
         >
             {/* Header: Class label, Mode, Title, Progress */}
             <div className="space-y-3 border-b border-slate-200/80 pb-4 dark:border-slate-800">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="inline-flex items-center rounded-full bg-ochre-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-ochre-800 dark:bg-ochre-950/80 dark:text-ochre-300">
+                    <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
                         {`${l('yourClassPath')} · ${path.group_name}`}
                     </span>
                     <span
@@ -122,7 +122,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                     const isActionBusy = actionStepId === step.id;
 
                     const containerClasses = isCurrent
-                        ? 'border-ochre-300 bg-ochre-50/70 shadow-xs ring-1 ring-ochre-200 dark:border-ochre-800 dark:bg-ochre-950/30 dark:ring-ochre-900'
+                        ? 'border-indigo-300 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-200 dark:border-indigo-800 dark:bg-indigo-950/30 dark:ring-indigo-900'
                         : isDone
                         ? 'border-slate-200 bg-white hover:bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900'
                         : isUnavailable
@@ -174,7 +174,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                                             <h3
                                                 className={`text-base font-semibold ${
                                                     isCurrent
-                                                        ? 'text-ochre-900 dark:text-ochre-200'
+                                                        ? 'text-indigo-900 dark:text-indigo-200'
                                                         : 'text-slate-800 dark:text-slate-100'
                                                 }`}
                                             >
@@ -182,7 +182,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                                             </h3>
 
                                             {isCurrent && (
-                                                <span className="rounded-full bg-ochre-200/80 px-2.5 py-0.5 text-xs font-bold text-ochre-800 dark:bg-ochre-900 dark:text-ochre-200">
+                                                <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-bold text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
                                                     {l('current')}
                                                 </span>
                                             )}
