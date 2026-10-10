@@ -18,6 +18,7 @@ import { forumSaveError, forumStepInput, pathForumTopics, selectablePathForumTop
 import { pathForumText } from '@/lib/i18n-path-forum';
 import { classPathText, classPathsTexts } from '@/lib/i18n-class-paths';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
+import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { useI18n } from '@/lib/i18n-context';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { Button } from '@/components/ui/Button';
@@ -35,14 +36,15 @@ import { pathTemplateText } from '@/lib/i18n-path-templates';
 import { PathTemplateUpdate } from './PathTemplateUpdate';
 import { StepKindPicker } from './StepKindPicker';
 import { stepKindText, type StepKindTextKey } from '@/lib/i18n-step-kinds';
-import { isLegacyQuestionnaireTool, isPersonalTool, isStandaloneGuidedChat, type StepKind } from '@/lib/path-step-kinds';
+import { guidedChatKeys, isLegacyQuestionnaireTool, isPersonalTool, type StepKind } from '@/lib/path-step-kinds';
 
 type PathTextKey = keyof typeof classPathsTexts;
 type SettingsTextKey = keyof typeof classSettingsTexts;
 
 function toolLabel(toolKey: string, tools: ClassTool[], lang: string): string {
     const match = tools.find(t => t.key === toolKey);
-    if (!match) return toolKey;
+    // Built-in guided paths have no catalog row: use the app's own name.
+    if (!match) return resolveClassPathToolName(toolKey, lang);
     if (match.kind === 'personal' && match.key in classSettingsTexts) {
         return classSettingsText(lang, match.key as SettingsTextKey);
     }
@@ -210,7 +212,9 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     // #173: one «+ Aggiungi passo» flow; the tool menu lists personal tools only.
     const k = (key: StepKindTextKey) => stepKindText(lang, key);
     const personalTools = enabledTools.filter(isPersonalTool);
-    const chatTools = enabledTools.filter(isStandaloneGuidedChat);
+    const chatKeys = guidedChatKeys(classSettings.tools);
+    // Tools a step may use now: enabled catalog tools and built-in guided paths.
+    const usableKeys = new Set([...enabledTools.map(t => t.key), ...chatKeys]);
     const [adding, setAdding] = useState(false);
     const [kind, setKind] = useState<StepKind | null>(null);
     const [selectedChatKey, setSelectedChatKey] = useState('');
@@ -253,15 +257,15 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
 
     const handleAddStep = (toolKey: string) => {
         const tool = enabledTools.find(t => t.key === toolKey);
-        if (!tool) return;
+        if (!tool && !chatKeys.includes(toolKey)) return;
 
-        // Auto-detect check: assessment, guided, or personal auto-detect keys
-        const auto = tool.category === 'assessment' || tool.category === 'guided' ||
+        // Auto-detect check: assessment, guided (built-in guided paths too), or personal auto-detect keys
+        const auto = !tool || tool.category === 'assessment' || tool.category === 'guided' ||
             ['bussola', 'tavolo', 'goals', 'pqbl'].includes(tool.key.toLowerCase());
 
         const newStep: ClassPathStep = {
             position: steps.length + 1,
-            tool_key: tool.key,
+            tool_key: toolKey,
             title: null,
             instructions: null,
             due_date: null,
@@ -630,7 +634,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             ? `${f('forum')} · ${forumTopics.find(row => row.id === step.topic_id)?.title || `#${step.topic_id}`}${step.forum_summary?.locked ? ` · ${f('locked')}` : ''}`
                                             : toolLabel(step.tool_key, classSettings.tools, lang);
                             // Students see this step as not available: say so here too.
-                            const unavailable = ((step.step_type ?? 'tool') === 'tool' && !enabledTools.some(t => t.key === step.tool_key))
+                            const unavailable = ((step.step_type ?? 'tool') === 'tool' && !usableKeys.has(step.tool_key))
                                 // A saved assignment step loses its summary once revoked or otherwise unavailable.
                                 || (step.step_type === 'assignment' && step.id !== undefined && !step.assignment_summary)
                                 // Likewise a saved forum step whose discussion was hidden or whose forum is off.
@@ -797,11 +801,11 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             </div>
                             <p className="text-sm text-slate-600">{a('deepDiveRule')}</p>
                                 <h4 className="text-sm font-semibold">{k('chatStandalone')}</h4>
-                                {chatTools.length === 0 ? <p className="text-sm text-slate-600">{k('noChats')}</p> : (
+                                {chatKeys.length === 0 ? <p className="text-sm text-slate-600">{k('noChats')}</p> : (
                                     <div className="flex flex-wrap gap-2">
                                         <label>{k('chatStandalone')}<select value={selectedChatKey} onChange={event=>setSelectedChatKey(event.target.value)} className="ml-2 rounded border p-2">
                                             <option value="">{a('choose')}</option>
-                                            {chatTools.map(t => <option key={t.key} value={t.key}>{toolLabel(t.key, classSettings.tools, lang)}</option>)}
+                                            {chatKeys.map(key => <option key={key} value={key}>{toolLabel(key, classSettings.tools, lang)}</option>)}
                                         </select></label>
                                         <Button variant="secondary" disabled={busy || !selectedChatKey} onClick={() => {handleAddStep(selectedChatKey);closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                                     </div>

@@ -6,7 +6,8 @@ export const AVAILABLE_STEP_KINDS: StepKind[] = STEP_KINDS.filter(kind => kind !
 
 // Questionnaires enter a path only through an administration, which collects their data.
 export const ADMINISTRATION_QUESTIONNAIRES = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'];
-// Guided chats without a questionnaire: tool steps until the guided chat type exists (#177).
+// The app's «Percorsi guidati»: guided chats without a questionnaire, tool steps until
+// the guided chat type exists (#177).
 export const STANDALONE_GUIDED_CHATS = ['SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'IDEA'];
 
 interface ToolRow { key: string; kind: 'instrument' | 'personal'; category: string }
@@ -19,6 +20,18 @@ export function isPersonalTool(tool: ToolRow): boolean {
 /** A class instrument that is a guided chat, not a questionnaire to administer. */
 export function isStandaloneGuidedChat(tool: ToolRow): boolean {
     return tool.kind === 'instrument' && !ADMINISTRATION_QUESTIONNAIRES.includes(tool.key);
+}
+
+/**
+ * Guided chats a class path can offer: the class's enabled guided instruments, plus
+ * built-in guided paths with no catalog row (not toggleable, so always available).
+ */
+export function guidedChatKeys(tools: (ToolRow & { enabled: boolean })[]): string[] {
+    const listed = new Set(tools.map(tool => tool.key.toUpperCase()));
+    return [
+        ...tools.filter(tool => tool.enabled && isStandaloneGuidedChat(tool)).map(tool => tool.key),
+        ...STANDALONE_GUIDED_CHATS.filter(key => !listed.has(key)),
+    ];
 }
 
 /** An older step that opens a questionnaire as a plain tool: it still works but collects no administration data. */
