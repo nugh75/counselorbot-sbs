@@ -10,8 +10,9 @@ from sqlalchemy.orm import Session
 from .. import auth, database, models
 from ..path_step_types import ADMINISTRATION_QUESTIONNAIRES
 from ..path_templates import (apply_template, from_class_path, replace_template_steps, step_config,
-                              template_goal_available, template_steps, template_tool_available)
-from .class_paths import _require_visible_group, _require_visible_path, _serialize_path
+                              template_changes, template_goal_available, template_steps, template_tool_available,
+                              update_from_template)
+from .class_paths import _go_live, _require_visible_group, _require_visible_path, _serialize_path
 from .groups import _username
 
 router = APIRouter()
@@ -93,6 +94,12 @@ class TemplateShare(BaseModel):
 class TemplateApply(BaseModel):
     model_config = ConfigDict(extra="forbid")
     group_ids: list[Annotated[int, Field(gt=0)]] = Field(min_length=1, max_length=50)
+
+
+class TemplateUpdateApply(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    revision: int = Field(ge=1, strict=True)
+    template_revision: int = Field(ge=1, strict=True)
 
 
 def _visible(db: Session, identity):
@@ -253,3 +260,39 @@ def apply(template_id: int, payload: TemplateApply, identity=Depends(auth.get_cu
     paths = [apply_template(db, template, group, _username(identity) or "") for group in groups]
     db.commit()
     return [_serialize_path(db, path) for path in paths]
+
+
+def _path_template(db: Session, identity, path: models.ClassPath) -> models.PathTemplate:
+    if path.template_id is None:
+        raise HTTPException(404, "template_not_found")
+    return _require_template(db, identity, path.template_id)
+
+
+@router.get("/teacher/paths/{path_id}/template-update")
+def preview_template_update(path_id: int, identity=Depends(auth.get_current_plan_manager),
+                            db: Session = Depends(get_db)):
+    path = _require_visible_path(db, identity, path_id)
+    template = _path_template(db, identity, path)
+    changes = [{key: value for key, value in change.items() if key != "snapshot"}
+               for change in template_changes(db, path, template)]
+    return {"template_id": template.id, "template_title": template.title, "template_revision": template.revision,
+            "path_template_revision": path.template_revision, "changes": changes}
+
+
+@router.post("/teacher/paths/{path_id}/template-update")
+def apply_template_update(path_id: int, payload: TemplateUpdateApply, identity=Depends(auth.get_current_plan_manager),
+                          db: Session = Depends(get_db)):
+    path = _require_visible_path(db, identity, path_id, for_update=True)
+    if payload.revision != path.revision:
+        raise HTTPException(409, "Class path revision mismatch")
+    template = _path_template(db, identity, path)
+    # The teacher confirms the differences of the revision they previewed.
+    if payload.template_revision != template.revision:
+        raise HTTPException(409, "template_revision_conflict")
+    skipped = update_from_template(db, path, template)
+    if path.status == "published":
+        # New steps go live at once; any blocked step undoes the whole update.
+        _go_live(db, path, identity)
+    path.revision += 1
+    db.commit()
+    return {"path": _serialize_path(db, path), "skipped": skipped}
