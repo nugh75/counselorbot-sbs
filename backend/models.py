@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, DateTime, JSON, UniqueConstraint, ForeignKey, CheckConstraint
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, String, Text, Date, DateTime, JSON, UniqueConstraint, ForeignKey, CheckConstraint, Index, text
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -1950,14 +1950,26 @@ class ClassMeeting(Base):
     __table_args__ = (
         CheckConstraint("mode IN ('in_person', 'online')", name="class_meeting_mode"),
         CheckConstraint("status IN ('scheduled', 'cancelled')", name="class_meeting_status"),
+        CheckConstraint("kind IN ('group', 'individual')", name="class_meeting_kind"),
+        CheckConstraint("host_kind IN ('teacher', 'referent', 'expert')", name="class_meeting_host_kind"),
+        # A group meeting has one date; an individual one has its bookable slots.
+        CheckConstraint("kind = 'individual' OR starts_at IS NOT NULL", name="class_meeting_group_date"),
+        CheckConstraint("host_kind <> 'expert' OR host_name IS NOT NULL", name="class_meeting_expert_name"),
     )
 
     id = Column(Integer, primary_key=True, index=True)
     group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
-    starts_at = Column(DateTime(timezone=True), nullable=False)
+    starts_at = Column(DateTime(timezone=True), nullable=True)
     duration_minutes = Column(Integer, nullable=True)
+    # #176: individual meetings, with the teacher, an institute referent or an
+    # external expert (name and role only, no account; the teacher invites them).
+    kind = Column(String(20), nullable=False, default="group", server_default="group")
+    host_kind = Column(String(20), nullable=False, default="teacher", server_default="teacher")
+    referral_id = Column(Integer, ForeignKey("orientation_referrals.id", ondelete="SET NULL"), nullable=True)
+    host_name = Column(String(200), nullable=True)
+    host_role = Column(String(200), nullable=True)
     mode = Column(String(20), nullable=False)
     place = Column(String(300), nullable=True)
     link = Column(String(500), nullable=True)
@@ -1968,6 +1980,46 @@ class ClassMeeting(Base):
     revision = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class ClassMeetingSlot(Base):
+    """A bookable time of an individual meeting (#176); one student per slot."""
+
+    __tablename__ = "class_meeting_slots"
+    __table_args__ = (CheckConstraint("status IN ('open', 'cancelled')", name="class_meeting_slot_status"),)
+
+    id = Column(Integer, primary_key=True)
+    meeting_id = Column(Integer, ForeignKey("class_meetings.id", ondelete="CASCADE"), nullable=False, index=True)
+    starts_at = Column(DateTime(timezone=True), nullable=False)
+    duration_minutes = Column(Integer, nullable=True)
+    status = Column(String(20), nullable=False, default="open", server_default="open")
+    revision = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ClassMeetingBooking(Base):
+    """A student's booking of one slot (#176).
+
+    Active bookings are unique per slot and per student and meeting, enforced by
+    partial unique indexes, so two concurrent bookings of a slot cannot both win.
+    A booking the teacher cancels stays, so the student sees why it disappeared.
+    """
+
+    __tablename__ = "class_meeting_bookings"
+    __table_args__ = (
+        CheckConstraint("status IN ('active', 'cancelled_by_teacher')", name="class_meeting_booking_status"),
+        Index("uq_class_meeting_booking_slot", "slot_id", unique=True, postgresql_where=text("status = 'active'")),
+        Index("uq_class_meeting_booking_student", "meeting_id", "username", unique=True,
+              postgresql_where=text("status = 'active'")),
+    )
+
+    id = Column(Integer, primary_key=True)
+    meeting_id = Column(Integer, ForeignKey("class_meetings.id", ondelete="CASCADE"), nullable=False, index=True)
+    slot_id = Column(Integer, ForeignKey("class_meeting_slots.id", ondelete="CASCADE"), nullable=False, index=True)
+    username = Column(String, nullable=False, index=True)
+    status = Column(String(20), nullable=False, default="active", server_default="active")
+    booked_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    changed_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class ClassMeetingAttendance(Base):
