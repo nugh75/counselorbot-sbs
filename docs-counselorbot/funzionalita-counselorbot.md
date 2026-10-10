@@ -539,6 +539,7 @@ strumenti personali: Tavolo, obiettivi, azioni, linea del tempo, Portfolio, flas
 carte, confronto, Bussola, assistente), partecipa a un incontro (incontri della classe o
 del gruppo: argomento, data e ora, durata, in presenza con luogo oppure online con link;
 il docente li crea, li sposta e li annulla da qui, vede quante presenze sono state segnate
+(dall’inizio dell’incontro)
 e un incontro annullato rende il passo non disponibile; nei modelli l’incontro è ancora
 «in arrivo») o partecipa a una discussione; su telefono il modulo si apre sotto l’elenco dei passi; i
 questionari inseriti in passato come strumento continuano a funzionare e sono segnalati
