@@ -11,6 +11,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import models
+from .class_tools import GUIDED_PATH_KEYS
 from .diagram_render import DiagramSpecError, parse_spec
 from .idea_map import IDEA_INSTRUMENT, resolve_focus
 
@@ -111,9 +112,10 @@ def has_automatic_evidence(db: Session, tool_key: str, username: str, since: dat
         .filter(func.lower(models.Instrument.code) == lower)
         .first()
     )
-    if instrument is None:
+    # A built-in guided path has no instrument row: its guided chat marker is the evidence.
+    if instrument is None and key.upper() not in GUIDED_PATH_KEYS:
         return False
-    code = instrument.code
+    code = instrument.code if instrument is not None else key.upper()
     if code.upper() == IDEA_INSTRUMENT:
         revisions = (
             db.query(models.IdeaMapRevision.spec, models.IdeaMapRevision.focus_id)
@@ -124,7 +126,7 @@ def has_automatic_evidence(db: Session, tool_key: str, username: str, since: dat
             .order_by(models.IdeaMapRevision.id.desc())
         )
         return any(_idea_map_is_focused(spec, focus_id) for spec, focus_id in revisions)
-    if instrument.tool_category == "assessment":
+    if instrument is not None and instrument.tool_category == "assessment":
         return _exists(db.query(models.QuestionnaireResult.id).filter(
             models.QuestionnaireResult.username == username,
             models.QuestionnaireResult.questionnaire_type == code,
