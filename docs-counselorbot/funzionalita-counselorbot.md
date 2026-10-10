@@ -519,7 +519,9 @@ il Taccuino del docente (`/docente/taccuino`, senza form nella home) e i **Taccu
 prova** (`/docente/taccuini-prova`). Seguono i tre gruppi (**Classe e assegnazioni**,
 **Cataloghi**, **Somministrazioni e ricerca**), nello stesso ordine e con una voce
 per ogni pagina; i **Cataloghi** si aprono con il percorso guidato «Obiettivi per la mia
-classe» (DOCENZA), con la sua immagine come le altre voci, prima del Catalogo obiettivi. L’ordine visivo coincide con quello dei collegamenti nel DOM e
+classe» (DOCENZA), con la sua immagine come le altre voci, prima del Catalogo obiettivi.
+La voce e la pagina dell’invio restano al singolare, «Assegnazione», distinte dalle
+«Assegnazioni ricevute» dello studente. L’ordine visivo coincide con quello dei collegamenti nel DOM e
 della navigazione da tastiera. Ogni voce apre una pagina dedicata con il ritorno
 all’Area docenti: `/docente/istituti` (primo elenco del gruppo **Classe e
 assegnazioni**: creare un istituto, unirsi a uno esistente, impostarne codice e
