@@ -14,7 +14,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from . import models
-from .class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS
+from .class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, builtin_guided_paths
 
 TEMPLATE_STEP_TYPES = ("tool", "questionnaire_administration", "guided_results_chat", "assignment", "forum")
 
@@ -25,6 +25,8 @@ def template_tool_available(db: Session, tool_key: str) -> bool:
         return True
     if tool_key in ALWAYS_ON:
         return False
+    if tool_key in builtin_guided_paths(db):
+        return True
     instrument = db.query(models.Instrument).filter_by(code=tool_key).first()
     return bool(instrument and instrument.is_active and instrument.target_audience == "student")
 

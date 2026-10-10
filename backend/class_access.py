@@ -19,7 +19,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import auth, models
-from .class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS
+from .class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, builtin_guided_paths
 
 
 class ToolAccessDenied(HTTPException):
@@ -170,7 +170,7 @@ def _admin_tool_keys(db: Session) -> list[str]:
         models.Instrument.target_audience == "student",
         models.Instrument.code.notin_(reserved),
     ).order_by(models.Instrument.code)]
-    return codes + list(PERSONAL_TOOL_KEYS) + sorted(ALWAYS_ON)
+    return codes + builtin_guided_paths(db) + list(PERSONAL_TOOL_KEYS) + sorted(ALWAYS_ON)
 
 
 def resolve_access(db: Session, identity) -> dict:

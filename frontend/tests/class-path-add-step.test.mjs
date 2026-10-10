@@ -97,12 +97,23 @@ async function openEditor(page) {
     // Guided chat: on the results of a questionnaire step, or standalone.
     await open('Fa una chat guidata');
     await add.getByText('Sui risultati di un questionario del percorso').waitFor();
-    const chats = await add.getByRole('combobox', { name: /^Chat guidata autonoma/ }).locator('option').allTextContents();
-    assert.deepEqual(chats.slice(1), ['Intervista Savickas']);
-    await add.getByRole('combobox', { name: /^Chat guidata autonoma/ }).selectOption('SAVICKAS');
+    // Guided paths: the class's catalog row (Savickas) and the built-in ones without a row.
+    const chats = add.getByRole('combobox', { name: /^Percorso guidato/ });
+    const names = await chats.locator('option').allTextContents();
+    assert.equal(names.length, 6, names.join(', '));
+    assert.equal(names[1], 'Intervista Savickas');
+    assert.deepEqual(await chats.locator('option').evaluateAll(rows => rows.slice(1).map(row => row.value)),
+        ['SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'IDEA']);
+    await chats.selectOption('SAVICKAS');
     await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).nth(1).click();
     assert.equal(await cards.count(), 4);
     await cards.nth(3).getByText('Intervista Savickas').waitFor();
+    await open('Fa una chat guidata');
+    await chats.selectOption('EVENTO_STUDIO');
+    await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).nth(1).click();
+    assert.equal(await cards.count(), 5);
+    // A built-in guided path is usable: no «not available» badge.
+    assert.equal(await cards.nth(4).getByText('Non disponibile').count(), 0);
 
     // Activity: a whole-class assignment.
     await open('Svolge un’attività');

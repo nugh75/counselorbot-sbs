@@ -7,7 +7,10 @@ la copia del passo del modello salvata all’applicazione (`template_snapshot`),
 testo di una discussione già creata non viene mai letto (PR #179). Fase 1 (#173): un solo
 «+ Aggiungi passo» nell’editor della classe e dei modelli; le chat guidate autonome
 restano passi `tool` scelti da «Fa una chat guidata» finché non arriva il tipo dedicato
-(#177); l’incontro è elencato come «in arrivo» fino a #175/#176.
+(#177); l’incontro è elencato come «in arrivo» fino a #175/#176. I percorsi guidati
+integrati (Savickas, Evento di studio, Evento professionale, Obiettivo di studio, Idea)
+senza riga `instruments` sono offerti come chat guidate e compaiono nell’elenco di accesso
+degli studenti di classe, coerentemente con `require_tool` che li lascia passare.
 Tracciamento: milestone e issue su GitHub (vedi «Fasi»).
 
 ## Problema
