@@ -1880,17 +1880,20 @@ class PathTemplateStep(Base):
 
 STEP_TARGET_CHECK = (
     "(step_type = 'tool' AND tool_key IS NOT NULL AND administration_plan_id IS NULL AND results_step_id IS NULL "
-    "AND assignment_id IS NULL AND topic_id IS NULL) OR "
+    "AND assignment_id IS NULL AND topic_id IS NULL AND meeting_id IS NULL) OR "
     "(step_type = 'questionnaire_administration' AND tool_key IS NULL AND administration_plan_id IS NOT NULL "
-    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NULL) OR "
+    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NULL AND meeting_id IS NULL) OR "
     "(step_type = 'guided_results_chat' AND tool_key IS NULL AND administration_plan_id IS NULL "
-    "AND results_step_id IS NOT NULL AND assignment_id IS NULL AND topic_id IS NULL) OR "
+    "AND results_step_id IS NOT NULL AND assignment_id IS NULL AND topic_id IS NULL AND meeting_id IS NULL) OR "
     "(step_type = 'assignment' AND tool_key IS NULL AND administration_plan_id IS NULL "
-    "AND results_step_id IS NULL AND assignment_id IS NOT NULL AND topic_id IS NULL) OR "
+    "AND results_step_id IS NULL AND assignment_id IS NOT NULL AND topic_id IS NULL AND meeting_id IS NULL) OR "
     "(step_type = 'forum' AND tool_key IS NULL AND administration_plan_id IS NULL "
-    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NOT NULL) OR "
+    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NOT NULL AND meeting_id IS NULL) OR "
     "(step_type = 'pending' AND tool_key IS NULL AND administration_plan_id IS NULL "
-    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NULL AND pending_config IS NOT NULL)"
+    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NULL AND meeting_id IS NULL "
+    "AND pending_config IS NOT NULL) OR "
+    "(step_type = 'meeting' AND tool_key IS NULL AND administration_plan_id IS NULL "
+    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NULL AND meeting_id IS NOT NULL)"
 )
 
 
@@ -1930,6 +1933,53 @@ class ClassPathStep(Base):
     # The template step as last copied here: «Update from template» compares it with
     # the template, so a class object's own content (e.g. forum text) is never read.
     template_snapshot = Column(JSON, nullable=True)
+    # Meeting step (#175): a class or group meeting of the same class (checked on save).
+    meeting_id = Column(Integer, ForeignKey("class_meetings.id"), nullable=True)
+
+
+class ClassMeeting(Base):
+    """A class or group meeting (#175), in person (place) or online (link).
+
+    The organiser leads it and the manager edits it. Today both are the teacher
+    who creates it; a future orientator or expert role can take over either
+    without migrating rows. Meetings are cancelled, never deleted, so steps and
+    attendance keep their reference.
+    """
+
+    __tablename__ = "class_meetings"
+    __table_args__ = (
+        CheckConstraint("mode IN ('in_person', 'online')", name="class_meeting_mode"),
+        CheckConstraint("status IN ('scheduled', 'cancelled')", name="class_meeting_status"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    starts_at = Column(DateTime(timezone=True), nullable=False)
+    duration_minutes = Column(Integer, nullable=True)
+    mode = Column(String(20), nullable=False)
+    place = Column(String(300), nullable=True)
+    link = Column(String(500), nullable=True)
+    organizer_username = Column(String, nullable=False)
+    manager_username = Column(String, nullable=False)
+    status = Column(String(20), nullable=False, default="scheduled", server_default="scheduled")
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    revision = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class ClassMeetingAttendance(Base):
+    """The student's own attendance mark (#175); there is no teacher register."""
+
+    __tablename__ = "class_meeting_attendance"
+    __table_args__ = (UniqueConstraint("meeting_id", "username", name="uq_class_meeting_attendance"),)
+
+    id = Column(Integer, primary_key=True)
+    meeting_id = Column(Integer, ForeignKey("class_meetings.id", ondelete="CASCADE"), nullable=False, index=True)
+    username = Column(String, nullable=False, index=True)
+    marked_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 class ClassPathProgress(Base):

@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from . import models, administration_context, forum_completion, scoring_service
 from .class_access import class_enables
 from .class_path_completion import GUIDED_CHAT_COMPLETED, has_automatic_evidence
+from .class_meetings import attendance, meeting_summary, meeting_target
 
 ADMINISTRATION_QUESTIONNAIRES = frozenset({"QSA", "QSAr", "ZTPI", "QPCS", "QPCC", "QAP"})
 EXTERNAL_IT_HREF = "https://www.competenzestrategiche.it/"
@@ -139,6 +140,9 @@ def validate_step_input(db, path, value):
     elif value.step_type == "forum":
         # Lock the discussion so a concurrent hide is seen before this save commits.
         forum_target(db, path.group_id, value.topic_id, for_update=True)
+    elif value.step_type == "meeting":
+        # Lock the meeting so a concurrent cancellation is seen before this save commits.
+        meeting_target(db, path.group_id, value.meeting_id, for_update=True)
     elif value.step_type == "pending":
         # Only kept, never created here: pending steps come from applying a template.
         stored = db.query(models.ClassPathStep).filter_by(id=value.id, path_id=path.id).first()
@@ -156,6 +160,9 @@ def validate_composition(db, path, steps):
     topics = [value.topic_id for value in steps if value.step_type == "forum"]
     if len(topics) != len(set(topics)):
         raise HTTPException(422, "duplicate_forum_step")
+    meetings = [value.meeting_id for value in steps if value.step_type == "meeting"]
+    if len(meetings) != len(set(meetings)):
+        raise HTTPException(422, "duplicate_meeting_step")
     linked = set()
     for index, value in enumerate(steps):
         if value.step_type == "pending":
@@ -218,6 +225,7 @@ def target_identity(value):
         "guided_results_chat": "results_step_id",
         "assignment": "assignment_id",
         "forum": "topic_id",
+        "meeting": "meeting_id",
     }[value.step_type]
     return value.step_type, getattr(value, target)
 
@@ -241,6 +249,7 @@ def apply_step_target(step, value):
     )
     step.assignment_id = value.assignment_id if value.step_type == "assignment" else None
     step.topic_id = value.topic_id if value.step_type == "forum" else None
+    step.meeting_id = value.meeting_id if value.step_type == "meeting" else None
 
 
 def results_step(db, step):
@@ -277,6 +286,8 @@ def step_descriptor(db, path, step):
         return assignment_descriptor(db, path, step)
     if step.step_type == "forum":
         return forum_descriptor(db, path, step)
+    if step.step_type == "meeting":
+        return meeting_descriptor(db, path, step)
     if step.step_type == "pending":
         # Created at publication; until then the teacher sees what the template describes.
         return {
@@ -408,6 +419,17 @@ def forum_descriptor(db, path, step):
     }
 
 
+def meeting_descriptor(db, path, step):
+    """Date, place or link: the student sees them in the path; attendance completes the step."""
+    try:
+        row = meeting_target(db, path.group_id, step.meeting_id)
+    except HTTPException as error:
+        return {"available": False, "availability_reason": error.detail, "auto_detect": True,
+                "target_summary": None, "start_href": None, "instrument_code": None}
+    return {"available": True, "availability_reason": None, "auto_detect": True, "instrument_code": None,
+            "start_href": None, "target_summary": meeting_summary(row)}
+
+
 def forum_evidence(db, path, step, username):
     """The student's own published reply in that discussion, after activation."""
     if step.active_from is None or not db.query(models.GroupMembership.id).filter_by(
@@ -440,6 +462,9 @@ def completion_evidence(db, path, step, username):
         return assignment_evidence(db, path, step, username)
     if step.step_type == "forum":
         return forum_evidence(db, path, step, username)
+    if step.step_type == "meeting":
+        mark = attendance(db, step.meeting_id, username)
+        return {"kind": "meeting_attendance", "at": mark.marked_at} if mark else None
     return next(administration_evidence(db, step, username), None)
 
 
