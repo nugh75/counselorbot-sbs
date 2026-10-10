@@ -1,3 +1,9 @@
+> **Historical document.** This audit describes the teacher path UI before the
+> builder shipped. It is obsolete: `frontend/src/components/teacher/ClassPathsTab.tsx`
+> now provides the path builder (draft, typed steps, publish, archive/restore and
+> progress). See `docs-counselorbot/funzionalita-counselorbot.md` ("Publishing and
+> managing a mixed class path") for the current behaviour. Kept for history only.
+
 # Class Path Teacher UI Audit
 
 ## Issue: Teacher class page shows only a list, no builder interface
