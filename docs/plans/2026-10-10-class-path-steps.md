@@ -11,6 +11,9 @@ restano passi `tool` scelti da «Fa una chat guidata» finché non arriva il tip
 integrati (Savickas, Evento di studio, Evento professionale, Obiettivo di studio, Idea)
 senza riga `instruments` sono offerti come chat guidate e compaiono nell’elenco di accesso
 degli studenti di classe, coerentemente con `require_tool` che li lascia passare.
+Fase 2 (#174): `teacher_assignments.tool_keys` (JSON, NULL per le assegnazioni esistenti)
+elenca gli strumenti personali dell’attività; la pagina dello strumento si apre in un
+`<dialog>` con iframe e `?embedded=1`, che nasconde l’intestazione del sito.
 Tracciamento: milestone e issue su GitHub (vedi «Fasi»).
 
 ## Problema
