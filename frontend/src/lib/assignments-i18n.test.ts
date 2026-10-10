@@ -7,16 +7,21 @@ import { teacherAreaName } from './i18n-teacher-area.ts';
 
 const languages = ['it', 'en', 'es', 'fr', 'de', 'sv'] as const;
 
-// #143: the teacher page and its navigation entry are named in the singular.
+// #143: the sent list is named in the singular; the teacher area entry and page
+// are plural, since a teacher sends more than one assignment (owner, 2026-10-10).
 const singular = {
     it: 'Assegnazione', en: 'Assignment', es: 'Asignación',
     fr: 'Attribution', de: 'Zuweisung', sv: 'Tilldelning',
 } as const;
+const plural = {
+    it: 'Assegnazioni', en: 'Assignments', es: 'Asignaciones',
+    fr: 'Attributions', de: 'Zuweisungen', sv: 'Tilldelningar',
+} as const;
 
-test('the teacher assignment page is named in the singular in all six languages', () => {
+test('the teacher assignment entry is plural and the sent list singular in all six languages', () => {
     for (const lang of languages) {
         assert.equal(assignmentText(lang, 'sent'), singular[lang], `sent/${lang}`);
-        assert.equal(teacherAreaName(lang, 'assegnazioni'), singular[lang], `nav/${lang}`);
+        assert.equal(teacherAreaName(lang, 'assegnazioni'), plural[lang], `nav/${lang}`);
     }
 });
 
