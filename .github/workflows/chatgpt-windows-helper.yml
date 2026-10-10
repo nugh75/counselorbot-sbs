@@ -1,0 +1,39 @@
+name: chatgpt-windows-helper
+
+# Builds the standalone Windows ChatGPT helper (#133) on a native Windows runner.
+# Operators download the artifact into dist/chatgpt-windows on the host.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/chatgpt-connect.py
+      - scripts/build-chatgpt-windows.sh
+      - .github/workflows/chatgpt-windows-helper.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build helper
+        shell: bash
+        run: bash scripts/build-chatgpt-windows.sh
+      - name: Smoke test the packaged helper
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP"
+          python -c "import zipfile; zipfile.ZipFile(r'$GITHUB_WORKSPACE/dist/chatgpt-windows/CounselorBot-ChatGPT-Windows.zip').extractall('helper')"
+          ./helper/CounselorBot-ChatGPT.exe --help | grep -- "--server"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CounselorBot-ChatGPT-Windows
+          path: |
+            dist/chatgpt-windows/CounselorBot-ChatGPT-Windows.zip
+            dist/chatgpt-windows/CounselorBot-ChatGPT-Windows.zip.sha256
+          retention-days: 30
