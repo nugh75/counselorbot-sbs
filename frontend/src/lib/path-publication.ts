@@ -72,3 +72,8 @@ export function parsePublicationProblems(detail: unknown): PublicationProblem[] 
 export function lifecycleRequest(revision: number): RequestInit {
     return {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({revision})};
 }
+
+/** Revision to publish from: a save made just before publishing bumps it. */
+export function publishRevision(current: number, saved: {revision: number} | boolean): number {
+    return typeof saved === 'object' ? saved.revision : current;
+}

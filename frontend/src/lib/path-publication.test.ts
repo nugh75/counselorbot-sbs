@@ -6,7 +6,7 @@ import { parseClassPathStep, parseStudentClassPathStep } from './class-paths.ts'
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { pathPublicationTexts, unavailableActionText } from './i18n-path-publication.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { lifecycleRequest, parsePublicationProblems, unavailableAction } from './path-publication.ts';
+import { lifecycleRequest, parsePublicationProblems, publishRevision, unavailableAction } from './path-publication.ts';
 
 test('a blocked publication lists every step to fix, in path order', () => {
     const detail = {code: 'path_publication_blocked', problems: [
@@ -46,6 +46,9 @@ test('lifecycle actions send the revision the teacher saw', () => {
     const request = lifecycleRequest(7);
     assert.equal(request.method, 'POST');
     assert.deepEqual(JSON.parse(String(request.body)), {revision: 7});
+    // Publishing right after an automatic save uses the saved revision, not the stale one.
+    assert.equal(publishRevision(7, {revision: 8}), 8);
+    assert.equal(publishRevision(7, true), 7);
 });
 
 test('publication texts exist in six languages without glyph labels', () => {
