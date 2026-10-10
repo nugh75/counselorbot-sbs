@@ -20,6 +20,16 @@ PERSONAL_TOOL_KEYS = {
     "forum": ("forum", "forum"),
 }
 ALWAYS_ON = frozenset({"notebook", "results", "classes", "assignments"})
+# The app's built-in guided paths («Percorsi guidati»). Without an instrument row
+# they are not toggleable and `require_tool` lets them pass, so access lists and
+# class paths offer them too; with a row, the instrument rules apply.
+GUIDED_PATH_KEYS = ("SAVICKAS", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE", "OBIETTIVO_STUDIO", "IDEA")
+
+
+def builtin_guided_paths(db: Session) -> list[str]:
+    """Guided paths with no instrument row: always available."""
+    codes = {code.upper() for (code,) in db.query(models.Instrument.code)}
+    return [key for key in GUIDED_PATH_KEYS if key not in codes]
 
 
 def tool_catalog(db: Session, disabled_keys: list[str]) -> list[dict]:

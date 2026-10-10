@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { AVAILABLE_STEP_KINDS, STEP_KINDS, isLegacyQuestionnaireTool, isPersonalTool, isStandaloneGuidedChat } from './path-step-kinds.ts';
+import { AVAILABLE_STEP_KINDS, STEP_KINDS, guidedChatKeys, isLegacyQuestionnaireTool, isPersonalTool, isStandaloneGuidedChat } from './path-step-kinds.ts';
 
 const row = (key: string, kind: 'instrument' | 'personal', category: string) => ({ key, kind, category });
 
@@ -18,4 +18,11 @@ test('six step kinds, meetings not yet available, older questionnaire tools reco
     assert.equal(isLegacyQuestionnaireTool({ tool_key: 'QSA' }), true);
     assert.equal(isLegacyQuestionnaireTool({ step_type: 'questionnaire_administration', tool_key: 'QSA' }), false);
     assert.equal(isLegacyQuestionnaireTool({ step_type: 'tool', tool_key: 'SAVICKAS' }), false);
+});
+
+test('guided paths: enabled catalog rows plus built-in ones without a row', () => {
+    const tools = [{ ...row('SAVICKAS', 'instrument', 'guided'), enabled: false }, { ...row('QSA', 'instrument', 'guided'), enabled: true },
+        { ...row('tavolo', 'personal', 'personal'), enabled: true }];
+    assert.deepEqual(guidedChatKeys(tools), ['EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'IDEA']);
+    assert.deepEqual(guidedChatKeys([]).length, 5);
 });
