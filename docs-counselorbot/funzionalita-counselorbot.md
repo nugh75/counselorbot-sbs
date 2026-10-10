@@ -551,7 +551,12 @@ a referente o esperto lo manda il docente, fuori dalla piattaforma): il docente 
 le fasce, vede chi ha prenotato, sposta una prenotazione su una fascia libera, annulla
 prenotazioni o fasce; ogni studente prenota una sola fascia, la cambia o la annulla, non
 vede chi ha preso le altre e, se il docente annulla la sua, vede l’avviso e ne sceglie
-un’altra; due prenotazioni contemporanee della stessa fascia non possono riuscire entrambe
+un’altra; due prenotazioni contemporanee della stessa fascia non possono riuscire entrambe;
+un incontro può valere **anche per altre classi o gruppi** gestiti dal docente («Anche per
+altre classi o gruppi» nel modulo): gli studenti di tutte quelle classi lo vedono, con il
+nome della propria classe, lo possono avere come passo del proprio percorso e
+condividono le stesse fasce; il docente vede le classi coinvolte e le presenze per
+classe; lo modifica chi gestisce la classe in cui è stato creato
 e un incontro annullato rende il passo non disponibile; nei modelli l’incontro è ancora
 «in arrivo») o partecipa a una discussione; su telefono il modulo si apre sotto l’elenco dei passi;
 le regole di completamento di questionario, attività e discussione stanno in «Come si completa

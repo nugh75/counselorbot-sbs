@@ -31,6 +31,9 @@ incontri.
 #189: `class_meetings.show_on_timeline` (default vero); la linea del tempo personale legge
 gli incontri da `/user/meetings` come voci di tipo `meeting` (data del gruppo o fascia
 prenotata), senza scriverli nel workspace; i filtri salvati prima restano compatibili.
+#190: `class_meeting_groups` collega un incontro ad altre classi o gruppi (la classe di
+`class_meetings.group_id` resta quella in cui è nato e da cui si modifica); visibilità,
+passi del percorso, presenze e fasce valgono per tutte le classi collegate.
 Tracciamento: milestone e issue su GitHub (vedi «Fasi»).
 
 ## Problema

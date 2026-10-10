@@ -29,6 +29,10 @@ export interface ClassMeeting {
     booking_cancelled?: boolean;
     /** #189: the teacher shows it on students' timelines. */
     show_on_timeline?: boolean;
+    /** #190 teacher view: the home class first, then the other classes or groups. */
+    group_ids?: number[];
+    group_names?: string[];
+    attendance_by_group?: Record<string, number>;
     duration_minutes: number | null;
     mode: 'in_person' | 'online';
     place: string | null;
@@ -63,6 +67,10 @@ export function parseMeeting(input: unknown): ClassMeeting | null {
         ...(raw.booking_slot_id !== undefined ? { booking_slot_id: raw.booking_slot_id != null ? Number(raw.booking_slot_id) : null } : {}),
         ...(raw.booking_cancelled != null ? { booking_cancelled: Boolean(raw.booking_cancelled) } : {}),
         ...(raw.show_on_timeline != null ? { show_on_timeline: Boolean(raw.show_on_timeline) } : {}),
+        ...(Array.isArray(raw.group_ids) ? { group_ids: raw.group_ids.map(Number) } : {}),
+        ...(Array.isArray(raw.group_names) ? { group_names: raw.group_names.map(String) } : {}),
+        ...(raw.attendance_by_group && typeof raw.attendance_by_group === 'object'
+            ? { attendance_by_group: Object.fromEntries(Object.entries(raw.attendance_by_group as Record<string, unknown>).map(([key, value]) => [key, Number(value)])) } : {}),
         duration_minutes: raw.duration_minutes != null ? Number(raw.duration_minutes) : null,
         mode: raw.mode === 'online' ? 'online' : 'in_person',
         place: raw.place ? String(raw.place) : null,

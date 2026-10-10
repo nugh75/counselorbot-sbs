@@ -184,6 +184,7 @@ def templates_schema():
         models.Base.metadata.create_all(connection)
         connection.execute(text("ALTER TABLE class_path_steps DROP CONSTRAINT class_path_step_target"))
         connection.execute(text("ALTER TABLE class_path_steps DROP COLUMN meeting_id"))
+        connection.execute(text("DROP TABLE class_meeting_groups"))
         connection.execute(text("DROP TABLE class_meeting_bookings"))
         connection.execute(text("DROP TABLE class_meeting_slots"))
         connection.execute(text("DROP TABLE class_meeting_attendance"))
@@ -508,3 +509,43 @@ def test_teacher_chooses_whether_a_meeting_is_on_student_timelines(api):
     as_user(identity, who("alice"))
     flags = {row["title"]: row["show_on_timeline"] for row in client.get("/user/meetings").json()}
     assert flags == {"Debriefing": True, "Riunione interna": False}
+
+
+def test_one_meeting_for_several_classes_or_groups(api):
+    client, db, identity, group, other = api
+    second = models.StudentGroup(name="Synthetic 5D", code="SYN-190-5D", owner_username="teacher")
+    db.add(second)
+    db.flush()
+    db.add(models.GroupMembership(group_id=second.id, username="dario"))
+    db.commit()
+    # A class the teacher does not manage cannot be linked.
+    assert plan(client, group, group_ids=[other.id]).status_code == 422
+    shared = plan(client, group, title="Orientamento in uscita", starts_at=when(hours=-1), group_ids=[second.id, group.id])
+    assert shared.status_code == 201, shared.text
+    meeting = shared.json()
+    assert meeting["group_ids"] == [group.id, second.id] and meeting["group_names"] == ["Synthetic 5C", "Synthetic 5D"]
+    # Both classes list it; each path can use it.
+    assert [row["id"] for row in client.get(f"/teacher/groups/{second.id}/meetings").json()] == [meeting["id"]]
+    saved = path_with(client, second, meeting["id"])
+    assert saved.status_code == 200, saved.text
+    assert client.post(f"/teacher/paths/{saved.json()['id']}/publish").status_code == 200
+    # Students of the linked class see it under their own class and attend.
+    as_user(identity, who("dario"))
+    mine = client.get("/user/meetings").json()
+    assert [(row["title"], row["group_name"]) for row in mine] == [("Orientamento in uscita", "Synthetic 5D")]
+    assert client.post(f"/user/meetings/{meeting['id']}/attendance").status_code == 200
+    assert client.get("/user/paths").json()[0]["done"] == 1
+    as_user(identity, who("alice"))
+    assert client.post(f"/user/meetings/{meeting['id']}/attendance").status_code == 200
+    # Students of an unlinked class still get the same 403.
+    as_user(identity, who("bob"))
+    assert client.post(f"/user/meetings/{meeting['id']}/attendance").status_code == 403
+    as_user(identity, TEACHER)
+    record = client.get(f"/teacher/groups/{group.id}/meetings").json()[0]
+    assert record["attendance_count"] == 2
+    assert record["attendance_by_group"] == {str(group.id): 1, str(second.id): 1}
+    # Unlinking keeps the meeting in its home class only.
+    edited = client.put(f"/teacher/meetings/{meeting['id']}", json={**{k: record[k] for k in (
+        "title", "starts_at", "mode", "place")}, "kind": "group", "group_ids": [], "revision": record["revision"]})
+    assert edited.status_code == 200 and edited.json()["group_ids"] == [group.id]
+    assert client.get(f"/teacher/groups/{second.id}/meetings").json() == []

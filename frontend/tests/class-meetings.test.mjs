@@ -43,13 +43,16 @@ function server(user) {
             email: `${user}@example.invalid`, groups: user === 'teacher.test' ? ['docenti'] : [] });
         if (p === '/api/user/account') return json({ setup_complete: true, notebook_completed: true });
         if (p === '/api/orientation/status') return json({ required: false, completed: true });
-        if (p === '/api/admin/groups') return json([group]);
+        if (p === '/api/admin/groups') return json([group, { ...group, id: 12, code: 'GR-3C', name: '3C Liceo' }]);
         if (p === '/api/teacher/path-templates') return json({ mine: [], shared: [] });
         if (p === '/api/teacher/groups/11/paths') return json([state.path]);
         if (p === '/api/teacher/groups/11/settings') return json({ group_id: 11, revision: 1, disabled_tool_keys: [], tools: [] });
         if (p === '/api/teacher/groups/11/meetings' && method === 'GET') return json(state.meetings);
         if (p === '/api/teacher/groups/11/meetings') {
-            const created = { ...body, id: 4, group_id: 11, status: 'scheduled', revision: 1, attendance_count: 0 };
+            state.created = body;
+            const groupIds = [11, ...(body.group_ids ?? [])];
+            const created = { ...body, id: 4, group_id: 11, status: 'scheduled', revision: 1, attendance_count: 0, group_ids: groupIds,
+                group_names: groupIds.map(id => (id === 11 ? '3B Liceo' : '3C Liceo')) };
             state.meetings.push(created);
             return json(created, 201);
         }
@@ -105,9 +108,13 @@ async function open(viewport, user) {
     await meetings.getByLabel('Data e ora').fill('2026-11-05T10:30');
     assert.equal(await meetings.getByRole('button', { name: 'Salva incontro' }).isDisabled(), true);
     await meetings.getByRole('textbox', { name: 'Luogo' }).fill('Aula 3');
+    // #190: the same meeting also for another class the teacher manages.
+    await meetings.getByRole('group', { name: 'Anche per altre classi o gruppi' }).getByRole('checkbox', { name: '3C Liceo' }).check();
     await meetings.getByRole('button', { name: 'Salva incontro' }).click();
     await meetings.getByText('Restituzione', { exact: true }).waitFor();
     assert.ok(state.posts.includes('POST /api/teacher/groups/11/meetings'));
+    assert.deepEqual(state.created.group_ids, [12]);
+    await meetings.getByText('Per: 3B Liceo, 3C Liceo').waitFor();
     // Cancelled meetings cannot be chosen; the new one is preselected.
     const options = await meetings.getByRole('combobox').locator('option').allTextContents();
     assert.ok(!options.some(name => name.startsWith('Annullato')), options.join(', '));
