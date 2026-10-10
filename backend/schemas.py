@@ -1935,6 +1935,12 @@ class ForumPathStepInput(PathStepFields):
     topic_id: int = Field(gt=0)
 
 
+class MeetingPathStepInput(PathStepFields):
+    """A class or group meeting of the same class (#175)."""
+    step_type: Literal["meeting"]
+    meeting_id: int = Field(gt=0)
+
+
 class PendingPathStepInput(PathStepFields):
     """A step applied from a template, kept as is until publication creates its target."""
     step_type: Literal["pending"]
@@ -1943,7 +1949,7 @@ class PendingPathStepInput(PathStepFields):
 
 TypedPathStepInput = Annotated[
     Union[ClassPathStepInput, AdministrationPathStepInput, GuidedResultsChatStepInput, AssignmentPathStepInput,
-          ForumPathStepInput, PendingPathStepInput],
+          ForumPathStepInput, PendingPathStepInput, MeetingPathStepInput],
     Field(discriminator="step_type"),
 ]
 
@@ -1958,6 +1964,7 @@ class ClassPathStepResponse(BaseModel):
     results_step_id: Optional[int] = None
     assignment_id: Optional[int] = None
     topic_id: Optional[int] = None
+    meeting_id: Optional[int] = None
     active_from: Optional[datetime] = None
     target_summary: Optional[dict] = None
     availability_reason: Optional[str] = None
@@ -2049,6 +2056,7 @@ class StudentClassPathStep(BaseModel):
     results_step_id: Optional[int] = None
     assignment_id: Optional[int] = None
     topic_id: Optional[int] = None
+    meeting_id: Optional[int] = None
     active_from: Optional[datetime] = None
     target_summary: Optional[dict] = None
     availability_reason: Optional[str] = None
