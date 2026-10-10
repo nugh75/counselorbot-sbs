@@ -1,6 +1,7 @@
 # Percorsi di classe: tipi di passo — piano
 
 Stato: proposta approvata dall'utente il 10 ottobre 2026, non ancora implementata.
+Tracciamento: milestone e issue su GitHub (vedi «Fasi»).
 
 ## Problema
 
@@ -50,7 +51,10 @@ o esperti.
     **«Aggiorna da modello»**: un percorso avviato non cambia sotto gli studenti.
 14. I modelli sono visibili **solo al docente che li crea**. Il docente può
     **condividerli**: un modello condiviso diventa un **preset** disponibile a tutti i
-    docenti, che lo applicano o lo copiano tra i propri modelli.
+    docenti, che lo applicano o lo copiano tra i propri modelli. La condivisione
+    è immediata, **senza revisione amministrativa**.
+15. «Aggiorna da modello» cambia **solo i passi che nessuno studente ha ancora
+    iniziato**; i passi già avviati restano invariati.
 
 ## Modelli e percorsi applicati
 
@@ -131,20 +135,23 @@ Partecipa a un incontro
 
 ## Fasi (una PR ciascuna)
 
-0. **Modelli e applicazione** — tabella dei modelli e dei loro passi astratti,
+Milestone GitHub «Class path templates, step types and meetings» (#7); ogni fase è una
+issue con criteri di accettazione e dipendenze.
+
+0. **Modelli e applicazione** (#172) — tabella dei modelli e dei loro passi astratti,
    collegamento percorso → modello d'origine, «Applica a…», «Salva come modello»,
    «Aggiorna da modello», condivisione come preset. Migrazione: i percorsi esistenti
    restano percorsi applicati senza modello.
-1. **Aggiungi passo unico** — scelta del tipo e moduli specifici; il menu
+1. **Aggiungi passo unico** (#173) — scelta del tipo e moduli specifici; il menu
    strumenti mostra solo gli strumenti personali. Solo interfaccia.
-2. **Strumenti nell'attività** — campo elenco sull'assegnazione, migrazione,
+2. **Strumenti nell'attività** (#174) — campo elenco sull'assegnazione, migrazione,
    dialogo «Nuova assegnazione», popup lato studente.
-3. **Incontri di classe/gruppo** — tabella, passo `meeting`, scheda studente nel
+3. **Incontri di classe/gruppo** (#175) — tabella, passo `meeting`, scheda studente nel
    percorso e nella linea del tempo, partecipazione segnata dallo studente.
-4. **Incontri individuali e fasce** — con docente, referente o esperto; fasce,
+4. **Incontri individuali e fasce** (#176) — con docente, referente o esperto; fasce,
    prenotazione, spostamento e annullamento; prenotazioni concorrenti sulla stessa
    fascia gestite in modo transazionale.
-5. **Chat guidata autonoma con seguito** — tipo esplicito e collegamento al passo
+5. **Chat guidata autonoma con seguito** (#177) — tipo esplicito e collegamento al passo
    incontro.
 
 Ogni fase aggiorna `docs-counselorbot/funzionalita-counselorbot.md`, la Guida e i
@@ -154,6 +161,4 @@ modifica ai file di prodotto, immagini comprese.
 ## Fuori ambito per ora
 
 - Account e ruolo dedicato per orientatori ed esperti.
-- Revisione amministrativa dei preset condivisi (da decidere: oggi la
-  condivisione li rende subito disponibili a tutti i docenti).
 - Invio automatico di inviti o promemoria via email.
