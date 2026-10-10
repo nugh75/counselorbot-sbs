@@ -107,6 +107,8 @@ const texts = {
     slotTaken: ["Questa fascia è appena stata prenotata da qualcun altro: scegline un’altra.", "Someone else has just booked this slot: choose another one.", "Otra persona acaba de reservar esta franja: elige otra.", "Quelqu’un vient de réserver ce créneau : choisis-en un autre.", "Jemand anderes hat dieses Zeitfenster gerade gebucht: Wähle ein anderes.", "Någon annan har just bokat den här tiden: välj en annan."],
     bookFirst: ["Prenota una fascia: potrai segnare la presenza dal suo inizio.", "Book a slot: you can mark attendance from its start.", "Reserva una franja: podrás marcar la asistencia desde su inicio.", "Réserve un créneau : tu pourras indiquer ta présence dès son début.", "Buche ein Zeitfenster: Ab seinem Beginn kannst du die Teilnahme markieren.", "Boka en tid: du kan markera närvaro från dess början."],
     showOnTimeline: ["Mostra nella linea del tempo degli studenti", "Show on students’ timelines", "Mostrar en la línea del tiempo de los estudiantes", "Afficher dans la frise des élèves", "In der Zeitleiste der Lernenden zeigen", "Visa på elevernas tidslinje"],
+    alsoFor: ["Anche per altre classi o gruppi", "Also for other classes or groups", "También para otras clases o grupos", "Aussi pour d’autres classes ou groupes", "Auch für andere Klassen oder Gruppen", "Även för andra klasser eller grupper"],
+    forGroups: ["Per", "For", "Para", "Pour", "Für", "För"],
 } satisfies Record<string, Localized>;
 
 export type ClassMeetingTextKey = keyof typeof texts;
