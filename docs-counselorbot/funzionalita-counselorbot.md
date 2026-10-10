@@ -514,6 +514,12 @@ salvata. I dettagli di attivazione automatica e ripristino sono in
 Nel menu della header la voce verso l'area è «Area docente» con l'icona a berretto
 da laurea, uguale per docenti, ricercatori e amministrazione.
 
+La Guida interfaccia (`/guide`) ha una sezione «Percorsi di classe e incontri» sia per il
+docente (con lo screenshot dell’editor del percorso: passi, chat guidata e incontro di
+seguito) sia per lo studente (con lo screenshot della pagina Percorsi di classe), nelle sei
+lingue; gli screenshot si rigenerano con `GUIDE_SCREENS=class-paths` in
+`frontend/scripts/capture-guide.mjs`.
+
 `/docente` è una panoramica illustrata, come l'Area personale: in alto, affiancati,
 il Taccuino del docente (`/docente/taccuino`, senza form nella home) e i **Taccuini di
 prova** (`/docente/taccuini-prova`). Seguono i tre gruppi (**Classe e assegnazioni**,

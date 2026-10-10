@@ -31,7 +31,7 @@ import { classSettingsText } from '@/lib/i18n-class-settings';
 import { forumText } from '@/lib/i18n-forum';
 import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
 
-const TEACHER_ROUTES = ['/docente', '/docente/classi', '/docente', '/docente', '/docente', '/docente', '/bussola', '/docente/classi'];
+const TEACHER_ROUTES = ['/docente', '/docente/classi', '/docente', '/docente', '/docente', '/docente', '/bussola', '/docente/classi', '/docente/percorsi'];
 
 export default function GuidePage() {
     return <Suspense><GuideContent /></Suspense>;
@@ -67,7 +67,7 @@ function GuideContent() {
     const teacher = audience === 'teacher';
     const showAudienceSelector = params.get('audience') !== 'student' && isTeacherUser;
     const l = (key: GuideAudienceKey) => guideAudienceText(lang, key);
-    const sections = Array.from({ length: teacher ? 8 : 16 }, (_, i) => i + 1);
+    const sections = Array.from({ length: teacher ? 9 : 17 }, (_, i) => i + 1);
     const sectionId = (n: number) => `guide-${teacher ? 'teacher-' : ''}section-${n}`;
     const sectionTitle = (n: number) => teacher ? l(`teacher${n}Title` as GuideAudienceKey) : t(`guide.section${n}.title`);
     const sectionBody = (n: number) => (teacher ? l(`teacher${n}Body` as GuideAudienceKey) : n === 15 ? l('personalGroups') : t(`guide.section${n}.body`) + (n === 1 ? ` ${classSettingsText(lang, 'studentSupportGuide')}` : '') + (n === 12 ? ` ${categoryText(lang, 'guideDirectory')}` : '')) + ((teacher && n === 8) || (!teacher && n === 16) ? ` ${forumText(lang, 'guideLinks')}` : '');
@@ -79,6 +79,7 @@ function GuideContent() {
         4: '/images/platform/assegnazioni.png',
         5: '/images/platform/chat-guidata.png',
         7: '/images/platform/bussola.png',
+        9: '/images/platform/percorsi-classe.png',
     } : {
         1: '/images/platform/bussola.png',
         2: '/images/platform/idea.png',
@@ -95,6 +96,7 @@ function GuideContent() {
         13: '/images/platform/linea-del-tempo.png',
         14: '/images/platform/assegnazioni.png',
         15: '/images/platform/classi.png',
+        17: '/images/platform/percorsi-classe.png',
     };
     const sectionImages: Record<number, { image: StaticImageData; caption: string }[]> = teacher ? {
         1: [{ image: images['teacher-area'], caption: l('teacher1Title') }, { image: images['teacher-notebook'], caption: teacherAreaName(lang, 'taccuino') }, { image: images['teacher-class-picker'], caption: classPickerText(lang, 'title') }],
@@ -120,6 +122,7 @@ function GuideContent() {
             { image: images['professional-event'], caption: t('guide.section11.title') },
         ],
         8: [{ image: images['teacher-forum'], caption: l('teacher8Title') }],
+        9: [{ image: images['teacher-class-paths'], caption: l('teacher9Title') }],
     } : {
         1: [{ image: images['access'], caption: t('guide.section1.title') }],
         2: [{ image: images['introduction'], caption: t('guide.section2.title') }],
@@ -143,6 +146,7 @@ function GuideContent() {
         14: [{ image: images['received-assignments'], caption: t('guide.section14.title') }],
         15: [{ image: images['personal-groups'], caption: t('guide.section15.title') }],
         16: [{ image: images['class-forum'], caption: t('guide.section16.title') }],
+        17: [{ image: images['class-paths'], caption: t('guide.section17.title') }],
     };
     const chatControls = [
         { key: 'options', icon: <MoreVertical className="h-4 w-4" aria-hidden="true" /> },
