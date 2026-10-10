@@ -14,6 +14,8 @@ import {
 } from '@/lib/class-paths';
 import { classPathText, type PathTextKey } from '@/lib/i18n-class-paths';
 import { useI18n } from '@/lib/i18n-context';
+import { unavailableAction } from '@/lib/path-publication';
+import { unavailableActionText } from '@/lib/i18n-path-publication';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
@@ -213,6 +215,14 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
                             </tfoot>
                         </table>
                     </div>
+                    {progress.steps.some(step => !step.available) && (
+                        // Unavailable steps are excluded from every ratio: say what makes them available again.
+                        <ul className="mt-3 space-y-1 text-xs text-slate-600">
+                            {progress.steps.filter(step => !step.available).map(step => (
+                                <li key={step.id}>{`#${step.position} · ${unavailableActionText(lang, unavailableAction(step.availability_reason) ?? 'other')}`}</li>
+                            ))}
+                        </ul>
+                    )}
 
                     <ul className="space-y-2 md:hidden">
                         {students.map(student => (

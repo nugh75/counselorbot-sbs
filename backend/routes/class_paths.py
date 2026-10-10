@@ -13,7 +13,8 @@ from sqlalchemy.orm import Session
 from .. import auth, database, models, schemas
 from ..class_access import class_enables, resolve_access
 from ..path_step_types import (step_descriptor, completion_evidence, validate_step_input, validate_composition,
-                               apply_step_target, administration_target, forum_student_state)
+                               apply_step_target, administration_target, forum_student_state,
+                               publication_problems)
 from ..class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, tool_catalog
 from .groups import _is_admin, _username, _visible_group_query
 
@@ -446,25 +447,43 @@ async def update_class_path(
     return _serialize_path(db, path, include_steps=True)
 
 
-@router.post("/teacher/paths/{path_id}/publish")
-async def publish_class_path(
-    path_id: int,
-    current_user=Depends(auth.get_current_plan_manager),
-    db: Session = Depends(get_db),
-):
-    """Publish a class path (records published_at once on first publication)."""
-    path = _require_visible_path(db, current_user, path_id, for_update=True)
+def _require_lifecycle_revision(path: models.ClassPath, payload: Optional[schemas.ClassPathLifecycle]) -> None:
+    # Older clients send no body; when a revision is sent it must be current.
+    if payload is not None and payload.revision is not None and payload.revision != path.revision:
+        raise HTTPException(status_code=409, detail="Class path revision mismatch")
+
+
+def _go_live(db: Session, path: models.ClassPath) -> None:
+    """Shared by publish and restore: validate every step, then activate new ones.
+
+    Nothing is written when any step is blocked; steps that are already active
+    keep their first activation time, so earlier evidence keeps its meaning.
+    """
+    steps = _active_steps(db, path.id)
+    problems = publication_problems(db, path, steps)
+    if problems:
+        raise HTTPException(409, {"code": "path_publication_blocked", "problems": problems})
     activation = datetime.now(timezone.utc)
-    for step in _active_steps(db, path.id):
-        descriptor = step_descriptor(db, path, step)
-        if not descriptor["available"]:
-            raise HTTPException(409, descriptor["availability_reason"])
+    for step in steps:
         if step.active_from is None:
             step.active_from = activation
     path.status = "published"
     if path.published_at is None:
         path.published_at = activation
     path.archived_at = None
+
+
+@router.post("/teacher/paths/{path_id}/publish")
+async def publish_class_path(
+    path_id: int,
+    payload: Optional[schemas.ClassPathLifecycle] = None,
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Publish a class path after validating every step (published_at is set once)."""
+    path = _require_visible_path(db, current_user, path_id, for_update=True)
+    _require_lifecycle_revision(path, payload)
+    _go_live(db, path)
     path.revision += 1
     db.commit()
     db.refresh(path)
@@ -474,11 +493,13 @@ async def publish_class_path(
 @router.post("/teacher/paths/{path_id}/archive")
 async def archive_class_path(
     path_id: int,
+    payload: Optional[schemas.ClassPathLifecycle] = None,
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Archive a class path."""
+    """Archive a class path; steps, activation times and progress are kept."""
     path = _require_visible_path(db, current_user, path_id, for_update=True)
+    _require_lifecycle_revision(path, payload)
     path.status = "archived"
     path.archived_at = func.now()
     path.revision += 1
@@ -490,13 +511,22 @@ async def archive_class_path(
 @router.post("/teacher/paths/{path_id}/restore")
 async def restore_class_path(
     path_id: int,
+    payload: Optional[schemas.ClassPathLifecycle] = None,
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    """Restore an archived class path to its previous status."""
+    """Restore an archived class path to its previous status.
+
+    A path that was published goes live again through the same validation as
+    publication, which also activates the steps added while it was archived.
+    """
     path = _require_visible_path(db, current_user, path_id, for_update=True)
-    path.status = "draft" if path.published_at is None else "published"
-    path.archived_at = None
+    _require_lifecycle_revision(path, payload)
+    if path.published_at is None:
+        path.status = "draft"
+        path.archived_at = None
+    else:
+        _go_live(db, path)
     path.revision += 1
     db.commit()
     db.refresh(path)
@@ -747,6 +777,10 @@ async def list_student_class_paths(
                     "title": cell["step"].title,
                     "instructions": cell["step"].instructions,
                     "due_date": cell["step"].due_date,
+                    # A step the class offers but this student's tool access excludes
+                    # still says why it is unavailable.
+                    "availability_reason": descriptors[cell["step"].id]["availability_reason"]
+                    or (None if available[cell["step"].id] else "tool_unavailable"),
                     "state": cell["state"],
                     "source": cell["source"],
                     "start_href": descriptors[cell["step"].id]["start_href"],

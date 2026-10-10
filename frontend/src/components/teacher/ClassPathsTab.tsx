@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { administrationStepText } from '@/lib/i18n-administration-steps';
 import { fetchInstruments } from '@/lib/instruments-api';
-import { ArrowDown, ArrowUp, ArrowLeft, Archive, ArchiveRestore, CheckCircle2, Circle, Flag, Plus, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowLeft, Archive, ArchiveRestore, CheckCircle2, Circle, ExternalLink, Flag, Plus, Trash2, X } from 'lucide-react';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
 import type { ClassSettings, ClassTool } from '@/lib/class-settings';
 import { parseClassPath, parseClassPaths, pathStepTools, type ClassPath, type ClassPathStep } from '@/lib/class-paths';
@@ -29,6 +29,8 @@ import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
 import { parseForumDiscussionLinks, parseForumList } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
+import { lifecycleRequest, parsePublicationProblems, publishRevision, unavailableAction, type PublicationProblem } from '@/lib/path-publication';
+import { pathPublicationText, unavailableActionText } from '@/lib/i18n-path-publication';
 
 type PathTextKey = keyof typeof classPathsTexts;
 type SettingsTextKey = keyof typeof classSettingsTexts;
@@ -45,14 +47,16 @@ function toolLabel(toolKey: string, tools: ClassTool[], lang: string): string {
 interface PathEditorProps {
     path: ClassPath;
     classSettings: ClassSettings;
+    institutionId: number | null;
     onBack: () => void;
     onUpdated: (updated: ClassPath) => void;
     onDeleted: (deletedId: number) => void;
 }
 
-function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: PathEditorProps) {
+function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated, onDeleted }: PathEditorProps) {
     const { lang } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
+    const pub = (key: Parameters<typeof pathPublicationText>[1]) => pathPublicationText(lang, key);
     const discussions = useTeacherResource('/api/user/forum/links', parseForumDiscussionLinks);
 
     const [currentPath, setCurrentPath] = useState<ClassPath>(path);
@@ -161,7 +165,27 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
     const [selectedToolKey, setSelectedToolKey] = useState<string>('');
 
     const [busy, setBusy] = useState(false);
-    const [notice, setNotice] = useState<'saved' | 'published' | 'conflict' | 'tool_disabled' | 'deep_dive_referenced' | 'deep_dive_invalid' | 'assignment_invalid' | 'forum_invalid' | 'error' | null>(null);
+    const [notice, setNotice] = useState<'saved' | 'published' | 'conflict' | 'tool_disabled' | 'deep_dive_referenced' | 'deep_dive_invalid' | 'assignment_invalid' | 'forum_invalid' | 'blocked' | 'lifecycle_error' | 'error' | null>(null);
+    // TF8: every step that blocks publication or restore, reported at once by the server.
+    const [problems, setProblems] = useState<PublicationProblem[]>([]);
+    // A blocked report names steps by their saved position: reload them to show each reason.
+    const showBlocked = async (detail: unknown): Promise<boolean> => {
+        const report = parsePublicationProblems(detail);
+        if (!report) return false;
+        setProblems(report);
+        setNotice('blocked');
+        try {
+            const response = await apiFetch(`/api/teacher/paths/${currentPath.id}`);
+            if (response.ok) {
+                const next = parseClassPath(await response.json());
+                setCurrentPath(next);
+                setSteps(next.steps);
+            }
+        } catch {
+            // The report above already names every step to fix.
+        }
+        return true;
+    };
     const [forbidden, setForbidden] = useState(false);
 
     const mounted = useRef(false);
@@ -234,7 +258,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
         if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
-    const handleSave = async (): Promise<boolean> => {
+    const handleSave = async (): Promise<ClassPath | boolean> => {
         if (pending.current || notice === 'conflict') return false;
         if (!dirty) return true;
         if (account.current !== getViewAsAccount()?.username) {
@@ -302,7 +326,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
             setSteps(next.steps);
             setNotice('saved');
             onUpdated(next);
-            return true;
+            return next;
         } catch {
             if (isCurrent()) setNotice('error');
             return false;
@@ -316,16 +340,18 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
 
     const handlePublish = async () => {
         if (busy || notice === 'conflict') return;
+        // A save just made bumps the revision: publish from the saved one, not this render's.
+        let revision = currentPath.revision;
         if (dirty) {
-            const ok = await handleSave();
-            if (!ok) return;
+            const saved = await handleSave();
+            if (!saved) return;
+            revision = publishRevision(revision, saved);
         }
         setBusy(true);
         setNotice(null);
+        setProblems([]);
         try {
-            const response = await apiFetch(`/api/teacher/paths/${currentPath.id}/publish`, {
-                method: 'POST',
-            });
+            const response = await apiFetch(`/api/teacher/paths/${currentPath.id}/publish`, lifecycleRequest(revision));
             if (response.ok) {
                 const next = parseClassPath(await response.json());
                 setCurrentPath(next);
@@ -334,9 +360,10 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
             } else if (response.status === 401 || response.status === 403) {
                 setForbidden(true);
             } else {
-                // A revoked or otherwise invalid assignment target names itself; the draft stays.
+                // Blocked steps are listed together; a stale revision needs a reload; the draft stays.
                 const detail = (await response.json().catch(() => null))?.detail;
-                setNotice(assignmentSaveError(detail) ? 'assignment_invalid' : forumSaveError(detail) ? 'forum_invalid' : 'error');
+                if (await showBlocked(detail)) return;
+                setNotice(response.status === 409 ? 'conflict' : assignmentSaveError(detail) ? 'assignment_invalid' : forumSaveError(detail) ? 'forum_invalid' : 'error');
             }
         } catch {
             setNotice('error');
@@ -346,18 +373,27 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
     };
 
     const handleArchiveOrRestore = async () => {
-        if (busy) return;
+        if (busy || dirty) return;
         setBusy(true);
+        setNotice(null);
+        setProblems([]);
         try {
             const action = currentPath.status === 'archived' ? 'restore' : 'archive';
-            const response = await apiFetch(`/api/teacher/paths/${currentPath.id}/${action}`, {
-                method: 'POST',
-            });
+            const response = await apiFetch(`/api/teacher/paths/${currentPath.id}/${action}`, lifecycleRequest(currentPath.revision));
             if (response.ok) {
                 const updated = parseClassPath(await response.json());
                 setCurrentPath(updated);
+                setSteps(updated.steps);
                 onUpdated(updated);
+            } else if (response.status === 401 || response.status === 403) {
+                setForbidden(true);
+            } else {
+                // Restore goes live through the same validation as publication.
+                const detail = (await response.json().catch(() => null))?.detail;
+                if (!(await showBlocked(detail))) setNotice(response.status === 409 ? 'conflict' : 'lifecycle_error');
             }
+        } catch {
+            setNotice('lifecycle_error');
         } finally {
             setBusy(false);
         }
@@ -413,7 +449,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                     <Button
                         variant="secondary"
                         className="w-11 px-0"
-                        disabled={busy}
+                        disabled={busy || dirty}
                         onClick={handleArchiveOrRestore}
                         aria-label={currentPath.status === 'archived' ? l('restore') : l('archive')}
                         title={currentPath.status === 'archived' ? l('restore') : l('archive')}
@@ -533,6 +569,8 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                 || (step.step_type === 'assignment' && step.id !== undefined && !step.assignment_summary)
                                 // Likewise a saved forum step whose discussion was hidden or whose forum is off.
                                 || (step.step_type === 'forum' && step.id !== undefined && !step.forum_summary);
+                            // The server reason of a saved step says what to fix; a local check covers unsaved tools.
+                            const action = unavailableAction(step.availability_reason || (unavailable ? 'tool_disabled_for_class' : null));
                             return (
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${index}`}
@@ -550,10 +588,20 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                                     {l('selfMarkBadge')}
                                                 </span>
                                             )}
-                                            {unavailable && (
-                                                <span className="mt-0.5 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
-                                                    {l('notAvailable')}
-                                                </span>
+                                            {action && (
+                                                <>
+                                                    <span className="mt-0.5 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
+                                                        {l('notAvailable')}
+                                                    </span>
+                                                    <p className="mt-1 text-xs text-slate-600">{unavailableActionText(lang, action)}</p>
+                                                </>
+                                            )}
+                                            {step.step_type === 'questionnaire_administration' && step.administration_plan_id && (
+                                                // Classroom and research views edit the same administration row.
+                                                <Link href={`/docente/somministrazioni#plan-${step.administration_plan_id}`}
+                                                    className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-semibold text-indigo-700">
+                                                    <ExternalLink className="h-3.5 w-3.5" aria-hidden />{pub('openResearchView')}
+                                                </Link>
                                             )}
                                         </div>
                                     </div>
@@ -643,6 +691,8 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                 <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
                     <h3 className="font-semibold">{a('administration')}</h3>
                     <Link href="/docente/somministrazioni" className="text-indigo-700 underline">{a('research')}</Link>
+                    {institutionId == null && <Callout variant="warning">{pub('noInstitute')}{' '}
+                        <Link href="/docente/istituti" className="font-semibold text-indigo-700 underline">{pub('goToInstitutes')}</Link></Callout>}
                     {administrationError && <Callout variant="danger">{a('error')} <Button variant="secondary" onClick={()=>void loadAdministrations()}>{a('retry')}</Button></Callout>}
                     <div className="flex flex-wrap gap-2">
                         <label>{a('choose')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="ml-2 rounded border p-2">
@@ -762,6 +812,20 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
                                 {a(notice === 'deep_dive_referenced' ? 'deepDiveReferenced' : 'deepDiveInvalid')}
                             </p>
                         )}
+                        {notice === 'blocked' && (
+                            <div role="alert" className="text-red-600">
+                                <p className="font-medium">{pub('blocked')}</p>
+                                <ul className="mt-1 list-disc pl-5">
+                                    {problems.map(row => {
+                                        const action = unavailableAction(row.reason);
+                                        return <li key={`${row.step_id}-${row.reason}`}>{`#${row.position} · ${action ? unavailableActionText(lang, action) : row.reason}`}</li>;
+                                    })}
+                                </ul>
+                            </div>
+                        )}
+                        {notice === 'lifecycle_error' && (
+                            <p role="alert" className="text-red-600 font-medium">{pub('lifecycleError')}</p>
+                        )}
                         {notice === 'tool_disabled' && (
                             <p role="alert" className="text-red-600 font-medium">
                                 {l('toolDisabledNotice')}
@@ -793,7 +857,7 @@ function ClassPathEditor({ path, classSettings, onBack, onUpdated, onDeleted }: 
     );
 }
 
-export function ClassPathsTab({ groupId, classSettings }: { groupId: number; classSettings: ClassSettings }) {
+export function ClassPathsTab({ groupId, classSettings, institutionId = null }: { groupId: number; classSettings: ClassSettings; institutionId?: number | null }) {
     const { lang } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
 
@@ -849,6 +913,7 @@ export function ClassPathsTab({ groupId, classSettings }: { groupId: number; cla
                 key={`editor-${selectedPath.id}`}
                 path={selectedPath}
                 classSettings={classSettings}
+                institutionId={institutionId}
                 onBack={() => {
                     setSelectedPathId(null);
                     void pathsResource.reload();

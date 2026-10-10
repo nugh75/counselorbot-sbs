@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { parsePlanInstitutionOptions, planInstitutionField } from './administration-plans.ts';
+import { parsePlanInstitutionOptions, planIdFromHash, planInstitutionField } from './administration-plans.ts';
 
 test('institution options must carry identity and readiness, never credentials', () => {
     assert.throws(() => parsePlanInstitutionOptions({ detail: 'forbidden' }));
@@ -24,4 +24,11 @@ test('edits send the institute only when changed or when reconciliation is expli
     assert.deepEqual(planInstitutionField('4', pending, false), {});
     assert.deepEqual(planInstitutionField('4', pending, true), { institution_id: 4 });
     assert.deepEqual(planInstitutionField('', pending, true), { institution_id: null });
+});
+
+test('classroom links address one plan of the research view by hash', () => {
+    assert.equal(planIdFromHash('#plan-12'), 12);
+    assert.equal(planIdFromHash('#plan-'), null);
+    assert.equal(planIdFromHash('#plan-12x'), null);
+    assert.equal(planIdFromHash(''), null);
 });

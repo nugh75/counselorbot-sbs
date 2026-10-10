@@ -20,3 +20,9 @@ export function planInstitutionField(selected: string, original: PlanInstitution
     if (original.institution_link_state === 'needs_reconciliation') return confirmReconciliation ? { institution_id: value } : {};
     return value === original.institution_id ? {} : { institution_id: value };
 }
+
+// TF8: classroom links open the same plan in the research view as `#plan-<id>`.
+export function planIdFromHash(hash: string): number | null {
+    const match = /^#plan-(\d+)$/.exec(hash);
+    return match ? Number(match[1]) : null;
+}
