@@ -58,7 +58,10 @@ def step_config(db: Session, steps) -> list[dict]:
         elif value.step_type == "assignment":
             if not template_goal_available(db, value.goal_id):
                 raise HTTPException(422, "template_goal_unavailable")
+            # Only a non-empty tool list is stored: templates saved before #174 compare unchanged.
+            tools = list(dict.fromkeys(value.tool_keys))
             config = {"goal_id": value.goal_id, "attachments": [item.model_dump() for item in value.attachments],
+                      **({"tool_keys": tools} if tools else {}),
                       "instructions": value.assignment_instructions, "intent": value.intent,
                       "response_prompt": value.response_prompt, "language": value.language}
         else:
@@ -119,6 +122,7 @@ def from_class_path(db: Session, path: models.ClassPath) -> list[dict]:
             settings = db.get(models.AssignmentLearningSettings, row.id)
             config = {"goal_id": row.source_id,
                       "attachments": [{"source_kind": item["kind"], "source_id": item["source_id"]} for item in row.attachments or []],
+                      **({"tool_keys": row.tool_keys} if row.tool_keys else {}),
                       "instructions": row.instructions or "", "intent": settings.intent if settings else "proposal",
                       "response_prompt": settings.response_prompt if settings else "",
                       "language": (row.snapshot or {}).get("language") or "it"}

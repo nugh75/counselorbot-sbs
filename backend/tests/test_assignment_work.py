@@ -174,7 +174,7 @@ def test_legacy_settings_and_request_retries(setup):
     first = c.post('/teacher/assignments', json=payload).json()
     settings = db.get(models.AssignmentLearningSettings, first['id'])
     db.delete(settings)
-    old_payload = AssignmentWrite(**payload).model_dump(exclude={'intent', 'due_date', 'response_prompt', 'attachments'})
+    old_payload = AssignmentWrite(**payload).model_dump(exclude={'intent', 'due_date', 'response_prompt', 'attachments', 'tool_keys'})
     db.get(models.TeacherAssignment, first['id']).request_hash = hashlib.sha256(json.dumps(old_payload, sort_keys=True).encode()).hexdigest()
     db.commit()
     response = c.post('/teacher/assignments', json=payload)

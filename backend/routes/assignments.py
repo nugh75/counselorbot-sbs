@@ -11,6 +11,8 @@ from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
+from ..class_access import class_enables
+from ..class_tools import ACTIVITY_TOOL_KEYS
 from ..goals import Strict, membership_ids
 from .groups import _require_visible_group, _visible_group_query
 
@@ -28,6 +30,8 @@ class AssignmentWrite(Strict):
     source_kind: Literal['goal'] = 'goal'
     source_id: int = Field(gt=0)
     attachments: list[AttachmentWrite] = Field(default_factory=list, max_length=20)
+    # #174: personal tools opened inside the activity, enabled for the class when sent.
+    tool_keys: list[Literal[ACTIVITY_TOOL_KEYS]] = Field(default_factory=list, max_length=len(ACTIVITY_TOOL_KEYS))
     group_id: int = Field(gt=0)
     recipient_username: str | None = Field(default=None, min_length=1, max_length=200)
     instructions: str = Field(default='', max_length=3000)
@@ -77,10 +81,13 @@ def _snapshot(db, payload):
     return goal
 
 
-def _record(row, recipient_count=None, settings=None):
+def _record(db, row, recipient_count=None, settings=None):
     data = {key: getattr(row, key) for key in ('id', 'author_username', 'author_name', 'group_id',
             'group_name', 'source_kind', 'source_id', 'snapshot', 'attachments', 'instructions', 'created_at', 'revoked_at')}
     data['attachments'] = row.attachments or []
+    # A tool the class disabled after sending stays listed, marked unavailable.
+    class_settings = db.get(models.ClassSettings, row.group_id) if row.tool_keys else None
+    data['tools'] = [dict(key=key, available=class_enables(class_settings, key)) for key in row.tool_keys or []]
     # The recipient list / individual target is available only to the sender.
     if recipient_count is not None:
         data.update(recipient_username=row.recipient_username, recipient_count=recipient_count)
@@ -120,7 +127,7 @@ def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), use
     values = payload.model_dump(mode='json')
     # Preserve retries from clients predating the additive learning settings
     # and attachments: a request without them keeps the same hash as before.
-    for field, default in [('intent', 'proposal'), ('due_date', None), ('response_prompt', ''), ('attachments', [])]:
+    for field, default in [('intent', 'proposal'), ('due_date', None), ('response_prompt', ''), ('attachments', []), ('tool_keys', [])]:
         if values[field] == default:
             values.pop(field)
     digest = hashlib.sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
@@ -131,10 +138,10 @@ def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), use
     if existing:
         if existing.request_hash != digest:
             raise HTTPException(409, 'Request changed: use a new request id')
-        return _record(existing, _recipient_count(db, existing), db.get(models.AssignmentLearningSettings, existing.id))
+        return _record(db, existing, _recipient_count(db, existing), db.get(models.AssignmentLearningSettings, existing.id))
     row, recipients, settings = _create(db, user, group, payload, digest)
     db.commit(); db.refresh(row)
-    return _record(row, len(recipients), settings)
+    return _record(db, row, len(recipients), settings)
 
 
 def _create(db, user, group, payload, digest):
@@ -145,10 +152,14 @@ def _create(db, user, group, payload, digest):
     if payload.recipient_username is not None and not recipients:
         raise HTTPException(422, 'No eligible recipients in this group')
     snapshot = _snapshot(db, payload)
+    tool_keys = list(dict.fromkeys(payload.tool_keys))
+    class_settings = db.get(models.ClassSettings, group.id)
+    if any(not class_enables(class_settings, key) for key in tool_keys):
+        raise HTTPException(422, 'assignment_tool_unavailable')
     row = models.TeacherAssignment(author_username=user['username'], author_name=user.get('name') or user['username'],
         group_id=group.id, group_name=group.name, recipient_username=payload.recipient_username,
         source_kind=payload.source_kind, source_id=payload.source_id, snapshot=snapshot,
-        attachments=snapshot['attachments'], instructions=payload.instructions,
+        attachments=snapshot['attachments'], tool_keys=tool_keys or None, instructions=payload.instructions,
         request_id=payload.request_id, request_hash=digest)
     db.add(row); db.flush()
     settings = models.AssignmentLearningSettings(assignment_id=row.id, intent=payload.intent,
@@ -162,6 +173,7 @@ def _create(db, user, group, payload, digest):
 def build_path_assignment(db, user, group, config):
     """Path publication: a whole-class goal assignment inside the caller's transaction."""
     payload = AssignmentWrite(source_id=config['goal_id'], attachments=config.get('attachments') or [],
+        tool_keys=config.get('tool_keys') or [],
         group_id=group.id, instructions=config.get('instructions') or '', language=config.get('language') or 'it',
         request_id=f"path-{uuid.uuid4().hex}", intent=config.get('intent') or 'proposal',
         response_prompt=config.get('response_prompt') or '')
@@ -177,7 +189,7 @@ def path_targets(group_id: int, db: Session = Depends(database.get_db), user=Dep
     rows = db.query(models.TeacherAssignment).filter(models.TeacherAssignment.group_id == group.id,
         models.TeacherAssignment.recipient_username.is_(None), models.TeacherAssignment.source_kind == 'goal',
         models.TeacherAssignment.revoked_at.is_(None)).order_by(models.TeacherAssignment.id.desc()).all()
-    return [_record(row, _recipient_count(db, row), db.get(models.AssignmentLearningSettings, row.id)) for row in rows]
+    return [_record(db, row, _recipient_count(db, row), db.get(models.AssignmentLearningSettings, row.id)) for row in rows]
 
 
 @router.get('/teacher/assignments')
@@ -185,7 +197,7 @@ def sent(db: Session = Depends(database.get_db), user=Depends(auth.get_current_p
     visible = _visible_group_query(db, user).filter(models.StudentGroup.is_active.is_(True)).with_entities(models.StudentGroup.id)
     rows = db.query(models.TeacherAssignment).filter(models.TeacherAssignment.author_username == user['username'],
         models.TeacherAssignment.group_id.in_(visible)).order_by(models.TeacherAssignment.id.desc()).all()
-    return [_record(row, _recipient_count(db, row), db.get(models.AssignmentLearningSettings, row.id)) for row in rows]
+    return [_record(db, row, _recipient_count(db, row), db.get(models.AssignmentLearningSettings, row.id)) for row in rows]
 
 
 @router.delete('/teacher/assignments/{assignment_id}')
@@ -211,7 +223,7 @@ def received(db: Session = Depends(database.get_db), user=Depends(auth.get_curre
         models.TeacherAssignment.group_id.in_(membership_ids(db, user['username'])),
     ).order_by(models.TeacherAssignment.id.desc()).all()
     work = {w.assignment_id: w for w in db.query(models.AssignmentWork).filter_by(username=user['username']).all()}
-    return [{**_record(row, settings=db.get(models.AssignmentLearningSettings, row.id)),
+    return [{**_record(db, row, settings=db.get(models.AssignmentLearningSettings, row.id)),
              'progress': dict(planned=bool(work.get(row.id) and work[row.id].action_id),
                               shared=bool(work.get(row.id) and work[row.id].submission),
                               feedback_available=bool(work.get(row.id) and work[row.id].submission and work[row.id].feedback))}
