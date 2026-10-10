@@ -28,6 +28,9 @@ come questionario o strumento personale); `class_path_steps.follows_step_id` col
 passo `meeting` di seguito alla chat che lo precede (il salvataggio lo indica con la
 posizione `follows`); i modelli trattano la chat autonoma come strumento e rifiutano gli
 incontri.
+#189: `class_meetings.show_on_timeline` (default vero); la linea del tempo personale legge
+gli incontri da `/user/meetings` come voci di tipo `meeting` (data del gruppo o fascia
+prenotata), senza scriverli nel workspace; i filtri salvati prima restano compatibili.
 Tracciamento: milestone e issue su GitHub (vedi «Fasi»).
 
 ## Problema

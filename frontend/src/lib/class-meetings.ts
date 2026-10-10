@@ -27,6 +27,8 @@ export interface ClassMeeting {
     slots?: MeetingSlot[];
     booking_slot_id?: number | null;
     booking_cancelled?: boolean;
+    /** #189: the teacher shows it on students' timelines. */
+    show_on_timeline?: boolean;
     duration_minutes: number | null;
     mode: 'in_person' | 'online';
     place: string | null;
@@ -60,6 +62,7 @@ export function parseMeeting(input: unknown): ClassMeeting | null {
         ...(Array.isArray(raw.slots) ? { slots: raw.slots.flatMap(parseSlot) } : {}),
         ...(raw.booking_slot_id !== undefined ? { booking_slot_id: raw.booking_slot_id != null ? Number(raw.booking_slot_id) : null } : {}),
         ...(raw.booking_cancelled != null ? { booking_cancelled: Boolean(raw.booking_cancelled) } : {}),
+        ...(raw.show_on_timeline != null ? { show_on_timeline: Boolean(raw.show_on_timeline) } : {}),
         duration_minutes: raw.duration_minutes != null ? Number(raw.duration_minutes) : null,
         mode: raw.mode === 'online' ? 'online' : 'in_person',
         place: raw.place ? String(raw.place) : null,
@@ -120,4 +123,11 @@ export function toLocalInput(iso: string): string {
 export function fromLocalInput(value: string): string | null {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+/** When the meeting is on the student's timeline: its date, or the student's own slot (#189). */
+export function meetingTimelineStart(meeting: Pick<ClassMeeting, 'kind' | 'starts_at' | 'slots' | 'booking_slot_id' | 'show_on_timeline'>): string | null {
+    if (meeting.show_on_timeline === false) return null;
+    if (meeting.kind === 'group') return meeting.starts_at;
+    return meeting.slots?.find(slot => slot.id === meeting.booking_slot_id)?.starts_at ?? null;
 }

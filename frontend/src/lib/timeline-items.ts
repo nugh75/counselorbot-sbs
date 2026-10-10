@@ -3,12 +3,17 @@ import type { PersonalGoal } from './goals';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { eventDates } from './timeline-dates.ts';
 
-export type TimelineItemKind = 'milestone' | 'action' | 'goal' | 'appointment';
+export type TimelineItemKind = 'milestone' | 'action' | 'goal' | 'appointment' | 'meeting';
 export type TimelineItem = {
     key: string; kind: TimelineItemKind; title: string; start: string | null; end: string | null;
     href: string | null; editable: boolean; eventId?: string; stage?: string; status?: string;
     dateMode?: 'point' | 'period'; deadline?: boolean;
+    /** #189: a class or group meeting, read from the class and never saved in the workspace. */
+    time?: string; where?: string | null;
 };
+
+/** A class meeting placed on the timeline: `at` is the meeting's (or the student's slot's) start. */
+export type TimelineMeeting = { id: number; title: string; at: string; status: string; place: string | null };
 
 const UNDATED = '9999-99-99';
 const sortKey = (item: TimelineItem) => (item.start ?? item.end ?? UNDATED) + '\u0000' + item.title;
@@ -16,7 +21,8 @@ const sortKey = (item: TimelineItem) => (item.start ?? item.end ?? UNDATED) + '\
 /** Builds the unified personal timeline: past milestones and institution appointments from the
     workspace, dated activities, and active goals' review dates. Ordered by start-or-end then title;
     items without either date sort last (a caller wanting them separate should use splitByToday). */
-export function timelineItems(workspace: { actions: Action[]; timeline: { events: TimelineEvent[] } }, goals: Pick<PersonalGoal, 'id' | 'title' | 'status' | 'review_date'>[]): TimelineItem[] {
+export function timelineItems(workspace: { actions: Action[]; timeline: { events: TimelineEvent[] } }, goals: Pick<PersonalGoal, 'id' | 'title' | 'status' | 'review_date'>[],
+    meetings: TimelineMeeting[] = []): TimelineItem[] {
     const items: TimelineItem[] = [];
     for (const event of workspace.timeline.events) {
         const dates = eventDates(event);
@@ -42,6 +48,18 @@ export function timelineItems(workspace: { actions: Action[]; timeline: { events
         items.push({
             key: `goal-${goal.id}`, kind: 'goal', title: goal.title, start: goal.review_date, end: null,
             href: `/profilo/obiettivi?goal=${goal.id}`, editable: false, status: goal.status,
+        });
+    }
+    for (const meeting of meetings) {
+        const at = new Date(meeting.at);
+        if (Number.isNaN(at.getTime())) continue;
+        const pad = (value: number) => String(value).padStart(2, '0');
+        // The student's local day, so an evening meeting is not shown on the next day.
+        const day = `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}`;
+        items.push({
+            key: `meeting-${meeting.id}`, kind: 'meeting', title: meeting.title, start: day, end: null,
+            href: null, editable: false, status: meeting.status, time: `${pad(at.getHours())}:${pad(at.getMinutes())}`,
+            where: meeting.place,
         });
     }
     return items.sort((a, b) => sortKey(a).localeCompare(sortKey(b)));

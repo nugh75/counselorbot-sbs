@@ -498,3 +498,13 @@ def test_guided_chat_upgrade_accepts_chats_and_follow_ups_on_second_run(template
         with pytest.raises(IntegrityError):
             with templates_schema.begin() as connection:
                 connection.execute(text(statement))
+
+
+def test_teacher_chooses_whether_a_meeting_is_on_student_timelines(api):
+    client, _db, identity, group, _other = api
+    shown = plan(client, group).json()
+    hidden = plan(client, group, title="Riunione interna", show_on_timeline=False).json()
+    assert shown["show_on_timeline"] is True and hidden["show_on_timeline"] is False
+    as_user(identity, who("alice"))
+    flags = {row["title"]: row["show_on_timeline"] for row in client.get("/user/meetings").json()}
+    assert flags == {"Debriefing": True, "Riunione interna": False}
