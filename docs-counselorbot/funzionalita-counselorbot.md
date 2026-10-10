@@ -534,7 +534,12 @@ somministrazione), fa una chat guidata (sui risultati di un questionario del per
 percorso guidato per riflettere su un’esperienza o una scelta: Savickas, Evento di
 studio, Evento professionale, Obiettivo di studio, Idea; quelli integrati senza voce nel
 catalogo sono sempre disponibili, anche per gli studenti delle classi, e il passo si
-completa da solo alla fine della chat), svolge un’attività (assegnazione), usa uno strumento (solo
+completa da solo alla fine della chat; ogni chat guidata può avere un **seguito**:
+nessuno, un debriefing con la classe o il gruppo oppure un colloquio individuale, scelto
+tra gli incontri di quel tipo o creato al momento, che viene inserito subito dopo la
+chat come passo «Seguito della chat guidata #n»; nell’avanzamento il docente vede
+accanto all’incontro chi ha completato la chat; se toglie la chat o l’incontro, l’altro
+passo resta valido; salvare come modello un percorso con incontri non è ancora possibile), svolge un’attività (assegnazione), usa uno strumento (solo
 strumenti personali: Tavolo, obiettivi, azioni, linea del tempo, Portfolio, flashcard,
 carte, confronto, Bussola, assistente), partecipa a un incontro (incontri della classe o
 del gruppo: argomento, data e ora, durata, in presenza con luogo oppure online con link;

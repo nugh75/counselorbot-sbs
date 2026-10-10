@@ -1,5 +1,6 @@
 'use client';
 
+import { stepKindText } from '@/lib/i18n-step-kinds';
 import { useState } from 'react';
 import { Check, Lock } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
@@ -86,8 +87,13 @@ export function ClassPathProgressPanel({ pathId, toolName }: Props) {
             : null;
         return source ? `${state} (${source})` : state;
     };
+    // #177: a follow-up meeting names its chat, whose column shows who completed it first.
+    const followsName = (step: ClassPathProgressStep) => {
+        const chat = step.follows_step_id != null ? progress.steps.findIndex(row => row.id === step.follows_step_id) : -1;
+        return chat >= 0 ? ` · ${stepKindText(lang, 'followsChat')} ${chat + 1}` : '';
+    };
     const stepName = (step: ClassPathProgressStep, index: number) =>
-        `${l('stepLabel').replace('{n}', String(index + 1))} · ${step.title || typedStepTargetLabel(lang, step) || toolName(step.tool_key)}`;
+        `${l('stepLabel').replace('{n}', String(index + 1))} · ${step.title || typedStepTargetLabel(lang, step) || toolName(step.tool_key)}${followsName(step)}`;
     const formatDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(lang) : '');
 
     const students = filterProgressStudents(progress, filter, todayIso());

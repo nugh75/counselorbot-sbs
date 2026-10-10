@@ -37,7 +37,7 @@ import { PathTemplateUpdate } from './PathTemplateUpdate';
 import { StepKindPicker } from './StepKindPicker';
 import { ClassMeetingsManager } from './ClassMeetingsManager';
 import { classMeetingText } from '@/lib/i18n-class-meetings';
-import { meetingWhen } from '@/lib/class-meetings';
+import { meetingWhen, type ClassMeeting } from '@/lib/class-meetings';
 import { stepKindText, type StepKindTextKey } from '@/lib/i18n-step-kinds';
 import { guidedChatKeys, isLegacyQuestionnaireTool, isPersonalTool, type StepKind } from '@/lib/path-step-kinds';
 
@@ -122,14 +122,6 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
     };
     // A deep dive follows a saved administration step: the server binds it by step ID.
     const [selectedResultsStep,setSelectedResultsStep] = useState('');
-    const addDeepDiveStep = () => {
-        const source=steps.find(step=>step.id===Number(selectedResultsStep));
-        if (!source?.id) return;
-        setSteps(current=>[...current,{position:current.length+1,step_type:'guided_results_chat',
-            results_step_id:source.id,tool_key:'',auto_detect:true,can_self_mark:false,
-            target_summary:source.target_summary}]);
-        setSelectedResultsStep('');setNotice(null);
-    };
     // TF6: a whole-class goal assignment of this class, existing or created here.
     const p = (key: Parameters<typeof pathAssignmentText>[1]) => pathAssignmentText(lang, key);
     const [pathAssignments, setPathAssignments] = useState<AssignmentStepSummary[]>([]);
@@ -225,6 +217,24 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         setAdding(false);
         setKind(null);
     };
+    // #177: a guided chat (on a questionnaire's results, or standalone) and its optional follow-up meeting.
+    const [followUp, setFollowUp] = useState<'none' | 'group' | 'individual'>('none');
+    const chatReady = Boolean(selectedResultsStep || selectedChatKey);
+    const addChat = (meeting?: ClassMeeting) => {
+        const source = steps.find(step => step.id === Number(selectedResultsStep));
+        if (selectedResultsStep && !source?.id) return;
+        const key = `chat-${Date.now()}`;
+        const chat: ClassPathStep = source?.id
+            ? {position: 0, step_type: 'guided_results_chat', results_step_id: source.id, tool_key: '', auto_detect: true,
+                can_self_mark: false, target_summary: source.target_summary, client_key: key}
+            : {position: 0, step_type: 'guided_chat', tool_key: selectedChatKey, auto_detect: true, can_self_mark: false,
+                title: null, instructions: null, due_date: null, client_key: key};
+        const added: ClassPathStep[] = [chat, ...(meeting ? [{position: 0, step_type: 'meeting' as const, meeting_id: meeting.id,
+            meeting_summary: meeting, follows_key: key, tool_key: '', auto_detect: true, can_self_mark: false,
+            title: null, instructions: null, due_date: null}] : [])];
+        setSteps(current => [...current, ...added].map((step, index) => ({...step, position: index + 1})));
+        setSelectedResultsStep(''); setSelectedChatKey(''); setFollowUp('none'); setNotice(null);
+    };
 
     const dirty =
         title !== currentPath.title ||
@@ -281,6 +291,13 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
+    // A follow-up names its chat by position in the saved list: a saved chat by id, a new one by its editor key.
+    const followsIndex = (meeting: ClassPathStep) => {
+        const index = steps.findIndex(step => (meeting.follows_step_id != null && step.id === meeting.follows_step_id)
+            || (meeting.follows_key !== undefined && step.client_key === meeting.follows_key));
+        return index >= 0 ? {follows: index} : {};
+    };
+
     const handleSave = async (): Promise<ClassPath | boolean> => {
         if (pending.current || notice === 'conflict') return false;
         if (!dirty) return true;
@@ -312,7 +329,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                         : s.step_type === 'guided_results_chat' ? {results_step_id:s.results_step_id}
                             : s.step_type === 'assignment' ? {assignment_id:s.assignment_id}
                                 : s.step_type === 'forum' ? {topic_id:s.topic_id}
-                                    : s.step_type === 'meeting' ? {meeting_id:s.meeting_id} : {tool_key:s.tool_key}),
+                                    : s.step_type === 'meeting' ? {meeting_id:s.meeting_id, ...followsIndex(s)} : {tool_key:s.tool_key}),
                     title: s.title ? s.title.trim() : null,
                     instructions: s.instructions ? s.instructions.trim() : null,
                     due_date: s.due_date || null,
@@ -636,9 +653,15 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             ? `${f('forum')} · ${forumTopics.find(row => row.id === step.topic_id)?.title || `#${step.topic_id}`}${step.forum_summary?.locked ? ` · ${f('locked')}` : ''}`
                                             : step.step_type === 'meeting'
                                             ? `${classMeetingText(lang, 'meeting')} · ${step.meeting_summary ? `${step.meeting_summary.title} · ${step.meeting_summary.kind === 'individual' ? classMeetingText(lang, 'individual') : meetingWhen(step.meeting_summary, lang)}` : `#${step.meeting_id}`}`
+                                            : step.step_type === 'guided_chat'
+                                            ? `${k('guidedChat')} · ${toolLabel(step.tool_key, classSettings.tools, lang)}`
                                             : toolLabel(step.tool_key, classSettings.tools, lang);
+                            // #177: a follow-up names the chat it follows, saved or just added.
+                            const followed = step.step_type === 'meeting' ? steps.find(row =>
+                                (step.follows_step_id != null && row.id === step.follows_step_id)
+                                || (step.follows_key !== undefined && row.client_key === step.follows_key)) : undefined;
                             // Students see this step as not available: say so here too.
-                            const unavailable = ((step.step_type ?? 'tool') === 'tool' && !usableKeys.has(step.tool_key))
+                            const unavailable = (['tool', 'guided_chat'].includes(step.step_type ?? 'tool') && !usableKeys.has(step.tool_key))
                                 // A saved assignment step loses its summary once revoked or otherwise unavailable.
                                 || (step.step_type === 'assignment' && step.id !== undefined && !step.assignment_summary)
                                 // Likewise a saved forum step whose discussion was hidden or whose forum is off.
@@ -674,6 +697,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                             )}
                                             {pending && <p className="mt-1 text-xs text-slate-600">{pathTemplateText(lang, 'pendingHelp')}</p>}
                                             {isLegacyQuestionnaireTool(step) && <p className="mt-1 text-xs text-slate-600">{k('legacyQuestionnaire')}</p>}
+                                            {followed && <p className="mt-1 text-xs text-slate-600">{`${k('followsChat')} #${followed.position}`}</p>}
                                             {step.step_type === 'questionnaire_administration' && step.administration_plan_id && (
                                                 // Classroom and research views edit the same administration row.
                                                 <Link href={`/docente/somministrazioni#plan-${step.administration_plan_id}`}
@@ -804,24 +828,34 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             </div>}
                             {kind === 'guided_chat' && <div className="space-y-3">
                                 <h4 className="text-sm font-semibold">{k('chatOnResults')}</h4>
-                            <div className="flex flex-wrap gap-2">
-                                <label className="block w-full text-sm sm:w-auto">{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>setSelectedResultsStep(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                <label className="block w-full text-sm sm:w-auto">{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>{setSelectedResultsStep(event.target.value);if (event.target.value) setSelectedChatKey('');}} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     <option value="">{a('choose')}</option>
                                     {deepDiveSources(steps).map(step=><option key={step.id} value={step.id}>{`#${step.position} · ${step.target_summary?.code || step.administration_plan_id}`}</option>)}
                                 </select></label>
-                                <Button variant="secondary" disabled={busy || !selectedResultsStep} onClick={() => {addDeepDiveStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
-                            </div>
-                            <p className="text-sm text-slate-600">{a('deepDiveRule')}</p>
+                                <p className="text-sm text-slate-600">{a('deepDiveRule')}</p>
                                 <h4 className="text-sm font-semibold">{k('chatStandalone')}</h4>
                                 {chatKeys.length === 0 ? <p className="text-sm text-slate-600">{k('noChats')}</p> : (
-                                    <div className="flex flex-wrap gap-2">
-                                        <label><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>setSelectedChatKey(event.target.value)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
-                                            <option value="">{k('chooseGuidedPath')}</option>
-                                            {chatKeys.map(key => <option key={key} value={key}>{toolLabel(key, classSettings.tools, lang)}</option>)}
-                                        </select></label>
-                                        <Button variant="secondary" disabled={busy || !selectedChatKey} onClick={() => {handleAddStep(selectedChatKey);closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
-                                    </div>
+                                    <label className="block w-full text-sm sm:w-auto"><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>{setSelectedChatKey(event.target.value);if (event.target.value) setSelectedResultsStep('');}} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                        <option value="">{k('chooseGuidedPath')}</option>
+                                        {chatKeys.map(key => <option key={key} value={key}>{toolLabel(key, classSettings.tools, lang)}</option>)}
+                                    </select></label>
                                 )}
+                                {/* #177: an optional follow-up meeting, inserted right after the chat. */}
+                                <fieldset className="space-y-1 text-sm">
+                                    <legend className="font-semibold">{k('followUp')}</legend>
+                                    <div className="flex flex-wrap gap-x-4">
+                                        {(['none', 'group', 'individual'] as const).map(value => <label key={value} className="flex min-h-[44px] items-center gap-2">
+                                            <input type="radio" name="chat-follow-up" checked={followUp === value} onChange={() => setFollowUp(value)} className="h-4 w-4 accent-indigo-600" />
+                                            {k(value === 'none' ? 'followNone' : value === 'group' ? 'followGroup' : 'followIndividual')}</label>)}
+                                    </div>
+                                </fieldset>
+                                {followUp === 'none'
+                                    ? <Button variant="secondary" disabled={busy || !chatReady} onClick={() => {addChat();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
+                                    : chatReady
+                                    ? <ClassMeetingsManager lang={lang} groupId={path.group_id} kindFilter={followUp} addLabel={k('addChatAndMeeting')}
+                                        usedIds={steps.flatMap(step => step.step_type === 'meeting' && step.meeting_id ? [step.meeting_id] : [])}
+                                        onAdd={meeting => {addChat(meeting);closeAdd();}} />
+                                    : <p className="text-sm text-slate-600">{k('chooseChatFirst')}</p>}
                             </div>}
                             {kind === 'activity' && <div className="space-y-3">
                             {assignmentLoadError && <Callout variant="danger">{p('loadError')} <Button variant="secondary" onClick={()=>void loadPathAssignments()}>{p('retry')}</Button></Callout>}

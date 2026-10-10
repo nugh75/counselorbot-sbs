@@ -124,14 +124,28 @@ def forum_href(group_id, topic_id):
     return f"/profilo/classi/{group_id}/forum?topic={topic_id}"
 
 
+def is_guided_chat_key(db, key):
+    """A built-in guided path or an active student instrument that is not a questionnaire."""
+    from .class_tools import builtin_guided_paths
+    if key in builtin_guided_paths(db):
+        return True
+    if key in ADMINISTRATION_QUESTIONNAIRES:
+        return False
+    instrument = db.query(models.Instrument).filter_by(code=key).first()
+    return bool(instrument and instrument.target_audience == "student" and instrument.tool_category != "assessment")
+
+
 def validate_step_input(db, path, value):
     from .routes.class_paths import get_class_enabled_tool_keys
 
-    if value.step_type == "tool":
+    if value.step_type in ("tool", "guided_chat"):
         if value.tool_key not in get_class_enabled_tool_keys(db, path.group_id):
             raise HTTPException(
                 422, f"Tool '{value.tool_key}' is not enabled for this class"
             )
+        # A guided chat step names a chat, never a questionnaire or a personal tool.
+        if value.step_type == "guided_chat" and not is_guided_chat_key(db, value.tool_key):
+            raise HTTPException(422, "guided_chat_invalid")
     elif value.step_type == "questionnaire_administration":
         administration_target(db, path.group_id, value.administration_plan_id)
     elif value.step_type == "assignment":
@@ -163,6 +177,11 @@ def validate_composition(db, path, steps):
     meetings = [value.meeting_id for value in steps if value.step_type == "meeting"]
     if len(meetings) != len(set(meetings)):
         raise HTTPException(422, "duplicate_meeting_step")
+    # A follow-up meeting comes after the guided chat it follows, in this same save.
+    for index, value in enumerate(steps):
+        follows = getattr(value, "follows", None)
+        if follows is not None and (follows >= index or steps[follows].step_type not in ("guided_chat", "guided_results_chat")):
+            raise HTTPException(422, "follow_up_invalid")
     linked = set()
     for index, value in enumerate(steps):
         if value.step_type == "pending":
@@ -221,6 +240,7 @@ def target_identity(value):
         return value.step_type, value.id
     target = {
         "tool": "tool_key",
+        "guided_chat": "tool_key",
         "questionnaire_administration": "administration_plan_id",
         "guided_results_chat": "results_step_id",
         "assignment": "assignment_id",
@@ -238,7 +258,7 @@ def apply_step_target(step, value):
         return
     step.pending_config = None
     step.step_type = value.step_type
-    step.tool_key = value.tool_key if value.step_type == "tool" else None
+    step.tool_key = value.tool_key if value.step_type in ("tool", "guided_chat") else None
     step.administration_plan_id = (
         value.administration_plan_id
         if value.step_type == "questionnaire_administration"
@@ -272,7 +292,7 @@ def step_descriptor(db, path, step):
         get_tool_start_href,
     )
 
-    if step.step_type == "tool":
+    if step.step_type in ("tool", "guided_chat"):
         available = is_tool_available_for_class(db, path.group_id, step.tool_key)
         return {
             "available": available,
@@ -450,7 +470,7 @@ def forum_student_state(db, path, step, username):
 
 
 def completion_evidence(db, path, step, username):
-    if step.step_type == "tool":
+    if step.step_type in ("tool", "guided_chat"):
         return (
             {"kind": "tool", "at": None}
             if has_automatic_evidence(db, step.tool_key, username, path.published_at)

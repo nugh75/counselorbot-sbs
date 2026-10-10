@@ -19,6 +19,7 @@ import { parseForumDiscussionLinks } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 import { MeetingDetails, useStudentMeetings } from './MeetingDetails';
 import { classMeetingText } from '@/lib/i18n-class-meetings';
+import { stepKindText } from '@/lib/i18n-step-kinds';
 import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 import { pathForumText } from '@/lib/i18n-path-forum';
@@ -267,6 +268,10 @@ export function StudentClassPathsPage() {
                                                             <p className="text-xs text-slate-500">{pathForumText(lang, 'studentRule')}</p>
                                                             {notice && <p role="status" className="text-xs font-medium text-slate-700">{pathForumText(lang, `notice_${notice}`)}</p>}
                                                         </>);
+                                                    })()}
+                                                    {step.step_type === 'meeting' && step.follows_step_id != null && (() => {
+                                                        const chatIndex = path.steps.findIndex(row => row.id === step.follows_step_id);
+                                                        return chatIndex >= 0 && <p className="text-xs text-slate-500">{`${stepKindText(lang, 'followsChat')} [${chatIndex + 1}]`}</p>;
                                                     })()}
                                                     {step.step_type === 'meeting' && step.meeting_summary && !isUnavailable && (() => {
                                                         // The student's own view of the meeting carries slots and booking (#176).
