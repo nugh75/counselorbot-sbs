@@ -110,6 +110,7 @@ from .routes import institutions as institutions_routes
 from .routes import institution_categories as institution_categories_routes
 from .routes import orientation_referrals as orientation_referrals_routes
 from .routes import class_paths as class_paths_routes
+from .routes import path_templates as path_templates_routes
 
 
 # Re-export per retro-compatibilità (es. smoke test che importa da backend.main)
@@ -207,6 +208,7 @@ import_module("backend.migrations.20261009_typed_administration_steps").migrate(
 import_module("backend.migrations.20261009_guided_results_chat_steps").migrate(database.engine)
 import_module("backend.migrations.20261009_assignment_steps").migrate(database.engine)
 import_module("backend.migrations.20261010_forum_steps").migrate(database.engine)
+import_module("backend.migrations.20261010_path_templates").migrate(database.engine)
 
 
 @asynccontextmanager
@@ -2047,3 +2049,4 @@ app.include_router(institution_categories_routes.router)
 app.include_router(orientation_referrals_routes.router)
 app.include_router(prompt_experiments_routes.router)
 app.include_router(class_paths_routes.router)
+app.include_router(path_templates_routes.router)

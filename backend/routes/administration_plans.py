@@ -370,6 +370,13 @@ async def create_administration_plan(
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
+    plan = _build_plan(db, payload, current_user)
+    db.commit()
+    db.refresh(plan)
+    return _serialize_plan(db, plan)
+
+
+def _build_plan(db: Session, payload: schemas.AdministrationPlanCreate, current_user) -> models.AdministrationPlan:
     title = _clean(payload.title)
     if not title:
         raise HTTPException(status_code=400, detail="Titolo piano obbligatorio")
@@ -402,9 +409,18 @@ async def create_administration_plan(
     db.add(plan)
     db.flush()
     _replace_researchers(db, plan.id, payload.researchers)
-    db.commit()
-    db.refresh(plan)
-    return _serialize_plan(db, plan)
+    return plan
+
+
+def build_class_administration(db: Session, current_user, group: models.StudentGroup, *,
+                               title: str, instrument_code: str, locale: str) -> models.AdministrationPlan:
+    """Path publication creates the class administration inside its own transaction."""
+    if group.institution_id is None:
+        raise HTTPException(status_code=409, detail="class_institution_required")
+    _require_class_locale(db, instrument_code, locale)
+    payload = schemas.AdministrationPlanCreate(title=title, instrument_code=instrument_code, locale=locale,
+                                               group_id=group.id, institution_id=group.institution_id)
+    return _build_plan(db, payload, current_user)
 
 
 @router.put("/admin/administration-plans/{plan_id}", response_model=schemas.AdministrationPlanResponse)
