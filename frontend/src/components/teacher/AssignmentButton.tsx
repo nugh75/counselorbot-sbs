@@ -6,6 +6,10 @@ import { useI18n } from '@/lib/i18n-context';
 import { assignmentText } from '@/lib/i18n-assignments';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { Button } from '@/components/ui/Button';
+import { activityToolText } from '@/lib/i18n-activity-tools';
+import { parseClassSettings } from '@/lib/class-settings';
+import { isPersonalTool } from '@/lib/path-step-kinds';
+import { ActivityToolsPicker } from './ActivityTools';
 
 // #143: every assignment is anchored to a published catalog goal; strategies and
 // readings can only travel with it as optional attachments. Creation lives on
@@ -30,6 +34,19 @@ export function AssignmentDialog({ close, saved, classId }: { close: () => void;
     const [recipient, setRecipient] = useState(''); const [instructions, setInstructions] = useState('');
     const [intent, setIntent] = useState('proposal'); const [dueDate, setDueDate] = useState(''); const [responsePrompt, setResponsePrompt] = useState('');
     const [loading, setLoading] = useState(true); const [failed, setFailed] = useState(false); const [busy, setBusy] = useState(false);
+    // #174: personal tools enabled for the chosen class or group.
+    const [toolOptions, setToolOptions] = useState<string[] | null>(null); const [toolKeys, setToolKeys] = useState<string[]>([]);
+    useEffect(() => {
+        setToolKeys([]); setToolOptions(null);
+        if (!groupId) return;
+        let current = true;
+        apiFetch(`/api/teacher/groups/${groupId}/settings`).then(async res => {
+            if (!res.ok) throw new Error('settings');
+            const settings = parseClassSettings(await res.json());
+            if (current) setToolOptions(settings.tools.filter(tool => tool.enabled && !tool.always_on && isPersonalTool(tool)).map(tool => tool.key));
+        }).catch(() => { if (current) setToolOptions([]); });
+        return () => { current = false; };
+    }, [groupId]);
     const request = useRef<{ body: string; id: string } | null>(null);
     const group = groups.find(row => String(row.id) === groupId);
     const visibleGoals = goals.filter(row => !group || row.group_id == null || row.group_id === group.id);
@@ -68,7 +85,7 @@ export function AssignmentDialog({ close, saved, classId }: { close: () => void;
             event.preventDefault(); if (!group || !goalId || busy) return;
             const body = { source_kind: 'goal', source_id: Number(goalId), group_id: group.id, recipient_username: recipient || null, instructions, language: lang,
                 attachments: selectedAttachments.map(value => { const [source_kind, id] = value.split(':'); return { source_kind, source_id: Number(id) }; }),
-                intent, due_date: dueDate || null, response_prompt: responsePrompt };
+                intent, due_date: dueDate || null, response_prompt: responsePrompt, tool_keys: toolKeys };
             const signature = JSON.stringify(body);
             if (request.current?.body !== signature) request.current = { body: signature, id: crypto.randomUUID() };
             setBusy(true); setFailed(false);
@@ -88,6 +105,8 @@ export function AssignmentDialog({ close, saved, classId }: { close: () => void;
                 </>}
                 {group && classId !== undefined && <p className="text-sm text-slate-600">{l('recipients')}: {l('all')} ({group.participants.length}). {l('current')}</p>}
                 <label className="block text-sm font-medium">{l('attachments')}<select multiple aria-label={l('attachments')} size={Math.min(6, Math.max(2, attachments.length))} className={input} value={selectedAttachments} onChange={e => setSelectedAttachments(Array.from(e.target.selectedOptions, option => option.value))}>{attachments.map(item => <option key={`${item.kind}:${item.id}`} value={`${item.kind}:${item.id}`}>{l(item.kind)} · {item.title}</option>)}</select></label>
+                <ActivityToolsPicker lang={lang} options={toolOptions ?? []} value={toolKeys} onChange={setToolKeys}
+                    note={!groupId ? activityToolText(lang, 'chooseGroupFirst') : toolOptions?.length === 0 ? activityToolText(lang, 'noTools') : null} />
                 <label className="block text-sm font-medium">{l('instructions')}<textarea rows={3} maxLength={3000} className={input} value={instructions} onChange={e => setInstructions(e.target.value)} /></label>
                 <label className="block text-sm font-medium">{learningText(lang, 'intent')}<select className={input} value={intent} onChange={e => setIntent(e.target.value)}>{(['proposal', 'requested'] as const).map(value => <option key={value} value={value}>{learningText(lang, value)}</option>)}</select></label>
                 <label className="block text-sm font-medium">{learningText(lang, 'dueDate')}<input type="date" className={input} value={dueDate} onChange={e => setDueDate(e.target.value)} /></label>

@@ -8,6 +8,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
+from ..class_tools import ACTIVITY_TOOL_KEYS
 from ..path_step_types import ADMINISTRATION_QUESTIONNAIRES
 from ..path_templates import (apply_template, from_class_path, replace_template_steps, step_config,
                               template_changes, template_goal_available, template_steps, template_tool_available,
@@ -55,6 +56,7 @@ class TemplateAssignmentStep(TemplateStepFields):
     step_type: Literal["assignment"]
     goal_id: int = Field(gt=0)
     attachments: list[TemplateAttachment] = Field(default_factory=list, max_length=20)
+    tool_keys: list[Literal[ACTIVITY_TOOL_KEYS]] = Field(default_factory=list, max_length=len(ACTIVITY_TOOL_KEYS))
     assignment_instructions: str = Field(default="", max_length=3000)
     intent: Literal["proposal", "requested"] = "proposal"
     response_prompt: str = Field(default="", max_length=1500)
@@ -133,7 +135,8 @@ def _step(db: Session, row: models.PathTemplateStep) -> dict:
     elif row.step_type == "assignment":
         goal = db.get(models.GoalCatalogEntry, config.get("goal_id"))
         data.update(goal_id=config.get("goal_id"), goal_title=(goal.data or {}).get("title") if goal else None,
-                    attachments=config.get("attachments") or [], assignment_instructions=config.get("instructions") or "",
+                    attachments=config.get("attachments") or [], tool_keys=config.get("tool_keys") or [],
+                    assignment_instructions=config.get("instructions") or "",
                     intent=config.get("intent") or "proposal", response_prompt=config.get("response_prompt") or "",
                     language=config.get("language") or "it")
     elif row.step_type == "forum":

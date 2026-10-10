@@ -210,6 +210,7 @@ import_module("backend.migrations.20261009_assignment_steps").migrate(database.e
 import_module("backend.migrations.20261010_forum_steps").migrate(database.engine)
 import_module("backend.migrations.20261010_path_templates").migrate(database.engine)
 import_module("backend.migrations.20261010_path_template_snapshots").migrate(database.engine)
+import_module("backend.migrations.20261010_assignment_tools").migrate(database.engine)
 
 
 @asynccontextmanager
