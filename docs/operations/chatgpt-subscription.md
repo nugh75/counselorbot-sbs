@@ -266,6 +266,43 @@ I successivi aggiornamenti del ZIP sono visibili tramite il bind readonly
 senza ricostruire l'immagine Linux. Il link autenticato della pagina personale
 serve il pacchetto dalla directory montata, senza esporre percorsi locali.
 
+## Assistente per Windows (#133)
+
+Gli utenti Windows scaricano dal pannello `CounselorBot-ChatGPT-Windows.zip`, che
+contiene `CounselorBot-ChatGPT.exe`: lo stesso `scripts/chatgpt-connect.py`
+impacchettato con PyInstaller, senza Python né terminale. Aperto con un doppio clic
+chiede l’indirizzo di CounselorBot (Invio accetta `https://counselorbot.labform.net`;
+il pannello mostra l’indirizzo del sito da scrivere, utile su altre installazioni) e
+il codice di associazione; in caso di errore la finestra resta aperta finché si preme
+Invio.
+
+**Costruzione.** PyInstaller non compila per altri sistemi: lo ZIP si costruisce su
+Windows. Il workflow `.github/workflows/chatgpt-windows-helper.yml` (manuale, e su
+ogni PR che tocca l’helper) esegue `scripts/build-chatgpt-windows.sh` su
+`windows-latest`, verifica che l’eseguibile parta (`--help`) e pubblica come
+artefatto lo ZIP e il suo `.sha256`. Sull’host:
+
+```bash
+gh run download --repo nugh75/counselorbot-sbs --name CounselorBot-ChatGPT-Windows \
+  --dir dist/chatgpt-windows <run-id>
+```
+
+Il Compose portabile monta `./dist/chatgpt-windows` in sola lettura su
+`/app/chatgpt-windows` (`CHATGPT_WINDOWS_HELPER_DIR`); anche `docker-compose.yml`
+monta ora entrambe le cartelle degli assistenti, che prima non erano montate e
+lasciavano sempre nascosti i link. Senza ZIP l’endpoint
+`GET /api/chatgpt/helper/windows` risponde 404 e il link resta nascosto. Pubblicare
+l’hash del file `.sha256` alle scuole che usano liste di esecuzione consentita
+(Defender, AppLocker/WDAC).
+
+**Distribuzione non firmata.** Decisione 2026-10-09: gli assistenti sono distribuiti
+senza firma, con le istruzioni per sbloccarli; la firma è seguita in #135.
+- Windows: il file scaricato porta il «Mark of the Web»; SmartScreen mostra «PC
+  protetto da Windows» → **Ulteriori informazioni → Esegui comunque**. Alcuni antivirus
+  segnalano per errore l’avvio di PyInstaller: le scuole autorizzano l’hash pubblicato.
+- macOS: l’app con firma ad hoc si apre da **Impostazioni di Sistema → Privacy e
+  sicurezza → Apri comunque** (testo verificato invariato).
+
 ## Isolamento, scelta e quota
 
 Una connessione per username ai4auth e una registrazione per account verificato.
