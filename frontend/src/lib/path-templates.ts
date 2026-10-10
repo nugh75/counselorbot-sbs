@@ -144,3 +144,37 @@ export function templateStepsValid(steps: TemplateStep[]): boolean {
         }
     });
 }
+
+// «Update from template»: differences the server found between a class path and its template.
+export interface TemplateChange {
+    change: 'added' | 'changed' | 'removed';
+    step_type: TemplateStepType;
+    tool_key: string | null;
+    title: string | null;
+    status: 'apply' | 'started' | 'created' | 'tool_disabled';
+}
+
+export interface TemplateUpdatePreview {
+    template_title: string;
+    template_revision: number;
+    changes: TemplateChange[];
+}
+
+export function parseTemplateUpdate(input: unknown): TemplateUpdatePreview {
+    const raw = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
+    if (!Array.isArray(raw.changes)) throw new Error('Invalid template update');
+    return {
+        template_title: text(raw.template_title),
+        template_revision: Number(raw.template_revision),
+        changes: raw.changes.map(item => {
+            const row = item as Record<string, unknown>;
+            return {
+                change: row.change === 'added' || row.change === 'removed' ? row.change : 'changed',
+                step_type: (TEMPLATE_STEP_TYPES as string[]).includes(String(row.step_type)) ? row.step_type as TemplateStepType : 'tool',
+                tool_key: row.tool_key ? String(row.tool_key) : null,
+                title: row.title ? String(row.title) : null,
+                status: row.status === 'apply' || row.status === 'started' || row.status === 'created' ? row.status : 'tool_disabled',
+            };
+        }),
+    };
+}

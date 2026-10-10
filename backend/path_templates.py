@@ -8,6 +8,8 @@ Publication creates every described object in the same transaction, so students
 see nothing of a path until it goes live, and a blocked publication leaves no
 administration, assignment or discussion behind.
 """
+from datetime import datetime, timezone
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -134,6 +136,14 @@ def from_class_path(db: Session, path: models.ClassPath) -> list[dict]:
     return values
 
 
+def template_snapshot(row: models.PathTemplateStep, ids_by_position: dict[int, int]) -> dict:
+    """Comparable form of a template step: a results chat names its source step, not a position."""
+    config = dict(row.config or {})
+    if row.step_type == "guided_results_chat":
+        config = {"results_template_step_id": ids_by_position.get(config.get("results_position"))}
+    return {"step_type": row.step_type, "config": config, "title": row.title, "instructions": row.instructions}
+
+
 def apply_template(db: Session, template: models.PathTemplate, group: models.StudentGroup, username: str) -> models.ClassPath:
     """A draft copy for one class or group; class objects wait for publication."""
     from .routes.class_paths import get_class_enabled_tool_keys
@@ -148,10 +158,12 @@ def apply_template(db: Session, template: models.PathTemplate, group: models.Stu
     db.add(path)
     db.flush()
     created = {}
+    ids_by_position = {row.position: row.id for row in rows}
     for row in rows:
         config = dict(row.config or {})
         step = models.ClassPathStep(path_id=path.id, position=row.position, title=row.title,
-                                    instructions=row.instructions, template_step_id=row.id)
+                                    instructions=row.instructions, template_step_id=row.id,
+                                    template_snapshot=template_snapshot(row, ids_by_position))
         if row.step_type == "tool":
             step.step_type, step.tool_key = "tool", config["tool_key"]
         else:
@@ -162,6 +174,117 @@ def apply_template(db: Session, template: models.PathTemplate, group: models.Stu
         db.flush()
         created[row.position] = step
     return path
+
+
+def started_steps(db: Session, path: models.ClassPath, steps: list[models.ClassPathStep]) -> set[int]:
+    """Steps a student has begun: any progress mark, or automatic evidence since publication."""
+    from .path_step_types import completion_evidence
+    ids = [step.id for step in steps]
+    if not ids:
+        return set()
+    started = {step_id for (step_id,) in db.query(models.ClassPathProgress.step_id)
+               .filter(models.ClassPathProgress.step_id.in_(ids))}
+    usernames = [username for (username,) in db.query(models.GroupMembership.username)
+                 .filter_by(group_id=path.group_id).distinct()]
+    for step in steps:
+        if (step.id not in started and step.active_from is not None
+                and any(completion_evidence(db, path, step, username) for username in usernames)):
+            started.add(step.id)
+    return started
+
+
+def template_changes(db: Session, path: models.ClassPath, template: models.PathTemplate) -> list[dict]:
+    """Differences between an applied path and its template, by step.
+
+    `status`: `apply` (the update changes it), `started` (a student has begun it),
+    `created` (its class object exists: the teacher edits it in the path) or
+    `tool_disabled` (the tool is not enabled for the class).
+    """
+    from .routes.class_paths import _active_steps, get_class_enabled_tool_keys
+    rows = template_steps(db, template.id)
+    ids_by_position = {row.position: row.id for row in rows}
+    steps = _active_steps(db, path.id)
+    linked = {step.template_step_id: step for step in steps if step.template_step_id}
+    # Pending steps are invisible to students; class objects are never rewritten.
+    started = started_steps(db, path, [step for step in steps if step.step_type == "tool"])
+    enabled = get_class_enabled_tool_keys(db, path.group_id)
+
+    def status(step):
+        if step is not None and step.step_type not in ("tool", "pending"):
+            return "created"
+        return "started" if step is not None and step.id in started else "apply"
+
+    changes = []
+    for row in rows:
+        step = linked.get(row.id)
+        snapshot = template_snapshot(row, ids_by_position)
+        if step is not None and step.template_snapshot == snapshot:
+            continue
+        state = status(step)
+        if state == "apply" and row.step_type == "tool" and row.config.get("tool_key") not in enabled:
+            state = "tool_disabled"
+        changes.append({"change": "changed" if step else "added", "template_step_id": row.id,
+                        "step_id": step.id if step else None, "step_type": row.step_type,
+                        "tool_key": row.config.get("tool_key"), "title": row.title, "status": state,
+                        "snapshot": snapshot})
+    # A copied step whose template step was deleted (the link was emptied).
+    for step in steps:
+        if step.template_step_id is None and step.template_snapshot is not None:
+            changes.append({"change": "removed", "template_step_id": None, "step_id": step.id,
+                            "step_type": step.template_snapshot["step_type"], "tool_key": step.tool_key,
+                            "title": step.title, "status": status(step), "snapshot": None})
+    return changes
+
+
+def update_from_template(db: Session, path: models.ClassPath, template: models.PathTemplate) -> list[dict]:
+    """Apply the template's differences to steps no student has started; returns the others.
+
+    The class order of existing steps is kept; new steps follow the step copied
+    from the template step before them. Publication of the result is the caller's.
+    """
+    from .routes.class_paths import _active_steps
+    changes = template_changes(db, path, template)
+    rows = template_steps(db, template.id)
+    order = _active_steps(db, path.id)
+    linked = {step.template_step_id: step for step in order if step.template_step_id}
+    for change in changes:
+        if change["status"] != "apply":
+            continue
+        if change["change"] == "removed":
+            step = db.get(models.ClassPathStep, change["step_id"])
+            step.removed_at = datetime.now(timezone.utc)
+            order.remove(step)
+            continue
+        row = next(item for item in rows if item.id == change["template_step_id"])
+        step = linked.get(row.id)
+        if step is None:
+            step = models.ClassPathStep(path_id=path.id, template_step_id=row.id)
+            before = [linked[item.id] for item in rows[:rows.index(row)] if item.id in linked]
+            order.insert(order.index(before[-1]) + 1 if before else 0, step)
+            linked[row.id] = step
+        else:
+            # Nobody has begun it: activation restarts with the new content.
+            step.active_from = None
+        config = dict(row.config or {})
+        step.title, step.instructions, step.template_snapshot = row.title, row.instructions, change["snapshot"]
+        step.administration_plan_id = step.results_step_id = step.assignment_id = step.topic_id = None
+        if row.step_type == "tool":
+            step.step_type, step.tool_key, step.pending_config = "tool", config["tool_key"], None
+        else:
+            if row.step_type == "guided_results_chat":
+                source = linked[change["snapshot"]["config"]["results_template_step_id"]]
+                config = {"results_step_id": source.id}
+            step.step_type, step.tool_key, step.pending_config = "pending", None, {"kind": row.step_type, **config}
+        for position, item in enumerate(order, start=1):
+            item.position = position
+        db.add(step)
+        db.flush()
+    for position, item in enumerate(order, start=1):
+        item.position = position
+    path.template_revision = template.revision
+    db.flush()
+    return [{key: value for key, value in change.items() if key != "snapshot"}
+            for change in changes if change["status"] != "apply"]
 
 
 def materialize_pending(db: Session, path: models.ClassPath, steps: list[models.ClassPathStep], identity) -> list[dict]:

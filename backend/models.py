@@ -1925,6 +1925,9 @@ class ClassPathStep(Base):
     # publication creates the class object they describe.
     pending_config = Column(JSON, nullable=True)
     template_step_id = Column(Integer, ForeignKey("path_template_steps.id", ondelete="SET NULL"), nullable=True)
+    # The template step as last copied here: «Update from template» compares it with
+    # the template, so a class object's own content (e.g. forum text) is never read.
+    template_snapshot = Column(JSON, nullable=True)
 
 
 class ClassPathProgress(Base):
