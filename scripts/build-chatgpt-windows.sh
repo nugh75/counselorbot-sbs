@@ -28,7 +28,8 @@ with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
     bundle.write(exe, "CounselorBot-ChatGPT.exe")
 # Published hash for school allow-lists (Defender, AppLocker/WDAC).
 digest = hashlib.sha256(open(archive, "rb").read()).hexdigest()
-open(archive + ".sha256", "w").write(f"{digest}  CounselorBot-ChatGPT-Windows.zip\n")
+# Unix newline even on Windows, so `sha256sum -c` / `shasum -c` read the name.
+open(archive + ".sha256", "w", newline="\n").write(f"{digest}  CounselorBot-ChatGPT-Windows.zip\n")
 print(digest)
 PY
 echo "Built $zip_path"
