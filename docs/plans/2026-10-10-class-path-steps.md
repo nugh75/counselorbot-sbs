@@ -41,6 +41,43 @@ o esperti.
     In futuro orientatori ed esperti potranno entrare con un ruolo dedicato (terza
     figura) per gestire fasce e prenotazioni: il modello dati deve permetterlo.
 
+12. Un percorso nasce come **modello generale**, non legato a una classe, e si
+    **applica** a una o più classi o gruppi. Classe e gruppo sono lo stesso oggetto
+    (`StudentGroup`): un gruppo può non essere una classe, per esempio i tutor di
+    Roma Tre; per questo l'interfaccia dice «classe o gruppo».
+13. Applicare un modello crea una **copia** per la classe o il gruppo. Le modifiche
+    al modello non cambiano i percorsi già applicati finché il docente non sceglie
+    **«Aggiorna da modello»**: un percorso avviato non cambia sotto gli studenti.
+14. I modelli sono visibili **solo al docente che li crea**. Il docente può
+    **condividerli**: un modello condiviso diventa un **preset** disponibile a tutti i
+    docenti, che lo applicano o lo copiano tra i propri modelli.
+
+## Modelli e percorsi applicati
+
+```
+Percorsi (Area docente)
+ ├─ I miei modelli
+ │   └─ «Inizio anno – metodo di studio»  [Modifica] [Condividi] [Applica a… ▾]
+ ├─ Preset condivisi
+ │   └─ «Orientamento in uscita»           [Applica a… ▾] [Copia nei miei modelli]
+ └─ Applicati a classi e gruppi
+     ├─ 3B Liceo        · da «Inizio anno…» · pubblicato · 12/24 completati
+     └─ Tutor Roma Tre  · da «Inizio anno…» · bozza  [Aggiorna da modello]
+```
+
+- **Nel modello** i passi sono astratti: questionario = strumento e lingua; chat
+  guidata = strumento e tipo di seguito; attività = obiettivo, istruzioni e
+  strumenti; incontro = tipo, modalità e durata; discussione = titolo e testo
+  d'apertura.
+- **Applicandolo** si crea il percorso della classe o del gruppo e si preparano gli
+  oggetti concreti: somministrazione (serve l'istituto), assegnazione, discussione.
+  Il docente completa ciò che dipende dalla classe — date, luogo o link degli
+  incontri, fasce — e poi pubblica.
+- **«Aggiorna da modello»** mostra le differenze e le applica solo ai passi non
+  ancora iniziati da nessuno studente; i passi già avviati restano invariati.
+- **I percorsi esistenti** diventano percorsi applicati senza modello; l'azione
+  «Salva come modello» permette di riusarli.
+
 ## Tipi di passo
 
 | Tipo | Contenuto | `step_type` |
@@ -94,6 +131,10 @@ Partecipa a un incontro
 
 ## Fasi (una PR ciascuna)
 
+0. **Modelli e applicazione** — tabella dei modelli e dei loro passi astratti,
+   collegamento percorso → modello d'origine, «Applica a…», «Salva come modello»,
+   «Aggiorna da modello», condivisione come preset. Migrazione: i percorsi esistenti
+   restano percorsi applicati senza modello.
 1. **Aggiungi passo unico** — scelta del tipo e moduli specifici; il menu
    strumenti mostra solo gli strumenti personali. Solo interfaccia.
 2. **Strumenti nell'attività** — campo elenco sull'assegnazione, migrazione,
@@ -113,4 +154,6 @@ modifica ai file di prodotto, immagini comprese.
 ## Fuori ambito per ora
 
 - Account e ruolo dedicato per orientatori ed esperti.
+- Revisione amministrativa dei preset condivisi (da decidere: oggi la
+  condivisione li rende subito disponibili a tutti i docenti).
 - Invio automatico di inviti o promemoria via email.
