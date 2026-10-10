@@ -1975,6 +1975,13 @@ class ClassPathCreate(BaseModel):
     mode: str = "recommended"  # recommended | strict
 
 
+class ClassPathLifecycle(BaseModel):
+    """Publish, archive and restore: the revision the teacher last saw."""
+    model_config = {"extra": "forbid"}
+
+    revision: Optional[int] = Field(default=None, ge=1, strict=True)
+
+
 class ClassPathUpdate(BaseModel):
     model_config = {"extra": "forbid"}
 
