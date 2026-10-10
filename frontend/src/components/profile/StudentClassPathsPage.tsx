@@ -172,9 +172,9 @@ export function StudentClassPathsPage() {
                                 const isActionBusy = actionStepId === step.id;
 
                                 // State-based styles matching ASCII §8.3 & Design Rules
-                                // Ochre is ONLY for current active step
+                                // The current step is a petrol card; ochre stays on its play icon and badge only
                                 const containerClasses = isCurrent
-                                    ? 'border-ochre-300 bg-ochre-50/60 dark:bg-ochre-950/20 shadow-xs'
+                                    ? 'border-indigo-600 bg-white shadow-xs'
                                     : isDone
                                     ? 'border-slate-200 bg-white hover:bg-slate-50/50'
                                     : isUnavailable
@@ -222,7 +222,7 @@ export function StudentClassPathsPage() {
                                                         {(isDone || isLocked || isUnavailable) && <span className="text-xs font-semibold text-slate-500">
                                                             {`[${stepNumber}]`}
                                                         </span>}
-                                                        <h3 className={`text-base font-semibold ${isCurrent ? 'text-ochre-900' : 'text-slate-800'}`}>
+                                                        <h3 className={`text-base font-semibold ${isCurrent ? 'text-indigo-900' : 'text-slate-800'}`}>
                                                             {titleDisplay}
                                                         </h3>
 

@@ -7,7 +7,8 @@ import { cn } from '@/lib/utils';
 type Variant = 'info' | 'warning' | 'success' | 'danger';
 
 const STYLES: Record<Variant, { box: string; icon: string; defaultIcon: LucideIcon }> = {
-    info: { box: 'border border-sky-200 bg-sky-50 text-sky-950', icon: 'text-sky-600', defaultIcon: Info },
+    // Info uses the site's pale teal (indigo is remapped to petrol), not a cold sky blue.
+    info: { box: 'border border-indigo-200 bg-indigo-50 text-slate-900', icon: 'text-indigo-600', defaultIcon: Info },
     warning: { box: 'border-2 border-amber-300 bg-amber-50 text-amber-950', icon: 'text-amber-700', defaultIcon: AlertTriangle },
     success: { box: 'border border-emerald-200 bg-emerald-50 text-emerald-950', icon: 'text-emerald-600', defaultIcon: CheckCircle2 },
     danger: { box: 'border border-red-200 bg-red-50 text-red-800', icon: 'text-red-600', defaultIcon: XCircle },
