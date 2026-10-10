@@ -3,9 +3,9 @@ export type TemplateStepType = 'tool' | 'questionnaire_administration' | 'guided
 export const TEMPLATE_STEP_TYPES: TemplateStepType[] = ['tool', 'questionnaire_administration', 'guided_results_chat', 'assignment', 'forum'];
 export const TEMPLATE_QUESTIONNAIRES = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'];
 export const TEMPLATE_LOCALES = ['it', 'en', 'es', 'fr', 'de', 'sv'];
-// Personal tools plus the guided chats that are tool steps until the guided chat type exists (#177).
+// The tool menu lists personal tools only (#173); standalone guided chats have their own choice.
 export const TEMPLATE_TOOLS = ['tavolo', 'goals', 'actions', 'timeline', 'portfolio', 'pqbl', 'flashcards', 'cards',
-    'comparison', 'bussola', 'assistant', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'IDEA'];
+    'comparison', 'bussola', 'assistant'];
 
 export interface TemplateStep {
     id?: number;

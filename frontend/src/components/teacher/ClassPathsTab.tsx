@@ -33,6 +33,9 @@ import { lifecycleRequest, parsePublicationProblems, publishRevision, unavailabl
 import { pathPublicationText, unavailableActionText } from '@/lib/i18n-path-publication';
 import { pathTemplateText } from '@/lib/i18n-path-templates';
 import { PathTemplateUpdate } from './PathTemplateUpdate';
+import { StepKindPicker } from './StepKindPicker';
+import { stepKindText, type StepKindTextKey } from '@/lib/i18n-step-kinds';
+import { isLegacyQuestionnaireTool, isPersonalTool, isStandaloneGuidedChat, type StepKind } from '@/lib/path-step-kinds';
 
 type PathTextKey = keyof typeof classPathsTexts;
 type SettingsTextKey = keyof typeof classSettingsTexts;
@@ -204,6 +207,17 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
 
     // Enabled tools for this class
     const enabledTools = pathStepTools(classSettings.tools);
+    // #173: one «+ Aggiungi passo» flow; the tool menu lists personal tools only.
+    const k = (key: StepKindTextKey) => stepKindText(lang, key);
+    const personalTools = enabledTools.filter(isPersonalTool);
+    const chatTools = enabledTools.filter(isStandaloneGuidedChat);
+    const [adding, setAdding] = useState(false);
+    const [kind, setKind] = useState<StepKind | null>(null);
+    const [selectedChatKey, setSelectedChatKey] = useState('');
+    const closeAdd = () => {
+        setAdding(false);
+        setKind(null);
+    };
 
     const dirty =
         title !== currentPath.title ||
@@ -237,9 +251,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
-    const handleAddStep = () => {
-        if (!selectedToolKey) return;
-        const tool = enabledTools.find(t => t.key === selectedToolKey);
+    const handleAddStep = (toolKey: string) => {
+        const tool = enabledTools.find(t => t.key === toolKey);
         if (!tool) return;
 
         // Auto-detect check: assessment, guided, or personal auto-detect keys
@@ -257,6 +270,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         };
         setSteps([...steps, newStep]);
         setSelectedToolKey('');
+        setSelectedChatKey('');
         if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
@@ -649,6 +663,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                 </>
                                             )}
                                             {pending && <p className="mt-1 text-xs text-slate-600">{pathTemplateText(lang, 'pendingHelp')}</p>}
+                                            {isLegacyQuestionnaireTool(step) && <p className="mt-1 text-xs text-slate-600">{k('legacyQuestionnaire')}</p>}
                                             {step.step_type === 'questionnaire_administration' && step.administration_plan_id && (
                                                 // Classroom and research views edit the same administration row.
                                                 <Link href={`/docente/somministrazioni#plan-${step.administration_plan_id}`}
@@ -741,88 +756,109 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     </div>
                 )}
 
-                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
-                    <h3 className="font-semibold">{a('administration')}</h3>
-                    <Link href="/docente/somministrazioni" className="text-indigo-700 underline">{a('research')}</Link>
-                    {institutionId == null && <Callout variant="warning">{pub('noInstitute')}{' '}
-                        <Link href="/docente/istituti" className="font-semibold text-indigo-700 underline">{pub('goToInstitutes')}</Link></Callout>}
-                    {administrationError && <Callout variant="danger">{a('error')} <Button variant="secondary" onClick={()=>void loadAdministrations()}>{a('retry')}</Button></Callout>}
-                    <div className="flex flex-wrap gap-2">
-                        <label>{a('choose')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="ml-2 rounded border p-2">
-                            <option value="">{a('choose')}</option>
-                            {administrations.filter(offered).map(row=><option key={row.id} value={row.id}>{row.code} · {row.title} · {row.locale.toUpperCase()}</option>)}
-                        </select></label>
-                        <Button variant="secondary" disabled={busy || !selectedAdministration} onClick={addAdministrationStep}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <label>{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="ml-2 rounded border p-2" /></label>
-                        <label>{a('instrument')}<select value={administrationInstrument} onChange={event=>{setAdministrationInstrument(event.target.value);setAdministrationLocale('it');}} className="ml-2 rounded border p-2">
-                            {['QSA','QSAr','ZTPI','QPCS','QPCC','QAP'].map(code=><option key={code}>{code}</option>)}
-                        </select></label>
-                        <label>{a('locale')}<select value={administrationLocale} onChange={event=>setAdministrationLocale(event.target.value)} className="ml-2 rounded border p-2">
-                            {localeOptions(administrationInstrument).map(locale=><option key={locale} value={locale}>{locale.toUpperCase()}</option>)}
-                        </select></label>
-                        <Button disabled={busy || !administrationTitle.trim()} onClick={()=>void createAdministration()}>{a('create')}</Button>
-                    </div><p className="text-sm text-slate-600">{a('rule')}</p>
-                    <p className="text-sm text-slate-600">{a('teacherInAppGuide')}</p>
-                </div>
-                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
-                    <h3 className="font-semibold">{a('deepDive')}</h3>
-                    <div className="flex flex-wrap gap-2">
-                        <label>{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>setSelectedResultsStep(event.target.value)} className="ml-2 rounded border p-2">
-                            <option value="">{a('choose')}</option>
-                            {deepDiveSources(steps).map(step=><option key={step.id} value={step.id}>{`#${step.position} · ${step.target_summary?.code || step.administration_plan_id}`}</option>)}
-                        </select></label>
-                        <Button variant="secondary" disabled={busy || !selectedResultsStep} onClick={addDeepDiveStep}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
-                    </div>
-                    <p className="text-sm text-slate-600">{a('deepDiveRule')}</p>
-                </div>
-                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
-                    <h3 className="font-semibold">{p('assignment')}</h3>
-                    {assignmentLoadError && <Callout variant="danger">{p('loadError')} <Button variant="secondary" onClick={()=>void loadPathAssignments()}>{p('retry')}</Button></Callout>}
-                    {!assignmentLoadError && !pathAssignments.length && <p className="text-sm text-slate-600">{p('empty')}</p>}
-                    <div className="flex flex-wrap gap-2">
-                        <label>{p('choose')}<select value={selectedAssignment} onChange={event=>setSelectedAssignment(event.target.value)} className="ml-2 rounded border p-2">
-                            <option value="">{p('choose')}</option>
-                            {selectablePathAssignments(pathAssignments, steps).map(row=><option key={row.id} value={row.id}>{row.attachments.length ? `${row.title} · ${row.attachments.map(item=>item.title).join(', ')}` : row.title}</option>)}
-                        </select></label>
-                        <Button variant="secondary" disabled={busy || !selectedAssignment} onClick={addAssignmentStep}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
-                        <Button variant="secondary" disabled={busy} onClick={()=>setCreatingAssignment(true)}>{p('create')}</Button>
-                    </div>
-                    <p className="text-sm text-slate-600">{p('rule')}</p>
-                    {creatingAssignment && createPortal(<AssignmentDialog classId={path.group_id} close={()=>setCreatingAssignment(false)}
-                        saved={created=>void loadPathAssignments(created.id)} />, document.body)}
-                </div>
-                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3">
-                    <h3 className="font-semibold">{f('forum')}</h3>
-                    {forumLoadError && <Callout variant="danger">{f('loadError')} <Button variant="secondary" onClick={()=>void loadForumTopics()}>{f('retry')}</Button></Callout>}
-                    {!forumLoadError && !forumTopics.length && <p className="text-sm text-slate-600">{f('empty')}</p>}
-                    <div className="flex flex-wrap gap-2">
-                        <label>{f('choose')}<select value={selectedTopic} onChange={event=>setSelectedTopic(event.target.value)} className="ml-2 rounded border p-2">
-                            <option value="">{f('choose')}</option>
-                            {selectablePathForumTopics(forumTopics, steps).map(row=><option key={row.id} value={row.id}>{row.locked ? `${row.title} · ${f('locked')}` : row.title}</option>)}
-                        </select></label>
-                        <Button variant="secondary" disabled={busy || !selectedTopic} onClick={addForumStep}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
-                    </div>
-                    <p className="text-sm text-slate-600">{f('rule')}</p>
-                </div>
-                <div className="mt-4 flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
-                    <select
-                        value={selectedToolKey}
-                        onChange={e => setSelectedToolKey(e.target.value)}
-                        className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-600 focus:outline-none"
-                    >
-                        <option value="">{l('chooseTool')}</option>
-                        {enabledTools.map(t => (
-                            <option key={t.key} value={t.key}>
-                                {toolLabel(t.key, classSettings.tools, lang)}
-                            </option>
-                        ))}
-                    </select>
-                    <Button variant="secondary" disabled={busy || !selectedToolKey} onClick={handleAddStep}>
-                        <Plus className="h-4 w-4" aria-hidden />
-                        {l('addStep')}
-                    </Button>
+                <div className="mt-4 space-y-3 border-t border-slate-100 pt-3" data-testid="add-step">
+                    {!adding ? (
+                        <Button variant="secondary" disabled={busy} onClick={() => setAdding(true)}>{k('addStep')}</Button>
+                    ) : (
+                        <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <StepKindPicker lang={lang} value={kind} onChange={setKind} />
+                            {kind === 'questionnaire' && <div className="space-y-3">
+                            <Link href="/docente/somministrazioni" className="text-indigo-700 underline">{a('research')}</Link>
+                            {institutionId == null && <Callout variant="warning">{pub('noInstitute')}{' '}
+                                <Link href="/docente/istituti" className="font-semibold text-indigo-700 underline">{pub('goToInstitutes')}</Link></Callout>}
+                            {administrationError && <Callout variant="danger">{a('error')} <Button variant="secondary" onClick={()=>void loadAdministrations()}>{a('retry')}</Button></Callout>}
+                            <div className="flex flex-wrap gap-2">
+                                <label>{a('choose')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="ml-2 rounded border p-2">
+                                    <option value="">{a('choose')}</option>
+                                    {administrations.filter(offered).map(row=><option key={row.id} value={row.id}>{row.code} · {row.title} · {row.locale.toUpperCase()}</option>)}
+                                </select></label>
+                                <Button variant="secondary" disabled={busy || !selectedAdministration} onClick={() => {addAdministrationStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <label>{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="ml-2 rounded border p-2" /></label>
+                                <label>{a('instrument')}<select value={administrationInstrument} onChange={event=>{setAdministrationInstrument(event.target.value);setAdministrationLocale('it');}} className="ml-2 rounded border p-2">
+                                    {['QSA','QSAr','ZTPI','QPCS','QPCC','QAP'].map(code=><option key={code}>{code}</option>)}
+                                </select></label>
+                                <label>{a('locale')}<select value={administrationLocale} onChange={event=>setAdministrationLocale(event.target.value)} className="ml-2 rounded border p-2">
+                                    {localeOptions(administrationInstrument).map(locale=><option key={locale} value={locale}>{locale.toUpperCase()}</option>)}
+                                </select></label>
+                                <Button disabled={busy || !administrationTitle.trim()} onClick={()=>void createAdministration()}>{a('create')}</Button>
+                            </div><p className="text-sm text-slate-600">{a('rule')}</p>
+                            <p className="text-sm text-slate-600">{a('teacherInAppGuide')}</p>
+                            </div>}
+                            {kind === 'guided_chat' && <div className="space-y-3">
+                                <h4 className="text-sm font-semibold">{k('chatOnResults')}</h4>
+                            <div className="flex flex-wrap gap-2">
+                                <label>{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>setSelectedResultsStep(event.target.value)} className="ml-2 rounded border p-2">
+                                    <option value="">{a('choose')}</option>
+                                    {deepDiveSources(steps).map(step=><option key={step.id} value={step.id}>{`#${step.position} · ${step.target_summary?.code || step.administration_plan_id}`}</option>)}
+                                </select></label>
+                                <Button variant="secondary" disabled={busy || !selectedResultsStep} onClick={() => {addDeepDiveStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
+                            </div>
+                            <p className="text-sm text-slate-600">{a('deepDiveRule')}</p>
+                                <h4 className="text-sm font-semibold">{k('chatStandalone')}</h4>
+                                {chatTools.length === 0 ? <p className="text-sm text-slate-600">{k('noChats')}</p> : (
+                                    <div className="flex flex-wrap gap-2">
+                                        <label>{k('chatStandalone')}<select value={selectedChatKey} onChange={event=>setSelectedChatKey(event.target.value)} className="ml-2 rounded border p-2">
+                                            <option value="">{a('choose')}</option>
+                                            {chatTools.map(t => <option key={t.key} value={t.key}>{toolLabel(t.key, classSettings.tools, lang)}</option>)}
+                                        </select></label>
+                                        <Button variant="secondary" disabled={busy || !selectedChatKey} onClick={() => {handleAddStep(selectedChatKey);closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
+                                    </div>
+                                )}
+                            </div>}
+                            {kind === 'activity' && <div className="space-y-3">
+                            {assignmentLoadError && <Callout variant="danger">{p('loadError')} <Button variant="secondary" onClick={()=>void loadPathAssignments()}>{p('retry')}</Button></Callout>}
+                            {!assignmentLoadError && !pathAssignments.length && <p className="text-sm text-slate-600">{p('empty')}</p>}
+                            <div className="flex flex-wrap gap-2">
+                                <label>{p('choose')}<select value={selectedAssignment} onChange={event=>setSelectedAssignment(event.target.value)} className="ml-2 rounded border p-2">
+                                    <option value="">{p('choose')}</option>
+                                    {selectablePathAssignments(pathAssignments, steps).map(row=><option key={row.id} value={row.id}>{row.attachments.length ? `${row.title} · ${row.attachments.map(item=>item.title).join(', ')}` : row.title}</option>)}
+                                </select></label>
+                                <Button variant="secondary" disabled={busy || !selectedAssignment} onClick={() => {addAssignmentStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
+                                <Button variant="secondary" disabled={busy} onClick={()=>setCreatingAssignment(true)}>{p('create')}</Button>
+                            </div>
+                            <p className="text-sm text-slate-600">{p('rule')}</p>
+                            {creatingAssignment && createPortal(<AssignmentDialog classId={path.group_id} close={()=>setCreatingAssignment(false)}
+                                saved={created=>void loadPathAssignments(created.id)} />, document.body)}
+                            </div>}
+                            {kind === 'tool' && <div className="space-y-3">
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <select
+                                        value={selectedToolKey}
+                                        onChange={e => setSelectedToolKey(e.target.value)}
+                                        aria-label={l('chooseTool')}
+                                        className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-600 focus:outline-none"
+                                    >
+                                        <option value="">{l('chooseTool')}</option>
+                                        {personalTools.map(t => (
+                                            <option key={t.key} value={t.key}>
+                                                {toolLabel(t.key, classSettings.tools, lang)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <Button variant="secondary" disabled={busy || !selectedToolKey} onClick={() => {handleAddStep(selectedToolKey);closeAdd();}}>
+                                        <Plus className="h-4 w-4" aria-hidden />
+                                        {l('addStep')}
+                                    </Button>
+                                </div>
+                                <p className="text-sm text-slate-600">{k('toolHelp')}</p>
+                            </div>}
+                            {kind === 'discussion' && <div className="space-y-3">
+                            {forumLoadError && <Callout variant="danger">{f('loadError')} <Button variant="secondary" onClick={()=>void loadForumTopics()}>{f('retry')}</Button></Callout>}
+                            {!forumLoadError && !forumTopics.length && <p className="text-sm text-slate-600">{f('empty')}</p>}
+                            <div className="flex flex-wrap gap-2">
+                                <label>{f('choose')}<select value={selectedTopic} onChange={event=>setSelectedTopic(event.target.value)} className="ml-2 rounded border p-2">
+                                    <option value="">{f('choose')}</option>
+                                    {selectablePathForumTopics(forumTopics, steps).map(row=><option key={row.id} value={row.id}>{row.locked ? `${row.title} · ${f('locked')}` : row.title}</option>)}
+                                </select></label>
+                                <Button variant="secondary" disabled={busy || !selectedTopic} onClick={() => {addForumStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
+                            </div>
+                            <p className="text-sm text-slate-600">{f('rule')}</p>
+                            </div>}
+                            <Button variant="ghost" disabled={busy} onClick={closeAdd}>{k('close')}</Button>
+                        </div>
+                    )}
                 </div>
 
                 <p className="flex items-center gap-1 text-xs text-slate-500"><Flag className="h-3 w-3 shrink-0" aria-hidden />{l('selfMarkHelp')}</p>
