@@ -117,7 +117,9 @@ async function openEditor(page) {
     // Activity: a whole-class assignment.
     await open('Svolge un’attività');
     await add.getByRole('option', { name: 'Piano della settimana' }).waitFor({ state: 'attached' });
-    await add.getByText(/Obiettivo del catalogo con strategie/).waitFor();
+    // The completion rule sits in a disclosure: present, collapsed by default.
+    await add.getByText('Come si completa il passo').waitFor();
+    await add.getByText(/Obiettivo del catalogo con strategie/).waitFor({ state: 'attached' });
     await add.getByRole('button', { name: 'Chiudi' }).click();
 
     // Questionnaire: only through an administration.
@@ -127,7 +129,9 @@ async function openEditor(page) {
 
     // Discussion: a published discussion of the class.
     await open('Partecipa a una discussione');
-    await add.getByText(/Una discussione pubblicata di questa classe/).waitFor();
+    // The completion rule sits in a disclosure: present, collapsed by default.
+    await add.getByText('Come si completa il passo').waitFor();
+    await add.getByText(/Una discussione pubblicata di questa classe/).waitFor({ state: 'attached' });
     await add.getByRole('button', { name: 'Chiudi' }).click();
 
     // Keyboard: the opener and the radios are reachable and operable.
