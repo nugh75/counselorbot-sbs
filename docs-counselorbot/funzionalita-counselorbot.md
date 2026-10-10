@@ -526,7 +526,7 @@ assegnazioni**: creare un istituto, unirsi a uno esistente, impostarne codice e
 password per le somministrazioni e vederne le classi; visibile a docenti e
 amministratori, ciascuno limitato agli istituti di cui è membro, e chi crea un
 istituto ne diventa membro), `/docente/percorsi` (Percorsi di classe con una propria
-immagine: si sceglie la classe e si preparano, pubblicano e seguono i suoi percorsi
+immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano e seguono i suoi percorsi
 con lo stesso editor della scheda Percorsi della classe; `?class={id}` la preseleziona
 e i link dalle Somministrazioni portano qui), `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
 della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
