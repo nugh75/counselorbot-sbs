@@ -608,6 +608,8 @@ class TeacherAssignment(Base):
     snapshot = Column(JSON, nullable=False)
     # Optional add-ons delivered with the goal: [{source_kind, source_id, title}].
     attachments = Column(JSON, nullable=True, default=list)
+    # #174: personal tools the student opens inside the activity; older rows have none.
+    tool_keys = Column(JSON, nullable=True)
     instructions = Column(Text, nullable=False, default="")
     request_id = Column(String, nullable=False)
     request_hash = Column(String, nullable=False)

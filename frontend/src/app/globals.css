@@ -817,3 +817,7 @@ h1.text-3xl {
     body:has(.prompt-workspace) .prompt-workspace summary { break-after: avoid; }
     body:has(.prompt-workspace) .admin-shell select { max-width: 100%; }
 }
+
+/* #174: a tool page opened inside an activity popup shows only its content. */
+html[data-embedded] .console-header { display: none; }
+html[data-embedded] main#contenuto { padding-top: 1rem; }

@@ -20,6 +20,7 @@ export interface TemplateStep {
     goal_id?: number;
     goal_title?: string | null;
     attachments?: {source_kind: 'strategy' | 'reading'; source_id: number}[];
+    tool_keys?: string[];
     assignment_instructions?: string;
     intent?: 'proposal' | 'requested';
     response_prompt?: string;
@@ -59,6 +60,7 @@ function parseStep(input: unknown): TemplateStep {
         goal_id: raw.goal_id != null ? Number(raw.goal_id) : undefined,
         goal_title: raw.goal_title ? String(raw.goal_title) : null,
         attachments: Array.isArray(raw.attachments) ? raw.attachments as TemplateStep['attachments'] : [],
+        tool_keys: Array.isArray(raw.tool_keys) ? raw.tool_keys.map(String) : [],
         assignment_instructions: text(raw.assignment_instructions),
         intent: raw.intent === 'requested' ? 'requested' : 'proposal',
         response_prompt: text(raw.response_prompt),
@@ -122,7 +124,7 @@ export function templateStepPayload(step: TemplateStep) {
             return {...base, instrument_code: step.instrument_code, locale: step.locale, plan_title: step.plan_title?.trim() || ''};
         case 'guided_results_chat': return {...base, results_position: step.results_position};
         case 'assignment':
-            return {...base, goal_id: step.goal_id, attachments: step.attachments ?? [],
+            return {...base, goal_id: step.goal_id, attachments: step.attachments ?? [], tool_keys: step.tool_keys ?? [],
                 assignment_instructions: step.assignment_instructions?.trim() || '', intent: step.intent ?? 'proposal',
                 response_prompt: step.response_prompt?.trim() || '', language: step.language ?? 'it'};
         case 'forum': return {...base, topic_title: step.topic_title?.trim(), topic_body: step.topic_body?.trim()};

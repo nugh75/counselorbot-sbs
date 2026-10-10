@@ -20,6 +20,8 @@ PERSONAL_TOOL_KEYS = {
     "forum": ("forum", "forum"),
 }
 ALWAYS_ON = frozenset({"notebook", "results", "classes", "assignments"})
+# #174: tools an activity can ask the student to open (personal and support, not the forum switch).
+ACTIVITY_TOOL_KEYS = tuple(key for key, (category, _) in PERSONAL_TOOL_KEYS.items() if category in ("personal", "support"))
 # The app's built-in guided paths («Percorsi guidati»). Without an instrument row
 # they are not toggleable and `require_tool` lets them pass, so access lists and
 # class paths offer them too; with a row, the instrument rules apply.
