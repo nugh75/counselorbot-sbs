@@ -51,6 +51,7 @@ const labels = {
     catalogs: ['Cataloghi', 'Catalogs', 'Catálogos', 'Catalogues', 'Kataloge', 'Kataloger'],
     research: ['Somministrazioni e ricerca', 'Administration and research', 'Administración e investigación', 'Passations et recherche', 'Durchführungen und Forschung', 'Genomföranden och forskning'],
     pathsChooseClass: ['Classe', 'Class', 'Clase', 'Classe', 'Klasse', 'Klass'],
+    meetingsChooseClass: ['Classe o gruppo', 'Class or group', 'Clase o grupo', 'Classe ou groupe', 'Klasse oder Gruppe', 'Klass eller grupp'],
     pathsNoClasses: [
         'Non hai ancora classi: creane una in Gruppi e classi per preparare un percorso.',
         'You have no classes yet: create one in Groups and classes to prepare a path.',
@@ -58,6 +59,14 @@ const labels = {
         'Vous n’avez pas encore de classe : créez-en une dans Groupes et classes pour préparer un parcours.',
         'Sie haben noch keine Klassen: Legen Sie unter Gruppen und Klassen eine an, um einen Pfad vorzubereiten.',
         'Du har inga klasser än: skapa en under Grupper och klasser för att förbereda en väg.',
+    ],
+    meetingsNoClasses: [
+        'Non hai ancora classi o gruppi: creane uno in Gruppi e classi per organizzare un incontro.',
+        'You have no classes or groups yet: create one in Groups and classes to plan a meeting.',
+        'Todavía no tienes clases ni grupos: crea uno en Grupos y clases para organizar un encuentro.',
+        'Vous n’avez pas encore de classe ni de groupe : créez-en un dans Groupes et classes pour organiser une rencontre.',
+        'Sie haben noch keine Klassen oder Gruppen: Legen Sie unter Gruppen und Klassen eine an, um ein Treffen zu planen.',
+        'Du har inga klasser eller grupper än: skapa en under Grupper och klasser för att planera ett möte.',
     ],
     notebook: ['Taccuino del docente', 'Teacher notebook', 'Cuaderno del docente', 'Carnet de l’enseignant', 'Lehrkräfte-Notizbuch', 'Lärarens anteckningsbok'],
 } satisfies Record<string, Localized>;
@@ -68,6 +77,7 @@ const names = {
     'taccuini-prova': ['Taccuini di prova', 'Practice notebooks', 'Cuadernos de práctica', 'Carnets d’entraînement', 'Übungs-Notizbücher', 'Övningsanteckningsböcker'],
     classi: ['Gruppi e classi', 'Groups and classes', 'Grupos y clases', 'Groupes et classes', 'Gruppen und Klassen', 'Grupper och klasser'],
     percorsi: ['Percorsi di classe', 'Class paths', 'Itinerarios de clase', 'Parcours de classe', 'Klassenpfade', 'Klassvägar'],
+    incontri: ['Incontri', 'Meetings', 'Encuentros', 'Rencontres', 'Treffen', 'Möten'],
     assegnazioni: ['Assegnazioni', 'Assignments', 'Asignaciones', 'Attributions', 'Zuweisungen', 'Tilldelningar'],
     'catalogo-obiettivi': ['Catalogo obiettivi', 'Goal catalog', 'Catálogo de objetivos', 'Catalogue d’objectifs', 'Zielkatalog', 'Målkatalog'],
     strategie: ['Strategie', 'Strategies', 'Estrategias', 'Stratégies', 'Strategien', 'Strategier'],
@@ -133,6 +143,14 @@ const descriptions = {
         'Gérez le catalogue de lectures, films et autres ressources certifiées.',
         'Verwalten Sie den Katalog der zertifizierten Lektüren, Filme und Materialien.',
         'Hantera katalogen med certifierade läsningar, filmer och material.',
+    ],
+    incontri: [
+        "Organizza incontri con la classe o il gruppo e colloqui individuali a fasce prenotabili, anche con referenti o esperti.",
+        "Plan meetings with the class or group and individual appointments with bookable slots, also with referents or experts.",
+        "Organiza encuentros con la clase o el grupo y citas individuales con franjas reservables, también con referentes o expertos.",
+        "Organisez des rencontres avec la classe ou le groupe et des rendez-vous individuels sur créneaux, aussi avec des référents ou des experts.",
+        "Planen Sie Treffen mit der Klasse oder Gruppe und Einzeltermine mit buchbaren Zeitfenstern, auch mit Ansprechpersonen oder Fachleuten.",
+        "Planera möten med klassen eller gruppen och enskilda samtal med bokningsbara tider, även med kontaktpersoner eller experter.",
     ],
     percorsi: [
         'Prepara e pubblica la sequenza di passi che una classe percorre, e seguine l’avanzamento.',
