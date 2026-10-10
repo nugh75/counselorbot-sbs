@@ -50,6 +50,15 @@ const labels = {
     classroom: ['Classe e assegnazioni', 'Class and assignments', 'Clase y asignaciones', 'Classe et attributions', 'Klasse und Zuweisungen', 'Klass och tilldelningar'],
     catalogs: ['Cataloghi', 'Catalogs', 'Catálogos', 'Catalogues', 'Kataloge', 'Kataloger'],
     research: ['Somministrazioni e ricerca', 'Administration and research', 'Administración e investigación', 'Passations et recherche', 'Durchführungen und Forschung', 'Genomföranden och forskning'],
+    pathsChooseClass: ['Classe', 'Class', 'Clase', 'Classe', 'Klasse', 'Klass'],
+    pathsNoClasses: [
+        'Non hai ancora classi: creane una in Gruppi e classi per preparare un percorso.',
+        'You have no classes yet: create one in Groups and classes to prepare a path.',
+        'Todavía no tienes clases: crea una en Grupos y clases para preparar un itinerario.',
+        'Vous n’avez pas encore de classe : créez-en une dans Groupes et classes pour préparer un parcours.',
+        'Sie haben noch keine Klassen: Legen Sie unter Gruppen und Klassen eine an, um einen Pfad vorzubereiten.',
+        'Du har inga klasser än: skapa en under Grupper och klasser för att förbereda en väg.',
+    ],
     notebook: ['Taccuino del docente', 'Teacher notebook', 'Cuaderno del docente', 'Carnet de l’enseignant', 'Lehrkräfte-Notizbuch', 'Lärarens anteckningsbok'],
 } satisfies Record<string, Localized>;
 
@@ -58,6 +67,7 @@ const names = {
     taccuino: labels.notebook,
     'taccuini-prova': ['Taccuini di prova', 'Practice notebooks', 'Cuadernos de práctica', 'Carnets d’entraînement', 'Übungs-Notizbücher', 'Övningsanteckningsböcker'],
     classi: ['Gruppi e classi', 'Groups and classes', 'Grupos y clases', 'Groupes et classes', 'Gruppen und Klassen', 'Grupper och klasser'],
+    percorsi: ['Percorsi di classe', 'Class paths', 'Itinerarios de clase', 'Parcours de classe', 'Klassenpfade', 'Klassvägar'],
     assegnazioni: ['Assegnazione', 'Assignment', 'Asignación', 'Attribution', 'Zuweisung', 'Tilldelning'],
     'catalogo-obiettivi': ['Catalogo obiettivi', 'Goal catalog', 'Catálogo de objetivos', 'Catalogue d’objectifs', 'Zielkatalog', 'Målkatalog'],
     strategie: ['Strategie', 'Strategies', 'Estrategias', 'Stratégies', 'Strategien', 'Strategier'],
@@ -123,6 +133,14 @@ const descriptions = {
         'Gérez le catalogue de lectures, films et autres ressources certifiées.',
         'Verwalten Sie den Katalog der zertifizierten Lektüren, Filme und Materialien.',
         'Hantera katalogen med certifierade läsningar, filmer och material.',
+    ],
+    percorsi: [
+        'Prepara e pubblica la sequenza di passi che una classe percorre, e seguine l’avanzamento.',
+        'Prepare and publish the sequence of steps a class walks through, and follow its progress.',
+        'Prepara y publica la secuencia de pasos que recorre una clase y sigue su avance.',
+        'Préparez et publiez la suite d’étapes qu’une classe parcourt, et suivez sa progression.',
+        'Bereiten Sie die Schrittfolge vor, die eine Klasse durchläuft, veröffentlichen Sie sie und verfolgen Sie den Fortschritt.',
+        'Förbered och publicera stegen som en klass går igenom och följ hur det går.',
     ],
     orientamento: [
         'Organizza le categorie dei contatti e degli appuntamenti del tuo istituto.',

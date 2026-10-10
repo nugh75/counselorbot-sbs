@@ -9,6 +9,6 @@ import { useI18n } from '@/lib/i18n-context';
 export default function TeacherAdministrationPlansPage() {
     const { lang } = useI18n();
     return <TeacherAreaPage slug="somministrazioni">{() => <AdministrationPlansPanel
-        classHref={groupId => `/docente/classi/${groupId}?tab=paths`}
+        classHref={groupId => `/docente/percorsi?class=${groupId}`}
         classLinkLabel={pathPublicationText(lang, 'openClassPaths')} />}</TeacherAreaPage>;
 }
