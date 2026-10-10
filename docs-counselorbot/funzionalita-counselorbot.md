@@ -337,7 +337,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Funzione | Dove | Che cosa permette |
 | --- | --- | --- |
 | Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; toccare un obiettivo per modificarlo in una finestra popup, dove si scrive un nuovo obiettivo o si adotta e personalizza una proposta del catalogo (in creazione restano visibili titolo, motivazione e data di revisione; criteri, priorità, stato e condivisione sono sotto «Più dettagli»); scegliere un metodo (strategie certificate o proprie), pianificare azioni e controlli, collegare prove e lavori; chiudere con un bilancio, che diventa una tappa della Linea del tempo; scaricare il PDF «Percorso dell’obiettivo»; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
-| Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; per le tappe future o senza data compare anche «Cosa programmo»; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. |
+| Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; per le tappe future o senza data compare anche «Cosa programmo»; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. Sopra la linea, chi è in una classe o in un gruppo trova «Incontri delle tue classi o gruppi»: data, luogo o link, incontri annullati e il pulsante «Ho partecipato» dall’inizio dell’incontro. |
 | Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. |
 | Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli (il nome del mazzo si cambia direttamente nella pagina: Invio salva, Esc annulla) e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
 | Tavolo | `/profilo/tavolo` | Lavorare con materiali, idee e counselor; riaprire Tavoli salvati quando la funzione è abilitata. In cima c’è «I tuoi tavoli salvati» (aprire, rinominare nella riga, eliminare); sotto, in «Crea un nuovo tavolo», la creazione manuale, la composizione con AI e la scelta di counselor e modello, che contano solo per la creazione con AI. |
@@ -350,7 +350,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. |
 | Analisi combinata dei profili | `/profilo/analisi-combinata` | Generare una lettura integrata di almeno due strumenti tra QSA, QSAr e ZTPI. Si apre dal gruppo Conoscermi e riflettere e non compare più sotto i singoli risultati. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. Lista breve con filtri (gruppo, tipo, finalità richiesta/proposta, stato) e un solo dettaglio aperto alla volta; pianificazione con spiegazione del lavoro personale; anteprima di restituzione con destinatario esplicito e copia fissa. Se l’attività indica degli strumenti, nel dettaglio ognuno si apre con «Apri qui» in una finestra dentro l’attività (Esc o «Chiudi e torna all’attività» riportano al punto di partenza) oppure con «Apri a pagina intera»; uno strumento disattivato dopo l’invio per la classe o il gruppo resta elencato come non disponibile. La revoca conferma in linea sulla scheda. |
-| Percorsi di classe | `/profilo/percorsi` | Seguire i percorsi di apprendimento strutturati pubblicati dai docenti per la propria classe; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. Il percorso prioritario è inoltre visualizzato in cima alla panoramica dell'Area personale (`/profilo`) come hero card, con il catalogo strumenti sotto collassato. |
+| Percorsi di classe | `/profilo/percorsi` | Seguire i percorsi di apprendimento strutturati pubblicati dai docenti per la propria classe; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. Un passo incontro mostra data, ora, luogo o link; dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo) e il passo risulta fatto: non c’è registro del docente. Il percorso prioritario è inoltre visualizzato in cima alla panoramica dell'Area personale (`/profilo`) come hero card, con il catalogo strumenti sotto collassato. |
 | Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito; collegamenti contestuali alle assegnazioni del gruppo; messaggi generali del docente leggibili direttamente nella pagina; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
@@ -514,12 +514,12 @@ salvata. I dettagli di attivazione automatica e ripristino sono in
 Nel menu della header la voce verso l'area è «Area docente» con l'icona a berretto
 da laurea, uguale per docenti, ricercatori e amministrazione.
 
-`/docente` è una panoramica illustrata, come l'Area personale: il primo ingresso
-è il Taccuino del docente (`/docente/taccuino`), senza form nella home, seguito dai
-**Taccuini di prova** (`/docente/taccuini-prova`). Seguono il
-percorso «Obiettivi per la mia classe» (DOCENZA) e i tre gruppi (**Classe e assegnazioni**,
+`/docente` è una panoramica illustrata, come l'Area personale: in alto, affiancati,
+il Taccuino del docente (`/docente/taccuino`, senza form nella home) e i **Taccuini di
+prova** (`/docente/taccuini-prova`). Seguono i tre gruppi (**Classe e assegnazioni**,
 **Cataloghi**, **Somministrazioni e ricerca**), nello stesso ordine e con una voce
-per ogni pagina. L’ordine visivo coincide con quello dei collegamenti nel DOM e
+per ogni pagina; i **Cataloghi** si aprono con il percorso guidato «Obiettivi per la mia
+classe» (DOCENZA), con la sua immagine come le altre voci, prima del Catalogo obiettivi. L’ordine visivo coincide con quello dei collegamenti nel DOM e
 della navigazione da tastiera. Ogni voce apre una pagina dedicata con il ritorno
 all’Area docenti: `/docente/istituti` (primo elenco del gruppo **Classe e
 assegnazioni**: creare un istituto, unirsi a uno esistente, impostarne codice e
@@ -536,8 +536,12 @@ studio, Evento professionale, Obiettivo di studio, Idea; quelli integrati senza 
 catalogo sono sempre disponibili, anche per gli studenti delle classi, e il passo si
 completa da solo alla fine della chat), svolge un’attività (assegnazione), usa uno strumento (solo
 strumenti personali: Tavolo, obiettivi, azioni, linea del tempo, Portfolio, flashcard,
-carte, confronto, Bussola, assistente), partecipa a un incontro (indicato come in arrivo)
-o partecipa a una discussione; su telefono il modulo si apre sotto l’elenco dei passi; i
+carte, confronto, Bussola, assistente), partecipa a un incontro (incontri della classe o
+del gruppo: argomento, data e ora, durata, in presenza con luogo oppure online con link;
+il docente li crea, li sposta e li annulla da qui, vede quante presenze sono state segnate
+(dall’inizio dell’incontro)
+e un incontro annullato rende il passo non disponibile; nei modelli l’incontro è ancora
+«in arrivo») o partecipa a una discussione; su telefono il modulo si apre sotto l’elenco dei passi; i
 questionari inseriti in passato come strumento continuano a funzionare e sono segnalati
 come «Inserito come strumento: non raccoglie dati di somministrazione»; `?class={id}` la preseleziona
 e i link dalle Somministrazioni portano qui; sopra, **I miei modelli** e **Preset

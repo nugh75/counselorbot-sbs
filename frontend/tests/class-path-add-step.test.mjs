@@ -79,11 +79,10 @@ async function openEditor(page) {
         await add.getByRole('radio', { name: kind }).check();
     };
 
-    // Six choices; meetings are listed but not yet available.
+    // Six choices, all available in a class path (templates have no meetings yet).
     await add.getByRole('button', { name: '+ Aggiungi passo' }).click();
     assert.equal(await add.getByRole('radio').count(), 6);
-    assert.equal(await add.getByRole('radio', { name: /Partecipa a un incontro/ }).isDisabled(), true);
-    await add.getByText(/arrivano in un prossimo aggiornamento/).waitFor();
+    assert.equal(await add.getByRole('radio', { name: 'Partecipa a un incontro' }).isDisabled(), false);
     // Only the chosen type shows its form.
     await add.getByRole('radio', { name: 'Usa uno strumento' }).check();
     assert.equal(await add.getByText('Il passo è completato quando i dati entrano nella chat guidata.', { exact: false }).count(), 0);

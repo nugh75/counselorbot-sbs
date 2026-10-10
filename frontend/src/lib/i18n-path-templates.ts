@@ -17,6 +17,7 @@ const texts = {
     noTemplates: ['Non hai ancora modelli.', 'You have no templates yet.', 'Todavía no tienes plantillas.', 'Vous n’avez pas encore de modèle.', 'Du hast noch keine Vorlagen.', 'Du har inga mallar än.'],
     noShared: ['Nessun preset condiviso.', 'No shared presets.', 'No hay plantillas compartidas.', 'Aucun modèle partagé.', 'Keine geteilten Vorlagen.', 'Inga delade mallar.'],
     steps: ['passi', 'steps', 'pasos', 'étapes', 'Schritte', 'steg'],
+    step: ['passo', 'step', 'paso', 'étape', 'Schritt', 'steg'],
     by: ['di', 'by', 'de', 'par', 'von', 'av'],
     shared: ['Condiviso', 'Shared', 'Compartida', 'Partagé', 'Geteilt', 'Delad'],
     edit: ['Modifica', 'Edit', 'Editar', 'Modifier', 'Bearbeiten', 'Redigera'],

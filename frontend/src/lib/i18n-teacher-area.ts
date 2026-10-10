@@ -68,7 +68,7 @@ const names = {
     'taccuini-prova': ['Taccuini di prova', 'Practice notebooks', 'Cuadernos de práctica', 'Carnets d’entraînement', 'Übungs-Notizbücher', 'Övningsanteckningsböcker'],
     classi: ['Gruppi e classi', 'Groups and classes', 'Grupos y clases', 'Groupes et classes', 'Gruppen und Klassen', 'Grupper och klasser'],
     percorsi: ['Percorsi di classe', 'Class paths', 'Itinerarios de clase', 'Parcours de classe', 'Klassenpfade', 'Klassvägar'],
-    assegnazioni: ['Assegnazione', 'Assignment', 'Asignación', 'Attribution', 'Zuweisung', 'Tilldelning'],
+    assegnazioni: ['Assegnazioni', 'Assignments', 'Asignaciones', 'Attributions', 'Zuweisungen', 'Tilldelningar'],
     'catalogo-obiettivi': ['Catalogo obiettivi', 'Goal catalog', 'Catálogo de objetivos', 'Catalogue d’objectifs', 'Zielkatalog', 'Målkatalog'],
     strategie: ['Strategie', 'Strategies', 'Estrategias', 'Stratégies', 'Strategien', 'Strategier'],
     materiali: ['Letture, film e materiali', 'Readings, films and resources', 'Lecturas, películas y materiales', 'Lectures, films et ressources', 'Lektüren, Filme und Materialien', 'Läsningar, filmer och material'],

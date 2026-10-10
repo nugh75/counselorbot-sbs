@@ -21,7 +21,7 @@ import { StepKindPicker } from './StepKindPicker';
 import { ActivityToolsPicker } from './ActivityTools';
 import { ACTIVITY_TOOLS } from '@/lib/activity-tools';
 import { stepKindText } from '@/lib/i18n-step-kinds';
-import { STANDALONE_GUIDED_CHATS, type StepKind } from '@/lib/path-step-kinds';
+import { STANDALONE_GUIDED_CHATS, TEMPLATE_STEP_KINDS, type StepKind } from '@/lib/path-step-kinds';
 import type { StudentGroup } from './class-group-types';
 
 const input = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
@@ -73,12 +73,12 @@ export function PathTemplatesPanel({ groups, onApplied }: { groups: StudentGroup
             <div className="min-w-0">
                 <p className="break-words font-semibold text-slate-800">{template.title}</p>
                 <p className="text-xs text-slate-600">
-                    {`${template.steps.length} ${l('steps')}`}
+                    {`${template.steps.length} ${l(template.steps.length === 1 ? 'step' : 'steps')}`}
                     {!template.is_owner && ` · ${l('by')} ${template.owner_name}`}
                     {template.is_owner && template.shared && ` · ${l('shared')}`}
                 </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
                 <Button variant="secondary" disabled={busy} onClick={() => setApplying(template)}>{l('apply')}</Button>
                 {template.is_owner ? <>
                     <Button variant="secondary" disabled={busy} onClick={() => setEditing(template)}>{l('edit')}</Button>
@@ -248,7 +248,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
         <div className="space-y-3 border-t border-slate-100 pt-3">
             {!adding ? <Button variant="secondary" onClick={() => setAdding(true)}>{stepKindText(lang, 'addStep')}</Button> : (
                 <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <StepKindPicker lang={lang} value={kind} onChange={setKind} />
+                    <StepKindPicker lang={lang} value={kind} onChange={setKind} available={TEMPLATE_STEP_KINDS} />
                     {kind && <div className="flex flex-wrap gap-2">
                         {(kind === 'guided_chat' ? [['guided_results_chat', 'chatOnResults'], ['tool', 'chatStandalone']] as const
                             : [[KIND_TYPE[kind], kind] as const]).map(([type, label]) => <Button key={label} variant="secondary" onClick={() => {

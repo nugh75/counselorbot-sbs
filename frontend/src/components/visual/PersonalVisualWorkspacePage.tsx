@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PersonalAreaHeader } from '@/components/profile/PersonalAreaHeader';
 import { PersonalTimeline } from '@/components/visual/PersonalTimeline';
+import { StudentMeetings } from '@/components/profile/MeetingDetails';
 import { VisualTools, type WorkTab } from '@/components/visual/VisualTools';
 import { useI18n } from '@/lib/i18n-context';
 import { visualLabel } from '@/lib/i18n-visual-tools';
@@ -26,6 +27,8 @@ export function PersonalVisualWorkspacePage({ tab }: { tab: WorkTab }) {
         <PersonalAreaHeader slug="timeline" />
         {/* Il pannello «Obiettivi collegati» è omesso: l'accesso agli obiettivi
             è già garantito dalla barra (+ Obiettivo) e dalle voci nell'elenco. */}
+        {/* #175: class or group meetings sit above the personal timeline, read from the class. */}
+        <StudentMeetings lang={lang} />
         <PersonalTimeline locale={lang} />
     </main>;
 

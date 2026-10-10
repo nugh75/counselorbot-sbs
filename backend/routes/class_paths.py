@@ -150,6 +150,7 @@ def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:
         "results_step_id": step.results_step_id,
         "assignment_id": step.assignment_id,
         "topic_id": step.topic_id,
+        "meeting_id": step.meeting_id,
         "active_from": step.active_from,
         "target_summary": descriptor["target_summary"],
         "availability_reason": descriptor["availability_reason"],
@@ -437,6 +438,7 @@ async def update_class_path(
                 results_step_id=step_input.results_step_id if step_input.step_type == "guided_results_chat" else None,
                 assignment_id=step_input.assignment_id if step_input.step_type == "assignment" else None,
                 topic_id=step_input.topic_id if step_input.step_type == "forum" else None,
+                meeting_id=step_input.meeting_id if step_input.step_type == "meeting" else None,
                 active_from=datetime.now(timezone.utc) if path.status == "published" else None,
                 title=step_title,
                 instructions=step_instructions,
@@ -764,9 +766,10 @@ async def list_student_class_paths(
         steps = _active_steps(db, path.id)
         descriptors = {s.id: step_descriptor(db, path, s) for s in steps}
         # The forum follows its own class setting only (checked by the
-        # descriptor), never the union of the student's classes or tool view.
+        # descriptor), never the union of the student's classes or tool view;
+        # a meeting (#175) follows class membership only.
         available = {s.id: descriptors[s.id]["available"] and (
-                     s.step_type == "forum"
+                     s.step_type in ("forum", "meeting")
                      or (descriptors[s.id]["instrument_code"] or "").lower() in user_tools_lower) for s in steps}
         auto = {s.id: descriptors[s.id]["auto_detect"] for s in steps}
         marks = _load_marks(db, [s.id for s in steps], [username])
