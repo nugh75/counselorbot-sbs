@@ -530,8 +530,11 @@ immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano
 con lo stesso editor della scheda Percorsi della classe; nell’editor (della classe e dei
 modelli) un solo **+ Aggiungi passo** chiede «Cosa fa lo studente in questo passo?» e
 mostra solo il modulo del tipo scelto: compila un questionario (sempre tramite
-somministrazione), fa una chat guidata (sui risultati di un questionario del percorso o
-autonoma, come Savickas), svolge un’attività (assegnazione), usa uno strumento (solo
+somministrazione), fa una chat guidata (sui risultati di un questionario del percorso, oppure un
+percorso guidato per riflettere su un’esperienza o una scelta: Savickas, Evento di
+studio, Evento professionale, Obiettivo di studio, Idea; quelli integrati senza voce nel
+catalogo sono sempre disponibili, anche per gli studenti delle classi, e il passo si
+completa da solo alla fine della chat), svolge un’attività (assegnazione), usa uno strumento (solo
 strumenti personali: Tavolo, obiettivi, azioni, linea del tempo, Portfolio, flashcard,
 carte, confronto, Bussola, assistente), partecipa a un incontro (indicato come in arrivo)
 o partecipa a una discussione; su telefono il modulo si apre sotto l’elenco dei passi; i
