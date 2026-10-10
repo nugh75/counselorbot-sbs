@@ -1935,9 +1935,15 @@ class ForumPathStepInput(PathStepFields):
     topic_id: int = Field(gt=0)
 
 
+class PendingPathStepInput(PathStepFields):
+    """A step applied from a template, kept as is until publication creates its target."""
+    step_type: Literal["pending"]
+    id: int = Field(gt=0)
+
+
 TypedPathStepInput = Annotated[
     Union[ClassPathStepInput, AdministrationPathStepInput, GuidedResultsChatStepInput, AssignmentPathStepInput,
-          ForumPathStepInput],
+          ForumPathStepInput, PendingPathStepInput],
     Field(discriminator="step_type"),
 ]
 

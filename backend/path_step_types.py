@@ -139,6 +139,11 @@ def validate_step_input(db, path, value):
     elif value.step_type == "forum":
         # Lock the discussion so a concurrent hide is seen before this save commits.
         forum_target(db, path.group_id, value.topic_id, for_update=True)
+    elif value.step_type == "pending":
+        # Only kept, never created here: pending steps come from applying a template.
+        stored = db.query(models.ClassPathStep).filter_by(id=value.id, path_id=path.id).first()
+        if not stored or stored.step_type != "pending":
+            raise HTTPException(422, "pending_step_invalid")
 
 
 def validate_composition(db, path, steps):
@@ -153,6 +158,9 @@ def validate_composition(db, path, steps):
         raise HTTPException(422, "duplicate_forum_step")
     linked = set()
     for index, value in enumerate(steps):
+        if value.step_type == "pending":
+            _validate_pending_reference(db, steps, positions, index, value)
+            continue
         if value.step_type != "guided_results_chat":
             continue
         if value.results_step_id in linked:
@@ -174,6 +182,18 @@ def validate_composition(db, path, steps):
             raise HTTPException(422, "results_step_order")
 
 
+def _validate_pending_reference(db, steps, positions, index, value):
+    """A pending deep dive keeps its earlier questionnaire step, pending or created."""
+    config = db.get(models.ClassPathStep, value.id).pending_config or {}
+    if config.get("kind") != "guided_results_chat":
+        return
+    source = config.get("results_step_id")
+    if source not in positions:
+        raise HTTPException(409, "results_step_referenced")
+    if steps[positions[source]].step_type not in {"pending", "questionnaire_administration"} or positions[source] > index:
+        raise HTTPException(422, "results_step_order")
+
+
 def publication_problems(db, path, steps):
     """Every active step whose target, capability or reference blocks going live.
 
@@ -190,6 +210,8 @@ def publication_problems(db, path, steps):
 
 
 def target_identity(value):
+    if value.step_type == "pending":
+        return value.step_type, value.id
     target = {
         "tool": "tool_key",
         "questionnaire_administration": "administration_plan_id",
@@ -203,6 +225,10 @@ def target_identity(value):
 def apply_step_target(step, value):
     if step.active_from is not None and target_identity(step) != target_identity(value):
         raise HTTPException(409, "activated_step_target_immutable")
+    if value.step_type == "pending":
+        # validate_step_input already checked the stored step is still pending.
+        return
+    step.pending_config = None
     step.step_type = value.step_type
     step.tool_key = value.tool_key if value.step_type == "tool" else None
     step.administration_plan_id = (
@@ -251,6 +277,16 @@ def step_descriptor(db, path, step):
         return assignment_descriptor(db, path, step)
     if step.step_type == "forum":
         return forum_descriptor(db, path, step)
+    if step.step_type == "pending":
+        # Created at publication; until then the teacher sees what the template describes.
+        return {
+            "available": False,
+            "availability_reason": "pending_preparation",
+            "auto_detect": True,
+            "target_summary": None,
+            "start_href": None,
+            "instrument_code": None,
+        }
     deep_dive = step.step_type == "guided_results_chat"
     source = results_step(db, step) if deep_dive else step
     try:

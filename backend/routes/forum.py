@@ -235,6 +235,19 @@ def create_topic(group_id: int, payload: ForumTopicCreate,
     return _topic(db, row, staff, identity["username"])
 
 
+def create_path_topic(db: Session, group_id: int, identity: dict, title: str, body: str) -> int:
+    """Publication of a path applied from a template: the teacher's own discussion (#172).
+
+    Write-only seam: the title and body come from the template, never from forum rows."""
+    now = db.scalar(func.statement_timestamp())
+    row = models.ForumTopic(group_id=group_id, title=title, body=body, status="published",
+                            created_at=now, last_post_at=now, author_username=identity["username"],
+                            author_display_name=identity.get("name") or identity["username"])
+    db.add(row)
+    db.flush()
+    return row.id
+
+
 @router.get("/groups/{group_id}/forum/link-targets")
 def link_targets(group_id: int, identity=Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     _, staff = _access(db, identity, group_id)
