@@ -35,6 +35,9 @@ import { pathPublicationText, unavailableActionText } from '@/lib/i18n-path-publ
 import { pathTemplateText } from '@/lib/i18n-path-templates';
 import { PathTemplateUpdate } from './PathTemplateUpdate';
 import { StepKindPicker } from './StepKindPicker';
+import { ClassMeetingsManager } from './ClassMeetingsManager';
+import { classMeetingText } from '@/lib/i18n-class-meetings';
+import { meetingWhen } from '@/lib/class-meetings';
 import { stepKindText, type StepKindTextKey } from '@/lib/i18n-step-kinds';
 import { guidedChatKeys, isLegacyQuestionnaireTool, isPersonalTool, type StepKind } from '@/lib/path-step-kinds';
 
@@ -308,7 +311,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                         ? {administration_plan_id:s.administration_plan_id}
                         : s.step_type === 'guided_results_chat' ? {results_step_id:s.results_step_id}
                             : s.step_type === 'assignment' ? {assignment_id:s.assignment_id}
-                                : s.step_type === 'forum' ? {topic_id:s.topic_id} : {tool_key:s.tool_key}),
+                                : s.step_type === 'forum' ? {topic_id:s.topic_id}
+                                    : s.step_type === 'meeting' ? {meeting_id:s.meeting_id} : {tool_key:s.tool_key}),
                     title: s.title ? s.title.trim() : null,
                     instructions: s.instructions ? s.instructions.trim() : null,
                     due_date: s.due_date || null,
@@ -632,13 +636,17 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                         ? `${p('assignment')} · ${step.assignment_summary?.title || `#${step.assignment_id}`}`
                                         : step.step_type === 'forum'
                                             ? `${f('forum')} · ${forumTopics.find(row => row.id === step.topic_id)?.title || `#${step.topic_id}`}${step.forum_summary?.locked ? ` · ${f('locked')}` : ''}`
+                                            : step.step_type === 'meeting'
+                                            ? `${classMeetingText(lang, 'meeting')} · ${step.meeting_summary ? `${step.meeting_summary.title} · ${meetingWhen(step.meeting_summary, lang)}` : `#${step.meeting_id}`}`
                                             : toolLabel(step.tool_key, classSettings.tools, lang);
                             // Students see this step as not available: say so here too.
                             const unavailable = ((step.step_type ?? 'tool') === 'tool' && !usableKeys.has(step.tool_key))
                                 // A saved assignment step loses its summary once revoked or otherwise unavailable.
                                 || (step.step_type === 'assignment' && step.id !== undefined && !step.assignment_summary)
                                 // Likewise a saved forum step whose discussion was hidden or whose forum is off.
-                                || (step.step_type === 'forum' && step.id !== undefined && !step.forum_summary);
+                                || (step.step_type === 'forum' && step.id !== undefined && !step.forum_summary)
+                                // And a saved meeting step whose meeting was cancelled.
+                                || (step.step_type === 'meeting' && step.id !== undefined && !step.meeting_summary);
                             // The server reason of a saved step says what to fix; a local check covers unsaved tools.
                             const action = pending ? null : unavailableAction(step.availability_reason || (unavailable ? 'tool_disabled_for_class' : null));
                             return (
@@ -803,8 +811,8 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <h4 className="text-sm font-semibold">{k('chatStandalone')}</h4>
                                 {chatKeys.length === 0 ? <p className="text-sm text-slate-600">{k('noChats')}</p> : (
                                     <div className="flex flex-wrap gap-2">
-                                        <label>{k('chatStandalone')}<select value={selectedChatKey} onChange={event=>setSelectedChatKey(event.target.value)} className="ml-2 rounded border p-2">
-                                            <option value="">{a('choose')}</option>
+                                        <label><span className="sr-only">{k('chatStandalone')}</span><select value={selectedChatKey} onChange={event=>setSelectedChatKey(event.target.value)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
+                                            <option value="">{k('chooseGuidedPath')}</option>
                                             {chatKeys.map(key => <option key={key} value={key}>{toolLabel(key, classSettings.tools, lang)}</option>)}
                                         </select></label>
                                         <Button variant="secondary" disabled={busy || !selectedChatKey} onClick={() => {handleAddStep(selectedChatKey);closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
@@ -848,6 +856,15 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 </div>
                                 <p className="text-sm text-slate-600">{k('toolHelp')}</p>
                             </div>}
+                            {kind === 'meeting' && <ClassMeetingsManager lang={lang} groupId={path.group_id} addLabel={l('addStep')}
+                                usedIds={steps.flatMap(step => step.step_type === 'meeting' && step.meeting_id ? [step.meeting_id] : [])}
+                                onAdd={meeting => {
+                                    setSteps(current => [...current, {position: current.length + 1, step_type: 'meeting', meeting_id: meeting.id,
+                                        meeting_summary: meeting, tool_key: '', auto_detect: true, can_self_mark: false, title: null,
+                                        instructions: null, due_date: null}]);
+                                    setNotice(null);
+                                    closeAdd();
+                                }} />}
                             {kind === 'discussion' && <div className="space-y-3">
                             {forumLoadError && <Callout variant="danger">{f('loadError')} <Button variant="secondary" onClick={()=>void loadForumTopics()}>{f('retry')}</Button></Callout>}
                             {!forumLoadError && !forumTopics.length && <p className="text-sm text-slate-600">{f('empty')}</p>}

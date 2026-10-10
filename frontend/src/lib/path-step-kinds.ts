@@ -1,8 +1,8 @@
 // «+ Aggiungi passo» (#173): what the student does in a step, before its form.
 export type StepKind = 'questionnaire' | 'guided_chat' | 'activity' | 'tool' | 'meeting' | 'discussion';
 export const STEP_KINDS: StepKind[] = ['questionnaire', 'guided_chat', 'activity', 'tool', 'meeting', 'discussion'];
-// Meetings arrive with #175/#176: the choice is listed but not yet available.
-export const AVAILABLE_STEP_KINDS: StepKind[] = STEP_KINDS.filter(kind => kind !== 'meeting');
+// Templates have no meetings yet: they need a date and a class (#175 adds them to class paths).
+export const TEMPLATE_STEP_KINDS: StepKind[] = STEP_KINDS.filter(kind => kind !== 'meeting');
 
 // Questionnaires enter a path only through an administration, which collects their data.
 export const ADMINISTRATION_QUESTIONNAIRES = ['QSA', 'QSAr', 'ZTPI', 'QPCS', 'QPCC', 'QAP'];

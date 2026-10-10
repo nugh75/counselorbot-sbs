@@ -21,7 +21,7 @@ import { StepKindPicker } from './StepKindPicker';
 import { ActivityToolsPicker } from './ActivityTools';
 import { ACTIVITY_TOOLS } from '@/lib/activity-tools';
 import { stepKindText } from '@/lib/i18n-step-kinds';
-import { STANDALONE_GUIDED_CHATS, type StepKind } from '@/lib/path-step-kinds';
+import { STANDALONE_GUIDED_CHATS, TEMPLATE_STEP_KINDS, type StepKind } from '@/lib/path-step-kinds';
 import type { StudentGroup } from './class-group-types';
 
 const input = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
@@ -248,7 +248,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
         <div className="space-y-3 border-t border-slate-100 pt-3">
             {!adding ? <Button variant="secondary" onClick={() => setAdding(true)}>{stepKindText(lang, 'addStep')}</Button> : (
                 <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <StepKindPicker lang={lang} value={kind} onChange={setKind} />
+                    <StepKindPicker lang={lang} value={kind} onChange={setKind} available={TEMPLATE_STEP_KINDS} />
                     {kind && <div className="flex flex-wrap gap-2">
                         {(kind === 'guided_chat' ? [['guided_results_chat', 'chatOnResults'], ['tool', 'chatStandalone']] as const
                             : [[KIND_TYPE[kind], kind] as const]).map(([type, label]) => <Button key={label} variant="secondary" onClick={() => {
