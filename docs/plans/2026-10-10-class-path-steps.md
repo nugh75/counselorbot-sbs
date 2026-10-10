@@ -18,6 +18,11 @@ Fase 3 (#175): tabelle `class_meetings` (organizzatore e gestore distinti, annul
 senza cancellazione) e `class_meeting_attendance` (segnata dallo studente); passo
 `meeting` con `class_path_steps.meeting_id`; nei modelli l’incontro arriverà con data e
 fasce da completare nella classe.
+Fase 4 (#176): `class_meetings.kind` (`group`/`individual`), `host_kind` (docente, referente
+da `orientation_referrals` con ruolo e nome copiati, esperto con nome e ruolo), `starts_at`
+facoltativo per gli individuali; `class_meeting_slots` e `class_meeting_bookings` con indici
+unici parziali sulle prenotazioni attive (una per fascia, una per studente e incontro) e
+lock della fascia: due prenotazioni contemporanee hanno un solo vincitore.
 Tracciamento: milestone e issue su GitHub (vedi «Fasi»).
 
 ## Problema

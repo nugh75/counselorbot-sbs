@@ -337,7 +337,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Funzione | Dove | Che cosa permette |
 | --- | --- | --- |
 | Obiettivi | `/profilo/obiettivi` | Organizzare gli obiettivi in una rete, dal perché al come: sopraobiettivi e sottobiettivi, anche con più genitori; toccare un obiettivo per modificarlo in una finestra popup, dove si scrive un nuovo obiettivo o si adotta e personalizza una proposta del catalogo (in creazione restano visibili titolo, motivazione e data di revisione; criteri, priorità, stato e condivisione sono sotto «Più dettagli»); scegliere un metodo (strategie certificate o proprie), pianificare azioni e controlli, collegare prove e lavori; chiudere con un bilancio, che diventa una tappa della Linea del tempo; scaricare il PDF «Percorso dell’obiettivo»; condividere un ramo con i docenti di un gruppo (mai i sopraobiettivi). Su computer anche vista mappa. Completare un’attività non conclude automaticamente un obiettivo: lo stato resta sempre manuale, è la persona a rivederlo. |
-| Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; per le tappe future o senza data compare anche «Cosa programmo»; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. Sopra la linea, chi è in una classe o in un gruppo trova «Incontri delle tue classi o gruppi»: data, luogo o link, incontri annullati e il pulsante «Ho partecipato» dall’inizio dell’incontro. |
+| Linea del tempo | `/profilo/timeline` | Vedere tutto nel tempo: tappe passate, azioni datate, revisioni degli obiettivi e appuntamenti dell’istituto, con vista calendario e filtri per tipo. Qui si aggiungono solo tappe passate, con data o periodo, simbolo, diario, collegamenti al Portfolio e la rilettura dell’esperienza (cosa ha funzionato, cosa proverò), che può diventare un obiettivo o un’azione; per le tappe future o senza data compare anche «Cosa programmo»; una legenda spiega i simboli; azioni e obiettivi si aprono sulle loro pagine. Sopra la linea, chi è in una classe o in un gruppo trova «Incontri delle tue classi o gruppi»: data, luogo o link, con chi è l’incontro, incontri annullati, la prenotazione delle fasce degli incontri individuali e il pulsante «Ho partecipato» dall’inizio dell’incontro o della propria fascia. |
 | Studiare da un PDF (pQBL) | `/profilo/pqbl` | Caricare un PDF con testo selezionabile (massimo 100 MB), generare domande e ricevere feedback; modalità apprendimento e verifica finale. `/pqbl` reindirizza qui. |
 | Flashcard | `/profilo/flashcard` | Preparare mazzi di domande e risposte, modificarli (il nome del mazzo si cambia direttamente nella pagina: Invio salva, Esc annulla) e ripassare in una sessione di studio, mostrando la risposta e registrando il proprio esito. |
 | Tavolo | `/profilo/tavolo` | Lavorare con materiali, idee e counselor; riaprire Tavoli salvati quando la funzione è abilitata. In cima c’è «I tuoi tavoli salvati» (aprire, rinominare nella riga, eliminare); sotto, in «Crea un nuovo tavolo», la creazione manuale, la composizione con AI e la scelta di counselor e modello, che contano solo per la creazione con AI. |
@@ -539,7 +539,14 @@ strumenti personali: Tavolo, obiettivi, azioni, linea del tempo, Portfolio, flas
 carte, confronto, Bussola, assistente), partecipa a un incontro (incontri della classe o
 del gruppo: argomento, data e ora, durata, in presenza con luogo oppure online con link;
 il docente li crea, li sposta e li annulla da qui, vede quante presenze sono state segnate
-(dall’inizio dell’incontro)
+(dall’inizio dell’incontro); un incontro può anche essere **individuale, a fasce
+prenotabili**, con il docente, con un referente dell’istituto scelto dall’elenco di
+«Referenti ed eventi» oppure con un esperto esterno indicato con nome e ruolo (l’invito
+a referente o esperto lo manda il docente, fuori dalla piattaforma): il docente aggiunge
+le fasce, vede chi ha prenotato, sposta una prenotazione su una fascia libera, annulla
+prenotazioni o fasce; ogni studente prenota una sola fascia, la cambia o la annulla, non
+vede chi ha preso le altre e, se il docente annulla la sua, vede l’avviso e ne sceglie
+un’altra; due prenotazioni contemporanee della stessa fascia non possono riuscire entrambe
 e un incontro annullato rende il passo non disponibile; nei modelli l’incontro è ancora
 «in arrivo») o partecipa a una discussione; su telefono il modulo si apre sotto l’elenco dei passi;
 le regole di completamento di questionario, attività e discussione stanno in «Come si completa
