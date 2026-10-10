@@ -35,6 +35,7 @@ class MeetingWrite(BaseModel):
     referral_id: Optional[int] = Field(default=None, gt=0)
     host_name: Optional[str] = Field(default=None, max_length=200)
     host_role: Optional[str] = Field(default=None, max_length=200)
+    show_on_timeline: bool = True
 
     @model_validator(mode="after")
     def consistent(self):
@@ -165,6 +166,7 @@ def _apply(db: Session, group: models.StudentGroup, row: models.ClassMeeting, pa
     row.description = (payload.description or "").strip() or None
     row.mode, row.place, row.link = payload.mode, payload.place, payload.link
     row.host_kind, row.referral_id, row.host_name, row.host_role = payload.host_kind, payload.referral_id, host_name, host_role
+    row.show_on_timeline = payload.show_on_timeline
 
 
 @router.get("/teacher/groups/{group_id}/meetings")
