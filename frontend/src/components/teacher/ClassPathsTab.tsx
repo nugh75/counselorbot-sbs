@@ -29,7 +29,7 @@ import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
 import { parseForumDiscussionLinks, parseForumList } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
-import { lifecycleRequest, parsePublicationProblems, unavailableAction, type PublicationProblem } from '@/lib/path-publication';
+import { lifecycleRequest, parsePublicationProblems, publishRevision, unavailableAction, type PublicationProblem } from '@/lib/path-publication';
 import { pathPublicationText, unavailableActionText } from '@/lib/i18n-path-publication';
 
 type PathTextKey = keyof typeof classPathsTexts;
@@ -258,7 +258,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         if (notice === 'saved' || notice === 'published') setNotice(null);
     };
 
-    const handleSave = async (): Promise<boolean> => {
+    const handleSave = async (): Promise<ClassPath | boolean> => {
         if (pending.current || notice === 'conflict') return false;
         if (!dirty) return true;
         if (account.current !== getViewAsAccount()?.username) {
@@ -326,7 +326,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             setSteps(next.steps);
             setNotice('saved');
             onUpdated(next);
-            return true;
+            return next;
         } catch {
             if (isCurrent()) setNotice('error');
             return false;
@@ -340,15 +340,18 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
 
     const handlePublish = async () => {
         if (busy || notice === 'conflict') return;
+        // A save just made bumps the revision: publish from the saved one, not this render's.
+        let revision = currentPath.revision;
         if (dirty) {
-            const ok = await handleSave();
-            if (!ok) return;
+            const saved = await handleSave();
+            if (!saved) return;
+            revision = publishRevision(revision, saved);
         }
         setBusy(true);
         setNotice(null);
         setProblems([]);
         try {
-            const response = await apiFetch(`/api/teacher/paths/${currentPath.id}/publish`, lifecycleRequest(currentPath.revision));
+            const response = await apiFetch(`/api/teacher/paths/${currentPath.id}/publish`, lifecycleRequest(revision));
             if (response.ok) {
                 const next = parseClassPath(await response.json());
                 setCurrentPath(next);
