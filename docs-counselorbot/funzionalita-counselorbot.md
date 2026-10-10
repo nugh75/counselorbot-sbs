@@ -541,7 +541,9 @@ del gruppo: argomento, data e ora, durata, in presenza con luogo oppure online c
 il docente li crea, li sposta e li annulla da qui, vede quante presenze sono state segnate
 (dall’inizio dell’incontro)
 e un incontro annullato rende il passo non disponibile; nei modelli l’incontro è ancora
-«in arrivo») o partecipa a una discussione; su telefono il modulo si apre sotto l’elenco dei passi; i
+«in arrivo») o partecipa a una discussione; su telefono il modulo si apre sotto l’elenco dei passi;
+le regole di completamento di questionario, attività e discussione stanno in «Come si completa
+il passo», da aprire quando servono, e «Pubblica» è un pulsante petrolio come gli altri; i
 questionari inseriti in passato come strumento continuano a funzionare e sono segnalati
 come «Inserito come strumento: non raccoglie dati di somministrazione»; `?class={id}` la preseleziona
 e i link dalle Somministrazioni portano qui; sopra, **I miei modelli** e **Preset
