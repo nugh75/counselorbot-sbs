@@ -16,10 +16,10 @@ type HostKind = ClassMeeting['host_kind'];
 interface Draft {
     title: string; description: string; kind: ClassMeeting['kind']; startsAt: string; duration: string;
     mode: 'in_person' | 'online'; place: string; link: string;
-    hostKind: HostKind; referralId: string; hostName: string; hostRole: string;
+    hostKind: HostKind; referralId: string; hostName: string; hostRole: string; showOnTimeline: boolean;
 }
 const emptyDraft: Draft = { title: '', description: '', kind: 'group', startsAt: '', duration: '60', mode: 'in_person', place: '', link: '',
-    hostKind: 'teacher', referralId: '', hostName: '', hostRole: '' };
+    hostKind: 'teacher', referralId: '', hostName: '', hostRole: '', showOnTimeline: true };
 interface Referent { id: number; role: string; name: string | null }
 
 function draftOf(meeting: ClassMeeting): Draft {
@@ -29,7 +29,7 @@ function draftOf(meeting: ClassMeeting): Draft {
         place: meeting.place ?? '', link: meeting.link ?? '', hostKind: meeting.host_kind,
         referralId: meeting.referral_id ? String(meeting.referral_id) : '',
         hostName: meeting.host_kind === 'expert' ? meeting.host_name ?? '' : '',
-        hostRole: meeting.host_kind === 'expert' ? meeting.host_role ?? '' : '' };
+        hostRole: meeting.host_kind === 'expert' ? meeting.host_role ?? '' : '', showOnTimeline: meeting.show_on_timeline !== false };
 }
 
 /**
@@ -101,7 +101,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
             link: draft.mode === 'online' ? draft.link.trim() || null : null,
             host_kind: draft.hostKind, referral_id: draft.hostKind === 'referent' ? Number(draft.referralId) || null : null,
             host_name: draft.hostKind === 'expert' ? draft.hostName.trim() || null : null,
-            host_role: draft.hostKind === 'expert' ? draft.hostRole.trim() || null : null };
+            host_role: draft.hostKind === 'expert' ? draft.hostRole.trim() || null : null, show_on_timeline: draft.showOnTimeline };
         const done = editing === 'new'
             ? await send(`/api/teacher/groups/${groupId}/meetings`, 'POST', body)
             : await send(`/api/teacher/meetings/${(editing as ClassMeeting).id}`, 'PUT', { ...body, revision: (editing as ClassMeeting).revision });
@@ -182,6 +182,9 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                     <input className={input} maxLength={300} value={draft.place} onChange={event => setDraft({ ...draft, place: event.target.value })} /></label>
                 : <label className="block text-sm">{m('link')}
                     <input type="url" className={input} maxLength={500} placeholder="https://" value={draft.link} onChange={event => setDraft({ ...draft, link: event.target.value })} /></label>}
+            <label className="flex min-h-[44px] items-center gap-2 text-sm">
+                <input type="checkbox" checked={draft.showOnTimeline} onChange={event => setDraft({ ...draft, showOnTimeline: event.target.checked })}
+                    className="h-4 w-4 accent-indigo-600" />{m('showOnTimeline')}</label>
             <label className="block text-sm">{m('description')}
                 <textarea className={input} rows={2} maxLength={3000} value={draft.description} onChange={event => setDraft({ ...draft, description: event.target.value })} /></label>
             <div className="flex flex-wrap gap-2">
