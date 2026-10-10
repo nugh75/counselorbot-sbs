@@ -597,7 +597,9 @@ usare nell’attività** — uno o più strumenti personali abilitati per la cla
 gruppo, che lo studente apre in una finestra dentro l’attività o a pagina intera; lo
 stesso campo c’è nell’attività di un modello di percorso, e alla pubblicazione uno
 strumento nel frattempo disattivato blocca il passo; l’elenco mostra invii,
-destinatari e restituzioni, con revoca a conferma in linea sulla scheda e gli
+destinatari e restituzioni, con revoca a conferma in linea sulla scheda, «Elimina»
+finché nessuno studente l’ha iniziata (nessuna pianificazione né consegna) e nessun passo
+di percorso la usa — altrimenti la scheda dice perché e resta la revoca — e gli
 allegati visibili nel dettaglio), `/docente/catalogo-obiettivi` (solo creazione e
 gestione del catalogo: le voci pubblicate non si assegnano da qui), `/docente/strategie`,
 `/docente/materiali`, `/docente/orientamento` (solo docenti) e
