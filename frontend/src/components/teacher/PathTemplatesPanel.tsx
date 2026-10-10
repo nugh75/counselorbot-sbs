@@ -20,12 +20,12 @@ import { useTeacherResource } from './useTeacherResource';
 import type { StudentGroup } from './class-group-types';
 
 const input = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
-const TYPE_LABEL: Record<TemplateStepType, PathTemplateTextKey> = {
+export const TYPE_LABEL: Record<TemplateStepType, PathTemplateTextKey> = {
     tool: 'typeTool', questionnaire_administration: 'typeQuestionnaire', guided_results_chat: 'typeResults',
     assignment: 'typeAssignment', forum: 'typeForum',
 };
 
-function toolName(key: string, lang: string) {
+export function toolName(key: string, lang: string) {
     return key in classSettingsTexts ? classSettingsText(lang, key as keyof typeof classSettingsTexts) : resolveClassPathToolName(key, lang);
 }
 

@@ -65,6 +65,19 @@ function fakeServer() {
         if (groupSettings) return json(settings(Number(groupSettings[1])));
         const saveAs = path.match(/^\/api\/teacher\/paths\/(\d+)\/save-as-template$/);
         if (saveAs) return json(template({ title: 'Copia', steps: [] }), 201);
+        const templateUpdate = path.match(/^\/api\/teacher\/paths\/(\d+)\/template-update$/);
+        if (templateUpdate && method === 'GET') return json({ template_id: 70, template_title: 'Inizio anno', template_revision: 2,
+            path_template_revision: 1, changes: [
+                { change: 'added', step_type: 'tool', tool_key: 'tavolo', title: 'Ripasso', status: 'apply' },
+                { change: 'changed', step_type: 'forum', tool_key: null, title: null, status: 'created' },
+            ] });
+        if (templateUpdate) {
+            const current = state.paths[11][0];
+            current.revision += 1;
+            current.template_revision = body.template_revision;
+            current.steps.push({ id: 4, position: 4, step_type: 'tool', tool_key: 'tavolo', title: 'Ripasso', auto_detect: true, pending_config: null });
+            return json({ path: current, skipped: [] });
+        }
         if (path.startsWith('/api/groups/') && path.endsWith('/forum/topics')) return json({ topics: [] });
         return json([]);
     };
@@ -120,8 +133,18 @@ async function prepare(page) {
     assert.equal(await page.getByText('Verrà creato quando pubblichi il percorso; fino ad allora gli studenti non vedono nulla.').count(), 2);
     await page.getByRole('button', { name: 'Salva come modello' }).click();
     await page.getByText('Salvato tra i tuoi modelli.').waitFor();
+
+    // Update from template: the differences come first, then only untouched steps change.
+    await page.getByRole('button', { name: 'Aggiorna da modello' }).click();
+    const update = page.locator('[aria-label="Aggiorna da modello"]');
+    await update.getByText('Nuovo · Strumento · Tavolo').waitFor();
+    await update.getByText('già creato nella classe: modificalo nel percorso').waitFor();
+    await update.getByRole('button', { name: 'Applica aggiornamento' }).click();
+    await page.getByText('Percorso aggiornato dal modello.').waitFor();
+    assert.equal(await cards.count(), 4);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);
+    assert.ok(requests.includes('POST /api/teacher/paths/311/template-update'));
 
     const created = requests.filter(row => row === 'POST /api/teacher/path-templates');
     assert.equal(created.length, 1);
