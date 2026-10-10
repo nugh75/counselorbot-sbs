@@ -635,7 +635,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                         : step.step_type === 'forum'
                                             ? `${f('forum')} · ${forumTopics.find(row => row.id === step.topic_id)?.title || `#${step.topic_id}`}${step.forum_summary?.locked ? ` · ${f('locked')}` : ''}`
                                             : step.step_type === 'meeting'
-                                            ? `${classMeetingText(lang, 'meeting')} · ${step.meeting_summary ? `${step.meeting_summary.title} · ${meetingWhen(step.meeting_summary, lang)}` : `#${step.meeting_id}`}`
+                                            ? `${classMeetingText(lang, 'meeting')} · ${step.meeting_summary ? `${step.meeting_summary.title} · ${step.meeting_summary.kind === 'individual' ? classMeetingText(lang, 'individual') : meetingWhen(step.meeting_summary, lang)}` : `#${step.meeting_id}`}`
                                             : toolLabel(step.tool_key, classSettings.tools, lang);
                             // Students see this step as not available: say so here too.
                             const unavailable = ((step.step_type ?? 'tool') === 'tool' && !usableKeys.has(step.tool_key))

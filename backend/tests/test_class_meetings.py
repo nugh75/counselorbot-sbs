@@ -23,6 +23,7 @@ from backend.tests.artifact_database import artifact_session
 TEACHER = dict(username="teacher", name="Teacher One", authenticated=True, is_admin=False, groups=["docenti"])
 templates_migration = import_module("backend.migrations.20261010_path_templates")
 migration = import_module("backend.migrations.20261010_class_meetings")
+individual_migration = import_module("backend.migrations.20261010_individual_meetings")
 
 
 def who(name):
@@ -181,6 +182,8 @@ def templates_schema():
         models.Base.metadata.create_all(connection)
         connection.execute(text("ALTER TABLE class_path_steps DROP CONSTRAINT class_path_step_target"))
         connection.execute(text("ALTER TABLE class_path_steps DROP COLUMN meeting_id"))
+        connection.execute(text("DROP TABLE class_meeting_bookings"))
+        connection.execute(text("DROP TABLE class_meeting_slots"))
         connection.execute(text("DROP TABLE class_meeting_attendance"))
         connection.execute(text("DROP TABLE class_meetings"))
         connection.execute(text(
@@ -217,3 +220,207 @@ def test_migration_keeps_steps_and_accepts_meeting_steps_on_second_run(templates
             with templates_schema.begin() as connection:
                 connection.execute(text(
                     f"INSERT INTO class_path_steps (id,path_id,position,step_type,tool_key,meeting_id) VALUES {values}"))
+
+
+def individual(client, group, **extra):
+    body = {"title": "Colloquio", "kind": "individual", "mode": "in_person", "place": "Studio 2", **extra}
+    return client.post(f"/teacher/groups/{group.id}/meetings", json=body)
+
+
+def add_slot(client, meeting_id, **delta):
+    return client.post(f"/teacher/meetings/{meeting_id}/slots", json={"starts_at": when(**delta), "duration_minutes": 15})
+
+
+def test_individual_meeting_hosts_referents_and_experts(api):
+    client, db, _identity, group, _other = api
+    school = models.Institution(slug="syn-176", name="Synthetic institute", kind="school", institution_code="SYN-176",
+                                hashed_password=models.get_password_hash("Invented-176"))
+    db.add(school)
+    db.flush()
+    group.institution_id = school.id
+    desk = models.OrientationReferral(slug="syn-desk-176", institution_id=school.id, role_label_i18n={"it": "Sportello orientamento"},
+                                      person_name=None, status="certified", is_active=True)
+    elsewhere = models.OrientationReferral(slug="syn-other-176", institution_id=school.id + 1000, role_label_i18n={"it": "Altro"},
+                                           status="certified", is_active=True)
+    db.add_all([desk, elsewhere])
+    db.commit()
+    referents = client.get(f"/teacher/groups/{group.id}/meeting-referents").json()
+    assert [row["role"] for row in referents] == ["Sportello orientamento"]
+    with_desk = individual(client, group, host_kind="referent", referral_id=desk.id)
+    assert with_desk.status_code == 201, with_desk.text
+    assert with_desk.json()["host_role"] == "Sportello orientamento" and with_desk.json()["starts_at"] is None
+    assert individual(client, group, host_kind="referent", referral_id=elsewhere.id).status_code == 422
+    assert individual(client, group, host_kind="referent").status_code == 422
+    expert = individual(client, group, host_kind="expert", host_name="Dott.ssa Rossi", host_role="Psicologa")
+    assert expert.status_code == 201 and expert.json()["host_name"] == "Dott.ssa Rossi"
+    assert individual(client, group, host_kind="expert").status_code == 422
+    # A group meeting still needs its date; the kind cannot change afterwards.
+    assert plan(client, group, starts_at=None).status_code == 422
+    row = expert.json()
+    assert client.put(f"/teacher/meetings/{row['id']}", json={**{k: row[k] for k in (
+        "title", "mode", "place", "host_kind", "host_name", "host_role")}, "kind": "group", "starts_at": when(days=1),
+        "revision": row["revision"]}).status_code == 409
+
+
+def test_students_book_change_and_lose_slots_moved_or_cancelled_by_the_teacher(api):
+    client, db, identity, group, _other = api
+    db.add(models.GroupMembership(group_id=group.id, username="carla"))
+    db.commit()
+    meeting = individual(client, group).json()
+    for delta in (1, 2, 3):
+        add_slot(client, meeting["id"], days=delta)
+    slots = client.get(f"/teacher/groups/{group.id}/meetings").json()[0]["slots"]
+    assert len(slots) == 3 and all(slot["booking"] is None for slot in slots)
+    as_user(identity, who("alice"))
+    assert client.post(f"/user/meetings/{meeting['id']}/booking", json={"slot_id": slots[0]["id"]}).status_code == 200
+    # Changing keeps one booking per student.
+    assert client.post(f"/user/meetings/{meeting['id']}/booking", json={"slot_id": slots[1]["id"]}).json() == {"slot_id": slots[1]["id"]}
+    mine = client.get("/user/meetings").json()[0]
+    assert mine["booking_slot_id"] == slots[1]["id"] and [slot["mine"] for slot in mine["slots"]] == [False, True, False]
+    assert client.post(f"/user/meetings/{meeting['id']}/attendance").json()["detail"] == "meeting_not_started"
+    as_user(identity, who("carla"))
+    taken = client.post(f"/user/meetings/{meeting['id']}/booking", json={"slot_id": slots[1]["id"]})
+    assert taken.status_code == 409 and taken.json()["detail"] == "slot_taken"
+    # Others' bookings stay private: carla sees only free slots.
+    assert [slot["id"] for slot in client.get("/user/meetings").json()[0]["slots"]] == [slots[0]["id"], slots[2]["id"]]
+    assert client.post(f"/user/meetings/{meeting['id']}/attendance").json()["detail"] == "meeting_not_booked"
+    # The teacher moves alice to slot 3, then cancels slot 3: alice sees it and books again.
+    as_user(identity, TEACHER)
+    booking = client.get(f"/teacher/groups/{group.id}/meetings").json()[0]["slots"][1]["booking"]
+    assert booking["username"] == "alice"
+    moved = client.post(f"/teacher/bookings/{booking['id']}/move", json={"slot_id": slots[2]["id"]})
+    assert moved.status_code == 200 and moved.json()["slots"][2]["booking"]["username"] == "alice"
+    cancelled = client.post(f"/teacher/slots/{slots[2]['id']}/cancel", json={"revision": slots[2]["revision"]})
+    assert cancelled.json()["slots"][2]["status"] == "cancelled" and cancelled.json()["slots"][2]["booking"] is None
+    as_user(identity, who("alice"))
+    again = client.get("/user/meetings").json()[0]
+    assert again["booking_cancelled"] is True and again["booking_slot_id"] is None
+    assert client.post(f"/user/meetings/{meeting['id']}/booking", json={"slot_id": slots[2]["id"]}).status_code == 409
+    assert client.delete(f"/user/meetings/{meeting['id']}/booking").json() == {"slot_id": None}
+
+
+def test_attendance_after_the_booked_slot_completes_the_step(api):
+    client, db, identity, group, _other = api
+    meeting = individual(client, group, mode="online", place=None, link="https://meet.example.invalid/1").json()
+    slot = add_slot(client, meeting["id"], hours=2).json()["slots"][0]
+    path_id = path_with(client, group, meeting["id"]).json()["id"]
+    assert client.post(f"/teacher/paths/{path_id}/publish").status_code == 200
+    as_user(identity, who("alice"))
+    assert client.post(f"/user/meetings/{meeting['id']}/booking", json={"slot_id": slot["id"]}).status_code == 200
+    # The teacher moves the slot earlier: it has started, so attendance is possible.
+    as_user(identity, TEACHER)
+    assert client.put(f"/teacher/slots/{slot['id']}", json={"starts_at": when(minutes=-5), "duration_minutes": 15,
+                                                            "revision": slot["revision"]}).status_code == 200
+    as_user(identity, who("alice"))
+    assert client.get("/user/meetings").json()[0]["can_mark"] is True
+    assert client.post(f"/user/meetings/{meeting['id']}/attendance").status_code == 200
+    assert client.get("/user/paths").json()[0]["done"] == 1
+    # Past slots cannot be booked.
+    as_user(identity, TEACHER)
+    past = add_slot(client, meeting["id"], hours=-3).json()["slots"][0]
+    as_user(identity, who("bob"))
+    assert client.post(f"/user/meetings/{meeting['id']}/booking", json={"slot_id": past["id"]}).status_code == 403
+
+
+@pytest.fixture
+def committed_slot():
+    """Committed rows in a disposable schema, for two concurrent sessions."""
+    assert os.environ["DATABASE_URL"].rsplit("/", 1)[-1].endswith("_test")
+    engine = create_engine(os.environ["DATABASE_URL"], pool_size=4)
+    schema = "book176_" + uuid.uuid4().hex
+
+    @event.listens_for(engine, "connect")
+    def scope(connection, _):
+        connection.autocommit = True
+        with connection.cursor() as cursor:
+            cursor.execute(f'SET search_path TO "{schema}"')
+        connection.autocommit = False
+
+    with engine.begin() as connection:
+        connection.execute(text(f'CREATE SCHEMA "{schema}"'))
+        models.Base.metadata.create_all(connection)
+        connection.execute(text(
+            "INSERT INTO student_groups (id,code,name,is_active,owner_username,context_visible_to_students) "
+            "VALUES (1,'SYN-176','Synthetic',true,'teacher',false)"))
+        connection.execute(text(
+            "INSERT INTO class_meetings (id,group_id,title,kind,host_kind,mode,place,organizer_username,manager_username,"
+            "status,revision) VALUES (1,1,'Colloquio','individual','teacher','in_person','Studio','teacher','teacher',"
+            "'scheduled',1)"))
+        connection.execute(text(
+            "INSERT INTO class_meeting_slots (id,meeting_id,starts_at,status,revision) "
+            "VALUES (1,1,now() + interval '1 day','open',1)"))
+    yield engine
+    with engine.begin() as connection:
+        connection.execute(text(f'DROP SCHEMA "{schema}" CASCADE'))
+    engine.dispose()
+
+
+def test_concurrent_bookings_of_one_slot_have_a_single_winner(committed_slot):
+    import threading
+    from fastapi import HTTPException
+    from sqlalchemy.orm import sessionmaker
+    from backend.class_meetings import book_slot
+
+    Session = sessionmaker(bind=committed_slot)
+    barrier = threading.Barrier(2)
+    results = {}
+
+    def attempt(username):
+        session = Session()
+        try:
+            meeting = session.get(models.ClassMeeting, 1)
+            barrier.wait()
+            book_slot(session, meeting, 1, username)
+            session.commit()
+            results[username] = "booked"
+        except HTTPException as error:
+            session.rollback()
+            results[username] = error.detail
+        finally:
+            session.close()
+
+    threads = [threading.Thread(target=attempt, args=(name,)) for name in ("alice", "carla")]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=30)
+    assert sorted(results.values()) == ["booked", "slot_taken"], results
+    with committed_slot.begin() as connection:
+        assert connection.execute(text(
+            "SELECT count(*) FROM class_meeting_bookings WHERE status = 'active'")).scalar() == 1
+
+
+def test_individual_upgrade_keeps_group_meetings_on_second_run(templates_schema):
+    migration.migrate(templates_schema)
+    with templates_schema.begin() as connection:
+        # A #175 schema: group meetings only, a date always required.
+        for name in ("class_meeting_kind", "class_meeting_host_kind", "class_meeting_group_date", "class_meeting_expert_name"):
+            connection.execute(text(f"ALTER TABLE class_meetings DROP CONSTRAINT {name}"))
+        for column in ("kind", "host_kind", "referral_id", "host_name", "host_role"):
+            connection.execute(text(f"ALTER TABLE class_meetings DROP COLUMN {column}"))
+        connection.execute(text(
+            "INSERT INTO class_meetings (id,group_id,title,starts_at,mode,place,organizer_username,manager_username,"
+            "status,revision) VALUES (1,1,'Debrief',now(),'in_person','Aula','teacher','teacher','scheduled',1)"))
+        connection.execute(text("ALTER TABLE class_meetings ALTER COLUMN starts_at SET NOT NULL"))
+    for _ in range(2):
+        individual_migration.migrate(templates_schema)
+    with templates_schema.begin() as connection:
+        assert connection.execute(text("SELECT kind, host_kind FROM class_meetings")).all() == [("group", "teacher")]
+        connection.execute(text(
+            "INSERT INTO class_meetings (id,group_id,title,kind,host_kind,host_name,mode,link,organizer_username,"
+            "manager_username,status,revision) VALUES (2,1,'Colloquio','individual','expert','Rossi','online',"
+            "'https://example.invalid','teacher','teacher','scheduled',1)"))
+        connection.execute(text(
+            "INSERT INTO class_meeting_slots (id,meeting_id,starts_at,status,revision) VALUES (1,2,now(),'open',1)"))
+        connection.execute(text(
+            "INSERT INTO class_meeting_bookings (meeting_id,slot_id,username,status) VALUES (2,1,'alice','active')"))
+    for statement in (
+        "INSERT INTO class_meetings (group_id,title,kind,host_kind,mode,place,organizer_username,manager_username,status,"
+        "revision) VALUES (1,'No date','group','teacher','in_person','Aula','t','t','scheduled',1)",
+        "INSERT INTO class_meetings (group_id,title,kind,host_kind,mode,place,organizer_username,manager_username,status,"
+        "revision) VALUES (1,'No expert','individual','expert','in_person','Aula','t','t','scheduled',1)",
+        "INSERT INTO class_meeting_bookings (meeting_id,slot_id,username,status) VALUES (2,1,'carla','active')",
+    ):
+        with pytest.raises(IntegrityError):
+            with templates_schema.begin() as connection:
+                connection.execute(text(statement))

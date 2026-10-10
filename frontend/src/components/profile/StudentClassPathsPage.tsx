@@ -17,7 +17,7 @@ import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { useTeacherResource } from '@/components/teacher/useTeacherResource';
 import { parseForumDiscussionLinks } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
-import { MeetingDetails } from './MeetingDetails';
+import { MeetingDetails, useStudentMeetings } from './MeetingDetails';
 import { classMeetingText } from '@/lib/i18n-class-meetings';
 import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
@@ -28,6 +28,7 @@ export function StudentClassPathsPage() {
     const { lang } = useI18n();
     const l = (key: PathTextKey) => classPathText(lang, key);
     const discussions = useTeacherResource('/api/user/forum/links', parseForumDiscussionLinks);
+    const meetings = useStudentMeetings();
 
     const [paths, setPaths] = useState<StudentClassPath[]>([]);
     const [loading, setLoading] = useState(true);
@@ -267,12 +268,18 @@ export function StudentClassPathsPage() {
                                                             {notice && <p role="status" className="text-xs font-medium text-slate-700">{pathForumText(lang, `notice_${notice}`)}</p>}
                                                         </>);
                                                     })()}
-                                                    {step.step_type === 'meeting' && step.meeting_summary && !isUnavailable && (<>
-                                                        <MeetingDetails lang={lang} meeting={step.meeting_summary} attended={isDone} onChanged={loadPaths} />
-                                                        {/* The rule matters once it can be followed: started, not yet marked. */}
-                                                        {!isDone && step.meeting_summary.status === 'scheduled' && new Date(step.meeting_summary.starts_at).getTime() <= Date.now()
-                                                            && <p className="text-xs text-slate-500">{classMeetingText(lang, 'studentRule')}</p>}
-                                                    </>)}
+                                                    {step.step_type === 'meeting' && step.meeting_summary && !isUnavailable && (() => {
+                                                        // The student's own view of the meeting carries slots and booking (#176).
+                                                        const meeting = meetings.meetings?.find(row => row.id === step.meeting_id) ?? step.meeting_summary;
+                                                        return (<>
+                                                            <MeetingDetails lang={lang} meeting={meeting} attended={isDone}
+                                                                onChanged={async () => { await Promise.all([loadPaths(), meetings.load()]); }} />
+                                                            {/* The rule matters once it can be followed: started, not yet marked. */}
+                                                            {!isDone && meeting.status === 'scheduled' && meeting.kind === 'group' && meeting.starts_at
+                                                                && new Date(meeting.starts_at).getTime() <= Date.now()
+                                                                && <p className="text-xs text-slate-500">{classMeetingText(lang, 'studentRule')}</p>}
+                                                        </>);
+                                                    })()}
                                                     <ForumDiscussionLinks links={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
                                                         kind="path_step" targetId={step.id} />
 
