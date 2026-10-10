@@ -1881,6 +1881,8 @@ class PathTemplateStep(Base):
 STEP_TARGET_CHECK = (
     "(step_type = 'tool' AND tool_key IS NOT NULL AND administration_plan_id IS NULL AND results_step_id IS NULL "
     "AND assignment_id IS NULL AND topic_id IS NULL AND meeting_id IS NULL) OR "
+    "(step_type = 'guided_chat' AND tool_key IS NOT NULL AND administration_plan_id IS NULL AND results_step_id IS NULL "
+    "AND assignment_id IS NULL AND topic_id IS NULL AND meeting_id IS NULL) OR "
     "(step_type = 'questionnaire_administration' AND tool_key IS NULL AND administration_plan_id IS NOT NULL "
     "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NULL AND meeting_id IS NULL) OR "
     "(step_type = 'guided_results_chat' AND tool_key IS NULL AND administration_plan_id IS NULL "
@@ -1909,7 +1911,11 @@ class ClassPathStep(Base):
     id = Column(Integer, primary_key=True, index=True)
     path_id = Column(Integer, ForeignKey("class_paths.id", ondelete="CASCADE"), index=True, nullable=False)
     position = Column(Integer, nullable=False)  # 1-indexed
-    __table_args__ = (CheckConstraint(STEP_TARGET_CHECK, name="class_path_step_target"),)
+    __table_args__ = (
+        CheckConstraint(STEP_TARGET_CHECK, name="class_path_step_target"),
+        # Only a meeting can be the follow-up of a guided chat (#177).
+        CheckConstraint("follows_step_id IS NULL OR step_type = 'meeting'", name="class_path_step_follows"),
+    )
     step_type = Column(String(40), nullable=False, default="tool", server_default="tool")
     tool_key = Column(String, nullable=True)
     administration_plan_id = Column(Integer, ForeignKey("administration_plans.id", ondelete="RESTRICT"), nullable=True)
@@ -1935,6 +1941,8 @@ class ClassPathStep(Base):
     template_snapshot = Column(JSON, nullable=True)
     # Meeting step (#175): a class or group meeting of the same class (checked on save).
     meeting_id = Column(Integer, ForeignKey("class_meetings.id"), nullable=True)
+    # Follow-up (#177): a meeting step that follows a guided chat step of the same path.
+    follows_step_id = Column(Integer, ForeignKey("class_path_steps.id", ondelete="SET NULL"), nullable=True)
 
 
 class ClassMeeting(Base):
