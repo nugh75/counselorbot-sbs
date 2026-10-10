@@ -209,6 +209,7 @@ import_module("backend.migrations.20261009_guided_results_chat_steps").migrate(d
 import_module("backend.migrations.20261009_assignment_steps").migrate(database.engine)
 import_module("backend.migrations.20261010_forum_steps").migrate(database.engine)
 import_module("backend.migrations.20261010_path_templates").migrate(database.engine)
+import_module("backend.migrations.20261010_path_template_snapshots").migrate(database.engine)
 
 
 @asynccontextmanager

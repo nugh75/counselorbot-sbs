@@ -259,3 +259,111 @@ def test_deleting_a_template_keeps_applied_paths(api):
     assert current["template_id"] is None and len(current["steps"]) == 5
     assert all(s["template_step_id"] is None for s in current["steps"])
     assert client.post(f"/teacher/paths/{path['id']}/publish").status_code == 200
+
+
+def edit(client, template, steps, **extra):
+    current = client.get(f"/teacher/path-templates/{template['id']}").json()
+    response = client.put(f"/teacher/path-templates/{template['id']}", json={
+        "revision": current["revision"], "title": current["title"], "steps": steps, **extra})
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def kept(template, index, **changes):
+    """A template step sent back by id, so applied paths keep their link to it."""
+    step = {key: value for key, value in template["steps"][index].items()
+            if key not in {"position", "goal_title"} and value is not None}
+    return {**step, **changes}
+
+
+def update(client, path_id, template):
+    path = client.get(f"/teacher/paths/{path_id}").json()
+    return client.post(f"/teacher/paths/{path_id}/template-update",
+                       json={"revision": path["revision"], "template_revision": template["revision"]})
+
+
+def test_update_from_template_rewrites_an_untouched_draft(api):
+    client, db, _identity, data = api
+    template = create(client, data["goal"])
+    path = apply(client, template, data["group"]).json()[0]
+    assert client.get(f"/teacher/paths/{path['id']}/template-update").json()["changes"] == []
+    template = edit(client, template, [
+        kept(template, 0, title="Warm up again"),
+        kept(template, 1),
+        {"step_type": "tool", "tool_key": "timeline", "title": "New"},
+        kept(template, 2, results_position=2),
+        kept(template, 4, topic_body="Share two things"),
+    ])
+    preview = client.get(f"/teacher/paths/{path['id']}/template-update").json()
+    assert preview["template_revision"] == template["revision"] and preview["path_template_revision"] == 1
+    assert sorted((c["change"], c["step_type"], c["status"]) for c in preview["changes"]) == [
+        ("added", "tool", "apply"), ("changed", "forum", "apply"), ("changed", "tool", "apply"),
+        ("removed", "assignment", "apply")]
+    before = counts(db)
+    response = update(client, path["id"], template)
+    assert response.status_code == 200, response.text
+    assert response.json()["skipped"] == []
+    updated = response.json()["path"]
+    assert updated["template_revision"] == template["revision"] and updated["status"] == "draft"
+    assert [(s["step_type"], s["tool_key"], s["title"]) for s in updated["steps"]] == [
+        ("tool", "tavolo", "Warm up again"), ("pending", None, None), ("tool", "timeline", "New"),
+        ("pending", None, None), ("pending", None, None)]
+    assert updated["steps"][3]["pending_config"] == {"kind": "guided_results_chat",
+                                                     "results_step_id": updated["steps"][1]["id"]}
+    assert updated["steps"][4]["pending_config"]["body"] == "Share two things"
+    assert counts(db) == before
+    assert client.get(f"/teacher/paths/{path['id']}/template-update").json()["changes"] == []
+    assert client.post(f"/teacher/paths/{path['id']}/publish").status_code == 200
+    assert db.get(models.ForumTopic, client.get(f"/teacher/paths/{path['id']}").json()["steps"][4]["topic_id"]).body == "Share two things"
+
+
+def test_update_from_template_spares_started_steps_and_created_objects(api):
+    client, db, _identity, data = api
+    template = create(client, data["goal"])
+    path = apply(client, template, data["group"]).json()[0]
+    published = client.post(f"/teacher/paths/{path['id']}/publish").json()
+    # Alice has begun the first step.
+    db.add(models.ClassPathProgress(step_id=published["steps"][0]["id"], username="alice", state="done",
+                                    source="student", actor_username="alice"))
+    db.commit()
+    template = edit(client, template, [
+        kept(template, 0, title="Renamed tool"), kept(template, 1), kept(template, 2), kept(template, 3),
+        kept(template, 4, topic_title="New question"),
+        {"step_type": "tool", "tool_key": "timeline"},
+        {"step_type": "forum", "topic_title": "Closing", "topic_body": "One last word"},
+    ])
+    statuses = {(c["change"], c["step_type"]): c["status"]
+                for c in client.get(f"/teacher/paths/{path['id']}/template-update").json()["changes"]}
+    assert statuses == {("changed", "tool"): "started", ("changed", "forum"): "created",
+                        ("added", "tool"): "apply", ("added", "forum"): "apply"}
+    topics = db.query(models.ForumTopic).count()
+    response = update(client, path["id"], template)
+    assert response.status_code == 200, response.text
+    assert sorted(c["status"] for c in response.json()["skipped"]) == ["created", "started"]
+    steps = response.json()["path"]["steps"]
+    assert steps[0]["title"] == "Warm up" and steps[4]["topic_id"] == published["steps"][4]["topic_id"]
+    # New steps of a published path go live at once, their class objects included.
+    assert [s["step_type"] for s in steps[5:]] == ["tool", "forum"]
+    assert all(s["active_from"] for s in steps) and db.query(models.ForumTopic).count() == topics + 1
+    # Skipped differences stay visible until the teacher handles them.
+    assert len(client.get(f"/teacher/paths/{path['id']}/template-update").json()["changes"]) == 2
+
+
+def test_blocked_or_stale_update_changes_nothing(api):
+    client, db, _identity, data = api
+    template = client.post("/teacher/path-templates", json={
+        "title": "Tools", "steps": [{"step_type": "tool", "tool_key": "tavolo"}]}).json()
+    path = apply(client, template, data["tutors"]).json()[0]
+    assert client.post(f"/teacher/paths/{path['id']}/publish").status_code == 200
+    stale = template
+    template = edit(client, template, [kept(template, 0), {
+        "step_type": "questionnaire_administration", "instrument_code": "QSA", "locale": "it"}])
+    assert update(client, path["id"], stale).status_code == 409
+    # The group has no institute: the questionnaire cannot be created, so nothing changes.
+    before = counts(db)
+    blocked = update(client, path["id"], template)
+    assert blocked.status_code == 409 and blocked.json()["detail"]["code"] == "path_publication_blocked"
+    current = client.get(f"/teacher/paths/{path['id']}").json()
+    assert len(current["steps"]) == 1 and current["template_revision"] == 1 and counts(db) == before
+    plain = client.post(f"/teacher/groups/{data['group'].id}/paths", json={"title": "Plain"}).json()
+    assert client.get(f"/teacher/paths/{plain['id']}/template-update").status_code == 404

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { moveTemplateStep, newTemplateStep, parsePathTemplateList, templateStepPayload, templateStepsValid } from './path-templates.ts';
+import { moveTemplateStep, newTemplateStep, parsePathTemplateList, parseTemplateUpdate, templateStepPayload, templateStepsValid } from './path-templates.ts';
 
 const questionnaire = { ...newTemplateStep('questionnaire_administration'), id: 1 };
 const chat = { ...newTemplateStep('guided_results_chat'), results_position: 1 };
@@ -31,4 +31,15 @@ test('payloads carry only the fields of their step type', () => {
 test('template lists must carry both sections', () => {
     assert.throws(() => parsePathTemplateList({ mine: [] }));
     assert.deepEqual(parsePathTemplateList({ mine: [], shared: [] }), { mine: [], shared: [] });
+});
+
+test('template update previews keep known values and reject other payloads', () => {
+    const preview = parseTemplateUpdate({template_title: 'Start', template_revision: 3, changes: [
+        {change: 'added', step_type: 'forum', tool_key: null, title: 'Closing', status: 'apply'},
+        {change: 'removed', step_type: 'tool', tool_key: 'tavolo', title: null, status: 'started'},
+    ]});
+    assert.equal(preview.template_revision, 3);
+    assert.deepEqual(preview.changes.map(row => [row.change, row.step_type, row.status]),
+        [['added', 'forum', 'apply'], ['removed', 'tool', 'started']]);
+    assert.throws(() => parseTemplateUpdate({changes: null}));
 });

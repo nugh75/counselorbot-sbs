@@ -2,7 +2,9 @@
 
 Stato: proposta approvata dall'utente il 10 ottobre 2026. Fase 0 (#172): modelli,
 condivisione, «Salva come modello» e «Applica a…» con passi «Da preparare» creati alla
-pubblicazione; «Aggiorna da modello» segue in una seconda PR.
+pubblicazione (PR #178); «Aggiorna da modello» nella seconda PR: confronta ogni passo con
+la copia del passo del modello salvata all’applicazione (`template_snapshot`), così il
+testo di una discussione già creata non viene mai letto.
 Tracciamento: milestone e issue su GitHub (vedi «Fasi»).
 
 ## Problema
