@@ -84,6 +84,8 @@ export interface ClassPathStep {
     forum_summary?: ForumStepSummary | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
+    /** Server reason code when the step cannot be used now (TF8). */
+    availability_reason?: string | null;
     completion_kind?: string | null;
     title?: string | null;
     instructions?: string | null;
@@ -131,6 +133,7 @@ export function parseClassPathStep(input: unknown): ClassPathStep {
         results_step_id: raw.results_step_id != null ? Number(raw.results_step_id) : null,
         active_from: raw.active_from ? String(raw.active_from) : null,
         ...typedTarget(raw, stepType),
+        availability_reason: raw.availability_reason ? String(raw.availability_reason) : null,
         completion_kind: raw.completion_kind ? String(raw.completion_kind) : null,
         title: raw.title ? String(raw.title) : null,
         instructions: raw.instructions ? String(raw.instructions) : null,
@@ -179,6 +182,8 @@ export interface StudentClassPathStep {
     forum_summary?: ForumStepSummary | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
+    /** Server reason code when the step cannot be used now (TF8). */
+    availability_reason?: string | null;
     completion_kind?: string | null;
     title?: string | null;
     instructions?: string | null;
@@ -219,6 +224,7 @@ export function parseStudentClassPathStep(input: unknown): StudentClassPathStep 
         results_step_id: raw.results_step_id != null ? Number(raw.results_step_id) : null,
         active_from: raw.active_from ? String(raw.active_from) : null,
         ...typedTarget(raw, stepType),
+        availability_reason: raw.availability_reason ? String(raw.availability_reason) : null,
         completion_kind: raw.completion_kind ? String(raw.completion_kind) : null,
         title: raw.title ? String(raw.title) : null,
         instructions: raw.instructions ? String(raw.instructions) : null,

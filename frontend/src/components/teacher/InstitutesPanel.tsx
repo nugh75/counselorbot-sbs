@@ -1,5 +1,7 @@
 'use client';
 
+import { ChevronRight } from 'lucide-react';
+
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { apiFetch, getViewAsAccount } from '@/lib/auth';
@@ -154,7 +156,7 @@ export function InstituteClasses({ institutionId }: { institutionId: number }) {
     if (school.loading) return <TeacherLoading />;
     if (school.failed || !school.data) return <Callout variant="danger"><p>{l('loadError')}</p><Button onClick={() => void school.reload()}>{l('reload')}</Button></Callout>;
     return <div className="space-y-5">
-        <nav aria-label={l('classes')} className="flex flex-wrap gap-2 text-sm"><Link href="/docente/istituti" className="text-indigo-700">{l('title')}</Link><span aria-hidden>→</span><span>{school.data.name}</span><span aria-hidden>→</span><span>{l('classes')}</span></nav>
+        <nav aria-label={l('classes')} className="flex flex-wrap gap-2 text-sm"><Link href="/docente/istituti" className="text-indigo-700">{l('title')}</Link><ChevronRight className="h-4 w-4 self-center text-slate-400" aria-hidden /><span>{school.data.name}</span><ChevronRight className="h-4 w-4 self-center text-slate-400" aria-hidden /><span>{l('classes')}</span></nav>
         <h2 className="break-words text-xl font-bold">{school.data.name}</h2>
         {groups.failed && <Callout variant="danger"><p>{l('loadError')}</p><Button onClick={() => void groups.reload()}>{l('reload')}</Button></Callout>}
         {groups.data?.some(row => row.institution_id === null) && <Card><div className="flex flex-wrap items-end gap-3"><label className="min-w-0 flex-1 text-sm">{l('unlinked')}<select aria-label={l('unlinked')} className={input} value={selected} disabled={busy || groups.loading} onChange={event => setSelected(event.target.value)}><option value="">{l('select')}</option>{groups.data.filter(row => row.institution_id === null).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label><Button disabled={!selected || busy || groups.loading} onClick={() => void attach()}>{l('attach')}</Button></div>{error && <p role="alert">{l('error')}</p>}</Card>}
