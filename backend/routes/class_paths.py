@@ -151,6 +151,7 @@ def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:
         "assignment_id": step.assignment_id,
         "topic_id": step.topic_id,
         "meeting_id": step.meeting_id,
+        "follows_step_id": step.follows_step_id,
         "active_from": step.active_from,
         "target_summary": descriptor["target_summary"],
         "availability_reason": descriptor["availability_reason"],
@@ -400,6 +401,7 @@ async def update_class_path(
             s.removed_at = func.now()
 
     # Update or insert steps in the provided order
+    placed = []
     for position, step_input in enumerate(payload.steps, start=1):
         step_title = (step_input.title or "").strip() or None
         step_instructions = (step_input.instructions or "").strip() or None
@@ -410,6 +412,7 @@ async def update_class_path(
             step.title = step_title
             step.instructions = step_instructions
             step.due_date = step_input.due_date
+            placed.append(step)
         elif step_input.id is not None:
             # Check if the step belongs to this path and was previously removed
             archived_step = (
@@ -426,6 +429,7 @@ async def update_class_path(
                 archived_step.title = step_title
                 archived_step.instructions = step_instructions
                 archived_step.due_date = step_input.due_date
+                placed.append(archived_step)
             else:
                 raise HTTPException(status_code=422, detail=f"Step ID {step_input.id} does not belong to this path")
         else:
@@ -433,7 +437,7 @@ async def update_class_path(
                 path_id=path.id,
                 position=position,
                 step_type=step_input.step_type,
-                tool_key=step_input.tool_key if step_input.step_type == "tool" else None,
+                tool_key=step_input.tool_key if step_input.step_type in ("tool", "guided_chat") else None,
                 administration_plan_id=step_input.administration_plan_id if step_input.step_type == "questionnaire_administration" else None,
                 results_step_id=step_input.results_step_id if step_input.step_type == "guided_results_chat" else None,
                 assignment_id=step_input.assignment_id if step_input.step_type == "assignment" else None,
@@ -445,6 +449,15 @@ async def update_class_path(
                 due_date=step_input.due_date,
             )
             db.add(new_step)
+            placed.append(new_step)
+
+    # #177: a follow-up meeting points at the chat placed at its `follows` position;
+    # removing either step leaves the other as an ordinary step.
+    db.flush()
+    for step_input, step in zip(payload.steps, placed):
+        if step.step_type == "meeting":
+            follows = getattr(step_input, "follows", None)
+            step.follows_step_id = placed[follows].id if follows is not None else None
 
     path.title = title
     path.description = (payload.description or "").strip() or None
@@ -963,8 +976,8 @@ def require_step_launch(db, identity, path_id, step_id, *, for_update=False):
 @router.post("/user/paths/{path_id}/steps/{step_id}/launch")
 async def launch_step(path_id: int, step_id: int, current_user=Depends(auth.get_current_user), db: Session=Depends(get_db)):
     path, step, descriptor = require_step_launch(db, current_user, path_id, step_id)
-    if step.step_type == "tool":
-        return {"step_type":"tool", "start_href":descriptor["start_href"]}
+    if step.step_type in ("tool", "guided_chat"):
+        return {"step_type":step.step_type, "start_href":descriptor["start_href"]}
     if step.step_type == "guided_results_chat":
         return {"step_type":step.step_type, "path_id":path.id, "step_id":step.id,
                 "results_step_id":step.results_step_id, "start_href":descriptor["start_href"]}
