@@ -1629,7 +1629,8 @@ time; steps already active keep their first activation.
 Publish, archive and restore accept an optional `{"revision": n}` body; a stale
 revision returns `409` (`Class path revision mismatch`) without changes, so two tabs
 cannot publish or archive over each other. Clients that send no body keep the
-previous behaviour. The builder sends the revision it last loaded and disables
+previous behaviour. The builder sends the revision it last loaded (after saving
+pending edits, Publish uses the revision returned by that save) and disables
 archive/restore while the draft has unsaved edits.
 
 Restore of a path that was already published goes live through the same validation
