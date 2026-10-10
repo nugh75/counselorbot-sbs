@@ -17,6 +17,8 @@ import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { useTeacherResource } from '@/components/teacher/useTeacherResource';
 import { parseForumDiscussionLinks } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
+import { MeetingDetails } from './MeetingDetails';
+import { classMeetingText } from '@/lib/i18n-class-meetings';
 import { typedStepTargetLabel } from '@/lib/i18n-administration-steps';
 import { pathAssignmentText } from '@/lib/i18n-path-assignments';
 import { pathForumText } from '@/lib/i18n-path-forum';
@@ -264,6 +266,12 @@ export function StudentClassPathsPage() {
                                                             {notice && <p role="status" className="text-xs font-medium text-slate-700">{pathForumText(lang, `notice_${notice}`)}</p>}
                                                         </>);
                                                     })()}
+                                                    {step.step_type === 'meeting' && step.meeting_summary && !isUnavailable && (<>
+                                                        <MeetingDetails lang={lang} meeting={step.meeting_summary} attended={isDone} onChanged={loadPaths} />
+                                                        {/* The rule matters once it can be followed: started, not yet marked. */}
+                                                        {!isDone && step.meeting_summary.status === 'scheduled' && new Date(step.meeting_summary.starts_at).getTime() <= Date.now()
+                                                            && <p className="text-xs text-slate-500">{classMeetingText(lang, 'studentRule')}</p>}
+                                                    </>)}
                                                     <ForumDiscussionLinks links={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
                                                         kind="path_step" targetId={step.id} />
 

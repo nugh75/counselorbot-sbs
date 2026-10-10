@@ -77,6 +77,14 @@ export const pathPublicationTexts = {
     "Die Diskussion ist ausgeblendet oder nicht mehr in dieser Klasse: Stelle sie im Forum wieder her oder ersetze den Schritt.",
     "Diskussionen är dold eller finns inte längre i den här klassen: återställ den i forumet eller ersätt steget.",
   ],
+  action_meeting: [
+    "L’incontro è stato annullato o non è di questa classe o gruppo: sostituisci il passo con un altro incontro.",
+    "The meeting was cancelled or is not of this class or group: replace the step with another meeting.",
+    "El encuentro se canceló o no es de esta clase o grupo: sustituye el paso por otro encuentro.",
+    "La rencontre a été annulée ou n’appartient pas à cette classe ou ce groupe : remplacez l’étape par une autre rencontre.",
+    "Das Treffen wurde abgesagt oder gehört nicht zu dieser Klasse oder Gruppe: Ersetze den Schritt durch ein anderes Treffen.",
+    "Mötet har ställts in eller hör inte till den här klassen eller gruppen: ersätt steget med ett annat möte.",
+  ],
   action_class_inactive: [
     "La classe è archiviata: riattivala per pubblicare il percorso.",
     "The class is archived: reactivate it to publish the path.",

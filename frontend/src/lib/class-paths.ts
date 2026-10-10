@@ -1,9 +1,11 @@
-// `pending`: applied from a template, created at publication (#172).
-export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat" | "assignment" | "forum" | "pending";
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { parseMeeting, type ClassMeeting } from './class-meetings.ts';
+// `pending`: applied from a template, created at publication (#172); `meeting`: a class or group meeting (#175).
+export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat" | "assignment" | "forum" | "pending" | "meeting";
 
 function parseStepType(value: unknown): ClassPathStepType {
     return value === 'questionnaire_administration' || value === 'guided_results_chat' || value === 'assignment'
-        || value === 'forum' || value === 'pending' ? value : 'tool';
+        || value === 'forum' || value === 'pending' || value === 'meeting' ? value : 'tool';
 }
 
 /** What a pending step will create: the template config, never class data. */
@@ -74,12 +76,15 @@ export function parseAssignmentSummary(value: unknown): AssignmentStepSummary | 
 function typedTarget(raw: Record<string, unknown>, stepType: ClassPathStepType) {
     const assignment = stepType === 'assignment';
     const forum = stepType === 'forum';
+    const meeting = stepType === 'meeting';
     return {
+        meeting_id: meeting && raw.meeting_id != null ? Number(raw.meeting_id) : null,
+        meeting_summary: meeting ? parseMeeting(raw.target_summary) : null,
         assignment_id: assignment && raw.assignment_id != null ? Number(raw.assignment_id) : null,
         assignment_summary: assignment ? parseAssignmentSummary(raw.target_summary) : null,
         topic_id: forum && raw.topic_id != null ? Number(raw.topic_id) : null,
         forum_summary: forum ? parseForumSummary(raw.target_summary) : null,
-        target_summary: assignment || forum ? null : raw.target_summary as ClassPathStep['target_summary'],
+        target_summary: assignment || forum || meeting ? null : raw.target_summary as ClassPathStep['target_summary'],
     };
 }
 
@@ -95,6 +100,8 @@ export interface ClassPathStep {
     assignment_summary?: AssignmentStepSummary | null;
     topic_id?: number | null;
     forum_summary?: ForumStepSummary | null;
+    meeting_id?: number | null;
+    meeting_summary?: ClassMeeting | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
     /** Server reason code when the step cannot be used now (TF8). */
@@ -198,6 +205,8 @@ export interface StudentClassPathStep {
     assignment_summary?: AssignmentStepSummary | null;
     topic_id?: number | null;
     forum_summary?: ForumStepSummary | null;
+    meeting_id?: number | null;
+    meeting_summary?: ClassMeeting | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
     /** Server reason code when the step cannot be used now (TF8). */

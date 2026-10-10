@@ -3,6 +3,8 @@ import type { Lang } from "./i18n";
 import { pathAssignmentText } from "./i18n-path-assignments.ts";
 // @ts-expect-error -- Node's TypeScript runner requires the extension.
 import { pathForumText } from "./i18n-path-forum.ts";
+// @ts-expect-error -- Node's TypeScript runner requires the extension.
+import { classMeetingText } from "./i18n-class-meetings.ts";
 const languages: readonly Lang[] = ["it", "en", "es", "fr", "de", "sv"];
 export const administrationStepTexts = {
   teacherGuide: [
@@ -363,6 +365,7 @@ export function typedStepTargetLabel(
     step_type?: string;
     target_summary?: { instrument_code: string; code: string } | null;
     assignment_summary?: { title: string } | null;
+    meeting_summary?: { title: string } | null;
   },
 ): string | null {
   // Forum steps carry no discussion title: path views never hold forum text.
@@ -371,6 +374,10 @@ export function typedStepTargetLabel(
     return step.assignment_summary
       ? `${pathAssignmentText(lang, "assignment")} · ${step.assignment_summary.title}`
       : null;
+  if (step.step_type === "meeting")
+    return step.meeting_summary
+      ? `${classMeetingText(lang, "meeting")} · ${step.meeting_summary.title}`
+      : classMeetingText(lang, "meeting");
   if (!step.target_summary) return null;
   const target = `${step.target_summary.instrument_code} · ${step.target_summary.code}`;
   return step.step_type === "guided_results_chat"
