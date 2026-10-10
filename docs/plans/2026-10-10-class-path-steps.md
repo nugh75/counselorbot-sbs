@@ -23,6 +23,11 @@ da `orientation_referrals` con ruolo e nome copiati, esperto con nome e ruolo), 
 facoltativo per gli individuali; `class_meeting_slots` e `class_meeting_bookings` con indici
 unici parziali sulle prenotazioni attive (una per fascia, una per studente e incontro) e
 lock della fascia: due prenotazioni contemporanee hanno un solo vincitore.
+Fase 5 (#177): passo `guided_chat` (chat autonoma in `tool_key`, validata come chat e non
+come questionario o strumento personale); `class_path_steps.follows_step_id` collega un
+passo `meeting` di seguito alla chat che lo precede (il salvataggio lo indica con la
+posizione `follows`); i modelli trattano la chat autonoma come strumento e rifiutano gli
+incontri.
 Tracciamento: milestone e issue su GitHub (vedi «Fasi»).
 
 ## Problema

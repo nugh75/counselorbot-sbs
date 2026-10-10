@@ -17,13 +17,14 @@ from sqlalchemy import create_engine, event, text
 from sqlalchemy.exc import IntegrityError
 
 from backend import auth, database, models
-from backend.routes import class_meetings, class_paths
+from backend.routes import class_meetings, class_paths, path_templates
 from backend.tests.artifact_database import artifact_session
 
 TEACHER = dict(username="teacher", name="Teacher One", authenticated=True, is_admin=False, groups=["docenti"])
 templates_migration = import_module("backend.migrations.20261010_path_templates")
 migration = import_module("backend.migrations.20261010_class_meetings")
 individual_migration = import_module("backend.migrations.20261010_individual_meetings")
+guided_migration = import_module("backend.migrations.20261010_guided_chat_steps")
 
 
 def who(name):
@@ -48,6 +49,7 @@ def api():
         app = FastAPI()
         app.include_router(class_paths.router)
         app.include_router(class_meetings.router)
+        app.include_router(path_templates.router)
         app.dependency_overrides[database.get_db] = lambda: db
         app.dependency_overrides[auth.get_identity] = lambda: dict(identity)
         with TestClient(app) as client:
@@ -420,6 +422,78 @@ def test_individual_upgrade_keeps_group_meetings_on_second_run(templates_schema)
         "INSERT INTO class_meetings (group_id,title,kind,host_kind,mode,place,organizer_username,manager_username,status,"
         "revision) VALUES (1,'No expert','individual','expert','in_person','Aula','t','t','scheduled',1)",
         "INSERT INTO class_meeting_bookings (meeting_id,slot_id,username,status) VALUES (2,1,'carla','active')",
+    ):
+        with pytest.raises(IntegrityError):
+            with templates_schema.begin() as connection:
+                connection.execute(text(statement))
+
+
+def test_guided_chat_step_with_a_follow_up_meeting(api):
+    client, db, identity, group, _other = api
+    meeting = plan(client, group, starts_at=when(hours=-1)).json()
+    path = client.post(f"/teacher/groups/{group.id}/paths", json={"title": "Racconto"}).json()
+    body = lambda steps, revision: {"revision": revision, "title": "Racconto", "mode": "recommended", "steps": steps}
+    # A questionnaire or a personal tool is not a guided chat.
+    for key in ("QSA", "tavolo"):
+        refused = client.put(f"/teacher/paths/{path['id']}", json=body([{"step_type": "guided_chat", "tool_key": key}], path["revision"]))
+        assert refused.status_code == 422, key
+    # The follow-up must come after a guided chat of the same save.
+    assert client.put(f"/teacher/paths/{path['id']}", json=body([
+        {"step_type": "meeting", "meeting_id": meeting["id"], "follows": 0}], path["revision"])).status_code == 422
+    saved = client.put(f"/teacher/paths/{path['id']}", json=body([
+        {"step_type": "guided_chat", "tool_key": "SAVICKAS"},
+        {"step_type": "meeting", "meeting_id": meeting["id"], "follows": 0}], path["revision"]))
+    assert saved.status_code == 200, saved.text
+    chat, follow = saved.json()["steps"]
+    assert chat["step_type"] == "guided_chat" and chat["auto_detect"] is True
+    assert follow["follows_step_id"] == chat["id"]
+    # Saving as a template refuses meetings for now.
+    refused = client.post(f"/teacher/paths/{path['id']}/save-as-template")
+    assert refused.status_code == 409 and refused.json()["detail"]["code"] == "template_meeting_unavailable"
+    assert client.post(f"/teacher/paths/{path['id']}/publish").status_code == 200
+    # The student sees chat then follow-up; the chat completes on its guided chat marker.
+    as_user(identity, who("alice"))
+    steps = client.get("/user/paths").json()[0]["steps"]
+    assert [s["step_type"] for s in steps] == ["guided_chat", "meeting"] and steps[1]["follows_step_id"] == steps[0]["id"]
+    assert steps[0]["start_href"] == "/?start=SAVICKAS"
+    db.add(models.Log(session_id="synthetic-177", action="guided_chat_completed", username="alice",
+                      questionnaire_type="SAVICKAS", timestamp=datetime.now(timezone.utc) + timedelta(seconds=1)))
+    db.commit()
+    assert client.get("/user/paths").json()[0]["steps"][0]["state"] == "done"
+    # The teacher sees who completed the chat in progress, next to the follow-up.
+    as_user(identity, TEACHER)
+    progress = client.get(f"/teacher/paths/{path['id']}/progress").json()
+    assert [s["done_count"] for s in progress["steps"]] == [1, 0]
+    assert progress["steps"][1]["follows_step_id"] == progress["steps"][0]["id"]
+    # Removing the chat keeps the meeting as an ordinary step.
+    current = client.get(f"/teacher/paths/{path['id']}").json()
+    kept = client.put(f"/teacher/paths/{path['id']}", json=body([
+        {"id": current["steps"][1]["id"], "step_type": "meeting", "meeting_id": meeting["id"]}], current["revision"]))
+    assert kept.status_code == 200 and kept.json()["steps"][0]["follows_step_id"] is None
+
+
+def test_guided_chat_upgrade_accepts_chats_and_follow_ups_on_second_run(templates_schema):
+    migration.migrate(templates_schema)
+    with templates_schema.begin() as connection:
+        # A #176 schema: no guided_chat type, no follow-up column.
+        connection.execute(text("ALTER TABLE class_path_steps DROP CONSTRAINT class_path_step_follows"))
+        connection.execute(text("ALTER TABLE class_path_steps DROP COLUMN follows_step_id"))
+    for _ in range(2):
+        guided_migration.migrate(templates_schema)
+    with templates_schema.begin() as connection:
+        assert connection.execute(text("SELECT id, step_type FROM class_path_steps")).all() == [(12, "tool")]
+        connection.execute(text(
+            "INSERT INTO class_meetings (id,group_id,title,starts_at,mode,link,organizer_username,manager_username,"
+            "status,revision) VALUES (1,1,'Debrief',now(),'online','https://example.invalid','teacher','teacher',"
+            "'scheduled',1)"))
+        connection.execute(text(
+            "INSERT INTO class_path_steps (id,path_id,position,step_type,tool_key) VALUES (13,1,2,'guided_chat','SAVICKAS')"))
+        connection.execute(text(
+            "INSERT INTO class_path_steps (id,path_id,position,step_type,meeting_id,follows_step_id) "
+            "VALUES (14,1,3,'meeting',1,13)"))
+    for statement in (
+        "INSERT INTO class_path_steps (id,path_id,position,step_type) VALUES (15,1,4,'guided_chat')",
+        "INSERT INTO class_path_steps (id,path_id,position,step_type,tool_key,follows_step_id) VALUES (15,1,4,'tool','timeline',13)",
     ):
         with pytest.raises(IntegrityError):
             with templates_schema.begin() as connection:

@@ -1915,6 +1915,12 @@ class ClassPathStepInput(PathStepFields):
     tool_key: str = Field(min_length=1)
 
 
+class GuidedChatPathStepInput(PathStepFields):
+    """A standalone guided chat (#177), e.g. SAVICKAS; questionnaires go through an administration."""
+    step_type: Literal["guided_chat"]
+    tool_key: str = Field(min_length=1)
+
+
 class AdministrationPathStepInput(PathStepFields):
     step_type: Literal["questionnaire_administration"]
     administration_plan_id: int = Field(gt=0)
@@ -1939,6 +1945,8 @@ class MeetingPathStepInput(PathStepFields):
     """A class or group meeting of the same class (#175)."""
     step_type: Literal["meeting"]
     meeting_id: int = Field(gt=0)
+    # #177: position (0-based) in this payload of the guided chat it follows up.
+    follows: Optional[int] = Field(default=None, ge=0)
 
 
 class PendingPathStepInput(PathStepFields):
@@ -1949,7 +1957,7 @@ class PendingPathStepInput(PathStepFields):
 
 TypedPathStepInput = Annotated[
     Union[ClassPathStepInput, AdministrationPathStepInput, GuidedResultsChatStepInput, AssignmentPathStepInput,
-          ForumPathStepInput, PendingPathStepInput, MeetingPathStepInput],
+          ForumPathStepInput, PendingPathStepInput, MeetingPathStepInput, GuidedChatPathStepInput],
     Field(discriminator="step_type"),
 ]
 
@@ -1965,6 +1973,7 @@ class ClassPathStepResponse(BaseModel):
     assignment_id: Optional[int] = None
     topic_id: Optional[int] = None
     meeting_id: Optional[int] = None
+    follows_step_id: Optional[int] = None
     active_from: Optional[datetime] = None
     target_summary: Optional[dict] = None
     availability_reason: Optional[str] = None
@@ -2057,6 +2066,7 @@ class StudentClassPathStep(BaseModel):
     assignment_id: Optional[int] = None
     topic_id: Optional[int] = None
     meeting_id: Optional[int] = None
+    follows_step_id: Optional[int] = None
     active_from: Optional[datetime] = None
     target_summary: Optional[dict] = None
     availability_reason: Optional[str] = None

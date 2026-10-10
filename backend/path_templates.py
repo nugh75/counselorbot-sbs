@@ -132,8 +132,12 @@ def from_class_path(db: Session, path: models.ClassPath) -> list[dict]:
             if origin is None or origin.step_type != "forum":
                 raise HTTPException(409, {"code": "template_forum_unavailable", "position": position[step.id]})
             config = {"title": origin.config["title"], "body": origin.config["body"]}
-        elif kind == "tool":
-            config = {"tool_key": step.tool_key}
+        elif kind == "meeting":
+            # Meetings need a date and a class: templates do not carry them yet.
+            raise HTTPException(409, {"code": "template_meeting_unavailable", "position": position[step.id]})
+        elif kind in ("tool", "guided_chat"):
+            # A template keeps a standalone guided chat as a tool step naming the chat.
+            kind, config = "tool", {"tool_key": step.tool_key}
         if kind == "guided_results_chat" and not config["results_position"]:
             raise HTTPException(409, "results_step_unavailable")
         values.append({"id": None, "step_type": kind, "tool_key": step.tool_key if kind == "tool" else None,
@@ -212,11 +216,11 @@ def template_changes(db: Session, path: models.ClassPath, template: models.PathT
     steps = _active_steps(db, path.id)
     linked = {step.template_step_id: step for step in steps if step.template_step_id}
     # Pending steps are invisible to students; class objects are never rewritten.
-    started = started_steps(db, path, [step for step in steps if step.step_type == "tool"])
+    started = started_steps(db, path, [step for step in steps if step.step_type in ("tool", "guided_chat")])
     enabled = get_class_enabled_tool_keys(db, path.group_id)
 
     def status(step):
-        if step is not None and step.step_type not in ("tool", "pending"):
+        if step is not None and step.step_type not in ("tool", "guided_chat", "pending"):
             return "created"
         return "started" if step is not None and step.id in started else "apply"
 
