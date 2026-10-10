@@ -47,7 +47,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     const h2 = await page.getByRole('heading', { level: 2 }).allTextContents();
     assert.deepEqual(h2.slice(0, 3), ['Percorso guidato: obiettivi per la mia classe', 'Classe e assegnazioni', 'Cataloghi']);
     // link illustrati
-    for (const href of ['/docente/classi', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
+    for (const href of ['/docente/classi', '/docente/percorsi', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
         assert.equal(await page.locator(`nav a[href="${href}"]`).count(), 1, `link ${href}`);
     }
     assert.ok(await page.locator('[data-teacher-area-home] img').first().isVisible());
@@ -71,6 +71,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
 for (const [slug, h1, marker] of [
     ['classi', 'Gruppi e classi', 'Gruppi e classi che gestisco'],
     ['assegnazioni', 'Assegnazione', 'Assegnazione'],
+    ['percorsi', 'Percorsi di classe', 'Non hai ancora classi: creane una in Gruppi e classi per preparare un percorso.'],
     ['somministrazioni', 'Piani di somministrazione', 'Piani di somministrazione'],
 ]) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
