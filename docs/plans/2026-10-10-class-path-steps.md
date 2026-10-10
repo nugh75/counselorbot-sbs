@@ -4,7 +4,10 @@ Stato: proposta approvata dall'utente il 10 ottobre 2026. Fase 0 (#172): modelli
 condivisione, «Salva come modello» e «Applica a…» con passi «Da preparare» creati alla
 pubblicazione (PR #178); «Aggiorna da modello» nella seconda PR: confronta ogni passo con
 la copia del passo del modello salvata all’applicazione (`template_snapshot`), così il
-testo di una discussione già creata non viene mai letto.
+testo di una discussione già creata non viene mai letto (PR #179). Fase 1 (#173): un solo
+«+ Aggiungi passo» nell’editor della classe e dei modelli; le chat guidate autonome
+restano passi `tool` scelti da «Fa una chat guidata» finché non arriva il tipo dedicato
+(#177); l’incontro è elencato come «in arrivo» fino a #175/#176.
 Tracciamento: milestone e issue su GitHub (vedi «Fasi»).
 
 ## Problema

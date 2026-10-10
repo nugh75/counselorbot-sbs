@@ -106,15 +106,20 @@ async function prepare(page) {
     await page.getByRole('button', { name: 'Nuovo modello' }).click();
     const editor = page.locator('[data-testid="path-template-editor"]');
     await editor.getByRole('textbox', { name: 'Titolo', exact: true }).fill('Inizio anno');
-    await editor.getByRole('combobox', { name: /^Tipo di passo/ }).selectOption('tool');
-    await editor.getByRole('button', { name: 'Aggiungi passo' }).click();
+    const addStep = async (kind, button = 'Aggiungi passo') => {
+        await editor.getByRole('button', { name: '+ Aggiungi passo' }).click();
+        await editor.getByRole('radio', { name: kind }).check();
+        await editor.getByRole('button', { name: button, exact: true }).click();
+    };
+    await addStep('Usa uno strumento');
+    // The template tool menu lists personal tools only.
+    const tools = await editor.getByRole('combobox', { name: /^Strumento/ }).locator('option').allTextContents();
+    assert.ok(tools.includes('Tavolo') && !tools.some(name => /Savickas|QSA/i.test(name)), tools.join(', '));
     await editor.getByRole('combobox', { name: /^Strumento/ }).selectOption('tavolo');
-    await editor.getByRole('combobox', { name: /^Tipo di passo/ }).selectOption('guided_results_chat');
-    await editor.getByRole('button', { name: 'Aggiungi passo' }).click();
+    await addStep('Fa una chat guidata', 'Sui risultati di un questionario del percorso');
     // A results chat without an earlier questionnaire cannot be saved.
     assert.equal(await editor.getByRole('button', { name: 'Salva modello' }).isDisabled(), true);
-    await editor.getByRole('combobox', { name: /^Tipo di passo/ }).selectOption('questionnaire_administration');
-    await editor.getByRole('button', { name: 'Aggiungi passo' }).click();
+    await addStep('Compila un questionario');
     await editor.getByRole('button', { name: 'Sposta su #3' }).click();
     await editor.getByRole('combobox', { name: /^Sui risultati del passo/ }).selectOption('2');
     await editor.getByRole('button', { name: 'Salva modello' }).click();
