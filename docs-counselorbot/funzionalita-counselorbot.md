@@ -521,7 +521,11 @@ percorso «Obiettivi per la mia classe» (DOCENZA) e i tre gruppi (**Classe e as
 **Cataloghi**, **Somministrazioni e ricerca**), nello stesso ordine e con una voce
 per ogni pagina. L’ordine visivo coincide con quello dei collegamenti nel DOM e
 della navigazione da tastiera. Ogni voce apre una pagina dedicata con il ritorno
-all’Area docenti: `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
+all’Area docenti: `/docente/istituti` (primo elenco del gruppo **Classe e
+assegnazioni**: creare un istituto, unirsi a uno esistente, impostarne codice e
+password per le somministrazioni e vederne le classi; visibile a docenti e
+amministratori, ciascuno limitato agli istituti di cui è membro, e chi crea un
+istituto ne diventa membro), `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
 della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
 link alla pagina dedicata con filtro già impostato),
 `/docente/assegnazioni` (pagina di sola assegnazione: da «Nuova assegnazione» si
