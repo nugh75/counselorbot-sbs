@@ -12,13 +12,28 @@ from sqlalchemy.orm import Session
 from . import models
 
 
+def meeting_group_ids(db: Session, meeting: models.ClassMeeting) -> list[int]:
+    """The meeting's home class first, then the other classes or groups it is for (#190)."""
+    linked = [group_id for (group_id,) in db.query(models.ClassMeetingGroup.group_id)
+              .filter_by(meeting_id=meeting.id).order_by(models.ClassMeetingGroup.group_id)]
+    return [meeting.group_id, *[group_id for group_id in linked if group_id != meeting.group_id]]
+
+
+def meetings_for_groups(db: Session, group_ids):
+    """Meetings of these classes or groups, home or linked."""
+    from sqlalchemy import or_
+    linked = db.query(models.ClassMeetingGroup.meeting_id).filter(models.ClassMeetingGroup.group_id.in_(group_ids))
+    return db.query(models.ClassMeeting).filter(or_(models.ClassMeeting.group_id.in_(group_ids),
+                                                    models.ClassMeeting.id.in_(linked)))
+
+
 def meeting_target(db: Session, group_id: int, meeting_id: int, *, for_update=False) -> models.ClassMeeting:
-    """A scheduled meeting of this class or group."""
+    """A scheduled meeting of this class or group, home or linked."""
     query = db.query(models.ClassMeeting).filter_by(id=meeting_id)
     if for_update:
         query = query.populate_existing().with_for_update()
     row = query.first()
-    if not row or row.group_id != group_id:
+    if not row or group_id not in meeting_group_ids(db, row):
         raise HTTPException(422, "meeting_class_mismatch")
     if row.status == "cancelled":
         raise HTTPException(409, "meeting_cancelled")

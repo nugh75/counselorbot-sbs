@@ -1992,6 +1992,15 @@ class ClassMeeting(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class ClassMeetingGroup(Base):
+    """Another class or group a meeting is for (#190); `ClassMeeting.group_id` stays its home class."""
+
+    __tablename__ = "class_meeting_groups"
+
+    meeting_id = Column(Integer, ForeignKey("class_meetings.id", ondelete="CASCADE"), primary_key=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), primary_key=True, index=True)
+
+
 class ClassMeetingSlot(Base):
     """A bookable time of an individual meeting (#176); one student per slot."""
 

@@ -13,7 +13,8 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from .. import auth, database, models
-from ..class_meetings import active_bookings, attendance, book_slot, meeting_summary, my_booking, slots
+from ..class_meetings import (active_bookings, attendance, book_slot, meeting_group_ids, meeting_summary,
+                              meetings_for_groups, my_booking, slots)
 from ..goals import membership_ids
 from .groups import _require_visible_group, _username
 
@@ -36,6 +37,8 @@ class MeetingWrite(BaseModel):
     host_name: Optional[str] = Field(default=None, max_length=200)
     host_role: Optional[str] = Field(default=None, max_length=200)
     show_on_timeline: bool = True
+    # #190: other classes or groups the meeting is also for; the home class is implied.
+    group_ids: list[int] = Field(default_factory=list, max_length=50)
 
     @model_validator(mode="after")
     def consistent(self):
@@ -138,9 +141,17 @@ def _names(db: Session, usernames) -> dict:
 
 
 def _teacher_record(db: Session, row: models.ClassMeeting) -> dict:
+    group_ids = meeting_group_ids(db, row)
+    names = dict(db.query(models.StudentGroup.id, models.StudentGroup.name).filter(models.StudentGroup.id.in_(group_ids)))
+    attendees = [username for (username,) in db.query(models.ClassMeetingAttendance.username).filter_by(meeting_id=row.id)]
+    members = db.query(models.GroupMembership.group_id, models.GroupMembership.username).filter(
+        models.GroupMembership.group_id.in_(group_ids), models.GroupMembership.username.in_(attendees)).all() if attendees else []
     data = {**meeting_summary(row), "organizer_username": row.organizer_username,
             "manager_username": row.manager_username, "referral_id": row.referral_id,
-            "attendance_count": db.query(models.ClassMeetingAttendance).filter_by(meeting_id=row.id).count()}
+            "attendance_count": len(attendees), "group_ids": group_ids,
+            "group_names": [names.get(group_id, "") for group_id in group_ids],
+            # Attendance per class or group: a student in two linked classes counts in both.
+            "attendance_by_group": {str(group_id): sum(1 for gid, _ in members if gid == group_id) for group_id in group_ids}}
     if row.kind == "individual":
         bookings = active_bookings(db, row.id)
         names = _names(db, [booking.username for booking in bookings.values()])
@@ -153,7 +164,7 @@ def _teacher_record(db: Session, row: models.ClassMeeting) -> dict:
     return data
 
 
-def _apply(db: Session, group: models.StudentGroup, row: models.ClassMeeting, payload: MeetingWrite) -> None:
+def _apply(db: Session, identity, group: models.StudentGroup, row: models.ClassMeeting, payload: MeetingWrite) -> None:
     if payload.host_kind == "referent":
         referral = next((item for item in _referents(db, group) if item.id == payload.referral_id), None)
         if referral is None:
@@ -167,12 +178,26 @@ def _apply(db: Session, group: models.StudentGroup, row: models.ClassMeeting, pa
     row.mode, row.place, row.link = payload.mode, payload.place, payload.link
     row.host_kind, row.referral_id, row.host_name, row.host_role = payload.host_kind, payload.referral_id, host_name, host_role
     row.show_on_timeline = payload.show_on_timeline
+    # The other classes must be active classes or groups the teacher manages.
+    extra = [group_id for group_id in dict.fromkeys(payload.group_ids) if group_id != group.id]
+    for group_id in extra:
+        try:
+            other = _require_visible_group(db, identity, group_id)
+        except HTTPException:
+            raise HTTPException(422, "meeting_group_unavailable") from None
+        if not other.is_active:
+            raise HTTPException(422, "meeting_group_unavailable")
+    if row.id is None:
+        db.add(row)
+        db.flush()
+    db.query(models.ClassMeetingGroup).filter_by(meeting_id=row.id).delete()
+    db.add_all([models.ClassMeetingGroup(meeting_id=row.id, group_id=group_id) for group_id in extra])
 
 
 @router.get("/teacher/groups/{group_id}/meetings")
 def list_meetings(group_id: int, identity=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
     _require_visible_group(db, identity, group_id)
-    rows = (db.query(models.ClassMeeting).filter_by(group_id=group_id)
+    rows = (meetings_for_groups(db, [group_id])
             .order_by(models.ClassMeeting.starts_at.desc().nulls_first(), models.ClassMeeting.id.desc()).all())
     return [_teacher_record(db, row) for row in rows]
 
@@ -194,8 +219,7 @@ def create_meeting(group_id: int, payload: MeetingWrite, identity=Depends(auth.g
     # Today the teacher both organises and manages; the fields stay apart for a future role.
     row = models.ClassMeeting(group_id=group.id, kind=payload.kind, organizer_username=username,
                               manager_username=username, status="scheduled", revision=1)
-    _apply(db, group, row, payload)
-    db.add(row)
+    _apply(db, identity, group, row, payload)
     db.commit()
     return _teacher_record(db, row)
 
@@ -211,7 +235,7 @@ def update_meeting(meeting_id: int, payload: MeetingUpdate, identity=Depends(aut
     if payload.kind != row.kind:
         raise HTTPException(409, "meeting_kind_immutable")
     # A date change keeps the attendance already marked: the meeting is the same.
-    _apply(db, db.get(models.StudentGroup, row.group_id), row, payload)
+    _apply(db, identity, db.get(models.StudentGroup, row.group_id), row, payload)
     row.revision += 1
     db.commit()
     return _teacher_record(db, row)
@@ -309,10 +333,7 @@ def cancel_booking(booking_id: int, identity=Depends(auth.get_current_plan_manag
 
 
 def _student_meeting(db: Session, identity, meeting_id: int, *, for_update=False) -> models.ClassMeeting:
-    query = db.query(models.ClassMeeting).filter(
-        models.ClassMeeting.id == meeting_id,
-        models.ClassMeeting.group_id.in_(membership_ids(db, _username(identity) or "")),
-    )
+    query = meetings_for_groups(db, membership_ids(db, _username(identity) or "")).filter(models.ClassMeeting.id == meeting_id)
     if for_update:
         query = query.populate_existing().with_for_update()
     row = query.first()
@@ -333,7 +354,9 @@ def _attendable_from(db: Session, row: models.ClassMeeting, username: str):
 def _student_record(db: Session, row: models.ClassMeeting, username: str, names: dict) -> dict:
     mark = attendance(db, row.id, username)
     start = _attendable_from(db, row, username)
-    data = {**meeting_summary(row), "group_name": names.get(row.group_id, ""), "attended": mark is not None,
+    # A meeting for several classes is named after the student's own class.
+    own = next((group_id for group_id in meeting_group_ids(db, row) if group_id in names), row.group_id)
+    data = {**meeting_summary(row), "group_name": names.get(own, ""), "attended": mark is not None,
             "attended_at": mark.marked_at.isoformat() if mark else None,
             "can_mark": row.status == "scheduled" and start is not None and start <= datetime.now(timezone.utc)}
     if row.kind == "individual":
@@ -356,11 +379,11 @@ def _student_record(db: Session, row: models.ClassMeeting, username: str, names:
 @router.get("/user/meetings")
 def my_meetings(identity=Depends(auth.get_current_user), db: Session = Depends(get_db)):
     username = _username(identity) or ""
-    rows = (db.query(models.ClassMeeting)
-            .filter(models.ClassMeeting.group_id.in_(membership_ids(db, username)))
+    rows = (meetings_for_groups(db, membership_ids(db, username))
             .order_by(models.ClassMeeting.starts_at.nulls_first(), models.ClassMeeting.id).all())
+    # Only the student's own classes name a meeting.
     names = dict(db.query(models.StudentGroup.id, models.StudentGroup.name)
-                 .filter(models.StudentGroup.id.in_({row.group_id for row in rows}))) if rows else {}
+                 .filter(models.StudentGroup.id.in_(membership_ids(db, username)))) if rows else {}
     return [_student_record(db, row, username, names) for row in rows]
 
 
