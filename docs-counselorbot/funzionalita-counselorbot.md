@@ -527,7 +527,16 @@ password per le somministrazioni e vederne le classi; visibile a docenti e
 amministratori, ciascuno limitato agli istituti di cui è membro, e chi crea un
 istituto ne diventa membro), `/docente/percorsi` (Percorsi di classe con una propria
 immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano e seguono i suoi percorsi
-con lo stesso editor della scheda Percorsi della classe; `?class={id}` la preseleziona
+con lo stesso editor della scheda Percorsi della classe; nell’editor (della classe e dei
+modelli) un solo **+ Aggiungi passo** chiede «Cosa fa lo studente in questo passo?» e
+mostra solo il modulo del tipo scelto: compila un questionario (sempre tramite
+somministrazione), fa una chat guidata (sui risultati di un questionario del percorso o
+autonoma, come Savickas), svolge un’attività (assegnazione), usa uno strumento (solo
+strumenti personali: Tavolo, obiettivi, azioni, linea del tempo, Portfolio, flashcard,
+carte, confronto, Bussola, assistente), partecipa a un incontro (indicato come in arrivo)
+o partecipa a una discussione; su telefono il modulo si apre sotto l’elenco dei passi; i
+questionari inseriti in passato come strumento continuano a funzionare e sono segnalati
+come «Inserito come strumento: non raccoglie dati di somministrazione»; `?class={id}` la preseleziona
 e i link dalle Somministrazioni portano qui; sopra, **I miei modelli** e **Preset
 condivisi**: un modello è un percorso generale con passi astratti — strumento,
 questionario con strumento e lingua, chat sui risultati di un questionario precedente,

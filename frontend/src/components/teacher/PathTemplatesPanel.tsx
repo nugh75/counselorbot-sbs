@@ -8,7 +8,7 @@ import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings
 import { resolveClassPathToolName } from '@/lib/class-paths-tool-names';
 import { pathTemplateText, type PathTemplateTextKey } from '@/lib/i18n-path-templates';
 import {
-    TEMPLATE_LOCALES, TEMPLATE_QUESTIONNAIRES, TEMPLATE_STEP_TYPES, TEMPLATE_TOOLS, moveTemplateStep, newTemplateStep,
+    TEMPLATE_LOCALES, TEMPLATE_QUESTIONNAIRES, TEMPLATE_TOOLS, moveTemplateStep, newTemplateStep,
     parsePathTemplate, parsePathTemplateList, templateStepPayload, templateStepsValid,
     type PathTemplate, type TemplateStep, type TemplateStepType,
 } from '@/lib/path-templates';
@@ -17,6 +17,9 @@ import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
 import { TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
+import { StepKindPicker } from './StepKindPicker';
+import { stepKindText } from '@/lib/i18n-step-kinds';
+import { STANDALONE_GUIDED_CHATS, type StepKind } from '@/lib/path-step-kinds';
 import type { StudentGroup } from './class-group-types';
 
 const input = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
@@ -153,6 +156,15 @@ function ApplyTemplate({ template, groups, close, applied }: {
 
 interface GoalOption { id: number; title: string }
 
+// Meetings are not offered yet; a guided chat chooses its own step type.
+const KIND_TYPE: Record<Exclude<StepKind, 'guided_chat'>, TemplateStepType> = {
+    questionnaire: 'questionnaire_administration', activity: 'assignment', tool: 'tool', meeting: 'tool', discussion: 'forum',
+};
+
+function isChat(step: TemplateStep) {
+    return step.step_type === 'tool' && STANDALONE_GUIDED_CHATS.includes(step.tool_key ?? '');
+}
+
 function TemplateEditor({ template, close }: { template: PathTemplate | null; close: (saved: boolean) => void }) {
     const { lang } = useI18n();
     const l = (key: PathTemplateTextKey) => pathTemplateText(lang, key);
@@ -160,7 +172,8 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
     const [description, setDescription] = useState(template?.description ?? '');
     const [mode, setMode] = useState<'recommended' | 'strict'>(template?.mode ?? 'recommended');
     const [steps, setSteps] = useState<TemplateStep[]>(template?.steps ?? []);
-    const [newType, setNewType] = useState<TemplateStepType>('tool');
+    const [adding, setAdding] = useState(false);
+    const [kind, setKind] = useState<StepKind | null>(null);
     const [goals, setGoals] = useState<GoalOption[]>([]);
     const [busy, setBusy] = useState(false);
     const [failure, setFailure] = useState<PathTemplateTextKey | null>(null);
@@ -213,7 +226,7 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
             {steps.map((step, index) => <li key={step.id ?? `new-${index}`} data-testid="template-step"
                 className="space-y-2 rounded-lg border border-slate-200 bg-white p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-semibold text-slate-800">{`#${index + 1} · ${l(TYPE_LABEL[step.step_type])}`}</p>
+                    <p className="font-semibold text-slate-800">{`#${index + 1} · ${isChat(step) ? stepKindText(lang, 'chatStandalone') : l(TYPE_LABEL[step.step_type])}`}</p>
                     <div className="flex gap-1">
                         <Button variant="secondary" className="w-11 px-0" disabled={index === 0} aria-label={`${l('moveUp')} #${index + 1}`}
                             onClick={() => setSteps(current => moveTemplateStep(current, index, index - 1))}><ArrowUp className="h-4 w-4" aria-hidden /></Button>
@@ -230,13 +243,22 @@ function TemplateEditor({ template, close }: { template: PathTemplate | null; cl
             </li>)}
         </ol>
 
-        <div className="flex flex-wrap items-end gap-2 border-t border-slate-100 pt-3">
-            <label className="text-sm font-medium text-slate-700">{l('stepType')}
-                <select className={input} value={newType} onChange={event => setNewType(event.target.value as TemplateStepType)}>
-                    {TEMPLATE_STEP_TYPES.map(type => <option key={type} value={type}>{l(TYPE_LABEL[type])}</option>)}
-                </select></label>
-            <Button variant="secondary" onClick={() => setSteps(current => [...current, newTemplateStep(newType)])}>
-                <Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
+        <div className="space-y-3 border-t border-slate-100 pt-3">
+            {!adding ? <Button variant="secondary" onClick={() => setAdding(true)}>{stepKindText(lang, 'addStep')}</Button> : (
+                <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <StepKindPicker lang={lang} value={kind} onChange={setKind} />
+                    {kind && <div className="flex flex-wrap gap-2">
+                        {(kind === 'guided_chat' ? [['guided_results_chat', 'chatOnResults'], ['tool', 'chatStandalone']] as const
+                            : [[KIND_TYPE[kind], kind] as const]).map(([type, label]) => <Button key={label} variant="secondary" onClick={() => {
+                            const step = newTemplateStep(type);
+                            setSteps(current => [...current, label === 'chatStandalone' ? {...step, tool_key: STANDALONE_GUIDED_CHATS[0]} : step]);
+                            setAdding(false);
+                            setKind(null);
+                        }}><Plus className="h-4 w-4" aria-hidden />{kind === 'guided_chat' ? stepKindText(lang, label) : l('addStep')}</Button>)}
+                    </div>}
+                    <Button variant="ghost" onClick={() => { setAdding(false); setKind(null); }}>{stepKindText(lang, 'close')}</Button>
+                </div>
+            )}
         </div>
 
         {failure && <p role="alert" className="text-sm font-medium text-red-600">{l(failure)}</p>}
@@ -256,8 +278,10 @@ function StepFields({ step, index, goals, questionnaires, update }: {
     const id = `template-step-${index}`;
     switch (step.step_type) {
         case 'tool': {
-            const tools = TEMPLATE_TOOLS.includes(step.tool_key ?? '') || !step.tool_key ? TEMPLATE_TOOLS : [step.tool_key, ...TEMPLATE_TOOLS];
-            return <label className="block text-sm text-slate-700">{l('tool')}
+            // A standalone guided chat picks among chats; a tool among personal tools (an older key stays listed).
+            const list = isChat(step) ? STANDALONE_GUIDED_CHATS : TEMPLATE_TOOLS;
+            const tools = list.includes(step.tool_key ?? '') || !step.tool_key ? list : [step.tool_key, ...list];
+            return <label className="block text-sm text-slate-700">{isChat(step) ? stepKindText(lang, 'chatStandalone') : l('tool')}
                 <select id={id} className={input} value={step.tool_key ?? ''} onChange={event => update({tool_key: event.target.value})}>
                     <option value="">{l('choose')}</option>
                     {tools.map(key => <option key={key} value={key}>{toolName(key, lang)}</option>)}
