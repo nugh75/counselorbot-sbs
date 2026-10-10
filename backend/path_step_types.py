@@ -174,6 +174,21 @@ def validate_composition(db, path, steps):
             raise HTTPException(422, "results_step_order")
 
 
+def publication_problems(db, path, steps):
+    """Every active step whose target, capability or reference blocks going live.
+
+    Publication and restore share this report, so the teacher sees all the
+    steps to fix at once instead of one error per attempt.
+    """
+    problems = []
+    for step in steps:
+        descriptor = step_descriptor(db, path, step)
+        if not descriptor["available"]:
+            problems.append({"step_id": step.id, "position": step.position,
+                             "step_type": step.step_type, "reason": descriptor["availability_reason"]})
+    return problems
+
+
 def target_identity(value):
     target = {
         "tool": "tool_key",
