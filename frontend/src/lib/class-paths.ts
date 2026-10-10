@@ -1,11 +1,11 @@
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { parseMeeting, type ClassMeeting } from './class-meetings.ts';
 // `pending`: applied from a template, created at publication (#172); `meeting`: a class or group meeting (#175).
-export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat" | "assignment" | "forum" | "pending" | "meeting";
+export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat" | "assignment" | "forum" | "pending" | "meeting" | "guided_chat";
 
 function parseStepType(value: unknown): ClassPathStepType {
     return value === 'questionnaire_administration' || value === 'guided_results_chat' || value === 'assignment'
-        || value === 'forum' || value === 'pending' || value === 'meeting' ? value : 'tool';
+        || value === 'forum' || value === 'pending' || value === 'meeting' || value === 'guided_chat' ? value : 'tool';
 }
 
 /** What a pending step will create: the template config, never class data. */
@@ -79,6 +79,7 @@ function typedTarget(raw: Record<string, unknown>, stepType: ClassPathStepType) 
     const meeting = stepType === 'meeting';
     return {
         meeting_id: meeting && raw.meeting_id != null ? Number(raw.meeting_id) : null,
+        follows_step_id: meeting && raw.follows_step_id != null ? Number(raw.follows_step_id) : null,
         meeting_summary: meeting ? parseMeeting(raw.target_summary) : null,
         assignment_id: assignment && raw.assignment_id != null ? Number(raw.assignment_id) : null,
         assignment_summary: assignment ? parseAssignmentSummary(raw.target_summary) : null,
@@ -90,6 +91,9 @@ function typedTarget(raw: Record<string, unknown>, stepType: ClassPathStepType) 
 
 export interface ClassPathStep {
     id?: number;
+    /** Editor only: links an unsaved follow-up meeting to its unsaved chat (#177). */
+    client_key?: string;
+    follows_key?: string;
     path_id?: number;
     position: number;
     tool_key: string;
@@ -102,6 +106,8 @@ export interface ClassPathStep {
     forum_summary?: ForumStepSummary | null;
     meeting_id?: number | null;
     meeting_summary?: ClassMeeting | null;
+    /** #177: the guided chat step this meeting follows up. */
+    follows_step_id?: number | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
     /** Server reason code when the step cannot be used now (TF8). */
@@ -207,6 +213,8 @@ export interface StudentClassPathStep {
     forum_summary?: ForumStepSummary | null;
     meeting_id?: number | null;
     meeting_summary?: ClassMeeting | null;
+    /** #177: the guided chat step this meeting follows up. */
+    follows_step_id?: number | null;
     active_from?: string | null;
     target_summary?: {id: number; title: string; code: string; instrument_code: string; locale: string; institution_name: string} | null;
     /** Server reason code when the step cannot be used now (TF8). */

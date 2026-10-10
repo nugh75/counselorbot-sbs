@@ -50,6 +50,14 @@ const texts = {
         'Als Werkzeug eingefügt: Es erfasst keine Erhebungsdaten.',
         'Infogad som verktyg: den samlar inga administreringsdata.',
     ],
+    followUp: ["Seguito", "Follow-up", "Seguimiento", "Suite", "Nachbereitung", "Uppföljning"],
+    followNone: ["Nessun seguito", "No follow-up", "Sin seguimiento", "Pas de suite", "Keine Nachbereitung", "Ingen uppföljning"],
+    followGroup: ["Debriefing con la classe o il gruppo", "Debriefing with the class or group", "Debriefing con la clase o el grupo", "Débriefing avec la classe ou le groupe", "Nachbesprechung mit der Klasse oder Gruppe", "Genomgång med klassen eller gruppen"],
+    followIndividual: ["Colloquio individuale", "Individual appointment", "Cita individual", "Rendez-vous individuel", "Einzeltermin", "Enskilt samtal"],
+    addChatAndMeeting: ["Aggiungi chat e incontro", "Add chat and meeting", "Añadir chat y encuentro", "Ajouter le chat et la rencontre", "Chat und Treffen hinzufügen", "Lägg till chatt och möte"],
+    chooseChatFirst: ["Scegli prima la chat guidata.", "Choose the guided chat first.", "Elige primero el chat guiado.", "Choisissez d’abord le chat guidé.", "Wähle zuerst den geführten Chat.", "Välj först den guidade chatten."],
+    followsChat: ["Seguito della chat guidata", "Follow-up of the guided chat", "Seguimiento del chat guiado", "Suite du chat guidé", "Nachbereitung des geführten Chats", "Uppföljning av den guidade chatten"],
+    guidedChat: ["Chat guidata", "Guided chat", "Chat guiado", "Chat guidé", "Geführter Chat", "Guidad chatt"],
 } satisfies Record<string, Localized>;
 
 export type StepKindTextKey = keyof typeof texts;
