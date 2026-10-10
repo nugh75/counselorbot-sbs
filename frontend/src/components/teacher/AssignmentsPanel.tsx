@@ -24,6 +24,8 @@ export interface Assignment {
     progress?: { planned: boolean; shared: boolean; feedback_available: boolean };
     attachments?: { kind: 'strategy' | 'reading'; source_id: number; title: string }[];
     tools?: ActivityTool[];
+    /** #188, teacher view: why it cannot be deleted, or null. */
+    delete_blocker?: 'assignment_started' | 'assignment_in_path' | null;
     snapshot: { title: string; description: string; details: string; creators?: string[]; year?: number; content_warning?: string; where_to_find?: string; source_reference?: string };
 }
 
@@ -56,6 +58,7 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
     const leaveDraft = () => !draft.busy && (!draft.dirty || window.confirm(w('leaveDraft')));
     // Lotto 5B: la revoca conferma in linea, sulla scheda stessa.
     const [confirmRevoke, setConfirmRevoke] = useState<number | null>(null);
+    const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
     const toggle = (id: number) => { if (leaveDraft()) setOpenId(current => current === id ? null : id); };
     const load = useCallback(async () => {
         setLoading(true); setFailed(false);
@@ -182,6 +185,18 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
                             }}
                             onCancel={() => setConfirmRevoke(null)} />
                         : <Button variant="secondary" size="sm" type="button" disabled={busy !== null} onClick={() => setConfirmRevoke(row.id)}>{l('revoke')}</Button>)}
+                    {/* #188: delete only while no student has started it and no path step uses it. */}
+                    {teacher && (confirmDelete === row.id
+                        ? <ConfirmInline question={l('confirmDelete')} busy={busy !== null}
+                            onConfirm={async () => {
+                                setBusy(row.id); setFailed(false);
+                                try { const res = await apiFetch(`/api/teacher/assignments/${row.id}/delete`, { method: 'POST' }); if (!res.ok) throw new Error('delete failed'); setConfirmDelete(null); await load(); }
+                                catch { setFailed(true); } finally { setBusy(null); }
+                            }}
+                            onCancel={() => setConfirmDelete(null)} />
+                        : row.delete_blocker === null
+                            ? <Button variant="ghost" size="sm" type="button" className="text-red-700" disabled={busy !== null} onClick={() => setConfirmDelete(row.id)}>{l('deleteAssignment')}</Button>
+                            : row.delete_blocker && <p className="text-xs text-slate-600">{l(row.delete_blocker === 'assignment_started' ? 'blockedStarted' : 'blockedPath')}</p>)}
                 </>}
             </article>;
         })}
