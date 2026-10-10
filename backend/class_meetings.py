@@ -31,7 +31,7 @@ def meeting_summary(row: models.ClassMeeting) -> dict:
             "duration_minutes": row.duration_minutes, "mode": row.mode, "place": row.place, "link": row.link,
             "status": row.status, "cancelled_at": row.cancelled_at.isoformat() if row.cancelled_at else None,
             "revision": row.revision, "kind": row.kind, "host_kind": row.host_kind,
-            "host_name": row.host_name, "host_role": row.host_role}
+            "host_name": row.host_name, "host_role": row.host_role, "show_on_timeline": row.show_on_timeline}
 
 
 def attendance(db: Session, meeting_id: int, username: str) -> models.ClassMeetingAttendance | None:
