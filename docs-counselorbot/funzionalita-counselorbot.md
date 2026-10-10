@@ -1604,3 +1604,58 @@ forum router no longer imports the class-management router. The database upgrade
 adds `class_path_steps.topic_id` (deleting a referenced discussion is refused,
 while deleting the whole class still cascades) and widens the step target check;
 it is replay-safe and keeps existing steps.
+
+
+### Publishing and managing a mixed class path
+
+The teacher journey runs Teacher area → Institutes → institute → class → Class
+paths tab (the class card in the institute and class lists also links straight to
+that tab). One path can mix every step type: `questionnaire_administration`,
+`guided_results_chat`, `assignment`, `forum` and `tool`. The class tab passes the
+class's institute to the builder; when the class has none, the administration
+section explains that administration steps need one and links to Institutes.
+
+Publication validates the whole path at once. `POST /teacher/paths/{id}/publish`
+resolves every active step through the shared typed-step descriptor (targets,
+platform and class capabilities, institute context, deep-dive source) and, when any
+step is blocked, returns `409` with
+`{"code": "path_publication_blocked", "problems": [{step_id, position, step_type,
+reason}]}` listing every blocked step; nothing is written, so status, published
+time, revision and activation times stay unchanged. The builder lists each blocked
+step with the action that fixes it and reloads the steps so their reasons appear in
+place. Otherwise steps without an activation time receive the same publication
+time; steps already active keep their first activation.
+
+Publish, archive and restore accept an optional `{"revision": n}` body; a stale
+revision returns `409` (`Class path revision mismatch`) without changes, so two tabs
+cannot publish or archive over each other. Clients that send no body keep the
+previous behaviour. The builder sends the revision it last loaded and disables
+archive/restore while the draft has unsaved edits.
+
+Restore of a path that was already published goes live through the same validation
+as publication: blocked steps are reported the same way and the path stays archived,
+and steps added while the path was archived are activated at restore time (before
+this change they stayed without an activation time and could never complete). A
+never-published path returns to draft without validation.
+
+Identity rules are unchanged and now covered together by synthetic tests: reorder
+and title, instruction or due-date edits keep step IDs and activation times; the
+target of an activated step is immutable (`409 activated_step_target_immutable`);
+replacing it means removing the step and adding a new one, which gets a new ID and
+its own activation time, while the removed step keeps its rows and teacher marks.
+
+Unavailable steps carry a reason everywhere: each serialized step has
+`availability_reason`, and `/user/paths` also reports `tool_unavailable` for a step
+the class offers but the student's current tool view excludes (#147 view). The
+builder, the progress matrix (below the table) and the student pages show the
+reason; teacher texts are grouped by the action that fixes the step (platform tool,
+class tool, institute, administration, deep-dive source, assignment, forum, archived
+class). Unavailable steps stay out of every ratio, cannot be overridden, and an
+existing teacher mark stays visible and can be cleared.
+
+The research view and the classroom view address the same `AdministrationPlan` row:
+each administration step in the builder links to
+`/docente/somministrazioni#plan-{id}`, which scrolls to and highlights that plan,
+and in the teacher research view a plan linked to a class links back to
+`/docente/classi/{class}?tab=paths`. Breadcrumbs in the institute and class pages
+use lucide icons instead of text arrows. No schema change is needed.

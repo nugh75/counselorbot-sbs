@@ -372,3 +372,25 @@ to contact you, and you can mark the step manually. Hiding the discussion, archi
 the class or switching the class forum off makes the step unavailable and blocks
 publishing; the class forum setting applies whatever tool view the student uses.
 Progress shows only whether and when a reply was published, never its text.
+
+
+### Publishing and managing a mixed path
+
+Start from Institutes, open your institute and its class, then the Class paths tab
+(the Paths link on each class card goes there directly). A path can combine
+administrations, a results deep dive, assignments, forum discussions and other
+tools. Publish checks all the steps together: if any step is not available, nothing
+changes and a list tells you, step by step, what to fix (for example switch a tool
+on in Tools & counselors, save the institute credentials, restore a hidden
+discussion or replace a revoked assignment). Restoring an archived path runs the same
+check and activates the steps you added while it was archived.
+
+Moving steps or editing their title, instructions and due date keeps what students
+have already done. To point an active step at another target, remove it and add a
+new step: the new one counts from that moment, and the old step keeps its history.
+If someone else changed the path in another tab, Publish, Archive and Restore tell
+you to reload instead of overwriting their work; archive and restore are available
+once your edits are saved. A step that is not available does not count in anyone's
+progress; the builder, the progress table and the student page say why. Each
+administration step has an "Open in Administration plans" link to the same plan, and
+from Administration plans a plan linked to a class opens that class's paths.

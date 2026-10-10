@@ -128,6 +128,9 @@ approval. A reply the teacher hides or you delete no longer counts. If the
 discussion is locked or you cannot post in the class forum, the step says so; ask
 your teacher how to complete it.
 
+A step marked not available does not count in your progress, and the page explains
+that it cannot be used right now: ask your teacher when it will open.
+
 ## Groups and what teachers can see
 
 **My groups/classes** (`/profilo/classi`) lists the groups you have joined. An
