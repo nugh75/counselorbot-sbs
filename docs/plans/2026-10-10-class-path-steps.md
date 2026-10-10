@@ -1,6 +1,8 @@
 # Percorsi di classe: tipi di passo — piano
 
-Stato: proposta approvata dall'utente il 10 ottobre 2026, non ancora implementata.
+Stato: proposta approvata dall'utente il 10 ottobre 2026. Fase 0 (#172): modelli,
+condivisione, «Salva come modello» e «Applica a…» con passi «Da preparare» creati alla
+pubblicazione; «Aggiorna da modello» segue in una seconda PR.
 Tracciamento: milestone e issue su GitHub (vedi «Fasi»).
 
 ## Problema
@@ -69,6 +71,14 @@ Percorsi (Area docente)
      └─ Tutor Roma Tre  · da «Inizio anno…» · bozza  [Aggiorna da modello]
 ```
 
+- **Passi «Da preparare»**: applicando un modello, questionario, attività, discussione
+  e chat sui risultati diventano passi `pending` della bozza; la **pubblicazione** crea
+  somministrazione, assegnazione e discussione in un'unica transazione. Se qualcosa
+  manca non si crea nulla e il blocco elenca i passi. Così gli studenti non vedono
+  assegnazioni o discussioni di un percorso ancora in bozza.
+- **Forum**: «Salva come modello» non legge mai testi del forum; una discussione entra
+  in un modello solo se nasce da un modello (si riusa quel testo). La pubblicazione
+  scrive la discussione attraverso l'unica funzione `create_path_topic` del modulo forum.
 - **Nel modello** i passi sono astratti: questionario = strumento e lingua; chat
   guidata = strumento e tipo di seguito; attività = obiettivo, istruzioni e
   strumenti; incontro = tipo, modalità e durata; discussione = titolo e testo

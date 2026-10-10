@@ -21,6 +21,9 @@ const ACTIONS: Record<string, UnavailableAction> = {
     institution_inactive: 'institute',
     institution_credentials_missing: 'institute',
     administration_not_institution_backed: 'institute',
+    // A step applied from a template creates its administration in the class institute.
+    class_institution_required: 'institute',
+    institution_link_forbidden: 'institute',
     administration_needs_reconciliation: 'administration',
     administration_delivery_unavailable: 'administration',
     administration_locale_unavailable: 'administration',

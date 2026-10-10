@@ -22,6 +22,13 @@ def module_path(name):
     return path if path.is_file() else None
 
 
+def forum_write_seam_only(source):
+    """Every forum import is `from .routes.forum import create_path_topic`, alone."""
+    forum = [node for node in ast.walk(ast.parse(source)) if isinstance(node, ast.ImportFrom)
+             and node.module in {"routes.forum", "backend.routes.forum"}]
+    return bool(forum) and all([alias.name for alias in node.names] == ["create_path_topic"] for node in forum)
+
+
 def imports(name, source, *, nested=False):
     tree = ast.parse(source)
     nodes = ast.walk(tree) if nested else tree.body
@@ -115,7 +122,10 @@ def test_no_non_forum_consumer_can_read_forum_models_or_tables():
             if isinstance(value, str) and any(token in value for token in FORUM_SYMBOLS):
                 violations.append(f'{relative}:{node.lineno}')
         name = 'backend.' + '.'.join(relative.with_suffix('').parts)
-        # main may register the router, but may not consume forum data.
+        # main may register the router, but may not consume forum data. Path
+        # publication (#172) may import only the write-only discussion seam.
+        if relative == Path('path_templates.py') and forum_write_seam_only(path.read_text()):
+            continue
         if relative != Path('main.py') and imports(name, path.read_text(), nested=True) & FORUM_FILES:
             violations.append(f'{relative}:forum import')
     assert not violations, f'Forum data reached a non-forum consumer: {violations}'
@@ -152,6 +162,9 @@ def test_forum_metadata_reader_is_isolated_from_ai_rag_context_and_exports():
         "backend.results_deep_dive",
         "backend.questionnaire_entry",
         "backend.routes.administration_plans",
+        # Path templates (#172) are class paths too; forum writes stay in routes/forum.py.
+        "backend.path_templates",
+        "backend.routes.path_templates",
         "backend.main",
     }
 

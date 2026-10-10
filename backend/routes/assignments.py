@@ -1,6 +1,7 @@
 """Published catalog entries assigned to a group or an individual member."""
 import hashlib
 import json
+import uuid
 from datetime import date, datetime, timezone
 from typing import Literal
 
@@ -131,6 +132,12 @@ def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), use
         if existing.request_hash != digest:
             raise HTTPException(409, 'Request changed: use a new request id')
         return _record(existing, _recipient_count(db, existing), db.get(models.AssignmentLearningSettings, existing.id))
+    row, recipients, settings = _create(db, user, group, payload, digest)
+    db.commit(); db.refresh(row)
+    return _record(row, len(recipients), settings)
+
+
+def _create(db, user, group, payload, digest):
     members = db.query(models.GroupMembership.username).filter_by(group_id=group.id)
     if payload.recipient_username is not None:
         members = members.filter_by(username=payload.recipient_username)
@@ -148,8 +155,19 @@ def assign(payload: AssignmentWrite, db: Session = Depends(database.get_db), use
         due_date=payload.due_date, response_prompt=payload.response_prompt)
     db.add(settings)
     db.add_all([models.AssignmentRecipient(assignment_id=row.id, username=name) for name in sorted(recipients)])
-    db.commit(); db.refresh(row)
-    return _record(row, len(recipients), settings)
+    db.flush()
+    return row, recipients, settings
+
+
+def build_path_assignment(db, user, group, config):
+    """Path publication: a whole-class goal assignment inside the caller's transaction."""
+    payload = AssignmentWrite(source_id=config['goal_id'], attachments=config.get('attachments') or [],
+        group_id=group.id, instructions=config.get('instructions') or '', language=config.get('language') or 'it',
+        request_id=f"path-{uuid.uuid4().hex}", intent=config.get('intent') or 'proposal',
+        response_prompt=config.get('response_prompt') or '')
+    digest = hashlib.sha256(json.dumps(payload.model_dump(mode='json'), sort_keys=True).encode()).hexdigest()
+    row, _recipients, _settings = _create(db, user, group, payload, digest)
+    return row
 
 
 @router.get('/teacher/groups/{group_id}/path-assignments')

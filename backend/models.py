@@ -1840,6 +1840,40 @@ class ClassPath(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     archived_at = Column(DateTime(timezone=True), nullable=True)
+    # Applied from a template: a copy, never changed by later template edits.
+    template_id = Column(Integer, ForeignKey("path_templates.id", ondelete="SET NULL"), nullable=True, index=True)
+    template_revision = Column(Integer, nullable=True)
+
+
+class PathTemplate(Base):
+    """Reusable path owned by a teacher; once shared it is a preset for every teacher."""
+
+    __tablename__ = "path_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_username = Column(String, nullable=False, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    mode = Column(String, nullable=False, default="recommended")
+    shared_at = Column(DateTime(timezone=True), nullable=True)
+    revision = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class PathTemplateStep(Base):
+    """Abstract step: class objects (administration, assignment, discussion) are
+    described in `config` and created only when an applied path is published."""
+
+    __tablename__ = "path_template_steps"
+
+    id = Column(Integer, primary_key=True, index=True)
+    template_id = Column(Integer, ForeignKey("path_templates.id", ondelete="CASCADE"), nullable=False, index=True)
+    position = Column(Integer, nullable=False)
+    step_type = Column(String(40), nullable=False)
+    config = Column(JSON, nullable=False, default=dict)
+    title = Column(String, nullable=True)
+    instructions = Column(Text, nullable=True)
 
 
 STEP_TARGET_CHECK = (
@@ -1852,7 +1886,9 @@ STEP_TARGET_CHECK = (
     "(step_type = 'assignment' AND tool_key IS NULL AND administration_plan_id IS NULL "
     "AND results_step_id IS NULL AND assignment_id IS NOT NULL AND topic_id IS NULL) OR "
     "(step_type = 'forum' AND tool_key IS NULL AND administration_plan_id IS NULL "
-    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NOT NULL)"
+    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NOT NULL) OR "
+    "(step_type = 'pending' AND tool_key IS NULL AND administration_plan_id IS NULL "
+    "AND results_step_id IS NULL AND assignment_id IS NULL AND topic_id IS NULL AND pending_config IS NOT NULL)"
 )
 
 
@@ -1885,6 +1921,10 @@ class ClassPathStep(Base):
     due_date = Column(Date, nullable=True)
     removed_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    # Applied from a template: `pending` steps keep the template config until
+    # publication creates the class object they describe.
+    pending_config = Column(JSON, nullable=True)
+    template_step_id = Column(Integer, ForeignKey("path_template_steps.id", ondelete="SET NULL"), nullable=True)
 
 
 class ClassPathProgress(Base):
