@@ -197,7 +197,8 @@ def sent(db: Session = Depends(database.get_db), user=Depends(auth.get_current_p
     visible = _visible_group_query(db, user).filter(models.StudentGroup.is_active.is_(True)).with_entities(models.StudentGroup.id)
     rows = db.query(models.TeacherAssignment).filter(models.TeacherAssignment.author_username == user['username'],
         models.TeacherAssignment.group_id.in_(visible)).order_by(models.TeacherAssignment.id.desc()).all()
-    return [_record(db, row, _recipient_count(db, row), db.get(models.AssignmentLearningSettings, row.id)) for row in rows]
+    return [{**_record(db, row, _recipient_count(db, row), db.get(models.AssignmentLearningSettings, row.id)),
+             'delete_blocker': _delete_blocker(db, row)} for row in rows]
 
 
 @router.delete('/teacher/assignments/{assignment_id}')
@@ -209,6 +210,36 @@ def revoke(assignment_id: int, db: Session = Depends(database.get_db), user=Depe
     row.revoked_at = row.revoked_at or datetime.now(timezone.utc)
     db.commit()
     return {'revoked': True}
+
+
+def _delete_blocker(db, row):
+    """Why an assignment cannot be deleted (#188), or None.
+
+    Deletion is allowed only while no student has started it: no planning and no
+    submission (any AssignmentWork row). A path step, even a removed one, keeps
+    its assignment: the teacher removes the step first or revokes instead.
+    """
+    if db.query(models.AssignmentWork.id).filter_by(assignment_id=row.id).first():
+        return 'assignment_started'
+    if db.query(models.ClassPathStep.id).filter_by(assignment_id=row.id).first():
+        return 'assignment_in_path'
+    return None
+
+
+@router.post('/teacher/assignments/{assignment_id}/delete')
+def delete(assignment_id: int, db: Session = Depends(database.get_db), user=Depends(auth.get_current_plan_manager)):
+    row = (db.query(models.TeacherAssignment).filter_by(id=assignment_id, author_username=user['username'])
+           .populate_existing().with_for_update().first())
+    if row is None:
+        raise HTTPException(404, 'Assignment unavailable')
+    _managed_group(db, user, row.group_id)
+    blocker = _delete_blocker(db, row)
+    if blocker:
+        raise HTTPException(409, blocker)
+    # Recipients, learning settings and (never created) work rows go with it.
+    db.delete(row)
+    db.commit()
+    return {'deleted': assignment_id}
 
 
 @router.get('/user/assignments')
