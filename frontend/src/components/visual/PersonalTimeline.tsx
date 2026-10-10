@@ -7,13 +7,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Activity, CalendarDays, Circle, CircleDot, Clock, Diamond, Flag, Plus, Square, Target, Trash2, Unlink } from 'lucide-react';
+import { Activity, CalendarDays, Circle, CircleDot, Clock, Diamond, Flag, Plus, Square, Target, Trash2, Unlink, Users } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { apiFetch } from '@/lib/auth';
 import { goalApi, type PersonalGoal } from '@/lib/goals';
 import { visualLabel } from '@/lib/i18n-visual-tools';
 import { useDraftGuard } from '@/lib/use-draft-guard';
+import { useStudentMeetings } from '@/components/profile/MeetingDetails';
+import { classMeetingText } from '@/lib/i18n-class-meetings';
+import { meetingTimelineStart } from '@/lib/class-meetings';
 import { TimelineCalendar } from './TimelineCalendar';
 import { TimelineDateFields } from './TimelineDateFields';
 import { InstitutionTimelineDates } from './InstitutionTimelineDates';
@@ -26,9 +29,11 @@ import type { SavedWorkspace, TimelineEvent, VisualWorkspace } from '@/lib/visua
 const field = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] text-slate-800';
 const iconButton = 'h-[44px] w-[44px] shrink-0 p-0';
 const FILTER_KEY = 'cb_timeline_filters';
-const KINDS: TimelineItemKind[] = ['milestone', 'action', 'goal', 'appointment'];
-const KIND_ICON: Record<TimelineItemKind, typeof Flag> = { milestone: Flag, action: Activity, goal: Target, appointment: CalendarDays };
-const KIND_LABEL: Record<TimelineItemKind, string> = { milestone: 'milestone', action: 'kindAction', goal: 'kindGoal', appointment: 'kindAppointment' };
+const KINDS: TimelineItemKind[] = ['milestone', 'action', 'goal', 'appointment', 'meeting'];
+// Kinds that existed before #189: a filter saved then keeps later kinds visible.
+const KINDS_BEFORE_MEETINGS: TimelineItemKind[] = ['milestone', 'action', 'goal', 'appointment'];
+const KIND_ICON: Record<TimelineItemKind, typeof Flag> = { milestone: Flag, action: Activity, goal: Target, appointment: CalendarDays, meeting: Users };
+const KIND_LABEL: Record<TimelineItemKind, string> = { milestone: 'milestone', action: 'kindAction', goal: 'kindGoal', appointment: 'kindAppointment', meeting: 'kindMeeting' };
 // Legend order mirrors `TIMELINE_GLYPHS`: past milestone, a goal's balance, check action, other action, review date.
 const GLYPH_LABELS = ['glyphMilestone', 'glyphGoalReview', 'glyphActionCheck', 'glyphAction', 'glyphReviewDate'];
 const GLYPH_ICON: Record<TimelineGlyph, typeof Flag> = { milestone: Circle, 'goal-review': Diamond, check: Clock, action: Square, 'review-date': CircleDot };
@@ -40,7 +45,14 @@ type SnapshotPayload = { revision: number; event_ids: string[]; title: string; r
 const readFilters = (): Set<TimelineItemKind> => {
     try {
         const raw = localStorage.getItem(FILTER_KEY);
-        if (raw) return new Set((JSON.parse(raw) as TimelineItemKind[]).filter(kind => KINDS.includes(kind)));
+        if (raw) {
+            const saved = JSON.parse(raw) as TimelineItemKind[] | { visible: TimelineItemKind[] };
+            if (Array.isArray(saved)) {
+                const added = KINDS.filter(kind => !KINDS_BEFORE_MEETINGS.includes(kind));
+                return new Set([...saved, ...added].filter(kind => KINDS.includes(kind)));
+            }
+            return new Set(saved.visible.filter(kind => KINDS.includes(kind)));
+        }
     } catch { /* best effort only */ }
     return new Set(KINDS);
 };
@@ -111,7 +123,7 @@ export function PersonalTimeline({ locale }: { locale: string }) {
     useEffect(() => { if (!filters) setFilters(readFilters()); }, [filters]);
     const chooseFilters = (next: Set<TimelineItemKind>) => {
         setFilters(next);
-        try { localStorage.setItem(FILTER_KEY, JSON.stringify([...next])); } catch { /* per-viewer convenience only */ }
+        try { localStorage.setItem(FILTER_KEY, JSON.stringify({ visible: [...next] })); } catch { /* per-viewer convenience only */ }
     };
 
     const save = useCallback(async (next?: VisualWorkspace): Promise<SavedWorkspace | null> => {
@@ -149,7 +161,13 @@ export function PersonalTimeline({ locale }: { locale: string }) {
         setActiveEvent(event.id);
     };
 
-    const items = useMemo(() => timelineItems(workspace, goals), [workspace, goals]);
+    // #189: class meetings come from the class, never from the student's saved workspace.
+    const classMeetings = useStudentMeetings();
+    const meetingItems = useMemo(() => (classMeetings.meetings ?? []).flatMap(meeting => {
+        const at = meetingTimelineStart(meeting);
+        return at ? [{ id: meeting.id, title: meeting.title, at, status: meeting.status, place: meeting.place }] : [];
+    }), [classMeetings.meetings]);
+    const items = useMemo(() => timelineItems(workspace, goals, meetingItems), [workspace, goals, meetingItems]);
     const filtered = useMemo(() => filterItems(items, filters ?? new Set(KINDS)), [items, filters]);
     const { past, future, undated } = useMemo(() => splitByToday(filtered, localToday()), [filtered]);
 
@@ -233,7 +251,8 @@ export function PersonalTimeline({ locale }: { locale: string }) {
             <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ochre-600" aria-hidden="true" />
             <span className="min-w-0">
                 <span className="block break-words font-medium">{item.deadline ? `${l('registrationDeadline')}: ${item.title}` : item.title}</span>
-                <span className="block text-xs text-slate-600">{kindName(item.kind)}{item.kind === 'appointment' && item.start ? ` · ${displayDate(item.start, locale)}` : ''}{item.kind === 'action' && item.stage ? ` · ${l(item.stage)}` : ''}</span>
+                <span className="block text-xs text-slate-600">{kindName(item.kind)}{item.kind === 'appointment' && item.start ? ` · ${displayDate(item.start, locale)}` : ''}{item.kind === 'action' && item.stage ? ` · ${l(item.stage)}` : ''}
+                    {item.kind === 'meeting' && item.start ? ` · ${displayDate(item.start, locale)} ${item.time ?? ''} · ${item.where ?? classMeetingText(locale, 'online')}${item.status === 'cancelled' ? ` · ${classMeetingText(locale, 'cancelled')}` : ''}` : ''}</span>
             </span>
         </span>;
         const content = item.href

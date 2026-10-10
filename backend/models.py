@@ -1978,6 +1978,8 @@ class ClassMeeting(Base):
     referral_id = Column(Integer, ForeignKey("orientation_referrals.id", ondelete="SET NULL"), nullable=True)
     host_name = Column(String(200), nullable=True)
     host_role = Column(String(200), nullable=True)
+    # #189: shown on students' timelines (individual meetings: only the student's own slot).
+    show_on_timeline = Column(Boolean, nullable=False, default=True, server_default="true")
     mode = Column(String(20), nullable=False)
     place = Column(String(300), nullable=True)
     link = Column(String(500), nullable=True)

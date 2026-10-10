@@ -215,6 +215,7 @@ import_module("backend.migrations.20261010_assignment_tools").migrate(database.e
 import_module("backend.migrations.20261010_class_meetings").migrate(database.engine)
 import_module("backend.migrations.20261010_individual_meetings").migrate(database.engine)
 import_module("backend.migrations.20261010_guided_chat_steps").migrate(database.engine)
+import_module("backend.migrations.20261010_meeting_timeline").migrate(database.engine)
 
 
 @asynccontextmanager
