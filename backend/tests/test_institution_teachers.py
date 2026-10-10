@@ -108,6 +108,17 @@ class InstitutionTeacherTests(unittest.TestCase):
         with self.assertRaises(HTTPException):
             require_institution_teacher(self.db, self.identity, self.schools[0].id)
 
+    def test_admin_without_teacher_group_manages_own_institutes(self):
+        self.assertEqual(self.client.get("/teacher/institutions").json(), [])
+        response = self.client.post("/teacher/institutions", json={"name": "Admin School", "kind": "school"})
+        self.assertEqual(response.status_code, 201, response.text)
+        created = self.db.get(models.Institution, response.json()["id"])
+        self.schools.append(created)
+        self.assertEqual([i["id"] for i in self.client.get("/teacher/institutions").json()], [created.id])
+        require_institution_teacher(self.db, self.identity, created.id)
+        with self.assertRaises(HTTPException):
+            require_institution_teacher(self.db, self.identity, self.schools[0].id)
+
     def test_researcher_cannot_manage_membership(self):
         self.teacher(groups=["researchers"], is_researcher=True)
         self.assertEqual(self.client.post(self.path, json={"username": "teacher-test"}).status_code, 403)

@@ -10,7 +10,7 @@ import { teacherAreaText } from '@/lib/i18n-teacher-area';
 // sottopagine /docente/<slug> (Orientamento solo per i docenti, come prima).
 export default function TeacherPage() {
     const { lang } = useI18n();
-    const { state, teacher } = useTeacherAccessState();
+    const { state, teacher, institutes } = useTeacherAccessState();
 
     if (state === 'loading') return <TeacherLoading />;
     if (state === 'forbidden') return <TeacherForbidden />;
@@ -21,7 +21,7 @@ export default function TeacherPage() {
                 <h1 className="text-2xl font-bold text-slate-800">{teacherAreaText(lang, 'title')}</h1>
                 <p className="mt-1 text-sm text-slate-500">{teacherAreaText(lang, 'subtitle')}</p>
                 <div className="mt-6">
-                    <TeacherAreaHome teacher={teacher} />
+                    <TeacherAreaHome teacher={teacher} institutes={institutes} />
                 </div>
             </section>
         </div>

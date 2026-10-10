@@ -26,7 +26,7 @@ function TeacherAreaEntry({ slug }: { slug: TeacherAreaSlug }) {
     );
 }
 
-export function TeacherAreaHome({ teacher }: { teacher: boolean }) {
+export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; institutes: boolean }) {
     const { lang } = useI18n();
     const l = (key: Parameters<typeof teacherAreaText>[1]) => teacherAreaText(lang, key);
     return (
@@ -43,7 +43,7 @@ export function TeacherAreaHome({ teacher }: { teacher: boolean }) {
                     </span>
                 </Link>
             </section>
-            {teacherAreaGroups.map(group => ({ ...group, slugs: group.slugs.filter(slug => teacher || (slug !== 'orientamento' && slug !== 'istituti')) })).map(group => (
+            {teacherAreaGroups.map(group => ({ ...group, slugs: group.slugs.filter(slug => slug === 'istituti' ? institutes : teacher || slug !== 'orientamento') })).map(group => (
                 <section key={group.id} aria-labelledby={`teacher-group-${group.id}`}>
                     <h2 id={`teacher-group-${group.id}`} className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">{l(group.id)}</h2>
                     <nav aria-labelledby={`teacher-group-${group.id}`} className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
