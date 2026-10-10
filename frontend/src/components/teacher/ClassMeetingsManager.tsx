@@ -8,6 +8,7 @@ import { fromLocalInput, meetingHost, meetingWhen, parseMeeting, parseMeetings, 
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { ConfirmInline } from '@/components/ui/ConfirmInline';
+import { parseClassGroups } from './class-group-types';
 
 const input = 'mt-1 w-full min-w-0 rounded-md border border-slate-300 bg-white p-2 text-sm';
 const select = 'mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto';
@@ -17,9 +18,11 @@ interface Draft {
     title: string; description: string; kind: ClassMeeting['kind']; startsAt: string; duration: string;
     mode: 'in_person' | 'online'; place: string; link: string;
     hostKind: HostKind; referralId: string; hostName: string; hostRole: string; showOnTimeline: boolean;
+    /** #190: the other classes or groups, besides this one. */
+    groupIds: number[];
 }
 const emptyDraft: Draft = { title: '', description: '', kind: 'group', startsAt: '', duration: '60', mode: 'in_person', place: '', link: '',
-    hostKind: 'teacher', referralId: '', hostName: '', hostRole: '', showOnTimeline: true };
+    hostKind: 'teacher', referralId: '', hostName: '', hostRole: '', showOnTimeline: true, groupIds: [] };
 interface Referent { id: number; role: string; name: string | null }
 
 function draftOf(meeting: ClassMeeting): Draft {
@@ -29,7 +32,8 @@ function draftOf(meeting: ClassMeeting): Draft {
         place: meeting.place ?? '', link: meeting.link ?? '', hostKind: meeting.host_kind,
         referralId: meeting.referral_id ? String(meeting.referral_id) : '',
         hostName: meeting.host_kind === 'expert' ? meeting.host_name ?? '' : '',
-        hostRole: meeting.host_kind === 'expert' ? meeting.host_role ?? '' : '', showOnTimeline: meeting.show_on_timeline !== false };
+        hostRole: meeting.host_kind === 'expert' ? meeting.host_role ?? '' : '', showOnTimeline: meeting.show_on_timeline !== false,
+        groupIds: (meeting.group_ids ?? []).filter(id => id !== meeting.group_id) };
 }
 
 /**
@@ -45,6 +49,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
     const m = (key: ClassMeetingTextKey) => classMeetingText(lang, key);
     const [meetings, setMeetings] = useState<ClassMeeting[]>([]);
     const [referents, setReferents] = useState<Referent[]>([]);
+    const [otherGroups, setOtherGroups] = useState<{ id: number; name: string }[]>([]);
     const [loadFailed, setLoadFailed] = useState(false);
     const [selected, setSelected] = useState('');
     const [editing, setEditing] = useState<ClassMeeting | 'new' | null>(null);
@@ -55,13 +60,17 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
 
     const load = useCallback(async () => {
         try {
-            const [response, people] = await Promise.all([
+            const [response, people, groups] = await Promise.all([
                 apiFetch(`/api/teacher/groups/${groupId}/meetings`),
                 apiFetch(`/api/teacher/groups/${groupId}/meeting-referents`),
+                apiFetch('/api/admin/groups'),
             ]);
             if (!response.ok) throw new Error('meetings');
             setMeetings(parseMeetings(await response.json()));
             if (people.ok) setReferents(await people.json() as Referent[]);
+            // Other active classes or groups the teacher manages can share a meeting (#190).
+            if (groups.ok) setOtherGroups(parseClassGroups(await groups.json())
+                .filter(row => row.is_active && row.id !== groupId).map(row => ({ id: row.id, name: row.name })));
             setLoadFailed(false);
         } catch { setLoadFailed(true); }
     }, [groupId]);
@@ -101,7 +110,8 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
             link: draft.mode === 'online' ? draft.link.trim() || null : null,
             host_kind: draft.hostKind, referral_id: draft.hostKind === 'referent' ? Number(draft.referralId) || null : null,
             host_name: draft.hostKind === 'expert' ? draft.hostName.trim() || null : null,
-            host_role: draft.hostKind === 'expert' ? draft.hostRole.trim() || null : null, show_on_timeline: draft.showOnTimeline };
+            host_role: draft.hostKind === 'expert' ? draft.hostRole.trim() || null : null, show_on_timeline: draft.showOnTimeline,
+            group_ids: draft.groupIds };
         const done = editing === 'new'
             ? await send(`/api/teacher/groups/${groupId}/meetings`, 'POST', body)
             : await send(`/api/teacher/meetings/${(editing as ClassMeeting).id}`, 'PUT', { ...body, revision: (editing as ClassMeeting).revision });
@@ -182,6 +192,15 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                     <input className={input} maxLength={300} value={draft.place} onChange={event => setDraft({ ...draft, place: event.target.value })} /></label>
                 : <label className="block text-sm">{m('link')}
                     <input type="url" className={input} maxLength={500} placeholder="https://" value={draft.link} onChange={event => setDraft({ ...draft, link: event.target.value })} /></label>}
+            {otherGroups.length > 0 && <fieldset className="space-y-1 text-sm">
+                <legend className="mb-1">{m('alsoFor')}</legend>
+                <div className="grid gap-x-4 sm:grid-cols-2">
+                    {otherGroups.map(other => <label key={other.id} className="flex min-h-[44px] items-center gap-2">
+                        <input type="checkbox" className="h-4 w-4 accent-indigo-600" checked={draft.groupIds.includes(other.id)}
+                            onChange={event => setDraft({ ...draft, groupIds: event.target.checked ? [...draft.groupIds, other.id]
+                                : draft.groupIds.filter(id => id !== other.id) })} />{other.name}</label>)}
+                </div>
+            </fieldset>}
             <label className="flex min-h-[44px] items-center gap-2 text-sm">
                 <input type="checkbox" checked={draft.showOnTimeline} onChange={event => setDraft({ ...draft, showOnTimeline: event.target.checked })}
                     className="h-4 w-4 accent-indigo-600" />{m('showOnTimeline')}</label>
@@ -209,7 +228,10 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                     meetingHost(row) ? `${m('with')} ${meetingHost(row)}` : null].filter(Boolean).join(' · ')}</p>
                 {/* Attendance means something only once a scheduled meeting has started. */}
                 {row.status === 'scheduled' && (row.kind === 'individual' || (row.starts_at && new Date(row.starts_at).getTime() <= Date.now()))
-                    && <p className="text-xs text-slate-500">{`${row.attendance_count ?? 0} ${m('attendances')}`}</p>}
+                    && <p className="text-xs text-slate-500">{`${row.attendance_count ?? 0} ${m('attendances')}`}
+                        {(row.group_ids?.length ?? 0) > 1 && ` (${(row.group_ids ?? []).map((id, index) =>
+                            `${row.group_names?.[index] ?? id}: ${row.attendance_by_group?.[String(id)] ?? 0}`).join(' · ')})`}</p>}
+                {(row.group_names?.length ?? 0) > 1 && <p className="text-xs text-slate-600">{`${m('forGroups')}: ${row.group_names!.join(', ')}`}</p>}
                 {row.kind === 'individual' && row.status === 'scheduled'
                     && <SlotsEditor lang={lang} meeting={row} busy={busy} send={send} />}
                 {confirmCancel === row.id && <ConfirmInline question={m('cancelConfirm')} busy={busy}
