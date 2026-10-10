@@ -12,6 +12,8 @@ import { NewAssignmentButton } from './AssignmentButton';
 import { useTeacherResource } from './useTeacherResource';
 import { parseForumDiscussionLinks } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
+import { parseActivityTools, type ActivityTool } from '@/lib/activity-tools';
+import { ActivityToolsList } from './ActivityTools';
 
 // F31: l'interfaccia è esportata per il blocco "Assegnazioni della classe"
 // dentro la scheda gruppo di /docente/classi (GroupAssignments).
@@ -21,6 +23,7 @@ export interface Assignment {
     recipient_username?: string | null; recipient_count?: number; instructions: string; created_at: string; revoked_at: string | null;
     progress?: { planned: boolean; shared: boolean; feedback_available: boolean };
     attachments?: { kind: 'strategy' | 'reading'; source_id: number; title: string }[];
+    tools?: ActivityTool[];
     snapshot: { title: string; description: string; details: string; creators?: string[]; year?: number; content_warning?: string; where_to_find?: string; source_reference?: string };
 }
 
@@ -163,6 +166,8 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
                         <p className="font-semibold">{l('attachments')}</p>
                         <ul className="list-disc ps-5">{row.attachments.map(item => <li key={`${item.kind}:${item.source_id}`}>{l(item.kind)} · {item.title}</li>)}</ul>
                     </div> : null}
+                    {/* #174: the student opens each tool in a popup or at full page; the teacher sees the list. */}
+                    <ActivityToolsList lang={lang} tools={parseActivityTools(row.tools)} interactive={!teacher} />
                     {row.snapshot.where_to_find && <p className="whitespace-pre-wrap text-sm">{l('where')}: {row.snapshot.where_to_find}</p>}
                     {row.snapshot.source_reference && <p className="whitespace-pre-wrap text-sm text-slate-600">{l('source')}: {row.snapshot.source_reference}</p>}
                     {!teacher && <AssignmentWork assignmentId={row.id} authorName={row.author_name} onDraftStateChange={onDraftStateChange} />}

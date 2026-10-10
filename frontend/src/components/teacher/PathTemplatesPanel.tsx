@@ -18,6 +18,8 @@ import { Card } from '@/components/ui/Card';
 import { TeacherLoading } from './TeacherAccess';
 import { useTeacherResource } from './useTeacherResource';
 import { StepKindPicker } from './StepKindPicker';
+import { ActivityToolsPicker } from './ActivityTools';
+import { ACTIVITY_TOOLS } from '@/lib/activity-tools';
 import { stepKindText } from '@/lib/i18n-step-kinds';
 import { STANDALONE_GUIDED_CHATS, type StepKind } from '@/lib/path-step-kinds';
 import type { StudentGroup } from './class-group-types';
@@ -315,6 +317,7 @@ function StepFields({ step, index, goals, questionnaires, update }: {
                         <option value="">{l('choose')}</option>
                         {options.map(goal => <option key={goal.id} value={goal.id}>{goal.title}</option>)}
                     </select></label>
+                <ActivityToolsPicker lang={lang} options={ACTIVITY_TOOLS} value={step.tool_keys ?? []} onChange={tool_keys => update({tool_keys})} />
                 <label className="block text-sm text-slate-700">{l('assignmentInstructions')}
                     <textarea className={input} rows={2} maxLength={3000} value={step.assignment_instructions ?? ''}
                         onChange={event => update({assignment_instructions: event.target.value})} /></label>
