@@ -37,8 +37,10 @@ function draftOf(meeting: ClassMeeting): Draft {
  * cancels them here, manages the slots and bookings of individual meetings and
  * picks one as a path step.
  */
-export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel }: {
+export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, kindFilter }: {
     lang: string; groupId: number; usedIds: number[]; onAdd: (meeting: ClassMeeting) => void; addLabel: string;
+    /** #177: a follow-up offers only class debriefings or only individual appointments. */
+    kindFilter?: ClassMeeting['kind'];
 }) {
     const m = (key: ClassMeetingTextKey) => classMeetingText(lang, key);
     const [meetings, setMeetings] = useState<ClassMeeting[]>([]);
@@ -67,7 +69,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel }
 
     const open = (target: ClassMeeting | 'new') => {
         setEditing(target);
-        setDraft(target === 'new' ? emptyDraft : draftOf(target));
+        setDraft(target === 'new' ? { ...emptyDraft, kind: kindFilter ?? 'group' } : draftOf(target));
         setFailure(null);
     };
 
@@ -109,7 +111,8 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel }
     const ready = draft.title.trim() && (draft.kind === 'individual' || draft.startsAt)
         && (draft.mode === 'in_person' ? draft.place.trim() : draft.link.trim())
         && (draft.hostKind !== 'referent' || draft.referralId) && (draft.hostKind !== 'expert' || draft.hostName.trim());
-    const selectable = meetings.filter(row => row.status === 'scheduled' && !usedIds.includes(row.id));
+    const selectable = meetings.filter(row => row.status === 'scheduled' && !usedIds.includes(row.id)
+        && (!kindFilter || row.kind === kindFilter));
     const label = (row: ClassMeeting) => row.kind === 'individual' ? `${row.title} · ${m('individual')}` : `${row.title} · ${meetingWhen(row, lang)}`;
     return <div className="space-y-3" data-testid="class-meetings">
         {loadFailed && <Callout variant="danger">{m('loadError')} <Button variant="secondary" onClick={() => void load()}>{m('retry')}</Button></Callout>}
@@ -135,7 +138,7 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel }
             <label className="block text-sm">{m('topic')}
                 <input className={input} maxLength={200} value={draft.title} onChange={event => setDraft({ ...draft, title: event.target.value })} /></label>
             {/* The kind is chosen once: group meetings have a date, individual ones slots. */}
-            {editing === 'new' && <fieldset className="flex flex-wrap gap-4 text-sm">
+            {editing === 'new' && !kindFilter && <fieldset className="flex flex-wrap gap-4 text-sm">
                 <legend className="mb-1">{m('kind')}</legend>
                 {(['group', 'individual'] as const).map(kind => <label key={kind} className="flex min-h-[44px] items-center gap-2">
                     <input type="radio" name={`meeting-kind-${groupId}`} checked={draft.kind === kind} onChange={() => setDraft({ ...draft, kind })}

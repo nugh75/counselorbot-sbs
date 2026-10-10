@@ -104,12 +104,12 @@ async function openEditor(page) {
     assert.deepEqual(await chats.locator('option').evaluateAll(rows => rows.slice(1).map(row => row.value)),
         ['SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'IDEA']);
     await chats.selectOption('SAVICKAS');
-    await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).nth(1).click();
+    await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).click();
     assert.equal(await cards.count(), 4);
     await cards.nth(3).getByText('Intervista Savickas').waitFor();
     await open('Fa una chat guidata');
     await chats.selectOption('EVENTO_STUDIO');
-    await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).nth(1).click();
+    await add.getByRole('button', { name: 'Aggiungi passo', exact: true }).click();
     assert.equal(await cards.count(), 5);
     // A built-in guided path is usable: no «not available» badge.
     assert.equal(await cards.nth(4).getByText('Non disponibile').count(), 0);
