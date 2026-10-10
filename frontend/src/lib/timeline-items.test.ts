@@ -127,3 +127,14 @@ test('a legacy event with free-text period and no date_mode is undated', () => {
     const { undated } = splitByToday(items, '2026-01-15');
     assert.deepEqual(undated.map(i => i.key), ['milestone-evt-legacy']);
 });
+
+test('class meetings join the timeline on the student\'s local day, without being editable', () => {
+    const items = timelineItems({ actions: [], timeline: { events: [] } }, [],
+        [{ id: 1, title: 'Debriefing', at: '2026-11-10T08:30:00Z', status: 'scheduled', place: 'Aula 3' },
+         { id: 2, title: 'Broken', at: 'not a date', status: 'scheduled', place: null }]);
+    assert.equal(items.length, 1);
+    assert.equal(items[0].kind, 'meeting');
+    assert.equal(items[0].editable, false);
+    assert.match(items[0].start ?? '', /^2026-11-1[01]$/);
+    assert.equal(items[0].where, 'Aula 3');
+});

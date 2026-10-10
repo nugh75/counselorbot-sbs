@@ -106,6 +106,7 @@ const texts = {
     noFreeSlots: ["Nessuna fascia libera al momento.", "No free slot at the moment.", "No hay franjas libres por ahora.", "Aucun créneau libre pour le moment.", "Derzeit kein freies Zeitfenster.", "Ingen ledig tid just nu."],
     slotTaken: ["Questa fascia è appena stata prenotata da qualcun altro: scegline un’altra.", "Someone else has just booked this slot: choose another one.", "Otra persona acaba de reservar esta franja: elige otra.", "Quelqu’un vient de réserver ce créneau : choisis-en un autre.", "Jemand anderes hat dieses Zeitfenster gerade gebucht: Wähle ein anderes.", "Någon annan har just bokat den här tiden: välj en annan."],
     bookFirst: ["Prenota una fascia: potrai segnare la presenza dal suo inizio.", "Book a slot: you can mark attendance from its start.", "Reserva una franja: podrás marcar la asistencia desde su inicio.", "Réserve un créneau : tu pourras indiquer ta présence dès son début.", "Buche ein Zeitfenster: Ab seinem Beginn kannst du die Teilnahme markieren.", "Boka en tid: du kan markera närvaro från dess början."],
+    showOnTimeline: ["Mostra nella linea del tempo degli studenti", "Show on students’ timelines", "Mostrar en la línea del tiempo de los estudiantes", "Afficher dans la frise des élèves", "In der Zeitleiste der Lernenden zeigen", "Visa på elevernas tidslinje"],
 } satisfies Record<string, Localized>;
 
 export type ClassMeetingTextKey = keyof typeof texts;
