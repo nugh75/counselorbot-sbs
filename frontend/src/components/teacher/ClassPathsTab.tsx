@@ -609,7 +609,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
             <Card className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
                     <h3 className="text-base font-semibold text-slate-800">
-                        {`${l('pathsTitle')} (${steps.length} ${l('stepsCount')})`}
+                        {`${l('stepsHeading')} (${steps.length})`}
                     </h3>
                 </div>
 
@@ -775,33 +775,39 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                         <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
                             <StepKindPicker lang={lang} value={kind} onChange={setKind} />
                             {kind === 'questionnaire' && <div className="space-y-3">
-                            <Link href="/docente/somministrazioni" className="text-indigo-700 underline">{a('research')}</Link>
+                            <Link href="/docente/somministrazioni" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-indigo-700 hover:underline">
+                                <ExternalLink className="h-4 w-4" aria-hidden />{a('research')}</Link>
                             {institutionId == null && <Callout variant="warning">{pub('noInstitute')}{' '}
                                 <Link href="/docente/istituti" className="font-semibold text-indigo-700 underline">{pub('goToInstitutes')}</Link></Callout>}
                             {administrationError && <Callout variant="danger">{a('error')} <Button variant="secondary" onClick={()=>void loadAdministrations()}>{a('retry')}</Button></Callout>}
-                            <div className="flex flex-wrap gap-2">
-                                <label>{a('choose')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="ml-2 rounded border p-2">
+                            <div className="flex flex-wrap items-end gap-2">
+                                <label className="block w-full text-sm sm:w-auto">{a('existing')}<select value={selectedAdministration} onChange={event=>setSelectedAdministration(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     <option value="">{a('choose')}</option>
                                     {administrations.filter(offered).map(row=><option key={row.id} value={row.id}>{row.code} · {row.title} · {row.locale.toUpperCase()}</option>)}
                                 </select></label>
                                 <Button variant="secondary" disabled={busy || !selectedAdministration} onClick={() => {addAdministrationStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                                <label>{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="ml-2 rounded border p-2" /></label>
-                                <label>{a('instrument')}<select value={administrationInstrument} onChange={event=>{setAdministrationInstrument(event.target.value);setAdministrationLocale('it');}} className="ml-2 rounded border p-2">
+                            <h4 className="text-sm font-semibold">{a('createNew')}</h4>
+                            <div className="flex flex-wrap items-end gap-2">
+                                <label className="block w-full text-sm sm:w-auto">{a('title')}<input value={administrationTitle} onChange={event=>setAdministrationTitle(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto" /></label>
+                                <label className="block w-full text-sm sm:w-auto">{a('instrument')}<select value={administrationInstrument} onChange={event=>{setAdministrationInstrument(event.target.value);setAdministrationLocale('it');}} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     {['QSA','QSAr','ZTPI','QPCS','QPCC','QAP'].map(code=><option key={code}>{code}</option>)}
                                 </select></label>
-                                <label>{a('locale')}<select value={administrationLocale} onChange={event=>setAdministrationLocale(event.target.value)} className="ml-2 rounded border p-2">
+                                <label className="block w-full text-sm sm:w-auto">{a('locale')}<select value={administrationLocale} onChange={event=>setAdministrationLocale(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     {localeOptions(administrationInstrument).map(locale=><option key={locale} value={locale}>{locale.toUpperCase()}</option>)}
                                 </select></label>
                                 <Button disabled={busy || !administrationTitle.trim()} onClick={()=>void createAdministration()}>{a('create')}</Button>
-                            </div><p className="text-sm text-slate-600">{a('rule')}</p>
-                            <p className="text-sm text-slate-600">{a('teacherInAppGuide')}</p>
+                            </div>
+                            <details className="text-sm text-slate-600">
+                                <summary className="cursor-pointer font-medium text-slate-700">{a('howDone')}</summary>
+                                <p className="mt-1">{a('rule')}</p>
+                                <p className="mt-1">{a('teacherInAppGuide')}</p>
+                            </details>
                             </div>}
                             {kind === 'guided_chat' && <div className="space-y-3">
                                 <h4 className="text-sm font-semibold">{k('chatOnResults')}</h4>
                             <div className="flex flex-wrap gap-2">
-                                <label>{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>setSelectedResultsStep(event.target.value)} className="ml-2 rounded border p-2">
+                                <label className="block w-full text-sm sm:w-auto">{a('deepDiveFrom')}<select value={selectedResultsStep} onChange={event=>setSelectedResultsStep(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     <option value="">{a('choose')}</option>
                                     {deepDiveSources(steps).map(step=><option key={step.id} value={step.id}>{`#${step.position} · ${step.target_summary?.code || step.administration_plan_id}`}</option>)}
                                 </select></label>
@@ -823,7 +829,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             {assignmentLoadError && <Callout variant="danger">{p('loadError')} <Button variant="secondary" onClick={()=>void loadPathAssignments()}>{p('retry')}</Button></Callout>}
                             {!assignmentLoadError && !pathAssignments.length && <p className="text-sm text-slate-600">{p('empty')}</p>}
                             <div className="flex flex-wrap gap-2">
-                                <label>{p('choose')}<select value={selectedAssignment} onChange={event=>setSelectedAssignment(event.target.value)} className="ml-2 rounded border p-2">
+                                <label className="block w-full text-sm sm:w-auto">{p('choose')}<select value={selectedAssignment} onChange={event=>setSelectedAssignment(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     <option value="">{p('choose')}</option>
                                     {selectablePathAssignments(pathAssignments, steps).map(row=><option key={row.id} value={row.id}>{row.attachments.length ? `${row.title} · ${row.attachments.map(item=>item.title).join(', ')}` : row.title}</option>)}
                                 </select></label>
@@ -869,7 +875,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             {forumLoadError && <Callout variant="danger">{f('loadError')} <Button variant="secondary" onClick={()=>void loadForumTopics()}>{f('retry')}</Button></Callout>}
                             {!forumLoadError && !forumTopics.length && <p className="text-sm text-slate-600">{f('empty')}</p>}
                             <div className="flex flex-wrap gap-2">
-                                <label>{f('choose')}<select value={selectedTopic} onChange={event=>setSelectedTopic(event.target.value)} className="ml-2 rounded border p-2">
+                                <label className="block w-full text-sm sm:w-auto">{f('choose')}<select value={selectedTopic} onChange={event=>setSelectedTopic(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm sm:w-auto">
                                     <option value="">{f('choose')}</option>
                                     {selectablePathForumTopics(forumTopics, steps).map(row=><option key={row.id} value={row.id}>{row.locked ? `${row.title} · ${f('locked')}` : row.title}</option>)}
                                 </select></label>
@@ -1067,11 +1073,11 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
                                 <div>
                                     <h3 className="text-base font-semibold text-slate-800">{p.title}</h3>
                                     <p className="text-xs text-slate-500">
-                                        {`${p.status === 'published' ? l('publishedBadge') : l('draftBadge')} · ${p.steps_count} ${l('stepsCount')} · ${p.mode === 'strict' ? l('orderStrict') : l('orderRecommended')}`}
+                                        {`${p.status === 'published' ? l('publishedBadge') : l('draftBadge')} · ${p.steps_count} ${l(p.steps_count === 1 ? 'stepCountOne' : 'stepsCount')} · ${p.mode === 'strict' ? l('orderStrict') : l('orderRecommended')}`}
                                     </p>
                                 </div>
                             </div>
-                            <Button variant="secondary" onClick={() => setSelectedPathId(p.id)}>
+                            <Button variant="secondary" className="ml-8 sm:ml-0" onClick={() => setSelectedPathId(p.id)}>
                                 {l('open')}
                             </Button>
                         </Card>
@@ -1095,7 +1101,7 @@ export function ClassPathsTab({ groupId, classSettings, institutionId = null }: 
                                             <div>
                                                 <h3 className="text-sm font-semibold text-slate-700">{p.title}</h3>
                                                 <p className="text-xs text-slate-400">
-                                                    {`${l('archivedBadge')} · ${p.steps_count} ${l('stepsCount')}`}
+                                                    {`${l('archivedBadge')} · ${p.steps_count} ${l(p.steps_count === 1 ? 'stepCountOne' : 'stepsCount')}`}
                                                 </p>
 
                                             </div>

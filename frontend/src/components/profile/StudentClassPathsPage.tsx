@@ -218,9 +218,10 @@ export function StudentClassPathsPage() {
 
                                                 <div className="space-y-1 min-w-0">
                                                     <div className="flex flex-wrap items-center gap-2">
-                                                        <span className="text-xs font-semibold text-slate-500">
+                                                        {/* The number appears once: here only when the marker shows an icon. */}
+                                                        {(isDone || isLocked || isUnavailable) && <span className="text-xs font-semibold text-slate-500">
                                                             {`[${stepNumber}]`}
-                                                        </span>
+                                                        </span>}
                                                         <h3 className={`text-base font-semibold ${isCurrent ? 'text-ochre-900' : 'text-slate-800'}`}>
                                                             {titleDisplay}
                                                         </h3>
@@ -303,7 +304,7 @@ export function StudentClassPathsPage() {
                                                             variant={isCurrent ? 'accent' : 'secondary'}
                                                             size="md"
                                                         >
-                                                            {l('start')}
+                                                            {isDone ? l('reopen') : l('start')}
                                                             <ArrowRight className="h-4 w-4" aria-hidden />
                                                         </Button>
                                                     </Link>

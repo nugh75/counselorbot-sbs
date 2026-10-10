@@ -149,18 +149,19 @@ export function AssignmentsPanel({ teacher = false, showHeading = true }: { teac
                     </div>
                 </div>
                 {open && <>
+                    {/* The goal's description belongs to its title, before notes and instructions. */}
+                    {row.snapshot.description && <p className="whitespace-pre-wrap text-sm text-slate-700">{row.snapshot.description}</p>}
                     <ForumDiscussionLinks links={discussions.forbidden || discussions.failed ? [] : discussions.data?.links || []}
                         kind="assignment" targetId={row.id} />
                     {row.response_prompt && <p className="whitespace-pre-wrap text-sm"><strong>{w('responsePrompt')}: </strong>{row.response_prompt}</p>}
                     <p className="text-sm text-slate-600">{l('from')}: {row.author_name}</p>
                     {teacher && <p className="text-sm text-slate-600">{l('recipients')}: {row.recipient_username || l('all')} ({row.recipient_count})</p>}
                     {row.instructions && <Callout variant="info" className="text-sm">
-                        <p className="font-semibold">{l('instructions')}</p>
+                        <p className="font-semibold">{l('instructionsRead')}</p>
                         <p className="whitespace-pre-wrap">{row.instructions}</p>
                     </Callout>}
                     {row.snapshot.content_warning && <Callout variant="warning" className="text-sm">{row.snapshot.content_warning}</Callout>}
                     {row.snapshot.creators?.length ? <p>{row.snapshot.creators.join(', ')}{row.snapshot.year ? ` · ${row.snapshot.year}` : ''}</p> : null}
-                    {row.snapshot.description && <p className="whitespace-pre-wrap">{row.snapshot.description}</p>}
                     {row.snapshot.details && <p className="whitespace-pre-wrap text-sm">{row.snapshot.details}</p>}
                     {row.attachments?.length ? <div className="text-sm">
                         <p className="font-semibold">{l('attachments')}</p>
