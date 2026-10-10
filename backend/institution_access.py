@@ -13,7 +13,8 @@ async def require_institution_admin(identity: dict = Depends(auth.get_current_us
 
 
 def require_teacher(identity: dict) -> str:
-    if not auth.is_teacher(identity.get("groups")):
+    # Administrators manage their own institutes from the teacher area too; access stays membership-based.
+    if not identity.get("is_admin") and not auth.is_teacher(identity.get("groups")):
         raise HTTPException(status_code=403, detail="Accesso riservato ai docenti")
     username = str(identity.get("username") or "").strip()
     if not username:

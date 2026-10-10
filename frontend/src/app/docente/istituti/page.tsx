@@ -4,5 +4,5 @@ import { TeacherForbidden } from '@/components/teacher/TeacherAccess';
 import { InstitutesPanel } from '@/components/teacher/InstitutesPanel';
 
 export default function InstitutesPage() {
-    return <TeacherAreaPage slug="istituti">{teacher => teacher ? <InstitutesPanel /> : <TeacherForbidden />}</TeacherAreaPage>;
+    return <TeacherAreaPage slug="istituti">{(_teacher, institutes) => institutes ? <InstitutesPanel /> : <TeacherForbidden />}</TeacherAreaPage>;
 }
