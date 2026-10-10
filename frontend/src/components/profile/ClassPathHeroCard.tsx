@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, Lock, AlertCircle, ArrowRight, Play } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { pathPublicationText } from '@/lib/i18n-path-publication';
 import { apiFetch } from '@/lib/auth';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -196,6 +197,9 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
                                                 </span>
                                             )}
                                         </div>
+                                        {isUnavailable && (
+                                            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{pathPublicationText(lang, 'studentUnavailable')}</p>
+                                        )}
 
                                         {step.title && step.title !== toolDisplayName && (
                                             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
