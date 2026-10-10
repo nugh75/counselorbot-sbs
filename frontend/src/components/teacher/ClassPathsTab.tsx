@@ -32,6 +32,7 @@ import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 import { lifecycleRequest, parsePublicationProblems, publishRevision, unavailableAction, type PublicationProblem } from '@/lib/path-publication';
 import { pathPublicationText, unavailableActionText } from '@/lib/i18n-path-publication';
 import { pathTemplateText } from '@/lib/i18n-path-templates';
+import { PathTemplateUpdate } from './PathTemplateUpdate';
 
 type PathTextKey = keyof typeof classPathsTexts;
 type SettingsTextKey = keyof typeof classSettingsTexts;
@@ -490,6 +491,22 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     </Button>
                 </div>
             </div>
+            {currentPath.template_id != null && (
+                <div className="flex flex-wrap items-start gap-2">
+                    <PathTemplateUpdate
+                        lang={lang}
+                        pathId={currentPath.id}
+                        revision={currentPath.revision}
+                        disabled={busy || dirty}
+                        onUpdated={next => {
+                            setCurrentPath(next);
+                            setSteps(next.steps);
+                            onUpdated(next);
+                        }}
+                        onBlocked={showBlocked}
+                    />
+                </div>
+            )}
             {templateNotice && (
                 <p role={templateNotice === 'savedAsTemplate' ? 'status' : 'alert'}
                     className={`text-sm font-medium ${templateNotice === 'savedAsTemplate' ? 'text-emerald-700' : 'text-red-600'}`}>
