@@ -213,6 +213,7 @@ import_module("backend.migrations.20261010_path_templates").migrate(database.eng
 import_module("backend.migrations.20261010_path_template_snapshots").migrate(database.engine)
 import_module("backend.migrations.20261010_assignment_tools").migrate(database.engine)
 import_module("backend.migrations.20261010_class_meetings").migrate(database.engine)
+import_module("backend.migrations.20261010_individual_meetings").migrate(database.engine)
 
 
 @asynccontextmanager
