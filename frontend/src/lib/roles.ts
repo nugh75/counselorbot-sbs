@@ -15,6 +15,11 @@ export function isTeacher(identity: Identity | null | undefined): boolean {
     return hasGroupMarker(identity, TEACHER_MARKERS);
 }
 
+// Institutes are managed from the teacher area by teachers and administrators.
+export function canManageInstitutes(identity: Identity | null | undefined): boolean {
+    return Boolean(identity?.is_admin || isTeacher(identity));
+}
+
 export function isResearcher(identity: Identity | null | undefined): boolean {
     return Boolean(identity?.is_researcher || hasGroupMarker(identity, RESEARCH_MARKERS));
 }
