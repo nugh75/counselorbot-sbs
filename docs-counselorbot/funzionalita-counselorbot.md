@@ -584,7 +584,12 @@ un nuovo modello privato, rifiutando obiettivi di una sola classe e discussioni 
 nate da un modello, perché il testo del forum non esce mai dal forum), `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
 della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
 link alla pagina dedicata con filtro già impostato),
-`/docente/assegnazioni` (pagina di sola assegnazione: da «Nuova assegnazione» si
+`/docente/incontri` (Incontri, con la propria immagine `incontri.png`, nel gruppo **Classe e
+assegnazioni** dopo Percorsi di classe: si sceglie la classe o il gruppo e si creano,
+spostano e annullano gli incontri di classe o di gruppo e i colloqui individuali a fasce,
+con prenotazioni, presenze e altre classi coinvolte, senza aprire un percorso;
+`?class={id}` la preseleziona; aggiungere un incontro a un percorso resta nell’editor del
+percorso), `/docente/assegnazioni` (pagina di sola assegnazione: da «Nuova assegnazione» si
 sceglie un obiettivo pubblicato del catalogo — obbligatorio — per il gruppo o la
 classe, si possono allegare facoltativamente strategie e materiali e si indicano
 istruzioni, finalità, scadenza e richiesta di restituzione, oltre agli **strumenti da

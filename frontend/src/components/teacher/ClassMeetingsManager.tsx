@@ -42,7 +42,9 @@ function draftOf(meeting: ClassMeeting): Draft {
  * picks one as a path step.
  */
 export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, kindFilter }: {
-    lang: string; groupId: number; usedIds: number[]; onAdd: (meeting: ClassMeeting) => void; addLabel: string;
+    lang: string; groupId: number; usedIds?: number[];
+    /** Absent on the dedicated meetings page (#195): there is no path to add a step to. */
+    onAdd?: (meeting: ClassMeeting) => void; addLabel?: string;
     /** #177: a follow-up offers only class debriefings or only individual appointments. */
     kindFilter?: ClassMeeting['kind'];
 }) {
@@ -121,13 +123,14 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
     const ready = draft.title.trim() && (draft.kind === 'individual' || draft.startsAt)
         && (draft.mode === 'in_person' ? draft.place.trim() : draft.link.trim())
         && (draft.hostKind !== 'referent' || draft.referralId) && (draft.hostKind !== 'expert' || draft.hostName.trim());
-    const selectable = meetings.filter(row => row.status === 'scheduled' && !usedIds.includes(row.id)
+    const selectable = meetings.filter(row => row.status === 'scheduled' && !(usedIds ?? []).includes(row.id)
         && (!kindFilter || row.kind === kindFilter));
     const label = (row: ClassMeeting) => row.kind === 'individual' ? `${row.title} · ${m('individual')}` : `${row.title} · ${meetingWhen(row, lang)}`;
     return <div className="space-y-3" data-testid="class-meetings">
         {loadFailed && <Callout variant="danger">{m('loadError')} <Button variant="secondary" onClick={() => void load()}>{m('retry')}</Button></Callout>}
         {!loadFailed && !meetings.length && <p className="text-sm text-slate-600">{m('empty')}</p>}
         <div className="flex flex-wrap items-end gap-2">
+            {onAdd && <>
             <label className="block w-full text-sm sm:w-auto">{m('meeting')}
                 <select value={selected} onChange={event => setSelected(event.target.value)} className={`${input} sm:w-auto`}>
                     <option value="">{m('choose')}</option>
@@ -139,7 +142,8 @@ export function ClassMeetingsManager({ lang, groupId, usedIds, onAdd, addLabel, 
                 if (meeting) onAdd(meeting);
                 setSelected('');
             }}><Plus className="h-4 w-4" aria-hidden />{addLabel}</Button>
-            <Button variant="secondary" disabled={busy} onClick={() => open('new')}>{m('newMeeting')}</Button>
+            </>}
+            <Button variant={onAdd ? 'secondary' : 'primary'} disabled={busy} onClick={() => open('new')}>{m('newMeeting')}</Button>
         </div>
         <p className="text-sm text-slate-600">{m('rule')}</p>
 
