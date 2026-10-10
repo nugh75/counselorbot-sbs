@@ -12,6 +12,7 @@ from backend import models
 
 forum_steps = import_module("backend.migrations.20261010_forum_steps")
 migration = import_module("backend.migrations.20261010_path_templates")
+snapshots = import_module("backend.migrations.20261010_path_template_snapshots")
 
 
 @pytest.fixture
@@ -34,6 +35,7 @@ def upgraded_tf7():
         models.Base.metadata.create_all(connection)
         connection.execute(text("ALTER TABLE class_path_steps DROP CONSTRAINT class_path_step_target"))
         connection.execute(text("ALTER TABLE class_path_steps DROP COLUMN pending_config"))
+        connection.execute(text("ALTER TABLE class_path_steps DROP COLUMN template_snapshot"))
         connection.execute(text("ALTER TABLE class_path_steps DROP COLUMN template_step_id"))
         connection.execute(text("ALTER TABLE class_paths DROP COLUMN template_id"))
         connection.execute(text("ALTER TABLE class_paths DROP COLUMN template_revision"))
@@ -96,3 +98,25 @@ def test_upgraded_check_rejects_pending_steps_without_config_or_with_a_target(up
         with upgraded_tf7.begin() as connection:
             connection.execute(text(
                 f"INSERT INTO class_path_steps (id,path_id,position,step_type,tool_key,pending_config) VALUES {values}"))
+
+
+def test_snapshot_upgrade_takes_applied_steps_as_in_step_with_their_template(upgraded_tf7):
+    with upgraded_tf7.begin() as connection:
+        insert_path(connection)
+    migration.migrate(upgraded_tf7)
+    with upgraded_tf7.begin() as connection:
+        connection.execute(text(
+            "INSERT INTO path_templates (id,owner_username,title,mode,revision) VALUES (1,'teacher','T','recommended',1)"))
+        connection.execute(text(
+            "INSERT INTO path_template_steps (id,template_id,position,step_type,config,title) VALUES "
+            "(5,1,1,'questionnaire_administration',:questionnaire,NULL),(6,1,2,'guided_results_chat',:chat,'Talk')"),
+            {"questionnaire": '{"instrument_code":"QSA","locale":"it","plan_title":""}', "chat": '{"results_position":1}'})
+        connection.execute(text(
+            "INSERT INTO class_path_steps (id,path_id,position,step_type,pending_config,template_step_id) VALUES "
+            "(13,1,2,'pending',:config,6)"), {"config": '{"kind":"guided_results_chat","results_step_id":12}'})
+    for _ in range(2):
+        snapshots.migrate(upgraded_tf7)
+    with upgraded_tf7.begin() as connection:
+        rows = dict(connection.execute(text("SELECT id, template_snapshot FROM class_path_steps")).all())
+    assert rows == {12: None, 13: {"step_type": "guided_results_chat", "config": {"results_template_step_id": 5},
+                                   "title": "Talk", "instructions": None}}
