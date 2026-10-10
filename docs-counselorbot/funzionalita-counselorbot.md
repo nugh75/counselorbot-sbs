@@ -539,7 +539,12 @@ assegnazione, discussione, chat sui risultati) vengono creati solo alla pubblica
 in un’unica operazione: se manca qualcosa, per esempio l’istituto della classe per un
 questionario, non si crea nulla e il blocco elenca i passi da sistemare; gli studenti
 non vedono nulla prima della pubblicazione e le modifiche successive al modello non
-toccano le copie già applicate; «Salva come modello» nell’editor di un percorso ne fa
+toccano le copie già applicate finché il docente non sceglie «Aggiorna da modello»
+nell’editor del percorso: prima elenca le differenze (passi nuovi, modificati o tolti
+dal modello), poi aggiorna solo i passi che nessuno studente ha iniziato e che non hanno
+ancora creato un oggetto nella classe, mantiene l’ordine dei passi esistenti e, in un
+percorso pubblicato, crea subito i nuovi passi, senza cambiare nulla se uno è bloccato;
+«Salva come modello» nell’editor di un percorso ne fa
 un nuovo modello privato, rifiutando obiettivi di una sola classe e discussioni non
 nate da un modello, perché il testo del forum non esce mai dal forum), `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
 della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
