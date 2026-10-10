@@ -73,12 +73,12 @@ export function PathTemplatesPanel({ groups, onApplied }: { groups: StudentGroup
             <div className="min-w-0">
                 <p className="break-words font-semibold text-slate-800">{template.title}</p>
                 <p className="text-xs text-slate-600">
-                    {`${template.steps.length} ${l('steps')}`}
+                    {`${template.steps.length} ${l(template.steps.length === 1 ? 'step' : 'steps')}`}
                     {!template.is_owner && ` · ${l('by')} ${template.owner_name}`}
                     {template.is_owner && template.shared && ` · ${l('shared')}`}
                 </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
                 <Button variant="secondary" disabled={busy} onClick={() => setApplying(template)}>{l('apply')}</Button>
                 {template.is_owner ? <>
                     <Button variant="secondary" disabled={busy} onClick={() => setEditing(template)}>{l('edit')}</Button>
