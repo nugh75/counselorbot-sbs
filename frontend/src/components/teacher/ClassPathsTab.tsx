@@ -31,6 +31,7 @@ import { parseForumDiscussionLinks, parseForumList } from '@/lib/forum';
 import { ForumDiscussionLinks } from '@/components/forum/ForumDiscussionLinks';
 import { lifecycleRequest, parsePublicationProblems, publishRevision, unavailableAction, type PublicationProblem } from '@/lib/path-publication';
 import { pathPublicationText, unavailableActionText } from '@/lib/i18n-path-publication';
+import { pathTemplateText } from '@/lib/i18n-path-templates';
 
 type PathTextKey = keyof typeof classPathsTexts;
 type SettingsTextKey = keyof typeof classSettingsTexts;
@@ -282,7 +283,9 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                 steps: steps.map(s => ({
                     id: s.id,
                     step_type: s.step_type || 'tool',
-                    ...(s.step_type === 'questionnaire_administration'
+                    // Pending steps travel by id only: publication creates their targets.
+                    ...(s.step_type === 'pending' ? {}
+                        : s.step_type === 'questionnaire_administration'
                         ? {administration_plan_id:s.administration_plan_id}
                         : s.step_type === 'guided_results_chat' ? {results_step_id:s.results_step_id}
                             : s.step_type === 'assignment' ? {assignment_id:s.assignment_id}
@@ -399,6 +402,20 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
         }
     };
 
+    const [templateNotice, setTemplateNotice] = useState<'savedAsTemplate' | 'saveAsTemplateBlocked' | 'error' | null>(null);
+    const handleSaveAsTemplate = async () => {
+        setBusy(true);
+        setTemplateNotice(null);
+        try {
+            const response = await apiFetch(`/api/teacher/paths/${currentPath.id}/save-as-template`, {method: 'POST'});
+            setTemplateNotice(response.ok ? 'savedAsTemplate' : response.status === 409 ? 'saveAsTemplateBlocked' : 'error');
+        } catch {
+            setTemplateNotice('error');
+        } finally {
+            setBusy(false);
+        }
+    };
+
     const handleDelete = async () => {
         if (!window.confirm(l('confirmDelete'))) return;
         setBusy(true);
@@ -427,7 +444,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     <ArrowLeft className="h-4 w-4" aria-hidden />
                     {l('backToList')}
                 </button>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <span
                         className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                             currentPath.status === 'published'
@@ -446,6 +463,9 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                         <span className="font-mono text-xs">{`(r${currentPath.revision})`}</span>
 
                     </span>
+                    <Button variant="secondary" disabled={busy || dirty} onClick={() => void handleSaveAsTemplate()}>
+                        {pathTemplateText(lang, 'saveAsTemplate')}
+                    </Button>
                     <Button
                         variant="secondary"
                         className="w-11 px-0"
@@ -470,6 +490,12 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     </Button>
                 </div>
             </div>
+            {templateNotice && (
+                <p role={templateNotice === 'savedAsTemplate' ? 'status' : 'alert'}
+                    className={`text-sm font-medium ${templateNotice === 'savedAsTemplate' ? 'text-emerald-700' : 'text-red-600'}`}>
+                    {pathTemplateText(lang, templateNotice)}
+                </p>
+            )}
 
             <Card className="space-y-4">
                 <div>
@@ -554,7 +580,16 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                     <div className="space-y-3">
                         {steps.map((step, index) => {
                             const source = steps.find(row => row.id !== undefined && row.id === step.results_step_id);
-                            const name = step.step_type === 'questionnaire_administration'
+                            const pending = step.step_type === 'pending' ? step.pending_config : null;
+                            const pendingSource = pending?.kind === 'guided_results_chat'
+                                ? steps.find(row => row.id === pending.results_step_id) : undefined;
+                            const name = pending
+                                ? `${pathTemplateText(lang, 'pending')} · ${pending.kind === 'questionnaire_administration'
+                                    ? `${a('administration')} · ${pending.instrument_code} ${(pending.locale || '').toUpperCase()}`
+                                    : pending.kind === 'guided_results_chat'
+                                        ? `${a('deepDive')} · ${a('deepDiveFrom')} #${pendingSource?.position ?? '?'}`
+                                        : pending.kind === 'assignment' ? p('assignment') : `${f('forum')} · ${pending.title || ''}`}`
+                                : step.step_type === 'questionnaire_administration'
                                 ? `${a('administration')} · ${step.target_summary?.code || step.administration_plan_id}`
                                 : step.step_type === 'guided_results_chat'
                                     ? `${a('deepDive')} · ${a('deepDiveFrom')} #${source?.position ?? '?'}`
@@ -570,7 +605,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 // Likewise a saved forum step whose discussion was hidden or whose forum is off.
                                 || (step.step_type === 'forum' && step.id !== undefined && !step.forum_summary);
                             // The server reason of a saved step says what to fix; a local check covers unsaved tools.
-                            const action = unavailableAction(step.availability_reason || (unavailable ? 'tool_disabled_for_class' : null));
+                            const action = pending ? null : unavailableAction(step.availability_reason || (unavailable ? 'tool_disabled_for_class' : null));
                             return (
                                 <div
                                     key={step.id ? `step-${step.id}` : `new-step-${index}`}
@@ -596,6 +631,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                                     <p className="mt-1 text-xs text-slate-600">{unavailableActionText(lang, action)}</p>
                                                 </>
                                             )}
+                                            {pending && <p className="mt-1 text-xs text-slate-600">{pathTemplateText(lang, 'pendingHelp')}</p>}
                                             {step.step_type === 'questionnaire_administration' && step.administration_plan_id && (
                                                 // Classroom and research views edit the same administration row.
                                                 <Link href={`/docente/somministrazioni#plan-${step.administration_plan_id}`}

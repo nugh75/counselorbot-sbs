@@ -160,6 +160,8 @@ def _serialize_step(db: Session, step: models.ClassPathStep) -> dict:
         "due_date": step.due_date.isoformat() if step.due_date else None,
         "auto_detect": auto,
         "can_self_mark": not auto,
+        "pending_config": step.pending_config,
+        "template_step_id": step.template_step_id,
     }
 
 
@@ -188,6 +190,8 @@ def _serialize_path(db: Session, path: models.ClassPath, *, include_steps: bool 
         "created_at": path.created_at.isoformat() if path.created_at else None,
         "updated_at": path.updated_at.isoformat() if path.updated_at else None,
         "archived_at": path.archived_at.isoformat() if path.archived_at else None,
+        "template_id": path.template_id,
+        "template_revision": path.template_revision,
     }
 
 
@@ -453,15 +457,22 @@ def _require_lifecycle_revision(path: models.ClassPath, payload: Optional[schema
         raise HTTPException(status_code=409, detail="Class path revision mismatch")
 
 
-def _go_live(db: Session, path: models.ClassPath) -> None:
-    """Shared by publish and restore: validate every step, then activate new ones.
+def _go_live(db: Session, path: models.ClassPath, identity) -> None:
+    """Shared by publish and restore: create the class objects of steps applied
+    from a template, validate every step, then activate new ones.
 
     Nothing is written when any step is blocked; steps that are already active
     keep their first activation time, so earlier evidence keeps its meaning.
     """
+    from ..path_templates import materialize_pending
     steps = _active_steps(db, path.id)
-    problems = publication_problems(db, path, steps)
+    problems = materialize_pending(db, path, steps, identity)
+    problems += [row for row in publication_problems(db, path, steps)
+                 if row["step_id"] not in {problem["step_id"] for problem in problems}]
+    problems.sort(key=lambda row: row["position"])
     if problems:
+        # Objects created for other pending steps must not survive a blocked publication.
+        db.rollback()
         raise HTTPException(409, {"code": "path_publication_blocked", "problems": problems})
     activation = datetime.now(timezone.utc)
     for step in steps:
@@ -483,7 +494,7 @@ async def publish_class_path(
     """Publish a class path after validating every step (published_at is set once)."""
     path = _require_visible_path(db, current_user, path_id, for_update=True)
     _require_lifecycle_revision(path, payload)
-    _go_live(db, path)
+    _go_live(db, path, current_user)
     path.revision += 1
     db.commit()
     db.refresh(path)
@@ -526,7 +537,7 @@ async def restore_class_path(
         path.status = "draft"
         path.archived_at = None
     else:
-        _go_live(db, path)
+        _go_live(db, path, current_user)
     path.revision += 1
     db.commit()
     db.refresh(path)

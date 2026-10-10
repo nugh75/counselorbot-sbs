@@ -1,8 +1,21 @@
-export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat" | "assignment" | "forum";
+// `pending`: applied from a template, created at publication (#172).
+export type ClassPathStepType = "tool" | "questionnaire_administration" | "guided_results_chat" | "assignment" | "forum" | "pending";
 
 function parseStepType(value: unknown): ClassPathStepType {
     return value === 'questionnaire_administration' || value === 'guided_results_chat' || value === 'assignment'
-        || value === 'forum' ? value : 'tool';
+        || value === 'forum' || value === 'pending' ? value : 'tool';
+}
+
+/** What a pending step will create: the template config, never class data. */
+export interface PendingStepConfig {
+    kind: Exclude<ClassPathStepType, 'tool' | 'pending'>;
+    instrument_code?: string;
+    locale?: string;
+    plan_title?: string;
+    results_step_id?: number;
+    goal_id?: number;
+    instructions?: string;
+    title?: string;
 }
 
 // TF7: the exact class discussion of a forum step, as identifiers and lock state only.
@@ -92,6 +105,7 @@ export interface ClassPathStep {
     due_date?: string | null;
     auto_detect?: boolean;
     can_self_mark?: boolean;
+    pending_config?: PendingStepConfig | null;
 }
 
 export interface ClassPath {
@@ -109,6 +123,7 @@ export interface ClassPath {
     created_at?: string | null;
     updated_at?: string | null;
     archived_at?: string | null;
+    template_id?: number | null;
 }
 
 // Tools a path step may use: the ones the class enables, which is what the
@@ -140,6 +155,8 @@ export function parseClassPathStep(input: unknown): ClassPathStep {
         due_date: raw.due_date ? String(raw.due_date) : null,
         auto_detect: auto,
         can_self_mark: raw.can_self_mark != null ? Boolean(raw.can_self_mark) : !auto,
+        pending_config: stepType === 'pending' && raw.pending_config && typeof raw.pending_config === 'object'
+            ? raw.pending_config as PendingStepConfig : null,
     };
 }
 
@@ -162,6 +179,7 @@ export function parseClassPath(input: unknown): ClassPath {
         created_at: raw.created_at ? String(raw.created_at) : null,
         updated_at: raw.updated_at ? String(raw.updated_at) : null,
         archived_at: raw.archived_at ? String(raw.archived_at) : null,
+        template_id: raw.template_id != null ? Number(raw.template_id) : null,
     };
 }
 

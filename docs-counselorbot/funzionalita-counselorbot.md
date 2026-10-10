@@ -528,7 +528,20 @@ amministratori, ciascuno limitato agli istituti di cui è membro, e chi crea un
 istituto ne diventa membro), `/docente/percorsi` (Percorsi di classe con una propria
 immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano e seguono i suoi percorsi
 con lo stesso editor della scheda Percorsi della classe; `?class={id}` la preseleziona
-e i link dalle Somministrazioni portano qui), `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
+e i link dalle Somministrazioni portano qui; sopra, **I miei modelli** e **Preset
+condivisi**: un modello è un percorso generale con passi astratti — strumento,
+questionario con strumento e lingua, chat sui risultati di un questionario precedente,
+attività con un obiettivo del catalogo comune, discussione con titolo e testo — che
+si crea, modifica, elimina, condivide come preset per tutti i docenti senza revisione
+o si copia nei propri; «Applica a…» crea in ogni classe o gruppo scelto una bozza
+indipendente in cui strumenti copiati e passi «Da preparare» (somministrazione,
+assegnazione, discussione, chat sui risultati) vengono creati solo alla pubblicazione,
+in un’unica operazione: se manca qualcosa, per esempio l’istituto della classe per un
+questionario, non si crea nulla e il blocco elenca i passi da sistemare; gli studenti
+non vedono nulla prima della pubblicazione e le modifiche successive al modello non
+toccano le copie già applicate; «Salva come modello» nell’editor di un percorso ne fa
+un nuovo modello privato, rifiutando obiettivi di una sola classe e discussioni non
+nate da un modello, perché il testo del forum non esce mai dal forum), `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
 della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
 link alla pagina dedicata con filtro già impostato),
 `/docente/assegnazioni` (pagina di sola assegnazione: da «Nuova assegnazione» si
