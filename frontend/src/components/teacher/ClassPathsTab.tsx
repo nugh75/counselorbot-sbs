@@ -482,8 +482,6 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                             : currentPath.status === 'archived'
                             ? l('archivedBadge')
                             : l('draftBadge')}
-                        {' '}
-                        <span className="font-mono text-xs">{`(r${currentPath.revision})`}</span>
 
                     </span>
                     <Button variant="secondary" disabled={busy || dirty} onClick={() => void handleSaveAsTemplate()}>
@@ -836,7 +834,10 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 <Button variant="secondary" disabled={busy || !selectedAssignment} onClick={() => {addAssignmentStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                                 <Button variant="secondary" disabled={busy} onClick={()=>setCreatingAssignment(true)}>{p('create')}</Button>
                             </div>
-                            <p className="text-sm text-slate-600">{p('rule')}</p>
+                            <details className="text-sm text-slate-600">
+                                <summary className="cursor-pointer font-medium text-slate-700">{a('howDone')}</summary>
+                                <p className="mt-1">{p('rule')}</p>
+                            </details>
                             {creatingAssignment && createPortal(<AssignmentDialog classId={path.group_id} close={()=>setCreatingAssignment(false)}
                                 saved={created=>void loadPathAssignments(created.id)} />, document.body)}
                             </div>}
@@ -881,15 +882,18 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                                 </select></label>
                                 <Button variant="secondary" disabled={busy || !selectedTopic} onClick={() => {addForumStep();closeAdd();}}><Plus className="h-4 w-4" aria-hidden />{l('addStep')}</Button>
                             </div>
-                            <p className="text-sm text-slate-600">{f('rule')}</p>
+                            <details className="text-sm text-slate-600">
+                                <summary className="cursor-pointer font-medium text-slate-700">{a('howDone')}</summary>
+                                <p className="mt-1">{f('rule')}</p>
+                            </details>
                             </div>}
                             <Button variant="ghost" disabled={busy} onClick={closeAdd}>{k('close')}</Button>
                         </div>
                     )}
                 </div>
 
-                <p className="flex items-center gap-1 text-xs text-slate-500"><Flag className="h-3 w-3 shrink-0" aria-hidden />{l('selfMarkHelp')}</p>
-                <p className="text-xs text-slate-400">{l('onlyEnabledHelp')}</p>
+                {/* Explains the self-mark badge only when a step shows it; the tool form says which tools are offered. */}
+                {steps.some(step => !step.auto_detect) && <p className="flex items-center gap-1 text-xs text-slate-500"><Flag className="h-3 w-3 shrink-0" aria-hidden />{l('selfMarkHelp')}</p>}
             </Card>
 
             {currentPath.published_at && (
@@ -963,7 +967,7 @@ function ClassPathEditor({ path, classSettings, institutionId, onBack, onUpdated
                         <Button variant="secondary" disabled={busy || !dirty || notice === 'conflict'} onClick={() => void handleSave()}>
                             {busy ? l('saving') : l('saveDraft')}
                         </Button>
-                        <Button variant="accent" disabled={busy || notice === 'conflict'} onClick={() => void handlePublish()}>
+                        <Button disabled={busy || notice === 'conflict'} onClick={() => void handlePublish()}>
                             {busy ? l('publishing') : l('publish')}
                         </Button>
                     </div>
