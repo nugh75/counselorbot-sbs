@@ -14,6 +14,10 @@ degli studenti di classe, coerentemente con `require_tool` che li lascia passare
 Fase 2 (#174): `teacher_assignments.tool_keys` (JSON, NULL per le assegnazioni esistenti)
 elenca gli strumenti personali dell’attività; la pagina dello strumento si apre in un
 `<dialog>` con iframe e `?embedded=1`, che nasconde l’intestazione del sito.
+Fase 3 (#175): tabelle `class_meetings` (organizzatore e gestore distinti, annullamento
+senza cancellazione) e `class_meeting_attendance` (segnata dallo studente); passo
+`meeting` con `class_path_steps.meeting_id`; nei modelli l’incontro arriverà con data e
+fasce da completare nella classe.
 Tracciamento: milestone e issue su GitHub (vedi «Fasi»).
 
 ## Problema
