@@ -208,6 +208,14 @@ test('class list offers Open class', async () => {
     const f = await fixture();
     try {
         await f.page.goto(`${origin}/docente/classi`, { waitUntil: 'networkidle' });
+        // Tools & counselors has its own link, separate from Open class and Paths.
+        const tools = f.page.getByRole('link', { name: 'Tools & counselors', exact: true });
+        assert.equal(await tools.getAttribute('href'), '/docente/classi/88?tab=tools');
+        const boxes = await Promise.all(['Open class', 'Tools & counselors'].map(name => f.page.getByRole('link', { name, exact: true }).boundingBox()));
+        assert.ok(boxes[1].x >= boxes[0].x + boxes[0].width + 8);
+        await tools.click();
+        assert.equal(await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).getAttribute('aria-selected'), 'true');
+        await f.page.goto(`${origin}/docente/classi`, { waitUntil: 'networkidle' });
         const link = f.page.getByRole('link', { name: 'Open class', exact: true });
         assert.equal(await link.getAttribute('href'), '/docente/classi/88');
         await link.click();
