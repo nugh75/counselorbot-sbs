@@ -4,17 +4,24 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
-import { AlertTriangle, BookOpen, Check, ChevronDown, ExternalLink } from 'lucide-react';
+import { AlertTriangle, BookOpen, Check, ChevronDown, ExternalLink, Snowflake, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { STRATEGIC_COMPETENCES_URLS } from '@/lib/questionnaire-sources';
 import { resolveActiveStudentTools, TEACHER_AREA_INSTRUMENT_IDS } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
+import { resumeHref } from '@/lib/use-resume-entries';
 import { useUserAccess } from '@/lib/use-user-access';
 import { isToolAllowed } from '@/lib/user-access';
 import { BackButton } from '@/components/ui/BackButton';
 import { PersonalAreaEntry } from '@/components/home/PersonalAreaEntry';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+
+// Chat guidata appena congelata: il catalogo è dove si atterra dopo il fiocco.
+export interface PausedChat {
+    sessionId: string;
+    questionnaireId: string;
+}
 
 interface QuestionnaireSelectorProps {
     onSelect: (questionnaire: QuestionnaireConfig) => void;
@@ -22,9 +29,11 @@ interface QuestionnaireSelectorProps {
     // Strumenti già compilati dallo studente: la card lo dice, così non si
     // rifà una scelta senza sapere cosa c'è già.
     completed?: QuestionnaireType[];
+    pausedChat?: PausedChat | null;
+    onDismissPausedChat?: () => void;
 }
 
-export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: QuestionnaireSelectorProps) {
+export function QuestionnaireSelector({ onSelect, onBack, completed = [], pausedChat = null, onDismissPausedChat }: QuestionnaireSelectorProps) {
     const { t, tf, lang, setLang } = useI18n();
     const [expanded, setExpanded] = useState<string | null>(null);
     // Selezione come nel CounselorSelector: si clicca la card per evidenziarla,
@@ -221,6 +230,35 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [] }: Ques
                 </p>
                 <ForwardButton onClick={handleContinue} disabled={!selectedKey} label={t('counselor.continue')} />
             </div>
+
+            {pausedChat && (
+                <section className="flex items-start gap-3 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3" role="status">
+                    <Snowflake className="mt-0.5 h-5 w-5 shrink-0 text-sky-700" aria-hidden="true" />
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-sky-950">
+                            {t('selector.paused.title', { tool: tf(`q.${pausedChat.questionnaireId}.name`, pausedChat.questionnaireId) })}
+                        </p>
+                        <p className="mt-0.5 text-sm text-sky-900">{t('selector.paused.body')}</p>
+                    </div>
+                    {/* Riprendere ricarica la pagina: la home legge lo snapshot al mount. */}
+                    <a
+                        href={resumeHref({ session_id: pausedChat.sessionId })}
+                        className="inline-flex shrink-0 items-center rounded-md bg-sky-700 px-3.5 py-2 text-sm font-semibold text-white hover:bg-sky-800 transition-colors"
+                    >
+                        {t('selector.paused.resume')}
+                    </a>
+                    {onDismissPausedChat && (
+                        <button
+                            type="button"
+                            onClick={onDismissPausedChat}
+                            aria-label={t('selector.paused.dismiss')}
+                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-sky-800 hover:bg-sky-100 transition-colors"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    )}
+                </section>
+            )}
 
             {!isItalian && catalogLoading && (
                 <p className="text-sm text-slate-500" role="status">{t('base.catalog.loading')}</p>
