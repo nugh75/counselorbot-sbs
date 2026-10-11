@@ -41,7 +41,7 @@ export const classSettingsTexts = {
     enabled: ['Abilitati', 'Enabled', 'Habilitadas', 'Activés', 'Aktiviert', 'Aktiverade'],
     assessment: ['Questionari', 'Questionnaires', 'Cuestionarios', 'Questionnaires', 'Fragebögen', 'Frågeformulär'],
     guided: ['Chat guidate', 'Guided chats', 'Chats guiados', 'Chats guidés', 'Begleitete Chats', 'Vägledda chattar'],
-    personal: ['Area personale', 'Personal area', 'Área personal', 'Espace personnel', 'Persönlicher Bereich', 'Personligt område'],
+    personal: ['Area studente', 'Student area', 'Área del estudiante', 'Espace élève', 'Bereich für Lernende', 'Elevområde'],
     support: ['Orientamento e aiuto', 'Orientation and help', 'Orientación y ayuda', 'Orientation et aide', 'Orientierung und Hilfe', 'Vägledning och hjälp'],
     enableAll: ['Abilita tutti', 'Enable all', 'Habilitar todas', 'Tout activer', 'Alle aktivieren', 'Aktivera alla'],
     disableAll: ['Disabilita tutti', 'Disable all', 'Deshabilitar todas', 'Tout désactiver', 'Alle deaktivieren', 'Inaktivera alla'],

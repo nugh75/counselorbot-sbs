@@ -621,7 +621,7 @@ for (const width of [390, 1280]) test(`personal timeline integrates institution 
     } finally { await context.close(); }
 });
 
-for (const width of [390, 1280]) test(`personal area opens timeline without any session at ${width}px`, async () => {
+for (const width of [390, 1280]) test(`student area opens timeline without any session at ${width}px`, async () => {
     const { page, context, control } = await fixture(width);
     try {
         await page.goto(`${origin}/profilo`);

@@ -119,7 +119,7 @@ _PLATFORM_HELP = {
         '• pQBL: studiare un PDF attraverso domande e feedback.\n'
         'I questionari non si compilano qui in italiano: in italiano li compili su competenzestrategiche.it e qui lavoriamo sui risultati. In inglese, spagnolo, francese, tedesco e svedese puoi compilarli anche qui, ma quelle versioni non sono ancora validate. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA e pQBL non sono questionari: funzionano qui in tutte le lingue.\n'
         'Inoltre, il Taccuino raccoglie ciò che emerge trasversalmente, la lettura di ogni risultato resta accanto al risultato, gli Obiettivi e la Linea del tempo seguono il percorso e il Portfolio documenta i tuoi elaborati. Puoi dirmi quale area ti interessa — per esempio studio e caratteristiche professionali — e ti aiuto a scegliere da dove iniziare.\n'
-        'Nell’Area personale trovi anche obiettivi, attività, calendario e diario, carte, confronto e Tavolo. Le assegnazioni ricevute dai docenti possono diventare attività personali: scegli tu che cosa condividere come restituzione e puoi leggere il riscontro del docente.'
+        'Nell’Area studente trovi anche obiettivi, attività, calendario e diario, carte, confronto e Tavolo. Le assegnazioni ricevute dai docenti possono diventare attività personali: scegli tu che cosa condividere come restituzione e puoi leggere il riscontro del docente.'
     ),
     'en': (
         'Here is what you can do.\n'
@@ -139,7 +139,7 @@ _PLATFORM_HELP = {
         '• pQBL: study a PDF through questions and feedback.\n'
         'The questionnaires are not filled in here in Italian: in Italian you take them on competenzestrategiche.it and we work on the results here. In English, Spanish, French, German and Swedish you can also fill them in here, but those versions are not yet validated. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA and pQBL are not questionnaires: they work here in every language.\n'
         'The Notebook collects insights across paths, the reading of each result stays with that result, Goals and the Timeline follow the journey, and the Portfolio documents your work. Tell me which area interests you and I will help you choose where to begin.\n'
-        'The Personal area also contains goals, activities, calendar and diary, cards, comparison and Tavolo. Received teacher assignments can become personal activities: choose what to share as a response and read the teacher’s feedback.'
+        'The Student area also contains goals, activities, calendar and diary, cards, comparison and Tavolo. Received teacher assignments can become personal activities: choose what to share as a response and read the teacher’s feedback.'
     ),
     'es': (
         'Aquí puedes hacer lo siguiente.\n'
@@ -159,7 +159,7 @@ _PLATFORM_HELP = {
         '• pQBL: estudiar un PDF con preguntas y retroalimentación.\n'
         'Los cuestionarios no se completan aquí en italiano: en italiano se completan en competenzestrategiche.it y aquí trabajamos sobre los resultados. En inglés, español, francés, alemán y sueco también puedes completarlos aquí, pero esas versiones aún no están validadas. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA y pQBL no son cuestionarios: funcionan aquí en todos los idiomas.\n'
         'El Cuaderno reúne lo que emerge entre recorridos, la lectura de cada resultado se queda junto al resultado, los Objetivos y la Línea del tiempo siguen el recorrido y el Portfolio documenta tus producciones. Dime qué área te interesa y te ayudaré a elegir por dónde empezar.\n'
-        'El Área personal también reúne objetivos, actividades, calendario y diario, tarjetas, comparación y Tavolo. Las asignaciones docentes pueden convertirse en actividades personales: tú eliges qué compartir como respuesta y puedes leer los comentarios del docente.'
+        'El Área del estudiante también reúne objetivos, actividades, calendario y diario, tarjetas, comparación y Tavolo. Las asignaciones docentes pueden convertirse en actividades personales: tú eliges qué compartir como respuesta y puedes leer los comentarios del docente.'
     ),
     'fr': (
         'Voici ce que vous pouvez faire.\n'
@@ -179,7 +179,7 @@ _PLATFORM_HELP = {
         '• pQBL : étudier un PDF à l’aide de questions et de retours.\n'
         'Les questionnaires ne se remplissent pas ici en italien : en italien, on les remplit sur competenzestrategiche.it et nous travaillons ici sur les résultats. En anglais, espagnol, français, allemand et suédois, vous pouvez aussi les remplir ici, mais ces versions ne sont pas encore validées. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA et pQBL ne sont pas des questionnaires : ils fonctionnent ici dans toutes les langues.\n'
         'Le Carnet rassemble les éléments transversaux, la lecture de chaque résultat reste avec ce résultat, les Objectifs et la Ligne du temps suivent le parcours et le Portfolio documente vos productions. Dites-moi quel domaine vous intéresse et je vous aiderai à choisir un point de départ.\n'
-        'L’Espace personnel regroupe aussi objectifs, activités, calendrier et journal, cartes, comparaison et Tavolo. Les activités proposées par les enseignants peuvent devenir des activités personnelles : vous choisissez la réponse à partager et pouvez lire le retour de l’enseignant.'
+        'L’Espace élève regroupe aussi objectifs, activités, calendrier et journal, cartes, comparaison et Tavolo. Les activités proposées par les enseignants peuvent devenir des activités personnelles : vous choisissez la réponse à partager et pouvez lire le retour de l’enseignant.'
     ),
     'de': (
         'Hier kannst du Folgendes tun.\n'
@@ -199,7 +199,7 @@ _PLATFORM_HELP = {
         '• pQBL: ein PDF durch Fragen und Feedback lernen.\n'
         'Die Fragebögen werden hier nicht auf Italienisch ausgefüllt: Auf Italienisch füllst du sie auf competenzestrategiche.it aus, und hier arbeiten wir mit den Ergebnissen. Auf Englisch, Spanisch, Französisch, Deutsch und Schwedisch kannst du sie auch hier ausfüllen, diese Fassungen sind aber noch nicht validiert. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA und pQBL sind keine Fragebögen: Sie funktionieren hier in allen Sprachen.\n'
         'Das Notizbuch sammelt übergreifende Erkenntnisse, die Deutung jedes Ergebnisses bleibt beim Ergebnis, Ziele und Zeitleiste begleiten den Weg und das Portfolio dokumentiert deine Ergebnisse. Sag mir, welcher Bereich dich interessiert, dann helfe ich dir beim Einstieg.\n'
-        'Im persönlichen Bereich findest du auch Ziele, Aktivitäten, Kalender und Tagebuch, Karten, Vergleich und Tavolo. Zuweisungen von Lehrkräften können zu persönlichen Aktivitäten werden: Du entscheidest, welche Rückmeldung du teilst, und kannst das Feedback der Lehrkraft lesen.'
+        'Im Bereich für Lernende findest du auch Ziele, Aktivitäten, Kalender und Tagebuch, Karten, Vergleich und Tavolo. Zuweisungen von Lehrkräften können zu persönlichen Aktivitäten werden: Du entscheidest, welche Rückmeldung du teilst, und kannst das Feedback der Lehrkraft lesen.'
     ),
     'sv': (
         'Här kan du göra följande.\n'
@@ -219,7 +219,7 @@ _PLATFORM_HELP = {
         '• pQBL: studera en PDF med frågor och återkoppling.\n'
         'Frågeformulären fylls inte i här på italienska: på italienska fyller du i dem på competenzestrategiche.it och här arbetar vi med resultaten. På engelska, spanska, franska, tyska och svenska kan du också fylla i dem här, men de versionerna är ännu inte validerade. SAVICKAS, EVENTO_STUDIO, EVENTO_PROFESSIONALE, OBIETTIVO_STUDIO, OBIETTIVO_DOCENZA, IDEA och pQBL är inte frågeformulär: de fungerar här på alla språk.\n'
         'Anteckningsboken samlar sådant som gäller flera vägar, tolkningen av varje resultat stannar hos resultatet, Mål och tidslinjen följer vägen och Portfolio dokumenterar dina arbeten. Berätta vilket område som intresserar dig så hjälper jag dig att välja var du ska börja.\n'
-        'Det personliga området innehåller också mål, aktiviteter, kalender och dagbok, kort, jämförelse och Tavolo. Tilldelningar från lärare kan bli personliga aktiviteter: du väljer vilket svar du delar och kan läsa lärarens återkoppling.'
+        'Elevområdet innehåller också mål, aktiviteter, kalender och dagbok, kort, jämförelse och Tavolo. Tilldelningar från lärare kan bli personliga aktiviteter: du väljer vilket svar du delar och kan läsa lärarens återkoppling.'
     ),
 }
 
@@ -453,7 +453,7 @@ _INTERFACE_HELP = (
     "\nHOW COUNSELORBOT IS USED. Explain the live function reference in the student's language "
     "at the depth the question deserves. Use its current names, routes and saving rules.\n"
     "GETTING STARTED - The introduction offers Compass, Questionnaire analysis, Guided paths and "
-    "Personal area and tools. The full catalog starts with Compass and ends with Resume activities. "
+    "Student area and tools. The full catalog starts with Compass and ends with Resume activities. "
     "Counselor and Notebook setup is requested when missing. The person decides when to revise "
     "the Notebook; background drafts and explicit history revisions are distinct.\n"
     "INSIDE A GUIDED CHAT - Questionnaire conversations explore score factors; narrative tools "
@@ -829,7 +829,7 @@ This availability list overrides broader platform descriptions, history and note
 {DEFAULT_COUNSELORBOT_CHAT_CONTEXT}
 {platform_guidance_context()}
 This Compass explains and routes among these activities and personal spaces; it is not itself a test and produces no score.{reference}
-The header contains the illustrated interface Guide at /guide, accessible even before login, the Assistant at /assistente for platform questions, and the Personal area at /profilo. Direct questions about these features to their actual location; never claim that the Guide is unavailable. Questions about goals, assignments, diary or teacher feedback are platform questions: answer using the platform facts even if the student has no active personal goals. Do not redirect them to a questionnaire merely to explain these features.
+The header contains the illustrated interface Guide at /guide, accessible even before login, the Assistant at /assistente for platform questions, and the Student area at /profilo. Direct questions about these features to their actual location; never claim that the Guide is unavailable. Questions about goals, assignments, diary or teacher feedback are platform questions: answer using the platform facts even if the student has no active personal goals. Do not redirect them to a questionnaire merely to explain these features.
 Keep the three families distinct and never call all tools "questionnaires": only the six listed under QUESTIONNAIRES have items to fill in, and the administration rule applies to those six alone. In Italian they are taken on competenzestrategiche.it and the student brings the results here; in English, Spanish, French, German and Swedish they can also be filled in inside CounselorBot, but those versions are not validated yet: say so whenever you mention them. SAVICKAS, IDEA and pQBL are not questionnaires — they run inside CounselorBot in every language and have nothing to fill in beforehand.{sources}
 A student who says they have already filled in one of the six questionnaires is not finished with it: having the results is exactly what opens that instrument's guided chat. Recommend that same instrument only if it is enabled, so they can open it and work on their own factors. Never ask the student to type or paste scores into this conversation — the Compass receives no scores, and they are entered on the instrument's own screen.
 WHAT HAPPENS WHERE. This Compass screen is for orientation only: nothing is filled in here and no profile is read here. Questionnaire items are filled in on competenzestrategiche.it in Italian, or on the instrument's own screen in the other languages. The guided chat that reads a profile factor by factor is a separate screen: it opens from the recommendation card, and an interrupted guided session is reopened from 'Resume' in the header. Never say or imply that a questionnaire, a guided chat or a factor-by-factor reading takes place in this conversation: do not offer to open or start it "here" or "now", and do not ask which factor to begin with, because that choice belongs to the guided chat. When the student asks whether something can be done on this screen, answer plainly that it cannot and say where it happens.
