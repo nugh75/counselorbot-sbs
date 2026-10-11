@@ -268,35 +268,17 @@ keys or subscription, when the administrator has enabled them. It is on by
 default. If you turn it off, the class's students use the institution's models;
 their saved keys are kept but not used. Your own key is never shared with the class.
 
-### Sharing a key with a class
+### Offering your counselors to your classes
 
-When the administrator allows it, **API key for the class** in the class
-settings (Tools & counselors tab) lets you choose one of your API connections
-and a reasoning level for that class. Students of the class who have no
-personal choice of their own then talk to the counselors through your key, and
-you pay for their requests. Students never see the key, and their conversation
-data goes to your provider account. The section shows this month's requests
-and recorded cost, and warns you when the last request with your key failed;
-students only see a generic message. **Stop sharing** applies from the next
-message. A personal ChatGPT subscription cannot be shared. If a student belongs
-to several classes that share different keys, the institution's models answer.
-
-**Test connection and model** sends a short neutral request only when pressed.
-It consumes quota and can incur a provider charge. Errors distinguish key access,
-model availability, quota, rate limits and an unavailable local data protection
-service. Saving and assigning connections do not call an LLM.
-
-This account preference applies to chat, Compass, Assistant, PDF study, combined
-analysis, PDF summaries, Tavolo and diagrams; audio, local services and technical
-tools keep the system settings. When the administrator disables the feature,
-new requests use system APIs and the personal-area link is hidden. Existing
-requests finish with their original settings. The form and Guide section are
-hidden too; direct page visits return to your own area. Re-enabling restores
-the saved preference. Administrative activation prepares key protection
-automatically, without server commands. Choosing personal APIs switches off
-ChatGPT subscription use, and vice versa; both credentials remain saved. No automatic system-key fallback occurs when
-an active personal connection fails.
-
+When the administrator allows it, your **APIs and ChatGPT** page has the option
+**Offer your counselors with your APIs to the students of your classes**. Students
+of all the classes you manage can then use every counselor you assigned one of
+your API connections to under **Who answers**, including your own counselors:
+their chats run on your key and you pay for them. Students never see the key and
+other teachers cannot use it. The page shows this month's requests and recorded
+cost, and warns you when a student's request with your key failed (the student
+only sees a generic message). Your ChatGPT subscription is never offered. A
+student's own choice for a counselor always comes first.
 
 ### Italian administration steps
 
