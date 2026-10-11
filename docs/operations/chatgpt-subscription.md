@@ -296,7 +296,10 @@ l’hash del file `.sha256` alle scuole che usano liste di esecuzione consentita
 (Defender, AppLocker/WDAC).
 
 **Distribuzione non firmata.** Decisione 2026-10-09: gli assistenti sono distribuiti
-senza firma, con le istruzioni per sbloccarli; la firma è seguita in #135.
+senza firma, con le istruzioni per sbloccarli. Il 2026-10-11 il responsabile ha
+confermato la distribuzione non firmata e ha rimandato la firma (titolare dei
+certificati, costi, custodia delle chiavi) alla milestone dedicata «Helper code
+signing» (#135).
 - Windows: il file scaricato porta il «Mark of the Web»; SmartScreen mostra «PC
   protetto da Windows» → **Ulteriori informazioni → Esegui comunque**. Alcuni antivirus
   segnalano per errore l’avvio di PyInstaller: le scuole autorizzano l’hash pubblicato.

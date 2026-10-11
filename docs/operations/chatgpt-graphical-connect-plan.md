@@ -371,3 +371,5 @@ Created 2026-10-09 in milestone [ChatGPT graphical connection (#82)](https://git
 | 1 | [#133](https://github.com/nugh75/counselorbot-sbs/issues/133) | Standalone Windows helper (unsigned), `GET /api/chatgpt/helper/windows`, `windows_helper_available`, build script, Compose mount, minimal download link, operator docs with the SmartScreen workaround and the recorded decision | — |
 | 2 | [#134](https://github.com/nugh75/counselorbot-sbs/issues/134) | Guided 4-state wizard, OS detection, unsupported-device message, i18n in 6 languages, Playwright, user and product guide | #133 |
 | — | [#135](https://github.com/nugh75/counselorbot-sbs/issues/135) | Code signing for Windows and macOS helpers | Owner decision (blocked), #133 |
+
+**Outcome (2026-10-11):** #133 and #134 are merged and deployed. The owner confirmed shipping the helpers unsigned with the documented workaround and moved #135 to its own milestone, [Helper code signing](https://github.com/nugh75/counselorbot-sbs/issues/135), because signing needs a separate decision on identity, cost and key custody. Linux keeps the Python CLI (§2.5). Phase 2 of #82 is complete.
