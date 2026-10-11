@@ -530,7 +530,7 @@ Se la chiave personale dà errore non si passa automaticamente alle chiavi di
 sistema.
 
 Spegnendo la funzione, l’amministratore fa usare le API di sistema alle nuove
-richieste e nasconde i collegamenti dalle aree personali. Le richieste già
+richieste e nasconde i collegamenti dall’Area studente e dall’Area docenti. Le richieste già
 avviate terminano con la configurazione iniziale. Le chiavi salvate restano
 cifrate. Anche il modulo e la sezione della Guida scompaiono: un link diretto
 rimanda alla rispettiva area studente. Alla riattivazione riprende la scelta
@@ -1112,7 +1112,13 @@ la stessa sezione; un valore non riconosciuto apre Generale.
 Nella sezione Generale, dopo modello attivo, ripieghi e funzioni, il blocco
 **AI dello studente: proprie chiavi e proprio ChatGPT** contiene la **Protezione dei
 dati per i modelli esterni** e un collegamento alla pagina **API e ChatGPT**, dove
-l’amministratore abilita **API personali** e **Collegamento ChatGPT**. Anche i messaggi
+l’amministratore abilita **API personali** e **Collegamento ChatGPT**.
+Per ciascuna delle due funzioni, **Chi può usarle** ha due caselle indipendenti:
+**Docenti**, che usano le proprie API o il proprio ChatGPT nelle loro chat, e
+**Studenti**, che li usano nelle chat delle loro classi (ogni docente può anche
+disattivarlo per la sua classe). Ognuno usa solo le proprie chiavi o il proprio
+abbonamento: il docente non condivide i suoi con gli studenti. Le installazioni
+esistenti partono con entrambe le caselle attive. Anche i messaggi
 «collegamento disattivato» e la Guida indicano questa pagina. Le
 **API Keys** della piattaforma sono dell’amministratore e restano fuori dal
 blocco, subito sotto.

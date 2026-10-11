@@ -7,6 +7,7 @@ import { personalAPIText } from '@/lib/i18n-personal-api';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
+import { AudienceSwitches } from './AudienceSwitches';
 
 type Policy = { enabled: boolean; encryption_ready: boolean; reason: string | null; key_source: 'managed' | 'environment' };
 export function PersonalAPIPolicy() {
@@ -52,6 +53,7 @@ export function PersonalAPIPolicy() {
             <input type="checkbox" checked={policy.enabled} disabled={busy} onChange={event => void toggle(event.target.checked)} />
             {l('adminToggle')}
         </label>}
+        {policy?.enabled && <AudienceSwitches feature="api" />}
         {policy && <p className="mt-3 text-sm text-slate-600">{l(policy.encryption_ready ? 'protected' : 'automatic')}</p>}
         {policy?.reason === 'keyMissing' && <Callout variant="warning" className="mt-3">{l('keyMissing')}</Callout>}
         <p className="mt-3 text-xs text-slate-600">{l('backup')}</p>

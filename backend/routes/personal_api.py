@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr
 from sqlalchemy.orm import Session
 from uuid import uuid4
 
+from .. import personal_ai_audience as audience
 from .. import auth, models, personal_api
 from ..ai_service import AIService
 from ..database import get_db
@@ -97,6 +98,30 @@ def policy(db):
     return personal_api.installation_status(db)
 
 
+class AudienceSwitches(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    teachers: bool = Field(strict=True)
+    students: bool = Field(strict=True)
+
+
+class AudienceUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    api: AudienceSwitches | None = None
+    chatgpt: AudienceSwitches | None = None
+
+
+@router.get("/admin/personal-ai-audiences")
+def read_audiences(identity: dict = Depends(require_admin), db: Session = Depends(get_db)):
+    return audience.audiences(db)
+
+
+@router.put("/admin/personal-ai-audiences", dependencies=[Depends(browser_mutation)])
+def write_audiences(request: AudienceUpdate, identity: dict = Depends(require_admin), db: Session = Depends(get_db)):
+    # Teachers use their own sources for their chats; students in the chats of their classes.
+    return audience.set_audiences(db, {feature: switches.model_dump() for feature, switches in
+                                       (("api", request.api), ("chatgpt", request.chatgpt)) if switches is not None})
+
+
 @router.get("/admin/personal-api-policy")
 def read_policy(identity: dict = Depends(require_admin), db: Session = Depends(get_db)):
     return policy(db)
@@ -117,7 +142,7 @@ def read_settings(identity: dict = Depends(current_owner), db: Session = Depends
     row = (db.query(models.PersonalAPIConnection).filter_by(id=routing.default_connection_id, username=identity["username"]).first()
            if routing else db.query(models.PersonalAPISettings).filter_by(username=identity["username"]).first())
     blocked = not personal_api.class_allows(db, identity["username"])
-    allowed = personal_api.feature_enabled(db) and not blocked
+    allowed = _sources_for(db, identity)[0] and not blocked
     return {
         "available": allowed,
         "class_blocked": blocked,  # #217: a class of this student does not allow own APIs
@@ -281,15 +306,23 @@ def _chatgpt_models(db, username):
              "reasoning_levels": item.get("reasoning_levels") or []} for item in row.catalog or []]
 
 
+def _sources_for(db, identity):
+    """Which own sources this person may use: installation switch and role switch (teachers/students)."""
+    from ..chatgpt_connections import enabled
+    audience.remember(db, identity)
+    username = identity["username"]
+    return (personal_api.feature_enabled(db) and audience.allowed(db, "api", username),
+            enabled(db) and audience.allowed(db, "chatgpt", username))
+
+
 def _catalog(db, identity):
     username = identity["username"]
-    from ..chatgpt_connections import enabled
     routing = db.get(models.PersonalAIRouting, username)
-    api = personal_api.feature_enabled(db)
+    api, chatgpt = _sources_for(db, identity)
     blocked = not personal_api.class_allows(db, username)
     return {
-        "available": _routing_available(db) and not blocked, "class_blocked": blocked,
-        "api_enabled": api, "chatgpt_enabled": enabled(db),
+        "available": (api or chatgpt) and not blocked, "class_blocked": blocked,
+        "api_enabled": api, "chatgpt_enabled": chatgpt,
         "chatgpt_models": _chatgpt_models(db, username),
         "enabled": bool(routing and routing.enabled),
         "default_connection_id": routing.default_connection_id if routing else None,
@@ -393,6 +426,7 @@ def update_routing(request: RoutingUpdate, identity: dict = Depends(current_owne
     username = identity["username"]
     if not personal_api.class_allows(db, username):
         raise HTTPException(403, "personalAPI.errors.disabled")
+    api_allowed, chatgpt_allowed = _sources_for(db, identity)
     routing = _prepare_routing(db, username)
     catalog = {item["slug"]: item for item in _chatgpt_models(db, username)}
     models_seen = set()
@@ -400,6 +434,9 @@ def update_routing(request: RoutingUpdate, identity: dict = Depends(current_owne
     def check(connection_id, chatgpt_model, allow_empty, reasoning=None):
         if connection_id and chatgpt_model or not (connection_id or chatgpt_model or allow_empty):
             raise HTTPException(422, "personalAPI.errors.configuration")
+        # A source the administrator turned off for this person's role cannot be chosen.
+        if connection_id and not api_allowed or chatgpt_model and not chatgpt_allowed:
+            raise HTTPException(403, "personalAPI.errors.disabled")
         # #202: a level needs a source, and a ChatGPT model that lists its levels must offer it.
         if reasoning is not None and (reasoning not in personal_api.REASONING_LEVELS or not (connection_id or chatgpt_model)
                                       or chatgpt_model and catalog.get(chatgpt_model, {}).get("reasoning_levels")
