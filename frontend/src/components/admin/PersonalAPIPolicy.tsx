@@ -18,7 +18,6 @@ export function PersonalAPIPolicy() {
     const [error, setError] = useState(false);
     const [saved, setSaved] = useState(false);
     const [reason, setReason] = useState<'error' | 'keyMissing' | 'notConfigured'>('error');
-    const [sharing, setSharing] = useState<boolean | null>(null);
     const load = useCallback(async () => {
         setError(false);
         try {
@@ -26,8 +25,6 @@ export function PersonalAPIPolicy() {
             if (response.status === 403) { setForbidden(true); return; }
             if (!response.ok) throw new Error();
             setPolicy(await response.json());
-            const share = await apiFetch('/api/admin/class-api-sharing', { cache: 'no-store' });
-            if (share.ok) setSharing((await share.json()).enabled === true);
         } catch { setError(true); }
     }, []);
     useEffect(() => { if (!getViewAsAccount()) void load(); }, [load]);
@@ -48,17 +45,6 @@ export function PersonalAPIPolicy() {
             setPolicy(await response.json()); setSaved(true); notifyChatGPTChange();
         } catch { setPolicy(previous); setError(true); } finally { setBusy(false); }
     };
-    // #201: separate switch for sharing a teacher's key with a class.
-    const toggleSharing = async (enabled: boolean) => {
-        setBusy(true); setError(false); setSaved(false);
-        try {
-            const response = await apiFetch('/api/admin/class-api-sharing', {
-                method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'CounselorBot' }, cache: 'no-store', body: JSON.stringify({ enabled }),
-            });
-            if (!response.ok) throw new Error();
-            setSharing((await response.json()).enabled); setSaved(true);
-        } catch { setReason('error'); setError(true); } finally { setBusy(false); }
-    };
     return <div data-testid="personal-api-settings"><Card>
         <h4 className="font-semibold text-slate-900">{l('title')}</h4>
         <p className="mt-2 text-sm text-slate-600">{l('adminHelp')}</p>
@@ -66,13 +52,6 @@ export function PersonalAPIPolicy() {
             <input type="checkbox" checked={policy.enabled} disabled={busy} onChange={event => void toggle(event.target.checked)} />
             {l('adminToggle')}
         </label>}
-        {policy && sharing !== null && <>
-            <label className="mt-3 flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-800">
-                <input type="checkbox" checked={sharing} disabled={busy} onChange={event => void toggleSharing(event.target.checked)} />
-                {l('adminClassSharing')}
-            </label>
-            <p className="text-sm text-slate-600">{l('adminClassSharingHelp')}</p>
-        </>}
         {policy && <p className="mt-3 text-sm text-slate-600">{l(policy.encryption_ready ? 'protected' : 'automatic')}</p>}
         {policy?.reason === 'keyMissing' && <Callout variant="warning" className="mt-3">{l('keyMissing')}</Callout>}
         <p className="mt-3 text-xs text-slate-600">{l('backup')}</p>

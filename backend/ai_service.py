@@ -97,10 +97,8 @@ class AIService:
         self.config = self._load_config()
         # #202: livello di ragionamento della fonte personale; prevale sul preset.
         self.personal_reasoning = None
-        self.shared_group_id = None  # #201: class whose teacher's key answers
         self.personal_target = None
         self.personal_error = None
-        self.personal_error_code = "personalAPI.errors.configuration"
         from .chatgpt_connections import preference, owner
         self.chatgpt_model = preference(db)
         account = owner(db) if "chatgpt_username" in getattr(db, "info", {}) else username
@@ -111,23 +109,10 @@ class AIService:
             if connection or self.chatgpt_model:
                 self.personal_reasoning = personal_api.chosen_reasoning(
                     db, account, getattr(db, "info", {}).get("personal_ai_counselor_id"))
-            else:
-                # #201: without an own choice, the class teacher's shared key answers.
-                from .class_api_sharing import share_for_student
-                share = share_for_student(db, account)
-                if share is not None:
-                    self.shared_group_id = share.group_id
-                    shared = db.get(models.PersonalAPIConnection, share.connection_id)
-                    self.use_personal_connection(shared)
-                    self.personal_reasoning = share.reasoning
         except personal_api.PersonalAPIError as exc:
             # Raise within dispatch so existing HTTP/SSE error handlers can
             # report it, while forbidding a fallback to system credentials.
             self.personal_error = str(exc)
-            if self.shared_group_id is not None:
-                from .class_api_sharing import SHARE_ERROR, record_error
-                record_error(db, self.shared_group_id, "personalAPI.errors.configuration")
-                self.personal_error, self.personal_error_code = "Class AI connection failed.", SHARE_ERROR
         self.last_usage = None
         self.last_provider = None
         self.last_model = None
@@ -208,11 +193,6 @@ class AIService:
                            summary_model_name=connection.model_name)
 
     def _personal_failure(self, exc):
-        if self.shared_group_id is not None:
-            # Students get a neutral message; the teacher sees the reason in class settings.
-            from .class_api_sharing import SHARE_ERROR, record_error
-            record_error(self.db, self.shared_group_id, personal_api.connection_error_code(exc))
-            return AIError("Class AI connection failed.", code=SHARE_ERROR)
         return AIError("Personal AI connection failed.", code=personal_api.connection_error_code(exc))
 
     @staticmethod
@@ -548,7 +528,7 @@ class AIService:
 
     def _selected_target(self, provider, model):
         if self.personal_error:
-            raise AIError(self.personal_error, code=self.personal_error_code)
+            raise AIError(self.personal_error, code="personalAPI.errors.configuration")
         if self.chatgpt_model:
             return "openai_chatgpt", self.chatgpt_model
         if self.personal_target:
@@ -640,7 +620,7 @@ class AIService:
         ausiliari. Il benchmark senza identita' personale resta esplicito.
         Popola self.last_usage (token/costo) quando il provider lo fornisce."""
         if self.personal_error:
-            raise AIError(self.personal_error, code=self.personal_error_code)
+            raise AIError(self.personal_error, code="personalAPI.errors.configuration")
         if self.chatgpt_model:
             provider, model = "openai_chatgpt", self.chatgpt_model
         elif self.personal_target:
