@@ -108,13 +108,19 @@ def installation_settings(data: InstallationSettings, username: str = Depends(cu
 
 
 @router.get("/user/chatgpt")
-def status(username: str = Depends(current_owner), db: Session = Depends(database.get_db)):
+def status(username: str = Depends(current_owner), identity: dict = Depends(auth.get_identity), db: Session = Depends(database.get_db)):
+    from ..personal_ai_audience import remember
+    remember(db, identity)  # The role decides whether ChatGPT is on for this person.
     return {**accounts.status(db, username), "macos_helper_available": macos_helper_available(),
             "windows_helper_available": windows_helper_available()}
 
 
 @router.post("/user/chatgpt/link", dependencies=[Depends(browser_mutation)])
-def start(username: str = Depends(current_owner), db: Session = Depends(database.get_db)):
+def start(username: str = Depends(current_owner), identity: dict = Depends(auth.get_identity), db: Session = Depends(database.get_db)):
+    from ..personal_ai_audience import allowed, remember
+    remember(db, identity)
+    if not allowed(db, "chatgpt", username):
+        raise HTTPException(403, "chatgpt.errors.disabled")
     return invoke(accounts.start_link, db, username)
 
 

@@ -153,7 +153,8 @@ def chosen_reasoning(db, username, counselor_id=None):
 
 
 def active_settings(db, username, counselor_id=None):
-    if not username or not feature_enabled(db):
+    from .personal_ai_audience import allowed
+    if not username or not feature_enabled(db) or not allowed(db, "api", username):
         return None
     from .auth import VIEW_AS_DEMO_ACCOUNTS
     if username in VIEW_AS_DEMO_ACCOUNTS:
