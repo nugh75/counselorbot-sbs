@@ -345,6 +345,16 @@ def mark_reconnect(db, rejected_token):
             pass
 
 
+def _reasoning_levels(item):
+    """Efforts the model declares (#202); empty when the catalog does not say."""
+    from .personal_api import REASONING_LEVELS
+    levels = item.get("supported_reasoning_levels")
+    if not isinstance(levels, list):
+        return []
+    found = [level.get("effort") if isinstance(level, dict) else level for level in levels]
+    return [level for level in REASONING_LEVELS if level in found]
+
+
 def list_models(db):
     token = access_token(db)
     try:
@@ -356,7 +366,8 @@ def list_models(db):
         if result.status_code == 429:
             raise ChatGPTError("quota")
         result.raise_for_status()
-        catalog = [{"slug": item["slug"], "display_name": item.get("display_name") or item["slug"]}
+        catalog = [{"slug": item["slug"], "display_name": item.get("display_name") or item["slug"],
+                    "reasoning_levels": _reasoning_levels(item)}
                    for item in result.json().get("models", [])
                    if item.get("visibility") == "list" and isinstance(item.get("slug"), str)]
     except (httpx.HTTPError, ValueError, TypeError, KeyError):
@@ -388,7 +399,8 @@ def drop_choices(db, username):
     routing = db.get(models.PersonalAIRouting, username)
     if routing is None:
         return
-    routing.default_chatgpt_model = None
+    if routing.default_chatgpt_model:
+        routing.default_chatgpt_model = routing.default_reasoning = None
     db.query(models.PersonalCounselorConnection).filter(models.PersonalCounselorConnection.username == username,
         models.PersonalCounselorConnection.chatgpt_model.isnot(None)).delete(synchronize_session=False)
     db.flush()
@@ -411,6 +423,7 @@ def set_preference(db, username, active, model):
             db.add(routing)
         # Counselor-specific choices stay; only the default changes.
         routing.enabled, routing.default_connection_id, routing.default_chatgpt_model = True, None, model
+        routing.default_reasoning = None  # A level chosen for another source may not apply (#202).
         row.preferred_model = model
     else:
         drop_choices(db, username)

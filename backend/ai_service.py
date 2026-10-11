@@ -88,11 +88,15 @@ OPENAI_COMPAT_PROVIDERS = {
 
 # Provider locali: nessuna anonimizzazione verso l'esterno necessaria.
 LOCAL_PROVIDERS = {'ollama', 'llamacpp'}
+# #202: token di ragionamento per livello scelto sulle fonti personali (API).
+PERSONAL_REASONING_BUDGETS = {'minimal': 512, 'low': 1024, 'medium': 4096, 'high': 12000, 'xhigh': 24000}
 
 class AIService:
     def __init__(self, db: Session, username: str | None = None):
         self.db = db
         self.config = self._load_config()
+        # #202: livello di ragionamento della fonte personale; prevale sul preset.
+        self.personal_reasoning = None
         self.personal_target = None
         self.personal_error = None
         from .chatgpt_connections import preference, owner
@@ -102,6 +106,9 @@ class AIService:
             connection = personal_api.active_settings(db, account, getattr(db, "info", {}).get("personal_ai_counselor_id"))
             if connection:
                 self.use_personal_connection(connection)
+            if connection or self.chatgpt_model:
+                self.personal_reasoning = personal_api.chosen_reasoning(
+                    db, account, getattr(db, "info", {}).get("personal_ai_counselor_id"))
         except personal_api.PersonalAPIError as exc:
             # Raise within dispatch so existing HTTP/SSE error handlers can
             # report it, while forbidding a fallback to system credentials.
@@ -226,6 +233,28 @@ class AIService:
             if role in ("user", "assistant") and content:
                 out.append({"role": role, "content": content})
         return out
+
+    # Il preset del counselor imposta questi valori dopo la creazione del servizio:
+    # il livello scelto per la fonte personale (#202) ha la precedenza.
+    @property
+    def disable_thinking(self):
+        if self.personal_reasoning:
+            return self.personal_reasoning == 'none'
+        return self._disable_thinking
+
+    @disable_thinking.setter
+    def disable_thinking(self, value):
+        self._disable_thinking = value
+
+    @property
+    def reasoning_budget_override(self):
+        if self.personal_reasoning:
+            return PERSONAL_REASONING_BUDGETS.get(self.personal_reasoning)
+        return self._reasoning_budget_override
+
+    @reasoning_budget_override.setter
+    def reasoning_budget_override(self, value):
+        self._reasoning_budget_override = value
 
     def _resolve_reasoning(self, model, requested_max_tokens, fallback_max_tokens) -> ReasoningPlan:
         """Risolve e memorizza il piano di reasoning per (modello, flag, budget).
@@ -1030,7 +1059,7 @@ class AIService:
         from .chatgpt_i18n import error_message
         try:
             for item in stream(self.db, model, user_message, system_prompt, self._normalize_history(history),
-                               timeout=self._int_config("ai_timeout_seconds", 120, 10, 600)):
+                               timeout=self._int_config("ai_timeout_seconds", 120, 10, 600), effort=self.personal_reasoning):
                 if isinstance(item, dict) and item.get("type") == "usage":
                     self.last_usage = item["usage"]
                 yield item

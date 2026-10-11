@@ -120,6 +120,8 @@ class PersonalAIRouting(Base):
     default_connection_id = Column(String(32), ForeignKey("personal_api_connections.id", ondelete="SET NULL"), nullable=True)
     # #200: the default source may be a ChatGPT model instead of an API connection.
     default_chatgpt_model = Column(String(200), nullable=True)
+    # #202: reasoning level for the default source; None = the model's default.
+    default_reasoning = Column(String(16), nullable=True)
 
 
 class PersonalCounselorConnection(Base):
@@ -129,6 +131,7 @@ class PersonalCounselorConnection(Base):
     # Exactly one source per counselor: an API connection or a ChatGPT model (#200).
     connection_id = Column(String(32), ForeignKey("personal_api_connections.id", ondelete="CASCADE"), nullable=True)
     chatgpt_model = Column(String(200), nullable=True)
+    reasoning = Column(String(16), nullable=True)  # #202: None = the model's default
 
 class Log(Base):
     __tablename__ = "logs"
