@@ -13,7 +13,8 @@ async function fixture({ role = 'student', api = false, chatgpt = false, lang = 
     const context = await browser.newContext({ viewport: { width, height: 1000 } });
     await context.addInitScript(locale => localStorage.setItem('cb_lang', locale), lang);
     const page = await context.newPage();
-    const flags = { api, chatgpt }, writes = [], errors = [];
+    const flags = { api, chatgpt }, writes = [], errors = [], audienceWrites = [];
+    const audiences = { api: { teachers: true, students: true }, chatgpt: { teachers: true, students: true } };
     page.on('pageerror', error => errors.push(error.message));
     const apiPolicy = { enabled: false, encryption_ready: false, reason: 'notConfigured', key_source: 'managed' };
     const chatgptPolicy = { enabled: false, ready: false, reason: 'notConfigured', key_source: 'managed' };
@@ -27,6 +28,10 @@ async function fixture({ role = 'student', api = false, chatgpt = false, lang = 
         else if (path === '/api/user/api-connections') data = { available: flags.api || flags.chatgpt, api_enabled: flags.api, chatgpt_enabled: flags.chatgpt, chatgpt_models: [], providers: ['openai'], enabled: false, connections: [], bindings: [], counselors: [], default_connection_id: null, default_chatgpt_model: null };
         else if (path === '/api/user/api-settings') data = { available: flags.api, providers: ['openai'], configured: false, provider: 'openai', model: '', enabled: false, active: false };
         else if (path === '/api/user/chatgpt') data = { enabled: flags.chatgpt, available: flags.chatgpt, reason: flags.chatgpt ? null : 'disabled', connected: false, use_subscription: false, models: [], pending_link: false };
+        else if (path === '/api/admin/personal-ai-audiences') {
+            if (request.method() === 'PUT') { audienceWrites.push(request.postDataJSON()); Object.assign(audiences, request.postDataJSON()); }
+            data = audiences;
+        }
         else if (path === '/api/admin/personal-api-policy' || path === '/api/admin/chatgpt/settings') {
             const policy = path.includes('chatgpt') ? chatgptPolicy : apiPolicy;
             if (request.method() === 'PUT') {
@@ -38,7 +43,7 @@ async function fixture({ role = 'student', api = false, chatgpt = false, lang = 
         }
         return route.fulfill({ json: data });
     });
-    return { page, context, flags, writes, errors };
+    return { page, context, flags, writes, errors, audienceWrites };
 }
 
 for (const role of ['student', 'teacher']) {
@@ -115,3 +120,25 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
         });
     }
 }
+
+test('admin switches teachers and students independently for each feature', async () => {
+    const f = await fixture({ role: 'admin', lang: 'it', width: 390 });
+    try {
+        await f.page.goto(`${origin}/profilo/api-personali`);
+        const api = f.page.getByTestId('personal-api-settings');
+        await api.getByRole('checkbox', { name: personalAPIText('it', 'adminToggle'), exact: true }).check();
+        const switches = f.page.getByTestId('audience-api');
+        await switches.getByText(personalAPIText('it', 'audienceHelp'), { exact: true }).waitFor();
+        await switches.getByRole('checkbox', { name: personalAPIText('it', 'audienceStudentsApi'), exact: true }).uncheck();
+        for (let i = 0; i < 100 && f.audienceWrites.length < 1; i++) await f.page.waitForTimeout(100);
+        assert.deepEqual(f.audienceWrites, [{ api: { teachers: true, students: false } }]);
+        assert.equal(await switches.getByRole('checkbox', { name: personalAPIText('it', 'audienceTeachersApi'), exact: true }).isChecked(), true);
+        const chatgpt = f.page.getByTestId('chatgpt-settings');
+        await chatgpt.getByRole('button', { name: CHATGPT_DICTS.it['chatgpt.admin.enable'], exact: true }).click();
+        await f.page.getByTestId('audience-chatgpt').getByRole('checkbox', { name: personalAPIText('it', 'audienceTeachersChatgpt'), exact: true }).uncheck();
+        for (let i = 0; i < 100 && f.audienceWrites.length < 2; i++) await f.page.waitForTimeout(100);
+        assert.deepEqual(f.audienceWrites.at(-1), { chatgpt: { teachers: false, students: true } });
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});

@@ -104,6 +104,8 @@ def bind_identity(db, identity, language="it"):
         owner = None
     db.info["chatgpt_username"] = owner
     db.info["chatgpt_language"] = language
+    from .personal_ai_audience import remember
+    remember(db, identity)
 
 
 @contextmanager
@@ -285,6 +287,9 @@ def preference(db):
     if setting is not None and setting.value != "true":
         return None  # An explicit administrator decision selects installation AI.
     from .personal_api import chosen_source
+    from .personal_ai_audience import allowed
+    if not allowed(db, "chatgpt", owner(db)):
+        return None  # The administrator turned ChatGPT off for this person's role.
     # #200: the model chosen for this counselor, or the person's default source.
     source = chosen_source(db, owner(db), getattr(db, "info", {}).get("personal_ai_counselor_id"))
     if not source or source[0] != "chatgpt":
@@ -454,8 +459,9 @@ def status(db, username):
     pending = db.query(models.ChatGPTLink).filter(models.ChatGPTLink.username == username,
                   models.ChatGPTLink.expires_at > datetime.now(timezone.utc)).first() is not None
     from .personal_api import class_allows
+    from .personal_ai_audience import allowed
     blocked = not class_allows(db, username)  # #217: the class does not allow own subscriptions
-    return {"available": ready, "enabled": enabled(db) and not blocked, "class_blocked": blocked, "personal_api_enabled": feature_enabled(db), "reason": reason, "connected": bool(row and row.encrypted_credentials),
+    return {"available": ready, "enabled": enabled(db) and not blocked and allowed(db, "chatgpt", username), "class_blocked": blocked, "personal_api_enabled": feature_enabled(db), "reason": reason, "connected": bool(row and row.encrypted_credentials),
             "email": row.email if row else None, "use_subscription": bool(row and in_use), "pending_link": pending,
             "model": in_use or (row.preferred_model if row else None), "needs_reconnect": bool(row and row.last_error == "reconnect"),
             "registered": bool(row and row.client_id),
