@@ -303,6 +303,21 @@ senza firma, con le istruzioni per sbloccarli; la firma è seguita in #135.
 - macOS: l’app con firma ad hoc si apre da **Impostazioni di Sistema → Privacy e
   sicurezza → Apri comunque** (testo verificato invariato).
 
+## Procedura guidata nel pannello (#134)
+
+`ChatGPTConnectionPanel` ha quattro stati (`data-state` sul pannello): non
+collegato, in attesa dell’accesso, collegato, errore. Il sistema del computer è
+rilevato nel browser da `frontend/src/lib/device-os.ts` (user agent e
+`userAgentData.platform`) e decide l’assistente proposto per primo: ZIP Windows o
+macOS se presenti sul server, altrimenti lo script Python, che è anche la scelta
+per Linux. Telefoni, tablet (iPad compreso) e Chromebook vedono solo una
+spiegazione, senza pulsanti. Il conto alla rovescia usa `expires_at` del codice e
+non viene annunciato dagli screen reader a ogni secondo; alla scadenza il pannello
+passa allo stato di errore con **Riprova il collegamento** (nuovo `POST /link`) e
+una sezione di risoluzione dei problemi. Il collegamento da terminale/SSH resta
+nella sezione avanzata. Test: `frontend/src/lib/device-os.test.ts` e
+`frontend/tests/chatgpt-subscription.test.mjs`.
+
 ## Isolamento, scelta e quota
 
 Una connessione per username ai4auth e una registrazione per account verificato.
