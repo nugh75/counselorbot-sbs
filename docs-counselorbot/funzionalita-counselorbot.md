@@ -885,7 +885,13 @@ ChatGPT are enabled, the teacher can change their own source and reasoning level
 for that counselor right there; the choice is personal (students keep the
 institution's model) and is the same one shown in **APIs and ChatGPT**. The
 settings payload adds `description`, `description_i18n` and `model` to each
-counselor. The server accepts a default only
+counselor. **Students' own APIs and ChatGPT** (#217), in the same tab, lets the
+teacher decide whether the students of the class may use their own personal API
+keys and ChatGPT subscription (default: allowed; the administrator switches stay
+the global gate). When any active class of a student forbids it, that student's
+chats use the institution's models: their keys and choices stay saved but
+unused, and **APIs and ChatGPT** explains why. No teacher key is ever shared.
+The server accepts a default only
 if it is institutional and enabled (otherwise HTTP 422). For a student in at
 least one active class, a counselor is available when at least one of the
 student's classes enables it; counselors disabled by the administrator never

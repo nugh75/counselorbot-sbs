@@ -3,7 +3,7 @@ export type ServerBinding = { counselor_id: number; connection_id: string | null
 // A source is '' (institution or default), 'api:<connection id>' or 'chatgpt:<model>'.
 export type Binding = { counselor_id: number; source: string; reasoning: string };
 export type PersonalSources = {
-    available: boolean; api_enabled: boolean; chatgpt_enabled: boolean; enabled: boolean; providers: string[];
+    available: boolean; class_blocked?: boolean; api_enabled: boolean; chatgpt_enabled: boolean; enabled: boolean; providers: string[];
     default_connection_id: string | null; default_chatgpt_model: string | null; default_reasoning: string | null;
     connections: { id: string; name: string; provider: string; model: string }[]; bindings: ServerBinding[];
     chatgpt_models: { slug: string; display_name: string; reasoning_levels: string[] }[];

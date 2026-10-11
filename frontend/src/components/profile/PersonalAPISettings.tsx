@@ -89,7 +89,9 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
         finally { setLoading(false); }
     }, [accept]);
     useEffect(() => { void load(); }, [load]);
-    useEffect(() => { if (settings?.available === false) router.replace(`/${area}`); }, [settings?.available, router, area]);
+    // #217: a class that forbids own sources gets an explanation instead of a redirect.
+    const blocked = settings?.class_blocked === true;
+    useEffect(() => { if (settings?.available === false && !blocked) router.replace(`/${area}`); }, [settings?.available, blocked, router, area]);
     useEffect(() => {
         let active = true;
         const refresh = () => {
@@ -147,19 +149,20 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
     </div>;
     // Options shared by the default and the per-counselor selects: the person's APIs and ChatGPT models.
     const sourceOptions = settings && <SourceOptions sources={settings} />;
-    if (settings?.available === false) return null;
+    if (settings?.available === false && !blocked) return null;
     const field = 'mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900';
     return <div className="min-h-screen bg-slate-50 px-4 py-8"><div className="mx-auto max-w-3xl space-y-6">
         <Link href={`/${area}`} className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"><ArrowLeft className="h-4 w-4" aria-hidden />{area === 'docente' ? teacherAreaText(lang, 'title') : personalAreaText(lang, 'title')}</Link>
-        {settings?.available && <PageHeader title={l('sectionTitle')} subtitle={l('description')} icon={<KeyRound className="h-6 w-6 text-indigo-600" aria-hidden />} />}
+        {(settings?.available || blocked) && <PageHeader title={l('sectionTitle')} subtitle={l('description')} icon={<KeyRound className="h-6 w-6 text-indigo-600" aria-hidden />} />}
         <div ref={messageRef}>
         {loading && <p role="status">{l('loading')}</p>}
         {error === 'login' && <Callout variant="info">{l('login')} <Link href="/login" className="underline">{l('signIn')}</Link></Callout>}
         {error && error !== 'login' && <Callout variant="danger">{personalAPIErrorText(lang, error) ?? (error.startsWith('chatgpt.errors.') ? t(error) : l('error'))}</Callout>}
         {error && !settings && <Button variant="secondary" onClick={() => void load()}>{l('retry')}</Button>}
         {feedback && <Callout variant="info"><span role="status">{l(feedback)}</span></Callout>}
+        {blocked && <Callout variant="info">{l('classBlocked')}</Callout>}
         </div>
-        {settings && <>
+        {settings && !blocked && <>
             {settings.chatgpt_enabled && <div id="chatgpt"><ChatGPTConnectionPanel area={area} /></div>}
             {settings.api_enabled && <>
             <Callout variant="info">{l('notice')}</Callout>

@@ -56,6 +56,7 @@ export interface ClassSettings {
     default_counselor_id: number | null;
     counselors: ClassCounselor[];
     forum?: ClassForum;
+    students_personal_ai?: boolean;  // #217: students may use their own APIs and ChatGPT
 }
 
 function validLock(row: ClassItemLock): boolean {

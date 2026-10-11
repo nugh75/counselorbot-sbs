@@ -58,6 +58,7 @@ async function fixture({ lang = 'en', width = 390, settingsFailure = null, role 
                 state.settings = { ...state.settings, disabled_tool_keys: body.disabled_tool_keys, revision: state.settings.revision + 1,
                     disabled_counselor_ids: body.disabled_counselor_ids ?? state.settings.disabled_counselor_ids,
                     default_counselor_id: body.default_counselor_id ?? null,
+                    students_personal_ai: body.students_personal_ai ?? state.settings.students_personal_ai,
                     tools: state.settings.tools.map(row => ({ ...row, enabled: row.admin_enabled && !body.disabled_tool_keys.includes(row.key) })) };
             } else if (state.readFailure) return route.fulfill({ status: state.readFailure, json: {} });
             data = state.settings;
@@ -81,12 +82,12 @@ test('Tools tab has accessible toggles and saves only on explicit Save', async (
         await qsa.focus(); await f.page.keyboard.press('Space');
         assert.equal(await qsa.isChecked(), false);
         assert.equal(await f.page.getByRole('checkbox', { name: /OFF/ }).isDisabled(), true);
-        // Five tools plus the two F3 forum options.
-        assert.equal(await f.page.getByRole('checkbox').count(), 7);
+        // Five tools, the two F3 forum options and the students' own APIs option (#217).
+        assert.equal(await f.page.getByRole('checkbox').count(), 8);
         assert.deepEqual(f.state.writes, []);
         await f.page.getByRole('button', { name: 'Save', exact: true }).click();
         await f.page.getByText('Settings saved', { exact: true }).waitFor();
-        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: ['QSA'], disabled_counselor_ids: [], default_counselor_id: null, forum: { students_can_open: false, premoderation: false } }]);
+        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: ['QSA'], disabled_counselor_ids: [], default_counselor_id: null, forum: { students_can_open: false, premoderation: false }, students_personal_ai: true }]);
         await f.page.reload({ waitUntil: 'networkidle' });
         await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
         assert.equal(await f.page.getByRole('checkbox', { name: 'QSA', exact: true }).isChecked(), false);
@@ -238,7 +239,7 @@ test('Counselors: toggles, filters and one optional class default saved together
         assert.deepEqual(f.state.writes, []);
         await f.page.getByRole('button', { name: 'Save', exact: true }).click();
         await f.page.getByText('Settings saved', { exact: true }).waitFor();
-        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: [], disabled_counselor_ids: [2], default_counselor_id: 1, forum: { students_can_open: false, premoderation: false } }]);
+        assert.deepEqual(f.state.writes, [{ revision: 1, disabled_tool_keys: [], disabled_counselor_ids: [2], default_counselor_id: 1, forum: { students_can_open: false, premoderation: false }, students_personal_ai: true }]);
         await f.page.reload({ waitUntil: 'networkidle' });
         await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
         assert.equal(await f.page.getByRole('radio', { name: 'Class default: Clio' }).isChecked(), true);
@@ -352,6 +353,21 @@ test('#205: counselor details show description, institution model and the teache
         await plain.getByText('No description available.', { exact: true }).waitFor();
         assert.equal(await plain.getByTestId('counselor-institution-model').textContent(), 'Installation default model');
         assert.equal(await plain.locator('#counselor-details-source').count(), 0);
+        assert.deepEqual(f.state.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('#217: the teacher decides whether students may use their own APIs and ChatGPT', async () => {
+    const f = await fixture({ width: 390, settings: { ...initial, students_personal_ai: true } });
+    try {
+        await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
+        const toggle = f.page.getByRole('checkbox', { name: 'Students may use their own APIs and ChatGPT', exact: true });
+        assert.equal(await toggle.isChecked(), true);
+        await toggle.uncheck();
+        await f.page.getByRole('button', { name: 'Save', exact: true }).click();
+        await f.page.getByRole('status').filter({ hasText: /./ }).first().waitFor();
+        assert.equal(f.state.writes.at(-1).students_personal_ai, false);
+        assert.equal(await toggle.isChecked(), false);
         assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
 });
