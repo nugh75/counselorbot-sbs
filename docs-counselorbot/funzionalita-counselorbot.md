@@ -1110,7 +1110,8 @@ la stessa sezione; un valore non riconosciuto apre Generale.
 Nella sezione Generale, dopo modello attivo, ripieghi e funzioni, il blocco
 **AI dello studente: proprie chiavi e proprio ChatGPT** contiene la **Protezione dei
 dati per i modelli esterni** e un collegamento alla pagina **API e ChatGPT**, dove
-l’amministratore abilita **API personali** e **Collegamento ChatGPT**. Le
+l’amministratore abilita **API personali** e **Collegamento ChatGPT**. Anche i messaggi
+«collegamento disattivato» e la Guida indicano questa pagina. Le
 **API Keys** della piattaforma sono dell’amministratore e restano fuori dal
 blocco, subito sotto.
 
