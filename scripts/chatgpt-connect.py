@@ -20,6 +20,9 @@ import urllib.request
 import webbrowser
 
 ISSUER = "https://auth.openai.com"
+# The packaged Windows helper (#133) starts with a double click: no arguments.
+DEFAULT_SERVER = "https://counselorbot.labform.net"
+FROZEN = bool(getattr(sys, "frozen", False))
 RESOURCE = "https://api.openai.com/v1"
 SCOPES = "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct"
 
@@ -163,13 +166,17 @@ def port_number(value):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--server", required=True, help="CounselorBot origin (HTTPS or localhost tunnel)")
+    parser.add_argument("--server", required=not FROZEN, help="CounselorBot origin (HTTPS or localhost tunnel)")
     parser.add_argument("--no-browser", action="store_true", help="Print the public sign-in URL instead of opening it")
     parser.add_argument("--callback-port", type=port_number, default=0, help="Loopback callback port (0: automatic; use a fixed port with SSH -L)")
     parser.add_argument("--hide-code", action="store_true", help="Hide the pairing code while pasting it; press Enter to submit")
     args = parser.parse_args()
     try:
-        origin = server_origin(args.server)
+        server = args.server
+        if not server:
+            # Double-clicked helper: ask for the address, Enter keeps the usual one.
+            server = input(f"Indirizzo di CounselorBot (Invio per {DEFAULT_SERVER}): ").strip() or DEFAULT_SERVER
+        origin = server_origin(server)
         print("Incolla il codice di associazione generato da CounselorBot, non un token o una chiave OpenAI. Poi premi Invio.", flush=True)
         read_code = getpass.getpass if args.hide_code else input
         prompt = "Codice di associazione (incolla invisibile): " if args.hide_code else "Codice di associazione (visibile): "
@@ -195,4 +202,11 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    code = main()
+    if FROZEN:
+        # A double-clicked console window would close at once: keep the message readable.
+        try:
+            input("Premi Invio per chiudere questa finestra.")
+        except (EOFError, KeyboardInterrupt):
+            pass
+    sys.exit(code)

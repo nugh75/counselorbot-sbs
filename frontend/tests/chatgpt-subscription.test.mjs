@@ -18,7 +18,7 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
             page.on('pageerror', error => errors.push(error.message));
             let failModels = false;
             const status = { available: true, enabled: true, reason: null, connected: false, email: null, use_subscription: false,
-                model: null, needs_reconnect: false, pending_link: false, macos_helper_available: true, models: [] };
+                model: null, needs_reconnect: false, pending_link: false, macos_helper_available: true, windows_helper_available: true, models: [] };
             await page.route('**/api/**', async route => {
                 const request = route.request(), path = new URL(request.url()).pathname, method = request.method();
                 let data = [];
@@ -56,6 +56,9 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                 await panel.getByText(t('code'), { exact: true }).waitFor();
                 assert.equal(await panel.getByTestId('chatgpt-pairing-code').textContent(), 'fixture-pairing-code-never-save-in-storage-123');
                 assert.equal(await panel.getByRole('link', { name: t('macosDownload') }).getAttribute('href'), '/api/chatgpt/helper/macos');
+                // #133: the Windows helper, with the SmartScreen steps and this site's address.
+                assert.equal(await panel.getByRole('link', { name: t('windowsDownload') }).getAttribute('href'), '/api/chatgpt/helper/windows');
+                assert.ok((await panel.getByText(t('windowsSecurity').split('{origin}')[0], { exact: false }).textContent()).includes(origin));
                 assert.equal(await panel.getByRole('link', { name: t('download') }).isVisible(), false);
                 assert.equal(await panel.getByText(t('macosInstructions'), { exact: true }).isVisible(), true);
                 if (language === 'it') await panel.getByTestId('chatgpt-link').screenshot({ path: `/tmp/chatgpt-macos-pairing-${width}.png` });
@@ -94,10 +97,12 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                 assert.equal(status.connected, false);
                 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
                 status.macos_helper_available = false;
+                status.windows_helper_available = false;
                 await page.reload();
                 await panel.getByRole('button', { name: t('connect'), exact: true }).click();
                 await panel.getByTestId('chatgpt-pairing-code').waitFor({ state: 'visible' });
                 assert.equal(await panel.getByRole('link', { name: t('macosDownload') }).count(), 0);
+                assert.equal(await panel.getByRole('link', { name: t('windowsDownload') }).count(), 0);
                 assert.equal(await panel.getByRole('link', { name: t('download') }).isVisible(), true);
                 await panel.getByRole('button', { name: t('cancel') }).click();
                 assert.deepEqual(errors, []);
