@@ -168,6 +168,7 @@ def _serialize_settings(db: Session, group_id: int, settings) -> dict:
                            models.Counselor.owner_username.is_(None)
                        ).order_by(models.Counselor.sort_order, models.Counselor.id).all()],
         "forum": _serialize_forum_options(settings),
+        "students_personal_ai": settings.students_personal_ai if settings else True,
     }
     latest = {}
     for row in db.query(models.ClassSettingsAuditLog).filter_by(group_id=group_id).order_by(models.ClassSettingsAuditLog.id.desc()):
@@ -254,7 +255,8 @@ async def list_admin_classes(search: str = "", owner: str = "", institution_id: 
                        "co_teachers": shares.get(group.id, []), "members_count": counts.get(group.id, 0),
                        "is_active": group.is_active, "created_at": group.created_at,
                        "has_custom_settings": bool(row and (row.disabled_tool_keys or row.disabled_counselor_ids
-                            or row.default_counselor_id or row.forum_students_can_open or row.forum_premoderation)),
+                            or row.default_counselor_id or row.forum_students_can_open or row.forum_premoderation
+                            or row.students_personal_ai is False)),
                        "locked_items_count": sum(len(getattr(row, column) or {}) for column in (
                            "locked_tool_keys", "locked_counselor_ids", "locked_forum_options")) if row else 0})
     return result
@@ -444,6 +446,10 @@ async def put_class_settings(
                 _audit_setting(db, group_id, current_user, "setting_change", "forum_option", name,
                                {"value": old}, {"value": new}, payload.reason)
                 setattr(settings, f"forum_{name}", new)
+    if payload.students_personal_ai is not None and payload.students_personal_ai != settings.students_personal_ai:
+        _audit_setting(db, group_id, current_user, "setting_change", "settings_bulk", "students_personal_ai",
+                       {"value": settings.students_personal_ai}, {"value": payload.students_personal_ai}, payload.reason)
+        settings.students_personal_ai = payload.students_personal_ai
     settings.disabled_tool_keys = sorted(set(payload.disabled_tool_keys))
     settings.disabled_counselor_ids = sorted(set(disabled_counselors))
     settings.default_counselor_id = default_id
