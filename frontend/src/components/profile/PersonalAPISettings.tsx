@@ -18,18 +18,25 @@ import { ChatGPTConnectionPanel } from './ChatGPTConnectionPanel';
 
 type Connection = { id: string; name: string; provider: string; model: string };
 type Counselor = { id: number; name: string; description: string; persona: string };
-type ServerBinding = { counselor_id: number; connection_id: string | null; chatgpt_model: string | null };
+type ServerBinding = { counselor_id: number; connection_id: string | null; chatgpt_model: string | null; reasoning: string | null };
 // A source is '' (institution), 'api:<connection id>' or 'chatgpt:<model>' (#200).
-type Binding = { counselor_id: number; source: string };
+type Binding = { counselor_id: number; source: string; reasoning: string };
 type Settings = {
     available: boolean; api_enabled: boolean; chatgpt_enabled: boolean; enabled: boolean; providers: string[];
-    default_connection_id: string | null; default_chatgpt_model: string | null; connections: Connection[]; bindings: ServerBinding[];
-    chatgpt_models: { slug: string; display_name: string }[];
+    default_connection_id: string | null; default_chatgpt_model: string | null; default_reasoning: string | null;
+    connections: Connection[]; bindings: ServerBinding[];
+    chatgpt_models: { slug: string; display_name: string; reasoning_levels: string[] }[];
     counselors: { id: number; name: string; is_personal: boolean }[];
 };
 const encode = (connection: string | null, chatgpt: string | null) => connection ? `api:${connection}` : chatgpt ? `chatgpt:${chatgpt}` : '';
 const decode = (source: string) => ({ connection_id: source.startsWith('api:') ? source.slice(4) : null, chatgpt_model: source.startsWith('chatgpt:') ? source.slice(8) : null });
-const fromServer = (items: ServerBinding[]): Binding[] => items.map(b => ({ counselor_id: b.counselor_id, source: encode(b.connection_id, b.chatgpt_model) }));
+const fromServer = (items: ServerBinding[]): Binding[] => items.map(b => ({ counselor_id: b.counselor_id, source: encode(b.connection_id, b.chatgpt_model), reasoning: b.reasoning ?? '' }));
+// #202: levels offered for a source; a ChatGPT model that lists its own levels offers only those.
+const API_LEVELS = ['none', 'low', 'medium', 'high'];
+const levelsFor = (data: Settings | null, source: string) => !data || !source ? [] : source.startsWith('chatgpt:')
+    ? (data.chatgpt_models.find(m => `chatgpt:${m.slug}` === source)?.reasoning_levels ?? []).length
+        ? data.chatgpt_models.find(m => `chatgpt:${m.slug}` === source)!.reasoning_levels : ['low', 'medium', 'high']
+    : API_LEVELS;
 const sortedBindings = (items: Binding[]) => JSON.stringify([...items].sort((a, b) => a.counselor_id - b.counselor_id));
 const validSource = (data: Settings, source: string) => !source || data.connections.some(c => `api:${c.id}` === source) || data.chatgpt_models.some(m => `chatgpt:${m.slug}` === source);
 const providerName = (value: string) => (({ openai: 'OpenAI', openrouter: 'OpenRouter', gemini: 'Google Gemini' } as Record<string, string>)[value] ?? value.charAt(0).toUpperCase() + value.slice(1));
@@ -52,6 +59,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
     const [own, setOwn] = useState<Counselor[]>([]);
     const [enabled, setEnabled] = useState(false);
     const [defaultSource, setDefaultSource] = useState('');
+    const [defaultReasoning, setDefaultReasoning] = useState('');
     const [bindings, setBindings] = useState<Binding[]>([]);
     const [connectionOpen, setConnectionOpen] = useState(false);
     const [editingConnection, setEditingConnection] = useState<Connection | null>(null);
@@ -72,7 +80,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
     const [deleteCounselor, setDeleteCounselor] = useState<number | null>(null);
     const messageRef = useRef<HTMLDivElement>(null);
     useEffect(() => { if (error || feedback) messageRef.current?.scrollIntoView({ block: 'nearest' }); }, [error, feedback]);
-    const routingDirty = !!settings && (enabled !== settings.enabled || defaultSource !== encode(settings.default_connection_id, settings.default_chatgpt_model) || sortedBindings(bindings) !== sortedBindings(fromServer(settings.bindings)));
+    const routingDirty = !!settings && (enabled !== settings.enabled || defaultSource !== encode(settings.default_connection_id, settings.default_chatgpt_model) || defaultReasoning !== (settings.default_reasoning ?? '') || sortedBindings(bindings) !== sortedBindings(fromServer(settings.bindings)));
     const connectionDirty = connectionOpen && (name !== (editingConnection?.name ?? '') || provider !== (editingConnection?.provider ?? 'openai') || model !== (editingConnection?.model ?? '') || !!key);
     const counselorDirty = counselorOpen && (counselorName !== (editingCounselor?.name ?? '') || description !== (editingCounselor?.description ?? '') || persona !== (editingCounselor?.persona ?? ''));
     const dirty = routingDirty || connectionDirty || counselorDirty;
@@ -82,7 +90,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
 
     const accept = useCallback((data: Settings, preserve = false) => {
         setSettings(data);
-        if (!preserve) { setEnabled(data.enabled); setDefaultSource(encode(data.default_connection_id, data.default_chatgpt_model)); setBindings(fromServer(data.bindings)); }
+        if (!preserve) { setEnabled(data.enabled); setDefaultSource(encode(data.default_connection_id, data.default_chatgpt_model)); setDefaultReasoning(data.default_reasoning ?? ''); setBindings(fromServer(data.bindings)); }
         else {
             setDefaultSource(source => validSource(data, source) ? source : '');
             setBindings(items => items.filter(b => validSource(data, b.source) && data.counselors.some(c => c.id === b.counselor_id)));
@@ -140,10 +148,21 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
     const saveRouting = () => void run(async () => {
         const fallback = decode(defaultSource);
         accept(await request('/api/user/api-routing', 'PUT', { enabled, default_connection_id: fallback.connection_id, default_chatgpt_model: fallback.chatgpt_model,
-            bindings: bindings.map(b => ({ counselor_id: b.counselor_id, ...decode(b.source) })) }));
+            default_reasoning: defaultSource && defaultReasoning || null,
+            bindings: bindings.map(b => ({ counselor_id: b.counselor_id, ...decode(b.source), reasoning: b.reasoning || null })) }));
         setFeedback('saved'); notifyChatGPTChange();
     });
-    const assign = (cid: number, source: string) => setBindings(items => [...items.filter(b => b.counselor_id !== cid), ...(source ? [{ counselor_id: cid, source }] : [])]);
+    const assign = (cid: number, source: string, reasoning = '') => setBindings(items => [...items.filter(b => b.counselor_id !== cid),
+        ...(source ? [{ counselor_id: cid, source, reasoning: levelsFor(settings, source).includes(reasoning) ? reasoning : '' }] : [])]);
+    const chooseDefault = (source: string) => { setDefaultSource(source); if (!levelsFor(settings, source).includes(defaultReasoning)) setDefaultReasoning(''); };
+    // The level select next to a source; hidden while the source is the institution or the default.
+    const reasoningSelect = (id: string, source: string, value: string, onChange: (value: string) => void) => source && <div className="sm:w-48">
+        <label htmlFor={id} className="text-sm font-semibold text-slate-800">{l('reasoning')}</label>
+        <select id={id} className={field} value={value} onChange={e => onChange(e.target.value)}>
+            <option value="">{l('reasoningDefault')}</option>
+            {levelsFor(settings, source).map(level => <option key={level} value={level}>{l(`reasoning_${level}` as Parameters<typeof personalAPIText>[1])}</option>)}
+        </select>
+    </div>;
     // Options shared by the default and the per-counselor selects: the person's APIs and ChatGPT models.
     const sourceOptions = settings && <>
         {settings.api_enabled && settings.connections.length > 0 && <optgroup label={l('sourceApi')}>{settings.connections.map(c => <option key={c.id} value={`api:${c.id}`}>{c.name} · {c.model}</option>)}</optgroup>}
@@ -188,9 +207,10 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
                 <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} />{l('usePersonal')}</label>
                 {settings.chatgpt_enabled && settings.api_enabled && <p className="text-sm text-slate-600">{l('choiceHelp')}</p>}
                 <p className="text-sm font-semibold text-indigo-700">{l(settings.enabled ? 'active' : 'system')}</p>
-                <div><label htmlFor="personal-default-connection" className="text-sm font-semibold text-slate-800">{l('defaultConnection')}</label><select id="personal-default-connection" className={field} value={defaultSource} onChange={e => setDefaultSource(e.target.value)}><option value="">{l('institution')}</option>{sourceOptions}</select><p className="mt-1 text-sm text-slate-600">{l('defaultHelp')}</p></div>
+                <div><div className="flex flex-col gap-3 sm:flex-row sm:items-end"><div className="min-w-0 flex-1"><label htmlFor="personal-default-connection" className="text-sm font-semibold text-slate-800">{l('defaultConnection')}</label><select id="personal-default-connection" className={field} value={defaultSource} onChange={e => chooseDefault(e.target.value)}><option value="">{l('institution')}</option>{sourceOptions}</select></div>{reasoningSelect('personal-default-reasoning', defaultSource, defaultReasoning, setDefaultReasoning)}</div><p className="mt-1 text-sm text-slate-600">{l('defaultHelp')}</p></div>
+                <p className="text-sm text-slate-600">{l('reasoningHelp')}</p>
                 {settings.counselors.length === 0 && <p className="text-sm text-slate-600">{l('noCounselors')}</p>}
-                {settings.counselors.map(c => <div key={c.id}><label htmlFor={`personal-counselor-${c.id}`} className="text-sm font-semibold text-slate-800">{c.name}{c.is_personal && <span className="ml-2 text-slate-600">({l('personalCounselor')})</span>}</label><select id={`personal-counselor-${c.id}`} className={field} value={bindings.find(b => b.counselor_id === c.id)?.source ?? ''} onChange={e => assign(c.id, e.target.value)}><option value="">{l('useDefault')}</option>{sourceOptions}</select></div>)}
+                {settings.counselors.map(c => { const bound = bindings.find(b => b.counselor_id === c.id); return <div key={c.id} className="flex flex-col gap-3 sm:flex-row sm:items-end"><div className="min-w-0 flex-1"><label htmlFor={`personal-counselor-${c.id}`} className="text-sm font-semibold text-slate-800">{c.name}{c.is_personal && <span className="ml-2 text-slate-600">({l('personalCounselor')})</span>}</label><select id={`personal-counselor-${c.id}`} className={field} value={bound?.source ?? ''} onChange={e => assign(c.id, e.target.value, bound?.reasoning)}><option value="">{l('useDefault')}</option>{sourceOptions}</select></div>{reasoningSelect(`personal-reasoning-${c.id}`, bound?.source ?? '', bound?.reasoning ?? '', value => assign(c.id, bound!.source, value))}</div>; })}
                 <Button disabled={busy || !routingDirty || (enabled && !defaultSource && !bindings.length)} onClick={saveRouting}>{l('saveRouting')}</Button>
             </fieldset></Card></section>
             {settings.api_enabled && <section aria-labelledby="own-counselors-title" className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><h2 id="own-counselors-title" className="text-xl font-bold text-slate-900">{l('ownCounselors')}</h2><Button variant="secondary" disabled={busy} onClick={() => editCounselor(null)}><Plus className="h-4 w-4" aria-hidden />{l('createCounselor')}</Button></div><p className="text-sm text-slate-600">{l('ownHelp')}</p>
