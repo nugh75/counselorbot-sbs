@@ -1,14 +1,14 @@
-"""#201: a teacher's personal API connection shared with a class."""
+"""A teacher offers the counselors bound to their API connections to their classes."""
 import uuid
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from backend import auth, class_api_sharing, database, models, personal_api
+from backend import auth, class_access, class_api_sharing, database, models, personal_api
 from backend.ai_service import AIService, AIError
-from backend.routes import groups
-from backend.tests.test_personal_api import db  # noqa: F401
+from backend.routes import personal_api as routes
+from backend.tests.test_personal_api import db, identity  # noqa: F401
 
 
 def connection(db, username, model="teacher-model"):
@@ -23,92 +23,93 @@ def connection(db, username, model="teacher-model"):
 @pytest.fixture
 def school(db):
     class_api_sharing.set_switch(db, True)
-    first = models.StudentGroup(code="GR-SHARE1", name="Shared class", owner_username="alice")
-    second = models.StudentGroup(code="GR-SHARE2", name="Other class", owner_username="dora")
-    db.add_all([first, second])
+    group = models.StudentGroup(code="GR-OFFER1", name="Class", owner_username="alice")
+    other = models.StudentGroup(code="GR-OFFER2", name="Other", owner_username="dora")
+    db.add_all([group, other])
     db.flush()
-    db.add(models.GroupMembership(group_id=first.id, username="bob"))
-    keys = {"alice": connection(db, "alice"), "dora": connection(db, "dora", "dora-model")}
+    db.add(models.GroupMembership(group_id=group.id, username="bob"))
+    db.add_all([models.Counselor(id=20, name="Institution", slug="inst", is_active=True),
+                models.Counselor(id=21, name="Alice private", slug="alice-own", is_active=True, owner_username="alice"),
+                models.Counselor(id=22, name="Not offered", slug="plain", is_active=True)])
+    key = connection(db, "alice")
+    db.add(models.PersonalAIRouting(username="alice", enabled=True, share_with_classes=True))
+    db.add_all([models.PersonalCounselorConnection(username="alice", counselor_id=20, connection_id=key.id, reasoning="low"),
+                models.PersonalCounselorConnection(username="alice", counselor_id=21, connection_id=key.id)])
     db.commit()
-    current = {"identity": {"username": "alice", "groups": ["docenti"], "is_admin": False, "is_researcher": False, "authenticated": True}}
+    current = {"identity": identity("alice", groups=["docenti"])}
     app = FastAPI()
-    app.include_router(groups.router)
+    app.include_router(routes.router)
     app.dependency_overrides[database.get_db] = lambda: db
-    app.dependency_overrides[auth.get_current_user] = lambda: current["identity"]
+    app.dependency_overrides[auth.get_identity] = lambda: current["identity"]
     with TestClient(app, headers={"X-Requested-With": "CounselorBot"}) as client:
         client.actor = current
-        yield client, first, second, keys
+        yield client, group, key
 
 
-def targets(db, username):
+def targets(db, username, counselor_id):
+    personal_api.bind_counselor(db, counselor_id)
     return AIService(db, username=username)._targets("ollama", "institution-model")
 
 
-def test_class_students_use_the_shared_key_others_do_not(db, school):
-    client, first, _, keys = school
-    path = f"/teacher/groups/{first.id}/api-share"
-    assert client.get(path).json()["share"] is None
-    response = client.put(path, json={"connection_id": keys["alice"].id, "reasoning": "low"})
-    assert response.status_code == 200, response.text
-    state = response.json()
-    assert state["share"]["mine"] and state["share"]["model"] == "teacher-model"
-    assert "fake-key" not in response.text and "encrypted_key" not in response.text
-    service = AIService(db, username="bob")
-    assert service.shared_group_id == first.id and service.personal_reasoning == "low"
+def test_students_use_the_teachers_counselors_through_the_teachers_key(db, school):
+    client, _, key = school
+    service = (personal_api.bind_counselor(db, 20), AIService(db, username="bob"))[1]
+    assert service.shared_owner == "alice" and service.personal_reasoning == "low"
     assert service.config["api_key_openai"] == "alice-fake-key"
-    assert targets(db, "bob") == [("openai", "teacher-model")]
-    assert targets(db, "carol") == [("ollama", "institution-model")]
-    # Revoking applies to the next message.
-    assert client.delete(path).json()["share"] is None
-    assert targets(db, "bob") == [("ollama", "institution-model")]
+    assert targets(db, "bob", 20) == [("openai", "teacher-model")]
+    assert targets(db, "bob", 22) == [("ollama", "institution-model")]  # Not bound by the teacher.
+    assert targets(db, "carol", 20) == [("ollama", "institution-model")]  # Not in the class.
+    # The teacher's private counselor becomes visible to the student, never the key.
+    assert 21 in {c.id for c in personal_api.visible_counselors(db, "bob")}
+    assert 21 not in {c.id for c in personal_api.visible_counselors(db, "carol")}
+    assert 21 in class_access._counselor_access(db, "bob", [(0, None)])[0]
 
 
-def test_only_own_connections_and_never_with_the_switch_off(db, school):
-    client, first, _, keys = school
-    path = f"/teacher/groups/{first.id}/api-share"
-    assert client.put(path, json={"connection_id": keys["dora"].id}).status_code == 404
-    assert client.put(path, json={"connection_id": keys["alice"].id, "reasoning": "turbo"}).status_code == 422
-    assert client.put(path, json={"connection_id": keys["alice"].id}).status_code == 200
+def test_stopping_or_switch_off_applies_on_the_next_message(db, school):
+    client, _, key = school
+    bindings = [{"counselor_id": 20, "connection_id": key.id}, {"counselor_id": 21, "connection_id": key.id}]
+    # The teacher's own routing can stay off: offering is separate from using it personally.
+    response = client.put("/user/api-routing", json={"enabled": False, "bindings": bindings, "share_with_classes": False})
+    assert response.status_code == 200, response.text
+    assert targets(db, "bob", 20) == [("ollama", "institution-model")]
+    assert client.put("/user/api-routing", json={"enabled": False, "bindings": bindings, "share_with_classes": True}).status_code == 200
+    assert targets(db, "bob", 20) == [("openai", "teacher-model")]
     class_api_sharing.set_switch(db, False)
-    assert targets(db, "bob") == [("ollama", "institution-model")]
-    assert client.put(path, json={"connection_id": keys["alice"].id}).status_code == 403
-    assert client.get(path).json()["available"] is False
-    # Stopping stays possible.
-    assert client.delete(path).status_code == 200
+    assert targets(db, "bob", 20) == [("ollama", "institution-model")]
+    assert 21 not in {c.id for c in personal_api.visible_counselors(db, "bob")}
 
 
-def test_own_choice_wins_and_conflicting_classes_fall_back(db, school):
-    client, first, second, keys = school
-    assert client.put(f"/teacher/groups/{first.id}/api-share", json={"connection_id": keys["alice"].id}).status_code == 200
-    db.add(models.ClassAPIShare(group_id=second.id, owner_username="dora", connection_id=keys["dora"].id))
-    db.add(models.GroupMembership(group_id=second.id, username="bob"))
+def test_only_teachers_can_offer_and_the_page_reports_usage(db, school):
+    client, _, _ = school
+    db.add(models.Log(action="chat_message", cost_usd=0.5, details={"shared_owner": "alice"}))
     db.commit()
-    assert targets(db, "bob") == [("ollama", "institution-model")]  # Two different shares: ambiguous.
-    db.query(models.ClassAPIShare).filter_by(group_id=second.id).delete()
+    state = client.get("/user/api-connections").json()
+    assert state["share_available"] and state["share_with_classes"]
+    assert state["share_usage"] == {"requests": 1, "cost_usd": 0.5}
+    client.actor["identity"] = identity("bob", groups=["studenti"])
+    assert client.get("/user/api-connections").json()["share_available"] is False
+    response = client.put("/user/api-routing", json={"enabled": False, "bindings": [], "share_with_classes": True})
+    assert response.status_code == 403
+
+
+def test_own_choice_wins_and_conflicting_teachers_fall_back(db, school):
+    client, group, _ = school
+    other = connection(db, "dora", "dora-model")
+    db.add(models.GroupShare(group_id=group.id, shared_with_username="dora", granted_by_username="alice"))
+    db.add(models.PersonalAIRouting(username="dora", enabled=True, share_with_classes=True))
+    db.add(models.PersonalCounselorConnection(username="dora", counselor_id=20, connection_id=other.id))
+    db.commit()
+    assert targets(db, "bob", 20) == [("ollama", "institution-model")]  # Two keys for one counselor.
     own = connection(db, "bob", "bob-model")
     db.add(models.PersonalAIRouting(username="bob", enabled=True, default_connection_id=own.id))
     db.commit()
-    assert targets(db, "bob") == [("openai", "bob-model")]
+    assert targets(db, "bob", 20) == [("openai", "bob-model")]
 
 
 def test_failures_are_neutral_for_students_and_recorded_for_the_teacher(db, school):
-    client, first, _, keys = school
-    path = f"/teacher/groups/{first.id}/api-share"
-    client.put(path, json={"connection_id": keys["alice"].id})
+    personal_api.bind_counselor(db, 20)
     service = AIService(db, username="bob")
     error = service._personal_failure(type("Quota", (Exception,), {"status_code": 429, "body": None})())
     assert isinstance(error, AIError) and error.code == class_api_sharing.SHARE_ERROR
     db.expire_all()
-    assert client.get(path).json()["share"]["last_error"] == "personalAPI.errors.rateLimit"
-    # Saving again clears it.
-    assert client.put(path, json={"connection_id": keys["alice"].id}).json()["share"]["last_error"] is None
-
-
-def test_month_usage_counts_only_this_class(db, school):
-    client, first, second, _ = school
-    db.add_all([models.Log(action="chat_message", cost_usd=0.25, details={"shared_group_id": first.id}),
-                models.Log(action="chat_message", cost_usd=0.5, details={"shared_group_id": first.id}),
-                models.Log(action="chat_message", cost_usd=9.0, details={"shared_group_id": second.id}),
-                models.Log(action="chat_message", cost_usd=1.0, details={})])
-    db.commit()
-    assert client.get(f"/teacher/groups/{first.id}/api-share").json()["usage"] == {"requests": 2, "cost_usd": 0.75}
+    assert db.get(models.PersonalAIRouting, "alice").share_last_error == "personalAPI.errors.rateLimit"
