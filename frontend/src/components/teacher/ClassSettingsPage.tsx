@@ -299,7 +299,9 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
     const groups = useTeacherResource('/api/admin/groups', parseClassGroups);
     const settings = useTeacherResource(`/api/teacher/groups/${groupId}/settings`, parseClassSettings);
     const [tab, setTab] = useState<'overview' | 'toolsTab' | 'paths' | 'forum' | 'audit'>(() =>
-        typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'paths' ? 'paths' : 'overview');
+        // ?tab=tools|paths|forum|audit opens that tab directly from the class list.
+        ({ tools: 'toolsTab', paths: 'paths', forum: 'forum', audit: 'audit' } as const)[
+            (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null) as 'tools'] ?? 'overview');
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const group = groups.data?.find(row => row.id === groupId);
     if (groups.forbidden || settings.forbidden) return <TeacherForbidden />;
