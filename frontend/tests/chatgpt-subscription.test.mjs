@@ -33,6 +33,9 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                 if (path === '/api/auth/me') data = { authenticated: true, username: 'chatgpt-fixture', email: 'user@example.test', groups: ['studenti'], is_admin: false };
                 else if (path === '/api/user/account-preferences') data = { counselor_ready: true, notebook_ready: true, setup_completed: true, counselor_id: 1 };
                 else if (path === '/api/orientation/status') data = { required: false, completed: true };
+                else if (path === '/api/user/api-connections') data = { available: true, api_enabled: false, chatgpt_enabled: true, enabled: false,
+                    default_connection_id: null, default_chatgpt_model: null, providers: [], connections: [], bindings: [], counselors: [], chatgpt_models: status.models };
+                else if (path === '/api/user/api-settings') data = { available: false };
                 else if (path.startsWith('/api/user/chatgpt')) {
                     if (method !== 'GET') {
                         writes.push({ path, method, body: request.postData() ? request.postDataJSON() : null });
@@ -89,23 +92,16 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                 await panel.getByRole('button', { name: t('connect'), exact: true }).click();
                 Object.assign(status, { connected: true, pending_link: false, email: 'own-account@example.test' });
                 await panel.getByText(t('connected') + ' · own-account@example.test', { exact: true }).waitFor();
-                await panel.getByRole('combobox', { name: t('model') }).selectOption('fixture-model');
-                assert.equal(status.use_subscription, false);
-                await panel.getByRole('button', { name: t('save'), exact: true }).click();
-                await panel.getByText(t('active') + ' · fixture-model', { exact: true }).waitFor();
-                assert.equal(status.use_subscription, true);
-                assert.equal(writes.filter(write => write.path.endsWith('/preference')).length, 1);
+                // #200: the model is chosen per counselor below the panel, not in it.
+                await panel.getByText(t('chooseBelow'), { exact: true }).waitFor();
+                await panel.getByText(t('inactive'), { exact: true }).waitFor();
                 failModels = true;
                 await panel.getByRole('button', { name: t('refresh') }).click();
                 await panel.getByRole('alert').getByText(t('errors.quota'), { exact: true }).waitFor();
-                assert.equal(status.use_subscription, true);
-                assert.equal(writes.filter(write => write.path.endsWith('/preference')).length, 1);
+                assert.equal(writes.some(write => write.path.endsWith('/preference')), false);
                 assert.equal(await panel.getByRole('link', { name: t('usage') }).getAttribute('href'), 'https://chatgpt.com/settings/usage');
                 failModels = false;
                 if (language === 'it') await panel.screenshot({ path: `/tmp/chatgpt-personal-${width}.png` });
-                await panel.getByRole('button', { name: t('institution') }).click();
-                await panel.getByText(t('inactive'), { exact: true }).waitFor();
-                assert.equal(status.use_subscription, false);
                 await panel.getByRole('button', { name: t('disconnect'), exact: true }).click();
                 await panel.getByText(t('revocation'), { exact: true }).waitFor();
                 assert.equal(status.connected, false);
@@ -142,7 +138,9 @@ async function wizardPage(agent, { expiresIn = 600000 } = {}) {
         else if (path.endsWith('/link') && request.method() === 'POST') {
             links.push(path);
             data = { pairing_code: 'fixture-code', expires_at: new Date(Date.now() + expiresIn).toISOString() };
-        } else if (path.startsWith('/api/user/chatgpt')) data = { available: true, enabled: true, reason: null, connected: false, email: null,
+        } else if (path === '/api/user/api-connections') data = { available: true, api_enabled: false, chatgpt_enabled: true, enabled: false,
+            default_connection_id: null, default_chatgpt_model: null, providers: [], connections: [], bindings: [], counselors: [], chatgpt_models: [] };
+        else if (path.startsWith('/api/user/chatgpt')) data = { available: true, enabled: true, reason: null, connected: false, email: null,
             use_subscription: false, model: null, needs_reconnect: false, pending_link: links.length > 0, macos_helper_available: true,
             windows_helper_available: true, models: [] };
         return route.fulfill({ json: data });

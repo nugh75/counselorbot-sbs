@@ -12,7 +12,7 @@ async function fixture({ role = 'student', width = 390, locale = 'it', configure
     const errors = [], writes = [], own = []; let counter = 1, failSave = false, modelError = null;
     page.on('pageerror', e => errors.push(e.message));
     await page.addInitScript(({ locale, dark }) => { localStorage.setItem('cb_lang', locale); localStorage.setItem('cb_theme', dark ? 'dark' : 'light'); }, { locale, dark });
-    const settings = { available: true, chatgpt_enabled: false, providers: ['openai','openrouter','anthropic','gemini'], enabled: configured, default_connection_id: configured ? 'a'.repeat(32) : null, connections: configured ? [{ id: 'a'.repeat(32), name: 'OpenRouter personale', provider: 'openrouter', model: 'qwen/qwen3.8-27b:free' }] : [], bindings: [], counselors: [{ id: 1, name: 'First counselor', is_personal: false }, { id: 2, name: 'Second counselor', is_personal: false }] };
+    const settings = { available: true, api_enabled: true, chatgpt_enabled: false, chatgpt_models: [], default_chatgpt_model: null, providers: ['openai','openrouter','anthropic','gemini'], enabled: configured, default_connection_id: configured ? 'a'.repeat(32) : null, connections: configured ? [{ id: 'a'.repeat(32), name: 'OpenRouter personale', provider: 'openrouter', model: 'qwen/qwen3.8-27b:free' }] : [], bindings: [], counselors: [{ id: 1, name: 'First counselor', is_personal: false }, { id: 2, name: 'Second counselor', is_personal: false }] };
     await page.route('**/api/**', async route => {
         const req = route.request(), path = new URL(req.url()).pathname, method = req.method(); let data = [], status = 200;
         if (path === '/api/auth/me') data = { authenticated: true, username: 'api-fixture', name: 'Test', groups: role === 'teacher' ? ['docenti'] : ['studenti'], is_admin: false };
@@ -55,13 +55,13 @@ async function fillConnection(page, name, model = 'qwen/qwen3.8-27b:free') {
 for (const [role, width] of [['student',390],['teacher',1440]]) test(`${role}: multiple accounts and one model associated with two counselors at ${width}px`, async () => {
     const f = await fixture({ role, width, configured: false });
     try {
-        await f.page.goto(`${origin}/${role === 'teacher' ? 'docente' : 'profilo'}`); await f.page.getByRole('link', { name: /^API personali/ }).click();
+        await f.page.goto(`${origin}/${role === 'teacher' ? 'docente' : 'profilo'}`); await f.page.getByRole('link', { name: /^API e ChatGPT/ }).click();
         for (const name of ['OpenRouter personale','OpenRouter università']) { await fillConnection(f.page,name); await f.page.getByRole('button', { name: 'Salva connessione', exact: true }).click(); await f.page.getByRole('heading', { name, exact: true }).waitFor(); }
         assert.equal(f.settings.connections.length,2); assert.equal(await f.page.getByLabel('Chiave API', { exact: true }).count(),0);
-        await f.page.getByLabel('Usa le mie API personali').check(); const id = f.settings.connections[1].id;
-        await f.page.locator('#personal-counselor-1').selectOption(id); await f.page.locator('#personal-counselor-2').selectOption(id);
-        await f.page.getByRole('button', { name: 'Salva associazioni e utilizzo', exact: true }).click(); await f.page.getByText('API personali in uso', { exact: true }).waitFor();
-        const saved = f.writes.find(w => w.path === '/api/user/api-routing'); assert.equal(saved.body.bindings.length,2); assert.ok(saved.body.bindings.every(b => b.connection_id === id)); assert.equal('api_key' in saved.body,false);
+        await f.page.getByLabel('Usa le mie API o il mio ChatGPT').check(); const id = f.settings.connections[1].id;
+        await f.page.locator('#personal-counselor-1').selectOption(`api:${id}`); await f.page.locator('#personal-counselor-2').selectOption(`api:${id}`);
+        await f.page.getByRole('button', { name: 'Salva associazioni e utilizzo', exact: true }).click(); await f.page.getByText('Le tue scelte personali sono in uso', { exact: true }).waitFor();
+        const saved = f.writes.find(w => w.path === '/api/user/api-routing'); assert.equal(saved.body.bindings.length,2); assert.ok(saved.body.bindings.every(b => b.connection_id === id && b.chatgpt_model === null)); assert.equal('api_key' in saved.body,false);
         await f.page.getByRole('button', { name: 'Prova connessione e modello', exact: true }).first().click(); await f.page.getByText('Il modello ha risposto al messaggio di test.', { exact: true }).waitFor();
         assert.deepEqual(f.errors,[]); assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     } finally { await f.context.close(); }
@@ -72,7 +72,7 @@ test('creates a private counselor with Italian instructions, associates a key, a
         await f.page.goto(`${origin}/profilo/api-personali`); await f.page.getByRole('button', { name: 'Crea un counselor', exact: true }).click();
         await f.page.getByLabel('Nome del counselor', { exact: true }).fill('La mia guida'); await f.page.getByLabel('Descrizione', { exact: true }).fill('Mi aiuta nello studio'); await f.page.getByLabel('Istruzioni del counselor', { exact: true }).fill('Aiutami in italiano, una domanda alla volta.');
         await f.page.getByRole('button', { name: 'Salva counselor', exact: true }).click(); await f.page.getByRole('heading', { name: 'La mia guida', exact: true }).waitFor(); assert.equal(f.own[0].persona,'Aiutami in italiano, una domanda alla volta.');
-        await f.page.locator(`#personal-counselor-${f.own[0].id}`).selectOption('a'.repeat(32)); await f.page.getByRole('button', { name: 'Salva associazioni e utilizzo', exact: true }).click();
+        await f.page.locator(`#personal-counselor-${f.own[0].id}`).selectOption('api:' + 'a'.repeat(32)); await f.page.getByRole('button', { name: 'Salva associazioni e utilizzo', exact: true }).click();
         await f.page.getByRole('heading', { name: 'La mia guida', exact: true }).locator('..').getByRole('button', { name: 'Modifica', exact: true }).click(); await f.page.getByLabel('Istruzioni del counselor', { exact: true }).fill('Hjälp mig på svenska.'); await f.page.getByRole('button', { name: 'Salva counselor', exact: true }).click(); await f.page.getByText(/Counselor salvato/).waitFor(); assert.equal(f.own[0].persona,'Hjälp mig på svenska.'); assert.deepEqual(f.errors,[]);
     } finally { await f.context.close(); }
 });
@@ -94,7 +94,7 @@ test('admin disable hides settings and clears a dirty key on focus', async () =>
     const f = await fixture();
     try { await f.page.goto(`${origin}/profilo/api-personali`); await f.page.getByRole('button', { name: 'Modifica', exact: true }).click(); await f.page.getByLabel('Chiave API', { exact: true }).fill('draft-test-key'); f.settings.available=false; await f.page.evaluate(() => window.dispatchEvent(new Event('focus'))); await f.page.waitForURL(`${origin}/profilo`); assert.equal(await f.page.getByLabel('Chiave API', { exact: true }).count(),0); assert.deepEqual(f.errors,[]); } finally { await f.context.close(); }
 });
-for (const [locale,title] of [['it','API personali'],['en','Personal APIs'],['es','API personales'],['fr','API personnelles'],['de','Eigene APIs'],['sv','Egna API:er']]) for (const width of [320,1440]) test(`connections and associations in ${locale} at ${width}px, dark theme`, async () => {
+for (const [locale,title] of ['it','en','es','fr','de','sv'].map(l => [l, personalAPIText(l, 'sectionTitle')])) for (const width of [320,1440]) test(`connections and associations in ${locale} at ${width}px, dark theme`, async () => {
     const f=await fixture({ locale,width,dark:true });
     try { await f.page.goto(`${origin}/profilo/api-personali`); await f.page.getByRole('heading', { name:title,exact:true }).waitFor(); await f.page.locator('#personal-counselor-1').waitFor(); assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)); assert.deepEqual(f.errors,[]); } finally { await f.context.close(); }
 });
@@ -114,15 +114,13 @@ for (const role of ['student', 'teacher']) for (const locale of ['it', 'en', 'es
             const section = home.getByRole('region', { name: personalAPIText(locale, 'sectionTitle'), exact: true });
             await section.getByRole('heading', { level: 2 }).waitFor();
             assert.equal(await section.getByRole('navigation', { name: personalAPIText(locale, 'sectionTitle'), exact: true }).count(), 1);
-            assert.deepEqual(await section.getByRole('link').evaluateAll(links => links.map(link => link.getAttribute('href'))), [`/${area}/api-personali`, `/${area}/chatgpt`]);
+            // #200: one entry for APIs and ChatGPT.
+            assert.deepEqual(await section.getByRole('link').evaluateAll(links => links.map(link => link.getAttribute('href'))), [`/${area}/api-personali`]);
             assert.equal(await section.evaluate(el => el === el.parentElement.lastElementChild), true);
             for (const width of [320, 1440]) {
                 await f.page.setViewportSize({ width, height: 1050 });
                 await section.scrollIntoViewIfNeeded();
                 assert.equal(await section.evaluate(el => el.getBoundingClientRect().top >= el.previousElementSibling.getBoundingClientRect().bottom), true);
-                const first = await section.getByRole('link').nth(0).boundingBox();
-                const second = await section.getByRole('link').nth(1).boundingBox();
-                assert.ok(width < 768 ? second.y > first.y && second.x === first.x : second.y === first.y && second.x > first.x);
                 assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
                 if (locale === 'it') await section.screenshot({ path: `/tmp/${area}-ai-section-${width}.png` });
             }
@@ -131,8 +129,9 @@ for (const role of ['student', 'teacher']) for (const locale of ['it', 'en', 'es
             assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             f.settings.available = false;
             await f.page.evaluate(() => window.dispatchEvent(new Event('focus')));
-            await section.locator(`a[href="/${area}/api-personali"]`).waitFor({ state: 'detached' });
-            assert.equal(await section.locator(`a[href="/${area}/chatgpt"]`).count(), 1);
+            // ChatGPT alone still opens the same page.
+            await f.page.evaluate(() => window.dispatchEvent(new Event('focus')));
+            assert.equal(await section.locator(`a[href="/${area}/api-personali"]`).count(), 1);
             f.settings.chatgpt_enabled = false;
             await f.page.evaluate(() => window.dispatchEvent(new Event('focus')));
             await section.waitFor({ state: 'detached' });
@@ -141,3 +140,41 @@ for (const role of ['student', 'teacher']) for (const locale of ['it', 'en', 'es
         } finally { await f.context.close(); }
     });
 }
+
+test('#200: each counselor can use an API connection or a ChatGPT model on one page', async () => {
+    const f = await fixture({ width: 390 });
+    Object.assign(f.settings, { chatgpt_enabled: true, chatgpt_models: [{ slug: 'fixture-model', display_name: 'Fixture model' }] });
+    try {
+        await f.page.goto(`${origin}/profilo/api-personali`);
+        await f.page.locator('#chatgpt').waitFor();
+        await f.page.locator('#personal-counselor-2').selectOption('chatgpt:fixture-model');
+        await f.page.getByRole('button', { name: 'Salva associazioni e utilizzo', exact: true }).click();
+        await f.page.getByRole('status').filter({ hasText: personalAPIText('it', 'saved') }).waitFor();
+        const saved = f.writes.find(w => w.path === '/api/user/api-routing').body;
+        assert.deepEqual(saved.bindings, [{ counselor_id: 2, connection_id: null, chatgpt_model: 'fixture-model' }]);
+        assert.equal(saved.default_connection_id, 'a'.repeat(32));
+        assert.equal(saved.default_chatgpt_model, null);
+        assert.equal(await f.page.locator('#personal-default-connection').inputValue(), 'api:' + 'a'.repeat(32));
+        // Without personal APIs the page keeps ChatGPT and the counselor choices only.
+        Object.assign(f.settings, { api_enabled: false, default_connection_id: null, default_chatgpt_model: 'fixture-model' });
+        await f.page.reload();
+        await f.page.locator('#personal-counselor-1').waitFor();
+        assert.equal(await f.page.locator('#personal-default-connection').inputValue(), 'chatgpt:fixture-model');
+        assert.equal(await f.page.getByRole('button', { name: 'Aggiungi connessione', exact: true }).count(), 0);
+        assert.equal(await f.page.getByRole('button', { name: 'Crea un counselor', exact: true }).count(), 0);
+        assert.equal(await f.page.locator('#personal-default-connection optgroup').count(), 1);
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('#200: the old ChatGPT address opens the ChatGPT section of the unified page', async () => {
+    const f = await fixture();
+    f.settings.chatgpt_enabled = true;
+    try {
+        await f.page.goto(`${origin}/profilo/chatgpt`);
+        await f.page.waitForURL(`${origin}/profilo/api-personali#chatgpt`);
+        await f.page.locator('#chatgpt').waitFor();
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});

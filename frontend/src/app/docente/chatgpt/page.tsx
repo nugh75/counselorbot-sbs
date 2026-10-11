@@ -1,12 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { ChatGPTSettingsPage } from '@/components/profile/ChatGPTSettingsPage';
-import { TeacherForbidden, TeacherLoading } from '@/components/teacher/TeacherAccess';
-import { useTeacherAccessState } from '@/components/teacher/useTeacherAccessState';
-
-export default function TeacherChatGPTPage() {
-    const { state } = useTeacherAccessState();
-    if (state === 'loading') return <TeacherLoading />;
-    if (state === 'forbidden') return <TeacherForbidden />;
-    return <ChatGPTSettingsPage area="docente" />;
+// #200: ChatGPT is now a section of the unified «API e ChatGPT» page.
+export default function Page() {
+    redirect('/docente/api-personali#chatgpt');
 }

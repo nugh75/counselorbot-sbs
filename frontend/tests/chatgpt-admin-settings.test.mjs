@@ -34,6 +34,8 @@ async function fixture(language, width, administrator = true) {
             }
             data = settings;
         }
+        if (path === '/api/user/api-connections') data = { available: settings.enabled, api_enabled: false, chatgpt_enabled: settings.enabled, enabled: false,
+            default_connection_id: null, default_chatgpt_model: null, providers: [], connections: [], bindings: [], counselors: [], chatgpt_models: [] };
         if (path === '/api/user/chatgpt') data = { available: settings.enabled, reason: settings.enabled ? null : 'disabled', connected: false, use_subscription: false, models: [] };
         return route.fulfill({ json: data });
     });
@@ -56,7 +58,7 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                 await panel.getByText(t('admin.enabled'), { exact: true }).waitFor();
                 assert.deepEqual(f.writes, [{ enabled: true }]);
                 assert.equal(await panel.locator('code, input[type=password], textarea').count(), 0);
-                assert.equal(await panel.getByRole('link', { name: t('admin.personal') }).getAttribute('href'), '/profilo/chatgpt');
+                assert.equal(await panel.getByRole('link', { name: t('admin.personal') }).getAttribute('href'), '/profilo/api-personali#chatgpt');
                 if (language === 'it') await panel.screenshot({ path: `/tmp/chatgpt-admin-${width}.png` });
                 await panel.getByRole('link', { name: t('admin.personal') }).click();
                 await f.page.locator('#chatgpt').getByRole('button', { name: t('connect'), exact: true }).waitFor();
