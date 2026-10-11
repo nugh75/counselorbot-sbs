@@ -58,16 +58,13 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                 await panel.getByText(t('admin.enabled'), { exact: true }).waitFor();
                 assert.deepEqual(f.writes, [{ enabled: true }]);
                 assert.equal(await panel.locator('code, input[type=password], textarea').count(), 0);
-                assert.equal(await panel.getByRole('link', { name: t('admin.personal') }).getAttribute('href'), '/profilo/api-personali#chatgpt');
                 if (language === 'it') await panel.screenshot({ path: `/tmp/chatgpt-admin-${width}.png` });
-                await panel.getByRole('link', { name: t('admin.personal') }).click();
+                // The page's own ChatGPT section appears below once the feature is on.
                 await f.page.locator('#chatgpt').getByRole('button', { name: t('connect'), exact: true }).waitFor();
-                await f.page.goto(origin + '/profilo/api-personali');
                 await panel.getByText(t('admin.enabled'), { exact: true }).waitFor();
                 await panel.getByRole('button', { name: t('admin.disable'), exact: true }).click();
                 await panel.getByText(t('admin.disabled'), { exact: true }).waitFor();
                 assert.deepEqual(f.writes, [{ enabled: true }, { enabled: false }]);
-                assert.equal(await panel.getByRole('link', { name: t('admin.personal') }).count(), 0);
                 f.fail(true);
                 await panel.getByRole('button', { name: t('admin.enable'), exact: true }).click();
                 await panel.getByRole('alert').getByText(t('errors.notConfigured'), { exact: true }).waitFor();

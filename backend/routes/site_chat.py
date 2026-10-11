@@ -432,6 +432,7 @@ async def site_chat_stream(
                     "response_length": request.response_length,
                     "cost_usd": cost_usd,
                     "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
+                    "shared_group_id": getattr(ai_service, "shared_group_id", None),
                 }, "question", "answer"),
             )
             log_db.add(log_entry)

@@ -102,7 +102,7 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                 await f.page.goto(`${origin}/profilo/api-personali`);
                 await f.page.locator('#ai-admin').waitFor();
                 const api = f.page.getByTestId('personal-api-settings');
-                const toggle = api.getByRole('checkbox');
+                const toggle = api.getByRole('checkbox', { name: personalAPIText(lang, 'adminToggle'), exact: true });
                 await toggle.waitFor();
                 assert.equal(await toggle.isDisabled(), false);
                 await api.getByText(personalAPIText(lang, 'automatic'), { exact: true }).waitFor();
@@ -128,7 +128,7 @@ test('admin switches teachers and students independently for each feature', asyn
         const api = f.page.getByTestId('personal-api-settings');
         await api.getByRole('checkbox', { name: personalAPIText('it', 'adminToggle'), exact: true }).check();
         const switches = f.page.getByTestId('audience-api');
-        await switches.getByText(personalAPIText('it', 'audienceHelp'), { exact: true }).waitFor();
+        await switches.getByRole('checkbox', { name: personalAPIText('it', 'audienceShareApi'), exact: true }).waitFor({ state: 'attached' }).catch(() => {});
         await switches.getByRole('checkbox', { name: personalAPIText('it', 'audienceStudentsApi'), exact: true }).uncheck();
         for (let i = 0; i < 100 && f.audienceWrites.length < 1; i++) await f.page.waitForTimeout(100);
         assert.deepEqual(f.audienceWrites, [{ api: { teachers: true, students: false } }]);

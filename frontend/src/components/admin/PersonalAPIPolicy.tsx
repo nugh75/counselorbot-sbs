@@ -48,15 +48,18 @@ export function PersonalAPIPolicy() {
     };
     return <div data-testid="personal-api-settings"><Card>
         <h4 className="font-semibold text-slate-900">{l('title')}</h4>
-        <p className="mt-2 text-sm text-slate-600">{l('adminHelp')}</p>
         {policy && <label className="mt-3 flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-800">
             <input type="checkbox" checked={policy.enabled} disabled={busy} onChange={event => void toggle(event.target.checked)} />
             {l('adminToggle')}
         </label>}
         {policy?.enabled && <AudienceSwitches feature="api" />}
-        {policy && <p className="mt-3 text-sm text-slate-600">{l(policy.encryption_ready ? 'protected' : 'automatic')}</p>}
         {policy?.reason === 'keyMissing' && <Callout variant="warning" className="mt-3">{l('keyMissing')}</Callout>}
-        <p className="mt-3 text-xs text-slate-600">{l('backup')}</p>
+        {/* Technical notes last, in small print: switching off, key protection, backups. */}
+        <div className="mt-3 space-y-1 text-xs text-slate-600">
+            <p>{l('adminHelp')}</p>
+            {policy && <p>{l(policy.encryption_ready ? 'protected' : 'automatic')}</p>}
+            <p>{l('backup')}</p>
+        </div>
         {error && <div className="mt-3 space-y-2"><Callout variant="danger">{l(reason)}</Callout><Button variant="secondary" onClick={() => void load()} disabled={busy}>{l('retry')}</Button></div>}
         {saved && <p role="status" className="mt-3 text-sm text-indigo-700">{l('saved')}</p>}
     </Card></div>;
