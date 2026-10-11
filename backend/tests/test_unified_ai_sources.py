@@ -15,6 +15,7 @@ from backend.tests.test_personal_api import db, client, identity  # noqa: F401
 from backend.tests.test_chatgpt_subscription import connect, signed  # noqa: F401
 
 migration = import_module("backend.migrations.20261011_unified_ai_sources")
+reasoning_migration = import_module("backend.migrations.20261011_reasoning_levels")
 
 
 @pytest.fixture
@@ -48,8 +49,8 @@ def test_each_counselor_uses_its_own_source(client, db, chatgpt):
     response = route(client, default_connection_id=cid, bindings=[{"counselor_id": 11, "chatgpt_model": "fixture-model"}])
     assert response.status_code == 200, response.text
     state = response.json()
-    assert state["chatgpt_models"] == [{"slug": "fixture-model", "display_name": "Fixture"}]
-    assert {"counselor_id": 11, "connection_id": None, "chatgpt_model": "fixture-model"} in state["bindings"]
+    assert state["chatgpt_models"] == [{"slug": "fixture-model", "display_name": "Fixture", "reasoning_levels": []}]
+    assert {"counselor_id": 11, "connection_id": None, "chatgpt_model": "fixture-model", "reasoning": None} in state["bindings"]
     assert targets(db, 10) == [("openai", "own-model")]
     assert targets(db, 11) == [("openai_chatgpt", "fixture-model")]
     assert accounts.status(db, "alice")["use_subscription"] is True
@@ -138,3 +139,83 @@ def test_migration_moves_the_global_chatgpt_choice(scratch_engine):
         with pytest.raises(IntegrityError, match="personal_counselor_one_source"):
             with connection.begin_nested():
                 connection.execute(text("INSERT INTO personal_counselor_connections (username, counselor_id) VALUES ('alice', 10)"))
+
+
+# #202: reasoning level per source.
+
+def test_reasoning_level_reaches_the_api_plan_over_the_preset(client, db, chatgpt):
+    cid = api_connection(client)
+    response = route(client, default_connection_id=cid, bindings=[{"counselor_id": 10, "connection_id": cid, "reasoning": "none"}])
+    assert response.status_code == 200, response.text
+    assert response.json()["bindings"][0]["reasoning"] == "none"
+    personal_api.bind_counselor(db, 10)
+    service = AIService(db)
+    service.disable_thinking = False  # The counselor preset applies after creation.
+    service.reasoning_budget_override = 999
+    assert service.disable_thinking is True
+    assert route(client, default_connection_id=cid, default_reasoning="high").status_code == 200
+    personal_api.bind_counselor(db, 11)
+    service = AIService(db)
+    service.reasoning_budget_override = 999
+    assert service.disable_thinking is False and service.reasoning_budget_override == 12000
+    # Without a personal source the preset keeps working.
+    assert route(client, enabled=False).status_code == 200
+    service = AIService(db)
+    service.reasoning_budget_override = 999
+    assert service.personal_reasoning is None and service.reasoning_budget_override == 999
+
+
+def test_chatgpt_effort_is_sent_and_dropped_when_refused(client, db, chatgpt, monkeypatch):
+    from openai import APIStatusError
+    import httpx
+    from backend import chatgpt_responses
+    chatgpt.catalog = [{"slug": "fixture-model", "display_name": "Fixture", "reasoning_levels": ["low", "high"]}]
+    db.commit()
+    assert route(client, default_chatgpt_model="fixture-model", default_reasoning="medium").status_code == 422
+    assert route(client, default_chatgpt_model="fixture-model", default_reasoning="high").status_code == 200
+    assert route(client, default_reasoning="high").status_code == 422  # A level needs a source.
+    sent = []
+
+    class Events:
+        def __init__(self, body):
+            self.body = body
+
+        def __enter__(self):
+            sent.append(self.body)
+            if "reasoning" in self.body:
+                raise APIStatusError("unsupported", response=httpx.Response(400, request=httpx.Request("POST", "https://x")), body=None)
+            return iter([type("E", (), {"type": "response.output_text.delta", "delta": "ok"})(),
+                         type("E", (), {"type": "response.completed", "response": None})()])
+
+        def __exit__(self, *args):
+            return False
+
+    class Client:
+        def __init__(self, **kwargs):
+            self.responses = type("R", (), {"create": staticmethod(lambda **body: Events(body))})()
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(chatgpt_responses, "OpenAI", Client)
+    personal_api.bind_counselor(db, 10)
+    service = AIService(db)
+    assert service.personal_reasoning == "high"
+    assert "".join(service._stream_chatgpt("hi", "instructions", "fixture-model")) == "ok"
+    assert sent[0]["reasoning"] == {"effort": "high"} and "reasoning" not in sent[1]
+    assert chatgpt_responses.preview("fixture-model", "hi", "i", effort="high")["body"]["reasoning"] == {"effort": "high"}
+
+
+def test_catalog_keeps_only_known_levels():
+    assert accounts._reasoning_levels({"supported_reasoning_levels": [{"effort": "high"}, {"effort": "turbo"}, "low"]}) == ["low", "high"]
+    assert accounts._reasoning_levels({}) == []
+
+
+def test_reasoning_migration_limits_the_levels(scratch_engine):
+    reasoning_migration.migrate(scratch_engine)
+    reasoning_migration.migrate(scratch_engine)  # Replay-safe.
+    with scratch_engine.begin() as connection:
+        connection.execute(text("INSERT INTO personal_ai_routing (username, enabled, default_reasoning) VALUES ('alice', false, 'high')"))
+        with pytest.raises(IntegrityError, match="personal_routing_reasoning_level"):
+            with connection.begin_nested():
+                connection.execute(text("UPDATE personal_ai_routing SET default_reasoning = 'turbo'"))
