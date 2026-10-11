@@ -161,7 +161,7 @@ def test_accounts_catalogs_and_provider_selection_are_isolated(signed, monkeypat
                 {"slug": "hidden", "visibility": "hidden"}]})
         mock_http(monkeypatch, handle)
         accounts.bind_identity(db, {"authenticated": True, "username": "alice"})
-        assert accounts.list_models(db) == [{"slug": "gpt-account", "display_name": "Account model"}]
+        assert accounts.list_models(db) == [{"slug": "gpt-account", "display_name": "Account model", "reasoning_levels": []}]
         accounts.set_preference(db, "alice", True, "gpt-account")
         assert sent == ["Bearer " + alice["access_token"]]
         assert accounts.status(db, "bob")["models"] == []

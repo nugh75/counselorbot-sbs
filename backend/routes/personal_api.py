@@ -67,6 +67,7 @@ class CounselorBinding(BaseModel):
     # Exactly one of the two (#200).
     connection_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}$")
     chatgpt_model: str | None = Field(default=None, min_length=1, max_length=200)
+    reasoning: str | None = Field(default=None, max_length=16)  # #202
 
 
 class RoutingUpdate(BaseModel):
@@ -74,6 +75,7 @@ class RoutingUpdate(BaseModel):
     enabled: bool = Field(strict=True)
     default_connection_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}$")
     default_chatgpt_model: str | None = Field(default=None, min_length=1, max_length=200)
+    default_reasoning: str | None = Field(default=None, max_length=16)
     bindings: list[CounselorBinding] = Field(default_factory=list, max_length=100)
 
 
@@ -273,7 +275,8 @@ def _chatgpt_models(db, username):
     row = db.query(models.ChatGPTConnection).filter_by(username=username).first()
     if not enabled(db) or not row or not row.encrypted_credentials:
         return []
-    return [{"slug": item["slug"], "display_name": item.get("display_name") or item["slug"]} for item in row.catalog or []]
+    return [{"slug": item["slug"], "display_name": item.get("display_name") or item["slug"],
+             "reasoning_levels": item.get("reasoning_levels") or []} for item in row.catalog or []]
 
 
 def _catalog(db, identity):
@@ -287,10 +290,13 @@ def _catalog(db, identity):
         "enabled": bool(routing and routing.enabled),
         "default_connection_id": routing.default_connection_id if routing else None,
         "default_chatgpt_model": routing.default_chatgpt_model if routing else None,
+        "default_reasoning": routing.default_reasoning if routing else None,
+        "reasoning_levels": list(personal_api.REASONING_LEVELS),
         "providers": list(personal_api.PROVIDERS),
         "connections": [{"id": c.id, "name": c.name, "provider": c.provider, "model": c.model_name}
                         for c in db.query(models.PersonalAPIConnection).filter_by(username=username).order_by(models.PersonalAPIConnection.updated_at, models.PersonalAPIConnection.id)],
-        "bindings": [{"counselor_id": b.counselor_id, "connection_id": b.connection_id, "chatgpt_model": b.chatgpt_model}
+        "bindings": [{"counselor_id": b.counselor_id, "connection_id": b.connection_id, "chatgpt_model": b.chatgpt_model,
+                      "reasoning": b.reasoning}
                      for b in db.query(models.PersonalCounselorConnection).filter_by(username=username).order_by(models.PersonalCounselorConnection.counselor_id)],
         "counselors": [{"id": c.id, "name": c.name, "is_personal": bool(c.owner_username)}
                        for c in personal_api.visible_counselors(db, username).filter_by(is_active=True).order_by(models.Counselor.sort_order, models.Counselor.id)],
@@ -382,10 +388,16 @@ def update_routing(request: RoutingUpdate, identity: dict = Depends(current_owne
     _require_routing(db)
     username = identity["username"]
     routing = _prepare_routing(db, username)
+    catalog = {item["slug"]: item for item in _chatgpt_models(db, username)}
     models_seen = set()
 
-    def check(connection_id, chatgpt_model, allow_empty):
+    def check(connection_id, chatgpt_model, allow_empty, reasoning=None):
         if connection_id and chatgpt_model or not (connection_id or chatgpt_model or allow_empty):
+            raise HTTPException(422, "personalAPI.errors.configuration")
+        # #202: a level needs a source, and a ChatGPT model that lists its levels must offer it.
+        if reasoning is not None and (reasoning not in personal_api.REASONING_LEVELS or not (connection_id or chatgpt_model)
+                                      or chatgpt_model and catalog.get(chatgpt_model, {}).get("reasoning_levels")
+                                      and reasoning not in catalog[chatgpt_model]["reasoning_levels"]):
             raise HTTPException(422, "personalAPI.errors.configuration")
         if connection_id:
             _require_personal_counselors(db)
@@ -398,10 +410,10 @@ def update_routing(request: RoutingUpdate, identity: dict = Depends(current_owne
                 raise HTTPException(422, f"chatgpt.errors.{exc.code}") from None
             models_seen.add(chatgpt_model)
 
-    check(request.default_connection_id, request.default_chatgpt_model, True)
+    check(request.default_connection_id, request.default_chatgpt_model, True, request.default_reasoning)
     seen = set()
     for binding in request.bindings:
-        check(binding.connection_id, binding.chatgpt_model, False)
+        check(binding.connection_id, binding.chatgpt_model, False, binding.reasoning)
         if binding.counselor_id in seen or not personal_api.visible_counselor(db, binding.counselor_id, username):
             raise HTTPException(422, "personalAPI.errors.counselor")
         seen.add(binding.counselor_id)
@@ -412,6 +424,7 @@ def update_routing(request: RoutingUpdate, identity: dict = Depends(current_owne
         db.add(models.PersonalCounselorConnection(username=username, **binding.model_dump()))
     routing.enabled = request.enabled
     routing.default_connection_id, routing.default_chatgpt_model = request.default_connection_id, request.default_chatgpt_model
+    routing.default_reasoning = request.default_reasoning
     db.commit()
     return _catalog(db, identity)
 
