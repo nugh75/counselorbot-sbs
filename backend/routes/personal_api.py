@@ -77,6 +77,8 @@ class RoutingUpdate(BaseModel):
     default_connection_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}$")
     default_chatgpt_model: str | None = Field(default=None, min_length=1, max_length=200)
     default_reasoning: str | None = Field(default=None, max_length=16)
+    # Teachers: offer the counselors bound to their API connections to their classes.
+    share_with_classes: bool | None = Field(default=None, strict=True)
     bindings: list[CounselorBinding] = Field(default_factory=list, max_length=100)
 
 
@@ -329,6 +331,17 @@ def _sources_for(db, identity):
             enabled(db) and audience.allowed(db, "chatgpt", username))
 
 
+def _sharing_state(db, identity, routing):
+    """The teacher's offer of their API-backed counselors to their classes."""
+    from .. import class_api_sharing
+    audience.remember(db, identity)
+    can_share = class_api_sharing.enabled(db) and audience.is_staff(db, identity["username"])
+    return {"share_available": can_share,
+            "share_with_classes": bool(routing and routing.share_with_classes),
+            "share_last_error": routing.share_last_error if routing else None,
+            "share_usage": class_api_sharing.month_usage(db, identity["username"]) if can_share else None}
+
+
 def _catalog(db, identity):
     username = identity["username"]
     routing = db.get(models.PersonalAIRouting, username)
@@ -342,6 +355,7 @@ def _catalog(db, identity):
         "default_connection_id": routing.default_connection_id if routing else None,
         "default_chatgpt_model": routing.default_chatgpt_model if routing else None,
         "default_reasoning": routing.default_reasoning if routing else None,
+        **_sharing_state(db, identity, routing),
         "reasoning_levels": list(personal_api.REASONING_LEVELS),
         "providers": list(personal_api.PROVIDERS),
         "connections": [{"id": c.id, "name": c.name, "provider": c.provider, "model": c.model_name}
@@ -482,6 +496,11 @@ def update_routing(request: RoutingUpdate, identity: dict = Depends(current_owne
     routing.enabled = request.enabled
     routing.default_connection_id, routing.default_chatgpt_model = request.default_connection_id, request.default_chatgpt_model
     routing.default_reasoning = request.default_reasoning
+    if request.share_with_classes is not None:
+        if request.share_with_classes and not _sharing_state(db, identity, routing)["share_available"]:
+            raise HTTPException(403, "personalAPI.errors.disabled")
+        routing.share_with_classes = request.share_with_classes
+        routing.share_last_error = None
     db.commit()
     return _catalog(db, identity)
 

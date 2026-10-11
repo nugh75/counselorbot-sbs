@@ -212,9 +212,16 @@ def visible_counselors(db, username=None):
     from .auth import VIEW_AS_DEMO_ACCOUNTS
     query = db.query(models.Counselor)
     shared = models.Counselor.owner_username.is_(None)
-    if username and username not in VIEW_AS_DEMO_ACCOUNTS and feature_enabled(db):
-        return query.filter(or_(shared, models.Counselor.owner_username == username))
-    return query.filter(shared)
+    visible = [shared]
+    if username and username not in VIEW_AS_DEMO_ACCOUNTS:
+        if feature_enabled(db):
+            visible.append(models.Counselor.owner_username == username)
+        # Teachers' own counselors they offer to this student's classes.
+        from .class_api_sharing import offered_private_counselors
+        offered = offered_private_counselors(db, username)
+        if offered:
+            visible.append(models.Counselor.id.in_(offered))
+    return query.filter(or_(*visible))
 
 
 def visible_counselor(db, counselor_id, username=None):
