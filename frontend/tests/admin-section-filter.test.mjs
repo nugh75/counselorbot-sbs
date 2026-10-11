@@ -13,12 +13,12 @@ const labels = {
 };
 // [prompt map, global directives, student AI title, student AI intro, platform API keys intro]
 const generalLabels = {
-    it: ['Mappa dei prompt', 'Direttive Globali', 'AI dello studente: proprie chiavi e proprio ChatGPT', 'Cosa studenti e docenti possono collegare nell’Area studente o nell’Area docenti e come vengono protetti i dati inviati ai provider esterni.', 'Stato, origine e verifica delle credenziali usate dai provider esterni.'],
-    en: ['Prompt map', 'Global Directives', 'Student AI: own keys and own ChatGPT', 'What students and teachers can connect in the Student area or Teacher area, and how data sent to external providers is protected.', 'Status, source, and verification of credentials used by external providers.'],
-    es: ['Mapa de prompts', 'Directivas Globales', 'IA del estudiante: claves propias y ChatGPT propio', 'Qué pueden conectar estudiantes y docentes en el Área del estudiante o el Área docente y cómo se protegen los datos enviados a proveedores externos.', 'Estado, origen y verificación de las credenciales de proveedores externos.'],
-    fr: ['Carte des prompts', 'Directives Globales', 'IA de l’élève : ses propres clés et son propre ChatGPT', 'Ce que les élèves et les enseignants peuvent connecter dans l’Espace élève ou l’Espace enseignant, et comment les données envoyées aux prestataires externes sont protégées.', 'État, origine et vérification des identifiants des prestataires externes.'],
-    de: ['Prompt-Karte', 'Globale Direktiven', 'KI der Lernenden: eigene Schlüssel und eigenes ChatGPT', 'Was Lernende und Lehrkräfte im Bereich für Lernende oder im Lehrkräftebereich verbinden können und wie an externe Anbieter gesendete Daten geschützt werden.', 'Status, Quelle und Prüfung der Zugangsdaten externer Anbieter.'],
-    sv: ['Promptkarta', 'Globala Direktiv', 'Elevens AI: egna nycklar och egen ChatGPT', 'Vad elever och lärare kan koppla i elevområdet eller lärarområdet och hur data som skickas till externa leverantörer skyddas.', 'Status, källa och verifiering av inloggningsuppgifter för externa leverantörer.'],
+    it: ['Mappa dei prompt', 'Direttive Globali', 'API personali e ChatGPT', 'Cosa studenti e docenti possono collegare nell’Area studente o nell’Area docenti e come vengono protetti i dati inviati ai provider esterni.', 'Stato, origine e verifica delle credenziali usate dai provider esterni.'],
+    en: ['Prompt map', 'Global Directives', 'Personal APIs and ChatGPT', 'What students and teachers can connect in the Student area or Teacher area, and how data sent to external providers is protected.', 'Status, source, and verification of credentials used by external providers.'],
+    es: ['Mapa de prompts', 'Directivas Globales', 'API personales y ChatGPT', 'Qué pueden conectar estudiantes y docentes en el Área del estudiante o el Área docente y cómo se protegen los datos enviados a proveedores externos.', 'Estado, origen y verificación de las credenciales de proveedores externos.'],
+    fr: ['Carte des prompts', 'Directives Globales', 'API personnelles et ChatGPT', 'Ce que les élèves et les enseignants peuvent connecter dans l’Espace élève ou l’Espace enseignant, et comment les données envoyées aux prestataires externes sont protégées.', 'État, origine et vérification des identifiants des prestataires externes.'],
+    de: ['Prompt-Karte', 'Globale Direktiven', 'Eigene APIs und ChatGPT', 'Was Lernende und Lehrkräfte im Bereich für Lernende oder im Lehrkräftebereich verbinden können und wie an externe Anbieter gesendete Daten geschützt werden.', 'Status, Quelle und Prüfung der Zugangsdaten externer Anbieter.'],
+    sv: ['Promptkarta', 'Globala Direktiv', 'Egna API:er och ChatGPT', 'Vad elever och lärare kan koppla i elevområdet eller lärarområdet och hur data som skickas till externa leverantörer skyddas.', 'Status, källa och verifiering av inloggningsuppgifter för externa leverantörer.'],
 };
 
 async function fixture(language, { width = 1440, path = '/admin' } = {}) {
@@ -124,11 +124,10 @@ for (const language of Object.keys(labels)) {
                 const [, , title, intro, apiKeysIntro] = generalLabels[language];
                 const block = page.getByRole('region', { name: title, exact: true });
                 await block.getByText(intro, { exact: true }).waitFor();
-                await block.getByTestId('external-privacy-settings').waitFor();
-                // Enabling personal APIs and ChatGPT moved to the "APIs and ChatGPT" page; a link points there.
-                const order = await block.locator('[data-testid]').evaluateAll(nodes => nodes.map(node => node.dataset.testid));
-                assert.deepEqual(order, ['external-privacy-settings']);
-                assert.equal(await block.locator('a[href="/profilo/api-personali#ai-admin"]').count(), 1);
+                await block.getByTestId('chatgpt-settings').getByRole('button').first().waitFor();
+                // Order inside the block: personal APIs, ChatGPT, external-provider privacy.
+                const order = await block.locator('[data-testid="personal-api-settings"], [data-testid="chatgpt-settings"], [data-testid="external-privacy-settings"]').evaluateAll(nodes => nodes.map(node => node.dataset.testid));
+                assert.deepEqual(order, ['personal-api-settings', 'chatgpt-settings', 'external-privacy-settings']);
                 // The platform API keys belong to the administrator and stay outside the block.
                 assert.equal(await block.getByText(apiKeysIntro, { exact: true }).count(), 0);
                 await page.getByText(apiKeysIntro, { exact: true }).waitFor();
