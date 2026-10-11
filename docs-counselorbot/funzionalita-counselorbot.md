@@ -211,8 +211,8 @@ non compare.
 
 ### Abbonamento personale ChatGPT (opzionale)
 
-L’amministratore apre **Amministrazione → Configurazione → Generale →
-AI dello studente: proprie chiavi e proprio ChatGPT → Collegamento ChatGPT** e preme **Abilita collegamento ChatGPT**. Il server
+L’amministratore apre **API e ChatGPT → Impostazioni dell’installazione**
+(`/profilo/api-personali#ai-admin`) e preme **Abilita collegamento ChatGPT**. Il server
 prepara automaticamente la protezione delle credenziali e salva la scelta:
 non servono comandi, modifica di file o riavvio. L’interfaccia indica lo stato
 e conferma subito il salvataggio. Il controllo è riservato agli amministratori;
@@ -448,8 +448,9 @@ della persona.
 
 ## API personali
 
-Quando l’amministratore abilita **API personali** in **Amministrazione →
-Configurazione → Generale → AI dello studente: proprie chiavi e proprio ChatGPT**,
+Quando l’amministratore abilita **API personali** in **API e ChatGPT →
+Impostazioni dell’installazione** (sezione visibile solo agli amministratori,
+che raggiungono la pagina anche con entrambe le funzioni spente),
 studenti e docenti trovano il collegamento nella propria pagina personale:
 `/profilo/api-personali` per l’Area personale e `/docente/api-personali` per
 l’Area docenti. Le due pagine condividono le impostazioni dello stesso account.
@@ -1107,8 +1108,9 @@ tastiera (frecce, Invio, Esc). La sezione scelta resta nell’indirizzo
 la stessa sezione; un valore non riconosciuto apre Generale.
 
 Nella sezione Generale, dopo modello attivo, ripieghi e funzioni, il blocco
-**AI dello studente: proprie chiavi e proprio ChatGPT** riunisce in quest’ordine **API personali**,
-**Collegamento ChatGPT** e **Protezione dei dati per i modelli esterni**. Le
+**AI dello studente: proprie chiavi e proprio ChatGPT** contiene la **Protezione dei
+dati per i modelli esterni** e un collegamento alla pagina **API e ChatGPT**, dove
+l’amministratore abilita **API personali** e **Collegamento ChatGPT**. Le
 **API Keys** della piattaforma sono dell’amministratore e restano fuori dal
 blocco, subito sotto.
 
