@@ -1,5 +1,6 @@
-import { ChatGPTSettingsPage } from '@/components/profile/ChatGPTSettingsPage';
+import { redirect } from 'next/navigation';
 
-export default function ChatGPTPage() {
-    return <ChatGPTSettingsPage area="profilo" />;
+// #200: ChatGPT is now a section of the unified «API e ChatGPT» page.
+export default function Page() {
+    redirect('/profilo/api-personali#chatgpt');
 }

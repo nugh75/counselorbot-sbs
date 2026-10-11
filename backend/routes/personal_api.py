@@ -64,13 +64,16 @@ class ConnectionUpdate(BaseModel):
 class CounselorBinding(BaseModel):
     model_config = ConfigDict(extra="forbid")
     counselor_id: int = Field(gt=0, strict=True)
-    connection_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+    # Exactly one of the two (#200).
+    connection_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}$")
+    chatgpt_model: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 class RoutingUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     enabled: bool = Field(strict=True)
     default_connection_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}$")
+    default_chatgpt_model: str | None = Field(default=None, min_length=1, max_length=200)
     bindings: list[CounselorBinding] = Field(default_factory=list, max_length=100)
 
 
@@ -254,18 +257,40 @@ def _own_connection(db, username, connection_id):
     return row
 
 
+def _routing_available(db):
+    """The choice page serves personal APIs, ChatGPT, or both, as the administrator allows."""
+    from ..chatgpt_connections import enabled
+    return personal_api.feature_enabled(db) or enabled(db)
+
+
+def _require_routing(db):
+    if not _routing_available(db):
+        raise HTTPException(403, "personalAPI.errors.disabled")
+
+
+def _chatgpt_models(db, username):
+    from ..chatgpt_connections import enabled
+    row = db.query(models.ChatGPTConnection).filter_by(username=username).first()
+    if not enabled(db) or not row or not row.encrypted_credentials:
+        return []
+    return [{"slug": item["slug"], "display_name": item.get("display_name") or item["slug"]} for item in row.catalog or []]
+
+
 def _catalog(db, identity):
     username = identity["username"]
     from ..chatgpt_connections import enabled
     routing = db.get(models.PersonalAIRouting, username)
+    api = personal_api.feature_enabled(db)
     return {
-        "available": personal_api.feature_enabled(db), "chatgpt_enabled": enabled(db),
+        "available": _routing_available(db), "api_enabled": api, "chatgpt_enabled": enabled(db),
+        "chatgpt_models": _chatgpt_models(db, username),
         "enabled": bool(routing and routing.enabled),
         "default_connection_id": routing.default_connection_id if routing else None,
+        "default_chatgpt_model": routing.default_chatgpt_model if routing else None,
         "providers": list(personal_api.PROVIDERS),
         "connections": [{"id": c.id, "name": c.name, "provider": c.provider, "model": c.model_name}
                         for c in db.query(models.PersonalAPIConnection).filter_by(username=username).order_by(models.PersonalAPIConnection.updated_at, models.PersonalAPIConnection.id)],
-        "bindings": [{"counselor_id": b.counselor_id, "connection_id": b.connection_id}
+        "bindings": [{"counselor_id": b.counselor_id, "connection_id": b.connection_id, "chatgpt_model": b.chatgpt_model}
                      for b in db.query(models.PersonalCounselorConnection).filter_by(username=username).order_by(models.PersonalCounselorConnection.counselor_id)],
         "counselors": [{"id": c.id, "name": c.name, "is_personal": bool(c.owner_username)}
                        for c in personal_api.visible_counselors(db, username).filter_by(is_active=True).order_by(models.Counselor.sort_order, models.Counselor.id)],
@@ -342,7 +367,9 @@ def delete_connection(connection_id: str, identity: dict = Depends(current_owner
         routing.default_connection_id = None
     db.delete(row)
     db.flush()
-    if routing and not db.query(models.PersonalAPIConnection).filter_by(username=identity["username"]).first():
+    # Nothing left to route to (ChatGPT choices count too): back to the institution.
+    if routing and not routing.default_connection_id and not routing.default_chatgpt_model and \
+            not db.query(models.PersonalCounselorConnection).filter_by(username=identity["username"]).first():
         routing.enabled = False
     # A migrated legacy row must not resurrect a removed credential on restart.
     db.query(models.PersonalAPISettings).filter_by(username=identity["username"]).delete()
@@ -352,25 +379,39 @@ def delete_connection(connection_id: str, identity: dict = Depends(current_owner
 
 @router.put("/user/api-routing", dependencies=[Depends(browser_mutation)])
 def update_routing(request: RoutingUpdate, identity: dict = Depends(current_owner), db: Session = Depends(get_db)):
-    _require_personal_counselors(db)
+    _require_routing(db)
     username = identity["username"]
     routing = _prepare_routing(db, username)
-    if request.default_connection_id:
-        _own_connection(db, username, request.default_connection_id)
+    models_seen = set()
+
+    def check(connection_id, chatgpt_model, allow_empty):
+        if connection_id and chatgpt_model or not (connection_id or chatgpt_model or allow_empty):
+            raise HTTPException(422, "personalAPI.errors.configuration")
+        if connection_id:
+            _require_personal_counselors(db)
+            _own_connection(db, username, connection_id)
+        if chatgpt_model and chatgpt_model not in models_seen:
+            from ..chatgpt_connections import ChatGPTError, require_model
+            try:
+                require_model(db, username, chatgpt_model)
+            except ChatGPTError as exc:
+                raise HTTPException(422, f"chatgpt.errors.{exc.code}") from None
+            models_seen.add(chatgpt_model)
+
+    check(request.default_connection_id, request.default_chatgpt_model, True)
     seen = set()
     for binding in request.bindings:
-        _own_connection(db, username, binding.connection_id)
+        check(binding.connection_id, binding.chatgpt_model, False)
         if binding.counselor_id in seen or not personal_api.visible_counselor(db, binding.counselor_id, username):
             raise HTTPException(422, "personalAPI.errors.counselor")
         seen.add(binding.counselor_id)
-    if request.enabled and not request.default_connection_id and not request.bindings:
+    if request.enabled and not request.default_connection_id and not request.default_chatgpt_model and not request.bindings:
         raise HTTPException(422, "personalAPI.errors.configuration")
     db.query(models.PersonalCounselorConnection).filter_by(username=username).delete()
     for binding in request.bindings:
         db.add(models.PersonalCounselorConnection(username=username, **binding.model_dump()))
-    routing.enabled, routing.default_connection_id = request.enabled, request.default_connection_id
-    if request.enabled:
-        db.query(models.ChatGPTConnection).filter_by(username=username).update({"use_subscription": False})
+    routing.enabled = request.enabled
+    routing.default_connection_id, routing.default_chatgpt_model = request.default_connection_id, request.default_chatgpt_model
     db.commit()
     return _catalog(db, identity)
 

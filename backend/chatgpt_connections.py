@@ -284,9 +284,14 @@ def preference(db):
         setting = db.query(models.Config).filter_by(key="chatgpt_enabled").first()
     if setting is not None and setting.value != "true":
         return None  # An explicit administrator decision selects installation AI.
+    from .personal_api import chosen_source
+    # #200: the model chosen for this counselor, or the person's default source.
+    source = chosen_source(db, owner(db), getattr(db, "info", {}).get("personal_ai_counselor_id"))
+    if not source or source[0] != "chatgpt":
+        return None
     with credential_session(db) as private:
-        row = private.query(models.ChatGPTConnection).filter_by(username=owner(db), use_subscription=True).first()
-        return row.preferred_model if row and row.preferred_model else None
+        row = private.query(models.ChatGPTConnection).filter_by(username=owner(db)).first()
+        return source[1] if row else None
 
 
 def access_token(db):
@@ -366,23 +371,62 @@ def list_models(db):
     return catalog
 
 
+def require_model(db, username, model):
+    """A ChatGPT model can be chosen only from the connected account's catalog."""
+    require_ready(db)
+    row = db.query(models.ChatGPTConnection).filter_by(username=username).first()
+    if row is None:
+        raise ChatGPTError("reconnect")
+    _credentials(row)
+    if not model or model not in {item["slug"] for item in row.catalog or []}:
+        raise ChatGPTError("model")
+    return row
+
+
+def drop_choices(db, username):
+    """Remove ChatGPT from the person's sources; what is left keeps working."""
+    routing = db.get(models.PersonalAIRouting, username)
+    if routing is None:
+        return
+    routing.default_chatgpt_model = None
+    db.query(models.PersonalCounselorConnection).filter(models.PersonalCounselorConnection.username == username,
+        models.PersonalCounselorConnection.chatgpt_model.isnot(None)).delete(synchronize_session=False)
+    db.flush()
+    if not routing.default_connection_id and not db.query(models.PersonalCounselorConnection).filter_by(username=username).first():
+        routing.enabled = False
+
+
 def set_preference(db, username, active, model):
+    """Quick switch from the ChatGPT panel: ChatGPT as the default source, or no ChatGPT at all."""
     from .personal_api import lock_choice
     lock_choice(db, username)
     if active:
-        require_ready(db)
-    row = db.query(models.ChatGPTConnection).filter_by(username=username).with_for_update().first()
-    if row is None:
-        raise ChatGPTError("reconnect")
-    if active:
-        _credentials(row)
-        if not model or model not in {item["slug"] for item in row.catalog or []}:
-            raise ChatGPTError("model")
+        from .personal_api import migrate_legacy_connections
+        row = require_model(db, username, model)
+        # A legacy personal key becomes a connection first, so choosing ChatGPT never loses it.
+        migrate_legacy_connections(db, username)
+        routing = db.get(models.PersonalAIRouting, username)
+        if routing is None:
+            routing = models.PersonalAIRouting(username=username, enabled=False)
+            db.add(routing)
+        # Counselor-specific choices stay; only the default changes.
+        routing.enabled, routing.default_connection_id, routing.default_chatgpt_model = True, None, model
         row.preferred_model = model
-        db.query(models.PersonalAPISettings).filter_by(username=username).update({"enabled": False})
-        db.query(models.PersonalAIRouting).filter_by(username=username).update({"enabled": False})
-    row.use_subscription = active
+    else:
+        drop_choices(db, username)
     db.commit()
+
+
+def usage(db, username):
+    """Whether ChatGPT answers for any counselor, and the model shown in badges."""
+    routing = db.get(models.PersonalAIRouting, username)
+    if routing is None or not routing.enabled:
+        return None
+    if routing.default_chatgpt_model:
+        return routing.default_chatgpt_model
+    binding = db.query(models.PersonalCounselorConnection).filter(models.PersonalCounselorConnection.username == username,
+        models.PersonalCounselorConnection.chatgpt_model.isnot(None)).order_by(models.PersonalCounselorConnection.counselor_id).first()
+    return binding.chatgpt_model if binding else None
 
 
 def status(db, username):
@@ -393,11 +437,12 @@ def status(db, username):
     except ChatGPTError as exc:
         ready, reason = False, exc.code
     row = db.query(models.ChatGPTConnection).filter_by(username=username).first()
+    in_use = usage(db, username)
     pending = db.query(models.ChatGPTLink).filter(models.ChatGPTLink.username == username,
                   models.ChatGPTLink.expires_at > datetime.now(timezone.utc)).first() is not None
     return {"available": ready, "enabled": enabled(db), "personal_api_enabled": feature_enabled(db), "reason": reason, "connected": bool(row and row.encrypted_credentials),
-            "email": row.email if row else None, "use_subscription": bool(row and row.use_subscription), "pending_link": pending,
-            "model": row.preferred_model if row else None, "needs_reconnect": bool(row and row.last_error == "reconnect"),
+            "email": row.email if row else None, "use_subscription": bool(row and in_use), "pending_link": pending,
+            "model": in_use or (row.preferred_model if row else None), "needs_reconnect": bool(row and row.last_error == "reconnect"),
             "registered": bool(row and row.client_id),
             "revocation_pending": bool(row and row.last_error == "revocationUnconfirmed"),
             "models": row.catalog or [] if row else [], "usage_url": "https://chatgpt.com/settings/usage"}
@@ -423,6 +468,7 @@ def disconnect(db, username, forget=False):
     if row:
         row.encrypted_credentials = None
         row.use_subscription = False
+        drop_choices(db, username)
         row.catalog = None
         row.last_error = None if confirmed else "revocationUnconfirmed"
         if forget:

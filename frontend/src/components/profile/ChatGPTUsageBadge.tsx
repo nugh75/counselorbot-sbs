@@ -21,5 +21,5 @@ export function ChatGPTUsageBadge({ onSubscription }: { onSubscription?: (active
         return () => { controller.abort(); window.removeEventListener('chatgpt-connection-changed', load); window.removeEventListener('focus', load); };
     }, [onSubscription]);
     if (!status?.enabled || !status.use_subscription) return null;
-    return <Link href={`/${area}/chatgpt`} className="block break-words rounded-lg border border-indigo-200 p-3 text-xs text-indigo-800">{t('chatgpt.active')} · {status.model}{status.needs_reconnect ? ` · ${t('chatgpt.errors.reconnect')}` : ''}</Link>;
+    return <Link href={`/${area}/api-personali#chatgpt`} className="block break-words rounded-lg border border-indigo-200 p-3 text-xs text-indigo-800">{t('chatgpt.active')} · {status.model}{status.needs_reconnect ? ` · ${t('chatgpt.errors.reconnect')}` : ''}</Link>;
 }
