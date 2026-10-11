@@ -15,7 +15,7 @@ import {
 import { useUserAccess } from '@/lib/use-user-access';
 import { isToolAllowed } from '@/lib/user-access';
 
-const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
+const QUESTIONNAIRE_SELECTION_HREF = '/?view=home';
 
 export default function TestAdministrationsPage() {
     const { t, lang } = useI18n();
