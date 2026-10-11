@@ -1,4 +1,4 @@
-const personalReasons = new Set(['authentication', 'modelUnavailable', 'quota', 'rateLimit', 'privacy', 'invalidRequest', 'connection', 'configuration', 'counselor']);
+const personalReasons = new Set(['authentication', 'modelUnavailable', 'quota', 'rateLimit', 'privacy', 'invalidRequest', 'connection', 'configuration', 'counselor', 'classShare']);
 const chatReasons = new Set(['connection', 'access', 'configuration']);
 
 // Only fixed codes may cross the proxy/UI boundary; upstream messages stay private.

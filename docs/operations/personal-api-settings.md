@@ -147,9 +147,26 @@ API e il proprio ChatGPT; si salva con le altre impostazioni (`PUT
 classe attiva dello studente lo vieta, `personal_api.class_allows` fa rispondere
 l’istituto (`chosen_source` e impostazioni legacy), `/user/api-connections`,
 `/user/api-settings` e `/user/chatgpt` restituiscono `class_blocked` e la pagina
-personale lo spiega. Docenti e studenti senza classi non sono limitati. La
-condivisione della chiave del docente (#201) è stata ritirata: la migrazione
-`20261011_drop_class_api_shares` elimina la tabella inutilizzata.
+personale lo spiega. Docenti e studenti senza classi non sono limitati. Il
+permesso riguarda le chiavi proprie degli studenti: la chiave che il docente
+mette a disposizione della classe (sezione seguente) resta disponibile.
+
+## Chiave condivisa con la classe (#201)
+
+Con `personal_api_enabled` e il nuovo interruttore `class_api_sharing_enabled`
+(API e ChatGPT → Impostazioni dell’installazione → API personali → casella «Docenti — possono mettere a disposizione…», `GET/PUT /api/admin/class-api-sharing`), un
+docente che gestisce la classe sceglie una propria connessione e un livello di
+ragionamento (`GET/PUT/DELETE /api/teacher/groups/{id}/api-share`, tabella
+`class_api_shares`, creata all’avvio). Solo connessioni API del docente: mai
+l’abbonamento ChatGPT. Per uno studente l’ordine è: scelta personale, chiave della
+classe, istituto; se le sue classi attive condividono chiavi diverse risponde
+l’istituto. La chiave è decifrata solo nel backend; i log delle chat registrano
+`shared_group_id` e `credential_source = personal`, quindi il costo non pesa sul
+budget dell’istituto e il docente vede richieste e costo del mese. Gli errori
+della chiave tornano agli studenti come `personalAPI.errors.classShare` (messaggio
+neutro) e restano al docente come `last_error`. I dati delle conversazioni sono
+trattati dal fornitore dell’account del docente: va indicato nell’informativa
+della scuola. Interrompere la condivisione vale dal messaggio successivo.
 
 ## Protezione, migrazione e API
 
