@@ -234,7 +234,15 @@ installazioni ammessi vanno verificati prima dell’attivazione; un piano di
 scuola/università non è automaticamente ammesso.
 
 **Collega ChatGPT** genera un codice di associazione CounselorBot, valido dieci
-minuti: non è un token o una chiave API OpenAI. Se disponibile, **Scarica
+minuti: non è un token o una chiave API OpenAI. Il pannello è una procedura guidata
+in tre passi numerati (scarica e apri l’assistente, copia il codice, accedi a
+ChatGPT) e riconosce il sistema del computer: propone per primo l’assistente per
+Windows o macOS, oppure lo script Python su Linux, mentre gli altri restano in
+**Assistenti per altri sistemi**. Accanto al codice un conto alla rovescia indica
+la scadenza; se il codice scade, **Riprova il collegamento** riparte senza
+ricaricare la pagina e **Se non funziona** elenca le verifiche principali.
+Su telefoni, tablet e Chromebook il pannello spiega che serve un computer e non
+offre pulsanti di collegamento. Se disponibile, **Scarica
 l’assistente grafico per macOS** scarica un’app per Mac Intel e Apple Silicon,
 senza Python né terminale. La persona copia il codice, estrae lo ZIP e apre
 l’assistente sullo stesso Mac del browser; incolla il codice e preme **Collega**.
