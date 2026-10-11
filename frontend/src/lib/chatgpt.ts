@@ -6,6 +6,7 @@ export type ChatGPTStatus = {
     use_subscription: boolean; model: string | null; needs_reconnect: boolean;
     pending_link: boolean; registered: boolean; revocation_pending: boolean; models: ChatGPTModel[];
     macos_helper_available?: boolean;
+    windows_helper_available?: boolean;
 };
 
 export type ChatGPTInstallationStatus = {

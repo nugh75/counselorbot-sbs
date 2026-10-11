@@ -241,6 +241,12 @@ l’assistente sullo stesso Mac del browser; incolla il codice e preme **Collega
 Si apre l’accesso ufficiale a ChatGPT e il trasferimento delle credenziali avviene
 automaticamente. L’app non è notarizzata da Apple: l’eventuale autorizzazione
 all’apertura si gestisce dalle impostazioni macOS, come indicato nel pannello.
+Su Windows, se disponibile, **Scarica l’assistente per Windows** scarica uno ZIP con
+`CounselorBot-ChatGPT.exe`, che si apre con un doppio clic senza Python né terminale:
+chiede l’indirizzo di CounselorBot (Invio accetta quello proposto, il pannello indica
+quello da scrivere) e poi il codice di associazione. L’eseguibile non è firmato: se
+compare «PC protetto da Windows» si sceglie «Ulteriori informazioni» → «Esegui
+comunque», come spiegato nel pannello.
 
 La sezione **Collegamento da terminale (anche SSH)** conserva lo strumento
 Python 3.10+. Il codice incollato è visibile: premere Invio per confermare;
