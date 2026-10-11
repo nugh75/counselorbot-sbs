@@ -132,7 +132,12 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
                 <a className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/api/chatgpt/helper/macos" download="CounselorBot-ChatGPT.zip">{t('chatgpt.macosDownload')}</a>
                 <p className="text-xs text-slate-600">{t('chatgpt.macosSecurity')}</p>
             </div>}
-            <details open={status.macos_helper_available ? undefined : true} className="space-y-3">
+            {/* #133: the unsigned Windows helper, with the SmartScreen steps and the address to type. */}
+            {status.windows_helper_available && <div className="space-y-2">
+                <a className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/api/chatgpt/helper/windows" download="CounselorBot-ChatGPT-Windows.zip">{t('chatgpt.windowsDownload')}</a>
+                <p className="text-xs text-slate-600">{t('chatgpt.windowsSecurity').replace('{origin}', typeof window === 'undefined' ? '' : window.location.origin)}</p>
+            </div>}
+            <details open={status.macos_helper_available || status.windows_helper_available ? undefined : true} className="space-y-3">
                 <summary className="cursor-pointer text-sm font-semibold">{t('chatgpt.manual')}</summary>
                 <p className="text-sm">{t('chatgpt.instructions')}</p>
                 <a className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/api/chatgpt/helper" download="chatgpt-connect.py">{t('chatgpt.download')}</a>

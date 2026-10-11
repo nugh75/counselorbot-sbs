@@ -109,7 +109,8 @@ def installation_settings(data: InstallationSettings, username: str = Depends(cu
 
 @router.get("/user/chatgpt")
 def status(username: str = Depends(current_owner), db: Session = Depends(database.get_db)):
-    return {**accounts.status(db, username), "macos_helper_available": macos_helper_available()}
+    return {**accounts.status(db, username), "macos_helper_available": macos_helper_available(),
+            "windows_helper_available": windows_helper_available()}
 
 
 @router.post("/user/chatgpt/link", dependencies=[Depends(browser_mutation)])
@@ -193,3 +194,30 @@ def macos_helper(request: Request, username: str = Depends(current_owner)):
         raise HTTPException(404, "chatgpt.errors.unavailable")
     return FileResponse(macos_helper_path(), media_type="application/zip",
                         filename=MACOS_HELPER_FILENAME, headers={"Cache-Control": "no-store"})
+
+
+WINDOWS_HELPER_FILENAME = "CounselorBot-ChatGPT-Windows.zip"
+
+
+def windows_helper_path() -> Path:
+    # Only the operator can select a directory; requests never supply a path.
+    default = Path(__file__).resolve().parents[2] / "dist" / "chatgpt-windows"
+    return Path(os.getenv("CHATGPT_WINDOWS_HELPER_DIR") or default) / WINDOWS_HELPER_FILENAME
+
+
+def windows_helper_available() -> bool:
+    try:
+        return windows_helper_path().is_file()
+    except OSError:
+        return False
+
+
+@router.get("/chatgpt/helper/windows")
+def windows_helper(request: Request, username: str = Depends(current_owner)):
+    # Same contract as the macOS download (#133): verified Console session, no-store.
+    if not request.headers.get("Cookie"):
+        raise HTTPException(401, "chatgpt.errors.signIn")
+    if not windows_helper_available():
+        raise HTTPException(404, "chatgpt.errors.unavailable")
+    return FileResponse(windows_helper_path(), media_type="application/zip",
+                        filename=WINDOWS_HELPER_FILENAME, headers={"Cache-Control": "no-store"})
