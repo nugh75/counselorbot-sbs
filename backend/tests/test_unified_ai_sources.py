@@ -219,3 +219,15 @@ def test_reasoning_migration_limits_the_levels(scratch_engine):
         with pytest.raises(IntegrityError, match="personal_routing_reasoning_level"):
             with connection.begin_nested():
                 connection.execute(text("UPDATE personal_ai_routing SET default_reasoning = 'turbo'"))
+
+
+def test_withdrawn_class_sharing_table_is_dropped(scratch_engine):
+    drop = import_module("backend.migrations.20261011_drop_class_api_shares")
+    with scratch_engine.begin() as connection:
+        connection.execute(text("CREATE TABLE class_api_shares (group_id INTEGER PRIMARY KEY)"))
+        connection.execute(text("INSERT INTO configs (key, value) VALUES ('class_api_sharing_enabled', 'false')"))
+    drop.migrate(scratch_engine)
+    drop.migrate(scratch_engine)  # Replay-safe.
+    with scratch_engine.begin() as connection:
+        assert connection.execute(text("SELECT to_regclass('class_api_shares')")).scalar() is None
+        assert connection.execute(text("SELECT count(*) FROM configs WHERE key = 'class_api_sharing_enabled'")).scalar() == 0

@@ -14,7 +14,7 @@ POLICY_KEY = "personal_api_enabled"
 REASONING_LEVELS = ("none", "minimal", "low", "medium", "high", "xhigh")
 CONNECTION_ERROR_CODES = frozenset("personalAPI.errors." + reason for reason in (
     "authentication", "modelUnavailable", "quota", "rateLimit", "privacy",
-    "invalidRequest", "connection", "configuration", "counselor", "classShare",
+    "invalidRequest", "connection", "configuration", "counselor",
 ))
 # Internal gateways and arbitrary endpoints must never receive personal keys.
 PROVIDERS = tuple(provider for provider in API_KEY_ENV_MAP if provider != "omniroute")

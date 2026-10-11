@@ -260,19 +260,6 @@ your own language. Link a saved connection to it and select it for new chats.
 You can edit or delete your counselors; other accounts cannot select them.
 Institution counselors and their prompts are unchanged.
 
-### Sharing a key with a class
-
-When the administrator allows it, **API key for the class** in the class
-settings (Tools & counselors tab) lets you choose one of your API connections
-and a reasoning level for that class. Students of the class who have no
-personal choice of their own then talk to the counselors through your key, and
-you pay for their requests. Students never see the key, and their conversation
-data goes to your provider account. The section shows this month's requests
-and recorded cost, and warns you when the last request with your key failed;
-students only see a generic message. **Stop sharing** applies from the next
-message. A personal ChatGPT subscription cannot be shared. If a student belongs
-to several classes that share different keys, the institution's models answer.
-
 **Test connection and model** sends a short neutral request only when pressed.
 It consumes quota and can incur a provider charge. Errors distinguish key access,
 model availability, quota, rate limits and an unavailable local data protection
