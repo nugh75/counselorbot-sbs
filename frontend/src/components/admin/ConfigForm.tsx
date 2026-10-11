@@ -6,13 +6,13 @@ import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, Palette, P
 import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { Button } from '@/components/ui/Button';
-import { PersonalAPIPolicy } from '@/components/admin/PersonalAPIPolicy';
+import Link from 'next/link';
+import { personalAPIText } from '@/lib/i18n-personal-api';
 import { ExternalPrivacySettings } from '@/components/admin/ExternalPrivacySettings';
 import { Callout } from '@/components/ui/Callout';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admin/PromptRequestPreview';
 import { PromptFactoryAlignment, type FactoryAlignmentResult } from '@/components/admin/PromptFactoryAlignment';
-import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
 import { ModelContextSettings } from '@/components/admin/ModelContextSettings';
 import { AI4EDUC_SECRETS_URL } from '@/lib/auth';
 import { SectionFilter, type SectionFilterGroup } from '@/components/admin/SectionFilter';
@@ -1907,8 +1907,8 @@ export function ConfigForm() {
                     <h3 id="student-ai-settings-title" className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.studentAi.title')}</h3>
                     <p className="mt-1 ml-1 text-sm text-slate-600">{t('admin.config.studentAi.intro')}</p>
                 </div>
-                <PersonalAPIPolicy />
-                <ChatGPTSettingsPanel />
+                {/* Enabling personal APIs and ChatGPT moved to the "APIs and ChatGPT" page. */}
+                <Link href="/profilo/api-personali#ai-admin" className="ml-1 inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline">{personalAPIText(lang, 'adminMoved')}</Link>
                 <ExternalPrivacySettings />
             </section>
 
