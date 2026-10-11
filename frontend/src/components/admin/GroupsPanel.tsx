@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Check, ChevronDown, ChevronRight, Link2, Plus, Route, Share2, Trash2, UserMinus, UserPlus, Users } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Link2, Plus, Route, Share2, Trash2, UserMinus, UserPlus, Users, Wrench } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { apiFetch } from '@/lib/auth';
@@ -318,8 +318,12 @@ export function GroupsPanel({ institutionId }: { institutionId?: number } = {}) 
                                     <span className="min-w-0 break-words">{group.name}</span>
                                 </button>
                             </h3>
-                            <Link href={`/docente/classi/${group.id}`} className="inline-flex min-h-[44px] items-center text-sm font-semibold text-indigo-700">{classSettingsText(lang, 'open')}</Link>
-                            <Link href={`/docente/classi/${group.id}/?tab=paths`} className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-indigo-700">{texts.percorsiPath} <Route className="h-3.5 w-3.5" /></Link>
+                            {/* The class page and its most used tabs, one link each. */}
+                            <div className="flex flex-wrap gap-x-5 gap-y-1">
+                                <Link href={`/docente/classi/${group.id}`} className="inline-flex min-h-[44px] items-center text-sm font-semibold text-indigo-700 underline-offset-4 hover:underline">{classSettingsText(lang, 'open')}</Link>
+                                <Link href={`/docente/classi/${group.id}?tab=tools`} className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-indigo-700 underline-offset-4 hover:underline">{classSettingsText(lang, 'toolsTab')} <Wrench className="h-3.5 w-3.5" aria-hidden /></Link>
+                                <Link href={`/docente/classi/${group.id}/?tab=paths`} className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-indigo-700 underline-offset-4 hover:underline">{texts.percorsiPath} <Route className="h-3.5 w-3.5" aria-hidden /></Link>
+                            </div>
                             <p className="break-words text-xs text-slate-500">
                                 {!group.is_active && <span>{texts.inactive}{' - '}</span>}
                                 {group.members_count} {texts.members}{' - '}{group.owner_username}

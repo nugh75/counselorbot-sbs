@@ -648,7 +648,9 @@ le assegnazioni attive.
 La gestione dei gruppi è distinta dall’iscrizione personale a un gruppo.
 
 **Class settings and guide (S1–S9, #88–#95, #109).** From Teacher area →
-Classes, **Open class** opens `/docente/classi/{id}`. Overview shows class
+Classes, **Open class** opens `/docente/classi/{id}`; next to it, **Tools &
+counselors** and **Paths** open those tabs directly (`?tab=tools`, `?tab=paths`;
+`forum` and `audit` work too). Overview shows class
 context; **Tools & counselors** lets owners, co-teachers and administrators
 choose student questionnaires, guided chats (including dynamic instruments),
 personal tools, Compass, Assistant and the class forum. Saves are explicit;
