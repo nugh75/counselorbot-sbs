@@ -516,3 +516,10 @@ def test_diagram_instrument_falls_back_to_practice_session():
         db.add(models.TeacherPracticeResult(notebook_id=practice.id, owner_username="t1", questionnaire_type="ZTPI", scores={"T1": 5}, session_id="p-ztpi"))
         db.commit()
         assert session_questionnaire(db, "p-ztpi") == "ZTPI"
+
+
+def test_simulation_notice_keeps_the_model_in_the_counsellor_role():
+    # The teacher plays the student; the model must never write the student's lines.
+    from backend.practice_notebooks import simulation_notice
+    assert "non scrivi mai le sue battute" in simulation_notice("it")
+    assert "never write the student's lines" in simulation_notice("en")

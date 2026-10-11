@@ -1960,7 +1960,9 @@ def test_prompt_audit_component_flags_use_saved_and_payload_values():
         assert body["components"]["system_prompt"] == ""
         assert body["components"]["step_prompt"] == ""
         assert body["components"]["metadata"] == ""
-        assert body["envelope"]["full_message"] == ""
+        # No student text on this turn: the model gets the neutral opening line, never an empty turn.
+        from backend.chat_logic import OPENING_TURN
+        assert body["envelope"]["full_message"] == OPENING_TURN
         assert "Questionario: QSA" not in body["envelope"]["system_prompt_final"]
 
         r = client.post("/admin/prompt-audit/dry-run", json={
@@ -8317,3 +8319,10 @@ def test_prompt_preview_can_clear_a_saved_meta_prompt_without_writing():
             row.value = old
         db.commit()
         db.close()
+
+
+def test_role_block_and_opening_turn_keep_the_model_as_counsellor():
+    from backend.chat_logic import OPENING_TURN, ROLE_BLOCK
+    assert ROLE_BLOCK.startswith("[ROLE] You are the counsellor ({{counselor_name}})")
+    assert "never write the student's lines" in ROLE_BLOCK
+    assert OPENING_TURN.strip()
