@@ -35,6 +35,10 @@ export interface ClassCounselor extends ClassItemLock {
     name: string;
     avatar_url?: string | null;
     approach_categories: string[];
+    // #205: shown in the counselor details.
+    description?: string | null;
+    description_i18n?: Record<string, string>;
+    model?: { name: string; provider: string; model: string } | null;
     admin_enabled: boolean;
     enabled: boolean;
 }

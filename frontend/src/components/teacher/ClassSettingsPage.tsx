@@ -6,6 +6,7 @@ import { ArrowLeft, ChevronRight, Lock } from 'lucide-react';
 import { apiFetch, getIdentity, getViewAsAccount } from '@/lib/auth';
 import { defaultForumOptions, effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, type ClassCounselor, type ClassSettings, type ClassTool, type ClassLockKind } from '@/lib/class-settings';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
+import { CounselorDetailsDialog } from './CounselorDetailsDialog';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
 import { instituteText } from '@/lib/i18n-teacher-institutes';
 import { forumText } from '@/lib/i18n-forum';
@@ -39,6 +40,7 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
     const l = (key: TextKey) => classSettingsText(lang, key);
     const [category, setCategory] = useState('');
     const [query, setQuery] = useState('');
+    const [details, setDetails] = useState<ClassCounselor | null>(null);
     const isEnabled = (row: ClassCounselor) => row.admin_enabled && !disabled.includes(row.id);
     const options = [...new Set(counselors.flatMap(row => row.approach_categories))].sort();
     const rows = filterClassCounselors(counselors, category, query);
@@ -78,6 +80,7 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
                             {!row.admin_enabled && <span id={`counselor-disabled-${row.id}`} className="mt-1 flex items-center gap-1 text-xs text-slate-500"><Lock className="h-4 w-4 shrink-0" aria-hidden />{l('platformDisabled')}</span>}
                         </span>
                     </label>
+                    <Button type="button" variant="secondary" aria-label={`${l('counselorDetails')}: ${row.name}`} onClick={() => setDetails(row)}>{l('counselorDetails')}</Button>
                     <ClassSettingLock item={row} label={row.name} admin={admin} disabled={lockDisabled}
                         onChange={state => onLock('counselor', String(row.id), state)} />
                     <label className="flex min-h-[44px] items-center gap-2 text-sm text-slate-600">
@@ -89,6 +92,7 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
             </div>
             {rows.length === 0 && <p className="text-sm text-slate-600">{l('counselorNoMatch')}</p>}
             <p className="text-sm text-slate-600">{l('counselorsPrivate')}</p>
+            {details && <CounselorDetailsDialog counselor={details} onClose={() => setDetails(null)} />}
         </section>
     </Card>;
 }
