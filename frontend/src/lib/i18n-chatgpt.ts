@@ -67,6 +67,8 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Scarica l’assistente grafico per macOS",
         "chatgpt.macosInstructions": "Copia il codice qui sotto. Scarica lo ZIP, estrailo e apri CounselorBot-ChatGPT sullo stesso Mac in cui usi il browser. Incolla il codice nell’assistente e premi Collega: si aprirà l’accesso ufficiale a ChatGPT. Non serve il terminale.",
         "chatgpt.macosSecurity": "L’assistente non è notarizzato da Apple. Se macOS blocca l’apertura, dopo aver provato ad aprirlo vai in Impostazioni di Sistema → Privacy e sicurezza → Apri comunque.",
+        "chatgpt.windowsDownload": "Scarica l’assistente per Windows",
+        "chatgpt.windowsSecurity": "L’assistente non è firmato digitalmente. Se Windows mostra «PC protetto da Windows», scegli «Ulteriori informazioni» e poi «Esegui comunque». Estrai lo ZIP, apri CounselorBot-ChatGPT.exe, premi Invio all’indirizzo proposto oppure scrivi {origin}, poi incolla il codice di associazione.",
         "chatgpt.manual": "Collegamento da terminale (anche SSH)",
         "chatgpt.sshInstructions": "Da SSH: sul computer del browser apri un tunnel locale verso la porta 1455 dello host SSH. Esegui questo comando nella shell di quello host, incolla il codice e premi Invio; poi apri l’URL mostrato nel browser del tuo computer. Il loopback di code-server dentro un container è distinto da quello dello host."
     },
@@ -136,6 +138,8 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Download the graphical assistant for macOS",
         "chatgpt.macosInstructions": "Copy the code below. Download and extract the ZIP, then open CounselorBot-ChatGPT on the same Mac as your browser. Paste the code and select Connect to open the official ChatGPT sign-in. No terminal needed.",
         "chatgpt.macosSecurity": "The assistant is not notarized by Apple. If macOS blocks it, first try opening it, then go to System Settings → Privacy & Security → Open Anyway.",
+        "chatgpt.windowsDownload": "Download the assistant for Windows",
+        "chatgpt.windowsSecurity": "The assistant is not digitally signed. If Windows shows “Windows protected your PC”, choose “More info” and then “Run anyway”. Extract the ZIP, open CounselorBot-ChatGPT.exe, press Enter at the suggested address or type {origin}, then paste the pairing code.",
         "chatgpt.manual": "Terminal connection (including SSH)",
         "chatgpt.sshInstructions": "Over SSH: on the browser’s computer, open a local tunnel to port 1455 on the SSH host. Run this command in that host’s shell, paste the code and press Enter, then open the displayed URL in your own browser. A code-server container has a separate loopback from its host."
     },
@@ -205,6 +209,8 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Descargar el asistente gráfico para macOS",
         "chatgpt.macosInstructions": "Copia el código. Descarga y extrae el ZIP y abre CounselorBot-ChatGPT en el mismo Mac que el navegador. Pega el código y pulsa Conectar para abrir el acceso oficial a ChatGPT. No necesitas terminal.",
         "chatgpt.macosSecurity": "El asistente no está notarizado por Apple. Si macOS lo bloquea, intenta abrirlo y ve a Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente.",
+        "chatgpt.windowsDownload": "Descarga el asistente para Windows",
+        "chatgpt.windowsSecurity": "El asistente no está firmado digitalmente. Si Windows muestra «Windows protegió su PC», elige «Más información» y luego «Ejecutar de todas formas». Extrae el ZIP, abre CounselorBot-ChatGPT.exe, pulsa Intro en la dirección propuesta o escribe {origin} y pega el código de vinculación.",
         "chatgpt.manual": "Conexión por terminal (también SSH)",
         "chatgpt.sshInstructions": "Por SSH: desde el ordenador del navegador, abre un túnel local al puerto 1455 del servidor SSH. Ejecuta este comando en su terminal, pega el código y pulsa Intro; después abre la URL mostrada en tu navegador. Un contenedor code-server tiene un loopback distinto del servidor."
     },
@@ -274,6 +280,8 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Télécharger l’assistant graphique pour macOS",
         "chatgpt.macosInstructions": "Copiez le code. Téléchargez et extrayez le ZIP, puis ouvrez CounselorBot-ChatGPT sur le même Mac que votre navigateur. Collez le code et cliquez sur Connecter pour ouvrir la connexion officielle ChatGPT. Aucun terminal nécessaire.",
         "chatgpt.macosSecurity": "L’assistant n’est pas notarié par Apple. Si macOS le bloque, essayez de l’ouvrir puis accédez à Réglages Système → Confidentialité et sécurité → Ouvrir quand même.",
+        "chatgpt.windowsDownload": "Télécharger l’assistant pour Windows",
+        "chatgpt.windowsSecurity": "L’assistant n’est pas signé numériquement. Si Windows affiche « Windows a protégé votre ordinateur », choisissez « Informations complémentaires » puis « Exécuter quand même ». Extrayez le ZIP, ouvrez CounselorBot-ChatGPT.exe, appuyez sur Entrée à l’adresse proposée ou tapez {origin}, puis collez le code d’association.",
         "chatgpt.manual": "Connexion par terminal (SSH inclus)",
         "chatgpt.sshInstructions": "Par SSH : depuis l’ordinateur du navigateur, ouvrez un tunnel local vers le port 1455 de l’hôte SSH. Exécutez cette commande sur cet hôte, collez le code et appuyez sur Entrée, puis ouvrez l’URL affichée dans votre navigateur. Un conteneur code-server possède un loopback distinct de celui de l’hôte."
     },
@@ -343,6 +351,8 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Grafischen Assistenten für macOS herunterladen",
         "chatgpt.macosInstructions": "Kopiere den Code. Lade die ZIP-Datei herunter, entpacke sie und öffne CounselorBot-ChatGPT auf dem Mac mit deinem Browser. Füge den Code ein und wähle Verbinden für die offizielle ChatGPT-Anmeldung. Kein Terminal erforderlich.",
         "chatgpt.macosSecurity": "Der Assistent ist nicht von Apple notarisiert. Wenn macOS ihn blockiert, versuche ihn zu öffnen und gehe zu Systemeinstellungen → Datenschutz & Sicherheit → Dennoch öffnen.",
+        "chatgpt.windowsDownload": "Assistent für Windows herunterladen",
+        "chatgpt.windowsSecurity": "Der Assistent ist nicht digital signiert. Zeigt Windows „Der Computer wurde durch Windows geschützt“, wähle „Weitere Informationen“ und dann „Trotzdem ausführen“. Entpacke die ZIP-Datei, öffne CounselorBot-ChatGPT.exe, drücke bei der vorgeschlagenen Adresse die Eingabetaste oder gib {origin} ein und füge dann den Kopplungscode ein.",
         "chatgpt.manual": "Verbindung im Terminal (auch SSH)",
         "chatgpt.sshInstructions": "Über SSH: Öffne auf dem Computer des Browsers einen lokalen Tunnel zu Port 1455 des SSH-Hosts. Führe diesen Befehl auf dem Host aus, füge den Code ein und drücke Enter. Öffne dann die angezeigte URL im eigenen Browser. Ein code-server-Container hat einen vom Host getrennten Loopback."
     },
@@ -412,6 +422,8 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
         "chatgpt.macosDownload": "Ladda ner den grafiska assistenten för macOS",
         "chatgpt.macosInstructions": "Kopiera koden. Ladda ner och packa upp ZIP-filen och öppna CounselorBot-ChatGPT på samma Mac som webbläsaren. Klistra in koden och välj Anslut för den officiella ChatGPT-inloggningen. Ingen terminal behövs.",
         "chatgpt.macosSecurity": "Assistenten är inte notariserad av Apple. Om macOS blockerar den, försök öppna den och gå till Systeminställningar → Integritet och säkerhet → Öppna ändå.",
+        "chatgpt.windowsDownload": "Ladda ned assistenten för Windows",
+        "chatgpt.windowsSecurity": "Assistenten är inte digitalt signerad. Om Windows visar ”Windows skyddade datorn” väljer du ”Mer information” och sedan ”Kör ändå”. Packa upp ZIP-filen, öppna CounselorBot-ChatGPT.exe, tryck Retur vid den föreslagna adressen eller skriv {origin} och klistra sedan in kopplingskoden.",
         "chatgpt.manual": "Anslutning via terminal (även SSH)",
         "chatgpt.sshInstructions": "Via SSH: öppna en lokal tunnel från webbläsarens dator till port 1455 på SSH-värden. Kör kommandot på värden, klistra in koden och tryck Enter. Öppna sedan den visade URL:en i din webbläsare. En code-server-container har en annan loopback än värden."
     }

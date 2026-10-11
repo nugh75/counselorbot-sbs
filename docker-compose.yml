@@ -58,6 +58,9 @@ services:
       - RAG_DOCS_DIR=/app/docs
       - RAG_INDEX_DIR=/app/rag_index
       - COUNSELORBOT_DOCS_DIR=/app/docs-counselorbot
+      # Built helpers (#133): absent folders just keep the download links hidden.
+      - CHATGPT_MACOS_HELPER_DIR=/app/chatgpt-macos
+      - CHATGPT_WINDOWS_HELPER_DIR=/app/chatgpt-windows
       - QSA_OCR_MODEL=${QSA_OCR_MODEL:-glm-ocr:latest}
       - QSA_PARSER_MODEL=${QSA_PARSER_MODEL:-qwen3.8:latest}
       - OPENCODE_WORKSPACE_ROOT=/opencode-workspaces
@@ -81,6 +84,8 @@ services:
       # Persistent encryption key, created when admin enables ChatGPT.
       - chatgpt_credentials:/app/chatgpt_credentials
       - personal_api_credentials:/app/personal_api_credentials
+      - ./dist/chatgpt-macos:/app/chatgpt-macos:ro
+      - ./dist/chatgpt-windows:/app/chatgpt-windows:ro
       # Sorgente in /var/lib (disco) e non /run (tmpfs): /run e' svuotata a ogni
       # avvio WSL e la dir ricreata con un inode nuovo staccava il bind-mount.
       - /var/lib/cloudflared-agent:/run/cloudflared-agent

@@ -98,7 +98,8 @@ def test_missing_helper_is_safe_404_and_status_reports_availability(helper_clien
     assert str(directory) not in response.text
     assert response.headers["Cache-Control"] == "no-store"
     response = client.get("/api/user/chatgpt", headers=SESSION)
-    assert response.json() == {"available": True, "connected": False, "macos_helper_available": False}
+    assert response.json() == {"available": True, "connected": False, "macos_helper_available": False,
+                               "windows_helper_available": False}
     assert response.headers["Cache-Control"] == "no-store"
     status.assert_called_once_with(db, "fixture.owner")
     make_helper(directory)
