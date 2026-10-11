@@ -877,7 +877,15 @@ section of the Tools & counselors tab lists the institutional counselors with a
 toggle each, a category filter and a name search, and one optional **Class
 default** (or **No class default**). A counselor turned off for the class
 cannot be the default; turning off the current default clears it, and a
-platform-disabled counselor is shown locked. The server accepts a default only
+platform-disabled counselor is shown locked. **Details** on each row (#205)
+opens a dialog with the counselor's description (in the interface language when
+translated), its institution model (preset name, provider and model, or the
+installation default) and what answers for the teacher. When personal APIs or
+ChatGPT are enabled, the teacher can change their own source and reasoning level
+for that counselor right there; the choice is personal (students keep the
+institution's model) and is the same one shown in **APIs and ChatGPT**. The
+settings payload adds `description`, `description_i18n` and `model` to each
+counselor. The server accepts a default only
 if it is institutional and enabled (otherwise HTTP 422). For a student in at
 least one active class, a counselor is available when at least one of the
 student's classes enables it; counselors disabled by the administrator never
