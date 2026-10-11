@@ -19,6 +19,9 @@ browser). **Riprendi un’attività** è in fondo, con l’immagine del puzzle;
 le attività interrotte sono raggiungibili anche dalla navigazione.
 Il catalogo degli strumenti ha un indirizzo proprio, `/strumenti` (apre
 `/?view=questionnaires`), ed è la voce **Strumenti** della navigazione.
+In cima al catalogo, **Consigliati per te** propone fino a tre strumenti: prima
+quelli con una chat in pausa, poi quelli indicati dall’ultima Bussola, esclusi gli
+strumenti già compilati. Senza questi segnali la sezione non compare.
 
 L’interfaccia non usa emoji né segni testuali come «+», «→» o «✓» nelle etichette:
 ogni simbolo è un’icona SVG (lucide-react). Le azioni dal significato evidente
