@@ -127,6 +127,17 @@ dipendere dal flag globale nel worker. Il cambio vale quindi per le nuove richie
 anche su worker già avviati, conservando la configurazione delle richieste in corso.
 Il default resta locale e bloccante; non si passa al filtro di base automaticamente.
 
+## Docenti e studenti
+
+`GET/PUT /api/admin/personal-ai-audiences` gestisce, per `api` e `chatgpt`, le
+caselle `teachers` e `students` (chiavi `personal_ai_{api,chatgpt}_{teachers,students}_enabled`
+in `configs`; se mancano valgono come attive). `personal_ai_audience.allowed`
+decide per ruolo: amministratori e docenti usano la casella docenti, gli altri
+quella studenti. Il ruolo arriva dall’identità della richiesta
+(`bind_identity`/`remember`); senza identità (lavori in background) è docente chi
+possiede o condivide una classe. Valgono nella risoluzione della fonte, nelle
+pagine personali, nel salvataggio delle scelte e nel collegamento ChatGPT.
+
 ## Permesso per classe (#217)
 
 `class_settings.students_personal_ai` (migrazione `20261011_class_personal_ai`,
