@@ -211,8 +211,8 @@ non compare.
 
 ### Abbonamento personale ChatGPT (opzionale)
 
-L’amministratore apre **API e ChatGPT → Impostazioni dell’installazione**
-(`/profilo/api-personali#ai-admin`) e preme **Abilita collegamento ChatGPT**. Il server
+L’amministratore apre **Area amministrazione → Configurazione & Prompt → Generale → API personali e ChatGPT** e preme
+**Abilita collegamento ChatGPT**. Il server
 prepara automaticamente la protezione delle credenziali e salva la scelta:
 non servono comandi, modifica di file o riavvio. L’interfaccia indica lo stato
 e conferma subito il salvataggio. Il controllo è riservato agli amministratori;
@@ -448,9 +448,8 @@ della persona.
 
 ## API personali
 
-Quando l’amministratore abilita **API personali** in **API e ChatGPT →
-Impostazioni dell’installazione** (sezione visibile solo agli amministratori,
-che raggiungono la pagina anche con entrambe le funzioni spente),
+Quando l’amministratore abilita **API personali** in
+**Area amministrazione → Configurazione & Prompt → Generale → API personali e ChatGPT**,
 studenti e docenti trovano il collegamento nella propria pagina personale:
 `/profilo/api-personali` per l’Area studente e `/docente/api-personali` per
 l’Area docenti. Le due pagine condividono le impostazioni dello stesso account.
@@ -510,7 +509,7 @@ Il modulo protegge le bozze; errori di salvataggio conservano chiave e campi.
 Le configurazioni precedenti vengono conservate come connessioni predefinite.
 I costi personali restano a carico dell’account provider di ciascuna chiave.
 
-In **Amministrazione → Configurazione → Generale → AI dello studente: proprie chiavi e proprio ChatGPT →
+In **Area amministrazione → Configurazione & Prompt → Generale → API personali e ChatGPT →
 Protezione dei dati per i modelli esterni**, il vero amministratore sceglie **Filtro di base + modello
 locale** oppure **Solo filtro di base (senza Ollama)** e salva. La prima modalità
 rimane quella predefinita e blocca le richieste esterne se il servizio locale
@@ -904,8 +903,8 @@ conversation data goes to the teacher's provider account, a personal ChatGPT
 subscription can never be shared, and the teacher sees this month's requests
 and recorded cost plus the last failure (students see a neutral message).
 When a student's active classes share different keys, the institution answers.
-It needs the personal APIs switch and its own checkbox in **APIs and ChatGPT →
-Installation settings** (**Teachers — may make one of their API keys available
+It needs the personal APIs switch and its own checkbox in **Administration area →
+Configuration & Prompts → General → Personal APIs and ChatGPT** (**Teachers — may make one of their API keys available
 to the students of their classes**). A teacher's key is never shared with other
 teachers, and the class permission for students' own keys does not affect it. The server accepts a default only
 if it is institutional and enabled (otherwise HTTP 422). For a student in at
@@ -1123,17 +1122,19 @@ tastiera (frecce, Invio, Esc). La sezione scelta resta nell’indirizzo
 la stessa sezione; un valore non riconosciuto apre Generale.
 
 Nella sezione Generale, dopo modello attivo, ripieghi e funzioni, il blocco
-**AI dello studente: proprie chiavi e proprio ChatGPT** contiene la **Protezione dei
-dati per i modelli esterni** e un collegamento alla pagina **API e ChatGPT**, dove
-l’amministratore abilita **API personali** e **Collegamento ChatGPT**.
-Per ciascuna delle due funzioni, **Chi può usarle** ha due caselle indipendenti:
-**Docenti**, che usano le proprie API o il proprio ChatGPT nelle loro chat, e
-**Studenti**, che li usano nelle chat delle loro classi (ogni docente può anche
-disattivarlo per la sua classe). Ognuno usa solo le proprie chiavi o il proprio
-abbonamento: il docente non condivide i suoi con gli studenti. Le installazioni
-esistenti partono con entrambe le caselle attive. Anche i messaggi
-«collegamento disattivato» e la Guida indicano questa pagina. Le
-**API Keys** della piattaforma sono dell’amministratore e restano fuori dal
+**API personali e ChatGPT** riunisce in quest’ordine **API personali**,
+**Collegamento ChatGPT** e **Protezione dei dati per i modelli esterni**. Per
+ciascuna delle due funzioni, **Chi può usarle** / **Chi può usarlo** ha due caselle
+indipendenti: **Docenti**, che usano le proprie chiavi o il proprio abbonamento
+nelle proprie chat, e **Studenti**, che li usano nelle chat delle loro classi se il
+docente della classe lo consente. Sotto le API personali una terza casella permette
+ai docenti di mettere a disposizione degli studenti delle loro classi una propria
+chiave API (mai degli altri docenti); l’abbonamento ChatGPT resta personale. Le
+installazioni esistenti partono con le caselle Docenti e Studenti attive. I messaggi
+«collegamento disattivato» e la Guida indicano questo blocco. La pagina **API e
+ChatGPT** del docente spiega, rivolgendosi a lui, che il suo abbonamento ChatGPT è
+personale e che per dare i modelli GPT alla classe serve una chiave API condivisa.
+Le **API Keys** della piattaforma sono dell’amministratore e restano fuori dal
 blocco, subito sotto.
 
 ### Mappa dei prompt delle chat guidate
