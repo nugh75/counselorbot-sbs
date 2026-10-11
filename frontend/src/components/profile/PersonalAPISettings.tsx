@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, KeyRound, Plus } from 'lucide-react';
-import { apiFetch } from '@/lib/auth';
+import { apiFetch, getIdentity, getViewAsAccount } from '@/lib/auth';
 import { notifyChatGPTChange } from '@/lib/chatgpt';
 import { useI18n } from '@/lib/i18n-context';
 import { personalAPIText, personalAPIErrorText } from '@/lib/i18n-personal-api';
@@ -15,6 +15,8 @@ import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ChatGPTConnectionPanel } from './ChatGPTConnectionPanel';
+import { PersonalAPIPolicy } from '@/components/admin/PersonalAPIPolicy';
+import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
 import { SourceOptions } from './SourceOptions';
 import { decode, encode, fromServer, levelsFor, validSource, type Binding, type PersonalSources as Settings } from '@/lib/personal-sources';
 
@@ -91,7 +93,10 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
     useEffect(() => { void load(); }, [load]);
     // #217: a class that forbids own sources gets an explanation instead of a redirect.
     const blocked = settings?.class_blocked === true;
-    useEffect(() => { if (settings?.available === false && !blocked) router.replace(`/${area}`); }, [settings?.available, blocked, router, area]);
+    // Administrators switch the features on here, so the page stays open for them even when both are off.
+    const [admin, setAdmin] = useState<boolean | null>(null);
+    useEffect(() => { void getIdentity().then(identity => setAdmin(Boolean(identity?.is_admin) && !getViewAsAccount())).catch(() => setAdmin(false)); }, []);
+    useEffect(() => { if (settings?.available === false && !blocked && admin === false) router.replace(`/${area}`); }, [settings?.available, blocked, admin, router, area]);
     useEffect(() => {
         let active = true;
         const refresh = () => {
@@ -149,11 +154,11 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
     </div>;
     // Options shared by the default and the per-counselor selects: the person's APIs and ChatGPT models.
     const sourceOptions = settings && <SourceOptions sources={settings} />;
-    if (settings?.available === false && !blocked) return null;
+    if (settings?.available === false && !blocked && !admin) return null;
     const field = 'mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900';
     return <div className="min-h-screen bg-slate-50 px-4 py-8"><div className="mx-auto max-w-3xl space-y-6">
         <Link href={`/${area}`} className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"><ArrowLeft className="h-4 w-4" aria-hidden />{area === 'docente' ? teacherAreaText(lang, 'title') : personalAreaText(lang, 'title')}</Link>
-        {(settings?.available || blocked) && <PageHeader title={l('sectionTitle')} subtitle={l('description')} icon={<KeyRound className="h-6 w-6 text-indigo-600" aria-hidden />} />}
+        {(settings?.available || blocked || admin) && <PageHeader title={l('sectionTitle')} subtitle={l('description')} icon={<KeyRound className="h-6 w-6 text-indigo-600" aria-hidden />} />}
         <div ref={messageRef}>
         {loading && <p role="status">{l('loading')}</p>}
         {error === 'login' && <Callout variant="info">{l('login')} <Link href="/login" className="underline">{l('signIn')}</Link></Callout>}
@@ -162,7 +167,13 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
         {feedback && <Callout variant="info"><span role="status">{l(feedback)}</span></Callout>}
         {blocked && <Callout variant="info">{l('classBlocked')}</Callout>}
         </div>
-        {settings && !blocked && <>
+        {admin && <section id="ai-admin" aria-labelledby="ai-admin-title" className="space-y-4">
+            <h2 id="ai-admin-title" className="text-xl font-bold text-slate-900">{l('adminSection')}</h2>
+            <p className="text-sm text-slate-600">{l('adminSectionHelp')}</p>
+            <PersonalAPIPolicy />
+            <ChatGPTSettingsPanel />
+        </section>}
+        {settings && !blocked && settings.available && <>
             {settings.chatgpt_enabled && <div id="chatgpt"><ChatGPTConnectionPanel area={area} /></div>}
             {settings.api_enabled && <>
             <Callout variant="info">{l('notice')}</Callout>
