@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
 import { personalAPIText } from '../src/lib/i18n-personal-api.ts';
+import { CHATGPT_DICTS } from '../src/lib/i18n-chatgpt.ts';
 const origin = process.env.PERSONAL_API_BASE_URL || 'http://127.0.0.1:3135';
 let browser;
 before(async () => { browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', headless: true }); });
@@ -215,6 +216,19 @@ test('#217: a class that forbids own sources explains it instead of redirecting'
         await f.page.getByText(personalAPIText('it', 'classBlocked'), { exact: true }).waitFor();
         assert.equal(f.page.url(), `${origin}/profilo/api-personali`);
         assert.equal(await f.page.locator('#personal-default-connection').count(), 0);
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('teachers read that their ChatGPT is personal and how to give GPT to a class', async () => {
+    const f = await fixture({ role: 'teacher' });
+    f.settings.chatgpt_enabled = true;
+    try {
+        await f.page.goto(`${origin}/docente/api-personali`);
+        await f.page.getByText(CHATGPT_DICTS.it['chatgpt.personalTeacher'], { exact: true }).waitFor();
+        assert.equal(await f.page.getByText(CHATGPT_DICTS.it['chatgpt.personalStudent'], { exact: true }).count(), 0);
+        // No installation switches on the teacher's own page.
+        assert.equal(await f.page.getByTestId('personal-api-settings').count(), 0);
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });

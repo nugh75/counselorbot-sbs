@@ -144,6 +144,8 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
         data-state={failed ? 'error' : link ? 'waiting' : status.connected && !status.needs_reconnect ? 'connected' : 'not_connected'}>
         <h2 className="text-xl font-semibold text-slate-900">{t('chatgpt.title')}</h2>
         <p className="text-sm text-slate-600">{t('chatgpt.intro')}</p>
+        {/* The subscription is personal: teachers learn how to give GPT to a class instead. */}
+        <p className="text-sm text-slate-700">{t(area === 'docente' ? 'chatgpt.personalTeacher' : 'chatgpt.personalStudent')}</p>
         {(notice || status?.revocation_pending) && <Callout variant="warning">{t(notice || 'chatgpt.revocation')}</Callout>}
         {status && !status.available && <Callout>{t(`chatgpt.errors.${status.reason || 'disabled'}`)}</Callout>}
         {status.available && !status.connected && device !== 'unsupported' && <p className="text-sm text-slate-700">{t('chatgpt.detected').replace('{os}', osName)}</p>}

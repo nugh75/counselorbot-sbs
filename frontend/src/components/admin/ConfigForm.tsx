@@ -6,7 +6,8 @@ import { CheckCircle2, Cpu, ExternalLink, FileText, KeyRound, Layers, Palette, P
 import { useI18n } from '@/lib/i18n-context';
 import { fetchCounselors, type PublicCounselor } from '@/lib/counselor';
 import { Button } from '@/components/ui/Button';
-import Link from 'next/link';
+import { PersonalAPIPolicy } from '@/components/admin/PersonalAPIPolicy';
+import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
 import { personalAPIText } from '@/lib/i18n-personal-api';
 import { ExternalPrivacySettings } from '@/components/admin/ExternalPrivacySettings';
 import { Callout } from '@/components/ui/Callout';
@@ -1907,8 +1908,9 @@ export function ConfigForm() {
                     <h3 id="student-ai-settings-title" className="text-sm font-semibold text-slate-500 uppercase tracking-wider ml-1">{t('admin.config.studentAi.title')}</h3>
                     <p className="mt-1 ml-1 text-sm text-slate-600">{t('admin.config.studentAi.intro')}</p>
                 </div>
-                {/* Enabling personal APIs and ChatGPT moved to the "APIs and ChatGPT" page. */}
-                <Link href="/profilo/api-personali#ai-admin" className="ml-1 inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline">{personalAPIText(lang, 'adminMoved')}</Link>
+                <p className="ml-1 text-sm text-slate-600">{personalAPIText(lang, 'adminSectionHelp')}</p>
+                <PersonalAPIPolicy />
+                <ChatGPTSettingsPanel />
                 <ExternalPrivacySettings />
             </section>
 

@@ -8,8 +8,8 @@ import { usePersonalAIFeatures } from '@/lib/use-personal-ai-features';
 
 export function PersonalAIConnections({ area }: { area: 'profilo' | 'docente' }) {
     const { lang } = useI18n();
-    const { personalAPI: api, chatgpt, admin } = usePersonalAIFeatures();
-    if (!api && !chatgpt && !admin) return null;
+    const { personalAPI: api, chatgpt } = usePersonalAIFeatures();
+    if (!api && !chatgpt) return null;
     // #200: one page for personal APIs and ChatGPT.
     const entries = [
         { visible: true, path: 'api-personali', title: personalAPIText(lang, 'sectionTitle'), description: personalAPIText(lang, 'description'), icon: api ? KeyRound : Bot },
