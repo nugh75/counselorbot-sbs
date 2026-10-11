@@ -30,7 +30,7 @@ disponibile o ammissibilità del server presso OpenAI.
 ## Attivazione dalla pagina Amministrazione
 
 Dopo il normale aggiornamento dell’applicazione, un amministratore apre
-**Amministrazione → Configurazione → Generale → Collegamento ChatGPT** e preme
+**API e ChatGPT → Impostazioni dell’installazione** (`/profilo/api-personali#ai-admin`) e preme
 **Abilita collegamento ChatGPT**. Non deve generare chiavi, modificare `.env`
 o eseguire comandi. Il server prepara la protezione delle credenziali e salva
 la scelta nel database. La modifica vale per le nuove richieste immediatamente,

@@ -1,6 +1,6 @@
 {
   "it": {
-    "disabled": "Il collegamento a ChatGPT è disattivato. Un amministratore può abilitarlo da Amministrazione → Generale → Collegamento ChatGPT.",
+    "disabled": "Il collegamento a ChatGPT è disattivato. Un amministratore può abilitarlo nella pagina API e ChatGPT, sezione Impostazioni dell’installazione.",
     "notConfigured": "Il collegamento a ChatGPT deve essere configurato da chi gestisce il server.",
     "signIn": "Accedi con il tuo account CounselorBot per collegare ChatGPT.",
     "reconnect": "Ricollega il tuo account ChatGPT dall’Area personale.",
@@ -17,7 +17,7 @@
     "adminSettings": "Gestisci il collegamento ChatGPT dal pannello dedicato in Amministrazione."
   },
   "en": {
-    "disabled": "The ChatGPT connection is disabled. An administrator can enable it in Administration → General → ChatGPT connection.",
+    "disabled": "The ChatGPT connection is disabled. An administrator can enable it on the APIs and ChatGPT page, Installation settings section.",
     "notConfigured": "The server administrator needs to configure ChatGPT connections.",
     "signIn": "Sign in with your CounselorBot account to connect ChatGPT.",
     "reconnect": "Reconnect your ChatGPT account in your personal area.",
@@ -34,7 +34,7 @@
     "adminSettings": "Manage the ChatGPT connection through its dedicated Administration panel."
   },
   "es": {
-    "disabled": "La conexión con ChatGPT está desactivada. Un administrador puede activarla en Administración → General → Conexión con ChatGPT.",
+    "disabled": "La conexión con ChatGPT está desactivada. Un administrador puede activarla en la página API y ChatGPT, sección Ajustes de la instalación.",
     "notConfigured": "El administrador del servidor debe configurar las conexiones a ChatGPT.",
     "signIn": "Accede con tu cuenta de CounselorBot para conectar ChatGPT.",
     "reconnect": "Reconecta tu cuenta de ChatGPT en el área personal.",
@@ -51,7 +51,7 @@
     "adminSettings": "Gestiona la conexión con ChatGPT desde su panel específico en Administración."
   },
   "fr": {
-    "disabled": "La connexion à ChatGPT est désactivée. Un administrateur peut l’activer dans Administration → Général → Connexion à ChatGPT.",
+    "disabled": "La connexion à ChatGPT est désactivée. Un administrateur peut l’activer sur la page API et ChatGPT, section Paramètres de l’installation.",
     "notConfigured": "L’administrateur du serveur doit configurer les connexions à ChatGPT.",
     "signIn": "Connectez-vous avec votre compte CounselorBot pour connecter ChatGPT.",
     "reconnect": "Reconnectez votre compte ChatGPT dans votre espace personnel.",
@@ -68,7 +68,7 @@
     "adminSettings": "Gérez la connexion à ChatGPT depuis son panneau dédié dans Administration."
   },
   "de": {
-    "disabled": "Die ChatGPT-Verbindung ist deaktiviert. Administratoren können sie unter Administration → Allgemein → ChatGPT-Verbindung aktivieren.",
+    "disabled": "Die ChatGPT-Verbindung ist deaktiviert. Administratoren können sie auf der Seite APIs und ChatGPT im Abschnitt Einstellungen der Installation aktivieren.",
     "notConfigured": "Die Serververwaltung muss ChatGPT-Verbindungen einrichten.",
     "signIn": "Melde dich mit deinem CounselorBot-Konto an, um ChatGPT zu verbinden.",
     "reconnect": "Verbinde dein ChatGPT-Konto im persönlichen Bereich erneut.",
@@ -85,7 +85,7 @@
     "adminSettings": "Verwalte die ChatGPT-Verbindung im dafür vorgesehenen Administrationsbereich."
   },
   "sv": {
-    "disabled": "ChatGPT-anslutningen är avaktiverad. En administratör kan aktivera den under Administration → Allmänt → ChatGPT-anslutning.",
+    "disabled": "ChatGPT-anslutningen är avaktiverad. En administratör kan aktivera den på sidan API:er och ChatGPT, avsnittet Installationens inställningar.",
     "notConfigured": "Serveradministratören behöver konfigurera ChatGPT-anslutningar.",
     "signIn": "Logga in med ditt CounselorBot-konto för att ansluta ChatGPT.",
     "reconnect": "Anslut ditt ChatGPT-konto igen i ditt personliga område.",

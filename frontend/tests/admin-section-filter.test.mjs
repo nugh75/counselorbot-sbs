@@ -124,10 +124,11 @@ for (const language of Object.keys(labels)) {
                 const [, , title, intro, apiKeysIntro] = generalLabels[language];
                 const block = page.getByRole('region', { name: title, exact: true });
                 await block.getByText(intro, { exact: true }).waitFor();
-                await block.getByTestId('chatgpt-settings').getByRole('button').first().waitFor();
-                // Order inside the block: personal APIs, ChatGPT, external-provider privacy.
+                await block.getByTestId('external-privacy-settings').waitFor();
+                // Enabling personal APIs and ChatGPT moved to the "APIs and ChatGPT" page; a link points there.
                 const order = await block.locator('[data-testid]').evaluateAll(nodes => nodes.map(node => node.dataset.testid));
-                assert.deepEqual(order, ['personal-api-settings', 'chatgpt-settings', 'external-privacy-settings']);
+                assert.deepEqual(order, ['external-privacy-settings']);
+                assert.equal(await block.locator('a[href="/profilo/api-personali#ai-admin"]').count(), 1);
                 // The platform API keys belong to the administrator and stay outside the block.
                 assert.equal(await block.getByText(apiKeysIntro, { exact: true }).count(), 0);
                 await page.getByText(apiKeysIntro, { exact: true }).waitFor();
