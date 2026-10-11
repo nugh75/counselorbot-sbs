@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { BookOpen, Bot, ClipboardList, Compass, GraduationCap, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, ClipboardList, Compass, GraduationCap, LayoutGrid, Library, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, type LucideIcon } from 'lucide-react';
 import { ClassViewSwitcher } from './ClassViewSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
@@ -64,10 +64,13 @@ export function Header() {
     const authLabel = isAuthenticated ? t('nav.logout') : t('nav.adminLogin');
     const AuthIcon = isAuthenticated ? LogOut : LogIn;
 
-    // Navigazione per dominio: in linea i quattro ingressi principali; le voci
+    // Navigazione per dominio: in linea gli ingressi principali; le voci
     // di ruolo (Area docente, Amministrazione) stanno solo nel menu.
     const workItems: SecondaryItem[] = [];
     const accountItems: SecondaryItem[] = [];
+    // Catalogo strumenti: prima ci si arrivava solo da alcuni percorsi (fiocco,
+    // Bussola), mai dalla navigazione.
+    workItems.push({ key: 'tools', href: '/strumenti', icon: Library, label: t('nav.tools') });
     if (isAuthenticated && !accessLoading && isToolAllowed(access, 'bussola')) {
         workItems.push({ key: 'orientation', href: '/bussola', icon: Compass, label: t('orientation.landing.open') });
     }
@@ -96,7 +99,7 @@ export function Header() {
     const secondaryItems = [...workItems, ...accountItems, ...menuOnlyItems];
 
     const desktopItems = secondaryItems.filter(item => !item.menuOnly);
-    // I quattro ingressi principali in linea da `lg`; il menu a tre punti segue
+    // Gli ingressi principali in linea da `lg`; il menu a tre punti segue
     // subito dopo e contiene le voci di ruolo.
     const workInline = (
         <div className="hidden items-center gap-1 lg:flex">
@@ -144,7 +147,7 @@ export function Header() {
                                 {/* Vista attiva dello studente con classi (#146). */}
                                 {isAuthenticated && <ClassViewSwitcher className="hidden lg:flex" />}
 
-                                {/* I quattro ingressi principali, poi il menu a tre punti. */}
+                                {/* Gli ingressi principali, poi il menu a tre punti. */}
                                 {workInline}
 
                                 <HeaderMenu
