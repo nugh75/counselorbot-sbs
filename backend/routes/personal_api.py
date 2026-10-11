@@ -62,6 +62,14 @@ class ConnectionUpdate(BaseModel):
     api_key: SecretStr | None = None
 
 
+class ModelListRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    provider: str = Field(min_length=1, max_length=40)
+    # The key being typed, or the saved connection being edited (its key never leaves the server).
+    api_key: SecretStr | None = None
+    connection_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}$")
+
+
 class CounselorBinding(BaseModel):
     model_config = ConfigDict(extra="forbid")
     counselor_id: int = Field(gt=0, strict=True)
@@ -384,6 +392,22 @@ def _prepare_routing(db, username):
     return row
 
 
+def _available_models(db, provider, key):
+    """Chat models the provider lists for this key (empty when it cannot be reached)."""
+    from ..api_secrets import config_key
+    ai = AIService(db)
+    for name in personal_api.PROVIDERS:
+        ai.config.pop(config_key(name), None)  # Never fall back to the installation's keys.
+    ai.config[config_key(provider)] = key
+    return ai.list_models(provider)
+
+
+def _check_model(db, provider, key, model):
+    """A connection is saved only with a model the provider really offers for this key."""
+    if model not in _available_models(db, provider, key):
+        raise HTTPException(422, "personalAPI.errors.modelUnavailable")
+
+
 def _write_connection(db, username, request, row):
     provider, model, name = request.provider.strip(), request.model.strip(), request.name.strip()
     if provider not in personal_api.PROVIDERS or not model or not name:
@@ -394,9 +418,13 @@ def _write_connection(db, username, request, row):
     if not key and (not row.encrypted_key or row.provider != provider):
         raise HTTPException(422, "personalAPI.errors.authentication")
     try:
+        saved_key = personal_api.decrypt_key(row) if not key else None
+    except personal_api.PersonalAPIError:
+        raise HTTPException(409, "personalAPI.errors.configuration") from None
+    # Checked before anything changes, so a refused model never alters the saved connection.
+    _check_model(db, provider, key or saved_key, model)
+    try:
         row.encrypted_key = personal_api.encrypt_key(username, provider, key, row.id) if key else row.encrypted_key
-        if not key:
-            personal_api.decrypt_key(row)
     except personal_api.PersonalAPIError:
         raise HTTPException(409, "personalAPI.errors.configuration") from None
     row.name, row.provider, row.model_name = name, provider, model
@@ -503,6 +531,27 @@ def update_routing(request: RoutingUpdate, identity: dict = Depends(current_owne
         routing.share_last_error = None
     db.commit()
     return _catalog(db, identity)
+
+
+@router.post("/user/api-connections/models", dependencies=[Depends(browser_mutation)])
+def list_connection_models(request: ModelListRequest, identity: dict = Depends(current_owner), db: Session = Depends(get_db)):
+    """Chat models this key can use, so the person picks one that works."""
+    _require_personal_counselors(db)
+    provider = request.provider.strip()
+    if provider not in personal_api.PROVIDERS:
+        raise HTTPException(422, "personalAPI.errors.configuration")
+    key = request.api_key.get_secret_value().strip() if request.api_key else ""
+    if not key and request.connection_id:
+        row = _own_connection(db, identity["username"], request.connection_id)
+        if row.provider != provider:
+            raise HTTPException(422, "personalAPI.errors.authentication")
+        try:
+            key = personal_api.decrypt_key(row)
+        except personal_api.PersonalAPIError:
+            raise HTTPException(409, "personalAPI.errors.configuration") from None
+    if not key or len(key) > 4096 or any(char.isspace() for char in key):
+        raise HTTPException(422, "personalAPI.errors.authentication")
+    return {"models": _available_models(db, provider, key)}
 
 
 @router.post("/user/api-connections/{connection_id}/test", dependencies=[Depends(browser_mutation)])

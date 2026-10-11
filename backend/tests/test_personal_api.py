@@ -29,8 +29,16 @@ def identity(username='alice', **values):
     return dict(auth._anonymous_identity(), authenticated=True, username=username, **values)
 
 
+class ListedModels(list):
+    """Fake provider listing: every model exists except 'not-listed'."""
+    def __contains__(self, model):
+        return model != 'not-listed'
+
+
 @pytest.fixture
-def client(db):
+def client(db, monkeypatch):
+    from backend.ai_service import AIService as Service
+    monkeypatch.setattr(Service, 'list_models', lambda self, provider=None: ListedModels())
     app = FastAPI()
     app.include_router(routes.router)
     app.dependency_overrides[database.get_db] = lambda: db
