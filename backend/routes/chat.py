@@ -734,7 +734,6 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "guided_phase_prompt_key": phase_prompt_key,
         "provider": _provider,
         "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
-        "shared_group_id": getattr(ai_service, "shared_group_id", None),
         "model_attempts": getattr(ai_service, "last_attempts", []),
         "context_budget": getattr(ai_service, "last_context_report", None),
         "journey_coverage": prepared.components.get("journey_coverage"),
@@ -924,7 +923,6 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 "provider": provider,
                 "model": model,
                 "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
-                "shared_group_id": getattr(ai_service, "shared_group_id", None),
                 "model_attempts": getattr(ai_service, "last_attempts", []),
                 "context_budget": getattr(ai_service, "last_context_report", None),
                 "journey_coverage": prepared.components.get("journey_coverage"),
@@ -1281,7 +1279,6 @@ async def chat_message(
         "questionnaire_type": questionnaire_type,
         "conversation_summary_length": len(conversation_summary),
         "credential_source": "personal" if getattr(ai_service, "personal_target", None) else "system",
-        "shared_group_id": getattr(ai_service, "shared_group_id", None),
         "usage": usage,
         "cost_usd": cost_usd,
     }, "user_input", "bot_response")

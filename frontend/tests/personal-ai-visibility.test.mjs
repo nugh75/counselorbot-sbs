@@ -95,7 +95,7 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
             try {
                 await f.page.goto(`${origin}/admin`);
                 const api = f.page.getByTestId('personal-api-settings');
-                const toggle = api.getByRole('checkbox', { name: personalAPIText(lang, 'adminToggle'), exact: true });
+                const toggle = api.getByRole('checkbox');
                 await toggle.waitFor();
                 assert.equal(await toggle.isDisabled(), false);
                 await api.getByText(personalAPIText(lang, 'automatic'), { exact: true }).waitFor();

@@ -28,7 +28,7 @@ async function fixture({ lang = 'en', width = 390, settingsFailure = null, role 
     await context.addInitScript(lang => { localStorage.setItem('cb_lang', lang); }, lang);
     const page = await context.newPage();
     page.setDefaultTimeout(12000);
-    const state = { settings: structuredClone(settings), writes: [], failure: null, readFailure: settingsFailure, held: null, errors: [], lockWrites: [], lockFailure: null, sources: null, routingWrites: [], share: null, shareWrites: [] };
+    const state = { settings: structuredClone(settings), writes: [], failure: null, readFailure: settingsFailure, held: null, errors: [], lockWrites: [], lockFailure: null, sources: null, routingWrites: [] };
     page.on('pageerror', error => state.errors.push(error.message));
     await page.route('**/*', async route => {
         const request = route.request(); const url = new URL(request.url());
@@ -61,12 +61,6 @@ async function fixture({ lang = 'en', width = 390, settingsFailure = null, role 
                     tools: state.settings.tools.map(row => ({ ...row, enabled: row.admin_enabled && !body.disabled_tool_keys.includes(row.key) })) };
             } else if (state.readFailure) return route.fulfill({ status: state.readFailure, json: {} });
             data = state.settings;
-        } else if (url.pathname.endsWith('/api-share') && state.share) {
-            if (request.method() === 'PUT') { const body = request.postDataJSON(); state.shareWrites.push(body);
-                const c = state.share.connections.find(row => row.id === body.connection_id);
-                state.share.share = { owner_username: 'fixture', connection_id: c.id, mine: true, reasoning: body.reasoning, last_error: null, name: c.name, provider: c.provider, model: c.model }; }
-            else if (request.method() === 'DELETE') { state.shareWrites.push('DELETE'); state.share.share = null; }
-            data = state.share;
         } else if (url.pathname === '/api/user/api-connections') data = state.sources ?? { available: false };
         else if (url.pathname === '/api/user/api-routing') {
             const body = request.postDataJSON(); state.routingWrites.push(body);
@@ -358,32 +352,6 @@ test('#205: counselor details show description, institution model and the teache
         await plain.getByText('No description available.', { exact: true }).waitFor();
         assert.equal(await plain.getByTestId('counselor-institution-model').textContent(), 'Installation default model');
         assert.equal(await plain.locator('#counselor-details-source').count(), 0);
-        assert.deepEqual(f.state.errors, []);
-    } finally { await f.context.close(); }
-});
-
-test('#201: the teacher shares one of their API connections with the class', async () => {
-    const f = await fixture({ width: 390, settings: { ...initial, counselors } });
-    f.state.share = { available: true, share: { owner_username: 'other', connection_id: 'b'.repeat(32), mine: false, reasoning: null, last_error: null,
-        name: null, provider: 'anthropic', model: 'claude-x' }, usage: { requests: 3, cost_usd: 0.1234 },
-        connections: [{ id: 'a'.repeat(32), name: 'School key', provider: 'openrouter', model: 'qwen/own' }] };
-    try {
-        await f.page.reload({ waitUntil: 'networkidle' });
-        await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
-        const section = f.page.getByTestId('class-api-share');
-        await section.getByText('Another teacher shares their connection (anthropic · claude-x). Sharing yours replaces it.', { exact: true }).waitFor();
-        await section.getByText('This month: 3 requests, 0.12 USD recorded.', { exact: true }).waitFor();
-        await section.getByText('Your ChatGPT subscription is personal and cannot be shared with the class.', { exact: true }).waitFor();
-        await section.locator('#class-api-share-connection').selectOption('a'.repeat(32));
-        await section.locator('#class-api-share-reasoning').selectOption('low');
-        await section.getByRole('button', { name: 'Share with the class', exact: true }).click();
-        await section.getByText('Shared: School key · qwen/own', { exact: true }).waitFor();
-        assert.deepEqual(f.state.shareWrites[0], { connection_id: 'a'.repeat(32), reasoning: 'low' });
-        await section.getByRole('button', { name: 'Stop sharing', exact: true }).click();
-        await section.getByRole('button', { name: 'Stop sharing', exact: true }).waitFor({ state: 'detached' });
-        assert.equal(f.state.shareWrites[1], 'DELETE');
-        assert.deepEqual(f.state.writes, []);
-        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
         assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
 });
