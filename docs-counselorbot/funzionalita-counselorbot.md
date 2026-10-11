@@ -17,6 +17,8 @@ come primo elemento in evidenza (hero card), mentre il catalogo degli strumenti 
 mostrato sotto collassato (con interruttore per espanderlo che ricorda la scelta nel
 browser). **Riprendi un’attività** è in fondo, con l’immagine del puzzle;
 le attività interrotte sono raggiungibili anche dalla navigazione.
+Il catalogo degli strumenti ha un indirizzo proprio, `/strumenti` (apre
+`/?view=questionnaires`), ed è la voce **Strumenti** della navigazione.
 
 L’interfaccia non usa emoji né segni testuali come «+», «→» o «✓» nelle etichette:
 ogni simbolo è un’icona SVG (lucide-react). Le azioni dal significato evidente
