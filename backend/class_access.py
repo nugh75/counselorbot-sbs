@@ -160,7 +160,10 @@ def _counselor_access(db: Session, username: str, classes) -> tuple[list[int], i
                     if settings is not None and settings.default_counselor_id in allowed), None)
     private = [cid for (cid,) in db.query(models.Counselor.id).filter(
         models.Counselor.owner_username == username, active).order_by(*order)] if username else []
-    return institutional + private, default
+    # Counselors a teacher of these classes offers with their API key are allowed too.
+    from .class_api_sharing import offered_private_counselors
+    offered = [cid for cid in offered_private_counselors(db, username) if cid not in private] if username else []
+    return institutional + private + offered, default
 
 
 def _admin_tool_keys(db: Session) -> list[str]:
