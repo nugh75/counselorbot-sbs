@@ -12,7 +12,7 @@ import {
     buildFallbackQuestionnaireConfig,
 } from '@/lib/questionnaires';
 import { fetchInstruments } from '@/lib/instruments-api';
-import { QuestionnaireSelector } from '@/components/questionnaire/QuestionnaireSelector';
+import { QuestionnaireSelector, type PausedChat } from '@/components/questionnaire/QuestionnaireSelector';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { InputMethodSelector } from '@/components/qsa/InputMethodSelector';
 import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
@@ -126,6 +126,13 @@ export default function Home() {
     const [preparingInstrument, setPreparingInstrument] = useState(false);
     const [sessionCounselorId, setSessionCounselorId] = useState<number | null>(null);
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
+    // Chat appena congelata col fiocco: il catalogo la ricorda in cima, così
+    // chi ci arriva sa cosa è successo e come tornare indietro.
+    const [pausedChat, setPausedChat] = useState<PausedChat | null>(null);
+    // L'avviso vale solo per l'atterraggio dopo il fiocco: uscire dal catalogo lo chiude.
+    useEffect(() => {
+        if (step !== 'questionnaire-select') setPausedChat(null);
+    }, [step]);
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
     const [notebookUpdatedAt, setNotebookUpdatedAt] = useState<string | null | undefined>(undefined);
     const [studentPaths, setStudentPaths] = useState<StudentClassPath[] | null>(null);
@@ -611,6 +618,7 @@ export default function Home() {
 
     // Tutti gli ingressi riusano le preferenze dell’account.
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
+        setPausedChat(null);
         setSelectedQuestionnaire(questionnaire);
         setSelectedInstrumentId(questionnaire.id);
         setScores(null);
@@ -919,7 +927,8 @@ export default function Home() {
 
                     {/* Step: Questionnaire Selection */}
                     {step === 'questionnaire-select' && (
-                        <QuestionnaireSelector onSelect={handleQuestionnaireSelect} onBack={goBack} completed={completedTypes} />
+                        <QuestionnaireSelector onSelect={handleQuestionnaireSelect} onBack={goBack} completed={completedTypes}
+                            pausedChat={pausedChat} onDismissPausedChat={() => setPausedChat(null)} />
                     )}
 
                     {step === 'counselor-select' && counselorRequest && (
@@ -1054,6 +1063,7 @@ export default function Home() {
                                     initialResponseFormat={responseFormat}
                                     reasoningCapable={reasoningCapable}
                                     onFrozen={() => {
+                                        setPausedChat({ sessionId, questionnaireId: selectedQuestionnaire.id });
                                         setResume(null);
                                         setFrozenSnapshot(null);
                                         setStep('questionnaire-select');
