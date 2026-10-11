@@ -15,6 +15,7 @@ from types import SimpleNamespace
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, ConfigDict, Field
 from fastapi.responses import JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -27,6 +28,7 @@ from ..user_names import store_user_display_name
 from ..class_tools import ALWAYS_ON, tool_catalog
 from ..class_access import FORUM_OPTIONS, forum_option
 from ..group_visibility import _is_admin, _username, _visible_group_query
+from .chatgpt import browser_mutation
 
 router = APIRouter()
 get_db = database.get_db
@@ -932,3 +934,67 @@ async def get_my_teacher_notes(
         .all()
     )
     return [_serialize_note(note) for note in notes]
+
+
+# --- #201: a teacher's personal API connection shared with the class ---------
+
+class APIShareUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    connection_id: str = Field(pattern=r"^[a-f0-9]{32}$")
+    reasoning: str | None = Field(default=None, max_length=16)
+
+
+def _api_share_state(db: Session, group_id: int, username: str) -> dict:
+    from .. import class_api_sharing
+    share = db.get(models.ClassAPIShare, group_id)
+    connection = db.get(models.PersonalAPIConnection, share.connection_id) if share else None
+    return {
+        "available": class_api_sharing.enabled(db),
+        "share": share and {
+            "owner_username": share.owner_username, "connection_id": share.connection_id,
+            "mine": share.owner_username == username, "reasoning": share.reasoning, "last_error": share.last_error,
+            # Another teacher's connection shows only provider and model, never its name or key.
+            "name": connection.name if connection and share.owner_username == username else None,
+            "provider": connection.provider if connection else None, "model": connection.model_name if connection else None,
+        },
+        "connections": [{"id": c.id, "name": c.name, "provider": c.provider, "model": c.model_name}
+                        for c in db.query(models.PersonalAPIConnection).filter_by(username=username)
+                        .order_by(models.PersonalAPIConnection.updated_at, models.PersonalAPIConnection.id)],
+        "usage": class_api_sharing.month_usage(db, group_id),
+    }
+
+
+@router.get("/teacher/groups/{group_id}/api-share")
+async def get_api_share(group_id: int, current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    _require_settings_group(db, current_user, group_id)
+    return _api_share_state(db, group_id, _username(current_user))
+
+
+@router.put("/teacher/groups/{group_id}/api-share", dependencies=[Depends(browser_mutation)])
+async def put_api_share(group_id: int, payload: APIShareUpdate, current_user=Depends(auth.get_current_plan_manager),
+                        db: Session = Depends(get_db)):
+    from .. import class_api_sharing, personal_api
+    _require_settings_group(db, current_user, group_id, for_update=True)
+    if not class_api_sharing.enabled(db):
+        raise HTTPException(403, "personalAPI.errors.disabled")
+    username = _username(current_user)
+    # Only the teacher's own API connections; ChatGPT subscriptions are never shared.
+    connection = db.query(models.PersonalAPIConnection).filter_by(id=payload.connection_id, username=username).first()
+    if connection is None:
+        raise HTTPException(404, "Connection not found")
+    if payload.reasoning is not None and payload.reasoning not in personal_api.REASONING_LEVELS:
+        raise HTTPException(422, "personalAPI.errors.configuration")
+    share = db.get(models.ClassAPIShare, group_id) or models.ClassAPIShare(group_id=group_id)
+    share.owner_username, share.connection_id, share.reasoning, share.last_error = username, connection.id, payload.reasoning, None
+    db.add(share)
+    db.commit()
+    return _api_share_state(db, group_id, username)
+
+
+@router.delete("/teacher/groups/{group_id}/api-share", dependencies=[Depends(browser_mutation)])
+async def delete_api_share(group_id: int, current_user=Depends(auth.get_current_plan_manager), db: Session = Depends(get_db)):
+    # Stopping is always allowed to whoever manages the class, even with sharing switched off.
+    _require_settings_group(db, current_user, group_id, for_update=True)
+    db.query(models.ClassAPIShare).filter_by(group_id=group_id).delete()
+    db.commit()
+    return _api_share_state(db, group_id, _username(current_user))
