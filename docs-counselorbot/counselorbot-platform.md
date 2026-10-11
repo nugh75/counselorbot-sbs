@@ -3,8 +3,8 @@
 Current interface reference: [CounselorBot functions](funzionalita-counselorbot.md),
 maintained alongside product changes and read live by the CounselorBot Assistant
 and Compass. The introduction offers Compass, Questionnaire analysis, Guided paths,
-and Personal area and tools. The full activity catalog starts with Compass and
-ends with Resume activities. PDF study and Flashcards are in the Personal area;
+and Student area and tools. The full activity catalog starts with Compass and
+ends with Resume activities. PDF study and Flashcards are in the Student area;
 there is no separate Training category.
 
 
@@ -62,9 +62,9 @@ controls offer listening and diagrams. Sessions with conversation progress save
 after replies; the home page and navigation provide Resume. Freeze saves and closes.
 An optional OpenCode workspace provides an alternative conversation experience.
 
-## Personal area: terminology and organization
+## Student area: terminology and organization
 
-**Personal area** (`/profilo`) starts with **My journey**: active goals, next
+**Student area** (`/profilo`) starts with **My journey**: active goals, next
 activities, received assignments and teacher feedback. Resources are grouped by
 purpose: understanding, exploring/acting, documenting and support.
 
@@ -126,7 +126,7 @@ managers can access the Notebook, questionnaire results and related conversation
 as disclosed when joining. This is separate from voluntary goal-summary sharing
 with the group's teachers and explicit assignment-response sharing with the
 assigning teacher. Response drafts and linked goals are not disclosed through
-that flow. Do not describe all Personal area content as private from teachers.
+that flow. Do not describe all Student area content as private from teachers.
 
 Students own their goals and personal work. Teachers and researchers have scoped
 group and pedagogical capabilities; research contacts support research operations.

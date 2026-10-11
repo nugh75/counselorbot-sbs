@@ -39,7 +39,7 @@ async function fixture(width, locale = 'it', resume = false) {
 }
 
 for (const width of [390, 1440]) {
-    test(`home, personal area and legacy PDF links preserve resume at ${width}px`, async () => {
+    test(`home, student area and legacy PDF links preserve resume at ${width}px`, async () => {
         const { page, context, errors } = await fixture(width, 'it', true);
         try {
             await page.goto(`${origin}/?view=home`);
@@ -56,7 +56,7 @@ for (const width of [390, 1440]) {
             await resumeLink.click();
             await page.getByText(/Feedback conservato/).waitFor();
             // Dalla testata comune il ritorno è un link, non più il bottone del vecchio PageHeader.
-            await page.locator('[data-personal-area-header]').getByRole('link', { name: 'Area personale', exact: true }).click();
+            await page.locator('[data-personal-area-header]').getByRole('link', { name: 'Area studente', exact: true }).click();
             await page.waitForURL('**/profilo');
             const tools = page.getByRole('navigation', { name: 'Studiare e ragionare', exact: true });
             await tools.waitFor();

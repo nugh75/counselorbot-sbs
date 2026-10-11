@@ -2,7 +2,7 @@
 export const classGroupTexts = {
     it: {
         title: "Gruppi e classi che gestisco",
-        subtitle: "Gestisci classi scolastiche o gruppi di adulti, universitari e altri partecipanti. Si entra tramite link di invito (web o Telegram) o codice dall’area personale. Collega un gruppo o una classe a un piano di somministrazione per associare i risultati.",
+        subtitle: "Gestisci classi scolastiche o gruppi di adulti, universitari e altri partecipanti. Si entra tramite link di invito (web o Telegram) o codice dall’area studente. Collega un gruppo o una classe a un piano di somministrazione per associare i risultati.",
         newGroup: "Nuovo gruppo o classe",
         namePlaceholder: "Nome (es. 3B, universitari, formazione adulti)",
         schoolPlaceholder: "Scuola, università o ente (opzionale)",
@@ -51,7 +51,7 @@ export const classGroupTexts = {
     },
     en: {
         title: "Groups and classes I manage",
-        subtitle: "Manage school classes or groups of adults, university students and other participants. Members join via an invitation link (web or Telegram) or a code in their personal area. Link a group or class to an administration plan to associate results.",
+        subtitle: "Manage school classes or groups of adults, university students and other participants. Members join via an invitation link (web or Telegram) or a code in their student area. Link a group or class to an administration plan to associate results.",
         newGroup: "New group or class",
         namePlaceholder: "Name (e.g. 3B, university students, adult learning)",
         schoolPlaceholder: "School, university or organisation (optional)",
@@ -100,7 +100,7 @@ export const classGroupTexts = {
     },
     es: {
         title: "Grupos y clases que gestiono",
-        subtitle: "Gestiona clases escolares o grupos de adultos, universitarios y otros participantes. Se accede mediante un enlace de invitación (web o Telegram) o un código en el área personal. Vincula un grupo o una clase a un plan de administración para asociar los resultados.",
+        subtitle: "Gestiona clases escolares o grupos de adultos, universitarios y otros participantes. Se accede mediante un enlace de invitación (web o Telegram) o un código en el área del estudiante. Vincula un grupo o una clase a un plan de administración para asociar los resultados.",
         newGroup: "Nuevo grupo o clase", namePlaceholder: "Nombre (p. ej., 3B, universitarios, formación de adultos)",
         schoolPlaceholder: "Escuela, universidad o entidad (opcional)", school: "Escuela, universidad o entidad", levelLabel: 'Nivel', levelNone: 'Nivel no indicado',
         levelSecondaria: 'Secundaria', levelUniversita: 'Universidad', levelAdulti: 'Adultos',
@@ -126,7 +126,7 @@ export const classGroupTexts = {
     },
     fr: {
         title: "Groupes et classes que je gère",
-        subtitle: "Gérez des classes scolaires ou des groupes d’adultes, d’étudiants universitaires et d’autres participants. L’inscription se fait par lien d’invitation (web ou Telegram) ou par code dans l’espace personnel. Associez un groupe ou une classe à un plan de passation pour relier les résultats.",
+        subtitle: "Gérez des classes scolaires ou des groupes d’adultes, d’étudiants universitaires et d’autres participants. L’inscription se fait par lien d’invitation (web ou Telegram) ou par code dans l’espace élève. Associez un groupe ou une classe à un plan de passation pour relier les résultats.",
         newGroup: "Nouveau groupe ou classe", namePlaceholder: "Nom (ex. 3B, étudiants, formation pour adultes)",
         schoolPlaceholder: "École, université ou organisme (facultatif)", school: "École, université ou organisme", levelLabel: 'Niveau', levelNone: 'Niveau non indiqué',
         levelSecondaria: 'Secondaire', levelUniversita: 'Université', levelAdulti: 'Adultes',
@@ -152,7 +152,7 @@ export const classGroupTexts = {
     },
     de: {
         title: "Gruppen und Klassen, die ich verwalte",
-        subtitle: "Verwalten Sie Schulklassen oder Gruppen von Erwachsenen, Studierenden und anderen Teilnehmenden. Der Beitritt erfolgt per Einladungslink (Web oder Telegram) oder Code im persönlichen Bereich. Verknüpfen Sie eine Gruppe oder Klasse mit einem Durchführungsplan, um Ergebnisse zuzuordnen.",
+        subtitle: "Verwalten Sie Schulklassen oder Gruppen von Erwachsenen, Studierenden und anderen Teilnehmenden. Der Beitritt erfolgt per Einladungslink (Web oder Telegram) oder Code im Bereich für Lernende. Verknüpfen Sie eine Gruppe oder Klasse mit einem Durchführungsplan, um Ergebnisse zuzuordnen.",
         newGroup: "Neue Gruppe oder Klasse", namePlaceholder: "Name (z. B. 3B, Studierende, Erwachsenenbildung)",
         schoolPlaceholder: "Schule, Universität oder Organisation (optional)", school: "Schule, Universität oder Organisation", levelLabel: 'Stufe', levelNone: 'Keine Stufe angegeben',
         levelSecondaria: 'Sekundarstufe', levelUniversita: 'Universität', levelAdulti: 'Erwachsene',
