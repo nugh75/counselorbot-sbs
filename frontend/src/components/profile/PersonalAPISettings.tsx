@@ -15,30 +15,12 @@ import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ChatGPTConnectionPanel } from './ChatGPTConnectionPanel';
+import { SourceOptions } from './SourceOptions';
+import { decode, encode, fromServer, levelsFor, validSource, type Binding, type PersonalSources as Settings } from '@/lib/personal-sources';
 
 type Connection = { id: string; name: string; provider: string; model: string };
 type Counselor = { id: number; name: string; description: string; persona: string };
-type ServerBinding = { counselor_id: number; connection_id: string | null; chatgpt_model: string | null; reasoning: string | null };
-// A source is '' (institution), 'api:<connection id>' or 'chatgpt:<model>' (#200).
-type Binding = { counselor_id: number; source: string; reasoning: string };
-type Settings = {
-    available: boolean; api_enabled: boolean; chatgpt_enabled: boolean; enabled: boolean; providers: string[];
-    default_connection_id: string | null; default_chatgpt_model: string | null; default_reasoning: string | null;
-    connections: Connection[]; bindings: ServerBinding[];
-    chatgpt_models: { slug: string; display_name: string; reasoning_levels: string[] }[];
-    counselors: { id: number; name: string; is_personal: boolean }[];
-};
-const encode = (connection: string | null, chatgpt: string | null) => connection ? `api:${connection}` : chatgpt ? `chatgpt:${chatgpt}` : '';
-const decode = (source: string) => ({ connection_id: source.startsWith('api:') ? source.slice(4) : null, chatgpt_model: source.startsWith('chatgpt:') ? source.slice(8) : null });
-const fromServer = (items: ServerBinding[]): Binding[] => items.map(b => ({ counselor_id: b.counselor_id, source: encode(b.connection_id, b.chatgpt_model), reasoning: b.reasoning ?? '' }));
-// #202: levels offered for a source; a ChatGPT model that lists its own levels offers only those.
-const API_LEVELS = ['none', 'low', 'medium', 'high'];
-const levelsFor = (data: Settings | null, source: string) => !data || !source ? [] : source.startsWith('chatgpt:')
-    ? (data.chatgpt_models.find(m => `chatgpt:${m.slug}` === source)?.reasoning_levels ?? []).length
-        ? data.chatgpt_models.find(m => `chatgpt:${m.slug}` === source)!.reasoning_levels : ['low', 'medium', 'high']
-    : API_LEVELS;
 const sortedBindings = (items: Binding[]) => JSON.stringify([...items].sort((a, b) => a.counselor_id - b.counselor_id));
-const validSource = (data: Settings, source: string) => !source || data.connections.some(c => `api:${c.id}` === source) || data.chatgpt_models.some(m => `chatgpt:${m.slug}` === source);
 const providerName = (value: string) => (({ openai: 'OpenAI', openrouter: 'OpenRouter', gemini: 'Google Gemini' } as Record<string, string>)[value] ?? value.charAt(0).toUpperCase() + value.slice(1));
 
 async function request(path: string, method = 'GET', body?: unknown) {
@@ -164,10 +146,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
         </select>
     </div>;
     // Options shared by the default and the per-counselor selects: the person's APIs and ChatGPT models.
-    const sourceOptions = settings && <>
-        {settings.api_enabled && settings.connections.length > 0 && <optgroup label={l('sourceApi')}>{settings.connections.map(c => <option key={c.id} value={`api:${c.id}`}>{c.name} · {c.model}</option>)}</optgroup>}
-        {settings.chatgpt_enabled && settings.chatgpt_models.length > 0 && <optgroup label={l('sourceChatgpt')}>{settings.chatgpt_models.map(m => <option key={m.slug} value={`chatgpt:${m.slug}`}>{`ChatGPT · ${m.display_name}`}</option>)}</optgroup>}
-    </>;
+    const sourceOptions = settings && <SourceOptions sources={settings} />;
     if (settings?.available === false) return null;
     const field = 'mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900';
     return <div className="min-h-screen bg-slate-50 px-4 py-8"><div className="mx-auto max-w-3xl space-y-6">
