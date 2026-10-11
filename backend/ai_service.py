@@ -91,6 +91,16 @@ LOCAL_PROVIDERS = {'ollama', 'llamacpp'}
 # #202: token di ragionamento per livello scelto sulle fonti personali (API).
 PERSONAL_REASONING_BUDGETS = {'minimal': 512, 'low': 1024, 'medium': 4096, 'high': 12000, 'xhigh': 24000}
 
+# Model ids that cannot answer a chat (embeddings, speech, images, moderation, legacy completions).
+NON_CHAT_MODEL_MARKERS = ("embed", "tts", "whisper", "dall-e", "moderation", "transcribe", "gpt-image",
+                          "davinci", "babbage", "-audio", "realtime", "guard")
+
+
+def _chat_model(model_id):
+    lowered = (model_id or "").lower()
+    return bool(lowered) and not any(marker in lowered for marker in NON_CHAT_MODEL_MARKERS)
+
+
 class AIService:
     def __init__(self, db: Session, username: str | None = None):
         self.db = db
@@ -467,6 +477,19 @@ class AIService:
                     if 'generateContent' in actions:
                         names.append((m.name or '').removeprefix('models/'))
                 return sorted(n for n in names if n)
+            if provider == 'mistral':
+                api_key = self._get_api_key('api_key_mistral')
+                if not api_key:
+                    return []
+                # Mistral lists embedding, OCR and moderation models too: keep the chat ones.
+                listed = Mistral(api_key=api_key).models.list().data or []
+                return sorted({m.id for m in listed
+                               if m.id and getattr(getattr(m, 'capabilities', None), 'completion_chat', False)})
+            if provider == 'anthropic':
+                api_key = self._get_api_key('api_key_anthropic')
+                if not api_key:
+                    return []
+                return sorted(m.id for m in anthropic.Anthropic(api_key=api_key, timeout=15).models.list(limit=100).data)
             if provider == 'openai':
                 client = OpenAI(api_key=self._get_api_key('api_key_openai'), timeout=timeout)
             elif provider == 'openrouter':
@@ -483,9 +506,8 @@ class AIService:
             elif provider in OPENAI_COMPAT_PROVIDERS:
                 client = self._openai_compatible_client(provider, timeout=timeout)
             else:
-                # anthropic/gemini/mistral: nessun elenco dinamico, usa il fallback statico lato UI
                 return []
-            return sorted({m.id for m in client.models.list().data})
+            return sorted({m.id for m in client.models.list().data if _chat_model(m.id)})
         except Exception as e:
             logger.warning(f"list_models fallito per {provider}: {e}")
             return []
