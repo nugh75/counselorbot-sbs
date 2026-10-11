@@ -4,7 +4,7 @@ import type { PersonalAreaSlug } from './personal-area';
 type Localized = readonly [string, string, string, string, string, string];
 const languages: readonly Lang[] = ['it', 'en', 'es', 'fr', 'de', 'sv'];
 const labels = {
-    title: ['Area personale', 'Personal area', 'Área personal', 'Espace personnel', 'Persönlicher Bereich', 'Personlig sida'],
+    title: ['Area studente', 'Student area', 'Área del estudiante', 'Espace élève', 'Bereich für Lernende', 'Elevområde'],
     intro: ['Ritrova il tuo lavoro e scegli come proseguire.', 'Find your work and choose how to continue.', 'Encuentra tu trabajo y elige cómo continuar.', 'Retrouve ton travail et choisis comment continuer.', 'Finde deine Arbeit wieder und entscheide, wie es weitergeht.', 'Hitta ditt arbete och välj hur du vill fortsätta.'],
     journey: ['Il mio percorso', 'My journey', 'Mi recorrido', 'Mon parcours', 'Mein Weg', 'Min väg'],
     reflection: ['Conoscermi e riflettere', 'Understand myself and reflect', 'Conocerme y reflexionar', 'Me connaître et réfléchir', 'Mich kennenlernen und reflektieren', 'Lära känna mig själv och reflektera'],

@@ -55,7 +55,7 @@ for (const width of [390, 1280]) {
                     await header.waitFor();
                     assert.equal(await page.locator('main h1').count(), 1);
                     assert.equal(await header.locator('h1').textContent(), title);
-                    const root = header.getByRole('link', { name: 'Area personale', exact: true });
+                    const root = header.getByRole('link', { name: 'Area studente', exact: true });
                     const rootBox = await root.boundingBox();
                     const headingBox = await header.locator('h1').boundingBox();
                     assert.ok(rootBox.x < headingBox.x, 'return link stays to the left of the title');
@@ -88,7 +88,7 @@ for (const width of [390, 1280]) {
     });
 }
 
-test('an unsaved action asks before returning to the personal area', async () => {
+test('an unsaved action asks before returning to the student area', async () => {
     const { page, context, errors } = await fixture(1280);
     try {
         await page.goto(`${origin}/profilo/azioni`, { waitUntil: 'networkidle' });

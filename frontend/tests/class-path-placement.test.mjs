@@ -368,7 +368,7 @@ test('Self-marking on hero card calls API and updates step state', async () => {
     }
 });
 
-test('Personal area (/profilo): hero card displayed first when path active, tools collapsible', async () => {
+test('Student area (/profilo): hero card displayed first when path active, tools collapsible', async () => {
     const f = await createFixture({ paths: [samplePath1], lang: 'it' });
     try {
         await f.page.goto(`${origin}/profilo`, { waitUntil: 'domcontentloaded' });

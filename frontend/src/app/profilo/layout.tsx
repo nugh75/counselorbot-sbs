@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 // dell'app portava lo stesso titolo generico, e più schede aperte erano
 // indistinguibili.
 export const metadata: Metadata = {
-    title: 'Area personale - CounselorBot',
+    title: 'Area studente - CounselorBot',
     description: 'Compilazioni, taccuino, obiettivi, portfolio e classi.',
 };
 
