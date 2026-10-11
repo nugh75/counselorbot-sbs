@@ -1,7 +1,8 @@
 # Connessioni AI personali di studenti e docenti
 
 La funzione è disattivata per default. Il vero amministratore la abilita in
-**Amministrazione → Configurazione → Generale → API personali**; il ricercatore
+**API e ChatGPT → Impostazioni dell’installazione** (`/profilo/api-personali#ai-admin`,
+visibile solo agli amministratori anche a funzioni spente); il ricercatore
 non può abilitarla. L’attivazione prepara automaticamente la protezione delle
 credenziali, senza comandi o variabili obbligatorie sul server.
 

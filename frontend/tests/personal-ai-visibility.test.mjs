@@ -93,7 +93,9 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
         test(`admin can enable both functions without preconfigured keys in ${lang} at ${width}px`, async () => {
             const f = await fixture({ role: 'admin', lang, width });
             try {
-                await f.page.goto(`${origin}/admin`);
+                // #ai-admin: the switches live on the "APIs and ChatGPT" page, open to admins even with both off.
+                await f.page.goto(`${origin}/profilo/api-personali`);
+                await f.page.locator('#ai-admin').waitFor();
                 const api = f.page.getByTestId('personal-api-settings');
                 const toggle = api.getByRole('checkbox');
                 await toggle.waitFor();
