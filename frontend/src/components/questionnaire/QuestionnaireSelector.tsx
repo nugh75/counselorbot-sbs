@@ -10,7 +10,8 @@ import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { STRATEGIC_COMPETENCES_URLS } from '@/lib/questionnaire-sources';
 import { resolveActiveStudentTools, TEACHER_AREA_INSTRUMENT_IDS } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
-import { resumeHref } from '@/lib/use-resume-entries';
+import { resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
+import { latestPausedByTool } from '@/lib/catalog-status';
 import { useUserAccess } from '@/lib/use-user-access';
 import { isToolAllowed } from '@/lib/user-access';
 import { BackButton } from '@/components/ui/BackButton';
@@ -41,6 +42,8 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [], paused
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const { rows: instrumentCatalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useInstrumentCatalog();
     const { access } = useUserAccess();
+    const { frozen } = useResumeEntries();
+    const pausedByTool = useMemo(() => latestPausedByTool(frozen), [frozen]);
 
     const active = useMemo(() => {
         return resolveActiveStudentTools(instrumentCatalog, lang, access);
@@ -83,6 +86,8 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [], paused
         const hasExternalAssessment = Boolean(externalAssessmentUrl);
         const isExpanded = expanded === q.id;
         const isSelected = selectedKey === q.id;
+        const paused = pausedByTool.get(q.id);
+        const pausedDate = paused?.updated_at ? new Date(paused.updated_at).toLocaleDateString(lang) : null;
         const unavailableInCurrentLanguage = !isItalian
             && !q.agentOnly
             && instrumentCatalog !== null
@@ -137,6 +142,11 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [], paused
                                 {t('selector.experimentalBadge')}
                             </span>
                         )}
+                        {paused && (
+                            <span className="px-2 py-0.5 bg-sky-50 text-sky-700 text-2xs font-bold rounded-full">
+                                {pausedDate ? t('selector.badge.pausedOn', { date: pausedDate }) : t('selector.badge.paused')}
+                            </span>
+                        )}
                         {completed.includes(q.id) && (
                             <span className="px-2 py-0.5 bg-teal-50 text-teal-700 text-2xs font-bold rounded-full">
                                 {t('selector.badge.done')}
@@ -170,6 +180,16 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [], paused
                         >
                             {t('selector.openStrategic')}
                             <ExternalLink className="w-4 h-4" />
+                        </a>
+                    )}
+                    {paused && (
+                        <a
+                            href={resumeHref(paused)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1.5 rounded-md border border-sky-200 bg-sky-50 px-3.5 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-100 transition-colors"
+                        >
+                            <Snowflake className="w-4 h-4" aria-hidden="true" />
+                            {t('selector.paused.resume')}
                         </a>
                     )}
                     <Link
