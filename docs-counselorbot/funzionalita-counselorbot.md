@@ -202,7 +202,8 @@ invio immediato scelto esplicitamente. In conversazione vocale si avvia e si fer
 la registrazione; il microfono non riparte da solo.
 
 Le conversazioni guidate con progressi si salvano dopo le risposte per essere
-riprese anche da un altro dispositivo. Congela sessione salva e chiude. La ripresa
+riprese anche da un altro dispositivo. Congela sessione salva e chiude: si torna al
+catalogo strumenti, che in cima avvisa che la chat è in pausa e offre Riprendi. La ripresa
 riporta percorso e conversazione, ma non garantisce memoria illimitata del modello.
 Eliminare un punto di ripresa non elimina i risultati del questionario o gli altri
 lavori. Il progresso PDF, invece, è locale al browser.
