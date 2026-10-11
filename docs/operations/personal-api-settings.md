@@ -150,22 +150,26 @@ personale lo spiega. Docenti e studenti senza classi non sono limitati. Il
 permesso riguarda le chiavi proprie degli studenti: la chiave che il docente
 mette a disposizione della classe (sezione seguente) resta disponibile.
 
-## Chiave condivisa con la classe (#201)
+## Counselor del docente offerti alle classi
 
-Con `personal_api_enabled` e il nuovo interruttore `class_api_sharing_enabled`
-(Area amministrazione → Configurazione & Prompt → Generale → API personali e ChatGPT → API personali → casella «Docenti — possono mettere a disposizione…», `GET/PUT /api/admin/class-api-sharing`), un
-docente che gestisce la classe sceglie una propria connessione e un livello di
-ragionamento (`GET/PUT/DELETE /api/teacher/groups/{id}/api-share`, tabella
-`class_api_shares`, creata all’avvio). Solo connessioni API del docente: mai
-l’abbonamento ChatGPT. Per uno studente l’ordine è: scelta personale, chiave della
-classe, istituto; se le sue classi attive condividono chiavi diverse risponde
-l’istituto. La chiave è decifrata solo nel backend; i log delle chat registrano
-`shared_group_id` e `credential_source = personal`, quindi il costo non pesa sul
-budget dell’istituto e il docente vede richieste e costo del mese. Gli errori
-della chiave tornano agli studenti come `personalAPI.errors.classShare` (messaggio
-neutro) e restano al docente come `last_error`. I dati delle conversazioni sono
-trattati dal fornitore dell’account del docente: va indicato nell’informativa
-della scuola. Interrompere la condivisione vale dal messaggio successivo.
+Con `personal_api_enabled` e `class_api_sharing_enabled` (casella «Docenti —
+possono mettere a disposizione…» in Area amministrazione → Configurazione & Prompt
+→ Generale → API personali e ChatGPT, `GET/PUT /api/admin/class-api-sharing`), un
+docente spunta nella propria pagina API e ChatGPT `share_with_classes`
+(`personal_ai_routing`, migrazione `20261011_teacher_shared_counselors`, che
+elimina anche la vecchia tabella per classe `class_api_shares`). `class_api_sharing.offers`
+restituisce per lo studente i counselor legati a una connessione API dai docenti
+(proprietari o co-docenti) delle sue classi attive; un counselor offerto da due
+docenti con chiavi diverse resta all’istituto. Ordine: scelta propria dello
+studente, counselor offerto, istituto. I counselor personali del docente offerti
+diventano visibili (`visible_counselors`) e consentiti anche agli studenti con
+classi filtrate (`class_access`). La chiave è decifrata solo nel backend; i log
+registrano `shared_owner` e `credential_source = personal`, quindi il costo non
+pesa sul budget dell’istituto e il docente vede richieste e costo del mese. Gli
+errori tornano agli studenti come `personalAPI.errors.classShare` e restano al
+docente come `share_last_error`. ChatGPT non si offre mai. I dati delle
+conversazioni sono trattati dal fornitore dell’account del docente: va indicato
+nell’informativa della scuola.
 
 ## Protezione, migrazione e API
 

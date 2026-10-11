@@ -7,7 +7,6 @@ import { apiFetch, getIdentity, getViewAsAccount } from '@/lib/auth';
 import { defaultForumOptions, effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, type ClassCounselor, type ClassSettings, type ClassTool, type ClassLockKind } from '@/lib/class-settings';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { CounselorDetailsDialog } from './CounselorDetailsDialog';
-import { ClassAPIShareSection } from './ClassAPIShareSection';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
 import { instituteText } from '@/lib/i18n-teacher-institutes';
 import { forumText } from '@/lib/i18n-forum';
@@ -251,7 +250,6 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
         <p className="text-sm text-slate-600">{l('always')}: {settings.tools.filter(tool => tool.always_on).map(label).join(' · ')}</p>
         {settings.counselors.length > 0 && <ClassCounselorsSection counselors={settings.counselors} disabled={disabledCounselors}
             defaultId={defaultCounselor} busy={busy} admin={admin} lockDisabled={busy || dirty} onLock={(kind, id, state) => void changeLock(kind, id, state)} onToggle={toggleCounselor} onDefault={chooseDefault} />}
-        <ClassAPIShareSection groupId={settings.group_id} />
         <Card>
             <h2 className="text-lg font-bold text-slate-800">{l('personalAITitle')}</h2>
             <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">

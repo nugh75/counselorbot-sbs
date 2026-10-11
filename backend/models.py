@@ -122,23 +122,10 @@ class PersonalAIRouting(Base):
     default_chatgpt_model = Column(String(200), nullable=True)
     # #202: reasoning level for the default source; None = the model's default.
     default_reasoning = Column(String(16), nullable=True)
-
-
-class ClassAPIShare(Base):
-    """A teacher's personal API connection made available to a class (#201).
-
-    Students of the class chat through it; the key never leaves the server and
-    a personal ChatGPT subscription can never be shared.
-    """
-    __tablename__ = "class_api_shares"
-    __table_args__ = (CheckConstraint("reasoning IS NULL OR reasoning IN ('none', 'minimal', 'low', 'medium', 'high', 'xhigh')",
-                                      name="class_api_share_reasoning_level"),)
-    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), primary_key=True)
-    owner_username = Column(String, nullable=False, index=True)
-    connection_id = Column(String(32), ForeignKey("personal_api_connections.id", ondelete="CASCADE"), nullable=False)
-    reasoning = Column(String(16), nullable=True)
-    last_error = Column(String(64), nullable=True)  # last failure code, shown to the teacher
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    # A teacher's counselors bound to their API connections, offered to the students
+    # of their classes; the key itself never leaves the server.
+    share_with_classes = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    share_last_error = Column(String(64), nullable=True)  # last failure, shown to the teacher
 
 
 class PersonalCounselorConnection(Base):

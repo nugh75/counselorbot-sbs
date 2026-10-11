@@ -232,3 +232,31 @@ test('teachers read that their ChatGPT is personal and how to give GPT to a clas
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });
+
+test('a teacher offers their API-backed counselors to their classes without sharing the key', async () => {
+    const f = await fixture({ role: 'teacher', width: 390 });
+    Object.assign(f.settings, { share_available: true, share_with_classes: false, share_last_error: null, share_usage: { requests: 4, cost_usd: 0.2 } });
+    const l = key => personalAPIText('it', key);
+    try {
+        await f.page.goto(`${origin}/docente/api-personali`);
+        const box = f.page.getByTestId('share-with-classes');
+        await box.getByText(l('shareHelp'), { exact: true }).waitFor();
+        await box.getByRole('checkbox', { name: l('shareToggle'), exact: true }).check();
+        await f.page.getByRole('button', { name: 'Salva associazioni e utilizzo', exact: true }).click();
+        await f.page.getByRole('status').filter({ hasText: l('saved') }).waitFor();
+        const saved = f.writes.find(w => w.path === '/api/user/api-routing').body;
+        assert.equal(saved.share_with_classes, true);
+        await box.getByText(l('shareUsage').replace('{requests}', '4').replace('{cost}', '0.20'), { exact: true }).waitFor();
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
+
+test('students never see the offer flag', async () => {
+    const f = await fixture();
+    try {
+        await f.page.goto(`${origin}/profilo/api-personali`);
+        await f.page.locator('#personal-counselor-1').waitFor();
+        assert.equal(await f.page.getByTestId('share-with-classes').count(), 0);
+    } finally { await f.context.close(); }
+});

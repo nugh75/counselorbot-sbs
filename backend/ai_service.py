@@ -97,7 +97,7 @@ class AIService:
         self.config = self._load_config()
         # #202: livello di ragionamento della fonte personale; prevale sul preset.
         self.personal_reasoning = None
-        self.shared_group_id = None  # #201: class whose teacher's key answers
+        self.shared_owner = None  # teacher whose counselor and API key answer this student
         self.personal_target = None
         self.personal_error = None
         self.personal_error_code = "personalAPI.errors.configuration"
@@ -112,21 +112,21 @@ class AIService:
                 self.personal_reasoning = personal_api.chosen_reasoning(
                     db, account, getattr(db, "info", {}).get("personal_ai_counselor_id"))
             else:
-                # #201: without an own choice, the class teacher's shared key answers.
-                from .class_api_sharing import share_for_student
-                share = share_for_student(db, account)
-                if share is not None:
-                    self.shared_group_id = share.group_id
-                    shared = db.get(models.PersonalAPIConnection, share.connection_id)
-                    self.use_personal_connection(shared)
-                    self.personal_reasoning = share.reasoning
+                # Without an own choice, a counselor offered by the student's teacher
+                # answers through that teacher's API connection.
+                from .class_api_sharing import offers
+                offer = offers(db, account).get(getattr(db, "info", {}).get("personal_ai_counselor_id"))
+                if offer is not None:
+                    self.shared_owner, connection_id, reasoning = offer
+                    self.use_personal_connection(db.get(models.PersonalAPIConnection, connection_id))
+                    self.personal_reasoning = reasoning
         except personal_api.PersonalAPIError as exc:
             # Raise within dispatch so existing HTTP/SSE error handlers can
             # report it, while forbidding a fallback to system credentials.
             self.personal_error = str(exc)
-            if self.shared_group_id is not None:
+            if self.shared_owner is not None:
                 from .class_api_sharing import SHARE_ERROR, record_error
-                record_error(db, self.shared_group_id, "personalAPI.errors.configuration")
+                record_error(db, self.shared_owner, "personalAPI.errors.configuration")
                 self.personal_error, self.personal_error_code = "Class AI connection failed.", SHARE_ERROR
         self.last_usage = None
         self.last_provider = None
@@ -208,10 +208,10 @@ class AIService:
                            summary_model_name=connection.model_name)
 
     def _personal_failure(self, exc):
-        if self.shared_group_id is not None:
-            # Students get a neutral message; the teacher sees the reason in class settings.
+        if self.shared_owner is not None:
+            # Students get a neutral message; the teacher sees the reason on their APIs page.
             from .class_api_sharing import SHARE_ERROR, record_error
-            record_error(self.db, self.shared_group_id, personal_api.connection_error_code(exc))
+            record_error(self.db, self.shared_owner, personal_api.connection_error_code(exc))
             return AIError("Class AI connection failed.", code=SHARE_ERROR)
         return AIError("Personal AI connection failed.", code=personal_api.connection_error_code(exc))
 
