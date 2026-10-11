@@ -40,6 +40,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
     const [settings, setSettings] = useState<Settings | null>(null);
     const [own, setOwn] = useState<Counselor[]>([]);
     const [enabled, setEnabled] = useState(false);
+    const [share, setShare] = useState(false);
     const [defaultSource, setDefaultSource] = useState('');
     const [defaultReasoning, setDefaultReasoning] = useState('');
     const [bindings, setBindings] = useState<Binding[]>([]);
@@ -62,7 +63,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
     const [deleteCounselor, setDeleteCounselor] = useState<number | null>(null);
     const messageRef = useRef<HTMLDivElement>(null);
     useEffect(() => { if (error || feedback) messageRef.current?.scrollIntoView({ block: 'nearest' }); }, [error, feedback]);
-    const routingDirty = !!settings && (enabled !== settings.enabled || defaultSource !== encode(settings.default_connection_id, settings.default_chatgpt_model) || defaultReasoning !== (settings.default_reasoning ?? '') || sortedBindings(bindings) !== sortedBindings(fromServer(settings.bindings)));
+    const routingDirty = !!settings && (enabled !== settings.enabled || share !== Boolean(settings.share_with_classes) || defaultSource !== encode(settings.default_connection_id, settings.default_chatgpt_model) || defaultReasoning !== (settings.default_reasoning ?? '') || sortedBindings(bindings) !== sortedBindings(fromServer(settings.bindings)));
     const connectionDirty = connectionOpen && (name !== (editingConnection?.name ?? '') || provider !== (editingConnection?.provider ?? 'openai') || model !== (editingConnection?.model ?? '') || !!key);
     const counselorDirty = counselorOpen && (counselorName !== (editingCounselor?.name ?? '') || description !== (editingCounselor?.description ?? '') || persona !== (editingCounselor?.persona ?? ''));
     const dirty = routingDirty || connectionDirty || counselorDirty;
@@ -72,7 +73,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
 
     const accept = useCallback((data: Settings, preserve = false) => {
         setSettings(data);
-        if (!preserve) { setEnabled(data.enabled); setDefaultSource(encode(data.default_connection_id, data.default_chatgpt_model)); setDefaultReasoning(data.default_reasoning ?? ''); setBindings(fromServer(data.bindings)); }
+        if (!preserve) { setEnabled(data.enabled); setShare(Boolean(data.share_with_classes)); setDefaultSource(encode(data.default_connection_id, data.default_chatgpt_model)); setDefaultReasoning(data.default_reasoning ?? ''); setBindings(fromServer(data.bindings)); }
         else {
             setDefaultSource(source => validSource(data, source) ? source : '');
             setBindings(items => items.filter(b => validSource(data, b.source) && data.counselors.some(c => c.id === b.counselor_id)));
@@ -133,6 +134,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
         const fallback = decode(defaultSource);
         accept(await request('/api/user/api-routing', 'PUT', { enabled, default_connection_id: fallback.connection_id, default_chatgpt_model: fallback.chatgpt_model,
             default_reasoning: defaultSource && defaultReasoning || null,
+            ...(settings?.share_available ? { share_with_classes: share } : {}),
             bindings: bindings.map(b => ({ counselor_id: b.counselor_id, ...decode(b.source), reasoning: b.reasoning || null })) }));
         setFeedback('saved'); notifyChatGPTChange();
     });
@@ -193,6 +195,12 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
                 <p className="text-sm text-slate-600">{l('reasoningHelp')}</p>
                 {settings.counselors.length === 0 && <p className="text-sm text-slate-600">{l('noCounselors')}</p>}
                 {settings.counselors.map(c => { const bound = bindings.find(b => b.counselor_id === c.id); return <div key={c.id} className="flex flex-col gap-3 sm:flex-row sm:items-end"><div className="min-w-0 flex-1"><label htmlFor={`personal-counselor-${c.id}`} className="text-sm font-semibold text-slate-800">{c.name}{c.is_personal && <span className="ml-2 text-slate-600">({l('personalCounselor')})</span>}</label><select id={`personal-counselor-${c.id}`} className={field} value={bound?.source ?? ''} onChange={e => assign(c.id, e.target.value, bound?.reasoning)}><option value="">{l('useDefault')}</option>{sourceOptions}</select></div>{reasoningSelect(`personal-reasoning-${c.id}`, bound?.source ?? '', bound?.reasoning ?? '', value => assign(c.id, bound!.source, value))}</div>; })}
+                {settings.share_available && <div className="space-y-2 rounded-lg border border-slate-200 p-3" data-testid="share-with-classes">
+                    <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={share} onChange={e => setShare(e.target.checked)} />{l('shareToggle')}</label>
+                    <p className="text-sm text-slate-600">{l('shareHelp')}</p>
+                    {settings.share_with_classes && settings.share_usage && <p className="text-sm text-slate-600">{l('shareUsage').replace('{requests}', String(settings.share_usage.requests)).replace('{cost}', settings.share_usage.cost_usd.toFixed(2))}</p>}
+                    {settings.share_with_classes && settings.share_last_error && <Callout variant="warning">{l('shareError')}</Callout>}
+                </div>}
                 <Button disabled={busy || !routingDirty || (enabled && !defaultSource && !bindings.length)} onClick={saveRouting}>{l('saveRouting')}</Button>
             </fieldset></Card></section>
             {settings.api_enabled && <section aria-labelledby="own-counselors-title" className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><h2 id="own-counselors-title" className="text-xl font-bold text-slate-900">{l('ownCounselors')}</h2><Button variant="secondary" disabled={busy} onClick={() => editCounselor(null)}><Plus className="h-4 w-4" aria-hidden />{l('createCounselor')}</Button></div><p className="text-sm text-slate-600">{l('ownHelp')}</p>

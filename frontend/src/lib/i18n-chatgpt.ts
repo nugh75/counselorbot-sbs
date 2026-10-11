@@ -4,7 +4,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
     "it": {
         "chatgpt.title": "Il tuo abbonamento ChatGPT",
         "chatgpt.intro": "Usa il tuo account personale mantenendo le conversazioni in CounselorBot. La quota e i modelli dipendono dal tuo piano ChatGPT.",
-        "chatgpt.personalTeacher": "Il tuo abbonamento ChatGPT è personale: puoi usarlo solo nelle tue chat. I termini di OpenAI non permettono di farlo usare ad altri, nemmeno ai tuoi studenti, e un’intera classe ne esaurirebbe subito i limiti. Se vuoi che la tua classe usi i modelli GPT, crea una chiave API OpenAI e mettila a disposizione da Classe → Strumenti e counselor → Chiave API per la classe.",
+        "chatgpt.personalTeacher": "Il tuo abbonamento ChatGPT è personale: puoi usarlo solo nelle tue chat. I termini di OpenAI non permettono di farlo usare ad altri, nemmeno ai tuoi studenti, e un’intera classe ne esaurirebbe subito i limiti. Se vuoi che la tua classe usi i modelli GPT, aggiungi qui una tua chiave API OpenAI, assegnala ai counselor in «Chi risponde» e mettili a disposizione dei tuoi studenti.",
         "chatgpt.personalStudent": "Il tuo abbonamento ChatGPT è personale: puoi usarlo solo nelle tue chat e non va condiviso con altri.",
         "chatgpt.choiceHelp": "Attivando il tuo abbonamento ChatGPT disattivi l’uso delle API personali. Entrambe le credenziali restano salvate.",
         "chatgpt.connect": "Collega ChatGPT",
@@ -86,7 +86,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
     "en": {
         "chatgpt.title": "Your ChatGPT subscription",
         "chatgpt.intro": "Use your personal account while keeping conversations in CounselorBot. Quota and models depend on your ChatGPT plan.",
-        "chatgpt.personalTeacher": "Your ChatGPT subscription is personal: you can use it only in your own chats. OpenAI’s terms do not allow others to use it, not even your students, and a whole class would use up its limits at once. If you want your class to use GPT models, create an OpenAI API key and make it available under Class → Tools & counselors → API key for the class.",
+        "chatgpt.personalTeacher": "Your ChatGPT subscription is personal: you can use it only in your own chats. OpenAI’s terms do not allow others to use it, not even your students, and a whole class would use up its limits at once. If you want your class to use GPT models, add an OpenAI API key here, assign it to counselors under “Who answers” and offer them to your students.",
         "chatgpt.personalStudent": "Your ChatGPT subscription is personal: you can use it only in your own chats and must not share it.",
         "chatgpt.choiceHelp": "Enabling your ChatGPT subscription switches off use of personal APIs. Both sets of credentials remain saved.",
         "chatgpt.connect": "Connect ChatGPT",
@@ -168,7 +168,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
     "es": {
         "chatgpt.title": "Tu suscripción a ChatGPT",
         "chatgpt.intro": "Usa tu cuenta personal y mantén las conversaciones en CounselorBot. La cuota y los modelos dependen de tu plan ChatGPT.",
-        "chatgpt.personalTeacher": "Tu suscripción a ChatGPT es personal: solo puedes usarla en tus propios chats. Los términos de OpenAI no permiten que otros la usen, ni siquiera tus estudiantes, y una clase entera agotaría sus límites enseguida. Si quieres que tu clase use los modelos GPT, crea una clave API de OpenAI y ponla a disposición en Clase → Herramientas y counselors → Clave API para la clase.",
+        "chatgpt.personalTeacher": "Tu suscripción a ChatGPT es personal: solo puedes usarla en tus propios chats. Los términos de OpenAI no permiten que otros la usen, ni siquiera tus estudiantes, y una clase entera agotaría sus límites enseguida. Si quieres que tu clase use los modelos GPT, añade aquí una clave API de OpenAI, asígnala a los counselors en «Quién responde» y ofrécelos a tus estudiantes.",
         "chatgpt.personalStudent": "Tu suscripción a ChatGPT es personal: solo puedes usarla en tus propios chats y no debes compartirla.",
         "chatgpt.choiceHelp": "Al activar tu suscripción ChatGPT desactivas el uso de las API personales. Ambas credenciales permanecen guardadas.",
         "chatgpt.connect": "Conectar ChatGPT",
@@ -250,7 +250,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
     "fr": {
         "chatgpt.title": "Votre abonnement ChatGPT",
         "chatgpt.intro": "Utilisez votre compte personnel et conservez vos conversations dans CounselorBot. Le quota et les modèles dépendent de votre forfait ChatGPT.",
-        "chatgpt.personalTeacher": "Ton abonnement ChatGPT est personnel : tu ne peux l’utiliser que dans tes propres conversations. Les conditions d’OpenAI ne permettent pas que d’autres l’utilisent, même tes élèves, et une classe entière épuiserait aussitôt ses limites. Si tu veux que ta classe utilise les modèles GPT, crée une clé API OpenAI et mets-la à disposition dans Classe → Outils et counselors → Clé API pour la classe.",
+        "chatgpt.personalTeacher": "Ton abonnement ChatGPT est personnel : tu ne peux l’utiliser que dans tes propres conversations. Les conditions d’OpenAI ne permettent pas que d’autres l’utilisent, même tes élèves, et une classe entière épuiserait aussitôt ses limites. Si tu veux que ta classe utilise les modèles GPT, ajoute ici une clé API OpenAI, attribue-la aux counselors dans « Qui répond » et propose-les à tes élèves.",
         "chatgpt.personalStudent": "Ton abonnement ChatGPT est personnel : tu ne peux l’utiliser que dans tes propres conversations et ne dois pas le partager.",
         "chatgpt.choiceHelp": "Activer ton abonnement ChatGPT désactive l’utilisation des API personnelles. Les deux identifiants restent enregistrés.",
         "chatgpt.connect": "Connecter ChatGPT",
@@ -332,7 +332,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
     "de": {
         "chatgpt.title": "Dein ChatGPT-Abonnement",
         "chatgpt.intro": "Nutze dein persönliches Konto und behalte Gespräche in CounselorBot. Kontingent und Modelle hängen von deinem ChatGPT-Tarif ab.",
-        "chatgpt.personalTeacher": "Dein ChatGPT-Abonnement ist persönlich: Du kannst es nur in deinen eigenen Chats nutzen. Die Bedingungen von OpenAI erlauben nicht, dass andere es nutzen, auch nicht deine Lernenden, und eine ganze Klasse würde seine Limits sofort aufbrauchen. Wenn deine Klasse GPT-Modelle nutzen soll, erstelle einen OpenAI-API-Schlüssel und stelle ihn unter Klasse → Werkzeuge und Counselors → API-Schlüssel für die Klasse bereit.",
+        "chatgpt.personalTeacher": "Dein ChatGPT-Abonnement ist persönlich: Du kannst es nur in deinen eigenen Chats nutzen. Die Bedingungen von OpenAI erlauben nicht, dass andere es nutzen, auch nicht deine Lernenden, und eine ganze Klasse würde seine Limits sofort aufbrauchen. Wenn deine Klasse GPT-Modelle nutzen soll, füge hier einen OpenAI-API-Schlüssel hinzu, weise ihn unter „Wer antwortet“ Counselorn zu und biete sie deinen Lernenden an.",
         "chatgpt.personalStudent": "Dein ChatGPT-Abonnement ist persönlich: Du kannst es nur in deinen eigenen Chats nutzen und darfst es nicht teilen.",
         "chatgpt.choiceHelp": "Das Aktivieren deines ChatGPT-Abonnements deaktiviert eigene APIs. Beide Anmeldedaten bleiben gespeichert.",
         "chatgpt.connect": "ChatGPT verbinden",
@@ -414,7 +414,7 @@ export const CHATGPT_DICTS: Record<Lang, Record<string, string>> = {
     "sv": {
         "chatgpt.title": "Din ChatGPT-prenumeration",
         "chatgpt.intro": "Använd ditt personliga konto och behåll samtalen i CounselorBot. Kvot och modeller beror på ditt ChatGPT-abonnemang.",
-        "chatgpt.personalTeacher": "Ditt ChatGPT-abonnemang är personligt: du kan bara använda det i dina egna chattar. OpenAI:s villkor tillåter inte att andra använder det, inte ens dina elever, och en hel klass skulle genast förbruka dess gränser. Om du vill att klassen ska använda GPT-modeller, skapa en OpenAI API-nyckel och gör den tillgänglig under Klass → Verktyg och counselors → API-nyckel för klassen.",
+        "chatgpt.personalTeacher": "Ditt ChatGPT-abonnemang är personligt: du kan bara använda det i dina egna chattar. OpenAI:s villkor tillåter inte att andra använder det, inte ens dina elever, och en hel klass skulle genast förbruka dess gränser. Om du vill att klassen ska använda GPT-modeller, lägg till en OpenAI API-nyckel här, tilldela den till counselors under ”Vem svarar” och erbjud dem till dina elever.",
         "chatgpt.personalStudent": "Ditt ChatGPT-abonnemang är personligt: du kan bara använda det i dina egna chattar och får inte dela det.",
         "chatgpt.choiceHelp": "När du aktiverar ditt ChatGPT-abonnemang stängs egna API:er av. Båda inloggningsuppgifterna finns kvar.",
         "chatgpt.connect": "Anslut ChatGPT",
