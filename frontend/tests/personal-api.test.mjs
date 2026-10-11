@@ -10,7 +10,7 @@ after(async () => { await browser?.close(); });
 async function fixture({ role = 'student', width = 390, locale = 'it', configured = true, dark = false } = {}) {
     const context = await browser.newContext({ viewport: { width, height: 1050 }, reducedMotion: 'reduce' });
     const page = await context.newPage(); page.setDefaultTimeout(25000);
-    const errors = [], writes = [], own = []; let counter = 1, failSave = false, modelError = null;
+    const errors = [], writes = [], own = [], modelLookups = []; let counter = 1, failSave = false, modelError = null;
     page.on('pageerror', e => errors.push(e.message));
     await page.addInitScript(({ locale, dark }) => { localStorage.setItem('cb_lang', locale); localStorage.setItem('cb_theme', dark ? 'dark' : 'light'); }, { locale, dark });
     const settings = { available: true, api_enabled: true, chatgpt_enabled: false, chatgpt_models: [], default_chatgpt_model: null, default_reasoning: null, providers: ['openai','openrouter','anthropic','gemini'], enabled: configured, default_connection_id: configured ? 'a'.repeat(32) : null, connections: configured ? [{ id: 'a'.repeat(32), name: 'OpenRouter personale', provider: 'openrouter', model: 'qwen/qwen3.8-27b:free' }] : [], bindings: [], counselors: [{ id: 1, name: 'First counselor', is_personal: false }, { id: 2, name: 'Second counselor', is_personal: false }] };
@@ -23,8 +23,9 @@ async function fixture({ role = 'student', width = 390, locale = 'it', configure
         else if (path === '/api/counselors') data = settings.counselors.map(c => ({ ...c, slug: 'test-'+c.id, language: ['*'], questionnaire_types: ['*'], is_active: true, model: 'test-model' }));
         else if (path === '/api/user/api-settings') data = { available: settings.available, configured: !!settings.connections.length, enabled: settings.enabled, active: settings.available && settings.enabled };
         else if (path.startsWith('/api/user/api-connections')) {
-            if (method !== 'GET') { assert.equal(req.headers()['x-requested-with'], 'CounselorBot'); writes.push({ method, path, body: req.postData() ? req.postDataJSON() : undefined }); }
+            if (method !== 'GET' && !path.endsWith('/models')) { assert.equal(req.headers()['x-requested-with'], 'CounselorBot'); writes.push({ method, path, body: req.postData() ? req.postDataJSON() : undefined }); }
             if (path.endsWith('/test')) data = { working: !modelError, ...(modelError ? { error_code: modelError } : {}) };
+            else if (path.endsWith('/models')) { modelLookups.push(req.postDataJSON()); data = { models: ['other/model:free', 'qwen/qwen3.8-27b:free'] }; }
             else {
                 const id = path.split('/')[4];
                 if (method === 'POST' || method === 'PUT') {
@@ -44,14 +45,17 @@ async function fixture({ role = 'student', width = 390, locale = 'it', configure
         }
         return route.fulfill({ status, json: data });
     });
-    return { page, context, settings, own, errors, writes, fail: () => { failSave = true; }, modelFail: code => { modelError = code; } };
+    return { page, context, settings, own, errors, writes, modelLookups, fail: () => { failSave = true; }, modelFail: code => { modelError = code; } };
 }
 async function fillConnection(page, name, model = 'qwen/qwen3.8-27b:free') {
     await page.getByRole('button', { name: 'Aggiungi connessione', exact: true }).click();
     await page.getByLabel('Nome della connessione', { exact: true }).fill(name);
     await page.getByLabel('Provider', { exact: true }).selectOption('openrouter');
-    await page.getByLabel('Modello', { exact: true }).fill(model);
+    // The model is picked from what the provider lists for the key, never typed.
     await page.getByLabel('Chiave API', { exact: true }).fill('fake-browser-key');
+    await page.getByLabel('Chiave API', { exact: true }).blur();
+    await page.locator('#personal-model option', { hasText: model }).waitFor({ state: 'attached' });
+    await page.getByLabel('Modello', { exact: true }).selectOption(model);
 }
 for (const [role, width] of [['student',390],['teacher',1440]]) test(`${role}: multiple accounts and one model associated with two counselors at ${width}px`, async () => {
     const f = await fixture({ role, width, configured: false });
@@ -79,7 +83,7 @@ test('creates a private counselor with Italian instructions, associates a key, a
 });
 test('saved key remains hidden, empty edit preserves it and deletion needs confirmation', async () => {
     const f = await fixture();
-    try { await f.page.goto(`${origin}/profilo/api-personali`); const card = f.page.getByRole('heading', { name: 'OpenRouter personale', exact: true }).locator('..'); await card.getByRole('button', { name: 'Modifica', exact: true }).click(); assert.equal(await f.page.getByLabel('Chiave API', { exact: true }).inputValue(),''); await f.page.getByLabel('Modello', { exact: true }).fill('other/model:free'); await f.page.getByRole('button', { name: 'Salva connessione', exact: true }).click(); await card.getByText(/other\/model:free/).waitFor(); assert.equal('api_key' in f.writes[0].body,false); await card.getByRole('button', { name: 'Elimina connessione', exact: true }).click(); assert.equal(f.writes.filter(w => w.method === 'DELETE').length,0); await card.getByRole('button', { name: 'Elimina connessione', exact: true }).last().click(); await f.page.getByText('Aggiungi una connessione per configurare le tue chiavi e i tuoi modelli.', { exact: true }).waitFor(); }
+    try { await f.page.goto(`${origin}/profilo/api-personali`); const card = f.page.getByRole('heading', { name: 'OpenRouter personale', exact: true }).locator('..'); await card.getByRole('button', { name: 'Modifica', exact: true }).click(); assert.equal(await f.page.getByLabel('Chiave API', { exact: true }).inputValue(),''); await f.page.locator('#personal-model option', { hasText: 'other/model:free' }).waitFor({ state: 'attached' }); await f.page.getByLabel('Modello', { exact: true }).selectOption('other/model:free'); assert.deepEqual(f.modelLookups.at(-1), { provider: 'openrouter', connection_id: 'a'.repeat(32) }); await f.page.getByRole('button', { name: 'Salva connessione', exact: true }).click(); await card.getByText(/other\/model:free/).waitFor(); assert.equal('api_key' in f.writes[0].body,false); await card.getByRole('button', { name: 'Elimina connessione', exact: true }).click(); assert.equal(f.writes.filter(w => w.method === 'DELETE').length,0); await card.getByRole('button', { name: 'Elimina connessione', exact: true }).last().click(); await f.page.getByText('Aggiungi una connessione per configurare le tue chiavi e i tuoi modelli.', { exact: true }).waitFor(); }
     finally { await f.context.close(); }
 });
 test('save failure preserves the draft key and model', async () => {

@@ -49,6 +49,9 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
     const [name, setName] = useState('');
     const [provider, setProvider] = useState('openai');
     const [model, setModel] = useState('');
+    // Chat models the key can use, looked up on request; null until asked.
+    const [models, setModels] = useState<string[] | null>(null);
+    const [modelsBusy, setModelsBusy] = useState(false);
     const [key, setKey] = useState('');
     const [counselorOpen, setCounselorOpen] = useState(false);
     const [editingCounselor, setEditingCounselor] = useState<Counselor | null>(null);
@@ -108,9 +111,24 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
         setBusy(true); setError(null); setFeedback(null);
         try { await action(); } catch (exc) { setError(exc instanceof Error ? exc.message : 'error'); } finally { setBusy(false); }
     };
+    // The model is always picked from what the provider lists for this key (never typed).
+    const canListModels = Boolean(key) || (!!editingConnection && editingConnection.provider === provider);
+    const loadModels = async (saved?: Connection) => {
+        setModelsBusy(true); setError(null);
+        try {
+            const result = await request('/api/user/api-connections/models', 'POST', saved
+                ? { provider: saved.provider, connection_id: saved.id }
+                : { provider, ...(key ? { api_key: key } : { connection_id: editingConnection?.id }) });
+            setModels(result.models);
+            setModel(current => result.models.includes(current) ? current : '');
+        } catch (exc) { setError(exc instanceof Error ? exc.message : 'error'); setModels(null); }
+        finally { setModelsBusy(false); }
+    };
     const editConnection = (row: Connection | null) => {
         if (connectionDirty && !window.confirm(l('dirty'))) return;
-        setEditingConnection(row); setName(row?.name ?? ''); setProvider(row?.provider ?? 'openai'); setModel(row?.model ?? ''); setKey(''); setConnectionOpen(true);
+        setEditingConnection(row); setName(row?.name ?? ''); setProvider(row?.provider ?? 'openai'); setModel(row?.model ?? ''); setKey(''); setModels(null); setConnectionOpen(true);
+        // Editing a saved connection: its key lists the models right away.
+        if (row) void loadModels(row);
     };
     const editCounselor = (row: Counselor | null) => {
         if (counselorDirty && !window.confirm(l('dirty'))) return;
@@ -180,9 +198,20 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
                 {!!settings.connections.length && <p className="text-sm text-slate-600">{l('modelTestHelp')}</p>}
                 {connectionOpen && <Card><form onSubmit={saveConnection} className="space-y-5"><fieldset disabled={busy} className="space-y-5">
                     <div><label htmlFor="personal-connection-name" className="text-sm font-semibold text-slate-800">{l('connectionName')}</label><input id="personal-connection-name" className={field} value={name} maxLength={100} required onChange={e => setName(e.target.value)} aria-describedby="connection-name-help" /><p id="connection-name-help" className="mt-1 text-sm text-slate-600">{l('connectionNameHelp')}</p></div>
-                    <div><label htmlFor="personal-provider" className="text-sm font-semibold text-slate-800">{l('provider')}</label><select id="personal-provider" className={field} value={provider} onChange={e => { setProvider(e.target.value); setKey(''); }}>{settings.providers.map(value => <option key={value} value={value}>{providerName(value)}</option>)}</select></div>
-                    <div><label htmlFor="personal-model" className="text-sm font-semibold text-slate-800">{l('model')}</label><input id="personal-model" className={field} value={model} maxLength={200} required onChange={e => setModel(e.target.value)} aria-describedby="personal-model-help" /><p id="personal-model-help" className="mt-1 text-sm text-slate-600">{l('modelHelp')}</p></div>
-                    <div><label htmlFor="personal-key" className="text-sm font-semibold text-slate-800">{l('key')}</label><input id="personal-key" type="password" className={field} value={key} maxLength={4096} autoComplete="off" autoCapitalize="none" spellCheck={false} required={!editingConnection || provider !== editingConnection.provider} onChange={e => setKey(e.target.value)} />{editingConnection && <p className="mt-1 text-sm text-slate-600">{l('keySaved')}</p>}</div>
+                    <div><label htmlFor="personal-provider" className="text-sm font-semibold text-slate-800">{l('provider')}</label><select id="personal-provider" className={field} value={provider} onChange={e => { setProvider(e.target.value); setKey(''); setModels(null); setModel(''); }}>{settings.providers.map(value => <option key={value} value={value}>{providerName(value)}</option>)}</select></div>
+                    <div><label htmlFor="personal-key" className="text-sm font-semibold text-slate-800">{l('key')}</label><input id="personal-key" type="password" className={field} value={key} maxLength={4096} autoComplete="off" autoCapitalize="none" spellCheck={false} required={!editingConnection || provider !== editingConnection.provider} onChange={e => { setKey(e.target.value); setModels(null); }} onBlur={() => { if (key) void loadModels(); }} />{editingConnection && <p className="mt-1 text-sm text-slate-600">{l('keySaved')}</p>}</div>
+                    <div>
+                        <label htmlFor="personal-model" className="text-sm font-semibold text-slate-800">{l('model')}</label>
+                        <select id="personal-model" className={field} value={model} required disabled={!models?.length} onChange={e => setModel(e.target.value)} aria-describedby="personal-model-help">
+                            <option value="">{l(modelsBusy ? 'modelsLoading' : 'modelChoose')}</option>
+                            {(models ?? []).map(item => <option key={item} value={item}>{item}</option>)}
+                        </select>
+                        <div className="mt-2 flex flex-wrap items-center gap-3">
+                            {models !== null && <Button type="button" variant="secondary" disabled={busy || modelsBusy || !canListModels} onClick={() => void loadModels()}>{l(modelsBusy ? 'modelsLoading' : 'modelsLoad')}</Button>}
+                            {models && models.length === 0 && <p role="status" className="text-sm text-amber-700">{l('modelsEmpty')}</p>}
+                        </div>
+                        <p id="personal-model-help" className="mt-1 text-sm text-slate-600">{l('modelsHelp')}</p>
+                    </div>
                     <div className="flex flex-wrap gap-3"><Button type="submit" disabled={busy || !connectionDirty}>{l('saveConnection')}</Button><Button type="button" variant="secondary" disabled={busy} onClick={() => { if (!connectionDirty || window.confirm(l('dirty'))) { setKey(''); setConnectionOpen(false); } }}>{t('common.cancel')}</Button></div>
                 </fieldset></form></Card>}
             </section>

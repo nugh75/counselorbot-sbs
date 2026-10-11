@@ -193,8 +193,9 @@ without Ollama. This filter has limits and does not guarantee anonymity; use
 fictional data for cloud tests. Then retry the connection and the guided step.
 
 Open **Personal APIs** from your student area (`/profilo/api-personali`).
-Add one or more named connections with a supported provider, exact model ID
-and your own API key. Multiple keys for the same provider or different provider
+Add one or more named connections with a supported provider and your own API key,
+then pick the model from the list the provider returns for that key (only models
+it can use for chat; a model cannot be typed by hand, so it always exists). Multiple keys for the same provider or different provider
 accounts can coexist. Link each connection to one or more counselors and choose
 a default for unassigned counselors and features without a counselor. Select
 **Use my personal APIs** and save associations to activate them; switching it off

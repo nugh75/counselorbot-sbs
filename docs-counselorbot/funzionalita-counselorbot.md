@@ -460,8 +460,12 @@ sono conservate dopo riavvii e aggiornamenti; l’archivio protetto va incluso
 nei backup insieme al database.
 
 La persona può salvare **più connessioni AI**, ciascuna con nome riconoscibile,
-provider, modello e chiave API, anche dello stesso provider o di account esterni
-diversi. Le chiavi sono cifrate e non vengono restituite né mostrate dopo il
+provider, chiave API e modello, anche dello stesso provider o di account esterni
+diversi. Il modello si sceglie solo dall’elenco che il provider restituisce per
+quella chiave (i soli modelli usabili in chat: per esempio Mistral esclude
+embedding, OCR e moderazione); l’elenco si carica appena inserita la chiave, o
+subito quando si modifica una connessione salvata, e il server rifiuta al
+salvataggio un modello che il provider non elenca. Le chiavi sono cifrate e non vengono restituite né mostrate dopo il
 salvataggio. In modifica, il campo vuoto conserva la chiave per quel provider;
 cambiarlo richiede una chiave nuova. L’eliminazione di una connessione chiede
 conferma, rimuove la chiave e le associazioni e conserva i counselor.
