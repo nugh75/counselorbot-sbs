@@ -100,6 +100,31 @@ def decrypt_key(row) -> str:
         raise PersonalAPIError("Personal API credential cannot be read; save the key again") from exc
 
 
+def chosen_source(db, username, counselor_id=None):
+    """The person's choice for a counselor (#200): ("api", connection id), ("chatgpt", model) or None.
+
+    Administrator switches are checked by each consumer, so a disabled source
+    falls back to the institution instead of to another personal source.
+    """
+    from .auth import VIEW_AS_DEMO_ACCOUNTS
+    if not username or username in VIEW_AS_DEMO_ACCOUNTS:
+        return None
+    with db.no_autoflush:
+        routing = db.get(models.PersonalAIRouting, username)
+        if routing is None or not routing.enabled:
+            return None
+        source = routing
+        if counselor_id is not None:
+            source = db.get(models.PersonalCounselorConnection, (username, counselor_id)) or routing
+    connection_id = source.connection_id if source is not routing else routing.default_connection_id
+    model = source.chatgpt_model if source is not routing else routing.default_chatgpt_model
+    if connection_id:
+        return ("api", connection_id)
+    if model:
+        return ("chatgpt", model)
+    return None
+
+
 def active_settings(db, username, counselor_id=None):
     if not username or not feature_enabled(db):
         return None
@@ -107,16 +132,11 @@ def active_settings(db, username, counselor_id=None):
     if username in VIEW_AS_DEMO_ACCOUNTS:
         return None
     with db.no_autoflush:
-        routing = db.get(models.PersonalAIRouting, username)
-        if routing is not None:
-            if not routing.enabled:
+        if db.get(models.PersonalAIRouting, username) is not None:
+            source = chosen_source(db, username, counselor_id)
+            if not source or source[0] != "api":
                 return None
-            cid = routing.default_connection_id
-            if counselor_id is not None:
-                binding = db.get(models.PersonalCounselorConnection, (username, counselor_id))
-                if binding:
-                    cid = binding.connection_id
-            return db.query(models.PersonalAPIConnection).filter_by(id=cid, username=username).first() if cid else None
+            return db.query(models.PersonalAPIConnection).filter_by(id=source[1], username=username).first()
         row = db.query(models.PersonalAPISettings).filter_by(username=username).first()
     if not row or not row.enabled:
         return None

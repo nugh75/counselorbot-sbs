@@ -112,7 +112,8 @@ def test_csrf_preview_and_validation_cannot_expose_or_change_credentials(client,
     assert client.get("/user/api-settings").status_code == 401
 
 
-def test_selecting_one_personal_mode_deactivates_the_other_without_erasing_keys(client, db, signed):
+def test_switching_the_default_source_keeps_both_keys(client, db, signed):
+    # #200: API and ChatGPT no longer exclude each other; the default source switches.
     assert save(client).status_code == 200
     personal = db.query(models.PersonalAPISettings).one()
     sealed_api = personal.encrypted_key
@@ -122,25 +123,25 @@ def test_selecting_one_personal_mode_deactivates_the_other_without_erasing_keys(
     db.commit()
     sealed_chatgpt = chatgpt.encrypted_credentials
     accounts.set_preference(db, "alice", True, "fixture-model")
-    assert chatgpt.use_subscription and not personal.enabled
     assert AIService(db)._targets("ollama", "ignored") == [("openai_chatgpt", "fixture-model")]
-    assert save(client).status_code == 200
-    assert personal.enabled and not chatgpt.use_subscription
-    assert personal.encrypted_key != "personal-test-key"
+    # The legacy key became a connection and can be the default again.
+    legacy = db.query(models.PersonalAPIConnection).filter_by(username="alice").one()
+    assert personal_api.cipher().decrypt(sealed_api.encode()) == personal_api.cipher().decrypt(legacy.encrypted_key.encode())
+    response = client.put("/user/api-routing",
+                          json={"enabled": True, "default_connection_id": legacy.id, "bindings": []})
+    assert response.status_code == 200, response.text
     assert chatgpt.encrypted_credentials == sealed_chatgpt
-    assert personal_api.cipher().decrypt(sealed_api.encode()) == personal_api.cipher().decrypt(personal.encrypted_key.encode())
     assert AIService(db)._targets("ollama", "ignored") == [("openai", "own-model")]
 
 
-def test_ambiguous_legacy_selection_never_spends_either_account(client, db, signed):
+def test_legacy_subscription_flag_alone_selects_nothing(client, db, signed):
+    # The migration moves an active flag into the routing; left over, it is ignored.
     save(client)
     connect(db, signed)
     row = db.query(models.ChatGPTConnection).one()
     row.preferred_model, row.use_subscription = "fixture-model", True
     db.commit()
-    service = AIService(db)
-    with pytest.raises(AIError, match="Choose one personal mode"):
-        service._targets("openai", "system-model")
+    assert AIService(db)._targets("openai", "system-model") == [("openai", "own-model")]
 
 
 def test_nested_services_use_bound_caller_instead_of_resource_owner(client, db):
