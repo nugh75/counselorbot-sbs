@@ -3,8 +3,8 @@
 Current interface reference: [CounselorBot functions](funzionalita-counselorbot.md),
 maintained alongside product changes and read live by the CounselorBot Assistant
 and Compass. The introduction offers Compass, Questionnaire analysis, Guided paths,
-and Personal area and tools. The full activity catalog starts with Compass and
-ends with Resume activities. PDF study and Flashcards are in the Personal area;
+and Student area and tools. The full activity catalog starts with Compass and
+ends with Resume activities. PDF study and Flashcards are in the Student area;
 there is no separate Training category.
 
 
@@ -150,7 +150,7 @@ a second look, next time) and a final summary. They require no questionnaire or
 scores. The summary is a Booklet draft, reviewed and explicitly saved by the person.
 These conversation tools are distinct from personal calendar events.
 
-The Personal area starts with My journey, goals, next activities and assignments.
+The Student area starts with My journey, goals, next activities and assignments.
 `/profilo/obiettivi` coordinates student-owned goals and links to activities, diary,
 cards, comparisons, Notebook, Booklet, saved Tavoli and Portfolio. Completing an
 activity never automatically achieves a goal. `/profilo/timeline` holds the shared
@@ -174,9 +174,9 @@ with formative feedback per alternative. Question banks exist per document (hash
 provider + language); `learning` and `final_test` modes are supported; answers are
 verified server-side.
 
-### Personal area, Notebook, Booklet and Portfolio
+### Student area, Notebook, Booklet and Portfolio
 
-- **Notebook** in the Personal area (`/profilo`): self-description edited by the person, with **revision history** and
+- **Notebook** in the Student area (`/profilo`): self-description edited by the person, with **revision history** and
   **change-reflection notes** (`/profilo/cambiamenti`) linking two consecutive revisions.
 - **Student booklet**: per-instrument editable booklet exportable as PDF, plus
   `EVENTO_STUDIO` and `EVENTO_PROFESSIONALE` narrative types.

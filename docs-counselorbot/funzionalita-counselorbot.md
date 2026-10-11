@@ -8,7 +8,7 @@ un elenco di azioni che l’assistente può eseguire al posto della persona.
 ## Presentazione, attività e navigazione
 
 La presentazione (`/`) offre quattro ingressi illustrati: **Bussola**, **Analisi
-questionari**, **Percorsi guidati**, **Area personale e strumenti**. Il collegamento
+questionari**, **Percorsi guidati**, **Area studente e strumenti**. Il collegamento
 “Vedi tutte le attività e i percorsi” apre il catalogo (`/?view=home`). Nel catalogo
 viene prima la Bussola, poi le analisi dei questionari, i percorsi guidati e l’Area
 personale e strumenti. Se lo studente appartiene a una classe con almeno un percorso
@@ -200,9 +200,9 @@ riporta percorso e conversazione, ma non garantisce memoria illimitata del model
 Eliminare un punto di ripresa non elimina i risultati del questionario o gli altri
 lavori. Il progresso PDF, invece, è locale al browser.
 
-## Area personale e strumenti
+## Area studente e strumenti
 
-La sezione **API e ChatGPT** è in fondo alla panoramica dell’Area personale
+La sezione **API e ChatGPT** è in fondo alla panoramica dell’Area studente
 (`/profilo`) e dell’Area docenti (`/docente`), dopo tutte le sezioni degli strumenti.
 Ha una sola voce, **API e ChatGPT** (`/profilo/api-personali`,
 `/docente/api-personali`), che riunisce le API personali e l’abbonamento ChatGPT
@@ -224,7 +224,7 @@ protezione manca per account esistenti, occorre ripristinarla dal backup del
 server; il pannello non la sostituisce automaticamente. Chi gestisce il server
 deve includere l’archivio protetto delle credenziali nei backup.
 
-Nella pagina **API e ChatGPT** dell’Area personale e dell’Area docenti, la sezione
+Nella pagina **API e ChatGPT** dell’Area studente e dell’Area docenti, la sezione
 **Il tuo abbonamento ChatGPT** consente il collegamento quando la funzione è
 attiva. Se disabilitata, la voce, i badge e la sezione della Guida non compaiono;
 i vecchi indirizzi `/profilo/chatgpt` e `/docente/chatgpt` portano a questa
@@ -308,10 +308,10 @@ in inglese e l’interfaccia è disponibile nelle sei lingue.
 
 Configurazione e limiti: `docs/operations/chatgpt-subscription.md`.
 
-**Testata comune (26 settembre 2026):** tutte le pagine dell’Area personale
+**Testata comune (26 settembre 2026):** tutte le pagine dell’Area studente
 (Taccuino, Risultati, Assegnazioni, Classi, Telegram, Portfolio, Tavolo,
 Orientamento, Azioni, Carte, Confronto, Linea del tempo, Flashcard e pQBL) hanno
-la stessa testata: a sinistra il collegamento **Area personale**, sempre diretto
+la stessa testata: a sinistra il collegamento **Area studente**, sempre diretto
 all’ingresso; sotto l’immagine, il titolo e la descrizione. Il pannello «Vai a…»
 è stato rimosso su richiesta dell’utente.
 
@@ -337,7 +337,7 @@ filtri: categorie con lo stesso nome restano distinte tra istituti. Ogni contenu
 nasconde il filtro senza cancellare i contenuti o i collegamenti; ripristinarla
 rende nuovamente disponibili le associazioni. Queste funzioni sono state distribuite in produzione il 23 settembre 2026.
 
-L’Area personale (`/profilo`) apre con **Da riprendere**, solo quando ci sono
+L’Area studente (`/profilo`) apre con **Da riprendere**, solo quando ci sono
 lavori pertinenti: al massimo tre attività collegate a obiettivi attivi, obiettivi
 senza attività aperte o assegnazioni. Le date disponibili precedono gli elementi
 senza data; un feedback è indicato come disponibile, non come non letto.
@@ -368,7 +368,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. |
 | Analisi combinata dei profili | `/profilo/analisi-combinata` | Generare una lettura integrata di almeno due strumenti tra QSA, QSAr e ZTPI. Si apre dal gruppo Conoscermi e riflettere e non compare più sotto i singoli risultati. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. Lista breve con filtri (gruppo, tipo, finalità richiesta/proposta, stato) e un solo dettaglio aperto alla volta; pianificazione con spiegazione del lavoro personale; anteprima di restituzione con destinatario esplicito e copia fissa. Se l’attività indica degli strumenti, nel dettaglio ognuno si apre con «Apri qui» in una finestra dentro l’attività (Esc o «Chiudi e torna all’attività» riportano al punto di partenza) oppure con «Apri a pagina intera»; uno strumento disattivato dopo l’invio per la classe o il gruppo resta elencato come non disponibile. La revoca conferma in linea sulla scheda. |
-| Percorsi di classe | `/profilo/percorsi` | Seguire i percorsi di apprendimento strutturati pubblicati dai docenti per la propria classe; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. Un passo incontro mostra data, ora, luogo o link; dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo) e il passo risulta fatto: non c’è registro del docente. Il percorso prioritario è inoltre visualizzato in cima alla panoramica dell'Area personale (`/profilo`) come hero card, con il catalogo strumenti sotto collassato. |
+| Percorsi di classe | `/profilo/percorsi` | Seguire i percorsi di apprendimento strutturati pubblicati dai docenti per la propria classe; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. Un passo incontro mostra data, ora, luogo o link; dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo) e il passo risulta fatto: non c’è registro del docente. Il percorso prioritario è inoltre visualizzato in cima alla panoramica dell'Area studente (`/profilo`) come hero card, con il catalogo strumenti sotto collassato. |
 | Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito; collegamenti contestuali alle assegnazioni del gruppo; messaggi generali del docente leggibili direttamente nella pagina; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
@@ -441,7 +441,7 @@ Il caricamento iniziale senza bozza non richiede conferme di scarto.
 
 Condividere il riepilogo di un obiettivo è volontario e revocabile. I gestori di un
 gruppo possono già vedere Taccuino, risultati e relative conversazioni secondo i
-permessi del gruppo. Non affermare che tutto nell’Area personale sia invisibile ai
+permessi del gruppo. Non affermare che tutto nell’Area studente sia invisibile ai
 docenti. Le bozze delle restituzioni e gli obiettivi collegati non sono divulgati
 dal flusso delle assegnazioni. L’AI non salva, adotta, condivide o consegna al posto
 della persona.
@@ -452,7 +452,7 @@ Quando l’amministratore abilita **API personali** in **API e ChatGPT →
 Impostazioni dell’installazione** (sezione visibile solo agli amministratori,
 che raggiungono la pagina anche con entrambe le funzioni spente),
 studenti e docenti trovano il collegamento nella propria pagina personale:
-`/profilo/api-personali` per l’Area personale e `/docente/api-personali` per
+`/profilo/api-personali` per l’Area studente e `/docente/api-personali` per
 l’Area docenti. Le due pagine condividono le impostazioni dello stesso account.
 La funzione è disabilitata per default e il ricercatore non può abilitarla.
 L’attivazione prepara automaticamente la protezione delle chiavi: non occorre
@@ -533,7 +533,7 @@ Spegnendo la funzione, l’amministratore fa usare le API di sistema alle nuove
 richieste e nasconde i collegamenti dalle aree personali. Le richieste già
 avviate terminano con la configurazione iniziale. Le chiavi salvate restano
 cifrate. Anche il modulo e la sezione della Guida scompaiono: un link diretto
-rimanda alla rispettiva area personale. Alla riattivazione riprende la scelta
+rimanda alla rispettiva area studente. Alla riattivazione riprende la scelta
 salvata. I dettagli di attivazione automatica e ripristino sono in
 `docs/operations/personal-api-settings.md`.
 
@@ -548,7 +548,7 @@ seguito) sia per lo studente (con lo screenshot della pagina Percorsi di classe)
 lingue; gli screenshot si rigenerano con `GUIDE_SCREENS=class-paths` in
 `frontend/scripts/capture-guide.mjs`.
 
-`/docente` è una panoramica illustrata, come l'Area personale: in alto, affiancati,
+`/docente` è una panoramica illustrata, come l'Area studente: in alto, affiancati,
 il Taccuino del docente (`/docente/taccuino`, senza form nella home) e i **Taccuini di
 prova** (`/docente/taccuini-prova`). Seguono i tre gruppi (**Classe e assegnazioni**,
 **Cataloghi**, **Somministrazioni e ricerca**), nello stesso ordine e con una voce
@@ -730,13 +730,13 @@ archived, restored, or deleted. Path authorization fails closed with HTTP 403
 existence oracles. All interfaces and messages are translated across
 the 6 platform languages.
 
-**Class paths publishing and student view (P2, #97).** Teachers can publish paths via a sticky `[Publish]` button on `/docente/classi/{id}` (calling `POST /teacher/paths/{path_id}/publish`), which sets status to `published` and marks `published_at` on first publication. Teachers can also archive and restore paths. Students enrolled in active classes view published paths at `/profilo/percorsi` (accessible from the first group «Conoscermi e riflettere» in the personal area, `/profilo`). The layout strictly follows identity guidelines: ochre is used only for the current step's play icon and `Button variant="accent"` for `[Inizia]` (the current step container and badge are petrol), with petrol for primary structure and slate for neutrals. Each published path card displays class name, title, description, and overall progress count and progress bar (`done of total done`). In strict mode (`strict`), future steps are locked (displaying a lock icon with «Si sblocca dopo il passo {n}») until preceding steps are finished. Steps whose tool is disabled for the student's class are displayed as unavailable and excluded from both total and done counts. For tools without automatic detection, students can mark and unmark steps as completed (`POST / DELETE /user/paths/{path_id}/steps/{step_id}/done`). Attempts to self-mark unavailable or auto-detect tools are rejected with HTTP 422. Progress resolution guarantees teacher precedence over student self-marks. Non-members receive HTTP 403 without existence oracles. All interfaces and notices are fully translated into the 6 platform languages.
+**Class paths publishing and student view (P2, #97).** Teachers can publish paths via a sticky `[Publish]` button on `/docente/classi/{id}` (calling `POST /teacher/paths/{path_id}/publish`), which sets status to `published` and marks `published_at` on first publication. Teachers can also archive and restore paths. Students enrolled in active classes view published paths at `/profilo/percorsi` (accessible from the first group «Conoscermi e riflettere» in the student area, `/profilo`). The layout strictly follows identity guidelines: ochre is used only for the current step's play icon and `Button variant="accent"` for `[Inizia]` (the current step container and badge are petrol), with petrol for primary structure and slate for neutrals. Each published path card displays class name, title, description, and overall progress count and progress bar (`done of total done`). In strict mode (`strict`), future steps are locked (displaying a lock icon with «Si sblocca dopo il passo {n}») until preceding steps are finished. Steps whose tool is disabled for the student's class are displayed as unavailable and excluded from both total and done counts. For tools without automatic detection, students can mark and unmark steps as completed (`POST / DELETE /user/paths/{path_id}/steps/{step_id}/done`). Attempts to self-mark unavailable or auto-detect tools are rejected with HTTP 422. Progress resolution guarantees teacher precedence over student self-marks. Non-members receive HTTP 403 without existence oracles. All interfaces and notices are fully translated into the 6 platform languages.
 
 **Automatic step completion and strict mode (P3, #98).** Step completion is computed on read (`GET /user/paths`), never stored, from evidence the student created at or after the path's `published_at`: a questionnaire result of that type for scored instruments (`tool_category=assessment`); a completed Bussola session (`completed_at`); a saved Tavolo (`saved_at`); a new personal goal; a completed pQBL learning session (`pqbl_session_completed` log); an Idea map revision with a branch to work on (the `idea_map` focus rule); and, for guided chats (Savickas, Evento, Obiettivo di studio, dynamic guided instruments), a new server-side `guided_chat_completed` log written when a `/chat` or `/chat/stream` turn on the instrument's last guided step completes. The marker is written once per session, instrument and student: further turns or a resumed session add nothing, and admin preview turns write none. Evidence created before `published_at` is ignored. The state of each step follows teacher mark > student mark > automatic evidence > not done; automatic completions show «rilevato automaticamente» (6 languages). In strict mode a step counts as done only when every earlier available step is done: all steps after the current one render locked (`🔒 Si sblocca dopo il passo {n}`, where {n} is the current step) and are excluded from the done count, even if they already have evidence or a self-mark; they count again as soon as the earlier steps are completed. Unavailable steps are skipped by the ordering. The lock affects the class path only: tool access, the catalog and the chat guards are unchanged.
 
 **Teacher progress view and overrides (P4, #99).** Once a path is published, the path editor in the **Class paths** tab shows a **Progressi** section: a students × steps matrix (`GET /teacher/paths/{path_id}/progress`, owner, co-teachers and admins; drafts get 422). Only current members of the class are listed: students who left keep their marks but disappear from the matrix. Each cell shows a check icon (done) or `·` (not done) followed by the source — `a` automatic, `s` student, `t` teacher — or a lock icon (locked by strict order) and `—` (tool no longer available, excluded from the counts). Each row ends with the student's done count and a footer row gives the done count per step. Filters: all, late (an available step past its due date and not done) and not started (nothing done yet). Cells are buttons, so the matrix works with the keyboard; on phones it becomes a per-student list with an expandable row. Selecting a cell opens a panel where the teacher can **mark done**, **mark not done** (optional reason, up to 500 characters) or **clear the teacher mark** (`PUT /teacher/paths/{path_id}/steps/{step_id}/progress/{username}` with `state` `done`, `not_done` or `clear`). The mark is stored with author and time and wins over the student's mark and the automatic evidence, in the teacher matrix and in the student's own view (which shows «fonte: docente»); clearing it falls back to the student mark, then to automatic evidence. In strict order a teacher mark on a later step is kept and shown in the panel, but the step stays locked until the earlier steps are done. Steps whose tool is unavailable accept only `clear` (422 otherwise); unknown students or steps outside the path get 404. All labels exist in the 6 platform languages.
 
-**Class path placement on home and personal area (P5, #100).** When a student belongs to a class with an active published class pathway, the path is prioritized as the first hero element (`ClassPathHeroCard`) on both the student home (`/` and `/?view=home`) and the personal area overview (`/profilo`). The general tool catalog (or personal tools catalog on `/profilo`) is collapsed below with an accessible toggle button («Mostra catalogo strumenti» / «Nascondi catalogo strumenti») and explanatory subtitle in all 6 languages, remembering open/closed state in `localStorage` per browser. The hero card displays class name, title, description, progress count and progress bar, highlighting the current active step in petrol (petrol border and badge) with ochre kept only for the play icon and `Button variant="accent"` for `[Inizia]`; the card itself uses the standard petrol border, no ochre surfaces with self-marking support where applicable. When multiple paths exist, the one with the nearest upcoming due date (or incomplete step due date) is selected, with a link to all class paths (`/profilo/percorsi`). For students without active class paths (or without a class), the experience is completely unchanged and the catalog opens normally without collapse.
+**Class path placement on home and student area (P5, #100).** When a student belongs to a class with an active published class pathway, the path is prioritized as the first hero element (`ClassPathHeroCard`) on both the student home (`/` and `/?view=home`) and the student area overview (`/profilo`). The general tool catalog (or personal tools catalog on `/profilo`) is collapsed below with an accessible toggle button («Mostra catalogo strumenti» / «Nascondi catalogo strumenti») and explanatory subtitle in all 6 languages, remembering open/closed state in `localStorage` per browser. The hero card displays class name, title, description, progress count and progress bar, highlighting the current active step in petrol (petrol border and badge) with ochre kept only for the play icon and `Button variant="accent"` for `[Inizia]`; the card itself uses the standard petrol border, no ochre surfaces with self-marking support where applicable. When multiple paths exist, the one with the nearest upcoming due date (or incomplete step due date) is selected, with a link to all class paths (`/profilo/percorsi`). For students without active class paths (or without a class), the experience is completely unchanged and the catalog opens normally without collapse.
 
 **Class forum (F1, #102).** Teachers open the Forum tab on
 `/docente/classi/{id}`; students open the forum link in their Classes list,
@@ -855,12 +855,12 @@ enabled. Students without a class keep the platform catalog; administrators are
 not filtered by classes, and an instrument disabled on the platform is closed in
 the bot for everyone (the bot has no admin preview).
 
-**Personal-area tools per class (S4, #91).** In the **Personal area** section of
+**Personal-area tools per class (S4, #91).** In the **Student area** section of
 the Tools & counselors tab, teachers can turn off Tavolo, Goals, Actions,
 Timeline, Portfolio, pQBL, Flashcards, Cards and Comparison for a class.
 Notebook, completed questionnaires, Classes and Assignments are always on and
 cannot be disabled (HTTP 422). Students whose classes all turn a tool off no
-longer see its link in the personal area (`/profilo`); a group with no remaining
+longer see its link in the student area (`/profilo`); a group with no remaining
 tool disappears, and the "Continue your work" overview leaves out goals or
 activities when Goals or Actions are off. Opening a disabled tool by its address
 keeps the page readable and shows the notice "Tool turned off by your class".
@@ -935,7 +935,7 @@ activity across active classes. The backend (`GET /user/forum/unread`,
 table, counting published posts created after the user's last read timestamp
 (or since topic creation if never read). The user's own posts are excluded from
 their unread count. Hidden and pending-moderation posts are excluded for
-students and visible only to teachers and administrators. In the personal area
+students and visible only to teachers and administrators. In the student area
 overview (`/profilo`), an ochre badge displays the total unread count on the
 Classes link (`/profilo/classi`); in the classes list, each class card with unread
 messages displays an unread badge on its forum link. Within the forum view,

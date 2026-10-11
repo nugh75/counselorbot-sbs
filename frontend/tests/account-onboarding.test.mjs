@@ -226,11 +226,11 @@ for (const width of [390, 1440]) {
             await tools.waitFor();
             assert.equal(await tools.count(), 1);
             const intro = page.getByTestId('intro-screen');
-            assert.deepEqual(await intro.locator('article h3').allTextContents(), ['Bussola', 'Analisi questionari', 'Percorsi guidati', 'Area personale e strumenti']);
+            assert.deepEqual(await intro.locator('article h3').allTextContents(), ['Bussola', 'Analisi questionari', 'Percorsi guidati', 'Area studente e strumenti']);
             const images = intro.locator('img');
             assert.equal(await images.count(), 4);
             await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
-            assert.equal(await intro.getByRole('link', { name: 'Apri Area personale', exact: true }).getAttribute('href'), '/profilo');
+            assert.equal(await intro.getByRole('link', { name: 'Apri Area studente', exact: true }).getAttribute('href'), '/profilo');
             assert.equal(await intro.locator('details[open]').count(), 0);
             assert.equal(await intro.locator('details').count(), 3);
             assert.equal(await intro.locator('details[data-section=start]').count(), 0);
@@ -250,7 +250,7 @@ for (const width of [390, 1440]) {
             await support.locator('summary').focus();
             await page.keyboard.press('Enter');
             assert.equal(await support.getAttribute('open'), '');
-            assert.equal(await support.getByText(/Nell’Area personale/).isVisible(), true);
+            assert.equal(await support.getByText(/Nell’Area studente/).isVisible(), true);
             assert.match(await support.innerText(), /Portfolio/);
             assert.match(await support.innerText(), /Tavolo/);
             await page.keyboard.press('Enter');

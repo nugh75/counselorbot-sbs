@@ -55,8 +55,8 @@ for (const width of [1440, 390]) {
             await card.waitFor();
             await card.getByLabel('Quando', { exact: true }).selectOption('point');
             await card.getByLabel('Evento in un giorno').fill('2026-09-20');
-            await page.getByRole('button', { name: 'Salva nell’Area personale' }).click();
-            await page.getByRole('status').filter({ hasText: 'Salvato nell’Area personale' }).waitFor();
+            await page.getByRole('button', { name: 'Salva nell’Area studente' }).click();
+            await page.getByRole('status').filter({ hasText: 'Salvato nell’Area studente' }).waitFor();
             await card.getByRole('link', { name: 'Vedi sulla linea del tempo' }).waitFor();
             await card.getByRole('link', { name: 'Vedi sulla linea del tempo' }).click();
             await page.getByRole('heading', { name: 'Linea del tempo', exact: true, level: 1 }).waitFor();

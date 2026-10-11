@@ -53,7 +53,7 @@ for (const available of [false, true]) {
                 assert.equal(await generate.count(), 0);
             }
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-            await page.getByRole('link', { name: 'Area personale', exact: true }).click();
+            await page.getByRole('link', { name: 'Area studente', exact: true }).click();
             await page.waitForURL(`${origin}/profilo`);
             await page.goto(`${origin}/profilo/compilazioni`);
             await page.getByRole('heading', { name: 'Risultati e conversazioni', exact: true }).waitFor();

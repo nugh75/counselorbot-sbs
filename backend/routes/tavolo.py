@@ -609,7 +609,7 @@ async def help_tavolo(
             "the edit. Connect pieces chooses source, target and linking words. Click a link's "
             "words to edit it. View proposals lists pending pieces and connections, which the "
             "person can inspect and accept or discard. Save the table gives it a name in the "
-            "personal area. Return only JSON: {\"reply\":\"your answer\"}."
+            "student area. Return only JSON: {\"reply\":\"your answer\"}."
         ),
         parse=HelpReply.model_validate_json,
         max_tokens=900,

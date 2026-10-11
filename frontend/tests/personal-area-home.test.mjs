@@ -20,7 +20,7 @@ async function fixture(lang = 'it', populated = false) {
     await page.route('**/api/**', async route => {
         const path = new URL(route.request().url()).pathname;
         requests.push([route.request().method(), path]);
-        assert.equal(route.request().method(), 'GET', 'opening the personal area never writes');
+        assert.equal(route.request().method(), 'GET', 'opening the student area never writes');
         if (fail && path === '/api/user/goals') return route.fulfill({ status: 503, json: { detail: 'unavailable' } });
         let data = [];
         if (path === '/api/auth/me') data = { authenticated: true, username: 'personal-area-test', name: 'Persona di prova', email: 'test@example.test', groups: ['studenti'], is_admin: false };
@@ -118,7 +118,7 @@ test('a pending overview request never blocks the illustrated navigation', async
     } finally { release(); await f.context.close(); }
 });
 
-test('forum unread count displays accessible badge on Classes entry in personal area', async () => {
+test('forum unread count displays accessible badge on Classes entry in student area', async () => {
     const f = await fixture('it');
     await f.page.route('**/api/user/forum/unread', async route => {
         await route.fulfill({ json: { total: 4, by_group: { '102': 4 } } });
