@@ -135,6 +135,20 @@ def write_policy(request: PolicyUpdate, identity: dict = Depends(require_admin),
         raise HTTPException(409, "personalAPI.errors." + exc.code) from None
 
 
+@router.get("/admin/class-api-sharing")
+def read_class_sharing(identity: dict = Depends(require_admin), db: Session = Depends(get_db)):
+    from .. import class_api_sharing
+    return {"enabled": class_api_sharing.switch_on(db), "personal_api_enabled": personal_api.feature_enabled(db)}
+
+
+@router.put("/admin/class-api-sharing", dependencies=[Depends(browser_mutation)])
+def write_class_sharing(request: PolicyUpdate, identity: dict = Depends(require_admin), db: Session = Depends(get_db)):
+    # #201: a separate switch; sharing also needs personal APIs to be enabled.
+    from .. import class_api_sharing
+    class_api_sharing.set_switch(db, request.enabled)
+    return read_class_sharing(identity, db)
+
+
 @router.get("/user/api-settings")
 def read_settings(identity: dict = Depends(current_owner), db: Session = Depends(get_db)):
     from ..chatgpt_connections import enabled

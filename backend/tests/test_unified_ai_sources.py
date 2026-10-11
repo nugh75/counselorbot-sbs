@@ -221,20 +221,6 @@ def test_reasoning_migration_limits_the_levels(scratch_engine):
                 connection.execute(text("UPDATE personal_ai_routing SET default_reasoning = 'turbo'"))
 
 
-def test_withdrawn_class_sharing_table_is_dropped(scratch_engine):
-    drop = import_module("backend.migrations.20261011_drop_class_api_shares")
-    with scratch_engine.begin() as connection:
-        connection.execute(text("CREATE TABLE class_api_shares (group_id INTEGER PRIMARY KEY)"))
-        connection.execute(text("INSERT INTO configs (key, value) VALUES ('class_api_sharing_enabled', 'false')"))
-    drop.migrate(scratch_engine)
-    drop.migrate(scratch_engine)  # Replay-safe.
-    with scratch_engine.begin() as connection:
-        assert connection.execute(text("SELECT to_regclass('class_api_shares')")).scalar() is None
-        assert connection.execute(text("SELECT count(*) FROM configs WHERE key = 'class_api_sharing_enabled'")).scalar() == 0
-
-
-# #217: the class decides whether its students may use their own sources.
-
 def test_a_class_can_forbid_students_own_sources(client, db, chatgpt):
     cid = api_connection(client)
     assert route(client, default_connection_id=cid, bindings=[{"counselor_id": 11, "chatgpt_model": "fixture-model"}]).status_code == 200
