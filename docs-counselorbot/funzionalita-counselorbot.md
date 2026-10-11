@@ -895,6 +895,19 @@ the global gate). When any active class of a student forbids it, that student's
 chats use the institution's models: their keys and choices stay saved but
 unused, and **APIs and ChatGPT** explains why. No teacher key is ever shared.
 The server accepts a default only
+
+counselor. **API key for the class** (#201), in the same tab, lets a teacher
+share one of their personal API connections, with a reasoning level, with the
+class: students without a personal choice of their own chat through that key
+(order: own choice, class share, institution). The key stays on the server,
+conversation data goes to the teacher's provider account, a personal ChatGPT
+subscription can never be shared, and the teacher sees this month's requests
+and recorded cost plus the last failure (students see a neutral message).
+When a student's active classes share different keys, the institution answers.
+It needs the personal APIs switch and its own checkbox in **APIs and ChatGPT →
+Installation settings** (**Teachers — may make one of their API keys available
+to the students of their classes**). A teacher's key is never shared with other
+teachers, and the class permission for students' own keys does not affect it. The server accepts a default only
 if it is institutional and enabled (otherwise HTTP 422). For a student in at
 least one active class, a counselor is available when at least one of the
 student's classes enables it; counselors disabled by the administrator never

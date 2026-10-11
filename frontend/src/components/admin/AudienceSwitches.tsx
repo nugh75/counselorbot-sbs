@@ -15,6 +15,13 @@ export function AudienceSwitches({ feature }: { feature: 'api' | 'chatgpt' }) {
     const [values, setValues] = useState<Switches | null>(null);
     const [busy, setBusy] = useState(false);
     const [failed, setFailed] = useState(false);
+    // Personal APIs only: a teacher's key made available to their classes (#201). ChatGPT is never shared.
+    const [share, setShare] = useState<boolean | null>(null);
+    useEffect(() => {
+        if (feature !== 'api') return;
+        void apiFetch('/api/admin/class-api-sharing', { cache: 'no-store' })
+            .then(async response => { if (response.ok) setShare((await response.json()).enabled === true); }).catch(() => {});
+    }, [feature]);
     useEffect(() => {
         void apiFetch('/api/admin/personal-ai-audiences', { cache: 'no-store' })
             .then(async response => { if (response.ok) setValues(((await response.json()) as Audiences)[feature]); }).catch(() => setFailed(true));
@@ -32,6 +39,17 @@ export function AudienceSwitches({ feature }: { feature: 'api' | 'chatgpt' }) {
             setValues(((await response.json()) as Audiences)[feature]); notifyChatGPTChange();
         } catch { setValues(previous); setFailed(true); } finally { setBusy(false); }
     };
+    const saveShare = async (enabled: boolean) => {
+        setShare(enabled); setBusy(true); setFailed(false);
+        try {
+            const response = await apiFetch('/api/admin/class-api-sharing', {
+                method: 'PUT', cache: 'no-store', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'CounselorBot' },
+                body: JSON.stringify({ enabled }),
+            });
+            if (!response.ok) throw new Error();
+            setShare((await response.json()).enabled === true);
+        } catch { setShare(!enabled); setFailed(true); } finally { setBusy(false); }
+    };
     const label = feature === 'api' ? { teachers: l('audienceTeachersApi'), students: l('audienceStudentsApi') }
         : { teachers: l('audienceTeachersChatgpt'), students: l('audienceStudentsChatgpt') };
     return <fieldset className="mt-3 space-y-1 rounded-lg border border-slate-200 p-3" data-testid={`audience-${feature}`} disabled={busy}>
@@ -40,7 +58,10 @@ export function AudienceSwitches({ feature }: { feature: 'api' | 'chatgpt' }) {
             <input type="checkbox" checked={values[audience]} onChange={event => void save({ ...values, [audience]: event.target.checked })} />
             {label[audience]}
         </label>)}
-        <p className="text-sm text-slate-600">{l('audienceHelp')}</p>
+        {share !== null && <label className="flex min-h-11 items-center gap-3 text-sm text-slate-800">
+            <input type="checkbox" checked={share} onChange={event => void saveShare(event.target.checked)} />
+            {l('audienceShareApi')}
+        </label>}
         {failed && <p role="alert" className="text-sm text-red-600">{l('error')}</p>}
     </fieldset>;
 }
