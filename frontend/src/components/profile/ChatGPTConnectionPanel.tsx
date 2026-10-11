@@ -16,7 +16,6 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
     const { t } = useI18n();
     const router = useRouter();
     const [status, setStatus] = useState<ChatGPTStatus>();
-    const [model, setModel] = useState('');
     const [link, setLink] = useState<LinkCode>();
     const [busy, setBusy] = useState(false);
     const [errorKey, setErrorKey] = useState('');
@@ -37,7 +36,6 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
     const load = useCallback(async () => {
         const next = await chatgptRequest<ChatGPTStatus>();
         setStatus(next);
-        setModel(next.model || '');
         return next;
     }, []);
 
@@ -47,7 +45,7 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
         if (getViewAsAccount()) { setPreview(true); return; }
         const refreshStatus = () => {
             void chatgptRequest<ChatGPTStatus>('', 'GET', undefined, controller.signal).then(next => {
-                setStatus(next); setModel(next.model || '');
+                setStatus(next);
                 if (!next.enabled) setLink(undefined);
             }).catch(() => { if (!controller.signal.aborted) setErrorKey('chatgpt.errors.unavailable'); });
         };
@@ -86,7 +84,7 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
                         if (!controller.signal.aborted) setErrorKey(failure instanceof Error ? failure.message : 'chatgpt.errors.unavailable');
                     }
                     if (!controller.signal.aborted) {
-                        setLink(undefined); setStatus(next); setModel(next.model || ''); notifyChatGPTChange();
+                        setLink(undefined); setStatus(next); notifyChatGPTChange();
                     }
                     return;
                 }
@@ -102,10 +100,7 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
     const refresh = () => act(async () => {
         const catalog = await chatgptRequest<{ models: ChatGPTStatus['models'] }>('/models', 'POST');
         setStatus(previous => previous ? { ...previous, models: catalog.models } : previous);
-    });
-    const choose = (active: boolean) => act(async () => {
-        const next = await chatgptRequest<ChatGPTStatus>('/preference', 'PUT', { use_subscription: active, model: active ? model : null });
-        setStatus(next); notifyChatGPTChange();
+        notifyChatGPTChange(); // The counselor choices list the refreshed models.
     });
     const disconnect = (forget = false) => act(async () => {
         const result = await chatgptRequest<{ revocation_confirmed: boolean }>(forget ? '?forget_registration=true' : '', 'DELETE');
@@ -206,21 +201,16 @@ export function ChatGPTConnectionPanel({ area = 'profilo' }: { area?: 'profilo' 
             <Button type="button" variant="secondary" disabled={busy} onClick={() => void act(async () => { await chatgptRequest('/link', 'DELETE'); setLink(undefined); await load(); })}>{t('chatgpt.cancel')}</Button>
         </div>}
 
-        {/* State 3: connected, unchanged behaviour. */}
+        {/* State 3: connected. Which counselor uses which model is chosen with the other sources (#200). */}
         {status?.connected && <div className="space-y-3">
             <p role="status" className="break-words text-sm font-semibold">{t('chatgpt.connected')}{status.email ? ` · ${status.email}` : ''}</p>
-            <label className="block text-sm font-semibold" htmlFor="chatgpt-model">{t('chatgpt.model')}</label>
-            <select id="chatgpt-model" value={model} disabled={busy || !!link || !status.available} onChange={event => setModel(event.target.value)} className="min-h-11 w-full min-w-0 rounded-md border border-slate-200 bg-white p-2 text-sm">
-                <option value="">{t('chatgpt.choose')}</option>
-                {status.models.map(item => <option key={item.slug} value={item.slug}>{item.display_name}</option>)}
-            </select>
+            <p className="text-sm text-slate-600">{t('chatgpt.chooseBelow')}</p>
             <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="secondary" disabled={busy || !!link || !status.available} onClick={() => void refresh()}>{t('chatgpt.refresh')}</Button>
-                <Button type="button" disabled={busy || !!link || !status.available || !model || !status.models.some(item => item.slug === model)} onClick={() => void choose(true)}>{t('chatgpt.save')}</Button>
                 <Button type="button" variant="secondary" disabled={busy} onClick={() => void disconnect()}>{t('chatgpt.disconnect')}</Button>
             </div>
         </div>}
-        {status?.use_subscription ? <div className="space-y-2"><p role="status" className="text-sm font-semibold">{t('chatgpt.active')} · {status.model}</p><Button type="button" variant="secondary" disabled={busy} onClick={() => void choose(false)}>{t('chatgpt.institution')}</Button></div> : status?.connected && <p className="text-sm text-slate-600">{t('chatgpt.inactive')}</p>}
+        {status?.use_subscription ? <p role="status" className="text-sm font-semibold">{t('chatgpt.active')} · {status.model}</p> : status?.connected && <p className="text-sm text-slate-600">{t('chatgpt.inactive')}</p>}
         {status?.needs_reconnect && <Callout variant="warning">{t('chatgpt.errors.reconnect')}</Callout>}
         {status?.registered && !status.connected && <Button type="button" variant="secondary" disabled={busy || !!link} onClick={() => void disconnect(true)}>{t('chatgpt.forget')}</Button>}
         {(status?.connected || status?.use_subscription) && <a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-sm text-indigo-700 underline">{t('chatgpt.usage')}</a>}

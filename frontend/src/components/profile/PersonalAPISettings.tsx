@@ -14,16 +14,24 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Callout } from '@/components/ui/Callout';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ChatGPTConnectionPanel } from './ChatGPTConnectionPanel';
 
 type Connection = { id: string; name: string; provider: string; model: string };
 type Counselor = { id: number; name: string; description: string; persona: string };
-type Binding = { counselor_id: number; connection_id: string };
+type ServerBinding = { counselor_id: number; connection_id: string | null; chatgpt_model: string | null };
+// A source is '' (institution), 'api:<connection id>' or 'chatgpt:<model>' (#200).
+type Binding = { counselor_id: number; source: string };
 type Settings = {
-    available: boolean; chatgpt_enabled: boolean; enabled: boolean; providers: string[];
-    default_connection_id: string | null; connections: Connection[]; bindings: Binding[];
+    available: boolean; api_enabled: boolean; chatgpt_enabled: boolean; enabled: boolean; providers: string[];
+    default_connection_id: string | null; default_chatgpt_model: string | null; connections: Connection[]; bindings: ServerBinding[];
+    chatgpt_models: { slug: string; display_name: string }[];
     counselors: { id: number; name: string; is_personal: boolean }[];
 };
+const encode = (connection: string | null, chatgpt: string | null) => connection ? `api:${connection}` : chatgpt ? `chatgpt:${chatgpt}` : '';
+const decode = (source: string) => ({ connection_id: source.startsWith('api:') ? source.slice(4) : null, chatgpt_model: source.startsWith('chatgpt:') ? source.slice(8) : null });
+const fromServer = (items: ServerBinding[]): Binding[] => items.map(b => ({ counselor_id: b.counselor_id, source: encode(b.connection_id, b.chatgpt_model) }));
 const sortedBindings = (items: Binding[]) => JSON.stringify([...items].sort((a, b) => a.counselor_id - b.counselor_id));
+const validSource = (data: Settings, source: string) => !source || data.connections.some(c => `api:${c.id}` === source) || data.chatgpt_models.some(m => `chatgpt:${m.slug}` === source);
 const providerName = (value: string) => (({ openai: 'OpenAI', openrouter: 'OpenRouter', gemini: 'Google Gemini' } as Record<string, string>)[value] ?? value.charAt(0).toUpperCase() + value.slice(1));
 
 async function request(path: string, method = 'GET', body?: unknown) {
@@ -43,7 +51,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
     const [settings, setSettings] = useState<Settings | null>(null);
     const [own, setOwn] = useState<Counselor[]>([]);
     const [enabled, setEnabled] = useState(false);
-    const [defaultId, setDefaultId] = useState<string | null>(null);
+    const [defaultSource, setDefaultSource] = useState('');
     const [bindings, setBindings] = useState<Binding[]>([]);
     const [connectionOpen, setConnectionOpen] = useState(false);
     const [editingConnection, setEditingConnection] = useState<Connection | null>(null);
@@ -64,7 +72,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
     const [deleteCounselor, setDeleteCounselor] = useState<number | null>(null);
     const messageRef = useRef<HTMLDivElement>(null);
     useEffect(() => { if (error || feedback) messageRef.current?.scrollIntoView({ block: 'nearest' }); }, [error, feedback]);
-    const routingDirty = !!settings && (enabled !== settings.enabled || defaultId !== settings.default_connection_id || sortedBindings(bindings) !== sortedBindings(settings.bindings));
+    const routingDirty = !!settings && (enabled !== settings.enabled || defaultSource !== encode(settings.default_connection_id, settings.default_chatgpt_model) || sortedBindings(bindings) !== sortedBindings(fromServer(settings.bindings)));
     const connectionDirty = connectionOpen && (name !== (editingConnection?.name ?? '') || provider !== (editingConnection?.provider ?? 'openai') || model !== (editingConnection?.model ?? '') || !!key);
     const counselorDirty = counselorOpen && (counselorName !== (editingCounselor?.name ?? '') || description !== (editingCounselor?.description ?? '') || persona !== (editingCounselor?.persona ?? ''));
     const dirty = routingDirty || connectionDirty || counselorDirty;
@@ -74,10 +82,10 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
 
     const accept = useCallback((data: Settings, preserve = false) => {
         setSettings(data);
-        if (!preserve) { setEnabled(data.enabled); setDefaultId(data.default_connection_id); setBindings(data.bindings); }
+        if (!preserve) { setEnabled(data.enabled); setDefaultSource(encode(data.default_connection_id, data.default_chatgpt_model)); setBindings(fromServer(data.bindings)); }
         else {
-            setDefaultId(id => data.connections.some(c => c.id === id) ? id : null);
-            setBindings(items => items.filter(b => data.connections.some(c => c.id === b.connection_id) && data.counselors.some(c => c.id === b.counselor_id)));
+            setDefaultSource(source => validSource(data, source) ? source : '');
+            setBindings(items => items.filter(b => validSource(data, b.source) && data.counselors.some(c => c.id === b.counselor_id)));
         }
         if (!data.available) { setKey(''); setPersona(''); setConnectionOpen(false); setCounselorOpen(false); }
     }, []);
@@ -86,7 +94,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
         try {
             const data: Settings = await request('/api/user/api-connections');
             accept(data, preserve);
-            if (data.available) setOwn(await request('/api/user/counselors'));
+            if (data.api_enabled) setOwn(await request('/api/user/counselors'));
         } catch (exc) { setError(exc instanceof Error ? exc.message : 'error'); }
         finally { setLoading(false); }
     }, [accept]);
@@ -130,23 +138,32 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
         });
     };
     const saveRouting = () => void run(async () => {
-        accept(await request('/api/user/api-routing', 'PUT', { enabled, default_connection_id: defaultId, bindings }));
+        const fallback = decode(defaultSource);
+        accept(await request('/api/user/api-routing', 'PUT', { enabled, default_connection_id: fallback.connection_id, default_chatgpt_model: fallback.chatgpt_model,
+            bindings: bindings.map(b => ({ counselor_id: b.counselor_id, ...decode(b.source) })) }));
         setFeedback('saved'); notifyChatGPTChange();
     });
-    const assign = (cid: number, id: string) => setBindings(items => [...items.filter(b => b.counselor_id !== cid), ...(id ? [{ counselor_id: cid, connection_id: id }] : [])]);
+    const assign = (cid: number, source: string) => setBindings(items => [...items.filter(b => b.counselor_id !== cid), ...(source ? [{ counselor_id: cid, source }] : [])]);
+    // Options shared by the default and the per-counselor selects: the person's APIs and ChatGPT models.
+    const sourceOptions = settings && <>
+        {settings.api_enabled && settings.connections.length > 0 && <optgroup label={l('sourceApi')}>{settings.connections.map(c => <option key={c.id} value={`api:${c.id}`}>{c.name} · {c.model}</option>)}</optgroup>}
+        {settings.chatgpt_enabled && settings.chatgpt_models.length > 0 && <optgroup label={l('sourceChatgpt')}>{settings.chatgpt_models.map(m => <option key={m.slug} value={`chatgpt:${m.slug}`}>{`ChatGPT · ${m.display_name}`}</option>)}</optgroup>}
+    </>;
     if (settings?.available === false) return null;
     const field = 'mt-1 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900';
     return <div className="min-h-screen bg-slate-50 px-4 py-8"><div className="mx-auto max-w-3xl space-y-6">
         <Link href={`/${area}`} className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"><ArrowLeft className="h-4 w-4" aria-hidden />{area === 'docente' ? teacherAreaText(lang, 'title') : personalAreaText(lang, 'title')}</Link>
-        {settings?.available && <PageHeader title={l('title')} subtitle={l('description')} icon={<KeyRound className="h-6 w-6 text-indigo-600" aria-hidden />} />}
+        {settings?.available && <PageHeader title={l('sectionTitle')} subtitle={l('description')} icon={<KeyRound className="h-6 w-6 text-indigo-600" aria-hidden />} />}
         <div ref={messageRef}>
         {loading && <p role="status">{l('loading')}</p>}
         {error === 'login' && <Callout variant="info">{l('login')} <Link href="/login" className="underline">{l('signIn')}</Link></Callout>}
-        {error && error !== 'login' && <Callout variant="danger">{personalAPIErrorText(lang, error) ?? l('error')}</Callout>}
+        {error && error !== 'login' && <Callout variant="danger">{personalAPIErrorText(lang, error) ?? (error.startsWith('chatgpt.errors.') ? t(error) : l('error'))}</Callout>}
         {error && !settings && <Button variant="secondary" onClick={() => void load()}>{l('retry')}</Button>}
         {feedback && <Callout variant="info"><span role="status">{l(feedback)}</span></Callout>}
         </div>
         {settings && <>
+            {settings.chatgpt_enabled && <div id="chatgpt"><ChatGPTConnectionPanel area={area} /></div>}
+            {settings.api_enabled && <>
             <Callout variant="info">{l('notice')}</Callout>
             <section aria-labelledby="personal-connections-title" className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3"><h2 id="personal-connections-title" className="text-xl font-bold text-slate-900">{l('connections')}</h2><Button variant="secondary" disabled={busy} onClick={() => editConnection(null)}><Plus className="h-4 w-4" aria-hidden />{l('addConnection')}</Button></div>
@@ -166,16 +183,17 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
                     <div className="flex flex-wrap gap-3"><Button type="submit" disabled={busy || !connectionDirty}>{l('saveConnection')}</Button><Button type="button" variant="secondary" disabled={busy} onClick={() => { if (!connectionDirty || window.confirm(l('dirty'))) { setKey(''); setConnectionOpen(false); } }}>{t('common.cancel')}</Button></div>
                 </fieldset></form></Card>}
             </section>
+            </>}
             <section aria-labelledby="personal-routing-title" className="space-y-4"><h2 id="personal-routing-title" className="text-xl font-bold text-slate-900">{l('counselors')}</h2><p className="text-sm text-slate-600">{l('routingHelp')}</p><Card><fieldset disabled={busy} className="space-y-5">
                 <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-800"><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} />{l('usePersonal')}</label>
-                {settings.chatgpt_enabled && <p className="text-sm text-slate-600">{l('choiceHelp')}</p>}
+                {settings.chatgpt_enabled && settings.api_enabled && <p className="text-sm text-slate-600">{l('choiceHelp')}</p>}
                 <p className="text-sm font-semibold text-indigo-700">{l(settings.enabled ? 'active' : 'system')}</p>
-                <div><label htmlFor="personal-default-connection" className="text-sm font-semibold text-slate-800">{l('defaultConnection')}</label><select id="personal-default-connection" className={field} value={defaultId ?? ''} onChange={e => setDefaultId(e.target.value || null)}><option value="">{l('system')}</option>{settings.connections.map(c => <option key={c.id} value={c.id}>{c.name} · {c.model}</option>)}</select><p className="mt-1 text-sm text-slate-600">{l('defaultHelp')}</p></div>
+                <div><label htmlFor="personal-default-connection" className="text-sm font-semibold text-slate-800">{l('defaultConnection')}</label><select id="personal-default-connection" className={field} value={defaultSource} onChange={e => setDefaultSource(e.target.value)}><option value="">{l('institution')}</option>{sourceOptions}</select><p className="mt-1 text-sm text-slate-600">{l('defaultHelp')}</p></div>
                 {settings.counselors.length === 0 && <p className="text-sm text-slate-600">{l('noCounselors')}</p>}
-                {settings.counselors.map(c => <div key={c.id}><label htmlFor={`personal-counselor-${c.id}`} className="text-sm font-semibold text-slate-800">{c.name}{c.is_personal && <span className="ml-2 text-slate-600">({l('personalCounselor')})</span>}</label><select id={`personal-counselor-${c.id}`} className={field} value={bindings.find(b => b.counselor_id === c.id)?.connection_id ?? ''} onChange={e => assign(c.id, e.target.value)}><option value="">{l('useDefault')}</option>{settings.connections.map(connection => <option key={connection.id} value={connection.id}>{connection.name} · {connection.model}</option>)}</select></div>)}
-                <Button disabled={busy || !routingDirty || (enabled && !defaultId && !bindings.length)} onClick={saveRouting}>{l('saveRouting')}</Button>
+                {settings.counselors.map(c => <div key={c.id}><label htmlFor={`personal-counselor-${c.id}`} className="text-sm font-semibold text-slate-800">{c.name}{c.is_personal && <span className="ml-2 text-slate-600">({l('personalCounselor')})</span>}</label><select id={`personal-counselor-${c.id}`} className={field} value={bindings.find(b => b.counselor_id === c.id)?.source ?? ''} onChange={e => assign(c.id, e.target.value)}><option value="">{l('useDefault')}</option>{sourceOptions}</select></div>)}
+                <Button disabled={busy || !routingDirty || (enabled && !defaultSource && !bindings.length)} onClick={saveRouting}>{l('saveRouting')}</Button>
             </fieldset></Card></section>
-            <section aria-labelledby="own-counselors-title" className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><h2 id="own-counselors-title" className="text-xl font-bold text-slate-900">{l('ownCounselors')}</h2><Button variant="secondary" disabled={busy} onClick={() => editCounselor(null)}><Plus className="h-4 w-4" aria-hidden />{l('createCounselor')}</Button></div><p className="text-sm text-slate-600">{l('ownHelp')}</p>
+            {settings.api_enabled && <section aria-labelledby="own-counselors-title" className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><h2 id="own-counselors-title" className="text-xl font-bold text-slate-900">{l('ownCounselors')}</h2><Button variant="secondary" disabled={busy} onClick={() => editCounselor(null)}><Plus className="h-4 w-4" aria-hidden />{l('createCounselor')}</Button></div><p className="text-sm text-slate-600">{l('ownHelp')}</p>
                 {own.map(c => <Card key={c.id}><h3 className="break-words font-bold text-slate-900">{c.name}</h3><p className="mt-1 break-words text-sm text-slate-600">{c.description}</p><div className="mt-3 flex flex-wrap gap-3"><Button variant="secondary" disabled={busy} onClick={() => editCounselor(c)}>{l('editCounselor')}</Button><Button variant="ghost" disabled={busy} onClick={() => setDeleteCounselor(c.id)}>{l('deleteCounselor')}</Button></div>{deleteCounselor === c.id && <div className="mt-4 space-y-3"><p>{l('confirmCounselor')}</p><div className="flex flex-wrap gap-3"><Button variant="danger" disabled={busy} onClick={() => void run(async () => { await request(`/api/user/counselors/${c.id}`, 'DELETE'); if (editingCounselor?.id === c.id) { setPersona(''); setCounselorOpen(false); } setDeleteCounselor(null); await load(routingDirty); setFeedback('counselorRemoved'); notifyChatGPTChange(); })}>{l('deleteCounselor')}</Button><Button variant="secondary" disabled={busy} onClick={() => setDeleteCounselor(null)}>{t('common.cancel')}</Button></div></div>}</Card>)}
                 {counselorOpen && <Card><form onSubmit={saveCounselor} className="space-y-5"><fieldset disabled={busy} className="space-y-5">
                     <div><label htmlFor="own-counselor-name" className="text-sm font-semibold text-slate-800">{l('counselorName')}</label><input id="own-counselor-name" className={field} value={counselorName} maxLength={100} required onChange={e => setCounselorName(e.target.value)} /></div>
@@ -183,7 +201,7 @@ export function PersonalAPISettings({ area }: { area: 'profilo' | 'docente' }) {
                     <div><label htmlFor="own-counselor-persona" className="text-sm font-semibold text-slate-800">{l('counselorInstructions')}</label><textarea id="own-counselor-persona" className={field} value={persona} maxLength={6000} rows={5} required onChange={e => setPersona(e.target.value)} aria-describedby="own-instructions-help" /><p id="own-instructions-help" className="mt-1 text-sm text-slate-600">{l('instructionsHelp')}</p></div>
                     <div className="flex flex-wrap gap-3"><Button type="submit" disabled={busy || !counselorDirty}>{l('saveCounselor')}</Button><Button type="button" variant="secondary" disabled={busy} onClick={() => { if (!counselorDirty || window.confirm(l('dirty'))) { setPersona(''); setCounselorOpen(false); } }}>{t('common.cancel')}</Button></div>
                 </fieldset></form></Card>}
-            </section>
+            </section>}
         </>}
     </div></div>;
 }

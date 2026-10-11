@@ -292,7 +292,7 @@ function GuideContent() {
                     <h2 className="font-bold text-slate-900">{t('chatgpt.title')}</h2>
                     <p className="text-sm leading-relaxed text-slate-600">{personalAPIText(lang, 'sectionLocation')}</p>
                     <p className="text-sm leading-relaxed text-slate-600">{t('chatgpt.guide')}</p>
-                    <Link href={teacher ? '/docente/chatgpt' : '/profilo/chatgpt'} className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline">{t('chatgpt.connect')}</Link>
+                    <Link href={teacher ? '/docente/api-personali#chatgpt' : '/profilo/api-personali#chatgpt'} className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline">{t('chatgpt.connect')}</Link>
                 </li>}
                 {sections.map((n) => (
                     <li key={n} id={sectionId(n)} className="glass-panel scroll-mt-24 p-5 text-left">
