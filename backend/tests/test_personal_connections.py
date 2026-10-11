@@ -13,8 +13,16 @@ from backend.routes import counselors, personal_api as routes
 from backend.tests.test_personal_api import db, identity  # pytest fixtures
 
 
+class ListedModels(list):
+    """Fake provider listing: every model exists except 'not-listed'."""
+    def __contains__(self, model):
+        return model != 'not-listed'
+
+
 @pytest.fixture
-def client(db):
+def client(db, monkeypatch):
+    from backend.ai_service import AIService as Service
+    monkeypatch.setattr(Service, 'list_models', lambda self, provider=None: ListedModels())
     app = FastAPI()
     app.include_router(routes.router)
     app.include_router(counselors.router)
@@ -233,3 +241,41 @@ def test_ciphertext_is_also_bound_to_its_connection_within_the_same_account(clie
     db.flush()
     with pytest.raises(personal_api.PersonalAPIError):
         personal_api.decrypt_key(b)
+
+
+def test_model_list_uses_only_the_persons_key(client, db, monkeypatch):
+    seen = []
+
+    def fake_list(self, provider=None):
+        seen.append((provider, self.config.get('api_key_mistral'), self.config.get('api_key_openai')))
+        return ['mistral-large-latest', 'mistral-small-latest']
+
+    monkeypatch.setattr(AIService, 'list_models', fake_list)
+    response = client.post('/user/api-connections/models', json={'provider': 'mistral', 'api_key': 'typed-fake-key'})
+    assert response.status_code == 200, response.text
+    assert response.json() == {'models': ['mistral-large-latest', 'mistral-small-latest']}
+    # The installation's OpenAI key is removed so nothing falls back to it.
+    assert seen[-1] == ('mistral', 'typed-fake-key', None)
+    saved = connect(client, provider='mistral', model='mistral-small-latest').json()['connections'][0]['id']
+    assert client.post('/user/api-connections/models', json={'provider': 'mistral', 'connection_id': saved}).status_code == 200
+    assert seen[-1][1] == 'fake-test-key'
+    assert 'fake-test-key' not in response.text
+    assert client.post('/user/api-connections/models', json={'provider': 'openai', 'connection_id': saved}).status_code == 422
+    assert client.post('/user/api-connections/models', json={'provider': 'nope', 'api_key': 'k'}).status_code == 422
+    assert client.post('/user/api-connections/models', json={'provider': 'mistral'}).status_code == 422
+
+
+def test_chat_model_filter_drops_non_chat_ids():
+    from backend.ai_service import _chat_model
+    assert _chat_model('gpt-5.5') and _chat_model('mistral-large-latest')
+    assert not any(_chat_model(m) for m in ['text-embedding-3-large', 'whisper-1', 'tts-1', 'dall-e-3', 'omni-moderation-latest', 'davinci-002'])
+
+
+def test_a_model_the_provider_does_not_list_cannot_be_saved(client, db):
+    response = connect(client, model='not-listed')
+    assert response.status_code == 422
+    assert response.json()['detail'] == 'personalAPI.errors.modelUnavailable'
+    saved = connect(client).json()['connections'][0]
+    edit = client.put('/user/api-connections/' + saved['id'], json=dict(name='Account 1', provider='openrouter', model='not-listed'))
+    assert edit.status_code == 422
+    assert client.get('/user/api-connections').json()['connections'][0]['model'] == saved['model']
