@@ -3,8 +3,8 @@
 Current interface reference: [CounselorBot functions](funzionalita-counselorbot.md),
 maintained alongside product changes and read live by the CounselorBot Assistant
 and Compass. The introduction offers Compass, Questionnaire analysis, Guided paths,
-and Personal area and tools. The full activity catalog starts with Compass and
-ends with Resume activities. PDF study and Flashcards are in the Personal area;
+and Student area and tools. The full activity catalog starts with Compass and
+ends with Resume activities. PDF study and Flashcards are in the Student area;
 there is no separate Training category.
 
 

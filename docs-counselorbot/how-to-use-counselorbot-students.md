@@ -3,8 +3,8 @@
 Current interface reference: [CounselorBot functions](funzionalita-counselorbot.md),
 maintained alongside product changes and read live by the CounselorBot Assistant
 and Compass. The introduction offers Compass, Questionnaire analysis, Guided paths,
-and Personal area and tools. The full activity catalog starts with Compass and
-ends with Resume activities. PDF study and Flashcards are in the Personal area;
+and Student area and tools. The full activity catalog starts with Compass and
+ends with Resume activities. PDF study and Flashcards are in the Student area;
 there is no separate Training category.
 
 
@@ -69,9 +69,9 @@ The tools include activities, cards for thoughts, comparison of alternatives,
 Notebook and Booklet. Transfers between notes and tools require choosing the
 content and destination, reviewing it and confirming. They are not automatic.
 
-## Personal area and goals
+## Student area and goals
 
-Open **Personal area** (`/profilo`). **My journey** brings together active goals,
+Open **Student area** (`/profilo`). **My journey** brings together active goals,
 next activities, received assignments and teacher feedback. The other resources
 are grouped by purpose: understanding your situation, exploring and acting,
 documenting your experience, and finding support.
@@ -82,7 +82,7 @@ useful. Link existing activities, calendar events, cards, comparisons, Notebook,
 Booklet, saved Tavoli and Portfolio works. You decide when to pause or conclude
 a goal; completing an activity does not automatically mean achieving it.
 
-**Tavolo** in the Personal area is a workspace for ideas and materials. **Cards**
+**Tavolo** in the Student area is a workspace for ideas and materials. **Cards**
 collect thoughts; **Comparison** helps examine alternatives with criteria you
 choose. A **Booklet** stores instrument-specific reflections, including the event
 tools. The **Portfolio** documents your works. Linking them to a goal does not
@@ -141,7 +141,7 @@ results and related conversations, as stated when joining.
 Sharing a goal summary with a group's teachers is a separate, voluntary and
 revocable choice. Assignment responses are shared only after confirmation with
 the assigning teacher. Private drafts and linked goals are not exposed through
-that assignment flow. Do not assume everything in the Personal area is either
+that assignment flow. Do not assume everything in the Student area is either
 shared or hidden: these permissions apply to different content.
 
 ### Questionnaire steps in a class path
@@ -192,7 +192,7 @@ administrator to restore that service or explicitly select the basic filter
 without Ollama. This filter has limits and does not guarantee anonymity; use
 fictional data for cloud tests. Then retry the connection and the guided step.
 
-Open **Personal APIs** from your personal area (`/profilo/api-personali`).
+Open **Personal APIs** from your student area (`/profilo/api-personali`).
 Add one or more named connections with a supported provider, exact model ID
 and your own API key. Multiple keys for the same provider or different provider
 accounts can coexist. Link each connection to one or more counselors and choose
