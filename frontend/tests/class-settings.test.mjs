@@ -28,7 +28,7 @@ async function fixture({ lang = 'en', width = 390, settingsFailure = null, role 
     await context.addInitScript(lang => { localStorage.setItem('cb_lang', lang); }, lang);
     const page = await context.newPage();
     page.setDefaultTimeout(12000);
-    const state = { settings: structuredClone(settings), writes: [], failure: null, readFailure: settingsFailure, held: null, errors: [], lockWrites: [], lockFailure: null };
+    const state = { settings: structuredClone(settings), writes: [], failure: null, readFailure: settingsFailure, held: null, errors: [], lockWrites: [], lockFailure: null, sources: null, routingWrites: [] };
     page.on('pageerror', error => state.errors.push(error.message));
     await page.route('**/*', async route => {
         const request = route.request(); const url = new URL(request.url());
@@ -61,6 +61,10 @@ async function fixture({ lang = 'en', width = 390, settingsFailure = null, role 
                     tools: state.settings.tools.map(row => ({ ...row, enabled: row.admin_enabled && !body.disabled_tool_keys.includes(row.key) })) };
             } else if (state.readFailure) return route.fulfill({ status: state.readFailure, json: {} });
             data = state.settings;
+        } else if (url.pathname === '/api/user/api-connections') data = state.sources ?? { available: false };
+        else if (url.pathname === '/api/user/api-routing') {
+            const body = request.postDataJSON(); state.routingWrites.push(body);
+            Object.assign(state.sources, body); data = state.sources;
         } else if (url.pathname === '/api/user/account-preferences') data = { setup_completed: true, counselor_ready: true, notebook_ready: true };
         else if (url.pathname === '/api/orientation/status') data = { required: false };
         return route.fulfill({ json: data });
@@ -311,5 +315,43 @@ test('admin counselor names retain a readable row at 320px beside lock controls'
         // The name takes its own full line instead of shrinking beside the lock buttons.
         assert.ok(box.width >= row.width - 20, `Counselor label collapsed to ${box.width}px of ${row.width}px`);
         assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    } finally { await f.context.close(); }
+});
+
+test('#205: counselor details show description, institution model and the teacher\'s own source', async () => {
+    const described = { ...counselor(1, 'Clio', ['tutor']), description: 'Ti aiuta a riflettere.', description_i18n: { en: 'Helps you reflect.' },
+        model: { name: 'Reflective', provider: 'openrouter', model: 'qwen/test' } };
+    const f = await fixture({ width: 390, settings: { ...initial, counselors: [described, counselor(2, 'Giulio', ['filosofo'])] } });
+    f.state.sources = { available: true, api_enabled: true, chatgpt_enabled: true, enabled: false, providers: ['openai'],
+        default_connection_id: null, default_chatgpt_model: null, default_reasoning: null, bindings: [], counselors: [],
+        connections: [{ id: 'a'.repeat(32), name: 'School key', provider: 'openrouter', model: 'qwen/own' }],
+        chatgpt_models: [{ slug: 'gpt-x', display_name: 'GPT X', reasoning_levels: ['low', 'high'] }] };
+    try {
+        await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).click();
+        await f.page.getByRole('button', { name: 'Details: Clio', exact: true }).click();
+        const dialog = f.page.getByRole('dialog', { name: 'Clio' });
+        await dialog.getByText('Helps you reflect.', { exact: true }).waitFor();
+        assert.equal(await dialog.getByTestId('counselor-institution-model').textContent(), 'Reflective · openrouter · qwen/test');
+        assert.equal(await dialog.getByTestId('counselor-answers').textContent(), 'Reflective · openrouter · qwen/test');
+        await dialog.locator('#counselor-details-source').selectOption('chatgpt:gpt-x');
+        assert.deepEqual(await dialog.locator('#counselor-details-reasoning option').evaluateAll(o => o.map(x => x.value)), ['', 'low', 'high']);
+        await dialog.locator('#counselor-details-reasoning').selectOption('high');
+        await dialog.getByRole('button', { name: 'Save choice', exact: true }).click();
+        await dialog.getByRole('status').filter({ hasText: 'Choice saved.' }).waitFor();
+        assert.deepEqual(f.state.routingWrites[0].bindings, [{ counselor_id: 1, connection_id: null, chatgpt_model: 'gpt-x', reasoning: 'high' }]);
+        assert.equal(f.state.routingWrites[0].enabled, true);
+        assert.equal(await dialog.getByTestId('counselor-answers').textContent(), 'ChatGPT · GPT X');
+        assert.ok(await f.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        await f.page.keyboard.press('Escape');
+        await dialog.waitFor({ state: 'detached' });
+        // Class settings were not touched; without personal sources only description and model are shown.
+        assert.deepEqual(f.state.writes, []);
+        f.state.sources = null;
+        await f.page.getByRole('button', { name: 'Details: Giulio', exact: true }).click();
+        const plain = f.page.getByRole('dialog', { name: 'Giulio' });
+        await plain.getByText('No description available.', { exact: true }).waitFor();
+        assert.equal(await plain.getByTestId('counselor-institution-model').textContent(), 'Installation default model');
+        assert.equal(await plain.locator('#counselor-details-source').count(), 0);
+        assert.deepEqual(f.state.errors, []);
     } finally { await f.context.close(); }
 });
