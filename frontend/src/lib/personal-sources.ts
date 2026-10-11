@@ -8,6 +8,9 @@ export type PersonalSources = {
     connections: { id: string; name: string; provider: string; model: string }[]; bindings: ServerBinding[];
     chatgpt_models: { slug: string; display_name: string; reasoning_levels: string[] }[];
     counselors: { id: number; name: string; is_personal: boolean }[];
+    // Teachers: their API-backed counselors offered to their classes.
+    share_available?: boolean; share_with_classes?: boolean; share_last_error?: string | null;
+    share_usage?: { requests: number; cost_usd: number } | null;
 };
 export const encode = (connection: string | null, chatgpt: string | null) => connection ? `api:${connection}` : chatgpt ? `chatgpt:${chatgpt}` : '';
 export const decode = (source: string) => ({ connection_id: source.startsWith('api:') ? source.slice(4) : null, chatgpt_model: source.startsWith('chatgpt:') ? source.slice(8) : null });
