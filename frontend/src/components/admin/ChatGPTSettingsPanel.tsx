@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Callout } from '@/components/ui/Callout';
 import { Card } from '@/components/ui/Card';
@@ -54,17 +53,21 @@ export function ChatGPTSettingsPanel() {
             {error && <Callout variant="danger"><p>{t(error)}</p><Button type="button" variant="secondary" disabled={busy} onClick={() => void retry()}>{t('chatgpt.retry')}</Button></Callout>}
             {!settings && !error && <p role="status">{t('chatgpt.loading')}</p>}
             {settings && <>
-                <p role="status" className="text-sm font-semibold">{t(settings.enabled ? 'chatgpt.admin.enabled' : 'chatgpt.admin.disabled')}</p>
-                {settings.reason !== 'keyMissing' && <p className="text-sm text-slate-600">{t(settings.ready ? 'chatgpt.admin.protected' : settings.key_source === 'managed' ? 'chatgpt.admin.automatic' : 'chatgpt.errors.notConfigured')}</p>}
-                {(settings.reason === 'keyMissing' || (settings.enabled && !settings.ready)) && <Callout variant="warning">{t(`chatgpt.errors.${settings.reason || 'notConfigured'}`)}</Callout>}
-                <Button type="button" variant={settings.enabled ? 'secondary' : 'primary'} disabled={busy} onClick={() => void update()}>{t(busy ? 'chatgpt.admin.saving' : settings.enabled ? 'chatgpt.admin.disable' : 'chatgpt.admin.enable')}</Button>
+                <div className="flex flex-wrap items-center gap-3">
+                    <p role="status" className="text-sm font-semibold">{t(settings.enabled ? 'chatgpt.admin.enabled' : 'chatgpt.admin.disabled')}</p>
+                    <Button type="button" variant={settings.enabled ? 'secondary' : 'primary'} disabled={busy} onClick={() => void update()}>{t(busy ? 'chatgpt.admin.saving' : settings.enabled ? 'chatgpt.admin.disable' : 'chatgpt.admin.enable')}</Button>
+                </div>
                 {saved && <p role="status" className="text-sm text-indigo-800">{t('chatgpt.admin.saved')}</p>}
+                {(settings.reason === 'keyMissing' || (settings.enabled && !settings.ready)) && <Callout variant="warning">{t(`chatgpt.errors.${settings.reason || 'notConfigured'}`)}</Callout>}
                 {settings.enabled && <AudienceSwitches feature="chatgpt" />}
-                {settings.enabled && settings.ready && <Link className="inline-flex min-h-11 items-center text-sm font-semibold text-indigo-700 underline" href="/profilo/api-personali#chatgpt">{t('chatgpt.admin.personal')}</Link>}
             </>}
-            <p className="text-sm text-slate-600">{t('chatgpt.admin.disableHelp')}</p>
-            <p className="text-xs text-slate-600">{t('chatgpt.admin.backup')}</p>
-            <p className="text-xs text-slate-600">{t('chatgpt.admin.eligibility')}</p>
+            {/* Technical notes last, in small print. */}
+            <div className="space-y-1 text-xs text-slate-600">
+                <p>{t('chatgpt.admin.disableHelp')}</p>
+                {settings && settings.reason !== 'keyMissing' && <p>{t(settings.ready ? 'chatgpt.admin.protected' : settings.key_source === 'managed' ? 'chatgpt.admin.automatic' : 'chatgpt.errors.notConfigured')}</p>}
+                <p>{t('chatgpt.admin.backup')}</p>
+                <p>{t('chatgpt.admin.eligibility')}</p>
+            </div>
         </Card>
     </div>;
 }

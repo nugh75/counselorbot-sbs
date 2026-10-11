@@ -40,7 +40,6 @@ export function AudienceSwitches({ feature }: { feature: 'api' | 'chatgpt' }) {
             <input type="checkbox" checked={values[audience]} onChange={event => void save({ ...values, [audience]: event.target.checked })} />
             {label[audience]}
         </label>)}
-        <p className="text-sm text-slate-600">{l('audienceHelp')}</p>
         {failed && <p role="alert" className="text-sm text-red-600">{l('error')}</p>}
     </fieldset>;
 }
