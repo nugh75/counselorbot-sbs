@@ -98,9 +98,7 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
         test(`admin can enable both functions without preconfigured keys in ${lang} at ${width}px`, async () => {
             const f = await fixture({ role: 'admin', lang, width });
             try {
-                // #ai-admin: the switches live on the "APIs and ChatGPT" page, open to admins even with both off.
-                await f.page.goto(`${origin}/profilo/api-personali`);
-                await f.page.locator('#ai-admin').waitFor();
+                await f.page.goto(`${origin}/admin`);
                 const api = f.page.getByTestId('personal-api-settings');
                 const toggle = api.getByRole('checkbox', { name: personalAPIText(lang, 'adminToggle'), exact: true });
                 await toggle.waitFor();
@@ -124,7 +122,7 @@ for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
 test('admin switches teachers and students independently for each feature', async () => {
     const f = await fixture({ role: 'admin', lang: 'it', width: 390 });
     try {
-        await f.page.goto(`${origin}/profilo/api-personali`);
+        await f.page.goto(`${origin}/admin`);
         const api = f.page.getByTestId('personal-api-settings');
         await api.getByRole('checkbox', { name: personalAPIText('it', 'adminToggle'), exact: true }).check();
         const switches = f.page.getByTestId('audience-api');

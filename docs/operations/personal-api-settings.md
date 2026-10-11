@@ -1,8 +1,7 @@
 # Connessioni AI personali di studenti e docenti
 
 La funzione è disattivata per default. Il vero amministratore la abilita in
-**API e ChatGPT → Impostazioni dell’installazione** (`/profilo/api-personali#ai-admin`,
-visibile solo agli amministratori anche a funzioni spente); il ricercatore
+**Area amministrazione → Configurazione & Prompt → Generale → API personali e ChatGPT**; il ricercatore
 non può abilitarla. L’attivazione prepara automaticamente la protezione delle
 credenziali, senza comandi o variabili obbligatorie sul server.
 
@@ -154,7 +153,7 @@ mette a disposizione della classe (sezione seguente) resta disponibile.
 ## Chiave condivisa con la classe (#201)
 
 Con `personal_api_enabled` e il nuovo interruttore `class_api_sharing_enabled`
-(API e ChatGPT → Impostazioni dell’installazione → API personali → casella «Docenti — possono mettere a disposizione…», `GET/PUT /api/admin/class-api-sharing`), un
+(Area amministrazione → Configurazione & Prompt → Generale → API personali e ChatGPT → API personali → casella «Docenti — possono mettere a disposizione…», `GET/PUT /api/admin/class-api-sharing`), un
 docente che gestisce la classe sceglie una propria connessione e un livello di
 ragionamento (`GET/PUT/DELETE /api/teacher/groups/{id}/api-share`, tabella
 `class_api_shares`, creata all’avvio). Solo connessioni API del docente: mai
