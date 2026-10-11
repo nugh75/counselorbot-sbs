@@ -453,7 +453,9 @@ def status(db, username):
     in_use = usage(db, username)
     pending = db.query(models.ChatGPTLink).filter(models.ChatGPTLink.username == username,
                   models.ChatGPTLink.expires_at > datetime.now(timezone.utc)).first() is not None
-    return {"available": ready, "enabled": enabled(db), "personal_api_enabled": feature_enabled(db), "reason": reason, "connected": bool(row and row.encrypted_credentials),
+    from .personal_api import class_allows
+    blocked = not class_allows(db, username)  # #217: the class does not allow own subscriptions
+    return {"available": ready, "enabled": enabled(db) and not blocked, "class_blocked": blocked, "personal_api_enabled": feature_enabled(db), "reason": reason, "connected": bool(row and row.encrypted_credentials),
             "email": row.email if row else None, "use_subscription": bool(row and in_use), "pending_link": pending,
             "model": in_use or (row.preferred_model if row else None), "needs_reconnect": bool(row and row.last_error == "reconnect"),
             "registered": bool(row and row.client_id),

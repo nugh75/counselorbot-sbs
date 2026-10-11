@@ -116,9 +116,11 @@ def read_settings(identity: dict = Depends(current_owner), db: Session = Depends
     routing = db.get(models.PersonalAIRouting, identity["username"])
     row = (db.query(models.PersonalAPIConnection).filter_by(id=routing.default_connection_id, username=identity["username"]).first()
            if routing else db.query(models.PersonalAPISettings).filter_by(username=identity["username"]).first())
-    allowed = personal_api.feature_enabled(db)
+    blocked = not personal_api.class_allows(db, identity["username"])
+    allowed = personal_api.feature_enabled(db) and not blocked
     return {
         "available": allowed,
+        "class_blocked": blocked,  # #217: a class of this student does not allow own APIs
         "chatgpt_enabled": enabled(db),
         "providers": list(personal_api.PROVIDERS),
         "configured": bool(row),
@@ -284,8 +286,10 @@ def _catalog(db, identity):
     from ..chatgpt_connections import enabled
     routing = db.get(models.PersonalAIRouting, username)
     api = personal_api.feature_enabled(db)
+    blocked = not personal_api.class_allows(db, username)
     return {
-        "available": _routing_available(db), "api_enabled": api, "chatgpt_enabled": enabled(db),
+        "available": _routing_available(db) and not blocked, "class_blocked": blocked,
+        "api_enabled": api, "chatgpt_enabled": enabled(db),
         "chatgpt_models": _chatgpt_models(db, username),
         "enabled": bool(routing and routing.enabled),
         "default_connection_id": routing.default_connection_id if routing else None,
@@ -387,6 +391,8 @@ def delete_connection(connection_id: str, identity: dict = Depends(current_owner
 def update_routing(request: RoutingUpdate, identity: dict = Depends(current_owner), db: Session = Depends(get_db)):
     _require_routing(db)
     username = identity["username"]
+    if not personal_api.class_allows(db, username):
+        raise HTTPException(403, "personalAPI.errors.disabled")
     routing = _prepare_routing(db, username)
     catalog = {item["slug"]: item for item in _chatgpt_models(db, username)}
     models_seen = set()

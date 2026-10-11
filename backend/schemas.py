@@ -1611,6 +1611,7 @@ class ClassSettingsUpdate(ClassSettingsReason):
     disabled_counselor_ids: Optional[List[StrictInt]] = None
     default_counselor_id: Optional[int] = Field(default=None, strict=True)
     forum: Optional[ClassForumOptions] = None
+    students_personal_ai: Optional[StrictBool] = None  # #217
 
 
 class ClassSettingsLockTarget(ClassSettingsReason):

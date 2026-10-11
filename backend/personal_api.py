@@ -102,6 +102,22 @@ def decrypt_key(row) -> str:
         raise PersonalAPIError("Personal API credential cannot be read; save the key again") from exc
 
 
+def class_allows(db, username):
+    """False when one of the student's active classes does not allow own APIs/ChatGPT (#217).
+
+    Staff and students without classes are not members, so they are never limited here.
+    """
+    if not username:
+        return True
+    with db.no_autoflush:
+        blocked = (db.query(models.GroupMembership.id)
+                   .join(models.StudentGroup, models.StudentGroup.id == models.GroupMembership.group_id)
+                   .join(models.ClassSettings, models.ClassSettings.group_id == models.GroupMembership.group_id)
+                   .filter(models.GroupMembership.username == username, models.StudentGroup.is_active.is_(True),
+                           models.ClassSettings.students_personal_ai.is_(False)).first())
+    return blocked is None
+
+
 def chosen_source(db, username, counselor_id=None):
     """The person's choice for a counselor (#200): ("api", connection id, level), ("chatgpt", model, level) or None.
 
@@ -111,7 +127,7 @@ def chosen_source(db, username, counselor_id=None):
     falls back to the institution instead of to another personal source.
     """
     from .auth import VIEW_AS_DEMO_ACCOUNTS
-    if not username or username in VIEW_AS_DEMO_ACCOUNTS:
+    if not username or username in VIEW_AS_DEMO_ACCOUNTS or not class_allows(db, username):
         return None
     with db.no_autoflush:
         routing = db.get(models.PersonalAIRouting, username)
@@ -149,7 +165,7 @@ def active_settings(db, username, counselor_id=None):
                 return None
             return db.query(models.PersonalAPIConnection).filter_by(id=source[1], username=username).first()
         row = db.query(models.PersonalAPISettings).filter_by(username=username).first()
-    if not row or not row.enabled:
+    if not row or not row.enabled or not class_allows(db, username):
         return None
     return row
 
