@@ -126,6 +126,23 @@ dipendere dal flag globale nel worker. Il cambio vale quindi per le nuove richie
 anche su worker già avviati, conservando la configurazione delle richieste in corso.
 Il default resta locale e bloccante; non si passa al filtro di base automaticamente.
 
+## Chiave condivisa con la classe (#201)
+
+Con `personal_api_enabled` e il nuovo interruttore `class_api_sharing_enabled`
+(Amministrazione → API personali, `GET/PUT /api/admin/class-api-sharing`), un
+docente che gestisce la classe sceglie una propria connessione e un livello di
+ragionamento (`GET/PUT/DELETE /api/teacher/groups/{id}/api-share`, tabella
+`class_api_shares`, creata all’avvio). Solo connessioni API del docente: mai
+l’abbonamento ChatGPT. Per uno studente l’ordine è: scelta personale, chiave della
+classe, istituto; se le sue classi attive condividono chiavi diverse risponde
+l’istituto. La chiave è decifrata solo nel backend; i log delle chat registrano
+`shared_group_id` e `credential_source = personal`, quindi il costo non pesa sul
+budget dell’istituto e il docente vede richieste e costo del mese. Gli errori
+della chiave tornano agli studenti come `personalAPI.errors.classShare` (messaggio
+neutro) e restano al docente come `last_error`. I dati delle conversazioni sono
+trattati dal fornitore dell’account del docente: va indicato nell’informativa
+della scuola. Interrompere la condivisione vale dal messaggio successivo.
+
 ## Protezione, migrazione e API
 
 La chiave Fernet è conservata in `personal_api_credentials/credential.key`
