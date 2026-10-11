@@ -1,17 +1,18 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { QUESTIONNAIRE_LIST, QuestionnaireType, QuestionnaireConfig } from '@/lib/questionnaires';
-import { AlertTriangle, BookOpen, Check, ChevronDown, ExternalLink, Snowflake, X } from 'lucide-react';
+import { AlertTriangle, BookOpen, Check, ChevronDown, ExternalLink, Snowflake, Sparkles, X } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { instrumentAvailableInLocale } from '@/lib/instrument-availability';
 import { STRATEGIC_COMPETENCES_URLS } from '@/lib/questionnaire-sources';
 import { resolveActiveStudentTools, TEACHER_AREA_INSTRUMENT_IDS } from '@/lib/tool-catalog';
 import { useInstrumentCatalog } from '@/lib/use-instrument-catalog';
 import { resumeHref, useResumeEntries } from '@/lib/use-resume-entries';
-import { latestPausedByTool } from '@/lib/catalog-status';
+import { latestPausedByTool, suggestTools } from '@/lib/catalog-status';
+import { fetchOrientationSession, fetchOrientationStatus, type OrientationRecommendation } from '@/lib/orientation-api';
 import { useUserAccess } from '@/lib/use-user-access';
 import { isToolAllowed } from '@/lib/user-access';
 import { BackButton } from '@/components/ui/BackButton';
@@ -44,6 +45,22 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [], paused
     const { access } = useUserAccess();
     const { frozen } = useResumeEntries();
     const pausedByTool = useMemo(() => latestPausedByTool(frozen), [frozen]);
+    // Strumenti indicati dall'ultima Bussola: senza Bussola (o senza login) la
+    // richiesta fallisce e i consigli usano solo le chat in pausa.
+    const [orientation, setOrientation] = useState<OrientationRecommendation[]>([]);
+    useEffect(() => {
+        let alive = true;
+        void (async () => {
+            try {
+                const status = await fetchOrientationStatus();
+                const sessionId = status.latest_session_id ?? status.in_progress_session_id;
+                if (!sessionId) return;
+                const session = await fetchOrientationSession(sessionId);
+                if (alive) setOrientation(session.recommendations);
+            } catch { /* nessun segnale dalla Bussola */ }
+        })();
+        return () => { alive = false; };
+    }, []);
 
     const active = useMemo(() => {
         return resolveActiveStudentTools(instrumentCatalog, lang, access);
@@ -57,6 +74,13 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [], paused
                 && !(TEACHER_AREA_INSTRUMENT_IDS as readonly string[]).includes(q.id)
         );
     }, [activeIdSet, access]);
+
+    const suggestions = useMemo(() => suggestTools({
+        activeIds: active.map((q) => q.id),
+        completed,
+        paused: frozen,
+        orientation,
+    }), [active, completed, frozen, orientation]);
 
     // Competenze Strategiche = strumenti con assessment sul sito / in-app; Interviste = agentOnly (Savickas, percorsi guidati).
     const csQuestionnaires = useMemo(() => active.filter((q) => !q.agentOnly), [active]);
@@ -277,6 +301,39 @@ export function QuestionnaireSelector({ onSelect, onBack, completed = [], paused
                             <X className="h-4 w-4" />
                         </button>
                     )}
+                </section>
+            )}
+
+            {suggestions.length > 0 && !isUnavailableQuestionnaireLang && (
+                <section className="space-y-3">
+                    <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+                        <Sparkles className="h-5 w-5 text-indigo-600" aria-hidden="true" />
+                        {t('selector.suggested.title')}
+                    </h2>
+                    <div className="grid gap-3 md:grid-cols-3">
+                        {suggestions.map((suggestion) => {
+                            const q = active.find((item) => item.id === suggestion.id);
+                            if (!q) return null;
+                            return (
+                                <button
+                                    key={suggestion.id}
+                                    type="button"
+                                    onClick={() => setSelectedKey(q.id)}
+                                    onDoubleClick={() => onSelect(q)}
+                                    aria-pressed={selectedKey === q.id}
+                                    className={cn(
+                                        'glass-panel flex flex-col gap-1 p-4 text-left transition-colors',
+                                        selectedKey === q.id ? 'ring-2 ring-indigo-400 border-indigo-300' : 'hover:border-indigo-200',
+                                    )}
+                                >
+                                    <span className="font-bold text-slate-800">{tf(`q.${q.id}.name`, q.name)}</span>
+                                    <span className="text-sm text-slate-500">
+                                        {suggestion.source === 'paused' ? t('selector.suggested.paused') : suggestion.reason}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </section>
             )}
 
