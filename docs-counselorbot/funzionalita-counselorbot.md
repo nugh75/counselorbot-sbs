@@ -471,7 +471,13 @@ API oppure un modello del proprio ChatGPT** (#200): per esempio un counselor con
 una chiave OpenRouter e un altro con ChatGPT. I counselor mantengono la propria
 personalità e i prompt del percorso. La **Scelta predefinita** (una connessione,
 un modello ChatGPT o i modelli dell’istituto) si applica ai counselor senza
-scelta specifica e alle funzioni senza counselor. La lista counselor mostra il modello
+scelta specifica e alle funzioni senza counselor. Accanto a ogni fonte personale
+il menu **Ragionamento** (#202) sceglie quanto il modello riflette prima di
+rispondere: **Predefinito del modello**, Nessuno, Basso, Medio o Alto per le API;
+per ChatGPT i livelli che il modello dichiara (Basso, Medio e Alto se il catalogo
+non li indica). Il livello prevale su quello del preset del counselor e vale solo
+per le fonti personali; se ChatGPT rifiuta il livello, risponde con il proprio
+predefinito invece di fallire. La lista counselor mostra il modello
 assegnato nell’account. Le scelte non cambiano i counselor dell’istituzione.
 **Usa le mie API o il mio ChatGPT** e **Salva associazioni e utilizzo** attivano
 le scelte; la disattivazione torna ai modelli dell’istituto, conservando tutte

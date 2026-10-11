@@ -406,7 +406,7 @@ def build_prompt_audit(
             "history": history,
         },
         "transport": chatgpt_preview(
-            model, full_message, system_prompt_final, history,
+            model, full_message, system_prompt_final, history, getattr(ai_service, "personal_reasoning", None),
         ) if provider == "openai_chatgpt" else None,
         "inputs": {
             "raw_message": request.message,

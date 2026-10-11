@@ -357,6 +357,16 @@ connessione ed elimina le associazioni API che erano disattivate; il flag
 `PUT /api/user/chatgpt/preference` imposta o toglie ChatGPT come scelta
 predefinita; la scelta usa un lock condiviso per account.
 
+**Livello di ragionamento (#202).** `default_reasoning` e `reasoning` (migrazione
+`20261011_reasoning_levels`, valori `none|minimal|low|medium|high|xhigh` o NULL per
+il predefinito del modello) accompagnano ogni fonte. Per ChatGPT il livello va nel
+corpo Responses come `reasoning: {"effort": …}` (visibile anche nell’ispezione del
+prompt); un 400 con il livello impostato ripete la richiesta una volta senza.
+`list_models` conserva i livelli dichiarati dal catalogo (`supported_reasoning_levels`)
+e il routing rifiuta quelli non offerti. Per le API personali `AIService` traduce
+il livello nel piano esistente (`none` spegne il ragionamento, gli altri impostano
+il budget: 512/1024/4096/12000/24000 token) con precedenza sul preset del counselor.
+
 **Scollega** toglie ChatGPT da tutte le scelte per counselor, elimina sempre i token
 locali e tenta la revoca OpenAI. Se la revoca
 non è confermata, controllare anche le connessioni nelle impostazioni ChatGPT.

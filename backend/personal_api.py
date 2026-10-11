@@ -10,6 +10,8 @@ from .api_secrets import API_KEY_ENV_MAP
 from .credential_storage import CredentialStore, CredentialStorageError
 
 POLICY_KEY = "personal_api_enabled"
+# #202: levels a person can choose for a source; the database check matches.
+REASONING_LEVELS = ("none", "minimal", "low", "medium", "high", "xhigh")
 CONNECTION_ERROR_CODES = frozenset("personalAPI.errors." + reason for reason in (
     "authentication", "modelUnavailable", "quota", "rateLimit", "privacy",
     "invalidRequest", "connection", "configuration", "counselor",
@@ -101,7 +103,9 @@ def decrypt_key(row) -> str:
 
 
 def chosen_source(db, username, counselor_id=None):
-    """The person's choice for a counselor (#200): ("api", connection id), ("chatgpt", model) or None.
+    """The person's choice for a counselor (#200): ("api", connection id, level), ("chatgpt", model, level) or None.
+
+    The level (#202) is the chosen reasoning effort, None for the model's default.
 
     Administrator switches are checked by each consumer, so a disabled source
     falls back to the institution instead of to another personal source.
@@ -118,11 +122,18 @@ def chosen_source(db, username, counselor_id=None):
             source = db.get(models.PersonalCounselorConnection, (username, counselor_id)) or routing
     connection_id = source.connection_id if source is not routing else routing.default_connection_id
     model = source.chatgpt_model if source is not routing else routing.default_chatgpt_model
+    level = source.reasoning if source is not routing else routing.default_reasoning
     if connection_id:
-        return ("api", connection_id)
+        return ("api", connection_id, level)
     if model:
-        return ("chatgpt", model)
+        return ("chatgpt", model, level)
     return None
+
+
+def chosen_reasoning(db, username, counselor_id=None):
+    """The reasoning level of the person's source for this counselor, if any (#202)."""
+    source = chosen_source(db, username, counselor_id)
+    return source[2] if source else None
 
 
 def active_settings(db, username, counselor_id=None):
