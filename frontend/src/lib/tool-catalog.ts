@@ -133,7 +133,7 @@ export function getDynamicToolCategories(
 export function orientationToolHref(id: string): string {
     if (isStartableQuestionnaireId(id)) return `/?start=${encodeURIComponent(id)}`;
     if (id === 'pqbl') return '/profilo/pqbl';
-    return '/?view=questionnaires';
+    return '/?view=home';
 }
 
 export function safeOrientationNext(value: string | null): string | null {

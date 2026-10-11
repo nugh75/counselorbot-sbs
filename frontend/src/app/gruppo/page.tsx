@@ -96,7 +96,7 @@ function GroupJoinInner() {
                     <p className="max-w-sm text-xs text-slate-500">{learningText(lang, 'groupVisibility')}</p>
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <Link
-                            href="/strumenti"
+                            href="/?view=home"
                             className="rounded-md bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-700"
                         >
                             {texts.goTools}
