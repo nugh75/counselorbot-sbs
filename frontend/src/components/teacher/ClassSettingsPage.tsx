@@ -105,6 +105,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
     const [disabledCounselors, setDisabledCounselors] = useState(initial.disabled_counselor_ids);
     const [defaultCounselor, setDefaultCounselor] = useState(effectiveDefaultCounselor(initial));
     const [forum, setForum] = useState(initial.forum ?? defaultForumOptions);
+    const [personalAI, setPersonalAI] = useState(initial.students_personal_ai ?? true);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<'saved' | 'error' | 'conflict' | 'invalid' | 'lockedError' | null>(null);
     const [forbidden, setForbidden] = useState(false);
@@ -120,7 +121,8 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
         || !sameIds(disabledCounselors, settings.disabled_counselor_ids)
         || defaultCounselor !== effectiveDefaultCounselor(settings)
         || forum.students_can_open !== (settings.forum ?? defaultForumOptions).students_can_open
-        || forum.premoderation !== (settings.forum ?? defaultForumOptions).premoderation;
+        || forum.premoderation !== (settings.forum ?? defaultForumOptions).premoderation
+        || personalAI !== (settings.students_personal_ai ?? true);
     useDraftGuard(dirty || busy, l('discard'), { blocked: busy });
     const tools = settings.tools.filter(tool => !tool.always_on);
     const isEnabled = (tool: ClassTool) => tool.admin_enabled && !disabled.includes(tool.key);
@@ -161,6 +163,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                     revision: settings.revision, disabled_tool_keys: disabled,
                     disabled_counselor_ids: disabledCounselors, default_counselor_id: defaultCounselor,
                     forum: { students_can_open: forum.students_can_open, premoderation: forum.premoderation },
+                    students_personal_ai: personalAI,
                     ...(reason.trim() ? { reason: reason.trim() } : {}),
                 }),
             });
@@ -176,7 +179,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
             if (current() && account.current === getViewAsAccount()?.username) {
                 setSettings(next); setDisabled(next.disabled_tool_keys);
                 setDisabledCounselors(next.disabled_counselor_ids); setDefaultCounselor(effectiveDefaultCounselor(next));
-                setForum(next.forum ?? defaultForumOptions);
+                setForum(next.forum ?? defaultForumOptions); setPersonalAI(next.students_personal_ai ?? true);
                 setNotice('saved'); setReason('');
             }
         } catch {
@@ -247,6 +250,15 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
         <p className="text-sm text-slate-600">{l('always')}: {settings.tools.filter(tool => tool.always_on).map(label).join(' · ')}</p>
         {settings.counselors.length > 0 && <ClassCounselorsSection counselors={settings.counselors} disabled={disabledCounselors}
             defaultId={defaultCounselor} busy={busy} admin={admin} lockDisabled={busy || dirty} onLock={(kind, id, state) => void changeLock(kind, id, state)} onToggle={toggleCounselor} onDefault={chooseDefault} />}
+        <Card>
+            <h2 className="text-lg font-bold text-slate-800">{l('personalAITitle')}</h2>
+            <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
+                <input type="checkbox" className="h-5 w-5 accent-indigo-600" checked={personalAI} disabled={busy}
+                    onChange={event => { if (!pending.current) { setPersonalAI(event.target.checked); setNotice(null); } }} />
+                {l('personalAIToggle')}
+            </label>
+            <p className="text-sm text-slate-600">{l('personalAIHelp')}</p>
+        </Card>
         <Card>
             <h2 className="text-lg font-bold text-slate-800">{forumText(lang, 'options')}</h2>
             {(['students_can_open', 'premoderation'] as const).map(name => {

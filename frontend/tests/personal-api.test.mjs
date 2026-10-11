@@ -206,3 +206,15 @@ test('#202: a reasoning level per source, limited to what the ChatGPT model offe
         assert.deepEqual(f.errors, []);
     } finally { await f.context.close(); }
 });
+
+test('#217: a class that forbids own sources explains it instead of redirecting', async () => {
+    const f = await fixture();
+    Object.assign(f.settings, { available: false, class_blocked: true });
+    try {
+        await f.page.goto(`${origin}/profilo/api-personali`);
+        await f.page.getByText(personalAPIText('it', 'classBlocked'), { exact: true }).waitFor();
+        assert.equal(f.page.url(), `${origin}/profilo/api-personali`);
+        assert.equal(await f.page.locator('#personal-default-connection').count(), 0);
+        assert.deepEqual(f.errors, []);
+    } finally { await f.context.close(); }
+});
