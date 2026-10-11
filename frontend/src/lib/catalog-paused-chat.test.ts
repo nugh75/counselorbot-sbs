@@ -1,23 +1,43 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
-// Dopo il fiocco si atterra nel catalogo: senza l'avviso lo studente non sa
-// che la chat è in pausa né come tornarci.
+// Il catalogo strumenti è confluito in «Attività e percorsi» (step `base`):
+// dopo il fiocco si atterra lì, con l'avviso della chat in pausa.
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
-test('freezing a guided chat hands the paused chat to the catalog', () => {
+test('freezing a guided chat lands on activities and paths with the paused chat', () => {
     const page = read('../app/page.tsx');
-    const onFrozen = page.slice(page.indexOf('onFrozen={() => {'), page.indexOf("setStep('questionnaire-select');", page.indexOf('onFrozen={() => {')));
+    const start = page.indexOf('onFrozen={() => {');
+    const onFrozen = page.slice(start, page.indexOf('}}', start));
     assert.match(onFrozen, /setPausedChat\(\{ sessionId, questionnaireId: selectedQuestionnaire\.id \}\)/);
+    assert.match(onFrozen, /setStep\('base'\)/);
     assert.match(page, /pausedChat=\{pausedChat\}/);
-    assert.match(page, /if \(step !== 'questionnaire-select'\) setPausedChat\(null\)/);
+    assert.match(page, /if \(step !== 'base'\) setPausedChat\(null\)/);
 });
 
-test('the catalog banner resumes the frozen snapshot', () => {
-    const selector = read('../components/questionnaire/QuestionnaireSelector.tsx');
-    assert.match(selector, /resumeHref\(\{ session_id: pausedChat\.sessionId \}\)/);
-    for (const key of ['title', 'body', 'resume', 'dismiss']) {
-        assert.ok(selector.includes(`selector.paused.${key}`), `missing selector.paused.${key}`);
+test('the old tool catalog step and page are gone', () => {
+    const page = read('../app/page.tsx');
+    assert.doesNotMatch(page, /questionnaire-select/);
+    assert.doesNotMatch(page, /QuestionnaireSelector/);
+    assert.ok(!existsSync(new URL('../components/questionnaire/QuestionnaireSelector.tsx', import.meta.url)));
+    assert.ok(!existsSync(new URL('../app/strumenti/page.tsx', import.meta.url)));
+    // I vecchi link `?view=questionnaires` portano ad «Attività e percorsi».
+    assert.match(page, /setStep\(view === 'intro' \? 'intro' : 'base'\)/);
+});
+
+test('activities and paths carry the tool catalog pieces', () => {
+    const home = read('../components/home/ReturningHome.tsx');
+    assert.match(home, /resumeHref\(\{ session_id: pausedChat\.sessionId \}\)/);
+    for (const key of ['selector.paused.title', 'selector.paused.resume', 'selector.paused.dismiss', 'selector.badge.pausedOn',
+        'selector.suggested.title', 'selector.openStrategic', 'selector.externalCredentials', 'selector.upcoming.title',
+        'selector.unavailable.title', 'selector.experimentalBadge']) {
+        assert.ok(home.includes(key), `missing ${key}`);
     }
+    assert.match(home, /suggestTools\(/);
+    assert.match(home, /latestPausedByTool\(frozen\)/);
+});
+
+test('the green brand palette stays: no off-brand sky colours in the new pieces', () => {
+    assert.doesNotMatch(read('../components/home/ReturningHome.tsx'), /\bsky-\d/);
 });

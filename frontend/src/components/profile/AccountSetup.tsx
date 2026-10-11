@@ -40,7 +40,7 @@ export function AccountSetup({ counselorOnly = false, onReturn }: { counselorOnl
     const goBack = () => {
         if (onReturn) onReturn();
         else if (window.history.state?.cbPreviousPage && window.history.length > 1) router.back();
-        else router.replace('/?view=questionnaires');
+        else router.replace('/?view=home');
     };
     const finish = async (id: number | null, complete = false) => {
         if (busy) return;

@@ -9,7 +9,7 @@ test('Bussola links only to tools in the shared catalog', () => {
     assert.equal(orientationToolHref('QSA'), '/?start=QSA');
     assert.equal(orientationToolHref('IDEA'), '/?start=IDEA');
     assert.equal(orientationToolHref('pqbl'), '/profilo/pqbl');
-    assert.equal(orientationToolHref('unknown'), '/?view=questionnaires');
+    assert.equal(orientationToolHref('unknown'), '/?view=home');
 });
 
 test('the return destination stays inside the app and outside Bussola', () => {
@@ -39,8 +39,7 @@ test('the landing shows before the gate, and its only way forward is the compass
     assert.equal(orientationGateBypass('/', '?view=questionnaires'), false);
     assert.equal(orientationGateBypass('/', '?start=IDEA'), false);
     // E il tasto della presentazione porta sempre alla Bussola: mai al
-    // catalogo vecchio (questionnaire-select), che rimane solo per i salti
-    // espliciti dalla Bussola stessa e dagli strumenti.
+    // vecchio catalogo strumenti (questionnaire-select), ora tolto.
     const source = readFileSync(new URL('../app/page.tsx', import.meta.url), 'utf8');
     const handler = source.slice(source.indexOf('const startFromIntro'), source.indexOf('const homeStep'));
     assert.doesNotMatch(handler, /questionnaire-select/);

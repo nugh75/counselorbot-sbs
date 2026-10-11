@@ -29,7 +29,7 @@ import {
     type VerificationRequest,
 } from '@/lib/institution-credentials';
 
-const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
+const QUESTIONNAIRE_SELECTION_HREF = '/?view=home';
 
 // Profilo calcolato lato server (POST /api/instruments/{code}/score).
 interface ScoreResult {

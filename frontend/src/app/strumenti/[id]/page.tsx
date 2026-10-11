@@ -19,7 +19,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { STRATEGIC_COMPETENCES_URLS, STRATEGIC_COMPETENCES_CODE, STRATEGIC_COMPETENCES_PASSWORD } from '@/lib/questionnaire-sources';
 
 const STATIC_AVAILABLE_INSTRUMENTS: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS', 'QPCC', 'ZTPI', 'QAP', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'IDEA'];
-const QUESTIONNAIRE_SELECTION_HREF = '/?view=questionnaires';
+const QUESTIONNAIRE_SELECTION_HREF = '/?view=home';
 
 export default function InstrumentDetailsPage() {
     const { t, tf, lang } = useI18n();

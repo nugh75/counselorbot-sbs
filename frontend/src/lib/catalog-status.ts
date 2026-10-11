@@ -4,6 +4,12 @@
 
 import type { FrozenSessionSummary } from './frozen-session';
 
+// Chat guidata appena congelata: «Attività e percorsi» è dove si atterra dopo il fiocco.
+export interface PausedChat {
+    sessionId: string;
+    questionnaireId: string;
+}
+
 export function latestPausedByTool(frozen: FrozenSessionSummary[]): Map<string, FrozenSessionSummary> {
     const byTool = new Map<string, FrozenSessionSummary>();
     for (const row of frozen) {

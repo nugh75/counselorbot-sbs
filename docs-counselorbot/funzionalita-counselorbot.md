@@ -17,11 +17,15 @@ come primo elemento in evidenza (hero card), mentre il catalogo degli strumenti 
 mostrato sotto collassato (con interruttore per espanderlo che ricorda la scelta nel
 browser). **Riprendi un’attività** è in fondo, con l’immagine del puzzle;
 le attività interrotte sono raggiungibili anche dalla navigazione.
-Il catalogo degli strumenti ha un indirizzo proprio, `/strumenti` (apre
-`/?view=questionnaires`), ed è la voce **Strumenti** della navigazione.
-In cima al catalogo, **Consigliati per te** propone fino a tre strumenti: prima
-quelli con una chat in pausa, poi quelli indicati dall’ultima Bussola, esclusi gli
-strumenti già compilati. Senza questi segnali la sezione non compare.
+Il vecchio catalogo strumenti separato non c’è più: i suoi elementi sono in
+**Attività e percorsi** (`/?view=home`; anche i vecchi link `/?view=questionnaires`
+portano qui). Sotto la Bussola, **Consigliati per te** propone fino a tre strumenti:
+prima quelli con una chat in pausa, poi quelli indicati dall’ultima Bussola, esclusi
+gli strumenti già compilati; senza questi segnali la sezione non compare. Ogni
+scheda mostra, quando servono, il segno «In pausa dal…» con Riprendi, il badge
+Sperimentale della compilazione in app e, in italiano, **Compila sul sito** con le
+credenziali; in fondo restano gli strumenti **In preparazione** e, nelle lingue senza
+questionari, l’avviso con il passaggio all’inglese.
 
 L’interfaccia non usa emoji né segni testuali come «+», «→» o «✓» nelle etichette:
 ogni simbolo è un’icona SVG (lucide-react). Le azioni dal significato evidente
@@ -207,9 +211,8 @@ invio immediato scelto esplicitamente. In conversazione vocale si avvia e si fer
 la registrazione; il microfono non riparte da solo.
 
 Le conversazioni guidate con progressi si salvano dopo le risposte per essere
-riprese anche da un altro dispositivo. Congela sessione salva e chiude: si torna al
-catalogo strumenti, che in cima avvisa che la chat è in pausa e offre Riprendi. Nel
-catalogo ogni strumento con una chat in pausa mostra la data e il proprio Riprendi. La ripresa
+riprese anche da un altro dispositivo. Congela sessione salva e chiude: si torna ad
+**Attività e percorsi**, che in cima avvisa che la chat è in pausa e offre Riprendi. La ripresa
 riporta percorso e conversazione, ma non garantisce memoria illimitata del modello.
 Eliminare un punto di ripresa non elimina i risultati del questionario o gli altri
 lavori. Il progresso PDF, invece, è locale al browser.

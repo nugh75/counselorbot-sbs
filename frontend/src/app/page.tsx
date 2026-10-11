@@ -12,7 +12,7 @@ import {
     buildFallbackQuestionnaireConfig,
 } from '@/lib/questionnaires';
 import { fetchInstruments } from '@/lib/instruments-api';
-import { QuestionnaireSelector, type PausedChat } from '@/components/questionnaire/QuestionnaireSelector';
+import type { PausedChat } from '@/lib/catalog-status';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { InputMethodSelector } from '@/components/qsa/InputMethodSelector';
 import { ScoreInputForm } from '@/components/qsa/ScoreInputForm';
@@ -58,7 +58,7 @@ import { enterStep, startTrail, stepAtDepth, type Trail } from '@/lib/flow-histo
 import { parseStudentClassPaths, type StudentClassPath } from '@/lib/class-paths';
 
 
-type Step = 'intro' | 'base' | 'questionnaire-select' | 'counselor-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'chat-settings' | 'interaction' | 'completed' | 'farewell';
+type Step = 'intro' | 'base' | 'counselor-select' | 'method-select' | 'manual-input' | 'upload-input' | 'dashboard' | 'chat-settings' | 'interaction' | 'completed' | 'farewell';
 
 // Compilazioni già salvate: servono a sapere se c'è qualcosa da riusare prima
 // di saltare la scelta del metodo di inserimento.
@@ -126,12 +126,12 @@ export default function Home() {
     const [preparingInstrument, setPreparingInstrument] = useState(false);
     const [sessionCounselorId, setSessionCounselorId] = useState<number | null>(null);
     const [frozenSnapshot, setFrozenSnapshot] = useState<FrozenSessionDetail | null>(null);
-    // Chat appena congelata col fiocco: il catalogo la ricorda in cima, così
-    // chi ci arriva sa cosa è successo e come tornare indietro.
+    // Chat appena congelata col fiocco: «Attività e percorsi» la ricorda in
+    // cima, così chi ci arriva sa cosa è successo e come tornare indietro.
     const [pausedChat, setPausedChat] = useState<PausedChat | null>(null);
-    // L'avviso vale solo per l'atterraggio dopo il fiocco: uscire dal catalogo lo chiude.
+    // L'avviso vale solo per l'atterraggio dopo il fiocco: uscire dalla pagina lo chiude.
     useEffect(() => {
-        if (step !== 'questionnaire-select') setPausedChat(null);
+        if (step !== 'base') setPausedChat(null);
     }, [step]);
     const [savedResults, setSavedResults] = useState<SavedResult[] | null>(null);
     const [notebookUpdatedAt, setNotebookUpdatedAt] = useState<string | null | undefined>(undefined);
@@ -260,12 +260,6 @@ export default function Home() {
         hasCompletedQuestionnaires || notebookUpdatedAt || (studentPaths?.length ?? 0) > 0 ? 'base' : 'intro'
     );
 
-    // Dove si ricade quando uno strumento non è consentito: al catalogo
-    // strumenti (o al percorso se c'è già storia).
-    const catalogStep = (): Step => (
-        hasCompletedQuestionnaires || notebookUpdatedAt || (studentPaths?.length ?? 0) > 0 ? 'base' : 'questionnaire-select'
-    );
-
     // Schermata iniziale: se lo studente appartiene a una classe con percorsi pubblicati,
     // atterra direttamente sulla schermata base con il percorso hero in evidenza;
     // altrimenti atterra sulla presentazione iniziale.
@@ -326,7 +320,7 @@ export default function Home() {
     // Verifica il counselor per questo strumento prima di avviare il percorso.
     const prepareInstrument = useCallback(async (questionnaire: QuestionnaireConfig | null, currentScores: Record<string, number> | null, resumeSid?: string) => {
         if (!questionnaire) {
-            setStep('questionnaire-select');
+            setStep('base');
             return;
         }
         setPreparingInstrument(true);
@@ -391,7 +385,7 @@ export default function Home() {
                     const access = await fetchUserAccess();
                     if (!isToolAllowed(access, snapshot.questionnaire_type)) {
                         toast.error(t('session.disabledForClass'));
-                        setStep(catalogStep());
+                        setStep('base');
                         setReady(true);
                         return;
                     }
@@ -424,10 +418,10 @@ export default function Home() {
                 } catch (err) {
                     if (err instanceof FrozenSessionAccessError && err.detail === 'tool_disabled_for_class') {
                         toast.error(t('session.disabledForClass'));
-                        setStep(catalogStep());
+                        setStep('base');
                     } else if (err instanceof FrozenSessionAccessError && err.detail === 'tool_unavailable') {
                         toast.error(t('session.toolUnavailable'));
-                        setStep(catalogStep());
+                        setStep('base');
                     } else {
                         toast.error(t('toast.error'));
                         setStep(homeStep());
@@ -448,7 +442,7 @@ export default function Home() {
                     const access = await fetchUserAccess();
                     if (!isToolAllowed(access, r.instrument)) {
                         toast.error(t('session.disabledForClass'));
-                        setStep(catalogStep());
+                        setStep('base');
                         setReady(true);
                         return;
                     }
@@ -488,11 +482,11 @@ export default function Home() {
                         } catch (err) {
                             if (err instanceof FrozenSessionAccessError && err.detail === 'tool_disabled_for_class') {
                                 toast.error(t('session.disabledForClass'));
-                                setStep(catalogStep());
+                                setStep('base');
                                 setReady(true);
                             } else if (err instanceof FrozenSessionAccessError && err.detail === 'tool_unavailable') {
                                 toast.error(t('session.toolUnavailable'));
-                                setStep(catalogStep());
+                                setStep('base');
                                 setReady(true);
                             } else {
                                 toast.error(t('toast.error'));
@@ -508,11 +502,13 @@ export default function Home() {
             }
         }
 
+        // `view=questionnaires` è il vecchio catalogo strumenti, confluito in
+        // «Attività e percorsi»: i link salvati portano lì.
         // `view=home` arriva dal bivio della Bussola: chi sceglie gli strumenti
         // deve trovare il catalogo di chi torna, non la presentazione, anche se
         // è la prima volta e non ha ancora compilato nulla.
         const view = params.get('view') || (!params.get('start') && !params.get('q') && !params.get('session_id')
-            ? ({ 'questionnaire-select': 'questionnaires', base: 'home', intro: 'intro' } as Record<string, string>)[window.history.state?.cbPageStep] : null);
+            ? ({ base: 'home', intro: 'intro' } as Record<string, string>)[window.history.state?.cbPageStep] : null);
         if (view === 'questionnaires' || view === 'home' || view === 'intro') {
             setSelectedQuestionnaire(null);
             setScores(null);
@@ -520,7 +516,7 @@ export default function Home() {
             setPdfToken(undefined);
             setSessionId('');
             setExperience(null);
-            setStep(view === 'intro' ? 'intro' : view === 'home' ? 'base' : 'questionnaire-select');
+            setStep(view === 'intro' ? 'intro' : 'base');
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             claimEntry();
             return;
@@ -536,7 +532,7 @@ export default function Home() {
                 const access = await fetchUserAccess();
                 if (!isToolAllowed(access, resumeInstrument)) {
                     toast.error(t('session.disabledForClass'));
-                    setStep(catalogStep());
+                    setStep('base');
                     claimEntry();
                     setReady(true);
                     return;
@@ -574,7 +570,7 @@ export default function Home() {
                 // Disabled tool: deep link falls back to the catalog with warning
                 toast.error(t('session.disabledForClass'));
                 window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-                setStep(catalogStep());
+                setStep('base');
                 claimEntry();
                 setReady(true);
                 return;
@@ -597,7 +593,7 @@ export default function Home() {
             }
             if (!questionnaire) {
                 window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
-                setStep(hasCompletedQuestionnaires || notebookUpdatedAt ? 'base' : 'questionnaire-select');
+                setStep('base');
                 claimEntry();
                 setReady(true);
                 return;
@@ -811,12 +807,11 @@ export default function Home() {
             return;
         }
         if (window.history.state?.cbPreviousPage && window.history.length > 1) { router.back(); return; }
-        if (step === 'questionnaire-select') setStep(homeStep());
-        else if (step === 'method-select' || step === 'counselor-select') setStep('questionnaire-select');
+        if (step === 'method-select' || step === 'counselor-select') setStep('base');
         else if (step === 'manual-input' || step === 'upload-input') setStep('method-select');
         else if (step === 'dashboard') setStep('method-select');
         else if (step === 'chat-settings') setStep('dashboard');
-        else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'questionnaire-select' : 'dashboard');
+        else if (step === 'interaction') setStep(isAgentOnly(selectedQuestionnaire) ? 'base' : 'dashboard');
         else if (step === 'completed') setStep('dashboard');
         else if (step === 'farewell') setStep('completed');
     };
@@ -874,11 +869,10 @@ export default function Home() {
         }
         return acc;
     }, {});
-    const completedTypes = Object.keys(lastCompiledAt) as QuestionnaireType[];
 
     const flowStages = ['CounselorBot', t('flow.select'), t('flow.input'), t('flow.profile'), t('flow.settings'), t('flow.chat'), t('flow.done')];
     const stageIndex = step === 'intro' ? 0
-        : step === 'questionnaire-select' || step === 'counselor-select' ? 1
+        : step === 'counselor-select' ? 1
         : step === 'method-select' || step === 'manual-input' || step === 'upload-input' ? 2
         : step === 'dashboard' ? 3 : step === 'chat-settings' ? 4 : step === 'interaction' ? 5 : 6;
 
@@ -922,13 +916,9 @@ export default function Home() {
                             onOpenIntro={() => setStep('intro')}
                             paths={studentPaths}
                             onRefreshPaths={loadStudentPaths}
+                            pausedChat={pausedChat}
+                            onDismissPausedChat={() => setPausedChat(null)}
                         />
-                    )}
-
-                    {/* Step: Questionnaire Selection */}
-                    {step === 'questionnaire-select' && (
-                        <QuestionnaireSelector onSelect={handleQuestionnaireSelect} onBack={goBack} completed={completedTypes}
-                            pausedChat={pausedChat} onDismissPausedChat={() => setPausedChat(null)} />
                     )}
 
                     {step === 'counselor-select' && counselorRequest && (
@@ -1066,7 +1056,7 @@ export default function Home() {
                                         setPausedChat({ sessionId, questionnaireId: selectedQuestionnaire.id });
                                         setResume(null);
                                         setFrozenSnapshot(null);
-                                        setStep('questionnaire-select');
+                                        setStep('base');
                                     }}
                                 />
                                 </ChatViewport>
