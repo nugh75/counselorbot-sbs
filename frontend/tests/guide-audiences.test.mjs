@@ -37,10 +37,10 @@ for (const [lang, width, dark] of [['it', 1440, false], ['en', 390, false], ['es
             const teacher = chooser.getByRole('link', { name: l('teacher'), exact: true });
             const student = chooser.getByRole('link', { name: l('student'), exact: true });
             assert.equal(await teacher.getAttribute('aria-current'), 'page');
-            assert.equal(await page.locator('li[id^="guide-teacher-section-"]').count(), 8);
+            assert.equal(await page.locator('li[id^="guide-teacher-section-"]').count(), 9);
             assert.equal(await page.locator('li[id^="guide-section-"]').count(), 0);
             assert.equal(await page.locator('#guide-teacher-section-5 h2').innerText(), l('teacher5Title'));
-            for (let n = 1; n <= 8; n++) {
+            for (let n = 1; n <= 9; n++) {
                 const section = page.locator(`#guide-teacher-section-${n}`);
                 assert.ok((await section.locator('p').first().innerText()).length > 100);
                 assert.ok(await section.locator('figure').count() > 0, `Missing screenshot: teacher section ${n}`);
@@ -48,7 +48,7 @@ for (const [lang, width, dark] of [['it', 1440, false], ['en', 390, false], ['es
                 assert.equal(new URL(page.url()).hash, `#guide-teacher-section-${n}`);
             }
             const figures = page.locator('figure');
-            assert.equal(await figures.count(), 16); // Institutes and credentials join the class and forum screenshots.
+            assert.equal(await figures.count(), 17); // Institutes, credentials, class, forum and class path screenshots.
             const settings = page.locator('#guide-teacher-section-2');
             for (const key of ['teacherInstitutesBody', 'teacherInstituteCredentialsBody', 'classSettingsTeacher', 'classSettingsAccess', 'classSettingsCounselors', 'classSettingsHistory', 'classPathDistinction']) {
                 assert.ok((await settings.innerText()).includes(l(key)), `Missing class guidance: ${key}`);
@@ -85,7 +85,9 @@ for (const [lang, width, dark] of [['it', 1440, false], ['en', 390, false], ['es
             assert.equal(new URL(page.url()).searchParams.get('audience'), 'student');
             // The explicit student view hides the audience selector.
             assert.equal(await chooser.getByRole('link').count(), 0);
-            assert.equal(await page.locator('li[id^="guide-section-"]').count(), 16);
+            assert.equal(await page.locator('li[id^="guide-section-"]').count(), 17);
+            // #101: class paths and meetings, with the student's path screenshot.
+            assert.equal(await page.locator('#guide-section-17 figure').count(), 1);
             assert.equal(await page.locator('#guide-section-15 p').innerText(), l('personalGroups'));
             assert.ok((await page.locator('#guide-section-4').innerText()).includes(l('classSettingsCounselors')));
             assert.ok((await page.locator('#guide-section-5').innerText()).includes(l('classSettingsAccess')));
@@ -129,7 +131,7 @@ for (const [lang, width] of [['it', 1440], ['en', 390], ['es', 390], ['fr', 1440
             const text = guideAudienceText(lang, 'classSettingsAdmin');
             assert.ok((await admin.innerText()).includes(text));
             if (lang !== 'en') assert.notEqual(text, guideAudienceText('en', 'classSettingsAdmin'));
-            assert.equal(await admin.getByRole('link', { name: classSettingsText(lang, 'adminEdit'), exact: true }).getAttribute('href'), '/admin/classi');
+            assert.equal(await admin.getByRole('link', { name: classSettingsText(lang, 'adminEdit'), exact: true }).getAttribute('href'), '/admin?tab=groupsClasses'); // #163
             const figures = page.locator('#guide-teacher-section-2 figure');
             assert.equal(await figures.count(), 9); // Includes the institute credentials screenshot (#149).
             for (const key of ['adminClasses', 'adminEdit', 'audit']) {
