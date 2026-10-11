@@ -53,7 +53,7 @@ export function AudienceSwitches({ feature }: { feature: 'api' | 'chatgpt' }) {
     const label = feature === 'api' ? { teachers: l('audienceTeachersApi'), students: l('audienceStudentsApi') }
         : { teachers: l('audienceTeachersChatgpt'), students: l('audienceStudentsChatgpt') };
     return <fieldset className="mt-3 space-y-1 rounded-lg border border-slate-200 p-3" data-testid={`audience-${feature}`} disabled={busy}>
-        <legend className="px-1 text-sm font-semibold text-slate-800">{l('audienceTitle')}</legend>
+        <legend className="px-1 text-sm font-semibold text-slate-800">{l(feature === 'api' ? 'audienceTitle' : 'audienceTitleChatgpt')}</legend>
         {(['teachers', 'students'] as const).map(audience => <label key={audience} className="flex min-h-11 items-center gap-3 text-sm text-slate-800">
             <input type="checkbox" checked={values[audience]} onChange={event => void save({ ...values, [audience]: event.target.checked })} />
             {label[audience]}

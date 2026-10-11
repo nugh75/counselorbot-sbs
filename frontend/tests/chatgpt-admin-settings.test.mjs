@@ -48,7 +48,7 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
             const f = await fixture(language, width);
             const t = key => CHATGPT_DICTS[language]['chatgpt.' + key];
             try {
-                await f.page.goto(origin + '/profilo/api-personali');
+                await f.page.goto(origin + '/admin');
                 const panel = f.page.getByTestId('chatgpt-settings');
                 await panel.getByRole('heading', { name: t('admin.title') }).waitFor();
                 await panel.getByText(t('admin.disabled'), { exact: true }).waitFor();
@@ -59,8 +59,6 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
                 assert.deepEqual(f.writes, [{ enabled: true }]);
                 assert.equal(await panel.locator('code, input[type=password], textarea').count(), 0);
                 if (language === 'it') await panel.screenshot({ path: `/tmp/chatgpt-admin-${width}.png` });
-                // The page's own ChatGPT section appears below once the feature is on.
-                await f.page.locator('#chatgpt').getByRole('button', { name: t('connect'), exact: true }).waitFor();
                 await panel.getByText(t('admin.enabled'), { exact: true }).waitFor();
                 await panel.getByRole('button', { name: t('admin.disable'), exact: true }).click();
                 await panel.getByText(t('admin.disabled'), { exact: true }).waitFor();
@@ -81,11 +79,10 @@ for (const language of ['it', 'en', 'es', 'fr', 'de', 'sv']) {
 test('researcher cannot see the installation activation control', async () => {
     const f = await fixture('it', 390, false);
     try {
-        await f.page.goto(origin + '/profilo/api-personali');
-        await f.page.waitForLoadState('networkidle');
-        // Only administrators get the installation section of the page.
-        assert.equal(await f.page.locator('#ai-admin').count(), 0);
-        assert.equal(await f.page.getByTestId('chatgpt-settings').count(), 0);
+        const denied = f.page.waitForResponse(response => response.url().endsWith('/api/admin/chatgpt/settings') && response.status() === 403);
+        await f.page.goto(origin + '/admin');
+        await denied;
+        await f.page.getByTestId('chatgpt-settings').waitFor({ state: 'hidden' });
         assert.equal(await f.page.getByRole('button', { name: CHATGPT_DICTS.it['chatgpt.admin.enable'], exact: true }).count(), 0);
         assert.equal(f.writes.length, 0);
         assert.deepEqual(f.errors, []);
