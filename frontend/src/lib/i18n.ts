@@ -1211,7 +1211,6 @@ const it: Dict = {
     'admin.run.meta.sourceOther': 'Altro invito',
     // Guida all'interfaccia
     'nav.guide': 'Guida',
-    'nav.tools': 'Strumenti',
     'guide.title': 'Guida all\u2019interfaccia',
     'guide.subtitle': 'Un breve tour di CounselorBot, sezione per sezione.',
     'guide.back': 'Torna alla home',
@@ -2507,7 +2506,6 @@ const en: Dict = {
     'admin.run.meta.sourceOther': 'Other invitation',
     // Interface guide
     'nav.guide': 'Guide',
-    'nav.tools': 'Tools',
     'guide.title': 'Interface guide',
     'guide.subtitle': 'A short tour of CounselorBot, section by section.',
     'guide.back': 'Back to home',
@@ -3802,7 +3800,6 @@ const es: Dict = {
     'admin.run.meta.sourceOther': 'Otra invitacion',
     // Guia de la interfaz
     'nav.guide': 'Gu\u00eda',
-    'nav.tools': 'Herramientas',
     'guide.title': 'Gu\u00eda de la interfaz',
     'guide.subtitle': 'Un breve recorrido por CounselorBot, secci\u00f3n por secci\u00f3n.',
     'guide.back': 'Volver al inicio',
@@ -5097,7 +5094,6 @@ const fr: Dict = {
     'admin.run.meta.sourceOther': 'Autre invitation',
     // Guide de l'interface
     'nav.guide': 'Guide',
-    'nav.tools': 'Outils',
     'guide.title': 'Guide de l\u2019interface',
     'guide.subtitle': 'Un bref tour de CounselorBot, section par section.',
     'guide.back': 'Retour \u00e0 l\u2019accueil',
@@ -6392,7 +6388,6 @@ const de: Dict = {
     'admin.run.meta.sourceOther': 'Andere Einladung',
     // Anleitung zur Oberflaeche
     'nav.guide': 'Anleitung',
-    'nav.tools': 'Werkzeuge',
     'guide.title': 'Anleitung zur Oberfl\u00e4che',
     'guide.subtitle': 'Eine kurze Tour durch CounselorBot, Abschnitt f\u00fcr Abschnitt.',
     'guide.back': 'Zur\u00fcck zur Startseite',
@@ -7687,7 +7682,6 @@ const sv: Dict = {
     'admin.run.meta.sourceOther': 'Annan inbjudan',
     // Guide till gr\u00e4nssnittet
     'nav.guide': 'Guide',
-    'nav.tools': 'Verktyg',
     'guide.title': 'Guide till gr\u00e4nssnittet',
     'guide.subtitle': 'En kort rundtur i CounselorBot, avsnitt f\u00f6r avsnitt.',
     'guide.back': 'Tillbaka till startsidan',

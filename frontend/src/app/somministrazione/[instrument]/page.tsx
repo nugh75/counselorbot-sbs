@@ -28,7 +28,7 @@ export default function AdministrationPage() {
                 <h1 className="text-xl font-bold text-slate-900">{t('detail.disabledForClass.title')}</h1>
                 <p className="text-slate-600">{t('detail.disabledForClass.body')}</p>
                 <div className="flex items-center justify-center gap-3">
-                    <PreviousPageButton fallbackHref="/?view=questionnaires" />
+                    <PreviousPageButton fallbackHref="/?view=home" />
                 </div>
             </div>
         );

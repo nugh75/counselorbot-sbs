@@ -248,7 +248,7 @@ export default function BussolaPage() {
     // rende `required` falso da se'.
     const skipToTools = () => {
         skipOrientationThisVisit();
-        router.push('/?view=questionnaires');
+        router.push('/?view=home');
     };
 
     // L'altra strada del bivio: il catalogo degli strumenti, la stessa schermata
