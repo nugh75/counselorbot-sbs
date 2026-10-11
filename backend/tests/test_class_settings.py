@@ -139,6 +139,23 @@ def test_counselor_validation_and_tools_only_save_preserves_other_settings(setti
     assert all(row["approach_categories"] == [] for row in saved["counselors"])
 
 
+
+def test_counselors_carry_description_and_institution_model(settings_api):
+    # #205: the teacher sees what each counselor is and which model answers.
+    client, db, group_id, _ = settings_api
+    preset = models.ModelPreset(name="Riflessivo", provider="openrouter", model="qwen/test", disable_thinking=False)
+    db.add(preset)
+    db.flush()
+    db.add_all([models.Counselor(slug="described", name="Described", is_active=True, preset_id=preset.id,
+                                 description="Ti aiuta a riflettere.", description_i18n={"en": "Helps you reflect."}),
+                models.Counselor(slug="plain", name="Plain", is_active=True)])
+    db.commit()
+    rows = {row["name"]: row for row in client.get(f"/teacher/groups/{group_id}/settings").json()["counselors"]}
+    assert rows["Described"]["description"] == "Ti aiuta a riflettere."
+    assert rows["Described"]["description_i18n"] == {"en": "Helps you reflect."}
+    assert rows["Described"]["model"] == {"name": "Riflessivo", "provider": "openrouter", "model": "qwen/test"}
+    assert rows["Plain"]["model"] is None and rows["Plain"]["description_i18n"] == {}
+
 @pytest.mark.parametrize("changes", [{"forum": {"students_can_open": True}},
                                      {"locked_tool_keys": {"QSA": {"enabled": True}}}])
 def test_future_forum_and_lock_writes_are_not_accepted(settings_api, changes):

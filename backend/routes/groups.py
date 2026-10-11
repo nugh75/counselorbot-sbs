@@ -139,7 +139,15 @@ def _require_settings_group(db: Session, identity, group_id: int, *, for_update=
     return group
 
 
+def _preset_summary(preset):
+    """Name, provider and model of a counselor's preset; None means the installation default."""
+    if preset is None:
+        return None
+    return {"name": preset.name, "provider": preset.provider, "model": preset.model}
+
+
 def _serialize_settings(db: Session, group_id: int, settings) -> dict:
+    presets = {row.id: row for row in db.query(models.ModelPreset).all()}
     disabled_tools = settings.disabled_tool_keys if settings else []
     disabled_counselors = settings.disabled_counselor_ids if settings else []
     result = {
@@ -151,6 +159,9 @@ def _serialize_settings(db: Session, group_id: int, settings) -> dict:
         "tools": tool_catalog(db, disabled_tools),
         "counselors": [{"id": row.id, "name": row.name, "avatar_url": row.avatar_url,
                         "approach_categories": row.approach_categories or [],
+                        # #205: what the counselor is and which institution model answers.
+                        "description": row.description, "description_i18n": row.description_i18n or {},
+                        "model": _preset_summary(presets.get(row.preset_id)),
                         "admin_enabled": bool(row.is_active),
                         "enabled": bool(row.is_active) and row.id not in disabled_counselors}
                        for row in db.query(models.Counselor).filter(
