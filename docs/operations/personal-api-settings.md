@@ -12,8 +12,14 @@ diretta rimanda alla rispettiva area. Le connessioni e i counselor restano salva
 
 ## Connessioni e associazioni
 
-**Aggiungi connessione** salva nome, provider, identificativo esatto del modello
-e chiave. Il nome è un’etichetta scelta dall’utente per riconoscere il proprio
+**Aggiungi connessione** salva nome, provider, chiave e modello. Il modello si
+sceglie dall’elenco di `POST /api/user/api-connections/models` (chiave appena
+inserita o `connection_id` salvato; mai le chiavi dell’installazione), che usa
+`AIService.list_models`: per Mistral i modelli con `capabilities.completion_chat`,
+per Anthropic l’elenco ufficiale, per gli altri i `/models` OpenAI-compatibili
+senza embedding, voce, immagini e moderazione. Al salvataggio il server
+ricontrolla il modello e risponde `personalAPI.errors.modelUnavailable` se il
+provider non lo elenca. Il nome è un’etichetta scelta dall’utente per riconoscere il proprio
 account provider: non effettua un login al provider. Si possono aggiungere più
 connessioni e chiavi, anche dello stesso provider o di account esterni diversi.
 Le chiavi appartengono sempre all’account CounselorBot autenticato: non si possono
