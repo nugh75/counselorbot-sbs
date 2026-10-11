@@ -14,6 +14,7 @@ import { visualLabel } from '../src/lib/i18n-visual-tools.ts';
 import { classPickerText } from '../src/lib/i18n-class-picker.ts';
 import { classSettingsText } from '../src/lib/i18n-class-settings.ts';
 import { notebookLinkText } from '../src/lib/teacher-notebook-links.ts';
+import { classPathText } from '../src/lib/i18n-class-paths.ts';
 
 const origin = new URL(process.env.GUIDE_BASE_URL || 'http://127.0.0.1:3000').origin;
 const locales = ['it', 'en', 'es', 'fr', 'de', 'sv'];
@@ -27,7 +28,7 @@ const samples = {
     de: ['Mein Lernen organisieren', 'Lernwerkstatt', 'Probiere zwei kurze Wiederholungen aus.', 'Beschreibe, was funktioniert hat und was du ändern würdest.', 'Ich habe das Wiederholen auf zwei Tage verteilt.', 'Vergleiche beim nächsten Mal auch, woran du dich ohne Notizen erinnerst.'],
     sv: ['Planera mina studier', 'Studieverkstad', 'Prova två korta repetitionspass.', 'Beskriv vad som fungerade och vad du skulle ändra.', 'Jag fördelade repetitionen över två dagar.', 'Jämför nästa gång också vad du minns utan anteckningar.'],
 };
-const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories', 'teacher-class-picker', 'teacher-notebook', 'class-forum', 'teacher-forum', 'class-overview', 'class-tools', 'admin-classes', 'admin-locks', 'admin-audit'];
+const names = ['personal-area', 'personal-goals', 'study-event', 'professional-event', 'teacher-area', 'teacher-groups', 'teacher-catalog', 'teacher-assignment', 'teacher-feedback', 'introduction', 'activities', 'pdf-study', 'flashcards', 'access', 'counselors', 'tool-selection', 'notebook', 'cards', 'calendar', 'received-assignments', 'personal-groups', 'goal-sharing', 'orientation', 'institution-categories', 'teacher-class-picker', 'teacher-notebook', 'class-forum', 'teacher-forum', 'class-overview', 'class-tools', 'admin-classes', 'admin-locks', 'admin-audit', 'teacher-class-paths', 'class-paths'];
 const browser = await chromium.launch({ headless: true });
 try {
     for (const lang of captureLocales) {
@@ -39,6 +40,7 @@ try {
         let teacher = false;
         let admin = false;
         let classSettingsCapture = process.env.GUIDE_SCREENS === 'class-settings';
+        const classPathsCapture = process.env.GUIDE_SCREENS === 'class-paths';
         let authenticated = false;
         page.on('pageerror', error => errors.push(error.message));
         await page.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); }, lang);
@@ -73,6 +75,23 @@ try {
         const demoCategory = { id: 'demo-category', name: title, description: instructions, position: 0, is_active: true, updated_by: 'teacher.demo', updated_at: '2026-09-23T08:00:00Z' };
         const demoReferral = { id: 'demo-contact', institution_id: 1, category_ids: ['demo-category'], role: `${categoryText(lang, 'contacts')} · Demo`, person: '', needs: ['metodo-studio'], what_for: instructions, how_to_reach: '', email: '', hours: '', location: '', page_url: '' };
         const demoEvent = { id: 'demo-event', institution_id: 1, category_ids: ['demo-category'], title: `${categoryText(lang, 'events')} · Demo`, starts_at: '2026-11-10T10:00:00Z', needs: ['metodo-studio'], summary: instructions, page_url: '', location: '', is_online: true };
+        // #101: a class path with a personal tool, a guided chat and its follow-up meeting.
+        const meeting = { id: 5, group_id: 91, title: groupName, description: null, starts_at: '2026-11-10T09:00:00Z', duration_minutes: 60,
+            kind: 'group', host_kind: 'teacher', host_name: null, host_role: null, mode: 'in_person', place: 'Lab 2', link: null,
+            status: 'scheduled', revision: 1, show_on_timeline: true, attendance_count: 0, group_ids: [91], group_names: [groupName],
+            group_name: groupName, attended: false, can_mark: false };
+        const pathSteps = [
+            { id: 1, position: 1, step_type: 'tool', tool_key: 'goals', title, instructions, auto_detect: true, can_self_mark: false },
+            { id: 2, position: 2, step_type: 'guided_chat', tool_key: 'SAVICKAS', title: null, instructions: responsePrompt, auto_detect: true, can_self_mark: false },
+            { id: 3, position: 3, step_type: 'meeting', tool_key: null, meeting_id: 5, follows_step_id: 2, target_summary: meeting,
+              title: null, instructions: null, auto_detect: true, can_self_mark: false },
+        ];
+        const classPath = { id: 31, group_id: 91, title: groupName, description: instructions, mode: 'recommended', status: 'published',
+            revision: 2, created_by: 'teacher.demo', template_id: null, published_at: '2026-10-01T08:00:00Z', steps_count: 3, steps: pathSteps };
+        const studentPath = { id: 31, group_id: 91, group_name: groupName, title: groupName, description: instructions, mode: 'recommended',
+            next_step_id: 2, done: 1, total: 3, steps: pathSteps.map((step, i) => ({ ...step, state: i === 0 ? 'done' : 'not_done',
+                source: i === 0 ? 'automatic' : null, start_href: i === 0 ? '/profilo/obiettivi' : i === 1 ? '/?start=SAVICKAS' : null,
+                availability_reason: null })) };
         const workspace = {
             ...emptyWorkspace(),
             card_decks: [{ id: 'default', title }], active_deck_id: 'default',
@@ -148,7 +167,15 @@ try {
                 premoderated: false,
                 mute: null,
             };
-            else if (path === '/teacher/groups/91/settings') data = classSettingsCapture ? settings : {
+            else if (path === '/teacher/path-templates') data = { mine: [], shared: [] };
+            else if (path === '/teacher/groups/91/paths') data = [classPath];
+            else if (path === '/teacher/paths/31/progress') data = { path_id: 31, group_id: 91, title: groupName, mode: 'recommended', status: 'published',
+                published_at: classPath.published_at, steps: pathSteps.map((step, i) => ({ ...step, available: true, done_count: [2, 1, 0][i] })), students: [] };
+            else if (path === '/teacher/groups/91/meetings') data = [meeting];
+            else if (path === '/teacher/groups/91/meeting-referents') data = [];
+            else if (path === '/user/paths') data = [studentPath];
+            else if (path === '/user/meetings') data = [meeting];
+            else if (path === '/teacher/groups/91/settings') data = classSettingsCapture || classPathsCapture ? settings : {
                 group_id: 91, revision: 1, disabled_tool_keys: [], tools: [], disabled_counselor_ids: [],
                 default_counselor_id: null, counselors: [], forum: { students_can_open: true, premoderation: false },
             };
@@ -299,6 +326,20 @@ try {
             await go('/profilo');
             await page.getByRole('link', { name: personalAreaName(lang, 'obiettivi'), exact: true }).waitFor();
             await capture('personal-area');
+            await context.close();
+            continue;
+        }
+        if (classPathsCapture) {
+            authenticated = true; teacher = true;
+            await go('/docente/percorsi?class=91');
+            await page.getByRole('button', { name: classPathText(lang, 'open'), exact: true }).click();
+            const editor = page.locator('[data-testid="add-step"]').locator('..');
+            await editor.locator('[data-testid="path-step-card"]').nth(2).waitFor();
+            await capture('teacher-class-paths', editor);
+            teacher = false;
+            await go('/profilo/percorsi');
+            await page.locator('[data-testid="meeting-details"]').first().waitFor();
+            await capture('class-paths', page.locator('main#contenuto'));
             await context.close();
             continue;
         }
