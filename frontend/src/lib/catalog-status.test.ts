@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 // @ts-expect-error -- Node direct typescript execution requires extension
-import { latestPausedByTool } from './catalog-status.ts';
+import { latestPausedByTool, suggestTools } from './catalog-status.ts';
 
 test('each tool keeps its most recent paused session', () => {
     const paused = latestPausedByTool([
@@ -17,4 +17,33 @@ test('each tool keeps its most recent paused session', () => {
 
 test('no paused sessions leaves every tool unchanged', () => {
     assert.equal(latestPausedByTool([]).size, 0);
+});
+
+const pausedRow = (id: string, tool: string) => ({ session_id: id, questionnaire_type: tool, current_phase: 'p1' });
+
+test('suggestions put paused chats before Bussola picks, without duplicates', () => {
+    const suggestions = suggestTools({
+        activeIds: ['QSA', 'IDEA', 'SAVICKAS', 'ZTPI'],
+        completed: [],
+        paused: [pausedRow('s1', 'IDEA')],
+        orientation: [{ id: 'IDEA', reason: 'again' }, { id: 'QSA', reason: 'study habits' }],
+    });
+    assert.deepEqual(suggestions, [
+        { id: 'IDEA', source: 'paused' },
+        { id: 'QSA', source: 'orientation', reason: 'study habits' },
+    ]);
+});
+
+test('suggestions skip completed and inactive tools and stop at three', () => {
+    const suggestions = suggestTools({
+        activeIds: ['A', 'B', 'C', 'D', 'E'],
+        completed: ['A'],
+        paused: [],
+        orientation: ['A', 'X', 'B', 'C', 'D', 'E'].map((id) => ({ id, reason: id })),
+    });
+    assert.deepEqual(suggestions.map((s) => s.id), ['B', 'C', 'D']);
+});
+
+test('no signal means no suggestions', () => {
+    assert.deepEqual(suggestTools({ activeIds: ['QSA'], completed: [], paused: [], orientation: [] }), []);
 });
