@@ -116,7 +116,8 @@ def test_admin_setting_precedes_environment_and_preserves_opted_in_grant(signed)
         with pytest.raises(accounts.ChatGPTError, match="disabled"):
             next(responses.stream(db, "fixture-model", "hello", "instructions"))
         assert accounts._credentials(row)["access_token"] == credentials["access_token"]
-        assert row.encrypted_credentials == sealed and row.use_subscription
+        # The choice survives the switch-off (#200: it lives in the personal routing).
+        assert row.encrypted_credentials == sealed and accounts.usage(db, "alice") == "fixture-model"
         accounts.set_installation_enabled(db, True)
         assert accounts.access_token(db) == credentials["access_token"]
 

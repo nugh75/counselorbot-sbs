@@ -204,9 +204,10 @@ lavori. Il progresso PDF, invece, è locale al browser.
 
 La sezione **API e ChatGPT** è in fondo alla panoramica dell’Area personale
 (`/profilo`) e dell’Area docenti (`/docente`), dopo tutte le sezioni degli strumenti.
-Raccoglie i collegamenti alle API personali e all’abbonamento ChatGPT abilitati
-per l’installazione, su due colonne da desktop e una da mobile.
-Se nessuna delle due funzioni è attiva, la sezione non compare.
+Ha una sola voce, **API e ChatGPT** (`/profilo/api-personali`,
+`/docente/api-personali`), che riunisce le API personali e l’abbonamento ChatGPT
+abilitati per l’installazione. Se nessuna delle due funzioni è attiva, la sezione
+non compare.
 
 ### Abbonamento personale ChatGPT (opzionale)
 
@@ -223,10 +224,11 @@ protezione manca per account esistenti, occorre ripristinarla dal backup del
 server; il pannello non la sostituisce automaticamente. Chi gestisce il server
 deve includere l’archivio protetto delle credenziali nei backup.
 
-Nell’Area personale (`/profilo/chatgpt`) e nell’Area docenti (`/docente/chatgpt`),
+Nella pagina **API e ChatGPT** dell’Area personale e dell’Area docenti, la sezione
 **Il tuo abbonamento ChatGPT** consente il collegamento quando la funzione è
 attiva. Se disabilitata, la voce, i badge e la sezione della Guida non compaiono;
-un accesso diretto rimanda alla rispettiva area personale. **Apri il tuo collegamento ChatGPT** nel pannello
+i vecchi indirizzi `/profilo/chatgpt` e `/docente/chatgpt` portano a questa
+sezione; un accesso diretto senza funzioni attive rimanda alla rispettiva area. **Apri il tuo collegamento ChatGPT** nel pannello
 amministrativo porta direttamente a questa scheda. L’accesso a
 CounselorBot e quello a ChatGPT sono distinti. La funzione usa il flusso ufficiale
 Sign in with ChatGPT per inferenza diretta, attualmente in anteprima: piani e
@@ -269,10 +271,11 @@ credenziali; non vanno incollate nell’interfaccia o nella chat. L’ingress
 portabile consente solo i tre endpoint con codice di associazione temporaneo;
 le pagine personali e le altre API continuano a richiedere il login Console.
 
-Dopo il collegamento occorre scegliere un modello tra quelli disponibili per
-il proprio account e premere **Usa il mio abbonamento**. Collegare l’account
-da solo non cambia il modello. La scelta personale precede il preset del
-counselor, mantenendo chat e memoria in CounselorBot. La scheda e le impostazioni
+Dopo il collegamento i modelli disponibili per il proprio account compaiono in
+**Chi risponde**, nella stessa pagina: si sceglie per quali counselor usare
+ChatGPT e con quale modello, oppure lo si imposta come scelta predefinita, e si
+preme **Salva associazioni e utilizzo**. Collegare l’account da solo non cambia
+il modello. La scelta personale precede il preset del counselor, mantenendo chat e memoria in CounselorBot. La scheda e le impostazioni
 chat mostrano la scelta; la quota si consulta nelle impostazioni di ChatGPT
 e non viene convertita in costi API stimati.
 
@@ -283,8 +286,9 @@ Credenziali scadute/revocate richiedono un nuovo accesso; indisponibilità
 temporanee conservano il collegamento. Quota esaurita e risposte interrotte
 producono un avviso, senza passaggio automatico alle API a pagamento.
 
-**Usa il modello dell’installazione** disattiva la preferenza personale.
-**Scollega** elimina le credenziali locali e tenta la revoca presso OpenAI:
+Riportare i counselor a **Modelli dell’istituto** (o **Usa la scelta
+predefinita**) disattiva ChatGPT per quei counselor. **Scollega** toglie ChatGPT
+da tutte le scelte, lasciando attive quelle con le API personali, ed elimina le credenziali locali e tenta la revoca presso OpenAI:
 se non confermata, controllare anche le connessioni nelle impostazioni ChatGPT.
 La registrazione resta disponibile per ricollegare lo stesso account. Dopo
 averlo scollegato, **Collega un altro account ChatGPT** azzera la registrazione.
@@ -462,15 +466,18 @@ salvataggio. In modifica, il campo vuoto conserva la chiave per quel provider;
 cambiarlo richiede una chiave nuova. L’eliminazione di una connessione chiede
 conferma, rimuove la chiave e le associazioni e conserva i counselor.
 
-Nella stessa pagina si può associare ciascuna connessione a **uno o più counselor**.
-I counselor mantengono la propria personalità e i prompt del percorso, usando
-modello e chiave della connessione assegnata. La connessione predefinita si
-applica ai counselor senza associazione e alle funzioni senza counselor; può
-essere impostata su API di sistema. La lista counselor mostra il modello
+In **Chi risponde**, nella stessa pagina, ogni counselor usa **una connessione
+API oppure un modello del proprio ChatGPT** (#200): per esempio un counselor con
+una chiave OpenRouter e un altro con ChatGPT. I counselor mantengono la propria
+personalità e i prompt del percorso. La **Scelta predefinita** (una connessione,
+un modello ChatGPT o i modelli dell’istituto) si applica ai counselor senza
+scelta specifica e alle funzioni senza counselor. La lista counselor mostra il modello
 assegnato nell’account. Le scelte non cambiano i counselor dell’istituzione.
-**Usa le mie API personali** e **Salva associazioni e utilizzo** attivano le scelte;
-la disattivazione torna alle API di sistema. API personali e abbonamento ChatGPT
-restano alternative, conservando tutte le credenziali.
+**Usa le mie API o il mio ChatGPT** e **Salva associazioni e utilizzo** attivano
+le scelte; la disattivazione torna ai modelli dell’istituto, conservando tutte
+le credenziali. Se l’amministratore abilita solo ChatGPT, la pagina mostra solo
+il collegamento ChatGPT e la scelta per counselor; se una fonte viene disabilitata,
+i counselor che la usavano tornano ai modelli dell’istituto.
 
 Studenti e docenti possono **creare counselor personali**, con nome, descrizione
 e istruzioni **nella propria lingua**, senza traduzione obbligatoria. Le

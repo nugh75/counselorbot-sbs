@@ -24,7 +24,7 @@ async function fixture({ role = 'student', api = false, chatgpt = false, lang = 
         else if (path === '/api/user/account-preferences') data = { counselor_id: 1, counselor_ready: true, notebook_ready: true, setup_completed: true };
         else if (path === '/api/orientation/status') data = { required: false, completed: true };
         else if (path === '/api/admin/external-privacy') data = { mode: 'local', local_model: 'qwen3:0.6b' };
-        else if (path === '/api/user/api-connections') data = { available: flags.api, chatgpt_enabled: flags.chatgpt, providers: ['openai'], enabled: false, connections: [], bindings: [], counselors: [], default_connection_id: null };
+        else if (path === '/api/user/api-connections') data = { available: flags.api || flags.chatgpt, api_enabled: flags.api, chatgpt_enabled: flags.chatgpt, chatgpt_models: [], providers: ['openai'], enabled: false, connections: [], bindings: [], counselors: [], default_connection_id: null, default_chatgpt_model: null };
         else if (path === '/api/user/api-settings') data = { available: flags.api, providers: ['openai'], configured: false, provider: 'openai', model: '', enabled: false, active: false };
         else if (path === '/api/user/chatgpt') data = { enabled: flags.chatgpt, available: flags.chatgpt, reason: flags.chatgpt ? null : 'disabled', connected: false, use_subscription: false, models: [], pending_link: false };
         else if (path === '/api/admin/personal-api-policy' || path === '/api/admin/chatgpt/settings') {
@@ -49,25 +49,27 @@ for (const role of ['student', 'teacher']) {
             try {
                 const loaded = Promise.all(['/api/user/api-settings', '/api/user/chatgpt'].map(path => f.page.waitForResponse(r => new URL(r.url()).pathname === path)));
                 await f.page.goto(`${origin}/${area}`); await loaded;
-                for (const [visible, path] of [[api, 'api-personali'], [chatgpt, 'chatgpt']]) {
-                    const entry = f.page.locator(`[data-testid="personal-ai-connections"] a[href="/${area}/${path}"]`);
-                    await entry.waitFor({ state: visible ? 'visible' : 'hidden' });
-                    assert.equal(await entry.count(), visible ? 1 : 0);
-                    if (!visible) {
+                // #200: one entry, shown when either personal source is enabled.
+                const entry = f.page.locator(`[data-testid="personal-ai-connections"] a[href="/${area}/api-personali"]`);
+                await entry.waitFor({ state: api || chatgpt ? 'visible' : 'hidden' });
+                assert.equal(await f.page.locator(`[data-testid="personal-ai-connections"] a`).count(), api || chatgpt ? 1 : 0);
+                if (!api && !chatgpt) {
+                    for (const path of ['api-personali', 'chatgpt']) {
                         await f.page.goto(`${origin}/${area}/${path}`);
                         await f.page.waitForURL(`${origin}/${area}`);
-                        assert.equal(await f.page.locator('#personal-key, #chatgpt-model, [data-testid="chatgpt-link"]').count(), 0);
+                        assert.equal(await f.page.locator('#personal-key, [data-testid="chatgpt-link"]').count(), 0);
                     }
-                }
-                if (chatgpt) {
-                    await f.page.locator(`[data-testid="personal-ai-connections"] a[href="/${area}/chatgpt"]`).click();
-                    await f.page.getByRole('heading', { name: 'Il tuo abbonamento ChatGPT', exact: true }).waitFor();
+                } else {
+                    await entry.click();
+                    await f.page.locator('#personal-default-connection').waitFor();
+                    assert.equal(await f.page.getByRole('heading', { name: 'Il tuo abbonamento ChatGPT', exact: true }).count(), chatgpt ? 1 : 0);
+                    assert.equal(await f.page.getByRole('button', { name: 'Aggiungi connessione', exact: true }).count(), api ? 1 : 0);
                 }
                 const guideLoaded = Promise.all(['/api/user/api-settings', '/api/user/chatgpt'].map(path => f.page.waitForResponse(r => new URL(r.url()).pathname === path)));
                 await f.page.goto(`${origin}/guide`); await guideLoaded;
                 await f.page.locator('#guide-personal-api').waitFor({ state: api ? 'visible' : 'hidden' });
                 await f.page.locator('#guide-chatgpt').waitFor({ state: chatgpt ? 'visible' : 'hidden' });
-                if (chatgpt) assert.equal(await f.page.locator('#guide-chatgpt a').getAttribute('href'), `/${area}/chatgpt`);
+                if (chatgpt) assert.equal(await f.page.locator('#guide-chatgpt a').getAttribute('href'), `/${area}/api-personali#chatgpt`);
                 assert.deepEqual(f.errors, []);
             } finally { await f.context.close(); }
         });

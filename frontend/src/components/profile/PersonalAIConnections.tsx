@@ -7,12 +7,12 @@ import { personalAPIText } from '@/lib/i18n-personal-api';
 import { usePersonalAIFeatures } from '@/lib/use-personal-ai-features';
 
 export function PersonalAIConnections({ area }: { area: 'profilo' | 'docente' }) {
-    const { lang, t } = useI18n();
+    const { lang } = useI18n();
     const { personalAPI: api, chatgpt } = usePersonalAIFeatures();
     if (!api && !chatgpt) return null;
+    // #200: one page for personal APIs and ChatGPT.
     const entries = [
-        { visible: api, path: 'api-personali', title: personalAPIText(lang, 'title'), description: personalAPIText(lang, 'description'), icon: KeyRound },
-        { visible: chatgpt, path: 'chatgpt', title: t('chatgpt.title'), description: t('chatgpt.intro'), icon: Bot },
+        { visible: true, path: 'api-personali', title: personalAPIText(lang, 'sectionTitle'), description: personalAPIText(lang, 'description'), icon: api ? KeyRound : Bot },
     ];
     const headingId = `${area}-ai-connections-title`;
     return <section aria-labelledby={headingId} data-testid="personal-ai-connections">

@@ -34,7 +34,7 @@ Dopo il normale aggiornamento dell’applicazione, un amministratore apre
 **Abilita collegamento ChatGPT**. Non deve generare chiavi, modificare `.env`
 o eseguire comandi. Il server prepara la protezione delle credenziali e salva
 la scelta nel database. La modifica vale per le nuove richieste immediatamente,
-senza riavvio. **Apri il tuo collegamento ChatGPT** porta a `/profilo/chatgpt`:
+senza riavvio. **Apri il tuo collegamento ChatGPT** porta a `/profilo/api-personali#chatgpt`:
 ogni utente collega e attiva il proprio account, separatamente dal controllo
 amministrativo.
 
@@ -102,8 +102,10 @@ Il percorso principale usa **CounselorBot ChatGPT**, un'app nativa per macOS
 deve installare Python né aprire il Terminale. L'app va aperta sul computer
 in cui usa il browser, anche quando CounselorBot gira su un server remoto.
 
-1. Accedere a CounselorBot e aprire **Area personale → Il tuo abbonamento ChatGPT**
-   (`/profilo/chatgpt`), oppure la stessa voce nell’Area docenti (`/docente/chatgpt`).
+1. Accedere a CounselorBot e aprire **Area personale → API e ChatGPT**
+   (`/profilo/api-personali`), oppure la stessa voce nell’Area docenti
+   (`/docente/api-personali`). I vecchi indirizzi `/profilo/chatgpt` e
+   `/docente/chatgpt` portano alla sezione ChatGPT della stessa pagina.
 2. Premere **Collega ChatGPT**, quindi **Scarica l’assistente grafico per macOS**.
    Aprire `CounselorBot-ChatGPT.zip` nel Finder e aprire l'app estratta.
 3. Nell'app verificare **Indirizzo di CounselorBot**, per questa installazione
@@ -112,8 +114,9 @@ in cui usa il browser, anche quando CounselorBot gira su un server remoto.
    Il codice scade in 10 minuti: non salvarlo in file e non incollare token OpenAI.
 4. Completare l’accesso ufficiale nel browser. Il callback è
    `http://127.0.0.1:<porta>/auth/callback`, sul computer dell’utente.
-5. Tornare a CounselorBot, scegliere un modello disponibile per l’account e
-   premere **Usa il mio abbonamento**. Il solo collegamento non abilita il piano.
+5. Tornare a CounselorBot e, in **Chi risponde**, scegliere per quali counselor
+   (o come scelta predefinita) usare un modello ChatGPT; premere **Salva
+   associazioni e utilizzo**. Il solo collegamento non abilita il piano.
 
 L'archivio si scarica da `GET /api/chatgpt/helper/macos`: richiede la sessione
 Console del proprietario e rifiuta le anteprime di ruolo. Il download è un
@@ -338,11 +341,24 @@ amministrativa conserva il precedente comportamento di blocco della preferenza.
 Non si inventano contatori o orari di reset; la quota si consulta su ChatGPT.
 I nomi dei modelli non vengono usati per stimare costi con il listino API.
 
-Attivare **Usa il mio abbonamento** disattiva la preferenza delle API personali,
-e viceversa. Entrambe le credenziali restano conservate. I due pannelli applicano
-la scelta con un lock condiviso per account, anche nei salvataggi simultanei.
+**Scelta per counselor (#200).** API personali e ChatGPT non si escludono più:
+`personal_ai_routing` ha una scelta predefinita (`default_connection_id` oppure
+`default_chatgpt_model`) e `personal_counselor_connections` una riga per counselor
+con esattamente una fonte (`connection_id` oppure `chatgpt_model`, vincolo
+`personal_counselor_one_source`). `personal_api.chosen_source` risolve la fonte
+del counselor in uso; ogni fonte rispetta il proprio interruttore amministrativo,
+e una fonte disabilitata torna ai modelli dell’istituto. `PUT /api/user/api-routing`
+accetta i modelli ChatGPT solo dal catalogo dell’account collegato e funziona
+anche quando è abilitato solo ChatGPT. La migrazione `20261011_unified_ai_sources`
+trasforma la vecchia preferenza globale (`use_subscription` + `preferred_model`)
+nella scelta predefinita ChatGPT, converte un’eventuale chiave legacy in
+connessione ed elimina le associazioni API che erano disattivate; il flag
+`use_subscription` resta solo per compatibilità e non seleziona più nulla.
+`PUT /api/user/chatgpt/preference` imposta o toglie ChatGPT come scelta
+predefinita; la scelta usa un lock condiviso per account.
 
-**Scollega** elimina sempre i token locali e tenta la revoca OpenAI. Se la revoca
+**Scollega** toglie ChatGPT da tutte le scelte per counselor, elimina sempre i token
+locali e tenta la revoca OpenAI. Se la revoca
 non è confermata, controllare anche le connessioni nelle impostazioni ChatGPT.
 La registrazione resta per ricollegare lo stesso account. Per usarne un altro,
 azzerarla con il pulsante dedicato dopo aver scollegato il primo.
