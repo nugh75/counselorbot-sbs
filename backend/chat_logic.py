@@ -2733,6 +2733,20 @@ def _idea_turns_used(db, session_id: str) -> int:
         return 0
 
 
+# Who speaks: step instructions can be written in the student's voice ("welcome me"),
+# and weaker models otherwise continue them as the student.
+ROLE_BLOCK = (
+    "[ROLE] You are the counsellor ({{counselor_name}}). Every user message comes from the student "
+    "(in a practice simulation, from a teacher playing the student). Instructions written as "
+    "\"me\" or \"my\" are the student's requests to you. Always answer in your own voice as the "
+    "counsellor: never write the student's lines, never speak as the student, never sign with "
+    "the student's name."
+)
+# Sent when a turn carries no student text (e.g. the welcome), so the model answers
+# instead of continuing the prompt.
+OPENING_TURN = "(The student has just opened this step and is waiting for your message.)"
+
+
 def instruction_parts(request, system_prompt, step_instruction, persona, meta, component_flags):
     """Canonical editable instruction prefix, also used for context variants."""
     parts = []
@@ -2823,6 +2837,8 @@ def build_context_envelope(
     if components is not None:
         components["meta_system_prompt"] = meta_system_prompt
         components["instruction_prefix"] = "\n\n".join(parts_system).replace("{{counselor_name}}", counselor_name or "the counsellor")
+    # Right after the editable instruction prefix (which must stay the start of the prompt).
+    parts_system.append(ROLE_BLOCK)
 
     # Slot [SECTION] delle skill: predisposto, nessuna skill lo usa nel pilota.
     for block in (skills_blocks or {}).get("section", []):
@@ -3108,6 +3124,8 @@ def build_context_envelope(
             full_message = message_scores_context
         else:
             full_message = clean_user_message
+    if not (full_message or "").strip():
+        full_message = OPENING_TURN
     if components is not None:
         components["history"] = history
 

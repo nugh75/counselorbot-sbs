@@ -180,7 +180,14 @@ gli strumenti guidati e per la Bussola, dove le Opzioni offrono solo «predefini
 «prova». Il contesto riceve il taccuino simulato al posto dei dati del docente
 (taccuino, portfolio, obiettivi, lettura, classi; nella Bussola anche compilazioni e
 sessioni) e un’istruzione separata, nella lingua dell’interfaccia, che dice al
-modello che lo studente è simulato e che si tratta dell’allenamento del docente. Il
+modello che lo studente è simulato e che si tratta dell’allenamento del docente;
+l’istruzione precisa anche che il modello resta sempre il counselor e non scrive mai
+le battute dello studente. In ogni chat un blocco [ROLE], subito dopo le istruzioni
+del passo e la persona, ricorda al modello che è il counselor e che i messaggi
+dell’utente vengono dallo studente (anche quando le istruzioni del passo sono scritte
+con la voce dello studente, «welcome me»), e un turno senza testo dello studente,
+come il benvenuto, arriva al modello come una breve riga neutra invece che vuoto:
+i modelli più deboli non continuano così il prompt al posto dello studente. Il
 server accetta solo un taccuino del docente stesso e non archiviato, riverificando il
 ruolo a ogni turno: un taccuino archiviato o eliminato non viene sostituito da dati
 reali, il contesto resta senza taccuino. Uno studente non può usare taccuini di prova.
