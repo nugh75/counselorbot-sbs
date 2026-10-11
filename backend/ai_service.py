@@ -100,9 +100,6 @@ class AIService:
         account = owner(db) if "chatgpt_username" in getattr(db, "info", {}) else username
         try:
             connection = personal_api.active_settings(db, account, getattr(db, "info", {}).get("personal_ai_counselor_id"))
-            if connection and self.chatgpt_model:
-                from .chatgpt_i18n import error_message
-                raise personal_api.PersonalAPIError(error_message("credentialChoice", db.info.get("chatgpt_language", "it")))
             if connection:
                 self.use_personal_connection(connection)
         except personal_api.PersonalAPIError as exc:

@@ -118,13 +118,17 @@ class PersonalAIRouting(Base):
     username = Column(String, primary_key=True)
     enabled = Column(Boolean, nullable=False, default=False)
     default_connection_id = Column(String(32), ForeignKey("personal_api_connections.id", ondelete="SET NULL"), nullable=True)
+    # #200: the default source may be a ChatGPT model instead of an API connection.
+    default_chatgpt_model = Column(String(200), nullable=True)
 
 
 class PersonalCounselorConnection(Base):
     __tablename__ = "personal_counselor_connections"
     username = Column(String, primary_key=True)
     counselor_id = Column(Integer, ForeignKey("counselors.id", ondelete="CASCADE"), primary_key=True)
-    connection_id = Column(String(32), ForeignKey("personal_api_connections.id", ondelete="CASCADE"), nullable=False)
+    # Exactly one source per counselor: an API connection or a ChatGPT model (#200).
+    connection_id = Column(String(32), ForeignKey("personal_api_connections.id", ondelete="CASCADE"), nullable=True)
+    chatgpt_model = Column(String(200), nullable=True)
 
 class Log(Base):
     __tablename__ = "logs"
