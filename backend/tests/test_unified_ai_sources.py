@@ -231,3 +231,30 @@ def test_withdrawn_class_sharing_table_is_dropped(scratch_engine):
     with scratch_engine.begin() as connection:
         assert connection.execute(text("SELECT to_regclass('class_api_shares')")).scalar() is None
         assert connection.execute(text("SELECT count(*) FROM configs WHERE key = 'class_api_sharing_enabled'")).scalar() == 0
+
+
+# #217: the class decides whether its students may use their own sources.
+
+def test_a_class_can_forbid_students_own_sources(client, db, chatgpt):
+    cid = api_connection(client)
+    assert route(client, default_connection_id=cid, bindings=[{"counselor_id": 11, "chatgpt_model": "fixture-model"}]).status_code == 200
+    group = models.StudentGroup(code="GR-PAI217", name="Class", owner_username="teacher")
+    db.add(group)
+    db.flush()
+    db.add(models.GroupMembership(group_id=group.id, username="alice"))
+    db.add(models.ClassSettings(group_id=group.id, updated_by="teacher", students_personal_ai=False))
+    db.commit()
+    assert targets(db, 10) == [("ollama", "institution-model")]
+    assert targets(db, 11) == [("ollama", "institution-model")]
+    state = client.get("/user/api-connections").json()
+    assert state["class_blocked"] and not state["available"]
+    assert accounts.status(db, "alice")["enabled"] is False
+    assert route(client, default_connection_id=cid).status_code == 403
+    # Saved choices come back when the class allows it again, or the class is archived.
+    group.is_active = False
+    db.commit()
+    assert targets(db, 10) == [("openai", "own-model")]
+    group.is_active = True
+    db.query(models.ClassSettings).filter_by(group_id=group.id).update({"students_personal_ai": True})
+    db.commit()
+    assert targets(db, 11) == [("openai_chatgpt", "fixture-model")]

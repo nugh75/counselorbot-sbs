@@ -260,6 +260,14 @@ your own language. Link a saved connection to it and select it for new chats.
 You can edit or delete your counselors; other accounts cannot select them.
 Institution counselors and their prompts are unchanged.
 
+### Students' own APIs in your class
+
+In the class settings (Tools & counselors tab), **Students may use their own
+APIs and ChatGPT** decides whether the students of that class may use their own
+keys or subscription, when the administrator has enabled them. It is on by
+default. If you turn it off, the class's students use the institution's models;
+their saved keys are kept but not used. Your own key is never shared with the class.
+
 **Test connection and model** sends a short neutral request only when pressed.
 It consumes quota and can incur a provider charge. Errors distinguish key access,
 model availability, quota, rate limits and an unavailable local data protection

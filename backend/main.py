@@ -220,6 +220,7 @@ import_module("backend.migrations.20261010_multi_class_meetings").migrate(databa
 import_module("backend.migrations.20261011_unified_ai_sources").migrate(database.engine)
 import_module("backend.migrations.20261011_reasoning_levels").migrate(database.engine)
 import_module("backend.migrations.20261011_drop_class_api_shares").migrate(database.engine)
+import_module("backend.migrations.20261011_class_personal_ai").migrate(database.engine)
 
 
 @asynccontextmanager

@@ -126,6 +126,19 @@ dipendere dal flag globale nel worker. Il cambio vale quindi per le nuove richie
 anche su worker già avviati, conservando la configurazione delle richieste in corso.
 Il default resta locale e bloccante; non si passa al filtro di base automaticamente.
 
+## Permesso per classe (#217)
+
+`class_settings.students_personal_ai` (migrazione `20261011_class_personal_ai`,
+predefinito `true`) indica se gli studenti della classe possono usare le proprie
+API e il proprio ChatGPT; si salva con le altre impostazioni (`PUT
+/api/teacher/groups/{id}/settings`, registrato nel registro modifiche). Se una
+classe attiva dello studente lo vieta, `personal_api.class_allows` fa rispondere
+l’istituto (`chosen_source` e impostazioni legacy), `/user/api-connections`,
+`/user/api-settings` e `/user/chatgpt` restituiscono `class_blocked` e la pagina
+personale lo spiega. Docenti e studenti senza classi non sono limitati. La
+condivisione della chiave del docente (#201) è stata ritirata: la migrazione
+`20261011_drop_class_api_shares` elimina la tabella inutilizzata.
+
 ## Protezione, migrazione e API
 
 La chiave Fernet è conservata in `personal_api_credentials/credential.key`

@@ -235,3 +235,14 @@ def test_concurrent_saves_have_one_winner_even_before_first_settings_row(existin
         with root.begin() as connection:
             connection.execute(text(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'))
         root.dispose()
+
+
+def test_students_personal_ai_is_saved_and_audited(settings_api):
+    # #217: allowed by default; the teacher can switch it off with the other settings.
+    client, db, group_id, _ = settings_api
+    path = f"/teacher/groups/{group_id}/settings"
+    assert client.get(path).json()["students_personal_ai"] is True
+    saved = client.put(path, json={"revision": 1, "disabled_tool_keys": [], "students_personal_ai": False}).json()
+    assert saved["students_personal_ai"] is False
+    assert client.put(path, json={"revision": 2, "disabled_tool_keys": []}).json()["students_personal_ai"] is False
+    assert db.query(models.ClassSettingsAuditLog).filter_by(group_id=group_id, target_id="students_personal_ai").count() == 1
