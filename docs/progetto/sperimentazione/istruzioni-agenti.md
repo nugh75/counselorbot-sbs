@@ -25,8 +25,10 @@ Regole:
 2. **Cronologico**: inserisci la voce nella posizione temporale corretta, non in coda.
 3. **Fonti citate**: ogni fatto ha un link relativo al documento (`../comunicazioni/...`,
    `../../presentazione-....md`) oppure `git log --oneline` / numero PR.
-4. **Niente segreti**: mai password, credenziali o indirizzi privati; rimanda ai
-   documenti originali ("vedi documento originale").
+4. **Niente segreti**: mai password, credenziali, indirizzi email o altri dati
+   personali; i testi integrali delle mail vanno nel repo privato
+   `counselorbot-sbs-private` (stessi percorsi), qui solo schede depurate
+   (ruolo, data, oggetto, sintesi) con puntatore al file privato.
 5. **Niente date inventate**: se la data non è nel documento, usa "data dal commit"
    (verificata con `git log`) o "s.d.".
 6. **Sintesi, non copia**: 2–3 righe per fatto; i testi integrali restano nei documenti citati.
@@ -36,10 +38,11 @@ Regole:
 ## Esempio
 
 ```markdown
-### 14 ottobre 2026 — Risposta del Prof. Bälter
+### 14 ottobre 2026 — Risposta dal KTH
 
-- **Risposta KTH**: il Prof. Bälter accetta un incontro pilota con gli studenti.
-  Documento: [`risposta-balder-2026-10-14.md`](../comunicazioni/risposta-balder-2026-10-14.md).
+- **Risposta KTH**: il docente accetta un incontro pilota con gli studenti.
+  Scheda: [`risposta-kth-2026-10-14.md`](../comunicazioni/risposta-kth-2026-10-14.md);
+  testo integrale nel repo privato (stesso percorso).
 ```
 
 ## Verifiche prima del commit
@@ -77,8 +80,10 @@ Rules:
 2. **Chronological**: insert the entry at the right time position, not at the end.
 3. **Cited sources**: every fact links to a document (`../comunicazioni/...`,
    `../../presentazione-....md`) or to `git log --oneline` / PR number.
-4. **No secrets**: never passwords, credentials or private addresses; point to the
-   original documents ("see original document").
+4. **No secrets**: never passwords, credentials, email addresses or other
+   personal data; full email texts go to the private repo
+   `counselorbot-sbs-private` (same paths), here only redacted sheets
+   (role, date, subject, summary) with a pointer to the private file.
 5. **No invented dates**: when the date is not in the document, use "date from
    commit" (verified with `git log`) or "n.d.".
 6. **Summaries, not copies**: 2–3 lines per fact; full texts stay in the cited documents.
