@@ -15,7 +15,8 @@ cartelle di `docs/progetto/` (documentazione stabile, organizzazione, comunicazi
 ## Fonti del diario
 
 - `../diario.md` — cronologia generale del progetto (base di partenza).
-- `../comunicazioni/` — le 4 mail archiviate (Begoña, Olle IT/EN, Sebastian EN).
+- `../comunicazioni/` — le 4 schede depurate (testi integrali nel repo privato
+  `counselorbot-sbs-private`, stessi percorsi).
 - `../../rebranding-compassbot-feedback-email.md` — bozza mail sul rebranding CompassBot.
 - `../../presentazione-kth-eecs-2026-09-01.md`,
   `../../presentazione-kth-2026-09-09-it.md`,
@@ -47,7 +48,8 @@ organisation, communications).
 ## Journal sources
 
 - `../diario.md` — general project chronology (starting point).
-- `../comunicazioni/` — the 4 archived emails (Begoña, Olle IT/EN, Sebastian EN).
+- `../comunicazioni/` — the 4 redacted sheets (full texts in the private repo
+  `counselorbot-sbs-private`, same paths).
 - `../../rebranding-compassbot-feedback-email.md` — CompassBot rebranding email draft.
 - `../../presentazione-kth-eecs-2026-09-01.md`,
   `../../presentazione-kth-2026-09-09-it.md`,

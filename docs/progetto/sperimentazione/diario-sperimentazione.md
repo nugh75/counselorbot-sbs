@@ -17,16 +17,17 @@ presentazioni KTH e git log / PR. Dettagli completi restano nei documenti citati
   [`manuale-operativo-validazione.md`](../../validazione/manuale-operativo-validazione.md)
   (procedura di validazione QSAr in inglese per studenti KTH in 6 passi).
   Fonte: [`../diario.md`](../diario.md).
-- **Contatto M. Begoña Alfageme González (Univ. Murcia)**: ricevuto il messaggio
+- **Contatto docente spagnola (validazione QSA)**: ricevuto il messaggio
   con revisione delle traduzioni spagnole dei questionari; preparata bozza di
   risposta in spagnolo che propone CounselorBot come piattaforma di validazione,
-  con link e account di prova. Documento:
-  [`contatto-begona-qsa-es-2026-05-30.md`](../comunicazioni/contatto-begona-qsa-es-2026-05-30.md).
-- **Contatto Prof. Olle Bälter (KTH)**: scritta la mail di proposta
+  con link e account di prova. Scheda:
+  [`contatto-begona-qsa-es-2026-05-30.md`](../comunicazioni/contatto-begona-qsa-es-2026-05-30.md)
+  (testo integrale nel repo privato).
+- **Contatto docente KTH (proposta validazione)**: scritta la mail di proposta
   [`mail-olle.md`](../comunicazioni/mail-olle.md) (validazione QSA in inglese ed
   eventuale svedese + attività con CounselorBot e studenti KTH) e la traduzione
   [`mail-olle-en.md`](../comunicazioni/mail-olle-en.md). Le credenziali di prova
-  citate nelle mail non sono riportate qui (vedi documenti originali).
+  citate nelle mail non sono riportate qui (testi integrali nel repo privato).
 
 ### 1 settembre 2026 — Presentazione KTH EECS
 
@@ -35,7 +36,7 @@ presentazioni KTH e git log / PR. Dettagli completi restano nei documenti citati
   tradizione pedagogica italiana (Pellerey, Roma Tre) e infrastruttura LLM, con
   richiesta pratica di una sede per la validazione svedese del QSAr.
   Copione: [`presentazione-kth-eecs-2026-09-01.md`](../../presentazione-kth-eecs-2026-09-01.md).
-  La presentazione richiama il contatto di maggio con il Prof. Bälter (vedi mail sopra).
+  La presentazione richiama il contatto di maggio con il docente KTH (vedi mail sopra).
 
 ### 9 settembre 2026 — Presentazione KTH (IT + EN)
 
@@ -47,10 +48,11 @@ presentazioni KTH e git log / PR. Dettagli completi restano nei documenti citati
 
 ### Settembre–ottobre 2026 (date dai commit) — Feedback e rebranding
 
-- **Ringraziamento a Sebastian**: mail di ringraziamento per test e suggerimenti,
+- **Ringraziamento a un tester**: mail di ringraziamento per test e suggerimenti,
   con elenco dei fix applicati (traduzioni questionario, Compass+Notebook,
   autosave, mappa IDEA, pulsante Start); sul nome si resta in riflessione.
-  Documento: [`mail-sebastian-en.md`](../comunicazioni/mail-sebastian-en.md).
+  Scheda: [`mail-sebastian-en.md`](../comunicazioni/mail-sebastian-en.md)
+  (testo integrale nel repo privato).
 - **Proposta di rebranding CompassBot**: bozza di mail che propone il nome
   "CompassBot" (metafora bussola/timonieri) per superare la connotazione
   terapeutica di "CounselorBot", con backup HelmsBot/NorthBot/LumenBot.
@@ -76,16 +78,17 @@ presentazioni KTH e git log / PR. Dettagli completi restano nei documenti citati
   [`manuale-operativo-validazione.md`](../../validazione/manuale-operativo-validazione.md)
   (6-step QSAr validation procedure in English for KTH students).
   Source: [`../diario.md`](../diario.md).
-- **Contact M. Begoña Alfageme González (Univ. of Murcia)**: received message
+- **Contact Spanish lecturer (QSA validation)**: received message
   with the review of the Spanish questionnaire translations; prepared a Spanish
   reply draft proposing CounselorBot as the validation platform, with link and
-  trial account. Document:
-  [`contatto-begona-qsa-es-2026-05-30.md`](../comunicazioni/contatto-begona-qsa-es-2026-05-30.md).
-- **Contact Prof. Olle Bälter (KTH)**: wrote the proposal email
+  trial account. Sheet:
+  [`contatto-begona-qsa-es-2026-05-30.md`](../comunicazioni/contatto-begona-qsa-es-2026-05-30.md)
+  (full text in the private repo).
+- **Contact KTH lecturer (validation proposal)**: wrote the proposal email
   [`mail-olle.md`](../comunicazioni/mail-olle.md) (QSA validation in English and
   possibly Swedish + CounselorBot activity with KTH students) and its translation
   [`mail-olle-en.md`](../comunicazioni/mail-olle-en.md). Trial credentials quoted
-  in the emails are not repeated here (see original documents).
+  in the emails are not repeated here (full texts in the private repo).
 
 ### 1 September 2026 — KTH EECS presentation
 
@@ -94,7 +97,7 @@ presentazioni KTH e git log / PR. Dettagli completi restano nei documenti citati
   Italian pedagogical tradition (Pellerey, Roma Tre) and LLM infrastructure, with
   a practical ask for a home for the Swedish QSAr validation.
   Script: [`presentazione-kth-eecs-2026-09-01.md`](../../presentazione-kth-eecs-2026-09-01.md).
-  The talk recalls the May contact with Prof. Bälter (see emails above).
+  The talk recalls the May contact with the KTH lecturer (see emails above).
 
 ### 9 September 2026 — KTH presentation (IT + EN)
 
@@ -106,10 +109,11 @@ presentazioni KTH e git log / PR. Dettagli completi restano nei documenti citati
 
 ### September–October 2026 (dates from commits) — Feedback and rebranding
 
-- **Thank-you to Sebastian**: thank-you email for testing and suggestions,
+- **Thank-you to a tester**: thank-you email for testing and suggestions,
   listing the applied fixes (questionnaire translations, Compass+Notebook,
   autosave, IDEA map, Start button); the name decision is still open.
-  Document: [`mail-sebastian-en.md`](../comunicazioni/mail-sebastian-en.md).
+  Sheet: [`mail-sebastian-en.md`](../comunicazioni/mail-sebastian-en.md)
+  (full text in the private repo).
 - **CompassBot rebranding proposal**: email draft proposing the name
   "CompassBot" (compass/helmsmen metaphor) to move past the therapeutic reading
   of "CounselorBot", with HelmsBot/NorthBot/LumenBot as backups.
