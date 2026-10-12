@@ -6,6 +6,19 @@ Questo file raccoglie la cronologia dettagliata delle attività svolte per il pr
 
 ## Versione Italiana (Cronologica)
 
+### 12 Ottobre 2026 - Incontro con i tutor del PEF
+* **Filone aperto il 12 ottobre 2026 su richiesta dei tutor del PEF, issue #242-249; dettaglio nelle issue**.
+* **Milestone**: N.12 'Incontro tutor PEF del 12 ottobre 2026' (aperta).
+* **Issue aperte**:
+  - #242 QPCC: allineare i campi del questionario ai campi della piattaforma (aperta).
+  - #243 Lingua ucraina: valutare il supporto per il QPCC (aperta).
+  - #244 Area docente: rendere raggiungibili i risultati della chat guidata dello studente di prova (aperta).
+  - #245 Taccuino di prova: chiarire e uniformare il comportamento del salvataggio del profilo (aperta).
+  - #246 Vista d'insieme dei risultati e delle chat dei propri studenti (aperta).
+  - #247 Monitoraggio: riassunto delle chat degli studenti con segnalazione delle criticita (aperta).
+  - #248 Chat guidata: rendere sempre visibili i comandi avanti/indietro (aperta).
+  - #249 Percorso di classe: uso degli step di chat guidata per i questionari (aperta).
+
 ### 30 Giugno 2026 - README in inglese e verifica link
 * **README aggiornati**: riscritti in inglese i README del repository, della cartella `docs/`, del frontend e degli archivi locali delle fonti.
 * **Allineamento al codice**: documentati stack attuale, flussi principali, route frontend/backend, setup Docker, sviluppo locale, pQBL, assistente RAG, admin console e test dei prompt.
@@ -49,6 +62,19 @@ Questo file raccoglie la cronologia dettagliata delle attività svolte per il pr
 ---
 
 ## English Version (Chronological)
+
+### October 12, 2026 - Meeting with the PEF tutors
+* **Workstream opened on October 12, 2026 at the request of the PEF tutors, issues #242-249; see the issues for details**.
+* **Milestone**: N.12 'Incontro tutor PEF del 12 ottobre 2026' (open).
+* **Open issues**:
+  - #242 QPCC: align the questionnaire fields with the platform fields (open).
+  - #243 Ukrainian language: evaluate support for the QPCC (open).
+  - #244 Teacher area: make the trial student's guided-chat results reachable (open).
+  - #245 Trial notebook: clarify and unify the profile-saving behavior (open).
+  - #246 Overview of results and chats of one's own students (open).
+  - #247 Monitoring: summary of student chats with flagging of critical issues (open).
+  - #248 Guided chat: always keep the forward/back commands visible (open).
+  - #249 Class path: use of guided-chat steps for questionnaires (open).
 
 ### June 30, 2026 - English README files and link check
 * **README update**: rewrote the repository, `docs/`, frontend, and local source-archive README files in English.
