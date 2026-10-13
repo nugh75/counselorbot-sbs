@@ -144,6 +144,9 @@ solo `scores`, con la stessa validazione 1–9 del POST. Ruoli e proprietà sono
 verificati dal guard esistente e da `_owned`; il risultato deve appartenere
 esattamente al taccuino nell’URL (altrimenti 404). Strumento, provenienza e
 sessione originale restano invariati. Nessuna nuova tabella o migrazione.
+Il PUT accetta numeri JSON, senza convertire stringhe o booleani in punteggi.
+Per QPCC richiede anche i dieci fattori canonici e stanine intere, come il POST;
+un profilo legacy, misto o incompleto restituisce 422 e non modifica il risultato.
 
 **Avvia chat guidata** (ocra, azione d’ingresso prevista da `docs/design.md`)
 riusa `/?start=<strumento>` aggiungendo `practice_notebook_id` e

@@ -198,6 +198,13 @@ async def update_practice_result(
     ).first()
     if result is None:
         raise HTTPException(status_code=404, detail="Practice result not found")
+    if result.questionnaire_type == "QPCC":
+        from ..qpcc import validate_scores
+
+        try:
+            validate_scores(payload.scores)
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
     result.scores = payload.scores
     db.commit()
     db.refresh(result)

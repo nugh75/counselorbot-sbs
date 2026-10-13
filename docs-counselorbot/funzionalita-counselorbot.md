@@ -245,6 +245,8 @@ profilo né creare una Compilazione reale. Turni e snapshot conservano
 `notebook_context="practice"` e `practice_notebook_id`; la ripresa usa il contesto
 dello snapshot anche se nel browser è stata scelta un’altra prova. Un link a un
 profilo assente, altrui, archiviato o di uno strumento diverso non avvia la chat.
+Anche la modifica di un profilo QPCC richiede i dieci fattori canonici con stanine
+intere 1–9: profili legacy, incompleti o misti vengono rifiutati senza salvare.
 
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
