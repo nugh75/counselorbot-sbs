@@ -383,3 +383,15 @@ The isolated synthetic PostgreSQL cluster uses 18648; dev uses 8148/3148, avoidi
 the pre-existing 8002/3107 services. The frontend is a secret-free source snapshot.
 Commands, SSH tunnel, tests, migration and exact shutdown steps are documented in
 [teacher-institutes-validation.md](teacher-institutes-validation.md).
+
+## Validazione QPCC isolata (#242)
+
+`./scripts/dev-qpcc-validation.sh` avvia Next con hot reload su `127.0.0.1:3147`
+(verifica porta libera con lsof), `BACKEND_ORIGIN=http://127.0.0.1:8047` deliberatamente
+senza backend. Non usa database o dati di produzione. Le fixture in
+`frontend/tests/qpcc-alignment.test.mjs` intercettano ogni `/api/*`; non avviare
+un backend reale su 8047 per queste prove. Stop: Ctrl-C nel terminale di avvio.
+Per SSH: `ssh -N -L 3147:127.0.0.1:3147 <utente>@<server>`, URL
+`http://localhost:3147`. Non è un ambiente operativo per salvare compilazioni.
+Audit, comandi test, limiti e piano di migrazione:
+[QPCC: audit e riallineamento](qpcc-factor-alignment.md).

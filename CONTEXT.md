@@ -3,6 +3,7 @@
 <!-- ai4educ:context-template v1.0 -->
 
 ## Quick Reference
+- **QPCC canonico (#242)**: `docs/operations/qpcc-factor-alignment.md` — 63 item, dieci scale A/V/C/M; chat su stanine importate, A1–A3 difficoltà, M2 contestuale. Vecchi K non riutilizzabili; somministrazione interna sospesa; aggiornamento esplicito e reversibile dei prompt di fabbrica.
 - **Differenziazione prompt CR1–CR4**: `docs/operations/model-context-levels.md` — stime token, livelli configurabili e assegnati manualmente per provider/modello, varianti DB indipendenti Totale/Ristretto/Minimo per ogni testo modello della Mappa (direttive, sistema/follow-up, meta, Idea, step, persona), pulsanti ed editor espliciti; `__short` compatibile solo con Ristretto; adattamento condiviso tra chat, anteprima e Prompt Lab. Confronto sintetico e limiti: `docs/operations/model-context-levels-validation.md`. Nessuna attivazione o modifica dei prompt operativi.
 - **Installazione portabile Console/macOS**: `docs/operations/portable-install-audit.md` e `docs/operations/portable-installation.md` — Compose autonomo `docker compose --env-file .env -f docker-compose.portable.yml up -d --build`, progetto `counselorbot-portable`, dominio `counselorbot.labform.net`, DB interno e rete Console; SSO pubblico, identità admin e logout verificati il 5 ottobre 2026. Ollama non installato; assistente Mac ChatGPT disponibile, accesso e scelta del modello personali ancora da completare. Protezione base scelta esplicitamente dall'operatore e verificata sul runtime, senza detector locale.
 - **Personal ChatGPT subscription (optional SIWC preview)**: `docs/operations/chatgpt-subscription.md` — default off, immediate activation from Administration → General with automatic persistent private key (dedicated Docker volume), encrypted per-user credentials, direct Responses API and explicit provider choice without paid failover. Native Mac helper (`scripts/build-chatgpt-macos.sh`) runs on the browser computer without Python/terminal; authenticated ZIP download is offered when present in `dist/chatgpt-macos`. CLI remains available, with visible pairing input (`--hide-code` optional); SSH supports `--no-browser --callback-port 1455` with a local callback tunnel to the host running the helper. Container code-server loopback is separate from its SSH host. Portable nginx exempts only the three exact Bearer pairing endpoints from Console SSO. Verify deployment eligibility and the repository license before a school pilot.
@@ -52,7 +53,7 @@ CounselorBot is an AI-powered web app that helps students analyze learning/caree
 | ZTPI | Zimbardo time perspective | — |
 | SAVICKAS | Career construction interview (narrative) | — |
 | QPCS | Perceived strategic competences | — |
-| QPCC | Perceived competences and beliefs | — |
+| QPCC | Perceived competences and beliefs: 63 items, 10 scales A/V/C/M, imported stanines | A1–A3; M2 contextual |
 | QAP | Career adaptability | — |
 | EVENTO_STUDIO | Significant study event: guided interview on one episode (6 steps + summary, milestone draft for the timeline) | — |
 | EVENTO_PROFESSIONALE | Significant professional event: same path on a work or placement episode | — |

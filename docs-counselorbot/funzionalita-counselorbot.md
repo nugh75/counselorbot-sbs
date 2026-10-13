@@ -124,13 +124,45 @@ shown. The Guide remains available independently of these class toggles.
 **QSA, QSAr, ZTPI, QPCS, QPCC e QAP** sono i sei questionari con punteggi. In italiano
 si compilano su competenzestrategiche.it, poi si portano i risultati in CounselorBot.
 Nelle altre cinque lingue sono disponibili versioni sperimentali interne, non ancora
-validate: questa limitazione va dichiarata quando vengono proposte.
+validate, dove la somministrazione è abilitata. Il QPCC fa eccezione: si portano
+le dieci stanine già calcolate; la somministrazione interna è sospesa perché
+i 25 item sostitutivi non sono i 63 item canonici e manca la chiave autorizzata.
 
 I risultati si inseriscono manualmente oppure si estraggono da PDF/immagine, con
 controllo della persona prima di proseguire. La visualizzazione e la chat aiutano
 la riflessione sui fattori; un punteggio alto non è sempre un punto di forza, perché
 alcuni fattori sono invertiti. Non si fanno diagnosi. La scheda di ciascuno strumento
 (`/strumenti/<codice>`) ne spiega finalità, svolgimento e dati necessari.
+
+Il **QPCC di Pellerey–Orio** è rivolto a giovani e adulti in cerca di occupazione
+o in contesti professionali relazionali. Il questionario canonico ha 63 item,
+quattro dimensioni connesse e dieci scale, con punteggi stanine 1–9:
+
+- Affettivo-emozionale: **A1 Ansia di parlare in pubblico**, **A2 Senso di
+  insicurezza**, **A3 Senso di inadeguatezza**.
+- Volitiva: **V1 Autoregolazione e perseveranza sul lavoro**, **V2 Far fronte a
+  sfide personali (coping)**.
+- Cognitiva: **C1 Competenze elaborative**, **C2 Competenza comunicativa**.
+- Motivazionale: **M1 Percezione di competenza**, **M2 Orientamento all’io**,
+  **M3 Attribuzioni causali (locus of control interno)**.
+
+La chat legge questi dieci fattori, costruisce un patto con accettazione
+esplicita e li approfondisce con esempi professionali o di ricerca di lavoro.
+È un’autovalutazione senza risposte giuste o sbagliate, con durata indicativa
+20–30 minuti; non somministra gli item né assegna nuovi punteggi. A1–A3 alti
+indicano maggiori difficoltà dichiarate; M2 viene discusso nel contesto, senza
+un giudizio automatico di forza/debolezza. I nomi e le etichette del profilo
+seguono la lingua scelta anche nei resoconti. Se nessun fattore rientra nella
+fascia dei punti di forza, il riepilogo lo indica senza dichiarare equilibrato
+il profilo nel suo insieme. La sintesi resta qualitativa,
+distingue proposte e impegni della persona e conserva solo tempi concordati.
+Le vecchie analisi K1–K5 non sono profili canonici: restano nello storico ma
+non si riutilizzano o convertono per iniziare/riprendere il nuovo percorso.
+Le nuove compilazioni richiedono un profilo completo con dieci stanine intere
+tra 1 e 9. Gli eventuali codici K in una
+vecchia bozza locale non entrano nel nuovo invio. Interfaccia, fattori e indicazioni
+sono disponibili in tutte le sei lingue. Audit e aggiornamento esplicito dei
+prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
 
 ## Percorsi guidati senza punteggi
 
