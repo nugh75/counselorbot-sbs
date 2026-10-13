@@ -160,7 +160,9 @@ def test_classes_stay_inside_docenza_chat():
         )
         system = _envelope(db, request, TEACHER_IDENTITY, "OBIETTIVO_STUDIO")
         assert 'Chimica' in system          # il taccuino docente si
-        assert '3B' not in system           # le classi no: restano alla docenza
+        # Il nome breve può comparire nel codice casuale della conversazione.
+        assert '- 3B' not in system         # le classi no: restano alla docenza
+        assert 'Classe di chimica' not in system
 
 
 def test_frozen_session_persists_notebook_context():
