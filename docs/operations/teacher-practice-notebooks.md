@@ -129,3 +129,32 @@ Limiti:
   punteggi con lo studente simulato e non li copia nel repertorio.
 - La Bussola non mostra la scelta prima di aprire una sessione: l'apertura usa
   la scelta già memorizzata nel browser (anche dalle chat guidate).
+
+## Profili: salvataggio esplicito e avvio diretto
+
+Sotto ogni taccuino attivo il repertorio riusa l’editor dei punteggi corrente,
+con il primario petrol **Salva profilo** nelle sei lingue. Generazione e modifica
+non persistono: il salvataggio esegue POST per un nuovo profilo, PUT per uno
+esistente, mostra «Salvato» e rilegge il repertorio. Un errore mantiene il form;
+durante la richiesta campi e comandi sono disabilitati. L’uscita con modifiche
+richiede conferma, come negli altri editor espliciti.
+
+`PUT /teacher/practice-notebooks/{notebook_id}/results/{result_id}` accetta
+solo `scores`, con la stessa validazione 1–9 del POST. Ruoli e proprietà sono
+verificati dal guard esistente e da `_owned`; il risultato deve appartenere
+esattamente al taccuino nell’URL (altrimenti 404). Strumento, provenienza e
+sessione originale restano invariati. Nessuna nuova tabella o migrazione.
+
+**Avvia chat guidata** (ocra, azione d’ingresso prevista da `docs/design.md`)
+riusa `/?start=<strumento>` aggiungendo `practice_notebook_id` e
+`practice_result_id`. All’arrivo si rileggono dall’API i taccuini attivi e il
+profilo del repertorio: ruolo docente, identità del taccuino e strumento devono
+corrispondere. Link non validi non avviano la chat e non salvano compilazioni.
+Il percorso passa attraverso il counselor e le impostazioni esistenti, con
+modalità guidata; i redirect di configurazione mantengono il link completo.
+Ogni avvio ha una nuova sessione; il profilo già salvato non viene duplicato.
+Turni e congelamento riusano il contratto practice esistente, compresa la
+ripresa dallo snapshot con precedenza sulle preferenze del browser.
+
+Audit e risultati della validazione isolata:
+`docs/operations/practice-notebook-profile-chat-validation.md`.
