@@ -22,9 +22,9 @@ export function TeacherAreaHeader({ slug }: { slug: TeacherAreaSlug }) {
             <div className="flex items-center">
                 <Link href="/docente" className={control}><ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />{l('title')}</Link>
             </div>
-            <div className="grid grid-cols-[4rem_1fr] items-center gap-x-4 gap-y-3 sm:grid-cols-[4.5rem_1fr]">
+            <div className="grid grid-cols-[4rem_minmax(0,1fr)] items-center gap-x-4 gap-y-3 sm:grid-cols-[4.5rem_minmax(0,1fr)]">
                 <Image src={teacherAreaImages[slug]} alt="" width={72} height={72} className="h-16 w-16 object-contain sm:row-span-2 sm:h-18 sm:w-18" />
-                <h1 ref={heading} tabIndex={-1} className="text-2xl font-bold tracking-tight focus:outline-none sm:self-end">{teacherAreaName(lang, slug)}</h1>
+                <h1 ref={heading} tabIndex={-1} className="min-w-0 break-words text-2xl font-bold tracking-tight focus:outline-none sm:self-end">{teacherAreaName(lang, slug)}</h1>
                 <p className="col-span-2 text-sm text-slate-600 sm:col-span-1 sm:self-start dark:text-slate-400">{teacherAreaDescription(lang, slug)}</p>
             </div>
         </header>
