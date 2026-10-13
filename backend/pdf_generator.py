@@ -935,6 +935,9 @@ def generate_questionnaire_pdf(
     lang = _normalize_lang(language)
     ui = UI_TEXT[lang]
     trans = FACTOR_TRANS[lang]
+    if questionnaire_type.upper() == 'QPCC':
+        from .qpcc import names
+        trans = {code: (label, label) for code, label in names(lang).items()}
     from .visual_tools import LABELS, workspace_sections
 
     pdf = ResultPDF(title=LABELS[lang][0] if mode == "visual" else ui["title"], page_label=ui["page"])
@@ -1016,9 +1019,11 @@ def generate_questionnaire_pdf(
                     continue
 
                 name, desc = info
-                inverted = code in INVERTED_CODES
+                inverted = code in ({'A1', 'A2', 'A3'} if questionnaire_type.upper() == 'QPCC' else INVERTED_CODES)
                 has_inverted = has_inverted or inverted
                 label, color = _score_label(value_int, inverted, ui)
+                if questionnaire_type.upper() == 'QPCC' and code == 'M2':
+                    label, color = name, APP_TEXT_MUTED
 
                 # Riga 1: codice + nome a piena larghezza (va a capo, non si sovrappone)
                 pdf.set_font("Helvetica", "B", 11)

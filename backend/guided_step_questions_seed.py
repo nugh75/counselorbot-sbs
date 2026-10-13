@@ -253,63 +253,47 @@ DEFAULT_GUIDED_STEP_QUESTIONS: dict[str, dict[str, list[str]]] = {
             "Quale piccolo obiettivo posso darmi per la prossima settimana?",
         ],
     },
-    "QPCC": {
-        "qpcc-profilo": [
-            "Come si leggono questi punteggi?",
-            "Qual è il mio punto di forza in questo profilo?",
-            "Da quale area conviene partire?",
-        ],
-        "qpcc-intro": [
-            "Come funziona il percorso QPCC?",
-            "Che cosa significa analizzare competenze e convinzioni?",
-            "Come useremo i miei punteggi in modo pratico?",
-        ],
-        "qpcc-welcome": [
-            "Come funziona il percorso QPCC?",
-            "Che cosa significa analizzare competenze e convinzioni?",
-            "Come useremo i miei punteggi in modo pratico?",
-        ],
-        "qpcc-factors": [
-            "Quali competenze o convinzioni emergono di più?",
-            "Quale area può sostenere meglio le mie scelte?",
-            "Quale convinzione su di me dovrei osservare con più attenzione?",
-        ],
-        "qpcc-comunicazione": [
-            "Come vivo la comunicazione in pubblico?",
-            "Come posso preparare meglio un intervento davanti agli altri?",
-            "Quale esempio concreto mostra il mio modo di comunicare?",
-        ],
-        "qpcc-controllo": [
-            "Come gestisco ansia e responsabilità nelle decisioni?",
-            "Quando sento più pressione e cosa posso fare?",
-            "Quale strategia mi aiuta a mantenere controllo senza irrigidirmi?",
-        ],
-        "qpcc-volizione": [
-            "Come posso rafforzare volizione e autoregolazione?",
-            "Cosa mi aiuta a organizzare il lavoro e portarlo a termine?",
-            "Quale routine posso provare per essere più costante?",
-        ],
-        "qpcc-elaborazione": [
-            "Come elaboro e collego quello che apprendo?",
-            "Puoi suggerirmi una strategia per applicare meglio ciò che studio?",
-            "Quale metodo può aiutarmi a passare dalla comprensione all'uso concreto?",
-        ],
-        "qpcc-convinzioni": [
-            "Quali convinzioni su di me emergono dal percorso?",
-            "Come posso distinguere una convinzione utile da una limitante?",
-            "Che cosa posso fare per rafforzare fiducia e motivazione?",
-        ],
-        "qpcc-sintesi": [
-            "Quali competenze e convinzioni emergono come risorse?",
-            "Quale convinzione dovrei monitorare nel tempo?",
-            "Puoi trasformare la sintesi in un piano 7/30/90 giorni?",
-        ],
-        FIXED_QUESTIONS_STEP_ID: [
-            "Qual è la sintesi del mio profilo QPCC?",
-            "Come collego competenze e convinzioni alle mie decisioni?",
-            "Puoi propormi un piano breve per rafforzare un'area?",
-        ],
-    },
+    "QPCC": {'qpcc-comunicazione': ['Come si manifesta Ansia di parlare in pubblico nella mia esperienza '
+                        'professionale o di ricerca di lavoro?',
+                        'Quale episodio concreto mi aiuta a riflettere su Ansia di parlare in '
+                        'pubblico?',
+                        'Quali collegamenti noto tra questi fattori e le altre dimensioni?'],
+ 'qpcc-controllo': ['Come si manifesta Senso di insicurezza nella mia esperienza professionale o '
+                    'di ricerca di lavoro?',
+                    'Quale episodio concreto mi aiuta a riflettere su Senso di inadeguatezza?',
+                    'Quali collegamenti noto tra questi fattori e le altre dimensioni?'],
+ 'qpcc-convinzioni': ['Come si manifesta Percezione di competenza nella mia esperienza '
+                      'professionale o di ricerca di lavoro?',
+                      'Quale episodio concreto mi aiuta a riflettere su Attribuzioni causali '
+                      '(locus of control interno)?',
+                      'Quali collegamenti noto tra questi fattori e le altre dimensioni?'],
+ 'qpcc-elaborazione': ['Come si manifesta Competenze elaborative nella mia esperienza '
+                       'professionale o di ricerca di lavoro?',
+                       'Quale episodio concreto mi aiuta a riflettere su Competenza comunicativa?',
+                       'Quali collegamenti noto tra questi fattori e le altre dimensioni?'],
+ 'qpcc-factors': ['Quali competenze o convinzioni emergono di più?',
+                  'Quale area può sostenere meglio le mie scelte?',
+                  'Quale convinzione su di me dovrei osservare con più attenzione?'],
+ 'qpcc-intro': ['Come funziona il percorso QPCC?',
+                'Che cosa significa analizzare competenze e convinzioni?',
+                'Come useremo i miei punteggi in modo pratico?'],
+ 'qpcc-profilo': ['Come si leggono questi punteggi?',
+                  'Qual è il mio punto di forza in questo profilo?',
+                  'Da quale area conviene partire?'],
+ 'qpcc-sintesi': ['Quali competenze e convinzioni emergono come risorse?',
+                  'Quale convinzione dovrei monitorare nel tempo?',
+                  'Puoi trasformare la sintesi in un piano 7/30/90 giorni?'],
+ 'qpcc-volizione': ['Come si manifesta Autoregolazione e perseveranza sul lavoro nella mia '
+                    'esperienza professionale o di ricerca di lavoro?',
+                    'Quale episodio concreto mi aiuta a riflettere su Far fronte a sfide personali '
+                    '(coping)?',
+                    'Quali collegamenti noto tra questi fattori e le altre dimensioni?'],
+ 'qpcc-welcome': ['Come funziona il percorso QPCC?',
+                  'Che cosa significa analizzare competenze e convinzioni?',
+                  'Come useremo i miei punteggi in modo pratico?'],
+ 'questions': ['Qual è la sintesi del mio profilo QPCC?',
+               'Come collego competenze e convinzioni alle mie decisioni?',
+               "Puoi propormi un piano breve per rafforzare un'area?"]},
     "QAP": {
         "qap-profilo": [
             "Come si leggono questi punteggi?",

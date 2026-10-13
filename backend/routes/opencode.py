@@ -394,6 +394,20 @@ def _scores_markdown(
     """
     if not scores:
         return ""
+    if questionnaire_type.upper() == 'QPCC':
+        from ..qpcc import names, validate_scores
+        try:
+            validate_scores(scores)
+        except ValueError:
+            raise HTTPException(422, 'qpcc_legacy_profile')
+        labels = names(locale)
+        copy = _LANG_COPY[locale]
+        lines = [f"| {copy['factor']} | {copy['name']} | {copy['score']} | {copy['reading']} |",
+                 '|---|---|---|---|']
+        for code, label in labels.items():
+            reading = copy['inverted'] if code.startswith('A') else label if code == 'M2' else copy['resource']
+            lines.append(f'| {code} | {label} | {scores[code]}/9 | {reading} |')
+        return '\n'.join(lines)
     factors = {
         f.code: f
         for f in db.query(models.Factor)

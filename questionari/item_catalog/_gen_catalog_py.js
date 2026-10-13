@@ -58,6 +58,12 @@ out.push('');
 out.push('INSTRUMENT_CATALOG_DEFAULTS = {');
 
 for (const code of instruments) {
+    if (code === 'QPCC') {
+        const canonical = require(path.join(ROOT, 'backend/qpcc_schema.json'));
+        out.push('    "QPCC": {"name_en": "Perceived Competences and Beliefs Questionnaire", "name_sv": "QPCC", "response_scale_min": 1, "response_scale_max": 4, "report_scale_type": "stanine",');
+        out.push('        "factors": ' + py(canonical.map(f => ({code:f.code, dimension:f.dimension, orientation:f.orientation, label_en:f.labels.en, label_sv:f.labels.sv}))) + ', "items": []},');
+        continue;
+    }
     const items_en = extractConst(adminTs, itemVar[code] + '_EN');
     const items_sv = extractConst(adminTs, itemVar[code] + '_SV');
     const factors = extractConst(scoringTs, factorVar[code]);
@@ -110,6 +116,7 @@ function py(v) {
 fs.writeFileSync(path.join(ROOT, 'backend/questionnaire_catalog.py'), out.join('\n'));
 console.log('Scritto backend/questionnaire_catalog.py');
 for (const code of instruments) {
+    if (code === 'QPCC') { console.log('  QPCC: canonical factors only, no in-app items'); continue; }
     const en = extractConst(adminTs, itemVar[code] + '_EN');
     console.log('  ' + code + ': ' + en.length + ' item');
 }

@@ -865,6 +865,9 @@ def _phase_factor_codes(db, phase: Optional[str]) -> set[str]:
     step = db.query(models.GuidedStep).filter(models.GuidedStep.id == phase).first()
     if not step or not step.prompt:
         return set()
+    if step.questionnaire_type == 'QPCC':
+        from .qpcc import CODES, STEP_CODES
+        return set(STEP_CODES.get(phase, CODES))
     return _extract_factor_codes(step.prompt)
 
 
@@ -953,7 +956,7 @@ def _scope_scores_to_codes(scores: str, codes: set[str]) -> str:
         return scores
     out = []
     for line in scores.splitlines():
-        m = re.match(r"\s*-\s*([CA]\d{1,2}r?|T[1-5])\b", line, re.IGNORECASE)
+        m = re.match(r"\s*-\s*([CAVM]\d{1,2}r?|T[1-5])\b", line, re.IGNORECASE)
         if m:
             if m.group(1).upper() in codes:
                 out.append(line)
@@ -1476,11 +1479,6 @@ _COMPETENCE_IT_FACTOR_NAMES: dict[str, dict[str, str]] = {
         "S3": "Volontà e perseveranza", "S4": "Strategie e collaborazione",
         "S5": "Fiducia e progetto di vita",
     },
-    "QPCC": {
-        "K1": "Comunicazione in pubblico", "K2": "Ansia, controllo e responsabilità",
-        "K3": "Volizione e autoregolazione", "K4": "Strategie di elaborazione",
-        "K5": "Convinzioni su di sé",
-    },
     "QAP": {
         "AD1": "Orientamento al futuro", "AD2": "Controllo e autonomia",
         "AD3": "Curiosità ed esplorazione", "AD4": "Fiducia e problem solving",
@@ -1499,7 +1497,7 @@ _COMPETENCE_BAND_LABELS: dict[str, dict[str, str]] = {
 }
 
 _COMPETENCE_SCORE_RE = re.compile(
-    r"\b(S[1-5]|K[1-5]|AD[1-4])\b[^\n\r0-9]{0,80}?([1-9])\s*/\s*9\b", re.IGNORECASE
+    r"\b(S[1-5]|K[1-5]|AD[1-4]|A[1-3]|V[1-2]|C[1-2]|M[1-3])\b[^\n\r0-9]{0,80}?([1-9])\s*/\s*9\b", re.IGNORECASE
 )
 
 
@@ -1517,6 +1515,9 @@ def competence_factor_names(db, questionnaire_type: str, language: Optional[str]
     code = (questionnaire_type or "").upper()
     if code not in _COMPETENCE_INSTRUMENTS:
         return {}
+    if code == 'QPCC':
+        from .qpcc import names
+        return names(language)
     italian = _COMPETENCE_IT_FACTOR_NAMES[code]
     if (language or "it").lower() == "it":
         return dict(italian)
@@ -1537,8 +1538,7 @@ def competence_factor_names(db, questionnaire_type: str, language: Optional[str]
 
 
 def _competence_band_for_score(score: int) -> str:
-    # Tutti i fattori di questi tre strumenti sono diretti (catalogo:
-    # is_interpretation_inverted false su tutti e 14).
+    # Resource-scale bands; QPCC difficulty and neutral scales are handled by the caller.
     if score <= 3:
         return "growth"
     if score <= 6:
@@ -1567,6 +1567,13 @@ def _apply_competence_step_profile_directive(
         if not name:
             continue
         band = _competence_band_for_score(int(raw_score))
+        if questionnaire_type.upper() == 'QPCC':
+            from .qpcc import INVERTED
+            if code in INVERTED:
+                band = _competence_band_for_score(10 - int(raw_score))
+            if code == 'M2':
+                lines.append(f'- {code} ({name}): {raw_score}/9 = {name}')
+                continue
         lines.append(f"- {code} ({name}): {raw_score}/9 = {labels[band]}")
     if not lines:
         return system_prompt

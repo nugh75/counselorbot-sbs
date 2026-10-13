@@ -1,5 +1,7 @@
 'use client';
 
+import { isReusableProfile } from '@/lib/questionnaires';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -330,6 +332,12 @@ export default function Home() {
             setStep('base');
             return;
         }
+        if (currentScores !== null && !isReusableProfile(questionnaire.id, currentScores)) {
+            toast.error(t('q.QPCC.legacyProfile'));
+            setScores(null);
+            setStep('method-select');
+            return;
+        }
         setPreparingInstrument(true);
         try {
             const preferences = await fetchAccountPreferences().catch(() => null);
@@ -425,6 +433,9 @@ export default function Home() {
                 } catch (err) {
                     if (err instanceof FrozenSessionAccessError && err.detail === 'tool_disabled_for_class') {
                         toast.error(t('session.disabledForClass'));
+                        setStep('base');
+                    } else if (err instanceof FrozenSessionAccessError && err.detail === 'qpcc_legacy_profile') {
+                        toast.error(t('q.QPCC.legacyProfile'));
                         setStep('base');
                     } else if (err instanceof FrozenSessionAccessError && err.detail === 'tool_unavailable') {
                         toast.error(t('session.toolUnavailable'));

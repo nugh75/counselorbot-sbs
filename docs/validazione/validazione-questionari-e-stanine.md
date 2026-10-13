@@ -156,3 +156,13 @@ strumento × lingua (× fascia scolastica se il campione lo consente). Caricamen
 2. Modalità "ricerca" che disattiva profilo e AI durante la raccolta (PROGETTO §8).
 3. Export dataset item-level pseudonimizzato per i ricercatori.
 4. Import delle tabelle normative prodotte in R dentro `norm_thresholds`.
+
+## Riallineamento QPCC (#242)
+
+Il QPCC usa dieci scale canoniche A1–A3, V1–V2, C1–C2, M1–M3 su quattro dimensioni
+A/V/C/M. Le cinque aree K e i 25 item sostitutivi non rappresentano lo strumento
+Pellerey–Orio di 63 item. La somministrazione interna e il fallback lineare sono
+bloccati per QPCC; si importa un profilo di dieci stanine già calcolate. La fonte
+utente non fornisce chiave item→fattore o norme: nessun mapping/norma inventato.
+Storico, piano di aggiornamento dei prompt e test:
+[QPCC: audit e riallineamento](../operations/qpcc-factor-alignment.md).

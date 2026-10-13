@@ -1,3 +1,4 @@
+import qpccFactors from './qpcc-schema.json' with { type: 'json' };
 // Questionnaire Configuration
 // This file defines all available questionnaires and their configurations
 
@@ -86,14 +87,12 @@ const QPCS_FACTOR_DEFINITIONS: FactorDefinition[] = [
     { code: 'S5', name: 'Fiducia e progetto di vita', description: 'Fiducia nelle competenze e senso di progetto', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
 ];
 
-// QPCC factor definitions — aree di competenze e convinzioni (scala 1-9, dirette)
-const QPCC_FACTOR_DEFINITIONS: FactorDefinition[] = [
-    { code: 'K1', name: 'Comunicazione in pubblico', description: 'Parlare e convincere davanti ad altri', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
-    { code: 'K2', name: 'Gestione di ansia e responsabilità', description: 'Gestire pressione e responsabilità nelle decisioni', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
-    { code: 'K3', name: 'Volizione e autoregolazione', description: 'Organizzare il lavoro e portarlo a termine', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
-    { code: 'K4', name: 'Strategie di elaborazione', description: 'Collegare e applicare ciò che si apprende', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
-    { code: 'K5', name: 'Convinzioni su di sé', description: 'Fiducia, attribuzioni e motivazione a riuscire', lowLabel: 'Area di crescita', midLabel: 'Adeguato', highLabel: 'Forza' },
-];
+// QPCC codes overlap QSA: all translations are instrument-scoped.
+const QPCC_FACTOR_DEFINITIONS: FactorDefinition[] = qpccFactors.map(factor => ({
+    code: factor.code, name: factor.labels.it, description: factor.labels.it,
+    lowLabel: factor.orientation === 'neutral' ? factor.labels.it : factor.orientation === 'difficulty' ? 'Forza' : 'Area di crescita',
+    midLabel: factor.orientation === 'neutral' ? factor.labels.it : 'Adeguato', highLabel: factor.orientation === 'neutral' ? factor.labels.it : factor.orientation === 'difficulty' ? 'Area di crescita' : 'Forza',
+}));
 
 // QAP factor definitions — 4 risorse dell'adattabilità professionale (CAAS, scala 1-9, dirette)
 const QAP_FACTOR_DEFINITIONS: FactorDefinition[] = [
@@ -152,9 +151,9 @@ export const QUESTIONNAIRES: Record<QuestionnaireType, QuestionnaireConfig> = {
         name: 'QPCC',
         fullName: 'Questionario di Percezione delle proprie Competenze e Convinzioni',
         description: 'Inserisci i valori dei fattori e ottieni un’analisi guidata di competenze e convinzioni',
-        factorPrefix: ['K'],
+        factorPrefix: ['A', 'V', 'C', 'M'],
         factors: QPCC_FACTOR_DEFINITIONS,
-        invertedFactors: [],
+        invertedFactors: ['A1', 'A2', 'A3'],
         color: 'bg-indigo-500',
         icon: 'lightbulb',
     },
@@ -335,4 +334,14 @@ const PROFILE_UPLOAD_QUESTIONNAIRES: QuestionnaireType[] = ['QSA', 'QSAr', 'QPCS
 
 export function supportsProfileUpload(id: QuestionnaireType): boolean {
     return PROFILE_UPLOAD_QUESTIONNAIRES.includes(id);
+}
+
+export function factorTranslationKey(questionnaireId: string, code: string, field = 'name'): string {
+    return `factor.${questionnaireId === 'QPCC' && !code.startsWith('K') ? 'QPCC.' : ''}${code}.${field}`;
+}
+
+export function isReusableProfile(questionnaireId: string, scores: Record<string, number> | null | undefined): boolean {
+    if (questionnaireId !== 'QPCC') return true;
+    return !!scores && Object.keys(scores).length === 10 && qpccFactors.every(f =>
+        Number.isInteger(scores[f.code]) && scores[f.code] >= 1 && scores[f.code] <= 9);
 }

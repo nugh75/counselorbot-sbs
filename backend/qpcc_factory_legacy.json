@@ -1,0 +1,658 @@
+{
+  "steps": {
+    "qpcc-profilo": {
+      "id": "qpcc-profilo",
+      "questionnaire_type": "QPCC",
+      "sort_order": 1,
+      "label": "1. Lettura del Profilo",
+      "prompt": "Read my whole QPCC profile before the interview areas: K1 (Public communication), K2 (Managing anxiety and responsibility), K3 (Volition and self-regulation), K4 (Elaboration strategies), K5 (Beliefs about oneself). For each of them give my score, its interpretation label and, in one or two sentences, what the area measures and how that result shows up in practice. Treat every score as my own self-assessment, a reference point for reflection and never a grade or a judgement. Then group the areas into strengths, good areas and areas to work on. Do not give practical advice here: the areas that follow explore each result in conversation.",
+      "system_prompt_mode": "qpcc-factor",
+      "color_theme": "slate",
+      "label_i18n": {
+        "en": "1. Reading Your Profile",
+        "es": "1. Lectura del Perfil",
+        "fr": "1. Lecture du Profil",
+        "de": "1. Profilübersicht",
+        "sv": "1. Profilöversikt"
+      }
+    },
+    "qpcc-intro": {
+      "id": "qpcc-intro",
+      "questionnaire_type": "QPCC",
+      "sort_order": 0,
+      "label": "0. Patto di Collaborazione",
+      "prompt": "Start of the QPCC path: build the agreement with the student. Briefly explain that you will have a reflective interview (not a graded test) on competences and beliefs about oneself; indicative duration (5 areas + summary), method (open questions), confidentiality. Ask for an explicit confirmation to begin (e.g. 'If you agree, write: I accept'). Do NOT advance until there is a clear confirmation. When the confirmation arrives, on the last line put only [[AVANZA_STEP]].",
+      "system_prompt_mode": "qpcc-interview",
+      "color_theme": "cyan",
+      "label_i18n": {
+        "en": "0. Collaboration Agreement",
+        "es": "0. Pacto de Colaboración",
+        "fr": "0. Pacte de Collaboration",
+        "de": "0. Kooperationsvereinbarung",
+        "sv": "0. Samarbetsöverenskommelse"
+      }
+    },
+    "qpcc-comunicazione": {
+      "id": "qpcc-comunicazione",
+      "questionnaire_type": "QPCC",
+      "sort_order": 2,
+      "label": "2. Comunicazione in Pubblico",
+      "prompt": "Area 1/5 - Communication and the ability to speak in public. Explore how the student experiences speaking in front of others, how they prepare and structure a talk and how they try to convince or engage their listeners. Ask for a concrete example. When the area is covered, give a mini-summary and on the last line only [[AVANZA_STEP]].",
+      "system_prompt_mode": "qpcc-interview",
+      "color_theme": "blue",
+      "label_i18n": {
+        "en": "2. Public Speaking",
+        "es": "2. Comunicación en Público",
+        "fr": "2. Communication en Public",
+        "de": "2. Sprechen vor Publikum",
+        "sv": "2. Att tala inför publik"
+      }
+    },
+    "qpcc-controllo": {
+      "id": "qpcc-controllo",
+      "questionnaire_type": "QPCC",
+      "sort_order": 3,
+      "label": "3. Ansia, Controllo e Responsabilità",
+      "prompt": "Area 2/5 - Managing anxiety, control and responsibility. Explore how the student reacts when facing difficult decisions and situations that put them under pressure, and how much they feel blocked or nervous because of responsibility. Ask for an example. When the area is covered, give a mini-summary and on the last line only [[AVANZA_STEP]].",
+      "system_prompt_mode": "qpcc-interview",
+      "color_theme": "indigo",
+      "label_i18n": {
+        "en": "3. Anxiety, Control and Responsibility",
+        "es": "3. Ansiedad, Control y Responsabilidad",
+        "fr": "3. Anxiété, Contrôle et Responsabilité",
+        "de": "3. Angst, Kontrolle und Verantwortung",
+        "sv": "3. Oro, kontroll och ansvar"
+      }
+    },
+    "qpcc-volizione": {
+      "id": "qpcc-volizione",
+      "questionnaire_type": "QPCC",
+      "sort_order": 4,
+      "label": "4. Volizione e Autoregolazione",
+      "prompt": "Area 3/5 - Volition and self-regulation. Explore how the student completes the commitments they take on, organises their work according to the time available and applies themselves even to uninteresting tasks. Ask for a concrete example. When the area is covered, give a mini-summary and on the last line only [[AVANZA_STEP]].",
+      "system_prompt_mode": "qpcc-interview",
+      "color_theme": "amber",
+      "label_i18n": {
+        "en": "4. Volition and Self-regulation",
+        "es": "4. Volición y Autorregulación",
+        "fr": "4. Volition et Autorégulation",
+        "de": "4. Volition und Selbstregulation",
+        "sv": "4. Volition och självreglering"
+      }
+    },
+    "qpcc-elaborazione": {
+      "id": "qpcc-elaborazione",
+      "questionnaire_type": "QPCC",
+      "sort_order": 5,
+      "label": "5. Strategie di Elaborazione",
+      "prompt": "Area 4/5 - Elaboration and learning strategies. Explore how the student connects new ideas to ones they already know, looks for concrete examples and applications, and identifies the important things when studying or working. Ask for a concrete example. When the area is covered, give a mini-summary and on the last line only [[AVANZA_STEP]].",
+      "system_prompt_mode": "qpcc-interview",
+      "color_theme": "teal",
+      "label_i18n": {
+        "en": "5. Elaboration Strategies",
+        "es": "5. Estrategias de Elaboración",
+        "fr": "5. Stratégies d'Élaboration",
+        "de": "5. Verarbeitungsstrategien",
+        "sv": "5. Bearbetningsstrategier"
+      }
+    },
+    "qpcc-convinzioni": {
+      "id": "qpcc-convinzioni",
+      "questionnaire_type": "QPCC",
+      "sort_order": 6,
+      "label": "6. Convinzioni su di Sé",
+      "prompt": "Area 5/5 - Beliefs about oneself. Explore how much the student trusts their own ability to succeed, what they attribute successes and failures to (effort vs external causes) and how much they are driven by the desire to do well or to do better. Ask for an example. When the area is covered, give a mini-summary and on the last line only [[AVANZA_STEP]].",
+      "system_prompt_mode": "qpcc-interview",
+      "color_theme": "rose",
+      "label_i18n": {
+        "en": "6. Beliefs about Oneself",
+        "es": "6. Convicciones sobre Sí Mismo",
+        "fr": "6. Convictions sur Soi",
+        "de": "6. Überzeugungen über sich selbst",
+        "sv": "6. Föreställningar om sig själv"
+      }
+    },
+    "qpcc-sintesi": {
+      "id": "qpcc-sintesi",
+      "questionnaire_type": "QPCC",
+      "sort_order": 7,
+      "label": "7. Sintesi e Piano d'Azione",
+      "prompt": "Final summary of the QPCC path: integrate what emerged across the 5 areas and build a portrait of the student's competences and beliefs (strengths and areas for growth, in words, without scores), with recurring resources, areas to work on, ONE practical suggestion, and points to review it at 7, 30 and 90 days. On the last line put only [[AVANZA_STEP]].",
+      "system_prompt_mode": "qpcc-summary",
+      "color_theme": "purple",
+      "label_i18n": {
+        "en": "7. Synthesis and Action Plan",
+        "es": "7. Síntesis y Plan de Acción",
+        "fr": "7. Synthèse et Plan d'Action",
+        "de": "7. Synthese und Aktionsplan",
+        "sv": "7. Syntes och handlingsplan"
+      }
+    }
+  },
+  "configs": {
+    "prompt_qpcc_interview": "Conduct a guided reflective interview that helps the student recognise their competences and beliefs about themselves. The areas explored are: communication and the ability to speak in public; managing anxiety, control and responsibility; volition and self-regulation of work; elaboration and learning strategies; beliefs about oneself (confidence in one's own abilities, attribution of successes and failures, motivation to succeed). This is a QUALITATIVE path: do NOT assign numeric scores, do not ask the student to fill in 1-4 or 1-5 scales, do not show score tables. Style: clear, welcoming, non-clinical, address the student informally. One area per step. For each step ask ONE open main question tied to the area, listen, and add at most two concrete follow-up micro-questions. When you receive short answers, invite a real example. When the area is covered (or you reach the follow-up limit) give a short mini-summary and on the last line put ONLY the technical marker [[AVANZA_STEP]]. Never explain the marker to the student. Do NOT use opening greetings. The student's stanine profile (scores 1-9) was already read with them in the profile step: you may refer to the score of the area you are exploring as their own self-assessment, never as a grade, and use it to explore more carefully the areas where they feel less sure. Do not show score tables here and do not turn the interview into a reading of numbers.",
+    "prompt_qpcc_summary": "Produce the final summary of the path in the requested language, with simple and actionable language. Include: 1) a portrait of the areas explored, with strengths and areas for growth (in words, WITHOUT numbers or scores), 2) recurring resources and attitudes, 3) areas worth working on, 4) at most ONE new practical suggestion, only if this step permits it and a certified candidate supports it, 5) a synthesis of actions already discussed, distinguishing counselor proposals from student commitments and retaining only agreed timeframes. End with a reflection question useful for the next step. On the last line put ONLY the technical marker [[AVANZA_STEP]] and do not explain it. Do NOT use opening greetings.",
+    "prompt_qpcc_factor": "Analyse the Questionnaire on the Perception of one's own Competences and Beliefs (QPCC) profile by areas: K1 Public communication, K2 Managing anxiety and responsibility, K3 Volition and self-regulation, K4 Elaboration strategies, K5 Beliefs about oneself. For each requested factor return ONLY: score (x/9), interpretation (a single label) and a short practical comment (max 2 sentences). The score and its interpretation label arrive already resolved in [CURRENT STEP SCORE PROFILE]: copy each label exactly as written there and never replace it with wording of your own. Produce a valid GFM Markdown table with these exact columns: Factor | Score | Interpretation | Short comment. One row per factor, with no line breaks inside cells. After the table, group the factors by the label they actually received: one short section per label that occurs, titled with that label in the response language and listing the factors it covers; skip a label that no factor received. Comment style: sentence 1 = practical meaning of the score; sentence 2 = what this result may look like in a concrete situation, framed as a hypothesis. This is interpretation, not an instruction to perform an exercise. New advice is permitted only by the current turn policy. Non-judgemental tone. Do NOT use opening greetings.\n\n[ANCHOR] Close with ONE short question that ties the reading to the student's own experience, drawn from what this student has actually said and from the factors just read - not from a fixed set of openers. Vary it between steps and never reuse a closing formula the conversation already carries. One question, at the very end, and nothing after it. This step explains and asks; it does not advise.",
+    "prompt_qpcc_welcome": "You are introducing yourself to the student at the start of the QPCC reflection on their competences and beliefs.\n\nIn this turn:\n- Introduce yourself warmly and welcome the student.\n- In 3-4 short, natural sentences, say that you will accompany the student through a clear step-by-step reading of the profile results.\n- Say positively that they can move forward with the next-step button when ready, or write if they want a clarification.\n- Reassure them that this is a support for reflection, not a test or a grade.\n- Close with a simple invitation to start the first step when ready.\n- Avoid bureaucratic wording, stage labels and meta-negations about questions.\n\nDo NOT yet: mention any score, factor, or table. This is only the welcome, not the reflection.\n\n[INTRO ALLOWED QUESTIONS]\nIf the student asks how the interaction works, explain briefly that the path is guided step by step: the student can move forward when ready and can write whenever they want a clarification. For score-based questionnaire paths, describe the counsellor role positively as guiding the reading of the profile results already provided. Avoid meta-negations about questions or stage labels; do not make the intro sound like a procedural disclaimer. Only explicitly dialogic or interview phases are question-led.\nIf the student asks what tools are available in CounselorBot, answer from the [PLATFORM CAPABILITIES] block in this prompt, which carries the current catalog. Keep it brief and do not analyse any result.",
+    "site_chat_knowledge_card": "INSTRUMENTS SHEET (canonical data; use EXACT names, acronyms and numbers from here):\n- QSA — Learning Strategies Questionnaire (Pellerey, 100 items). 14 factors, stanine scale 1-9.\n  Cognitive: C1 Elaborative strategies · C2 Self-regulation · C3 Disorientation · C4 Willingness to collaborate · C5 Use of semantic organisers · C6 Concentration difficulties · C7 Self-questioning.\n  Affective: A1 Basic anxiety · A2 Volition · A3 Attribution to controllable causes · A4 Attribution to uncontrollable causes · A5 Lack of perseverance · A6 Perception of competence · A7 Emotional interference.\n  Inverted factors (high score = area for growth, not strength): C3, C6, A1, A4, A5, A7.\n- QSAr — Reduced QSA. 8 factors: C1r Elaborative strategies · C2r Self-regulatory strategies · C3r Graphic strategies and semantic organizers · C4r Lack of attention control (inv) · A1r Anxiety and emotional control (inv) · A2r Volition · A3r Causal attributions · A4r Perception of competence.\n- ZTPI — Zimbardo Time Perspective Inventory (by Philip Zimbardo, integrated in the project). 5 perspectives: T1 Past Negative (inv) · T2 Past Positive · T3 Present Hedonistic · T4 Present Fatalistic (inv) · T5 Future. Profile ideal = 'balanced time perspective' (Zimbardo), readapted on Italian sample (Margottini).\n- QPCS — Questionnaire on the Perception of one's own Strategic Competences. 5 factors: S1 Managing emotions · S2 Communicative competence · S3 Will and perseverance · S4 Strategies and collaboration · S5 Confidence and life project.\n- QPCC — Questionnaire on the Perception of one's own Competences and Beliefs. 5 factors: K1 Public communication · K2 Managing anxiety and responsibility · K3 Volition and self-regulation · K4 Elaboration strategies · K5 Beliefs about oneself.\n- QAP — Career Adaptability Questionnaire. 4 factors: AD1 Future orientation · AD2 Control and autonomy · AD3 Curiosity and exploration · AD4 Confidence and problem solving.\n- Savickas — narrative career construction interview (M. Savickas); resource of THIS platform, not of competenzestrategiche.it.\n- IDEA — conversation tool of CounselorBot for a concrete idea, decision or project; produces a cumulative map, without questionnaire items or scores.\n- EVENTO_STUDIO — Evento significativo di studio / Significant study event: a CounselorBot conversation about one study episode (lesson, exam, group project), without questionnaire items or scores.\n- EVENTO_PROFESSIONALE — Evento significativo professionale / Significant professional event: a CounselorBot conversation about one work or placement episode, including a teacher's practice, without questionnaire items or scores.\n- OBIETTIVO_STUDIO — Il mio obiettivo di apprendimento / My learning objective: a guided conversation that sets one learning objective (Bloom level, SMART, plan, proof), without questionnaire items or scores.\n- OBIETTIVO_DOCENZA — Obiettivi per la mia classe / Objectives for my class: the teacher's guided conversation for one didactic objective aligned with activities and assessment.\n  Both significant-event tools follow six steps (event, facts, what worked, what did not, a second look, next time) plus the separate final summary at step 7. Step 6 is what to try next time, not the summary. The summary is a draft milestone for the Timeline that the person reviews, edits and explicitly saves; there is no automatic saving or diagnosis. These are conversation tools, not calendar entries or questionnaires from competenzestrategiche.it."
+  },
+  "brief": "WHAT IT LOOKS AT — Five areas where competences and beliefs about oneself meet: speaking in public, managing anxiety and responsibility, volition and self-regulation, elaboration strategies, and the beliefs the student holds about themselves.\nWHAT YOU GET — A profile on the five areas and a conversation that treats a low score as a belief to examine rather than a verdict. Beliefs about oneself are the one factor here that changes what the others can do.\nWHEN IT IS THE RIGHT MOMENT — When the student says some version of 'I am just not the kind of person who can do this'; when anxiety and responsibility are the thing in the way; when the question is less about technique than about self-image.\nWHAT IT DOES NOT DO — It is not a clinical instrument and does not assess anxiety as a condition. It stays with what the student says about themselves in the context of study, and it does not replace support of another kind when that is what is needed.",
+  "questions_it": {
+    "qpcc-profilo": [
+      "Come si leggono questi punteggi?",
+      "Qual è il mio punto di forza in questo profilo?",
+      "Da quale area conviene partire?"
+    ],
+    "qpcc-intro": [
+      "Come funziona il percorso QPCC?",
+      "Che cosa significa analizzare competenze e convinzioni?",
+      "Come useremo i miei punteggi in modo pratico?"
+    ],
+    "qpcc-welcome": [
+      "Come funziona il percorso QPCC?",
+      "Che cosa significa analizzare competenze e convinzioni?",
+      "Come useremo i miei punteggi in modo pratico?"
+    ],
+    "qpcc-factors": [
+      "Quali competenze o convinzioni emergono di più?",
+      "Quale area può sostenere meglio le mie scelte?",
+      "Quale convinzione su di me dovrei osservare con più attenzione?"
+    ],
+    "qpcc-comunicazione": [
+      "Come si manifesta Ansia di parlare in pubblico nella mia esperienza professionale o di ricerca di lavoro?",
+      "Quale episodio concreto mi aiuta a riflettere su Ansia di parlare in pubblico?",
+      "Quali collegamenti noto tra questi fattori e le altre dimensioni?"
+    ],
+    "qpcc-controllo": [
+      "Come si manifesta Senso di insicurezza nella mia esperienza professionale o di ricerca di lavoro?",
+      "Quale episodio concreto mi aiuta a riflettere su Senso di inadeguatezza?",
+      "Quali collegamenti noto tra questi fattori e le altre dimensioni?"
+    ],
+    "qpcc-volizione": [
+      "Come si manifesta Autoregolazione e perseveranza sul lavoro nella mia esperienza professionale o di ricerca di lavoro?",
+      "Quale episodio concreto mi aiuta a riflettere su Far fronte a sfide personali (coping)?",
+      "Quali collegamenti noto tra questi fattori e le altre dimensioni?"
+    ],
+    "qpcc-elaborazione": [
+      "Come si manifesta Competenze elaborative nella mia esperienza professionale o di ricerca di lavoro?",
+      "Quale episodio concreto mi aiuta a riflettere su Competenza comunicativa?",
+      "Quali collegamenti noto tra questi fattori e le altre dimensioni?"
+    ],
+    "qpcc-convinzioni": [
+      "Come si manifesta Percezione di competenza nella mia esperienza professionale o di ricerca di lavoro?",
+      "Quale episodio concreto mi aiuta a riflettere su Attribuzioni causali (locus of control interno)?",
+      "Quali collegamenti noto tra questi fattori e le altre dimensioni?"
+    ],
+    "qpcc-sintesi": [
+      "Quali competenze e convinzioni emergono come risorse?",
+      "Quale convinzione dovrei monitorare nel tempo?",
+      "Puoi trasformare la sintesi in un piano 7/30/90 giorni?"
+    ],
+    "questions": [
+      "Qual è la sintesi del mio profilo QPCC?",
+      "Come collego competenze e convinzioni alle mie decisioni?",
+      "Puoi propormi un piano breve per rafforzare un'area?"
+    ]
+  },
+  "questions_i18n": {
+    "qpcc-intro": {
+      "en": [
+        "How does the QPCC process work?",
+        "What does it mean to analyze skills and beliefs?",
+        "How will we use my scores in a practical way?"
+      ],
+      "es": [
+        "¿Cómo funciona el proceso QPCC?",
+        "¿Qué significa analizar competencias y creencias?",
+        "¿Cómo utilizaremos mis puntuaciones de manera práctica?"
+      ],
+      "fr": [
+        "Comment fonctionne le parcours QPCC ?",
+        "Que signifie analyser les compétences et les convictions ?",
+        "Comment utiliserons-nous mes scores de manière pratique ?"
+      ],
+      "de": [
+        "Wie funktioniert der QPCC-Prozess?",
+        "Was bedeutet es, Kompetenzen und Überzeugungen zu analysieren?",
+        "Wie werden wir meine Ergebnisse praktisch nutzen?"
+      ],
+      "sv": [
+        "Hur fungerar QPCC-processen?",
+        "Vad innebär det att analysera kompetenser och övertygelser?",
+        "Hur kommer vi att använda mina poäng på ett praktiskt sätt?"
+      ]
+    },
+    "qpcc-welcome": {
+      "en": [
+        "How does the QPCC process work?",
+        "What does it mean to analyze skills and beliefs?",
+        "How will we use my scores in a practical way?"
+      ],
+      "es": [
+        "¿Cómo funciona el proceso QPCC?",
+        "¿Qué significa analizar competencias y creencias?",
+        "¿Cómo utilizaremos mis puntuaciones de manera práctica?"
+      ],
+      "fr": [
+        "Comment fonctionne le parcours QPCC ?",
+        "Que signifie analyser les compétences et les convictions ?",
+        "Comment utiliserons-nous mes scores de manière pratique ?"
+      ],
+      "de": [
+        "Wie funktioniert der QPCC-Prozess?",
+        "Was bedeutet es, Kompetenzen und Überzeugungen zu analysieren?",
+        "Wie werden wir meine Ergebnisse praktisch nutzen?"
+      ],
+      "sv": [
+        "Hur fungerar QPCC-processen?",
+        "Vad innebär det att analysera kompetenser och övertygelser?",
+        "Hur kommer vi att använda mina poäng på ett praktiskt sätt?"
+      ]
+    },
+    "qpcc-factors": {
+      "en": [
+        "Which skills or beliefs emerge the most?",
+        "Which area can best support my choices?",
+        "Which belief about myself should I observe more closely?"
+      ],
+      "es": [
+        "¿Qué competencias o creencias emergen más?",
+        "¿Qué área puede respaldar mejor mis elecciones?",
+        "¿Qué creencia sobre mí mismo debería observar con mayor atención?"
+      ],
+      "fr": [
+        "Quelles compétences ou convictions émergent le plus ?",
+        "Quel domaine peut le mieux soutenir mes choix ?",
+        "Quelle conviction sur moi-même devrais-je observer avec plus d'attention ?"
+      ],
+      "de": [
+        "Welche Kompetenzen oder Überzeugungen treten am stärksten hervor?",
+        "Welcher Bereich kann meine Entscheidungen am besten unterstützen?",
+        "Welche Überzeugung über mich selbst sollte ich genauer betrachten?"
+      ],
+      "sv": [
+        "Vilka färdigheter eller övertygelser framträder mest?",
+        "Vilket område kan bäst stödja mina val?",
+        "Vilken övertygelse om mig själv bör jag observera med större uppmärksamhet?"
+      ]
+    },
+    "qpcc-comunicazione": {
+      "en": [
+        "How do I experience public speaking?",
+        "How can I better prepare for a presentation in front of others?",
+        "What concrete example illustrates my way of communicating?"
+      ],
+      "es": [
+        "¿Cómo vivo la comunicación en público?",
+        "¿Cómo puedo preparar mejor una intervención ante los demás?",
+        "¿Qué ejemplo concreto muestra mi forma de comunicar?"
+      ],
+      "fr": [
+        "Comment est-ce que je vis la communication en public ?",
+        "Comment puis-je mieux préparer une intervention devant les autres ?",
+        "Quel exemple concret illustre ma manière de communiquer ?"
+      ],
+      "de": [
+        "Wie erlebe ich die Kommunikation vor Publikum?",
+        "Wie kann ich einen Vortrag vor anderen besser vorbereiten?",
+        "Welches konkrete Beispiel zeigt meine Art zu kommunizieren?"
+      ],
+      "sv": [
+        "Hur upplever jag att tala inför publik?",
+        "Hur kan jag bättre förbereda ett framförande inför andra?",
+        "Vilket konkret exempel visar mitt sätt att kommunicera?"
+      ]
+    },
+    "qpcc-controllo": {
+      "en": [
+        "How do I manage anxiety and responsibility in decision-making?",
+        "When do I feel the most pressure, and what can I do about it?",
+        "Which strategy helps me maintain control without becoming rigid?"
+      ],
+      "es": [
+        "¿Cómo gestiono la ansiedad y la responsabilidad en la toma de decisiones?",
+        "¿Cuándo siento más presión y qué puedo hacer al respecto?",
+        "¿Qué estrategia me ayuda a mantener el control sin volverme rígido?"
+      ],
+      "fr": [
+        "Comment est-ce que je gère l'anxiété et les responsabilités dans mes prises de décision ?",
+        "Quand est-ce que je ressens le plus de pression et que puis-je faire ?",
+        "Quelle stratégie m'aide à garder le contrôle sans me crisper ?"
+      ],
+      "de": [
+        "Wie gehe ich mit Angst und Verantwortung bei Entscheidungen um?",
+        "Wann verspüre ich den größten Druck und was kann ich dagegen tun?",
+        "Welche Strategie hilft mir, die Kontrolle zu behalten, ohne mich zu versteifen?"
+      ],
+      "sv": [
+        "Hur hanterar jag ångest och ansvar i beslutsfattande?",
+        "När känner jag som mest press och vad kan jag göra åt det?",
+        "Vilken strategi hjälper mig att behålla kontrollen utan att bli stelbent?"
+      ]
+    },
+    "qpcc-volizione": {
+      "en": [
+        "How can I strengthen my volition and self-regulation?",
+        "What helps me organize my work and see it through to completion?",
+        "What routine can I try to be more consistent?"
+      ],
+      "es": [
+        "¿Cómo puedo fortalecer mi volición y autorregulación?",
+        "¿Qué me ayuda a organizar el trabajo y llevarlo a término?",
+        "¿Qué rutina puedo probar para ser más constante?"
+      ],
+      "fr": [
+        "Comment puis-je renforcer ma volition et mon autorégulation ?",
+        "Qu'est-ce qui m'aide à organiser mon travail et à le mener à terme ?",
+        "Quelle routine puis-je essayer pour être plus constant ?"
+      ],
+      "de": [
+        "Wie kann ich meine Volition und Selbstregulation stärken?",
+        "Was hilft mir dabei, meine Arbeit zu organisieren und zum Abschluss zu bringen?",
+        "Welche Routine kann ich ausprobieren, um beständiger zu sein?"
+      ],
+      "sv": [
+        "Hur kan jag stärka min viljestyrka och självreglering?",
+        "Vad hjälper mig att organisera mitt arbete och slutföra det?",
+        "Vilken rutin kan jag prova för att bli mer konsekvent?"
+      ]
+    },
+    "qpcc-elaborazione": {
+      "en": [
+        "How do I process and connect what I learn?",
+        "Can you suggest a strategy for better applying what I study?",
+        "Which method can help me move from understanding to concrete application?"
+      ],
+      "es": [
+        "¿Cómo proceso y conecto lo que aprendo?",
+        "¿Puedes sugerirme una estrategia para aplicar mejor lo que estudio?",
+        "¿Qué método puede ayudarme a pasar de la comprensión al uso concreto?"
+      ],
+      "fr": [
+        "Comment est-ce que je traite et relie ce que j'apprends ?",
+        "Peux-tu me suggérer une stratégie pour mieux appliquer ce que j'étudie ?",
+        "Quelle méthode peut m'aider à passer de la compréhension à l'utilisation concrète ?"
+      ],
+      "de": [
+        "Wie verarbeite und verknüpfe ich das, was ich lerne?",
+        "Können Sie mir eine Strategie vorschlagen, um das Gelernte besser anzuwenden?",
+        "Welche Methode kann mir helfen, vom Verständnis zur konkreten Anwendung zu gelangen?"
+      ],
+      "sv": [
+        "Hur bearbetar och kopplar jag samman det jag lär mig?",
+        "Kan du föreslå en strategi för att bättre tillämpa det jag studerar?",
+        "Vilken metod kan hjälpa mig att gå från förståelse till konkret användning?"
+      ]
+    },
+    "qpcc-convinzioni": {
+      "en": [
+        "What beliefs about myself are emerging from this journey?",
+        "How can I distinguish a useful belief from a limiting one?",
+        "What can I do to strengthen my confidence and motivation?"
+      ],
+      "es": [
+        "¿Qué creencias sobre mí mismo emergen del proceso?",
+        "¿Cómo puedo distinguir una creencia útil de una limitante?",
+        "¿Qué puedo hacer para fortalecer la confianza y la motivación?"
+      ],
+      "fr": [
+        "Quelles croyances sur moi-même émergent de ce parcours ?",
+        "Comment puis-je distinguer une croyance utile d'une croyance limitante ?",
+        "Que puis-je faire pour renforcer ma confiance et ma motivation ?"
+      ],
+      "de": [
+        "Welche Überzeugungen über mich selbst kristallisieren sich im Laufe des Prozesses heraus?",
+        "Wie kann ich zwischen einer nützlichen und einer einschränkenden Überzeugung unterscheiden?",
+        "Was kann ich tun, um mein Vertrauen und meine Motivation zu stärken?"
+      ],
+      "sv": [
+        "Vilka föreställningar om mig själv framträder under processens gång?",
+        "Hur kan jag skilja på en hjälpsam och en begränsande föreställning?",
+        "Vad kan jag göra för att stärka mitt självförtroende och min motivation?"
+      ]
+    },
+    "qpcc-sintesi": {
+      "en": [
+        "Which skills and beliefs emerge as resources?",
+        "Which belief should I monitor over time?",
+        "Can you transform the summary into a 7/30/90-day plan?"
+      ],
+      "es": [
+        "¿Qué competencias y creencias emergen como recursos?",
+        "¿Qué creencia debería monitorear con el tiempo?",
+        "¿Puedes transformar la síntesis en un plan de 7/30/90 días?"
+      ],
+      "fr": [
+        "Quelles compétences et convictions émergent comme des ressources ?",
+        "Quelle conviction devrais-je surveiller au fil du temps ?",
+        "Peux-tu transformer cette synthèse en un plan de 7/30/90 jours ?"
+      ],
+      "de": [
+        "Welche Kompetenzen und Überzeugungen erweisen sich als Ressourcen?",
+        "Welche Überzeugung sollte ich im Laufe der Zeit beobachten?",
+        "Kannst du die Zusammenfassung in einen 7/30/90-Tage-Plan umwandeln?"
+      ],
+      "sv": [
+        "Vilka färdigheter och övertygelser framträder som resurser?",
+        "Vilken övertygelse bör jag följa upp över tid?",
+        "Kan du omvandla sammanfattningen till en 7/30/90-dagarsplan?"
+      ]
+    },
+    "questions": {
+      "en": [
+        "What is the summary of my QPCC profile?",
+        "How do I connect skills and beliefs to my decisions?",
+        "Can you propose a brief plan for me to strengthen an area?"
+      ],
+      "es": [
+        "¿Cuál es la síntesis de mi perfil QPCC?",
+        "¿Cómo conecto mis competencias y convicciones con mis decisiones?",
+        "¿Puedes proponerme un plan breve para fortalecer un área?"
+      ],
+      "fr": [
+        "Quelle est la synthèse de mon profil QPCC ?",
+        "Comment puis-je relier mes compétences et mes convictions à mes décisions ?",
+        "Peux-tu me proposer un plan court pour renforcer un domaine ?"
+      ],
+      "de": [
+        "Was ist die Zusammenfassung meines QPCC-Profils?",
+        "Wie verknüpfe ich Kompetenzen und Überzeugungen mit meinen Entscheidungen?",
+        "Können Sie mir einen kurzen Plan zur Stärkung eines Bereichs vorschlagen?"
+      ],
+      "sv": [
+        "Vad är sammanfattningen av min QPCC-profil?",
+        "Hur kopplar jag kompetenser och övertygelser till mina beslut?",
+        "Kan du föreslå en kort plan för att stärka ett område?"
+      ]
+    },
+    "qpcc-profilo": {
+      "en": [
+        "How should I read these scores?",
+        "What is my strongest area in this profile?",
+        "Which area is worth starting from?"
+      ],
+      "es": [
+        "¿Cómo se leen estas puntuaciones?",
+        "¿Cuál es mi punto fuerte en este perfil?",
+        "¿Por qué área conviene empezar?"
+      ],
+      "fr": [
+        "Comment lire ces scores ?",
+        "Quel est mon point fort dans ce profil ?",
+        "Par quel domaine vaut-il mieux commencer ?"
+      ],
+      "de": [
+        "Wie sind diese Werte zu lesen?",
+        "Was ist meine Stärke in diesem Profil?",
+        "Mit welchem Bereich sollte ich anfangen?"
+      ],
+      "sv": [
+        "Hur ska jag läsa de här poängen?",
+        "Vad är min styrka i den här profilen?",
+        "Vilket område är det bäst att börja med?"
+      ]
+    }
+  },
+  "new_questions": {
+    "qpcc-comunicazione": {
+      "it": [
+        "Come si manifesta Ansia di parlare in pubblico nella mia esperienza professionale o di ricerca di lavoro?",
+        "Quale episodio concreto mi aiuta a riflettere su Ansia di parlare in pubblico?",
+        "Quali collegamenti noto tra questi fattori e le altre dimensioni?"
+      ],
+      "en": [
+        "How does Public speaking anxiety show up in my professional or job-seeking experience?",
+        "What concrete example helps me reflect on Public speaking anxiety?",
+        "What connections do I notice with the other dimensions?"
+      ],
+      "es": [
+        "¿Cómo aparece Ansiedad al hablar en público en mi experiencia profesional o de búsqueda de empleo?",
+        "¿Qué ejemplo concreto me ayuda a reflexionar sobre Ansiedad al hablar en público?",
+        "¿Qué relaciones observo con las otras dimensiones?"
+      ],
+      "fr": [
+        "Comment Anxiété de parler en public se manifeste dans mon expérience professionnelle ou de recherche d’emploi ?",
+        "Quel exemple concret m’aide à réfléchir à Anxiété de parler en public ?",
+        "Quels liens est-ce que je remarque avec les autres dimensions ?"
+      ],
+      "de": [
+        "Wie zeigt sich Angst vor öffentlichem Sprechen in meiner beruflichen Erfahrung oder bei der Arbeitssuche?",
+        "Welches konkrete Beispiel hilft mir, über Angst vor öffentlichem Sprechen nachzudenken?",
+        "Welche Verbindungen sehe ich zu den anderen Dimensionen?"
+      ],
+      "sv": [
+        "Hur visar sig Oro inför att tala inför publik i min yrkeserfarenhet eller när jag söker arbete?",
+        "Vilket konkret exempel hjälper mig att reflektera över Oro inför att tala inför publik?",
+        "Vilka kopplingar ser jag till de andra dimensionerna?"
+      ]
+    },
+    "qpcc-controllo": {
+      "it": [
+        "Come si manifesta Senso di insicurezza nella mia esperienza professionale o di ricerca di lavoro?",
+        "Quale episodio concreto mi aiuta a riflettere su Senso di inadeguatezza?",
+        "Quali collegamenti noto tra questi fattori e le altre dimensioni?"
+      ],
+      "en": [
+        "How does Sense of insecurity show up in my professional or job-seeking experience?",
+        "What concrete example helps me reflect on Sense of inadequacy?",
+        "What connections do I notice with the other dimensions?"
+      ],
+      "es": [
+        "¿Cómo aparece Sensación de inseguridad en mi experiencia profesional o de búsqueda de empleo?",
+        "¿Qué ejemplo concreto me ayuda a reflexionar sobre Sensación de inadecuación?",
+        "¿Qué relaciones observo con las otras dimensiones?"
+      ],
+      "fr": [
+        "Comment Sentiment d’insécurité se manifeste dans mon expérience professionnelle ou de recherche d’emploi ?",
+        "Quel exemple concret m’aide à réfléchir à Sentiment d’inadéquation ?",
+        "Quels liens est-ce que je remarque avec les autres dimensions ?"
+      ],
+      "de": [
+        "Wie zeigt sich Gefühl der Unsicherheit in meiner beruflichen Erfahrung oder bei der Arbeitssuche?",
+        "Welches konkrete Beispiel hilft mir, über Gefühl der Unzulänglichkeit nachzudenken?",
+        "Welche Verbindungen sehe ich zu den anderen Dimensionen?"
+      ],
+      "sv": [
+        "Hur visar sig Känsla av osäkerhet i min yrkeserfarenhet eller när jag söker arbete?",
+        "Vilket konkret exempel hjälper mig att reflektera över Känsla av otillräcklighet?",
+        "Vilka kopplingar ser jag till de andra dimensionerna?"
+      ]
+    },
+    "qpcc-volizione": {
+      "it": [
+        "Come si manifesta Autoregolazione e perseveranza sul lavoro nella mia esperienza professionale o di ricerca di lavoro?",
+        "Quale episodio concreto mi aiuta a riflettere su Far fronte a sfide personali (coping)?",
+        "Quali collegamenti noto tra questi fattori e le altre dimensioni?"
+      ],
+      "en": [
+        "How does Self-regulation and perseverance at work show up in my professional or job-seeking experience?",
+        "What concrete example helps me reflect on Coping with personal challenges?",
+        "What connections do I notice with the other dimensions?"
+      ],
+      "es": [
+        "¿Cómo aparece Autorregulación y perseverancia en el trabajo en mi experiencia profesional o de búsqueda de empleo?",
+        "¿Qué ejemplo concreto me ayuda a reflexionar sobre Afrontar desafíos personales (coping)?",
+        "¿Qué relaciones observo con las otras dimensiones?"
+      ],
+      "fr": [
+        "Comment Autorégulation et persévérance au travail se manifeste dans mon expérience professionnelle ou de recherche d’emploi ?",
+        "Quel exemple concret m’aide à réfléchir à Faire face aux défis personnels (coping) ?",
+        "Quels liens est-ce que je remarque avec les autres dimensions ?"
+      ],
+      "de": [
+        "Wie zeigt sich Selbstregulation und Ausdauer bei der Arbeit in meiner beruflichen Erfahrung oder bei der Arbeitssuche?",
+        "Welches konkrete Beispiel hilft mir, über Persönliche Herausforderungen bewältigen (Coping) nachzudenken?",
+        "Welche Verbindungen sehe ich zu den anderen Dimensionen?"
+      ],
+      "sv": [
+        "Hur visar sig Självreglering och uthållighet i arbetet i min yrkeserfarenhet eller när jag söker arbete?",
+        "Vilket konkret exempel hjälper mig att reflektera över Hantera personliga utmaningar (coping)?",
+        "Vilka kopplingar ser jag till de andra dimensionerna?"
+      ]
+    },
+    "qpcc-elaborazione": {
+      "it": [
+        "Come si manifesta Competenze elaborative nella mia esperienza professionale o di ricerca di lavoro?",
+        "Quale episodio concreto mi aiuta a riflettere su Competenza comunicativa?",
+        "Quali collegamenti noto tra questi fattori e le altre dimensioni?"
+      ],
+      "en": [
+        "How does Elaborative competences show up in my professional or job-seeking experience?",
+        "What concrete example helps me reflect on Communicative competence?",
+        "What connections do I notice with the other dimensions?"
+      ],
+      "es": [
+        "¿Cómo aparece Competencias elaborativas en mi experiencia profesional o de búsqueda de empleo?",
+        "¿Qué ejemplo concreto me ayuda a reflexionar sobre Competencia comunicativa?",
+        "¿Qué relaciones observo con las otras dimensiones?"
+      ],
+      "fr": [
+        "Comment Compétences élaboratives se manifeste dans mon expérience professionnelle ou de recherche d’emploi ?",
+        "Quel exemple concret m’aide à réfléchir à Compétence communicative ?",
+        "Quels liens est-ce que je remarque avec les autres dimensions ?"
+      ],
+      "de": [
+        "Wie zeigt sich Elaborative Kompetenzen in meiner beruflichen Erfahrung oder bei der Arbeitssuche?",
+        "Welches konkrete Beispiel hilft mir, über Kommunikative Kompetenz nachzudenken?",
+        "Welche Verbindungen sehe ich zu den anderen Dimensionen?"
+      ],
+      "sv": [
+        "Hur visar sig Bearbetningskompetenser i min yrkeserfarenhet eller när jag söker arbete?",
+        "Vilket konkret exempel hjälper mig att reflektera över Kommunikativ kompetens?",
+        "Vilka kopplingar ser jag till de andra dimensionerna?"
+      ]
+    },
+    "qpcc-convinzioni": {
+      "it": [
+        "Come si manifesta Percezione di competenza nella mia esperienza professionale o di ricerca di lavoro?",
+        "Quale episodio concreto mi aiuta a riflettere su Attribuzioni causali (locus of control interno)?",
+        "Quali collegamenti noto tra questi fattori e le altre dimensioni?"
+      ],
+      "en": [
+        "How does Perceived competence show up in my professional or job-seeking experience?",
+        "What concrete example helps me reflect on Causal attributions (internal locus of control)?",
+        "What connections do I notice with the other dimensions?"
+      ],
+      "es": [
+        "¿Cómo aparece Percepción de competencia en mi experiencia profesional o de búsqueda de empleo?",
+        "¿Qué ejemplo concreto me ayuda a reflexionar sobre Atribuciones causales (locus de control interno)?",
+        "¿Qué relaciones observo con las otras dimensiones?"
+      ],
+      "fr": [
+        "Comment Perception de compétence se manifeste dans mon expérience professionnelle ou de recherche d’emploi ?",
+        "Quel exemple concret m’aide à réfléchir à Attributions causales (locus de contrôle interne) ?",
+        "Quels liens est-ce que je remarque avec les autres dimensions ?"
+      ],
+      "de": [
+        "Wie zeigt sich Wahrgenommene Kompetenz in meiner beruflichen Erfahrung oder bei der Arbeitssuche?",
+        "Welches konkrete Beispiel hilft mir, über Kausale Attributionen (interne Kontrollüberzeugung) nachzudenken?",
+        "Welche Verbindungen sehe ich zu den anderen Dimensionen?"
+      ],
+      "sv": [
+        "Hur visar sig Upplevd kompetens i min yrkeserfarenhet eller när jag söker arbete?",
+        "Vilket konkret exempel hjälper mig att reflektera över Orsaksförklaringar (inre kontrollokus)?",
+        "Vilka kopplingar ser jag till de andra dimensionerna?"
+      ]
+    }
+  }
+}

@@ -3,6 +3,7 @@
 Retrieval can be replaced by a captured context for reproducible, offline audits.
 Writing session memory and recording model output remain endpoint responsibilities.
 """
+import re
 from dataclasses import dataclass
 from types import SimpleNamespace
 from .prompt_variants import level_config, variant_levels, variant_text
@@ -187,6 +188,12 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     step_label = step.label if step else ""
     questionnaire_type = step.questionnaire_type if step else (request.questionnaire_type or "")
     request = request.copy(update={"questionnaire_type": questionnaire_type})
+    if questionnaire_type.upper() == 'QPCC':
+        from .qpcc import score_context
+        if re.search(r'\bK[1-5]\b', request.scores_context):
+            from fastapi import HTTPException
+            raise HTTPException(409, 'qpcc_legacy_profile')
+        request = request.copy(update={'scores_context': score_context(request.scores_context, request.language)})
     effective_response_length = request.response_length
     max_tokens = _response_length_max_tokens(effective_response_length, request.max_tokens)
     # Reserve the private map separately from the student's visible-length choice.
@@ -476,6 +483,9 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         synthesis=bool(is_synthesis),
     )
     system_prompt_final += "\n\n" + contract
+    if questionnaire_type.upper() == 'QPCC':
+        from .qpcc import directive
+        system_prompt_final += '\n\n' + directive(request.phase)
     components["turn_contract"] = contract
     if essential and include_history and not history and not is_synthesis:
         evidence, coverage = journey_context(

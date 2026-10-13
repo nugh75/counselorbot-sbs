@@ -1,5 +1,7 @@
 'use client';
 
+import { factorTranslationKey } from '@/lib/questionnaires';
+
 import { cn } from '@/lib/utils';
 import { QuestionnaireConfig } from '@/lib/questionnaires';
 import {
@@ -81,6 +83,7 @@ function getInterpretation(
         return read(t('profile.growth'), 'growth', 'low');
     }
 
+    if (questionnaireId === 'QPCC' && code === 'M2') return read(t('factor.QPCC.M2.name'), 'adequate', 'mid');
     const isInverted = invertedSet.has(code);
 
     let zone: 'low' | 'mid' | 'high';
@@ -155,6 +158,7 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
     const { t } = useI18n();
     const markerPosition = ((score - 1) / 8) * 100;
     const isZTPI = questionnaireId === 'ZTPI' && code.startsWith('T');
+    const isNeutral = questionnaireId === 'QPCC' && code === 'M2';
     const ztpiCode = code as ZTPIFactorCode;
     const ztpiSegments = isZTPI ? makeZTPISegments(ztpiCode) : [];
 
@@ -171,7 +175,9 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
             </div>
 
             <div className="relative col-span-2 row-start-2 min-w-0 sm:flex-1">
-                {isZTPI ? (
+                {isNeutral ? (
+                    <div className="flex h-6 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-2xs text-slate-600">1–9</div>
+                ) : isZTPI ? (
                     <div className="flex h-6 rounded-md overflow-hidden border border-slate-200">
                         {ztpiSegments.map((segment, idx) => (
                             <ZoneBand
@@ -193,21 +199,21 @@ function ScoreBar({ questionnaireId, code, score, factorName, isInverted, interp
                 )}
 
                 <div
-                    className="absolute top-0 h-6 w-1 rounded-full shadow-md transition-all"
+                    className={cn("absolute top-0 h-6 w-1 rounded-full shadow-md transition-all", isNeutral && "bg-slate-500")}
                     style={{
                         left: `calc(${markerPosition}% - 2px)`,
-                        backgroundColor: interpretation.color,
-                        boxShadow: `0 0 8px ${interpretation.color}`
+                        backgroundColor: isNeutral ? undefined : interpretation.color,
+                        boxShadow: isNeutral ? undefined : `0 0 8px ${interpretation.color}`
                     }}
                 />
             </div>
 
             <div className="col-start-2 row-start-1 w-24 flex-shrink-0 text-right">
                 <span
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold"
+                    className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold", isNeutral && "bg-slate-50 text-slate-700")}
                     style={{
-                        backgroundColor: interpretation.tone.chip,
-                        color: interpretation.tone.text,
+                        backgroundColor: isNeutral ? undefined : interpretation.tone.chip,
+                        color: isNeutral ? undefined : interpretation.tone.text,
                     }}
                 >
                     <OutcomeGlyph tone={interpretation.tone} />
@@ -247,8 +253,9 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
     const strengths: Ranked[] = [];
     const growth: Ranked[] = [];
     for (const [code, score] of Object.entries(scores)) {
+        if (questionnaire.id === "QPCC" && code === "M2") continue;
         const factor = questionnaire.factors.find((f) => f.code === code);
-        const name = tf(`factor.${code}.name`, factor?.name || code);
+        const name = tf(factorTranslationKey(questionnaire.id, code, 'name'), factor?.name || code);
         const inverted = invertedSet.has(code);
         let isStrength: boolean;
         let isGrowth: boolean;
@@ -307,7 +314,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                             </div>
                             {topStrengths.length > 0
                                 ? renderChips(topStrengths, 'strength')
-                                : <p className="text-xs text-slate-500">{t('profile.summary.balanced')}</p>}
+                                : <p className="text-xs text-slate-500">{t(questionnaire.id === 'QPCC' ? 'profile.QPCC.noStrengths' : 'profile.summary.balanced')}</p>}
                         </div>
                         <div className="space-y-1.5">
                             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
@@ -325,7 +332,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
             <div className={cn("grid gap-x-8 gap-y-2", gridCols)}>
                 {columns.map(({ prefix, entries }) => {
                     const sectionColor = PREFIX_SECTION_COLOR[prefix] || 'text-slate-700';
-                    const sectionLabel = PREFIX_SECTION_COLOR[prefix] ? t(`profile.section.${prefix}`) : `${prefix}`;
+                    const sectionLabel = questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : PREFIX_SECTION_COLOR[prefix] ? t(`profile.section.${prefix}`) : `${prefix}`;
                     return (
                         <div key={prefix} className="space-y-0.5">
                             <h4 className={cn("text-sm font-semibold mb-1 pb-1 border-b border-slate-200", sectionColor)}>
@@ -341,7 +348,7 @@ export function ProfileVisualization({ scores, questionnaire }: ProfileVisualiza
                                         questionnaireId={questionnaire.id}
                                         code={code}
                                         score={score}
-                                        factorName={tf(`factor.${code}.name`, factor?.name || code)}
+                                        factorName={tf(factorTranslationKey(questionnaire.id, code, 'name'), factor?.name || code)}
                                         isInverted={isInverted}
                                         interpretation={interpretation}
                                     />
