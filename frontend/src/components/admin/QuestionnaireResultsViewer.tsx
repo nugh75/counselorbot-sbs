@@ -1,5 +1,7 @@
 'use client';
 
+import { factorTranslationKey } from '@/lib/questionnaires';
+
 import { useState, useEffect, useMemo, Fragment } from 'react';
 import { RefreshCw, FileText, Filter, Download } from 'lucide-react';
 import { format } from 'date-fns';
@@ -47,14 +49,14 @@ function getFactorName(code: string, questionnaireType: string, tf: TranslateFal
     const q = QUESTIONNAIRES[questionnaireType as QuestionnaireType];
     if (!q) return code;
     const factor = q.factors.find((f: FactorDefinition) => f.code === code);
-    return factor ? `${code} (${tf(`factor.${code}.name`, factor.name)})` : code;
+    return factor ? `${code} (${tf(factorTranslationKey(questionnaireType, code, 'name'), factor.name)})` : code;
 }
 
 function getFactorDescription(code: string, questionnaireType: string, tf: TranslateFallback): string {
     const q = QUESTIONNAIRES[questionnaireType as QuestionnaireType];
     if (!q) return '';
     const factor = q.factors.find((f: FactorDefinition) => f.code === code);
-    return factor ? tf(`factor.${code}.desc`, factor.description) : '';
+    return factor ? tf(factorTranslationKey(questionnaireType, code, 'desc'), factor.description) : '';
 }
 
 function isInverted(code: string, questionnaireType: string): boolean {
@@ -65,8 +67,8 @@ function isInverted(code: string, questionnaireType: string): boolean {
 
 function ScoreBadge({ value, code, questionnaireType, invertedTitle }: { value: number; code: string; questionnaireType: string; invertedTitle: string }) {
     const inverted = isInverted(code, questionnaireType);
-    const isStrength = inverted ? value <= 3 : value >= 7;
-    const isGrowth = inverted ? value >= 7 : value <= 3;
+    const isStrength = !(questionnaireType === 'QPCC' && code === 'M2') && (inverted ? value <= 3 : value >= 7);
+    const isGrowth = !(questionnaireType === 'QPCC' && code === 'M2') && (inverted ? value >= 7 : value <= 3);
 
     let color: string;
     if (isStrength) color = 'bg-green-100 text-green-700';
@@ -208,7 +210,7 @@ export function QuestionnaireResultsViewer() {
 
                 factors.push({
                     code,
-                    name: factorDef ? tf(`factor.${code}.name`, factorDef.name) : code,
+                    name: factorDef ? tf(factorTranslationKey(type, code, 'name'), factorDef.name) : code,
                     mean: Math.round(mean * 100) / 100,
                     stdDev: Math.round(stdDev * 100) / 100,
                     min,
@@ -478,8 +480,8 @@ export function QuestionnaireResultsViewer() {
                                                                     const inverted = isInverted(code, result.questionnaire_type);
                                                                     const name = getFactorName(code, result.questionnaire_type, tf);
                                                                     const desc = getFactorDescription(code, result.questionnaire_type, tf);
-                                                                    const isStrength = inverted ? value <= 3 : value >= 7;
-                                                                    const isGrowth = inverted ? value >= 7 : value <= 3;
+                                                                    const isStrength = !(result.questionnaire_type === 'QPCC' && code === 'M2') && (inverted ? value <= 3 : value >= 7);
+                                                                    const isGrowth = !(result.questionnaire_type === 'QPCC' && code === 'M2') && (inverted ? value >= 7 : value <= 3);
                                                                     let badgeClass: string;
                                                                     if (isStrength) badgeClass = 'border-green-300 bg-green-50';
                                                                     else if (isGrowth) badgeClass = 'border-red-300 bg-red-50';

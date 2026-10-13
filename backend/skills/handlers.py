@@ -128,6 +128,12 @@ def _profile_entries(db, rows, language, questionnaire_type, per_instrument, lim
         if not qtype or not isinstance(row.scores, dict) or not row.scores:
             continue
         key = qtype.upper()
+        if key == 'QPCC':
+            from ..qpcc import validate_scores
+            try:
+                validate_scores(row.scores)
+            except ValueError:
+                continue
         rank = per_type.get(key, 0)
         if rank >= max(1, per_instrument):
             continue
@@ -154,6 +160,8 @@ def _profile_entries(db, rows, language, questionnaire_type, per_instrument, lim
         label = getattr(factor, f"label_{lang}", None) or factor.label_it or factor.label_en or factor.code
         labels[(factor.instrument_code, factor.code)] = label
 
+    from ..qpcc import names as qpcc_names
+    labels.update({('QPCC', code): label for code, label in qpcc_names(lang).items()})
     return tuple({
         "questionnaire_type": row.questionnaire_type,
         # "current" = compilazione piu' recente di quello strumento, "previous"

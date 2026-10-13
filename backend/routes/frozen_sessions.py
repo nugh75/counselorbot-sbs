@@ -29,6 +29,12 @@ def _summary(row: models.FrozenSession) -> schemas.FrozenSessionSummary:
 
 def _detail(row: models.FrozenSession) -> schemas.FrozenSessionDetail:
     data = row.data or {}
+    if row.questionnaire_type == 'QPCC':
+        from ..qpcc import validate_scores
+        try:
+            validate_scores(data.get('scores'))
+        except ValueError:
+            raise HTTPException(409, 'qpcc_legacy_profile')
     return schemas.FrozenSessionDetail(
         **_summary(row).model_dump(),
         messages=data.get("messages") or [],

@@ -108,6 +108,8 @@ class CertifiedStrategyMemory:
         matched_on: dict[int, list[str]] = {}
         eligible = []
         for row in rows:
+            if questionnaire == 'QPCC' and any(str(code).upper().startswith('K') for code in (row.factor_codes or [])):
+                continue
             if row.slug in excluded:
                 continue
             if allowed is not None and row.slug not in allowed:
@@ -228,6 +230,15 @@ class CertifiedStrategyMemory:
         return {token.upper() for token in re.findall(r"\b[A-Za-z]{1,3}\d{1,2}[A-Za-z]?\b", text or "")}
 
     def _score_bands(self, questionnaire: str, scores_context: str) -> dict[str, dict[str, str]]:
+        if questionnaire == 'QPCC':
+            from .qpcc import CODES, INVERTED
+            out = {}
+            for code, raw in re.findall(r'\b([AVCM][1-3])\b[^\n\r0-9]{0,120}?([1-9])\s*/\s*9\b', scores_context or ''):
+                if code not in CODES:
+                    continue
+                band = 'normal' if code == 'M2' else self._band_for_qsa_score('C1', 10 - int(raw) if code in INVERTED else int(raw))
+                out[code] = {'score': raw, 'band': band, 'label_it': 'Orientamento all’io' if code == 'M2' else _BAND_LABELS['it'][band]}
+            return out
         if questionnaire not in ("QSA", "QSAR") or not scores_context:
             return {}
         out: dict[str, dict[str, str]] = {}
@@ -266,7 +277,7 @@ class CertifiedStrategyMemory:
         language: str,
     ) -> dict[str, str]:
         codes = [str(code).upper() for code in (row.factor_codes or []) if str(code).strip()]
-        if questionnaire not in ("QSA", "QSAR") or not codes or not score_bands:
+        if questionnaire not in ("QSA", "QSAR", "QPCC") or not codes or not score_bands:
             return {"role": "primary", "note": ""}
 
         code_bands = {code: score_bands[code] for code in codes if code in score_bands}

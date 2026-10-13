@@ -1,5 +1,7 @@
 'use client';
 
+import { factorTranslationKey, isReusableProfile } from '@/lib/questionnaires';
+
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -353,13 +355,13 @@ export default function ProfilePage() {
         const type = selectedSession.questionnaire_type;
         const scores = selectedSession.scores;
         const config = QUESTIONNAIRES[type as QuestionnaireType];
-        if (!config) return [];
+        if (!config || !isReusableProfile(type, scores)) return [];
 
         return config.factors.map(f => {
             const val = scores[f.code] ?? 0;
             const inverted = config.invertedFactors.includes(f.code);
-            const isStrength = inverted ? val <= 3 : val >= 7;
-            const isGrowth = inverted ? val >= 7 : val <= 3;
+            const isStrength = !(type === 'QPCC' && f.code === 'M2') && (inverted ? val <= 3 : val >= 7);
+            const isGrowth = !(type === 'QPCC' && f.code === 'M2') && (inverted ? val >= 7 : val <= 3);
             
             let color = '#ca8a04'; // yellow-600
             if (isStrength) color = '#16a34a'; // green-600
@@ -367,7 +369,7 @@ export default function ProfilePage() {
 
             return {
                 code: f.code,
-                name: tf(`factor.${f.code}.name`, f.name),
+                name: tf(factorTranslationKey(selectedSession.questionnaire_type, f.code, 'name'), f.name),
                 value: val,
                 color,
             };
@@ -684,6 +686,9 @@ export default function ProfilePage() {
                                     </div>
                                 )}
 
+                                {selectedSession.questionnaire_type === 'QPCC' && !isReusableProfile('QPCC', selectedSession.scores) && (
+                                    <p className="text-sm text-slate-600">{t('q.QPCC.legacyProfile')}</p>
+                                )}
                                 {/* Detailed Grid of Factors */}
                                 {chartData.length > 0 && selectedSession.scores ? (
                                     <div className="space-y-3">
@@ -695,11 +700,11 @@ export default function ProfilePage() {
                                                 const factorDef = config?.factors.find(f => f.code === code);
                                                 const inverted = config?.invertedFactors.includes(code);
 
-                                                const isStrength = inverted ? val <= 3 : val >= 7;
-                                                const isGrowth = inverted ? val >= 7 : val <= 3;
+                                                const isStrength = !(selectedSession.questionnaire_type === 'QPCC' && code === 'M2') && (inverted ? val <= 3 : val >= 7);
+                                                const isGrowth = !(selectedSession.questionnaire_type === 'QPCC' && code === 'M2') && (inverted ? val >= 7 : val <= 3);
 
                                                 let badgeColor = 'bg-yellow-50 text-yellow-700 border-yellow-200';
-                                                let evaluation = t('profile.normal');
+                                                let evaluation = selectedSession.questionnaire_type === 'QPCC' && code === 'M2' ? t('factor.QPCC.M2.name') : t('profile.normal');
                                                 if (isStrength) {
                                                     badgeColor = 'bg-green-50 text-green-700 border-green-200';
                                                     evaluation = t('profile.strength');
@@ -712,13 +717,13 @@ export default function ProfilePage() {
                                                     <div key={code} className="border border-slate-100 rounded-xl p-3 bg-white space-y-1.5 flex flex-col justify-between">
                                                         <div>
                                                             <div className="flex justify-between items-start gap-2">
-                                                                <span className="font-bold text-xs text-slate-800">{code} - {tf(`factor.${code}.name`, factorDef?.name || code)}</span>
+                                                                <span className="font-bold text-xs text-slate-800">{code} - {tf(factorTranslationKey(selectedSession.questionnaire_type, code, 'name'), factorDef?.name || code)}</span>
                                                                 <span className={`px-2 py-0.5 border text-2xs font-semibold rounded-full shrink-0 ${badgeColor}`}>
                                                                     {evaluation}
                                                                 </span>
                                                             </div>
                                                             {factorDef?.description && (
-                                                                <p className="text-[11px] text-slate-500 leading-normal mt-1">{tf(`factor.${code}.desc`, factorDef.description)}</p>
+                                                                <p className="text-[11px] text-slate-500 leading-normal mt-1">{tf(factorTranslationKey(selectedSession.questionnaire_type, code, 'desc'), factorDef.description)}</p>
                                                             )}
                                                         </div>
                                                         <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-50">

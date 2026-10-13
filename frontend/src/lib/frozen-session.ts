@@ -120,7 +120,7 @@ export async function listFrozenSessions(): Promise<FrozenSessionSummary[]> {
 export async function getFrozenSession(sessionId: string): Promise<FrozenSessionDetail | null> {
     const res = await apiFetch(`/api/session/frozen/${encodeURIComponent(sessionId)}`);
     if (res.status === 404) return null;
-    if (res.status === 403) {
+    if (res.status === 403 || res.status === 409) {
         let detail = 'forbidden';
         let tool: string | undefined;
         try {
@@ -132,7 +132,7 @@ export async function getFrozenSession(sessionId: string): Promise<FrozenSession
         } catch {
             // ignore JSON parse error
         }
-        throw new FrozenSessionAccessError(detail, tool, 403);
+        throw new FrozenSessionAccessError(detail, tool, res.status);
     }
     if (!res.ok) throw new Error(`Frozen session unavailable (${res.status})`);
     return (await res.json()) as FrozenSessionDetail;

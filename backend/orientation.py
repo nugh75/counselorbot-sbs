@@ -340,7 +340,7 @@ _TOOL_INFO = {
         "QSAr": "Il QSAr è la versione breve del QSA.\nEsplora gli stessi aspetti — concentrazione, organizzazione, autoregolazione, motivazione — con un percorso più rapido e un profilo più essenziale.\nÈ il punto di partenza giusto se vuoi un primo quadro di come studi senza impegnare troppo tempo; puoi passare al QSA in seguito per approfondire.",
         "ZTPI": "Lo ZTPI è un questionario che riflette sul tuo rapporto con passato, presente e futuro.\nTi aiuta a capire come la prospettiva temporale influenza le tue scelte, la tua motivazione e il modo in cui affronti studio e progetti.\nDalle risposte emerge un profilo delle tue prospettive temporali, utile per dare direzione alle decisioni e alle abitudini.",
         "QPCS": "Il QPCS esplora le competenze strategiche che percepisci di avere.\nOsserva come affronti compiti, studio, impegni e sfide quotidiane, e quali strategie senti di padroneggiare.\nIl profilo che ne esce ti mostra le risorse su cui puoi contare e dove vale la pena rafforzarti.",
-        "QPCC": "Il QPCC esplora le convinzioni che hai su di te e sulle tue competenze.\nAiuta a distinguere ciò che sai fare davvero da ciò che credi di sapere, mettendo in luce le convinzioni che ti sostengono e quelle che ti frenano.\nÈ utile quando senti che l’immagine che hai di te non corrisponde a come agisci.",
+        "QPCC": "QPCC Pellerey-Orio: autovalutazione di 63 item su quattro dimensioni connesse e dieci fattori A1–A3, V1–V2, C1–C2, M1–M3. Per giovani e adulti in cerca di occupazione o in professioni relazionali. La chat legge dieci stanine 1–9 già calcolate, senza risposte giuste o sbagliate, in circa 20–30 minuti. Non certifica competenze né formula diagnosi.",
         "QAP": "Il QAP approfondisce l’adattabilità e le risorse per le scelte professionali.\nEsplora come ti orienti nelle decisioni, quanto sei pronto al cambiamento e come costruisci il tuo futuro lavorativo.\nIl profilo che emerge ti aiuta a capire su quali risorse puntare quando devi scegliere strada, lavoro o percorso di studi.",
         "SAVICKAS": "SAVICKAS è un’intervista narrativa sulla tua storia e sul tuo progetto professionale.\nInvece di un questionario, è una conversazione: racconti esperienze, passaggi e scelte della tua vita, e insieme costruiamo il filo che li collega.\nServe a dare senso alla tua storia e a trasformarla in una direzione concreta per il futuro.",
         "EVENTO_STUDIO": 'L’Evento significativo di studio è un percorso guidato che rilegge un solo episodio della tua esperienza di studio: una lezione, un esame, un lavoro di gruppo.\nPrima racconti che cosa è successo, poi guardi che cosa ha funzionato e che cosa no, lo rileggi con calma e scegli che cosa provare la prossima volta.\nNon ci sono punteggi: alla fine puoi salvare la sintesi come tappa nella tua Linea del tempo.',
@@ -353,7 +353,7 @@ _TOOL_INFO = {
         "QSAr": "QSAr is the short version of QSA: it explores your study strategies and concentration more quickly. If you want a first picture without committing much time, it is the right starting point.",
         "ZTPI": "ZTPI is a questionnaire about your relationship with past, present and future. It helps you see how your time perspective shapes choices and motivation.",
         "QPCS": "QPCS explores the strategic competences you perceive in yourself: how you approach tasks, study and challenges, and which resources you can count on.",
-        "QPCC": "QPCC explores your beliefs about yourself and your competences. It helps separate what you can do from what you believe, and to work on beliefs that hold you back.",
+        "QPCC": "QPCC Pellerey-Orio: self-assessment with 63 items, four connected dimensions and ten factors A1–A3, V1–V2, C1–C2, M1–M3. For young people and adults seeking employment or in relational professions. The chat reads ten already calculated stanines 1–9, with no right or wrong answers, in about 20–30 minutes. It does not certify competence or diagnose.",
         "QAP": "QAP explores career adaptability and the resources for professional choices: how you orient yourself, how ready you are for change and how you build your working future.",
         "SAVICKAS": "SAVICKAS is a narrative interview about your story and your career project. You tell your experiences and together we connect them to the direction you want to take.",
         "EVENTO_STUDIO": 'The significant study event is a guided path that looks back at one single episode from your studies: a lesson, an exam, a group project. You first tell what happened, then look at what worked and what did not, take a second look and choose what to try next time.',
@@ -366,7 +366,7 @@ _TOOL_INFO = {
         "QSAr": "QSAr es la versión breve de QSA: explora tus estrategias de estudio y tu concentración de forma más rápida. Si quieres un primer panorama sin invertir mucho tiempo, es el punto de partida adecuado.",
         "ZTPI": "ZTPI es un cuestionario sobre tu relación con el pasado, el presente y el futuro. Te ayuda a ver cómo la perspectiva temporal influye en tus decisiones y en tu motivación.",
         "QPCS": "QPCS explora las competencias estratégicas que percibes en ti: cómo afrontas tareas, estudio y desafíos, y con qué recursos puedes contar.",
-        "QPCC": "QPCC explora tus creencias sobre ti y sobre tus competencias. Ayuda a distinguir lo que sabes hacer de lo que crees, y a trabajar sobre las creencias que te frenan.",
+        "QPCC": "QPCC Pellerey-Orio: autoevaluación de 63 ítems, cuatro dimensiones conectadas y diez factores A1–A3, V1–V2, C1–C2, M1–M3. Para jóvenes y adultos que buscan empleo o ejercen profesiones relacionales. La conversación lee diez estaninas 1–9 ya calculadas, sin respuestas correctas o incorrectas, en unos 20–30 minutos. No certifica competencias ni diagnostica.",
         "QAP": "QAP profundiza en la adaptabilidad y en los recursos para las decisiones profesionales: cómo te orientas, cuánto estás preparado para el cambio y cómo construyes tu futuro laboral.",
         "SAVICKAS": "SAVICKAS es una entrevista narrativa sobre tu historia y tu proyecto profesional. Cuentas tus experiencias y juntos construimos el hilo que las conecta con la dirección que quieres tomar.",
         "EVENTO_STUDIO": 'El evento significativo de estudio es un recorrido guiado que vuelve sobre un único episodio de tus estudios: una clase, un examen, un trabajo en grupo. Primero cuentas lo que pasó, luego miras lo que funcionó y lo que no, lo vuelves a mirar y eliges qué probar la próxima vez.',
@@ -379,7 +379,7 @@ _TOOL_INFO = {
         "QSAr": "Le QSAr est la version courte du QSA : il explore vos stratégies d’étude et votre concentration plus rapidement. Si vous voulez un premier aperçu sans y consacrer trop de temps, c’est le bon point de départ.",
         "ZTPI": "Le ZTPI est un questionnaire sur votre rapport au passé, au présent et au futur. Il aide à voir comment votre perspective temporelle influence vos choix et votre motivation.",
         "QPCS": "Le QPCS explore les compétences stratégiques que vous percevez chez vous : votre façon d’aborder tâches, étude et défis, et les ressources sur lesquelles compter.",
-        "QPCC": "Le QPCC explore vos convictions sur vous-même et sur vos compétences. Il aide à distinguer ce que vous savez faire de ce que vous croyez, et à travailler sur les convictions qui vous freinent.",
+        "QPCC": "QPCC Pellerey-Orio : autoévaluation de 63 items, quatre dimensions liées et dix facteurs A1–A3, V1–V2, C1–C2, M1–M3. Pour les jeunes et adultes en recherche d’emploi ou dans les professions relationnelles. Le dialogue lit dix stanines 1–9 déjà calculées, sans bonnes ou mauvaises réponses, en environ 20–30 minutes. Il ne certifie pas de compétences et ne pose pas de diagnostic.",
         "QAP": "Le QAP approfondit l’adaptabilité et les ressources utiles aux choix professionnels : votre façon de vous orienter, votre disposition au changement et la construction de votre avenir professionnel.",
         "SAVICKAS": "SAVICKAS est un entretien narratif sur votre histoire et votre projet professionnel. Vous racontez vos expériences et nous relions ensemble le fil qui mène à la direction que vous voulez prendre.",
         "EVENTO_STUDIO": 'L’événement d’étude significatif est un parcours guidé qui revient sur un seul épisode de vos études : un cours, un examen, un travail de groupe. Vous racontez d’abord ce qui s’est passé, puis vous regardez ce qui a fonctionné et ce qui n’a pas fonctionné, vous le relisez et vous choisissez ce que vous essaierez la prochaine fois.',
@@ -392,7 +392,7 @@ _TOOL_INFO = {
         "QSAr": "Der QSAr ist die Kurzversion des QSA: Er untersucht Lernstrategien und Konzentration schneller. Wenn du einen ersten Überblick ohne großen Zeitaufwand willst, ist er der richtige Einstieg.",
         "ZTPI": "Der ZTPI ist ein Fragebogen zu deinem Verhältnis zu Vergangenheit, Gegenwart und Zukunft. Er zeigt, wie deine Zeitperspektive Entscheidungen und Motivation prägt.",
         "QPCS": "Der QPCS untersucht die strategischen Kompetenzen, die du bei dir wahrnimmst: wie du Aufgaben, Lernen und Herausforderungen angehst und auf welche Ressourcen du zählen kannst.",
-        "QPCC": "Der QPCC untersucht deine Überzeugungen über dich und deine Kompetenzen. Er hilft zu trennen, was du kannst und was du nur zu können glaubst, und an bremsenden Überzeugungen zu arbeiten.",
+        "QPCC": "QPCC Pellerey-Orio: Selbsteinschätzung mit 63 Items, vier verbundenen Dimensionen und zehn Faktoren A1–A3, V1–V2, C1–C2, M1–M3. Für junge Menschen und Erwachsene auf Arbeitssuche oder in beziehungsorientierten Berufen. Das Gespräch liest zehn bereits berechnete Staninewerte 1–9 ohne richtige oder falsche Antworten in etwa 20–30 Minuten. Es zertifiziert keine Kompetenzen und stellt keine Diagnosen.",
         "QAP": "Der QAP vertieft Anpassungsfähigkeit und Ressourcen für berufliche Entscheidungen: wie du dich orientierst, wie offen du für Veränderung bist und wie du deine berufliche Zukunft baust.",
         "SAVICKAS": "SAVICKAS ist ein narratives Interview über deine Geschichte und dein berufliches Projekt. Du erzählst deine Erfahrungen und wir verbinden sie gemeinsam mit der Richtung, die du einschlagen willst.",
         "EVENTO_STUDIO": 'Das bedeutsame Lernereignis ist ein geführter Weg, der auf eine einzige Episode aus deinem Studium oder deiner Schulzeit zurückblickt: eine Unterrichtsstunde, eine Prüfung, eine Gruppenarbeit. Zuerst erzählst du, was passiert ist, dann schaust du, was funktioniert hat und was nicht, betrachtest es neu und wählst, was du beim nächsten Mal ausprobierst.',
@@ -405,7 +405,7 @@ _TOOL_INFO = {
         "QSAr": "QSAr är kortversionen av QSA: det utforskar dina studiestrategier och din koncentration snabbare. Vill du ha en första överblick utan att lägga mycket tid är det rätt startpunkt.",
         "ZTPI": "ZTPI är ett frågeformulär om din relation till dåtid, nutid och framtid. Det visar hur ditt tidsperspektiv formar val och motivation.",
         "QPCS": "QPCS utforskar de strategiska kompetenser du upplever hos dig själv: hur du möter uppgifter, studier och utmaningar, och vilka resurser du kan räkna med.",
-        "QPCC": "QPCC utforskar dina föreställningar om dig själv och dina kompetenser. Det hjälper dig skilja vad du kan från vad du tror, och att arbeta med föreställningar som håller dig tillbaka.",
+        "QPCC": "QPCC Pellerey-Orio: självskattning med 63 frågor, fyra sammanhängande dimensioner och tio faktorer A1–A3, V1–V2, C1–C2, M1–M2–M3. För unga och vuxna som söker arbete eller arbetar i relationella yrken. Samtalet läser tio redan beräknade staniner 1–9 utan rätt eller fel svar på cirka 20–30 minuter. Det certifierar inte kompetenser och ställer inga diagnoser.",
         "QAP": "QAP fördjupar anpassningsförmåga och resurser inför yrkesval: hur du orienterar dig, hur redo du är för förändring och hur du bygger din yrkesmässiga framtid.",
         "SAVICKAS": "SAVICKAS är en narrativ intervju om din historia och ditt yrkesprojekt. Du berättar dina erfarenheter och tillsammans knyter vi dem till den riktning du vill ta.",
         "EVENTO_STUDIO": 'Den betydelsefulla studiehändelsen är en guidad väg som blickar tillbaka på en enda episod från dina studier: en lektion, en tenta, ett grupparbete. Först berättar du vad som hände, sedan ser du på vad som fungerade och vad som inte gjorde det, tittar på det igen och väljer vad du vill prova nästa gång.',
@@ -646,7 +646,7 @@ def _questionnaire_sources(language: str) -> str:
             f"{rows}\n"
         )
     return (
-        "\nWHERE THE QUESTIONNAIRE IS TAKEN. In this language the six questionnaires are filled in "
+        "\nWHERE THE QUESTIONNAIRE IS TAKEN. QPCC in-app item administration is suspended in every language: import the ten already calculated stanines for its guided chat. The other available questionnaires are filled in "
         "inside CounselorBot: tell the student they can complete it here, on the tool's own screen, "
         "before bringing the results into the chat, and repeat that these versions are not validated "
         "yet. Write no web address at all.\n"
@@ -687,6 +687,9 @@ def _brief_candidates(message: str, history: list[dict[str, str]] | None, lang: 
 
 def _factor_line(db: Session, tool_id: str) -> str:
     """I fattori che lo strumento riporta: e' la parte concreta del "a che serve"."""
+    if tool_id == 'QPCC':
+        from .qpcc import directive
+        return directive()
     rows = (
         db.query(models.Factor)
         .filter(models.Factor.instrument_code == tool_id)

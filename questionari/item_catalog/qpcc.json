@@ -28,11 +28,142 @@
     }
   },
   "report_scale": {
-    "type": "to_define",
-    "min": null,
-    "max": null
+    "type": "stanine",
+    "min": 1,
+    "max": 9
   },
-  "factors": [],
+  "factors": [
+    {
+      "code": "A1",
+      "dimension": "A",
+      "orientation": "difficulty",
+      "labels": {
+        "it": "Ansia di parlare in pubblico",
+        "en": "Public speaking anxiety",
+        "es": "Ansiedad al hablar en público",
+        "fr": "Anxiété de parler en public",
+        "de": "Angst vor öffentlichem Sprechen",
+        "sv": "Oro inför att tala inför publik"
+      }
+    },
+    {
+      "code": "A2",
+      "dimension": "A",
+      "orientation": "difficulty",
+      "labels": {
+        "it": "Senso di insicurezza",
+        "en": "Sense of insecurity",
+        "es": "Sensación de inseguridad",
+        "fr": "Sentiment d’insécurité",
+        "de": "Gefühl der Unsicherheit",
+        "sv": "Känsla av osäkerhet"
+      }
+    },
+    {
+      "code": "A3",
+      "dimension": "A",
+      "orientation": "difficulty",
+      "labels": {
+        "it": "Senso di inadeguatezza",
+        "en": "Sense of inadequacy",
+        "es": "Sensación de inadecuación",
+        "fr": "Sentiment d’inadéquation",
+        "de": "Gefühl der Unzulänglichkeit",
+        "sv": "Känsla av otillräcklighet"
+      }
+    },
+    {
+      "code": "V1",
+      "dimension": "V",
+      "orientation": "resource",
+      "labels": {
+        "it": "Autoregolazione e perseveranza sul lavoro",
+        "en": "Self-regulation and perseverance at work",
+        "es": "Autorregulación y perseverancia en el trabajo",
+        "fr": "Autorégulation et persévérance au travail",
+        "de": "Selbstregulation und Ausdauer bei der Arbeit",
+        "sv": "Självreglering och uthållighet i arbetet"
+      }
+    },
+    {
+      "code": "V2",
+      "dimension": "V",
+      "orientation": "resource",
+      "labels": {
+        "it": "Far fronte a sfide personali (coping)",
+        "en": "Coping with personal challenges",
+        "es": "Afrontar desafíos personales (coping)",
+        "fr": "Faire face aux défis personnels (coping)",
+        "de": "Persönliche Herausforderungen bewältigen (Coping)",
+        "sv": "Hantera personliga utmaningar (coping)"
+      }
+    },
+    {
+      "code": "C1",
+      "dimension": "C",
+      "orientation": "resource",
+      "labels": {
+        "it": "Competenze elaborative",
+        "en": "Elaborative competences",
+        "es": "Competencias elaborativas",
+        "fr": "Compétences élaboratives",
+        "de": "Elaborative Kompetenzen",
+        "sv": "Bearbetningskompetenser"
+      }
+    },
+    {
+      "code": "C2",
+      "dimension": "C",
+      "orientation": "resource",
+      "labels": {
+        "it": "Competenza comunicativa",
+        "en": "Communicative competence",
+        "es": "Competencia comunicativa",
+        "fr": "Compétence communicative",
+        "de": "Kommunikative Kompetenz",
+        "sv": "Kommunikativ kompetens"
+      }
+    },
+    {
+      "code": "M1",
+      "dimension": "M",
+      "orientation": "resource",
+      "labels": {
+        "it": "Percezione di competenza",
+        "en": "Perceived competence",
+        "es": "Percepción de competencia",
+        "fr": "Perception de compétence",
+        "de": "Wahrgenommene Kompetenz",
+        "sv": "Upplevd kompetens"
+      }
+    },
+    {
+      "code": "M2",
+      "dimension": "M",
+      "orientation": "neutral",
+      "labels": {
+        "it": "Orientamento all’io",
+        "en": "Ego orientation",
+        "es": "Orientación al yo",
+        "fr": "Orientation vers le moi",
+        "de": "Ich-Orientierung",
+        "sv": "Jagorientering"
+      }
+    },
+    {
+      "code": "M3",
+      "dimension": "M",
+      "orientation": "resource",
+      "labels": {
+        "it": "Attribuzioni causali (locus of control interno)",
+        "en": "Causal attributions (internal locus of control)",
+        "es": "Atribuciones causales (locus de control interno)",
+        "fr": "Attributions causales (locus de contrôle interne)",
+        "de": "Kausale Attributionen (interne Kontrollüberzeugung)",
+        "sv": "Orsaksförklaringar (inre kontrollokus)"
+      }
+    }
+  ],
   "items": [
     {
       "id": "QPCC-001",

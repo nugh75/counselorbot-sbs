@@ -1,0 +1,57 @@
+"""Canonical QPCC contract; no item key or normative conversion is inferred."""
+import json
+import re
+from pathlib import Path
+
+FACTORS = json.loads(Path(__file__).with_name('qpcc_schema.json').read_text())
+CODES = tuple(f['code'] for f in FACTORS)
+INVERTED = frozenset(('A1', 'A2', 'A3'))
+STEP_CODES = {
+    'qpcc-profilo': CODES, 'qpcc-factors': CODES,
+    'qpcc-comunicazione': ('A1',), 'qpcc-controllo': ('A2', 'A3'),
+    'qpcc-volizione': ('V1', 'V2'), 'qpcc-elaborazione': ('C1', 'C2'),
+    'qpcc-convinzioni': ('M1', 'M2', 'M3'),
+}
+SCORING_UNAVAILABLE = 'QPCC canonical item key and validated stanine norms are unavailable; import the ten already calculated stanines.'
+
+
+def names(language='it'):
+    return {f['code']: f['labels'].get(language or 'it', f['labels']['it']) for f in FACTORS}
+
+
+def validate_scores(scores):
+    if not isinstance(scores, dict) or set(scores) != set(CODES):
+        raise ValueError('QPCC requires exactly A1 A2 A3 V1 V2 C1 C2 M1 M2 M3; legacy K profiles cannot be reused')
+    if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not 1 <= v <= 9 or v != int(v) for v in scores.values()):
+        raise ValueError('QPCC scores must be integer stanines from 1 to 9')
+    return scores
+
+
+def score_context(text, language='it'):
+    """Rebuild labels server-side. Never translate K scores to canonical factors."""
+    if not text:
+        return ''
+    matches = re.findall(r'\b([AVCMK]\d)\b[^\n\r0-9]{0,120}?([1-9])\s*/\s*9\b', text)
+    if re.search(r'\bK[1-5]\b', text):
+        return '[QPCC LEGACY PROFILE] K1-K5 are obsolete synthetic areas, not canonical QPCC scales. Do not interpret, convert or reuse them. Ask for a new ten-factor profile.'
+    labels = names(language)
+    return '\n'.join(f'- {code} ({labels[code]}): {value}/9' for code, value in matches if code in labels)
+
+
+def directive(phase=None):
+    factors = '; '.join(f"{f['code']} {f['labels']['en']}" for f in FACTORS)
+    scope = STEP_CODES.get(phase, CODES)
+    return (
+        '[CANONICAL QPCC CONTRACT]\nQPCC (Pellerey-Orio): 63 self-assessment items, four interconnected dimensions '
+        'A affective-emotional, V volitional, C cognitive, M motivational; ten scales: '+factors+'. '
+        'The questionnaire is for young people and adults seeking employment or working in relational professional contexts. '
+        'Expected duration 20-30 minutes; no right or wrong answers. The guided chat reflects on an already calculated profile, '
+        'it does not administer the 63 items or assign scores. Scores are stanines 1-9. '
+        'A1/A2/A3 measure difficulties: high scores mean more reported difficulty, never a strength; low scores mean less difficulty. '
+        'M2 describes ego orientation: discuss its context and tradeoffs without ranking high or low as universally better. '
+        'Other scales describe perceived resources, not grades or diagnoses. K1-K5 are not QPCC factors and must never be inferred or reused. '
+        'This canonical schema takes priority over any older five-area description in stored instructions or conversation history. '
+        'Current step factors: '+', '.join(scope)+'. Distinguish each factor by its code and meaning even when discussing one dimension. '
+        'Ask ONE main open question and at most two concrete follow-ups, use work/job-seeking examples relevant to the person. '
+        'The agreement requires explicit acceptance. In the summary distinguish proposals from commitments and retain only agreed timeframes.'
+    )

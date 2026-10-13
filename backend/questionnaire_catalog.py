@@ -5,6 +5,8 @@ NON modificare a mano: dopo il primo seed le modifiche avvengono via editor admi
 Vedi docs/validazione/progetto-validazione-qsa-qsar-sv-en.md.
 """
 
+from .qpcc import FACTORS as QPCC_FACTORS
+
 INSTRUMENT_CATALOG_DEFAULTS = {
     "QSA": {
         "name_en": "Learning Strategies Questionnaire",
@@ -311,44 +313,16 @@ INSTRUMENT_CATALOG_DEFAULTS = {
     },
     "QPCC": {
         "name_en": "Perceived Competences and Beliefs Questionnaire",
-        "name_sv": "Frågeformulär om upplevda kompetenser och föreställningar",
+        "name_sv": "Frågeformulär om upplevda kompetenser och övertygelser",
         "response_scale_min": 1,
         "response_scale_max": 4,
         "report_scale_type": "stanine",
-        "factors": [
-            {"code": "K1", "dimension": "public_speaking", "orientation": "resource", "label_en": "Public speaking", "label_sv": "Tala inför andra"},
-            {"code": "K2", "dimension": "anxiety_responsibility", "orientation": "resource", "label_en": "Managing anxiety & responsibility", "label_sv": "Hantera ångest & ansvar"},
-            {"code": "K3", "dimension": "volition_selfregulation", "orientation": "resource", "label_en": "Volition & self-regulation", "label_sv": "Vilja & självreglering"},
-            {"code": "K4", "dimension": "elaboration_strategies", "orientation": "resource", "label_en": "Elaboration strategies", "label_sv": "Bearbetningsstrategier"},
-            {"code": "K5", "dimension": "beliefs_about_self", "orientation": "resource", "label_en": "Beliefs about oneself", "label_sv": "Föreställningar om sig själv"},
-        ],
-        "items": [
-            {"item_number": 1, "factor_code": "K1", "reverse_scoring": False, "text_en": "I feel confident when I have to speak in front of a group.", "text_sv": "Jag känner mig trygg när jag ska tala inför en grupp."},
-            {"item_number": 2, "factor_code": "K1", "reverse_scoring": False, "text_en": "I can present my ideas clearly to an audience.", "text_sv": "Jag kan presentera mina idéer tydligt inför en publik."},
-            {"item_number": 3, "factor_code": "K1", "reverse_scoring": False, "text_en": "I enjoy participating in class presentations.", "text_sv": "Jag tycker om att delta i klasspresentationer."},
-            {"item_number": 4, "factor_code": "K1", "reverse_scoring": False, "text_en": "I am able to persuade others with my arguments.", "text_sv": "Jag kan övertyga andra med mina argument."},
-            {"item_number": 5, "factor_code": "K1", "reverse_scoring": False, "text_en": "I feel comfortable expressing my opinions in a meeting.", "text_sv": "Jag känner mig bekväm med att uttrycka mina åsikter i ett möte."},
-            {"item_number": 6, "factor_code": "K2", "reverse_scoring": False, "text_en": "I can manage pressure when making important decisions.", "text_sv": "Jag hanterar press när jag fattar viktiga beslut."},
-            {"item_number": 7, "factor_code": "K2", "reverse_scoring": False, "text_en": "I take responsibility for the consequences of my choices.", "text_sv": "Jag tar ansvar för konsekvenserna av mina val."},
-            {"item_number": 8, "factor_code": "K2", "reverse_scoring": False, "text_en": "I stay calm when faced with unexpected challenges.", "text_sv": "Jag förblir lugn inför oväntade utmaningar."},
-            {"item_number": 9, "factor_code": "K2", "reverse_scoring": False, "text_en": "I am able to balance multiple responsibilities at the same time.", "text_sv": "Jag kan balansera flera ansvarsområden samtidigt."},
-            {"item_number": 10, "factor_code": "K2", "reverse_scoring": False, "text_en": "I handle stressful situations without losing focus.", "text_sv": "Jag hanterar stressiga situationer utan att tappa fokus."},
-            {"item_number": 11, "factor_code": "K3", "reverse_scoring": False, "text_en": "I set clear goals for my studies and work.", "text_sv": "Jag sätter tydliga mål för mina studier och mitt arbete."},
-            {"item_number": 12, "factor_code": "K3", "reverse_scoring": False, "text_en": "I organise my tasks in order of priority.", "text_sv": "Jag organiserar mina uppgifter i prioritetsordning."},
-            {"item_number": 13, "factor_code": "K3", "reverse_scoring": False, "text_en": "I monitor my own progress towards my goals.", "text_sv": "Jag följer mina egna framsteg mot mina mål."},
-            {"item_number": 14, "factor_code": "K3", "reverse_scoring": False, "text_en": "I adjust my plans when circumstances change.", "text_sv": "Jag justerar mina planer när omständigheterna förändras."},
-            {"item_number": 15, "factor_code": "K3", "reverse_scoring": False, "text_en": "I reflect on my actions to learn from experience.", "text_sv": "Jag reflekterar över mina handlingar för att lära av erfarenhet."},
-            {"item_number": 16, "factor_code": "K4", "reverse_scoring": False, "text_en": "I connect new information with what I already know.", "text_sv": "Jag kopplar ny information till det jag redan vet."},
-            {"item_number": 17, "factor_code": "K4", "reverse_scoring": False, "text_en": "I organise ideas in my mind to understand them better.", "text_sv": "Jag organiserar idéer i mitt huvud för att förstå dem bättre."},
-            {"item_number": 18, "factor_code": "K4", "reverse_scoring": False, "text_en": "I apply what I learn in one subject to other areas.", "text_sv": "Jag tillämpar det jag lärt mig i ett ämne på andra områden."},
-            {"item_number": 19, "factor_code": "K4", "reverse_scoring": False, "text_en": "I use examples and analogies to deepen my understanding.", "text_sv": "Jag använder exempel och analogier för att fördjupa min förståelse."},
-            {"item_number": 20, "factor_code": "K4", "reverse_scoring": False, "text_en": "I think critically about the information I receive.", "text_sv": "Jag tänker kritiskt på den information jag får."},
-            {"item_number": 21, "factor_code": "K5", "reverse_scoring": False, "text_en": "I believe in my ability to learn new things.", "text_sv": "Jag tror på min förmåga att lära mig nya saker."},
-            {"item_number": 22, "factor_code": "K5", "reverse_scoring": False, "text_en": "I trust that my efforts will pay off in the long run.", "text_sv": "Jag litar på att mina ansträngningar lönar sig i längden."},
-            {"item_number": 23, "factor_code": "K5", "reverse_scoring": False, "text_en": "I attribute my successes to my own skills and hard work.", "text_sv": "Jag tillskriver mina framgångar mina egna färdigheter och hårda arbete."},
-            {"item_number": 24, "factor_code": "K5", "reverse_scoring": False, "text_en": "I am optimistic about my ability to overcome difficulties.", "text_sv": "Jag är optimistisk om min förmåga att övervinna svårigheter."},
-            {"item_number": 25, "factor_code": "K5", "reverse_scoring": False, "text_en": "I believe that I can improve through practice and dedication.", "text_sv": "Jag tror att jag kan förbättras genom övning och hängivenhet."},
-        ],
+        "factors": [dict(code=f["code"], dimension=f["dimension"], orientation=f["orientation"],
+                         label_en=f["labels"]["en"], label_sv=f["labels"]["sv"],
+                         label_it=f["labels"]["it"], label_es=f["labels"]["es"], label_i18n=f["labels"])
+                    for f in QPCC_FACTORS],
+        # No authorised item key or validated norms: import existing factor stanines.
+        "items": [],
     },
     "QAP": {
         "name_en": "Career Adapt-Abilities Scale",

@@ -161,8 +161,8 @@ def main():
             "en": ["1 = Strongly disagree", "2 = Partly agree", "3 = Fairly agree", "4 = Fully agree"],
             "sv": ["1 = Instämmer inte alls", "2 = Instämmer delvis", "3 = Instämmer ganska mycket", "4 = Instämmer helt"],
         }),
-        {"type": "to_define", "min": None, "max": None},
-        [],
+        {"type": "stanine", "min": 1, "max": 9},
+        json.loads((HERE.parents[1] / "backend/qpcc_schema.json").read_text()),
         build_items("QPCC", 63),
     )
 

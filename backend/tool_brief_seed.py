@@ -83,20 +83,7 @@ TOOL_BRIEFS: dict[str, str] = {
         "with anyone else. Perceived competence and demonstrated competence come apart, often in "
         "both directions, and this instrument only sees the first."
     ),
-    "QPCC": (
-        "WHAT IT LOOKS AT — Five areas where competences and beliefs about oneself meet: speaking "
-        "in public, managing anxiety and responsibility, volition and self-regulation, elaboration "
-        "strategies, and the beliefs the student holds about themselves.\n"
-        "WHAT YOU GET — A profile on the five areas and a conversation that treats a low score as a "
-        "belief to examine rather than a verdict. Beliefs about oneself are the one factor here "
-        "that changes what the others can do.\n"
-        "WHEN IT IS THE RIGHT MOMENT — When the student says some version of 'I am just not the "
-        "kind of person who can do this'; when anxiety and responsibility are the thing in the way; "
-        "when the question is less about technique than about self-image.\n"
-        "WHAT IT DOES NOT DO — It is not a clinical instrument and does not assess anxiety as a "
-        "condition. It stays with what the student says about themselves in the context of study, "
-        "and it does not replace support of another kind when that is what is needed."
-    ),
+    "QPCC": '[CANONICAL QPCC CONTRACT]\nQPCC (Pellerey-Orio): 63 self-assessment items, four interconnected dimensions A affective-emotional, V volitional, C cognitive, M motivational; ten scales: A1 Public speaking anxiety; A2 Sense of insecurity; A3 Sense of inadequacy; V1 Self-regulation and perseverance at work; V2 Coping with personal challenges; C1 Elaborative competences; C2 Communicative competence; M1 Perceived competence; M2 Ego orientation; M3 Causal attributions (internal locus of control). The questionnaire is for young people and adults seeking employment or working in relational professional contexts. Expected duration 20-30 minutes; no right or wrong answers. The guided chat reflects on an already calculated profile, it does not administer the 63 items or assign scores. Scores are stanines 1-9. A1/A2/A3 measure difficulties: high scores mean more reported difficulty, never a strength; low scores mean less difficulty. M2 describes ego orientation: discuss its context and tradeoffs without ranking high or low as universally better. Other scales describe perceived resources, not grades or diagnoses. K1-K5 are not QPCC factors and must never be inferred or reused. This canonical schema takes priority over any older five-area description in stored instructions or conversation history. Current step factors: A1, A2, A3, V1, V2, C1, C2, M1, M2, M3. Distinguish each factor by its code and meaning even when discussing one dimension. Ask ONE main open question and at most two concrete follow-ups, use work/job-seeking examples relevant to the person. The agreement requires explicit acceptance. In the summary distinguish proposals from commitments and retain only agreed timeframes.\nWHAT YOU GET — A reflective reading of ten already calculated stanines in a guided interview, with no right or wrong answers. Canonical item scoring is unavailable; no replacement questionnaire or diagnostic judgement.',
     "QAP": (
         "WHAT IT LOOKS AT — Four resources for facing change and transition: concern for one's own "
         "future, a sense of control over it, curiosity about the possibilities out there, and "

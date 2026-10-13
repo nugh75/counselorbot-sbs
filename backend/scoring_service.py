@@ -160,6 +160,8 @@ class LocaleUnavailable(ScoringError):
 
 def _assert_locale_available(db: Session, instrument_code: str, locale: str) -> str:
     """Rifiuta una lingua sconosciuta o non ancora somministrabile. Ritorna lo stato."""
+    if instrument_code.upper() == 'QPCC':
+        raise LocaleUnavailable(instrument_code, locale, 'draft', [])
     if locale not in APP_LOCALES:
         raise ScoringError(f"Locale non supportato: {locale}")
     statuses = status_map(db, "instrument", instrument_code)
@@ -221,6 +223,9 @@ def compute_profile(
 
     answers: {item_number: valore}. Ritorna dict con metadati + lista risultati per fattore.
     """
+    if instrument_code.upper() == 'QPCC':
+        from .qpcc import SCORING_UNAVAILABLE
+        raise ScoringError(SCORING_UNAVAILABLE)
     instrument = db.query(models.Instrument).filter(
         models.Instrument.code == instrument_code
     ).first()

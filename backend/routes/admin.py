@@ -1783,7 +1783,11 @@ async def admin_update_instrument(code: str, update: schemas.InstrumentUpdate, c
 
 @router.get("/admin/instruments/{code}/factors", response_model=List[schemas.FactorResponse])
 async def admin_list_factors(code: str, current_user: models.User = Depends(auth.get_current_catalog_editor), db: Session = Depends(get_db)):
-    return db.query(models.Factor).filter(models.Factor.instrument_code == code).order_by(models.Factor.sort_order).all()
+    query = db.query(models.Factor).filter(models.Factor.instrument_code == code)
+    if code == 'QPCC':
+        from ..qpcc import CODES
+        query = query.filter(models.Factor.code.in_(CODES))
+    return query.order_by(models.Factor.sort_order).all()
 
 
 @router.post("/admin/instruments/{code}/factors", response_model=schemas.FactorResponse)

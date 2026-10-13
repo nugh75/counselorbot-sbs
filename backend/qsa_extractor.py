@@ -34,7 +34,7 @@ QUESTIONNAIRE_FACTORS = {
     "QSA": QSA_FACTORS,
     "QSAr": ("C1r", "C2r", "C3r", "C4r", "A1r", "A2r", "A3r", "A4r"),
     "QPCS": ("S1", "S2", "S3", "S4", "S5"),
-    "QPCC": ("K1", "K2", "K3", "K4", "K5"),
+    "QPCC": ("A1", "A2", "A3", "V1", "V2", "C1", "C2", "M1", "M2", "M3"),
     "QAP": ("AD1", "AD2", "AD3", "AD4"),
 }
 SUPPORTED_QUESTIONNAIRES = tuple(QUESTIONNAIRE_FACTORS)

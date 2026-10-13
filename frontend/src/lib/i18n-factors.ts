@@ -72,6 +72,33 @@ const it: Dict = {
     'dimension.volition_selfregulation': 'Volizione e autoregolazione',
     'dimension.elaboration_strategies': 'Strategie di elaborazione',
     'dimension.beliefs_about_self': 'Convinzioni su di sé',
+    "dimension.QPCC.A": "Affettivo-emozionale",
+    "dimension.QPCC.V": "Volitiva",
+    "dimension.QPCC.C": "Cognitiva",
+    "dimension.QPCC.M": "Motivazionale",
+
+    // Canonical QPCC names; checked against qpcc-schema.json.
+    'factor.QPCC.A1.name': "Ansia di parlare in pubblico",
+    'factor.QPCC.A1.desc': "Ansia di parlare in pubblico",
+    'factor.QPCC.A2.name': "Senso di insicurezza",
+    'factor.QPCC.A2.desc': "Senso di insicurezza",
+    'factor.QPCC.A3.name': "Senso di inadeguatezza",
+    'factor.QPCC.A3.desc': "Senso di inadeguatezza",
+    'factor.QPCC.V1.name': "Autoregolazione e perseveranza sul lavoro",
+    'factor.QPCC.V1.desc': "Autoregolazione e perseveranza sul lavoro",
+    'factor.QPCC.V2.name': "Far fronte a sfide personali (coping)",
+    'factor.QPCC.V2.desc': "Far fronte a sfide personali (coping)",
+    'factor.QPCC.C1.name': "Competenze elaborative",
+    'factor.QPCC.C1.desc': "Competenze elaborative",
+    'factor.QPCC.C2.name': "Competenza comunicativa",
+    'factor.QPCC.C2.desc': "Competenza comunicativa",
+    'factor.QPCC.M1.name': "Percezione di competenza",
+    'factor.QPCC.M1.desc': "Percezione di competenza",
+    'factor.QPCC.M2.name': "Orientamento all’io",
+    'factor.QPCC.M2.desc': "Orientamento all’io",
+    'factor.QPCC.M3.name': "Attribuzioni causali (locus of control interno)",
+    'factor.QPCC.M3.desc': "Attribuzioni causali (locus of control interno)",
+
 };
 
 const en: Dict = {
@@ -141,6 +168,33 @@ const en: Dict = {
     'dimension.volition_selfregulation': 'Volition & self-regulation',
     'dimension.elaboration_strategies': 'Elaboration strategies',
     'dimension.beliefs_about_self': 'Beliefs about oneself',
+    "dimension.QPCC.A": "Affective-emotional",
+    "dimension.QPCC.V": "Volitional",
+    "dimension.QPCC.C": "Cognitive",
+    "dimension.QPCC.M": "Motivational",
+
+    // Canonical QPCC names; checked against qpcc-schema.json.
+    'factor.QPCC.A1.name': "Public speaking anxiety",
+    'factor.QPCC.A1.desc': "Public speaking anxiety",
+    'factor.QPCC.A2.name': "Sense of insecurity",
+    'factor.QPCC.A2.desc': "Sense of insecurity",
+    'factor.QPCC.A3.name': "Sense of inadequacy",
+    'factor.QPCC.A3.desc': "Sense of inadequacy",
+    'factor.QPCC.V1.name': "Self-regulation and perseverance at work",
+    'factor.QPCC.V1.desc': "Self-regulation and perseverance at work",
+    'factor.QPCC.V2.name': "Coping with personal challenges",
+    'factor.QPCC.V2.desc': "Coping with personal challenges",
+    'factor.QPCC.C1.name': "Elaborative competences",
+    'factor.QPCC.C1.desc': "Elaborative competences",
+    'factor.QPCC.C2.name': "Communicative competence",
+    'factor.QPCC.C2.desc': "Communicative competence",
+    'factor.QPCC.M1.name': "Perceived competence",
+    'factor.QPCC.M1.desc': "Perceived competence",
+    'factor.QPCC.M2.name': "Ego orientation",
+    'factor.QPCC.M2.desc': "Ego orientation",
+    'factor.QPCC.M3.name': "Causal attributions (internal locus of control)",
+    'factor.QPCC.M3.desc': "Causal attributions (internal locus of control)",
+
 };
 
 const es: Dict = {
@@ -210,6 +264,33 @@ const es: Dict = {
     'dimension.volition_selfregulation': 'Volicion y autorregulacion',
     'dimension.elaboration_strategies': 'Estrategias de elaboracion',
     'dimension.beliefs_about_self': 'Creencias sobre uno mismo',
+    "dimension.QPCC.A": "Afectivo-emocional",
+    "dimension.QPCC.V": "Volitiva",
+    "dimension.QPCC.C": "Cognitiva",
+    "dimension.QPCC.M": "Motivacional",
+
+    // Canonical QPCC names; checked against qpcc-schema.json.
+    'factor.QPCC.A1.name': "Ansiedad al hablar en público",
+    'factor.QPCC.A1.desc': "Ansiedad al hablar en público",
+    'factor.QPCC.A2.name': "Sensación de inseguridad",
+    'factor.QPCC.A2.desc': "Sensación de inseguridad",
+    'factor.QPCC.A3.name': "Sensación de inadecuación",
+    'factor.QPCC.A3.desc': "Sensación de inadecuación",
+    'factor.QPCC.V1.name': "Autorregulación y perseverancia en el trabajo",
+    'factor.QPCC.V1.desc': "Autorregulación y perseverancia en el trabajo",
+    'factor.QPCC.V2.name': "Afrontar desafíos personales (coping)",
+    'factor.QPCC.V2.desc': "Afrontar desafíos personales (coping)",
+    'factor.QPCC.C1.name': "Competencias elaborativas",
+    'factor.QPCC.C1.desc': "Competencias elaborativas",
+    'factor.QPCC.C2.name': "Competencia comunicativa",
+    'factor.QPCC.C2.desc': "Competencia comunicativa",
+    'factor.QPCC.M1.name': "Percepción de competencia",
+    'factor.QPCC.M1.desc': "Percepción de competencia",
+    'factor.QPCC.M2.name': "Orientación al yo",
+    'factor.QPCC.M2.desc': "Orientación al yo",
+    'factor.QPCC.M3.name': "Atribuciones causales (locus de control interno)",
+    'factor.QPCC.M3.desc': "Atribuciones causales (locus de control interno)",
+
 };
 
 const fr: Dict = {
@@ -279,6 +360,33 @@ const fr: Dict = {
     'dimension.volition_selfregulation': 'Volition et autorégulation',
     'dimension.elaboration_strategies': 'Stratégies d’élaboration',
     'dimension.beliefs_about_self': 'Croyances sur soi',
+    "dimension.QPCC.A": "Affective-émotionnelle",
+    "dimension.QPCC.V": "Volitive",
+    "dimension.QPCC.C": "Cognitive",
+    "dimension.QPCC.M": "Motivationnelle",
+
+    // Canonical QPCC names; checked against qpcc-schema.json.
+    'factor.QPCC.A1.name': "Anxiété de parler en public",
+    'factor.QPCC.A1.desc': "Anxiété de parler en public",
+    'factor.QPCC.A2.name': "Sentiment d’insécurité",
+    'factor.QPCC.A2.desc': "Sentiment d’insécurité",
+    'factor.QPCC.A3.name': "Sentiment d’inadéquation",
+    'factor.QPCC.A3.desc': "Sentiment d’inadéquation",
+    'factor.QPCC.V1.name': "Autorégulation et persévérance au travail",
+    'factor.QPCC.V1.desc': "Autorégulation et persévérance au travail",
+    'factor.QPCC.V2.name': "Faire face aux défis personnels (coping)",
+    'factor.QPCC.V2.desc': "Faire face aux défis personnels (coping)",
+    'factor.QPCC.C1.name': "Compétences élaboratives",
+    'factor.QPCC.C1.desc': "Compétences élaboratives",
+    'factor.QPCC.C2.name': "Compétence communicative",
+    'factor.QPCC.C2.desc': "Compétence communicative",
+    'factor.QPCC.M1.name': "Perception de compétence",
+    'factor.QPCC.M1.desc': "Perception de compétence",
+    'factor.QPCC.M2.name': "Orientation vers le moi",
+    'factor.QPCC.M2.desc': "Orientation vers le moi",
+    'factor.QPCC.M3.name': "Attributions causales (locus de contrôle interne)",
+    'factor.QPCC.M3.desc': "Attributions causales (locus de contrôle interne)",
+
 };
 
 const de: Dict = {
@@ -348,6 +456,33 @@ const de: Dict = {
     'dimension.volition_selfregulation': 'Volition und Selbstregulation',
     'dimension.elaboration_strategies': 'Elaborationsstrategien',
     'dimension.beliefs_about_self': 'Überzeugungen über sich selbst',
+    "dimension.QPCC.A": "Affektiv-emotional",
+    "dimension.QPCC.V": "Volitional",
+    "dimension.QPCC.C": "Kognitiv",
+    "dimension.QPCC.M": "Motivational",
+
+    // Canonical QPCC names; checked against qpcc-schema.json.
+    'factor.QPCC.A1.name': "Angst vor öffentlichem Sprechen",
+    'factor.QPCC.A1.desc': "Angst vor öffentlichem Sprechen",
+    'factor.QPCC.A2.name': "Gefühl der Unsicherheit",
+    'factor.QPCC.A2.desc': "Gefühl der Unsicherheit",
+    'factor.QPCC.A3.name': "Gefühl der Unzulänglichkeit",
+    'factor.QPCC.A3.desc': "Gefühl der Unzulänglichkeit",
+    'factor.QPCC.V1.name': "Selbstregulation und Ausdauer bei der Arbeit",
+    'factor.QPCC.V1.desc': "Selbstregulation und Ausdauer bei der Arbeit",
+    'factor.QPCC.V2.name': "Persönliche Herausforderungen bewältigen (Coping)",
+    'factor.QPCC.V2.desc': "Persönliche Herausforderungen bewältigen (Coping)",
+    'factor.QPCC.C1.name': "Elaborative Kompetenzen",
+    'factor.QPCC.C1.desc': "Elaborative Kompetenzen",
+    'factor.QPCC.C2.name': "Kommunikative Kompetenz",
+    'factor.QPCC.C2.desc': "Kommunikative Kompetenz",
+    'factor.QPCC.M1.name': "Wahrgenommene Kompetenz",
+    'factor.QPCC.M1.desc': "Wahrgenommene Kompetenz",
+    'factor.QPCC.M2.name': "Ich-Orientierung",
+    'factor.QPCC.M2.desc': "Ich-Orientierung",
+    'factor.QPCC.M3.name': "Kausale Attributionen (interne Kontrollüberzeugung)",
+    'factor.QPCC.M3.desc': "Kausale Attributionen (interne Kontrollüberzeugung)",
+
 };
 
 const sv: Dict = {
@@ -417,6 +552,33 @@ const sv: Dict = {
     'dimension.volition_selfregulation': 'Vilja & självreglering',
     'dimension.elaboration_strategies': 'Bearbetningsstrategier',
     'dimension.beliefs_about_self': 'Föreställningar om sig själv',
+    "dimension.QPCC.A": "Affektiv-emotionell",
+    "dimension.QPCC.V": "Viljemässig",
+    "dimension.QPCC.C": "Kognitiv",
+    "dimension.QPCC.M": "Motivationsmässig",
+
+    // Canonical QPCC names; checked against qpcc-schema.json.
+    'factor.QPCC.A1.name': "Oro inför att tala inför publik",
+    'factor.QPCC.A1.desc': "Oro inför att tala inför publik",
+    'factor.QPCC.A2.name': "Känsla av osäkerhet",
+    'factor.QPCC.A2.desc': "Känsla av osäkerhet",
+    'factor.QPCC.A3.name': "Känsla av otillräcklighet",
+    'factor.QPCC.A3.desc': "Känsla av otillräcklighet",
+    'factor.QPCC.V1.name': "Självreglering och uthållighet i arbetet",
+    'factor.QPCC.V1.desc': "Självreglering och uthållighet i arbetet",
+    'factor.QPCC.V2.name': "Hantera personliga utmaningar (coping)",
+    'factor.QPCC.V2.desc': "Hantera personliga utmaningar (coping)",
+    'factor.QPCC.C1.name': "Bearbetningskompetenser",
+    'factor.QPCC.C1.desc': "Bearbetningskompetenser",
+    'factor.QPCC.C2.name': "Kommunikativ kompetens",
+    'factor.QPCC.C2.desc': "Kommunikativ kompetens",
+    'factor.QPCC.M1.name': "Upplevd kompetens",
+    'factor.QPCC.M1.desc': "Upplevd kompetens",
+    'factor.QPCC.M2.name': "Jagorientering",
+    'factor.QPCC.M2.desc': "Jagorientering",
+    'factor.QPCC.M3.name': "Orsaksförklaringar (inre kontrollokus)",
+    'factor.QPCC.M3.desc': "Orsaksförklaringar (inre kontrollokus)",
+
 };
 
 export const FACTOR_DICTS: Record<Lang, Dict> = { it, en, es, fr, de, sv };

@@ -1,5 +1,7 @@
 'use client';
 
+import { isReusableProfile } from '@/lib/questionnaires';
+
 import { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
 import { QuestionnaireConfig, supportsProfileUpload } from '@/lib/questionnaires';
@@ -81,7 +83,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
             return () => { active = false; };
         }
         practiceNotebookApi.results(practiceNotebook.id, questionnaire.id)
-            .then((rows) => { if (active) setPracticeResults(rows); })
+            .then((rows) => { if (active) setPracticeResults(rows.filter(row => isReusableProfile(questionnaire.id, row.scores))); })
             .catch(() => { if (active) setPracticeResults([]); });
         return () => { active = false; };
     }, [questionnaire, practiceNotebook]);
@@ -109,7 +111,7 @@ export function InputMethodSelector({ onSelect, onBack, questionnaire }: InputMe
             .then((all: SavedResult[]) => {
                 if (cancelled) return;
                 const filtered = all
-                    .filter((r) => r.questionnaire_type === questionnaire.id && r.scores && Object.keys(r.scores).length > 0)
+                    .filter((r) => r.questionnaire_type === questionnaire.id && isReusableProfile(questionnaire.id, r.scores) && r.scores && Object.keys(r.scores).length > 0)
                     .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
                 setSavedResults(filtered);
             })
