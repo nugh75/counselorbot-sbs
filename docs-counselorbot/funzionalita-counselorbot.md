@@ -201,6 +201,19 @@ server accetta solo un taccuino del docente stesso e non archiviato, riverifican
 ruolo a ogni turno: un taccuino archiviato o eliminato non viene sostituito da dati
 reali, il contesto resta senza taccuino. Uno studente non può usare taccuini di prova.
 
+Sotto ogni taccuino di prova, **Profili nei questionari** permette di creare,
+generare, modificare ed eliminare profili fittizi QSA, QSAr, ZTPI, QPCS, QPCC e
+QAP. Il pulsante **Salva profilo** persiste i punteggi solo su richiesta esplicita;
+generazione e modifiche restano bozze fino al salvataggio. Un errore conserva la
+bozza per riprovare. I profili salvati restano disponibili dopo la ricarica.
+**Avvia chat guidata** sul profilo rilegge i punteggi salvati e apre il percorso
+dello strumento con quel taccuino di prova già selezionato, passando per counselor
+e impostazioni correnti. Ogni avvio crea una nuova sessione, senza duplicare il
+profilo né creare una Compilazione reale. Turni e snapshot conservano
+`notebook_context="practice"` e `practice_notebook_id`; la ripresa usa il contesto
+dello snapshot anche se nel browser è stata scelta un’altra prova. Un link a un
+profilo assente, altrui, archiviato o di uno strumento diverso non avvia la chat.
+
 La generazione può essere interrotta; “Continua” riprende una risposta incompleta.
 Le risposte possono essere ascoltate; i controlli dei messaggi offrono diagrammi
 e feedback quando disponibili. Il lettore nel menu di navigazione legge il testo visibile,

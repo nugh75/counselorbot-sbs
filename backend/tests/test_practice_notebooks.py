@@ -460,6 +460,36 @@ def test_repertoire_api_crud_validation_and_ownership():
         assert db.query(models.TeacherPracticeResult).filter_by(notebook_id=practice.id).count() == 0
 
 
+def test_repertoire_explicit_update_persists_and_checks_role_and_notebook():
+    with artifact_session() as db:
+        practice = _seed_teacher(db)
+        second = models.TeacherPracticeNotebook(owner_username="t1", title="Secondo", data={})
+        other = models.TeacherPracticeNotebook(owner_username="t2", title="Altrui", data={})
+        db.add_all([second, other])
+        db.commit()
+        client = _app(db, TEACHER, practice_notebooks.router)
+        base = f"/teacher/practice-notebooks/{practice.id}/results"
+        result = client.post(base, json={"questionnaire_type": "QSA", "scores": QSA_SCORES, "source": "generated"}).json()
+        target = f"{base}/{result['id']}"
+        changed = {**QSA_SCORES, "C1": 9}
+        response = client.put(target, json={"scores": changed})
+        assert response.status_code == 200
+        assert response.json() == {**result, "scores": changed}
+        db.expire_all()  # Fresh DB read, as after a browser refresh.
+        assert client.get(base).json()[0]["scores"] == changed
+        for scores in ({}, {"C1": 0}, {"C1": 10}, {"C1": "NaN"}, {"x" * 13: 5}):
+            assert client.put(target, json={"scores": scores}).status_code == 422
+        assert client.put(f"{base}/999999", json={"scores": changed}).status_code == 404
+        for notebook in (second, other):
+            assert client.put(f"/teacher/practice-notebooks/{notebook.id}/results/{result['id']}", json={"scores": changed}).status_code == 404
+        student = _app(db, STUDENT, practice_notebooks.router)
+        assert student.put(target, json={"scores": changed}).status_code == 403
+        assert client.get(base).json()[0]["scores"] == changed
+        assert db.query(models.QuestionnaireResult).count() == 0
+        request = ChatRequest(message="turno", questionnaire_type="QSA", notebook_context="practice", practice_notebook_id=practice.id)
+        assert "Giulia" in _envelope(db, request, TEACHER, "QSA")
+
+
 def test_profile_comparison_reads_the_simulated_repertoire_in_practice():
     from backend.skills.handlers import load_profile_results
     with artifact_session() as db:

@@ -38,8 +38,9 @@ import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
 import { canUseTeacherAssistant } from '@/lib/roles';
-import { readStoredNotebookContext, readStoredPracticeNotebookId } from '@/lib/notebook-context';
+import { readStoredNotebookContext, readStoredPracticeNotebookId, storeNotebookContext, storePracticeNotebookId } from '@/lib/notebook-context';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
+import { practiceResultChatHref } from '@/lib/practice-notebooks';
 import { apiFetch, ai4authLoginUrl, getIdentity, type Identity } from '@/lib/auth';
 import { fetchCounselors, getSelectedCounselorId, setSelectedCounselorId, setActiveSessionCounselorId } from '@/lib/counselor';
 import { experiencePrefForInstrument, getExperiencePref, getInputMethodPref, getReasoningPref, getResponseLengthPref, setExperiencePref, setInputMethodPref, setReasoningPref, setResponseLengthPref } from '@/lib/session-prefs';
@@ -155,6 +156,8 @@ export default function Home() {
     // dati dello studente sono arrivati.
     const [ready, setReady] = useState(false);
     const entryClaimed = useRef(false);
+    const practiceProfileEntry = useRef<number | null>(null);
+    const practiceProfileHref = useRef<string | null>(null);
     // Cronologia del percorso: un'entrata per passo, così Indietro e Avanti del
     // browser (e la gesture di ritorno) si muovono dentro il percorso invece di
     // uscirne. `movingRef` distingue il passo deciso dal codice da quello
@@ -278,8 +281,12 @@ export default function Home() {
     // Apre la chat con la modalità già scelta in passato; Idea fa eccezione,
     // perché mappa grafica e OpenCode devono restare una scelta esplicita.
     const beginInteraction = useCallback((sid: string, instrument: string) => {
+        if (practiceProfileEntry.current !== null) {
+            storePracticeNotebookId(practiceProfileEntry.current);
+            storeNotebookContext('practice');
+        }
         setSessionCounselorId(getSelectedCounselorId());
-        const pref = experiencePrefForInstrument(instrument, getExperiencePref());
+        const pref = practiceProfileEntry.current ? 'standard' : experiencePrefForInstrument(instrument, getExperiencePref());
         // Se la preferenza non è memorizzata resta la scelta fatta nella scheda
         // Impostazioni; null solo se nessuna delle due parla (retrocompatibilità).
         setExperience((current) => pref ?? current);
@@ -328,7 +335,7 @@ export default function Home() {
             const preferences = await fetchAccountPreferences().catch(() => null);
             if (!preferences) { toast.error(t('setup.error')); return; }
             if (!preferences.notebook_ready || !preferences.counselor_ready) {
-                router.push(`${preferences.notebook_ready ? "/counselor" : "/inizia"}?next=${encodeURIComponent(`/?start=${questionnaire.id}`)}`);
+                router.push(`${preferences.notebook_ready ? "/counselor" : "/inizia"}?next=${encodeURIComponent(practiceProfileHref.current ?? `/?start=${questionnaire.id}`)}`);
                 return;
             }
             const counselors = await fetchCounselors(lang, lang, questionnaire.id);
@@ -599,14 +606,44 @@ export default function Home() {
                 return;
             }
 
+            // L'ingresso dal repertorio riusa lo stesso flusso, con punteggi
+            // riletti dall'API proprietaria; un link non valido non apre la chat.
+            let practiceScores: Record<string, number> | null = null;
+            const notebookParam = params.get('practice_notebook_id');
+            const resultParam = params.get('practice_result_id');
+            if (notebookParam !== null || resultParam !== null) {
+                try {
+                    const notebookId = Number(notebookParam);
+                    const resultId = Number(resultParam);
+                    if (!canUseTeacherAssistant(identity) || !Number.isSafeInteger(notebookId) || notebookId <= 0
+                        || !Number.isSafeInteger(resultId) || resultId <= 0) throw new Error('Invalid practice entry');
+                    const notebooks = await practiceNotebookApi.list();
+                    if (!notebooks.some(row => row.id === notebookId)) throw new Error('Unavailable practice notebook');
+                    const results = await practiceNotebookApi.results(notebookId, questionnaire.id);
+                    const result = results.find(row => row.id === resultId && row.notebook_id === notebookId && row.questionnaire_type === questionnaire.id);
+                    if (!result) throw new Error('Unavailable practice profile');
+                    practiceScores = result.scores;
+                    practiceProfileEntry.current = notebookId;
+                    practiceProfileHref.current = practiceResultChatHref(result);
+                    storePracticeNotebookId(notebookId);
+                    storeNotebookContext('practice');
+                } catch {
+                    toast.error(t('toast.error'));
+                    setStep('base');
+                    window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
+                    claimEntry();
+                    return;
+                }
+            }
+
             setSelectedQuestionnaire(questionnaire);
             setSelectedInstrumentId(questionnaire.id);
-            setScores(null);
-            setScoreOrigin('new');
+            setScores(practiceScores);
+            setScoreOrigin(practiceScores ? 'practice' : 'new');
             setPdfToken(undefined);
             setSessionId('');
-            setExperience(null);
-            void prepareInstrument(questionnaire, null);
+            setExperience(practiceScores ? 'standard' : null);
+            void prepareInstrument(questionnaire, practiceScores);
             window.history.replaceState({ ...window.history.state }, '', window.location.pathname);
             claimEntry();
         })();
@@ -614,6 +651,8 @@ export default function Home() {
 
     // Tutti gli ingressi riusano le preferenze dell’account.
     const handleQuestionnaireSelect = (questionnaire: QuestionnaireConfig) => {
+        practiceProfileEntry.current = null;
+        practiceProfileHref.current = null;
         setPausedChat(null);
         setSelectedQuestionnaire(questionnaire);
         setSelectedInstrumentId(questionnaire.id);
@@ -657,7 +696,7 @@ export default function Home() {
         if (starting) return;
         if (!getSelectedCounselorId()) {
             toast.info(t('counselor.selectFirst'));
-            router.push(`/counselor?next=${encodeURIComponent(`/?start=${selectedQuestionnaire?.id || 'QSA'}`)}`);
+            router.push(`/counselor?next=${encodeURIComponent(practiceProfileHref.current ?? `/?start=${selectedQuestionnaire?.id || 'QSA'}`)}`);
             return;
         }
         setStarting(true);
@@ -666,8 +705,8 @@ export default function Home() {
         const qType = selectedQuestionnaire?.id || 'QSA';
         // Prova del docente: il server riverifica ruolo e proprietà a ogni turno;
         // qui decide solo dove salvare i punteggi nuovi.
-        const practiceNotebookId = canUseTeacherAssistant(identity) && readStoredNotebookContext() === 'practice'
-            ? readStoredPracticeNotebookId()
+        const practiceNotebookId = canUseTeacherAssistant(identity) && (practiceProfileEntry.current !== null || readStoredNotebookContext() === 'practice')
+            ? practiceProfileEntry.current ?? readStoredPracticeNotebookId()
             : null;
         if (practiceNotebookId !== null || scoreOrigin === 'practice') {
             if (practiceNotebookId !== null && scoreOrigin === 'new' && scores && Object.keys(scores).length) {
@@ -989,7 +1028,7 @@ export default function Home() {
                             onReasoningChange={handleReasoningChange}
                             onBack={goBack}
                             onStart={handleStartInteraction}
-                            showModeChoice={experiencePrefForInstrument(selectedQuestionnaire.id, getExperiencePref()) === null}
+                            showModeChoice={!practiceProfileEntry.current && experiencePrefForInstrument(selectedQuestionnaire.id, getExperiencePref()) === null}
                             experience={experience}
                             onExperienceChange={setExperience}
                             rememberExperience={rememberExperience}

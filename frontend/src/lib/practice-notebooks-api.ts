@@ -49,4 +49,9 @@ export const practiceNotebookApi = {
     async removeResult(id: number, resultId: number): Promise<void> {
         await json(await apiFetch(`${BASE}/${id}/results/${resultId}`, { method: 'DELETE' }));
     },
+    async updateResult(id: number, resultId: number, scores: Record<string, number>): Promise<PracticeResult> {
+        return json(await apiFetch(`${BASE}/${id}/results/${resultId}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scores }),
+        }));
+    },
 };

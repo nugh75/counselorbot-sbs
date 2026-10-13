@@ -918,6 +918,13 @@ class PracticeResultCreate(BaseModel):
         return clean
 
 
+class PracticeResultUpdate(BaseModel):
+    # Lo strumento e la provenienza restano quelli del profilo originale.
+    scores: Dict[str, float]
+
+    _valid_scores = validator("scores", allow_reuse=True)(PracticeResultCreate._valid_scores.__func__)
+
+
 class PracticeResultResponse(BaseModel):
     id: int
     notebook_id: int

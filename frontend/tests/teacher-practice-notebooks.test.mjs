@@ -14,6 +14,7 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
     const errors = [];
     const requests = [];
     const store = { nextId: 2, nextResultId: 2, results: [], rows: [{ id: 1, title: 'Giulia, 3ª liceo', data: { main_difficulty: 'Ansia da verifica' }, group_ids: [], archived_at: null }] };
+    const snapshots = new Map();
     page.on('pageerror', e => errors.push(e.message));
     await page.addInitScript(({ lang, initStorage }) => {
         localStorage.setItem('cb_lang', lang);
@@ -34,6 +35,20 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
             name: 'Docente di prova', email: 'teacher@example.invalid', groups: teacher ? ['docenti'] : ['studenti'],
         });
         if (url.pathname === '/api/user/account') return json({ setup_complete: true, notebook_completed: true });
+        if (url.pathname === '/api/counselors') return json([{ id: 1, name: 'Demo', slug: 'fixture', language: ['*'], suitable: true, is_active: true }]);
+        if (url.pathname === '/api/user/teacher-notebook') return json(null);
+        if (url.pathname === '/api/qsa/guided-ui-texts') return json({ guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 0, system_prompt_mode: 'generic' }] });
+        if (url.pathname === '/api/tavolo/enabled') return json({ enabled: false });
+        if (url.pathname.endsWith('/recommendations')) return json({ reading: [], strategy: [] });
+        if (url.pathname === '/api/session/freeze') {
+            snapshots.set(body.session_id, body);
+            return json(body);
+        }
+        if (url.pathname.startsWith('/api/session/frozen/')) return json(snapshots.get(url.pathname.split('/').at(-1)) ?? null);
+        if (url.pathname === '/api/chat/stream') {
+            const reply = `Risposta: ${body.message}`;
+            return route.fulfill({ contentType: 'text/event-stream', body: stream({ conversation_id: 'practice-demo' }) + stream({ display: reply }) + stream({ done: true, response: reply, conversation_id: 'practice-demo' }) });
+        }
         if (url.pathname === '/api/admin/groups') return json([
             { id: 31, name: '3B', school: 'Liceo Demo', context_visible_to_students: true, is_active: true },
             { id: 32, name: '4A', school: null, context_visible_to_students: false, is_active: true },
@@ -58,6 +73,12 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
         const resultsMatch = url.pathname.match(/^\/api\/teacher\/practice-notebooks\/(\d+)\/results(?:\/(\d+))?$/);
         if (resultsMatch) {
             const notebookId = Number(resultsMatch[1]);
+            if (method === 'PUT') {
+                const row = store.results.find(row => row.notebook_id === notebookId && row.id === Number(resultsMatch[2]));
+                if (!row) return json({ detail: 'not found' }, 404);
+                row.scores = body.scores;
+                return json(row);
+            }
             if (method === 'POST') {
                 const row = { id: store.nextResultId++, notebook_id: notebookId, session_id: body.session_id || `s-${store.nextResultId}`, created_at: '2026-10-06T09:00:00Z', ...body };
                 store.results.unshift(row);
@@ -86,7 +107,7 @@ async function prepare(page, { lang = 'it', teacher = true, initStorage = {}, co
         }
         return json([]);
     });
-    return { errors, requests, store };
+    return { errors, requests, store, snapshots };
 }
 
 test('il docente crea, modifica, archivia, ripristina ed elimina i taccuini di prova', async () => {
@@ -298,7 +319,7 @@ test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {
     await repertoire.getByRole('button', { name: 'Genera un profilo plausibile' }).click();
     const first = repertoire.locator('input[type="text"], input[inputmode], input').first();
     await first.fill('9');
-    await repertoire.locator('form').evaluate(form => form.requestSubmit());
+    await repertoire.getByRole('button', { name: 'Salva profilo', exact: true }).click();
     await repertoire.locator('[data-practice-result]').first().waitFor();
     const generated = requests.filter(r => r.method === 'POST' && r.path.endsWith('/results')).at(-1).body;
     assert.equal(generated.questionnaire_type, 'ZTPI');
@@ -306,6 +327,18 @@ test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {
     assert.equal(Object.values(generated.scores)[0], 9);
     assert.ok(Object.values(generated.scores).every(v => v >= 1 && v <= 9));
     assert.ok(await repertoire.getByText('generato').first().isVisible());
+    await page.reload({ waitUntil: 'networkidle' });
+    const row = page.locator('[data-practice-result]').first();
+    await row.getByRole('button', { name: 'Modifica' }).click();
+    const editor = page.locator('[data-practice-result-editor]');
+    assert.equal(await editor.locator('form input').first().inputValue(), '9');
+    await editor.locator('form input').first().fill('4');
+    assert.equal(store.results[0].scores.T1, 9);
+    await editor.getByRole('button', { name: 'Salva profilo' }).click();
+    await editor.waitFor({ state: 'detached' });
+    assert.equal(store.results[0].scores.T1, 4);
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.locator('[data-practice-result]').first().getByText('T1 4', { exact: false }).waitFor();
     // La bozza personale della compilazione non viene toccata.
     assert.equal(await page.evaluate(() => Object.keys(localStorage).filter(k => k.includes('score')).length), 0);
     await repertoire.locator('[data-practice-result]').first().getByRole('button', { name: 'Elimina' }).click();
@@ -381,3 +414,120 @@ test('avvio in prova con punteggi nuovi: vanno nel repertorio, non tra le compil
     assert.deepEqual(state.errors, []);
     await page.close();
 });
+
+const qapProfile = { id: 91, notebook_id: 1, questionnaire_type: 'QAP', scores: { AD1: 8, AD2: 3, AD3: 6, AD4: 4 }, session_id: 'profile-91', source: 'generated', created_at: '2026-10-13T08:00:00Z' };
+
+test('dal profilo: nuova chat guidata, turni e ripresa usano il taccuino e i punteggi corretti', async () => {
+    const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+    const { errors, requests, store, snapshots } = await prepare(page, { initStorage: {
+        'cb-notebook-context': 'teacher', 'cb-practice-notebook-id': '2',
+        'counselorbot_selected_counselor': '1',
+    } });
+    store.results.push({ ...qapProfile });
+    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    const profile = page.locator('[data-practice-result="91"]');
+    await profile.getByRole('link', { name: 'Avvia chat guidata' }).click();
+    await page.getByText('AD1', { exact: true }).first().waitFor();
+    assert.equal(await page.locator('[data-practice-student]').count(), 0);
+    await page.getByRole('button', { name: 'Continua', exact: true }).click();
+    await page.getByTestId('chat-settings').waitFor();
+    await page.getByRole('button', { name: 'Inizia la conversa', exact: false }).click();
+    const start = page.getByRole('button', { name: 'Inizia', exact: true });
+    if (await start.isVisible()) await start.click();
+    await page.locator('#guided-composer').waitFor();
+    await page.locator('#guided-composer').fill('Provo questo profilo');
+    await page.locator('#guided-composer').press('Enter');
+    await page.getByRole('log').getByText('Risposta: Provo questo profilo', { exact: true }).waitFor();
+    const turn = requests.filter(r => r.path === '/api/chat/stream').at(-1).body;
+    assert.equal(turn.notebook_context, 'practice');
+    assert.equal(turn.practice_notebook_id, 1);
+    assert.equal(turn.questionnaire_type, 'QAP');
+    assert.notEqual(turn.session_id, qapProfile.session_id);
+    await page.waitForTimeout(2500);
+    const snapshot = snapshots.get(turn.session_id);
+    assert.equal(snapshot.notebook_context, 'practice');
+    assert.equal(snapshot.practice_notebook_id, 1);
+    assert.deepEqual(snapshot.scores, qapProfile.scores);
+    assert.equal(snapshot.experience, 'standard');
+    // Un'altra scelta del browser non deve sovrascrivere il contesto congelato.
+    await page.evaluate(() => { localStorage.setItem('cb-notebook-context', 'teacher'); localStorage.setItem('cb-practice-notebook-id', '2'); });
+    await page.goto(`${origin}/?frozen=${turn.session_id}`, { waitUntil: 'domcontentloaded' });
+    await page.locator('#guided-composer').waitFor();
+    await page.locator('#guided-composer').fill('Continuo la prova');
+    await page.locator('#guided-composer').press('Enter');
+    await page.getByRole('log').getByText('Risposta: Continuo la prova', { exact: true }).waitFor();
+    const continued = requests.filter(r => r.path === '/api/chat/stream').at(-1).body;
+    assert.equal(continued.notebook_context, 'practice');
+    assert.equal(continued.practice_notebook_id, 1);
+    assert.equal(continued.session_id, turn.session_id);
+    assert.equal(store.results.length, 1);
+    assert.equal(requests.filter(r => r.method === 'POST' && (r.path.endsWith('/results') || r.path === '/api/questionnaire-result')).length, 0);
+    assert.deepEqual(errors, []);
+    await page.close();
+});
+
+for (const [lang, save, start] of [
+    ['it', 'Salva profilo', 'Avvia chat guidata'], ['en', 'Save profile', 'Start guided chat'],
+    ['es', 'Guardar perfil', 'Iniciar chat guiado'], ['fr', 'Enregistrer le profil', 'Démarrer le chat guidé'],
+    ['de', 'Profil speichern', 'Begleiteten Chat starten'], ['sv', 'Spara profil', 'Starta vägledd chatt'],
+]) {
+    test(`profilo: salvataggio e avvio localizzati a 390 px (${lang})`, async () => {
+        const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+        const { errors, store } = await prepare(page, { lang });
+        store.results.push({ ...qapProfile });
+        await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+        const profile = page.locator('[data-practice-result="91"]');
+        await profile.getByRole('link', { name: start, exact: true }).waitFor();
+        await profile.getByRole('button').first().click();
+        await page.locator('[data-practice-result-editor]').getByRole('button', { name: save, exact: true }).waitFor();
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        assert.deepEqual(errors, []);
+        await page.close();
+    });
+}
+
+test('errore di salvataggio: bozza conservata, retry esplicito e nessun doppio submit', async () => {
+    const page = await browser.newPage();
+    const { errors, store } = await prepare(page);
+    store.results.push({ ...qapProfile });
+    let attempts = 0;
+    await page.route('**/api/teacher/practice-notebooks/1/results/91', async route => {
+        if (route.request().method() !== 'PUT') return route.fallback();
+        attempts++;
+        await new Promise(resolve => setTimeout(resolve, 400));
+        if (attempts === 1) return route.fulfill({ status: 500, json: { detail: 'fixture failure' } });
+        store.results[0].scores = route.request().postDataJSON().scores;
+        return route.fulfill({ json: store.results[0] });
+    });
+    await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
+    await page.locator('[data-practice-result="91"]').getByRole('button', { name: 'Modifica' }).click();
+    const editor = page.locator('[data-practice-result-editor]');
+    await editor.locator('input').first().fill('7');
+    const save = editor.getByRole('button', { name: 'Salva profilo' });
+    await save.dblclick();
+    await page.getByRole('alert').getByText('Operazione non riuscita. Riprova.').waitFor();
+    assert.equal(attempts, 1);
+    assert.equal(await editor.locator('input').first().inputValue(), '7');
+    assert.equal(store.results[0].scores.AD1, 8);
+    await save.click();
+    await editor.waitFor({ state: 'detached' });
+    assert.equal(store.results[0].scores.AD1, 7);
+    assert.deepEqual(errors, []);
+    await page.close();
+});
+
+for (const scenario of ['student', 'archived', 'missing', 'wrong-notebook', 'wrong-instrument']) {
+    test(`il link al profilo rifiuta ${scenario} senza avviare né salvare una chat`, async () => {
+        const page = await browser.newPage();
+        const { requests, store, errors } = await prepare(page, { teacher: scenario !== 'student' });
+        if (scenario === 'archived') store.rows[0].archived_at = '2026-10-13T08:00:00Z';
+        if (scenario !== 'missing') store.results.push({ ...qapProfile, notebook_id: scenario === 'wrong-notebook' ? 2 : 1 });
+        const type = scenario === 'wrong-instrument' ? 'QSA' : 'QAP';
+        await page.goto(`${origin}/?start=${type}&practice_notebook_id=1&practice_result_id=91`, { waitUntil: 'networkidle' });
+        await page.getByText('Operazione non riuscita. Riprova.', { exact: false }).first().waitFor();
+        assert.equal(await page.locator('#guided-composer').count(), 0);
+        assert.equal(requests.filter(r => r.method === 'POST').length, 0);
+        assert.deepEqual(errors, []);
+        await page.close();
+    });
+}
