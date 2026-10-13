@@ -123,14 +123,16 @@ Il secondo fallimento della suite post-merge QPCC era un file di fixture assente
 dal container, non un errore del contratto: i test di allineamento leggono anche
 `questionari/item_catalog/qpcc.json` e `frontend/src/lib/qpcc-schema.json`.
 Montare entrambi in sola lettura, oltre a `docs-counselorbot` e ai test correnti.
-Rilievo Diario `29f937d7-0189-42af-95e7-7b30f1acedfa` (sospetto).
+Rilievo Diario `29f937d7-0189-42af-95e7-7b30f1acedfa` (risolto nel runner:
+fixture montate e 64/64 test passati).
 
 L'host dispone di 8 GiB; durante la ripresa sono stati osservati swap intenso
 e attese prolungate. Sono stati fermati soltanto la build e il pytest residui
 s7 e le verifiche duplicate s8. Il Postgres condiviso non è stato modificato.
 `pg_stat_activity` ha mostrato `IO / DataFileImmediateSync` durante il bootstrap
 dello schema di test. Rilievo di ambiente Diario
-`aa5cf61f-caab-4614-a70e-43c1177f610c` (sospetto).
+`aa5cf61f-caab-4614-a70e-43c1177f610c` (confermato: heap nativo da 768 MiB
+esaurito e successivo evento Docker `oom` sul server dev limitato a 2 GiB).
 
 Per ripetere la suite senza scritture persistenti, usare un Postgres dedicato
 con dati su tmpfs e durabilità disattivata **solo per questo DB effimero**:
@@ -168,5 +170,58 @@ Verifiche già concluse nella ripresa: 430 test unitari frontend (log s7),
 controllo traduzioni 3.325 chiavi nelle sei lingue, `tsc --noEmit` sulla copia s8,
 ESLint sui file modificati (zero errori, un warning React preesistente),
 `make guidance-refresh`, `make guidance-check`, gate `--base origin/main` e
-`git diff --check`. Suite backend post-merge, browser dopo il fix mobile e build
-frontend restano in verifica; la PR viene mantenuta in bozza finché non conclusi.
+`git diff --check`.
+
+Un worker BuildKit della build s7 annullata era ancora attivo: `next-build`,
+RSS circa 1,35 GiB, con sorgenti del profilo e del fix mobile. È stato fermato
+con SIGTERM soltanto dopo aver verificato cgroup e sorgenti; una seconda lettura
+ha confermato l'assenza del processo. Rilievo Diario
+`f849c040-5da9-4d81-beb9-ec72f2c008a9` (sospetto, cancellazione non ripetuta).
+
+Il runner frontend dev in container deve usare l'origine `localhost`, già
+ammessa da Next, oppure una `allowedDevOrigins` limitata al solo host di test.
+Con `127.0.0.1` e bind interno `0.0.0.0`, Next bloccava risorse dev. Il passaggio
+a `localhost` ha consentito i primi dieci test; poi il limite di 2 GiB ha
+terminato il container dev per OOM. Questi tentativi non provano difetti
+applicativi. Rilievo Diario `7b42478e-f049-42e7-9920-782edb1b3826` (sospetto).
+
+## Esito finale s8
+
+| Verifica | Esito | Evidenza locale non tracciata |
+| --- | --- | --- |
+| Unitari frontend | 430 passati | `backend/.venv/s7-frontend-unit-postmerge.log` |
+| API, contesti e QPCC post-merge | 64 passati | `backend/.venv/s8-backend-memory-tests.log` |
+| Browser sull'immagine finale | 23 passati, zero errori | `backend/.venv/s8-browser-final-tests.log` |
+| Sei lingue | 3.325 chiavi allineate; layout a 390 px passato in tutte | i18n-check e suite browser |
+| TypeScript | passato nella copia isolata e nella build Docker | `backend/.venv/s8-typescript.log`, build frontend |
+| ESLint | zero errori, un warning React preesistente in `app/page.tsx` | controllo mirato sui file modificati |
+| Guida e diff | refresh/check, gate rispetto a `origin/main`, diff-check passati | manifesto aggiornato |
+| Build Docker backend/frontend | entrambe completate sui sorgenti finali | `backend/.venv/s8-backend-build.log`, `s8-frontend-build.log` |
+
+La build frontend finale usa Turbopack e il Dockerfile originale con le sole
+aggiunte temporanee `NODE_OPTIONS=--max-old-space-size=1536` e
+`NEXT_TELEMETRY_DISABLED=1`, in una copia sotto `.venv`; il Dockerfile del
+progetto resta invariato. Le tre segnalazioni Docker sul formato storico di
+`ENV` sono preesistenti. Contesti senza `.env*`, tag locali
+`s8-practice-notebooks-{backend,frontend}:local`; nessun Compose o deploy.
+
+Per la suite browser finale usare il server **compilato** della nuova immagine:
+
+```bash
+# Controllare prima che 3141 sia libera.
+docker run -d --rm --name s8-practice-notebooks-frontend-validation \
+  --cpus 2 --memory 512m --memory-swap 512m \
+  -p 127.0.0.1:3141:3000 -e NEXT_TELEMETRY_DISABLED=1 \
+  -e BACKEND_ORIGIN=http://127.0.0.1:9 s8-practice-notebooks-frontend:local
+cd frontend
+TEACHER_PRACTICE_BASE_URL=http://localhost:3141 \
+  node --test tests/teacher-practice-notebooks.test.mjs
+cd ..
+docker stop s8-practice-notebooks-frontend-validation
+```
+
+La suite finale verifica salvataggio, refresh, modifica, retry/doppio submit,
+nuova sessione e ripresa con punteggi/contesto corretti, link non validi e
+assenza di Compilazioni reali. Dopo la verifica tutti i processi/container s8
+sono fermati. Il Postgres condiviso e i servizi preesistenti restano intatti.
+PR #253 nel progetto GitHub CounselorBot; nessun merge, deploy o passo sudo.
