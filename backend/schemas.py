@@ -266,6 +266,14 @@ class QuestionnaireResultCreate(ServerAssignedProvenance):
     # Local institution verification grant; validated, never stored.
     institution_grant: Optional[str] = None
 
+    @model_validator(mode='before')
+    @classmethod
+    def canonical_qpcc(cls, data):
+        if isinstance(data, dict) and str(data.get('questionnaire_type', '')).upper() == 'QPCC':
+            from .qpcc import validate_scores
+            validate_scores(data.get('scores'))
+        return data
+
 
 class QuestionnaireResultResponse(BaseModel):
     source: str = "in-app"
@@ -916,6 +924,14 @@ class PracticeResultCreate(BaseModel):
                 raise ValueError("invalid score")
             clean[code] = float(value)
         return clean
+
+    @model_validator(mode='before')
+    @classmethod
+    def canonical_qpcc(cls, data):
+        if isinstance(data, dict) and data.get('questionnaire_type') == 'QPCC':
+            from .qpcc import validate_scores
+            validate_scores(data.get('scores'))
+        return data
 
 
 class PracticeResultResponse(BaseModel):

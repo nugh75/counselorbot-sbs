@@ -1726,6 +1726,8 @@ def _migrate_counselor_personas_and_intros(db):
             changed = True
 
     for key in _INTRO_CONFIG_KEYS:
+        if key == "prompt_qpcc_welcome":
+            continue  # QPCC requires the explicit reviewed alignment plan
         cfg = db.query(models.Config).filter(models.Config.key == key).first()
         if not cfg:
             continue
@@ -1918,6 +1920,8 @@ def _migrate_prompts_to_english(db):
     skipped_custom = []
 
     for key, it_value in LEGACY_IT_CONFIG_DEFAULTS.items():
+        if "qpcc" in key.lower():
+            continue  # QPCC updates require the reviewed alignment plan
         new_value = new_config_defaults.get(key)
         if not new_value:
             continue
@@ -1932,6 +1936,8 @@ def _migrate_prompts_to_english(db):
             skipped_custom.append(key)
 
     for step_id, it_prompt in LEGACY_IT_STEP_PROMPTS.items():
+        if step_id.startswith("qpcc-"):
+            continue  # QPCC updates require the reviewed alignment plan
         new_prompt = new_step_prompts.get(step_id)
         if not new_prompt:
             continue
@@ -1987,6 +1993,9 @@ def _seed_instruments_catalog(db):
                 is_interpretation_inverted=(f.get("orientation") == "difficulty"),
                 label_en=f.get("label_en"),
                 label_sv=f.get("label_sv"),
+                label_it=f.get("label_it"),
+                label_es=f.get("label_es"),
+                label_i18n=f.get("label_i18n"),
             ))
         for order, it in enumerate(spec.get("items", [])):
             db.add(models.QuestionnaireItem(

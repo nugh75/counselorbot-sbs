@@ -23,12 +23,17 @@ def spec_for(label, **node):
             'edges': [{'from': 'a', 'to': 'b'}]}
 
 
-def test_dictionary_covers_all_41_catalogue_factors_with_existing_translations():
+def test_dictionary_covers_all_catalogue_factors_with_existing_translations():
     expected = {f'{instrument.upper()}:{factor["code"].upper()}'
                 for instrument, entry in INSTRUMENT_CATALOG_DEFAULTS.items() for factor in entry['factors']}
-    assert len(FACTOR_SYMBOLS) == len(FACTORS) == 41
+    assert len(FACTOR_SYMBOLS) == len(FACTORS) == 46
     assert set(FACTORS) == expected
     for key, entry in FACTORS.items():
+        if key.startswith('QPCC:'):
+            from backend.qpcc import names
+            assert entry['labels'] == {lang: names(lang)[key.split(':')[1]] for lang in FACTOR_TRANS}
+            assert entry['icon'] in DIAGRAM_ICONS
+            continue
         code = next(code for code in FACTOR_TRANS['it'] if code.upper() == key.split(':')[1])
         assert entry['icon'] in DIAGRAM_ICONS
         assert entry['labels'] == {lang: values[code][0] for lang, values in FACTOR_TRANS.items()}

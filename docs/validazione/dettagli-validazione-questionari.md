@@ -79,12 +79,21 @@ Valuta le macro-competenze percepite per lo studio universitario e l'apprendimen
 
 ---
 
-## 5. QPCC (Questionario di Percezione delle Competenze di Cittadinanza)
+## 5. QPCC (Questionario di Percezione delle proprie Competenze e Convinzioni)
 
-Rileva la percezione delle competenze chiave di cittadinanza attiva e responsabilità sociale.
+**Autori**: Michele Pellerey e Francesco Orio. Autovalutazione di 63 item per
+giovani/adulti in cerca di occupazione o in professioni relazionali, senza
+risposte giuste/sbagliate, durata indicativa 20–30 minuti. Dieci scale stanine 1–9:
+A1 ansia di parlare in pubblico, A2 insicurezza, A3 inadeguatezza; V1 autoregolazione
+e perseveranza sul lavoro, V2 coping; C1 competenze elaborative, C2 competenza
+comunicativa; M1 percezione di competenza, M2 orientamento all’io, M3 attribuzioni
+causali interne. Quattro dimensioni connesse A/V/C/M.
 
-*   **Autori**: Michele Pellerey et al.
-*   **Fattori chiave**: Collaborazione, empatia, sensibilità interculturale, rispetto delle regole e impegno civico.
+CounselorBot legge un profilo già calcolato e approfondisce ogni scala in chat.
+La somministrazione dei 25 item sostitutivi è sospesa: non rappresenta QPCC e
+non può produrre stanine canoniche. Mancano una chiave item→fattore autorizzata
+e norme validate. I profili K1–K5 storici non sono convertibili. Dettagli e test:
+[QPCC: audit e riallineamento](../operations/qpcc-factor-alignment.md).
 
 ---
 

@@ -1524,6 +1524,8 @@ def seed_certified_strategies(db, models_module) -> int:
         # chat finche' un admin non le certifica dal pannello.
         spec = dict(spec)
         status = spec.pop("status", "certified")
+        if "QPCC" in spec.get("questionnaire_types", []) and any(code.startswith("K") for code in spec.get("factor_codes", [])):
+            status = "draft"  # requires editorial review against canonical QPCC factors
         db.add(
             models_module.CertifiedStrategy(
                 match_mode="any",

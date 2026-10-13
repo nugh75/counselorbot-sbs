@@ -290,9 +290,9 @@ async def list_instruments(
             "icon": instrument.icon or "compass",
             "color_theme": instrument.color_theme or "blue",
             "interview_mode": instrument.interview_mode or "interactive",
-            "item_count": item_count,
+            "item_count": 0 if instrument.code == "QPCC" else item_count,
             "locales": content_version_service.status_map(db, "instrument", instrument.code),
-            "available_locales": content_version_service.served_locales(
+            "available_locales": [] if instrument.code == "QPCC" else content_version_service.served_locales(
                 db, "instrument", instrument.code
             ),
         })

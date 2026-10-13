@@ -1799,7 +1799,7 @@ def test_profile_step_serves_the_factor_prompt_of_its_instrument():
     # usasse. Ora il primo passo dopo il patto legge il profilo e li serve.
     for questionnaire_type, step_id, key, code in (
         ("QPCS", "qpcs-profilo", "prompt_qpcs_factor", "S1"),
-        ("QPCC", "qpcc-profilo", "prompt_qpcc_factor", "K1"),
+        ("QPCC", "qpcc-profilo", "prompt_qpcc_factor", "V1"),
         ("QAP", "qap-profilo", "prompt_qap_factor", "AD1"),
     ):
         _ensure_guided_steps(questionnaire_type)

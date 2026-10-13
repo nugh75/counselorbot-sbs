@@ -1,5 +1,7 @@
 'use client';
 
+import { factorTranslationKey } from '@/lib/questionnaires';
+
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -114,7 +116,7 @@ export function OpenCodeExperience({
     const factorNameMap = useMemo(() => {
         const map: Record<string, string> = {};
         for (const factor of questionnaire.factors) {
-            map[factor.code] = tf(`factor.${factor.code}.name`, factor.name);
+            map[factor.code] = tf(factorTranslationKey(questionnaire.id, factor.code, 'name'), factor.name);
         }
         return map;
     }, [questionnaire, tf]);

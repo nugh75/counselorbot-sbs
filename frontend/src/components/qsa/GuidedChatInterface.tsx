@@ -1,4 +1,6 @@
 'use client';
+
+import { factorTranslationKey } from '@/lib/questionnaires';
 import { ChatGPTUsageBadge } from '@/components/profile/ChatGPTUsageBadge';
 
 import { ListenButton } from '@/components/voice-reader/VoiceReader';
@@ -337,6 +339,7 @@ function getScoreColor(
     invertedSet: Set<string>,
     questionnaireType: string
 ): string {
+    if (questionnaireType === 'QPCC' && code === 'M2') return 'bg-slate-500';
     if (questionnaireType === 'ZTPI' && code.startsWith('T')) {
         return getZTPIAlignmentColorClass(code as ZTPIFactorCode, score);
     }
@@ -602,7 +605,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const questionnaire = useMemo(() => getQuestionnaire(questionnaireType), [questionnaireType]);
     const invertedSet = useMemo(() => new Set(questionnaire?.invertedFactors || []), [questionnaire]);
     const formatScoresForPrompt = useMemo(
-        () => buildScoresFormatter(questionnaireType, (code, fallback) => tf(`factor.${code}.name`, fallback)),
+        () => buildScoresFormatter(questionnaireType, (code, fallback) => tf(factorTranslationKey(questionnaireType, code, 'name'), fallback)),
         [questionnaireType, tf],
     );
 
@@ -611,7 +614,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         if (!questionnaire) return [];
         return questionnaire.factorPrefix.map(prefix => ({
             prefix,
-            label: PREFIX_SIDEBAR[prefix] ? t(`sidebar.${prefix}`) : prefix,
+            label: questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : PREFIX_SIDEBAR[prefix] ? t(`sidebar.${prefix}`) : prefix,
             colorClass: PREFIX_SIDEBAR[prefix] || 'text-slate-600',
             entries: Object.entries(scores)
                 .filter(([k]) => k.startsWith(prefix))
@@ -1753,7 +1756,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                                             key={code}
                                             code={code}
                                             factorName={tf(
-                                                `factor.${code}.name`,
+                                                factorTranslationKey(questionnaireType, code, 'name'),
                                                 questionnaire?.factors?.find((factor) => factor.code === code)?.name || code,
                                             )}
                                             score={score}

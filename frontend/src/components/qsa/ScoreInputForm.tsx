@@ -1,5 +1,7 @@
 'use client';
 
+import { factorTranslationKey } from '@/lib/questionnaires';
+
 import { type FormEvent } from 'react';
 import { useForm, type UseFormRegister, type FieldErrors } from 'react-hook-form';
 import { QuestionnaireConfig, FactorDefinition } from '@/lib/questionnaires';
@@ -27,12 +29,14 @@ const PREFIX_COLOR: Record<string, string> = {
 // campi. Il render arriva puntuale al submit fallito (il componente è iscritto a
 // formState.errors), cioè proprio quando il fuoco serve dove manca il punteggio.
 function InputRow({
+    questionnaireId,
     factor,
     register,
     errors,
     t,
     tf,
 }: {
+    questionnaireId: string;
     factor: FactorDefinition;
     register: UseFormRegister<FormData>;
     errors: FieldErrors<FormData>;
@@ -73,10 +77,10 @@ function InputRow({
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                     <span className="font-mono text-indigo-600 font-bold text-sm">{factor.code}</span>
-                    <span className="font-medium text-slate-700 text-sm">{tf(`factor.${factor.code}.name`, factor.name)}</span>
+                    <span className="font-medium text-slate-700 text-sm">{tf(factorTranslationKey(questionnaireId, factor.code, 'name'), factor.name)}</span>
                 </div>
                 <div className="text-[11px] leading-tight text-slate-500 ml-8 flex items-center gap-1">
-                    {tf(`factor.${factor.code}.desc`, factor.description)}
+                    {tf(factorTranslationKey(questionnaireId, factor.code, 'desc'), factor.description)}
                 </div>
                 {hasError && (
                     <p id={errorId} className="ml-8 mt-1 text-[11px] font-medium text-red-700">
@@ -150,7 +154,9 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack,
 
     const onFormSubmit = (data: FormData) => {
         const scores = Object.fromEntries(
-            Object.entries(data.scores).map(([code, value]) => [code, Number(value)]),
+            Object.entries(data.scores)
+                .filter(([code]) => questionnaire.id !== "QPCC" || questionnaire.factors.some(factor => factor.code === code))
+                .map(([code, value]) => [code, Number(value)]),
         );
         if (persistDraft) clearScoreDraft();
         onSubmit(scores);
@@ -181,14 +187,14 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack,
                 <div className={cn("grid gap-x-8 gap-y-3", gridCols)}>
                     {groupedFactors.map(({ prefix, factors }) => {
                         const colorClass = PREFIX_COLOR[prefix] || 'text-slate-700';
-                        const label = PREFIX_COLOR[prefix] ? t(`score.prefix.${prefix}`) : `${prefix}`;
+                        const label = questionnaire.id === 'QPCC' ? t(`dimension.QPCC.${prefix}`) : PREFIX_COLOR[prefix] ? t(`score.prefix.${prefix}`) : `${prefix}`;
                         return (
                             <div key={prefix} className="space-y-1.5">
                                 <div className="flex items-center gap-2 mb-2 pb-1 border-b border-slate-200">
                                     <h3 className={cn("text-lg font-bold", colorClass)}>{label}</h3>
                                 </div>
                                 {factors.map(f => (
-                                    <InputRow key={f.code} factor={f} register={register} errors={errors} t={t} tf={tf} />
+                                    <InputRow key={f.code} questionnaireId={questionnaire.id} factor={f} register={register} errors={errors} t={t} tf={tf} />
                                 ))}
                             </div>
                         );

@@ -1,3 +1,4 @@
+from .qpcc import directive as qpcc_directive
 import json
 from pathlib import Path
 from typing import Dict, List
@@ -322,11 +323,11 @@ DEFAULT_SYSTEM_PROMPT_QPCS_SUMMARY = _text("default_system_prompt_qpcs_summary")
 
 # QPCC — Perception of one's own Competences and Beliefs (Pellerey-Orio)
 DEFAULT_SYSTEM_PROMPT_QPCC_FACTOR = (
-    "Analyse the Questionnaire on the Perception of one's own Competences and Beliefs "
-    "(QPCC) profile by areas: "
-    "K1 Public communication, K2 Managing anxiety and responsibility, "
-    "K3 Volition and self-regulation, K4 Elaboration strategies, K5 Beliefs about oneself. "
-    + _FACTOR_TABLE_RULES
+    qpcc_directive('qpcc-profilo') + "\nRead every available factor with its code, localised name, exact stanine and a brief explanation. "
+    "Use a table with Factor, Score, Interpretation, Description. For A1/A2/A3 describe lower, moderate or higher difficulty. "
+    "For M2 describe lower, moderate or higher ego orientation without labelling it strength or weakness. "
+    "For the other scales discuss reported resources. No practical advice in the profile step. Never invent missing scores. "
+    + "[ANCHOR]" + _FACTOR_TABLE_RULES.split("[ANCHOR]", 1)[1]
 )
 
 # QAP — Career Adaptability (CAAS, Savickas-Porfeli)
@@ -899,14 +900,9 @@ DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
 ) + INTRO_ALLOWED_QUESTIONS
 
 DEFAULT_SYSTEM_PROMPT_QPCC_INTRO = (
-    "You are introducing yourself to the student at the start of the QPCC "
-    "reflection on their competences and "
-    "beliefs.\n\n"
-    "In this turn:\n"
-    + _SCORE_BASED_INTRO_FLOW
-    + "\n"
-    "Do NOT yet: mention any score, factor, or table. This is only the "
-    "welcome, not the reflection."
+    qpcc_directive('qpcc-intro') + "\nIntroduce the reflective interview, expected duration 20-30 minutes, "
+    "self-assessment and absence of right or wrong answers. Ask for explicit acceptance before beginning. "
+    "Do not analyse scores in this welcome."
 ) + INTRO_ALLOWED_QUESTIONS
 
 DEFAULT_SYSTEM_PROMPT_QAP_INTRO = (
@@ -2454,38 +2450,40 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
 # Canonical detailed reflective paths, aligned with the deployed paths.
 # Existing installations retain their own steps; startup seeds only empty paths.
 
-DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{
-    'id': 'qpcc-profilo',
-    'questionnaire_type': 'QPCC',
-    'sort_order': 1,
-    'label': '1. Lettura del Profilo',
-    'prompt': (
-        "Read my whole QPCC profile before the interview areas: K1 (Public communication), K2 (Managing anxiety and responsibility), K3 (Volition and self-regulation), K4 (Elaboration strategies), K5 (Beliefs about oneself). "
-        "For each of them give my score, its interpretation label and, in one or two "
-        "sentences, what the area measures and how that result shows up in practice. "
-        "Treat every score as my own self-assessment, a reference point for reflection "
-        "and never a grade or a judgement. Then group the areas into strengths, good "
-        "areas and areas to work on. Do not give practical advice here: the areas that follow explore each result in conversation."
-    ),
-    'system_prompt_mode': 'qpcc-factor',
-    'color_theme': 'slate',
-    'label_i18n': {'en': '1. Reading Your Profile',
-                   'es': '1. Lectura del Perfil',
-                   'fr': '1. Lecture du Profil',
-                   'de': '1. Profilübersicht',
-                   'sv': '1. Profilöversikt'}},
+DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
+  'questionnaire_type': 'QPCC',
+  'sort_order': 1,
+  'label': '1. Lettura del Profilo',
+  'prompt': 'Read my whole canonical QPCC profile: A1 (Public speaking anxiety); A2 (Sense of '
+            'insecurity); A3 (Sense of inadequacy); V1 (Self-regulation and perseverance at work); '
+            'V2 (Coping with personal challenges); C1 (Elaborative competences); C2 (Communicative '
+            'competence); M1 (Perceived competence); M2 (Ego orientation); M3 (Causal attributions '
+            '(internal locus of control)). For each give the exact stanine 1-9, a localised '
+            'interpretation and one or two sentences on what it measures. A1/A2/A3 measure '
+            'difficulties, high is more difficulty; M2 is ego orientation and requires contextual '
+            'reflection, not a good/bad ranking. Treat scores as self-assessment, never grades or '
+            'diagnoses. Distinguish all ten scales within A/V/C/M. No practical advice here; never '
+            'infer missing scores or convert old K profiles.',
+  'system_prompt_mode': 'qpcc-factor',
+  'color_theme': 'slate',
+  'label_i18n': {'en': '1. Reading Your Profile',
+                 'es': '1. Lectura del Perfil',
+                 'fr': '1. Lecture du Profil',
+                 'de': '1. Profilübersicht',
+                 'sv': '1. Profilöversikt'}},
  {'id': 'qpcc-intro',
   'questionnaire_type': 'QPCC',
   'sort_order': 0,
   'label': '0. Patto di Collaborazione',
-  'prompt': 'Start of the QPCC path: build the agreement with the student. Briefly explain that you will '
-            'have a reflective interview (not a graded test) on competences and beliefs about oneself; '
-            'indicative duration (5 areas + summary), method (open questions), confidentiality. Ask for an '
-            "explicit confirmation to begin (e.g. 'If you agree, write: I accept'). Do NOT advance until "
-            'there is a clear confirmation. When the confirmation arrives, on the last line put only '
-            '[[AVANZA_STEP]].',
+  'prompt': 'Build the collaboration agreement for a QPCC reflective interview. Explain '
+            'self-assessment, no right or wrong answers, 20-30 minutes, four interconnected '
+            'dimensions and ten scales; the chat reflects on the existing profile and does not '
+            'administer the 63-item questionnaire. Use language suitable for young people and '
+            'adults seeking employment or in relational professions. Ask for explicit acceptance; '
+            'do not advance until accepted. After acceptance put only [[AVANZA_STEP]] on the last '
+            'line.',
   'system_prompt_mode': 'qpcc-interview',
-  'color_theme': 'cyan',
+  'color_theme': 'slate',
   'label_i18n': {'en': '0. Collaboration Agreement',
                  'es': '0. Pacto de Colaboración',
                  'fr': '0. Pacte de Collaboration',
@@ -2494,88 +2492,99 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{
  {'id': 'qpcc-comunicazione',
   'questionnaire_type': 'QPCC',
   'sort_order': 2,
-  'label': '2. Comunicazione in Pubblico',
-  'prompt': 'Area 1/5 - Communication and the ability to speak in public. Explore how the student '
-            'experiences speaking in front of others, how they prepare and structure a talk and how they try '
-            'to convince or engage their listeners. Ask for a concrete example. When the area is covered, '
-            'give a mini-summary and on the last line only [[AVANZA_STEP]].',
+  'label': '2. Ansia di parlare in pubblico',
+  'prompt': 'Explore A1 public speaking anxiety, part of the affective-emotional dimension. Ask '
+            'how the person experiences speaking before others in a job-seeking or professional '
+            'relational situation. Distinguish anxiety from C2 communicative competence; do not '
+            'infer that one determines the other. Ask ONE open question and at most two '
+            'follow-ups, request a concrete example, then a mini-summary and [[AVANZA_STEP]] on '
+            'the last line.',
   'system_prompt_mode': 'qpcc-interview',
-  'color_theme': 'blue',
-  'label_i18n': {'en': '2. Public Speaking',
-                 'es': '2. Comunicación en Público',
-                 'fr': '2. Communication en Public',
-                 'de': '2. Sprechen vor Publikum',
-                 'sv': '2. Att tala inför publik'}},
+  'color_theme': 'slate',
+  'label_i18n': {'en': '2. Public speaking anxiety',
+                 'es': '2. Ansiedad al hablar en público',
+                 'fr': '2. Anxiété de parler en public',
+                 'de': '2. Angst vor öffentlichem Sprechen',
+                 'sv': '2. Oro inför att tala inför publik'}},
  {'id': 'qpcc-controllo',
   'questionnaire_type': 'QPCC',
   'sort_order': 3,
-  'label': "3. Ansia, Controllo e Responsabilità",
-  'prompt': 'Area 2/5 - Managing anxiety, control and responsibility. Explore how the student reacts when '
-            'facing difficult decisions and situations that put them under pressure, and how much they feel '
-            'blocked or nervous because of responsibility. Ask for an example. When the area is covered, '
-            'give a mini-summary and on the last line only [[AVANZA_STEP]].',
+  'label': '3. Insicurezza e inadeguatezza',
+  'prompt': 'Explore the other affective-emotional scales separately: A2 sense of insecurity and '
+            'A3 sense of inadequacy. Ask ONE open question on a real professional or job-seeking '
+            'situation, then at most two follow-ups to distinguish uncertainty from feeling '
+            'inadequate. Reflect without diagnosis or treating responsibility as a separate scale. '
+            'Close with a mini-summary and [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
-  'color_theme': 'indigo',
-  'label_i18n': {'en': '3. Anxiety, Control and Responsibility',
-                 'es': '3. Ansiedad, Control y Responsabilidad',
-                 'fr': '3. Anxiété, Contrôle et Responsabilité',
-                 'de': '3. Angst, Kontrolle und Verantwortung',
-                 'sv': '3. Oro, kontroll och ansvar'}},
+  'color_theme': 'slate',
+  'label_i18n': {'en': '3. Insecurity and inadequacy',
+                 'es': '3. Inseguridad e inadecuación',
+                 'fr': '3. Insécurité et inadéquation',
+                 'de': '3. Unsicherheit und Unzulänglichkeit',
+                 'sv': '3. Osäkerhet och otillräcklighet'}},
  {'id': 'qpcc-volizione',
   'questionnaire_type': 'QPCC',
   'sort_order': 4,
-  'label': '4. Volizione e Autoregolazione',
-  'prompt': 'Area 3/5 - Volition and self-regulation. Explore how the student completes the commitments they '
-            'take on, organises their work according to the time available and applies themselves even to '
-            'uninteresting tasks. Ask for a concrete example. When the area is covered, give a mini-summary '
-            'and on the last line only [[AVANZA_STEP]].',
+  'label': '4. Dimensione volitiva',
+  'prompt': 'Explore the volitional dimension, distinguishing V1 self-regulation and perseverance '
+            'at work from V2 coping with personal challenges. Ask ONE open question on a work '
+            'commitment and at most two follow-ups to explore organisation/perseverance and '
+            'response to setbacks separately. Use a concrete example. Close with a mini-summary '
+            'and [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
-  'color_theme': 'amber',
-  'label_i18n': {'en': '4. Volition and Self-regulation',
-                 'es': '4. Volición y Autorregulación',
-                 'fr': '4. Volition et Autorégulation',
-                 'de': '4. Volition und Selbstregulation',
-                 'sv': '4. Volition och självreglering'}},
+  'color_theme': 'slate',
+  'label_i18n': {'en': '4. Volitional dimension',
+                 'es': '4. Dimensión volitiva',
+                 'fr': '4. Dimension volitive',
+                 'de': '4. Volitionale Dimension',
+                 'sv': '4. Viljemässig dimension'}},
  {'id': 'qpcc-elaborazione',
   'questionnaire_type': 'QPCC',
   'sort_order': 5,
-  'label': '5. Strategie di Elaborazione',
-  'prompt': 'Area 4/5 - Elaboration and learning strategies. Explore how the student connects new ideas to '
-            'ones they already know, looks for concrete examples and applications, and identifies the '
-            'important things when studying or working. Ask for a concrete example. When the area is '
-            'covered, give a mini-summary and on the last line only [[AVANZA_STEP]].',
+  'label': '5. Dimensione cognitiva',
+  'prompt': 'Explore the cognitive dimension, distinguishing C1 elaborative competences from C2 '
+            'communicative competence. Ask ONE open question on understanding and communicating an '
+            'idea in a professional context; at most two follow-ups on connections/application and '
+            'clarity/engagement with interlocutors. C2 is not A1 anxiety. Close with a '
+            'mini-summary and [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
-  'color_theme': 'teal',
-  'label_i18n': {'en': '5. Elaboration Strategies',
-                 'es': '5. Estrategias de Elaboración',
-                 'fr': "5. Stratégies d'Élaboration",
-                 'de': '5. Verarbeitungsstrategien',
-                 'sv': '5. Bearbetningsstrategier'}},
+  'color_theme': 'slate',
+  'label_i18n': {'en': '5. Cognitive dimension',
+                 'es': '5. Dimensión cognitiva',
+                 'fr': '5. Dimension cognitive',
+                 'de': '5. Kognitive Dimension',
+                 'sv': '5. Kognitiv dimension'}},
  {'id': 'qpcc-convinzioni',
   'questionnaire_type': 'QPCC',
   'sort_order': 6,
-  'label': "6. Convinzioni su di Sé",
-  'prompt': 'Area 5/5 - Beliefs about oneself. Explore how much the student trusts their own ability to '
-            'succeed, what they attribute successes and failures to (effort vs external causes) and how much '
-            'they are driven by the desire to do well or to do better. Ask for an example. When the area is '
-            'covered, give a mini-summary and on the last line only [[AVANZA_STEP]].',
+  'label': '6. Dimensione motivazionale',
+  'prompt': 'Explore the motivational dimension, distinguishing M1 perceived competence, M2 ego '
+            'orientation and M3 causal attributions (internal locus of control). Ask ONE open '
+            'question on a professional success or setback; at most two follow-ups on perceived '
+            'capability, comparison/recognition and controllable causes. M2 is not automatically a '
+            'strength or difficulty. Close with a mini-summary and [[AVANZA_STEP]] on the last '
+            'line.',
   'system_prompt_mode': 'qpcc-interview',
-  'color_theme': 'rose',
-  'label_i18n': {'en': '6. Beliefs about Oneself',
-                 'es': '6. Convicciones sobre Sí Mismo',
-                 'fr': '6. Convictions sur Soi',
-                 'de': '6. Überzeugungen über sich selbst',
-                 'sv': '6. Föreställningar om sig själv'}},
+  'color_theme': 'slate',
+  'label_i18n': {'en': '6. Motivational dimension',
+                 'es': '6. Dimensión motivacional',
+                 'fr': '6. Dimension motivationnelle',
+                 'de': '6. Motivationale Dimension',
+                 'sv': '6. Motivationsmässig dimension'}},
  {'id': 'qpcc-sintesi',
   'questionnaire_type': 'QPCC',
   'sort_order': 7,
   'label': "7. Sintesi e Piano d'Azione",
-  'prompt': 'Final summary of the QPCC path: integrate what emerged across the 5 areas and build a portrait '
-            "of the student's competences and beliefs (strengths and areas for growth, in words, without "
-            'scores), with recurring resources, areas to work on, ONE practical suggestion, and points to '
-            'review it at 7, 30 and 90 days. On the last line put only [[AVANZA_STEP]].',
+  'prompt': 'Integrate the four interconnected dimensions and all ten canonical QPCC scales '
+            'explored (A1 A2 A3 V1 V2 C1 C2 M1 M2 M3). Build a qualitative portrait without '
+            'assigning scores or diagnoses. Distinguish M2 ego orientation from capability and '
+            'causal attributions. Summarise resources and difficulties grounded in the '
+            'conversation; distinguish counselor proposals from the person’s commitments and keep '
+            'only agreed timeframes. At most ONE new practical suggestion only when permitted and '
+            'supported by a certified candidate. End with one reflection question and '
+            '[[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-summary',
-  'color_theme': 'purple',
+  'color_theme': 'slate',
   'label_i18n': {'en': '7. Synthesis and Action Plan',
                  'es': '7. Síntesis y Plan de Acción',
                  'fr': "7. Synthèse et Plan d'Action",

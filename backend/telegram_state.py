@@ -99,6 +99,10 @@ BOT_TEXTS = {
         "it": "Valori non validi (devono essere interi 1-9): {invalid}",
         "en": "Invalid values (must be integers 1-9): {invalid}",
     },
+    "qpcc_legacy_profile": {
+        "it": "Il vecchio profilo K1–K5 non è riutilizzabile. Inserisci un nuovo profilo QPCC con dieci stanine 1–9.",
+        "en": "The old K1–K5 profile cannot be reused. Enter a new QPCC profile with ten stanines 1–9.",
+    },
     "scores_none": {
         "it": "Non ho riconosciuto punteggi nel messaggio. Formato: C1=7 C2=5 ...",
         "en": "I could not read any scores. Format: C1=7 C2=5 ...",
@@ -274,7 +278,7 @@ SCORE_EXAMPLES = {
     "QSAr": "C1r=7 C2r=5 C3r=3 C4r=6 A1r=6 A2r=7 A3r=5 A4r=3",
     "ZTPI": "T1=4 T2=7 T3=5 T4=3 T5=6",
     "QPCS": "S1=5 S2=6 S3=4 S4=7 S5=5",
-    "QPCC": "K1=5 K2=6 K3=4 K4=7 K5=5",
+    "QPCC": "A1=5 A2=6 A3=4 V1=7 V2=5 C1=6 C2=7 M1=5 M2=4 M3=6",
     "QAP": "AD1=5 AD2=6 AD3=4 AD4=7",
 }
 
@@ -432,6 +436,9 @@ def get_active_link(db: Session, telegram_user_id: int) -> models.TelegramAccoun
 
 def allowed_factor_codes(db: Session, questionnaire_type: str) -> list[str]:
     """Codici fattore ammessi, dal DB (Factor) con fallback al catalogo statico."""
+    if questionnaire_type == 'QPCC':
+        from .qpcc import CODES
+        return list(CODES)
     rows = (
         db.query(models.Factor)
         .filter(models.Factor.instrument_code == questionnaire_type)
@@ -494,6 +501,11 @@ def format_scores_context(db: Session, questionnaire_type: str, scores: dict | N
     if questionnaire_type == "IDEA":
         return "CONTESTO STRUMENTO IDEA: messa a fuoco di un'idea attraverso una mappa, senza punteggi numerici."
     scores = scores or {}
+    if questionnaire_type == 'QPCC':
+        from .qpcc import names, validate_scores
+        validate_scores(scores)
+        labels = names(language)
+        return '\n'.join(f'- {code} ({label}): {scores[code]}/9' for code, label in labels.items())
     factors = {
         f.code: f
         for f in db.query(models.Factor)
@@ -618,6 +630,8 @@ async def _call_chat(db: Session, state: models.TelegramConversationState, *, me
                      memory_message: str | None = None, internal: bool = False) -> str | None:
     """Invoca la pipeline chat web con l'identita' dello studente collegato."""
     from .routes.chat import chat as chat_endpoint
+    if not await _require_qpcc_scores(db, state):
+        return None
     request = ChatRequest(
         message=message,
         memory_message=memory_message,
@@ -673,6 +687,8 @@ async def _send_answer(chat_id: int, text: str, language: str,
 
 
 async def _run_step(db: Session, state: models.TelegramConversationState, step: models.GuidedStep) -> None:
+    if not await _require_qpcc_scores(db, state):
+        return
     state.state = "in_step"
     state.step_id = step.id
     db.commit()
@@ -693,6 +709,8 @@ async def _start_flow(db: Session, state: models.TelegramConversationState) -> N
     if await _deny_tool(db, state, state.questionnaire_type):
         return
 
+    if not await _require_qpcc_scores(db, state):
+        return
     state.session_id = str(uuid.uuid4())
     state.conversation_id = None
     if state.questionnaire_type in SCORE_QUESTIONNAIRES:
@@ -831,6 +849,22 @@ def _instrument_keyboard(db: Session, username: str | None = None) -> list[list[
     return rows
 
 
+async def _require_qpcc_scores(db: Session, state: models.TelegramConversationState) -> bool:
+    if state.questionnaire_type != 'QPCC':
+        return True
+    from .qpcc import validate_scores
+    try:
+        validate_scores(state.scores)
+    except ValueError:
+        state.state = 'enter_scores'
+        state.scores = {}
+        db.commit()
+        await telegram_bot.send_message(state.telegram_chat_id, _t('qpcc_legacy_profile', state.language))
+        await _prompt_scores(db, state)
+        return False
+    return True
+
+
 async def _prompt_scores(db: Session, state: models.TelegramConversationState) -> None:
     qtype = state.questionnaire_type
     codes = allowed_factor_codes(db, qtype)
@@ -840,8 +874,10 @@ async def _prompt_scores(db: Session, state: models.TelegramConversationState) -
         .filter(models.Factor.instrument_code == qtype)
         .all()
     }
+    from .qpcc import names as qpcc_names
+    qpcc_labels = qpcc_names(state.language) if qtype == 'QPCC' else {}
     factor_lines = "\n".join(
-        f"- {code} ({_factor_label(factors.get(code), code, state.language)})"
+        f"- {code} ({qpcc_labels.get(code) or _factor_label(factors.get(code), code, state.language)})"
         for code in codes
     )
     example = SCORE_EXAMPLES.get(qtype) or " ".join(f"{c}=5" for c in codes[:4])
@@ -898,6 +934,8 @@ def step_instructions_message(questionnaire_type: str, step_prompt: str | None, 
 
 async def _handle_free_text(db: Session, state: models.TelegramConversationState, text: str) -> None:
     if await _deny_tool(db, state, state.questionnaire_type):
+        return
+    if not await _require_qpcc_scores(db, state):
         return
 
     steps = {s.id: s for s in _steps(db, state.questionnaire_type)}

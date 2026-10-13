@@ -231,31 +231,11 @@ STEP_LABEL_I18N: Dict[str, Dict[str, str]] = {
         "fr": "0. Pacte de Collaboration", "de": "0. Kooperationsvereinbarung",
         "sv": "0. Samarbetsöverenskommelse",
     },
-    "qpcc-comunicazione": {
-        "en": "2. Public Speaking", "es": "2. Comunicación en Público",
-        "fr": "2. Communication en Public", "de": "2. Sprechen vor Publikum",
-        "sv": "2. Att tala inför publik",
-    },
-    "qpcc-controllo": {
-        "en": "3. Anxiety, Control and Responsibility", "es": "3. Ansiedad, Control y Responsabilidad",
-        "fr": "3. Anxiété, Contrôle et Responsabilité", "de": "3. Angst, Kontrolle und Verantwortung",
-        "sv": "3. Oro, kontroll och ansvar",
-    },
-    "qpcc-volizione": {
-        "en": "4. Volition and Self-regulation", "es": "4. Volición y Autorregulación",
-        "fr": "4. Volition et Autorégulation", "de": "4. Volition und Selbstregulation",
-        "sv": "4. Volition och självreglering",
-    },
-    "qpcc-elaborazione": {
-        "en": "5. Elaboration Strategies", "es": "5. Estrategias de Elaboración",
-        "fr": "5. Stratégies d'Élaboration", "de": "5. Verarbeitungsstrategien",
-        "sv": "5. Bearbetningsstrategier",
-    },
-    "qpcc-convinzioni": {
-        "en": "6. Beliefs about Oneself", "es": "6. Convicciones sobre Sí Mismo",
-        "fr": "6. Convictions sur Soi", "de": "6. Überzeugungen über sich selbst",
-        "sv": "6. Föreställningar om sig själv",
-    },
+    'qpcc-comunicazione': {'en': '2. Public speaking anxiety', 'es': '2. Ansiedad al hablar en público', 'fr': '2. Anxiété de parler en public', 'de': '2. Angst vor öffentlichem Sprechen', 'sv': '2. Oro inför att tala inför publik'},
+    'qpcc-controllo': {'en': '3. Insecurity and inadequacy', 'es': '3. Inseguridad e inadecuación', 'fr': '3. Insécurité et inadéquation', 'de': '3. Unsicherheit und Unzulänglichkeit', 'sv': '3. Osäkerhet och otillräcklighet'},
+    'qpcc-volizione': {'en': '4. Volitional dimension', 'es': '4. Dimensión volitiva', 'fr': '4. Dimension volitive', 'de': '4. Volitionale Dimension', 'sv': '4. Viljemässig dimension'},
+    'qpcc-elaborazione': {'en': '5. Cognitive dimension', 'es': '5. Dimensión cognitiva', 'fr': '5. Dimension cognitive', 'de': '5. Kognitive Dimension', 'sv': '5. Kognitiv dimension'},
+    'qpcc-convinzioni': {'en': '6. Motivational dimension', 'es': '6. Dimensión motivacional', 'fr': '6. Dimension motivationnelle', 'de': '6. Motivationale Dimension', 'sv': '6. Motivationsmässig dimension'},
     "qpcc-sintesi": {
         "en": "7. Synthesis and Action Plan", "es": "7. Síntesis y Plan de Acción",
         "fr": "7. Synthèse et Plan d'Action", "de": "7. Synthese und Aktionsplan",

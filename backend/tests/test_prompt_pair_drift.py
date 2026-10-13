@@ -93,12 +93,17 @@ def _default_for(key: str) -> str:
     raise AssertionError(f"chiave {key} assente dai default")
 
 
-def test_qpcc_and_qap_share_one_summary_text():
+def test_qpcc_and_qap_summaries_keep_their_domain_and_shared_output_safeguards():
     # Due file distinti con lo stesso identico testo: se una direttiva entra in
     # uno solo, il percorso gemello resta indietro senza segnali.
     qpcc = _default_for("prompt_qpcc_summary")
     qap = _default_for("prompt_qap_summary")
-    assert qpcc == qap, "prompt_qpcc_summary e prompt_qap_summary sono divergenti"
+    assert '[CANONICAL QPCC CONTRACT]' in qpcc
+    assert 'ten' in qpcc and 'QPCC' not in qap
+    for text in (qpcc, qap):
+        assert '[[AVANZA_STEP]]' in text
+        assert 'certified candidate' in text
+        assert 'agreed timeframes' in text
 
 
 def test_the_three_competence_metas_stay_one_text():

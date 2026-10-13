@@ -512,84 +512,134 @@
     ]
   },
   {
-    "id": "QPCC:K1",
+    "id": "QPCC:A1",
     "icon": "explanation",
     "labels": {
-      "it": "Comunicazione in pubblico",
-      "en": "Public speaking",
-      "es": "Comunicación en público",
-      "fr": "Communication en public",
-      "de": "Sprechen vor Publikum",
-      "sv": "Tala inför andra"
+      "it": "Ansia di parlare in pubblico",
+      "en": "Public speaking anxiety",
+      "es": "Ansiedad al hablar en público",
+      "fr": "Anxiété de parler en public",
+      "de": "Angst vor öffentlichem Sprechen",
+      "sv": "Oro inför att tala inför publik"
     },
-    "aliases": [
-      "Public speaking",
-      "Tala inför andra"
-    ]
+    "aliases": []
   },
   {
-    "id": "QPCC:K2",
-    "icon": "heart",
+    "id": "QPCC:A2",
+    "icon": "explanation",
     "labels": {
-      "it": "Gestione di ansia e responsabilità",
-      "en": "Managing anxiety & responsibility",
-      "es": "Gestión de la ansiedad y la responsabilidad",
-      "fr": "Gestion de l'anxiété et de la responsabilité",
-      "de": "Umgang mit Angst und Verantwortung",
-      "sv": "Hantera ångest & ansvar"
+      "it": "Senso di insicurezza",
+      "en": "Sense of insecurity",
+      "es": "Sensación de inseguridad",
+      "fr": "Sentiment d’insécurité",
+      "de": "Gefühl der Unsicherheit",
+      "sv": "Känsla av osäkerhet"
     },
-    "aliases": [
-      "Managing anxiety & responsibility",
-      "Hantera ångest & ansvar"
-    ]
+    "aliases": []
   },
   {
-    "id": "QPCC:K3",
+    "id": "QPCC:A3",
+    "icon": "explanation",
+    "labels": {
+      "it": "Senso di inadeguatezza",
+      "en": "Sense of inadequacy",
+      "es": "Sensación de inadecuación",
+      "fr": "Sentiment d’inadéquation",
+      "de": "Gefühl der Unzulänglichkeit",
+      "sv": "Känsla av otillräcklighet"
+    },
+    "aliases": []
+  },
+  {
+    "id": "QPCC:V1",
     "icon": "tasks",
     "labels": {
-      "it": "Volizione e autoregolazione",
-      "en": "Volition & self-regulation",
-      "es": "Volición y autorregulación",
-      "fr": "Volition et autorégulation",
-      "de": "Volition und Selbstregulation",
-      "sv": "Vilja & självreglering"
+      "it": "Autoregolazione e perseveranza sul lavoro",
+      "en": "Self-regulation and perseverance at work",
+      "es": "Autorregulación y perseverancia en el trabajo",
+      "fr": "Autorégulation et persévérance au travail",
+      "de": "Selbstregulation und Ausdauer bei der Arbeit",
+      "sv": "Självreglering och uthållighet i arbetet"
     },
-    "aliases": [
-      "Volition & self-regulation",
-      "Vilja & självreglering"
-    ]
+    "aliases": []
   },
   {
-    "id": "QPCC:K4",
+    "id": "QPCC:V2",
+    "icon": "tasks",
+    "labels": {
+      "it": "Far fronte a sfide personali (coping)",
+      "en": "Coping with personal challenges",
+      "es": "Afrontar desafíos personales (coping)",
+      "fr": "Faire face aux défis personnels (coping)",
+      "de": "Persönliche Herausforderungen bewältigen (Coping)",
+      "sv": "Hantera personliga utmaningar (coping)"
+    },
+    "aliases": []
+  },
+  {
+    "id": "QPCC:C1",
     "icon": "connections",
     "labels": {
-      "it": "Strategie di elaborazione",
-      "en": "Elaboration strategies",
-      "es": "Estrategias de elaboración",
-      "fr": "Stratégies d'élaboration",
-      "de": "Elaborationsstrategien",
-      "sv": "Bearbetningsstrategier"
+      "it": "Competenze elaborative",
+      "en": "Elaborative competences",
+      "es": "Competencias elaborativas",
+      "fr": "Compétences élaboratives",
+      "de": "Elaborative Kompetenzen",
+      "sv": "Bearbetningskompetenser"
     },
-    "aliases": [
-      "Elaboration strategies",
-      "Bearbetningsstrategier"
-    ]
+    "aliases": []
   },
   {
-    "id": "QPCC:K5",
+    "id": "QPCC:C2",
+    "icon": "explanation",
+    "labels": {
+      "it": "Competenza comunicativa",
+      "en": "Communicative competence",
+      "es": "Competencia comunicativa",
+      "fr": "Compétence communicative",
+      "de": "Kommunikative Kompetenz",
+      "sv": "Kommunikativ kompetens"
+    },
+    "aliases": []
+  },
+  {
+    "id": "QPCC:M1",
     "icon": "individual",
     "labels": {
-      "it": "Convinzioni su di sé",
-      "en": "Beliefs about oneself",
-      "es": "Creencias sobre uno mismo",
-      "fr": "Croyances sur soi",
-      "de": "Überzeugungen über sich selbst",
-      "sv": "Föreställningar om sig själv"
+      "it": "Percezione di competenza",
+      "en": "Perceived competence",
+      "es": "Percepción de competencia",
+      "fr": "Perception de compétence",
+      "de": "Wahrgenommene Kompetenz",
+      "sv": "Upplevd kompetens"
     },
-    "aliases": [
-      "Beliefs about oneself",
-      "Föreställningar om sig själv"
-    ]
+    "aliases": []
+  },
+  {
+    "id": "QPCC:M2",
+    "icon": "individual",
+    "labels": {
+      "it": "Orientamento all’io",
+      "en": "Ego orientation",
+      "es": "Orientación al yo",
+      "fr": "Orientation vers le moi",
+      "de": "Ich-Orientierung",
+      "sv": "Jagorientering"
+    },
+    "aliases": []
+  },
+  {
+    "id": "QPCC:M3",
+    "icon": "individual",
+    "labels": {
+      "it": "Attribuzioni causali (locus of control interno)",
+      "en": "Causal attributions (internal locus of control)",
+      "es": "Atribuciones causales (locus de control interno)",
+      "fr": "Attributions causales (locus de contrôle interne)",
+      "de": "Kausale Attributionen (interne Kontrollüberzeugung)",
+      "sv": "Orsaksförklaringar (inre kontrollokus)"
+    },
+    "aliases": []
   },
   {
     "id": "QAP:AD1",
