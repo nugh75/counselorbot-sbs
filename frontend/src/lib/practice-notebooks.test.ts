@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { PRACTICE_NOTEBOOK_FIELDS, generatePracticeScores, parsePracticeNotebooks, parsePracticeResults, practiceNotebookBody } from './practice-notebooks.ts';
+import { PRACTICE_NOTEBOOK_FIELDS, generatePracticeScores, parsePracticeNotebooks, parsePracticeResults, practiceNotebookBody, practiceResultChatHref } from './practice-notebooks.ts';
 
 test('i campi coincidono con quelli che il server porta nel prompt', () => {
     assert.deepEqual(
@@ -54,4 +54,8 @@ test('il repertorio scarta righe malformate', () => {
     ]);
     assert.deepEqual(rows.map((row: { id: number }) => row.id), [1]);
     assert.deepEqual(parsePracticeResults(null), []);
+});
+
+test('practice chat links identify the saved profile and notebook without scores', () => {
+    assert.equal(practiceResultChatHref({ id: 91, notebook_id: 6, questionnaire_type: 'QAP', scores: { AD1: 9 }, session_id: 'original', source: 'manual' }), '/?start=QAP&practice_notebook_id=6&practice_result_id=91');
 });

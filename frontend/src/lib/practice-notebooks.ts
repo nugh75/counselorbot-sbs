@@ -70,6 +70,12 @@ export interface PracticeResult {
     created_at?: string | null;
 }
 
+// Riuso dell'ingresso guidato esistente: i punteggi si rileggono dall'API
+// proprietaria all'arrivo, senza passarli nell'URL o nelle compilazioni reali.
+export function practiceResultChatHref(result: PracticeResult): string {
+    return `/?start=${encodeURIComponent(result.questionnaire_type)}&practice_notebook_id=${result.notebook_id}&practice_result_id=${result.id}`;
+}
+
 export function parsePracticeResults(payload: unknown): PracticeResult[] {
     if (!Array.isArray(payload)) return [];
     return payload.filter((row): row is PracticeResult =>

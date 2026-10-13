@@ -180,3 +180,32 @@ async def delete_practice_result(
     db.delete(result)
     db.commit()
     return {"deleted": result_id}
+
+
+@router.put("/teacher/practice-notebooks/{notebook_id}/results/{result_id}", response_model=schemas.PracticeResultResponse)
+async def update_practice_result(
+    notebook_id: int,
+    result_id: int,
+    payload: schemas.PracticeResultUpdate,
+    current_user: dict = Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Salvataggio esplicito dei punteggi; identità e sessione restano invariate."""
+    notebook = _owned(db, current_user["username"], notebook_id)
+    result = db.query(models.TeacherPracticeResult).filter(
+        models.TeacherPracticeResult.id == result_id,
+        models.TeacherPracticeResult.notebook_id == notebook.id,
+    ).first()
+    if result is None:
+        raise HTTPException(status_code=404, detail="Practice result not found")
+    if result.questionnaire_type == "QPCC":
+        from ..qpcc import validate_scores
+
+        try:
+            validate_scores(payload.scores)
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
+    result.scores = payload.scores
+    db.commit()
+    db.refresh(result)
+    return result
