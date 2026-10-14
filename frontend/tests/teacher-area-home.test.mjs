@@ -92,12 +92,16 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/docente/percorsi"]').count(), 1);
     const ctaBox = await page.locator('[data-testid="didactic-design-cta"]').boundingBox();
     assert.ok(ctaBox && ctaBox.height >= 44, 'didactic design CTA meets 44px touch target');
-    // I cataloghi non contengono più il link solitario goal-path: contengono solo gli slug standard
-    const catalogs = await page.locator('nav[aria-labelledby="teacher-group-catalogs"] a').evaluateAll(rows => rows.map(row => row.getAttribute('href')));
-    assert.deepEqual(catalogs.slice(0, 3), ['/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali']);
-    // link illustrati dei gruppi
-    for (const href of ['/docente/classi', '/docente/percorsi', '/docente/incontri', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
-        assert.ok(await page.locator(`nav a[href="${href}"]`).count() >= 1, `link ${href}`);
+    // Sezione Libreria e risorse didattiche accorpata
+    await page.locator('[data-testid="teacher-resources-library-section"]').waitFor();
+    const resourcesLink = page.locator('[data-testid="teacher-resources-main-link"]');
+    assert.equal(await resourcesLink.getAttribute('href'), '/docente/risorse');
+    assert.equal(await page.locator('[data-testid="teacher-resources-strategies-link"]').getAttribute('href'), '/docente/strategie');
+    assert.equal(await page.locator('[data-testid="teacher-resources-materials-link"]').getAttribute('href'), '/docente/materiali');
+
+    // link illustrati dei gruppi e del flusso didattico
+    for (const href of ['/docente/classi', '/docente/percorsi', '/docente/incontri', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/risorse', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
+        assert.ok(await page.locator(`a[href="${href}"]`).count() >= 1, `link ${href}`);
     }
     assert.ok(await page.locator('[data-teacher-area-home] img').first().isVisible());
     // S16: the home is an entry point and never mounts the notebook form.
@@ -195,16 +199,22 @@ for (const [slug, h1, marker] of [
     await page.close();
 }
 
-// 3. Sottopagine cataloghi
+// 3. Sottopagine e Hub risorse
 for (const [slug, marker] of [
     ['catalogo-obiettivi', 'Nuova proposta'],
     ['strategie', 'Nuova strategia'],
     ['materiali', 'Nuova voce'],
+    ['risorse', 'Nuova strategia'],
 ]) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
     const { errors } = await prepare(page);
     await page.goto(`${origin}/docente/${slug}`, { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: marker, exact: true }).waitFor();
+    if (slug === 'risorse') {
+        // Verifica switch del tab a materiali
+        await page.locator('[data-testid="tab-materiali"]').click();
+        await page.getByRole('button', { name: 'Nuova voce', exact: true }).waitFor();
+    }
     assert.deepEqual(errors, []);
     await page.close();
 }

@@ -8,6 +8,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { DidacticDesignSection } from './DidacticDesignSection';
 import { MyClassesSection } from './MyClassesSection';
 import { PracticeGymSection } from './PracticeGymSection';
+import { TeacherResourcesSection } from './TeacherResourcesSection';
 import { teacherAreaName, teacherAreaDescription, teacherAreaText } from '@/lib/i18n-teacher-area';
 import { teacherAreaGroups, teacherAreaImages, type TeacherAreaSlug } from '@/lib/teacher-area';
 
@@ -39,7 +40,6 @@ export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; ins
     const l = (key: Parameters<typeof teacherAreaText>[1]) => teacherAreaText(lang, key);
 
     const classroomGroup = teacherAreaGroups.find(g => g.id === 'classroom');
-    const catalogsGroup = teacherAreaGroups.find(g => g.id === 'catalogs');
     const researchGroup = teacherAreaGroups.find(g => g.id === 'research');
 
     const renderGroup = (group: typeof teacherAreaGroups[number]) => {
@@ -82,7 +82,7 @@ export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; ins
                 </nav>
             </section>
 
-            {catalogsGroup && renderGroup(catalogsGroup)}
+            <TeacherResourcesSection />
             {researchGroup && renderGroup(researchGroup)}
 
             <PersonalAIConnections area="docente" />
