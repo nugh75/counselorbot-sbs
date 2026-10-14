@@ -1,10 +1,10 @@
 // Struttura dell'Area docenti, speculare a personal-area.ts: slugs raggruppati
 // per scopo, immagini d'ingresso e testi in i18n-teacher-area.ts.
-export const teacherAreaSlugs = ['istituti', 'classi', 'percorsi', 'incontri', 'assegnazioni', 'catalogo-obiettivi', 'strategie', 'materiali', 'orientamento', 'somministrazioni', 'taccuino', 'taccuini-prova'] as const;
+export const teacherAreaSlugs = ['istituti', 'classi', 'compilazioni', 'percorsi', 'incontri', 'assegnazioni', 'catalogo-obiettivi', 'strategie', 'materiali', 'orientamento', 'somministrazioni', 'taccuino', 'taccuini-prova'] as const;
 export type TeacherAreaSlug = (typeof teacherAreaSlugs)[number];
 
 export const teacherAreaGroups = [
-    { id: 'classroom', slugs: ['istituti', 'classi', 'percorsi', 'incontri', 'assegnazioni'] },
+    { id: 'classroom', slugs: ['istituti', 'classi', 'compilazioni', 'percorsi', 'incontri', 'assegnazioni'] },
     { id: 'catalogs', slugs: ['catalogo-obiettivi', 'strategie', 'materiali'] },
     { id: 'research', slugs: ['orientamento', 'somministrazioni'] },
 ] as const;
@@ -14,6 +14,7 @@ export const teacherAreaImages: Record<TeacherAreaSlug, string> = {
     'taccuini-prova': '/images/platform/chat-guidata.png',
     istituti: '/images/platform/classi.png',
     classi: '/images/platform/classi.png',
+    compilazioni: '/images/platform/compilazioni.png',
     percorsi: '/images/platform/percorsi-classe.png',
     incontri: '/images/platform/incontri.png',
     assegnazioni: '/images/platform/assegnazioni.png',

@@ -42,7 +42,7 @@ function ClassCompilations({ groupId }: { groupId: number }) {
     </ul>;
 }
 
-export function ClassCompilationsSection() {
+export function ClassCompilationsSection({ showHeading = true }: { showHeading?: boolean } = {}) {
     const { lang, t } = useI18n();
     const id = useId();
     const [selected, setSelected] = useState('');
@@ -50,10 +50,12 @@ export function ClassCompilationsSection() {
     const l = (key: Parameters<typeof classCompilationsText>[1]) => classCompilationsText(lang, key);
     const ready = !groups.loading && !groups.failed && !groups.forbidden;
     const group = ready ? groups.data?.find(row => String(row.id) === selected) : undefined;
-    return <Card as="section" className="min-w-0 p-4 sm:p-6" aria-labelledby={`${id}-title`} data-class-compilations>
-        <h2 id={`${id}-title`} className="text-lg font-bold text-slate-800">{l('title')}</h2>
-        <p className="mt-1 text-sm text-slate-600">{l('description')}</p>
-        <div className="mt-4 space-y-3">
+    return <Card as="section" className="min-w-0 p-4 sm:p-6" aria-labelledby={showHeading ? `${id}-title` : undefined} data-class-compilations>
+        {showHeading && <>
+            <h2 id={`${id}-title`} className="text-lg font-bold text-slate-800">{l('title')}</h2>
+            <p className="mt-1 text-sm text-slate-600">{l('description')}</p>
+        </>}
+        <div className={showHeading ? 'mt-4 space-y-3' : 'space-y-3'}>
             {groups.forbidden ? <Callout variant="danger">{teacherAreaText(lang, 'forbidden')}</Callout>
                 : groups.loading ? <p role="status">{t('common.loading')}</p>
                     : groups.failed ? <Callout variant="danger"><p>{l('classesError')}</p><Button variant="secondary" onClick={() => void groups.reload()}>{t('setup.retry')}</Button></Callout>

@@ -7,7 +7,6 @@ import { ArrowRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { teacherAreaName, teacherAreaDescription, teacherAreaText } from '@/lib/i18n-teacher-area';
 import { teacherAreaGroups, teacherAreaImages, type TeacherAreaSlug } from '@/lib/teacher-area';
-import { ClassCompilationsSection } from './ClassCompilationsSection';
 
 // Panoramica illustrata dell'Area docenti: stessa grammatica di PersonalAreaHome
 // (gruppi per scopo, immagine + nome + descrizione, due colonne su desktop).
@@ -42,7 +41,6 @@ export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; ins
                 <TeacherAreaEntry slug="taccuino" />
                 <TeacherAreaEntry slug="taccuini-prova" />
             </div>
-            <ClassCompilationsSection />
             {teacherAreaGroups.map(group => ({ ...group, slugs: group.slugs.filter(slug => slug === 'istituti' ? institutes : teacher || slug !== 'orientamento') })).map(group => (
                 <section key={group.id} aria-labelledby={`teacher-group-${group.id}`}>
                     <h2 id={`teacher-group-${group.id}`} className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">{l(group.id)}</h2>
