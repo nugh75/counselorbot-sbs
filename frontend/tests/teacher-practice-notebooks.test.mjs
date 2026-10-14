@@ -523,8 +523,12 @@ for (const scenario of ['student', 'archived', 'missing', 'wrong-notebook', 'wro
         if (scenario === 'archived') store.rows[0].archived_at = '2026-10-13T08:00:00Z';
         if (scenario !== 'missing') store.results.push({ ...qapProfile, notebook_id: scenario === 'wrong-notebook' ? 2 : 1 });
         const type = scenario === 'wrong-instrument' ? 'QSA' : 'QAP';
-        await page.goto(`${origin}/?start=${type}&practice_notebook_id=1&practice_result_id=91`, { waitUntil: 'networkidle' });
-        await page.getByText('Operazione non riuscita. Riprova.', { exact: false }).first().waitFor();
+        // Il toast dura quattro secondi: attendilo mentre la pagina carica,
+        // senza far dipendere la verifica dall'inattività della rete.
+        await Promise.all([
+            page.getByText('Operazione non riuscita. Riprova.', { exact: false }).first().waitFor(),
+            page.goto(`${origin}/?start=${type}&practice_notebook_id=1&practice_result_id=91`, { waitUntil: 'domcontentloaded' }),
+        ]);
         assert.equal(await page.locator('#guided-composer').count(), 0);
         assert.equal(requests.filter(r => r.method === 'POST').length, 0);
         assert.deepEqual(errors, []);
