@@ -624,6 +624,8 @@ collegamenti, la sezione **Compilazioni degli studenti** permette di scegliere u
 classe o un gruppo gestito, proprio o condiviso. Mostra soltanto i risultati
 salvati dei partecipanti restituiti dalla vista classe esistente, dal più recente:
 username dello studente, strumento/questionario, data e punteggi quando disponibili.
+Quando una classe è selezionata, il collegamento «Vista d'insieme della classe»
+permette di passare direttamente alla scheda dei risultati e dei partecipanti della classe.
 **Conversazione** apre su richiesta i messaggi già consultabili dalla classe,
 usando lo stesso componente e le stesse API di Classi e Piani di somministrazione.
 Il cambio classe svuota la vista precedente e interrompe le sue letture. Nessuna
@@ -742,11 +744,16 @@ assegna a una persona o a tutto un gruppo, anche vuoto: i nuovi iscritti ricevon
 le assegnazioni attive.
 La gestione dei gruppi è distinta dall’iscrizione personale a un gruppo.
 
-**Class settings and guide (S1–S9, #88–#95, #109).** From Teacher area →
-Classes, **Open class** opens `/docente/classi/{id}`; next to it, **Tools &
-counselors** and **Paths** open those tabs directly (`?tab=tools`, `?tab=paths`;
-`forum` and `audit` work too). Overview shows class
-context; **Tools & counselors** lets owners, co-teachers and administrators
+**Class settings and results overview (#88–#95, #109, #246).** From Teacher area →
+Classes, **Open class** opens `/docente/classi/{id}`; next to it, **Participants & results**, **Tools &
+counselors** and **Paths** open those tabs directly (`?tab=students`, `?tab=tools`, `?tab=paths`;
+`forum` and `audit` work too).
+The **Participants & results** tab (`?tab=students`) provides an at-a-glance overview
+of student submissions and notes: an **Overview matrix** (table of students × completed
+instruments showing completion dates, compact scores, attempt count and an inspection card
+with full score factors and conversation transcript reader) and a **Participants list**
+offering participant notebooks (learner model), notes and teacher-to-student messaging.
+Overview shows class context; **Tools & counselors** lets owners, co-teachers and administrators
 choose student questionnaires, guided chats (including dynamic instruments),
 personal tools, Compass, Assistant and the class forum. Saves are explicit;
 category actions change only editable items. Errors retain drafts; a concurrent
