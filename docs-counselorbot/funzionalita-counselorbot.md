@@ -235,7 +235,8 @@ reali, il contesto resta senza taccuino. Uno studente non può usare taccuini di
 
 Sotto ogni taccuino di prova, **Profili nei questionari** permette di creare,
 generare, modificare ed eliminare profili fittizi QSA, QSAr, ZTPI, QPCS, QPCC e
-QAP. Il pulsante **Salva profilo** persiste i punteggi solo su richiesta esplicita;
+QAP. Il pulsante **Salva**, con icona di salvataggio, persiste i punteggi sia
+in creazione sia in modifica, senza aprire un questionario o avviare la chat;
 generazione e modifiche restano bozze fino al salvataggio. Un errore conserva la
 bozza per riprovare. I profili salvati restano disponibili dopo la ricarica.
 **Avvia chat guidata** sul profilo rilegge i punteggi salvati e apre il percorso
