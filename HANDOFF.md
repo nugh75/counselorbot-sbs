@@ -1,3 +1,28 @@
+# Handoff S10: Area Docente - Navigazione secondaria coerente e breadcrumbs (Issue #268)
+Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
+
+- Completamento Issue #268 (Milestone 14 'Riorganizzazione Area Docente: didattica attiva, classi e palestra di prova').
+- Titolo: 'Area Docente: Navigazione secondaria coerente e breadcrumbs tra sezioni e classi'.
+- Branch: `feature/teacher-area-breadcrumbs-navigation`
+- Modifiche realizzate:
+  1. `frontend/src/lib/teacher-breadcrumbs.ts`: modulo logico di risoluzione delle breadcrumb gerarchiche per ciascuna sottopagina dell'Area Docente (`getTeacherBreadcrumbsForSlug`), con schema coerente «Area docenti (/docente) › [Sezione genitore opzionale] › [Sezione attiva]».
+  2. `frontend/src/components/teacher/TeacherBreadcrumbs.tsx`: componente breadcrumbs accessibile riutilizzabile, conforme agli standard WAI-ARIA (`<nav aria-label="...">` con lista semantica `<ol>` / `<li>`, `aria-current="page"` per l'elemento foglia attivo, touch target >= 44px con `min-h-[44px]` e supporto a controlli contestuali aggiuntivi via prop `extra`).
+  3. `frontend/src/components/teacher/ClassQuickSwitcher.tsx` e `frontend/src/lib/teacher-quick-switcher.ts`: switcher rapido di classe integrato nell'Hub di classe `/docente/classi/{id}`, che consente al docente di passare istantaneamente da una classe all'altra preservando l'eventuale tab secondario attivo (`?tab=students`, `?tab=tools`, `?tab=paths`, `?tab=forum`, `?tab=audit`) senza dover tornare alla home o all'elenco classi.
+  4. `frontend/src/components/teacher/TeacherAreaHeader.tsx` e `TeacherAreaPage.tsx`: integrato `TeacherBreadcrumbs` in tutte le sottopagine `/docente/<slug>`, garantendo al contempo la retrocompatibilità totale con i selettori di test esistenti (`[data-teacher-area-header] a[href="/docente"]`).
+  5. `frontend/src/components/teacher/ClassSettingsPage.tsx`: integrati `TeacherBreadcrumbs` e `ClassQuickSwitcher` nell'intestazione della classe, visualizzando la gerarchia «Area docenti › [Nome Classe] (› [Sottosezione/Tab])» e il menu compatto per il cambio rapido di classe.
+  6. Nuove route dedicate con redirect: `frontend/src/app/docente/palestra/page.tsx` (reindirizza a `/docente/taccuini-prova`), `frontend/src/app/docente/obiettivi/page.tsx` (reindirizza a `/docente/catalogo-obiettivi`) e `frontend/src/app/docente/proposte/page.tsx` (reindirizza a `/docente/assegnazioni`).
+  7. `frontend/src/lib/i18n-teacher-area.ts`: definite tutte le 21 nuove etichette localizzate nelle 6 lingue ufficiali (`it`, `en`, `es`, `fr`, `de`, `sv`).
+  8. `frontend/src/lib/teacher-breadcrumbs.test.ts` e `frontend/src/lib/teacher-area.test.ts`: test unitari per la generazione corretta delle breadcrumb, completezza i18n nelle 6 lingue, calcolo URL dello switcher con preservazione dei tab e filtraggio gruppi attivi.
+  9. `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`: documentazione allineata e verificata con `make guidance-refresh` e `make guidance-check`.
+- Verifiche superate:
+  - Unit test frontend: `npm test` (452/452 superati, 0 errori).
+  - TypeScript: `npx tsc --noEmit` (0 errori).
+  - i18n: `node scripts/check-i18n.mjs` (3.329 chiavi allineate nelle 6 lingue, nessun testo JSX hardcoded).
+  - Platform guidance: `make guidance-check` e check contro `origin/main` (SUCCESS).
+- Vincoli rispettati: nessun merge autonomo (in attesa di review utente da app mobile), nessun deploy, nessun comando sudo.
+
+---
+
 # Handoff S9: Area Docente - Accorpamento Libreria risorse e snellimento cataloghi (Issue #267)
 Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
 

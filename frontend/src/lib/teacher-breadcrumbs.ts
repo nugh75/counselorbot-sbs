@@ -1,0 +1,102 @@
+import type { Lang } from './i18n.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { teacherAreaText } from './i18n-teacher-area.ts';
+import type { TeacherAreaSlug } from './teacher-area.ts';
+
+export interface TeacherBreadcrumbItem {
+    label: string;
+    href?: string;
+    current?: boolean;
+}
+
+/**
+ * Mappatura gerarchica delle breadcrumb per ciascuna sottopagina dell'Area Docente.
+ * Schema generale:
+ * - Radice: "Area docenti" (/docente)
+ * - Hub genitore intermedio se applicabile (es. /docente/risorse per strategie e materiali)
+ * - Pagina o sezione attiva finale contrassegnata come current.
+ */
+export function getTeacherBreadcrumbsForSlug(slug: TeacherAreaSlug, lang: Lang): TeacherBreadcrumbItem[] {
+    const root: TeacherBreadcrumbItem = {
+        label: teacherAreaText(lang, 'title'),
+        href: '/docente',
+    };
+
+    switch (slug) {
+        case 'strategie':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbRisorse'), href: '/docente/risorse' },
+                { label: teacherAreaText(lang, 'breadcrumbStrategie'), current: true },
+            ];
+        case 'materiali':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbRisorse'), href: '/docente/risorse' },
+                { label: teacherAreaText(lang, 'breadcrumbMateriali'), current: true },
+            ];
+        case 'taccuini-prova':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbPalestra'), href: '/docente/palestra' },
+                { label: teacherAreaText(lang, 'breadcrumbTaccuiniProva'), current: true },
+            ];
+        case 'catalogo-obiettivi':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbObiettivi'), current: true },
+            ];
+        case 'percorsi':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbPercorsi'), current: true },
+            ];
+        case 'assegnazioni':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbProposte'), current: true },
+            ];
+        case 'taccuino':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbTaccuino'), current: true },
+            ];
+        case 'risorse':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbRisorse'), current: true },
+            ];
+        case 'classi':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbClassi'), current: true },
+            ];
+        case 'compilazioni':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbCompilazioni'), current: true },
+            ];
+        case 'incontri':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbIncontri'), current: true },
+            ];
+        case 'istituti':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbIstituti'), current: true },
+            ];
+        case 'orientamento':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbOrientamento'), current: true },
+            ];
+        case 'somministrazioni':
+            return [
+                root,
+                { label: teacherAreaText(lang, 'breadcrumbSomministrazioni'), current: true },
+            ];
+        default:
+            return [root];
+    }
+}

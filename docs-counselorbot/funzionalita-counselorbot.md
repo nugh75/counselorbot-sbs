@@ -753,6 +753,9 @@ assegna a una persona o a tutto un gruppo, anche vuoto: i nuovi iscritti ricevon
 le assegnazioni attive.
 La gestione dei gruppi è distinta dall’iscrizione personale a un gruppo.
 
+**Navigazione secondaria e breadcrumbs accessibili dell'Area Docente (Issue #268).**
+In tutte le sottopagine dell'Area Docente (`/docente/<slug>` e nell'Hub di classe `/docente/classi/{id}`), la navigazione secondaria e di orientamento è standardizzata tramite il componente accessibile `TeacherBreadcrumbs` (`<nav aria-label="...">` con lista semantica `<ol>` / `<li>`, `aria-current="page"` sull'elemento attivo finale e target touch >= 44px). Lo schema gerarchico comune collega la radice «Area docenti» (`/docente`), le eventuali sezioni genitore (es. «Risorse didattiche» per Strategie e Letture/materiali, o «Palestra di prova» per i Taccuini di simulazione) e la sezione corrente. Nelle viste contestuali di classe (`/docente/classi/{id}`), il selettore rapido `ClassQuickSwitcher` (`<select>` accessibile con etichette tradotte nelle 6 lingue ufficiali) consente al docente di passare istantaneamente tra le proprie classi attive preservando il tab secondario attivo (partecipanti/risultati, strumenti, percorsi, forum) senza dover tornare alla home o all'elenco classi. Sono inoltre fornite le route e i redirect dedicati `/docente/palestra` (verso `/docente/taccuini-prova`), `/docente/obiettivi` (verso `/docente/catalogo-obiettivi`) e `/docente/proposte` (verso `/docente/assegnazioni`).
+
 **Class settings and results overview (#88–#95, #109, #246).** From Teacher area →
 Classes, **Open class** opens `/docente/classi/{id}`; next to it, **Participants & results**, **Tools &
 counselors** and **Paths** open those tabs directly (`?tab=students`, `?tab=tools`, `?tab=paths`;

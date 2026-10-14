@@ -15,6 +15,8 @@ export interface StudentGroup {
     created_at: string | null;
 }
 
+export type ClassGroup = StudentGroup;
+
 export function parseClassGroups(payload: unknown): StudentGroup[] {
     if (!Array.isArray(payload)) throw new Error('invalid groups');
     return payload as StudentGroup[];
