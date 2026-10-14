@@ -90,10 +90,32 @@ test('my classes dashboard section labels are fully localized across all 6 langu
     }
 });
 
-test('catalogs group contains only standard catalog slugs', () => {
-    const catalogsGroup = teacherAreaGroups.find(g => g.id === 'catalogs');
-    assert.ok(catalogsGroup, 'catalogs group exists');
-    assert.deepEqual([...catalogsGroup.slugs], ['catalogo-obiettivi', 'strategie', 'materiali']);
+test('resources group contains the unified library slug', () => {
+    const resourcesGroup = teacherAreaGroups.find(g => g.id === 'resources');
+    assert.ok(resourcesGroup, 'resources group exists');
+    assert.deepEqual([...resourcesGroup.slugs], ['risorse']);
+});
+
+test('resources library and hub labels are fully localized across all 6 languages', async () => {
+    // @ts-expect-error -- Node runs TypeScript files directly.
+    const { teacherAreaText } = await import('./i18n-teacher-area.ts');
+    const resourceKeys = [
+        'resources',
+        'resourcesSubtitle',
+        'resourcesCardDescription',
+        'resourcesTabStrategies',
+        'resourcesTabMaterials',
+        'resourcesHubDescription',
+        'resourcesDirectStrategies',
+        'resourcesDirectMaterials',
+    ] as const;
+
+    for (const key of resourceKeys) {
+        for (const lang of languages) {
+            const val = teacherAreaText(lang, key);
+            assert.ok(val && val.trim().length > 0, `missing label ${key} in ${lang}`);
+        }
+    }
 });
 
 test('practice gym and teacher profile labels are fully localized across all 6 languages', async () => {

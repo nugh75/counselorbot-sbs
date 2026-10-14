@@ -1,8 +1,17 @@
 'use client';
 
+import { Suspense } from 'react';
 import { TeacherAreaPage } from '@/components/teacher/TeacherAreaPage';
-import { CertifiedStrategiesPanel } from '@/components/admin/CertifiedStrategiesPanel';
+import { TeacherResourcesHub } from '@/components/teacher/TeacherResourcesHub';
 
 export default function TeacherStrategiesPage() {
-    return <TeacherAreaPage slug="strategie">{() => <CertifiedStrategiesPanel />}</TeacherAreaPage>;
+    return (
+        <TeacherAreaPage slug="strategie">
+            {() => (
+                <Suspense fallback={null}>
+                    <TeacherResourcesHub defaultTab="strategie" />
+                </Suspense>
+            )}
+        </TeacherAreaPage>
+    );
 }
