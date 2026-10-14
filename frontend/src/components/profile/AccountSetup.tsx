@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation';
 import { CounselorSelector } from '@/components/questionnaire/CounselorSelector';
 import { LearnerProfileCard } from './LearnerProfileCard';
 import { Button } from '@/components/ui/Button';
+import { Callout } from '@/components/ui/Callout';
 import { fetchAccountPreferences, saveAccountPreferences, safeAccountNext, type AccountPreferences } from '@/lib/account-preferences';
 import { getSelectedCounselorId } from '@/lib/counselor';
 import { useI18n } from '@/lib/i18n-context';
+import { personalAreaName } from '@/lib/i18n-personal-area';
 
 export function AccountSetup({ counselorOnly = false, onReturn }: { counselorOnly?: boolean; onReturn?: () => void }) {
     const router = useRouter();
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const [prefs, setPrefs] = useState<AccountPreferences | null>(null);
     const [error, setError] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -62,9 +64,21 @@ export function AccountSetup({ counselorOnly = false, onReturn }: { counselorOnl
         </header>
         {error && <div role="alert"><p>{t('setup.error')}</p><Button onClick={() => setRetry(n => n + 1)}>{t('setup.retry')}</Button></div>}
         {prefs && (counselorOnly || !prefs.counselor_ready ?
+            <>
+            {!prefs.counselor_ready && <Callout>
+                <p data-first-use-hint="counselor" className="hidden xl:block">{t('setup.counselorHint')}</p>
+                <p data-first-use-hint="counselor" className="xl:hidden">{t('setup.counselorHintCompact', { menu: t('header.menu') })}</p>
+            </Callout>}
             <CounselorSelector questionnaireType={instrument} questionnaireName={instrument} initialSelectedId={prefs.counselor_id ?? getSelectedCounselorId()} busy={busy}
-                onContinue={id => void finish(id)} onBack={goBack} /> :
-            !prefs.notebook_ready ? <LearnerProfileCard key={retry} variant="review" requireInitial onUnavailable={() => setError(true)} onDone={() => void finish(prefs.counselor_id, true)} /> :
+                onContinue={id => void finish(id)} onBack={goBack} />
+            </> :
+            !prefs.notebook_ready ? <>
+                <Callout>
+                    <p data-first-use-hint="notebook" className="hidden lg:block">{t('setup.notebookHint', { area: t('profile.nav'), notebook: personalAreaName(lang, 'taccuino') })}</p>
+                    <p data-first-use-hint="notebook" className="lg:hidden">{t('setup.notebookHintCompact', { area: t('profile.nav'), notebook: personalAreaName(lang, 'taccuino'), menu: t('header.menu') })}</p>
+                </Callout>
+                <LearnerProfileCard key={retry} variant="review" requireInitial onUnavailable={() => setError(true)} onDone={() => void finish(prefs.counselor_id, true)} />
+            </> :
             <Button disabled={busy} onClick={() => void finish(prefs.counselor_id, true)}>{t('counselor.continue')}</Button>)}
     </div>;
 }
