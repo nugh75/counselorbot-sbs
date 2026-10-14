@@ -17,6 +17,7 @@ const labels = {
     student: ['Studente', 'Student', 'Estudiante', 'Élève', 'Lernende Person', 'Elev'],
     instrument: ['Strumento', 'Tool', 'Herramienta', 'Outil', 'Werkzeug', 'Verktyg'],
     date: ['Data', 'Date', 'Fecha', 'Date', 'Datum', 'Datum'],
+    viewAllInClass: ["Vista d'insieme della classe", 'Class results overview', 'Vista de conjunto de la clase', 'Vue d’ensemble de la classe', 'Ergebnisübersicht der Klasse', 'Klassens resultatöversikt'],
 } satisfies Record<string, Localized>;
 
 export const classCompilationsText = (lang: Lang, key: keyof typeof labels) => labels[key][Math.max(0, languages.indexOf(lang))];

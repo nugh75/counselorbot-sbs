@@ -1,6 +1,8 @@
 'use client';
 
 import { useId, useState } from 'react';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { classCompilationsText } from '@/lib/i18n-class-compilations';
 import { teacherAreaText } from '@/lib/i18n-teacher-area';
@@ -64,7 +66,15 @@ export function ClassCompilationsSection() {
                                     {groups.data?.map(row => <option key={row.id} value={row.id}>{row.name}{row.school ? ` · ${row.school}` : ''}</option>)}
                                 </select>
                                 {/* A new class mounts fresh state and aborts all old list/transcript reads. */}
-                                {group && <ClassCompilations key={group.id} groupId={group.id} />}
+                                {group && <div className="space-y-3">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                                        <span className="text-xs font-semibold text-slate-700">{group.name}{group.school ? ` · ${group.school}` : ''}</span>
+                                        <Link href={`/docente/classi/${group.id}?tab=students`} className="inline-flex min-h-[44px] items-center gap-1.5 text-xs font-semibold text-indigo-700 underline-offset-4 hover:underline">
+                                            {l('viewAllInClass')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                                        </Link>
+                                    </div>
+                                    <ClassCompilations key={group.id} groupId={group.id} />
+                                </div>}
                             </>}
         </div>
     </Card>;

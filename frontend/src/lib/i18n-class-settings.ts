@@ -21,7 +21,7 @@ export const classSettingsTexts = {
     inactive: ["Archiviata", "Archived", "Archivada", "Archivée", "Archiviert", "Arkiverad"],
     customSettings: ["Impostazioni personalizzate", "Custom settings", "Opciones personalizadas", "Paramètres personnalisés", "Eigene Einstellungen", "Egna inställningar"],
     lockCount: ["Blocchi", "Locks", "Bloqueos", "Verrouillages", "Sperren", "Lås"],
-    students: ["Studenti", "Students", "Estudiantes", "Élèves", "Lernende", "Elever"],
+    students: ["Partecipanti e risultati", "Participants and results", "Participantes y resultados", "Participants et résultats", "Teilnehmende und Ergebnisse", "Deltagare och resultat"],
     studentsCanOpen: ["Gli studenti possono aprire discussioni", "Students can open discussions", "Los estudiantes pueden abrir debates", "Les élèves peuvent ouvrir des discussions", "Lernende können Diskussionen eröffnen", "Elever kan starta diskussioner"],
     premoderation: ["Approvazione prima della pubblicazione", "Approval before publication", "Aprobación antes de publicar", "Approbation avant publication", "Freigabe vor Veröffentlichung", "Godkännande före publicering"],
     setting_change: ["Modifica", "Change", "Cambio", "Modification", "Änderung", "Ändring"],
