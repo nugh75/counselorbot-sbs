@@ -1,3 +1,33 @@
+# Handoff S5: Vista d'insieme dei risultati e delle chat dei propri studenti (Issue #246)
+Data: 2026-10-14 | Stato: completato, PR pronta su main
+
+- Completamento Issue #246 (Milestone 12 'Incontro tutor PEF del 12 ottobre 2026').
+- Goal Diario: `5dac8109-93b1-44fb-acc4-c6b5aaa53df7`
+- Task Diario: `ab555dbb-20c3-4ee8-b1c2-242de063fe0b`
+- Branch: `feature/teacher-class-overview-matrix`
+- Obiettivi realizzati:
+  1. Scheda **Partecipanti e risultati** (`?tab=students`) aggiunta alle schede attive di `ClassSettingsPage.tsx` (`/docente/classi/{id}`): il docente consulta direttamente partecipanti, note/messaggi e risultati salvati.
+  2. **Vista d'insieme aggregata (matrice)**: `PlanStudentsPanel.tsx` integrato con toggle `Vista d'insieme` (matrice) ed `Elenco partecipanti`.
+     - Matrice responsive (`overflow-x-auto`) studenti × strumenti: data di completamento, punteggi sintetici, contatore tentativi multipli.
+     - Ispezione rapida: cliccando una casella compilata si apre la scheda di dettaglio con `StudentResultItem` e pulsante per leggere la chat completa.
+     - Totali di completamento per strumento (colonna) e per studente (riga).
+  3. Percorso docente fluido e continuo:
+     - Dalla dashboard `/docente`: link diretto «Vista d'insieme della classe» quando una classe è selezionata nella sezione Compilazioni.
+     - Dall'elenco classi `/docente/classi`: link diretto «Partecipanti e risultati» accanto ad «Apri classe», «Strumenti e counselor» e «Percorsi».
+  4. Localizzazione: tutte le etichette tradotte nelle 6 lingue ufficiali (`it`, `en`, `es`, `fr`, `de`, `sv`).
+  5. Documentazione e conformità:
+     - `docs-counselorbot/funzionalita-counselorbot.md` aggiornato.
+     - `docs/operations/teacher-class-results-overview.md` redatto.
+     - `make guidance-refresh` e `make guidance-check --base origin/main` superati.
+- Verifiche superate:
+  - Unit test frontend: `npm test --prefix frontend` (434/434 superati, 0 fallimenti).
+  - TypeScript: `tsc --noEmit -p frontend/tsconfig.json` (0 errori).
+  - i18n: `npm run i18n:check --prefix frontend` (3.329 chiavi allineate nelle 6 lingue).
+  - Platform guidance: `make guidance-check` e `python3 scripts/check-platform-guidance.py --check --base origin/main` (SUCCESS).
+- Vincoli rispettati: nessun merge della PR (in attesa di review utente da app mobile), nessun deploy, nessun comando sudo.
+
+---
+
 # Handoff S3: seconda integrazione di main per PR #260 (merge PR #261 e PR #259)
 Data: 2026-10-14 | Validazione completata; PR #260 MERGEABLE e CLEAN su GitHub
 

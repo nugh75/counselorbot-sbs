@@ -21,6 +21,7 @@ import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { ClassSettingLock } from './ClassSettingLock';
 import { ClassSettingsAudit } from './ClassSettingsAudit';
 import { ClassPathsTab } from './ClassPathsTab';
+import { PlanStudentsPanel } from '@/components/admin/PlanStudentsPanel';
 import { useTeacherAccessState } from './useTeacherAccessState';
 import { useTeacherResource } from './useTeacherResource';
 import { parseClassGroups } from './class-group-types';
@@ -298,10 +299,17 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
     const l = (key: TextKey) => classSettingsText(lang, key);
     const groups = useTeacherResource('/api/admin/groups', parseClassGroups);
     const settings = useTeacherResource(`/api/teacher/groups/${groupId}/settings`, parseClassSettings);
-    const [tab, setTab] = useState<'overview' | 'toolsTab' | 'paths' | 'forum' | 'audit'>(() =>
-        // ?tab=tools|paths|forum|audit opens that tab directly from the class list.
-        ({ tools: 'toolsTab', paths: 'paths', forum: 'forum', audit: 'audit' } as const)[
-            (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null) as 'tools'] ?? 'overview');
+    const [tab, setTab] = useState<'overview' | 'students' | 'toolsTab' | 'paths' | 'forum' | 'audit'>(() => {
+        const raw = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
+        return ({
+            students: 'students',
+            results: 'students',
+            tools: 'toolsTab',
+            paths: 'paths',
+            forum: 'forum',
+            audit: 'audit',
+        } as const)[raw as 'students'] ?? 'overview';
+    });
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const group = groups.data?.find(row => row.id === groupId);
     if (groups.forbidden || settings.forbidden) return <TeacherForbidden />;
@@ -310,7 +318,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
         <p>{l('loadError')}</p>
         <Button variant="secondary" onClick={() => { void groups.reload(); void settings.reload(); }}>{l('reload')}</Button>
     </Callout>;
-    const activeTabs = ['overview', 'toolsTab', 'paths', 'forum', 'audit'] as const;
+    const activeTabs = ['overview', 'students', 'toolsTab', 'paths', 'forum', 'audit'] as const;
     return <div className="space-y-5">
         {!adminRoute && group.institution_id && <nav aria-label={instituteText(lang, 'classes')} className="flex flex-wrap gap-2 text-sm">
             <Link href="/docente/istituti" className="text-indigo-700">{instituteText(lang, 'title')}</Link><ChevronRight className="h-4 w-4 self-center text-slate-400" aria-hidden />
@@ -337,6 +345,9 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
                 {group.methodologies && <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{group.methodologies}</p>}
                 <Link href="/docente/classi" className="mt-3 inline-flex min-h-[44px] items-center text-sm text-indigo-700">{l('back')}</Link>
             </Card>
+        </div>
+        <div id="class-panel-students" role="tabpanel" aria-labelledby="class-tab-students" hidden={tab !== 'students'} tabIndex={0}>
+            {tab === 'students' && <PlanStudentsPanel base={`/api/admin/groups/${groupId}`} withNotes />}
         </div>
         <div id="class-panel-toolsTab" role="tabpanel" aria-labelledby="class-tab-toolsTab" hidden={tab !== 'toolsTab'} tabIndex={0}>
             <ClassToolsEditor admin={admin} initial={settings.data} onReload={() => { void settings.reload(); }} />

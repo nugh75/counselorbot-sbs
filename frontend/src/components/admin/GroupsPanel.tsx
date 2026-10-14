@@ -321,6 +321,7 @@ export function GroupsPanel({ institutionId }: { institutionId?: number } = {}) 
                             {/* The class page and its most used tabs, one link each. */}
                             <div className="flex flex-wrap gap-x-5 gap-y-1">
                                 <Link href={`/docente/classi/${group.id}`} className="inline-flex min-h-[44px] items-center text-sm font-semibold text-indigo-700 underline-offset-4 hover:underline">{classSettingsText(lang, 'open')}</Link>
+                                <Link href={`/docente/classi/${group.id}?tab=students`} className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-indigo-700 underline-offset-4 hover:underline">{classSettingsText(lang, 'students')} <Users className="h-3.5 w-3.5" aria-hidden /></Link>
                                 <Link href={`/docente/classi/${group.id}?tab=tools`} className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-indigo-700 underline-offset-4 hover:underline">{classSettingsText(lang, 'toolsTab')} <Wrench className="h-3.5 w-3.5" aria-hidden /></Link>
                                 <Link href={`/docente/classi/${group.id}/?tab=paths`} className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-indigo-700 underline-offset-4 hover:underline">{texts.percorsiPath} <Route className="h-3.5 w-3.5" aria-hidden /></Link>
                             </div>
