@@ -1,6 +1,10 @@
 # Handoff S3: compilazioni di classe nella dashboard docente
-Data: 2026-10-14 | Stato: verificato, pronto per PR su main
+Data: 2026-10-14 | Stato: completato, PR #260 aperta su main
 
+- PR [#260](https://github.com/nugh75/counselorbot-sbs/pull/260), collegata al Project
+  CounselorBot; commit funzionale `79546660`. Nessun merge/deploy.
+  Notify immediato best-effort: Timoniere destinatario in lavoro, notifica pending;
+  canale mobile disattivato, consegna non verificata.
 - Task Diario `7e7e3f97-2780-437b-8686-16a86a1fbbe6`, goal `9ce5d48f-e663-489a-9074-5966d55f6c87`.
   Agente `s3-compilazioni-classe`, T2 Codex gpt-6.1-sol high, `--yolo`;
   deroga esplicita utente alla revisione cross-modello limitata a questo task/PR.
