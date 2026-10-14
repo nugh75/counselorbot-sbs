@@ -7,10 +7,12 @@ import { useTeacherAccessState } from '@/components/teacher/useTeacherAccessStat
 // Guscio comune delle sottopagine /docente/<slug>: controllo di identità,
 // intestazione locale illustrata (come nelle aree personali) e contenuto.
 // `teacher` è vero solo per i docenti effettivi; orientamento e piani lo usano.
-export function TeacherAreaPage({ slug, children, wide = true }: {
+export function TeacherAreaPage({ slug, children, wide = true, customBreadcrumbs, extra }: {
     slug: Parameters<typeof TeacherAreaHeader>[0]['slug'];
     children: (teacher: boolean, institutes: boolean) => React.ReactNode;
     wide?: boolean;
+    customBreadcrumbs?: Parameters<typeof TeacherAreaHeader>[0]['customBreadcrumbs'];
+    extra?: Parameters<typeof TeacherAreaHeader>[0]['extra'];
 }) {
     const { state, teacher, institutes } = useTeacherAccessState();
     if (state === 'loading') return <TeacherLoading />;
@@ -18,7 +20,7 @@ export function TeacherAreaPage({ slug, children, wide = true }: {
     return (
         <div className="min-h-screen bg-slate-50">
             <section className={`${wide ? 'page-wide' : 'page-narrow'} space-y-8 px-4 py-8`}>
-                <TeacherAreaHeader slug={slug} />
+                <TeacherAreaHeader slug={slug} customBreadcrumbs={customBreadcrumbs} extra={extra} />
                 {children(teacher, institutes)}
             </section>
         </div>

@@ -143,3 +143,37 @@ test('practice gym and teacher profile labels are fully localized across all 6 l
     }
 });
 
+test('breadcrumbs and quick class switcher labels are fully localized across all 6 languages', async () => {
+    // @ts-expect-error -- Node runs TypeScript files directly.
+    const { teacherAreaText } = await import('./i18n-teacher-area.ts');
+    const breadcrumbKeys = [
+        'breadcrumbsAriaLabel',
+        'quickClassSwitcherAriaLabel',
+        'quickClassSwitcherLabel',
+        'quickClassSwitcherCurrent',
+        'classFallback',
+        'breadcrumbObiettivi',
+        'breadcrumbPercorsi',
+        'breadcrumbProposte',
+        'breadcrumbTaccuino',
+        'breadcrumbRisorse',
+        'breadcrumbStrategie',
+        'breadcrumbMateriali',
+        'breadcrumbPalestra',
+        'breadcrumbTaccuiniProva',
+        'breadcrumbClassi',
+        'breadcrumbCompilazioni',
+        'breadcrumbIncontri',
+        'breadcrumbIstituti',
+        'breadcrumbOrientamento',
+        'breadcrumbSomministrazioni',
+    ] as const;
+
+    for (const key of breadcrumbKeys) {
+        for (const lang of languages) {
+            const val = teacherAreaText(lang, key);
+            assert.ok(val && val.trim().length > 0, `missing label ${key} in ${lang}`);
+        }
+    }
+});
+

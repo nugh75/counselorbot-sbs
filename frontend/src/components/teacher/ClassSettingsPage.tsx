@@ -26,6 +26,10 @@ import { useTeacherAccessState } from './useTeacherAccessState';
 import { useTeacherResource } from './useTeacherResource';
 import { parseClassGroups } from './class-group-types';
 import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
+import { teacherAreaText } from '@/lib/i18n-teacher-area';
+import { TeacherBreadcrumbs } from './TeacherBreadcrumbs';
+import { ClassQuickSwitcher } from './ClassQuickSwitcher';
+import type { TeacherBreadcrumbItem } from '@/lib/teacher-breadcrumbs';
 
 type TextKey = keyof typeof classSettingsTexts;
 const categories = ['assessment', 'guided', 'personal', 'support', 'forum'] as const;
@@ -319,11 +323,25 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
         <Button variant="secondary" onClick={() => { void groups.reload(); void settings.reload(); }}>{l('reload')}</Button>
     </Callout>;
     const activeTabs = ['overview', 'students', 'toolsTab', 'paths', 'forum', 'audit'] as const;
+    const breadcrumbItems: TeacherBreadcrumbItem[] = [
+        { label: teacherAreaText(lang, 'title'), href: '/docente' },
+        {
+            label: group.name || teacherAreaText(lang, 'classFallback'),
+            href: tab !== 'overview' ? `/docente/classi/${groupId}` : undefined,
+            current: tab === 'overview',
+        },
+        ...(tab !== 'overview' ? [{
+            label: l(tab),
+            current: true,
+        }] : []),
+    ];
     return <div className="space-y-5">
-        {!adminRoute && group.institution_id && <nav aria-label={instituteText(lang, 'classes')} className="flex flex-wrap gap-2 text-sm">
-            <Link href="/docente/istituti" className="text-indigo-700">{instituteText(lang, 'title')}</Link><ChevronRight className="h-4 w-4 self-center text-slate-400" aria-hidden />
-            <Link href={`/docente/istituti/${group.institution_id}`} className="text-indigo-700">{group.institution_name ?? instituteText(lang, 'classes')}</Link><ChevronRight className="h-4 w-4 self-center text-slate-400" aria-hidden /><span>{group.name}</span>
-        </nav>}
+        {!adminRoute && (
+            <TeacherBreadcrumbs
+                items={breadcrumbItems}
+                extra={<ClassQuickSwitcher currentGroupId={groupId} groups={groups.data} currentTab={tab} />}
+            />
+        )}
         <header className="flex flex-wrap items-center justify-between gap-3">
             <Link href={adminRoute ? ADMIN_CLASSES_HREF : "/docente/classi"} className="inline-flex min-h-[44px] items-center gap-2 text-sm text-indigo-700"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
             <div><h1 className="break-words text-2xl font-bold text-slate-800">{group.name}</h1><p className="text-sm text-slate-600">{group.members_count} {l('members')}{group.school && ` · ${group.school}`}</p></div>
