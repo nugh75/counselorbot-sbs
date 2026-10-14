@@ -742,7 +742,12 @@ della panoramica. Nella home dell’Area docenti (`/docente`), una sezione promi
 **Progettazione didattica** mette in primo piano la didattica attiva con l’AI (hero card con link
 diretto ad `OBIETTIVO_DOCENZA`, badge AI, evidenza dei pilastri metodologici Bloom, SMART e
 allineamento costruttivo) e guida il flusso verso la pubblicazione nel Catalogo obiettivi e
-l'integrazione nei Percorsi di classe per gli studenti. Il Taccuino del docente descrive il ruolo
+l'integrazione nei Percorsi di classe per gli studenti. Subito sotto, il cruscotto operativo
+**Le mie classi** (`MyClassesSection`, Issue #265) mostra le classi attive del docente sotto forma
+di card intuitive con metadati essenziali (nome classe, numero partecipanti, istituto o codice invito
+`GR-XXXXXX`), link diretto rapido all'Hub della specifica classe (`/docente/classi/{id}`), collegamento
+di gestione complessiva a `/docente/classi` e stato vuoto incoraggiante con CTA «Crea la tua prima classe».
+Il Taccuino del docente descrive il ruolo
 professionale ed entra nel percorso OBIETTIVO_DOCENZA, distinto dal Taccuino personale. I docenti pubblicano
 strategie e materiali direttamente; pubblicano obiettivi nei propri gruppi, mentre
 il catalogo comune richiede revisione amministrativa. Ogni assegnazione è ancorata

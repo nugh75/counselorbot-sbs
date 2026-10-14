@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { DidacticDesignSection } from './DidacticDesignSection';
+import { MyClassesSection } from './MyClassesSection';
 import { teacherAreaName, teacherAreaDescription, teacherAreaText } from '@/lib/i18n-teacher-area';
 import { teacherAreaGroups, teacherAreaImages, type TeacherAreaSlug } from '@/lib/teacher-area';
 
@@ -45,6 +46,9 @@ export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; ins
 
             {/* Hero di progettazione didattica attiva (Obiettivi Bloom/SMART in primo piano) */}
             <DidacticDesignSection />
+
+            {/* Cruscotto operativo: Le mie classi */}
+            <MyClassesSection />
 
             {teacherAreaGroups.map(group => ({ ...group, slugs: group.slugs.filter(slug => slug === 'istituti' ? institutes : teacher || slug !== 'orientamento') })).map(group => (
                 <section key={group.id} aria-labelledby={`teacher-group-${group.id}`}>
