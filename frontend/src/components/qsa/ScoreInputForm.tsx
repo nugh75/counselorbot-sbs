@@ -3,12 +3,14 @@
 import { factorTranslationKey } from '@/lib/questionnaires';
 
 import { type FormEvent } from 'react';
+import { Save } from 'lucide-react';
 import { useForm, type UseFormRegister, type FieldErrors } from 'react-hook-form';
 import { QuestionnaireConfig, FactorDefinition } from '@/lib/questionnaires';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n-context';
 import { BackButton } from '@/components/ui/BackButton';
 import { ForwardButton } from '@/components/ui/ForwardButton';
+import { Button } from '@/components/ui/Button';
 import { clearScoreDraft, loadScoreDraft, saveScoreDraft } from '@/lib/compilation-draft';
 
 type FormData = { scores: Record<string, string | number> };
@@ -115,12 +117,13 @@ interface ScoreInputFormProps {
     persistDraft?: boolean;
     onDraftChange?: (scores: Record<string, number>) => void;
     submitLabel?: string;
+    submitAction?: 'continue' | 'save';
     submitDisabled?: boolean;
     // Più form nella stessa pagina (taccuini di prova): id distinti.
     formId?: string;
 }
 
-export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack, persistDraft = true, onDraftChange, submitLabel, submitDisabled = false, formId = 'score-form' }: ScoreInputFormProps) {
+export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack, persistDraft = true, onDraftChange, submitLabel, submitAction = 'continue', submitDisabled = false, formId = 'score-form' }: ScoreInputFormProps) {
     const { t, tf } = useI18n();
     // Venticinque numeri copiati da un PDF vivevano solo dentro react-hook-form:
     // si perdevano al ricaricamento e anche solo tornando indietro di un passo,
@@ -167,7 +170,8 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack,
 
     // Stessa "prima riga" di selezione usata da QuestionnaireSelector /
     // CounselorSelector / InputMethodSelector: BackButton (cerchio quieto) +
-    // ForwardButton (primario con etichetta, qui submit del form). Nessun testo
+    // ForwardButton nel percorso, Button con icona Save nel repertorio di prove.
+    // Entrambi inviano il form; il contesto sceglie l'azione. Nessun testo
     // introduttivo: il FlowStepper in alto descrive già la fase.
     // Il fuoco sul primo campo mancante lo porta shouldFocusError di
     // react-hook-form, attivo di default: il submit sta in cima e i campi
@@ -176,7 +180,14 @@ export function ScoreInputForm({ questionnaire, onSubmit, initialScores, onBack,
         <div className="w-full space-y-5 animate-fade-in-up">
             <div className="flex items-center gap-3">
                 {onBack && <BackButton onClick={onBack} label={t('nav.back')} />}
-                <ForwardButton type="submit" form={formId} disabled={submitDisabled} label={submitLabel || t('score.submit')} />
+                {submitAction === 'save' ? (
+                    <Button type="submit" form={formId} disabled={submitDisabled} className="min-h-[44px]">
+                        <Save className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        {submitLabel || t('common.save')}
+                    </Button>
+                ) : (
+                    <ForwardButton type="submit" form={formId} disabled={submitDisabled} label={submitLabel || t('score.submit')} />
+                )}
             </div>
             {missingCount > 0 && (
                 <p role="alert" className="max-w-4xl mx-auto rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
