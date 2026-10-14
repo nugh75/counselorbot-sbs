@@ -148,7 +148,7 @@ export function PracticeRepertoire({ notebookId }: { notebookId: number }) {
                     <fieldset disabled={busy} className="min-w-0">
                     <ScoreInputForm key={`${draft.type}-${draft.version}`} questionnaire={QUESTIONNAIRES[draft.type]}
                         initialScores={draft.scores} persistDraft={false} formId={`practice-score-form-${notebookId}`}
-                        submitLabel={l('saveProfile')} submitDisabled={busy} onDraftChange={() => { setDirty(true); setSaved(false); }}
+                        submitAction="save" submitLabel={l('save')} submitDisabled={busy} onDraftChange={() => { setDirty(true); setSaved(false); }}
                         onSubmit={(scores) => void save(scores)} onBack={cancel} />
                     </fieldset>
                 </div>

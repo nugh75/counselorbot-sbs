@@ -133,7 +133,9 @@ Limiti:
 ## Profili: salvataggio esplicito e avvio diretto
 
 Sotto ogni taccuino attivo il repertorio riusa l’editor dei punteggi corrente,
-con il primario petrol **Salva profilo** nelle sei lingue. Generazione e modifica
+con il primario petrol **Salva** e l’icona di salvataggio nelle sei lingue.
+Il comando resta nella pagina e non apre questionari o chat; i flussi ordinari
+dei questionari conservano **Continua** e la freccia avanti. Generazione e modifica
 non persistono: il salvataggio esegue POST per un nuovo profilo, PUT per uno
 esistente, mostra «Salvato» e rilegge il repertorio. Un errore mantiene il form;
 durante la richiesta campi e comandi sono disabilitati. L’uscita con modifiche

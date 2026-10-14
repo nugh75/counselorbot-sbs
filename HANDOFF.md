@@ -1,3 +1,38 @@
+# Handoff S3: integrazione non distruttiva di main per PR #260
+Data: 2026-10-14 | Validazione locale completata; gate remoto obbligatorio dopo push
+
+- Ripresa IVN sullo stesso worktree/branch. Merge di `origin/main` aggiornato a
+  `b81e76067a1e0b66c6dac7faf9e5b9df49e749e2` (PR #258) senza reset/rebase/force push.
+- Conflitti solo in HANDOFF e manifest guidance: entrambe le consegne S1/S3
+  conservate integralmente, manifest rigenerato sull’integrazione.
+  Documentazione prodotto e guida integrano sia **Salva** sia le compilazioni di classe.
+- `ScoreInputForm`, `PracticeRepertoire`, copie e test S1 sono byte per byte quelli
+  di main. I quattro componenti applicativi S3 sono byte per byte quelli di
+  `a85fd816`. Nessuna riscrittura del lavoro S1/S2 o nuova feature.
+- Verifiche ripetute perché necessarie all’integrazione: 430/430 unitari;
+  TypeScript, i18n 3.325 chiavi, ESLint mirato, 3/3 test del gate guidance;
+  `make guidance-refresh`, check e gate `--base origin/main`, diff/staged-check.
+- Browser compilato: dashboard 1/1, guida S3 nelle sei lingue 1/1;
+  profili S1 23/24 nella suite, caso residuo 1/1 nel rerun selettivo. Lo stesso
+  caso passa 1/1 anche sull’immagine S1 di confronto. Tutti i 24 casi S1 verificati;
+  l’intermittenza della lettura immediata dei radio resta registrata come sospetta,
+  senza modificare test o applicazione di main.
+- Build Docker Webpack riuscita: `counselorbot-frontend:s3-class-compilations-integration`,
+  ID `sha256:1df249f97b6215ba0bb1bba7184fdd650be6783952a4c57839aef1e2663c5463`;
+  container regolare/log senza errori, fixture solo su 127.0.0.1:3143.
+  Container di integrazione e confronto (:3144) arrestati prima del commit.
+  Nessun DB, deploy, sudo o container di produzione coinvolto.
+- I 25 test browser e 9 HTTP PostgreSQL della consegna S3 iniziale restano validi:
+  componenti S3 e backend invariati, non ripetuti senza ragione.
+- Bug IVN `776c271a-c490-4c92-81e0-aaaa388f63de`: richiede, prima della chiusura,
+  readback GitHub fresco con head identico al push, MERGEABLE e check SUCCESS.
+  Il solo commit di merge non costituisce prova di compatibilità.
+- Nuovo bug LOCAL `fcc442d0-2b46-40d3-849e-805fa4de80a8`: fixture radio del contesto
+  intermittente, triage sospetto. Nessun bug non registrato o issue aperta a mano.
+  Limiti preesistenti: lint globale e test con dati sintetici, come nella consegna iniziale.
+
+---
+
 # Handoff S3: compilazioni di classe nella dashboard docente
 Data: 2026-10-14 | Stato: completato, PR #260 aperta su main
 
@@ -51,6 +86,47 @@ Data: 2026-10-14 | Stato: completato, PR #260 aperta su main
   (carico concorrente; riproduzione deterministica non confermata).
   Bug non registrati: nessuno. I primi timeout dev/fixture sotto carico sono superati
   dalla suite finale compilata; nessuna certificazione SSO o dati reali/produzione.
+
+---
+
+# Handoff S1: Salva nei profili dei Taccuini di prova
+Data: 2026-10-14 | Agente: s1-salva-yolo | Ramo: fix/practice-profile-save-label
+
+- Task Diario: `79567a65-a28a-4450-8c8e-57aab9b3b168`; bug richiesto:
+  `0de89d6f-e1c7-4e49-8e14-07c3af3c725a`.
+- `ScoreInputForm` offre l’azione esplicita di salvataggio con il Button petrol
+  e l’icona Save; `PracticeRepertoire` la usa con **Salva** in creazione e modifica.
+  Il default dei flussi ordinari resta **Continua** con freccia avanti.
+- Messaggio sul salvataggio esplicito e guida allineati in IT/EN/ES/FR/DE/SV;
+  documentazione prodotto, documento operativo e manifesto guidance aggiornati.
+- Verifiche: 430/430 unitari frontend; 3.325 chiavi i18n nelle sei lingue;
+  4/4 test API del repertorio su PostgreSQL effimero, inclusa rilettura fresca.
+  Browser: 19 casi passati nella suite, poi 5/5 casi dei link negativi passati
+  dopo aver corretto l’attesa del toast transitorio. Tutti i 24 casi verificati.
+  Creazione/modifica e reload nelle sei lingue a 390 px, nessun avvio implicito,
+  avvio chat separato, retry e assenza di compilazioni reali verificati.
+- TypeScript della build e `tsc --noEmit --tsBuildInfoFile .next/cache/.tsbuildinfo`
+  passati nel builder isolato (copia standalone spostata fuori dai sorgenti
+  solo nel container temporaneo); ESLint mirato e controllo sintassi del test.
+  `make guidance-refresh`, `make guidance-check`, gate `--base origin/main`
+  e `git diff --check` passati.
+- Build Docker frontend completata: `s1-salva-yolo-frontend:local`, contesto
+  temporaneo senza `.env*`, heap limitato e telemetria disattivata. Backend
+  invariato; test su immagine locale esistente con fixture montate in sola lettura.
+  Nessun Compose, merge, deploy, sudo o accesso a dati di produzione.
+- Limiti: browser con API sintetiche; persistenza DB verificata separatamente.
+  Dipendenze native del worktree incomplete dopo installazioni interrotte:
+  controlli eseguiti con Node 22 nel builder e Playwright temporaneo sul Mac.
+  Processi e container S1 arrestati prima della consegna.
+- Revisione cross-modello dispensata esplicitamente dall’utente il 2026-10-13
+  solo per questo task/PR; nessuna autorizzazione a merge o deploy.
+- Bug tecnici registrati LOCAL nel Diario: `a2f445e1-ad30-4198-83ad-ae5c0ed2b11d`
+  (fixture backend mancanti nel runner, corretto: 430/430);
+  `ffeb64b5-1d00-4aa1-b4d1-bf30cfe6e607` (asserzione delle scritture includeva
+  le preferenze del layout, corretta);
+  `be5f7d3a-c1f4-49fe-97c2-9e5ca1acf243` (attesa networkidle perdeva il toast,
+  riprodotto anche sull’immagine precedente e corretto nel solo test: 5/5).
+- Bug non registrati: nessuno. Nessuna issue aperta manualmente.
 
 ---
 

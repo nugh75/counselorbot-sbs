@@ -315,12 +315,18 @@ test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {
     const repertoire = page.locator('[data-practice-notebook="1"] [data-practice-repertoire]');
     await repertoire.getByText('Nessun profilo ancora.').waitFor();
     await repertoire.getByRole('button', { name: 'Aggiungi profilo' }).click();
+    const saveButton = repertoire.getByRole('button', { name: 'Salva', exact: true });
+    assert.equal(await saveButton.locator('svg.lucide-save').count(), 1);
+    assert.equal(await saveButton.locator('svg.lucide-arrow-right').count(), 0);
     await repertoire.getByLabel('Strumento').selectOption('ZTPI');
     await repertoire.getByRole('button', { name: 'Genera un profilo plausibile' }).click();
     const first = repertoire.locator('input[type="text"], input[inputmode], input').first();
     await first.fill('9');
-    await repertoire.getByRole('button', { name: 'Salva profilo', exact: true }).click();
+    await repertoire.getByRole('button', { name: 'Salva', exact: true }).click();
     await repertoire.locator('[data-practice-result]').first().waitFor();
+    await repertoire.getByRole('status').getByText('Salvato', { exact: true }).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/docente/taccuini-prova');
+    await repertoire.getByRole('link', { name: 'Avvia chat guidata', exact: true }).waitFor();
     const generated = requests.filter(r => r.method === 'POST' && r.path.endsWith('/results')).at(-1).body;
     assert.equal(generated.questionnaire_type, 'ZTPI');
     assert.equal(generated.source, 'generated');
@@ -334,11 +340,18 @@ test('il repertorio: profilo generato e ritoccato, poi eliminato', async () => {
     assert.equal(await editor.locator('form input').first().inputValue(), '9');
     await editor.locator('form input').first().fill('4');
     assert.equal(store.results[0].scores.T1, 9);
-    await editor.getByRole('button', { name: 'Salva profilo' }).click();
+    await editor.getByRole('button', { name: 'Salva' }).click();
     await editor.waitFor({ state: 'detached' });
     assert.equal(store.results[0].scores.T1, 4);
     await page.reload({ waitUntil: 'networkidle' });
     await page.locator('[data-practice-result]').first().getByText('T1 4', { exact: false }).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/docente/taccuini-prova');
+    assert.equal(await page.locator('#guided-composer, #score-form, [data-testid="chat-settings"]').count(), 0);
+    // Il layout aggiorna le preferenze dell'account anche dopo la ricarica.
+    assert.deepEqual(requests.filter(r => r.method !== 'GET'
+        && !(r.method === 'PUT' && r.path === '/api/user/account-preferences')
+        && !r.path.startsWith('/api/teacher/practice-notebooks/'))
+        .map(({ method, path }) => ({ method, path })), []);
     // La bozza personale della compilazione non viene toccata.
     assert.equal(await page.evaluate(() => Object.keys(localStorage).filter(k => k.includes('score')).length), 0);
     await repertoire.locator('[data-practice-result]').first().getByRole('button', { name: 'Elimina' }).click();
@@ -466,25 +479,69 @@ test('dal profilo: nuova chat guidata, turni e ripresa usano il taccuino e i pun
     await page.close();
 });
 
-for (const [lang, save, start] of [
-    ['it', 'Salva profilo', 'Avvia chat guidata'], ['en', 'Save profile', 'Start guided chat'],
-    ['es', 'Guardar perfil', 'Iniciar chat guiado'], ['fr', 'Enregistrer le profil', 'Démarrer le chat guidé'],
-    ['de', 'Profil speichern', 'Begleiteten Chat starten'], ['sv', 'Spara profil', 'Starta vägledd chatt'],
+for (const [lang, save, saved, start] of [
+    ['it', 'Salva', 'Salvato', 'Avvia chat guidata'], ['en', 'Save', 'Saved', 'Start guided chat'],
+    ['es', 'Guardar', 'Guardado', 'Iniciar chat guiado'], ['fr', 'Enregistrer', 'Enregistré', 'Démarrer le chat guidé'],
+    ['de', 'Speichern', 'Gespeichert', 'Begleiteten Chat starten'], ['sv', 'Spara', 'Sparat', 'Starta vägledd chatt'],
 ]) {
     test(`profilo: salvataggio e avvio localizzati a 390 px (${lang})`, async () => {
         const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
-        const { errors, store } = await prepare(page, { lang });
+        const { errors, store, requests } = await prepare(page, { lang });
         store.results.push({ ...qapProfile });
         await page.goto(`${origin}/docente/taccuini-prova`, { waitUntil: 'networkidle' });
         const profile = page.locator('[data-practice-result="91"]');
         await profile.getByRole('link', { name: start, exact: true }).waitFor();
         await profile.getByRole('button').first().click();
-        await page.locator('[data-practice-result-editor]').getByRole('button', { name: save, exact: true }).waitFor();
+        const editor = page.locator('[data-practice-result-editor]');
+        const saveButton = editor.getByRole('button', { name: save, exact: true });
+        await saveButton.waitFor();
+        assert.equal(await saveButton.locator('svg.lucide-save').count(), 1);
+        assert.equal(await saveButton.locator('svg.lucide-arrow-right').count(), 0);
+        await editor.locator('form input').first().fill('7');
+        await saveButton.click();
+        await editor.waitFor({ state: 'detached' });
+        await page.locator('[data-practice-repertoire]').getByRole('status').getByText(saved, { exact: true }).waitFor();
+        assert.equal(store.results[0].scores.AD1, 7);
+        await page.reload({ waitUntil: 'networkidle' });
+        await profile.getByText('AD1 7', { exact: false }).waitFor();
+        await profile.getByRole('link', { name: start, exact: true }).waitFor();
+        const repertoire = page.locator('[data-practice-repertoire]');
+        await repertoire.getByRole('button').last().click();
+        const fields = editor.locator('form input');
+        await fields.first().waitFor();
+        for (let i = 0; i < await fields.count(); i++) await fields.nth(i).fill('5');
+        await editor.getByRole('button', { name: save, exact: true }).click();
+        await editor.waitFor({ state: 'detached' });
+        await repertoire.getByRole('status').getByText(saved, { exact: true }).waitFor();
+        await page.reload({ waitUntil: 'networkidle' });
+        await page.locator('[data-practice-result="2"]').getByText('C1 5', { exact: false }).waitFor();
+        assert.equal(new URL(page.url()).pathname, '/docente/taccuini-prova');
+        assert.equal(await page.locator('#guided-composer, #score-form').count(), 0);
+        assert.deepEqual(requests.filter(r => r.method !== 'GET'
+            && !(r.method === 'PUT' && r.path === '/api/user/account-preferences')
+            && !r.path.startsWith('/api/teacher/practice-notebooks/'))
+            .map(({ method, path }) => ({ method, path })), []);
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
         assert.deepEqual(errors, []);
         await page.close();
     });
 }
+
+test('il modulo ordinario dei punteggi conserva Continua e la freccia avanti', async () => {
+    const page = await browser.newPage();
+    const state = await guidedChat(page);
+    await page.goto(`${origin}/?start=QAP`, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: /Inserimento Manuale/ }).click();
+    await page.getByRole('button', { name: 'Continua', exact: true }).click();
+    await page.locator('#score-form input').first().waitFor();
+    const submit = page.locator('button[form="score-form"]');
+    assert.equal(await submit.innerText(), 'Continua');
+    assert.equal(await submit.locator('svg.lucide-arrow-right').count(), 1);
+    assert.equal(await submit.locator('svg.lucide-save').count(), 0);
+    assert.deepEqual(state.writes, []);
+    assert.deepEqual(state.errors, []);
+    await page.close();
+});
 
 test('errore di salvataggio: bozza conservata, retry esplicito e nessun doppio submit', async () => {
     const page = await browser.newPage();
@@ -503,7 +560,7 @@ test('errore di salvataggio: bozza conservata, retry esplicito e nessun doppio s
     await page.locator('[data-practice-result="91"]').getByRole('button', { name: 'Modifica' }).click();
     const editor = page.locator('[data-practice-result-editor]');
     await editor.locator('input').first().fill('7');
-    const save = editor.getByRole('button', { name: 'Salva profilo' });
+    const save = editor.getByRole('button', { name: 'Salva' });
     await save.dblclick();
     await page.getByRole('alert').getByText('Operazione non riuscita. Riprova.').waitFor();
     assert.equal(attempts, 1);
@@ -523,8 +580,12 @@ for (const scenario of ['student', 'archived', 'missing', 'wrong-notebook', 'wro
         if (scenario === 'archived') store.rows[0].archived_at = '2026-10-13T08:00:00Z';
         if (scenario !== 'missing') store.results.push({ ...qapProfile, notebook_id: scenario === 'wrong-notebook' ? 2 : 1 });
         const type = scenario === 'wrong-instrument' ? 'QSA' : 'QAP';
-        await page.goto(`${origin}/?start=${type}&practice_notebook_id=1&practice_result_id=91`, { waitUntil: 'networkidle' });
-        await page.getByText('Operazione non riuscita. Riprova.', { exact: false }).first().waitFor();
+        // Il toast dura quattro secondi: attendilo mentre la pagina carica,
+        // senza far dipendere la verifica dall'inattività della rete.
+        await Promise.all([
+            page.getByText('Operazione non riuscita. Riprova.', { exact: false }).first().waitFor(),
+            page.goto(`${origin}/?start=${type}&practice_notebook_id=1&practice_result_id=91`, { waitUntil: 'domcontentloaded' }),
+        ]);
         assert.equal(await page.locator('#guided-composer').count(), 0);
         assert.equal(requests.filter(r => r.method === 'POST').length, 0);
         assert.deepEqual(errors, []);
