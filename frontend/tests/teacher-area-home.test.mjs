@@ -42,27 +42,32 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
     const { errors } = await prepare(page);
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
-    await page.getByRole('link', { name: 'Percorso guidato: obiettivi per la mia classe', exact: true }).waitFor();
-    // intestazioni di gruppo in ordine; i due taccuini affiancati prima dei gruppi
+    await page.getByRole('heading', { level: 2, name: 'Progettazione didattica' }).waitFor();
+    await page.locator('[data-testid="didactic-design-cta"]').waitFor();
+    // intestazioni di gruppo in ordine: Progettazione didattica hero, poi i gruppi
     const h2 = await page.getByRole('heading', { level: 2 }).allTextContents();
-    assert.deepEqual(h2.slice(0, 3), ['Compilazioni degli studenti', 'Classe e assegnazioni', 'Cataloghi']);
+    assert.deepEqual(h2.slice(0, 3), ['Progettazione didattica', 'Classe e assegnazioni', 'Cataloghi']);
     const notebooks = await Promise.all(['Taccuino del docente', 'Taccuini di prova'].map(name =>
         page.getByRole('link', { name, exact: true }).boundingBox()));
     assert.ok(Math.abs(notebooks[0].y - notebooks[1].y) < 2 && notebooks[1].x > notebooks[0].x, 'notebooks side by side');
-    // il percorso guidato apre i cataloghi, prima del catalogo degli obiettivi
+    // La hero di progettazione didattica include l'azione primaria e i link al catalogo e ai percorsi
+    assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/?start=OBIETTIVO_DOCENZA"]').count(), 1);
+    assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/docente/catalogo-obiettivi"]').count(), 1);
+    assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/docente/percorsi"]').count(), 1);
+    const ctaBox = await page.locator('[data-testid="didactic-design-cta"]').boundingBox();
+    assert.ok(ctaBox && ctaBox.height >= 44, 'didactic design CTA meets 44px touch target');
+    // I cataloghi non contengono più il link solitario goal-path: contengono solo gli slug standard
     const catalogs = await page.locator('nav[aria-labelledby="teacher-group-catalogs"] a').evaluateAll(rows => rows.map(row => row.getAttribute('href')));
-    assert.deepEqual(catalogs.slice(0, 2), ['/?start=OBIETTIVO_DOCENZA', '/docente/catalogo-obiettivi']);
-    // link illustrati
+    assert.deepEqual(catalogs.slice(0, 3), ['/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali']);
+    // link illustrati dei gruppi
     for (const href of ['/docente/classi', '/docente/percorsi', '/docente/incontri', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
-        assert.equal(await page.locator(`nav a[href="${href}"]`).count(), 1, `link ${href}`);
+        assert.ok(await page.locator(`nav a[href="${href}"]`).count() >= 1, `link ${href}`);
     }
     assert.ok(await page.locator('[data-teacher-area-home] img').first().isVisible());
     // S16: the home is an entry point and never mounts the notebook form.
     assert.equal(await page.locator('[data-teacher-notebook]').count(), 0);
     assert.equal(await page.getByLabel('Discipline insegnate').count(), 0);
     assert.equal(await page.getByRole('link', { name: 'Taccuino del docente', exact: true }).getAttribute('href'), '/docente/taccuino');
-    // percorso guidato verso la chat
-    assert.ok(await page.locator('a[href="/?start=OBIETTIVO_DOCENZA"]').count() >= 1);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);
     // The first destination also works with pointer activation.
@@ -88,7 +93,7 @@ for (const [slug, h1, marker] of [
     await page.getByText(marker, { exact: true }).first().waitFor();
     // Torna all'Area docenti
     await page.getByRole('link', { name: 'Area docenti' }).first().click();
-    await page.getByRole('link', { name: 'Percorso guidato: obiettivi per la mia classe', exact: true }).waitFor();
+    await page.locator('[data-testid="didactic-design-cta"]').waitFor();
     assert.deepEqual(errors, []);
     await page.close();
 }
@@ -122,7 +127,7 @@ for (const [slug, marker] of [
     const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
     const { errors } = await prepare(page, { teacher: false, researcher: true });
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
-    await page.getByRole('link', { name: 'Percorso guidato: obiettivi per la mia classe', exact: true }).waitFor();
+    await page.locator('[data-testid="didactic-design-cta"]').waitFor();
     assert.equal(await page.locator('a[href="/docente/somministrazioni"]').count(), 1);
     assert.equal(await page.locator('a[href="/docente/orientamento"]').count(), 0);
     assert.equal(await page.locator('[data-teacher-area-home] a').first().getAttribute('href'), '/docente/taccuino');
