@@ -1,3 +1,32 @@
+# Handoff S7: Area Docente - Sezione Le mie classi come cruscotto operativo nella Home (Issue #265)
+Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
+
+- Completamento Issue #265 (Milestone 14 'Riorganizzazione Area Docente: didattica attiva, classi e palestra di prova').
+- Titolo: 'Area Docente: Sezione Le mie classi come cruscotto operativo nella Home'.
+- Branch: `feature/teacher-area-my-classes-dashboard`
+- Modifiche realizzate:
+  1. `frontend/src/components/teacher/MyClassesSection.tsx`: creata la nuova sezione cruscotto operativo `MyClassesSection`.
+     - Carica le classi con `useTeacherResource('/api/admin/groups', parseClassGroups)`.
+     - Mostra le classi attive sotto forma di card intuitive con metadati essenziali: nome classe, numero partecipanti/studenti (con gestione singolare/plurale localizzata), istituto/scuola, codice invito `GR-XXXXXX`.
+     - Azione rapida primaria: link diretto all'Hub della specifica classe (`/docente/classi/${group.id}`) con touch target >= 44px.
+     - Link secondario di gestione complessiva: collegamento «Gestisci classi» che punta a `/docente/classi` con touch target >= 44px.
+     - Zero-state incoraggiante per docenti senza classi attive con invito e CTA «Crea la tua prima classe» (`/docente/classi`).
+     - Skeleton loader animato con stato accessibile ARIA e gestione errori con Callout danger e pulsante «Riprova».
+  2. `frontend/src/components/teacher/TeacherAreaHome.tsx`: integrata `<MyClassesSection />` in posizione armonica subito sotto `<DidacticDesignSection />` e prima dei gruppi illustrati.
+  3. `frontend/src/lib/i18n-teacher-area.ts`: definite tutte le 14 etichette localizzate nelle 6 lingue ufficiali (`it`, `en`, `es`, `fr`, `de`, `sv`).
+  4. `frontend/src/lib/teacher-my-classes.test.ts`: test unitari per validazione payload gruppi, filtraggio classi attive, conformità route Hub e verifica localizzazione nelle 6 lingue.
+  5. `frontend/src/lib/teacher-area.test.ts`: aggiunta suite di test per la presenza e non-vacuità di tutte le chiavi `myClasses*` nelle 6 lingue.
+  6. `frontend/tests/teacher-area-home.test.mjs`: aggiornato test per la nuova gerarchia dei titoli h2 e aggiunti scenari per card attive, metadati, hub link, zero-state ed errore/retry con touch targets >= 44px.
+  7. `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`: documentazione di piattaforma allineata e verificata con `make guidance-refresh` e `make guidance-check`.
+- Verifiche superate:
+  - Unit test frontend: `npm test` (444/444 superati, 0 errori).
+  - TypeScript: `npx tsc --noEmit` (0 errori).
+  - i18n: `npm run i18n:check` (3.329 chiavi allineate nelle 6 lingue, nessun testo JSX hardcoded).
+  - Platform guidance: `make guidance-check` (SUCCESS).
+- Vincoli rispettati: nessun merge autonomo (in attesa di review utente da app mobile), nessun deploy, nessun comando sudo.
+
+---
+
 # Handoff S6: Area Docente - Hero di progettazione didattica attiva (Issue #264)
 Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
 
