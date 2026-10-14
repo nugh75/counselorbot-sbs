@@ -324,6 +324,7 @@ function GuideContent() {
                         {teacher && (
                             <Link href={TEACHER_ROUTES[n - 1]} className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-indigo-700 underline">{l('open')}</Link>
                         )}
+                        {teacher && n === 1 && <p className="mt-4 text-sm leading-relaxed text-slate-600">{l('teacherClassCompilationsBody')}</p>}
                         {teacher && n === 2 && <div className="mt-4 text-sm leading-relaxed text-slate-600">
                             <h3 className="font-semibold text-slate-900">{teacherAreaName(lang, 'istituti')}</h3>
                             <p className="mt-1.5">{l('teacherInstitutesBody')}</p>

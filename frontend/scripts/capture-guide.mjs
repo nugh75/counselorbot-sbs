@@ -5,6 +5,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { personalAreaName } from '../src/lib/i18n-personal-area.ts';
 import { teacherAreaName } from '../src/lib/i18n-teacher-area.ts';
+import { classCompilationsText } from '../src/lib/i18n-class-compilations.ts';
 import { categoryText } from '../src/lib/i18n-institution-categories.ts';
 import { goalText } from '../src/lib/i18n-goals.ts';
 import { assignmentText } from '../src/lib/i18n-assignments.ts';
@@ -35,7 +36,7 @@ try {
         const [title, groupName, instructions, responsePrompt, response, feedback] = samples[lang];
         const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: lang, timezoneId: 'Europe/Rome', reducedMotion: 'reduce' });
         const page = await context.newPage();
-        page.setDefaultTimeout(15000);
+        page.setDefaultTimeout(Number(process.env.GUIDE_TIMEOUT_MS || 15000));
         const errors = [];
         let teacher = false;
         let admin = false;
@@ -137,6 +138,7 @@ try {
             else if (path === '/user/goals') data = [goal];
             else if (path === '/user/goal-catalog' || path === '/teacher/goal-catalog') data = catalog;
             else if (path === '/user/goal-groups' || path === '/admin/groups') data = [group];
+            else if (path === '/admin/groups/91/students') data = { group_id: 91, students: [{ username: 'student.demo', results: [{ id: 91, session_id: 'demo-saved-result', questionnaire_type: 'QSA', scores: { C1: 7, C2: 5 }, submitted_at: '2026-10-13T08:00:00Z' }] }] };
             else if (path === '/user/groups') data = [{ membership_id: 1, group_id: 91, name: groupName, code: 'DEMO-3B', joined_via: 'web' }];
             else if (path === '/user/assignments' || path === '/teacher/assignments') data = [assignment];
             else if (path === '/teacher/assignment-targets') data = [{ id: 91, name: groupName, participants: [{ username: 'student.demo', name: 'Sam · Demo' }, { username: 'student2.demo', name: 'Robin · Demo' }] }];
@@ -201,6 +203,10 @@ try {
                 await page.evaluate(() => window.scrollTo(0, 0));
             }
             if (name === 'personal-area' || name === 'teacher-area') {
+                if (name === 'teacher-area') {
+                    await page.getByLabel(classCompilationsText(lang, 'classLabel'), { exact: true }).selectOption('91');
+                    await page.locator('[data-class-compilations] li > p').filter({ hasText: 'student.demo' }).waitFor();
+                }
                 await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
                 for (const image of await page.locator('[data-personal-area-home] img, [data-teacher-area-home] img').all()) {
                     await image.scrollIntoViewIfNeeded();

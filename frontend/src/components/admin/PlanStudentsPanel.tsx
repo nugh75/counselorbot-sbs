@@ -3,15 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n-context';
 import { apiFetch } from '@/lib/auth';
-import { ChevronDown, ChevronRight, MessageSquare, RefreshCw, Send, StickyNote, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, RefreshCw, Send, StickyNote, Trash2 } from 'lucide-react';
 
-interface StudentResult {
-    id: number;
-    session_id: string;
-    questionnaire_type: string;
-    scores: Record<string, number> | null;
-    submitted_at: string | null;
-}
+import { StudentResultItem, type StudentResult } from '@/components/teacher/StudentResultItem';
 
 interface PlanStudent {
     username: string;
@@ -107,15 +101,6 @@ const TEXTS = {
     },
 };
 
-function ScoresLine({ scores }: { scores: Record<string, number> | null }) {
-    if (!scores) return null;
-    const line = Object.entries(scores)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([code, value]) => `${code}=${value}`)
-        .join(' ');
-    return <span className="font-mono text-xs text-slate-600">{line}</span>;
-}
-
 // base: prefisso API della dashboard (piano: /api/admin/administration-plans/<id>,
 // classe: /api/admin/groups/<id>). withNotes: note+messaggi (solo classi).
 export function PlanStudentsPanel({ base, withNotes = false }: { base: string; withNotes?: boolean }) {
@@ -124,8 +109,6 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
     const [students, setStudents] = useState<PlanStudent[] | null>(null);
     const [notes, setNotes] = useState<TeacherNote[]>([]);
     const [openStudent, setOpenStudent] = useState<string | null>(null);
-    const [conversations, setConversations] = useState<Record<string, Array<{ role: string; text: string }>>>({});
-    const [openSession, setOpenSession] = useState<string | null>(null);
     const [noteText, setNoteText] = useState('');
     const [noteVisible, setNoteVisible] = useState(false);
     const [messageText, setMessageText] = useState('');
@@ -149,25 +132,6 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
     }, [base, withNotes, texts.error]);
 
     useEffect(() => { void load(); }, [load]);
-
-    const toggleSession = async (username: string, sessionId: string) => {
-        if (openSession === sessionId) {
-            setOpenSession(null);
-            return;
-        }
-        setOpenSession(sessionId);
-        if (!conversations[sessionId]) {
-            try {
-                const res = await apiFetch(
-                    `${base}/students/${encodeURIComponent(username)}/conversation/${encodeURIComponent(sessionId)}`,
-                );
-                if (res.ok) {
-                    const messages = await res.json() as Array<{ role: string; text: string }>;
-                    setConversations((prev) => ({ ...prev, [sessionId]: messages }));
-                }
-            } catch { /* transcript non disponibile */ }
-        }
-    };
 
     const addNote = async (username: string) => {
         if (!noteText.trim()) return;
@@ -252,32 +216,8 @@ export function PlanStudentsPanel({ base, withNotes = false }: { base: string; w
                             <div className="space-y-4 border-t border-slate-100 px-3 py-3">
                                 <ul className="space-y-2">
                                     {student.results.map((result) => (
-                                        <li key={result.id} className="text-sm text-slate-700">
-                                            <button
-                                                type="button"
-                                                onClick={() => void toggleSession(student.username, result.session_id)}
-                                                className="inline-flex items-center gap-1 font-semibold text-indigo-700 hover:underline"
-                                            >
-                                                <MessageSquare className="h-3.5 w-3.5" />
-                                                {result.questionnaire_type}
-                                            </button>
-                                            {result.submitted_at && (
-                                                <span className="ml-2 text-xs text-slate-500">
-                                                    {new Date(result.submitted_at).toLocaleDateString()}
-                                                </span>
-                                            )}
-                                            <div><ScoresLine scores={result.scores} /></div>
-                                            {openSession === result.session_id && (
-                                                <div className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded-md border border-slate-200 bg-slate-50 p-2">
-                                                    <p className="text-xs font-semibold uppercase text-slate-500">{texts.transcript}</p>
-                                                    {(conversations[result.session_id] || []).map((message, index) => (
-                                                        <p key={index} className="text-xs text-slate-600">
-                                                            <span className="font-semibold">{message.role === 'student' ? texts.studentRole : 'AI'}:</span>{' '}
-                                                            {message.text}
-                                                        </p>
-                                                    ))}
-                                                </div>
-                                            )}
+                                        <li key={result.id}>
+                                            <StudentResultItem base={base} username={student.username} result={result} />
                                         </li>
                                     ))}
                                 </ul>

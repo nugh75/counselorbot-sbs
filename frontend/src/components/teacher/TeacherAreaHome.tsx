@@ -7,6 +7,7 @@ import { ArrowRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { teacherAreaName, teacherAreaDescription, teacherAreaText } from '@/lib/i18n-teacher-area';
 import { teacherAreaGroups, teacherAreaImages, type TeacherAreaSlug } from '@/lib/teacher-area';
+import { ClassCompilationsSection } from './ClassCompilationsSection';
 
 // Panoramica illustrata dell'Area docenti: stessa grammatica di PersonalAreaHome
 // (gruppi per scopo, immagine + nome + descrizione, due colonne su desktop).
@@ -16,7 +17,7 @@ function TeacherAreaLink({ id, href, image, name, description }: { id: string; h
     return (
         <Link href={href} aria-labelledby={`teacher-link-${id}`} aria-describedby={`teacher-description-${id}`} className={control}>
             <Image src={image} alt="" width={72} height={72} sizes="(min-width: 768px) 72px, 64px" className="h-16 w-16 shrink-0 rounded-md object-contain md:h-18 md:w-18" />
-            <span className="min-w-0 flex-1">
+            <span className="min-w-0 flex-1 break-words">
                 <span id={`teacher-link-${id}`} className="block font-bold text-slate-900 group-hover:text-indigo-700">{name}</span>
                 <span id={`teacher-description-${id}`} className="mt-1 block text-sm leading-relaxed text-slate-600">{description}</span>
             </span>
@@ -37,10 +38,11 @@ export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; ins
     return (
         <div className="space-y-6" data-teacher-area-home>
             {/* The two notebooks side by side, before the groups. */}
-            <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-1 md:grid-cols-2">
                 <TeacherAreaEntry slug="taccuino" />
                 <TeacherAreaEntry slug="taccuini-prova" />
             </div>
+            <ClassCompilationsSection />
             {teacherAreaGroups.map(group => ({ ...group, slugs: group.slugs.filter(slug => slug === 'istituti' ? institutes : teacher || slug !== 'orientamento') })).map(group => (
                 <section key={group.id} aria-labelledby={`teacher-group-${group.id}`}>
                     <h2 id={`teacher-group-${group.id}`} className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">{l(group.id)}</h2>

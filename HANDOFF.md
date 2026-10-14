@@ -1,3 +1,120 @@
+# Handoff S3: seconda integrazione di main per PR #260 (merge PR #261 e PR #259)
+Data: 2026-10-14 | Validazione completata; PR #260 MERGEABLE e CLEAN su GitHub
+
+- Integrazione non distruttiva di `origin/main` avanzato a `b2ba6e288d9a16a859f4f606a46f6d3bc5ca6642`
+  (merge PR #261 per avvisi primo uso Taccuino/counselor e PR #259 per licenza AGPL-3.0).
+- Conflitti di integrazione risolti:
+  - `docs/operations/live-dev-environment.md`: integrate coerentemente le sezioni preservando
+    sia le istruzioni sulle compilazioni di classe nella dashboard docente (S3), sia le note
+    sul primo uso del Taccuino/counselor (S2).
+  - `docs/operations/platform-guidance-state.json`: risincronizzato con `make guidance-refresh`
+    riallineando i digest SHA256 di prodotto e guida.
+  - Codice applicativo (compilazioni di classe, dropdown classi, permessi docente) e modifiche di main
+    preservati integralmente senza interventi fuori scope.
+- Verifiche superate:
+  - Conformità documentale: `make guidance-check` e check con `--base origin/main` superati (documentazione allineata).
+  - Test unitari frontend: `npm test --prefix frontend` 430/430 superati (0 fail).
+  - Localizzazione: `npm run i18n:check --prefix frontend` (3.329 chiavi allineate nelle 6 lingue).
+  - TypeScript / build: verifica tipi con `tsc --noEmit -p frontend/tsconfig.json` superata (0 errori).
+- Stato remoto PR #260:
+  - Commit di merge: `9e9fdadfe687ff338a323b32b78d01c90678291f` su branch `feature/teacher-class-compilations`.
+  - GitHub status: `mergeable: MERGEABLE`, `mergeStateStatus: CLEAN`.
+  - Check remoti: `Platform guidance` SUCCESS, `Release Drafter` SUCCESS.
+- Vincoli rispettati: nessun merge della PR, nessun deploy, nessun comando sudo.
+
+---
+
+# Handoff S3: integrazione non distruttiva di main per PR #260
+Data: 2026-10-14 | Validazione locale completata; gate remoto obbligatorio dopo push
+
+- Ripresa IVN sullo stesso worktree/branch. Merge di `origin/main` aggiornato a
+  `b81e76067a1e0b66c6dac7faf9e5b9df49e749e2` (PR #258) senza reset/rebase/force push.
+- Conflitti solo in HANDOFF e manifest guidance: entrambe le consegne S1/S3
+  conservate integralmente, manifest rigenerato sull’integrazione.
+  Documentazione prodotto e guida integrano sia **Salva** sia le compilazioni di classe.
+- `ScoreInputForm`, `PracticeRepertoire`, copie e test S1 sono byte per byte quelli
+  di main. I quattro componenti applicativi S3 sono byte per byte quelli di
+  `a85fd816`. Nessuna riscrittura del lavoro S1/S2 o nuova feature.
+- Verifiche ripetute perché necessarie all’integrazione: 430/430 unitari;
+  TypeScript, i18n 3.325 chiavi, ESLint mirato, 3/3 test del gate guidance;
+  `make guidance-refresh`, check e gate `--base origin/main`, diff/staged-check.
+- Browser compilato: dashboard 1/1, guida S3 nelle sei lingue 1/1;
+  profili S1 23/24 nella suite, caso residuo 1/1 nel rerun selettivo. Lo stesso
+  caso passa 1/1 anche sull’immagine S1 di confronto. Tutti i 24 casi S1 verificati;
+  l’intermittenza della lettura immediata dei radio resta registrata come sospetta,
+  senza modificare test o applicazione di main.
+- Build Docker Webpack riuscita: `counselorbot-frontend:s3-class-compilations-integration`,
+  ID `sha256:1df249f97b6215ba0bb1bba7184fdd650be6783952a4c57839aef1e2663c5463`;
+  container regolare/log senza errori, fixture solo su 127.0.0.1:3143.
+  Container di integrazione e confronto (:3144) arrestati prima del commit.
+  Nessun DB, deploy, sudo o container di produzione coinvolto.
+- I 25 test browser e 9 HTTP PostgreSQL della consegna S3 iniziale restano validi:
+  componenti S3 e backend invariati, non ripetuti senza ragione.
+- Bug IVN `776c271a-c490-4c92-81e0-aaaa388f63de`: richiede, prima della chiusura,
+  readback GitHub fresco con head identico al push, MERGEABLE e check SUCCESS.
+  Il solo commit di merge non costituisce prova di compatibilità.
+- Nuovo bug LOCAL `fcc442d0-2b46-40d3-849e-805fa4de80a8`: fixture radio del contesto
+  intermittente, triage sospetto. Nessun bug non registrato o issue aperta a mano.
+  Limiti preesistenti: lint globale e test con dati sintetici, come nella consegna iniziale.
+
+---
+
+# Handoff S3: compilazioni di classe nella dashboard docente
+Data: 2026-10-14 | Stato: completato, PR #260 aperta su main
+
+- PR [#260](https://github.com/nugh75/counselorbot-sbs/pull/260), collegata al Project
+  CounselorBot; commit funzionale `79546660`. Nessun merge/deploy.
+  Notify immediato best-effort: Timoniere destinatario in lavoro, notifica pending;
+  canale mobile disattivato, consegna non verificata.
+- Task Diario `7e7e3f97-2780-437b-8686-16a86a1fbbe6`, goal `9ce5d48f-e663-489a-9074-5966d55f6c87`.
+  Agente `s3-compilazioni-classe`, T2 Codex gpt-6.1-sol high, `--yolo`;
+  deroga esplicita utente alla revisione cross-modello limitata a questo task/PR.
+- Worktree esclusivo `/tmp/counselorbot-teacher-class-compilations-20261013`,
+  branch `feature/teacher-class-compilations`, base aggiornata `4c80f4a5`.
+- In `/docente`, sotto i taccuini, sezione sempre visibile **Compilazioni degli studenti**:
+  scelta esplicita classe propria/condivisa, risultati salvati ordinati per data,
+  username, strumento, data e punteggi disponibili. Conversazione su apertura,
+  stesso componente riusato da Classi e Piani di somministrazione.
+- API e accessi backend invariati: classe propria/condivisa (admin come prima),
+  membro corrente e risultato della sessione. Cambio classe smonta elenco e
+  conversazioni, abortisce le letture e ignora risposte tardive. Stati caricamento,
+  nessuna classe, nessun risultato, errore/retry e accesso negato localizzati.
+  Nessuna inferenza sui questionari mancanti, export o nuovo form/permesso.
+- File principali: `ClassCompilationsSection.tsx`, `StudentResultItem.tsx`,
+  `TeacherAreaHome.tsx`, `PlanStudentsPanel.tsx`; nuove copie nelle sei lingue,
+  guida docente e sei screenshot; documento piattaforma, CONTEXT e operazioni.
+  PracticeRepertoire/ScoreInputForm, onboarding, QSA, chat_logic e prompt non toccati.
+- Verifiche: **9/9 HTTP FastAPI/PostgreSQL** sintetici (ruoli, proprietà/condivisione,
+  revoche, membro rimosso, sessione altrui, docente senza classi/classi vuote);
+  **25/25 browser sul compilato** (24 nuovi + smoke dashboard esistente), sei lingue,
+  320 px, chiaro/scuro, tastiera, 44 px, selezione, race, errori e guida;
+  **430/430 unitari**, TypeScript, i18n 3.325 chiavi, ESLint mirato senza warning,
+  build locale Webpack, guidance refresh/check/--base origin/main e diff/staged-check.
+- ESLint globale: **5 errori e 50 warning preesistenti**. I cinque errori sono
+  confermati sui file della base con `git show HEAD:<file> | eslint --stdin`:
+  ReturningHome:67, PersonalAreaHome:98, NewDeckDialog:36, class-paths-tool-names:11,
+  use-collapsed-catalog:27. Non corretti in questo task.
+- Docker: primo build originale riuscito; rebuild Turbopack senza avanzamento oltre
+  25 minuti interrotto. Rebuild finale isolato **Webpack riuscito**, stesso Dockerfile
+  e dipendenze salvo il comando di verifica `next build --webpack`, senza modificare
+  il Dockerfile versionato. Tag `counselorbot-frontend:s3-class-compilations-validation`,
+  ID `sha256:9b0056b2c7068c1b76047a23e5d7e129faf212bdc8933230f80e476a83ea3134`.
+  Container senza rete: avvio/log regolari, `/docente` HTTP 200; immagini guida nel
+  container identiche ai file finali 6/6. Nessun rebuild/restart produzione, deploy o sudo.
+- Processi propri :3143 arrestati; container frontend e PostgreSQL di prova arrestati.
+  PostgreSQL :55443 era su tmpfs, senza volumi persistenti. Nessuna modifica al checkout
+  principale o agli altri worktree. Comandi e limiti in
+  `docs/operations/teacher-class-compilations.md`.
+- Bug registrati LOCAL nel Diario (nessuna issue aperta manualmente):
+  `50db1e7c-31a4-4ee4-8097-e5490efc74e1` lint globale, confermato e deduplicato;
+  `ae6b1009-1d3b-4ef2-967f-a23ed6ee6a86` overflow svedese dei taccuini, risolto;
+  `92e23480-bcba-4ae9-b271-78147fbd73b3` rallentamento Turbopack, sospetto
+  (carico concorrente; riproduzione deterministica non confermata).
+  Bug non registrati: nessuno. I primi timeout dev/fixture sotto carico sono superati
+  dalla suite finale compilata; nessuna certificazione SSO o dati reali/produzione.
+
+---
+
 # Handoff S1: Salva nei profili dei Taccuini di prova
 Data: 2026-10-14 | Agente: s1-salva-yolo | Ramo: fix/practice-profile-save-label
 
