@@ -44,9 +44,16 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { level: 2, name: 'Progettazione didattica' }).waitFor();
     await page.locator('[data-testid="didactic-design-cta"]').waitFor();
-    // intestazioni di gruppo in ordine: Progettazione didattica hero, poi le mie classi, poi i gruppi
+    // intestazioni di gruppo in ordine: Didattica, Le mie classi, Classe e assegnazioni, Palestra, Profilo docente, Cataloghi
     const h2 = await page.getByRole('heading', { level: 2 }).allTextContents();
-    assert.deepEqual(h2.slice(0, 4), ['Progettazione didattica', 'Le mie classi', 'Classe e assegnazioni', 'Cataloghi']);
+    assert.deepEqual(h2.slice(0, 6), [
+        'Progettazione didattica',
+        'Le mie classi',
+        'Classe e assegnazioni',
+        'Palestra di prova e simulazione',
+        'Profilo professionale del docente',
+        'Cataloghi',
+    ]);
     // Sezione Le mie classi (zero-state con mock vuoto)
     await page.locator('[data-testid="teacher-my-classes-section"]').waitFor();
     const manageLink = page.locator('[data-testid="my-classes-manage-all-link"]');
@@ -59,9 +66,26 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     assert.equal(await createFirstCta.getAttribute('href'), '/docente/classi');
     const createFirstBox = await createFirstCta.boundingBox();
     assert.ok(createFirstBox && createFirstBox.height >= 44, 'create first class CTA meets 44px touch target');
-    const notebooks = await Promise.all(['Taccuino del docente', 'Taccuini di prova'].map(name =>
-        page.getByRole('link', { name, exact: true }).boundingBox()));
-    assert.ok(Math.abs(notebooks[0].y - notebooks[1].y) < 2 && notebooks[1].x > notebooks[0].x, 'notebooks side by side');
+
+    // Sezione Palestra di prova e simulazione (sandbox protetto con CTA >= 44px)
+    await page.locator('[data-testid="teacher-practice-gym-section"]').waitFor();
+    const gymCard = page.locator('[data-testid="practice-gym-card"]');
+    assert.ok(await gymCard.isVisible());
+    const practiceCta = page.locator('[data-testid="practice-gym-cta"]');
+    assert.equal(await practiceCta.getAttribute('href'), '/docente/taccuini-prova');
+    const practiceCtaBox = await practiceCta.boundingBox();
+    assert.ok(practiceCtaBox && practiceCtaBox.height >= 44, 'practice gym CTA meets 44px touch target');
+    assert.ok((await gymCard.textContent()).includes('Simulazione protetta'));
+    assert.ok((await gymCard.textContent()).includes('Nessun impatto sulle classi reali'));
+
+    // Sezione Profilo professionale del docente (Taccuino separato dalla palestra e collocato nel terzo pilastro)
+    await page.locator('[data-testid="teacher-profile-notebook-section"]').waitFor();
+    const notebookLink = page.getByRole('link', { name: 'Taccuino del docente', exact: true });
+    assert.equal(await notebookLink.getAttribute('href'), '/docente/taccuino');
+    const gymBox = await page.locator('[data-testid="teacher-practice-gym-section"]').boundingBox();
+    const notebookBox = await notebookLink.boundingBox();
+    assert.ok(gymBox && notebookBox && notebookBox.y > gymBox.y, 'teacher notebook is separated and placed in professional profile below practice gym');
+
     // La hero di progettazione didattica include l'azione primaria e i link al catalogo e ai percorsi
     assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/?start=OBIETTIVO_DOCENZA"]').count(), 1);
     assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/docente/catalogo-obiettivi"]').count(), 1);
@@ -82,8 +106,8 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     assert.equal(await page.getByRole('link', { name: 'Taccuino del docente', exact: true }).getAttribute('href'), '/docente/taccuino');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);
-    // The first destination also works with pointer activation.
-    await page.locator('[data-teacher-area-home] a').first().click();
+    // Attivazione con click del link del Taccuino del docente
+    await page.locator('[data-testid="teacher-profile-notebook-section"] a').first().click();
     await page.waitForURL(`${origin}/docente/taccuino`);
     await page.locator('[data-teacher-notebook]').waitFor();
     assert.deepEqual(errors, []);
@@ -203,7 +227,7 @@ for (const [slug, marker] of [
     await page.locator('[data-testid="didactic-design-cta"]').waitFor();
     assert.equal(await page.locator('a[href="/docente/somministrazioni"]').count(), 1);
     assert.equal(await page.locator('a[href="/docente/orientamento"]').count(), 0);
-    assert.equal(await page.locator('[data-teacher-area-home] a').first().getAttribute('href'), '/docente/taccuino');
+    assert.equal(await page.locator('[data-testid="teacher-profile-notebook-section"] a').first().getAttribute('href'), '/docente/taccuino');
     assert.deepEqual(errors, []);
     await page.close();
 }
