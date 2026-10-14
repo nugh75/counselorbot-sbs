@@ -1,3 +1,32 @@
+# Handoff S9: Area Docente - Accorpamento Libreria risorse e snellimento cataloghi (Issue #267)
+Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
+
+- Completamento Issue #267 (Milestone 14 'Riorganizzazione Area Docente: didattica attiva, classi e palestra di prova').
+- Titolo: 'Area Docente: Accorpamento Libreria risorse (Strategie + Letture e materiali) e snellimento cataloghi'.
+- Branch: `feature/teacher-area-resources-library`
+- Modifiche realizzate:
+  1. `frontend/src/components/teacher/TeacherResourcesHub.tsx`: creato il nuovo componente hub `TeacherResourcesHub`.
+     - Struttura unificata a schede (tablist accessibile con touch target >= 44px) che unifica e presenta congiuntamente Strategie di studio/vita (`CertifiedStrategiesPanel`) e Letture, film e materiali certificati (`CertifiedReadingsPanel`).
+     - Supporto a commutazione reattiva con query parameter URL `?tab=strategie` e `?tab=materiali` e mantenimento dello stato attivo.
+     - Header esplicativo coordinato che valorizza il patrimonio didattico di consultazione e arricchimento.
+  2. `frontend/src/app/docente/risorse/page.tsx`: creata la nuova route `/docente/risorse` protetta da `TeacherAreaPage` con slug `'risorse'` e rendering di `TeacherResourcesHub`.
+  3. `frontend/src/app/docente/strategie/page.tsx` e `frontend/src/app/docente/materiali/page.tsx`: preservata la piena retrocompatibilità senza regressioni, montando `TeacherResourcesHub` con il tab preselezionato (`defaultTab="strategie"` e `defaultTab="materiali"`), consentendo la consultazione e gestione diretta del pannello specifico e la navigazione fluida tra le risorse.
+  4. `frontend/src/components/teacher/TeacherResourcesSection.tsx`: creata la sezione dedicata della home nel Pilastro 3 'Profilo e Risorse' con card congiunta illustrata (`library_hall.png`), link principale all'hub `/docente/risorse` e accessi diretti secondari a `/docente/strategie` e `/docente/materiali`.
+  5. `frontend/src/components/teacher/TeacherAreaHome.tsx`: snellita l'area cataloghi eliminando la vecchia griglia frammentata `catalogsGroup`. Il Catalogo obiettivi mantiene il suo posizionamento naturale nel flusso di progettazione didattica (Pilastro 1 in `DidacticDesignSection`), mentre Strategie e Materiali sono accorpati nella nuova sezione `TeacherResourcesSection` nel Pilastro 3.
+  6. `frontend/src/lib/teacher-area.ts`: aggiunto lo slug `'risorse'`, associata l'immagine `library_hall.png` e aggiornato `teacherAreaGroups` con il gruppo `resources`.
+  7. `frontend/src/lib/i18n-teacher-area.ts`: definite tutte le nuove etichette, nomi e descrizioni per `resources`, `resourcesSubtitle`, `resourcesCardDescription`, `resourcesTabStrategies`, `resourcesTabMaterials`, `resourcesHubDescription`, `resourcesDirectStrategies`, `resourcesDirectMaterials` nelle 6 lingue ufficiali (`it`, `en`, `es`, `fr`, `de`, `sv`).
+  8. `frontend/src/lib/teacher-area.test.ts`: aggiornati i test del gruppo risorse e aggiunti test di completezza i18n nelle 6 lingue.
+  9. `frontend/tests/teacher-area-home.test.mjs`: aggiornate le asserzioni di home per la sezione Libreria risorse, i collegamenti operativi e aggiunto il test per l'hub `/docente/risorse` con switch dei tab.
+  10. `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`: documentazione allineata e verificata con `make guidance-refresh` e `make guidance-check`.
+- Verifiche superate:
+  - Unit test frontend: `npm test` (446/446 superati, 0 errori).
+  - TypeScript: `npx tsc --noEmit` (0 errori).
+  - i18n: `node scripts/check-i18n.mjs` (3.329 chiavi allineate nelle 6 lingue, nessun testo JSX hardcoded).
+  - Platform guidance: `make guidance-check` (SUCCESS).
+- Vincoli rispettati: nessun merge autonomo (in attesa di review utente da app mobile), nessun deploy, nessun comando sudo.
+
+---
+
 # Handoff S8: Area Docente - Separazione e chiarimento della Palestra di prova (Issue #266)
 Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
 
