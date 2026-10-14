@@ -1,3 +1,29 @@
+# Handoff S6: Area Docente - Hero di progettazione didattica attiva (Issue #264)
+Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
+
+- Completamento Issue #264 (Milestone 14 'Riorganizzazione Area Docente: didattica attiva, classi e palestra di prova').
+- Titolo: 'Area Docente: Hero di progettazione didattica attiva (Obiettivi Bloom/SMART in primo piano)'.
+- Goal Diario: `a9143835-b8e4-4db8-83e2-2132ffccd43d`
+- Task Diario: `e29eb32f-44b2-43bd-8605-1ee959c31ce4`
+- Branch: `feature/teacher-area-didactic-design-hero`
+- Modifiche realizzate:
+  1. `frontend/src/components/teacher/DidacticDesignSection.tsx`: creata la sezione prominente `DidacticDesignSection` con hero card in evidenza (badge didattica attiva con AI, titolo, descrizione pedagogica con tassonomia di Bloom, prova SMART e allineamento costruttivo, CTA touch >= 44px con link diretto a `/?start=OBIETTIVO_DOCENZA`, illustrazione coordinata `obiettivi-classe.png`).
+  2. Flusso e ciclo didattico completo: collegamento chiaro e contestualizzato al **Catalogo obiettivi** (`/docente/catalogo-obiettivi`) e ai **Percorsi di classe** (`/docente/percorsi`), spiegando che l'obiettivo progettato può essere pubblicato e inserito direttamente nei percorsi guidati per gli studenti.
+  3. `frontend/src/components/teacher/TeacherAreaHome.tsx`: inserita `<DidacticDesignSection />` in posizione prominente tra i taccuini e i gruppi di gestione; rimosso il vecchio link solitario `goal-path` confinato nel gruppo `catalogs`.
+  4. `frontend/src/lib/i18n-teacher-area.ts`: localizzate tutte le etichette della sezione e del flusso didattico nelle 6 lingue ufficiali (`it`, `en`, `es`, `fr`, `de`, `sv`).
+  5. `frontend/src/lib/teacher-area.test.ts`: aggiunti test unitari per la localizzazione completa delle 14 nuove etichette didattiche nelle 6 lingue e per l'integrità del gruppo `catalogs`.
+  6. `frontend/tests/teacher-area-home.test.mjs`: aggiornato lo smoke test browser Playwright verificando la hero card, il touch target >= 44px della CTA, l'ordine dei titoli h2 e i link correlati.
+  7. Documentazione e conformità: aggiornato `docs-counselorbot/funzionalita-counselorbot.md` e sincronizzato `docs/operations/platform-guidance-state.json` tramite `make guidance-refresh`.
+- Verifiche superate:
+  - Unit test frontend: `npm test --prefix frontend` (439/439 superati, 0 fallimenti).
+  - TypeScript: `tsc --noEmit -p frontend/tsconfig.json` (0 errori).
+  - i18n: `npm run i18n:check --prefix frontend` (3.329 chiavi allineate nelle 6 lingue, nessun testo hardcoded).
+  - Browser smoke: `teacher-area-home.test.mjs` (smoke OK con Playwright).
+  - Platform guidance: `make guidance-check` e `python3 scripts/check-platform-guidance.py --check --base origin/main` (SUCCESS).
+- Vincoli rispettati: nessun merge della PR (in attesa di review utente da app mobile), nessun deploy, nessun comando sudo.
+
+---
+
 # Handoff S5: Compilazioni degli studenti nel gruppo Classe e assegnazioni
 Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
 
