@@ -6,6 +6,20 @@ modifiche dal browser del Mac, **senza toccare i container di produzione**
 
 ## Comandi
 
+### Avvisi primo uso Taccuino/counselor (S2)
+
+Controllare che `3147` sia libera (`ss -ltn` su Linux oppure
+`lsof -nP -iTCP:3147 -sTCP:LISTEN` su macOS), poi avviare
+`bash scripts/dev-first-use-tests.sh` nel worktree dedicato. Next dev usa hot
+reload su `127.0.0.1:3147`; il backend è un indirizzo loopback non disponibile.
+Le API sono sostituite nel browser da dati sintetici: nessun DB o provider.
+Eseguire `cd frontend && ACCOUNT_BASE_URL=http://127.0.0.1:3147 npm run test:account`.
+La prima compilazione delle route può richiedere un preriscaldamento prima dei test.
+Arrestare il server con Ctrl-C nel terminale che lo ha avviato.
+Da SSH: `ssh -N -L 3147:127.0.0.1:3147 <user>@<server>`, poi
+`http://localhost:3147`. Fuori dal browser di test non c'è un backend utilizzabile.
+Copertura e limiti: [first-use-hints-validation.md](first-use-hints-validation.md).
+
 ### Class settings S1 (#88), secret-free worktree verification
 
 Use `scripts/dev-class-settings-backend.sh` (:8002, explicit local

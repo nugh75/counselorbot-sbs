@@ -56,7 +56,19 @@ un provider configurato dall’amministratore; la sola disponibilità del sito e
 dell’account non garantisce che chat, ricerca con embeddings o OCR siano attivi.
 Quando mancano le impostazioni iniziali,
 si scelgono counselor e Taccuino. La scelta del counselor resta nell’account e può
-essere modificata dalla pagina dei counselor. Metodo di inserimento dei risultati
+essere modificata dalla pagina dei counselor. Prima della prima conferma del
+counselor una nota indica come ritrovarlo: premere il nome del counselor nella
+barra in alto oppure aprire «Menu» sugli schermi compatti. Al primo invito a
+compilare il Taccuino, prima del modulo, un’altra nota indica «Area studente» →
+«Taccuino», dove riaprirlo e modificarlo; su schermi compatti «Area studente» è
+nel «Menu» sotto 1024 px; il counselor è nel «Menu» sotto 1280 px.
+Le note usano le etichette effettive nelle sei lingue e gli stati
+di primo uso esistenti, anche per gli altri ruoli che condividono questo ingresso
+al Taccuino personale. I nomi dell’area, del Taccuino e del Menu sono ripresi
+dalle stesse traduzioni degli accessi; in svedese l’area si chiama «Elevområde».
+Non aggiungono finestre né cambiano compilazione,
+salvataggi, conferma o compatibilità del counselor.
+Metodo di inserimento dei risultati
 e modalità di conversazione si ricordano solo selezionando l’apposita casella nella
 rispettiva schermata; le preferenze già memorizzate restano valide. Idea chiede la
 modalità ogni volta e non cambia la preferenza degli altri strumenti.
