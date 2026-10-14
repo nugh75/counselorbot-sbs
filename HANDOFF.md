@@ -1,3 +1,44 @@
+# Handoff S1: Salva nei profili dei Taccuini di prova
+Data: 2026-10-14 | Agente: s1-salva-yolo | Ramo: fix/practice-profile-save-label
+
+- Task Diario: `79567a65-a28a-4450-8c8e-57aab9b3b168`; bug richiesto:
+  `0de89d6f-e1c7-4e49-8e14-07c3af3c725a`.
+- `ScoreInputForm` offre l’azione esplicita di salvataggio con il Button petrol
+  e l’icona Save; `PracticeRepertoire` la usa con **Salva** in creazione e modifica.
+  Il default dei flussi ordinari resta **Continua** con freccia avanti.
+- Messaggio sul salvataggio esplicito e guida allineati in IT/EN/ES/FR/DE/SV;
+  documentazione prodotto, documento operativo e manifesto guidance aggiornati.
+- Verifiche: 430/430 unitari frontend; 3.325 chiavi i18n nelle sei lingue;
+  4/4 test API del repertorio su PostgreSQL effimero, inclusa rilettura fresca.
+  Browser: 19 casi passati nella suite, poi 5/5 casi dei link negativi passati
+  dopo aver corretto l’attesa del toast transitorio. Tutti i 24 casi verificati.
+  Creazione/modifica e reload nelle sei lingue a 390 px, nessun avvio implicito,
+  avvio chat separato, retry e assenza di compilazioni reali verificati.
+- TypeScript della build e `tsc --noEmit --tsBuildInfoFile .next/cache/.tsbuildinfo`
+  passati nel builder isolato (copia standalone spostata fuori dai sorgenti
+  solo nel container temporaneo); ESLint mirato e controllo sintassi del test.
+  `make guidance-refresh`, `make guidance-check`, gate `--base origin/main`
+  e `git diff --check` passati.
+- Build Docker frontend completata: `s1-salva-yolo-frontend:local`, contesto
+  temporaneo senza `.env*`, heap limitato e telemetria disattivata. Backend
+  invariato; test su immagine locale esistente con fixture montate in sola lettura.
+  Nessun Compose, merge, deploy, sudo o accesso a dati di produzione.
+- Limiti: browser con API sintetiche; persistenza DB verificata separatamente.
+  Dipendenze native del worktree incomplete dopo installazioni interrotte:
+  controlli eseguiti con Node 22 nel builder e Playwright temporaneo sul Mac.
+  Processi e container S1 arrestati prima della consegna.
+- Revisione cross-modello dispensata esplicitamente dall’utente il 2026-10-13
+  solo per questo task/PR; nessuna autorizzazione a merge o deploy.
+- Bug tecnici registrati LOCAL nel Diario: `a2f445e1-ad30-4198-83ad-ae5c0ed2b11d`
+  (fixture backend mancanti nel runner, corretto: 430/430);
+  `ffeb64b5-1d00-4aa1-b4d1-bf30cfe6e607` (asserzione delle scritture includeva
+  le preferenze del layout, corretta);
+  `be5f7d3a-c1f4-49fe-97c2-9e5ca1acf243` (attesa networkidle perdeva il toast,
+  riprodotto anche sull’immagine precedente e corretto nel solo test: 5/5).
+- Bug non registrati: nessuno. Nessuna issue aperta manualmente.
+
+---
+
 # Handoff: Selezione multi-tag per filtro categorie counselor
 Data: 2026-10-07 | Stato: Completato, verifiche superate
 
