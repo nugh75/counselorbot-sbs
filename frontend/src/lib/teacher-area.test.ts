@@ -62,6 +62,34 @@ test('didactic design hero and workflow labels are fully localized across all 6 
     }
 });
 
+test('my classes dashboard section labels are fully localized across all 6 languages', async () => {
+    // @ts-expect-error -- Node runs TypeScript files directly.
+    const { teacherAreaText } = await import('./i18n-teacher-area.ts');
+    const myClassesKeys = [
+        'myClassesTitle',
+        'myClassesSubtitle',
+        'myClassesManageAll',
+        'myClassesOpenHub',
+        'myClassesStudents',
+        'myClassesStudentSingle',
+        'myClassesInviteCode',
+        'myClassesEmptyTitle',
+        'myClassesEmptyDescription',
+        'myClassesCreateFirst',
+        'myClassesError',
+        'myClassesRetry',
+        'myClassesLoading',
+        'myClassesActiveBadge',
+    ] as const;
+
+    for (const key of myClassesKeys) {
+        for (const lang of languages) {
+            const val = teacherAreaText(lang, key);
+            assert.ok(val && val.trim().length > 0, `missing label ${key} in ${lang}`);
+        }
+    }
+});
+
 test('catalogs group contains only standard catalog slugs', () => {
     const catalogsGroup = teacherAreaGroups.find(g => g.id === 'catalogs');
     assert.ok(catalogsGroup, 'catalogs group exists');

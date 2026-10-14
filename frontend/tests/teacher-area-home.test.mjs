@@ -44,9 +44,21 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { level: 2, name: 'Progettazione didattica' }).waitFor();
     await page.locator('[data-testid="didactic-design-cta"]').waitFor();
-    // intestazioni di gruppo in ordine: Progettazione didattica hero, poi i gruppi
+    // intestazioni di gruppo in ordine: Progettazione didattica hero, poi le mie classi, poi i gruppi
     const h2 = await page.getByRole('heading', { level: 2 }).allTextContents();
-    assert.deepEqual(h2.slice(0, 3), ['Progettazione didattica', 'Classe e assegnazioni', 'Cataloghi']);
+    assert.deepEqual(h2.slice(0, 4), ['Progettazione didattica', 'Le mie classi', 'Classe e assegnazioni', 'Cataloghi']);
+    // Sezione Le mie classi (zero-state con mock vuoto)
+    await page.locator('[data-testid="teacher-my-classes-section"]').waitFor();
+    const manageLink = page.locator('[data-testid="my-classes-manage-all-link"]');
+    assert.equal(await manageLink.getAttribute('href'), '/docente/classi');
+    const manageBox = await manageLink.boundingBox();
+    assert.ok(manageBox && manageBox.height >= 44, 'my classes manage link meets 44px touch target');
+
+    await page.locator('[data-testid="my-classes-zero-state"]').waitFor();
+    const createFirstCta = page.locator('[data-testid="my-classes-create-first-cta"]');
+    assert.equal(await createFirstCta.getAttribute('href'), '/docente/classi');
+    const createFirstBox = await createFirstCta.boundingBox();
+    assert.ok(createFirstBox && createFirstBox.height >= 44, 'create first class CTA meets 44px touch target');
     const notebooks = await Promise.all(['Taccuino del docente', 'Taccuini di prova'].map(name =>
         page.getByRole('link', { name, exact: true }).boundingBox()));
     assert.ok(Math.abs(notebooks[0].y - notebooks[1].y) < 2 && notebooks[1].x > notebooks[0].x, 'notebooks side by side');
@@ -75,6 +87,67 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     await page.waitForURL(`${origin}/docente/taccuino`);
     await page.locator('[data-teacher-notebook]').waitFor();
     assert.deepEqual(errors, []);
+    await page.close();
+}
+
+// 1b. Sezione Le mie classi: rendering card attive, metadati e link all'Hub
+{
+    const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
+    const { errors } = await prepare(page);
+    await page.route('**/api/admin/groups', route => route.fulfill({
+        status: 200, contentType: 'application/json', body: JSON.stringify([
+            { id: 101, name: '3A Informatica', code: 'GR-INFO3A', school: 'IIS Volta', is_active: true, members_count: 22 },
+            { id: 102, name: '4B Liceo Scientifico', code: 'GR-LS4B', institution_name: 'Liceo Da Vinci', is_active: true, members_count: 1 },
+            { id: 103, name: 'Classe Inattiva', code: 'GR-INACT', is_active: false, members_count: 15 },
+        ]),
+    }));
+    await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
+    await page.locator('[data-testid="teacher-my-classes-section"]').waitFor();
+    assert.equal(await page.locator('[data-testid="my-class-card-101"]').count(), 1);
+    assert.equal(await page.locator('[data-testid="my-class-card-102"]').count(), 1);
+    assert.equal(await page.locator('[data-testid="my-class-card-103"]').count(), 0);
+
+    const card1 = page.locator('[data-testid="my-class-card-101"]');
+    assert.ok((await card1.textContent()).includes('3A Informatica'));
+    assert.ok((await card1.textContent()).includes('22'));
+    assert.ok((await card1.textContent()).includes('GR-INFO3A'));
+    assert.ok((await card1.textContent()).includes('IIS Volta'));
+
+    const hubLink = page.locator('[data-testid="my-class-hub-link-101"]');
+    assert.equal(await hubLink.getAttribute('href'), '/docente/classi/101');
+    const hubBox = await hubLink.boundingBox();
+    assert.ok(hubBox && hubBox.height >= 44, 'class hub link meets 44px touch target');
+
+    const card2 = page.locator('[data-testid="my-class-card-102"]');
+    assert.ok((await card2.textContent()).includes('1 studente'));
+    assert.ok((await card2.textContent()).includes('Liceo Da Vinci'));
+
+    assert.deepEqual(errors, []);
+    await page.close();
+}
+
+// 1c. Sezione Le mie classi: gestione errori e retry
+{
+    const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
+    const { errors } = await prepare(page);
+    let attempts = 0;
+    await page.route('**/api/admin/groups', route => {
+        attempts++;
+        if (attempts === 1) {
+            return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ detail: 'fail' }) });
+        }
+        return route.fulfill({
+            status: 200, contentType: 'application/json', body: JSON.stringify([
+                { id: 201, name: 'Classe Recuperata', code: 'GR-REC01', is_active: true, members_count: 12 },
+            ]),
+        });
+    });
+    await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
+    await page.locator('[role="alert"]').waitFor();
+    assert.ok((await page.locator('[role="alert"]').textContent()).includes('Impossibile caricare'));
+    await page.getByRole('button', { name: 'Riprova' }).click();
+    await page.locator('[data-testid="my-class-card-201"]').waitFor();
+    assert.equal(await page.locator('[data-testid="my-class-card-201"]').count(), 1);
     await page.close();
 }
 
