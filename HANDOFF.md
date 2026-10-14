@@ -1,3 +1,34 @@
+# Handoff S8: Area Docente - Separazione e chiarimento della Palestra di prova (Issue #266)
+Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
+
+- Completamento Issue #266 (Milestone 14 'Riorganizzazione Area Docente: didattica attiva, classi e palestra di prova').
+- Titolo: 'Area Docente: Separazione e chiarimento della Palestra di prova (studenti fittizi)'.
+- Branch: `feature/teacher-area-practice-gym-separation`
+- Modifiche realizzate:
+  1. `frontend/src/components/teacher/PracticeGymSection.tsx`: creata la nuova sezione dedicata `PracticeGymSection` con stile sandbox protetto.
+     - Badge esplicito «Simulazione protetta» con icona `ShieldCheck` per identificare chiaramente l'ambiente di test.
+     - Titolo e spiegazione esplicita dello scopo protetto: creazione e gestione di profili di studenti fittizi per sperimentare questionari, prompt personalizzati e dinamiche di colloquio prima delle sessioni reali in classe, con garanzia di nessun impatto sulle classi reali né sui dati dei partecipanti.
+     - Tag descrittivi ad alta leggibilità: «Studenti fittizi», «Test prompt e questionari», «Nessun impatto sulle classi reali».
+     - Azione primaria CTA touch-friendly (min-h-[44px]) «Entra nella Palestra di prova» verso `/docente/taccuini-prova`, affiancata da link secondario canonico «Taccuini di prova».
+     - Illustrazione coordinata `chat-guidata.png` responsive.
+  2. `frontend/src/components/teacher/TeacherAreaHome.tsx`: riorganizzata la home dell'Area Docente nei tre pilastri logici:
+     - **Pilastro 1 (Didattica e Classi)**: Hero di progettazione didattica attiva (`DidacticDesignSection`), Cruscotto operativo (`MyClassesSection`) e gruppo illustrato «Classe e assegnazioni» (`classroom`).
+     - **Pilastro 2 (Palestra di simulazione e prova)**: Sezione autonoma protetta (`PracticeGymSection`), visivamente distinta e separata.
+     - **Pilastro 3 (Profilo e Risorse)**: Sezione dedicata «Profilo professionale del docente» (`teacher-profile-notebook-section`) con il Taccuino del docente (`/docente/taccuino`), seguita dai gruppi «Cataloghi» (`catalogs`), «Somministrazioni e ricerca» (`research`) e dalle connessioni AI personali (`PersonalAIConnections`).
+     - Rimossa definitivamente la precedente griglia iniziale che posizionava Taccuino docente e Taccuini di prova affiancati in cima, eliminando ogni ambiguità tra profilo reale e simulazione.
+  3. `frontend/src/lib/i18n-teacher-area.ts`: definite tutte le 11 nuove etichette localizzate nelle 6 lingue ufficiali (`it`, `en`, `es`, `fr`, `de`, `sv`).
+  4. `frontend/src/lib/teacher-area.test.ts`: aggiunti test unitari per la presenza e non-vacuità di tutte le nuove chiavi `practiceGym*` e `teacherProfile*` nelle 6 lingue.
+  5. `frontend/tests/teacher-area-home.test.mjs`: aggiornato il test browser verificando la gerarchia dei titoli `h2`, la presenza e conformità della card sandbox e della CTA con touch target >= 44px, la collocazione del Taccuino del docente nel pilastro del profilo professionale sotto la palestra e l'attivazione dei collegamenti.
+  6. `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`: documentazione allineata e verificata con `make guidance-refresh` e `make guidance-check`.
+- Verifiche superate:
+  - Unit test frontend: `npm test` (445/445 superati, 0 errori).
+  - TypeScript: `npx tsc --noEmit` (0 errori).
+  - i18n: `npm run i18n:check` (3.329 chiavi allineate nelle 6 lingue, nessun testo hardcoded).
+  - Platform guidance: `make guidance-check` (SUCCESS).
+- Vincoli rispettati: nessun merge autonomo (in attesa di review utente da app mobile), nessun deploy, nessun comando sudo.
+
+---
+
 # Handoff S7: Area Docente - Sezione Le mie classi come cruscotto operativo nella Home (Issue #265)
 Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
 

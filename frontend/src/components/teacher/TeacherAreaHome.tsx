@@ -7,6 +7,7 @@ import { ArrowRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { DidacticDesignSection } from './DidacticDesignSection';
 import { MyClassesSection } from './MyClassesSection';
+import { PracticeGymSection } from './PracticeGymSection';
 import { teacherAreaName, teacherAreaDescription, teacherAreaText } from '@/lib/i18n-teacher-area';
 import { teacherAreaGroups, teacherAreaImages, type TeacherAreaSlug } from '@/lib/teacher-area';
 
@@ -36,28 +37,54 @@ function TeacherAreaEntry({ slug }: { slug: TeacherAreaSlug }) {
 export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; institutes: boolean }) {
     const { lang } = useI18n();
     const l = (key: Parameters<typeof teacherAreaText>[1]) => teacherAreaText(lang, key);
+
+    const classroomGroup = teacherAreaGroups.find(g => g.id === 'classroom');
+    const catalogsGroup = teacherAreaGroups.find(g => g.id === 'catalogs');
+    const researchGroup = teacherAreaGroups.find(g => g.id === 'research');
+
+    const renderGroup = (group: typeof teacherAreaGroups[number]) => {
+        const slugs = group.slugs.filter(slug => slug === 'istituti' ? institutes : teacher || slug !== 'orientamento');
+        if (slugs.length === 0) return null;
+        return (
+            <section key={group.id} aria-labelledby={`teacher-group-${group.id}`}>
+                <h2 id={`teacher-group-${group.id}`} className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">
+                    {l(group.id)}
+                </h2>
+                <nav aria-labelledby={`teacher-group-${group.id}`} className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
+                    {slugs.map(slug => <TeacherAreaEntry key={slug} slug={slug} />)}
+                </nav>
+            </section>
+        );
+    };
+
     return (
-        <div className="space-y-6" data-teacher-area-home>
-            {/* The two notebooks side by side, before the groups. */}
-            <div className="grid grid-cols-1 gap-x-6 gap-y-1 md:grid-cols-2">
-                <TeacherAreaEntry slug="taccuino" />
-                <TeacherAreaEntry slug="taccuini-prova" />
-            </div>
-
-            {/* Hero di progettazione didattica attiva (Obiettivi Bloom/SMART in primo piano) */}
+        <div className="space-y-8" data-teacher-area-home>
+            {/* 1. Didattica e Classi */}
             <DidacticDesignSection />
-
-            {/* Cruscotto operativo: Le mie classi */}
             <MyClassesSection />
+            {classroomGroup && renderGroup(classroomGroup)}
 
-            {teacherAreaGroups.map(group => ({ ...group, slugs: group.slugs.filter(slug => slug === 'istituti' ? institutes : teacher || slug !== 'orientamento') })).map(group => (
-                <section key={group.id} aria-labelledby={`teacher-group-${group.id}`}>
-                    <h2 id={`teacher-group-${group.id}`} className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">{l(group.id)}</h2>
-                    <nav aria-labelledby={`teacher-group-${group.id}`} className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
-                        {group.slugs.map(slug => <TeacherAreaEntry key={slug} slug={slug} />)}
-                    </nav>
-                </section>
-            ))}
+            {/* 2. Palestra di simulazione e prova */}
+            <PracticeGymSection />
+
+            {/* 3. Profilo e Risorse */}
+            <section aria-labelledby="teacher-profile-notebook-heading" data-testid="teacher-profile-notebook-section">
+                <div className="border-b border-slate-200 pb-2">
+                    <h2 id="teacher-profile-notebook-heading" className="text-lg font-bold text-slate-800">
+                        {l('teacherProfileHeading')}
+                    </h2>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                        {l('teacherProfileSubtitle')}
+                    </p>
+                </div>
+                <nav aria-labelledby="teacher-profile-notebook-heading" className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
+                    <TeacherAreaEntry slug="taccuino" />
+                </nav>
+            </section>
+
+            {catalogsGroup && renderGroup(catalogsGroup)}
+            {researchGroup && renderGroup(researchGroup)}
+
             <PersonalAIConnections area="docente" />
         </div>
     );

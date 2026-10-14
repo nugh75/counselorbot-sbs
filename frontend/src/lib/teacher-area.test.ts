@@ -96,3 +96,28 @@ test('catalogs group contains only standard catalog slugs', () => {
     assert.deepEqual([...catalogsGroup.slugs], ['catalogo-obiettivi', 'strategie', 'materiali']);
 });
 
+test('practice gym and teacher profile labels are fully localized across all 6 languages', async () => {
+    // @ts-expect-error -- Node runs TypeScript files directly.
+    const { teacherAreaText } = await import('./i18n-teacher-area.ts');
+    const gymKeys = [
+        'practiceGymTitle',
+        'practiceGymBadge',
+        'practiceGymPrimaryTitle',
+        'practiceGymPrimaryDescription',
+        'practiceGymCta',
+        'practiceGymTagSimulatedStudents',
+        'practiceGymTagPromptTesting',
+        'practiceGymTagSafeEnvironment',
+        'practiceGymManageNotebooks',
+        'teacherProfileHeading',
+        'teacherProfileSubtitle',
+    ] as const;
+
+    for (const key of gymKeys) {
+        for (const lang of languages) {
+            const val = teacherAreaText(lang, key);
+            assert.ok(val && val.trim().length > 0, `missing label ${key} in ${lang}`);
+        }
+    }
+});
+

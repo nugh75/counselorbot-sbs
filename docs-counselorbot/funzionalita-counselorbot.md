@@ -646,14 +646,10 @@ seguito) sia per lo studente (con lo screenshot della pagina Percorsi di classe)
 lingue; gli screenshot si rigenerano con `GUIDE_SCREENS=class-paths` in
 `frontend/scripts/capture-guide.mjs`.
 
-`/docente` è una panoramica illustrata, come l'Area studente: in alto, affiancati,
-il Taccuino del docente (`/docente/taccuino`, senza form nella home) e i **Taccuini di
-prova** (`/docente/taccuini-prova`). Seguono i tre gruppi (**Classe e assegnazioni**,
-**Cataloghi**, **Somministrazioni e ricerca**), nello stesso ordine e con una voce
-per ogni pagina; i **Cataloghi** si aprono con il percorso guidato «Obiettivi per la mia
-classe» (DOCENZA), con la sua immagine come le altre voci, prima del Catalogo obiettivi. L’ordine visivo coincide con quello dei collegamenti nel DOM e
-della navigazione da tastiera. Ogni voce apre una pagina dedicata con il ritorno
-all’Area docenti: `/docente/istituti` (primo elenco del gruppo **Classe e
+`/docente` è una panoramica illustrata organizzata in tre pilastri distinti:
+1. **Didattica e Classi**: la hero di progettazione didattica attiva con AI (`DidacticDesignSection`, con badge e CTA per `OBIETTIVO_DOCENZA`, link al Catalogo obiettivi e ai Percorsi), il cruscotto operativo «Le mie classi» (`MyClassesSection`, card attive con codice invito, partecipanti e accesso rapido all'Hub di classe) e il gruppo illustrato **Classe e assegnazioni** (`/docente/istituti`, `/docente/classi`, `/docente/compilazioni`, `/docente/percorsi`, `/docente/incontri`, `/docente/assegnazioni`).
+2. **Palestra di simulazione e prova**: sezione dedicata in evidenza con badge sandbox protetto (`PracticeGymSection` e pulsante CTA per `/docente/taccuini-prova`), dove creare e gestire studenti fittizi per testare questionari, prompt e dinamiche di colloquio prima delle sessioni reali, con la garanzia esplicita di nessun impatto sulle classi reali né sui dati reali degli studenti.
+3. **Profilo professionale e risorse**: lo spazio professionale del docente, chiaramente separato dalla palestra di prova, contenente il **Taccuino del docente** (`/docente/taccuino`, senza form nella home, per definire ruolo, pratica didattica e interessi di crescita), seguito dai gruppi **Cataloghi** (`/docente/catalogo-obiettivi`, `/docente/strategie`, `/docente/materiali`), **Somministrazioni e ricerca** (`/docente/orientamento`, `/docente/somministrazioni`) e dalle connessioni AI personali (`PersonalAIConnections`). Ogni voce apre una pagina dedicata con il ritorno all’Area docenti: `/docente/istituti` (primo elenco del gruppo **Classe e assegnazioni**: creare un istituto, unirsi a uno esistente, impostarne codice e
 assegnazioni**: creare un istituto, unirsi a uno esistente, impostarne codice e
 password per le somministrazioni e vederne le classi; visibile a docenti e
 amministratori, ciascuno limitato agli istituti di cui è membro, e chi crea un
