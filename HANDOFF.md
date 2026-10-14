@@ -1,3 +1,24 @@
+# Handoff S5: Compilazioni degli studenti nel gruppo Classe e assegnazioni
+Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
+
+- Spostamento di «Compilazioni degli studenti» dalla visualizzazione inline nella home docente alla struttura ad elenco illustrato nel gruppo «Classe e assegnazioni» (`group.id === 'classroom'`).
+- Modifiche realizzate:
+  1. `frontend/src/lib/teacher-area.ts`: aggiunto lo slug `'compilazioni'` a `teacherAreaSlugs`, al gruppo `classroom` e mappata l'immagine `/images/platform/compilazioni.png`.
+  2. `frontend/src/lib/i18n-teacher-area.ts`: aggiunte le traduzioni di nome e descrizione di `compilazioni` nelle 6 lingue ufficiali (`it`, `en`, `es`, `fr`, `de`, `sv`).
+  3. `frontend/src/components/teacher/TeacherAreaHome.tsx`: rimossa la sezione inline `<ClassCompilationsSection />`; la voce appare ora ordinatamente come card/tile illustrata nel gruppo «Classe e assegnazioni» insieme a Classi, Percorsi, Incontri e Assegnazioni.
+  4. `frontend/src/app/docente/compilazioni/page.tsx`: creata la pagina dedicata con `TeacherAreaPage` e intestazione unificata `TeacherAreaHeader`.
+  5. `frontend/src/components/teacher/ClassCompilationsSection.tsx`: aggiunto supporto a `showHeading={false}` per evitare duplicazioni di titoli sotto `TeacherAreaHeader`.
+  6. `frontend/src/lib/teacher-area.test.ts`: test unitari per verifica presenza nel gruppo classroom, percorsi immagini e completezza i18n su tutte le 6 lingue.
+  7. Documentazione e conformità: aggiornato `docs-counselorbot/funzionalita-counselorbot.md` e rigenerato `docs/operations/platform-guidance-state.json` tramite `make guidance-refresh`.
+- Verifiche superate:
+  - Unit test frontend: `npm test --prefix frontend` (437/437 superati, 0 fallimenti).
+  - TypeScript: `tsc --noEmit -p frontend/tsconfig.json` (0 errori).
+  - i18n: `npm run i18n:check --prefix frontend` (3.329 chiavi allineate nelle 6 lingue).
+  - Platform guidance: `make guidance-check` e `python3 scripts/check-platform-guidance.py --check --base origin/main` (SUCCESS).
+- Vincoli rispettati: nessun comando sudo, nessun deploy diretto.
+
+---
+
 # Handoff S5: Vista d'insieme dei risultati e delle chat dei propri studenti (Issue #246)
 Data: 2026-10-14 | Stato: completato, PR pronta su main
 

@@ -76,6 +76,7 @@ const names = {
     taccuino: labels.notebook,
     'taccuini-prova': ['Taccuini di prova', 'Practice notebooks', 'Cuadernos de práctica', 'Carnets d’entraînement', 'Übungs-Notizbücher', 'Övningsanteckningsböcker'],
     classi: ['Gruppi e classi', 'Groups and classes', 'Grupos y clases', 'Groupes et classes', 'Gruppen und Klassen', 'Grupper och klasser'],
+    compilazioni: ['Compilazioni degli studenti', 'Student submissions', 'Resultados de los estudiantes', 'Résultats des élèves', 'Ergebnisse der Lernenden', 'Elevernas resultat'],
     percorsi: ['Percorsi di classe', 'Class paths', 'Itinerarios de clase', 'Parcours de classe', 'Klassenpfade', 'Klassvägar'],
     incontri: ['Incontri', 'Meetings', 'Encuentros', 'Rencontres', 'Treffen', 'Möten'],
     assegnazioni: ['Assegnazioni', 'Assignments', 'Asignaciones', 'Attributions', 'Zuweisungen', 'Tilldelningar'],
@@ -111,6 +112,14 @@ const descriptions = {
         'Créez des classes et des groupes, partagez le code d’invitation et rédigez le contexte de la classe.',
         'Erstellen Sie Klassen und Gruppen, verteilen Sie den Einladungscode und schreiben Sie den Klassenkontext.',
         'Skapa klasser och grupper, dela inbjudningskoden och skriv klassens kontext.',
+    ],
+    compilazioni: [
+        'Scegli una delle classi che gestisci, anche condivise, per consultare i risultati salvati dai partecipanti.',
+        'Choose a class you manage, including shared classes, to view participants’ saved results.',
+        'Elige una clase que gestionas, también compartida, para consultar los resultados guardados de los participantes.',
+        'Choisissez une classe que vous gérez, y compris partagée, pour consulter les résultats enregistrés des participants.',
+        'Wählen Sie eine von Ihnen verwaltete Klasse, auch eine geteilte, um die gespeicherten Ergebnisse der Teilnehmenden zu lesen.',
+        'Välj en klass du hanterar, även en delad klass, för att se deltagarnas sparade resultat.',
     ],
     assegnazioni: [
         'Vedi le assegnazioni inviate, i destinatari e le restituzioni da valutare.',
