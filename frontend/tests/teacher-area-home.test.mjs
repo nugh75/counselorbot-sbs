@@ -45,7 +45,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     await page.getByRole('link', { name: 'Percorso guidato: obiettivi per la mia classe', exact: true }).waitFor();
     // intestazioni di gruppo in ordine; i due taccuini affiancati prima dei gruppi
     const h2 = await page.getByRole('heading', { level: 2 }).allTextContents();
-    assert.deepEqual(h2.slice(0, 2), ['Classe e assegnazioni', 'Cataloghi']);
+    assert.deepEqual(h2.slice(0, 3), ['Compilazioni degli studenti', 'Classe e assegnazioni', 'Cataloghi']);
     const notebooks = await Promise.all(['Taccuino del docente', 'Taccuini di prova'].map(name =>
         page.getByRole('link', { name, exact: true }).boundingBox()));
     assert.ok(Math.abs(notebooks[0].y - notebooks[1].y) < 2 && notebooks[1].x > notebooks[0].x, 'notebooks side by side');

@@ -606,6 +606,20 @@ salvata. I dettagli di attivazione automatica e ripristino sono in
 
 ## Docenti, ricercatori e amministrazione
 
+Nella dashboard `/docente`, subito sotto i due taccuini e prima dei gruppi di
+collegamenti, la sezione **Compilazioni degli studenti** permette di scegliere una
+classe o un gruppo gestito, proprio o condiviso. Mostra soltanto i risultati
+salvati dei partecipanti restituiti dalla vista classe esistente, dal più recente:
+username dello studente, strumento/questionario, data e punteggi quando disponibili.
+**Conversazione** apre su richiesta i messaggi già consultabili dalla classe,
+usando lo stesso componente e le stesse API di Classi e Piani di somministrazione.
+Il cambio classe svuota la vista precedente e interrompe le sue letture. Nessuna
+classe, nessuna compilazione visibile, caricamento ed errore hanno messaggi distinti;
+gli errori recuperabili offrono **Riprova**. L’assenza di risultati non viene
+interpretata come questionari incompleti. Sono conservati i controlli backend sul
+ruolo, sulla proprietà/condivisione della classe, sull’appartenenza dello studente
+e sulla sessione: nessun nuovo permesso o allargamento della visibilità.
+
 Nel menu della header la voce verso l'area è «Area docente» con l'icona a berretto
 da laurea, uguale per docenti, ricercatori e amministrazione.
 

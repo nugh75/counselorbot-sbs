@@ -1,3 +1,55 @@
+# Handoff S3: compilazioni di classe nella dashboard docente
+Data: 2026-10-14 | Stato: verificato, pronto per PR su main
+
+- Task Diario `7e7e3f97-2780-437b-8686-16a86a1fbbe6`, goal `9ce5d48f-e663-489a-9074-5966d55f6c87`.
+  Agente `s3-compilazioni-classe`, T2 Codex gpt-6.1-sol high, `--yolo`;
+  deroga esplicita utente alla revisione cross-modello limitata a questo task/PR.
+- Worktree esclusivo `/tmp/counselorbot-teacher-class-compilations-20261013`,
+  branch `feature/teacher-class-compilations`, base aggiornata `4c80f4a5`.
+- In `/docente`, sotto i taccuini, sezione sempre visibile **Compilazioni degli studenti**:
+  scelta esplicita classe propria/condivisa, risultati salvati ordinati per data,
+  username, strumento, data e punteggi disponibili. Conversazione su apertura,
+  stesso componente riusato da Classi e Piani di somministrazione.
+- API e accessi backend invariati: classe propria/condivisa (admin come prima),
+  membro corrente e risultato della sessione. Cambio classe smonta elenco e
+  conversazioni, abortisce le letture e ignora risposte tardive. Stati caricamento,
+  nessuna classe, nessun risultato, errore/retry e accesso negato localizzati.
+  Nessuna inferenza sui questionari mancanti, export o nuovo form/permesso.
+- File principali: `ClassCompilationsSection.tsx`, `StudentResultItem.tsx`,
+  `TeacherAreaHome.tsx`, `PlanStudentsPanel.tsx`; nuove copie nelle sei lingue,
+  guida docente e sei screenshot; documento piattaforma, CONTEXT e operazioni.
+  PracticeRepertoire/ScoreInputForm, onboarding, QSA, chat_logic e prompt non toccati.
+- Verifiche: **9/9 HTTP FastAPI/PostgreSQL** sintetici (ruoli, proprietà/condivisione,
+  revoche, membro rimosso, sessione altrui, docente senza classi/classi vuote);
+  **25/25 browser sul compilato** (24 nuovi + smoke dashboard esistente), sei lingue,
+  320 px, chiaro/scuro, tastiera, 44 px, selezione, race, errori e guida;
+  **430/430 unitari**, TypeScript, i18n 3.325 chiavi, ESLint mirato senza warning,
+  build locale Webpack, guidance refresh/check/--base origin/main e diff/staged-check.
+- ESLint globale: **5 errori e 50 warning preesistenti**. I cinque errori sono
+  confermati sui file della base con `git show HEAD:<file> | eslint --stdin`:
+  ReturningHome:67, PersonalAreaHome:98, NewDeckDialog:36, class-paths-tool-names:11,
+  use-collapsed-catalog:27. Non corretti in questo task.
+- Docker: primo build originale riuscito; rebuild Turbopack senza avanzamento oltre
+  25 minuti interrotto. Rebuild finale isolato **Webpack riuscito**, stesso Dockerfile
+  e dipendenze salvo il comando di verifica `next build --webpack`, senza modificare
+  il Dockerfile versionato. Tag `counselorbot-frontend:s3-class-compilations-validation`,
+  ID `sha256:9b0056b2c7068c1b76047a23e5d7e129faf212bdc8933230f80e476a83ea3134`.
+  Container senza rete: avvio/log regolari, `/docente` HTTP 200; immagini guida nel
+  container identiche ai file finali 6/6. Nessun rebuild/restart produzione, deploy o sudo.
+- Processi propri :3143 arrestati; container frontend e PostgreSQL di prova arrestati.
+  PostgreSQL :55443 era su tmpfs, senza volumi persistenti. Nessuna modifica al checkout
+  principale o agli altri worktree. Comandi e limiti in
+  `docs/operations/teacher-class-compilations.md`.
+- Bug registrati LOCAL nel Diario (nessuna issue aperta manualmente):
+  `50db1e7c-31a4-4ee4-8097-e5490efc74e1` lint globale, confermato e deduplicato;
+  `ae6b1009-1d3b-4ef2-967f-a23ed6ee6a86` overflow svedese dei taccuini, risolto;
+  `92e23480-bcba-4ae9-b271-78147fbd73b3` rallentamento Turbopack, sospetto
+  (carico concorrente; riproduzione deterministica non confermata).
+  Bug non registrati: nessuno. I primi timeout dev/fixture sotto carico sono superati
+  dalla suite finale compilata; nessuna certificazione SSO o dati reali/produzione.
+
+---
+
 # Handoff: Selezione multi-tag per filtro categorie counselor
 Data: 2026-10-07 | Stato: Completato, verifiche superate
 

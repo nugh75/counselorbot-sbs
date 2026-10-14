@@ -6,6 +6,17 @@ modifiche dal browser del Mac, **senza toccare i container di produzione**
 
 ## Comandi
 
+### Compilazioni di classe nella dashboard docente (S3)
+
+`scripts/dev-teacher-class-compilations-tests.sh` verifica e usa solo
+`127.0.0.1:3143`, hot reload con upstream `127.0.0.1:9`; API simulate e traffico
+esterno bloccato nei test, nessun accesso a dati di produzione. Arresto con
+Ctrl+C sul proprio processo. Tunnel `ssh -N -L 3143:127.0.0.1:3143
+<utente>@<server>`, URL `http://localhost:3143` (autenticazione solo fixture).
+Per i test HTTP backend, PostgreSQL temporaneo su :55443 con tmpfs e database
+`counselorbot_test`; fermare il solo container di prova a fine verifica.
+Contratti, comandi e limiti: [teacher-class-compilations.md](teacher-class-compilations.md).
+
 ### Class settings S1 (#88), secret-free worktree verification
 
 Use `scripts/dev-class-settings-backend.sh` (:8002, explicit local
