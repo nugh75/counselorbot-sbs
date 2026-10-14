@@ -5,6 +5,7 @@ import { PersonalAIConnections } from '@/components/profile/PersonalAIConnection
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
+import { DidacticDesignSection } from './DidacticDesignSection';
 import { teacherAreaName, teacherAreaDescription, teacherAreaText } from '@/lib/i18n-teacher-area';
 import { teacherAreaGroups, teacherAreaImages, type TeacherAreaSlug } from '@/lib/teacher-area';
 
@@ -41,13 +42,14 @@ export function TeacherAreaHome({ teacher, institutes }: { teacher: boolean; ins
                 <TeacherAreaEntry slug="taccuino" />
                 <TeacherAreaEntry slug="taccuini-prova" />
             </div>
+
+            {/* Hero di progettazione didattica attiva (Obiettivi Bloom/SMART in primo piano) */}
+            <DidacticDesignSection />
+
             {teacherAreaGroups.map(group => ({ ...group, slugs: group.slugs.filter(slug => slug === 'istituti' ? institutes : teacher || slug !== 'orientamento') })).map(group => (
                 <section key={group.id} aria-labelledby={`teacher-group-${group.id}`}>
                     <h2 id={`teacher-group-${group.id}`} className="border-b border-slate-200 pb-2 text-lg font-bold text-slate-800">{l(group.id)}</h2>
                     <nav aria-labelledby={`teacher-group-${group.id}`} className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
-                        {/* The guided chat for a class objective opens the catalogs, before the goal catalog. */}
-                        {group.id === 'catalogs' && <TeacherAreaLink id="goal-path" href="/?start=OBIETTIVO_DOCENZA"
-                            image="/images/platform/obiettivi-classe.png" name={l('goalPathTitle')} description={l('goalPathDescription')} />}
                         {group.slugs.map(slug => <TeacherAreaEntry key={slug} slug={slug} />)}
                     </nav>
                 </section>

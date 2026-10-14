@@ -191,10 +191,11 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
   con livello di apprendimento, controllo SMART, difficoltà, piano, prova e data di
   verifica. Offre percorso completo o essenziale; alla fine propone una bozza di
   obiettivo che la persona deve confermare, non un obiettivo salvato automaticamente.
-- **Obiettivi per la mia classe** (`OBIETTIVO_DOCENZA`): variante raggiungibile da
-  `/docente`, basata sulle classi selezionate e sul Taccuino del docente. Allinea
-  obiettivo, attività e valutazione; pubblicazione nel catalogo o assegnazione
-  richiedono una scelta esplicita.
+- **Obiettivi per la mia classe** (`OBIETTIVO_DOCENZA`): variante raggiungibile direttamente
+  dall’hero card prominente di **Progettazione didattica** in `/docente`, basata sulle classi selezionate
+  e sul Taccuino del docente. Guida la definizione dell'obiettivo con tassonomia di Bloom, verifica SMART
+  e allineamento costruttivo con attività e valutazione; l’obiettivo progettato si collega al Catalogo
+  obiettivi e ai Percorsi di classe per gli studenti.
 - **Strumenti e percorsi personalizzati**: gli strumenti e le chat guidate create
   e attivate dall'amministrazione compaiono dinamicamente nel catalogo attività
   dello studente (nella sezione dei percorsi guidati o delle analisi questionari a
@@ -737,8 +738,12 @@ allegati visibili nel dettaglio), `/docente/catalogo-obiettivi` (solo creazione 
 gestione del catalogo: le voci pubblicate non si assegnano da qui), `/docente/strategie`,
 `/docente/materiali`, `/docente/orientamento` (solo docenti) e
 `/docente/somministrazioni`. Le pagine applicano lo stesso controllo di accesso
-della panoramica. Il Taccuino del docente descrive il ruolo professionale ed entra nel
-percorso OBIETTIVO_DOCENZA, distinto dal Taccuino personale. I docenti pubblicano
+della panoramica. Nella home dell’Area docenti (`/docente`), una sezione prominente di
+**Progettazione didattica** mette in primo piano la didattica attiva con l’AI (hero card con link
+diretto ad `OBIETTIVO_DOCENZA`, badge AI, evidenza dei pilastri metodologici Bloom, SMART e
+allineamento costruttivo) e guida il flusso verso la pubblicazione nel Catalogo obiettivi e
+l'integrazione nei Percorsi di classe per gli studenti. Il Taccuino del docente descrive il ruolo
+professionale ed entra nel percorso OBIETTIVO_DOCENZA, distinto dal Taccuino personale. I docenti pubblicano
 strategie e materiali direttamente; pubblicano obiettivi nei propri gruppi, mentre
 il catalogo comune richiede revisione amministrativa. Ogni assegnazione è ancorata
 a un obiettivo pubblicato del catalogo, obbligatorio per il gruppo o la classe
