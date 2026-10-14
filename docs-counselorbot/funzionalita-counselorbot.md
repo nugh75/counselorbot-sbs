@@ -619,13 +619,14 @@ salvata. I dettagli di attivazione automatica e ripristino sono in
 
 ## Docenti, ricercatori e amministrazione
 
-Nella dashboard `/docente`, subito sotto i due taccuini e prima dei gruppi di
-collegamenti, la sezione **Compilazioni degli studenti** permette di scegliere una
-classe o un gruppo gestito, proprio o condiviso. Mostra soltanto i risultati
-salvati dei partecipanti restituiti dalla vista classe esistente, dal più recente:
-username dello studente, strumento/questionario, data e punteggi quando disponibili.
-Quando una classe è selezionata, il collegamento «Vista d'insieme della classe»
-permette di passare direttamente alla scheda dei risultati e dei partecipanti della classe.
+Nel gruppo **Classe e assegnazioni** dell'Area docenti, la voce illustrata
+**Compilazioni degli studenti** (`/docente/compilazioni`, con immagine `compilazioni.png`)
+apre la pagina dedicata dove il docente può scegliere una classe o un gruppo gestito,
+proprio o condiviso. Mostra soltanto i risultati salvati dei partecipanti restituiti dalla
+vista classe esistente, dal più recente: username dello studente, strumento/questionario,
+data e punteggi quando disponibili. Quando una classe è selezionata, il collegamento
+«Vista d'insieme della classe» permette di passare direttamente alla scheda dei risultati
+e dei partecipanti della classe (`/docente/classi/{id}?tab=students`).
 **Conversazione** apre su richiesta i messaggi già consultabili dalla classe,
 usando lo stesso componente e le stesse API di Classi e Piani di somministrazione.
 Il cambio classe svuota la vista precedente e interrompe le sue letture. Nessuna
@@ -655,7 +656,9 @@ all’Area docenti: `/docente/istituti` (primo elenco del gruppo **Classe e
 assegnazioni**: creare un istituto, unirsi a uno esistente, impostarne codice e
 password per le somministrazioni e vederne le classi; visibile a docenti e
 amministratori, ciascuno limitato agli istituti di cui è membro, e chi crea un
-istituto ne diventa membro), `/docente/percorsi` (Percorsi di classe con una propria
+istituto ne diventa membro), `/docente/compilazioni` (Compilazioni degli studenti con
+immagine `compilazioni.png`: selezione della classe, elenco cronologico dei risultati,
+lettura della conversazione e link rapido alla matrice dei partecipanti), `/docente/percorsi` (Percorsi di classe con una propria
 immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano e seguono i suoi percorsi
 con lo stesso editor della scheda Percorsi della classe; nell’editor (della classe e dei
 modelli) un solo **+ Aggiungi passo** chiede «Cosa fa lo studente in questo passo?» e
