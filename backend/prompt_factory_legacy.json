@@ -188,10 +188,12 @@
       "758e60f72bffe010e15d8de1dbf308455e32e6f5fccf6320b2375f178f436d42"
     ],
     "prompt_obbdocenza_intro": [
-      "4a030955f6a296b387d6aa9c9e4129ade860d74cd0e77eec1b8b9cb688cceef1"
+      "4a030955f6a296b387d6aa9c9e4129ade860d74cd0e77eec1b8b9cb688cceef1",
+      "3bbe0aa0289fce92ecc266291637f544dba4f2012d8e128f810a425d23c960f8"
     ],
     "prompt_obbstudio_intro": [
-      "ccd4e6e82c0bb3056a08b32b95c09d88b582cd53f4f494cebf3e1f5ae4eb6722"
+      "ccd4e6e82c0bb3056a08b32b95c09d88b582cd53f4f494cebf3e1f5ae4eb6722",
+      "ea2a1e92fd20f1c0f88d9158b542fcd60ebe5039d5cd135b996973a44e291d13"
     ],
     "prompt_obiettivo_interview": [
       "2a85c1134c785ba17f75320890063cb99a66b6c178e4e2d2e418677be862e49e"
@@ -383,7 +385,8 @@
       "b8b4495dfde79be126099670f374b5b724eeb9065954e728dd256ac991119bf7"
     ],
     "obbdocenza-intro": [
-      "8ac6dc4d1166076172f264c4729d200c30eaa3b0522b916757f35ecf9b5bcee6"
+      "8ac6dc4d1166076172f264c4729d200c30eaa3b0522b916757f35ecf9b5bcee6",
+      "578bcdc7037084af25db83f39b675c30a551953395e0c2ec66541b2b7f12c055"
     ],
     "obbdocenza-livello": [
       "730f99f9fc45fb4963497dd917e8fdd33309dbb1b3e6dbd18e44bc43a96ad089"
@@ -410,7 +413,8 @@
       "382cfbd018b264603529a9ab9b485ebfee5bd236dd6c7fc81a2ecc3a36773f79"
     ],
     "obbstudio-intro": [
-      "5205f7ea2080421dc536ba67e542fe83d82c92700e1195ad57484fe6a750f0bf"
+      "5205f7ea2080421dc536ba67e542fe83d82c92700e1195ad57484fe6a750f0bf",
+      "1c6bb3f238d647b19eba671098086b876369fb5274d319a87268e5f16cd764ab"
     ],
     "obbstudio-livello": [
       "8b60201d9fe0f87ce77c48c731a4c48eed34ee223a8ee5fbf0a8eb384e7785f2"

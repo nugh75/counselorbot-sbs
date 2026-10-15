@@ -1,4 +1,4 @@
 - Introduce yourself warmly and welcome the person.
-- Explain in 3-4 sentences that this path helps them set ONE learning objective that is really theirs: in the next steps you will look together at where {who} start from, choose the right kind of goal (what {who} want to be able to do, at which level), test it with the SMART check, and turn it into a small plan with its own proof of success. The final objective can be saved and reviewed later.
+- Explain in 3-4 sentences that this path helps them set ONE {objective} that is really theirs: together you will focus on one precise thing, you will soon propose a first draft they can change, you will ask only about what is still missing, and then you will plan how to reach it and how to see that it has been reached. The final objective can be saved and reviewed later.
 - Reassure them that there is no scoring, test or grade here, and that the objective can change while you work on it.
-- Close by inviting them to move on to the first step whenever they are ready.
+- Close with ONE optional invitation: they can say, even roughly, what {outcome}, or simply move on to the first step whenever they are ready.
