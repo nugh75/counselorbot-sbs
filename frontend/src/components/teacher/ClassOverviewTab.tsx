@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
     AlertTriangle,
     ArrowRight,
@@ -9,6 +10,7 @@ import {
     Copy,
     FileText,
     MessageSquare,
+    Pencil,
     Power,
     Route,
     Share2,
@@ -21,10 +23,13 @@ import {
 import { apiFetch } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n-context';
 import { classSettingsText, type classSettingsTexts } from '@/lib/i18n-class-settings';
+import { teacherAreaText } from '@/lib/i18n-teacher-area';
 import { learningText } from '@/lib/i18n-assignment-work';
 import { fetchTeacherInstitutions, type Institution } from '@/lib/referrals-api';
 import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
 import { useDraftGuard } from '@/lib/use-draft-guard';
+import { getClassCoverUrl } from '@/lib/class-cover-presets';
+import { ClassImageModal } from './ClassImageModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import type { StudentGroup } from './class-group-types';
@@ -92,6 +97,7 @@ export function ClassOverviewTab({
     const [saveBusy, setSaveBusy] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'saved' | 'error' | null>(null);
     const [saveError, setSaveError] = useState('');
+    const [showCoverModal, setShowCoverModal] = useState(false);
 
     // Status & Deletion state
     const [statusBusy, setStatusBusy] = useState(false);
@@ -667,6 +673,38 @@ export function ClassOverviewTab({
                         )}
                     </div>
 
+                    {/* Copertina 16:9 della classe */}
+                    <div className="flex flex-col gap-3 rounded-xl border border-slate-200/90 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="relative aspect-[16/9] h-16 sm:h-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-2xs">
+                                <Image
+                                    src={getClassCoverUrl(group)}
+                                    alt={group.name}
+                                    fill
+                                    unoptimized
+                                    className="object-cover"
+                                />
+                            </div>
+                            <div className="min-w-0">
+                                <h3 className="text-sm font-bold text-slate-800">
+                                    {teacherAreaText(lang, 'classCoverModalTitle')}
+                                </h3>
+                                <p className="mt-0.5 text-xs text-slate-500">
+                                    {teacherAreaText(lang, 'classCoverModalSubtitle')}
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setShowCoverModal(true)}
+                            className="inline-flex min-h-[44px] shrink-0 items-center gap-2 self-start sm:self-auto"
+                        >
+                            <Pencil className="h-4 w-4" aria-hidden />
+                            <span>{teacherAreaText(lang, 'classCoverChange')}</span>
+                        </Button>
+                    </div>
+
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         {/* Nome classe */}
                         <label className="flex flex-col gap-1 text-xs font-semibold text-slate-700">
@@ -944,6 +982,18 @@ export function ClassOverviewTab({
                     )}
                 </section>
             </Card>
+
+            {showCoverModal && (
+                <ClassImageModal
+                    open={showCoverModal}
+                    group={group}
+                    onClose={() => setShowCoverModal(false)}
+                    onUpdated={async (updatedGroup) => {
+                        setShowCoverModal(false);
+                        await onReload();
+                    }}
+                />
+            )}
         </div>
     );
 }

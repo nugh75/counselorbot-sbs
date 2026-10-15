@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <radialGradient id="bg_class_math" cx="45%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="50%" stop-color="#042f2e" />
+      <stop offset="100%" stop-color="#021c1b" />
+    </radialGradient>
+    <linearGradient id="brass_math" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef3c7" />
+      <stop offset="35%" stop-color="#fbbf24" />
+      <stop offset="70%" stop-color="#d97706" />
+      <stop offset="100%" stop-color="#78350f" />
+    </linearGradient>
+    <linearGradient id="spiral_glow" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#14b8a6" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#fef3c7" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="180" fill="url(#bg_class_math)" />
+
+  <!-- Griglia di coordinate cartesiane e assi ortogonali -->
+  <g stroke="#14b8a6" stroke-width="0.7" opacity="0.25" fill="none">
+    <!-- Rete quadrettata ortogonale -->
+    <line x1="40" y1="0" x2="40" y2="180" stroke-dasharray="2 3" />
+    <line x1="80" y1="0" x2="80" y2="180" stroke-dasharray="2 3" />
+    <line x1="120" y1="0" x2="120" y2="180" stroke-dasharray="2 3" />
+    <line x1="160" y1="0" x2="160" y2="180" stroke-dasharray="2 3" />
+    <line x1="200" y1="0" x2="200" y2="180" stroke-dasharray="2 3" />
+    <line x1="240" y1="0" x2="240" y2="180" stroke-dasharray="2 3" />
+    <line x1="280" y1="0" x2="280" y2="180" stroke-dasharray="2 3" />
+
+    <line x1="0" y1="30" x2="320" y2="30" stroke-dasharray="2 3" />
+    <line x1="0" y1="60" x2="320" y2="60" stroke-dasharray="2 3" />
+    <line x1="0" y1="90" x2="320" y2="90" stroke-dasharray="2 3" />
+    <line x1="0" y1="120" x2="320" y2="120" stroke-dasharray="2 3" />
+    <line x1="0" y1="150" x2="320" y2="150" stroke-dasharray="2 3" />
+
+    <!-- Assi cartesiani principali -->
+    <line x1="0" y1="90" x2="320" y2="90" stroke="#2dd4bf" stroke-width="1.2" opacity="0.5" />
+    <line x1="160" y1="0" x2="160" y2="180" stroke="#2dd4bf" stroke-width="1.2" opacity="0.5" />
+    <!-- Frecce degli assi -->
+    <polygon points="318,90 312,87 312,93" fill="#2dd4bf" />
+    <polygon points="160,2 157,8 163,8" fill="#2dd4bf" />
+  </g>
+
+  <!-- Rettangoli aurei proporzionali e Spirale di Fibonacci (Spirale Aurea) -->
+  <g opacity="0.65">
+    <!-- Rettangolo aureo guida a tratteggio -->
+    <rect x="25" y="25" width="130" height="80" fill="none" stroke="#f59e0b" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.4" />
+    <rect x="105" y="25" width="50" height="50" fill="none" stroke="#f59e0b" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.4" />
+    <!-- Curva continua della spirale aurea -->
+    <path d="M 125 65 A 6 6 0 0 1 120 70 A 10 10 0 0 1 110 60 A 18 18 0 0 1 128 42 A 32 32 0 0 1 155 74 A 54 54 0 0 1 101 128 A 90 90 0 0 1 11 38" fill="none" stroke="url(#spiral_glow)" stroke-width="2.4" stroke-linecap="round" />
+  </g>
+
+  <!-- Solido platonico regolare (Icosaedro wireframe tridimensionale) a destra -->
+  <g transform="translate(245, 90)">
+    <!-- Facce interne semitrasparenti -->
+    <polygon points="0,-45 -36,-12 0,16" fill="#14b8a6" fill-opacity="0.25" stroke="#2dd4bf" stroke-width="1.2" />
+    <polygon points="0,-45 36,-12 0,16" fill="#5eead4" fill-opacity="0.2" stroke="#2dd4bf" stroke-width="1.2" />
+    <polygon points="0,16 -36,-12 -22,38" fill="#0f766e" fill-opacity="0.3" stroke="#2dd4bf" stroke-width="1.2" />
+    <polygon points="0,16 36,-12 22,38" fill="#0d9488" fill-opacity="0.3" stroke="#2dd4bf" stroke-width="1.2" />
+    <polygon points="0,16 -22,38 22,38" fill="#042f2e" fill-opacity="0.4" stroke="#2dd4bf" stroke-width="1.2" />
+
+    <!-- Spigoli esterni dell'icosaedro -->
+    <polygon points="0,-45 -36,-12 -22,38 22,38 36,-12" fill="none" stroke="#5eead4" stroke-width="1.8" />
+    <line x1="0" y1="-45" x2="0" y2="16" stroke="#fde68a" stroke-width="1.5" />
+    <line x1="-36" y1="-12" x2="36" y2="-12" stroke="#fde68a" stroke-width="1" stroke-dasharray="3 3" opacity="0.6" />
+    <line x1="-22" y1="38" x2="36" y2="-12" stroke="#2dd4bf" stroke-width="1.2" />
+    <line x1="22" y1="38" x2="-36" y2="-12" stroke="#2dd4bf" stroke-width="1.2" />
+
+    <!-- Vertici geometrici dorati (nodi di coordinate) -->
+    <circle cx="0" cy="-45" r="3" fill="#fde68a" />
+    <circle cx="-36" cy="-12" r="3" fill="#fde68a" />
+    <circle cx="36" cy="-12" r="3" fill="#fde68a" />
+    <circle cx="0" cy="16" r="3.5" fill="#ffffff" />
+    <circle cx="-22" cy="38" r="3" fill="#fde68a" />
+    <circle cx="22" cy="38" r="3" fill="#fde68a" />
+  </g>
+
+  <!-- Grande compasso d'oro da architetto/matematico a sinistra -->
+  <g id="golden_compass" transform="translate(85, 40)">
+    <!-- Cerniera centrale superiore a disco con vite zigrinata -->
+    <circle cx="0" cy="0" r="11" fill="url(#brass_math)" stroke="#78350f" stroke-width="1.8" />
+    <circle cx="0" cy="0" r="4.5" fill="#042f2e" stroke="#fbbf24" stroke-width="1.2" />
+    <circle cx="0" cy="0" r="1.5" fill="#ffffff" />
+
+    <!-- Asta graduata orizzontale di regolazione micrometrica -->
+    <line x1="-26" y1="42" x2="26" y2="42" stroke="url(#brass_math)" stroke-width="2.5" />
+    <circle cx="0" cy="42" r="4.5" fill="url(#brass_math)" stroke="#78350f" stroke-width="1" />
+
+    <!-- Gamba sinistra del compasso -->
+    <path d="M -6 5 L -34 95 L -36 120" fill="none" stroke="url(#brass_math)" stroke-width="4.5" stroke-linecap="round" />
+    <!-- Punta d'acciaio sinistra -->
+    <polygon points="-36,120 -38,128 -34,128" fill="#e2e8f0" stroke="#042f2e" stroke-width="0.8" />
+
+    <!-- Gamba destra del compasso -->
+    <path d="M 6 5 L 34 95 L 36 120" fill="none" stroke="url(#brass_math)" stroke-width="4.5" stroke-linecap="round" />
+    <!-- Punta tracciante destra -->
+    <polygon points="36,120 34,128 38,128" fill="#fbbf24" stroke="#78350f" stroke-width="0.8" />
+
+    <!-- Punto di contatto e cerchio tracciato dalla punta -->
+    <circle cx="36" cy="128" r="2.5" fill="#5eead4" />
+    <path d="M 36 128 C 45 130, 60 128, 75 120" fill="none" stroke="#5eead4" stroke-width="1" stroke-dasharray="2 3" opacity="0.7" />
+  </g>
+</svg>

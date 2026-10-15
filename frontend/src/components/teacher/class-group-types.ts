@@ -9,6 +9,7 @@ export interface StudentGroup {
     description: string | null;
     methodologies: string | null;
     context_visible_to_students: boolean;
+    image_url?: string | null;
     owner_username: string;
     is_active: boolean;
     members_count: number;

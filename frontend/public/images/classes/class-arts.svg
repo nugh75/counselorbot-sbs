@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <radialGradient id="bg_class_arts" cx="45%" cy="40%" r="80%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="55%" stop-color="#042f2e" />
+      <stop offset="100%" stop-color="#021c1b" />
+    </radialGradient>
+    <linearGradient id="wood_arts" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a" />
+      <stop offset="45%" stop-color="#d97706" />
+      <stop offset="100%" stop-color="#92400e" />
+    </linearGradient>
+    <linearGradient id="canvas_arts" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f8fafc" />
+    </linearGradient>
+    <linearGradient id="brass_ferrule" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b45309" />
+      <stop offset="50%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#78350f" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="180" fill="url(#bg_class_arts)" />
+
+  <!-- Forme geometriche astratte di luce nello spazio dello studio -->
+  <g opacity="0.25">
+    <circle cx="250" cy="50" r="45" fill="none" stroke="#2dd4bf" stroke-width="1" stroke-dasharray="3 4" />
+    <polygon points="50,40 80,95 20,95" fill="none" stroke="#f59e0b" stroke-width="1.2" />
+    <line x1="20" y1="135" x2="300" y2="135" stroke="#14b8a6" stroke-width="0.8" stroke-dasharray="4 6" />
+  </g>
+
+  <!-- Grande cavalletto da pittura da studio a sinistra/centro -->
+  <g id="easel_studio" transform="translate(100, 15)">
+    <!-- Gambe del cavalletto -->
+    <line x1="20" y1="160" x2="45" y2="10" stroke="url(#wood_arts)" stroke-width="4.5" stroke-linecap="round" />
+    <line x1="70" y1="160" x2="45" y2="10" stroke="url(#wood_arts)" stroke-width="4.5" stroke-linecap="round" />
+    <line x1="45" y1="160" x2="45" y2="10" stroke="#78350f" stroke-width="3" stroke-linecap="round" opacity="0.7" />
+    <!-- Asta centrale verticale scanalata -->
+    <rect x="42.5" y="8" width="5" height="152" rx="1.5" fill="#b45309" />
+    <circle cx="45" cy="18" r="4" fill="url(#wood_arts)" stroke="#78350f" stroke-width="1" />
+
+    <!-- Mensola / ripiano di supporto della tela -->
+    <rect x="0" y="108" width="90" height="7" rx="2" fill="url(#wood_arts)" stroke="#78350f" stroke-width="1" />
+    <rect x="38" y="115" width="14" height="6" rx="1" fill="#78350f" />
+
+    <!-- Tela da pittura appoggiata sul cavalletto -->
+    <g transform="translate(6, 32)">
+      <!-- Telaio e superficie telata -->
+      <rect x="0" y="0" width="78" height="76" rx="2" fill="url(#canvas_arts)" stroke="#cbd5e1" stroke-width="1.5" />
+      <!-- Composizione pittorica astratta sulla tela -->
+      <!-- Cerchio d'oro solare -->
+      <circle cx="44" cy="32" r="18" fill="#f59e0b" opacity="0.9" />
+      <circle cx="44" cy="32" r="18" fill="none" stroke="#fbbf24" stroke-width="1.5" />
+      <!-- Arco di luna teal scuro -->
+      <path d="M 18 56 C 24 35, 48 30, 62 42" fill="none" stroke="#0f766e" stroke-width="4" stroke-linecap="round" />
+      <!-- Triangolo ciano dinamico -->
+      <polygon points="16,22 36,44 14,48" fill="#2dd4bf" opacity="0.85" />
+      <!-- Pennellata diagonale scarlatta -->
+      <line x1="26" y1="62" x2="64" y2="20" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round" />
+      <circle cx="56" cy="56" r="3" fill="#6366f1" />
+    </g>
+
+    <!-- Morsetto superiore ferma-tela in legno e ottone -->
+    <rect x="34" y="27" width="22" height="6" rx="1.5" fill="url(#wood_arts)" stroke="#78350f" stroke-width="1" />
+    <circle cx="45" cy="24" r="3" fill="#f59e0b" />
+  </g>
+
+  <!-- Tavolozza da pittore a destra con colori primari e complementari -->
+  <g transform="translate(196, 88) rotate(14)">
+    <!-- Sagoma della tavolozza in legno d'acero levigato -->
+    <path d="M 25 15 C 55 5, 85 20, 92 48 C 98 72, 75 92, 48 90 C 22 88, 5 72, 8 48 C 10 32, 12 18, 25 15 Z" fill="url(#wood_arts)" stroke="#78350f" stroke-width="2" />
+    <!-- Foro passadito per il pollice -->
+    <ellipse cx="74" cy="64" rx="7" ry="10" transform="rotate(-20 74 64)" fill="#042f2e" stroke="#78350f" stroke-width="1.2" />
+
+    <!-- Macchie di colore a rilievo sulla tavolozza -->
+    <!-- Giallo ambra caldo -->
+    <ellipse cx="30" cy="24" rx="6" ry="5" fill="#f59e0b" />
+    <circle cx="28" cy="22" r="1.5" fill="#fef3c7" />
+    <!-- Arancio vivo -->
+    <ellipse cx="48" cy="21" rx="5.5" ry="5" fill="#ea580c" />
+    <circle cx="46" cy="19" r="1.5" fill="#fed7aa" />
+    <!-- Rosso vermiglio -->
+    <ellipse cx="66" cy="26" rx="6" ry="5.5" fill="#e11d48" />
+    <circle cx="64" cy="24" r="1.5" fill="#ffe4e6" />
+    <!-- Blu oltremare profondo -->
+    <ellipse cx="80" cy="40" rx="5.5" ry="5" fill="#2563eb" />
+    <circle cx="78" cy="38" r="1.5" fill="#bfdbfe" />
+    <!-- Verde smeraldo / teal luminoso -->
+    <ellipse cx="32" cy="74" rx="6" ry="5" fill="#10b981" />
+    <circle cx="30" cy="72" r="1.5" fill="#a7f3d0" />
+    <!-- Bianco titanio al centro per mescolare -->
+    <ellipse cx="44" cy="50" rx="8" ry="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8" />
+  </g>
+
+  <!-- Due pennelli d'artista fini incrociati con ghiera metallica -->
+  <g transform="translate(182, 115)">
+    <!-- Pennello 1 inclinato a 45 gradi -->
+    <g transform="rotate(-38)">
+      <line x1="-30" y1="0" x2="48" y2="0" stroke="#78350f" stroke-width="3" stroke-linecap="round" />
+      <rect x="48" y="-2" width="12" height="4" rx="1" fill="url(#brass_ferrule)" />
+      <!-- Setole a lingua di gatto intinte nel teal -->
+      <path d="M 60 -2 C 68 -2, 74 0, 70 0 C 74 0, 68 2, 60 2 Z" fill="#2dd4bf" />
+    </g>
+    <!-- Pennello 2 inclinato a contrasto -->
+    <g transform="rotate(-12)">
+      <line x1="-25" y1="0" x2="52" y2="0" stroke="#92400e" stroke-width="2.5" stroke-linecap="round" />
+      <rect x="52" y="-1.8" width="11" height="3.6" rx="1" fill="url(#brass_ferrule)" />
+      <!-- Setole intinte nell'oro -->
+      <path d="M 63 -1.8 C 70 -1.8, 75 0, 72 0 C 75 0, 70 1.8, 63 1.8 Z" fill="#fbbf24" />
+    </g>
+  </g>
+</svg>

@@ -1,11 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Users, ArrowRight, GraduationCap, Building2, KeyRound, Plus, RefreshCw } from 'lucide-react';
+import Image from 'next/image';
+import { Users, ArrowRight, GraduationCap, Building2, KeyRound, Plus, RefreshCw, Pencil } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { teacherAreaText } from '@/lib/i18n-teacher-area';
 import { useTeacherResource } from './useTeacherResource';
-import { parseClassGroups } from './class-group-types';
+import { parseClassGroups, type StudentGroup } from './class-group-types';
+import { getClassCoverUrl } from '@/lib/class-cover-presets';
+import { ClassImageModal } from './ClassImageModal';
 import { Callout } from '@/components/ui/Callout';
 import { Button } from '@/components/ui/Button';
 
@@ -13,6 +17,7 @@ export function MyClassesSection() {
     const { lang } = useI18n();
     const l = (key: Parameters<typeof teacherAreaText>[1]) => teacherAreaText(lang, key);
     const { data: groups, loading, failed, forbidden, reload } = useTeacherResource('/api/admin/groups', parseClassGroups);
+    const [editingCoverGroup, setEditingCoverGroup] = useState<StudentGroup | null>(null);
 
     const activeGroups = (groups ?? []).filter(group => group.is_active);
 
@@ -118,12 +123,34 @@ export function MyClassesSection() {
                             <div
                                 key={group.id}
                                 data-testid={`my-class-card-${group.id}`}
-                                className="group flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-indigo-300 hover:shadow-md"
+                                className="group flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-4 shadow-xs transition hover:border-indigo-300 hover:shadow-md"
                             >
                                 <div className="min-w-0">
+                                    {/* Copertina 16:9 in stile counselor */}
+                                    <div className="relative mb-3 aspect-[16/9] max-h-28 w-full overflow-hidden rounded-lg border border-slate-200/80 bg-slate-100 shadow-xs group/cover">
+                                        <Image
+                                            src={getClassCoverUrl(group)}
+                                            alt={group.name}
+                                            fill
+                                            unoptimized
+                                            className="object-cover transition duration-300 group-hover/cover:scale-105"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingCoverGroup(group)}
+                                            title={l('classCoverChange')}
+                                            className="absolute inset-0 flex items-center justify-center bg-slate-900/40 opacity-0 backdrop-blur-[2px] transition duration-200 group-hover/cover:opacity-100 focus-visible:opacity-100 cursor-pointer"
+                                        >
+                                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1 text-xs font-semibold text-slate-800 shadow-sm transition hover:bg-white hover:text-indigo-700">
+                                                <Pencil className="h-3.5 w-3.5" aria-hidden />
+                                                <span>{l('classCoverChange')}</span>
+                                            </span>
+                                        </button>
+                                    </div>
+
                                     <div className="flex items-start justify-between gap-2">
-                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 transition-colors group-hover:bg-indigo-100">
-                                            <Users className="h-5 w-5" aria-hidden />
+                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 transition-colors group-hover:bg-indigo-100">
+                                            <Users className="h-4.5 w-4.5" aria-hidden />
                                         </div>
                                         {group.code && (
                                             <span
@@ -136,11 +163,11 @@ export function MyClassesSection() {
                                         )}
                                     </div>
 
-                                    <h3 className="mt-3 truncate text-base font-bold text-slate-900 group-hover:text-indigo-700" title={group.name}>
+                                    <h3 className="mt-2.5 truncate text-base font-bold text-slate-900 group-hover:text-indigo-700" title={group.name}>
                                         {group.name}
                                     </h3>
 
-                                    <div className="mt-2 space-y-1 text-xs text-slate-600">
+                                    <div className="mt-1.5 space-y-1 text-xs text-slate-600">
                                         <p className="flex items-center gap-1.5 font-medium">
                                             <span className="font-semibold text-slate-700">{studentCountText}</span>
                                         </p>
@@ -167,6 +194,18 @@ export function MyClassesSection() {
                         );
                     })}
                 </div>
+            )}
+
+            {editingCoverGroup && (
+                <ClassImageModal
+                    open={Boolean(editingCoverGroup)}
+                    group={editingCoverGroup}
+                    onClose={() => setEditingCoverGroup(null)}
+                    onUpdated={(updatedGroup) => {
+                        setEditingCoverGroup(null);
+                        void reload();
+                    }}
+                />
             )}
         </section>
     );

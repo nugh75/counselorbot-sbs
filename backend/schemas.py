@@ -1660,6 +1660,7 @@ class StudentGroupCreate(BaseModel):
     description: Optional[str] = None
     methodologies: Optional[str] = None
     context_visible_to_students: Optional[bool] = None
+    image_url: Optional[str] = None
 
 
 class StudentGroupUpdate(BaseModel):
@@ -1671,6 +1672,7 @@ class StudentGroupUpdate(BaseModel):
     description: Optional[str] = None
     methodologies: Optional[str] = None
     context_visible_to_students: Optional[bool] = None
+    image_url: Optional[str] = None
 
 
 class GroupShareCreate(BaseModel):

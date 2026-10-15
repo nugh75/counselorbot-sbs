@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from . import auth
 
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./counselorbot.db")
+DATA_DIR = os.getenv("DATA_DIR", "/app/uploads")
 
 if "sqlite" in SQLALCHEMY_DATABASE_URL:
     connect_args = {"check_same_thread": False}

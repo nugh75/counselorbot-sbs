@@ -1309,6 +1309,7 @@ class StudentGroup(Base):
     description = Column(Text, nullable=True)
     methodologies = Column(Text, nullable=True)
     context_visible_to_students = Column(Boolean, nullable=False, default=False)
+    image_url = Column(String, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

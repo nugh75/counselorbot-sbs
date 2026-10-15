@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <radialGradient id="bg_class_science" cx="65%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="55%" stop-color="#042f2e" />
+      <stop offset="100%" stop-color="#021c1b" />
+    </radialGradient>
+    <linearGradient id="brass_science" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#78350f" />
+      <stop offset="45%" stop-color="#d97706" />
+      <stop offset="85%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#fef3c7" />
+    </linearGradient>
+    <linearGradient id="liquid_science" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#0d9488" />
+      <stop offset="70%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#99f6e4" />
+    </linearGradient>
+    <linearGradient id="beam_science" x1="50%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#5eead4" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#ccfbf1" stop-opacity="0.0" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="180" fill="url(#bg_class_science)" />
+
+  <!-- Reticolo molecolare ed esagoni scientifici di fondo -->
+  <g stroke="#2dd4bf" stroke-width="0.8" opacity="0.22" fill="none">
+    <polygon points="40,35 55,26 70,35 70,52 55,61 40,52" />
+    <polygon points="70,35 85,26 100,35 100,52 85,61 70,52" />
+    <polygon points="55,61 70,52 70,35" stroke-dasharray="2 3" />
+    <polygon points="250,30 268,20 286,30 286,50 268,60 250,50" />
+    <line x1="100" y1="43" x2="125" y2="43" stroke-dasharray="3 3" />
+    <line x1="250" y1="40" x2="230" y2="30" stroke-dasharray="3 3" />
+    <circle cx="55" cy="26" r="2.5" fill="#5eead4" />
+    <circle cx="85" cy="26" r="2.5" fill="#f59e0b" />
+    <circle cx="100" cy="52" r="2" fill="#5eead4" />
+    <circle cx="268" cy="20" r="2.5" fill="#fbbf24" />
+    <circle cx="286" cy="50" r="2" fill="#5eead4" />
+  </g>
+
+  <!-- Onde di diffusione della materia -->
+  <path d="M 0 145 C 80 130, 160 160, 240 140 C 280 130, 305 135, 320 142" fill="none" stroke="#14b8a6" stroke-width="1" stroke-dasharray="3 5" opacity="0.3" />
+  <path d="M 0 160 C 90 145, 180 175, 270 155 C 295 150, 310 152, 320 156" fill="none" stroke="#2dd4bf" stroke-width="0.8" stroke-dasharray="2 4" opacity="0.2" />
+
+  <!-- Fascio di luce del condensatore del microscopio -->
+  <polygon points="123,126 137,126 148,82 112,82" fill="url(#beam_science)" />
+
+  <!-- Microscopio ottico composto -->
+  <g id="microscope_body">
+    <!-- Base stabile sagomata -->
+    <path d="M 78 158 C 82 152, 95 148, 140 148 C 160 148, 168 153, 172 158 Z" fill="#042f2e" stroke="#115e59" stroke-width="1.5" />
+    <rect x="88" y="154" width="74" height="5" rx="2" fill="url(#brass_science)" />
+    <!-- Stativo / braccio curvo -->
+    <path d="M 102 150 C 92 135, 90 105, 102 85 C 110 72, 122 66, 134 68" fill="none" stroke="url(#brass_science)" stroke-width="7" stroke-linecap="round" />
+    <path d="M 102 150 C 92 135, 90 105, 102 85 C 110 72, 122 66, 134 68" fill="none" stroke="#78350f" stroke-width="2" stroke-linecap="round" opacity="0.4" />
+    <!-- Manopola macrometrica dorata -->
+    <circle cx="98" cy="115" r="9" fill="url(#brass_science)" stroke="#78350f" stroke-width="1.5" />
+    <circle cx="98" cy="115" r="4" fill="#451a03" />
+    <!-- Tavolino portaoggetti con mollette -->
+    <rect x="105" y="108" width="50" height="5" rx="1.5" fill="#0f172a" stroke="#d97706" stroke-width="1" />
+    <!-- Vetrino con campione fluorescente -->
+    <rect x="120" y="105" width="22" height="2.5" rx="0.8" fill="#ccfbf1" opacity="0.9" />
+    <circle cx="130" cy="106.2" r="1.5" fill="#10b981" />
+    <!-- Revolver e obiettivi -->
+    <g transform="translate(130, 80)">
+      <!-- Tubo ottico a 65 gradi -->
+      <g transform="rotate(-25)">
+        <rect x="-8" y="-45" width="16" height="42" rx="2" fill="url(#brass_science)" stroke="#78350f" stroke-width="1" />
+        <!-- Oculare -->
+        <rect x="-11" y="-55" width="22" height="12" rx="2" fill="#042f2e" stroke="#d97706" stroke-width="1" />
+        <ellipse cx="0" cy="-55" rx="8" ry="2.5" fill="#5eead4" opacity="0.7" />
+      </g>
+      <!-- Revolver portaobiettivi circolare -->
+      <path d="M -12 2 C -12 10, 12 10, 12 2 Z" fill="#0f172a" stroke="#f59e0b" stroke-width="1" />
+      <!-- Obiettivo principale puntato sul vetrino -->
+      <rect x="-4" y="8" width="8" height="14" rx="1" fill="url(#brass_science)" />
+      <rect x="-3" y="22" width="6" height="4" fill="#ccfbf1" />
+      <!-- Obiettivo secondario angolato -->
+      <rect x="7" y="5" width="6" height="12" rx="1" transform="rotate(35 10 11)" fill="#b45309" />
+    </g>
+  </g>
+
+  <!-- Vetreria scientifica e provette graduate a destra -->
+  <g transform="translate(210, 88)">
+    <!-- Beuta graduata / Erlenmeyer -->
+    <path d="M 32 18 L 32 30 L 12 66 C 10 70, 14 74, 20 74 L 64 74 C 70 74, 74 70, 72 66 L 52 30 L 52 18 Z" fill="#0f766e" fill-opacity="0.25" stroke="#5eead4" stroke-width="1.5" />
+    <!-- Liquido chimico nella beuta -->
+    <path d="M 17 68 C 22 66, 32 67, 42 66 C 52 65, 62 67, 67 68 C 69 71, 67 73, 63 73 L 21 73 C 17 73, 15 71, 17 68 Z" fill="url(#liquid_science)" opacity="0.85" />
+    <!-- Tacche di graduazione sulla beuta -->
+    <line x1="28" y1="58" x2="36" y2="58" stroke="#fde68a" stroke-width="1" opacity="0.8" />
+    <line x1="31" y1="50" x2="37" y2="50" stroke="#fde68a" stroke-width="1" opacity="0.8" />
+    <line x1="34" y1="42" x2="40" y2="42" stroke="#fde68a" stroke-width="1" opacity="0.8" />
+    <!-- Bolle effervescenti che salgono -->
+    <circle cx="36" cy="62" r="1.8" fill="#ffffff" opacity="0.7" />
+    <circle cx="48" cy="56" r="2.2" fill="#ffffff" opacity="0.8" />
+    <circle cx="40" cy="46" r="1.5" fill="#fef3c7" opacity="0.9" />
+    <circle cx="44" cy="24" r="2" fill="#5eead4" opacity="0.7" />
+    <!-- Provetta inclinata con supporto -->
+    <g transform="translate(-18, 12) rotate(-15)">
+      <rect x="0" y="0" width="10" height="52" rx="5" fill="#0f766e" fill-opacity="0.2" stroke="#2dd4bf" stroke-width="1.2" />
+      <path d="M 1 30 Q 5 28 9 30 L 9 47 C 9 50, 1 50, 1 47 Z" fill="url(#brass_science)" opacity="0.85" />
+      <line x1="2" y1="18" x2="6" y2="18" stroke="#fde68a" stroke-width="0.8" opacity="0.7" />
+      <line x1="2" y1="24" x2="6" y2="24" stroke="#fde68a" stroke-width="0.8" opacity="0.7" />
+    </g>
+  </g>
+
+  <!-- Particelle luminose di scoperta -->
+  <g transform="translate(145, 42)">
+    <polygon points="0,-7 2,-2 7,0 2,2 0,7 -2,2 -7,0 -2,-2" fill="#fde68a" opacity="0.8" />
+    <circle cx="0" cy="0" r="1.5" fill="#ffffff" />
+  </g>
+</svg>
