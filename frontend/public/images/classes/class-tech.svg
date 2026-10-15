@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <radialGradient id="bg_class_tech" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="50%" stop-color="#042f2e" />
+      <stop offset="100%" stop-color="#021c1b" />
+    </radialGradient>
+    <linearGradient id="gold_trace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+    <linearGradient id="chip_surface" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="die_glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="180" fill="url(#bg_class_tech)" />
+
+  <!-- Tracce circuitali stampate (PCB) periferiche con snodi a 45 gradi -->
+  <g stroke="#14b8a6" stroke-width="1.2" fill="none" opacity="0.4">
+    <!-- Piste da sinistra -->
+    <path d="M 0 35 L 50 35 L 75 60 L 110 60" />
+    <path d="M 0 65 L 40 65 L 65 90 L 110 90" />
+    <path d="M 0 115 L 45 115 L 70 90 L 95 90" stroke-dasharray="3 3" />
+    <path d="M 0 145 L 60 145 L 90 115 L 110 115" />
+    <!-- Piste da destra -->
+    <path d="M 320 35 L 270 35 L 245 60 L 210 60" />
+    <path d="M 320 65 L 280 65 L 255 90 L 210 90" />
+    <path d="M 320 120 L 265 120 L 235 90 L 220 90" stroke-dasharray="3 3" />
+    <path d="M 320 150 L 260 150 L 230 120 L 210 120" />
+    <!-- Piste verticali sopra e sotto -->
+    <path d="M 130 0 L 130 25 L 145 40 L 145 55" />
+    <path d="M 190 0 L 190 25 L 175 40 L 175 55" />
+    <path d="M 135 180 L 135 155 L 145 145 L 145 125" />
+    <path d="M 185 180 L 185 155 L 175 145 L 175 125" />
+  </g>
+
+  <!-- Piste dorate ad alta velocità (Gold Bus Lines) in evidenza -->
+  <g stroke="url(#gold_trace)" stroke-width="1.8" fill="none" stroke-linecap="round">
+    <path d="M 25 15 L 85 15 L 115 45 L 115 70" />
+    <path d="M 35 165 L 90 165 L 120 135 L 120 110" />
+    <path d="M 295 15 L 235 15 L 205 45 L 205 70" />
+    <path d="M 285 165 L 230 165 L 200 135 L 200 110" />
+  </g>
+
+  <!-- Nodi e pad di saldatura dorati e ciano -->
+  <g fill="url(#gold_trace)">
+    <circle cx="25" cy="15" r="3.2" />
+    <circle cx="85" cy="15" r="2.5" />
+    <circle cx="35" cy="165" r="3.2" />
+    <circle cx="90" cy="165" r="2.5" />
+    <circle cx="295" cy="15" r="3.2" />
+    <circle cx="235" cy="15" r="2.5" />
+    <circle cx="285" cy="165" r="3.2" />
+    <circle cx="230" cy="165" r="2.5" />
+  </g>
+
+  <!-- Impulsi logici e bit quantici luminosi lungo le tracce -->
+  <g fill="#5eead4">
+    <circle cx="50" cy="35" r="2.2" />
+    <circle cx="270" cy="35" r="2.2" />
+    <circle cx="65" cy="90" r="2" />
+    <circle cx="255" cy="90" r="2" />
+    <circle cx="145" cy="40" r="2.2" />
+    <circle cx="175" cy="145" r="2.2" />
+  </g>
+
+  <!-- Microprocessore centrale / CPU Package -->
+  <g id="cpu_socket" transform="translate(160, 90)">
+    <!-- Alone di elaborazione / dissipatore termico ottico -->
+    <rect x="-56" y="-56" width="112" height="112" rx="14" fill="#0f766e" opacity="0.3" />
+    <!-- Substrato del chip in ceramica / package scuro -->
+    <rect x="-48" y="-48" width="96" height="96" rx="8" fill="url(#chip_surface)" stroke="#334155" stroke-width="2" />
+
+    <!-- Pin di connessione in ottone/oro lungo i 4 lati del package -->
+    <!-- Lato superiore -->
+    <g fill="url(#gold_trace)">
+      <rect x="-38" y="-53" width="4" height="6" rx="1" />
+      <rect x="-26" y="-53" width="4" height="6" rx="1" />
+      <rect x="-14" y="-53" width="4" height="6" rx="1" />
+      <rect x="-2" y="-53" width="4" height="6" rx="1" />
+      <rect x="10" y="-53" width="4" height="6" rx="1" />
+      <rect x="22" y="-53" width="4" height="6" rx="1" />
+      <rect x="34" y="-53" width="4" height="6" rx="1" />
+      <!-- Lato inferiore -->
+      <rect x="-38" y="47" width="4" height="6" rx="1" />
+      <rect x="-26" y="47" width="4" height="6" rx="1" />
+      <rect x="-14" y="47" width="4" height="6" rx="1" />
+      <rect x="-2" y="47" width="4" height="6" rx="1" />
+      <rect x="10" y="47" width="4" height="6" rx="1" />
+      <rect x="22" y="47" width="4" height="6" rx="1" />
+      <rect x="34" y="47" width="4" height="6" rx="1" />
+      <!-- Lato sinistro -->
+      <rect x="-53" y="-38" width="6" height="4" rx="1" />
+      <rect x="-53" y="-26" width="6" height="4" rx="1" />
+      <rect x="-53" y="-14" width="6" height="4" rx="1" />
+      <rect x="-53" y="-2" width="6" height="4" rx="1" />
+      <rect x="-53" y="10" width="6" height="4" rx="1" />
+      <rect x="-53" y="22" width="6" height="4" rx="1" />
+      <rect x="-53" y="34" width="6" height="4" rx="1" />
+      <!-- Lato destro -->
+      <rect x="47" y="-38" width="6" height="4" rx="1" />
+      <rect x="47" y="-26" width="6" height="4" rx="1" />
+      <rect x="47" y="-14" width="6" height="4" rx="1" />
+      <rect x="47" y="-2" width="6" height="4" rx="1" />
+      <rect x="47" y="10" width="6" height="4" rx="1" />
+      <rect x="47" y="22" width="6" height="4" rx="1" />
+      <rect x="47" y="34" width="6" height="4" rx="1" />
+    </g>
+
+    <!-- Marcature angolari del chip (pin 1 locator) -->
+    <polygon points="-40,-44 -44,-40 -38,-36 -34,-40" fill="#f59e0b" />
+
+    <!-- Heatspreader / nucleo metallico dorato interno -->
+    <rect x="-32" y="-32" width="64" height="64" rx="5" fill="none" stroke="url(#gold_trace)" stroke-width="2" />
+    <rect x="-28" y="-28" width="56" height="56" rx="4" fill="#042f2e" stroke="#115e59" stroke-width="1" />
+
+    <!-- Die in silicio centrale fluorescente con core logici -->
+    <rect x="-18" y="-18" width="36" height="36" rx="3" fill="url(#die_glow)" opacity="0.9" />
+    <!-- Reticolo interno a 4 quadranti (quad-core logic matrix) -->
+    <g stroke="#042f2e" stroke-width="1.5">
+      <line x1="-18" y1="0" x2="18" y2="0" />
+      <line x1="0" y1="-18" x2="0" y2="18" />
+    </g>
+    <!-- Scintilla del clock centrale al silicio -->
+    <circle cx="0" cy="0" r="3" fill="#ffffff" />
+    <circle cx="0" cy="0" r="6" fill="none" stroke="#fde68a" stroke-width="1.2" />
+  </g>
+</svg>

@@ -496,6 +496,7 @@ def _run_seed_and_migrations():
             ("student_groups", "ADD COLUMN description TEXT"),
             ("student_groups", "ADD COLUMN methodologies TEXT"),
             ("student_groups", "ADD COLUMN context_visible_to_students BOOLEAN NOT NULL DEFAULT false"),
+            ("student_groups", "ADD COLUMN image_url VARCHAR"),
             ("administration_plans", "ADD COLUMN school_level VARCHAR"),
             # Sessione pQBL in corso sul bot Telegram.
             ("telegram_conversation_states", "ADD COLUMN pqbl_state JSON"),

@@ -7,6 +7,8 @@ classe (AdministrationPlan.group_id): i risultati degli studenti della classe
 vengono taggati automaticamente col piano dello strumento corrispondente.
 Note e messaggi del docente vivono qui, sulla classe.
 """
+import glob
+import os
 import re
 import secrets
 import string
@@ -14,8 +16,8 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
@@ -30,6 +32,18 @@ from ..group_visibility import _is_admin, _username, _visible_group_query
 
 router = APIRouter()
 get_db = database.get_db
+
+CLASS_IMAGES_STORAGE_DIR = os.getenv(
+    "CLASS_IMAGES_STORAGE_DIR",
+    os.path.join(database.DATA_DIR, "class_images"),
+)
+MAX_CLASS_IMAGE_BYTES = 5 * 1024 * 1024  # 5 MB
+ALLOWED_CLASS_IMAGE_TYPES = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/gif": ".gif",
+}
 
 GROUP_CODE_RE = re.compile(r"^GR-[A-Z0-9][A-Z0-9-]{2,28}$")
 CODE_ALPHABET = string.ascii_uppercase + string.digits
@@ -77,6 +91,7 @@ def _serialize_group(db: Session, group: models.StudentGroup) -> dict:
         "description": group.description,
         "methodologies": group.methodologies,
         "context_visible_to_students": bool(group.context_visible_to_students),
+        "image_url": group.image_url,
         "owner_username": group.owner_username,
         "is_active": group.is_active,
         "members_count": _members_count(db, group.id),
@@ -493,11 +508,13 @@ async def create_group(
     store_user_display_name(db, current_user)
     school = (payload.school or "").strip() or None
     level = _valid_level(payload.school_level)
+    image_url = (payload.image_url or "").strip() or None
     group = models.StudentGroup(code=code, name=name, school=school, school_level=level,
                                 institution_id=payload.institution_id,
                                 description=(payload.description or "").strip() or None,
                                 methodologies=(payload.methodologies or "").strip() or None,
                                 context_visible_to_students=bool(payload.context_visible_to_students),
+                                image_url=image_url,
                                 owner_username=_username(current_user) or "")
     db.add(group)
     db.commit()
@@ -539,9 +556,73 @@ async def update_group(
         group.methodologies = (updates["methodologies"] or "").strip() or None
     if "context_visible_to_students" in updates:
         group.context_visible_to_students = bool(updates["context_visible_to_students"])
+    if "image_url" in updates:
+        group.image_url = (updates["image_url"] or "").strip() or None
     db.commit()
     db.refresh(group)
     return _serialize_group(db, group)
+
+
+@router.post("/admin/groups/{group_id}/image")
+@router.post("/api/admin/groups/{group_id}/image")
+async def upload_group_image(
+    group_id: int,
+    file: UploadFile = File(...),
+    current_user=Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Carica un'immagine di copertina personalizzata per la classe."""
+    group = _require_visible_group(db, current_user, group_id)
+    content_type = (file.content_type or "").lower().split(";")[0].strip()
+    ext = ALLOWED_CLASS_IMAGE_TYPES.get(content_type)
+    if not ext:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato non supportato. Usa PNG, JPG, WebP o GIF.",
+        )
+    contents = await file.read(MAX_CLASS_IMAGE_BYTES + 1)
+    await file.close()
+    if not contents:
+        raise HTTPException(status_code=400, detail="Il file e' vuoto.")
+    if len(contents) > MAX_CLASS_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail="L'immagine supera i 5 MB.")
+
+    os.makedirs(CLASS_IMAGES_STORAGE_DIR, exist_ok=True)
+    for existing in glob.glob(os.path.join(CLASS_IMAGES_STORAGE_DIR, f"group_{group_id}.*")):
+        try:
+            os.remove(existing)
+        except OSError:
+            pass
+
+    filename = f"group_{group_id}{ext}"
+    dest_path = os.path.join(CLASS_IMAGES_STORAGE_DIR, filename)
+    with open(dest_path, "wb") as fh:
+        fh.write(contents)
+
+    version_ts = int(datetime.now(timezone.utc).timestamp())
+    group.image_url = f"/api/groups/{group_id}/image?v={version_ts}"
+    db.commit()
+    db.refresh(group)
+    return _serialize_group(db, group)
+
+
+@router.get("/groups/{group_id}/image")
+@router.get("/api/groups/{group_id}/image")
+async def get_group_image(
+    group_id: int,
+):
+    """Serve l'immagine di copertina caricata per la classe."""
+    for ext, mime in [
+        (".jpg", "image/jpeg"),
+        (".jpeg", "image/jpeg"),
+        (".png", "image/png"),
+        (".webp", "image/webp"),
+        (".gif", "image/gif"),
+    ]:
+        path = os.path.join(CLASS_IMAGES_STORAGE_DIR, f"group_{group_id}{ext}")
+        if os.path.isfile(path):
+            return FileResponse(path, media_type=mime, headers={"Cache-Control": "public, max-age=3600"})
+    raise HTTPException(status_code=404, detail="Immagine di classe non trovata")
 
 
 @router.delete("/admin/groups/{group_id}")

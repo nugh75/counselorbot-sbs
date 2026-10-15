@@ -1,3 +1,45 @@
+# Handoff S17: Copertine rettangolari 16:9 stile counselor per le classi con 10 preset, upload e prompt IA (Issue #286)
+Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
+
+- Titolo: 'feat: copertine rettangolari 16:9 stile counselor per le classi con preset, upload e prompt IA'
+- Branch: `feat/class-counselor-style-covers`
+- Issue collegate: Closes #286
+- Obiettivo:
+  1. Dotare le classi e i gruppi di una personalizzazione visiva con copertine rettangolari in proporzione 16:9 (`viewBox="0 0 320 180"`), realizzate nello stesso stile illustrativo ed elegante delle copertine dei counselor (palette petrolio/teal `#042f2e` / `#0f766e`, elementi vettoriali simbolici, accenti ambra e ciano, assenza di testo o volti umani).
+  2. Implementare 10 preset tematici SVG standalone in `frontend/public/images/classes/` e garantire una selezione deterministica basata su hash del gruppo in assenza di copertina salvata.
+  3. Implementare backend storage e API: colonna `StudentGroup.image_url`, migrazione runtime, schema Pydantic, rotta di upload con validazione MIME/dimensione `POST /api/admin/groups/{id}/image` e rotta pubblica di erogazione file con cache `GET /api/groups/{id}/image`.
+  4. Realizzare il componente `ClassImageModal` con 3 schede (Preset grafici, Carica dal computer, Crea con IA con prompt generatore) e azione di ripristino default.
+  5. Integrare la visualizzazione e la modifica in `MyClassesSection` (card in `/docente`) e `ClassOverviewTab` (Hub di classe).
+  6. Supporto i18n completo nelle 6 lingue del sistema (`it`, `en`, `es`, `fr`, `de`, `sv`).
+- Modifiche realizzate:
+  1. Asset grafici SVG:
+     - Creati 10 file SVG standalone in `frontend/public/images/classes/` (`class-science.svg`, `class-space.svg`, `class-humanities.svg`, `class-arts.svg`, `class-tech.svg`, `class-nature.svg`, `class-math.svg`, `class-music.svg`, `class-sports.svg`, `class-geography.svg`).
+  2. Backend:
+     - `backend/models.py`: Aggiunta colonna `image_url` (String, nullable) al modello `StudentGroup`.
+     - `backend/main.py`: Aggiunta migrazione automatica di startup per la colonna `image_url` in `student_groups`.
+     - `backend/database.py`: Aggiunta configurazione cartella `DATA_DIR` per upload persistenti (default `/app/uploads`).
+     - `backend/schemas.py`: Aggiunto campo facoltativo `image_url` in `StudentGroupCreate` e `StudentGroupUpdate`.
+     - `backend/routes/groups.py`: Inclusione di `image_url` nei metodi di creazione, aggiornamento e serializzazione gruppo; implementati endpoint `POST /api/admin/groups/{group_id}/image` (validazione max 5MB, tipi PNG/JPEG/WEBP/GIF) e `GET /api/groups/{group_id}/image` con header di cache (`Cache-Control: public, max-age=86400`).
+     - `backend/tests/test_class_covers.py`: Test unitari/integrazione per migrazione runtime, aggiornamento schema e upload/serve dell'immagine.
+  3. Frontend:
+     - `frontend/src/components/teacher/class-group-types.ts`: Esteso `StudentGroup` con `image_url?: string | null`.
+     - `frontend/src/lib/class-cover-presets.ts`: Definizione dei 10 preset, helper deterministico `getClassCoverUrl` e generatore di prompt IA `composeClassCoverAIPrompt`.
+     - `frontend/src/lib/class-cover-presets.test.ts`: 4 test unitari per preset, fallback deterministico e prompt generation.
+     - `frontend/src/components/teacher/ClassImageModal.tsx`: Modale accessibile con tabs Presets, Upload, Crea con IA, anteprima 16:9, feedback di caricamento e reset copertina predefinita.
+     - `frontend/src/components/teacher/MyClassesSection.tsx`: Testata card classe 16:9 con preview della copertina, pulsante a matita in hover e integrazione `ClassImageModal`.
+     - `frontend/src/components/teacher/ClassOverviewTab.tsx`: Banner anagrafica 16:9 con pulsante «Modifica copertina» e modale `ClassImageModal`.
+     - `frontend/src/lib/i18n-teacher-area.ts`: Tutte le etichette localizzate nelle 6 lingue supportate.
+  4. Documentazione e conformità:
+     - `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`: Documentata la funzionalità in Guida e sincronizzato lo stato.
+- Verifiche superate:
+  - TypeScript: `npx tsc --noEmit` (0 errori, Node v22.23.3).
+  - Test unitari frontend: `npm test` (463/463 superati, 0 fallimenti).
+  - Controllo localizzazione: `node frontend/scripts/check-i18n.mjs` (3.329 chiavi verificate in 6 lingue, 0 violazioni).
+  - Backend pytest: `pytest backend/tests/test_class_covers.py` (14/14 passati).
+  - Guida di piattaforma: `make guidance-refresh && make guidance-check` (0 violazioni, documentazione allineata).
+
+---
+
 # Handoff S16: Riordino tab classe con Strumenti e counselor in coda e toggle massivo counselor (Issue #284)
 Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
 

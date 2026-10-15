@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <radialGradient id="bg_class_space" cx="75%" cy="30%" r="85%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="45%" stop-color="#0c1b33" />
+      <stop offset="75%" stop-color="#042f2e" />
+      <stop offset="100%" stop-color="#021c1b" />
+    </radialGradient>
+    <linearGradient id="brass_space" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#78350f" />
+      <stop offset="50%" stop-color="#d97706" />
+      <stop offset="100%" stop-color="#fbbf24" />
+    </linearGradient>
+    <linearGradient id="beam_space" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#fef3c7" stop-opacity="0.0" />
+    </linearGradient>
+    <linearGradient id="planet_space" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a" />
+      <stop offset="40%" stop-color="#f59e0b" />
+      <stop offset="85%" stop-color="#b45309" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="180" fill="url(#bg_class_space)" />
+
+  <!-- Stelle e costellazioni di sfondo -->
+  <g fill="#ffffff" opacity="0.6">
+    <circle cx="35" cy="45" r="1" />
+    <circle cx="65" cy="25" r="1.5" fill="#fde68a" />
+    <circle cx="95" cy="55" r="1" />
+    <circle cx="140" cy="25" r="1.2" />
+    <circle cx="175" cy="65" r="0.8" />
+    <circle cx="300" cy="120" r="1.2" />
+    <circle cx="280" cy="160" r="1" />
+    <circle cx="310" cy="40" r="1.5" />
+    <!-- Linee costellazione dell'Orsa / Cassiopea -->
+    <path d="M 35 45 L 65 25 L 95 55 L 140 25" fill="none" stroke="#38bdf8" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.35" />
+  </g>
+
+  <!-- Orbite ellittiche planetarie -->
+  <g stroke="#2dd4bf" stroke-width="0.8" stroke-dasharray="3 5" fill="none" opacity="0.25">
+    <ellipse cx="240" cy="55" rx="75" ry="32" transform="rotate(-15 240 55)" />
+    <ellipse cx="240" cy="55" rx="110" ry="48" transform="rotate(-15 240 55)" />
+  </g>
+
+  <!-- Fascio di osservazione ottica del telescopio -->
+  <polygon points="106,108 226,45 240,65 116,118" fill="url(#beam_space)" />
+
+  <!-- Pianeta con anelli maestoso in alto a destra -->
+  <g transform="translate(235, 52) rotate(-18)">
+    <!-- Metà anello posteriore -->
+    <ellipse cx="0" cy="0" rx="38" ry="11" fill="none" stroke="#fbbf24" stroke-width="3.5" opacity="0.45" />
+    <ellipse cx="0" cy="0" rx="44" ry="13" fill="none" stroke="#5eead4" stroke-width="1.2" opacity="0.35" />
+    <!-- Corpo del pianeta sferico con gradiente e ombreggiatura -->
+    <circle cx="0" cy="0" r="18" fill="url(#planet_space)" />
+    <path d="M -17 3 C -5 6, 10 3, 17 -1 C 18 10, 8 18, 0 18 C -9 18, -16 11, -17 3 Z" fill="#0c1b33" opacity="0.5" />
+    <!-- Metà anello anteriore che sovrappone il pianeta -->
+    <path d="M -44 0 C -44 8, 44 8, 44 0" fill="none" stroke="#fde68a" stroke-width="3" opacity="0.85" />
+    <path d="M -38 0 C -38 6, 38 6, 38 0" fill="none" stroke="#d97706" stroke-width="1.5" />
+  </g>
+
+  <!-- Astro guida polare dorato a 8 punte -->
+  <g transform="translate(290, 28)">
+    <circle cx="0" cy="0" r="14" fill="#fb923c" opacity="0.2" />
+    <circle cx="0" cy="0" r="6" fill="#f59e0b" opacity="0.45" />
+    <path d="M 0,-10 Q 0,0 10,0 Q 0,0 0,10 Q 0,0 -10,0 Q 0,0 0,-10 Z" fill="#fef3c7" />
+    <circle cx="0" cy="0" r="2.2" fill="#ffffff" />
+  </g>
+
+  <!-- Luna crescente o pianeta satellite minore -->
+  <g transform="translate(170, 32)">
+    <circle cx="0" cy="0" r="5" fill="#38bdf8" opacity="0.6" />
+    <circle cx="2" cy="-1" r="4.2" fill="#0c1b33" />
+  </g>
+
+  <!-- Grande telescopio astronomico rifrattore su montatura equatoriale -->
+  <g id="telescope_astronomy">
+    <!-- Treppiede professionale in ottone e acciaio scuro -->
+    <line x1="60" y1="175" x2="98" y2="124" stroke="#b45309" stroke-width="3.5" stroke-linecap="round" />
+    <line x1="135" y1="175" x2="98" y2="124" stroke="#b45309" stroke-width="3.5" stroke-linecap="round" />
+    <line x1="90" y1="175" x2="98" y2="124" stroke="#78350f" stroke-width="2.8" stroke-linecap="round" opacity="0.8" />
+    <!-- Raggiera di stabilità del treppiede -->
+    <line x1="78" y1="150" x2="118" y2="150" stroke="#d97706" stroke-width="1.8" />
+
+    <!-- Testa e contrappeso della montatura equatoriale -->
+    <circle cx="98" cy="124" r="7" fill="url(#brass_space)" stroke="#78350f" stroke-width="1.5" />
+    <line x1="98" y1="124" x2="80" y2="138" stroke="#451a03" stroke-width="3" stroke-linecap="round" />
+    <rect x="74" y="134" width="10" height="9" rx="2" fill="#0f172a" stroke="#d97706" stroke-width="1" />
+
+    <!-- Tubo del telescopio ruotato a 36 gradi verso l'alto -->
+    <g transform="rotate(-36 98 124)">
+      <!-- Oculare e cercatore -->
+      <rect x="52" y="121" width="16" height="6" rx="1.5" fill="#1e293b" />
+      <rect x="68" y="120" width="22" height="8" rx="2" fill="url(#brass_space)" />
+      <!-- Piccolo cercatore parallelo -->
+      <rect x="90" y="108" width="34" height="4.5" rx="1" fill="#042f2e" stroke="#f59e0b" stroke-width="0.8" />
+      <line x1="96" y1="112.5" x2="96" y2="120" stroke="#f59e0b" stroke-width="1.2" />
+      <line x1="118" y1="112.5" x2="118" y2="120" stroke="#f59e0b" stroke-width="1.2" />
+      <!-- Corpo principale ottico lungo -->
+      <rect x="88" y="118" width="35" height="12" rx="2" fill="#042f2e" stroke="#d97706" stroke-width="1" />
+      <rect x="120" y="117" width="50" height="14" rx="2" fill="url(#brass_space)" />
+      <!-- Paraluce / anello terminale con lente frontale -->
+      <rect x="168" y="115" width="12" height="18" rx="2" fill="#fbbf24" stroke="#78350f" stroke-width="1" />
+      <ellipse cx="180" cy="124" rx="3" ry="9" fill="#ccfbf1" opacity="0.85" />
+    </g>
+  </g>
+</svg>
