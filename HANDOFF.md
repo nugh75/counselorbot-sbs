@@ -1,7 +1,7 @@
 # Handoff S6: Obiettivi, un focus preciso e una bozza presto (blocco 2)
 Data: 2026-10-15 | Branch: `feature/goal-guided-focused-definition` (stacked su
 `fix/goal-guided-group-context`, PR #291) | Agente: `s6-obiettivi-focus` | Task `13b12039`
-PR: vedi sotto. Revisione non Claude obbligatoria prima del merge.
+PR draft stacked: https://github.com/nugh75/counselorbot-sbs/pull/292 (Project CounselorBot). Revisione non Claude obbligatoria prima del merge.
 
 Contratto e procedura: `docs/operations/goal-focused-definition.md`. In sintesi:
 
