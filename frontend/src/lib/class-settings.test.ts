@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { effectiveDefaultCounselor, filterClassCounselors, parseClassSettings } from './class-settings.ts';
+import { effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, toggleCounselorIds } from './class-settings.ts';
 
 test('forum options keep administrator lock flags and reject malformed values', () => {
     const base = { group_id: 104, revision: 1, tools: [], disabled_tool_keys: [] };
@@ -75,4 +75,18 @@ test('lock metadata survives parsing and malformed locks cannot enable controls'
     for (const metadata of [{ locked: 'true' }, { locked_enabled: 'false' }, { locked_by: 42 }]) {
         assert.throws(() => parseClassSettings({ ...base, tools: [{ ...tool, ...metadata }] }), /Invalid class settings/);
     }
+});
+
+test('toggleCounselorIds handles bulk enabling and disabling with sorting and deduplication', () => {
+    // Enabling counselors removes them from disabled list
+    assert.deepEqual(toggleCounselorIds([1, 2, 5], [2, 5], true), [1]);
+    assert.deepEqual(toggleCounselorIds([1, 2, 5], [3, 4], true), [1, 2, 5]);
+    assert.deepEqual(toggleCounselorIds([2], [2], true), []);
+    assert.deepEqual(toggleCounselorIds([], [1, 2], true), []);
+
+    // Disabling counselors adds them to disabled list, deduplicated and sorted numerically
+    assert.deepEqual(toggleCounselorIds([1, 5], [3, 2], false), [1, 2, 3, 5]);
+    assert.deepEqual(toggleCounselorIds([2], [2], false), [2]);
+    assert.deepEqual(toggleCounselorIds([], [10, 2, 5], false), [2, 5, 10]);
+    assert.deepEqual(toggleCounselorIds([1, 2], [], false), [1, 2]);
 });

@@ -773,9 +773,21 @@ The **Overview** tab (`ClassOverviewTab`, Issue #276) serves as the central oper
 5. **Class Status & Actions**: active/archived toggle (`PUT /api/admin/groups/{id}` with `is_active`) and secure class deletion (`DELETE /api/admin/groups/{id}`) with modal confirmation dialog and prevention of deletion if linked to administration plans.
 **Tools & counselors** lets owners, co-teachers and administrators
 choose student questionnaires, guided chats (including dynamic instruments),
-personal tools, Compass, Assistant and the class forum. Saves are explicit;
-category actions change only editable items. Errors retain drafts; a concurrent
-save requires Reload with discard confirmation. New classes and tools default
+personal tools, Compass, Assistant and the class forum. Nella barra dei tab di classe
+(`ClassSettingsPage`, Issue #284), il tab «Strumenti e counselor» è posizionato
+in fondo all'elenco dopo «Registro modifiche», secondo la sequenza ordinata:
+`overview` (Panoramica) → `students` (Studenti e risultati) → `paths` (Percorsi di classe) →
+`forum` (Forum) → `audit` (Registro modifiche) → `toolsTab` (Strumenti e counselor), con
+perfetto allineamento sequenziale dei rispettivi pannelli `role="tabpanel"` nel DOM.
+Nella sezione Counselor (`ClassCounselorsSection`, Issue #284), analogamente alle categorie
+di strumenti, sono disponibili i pulsanti di azione rapida «Abilita tutti» e «Disabilita tutti»
+(`enableAll` / `disableAll` localizzati nelle 6 lingue), che agiscono sui counselor visibili
+o filtrati, disabilitandosi quando l'operazione è in corso (`busy`) o se nessun counselor
+visibile è modificabile (non bloccato dall'amministratore e attivo a livello di piattaforma).
+La disabilitazione massiva azzera automaticamente il counselor predefinito di classe se
+incluso tra quelli disabilitati, aggiornando lo stato dirty della bozza.
+Saves are explicit; category actions change only editable items. Errors retain drafts;
+a concurrent save requires Reload with discard confirmation. New classes and tools default
 enabled. Notebook, completed questionnaires, Classes and Assignments remain
 available. Effective student access is the union of active classes, with global
 disables taking precedence; no active class means the platform catalog applies.
