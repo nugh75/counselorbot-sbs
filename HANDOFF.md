@@ -1,3 +1,37 @@
+# Handoff S16: Riordino tab classe con Strumenti e counselor in coda e toggle massivo counselor (Issue #284)
+Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
+
+- Titolo: 'feat: riordinare tab classe con strumenti e counselor in coda e toggle massivo counselor'
+- Branch: `feat/reorder-class-tabs-and-counselor-toggle-all`
+- Issue collegate: Closes #284
+- Obiettivo:
+  1. Spostare il tab «Strumenti e counselor» (`toolsTab`) in fondo all'elenco dei tab della pagina classe, dopo «Registro modifiche» (`audit`). Sequenza: `overview` (Panoramica) → `students` (Studenti e risultati) → `paths` (Percorsi di classe) → `forum` (Forum) → `audit` (Registro modifiche) → `toolsTab` (Strumenti e counselor), allineando anche i pannelli `role="tabpanel"` nel DOM per perfetta accessibilità.
+  2. Aggiungere nella sezione Counselor (`ClassCounselorsSection`) i pulsanti per abilitare e disabilitare in blocco tutti i counselor modificabili («Abilita tutti» / «Disabilita tutti», `enableAll` / `disableAll`), analogamente alle categorie di strumenti: azione sui counselor filtrati/visibili, disabilitazione su `busy` o se nessun counselor è modificabile, rimozione del counselor predefinito se tra quelli disabilitati, e aggiornamento stato dirty.
+- Modifiche realizzate:
+  1. `frontend/src/lib/class-settings.ts`:
+     - Aggiunta ed esportata la funzione helper deterministica `toggleCounselorIds(disabledIds, targetIds, enabled)` per gestire l'abilitazione e disabilitazione massiva (o singola) con deduplicazione e ordinamento numerico crescente.
+  2. `frontend/src/components/teacher/ClassSettingsPage.tsx`:
+     - Aggiornata la definizione di `activeTabs` e lo stato iniziale `tab` per posizionare `toolsTab` in coda dopo `audit`: `['overview', 'students', 'paths', 'forum', 'audit', 'toolsTab']`.
+     - Allineato l'ordine dei rispettivi pannelli tab (`role="tabpanel"`) nel JSX per garantire coerenza sequenziale e corretta accessibilità del DOM.
+     - Aggiunta prop `onToggleAll` in `ClassCounselorsSection` e inseriti i pulsanti «Abilita tutti» e «Disabilita tutti» (`variant="secondary"`) posizionati sopra l'elenco dei counselor, disabilitati quando `busy` o nessun counselor visibile è modificabile (`!rows.some(row => row.admin_enabled && !row.locked)`).
+     - In `ClassToolsEditor`, implementata la funzione `toggleAllCounselors(rows, enabled)`: rimuove gli ID modificabili da `disabledCounselors` su abilitazione, aggiunge gli ID su disabilitazione, azzera `defaultCounselor` se disabilitato, pulisce `notice === 'saved'` e aggiorna `dirty`.
+     - Refactoring di `toggleCounselor` per riutilizzare `toggleCounselorIds`.
+  3. `frontend/src/lib/class-settings.test.ts`:
+     - Aggiunti test unitari completi per `toggleCounselorIds` verificando abilitazione, disabilitazione con ordinamento e deduplicazione, e gestione di liste vuote.
+  4. `frontend/tests/class-settings.test.mjs`:
+     - Aggiornata la navigazione da tastiera delle tab per riflettere il wrap-around (`ArrowLeft` da `Overview` seleziona l'ultimo tab `Tools & counselors`).
+  5. `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`:
+     - Aggiornata la documentazione delle funzionalità per descrivere l'ordine aggiornato dei tab di classe e i comandi di toggle massivo dei counselor, registrato con `make guidance-refresh`.
+- Verifiche superate:
+  - TypeScript: `npx tsc --noEmit` (0 errori, Node v22.23.3).
+  - Test unitari frontend: `npm test` (459/459 superati, 0 fallimenti).
+  - Controllo localizzazione: `node frontend/scripts/check-i18n.mjs` (3.329 chiavi verificate in 6 lingue).
+  - Guida di piattaforma: `make guidance-refresh && make guidance-check` (0 violazioni, documentazione allineata).
+  - CI diff guidance: `python3 scripts/check-platform-guidance.py --base origin/main` (0 violazioni).
+- Conformità brand: bottoni `variant="secondary"` (slate/white), palette petrolio `indigo-*`, nessun violazione brand.
+
+---
+
 # Handoff S15: Ripristino token palette brand petrolio (indigo) nei componenti di classe (Issue #282)
 Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
 

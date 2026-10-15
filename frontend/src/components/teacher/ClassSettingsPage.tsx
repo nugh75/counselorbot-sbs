@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ChevronRight, Lock } from 'lucide-react';
 import { apiFetch, getIdentity, getViewAsAccount } from '@/lib/auth';
-import { defaultForumOptions, effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, type ClassCounselor, type ClassSettings, type ClassTool, type ClassLockKind } from '@/lib/class-settings';
+import { defaultForumOptions, effectiveDefaultCounselor, filterClassCounselors, parseClassSettings, toggleCounselorIds, type ClassCounselor, type ClassSettings, type ClassTool, type ClassLockKind } from '@/lib/class-settings';
 import { formatCategoryLabel } from '@/lib/i18n-counselor-identity';
 import { CounselorDetailsDialog } from './CounselorDetailsDialog';
 import { classSettingsText, classSettingsTexts } from '@/lib/i18n-class-settings';
@@ -37,10 +37,12 @@ const categories = ['assessment', 'guided', 'personal', 'support', 'forum'] as c
 const sameIds = (a: readonly (string | number)[], b: readonly (string | number)[]) =>
     JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
 
-function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggle, onDefault, admin, lockDisabled, onLock }: {
+function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggle, onToggleAll, onDefault, admin, lockDisabled, onLock }: {
     admin: boolean; lockDisabled: boolean; onLock: (kind: ClassLockKind, id: string, state: boolean | null) => void;
     counselors: ClassCounselor[]; disabled: number[]; defaultId: number | null; busy: boolean;
-    onToggle: (id: number, enabled: boolean) => void; onDefault: (id: number | null) => void;
+    onToggle: (id: number, enabled: boolean) => void;
+    onToggleAll: (rows: ClassCounselor[], enabled: boolean) => void;
+    onDefault: (id: number | null) => void;
 }) {
     const { lang } = useI18n();
     const l = (key: TextKey) => classSettingsText(lang, key);
@@ -67,6 +69,10 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
                 <label className="flex min-w-0 flex-col gap-1 text-sm text-slate-700">{l('counselorSearch')}
                     <input type="search" className="min-h-[44px] rounded-md border border-slate-300 px-2" value={query} onChange={event => setQuery(event.target.value)} />
                 </label>
+            </div>
+            <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" disabled={busy || !rows.some(row => row.admin_enabled && !row.locked)} onClick={() => onToggleAll(rows, true)}>{l('enableAll')}</Button>
+                <Button variant="secondary" disabled={busy || !rows.some(row => row.admin_enabled && !row.locked)} onClick={() => onToggleAll(rows, false)}>{l('disableAll')}</Button>
             </div>
             <div role="radiogroup" aria-label={l('counselorDefault')} className="space-y-1">
                 <label className="flex min-h-[44px] items-center gap-3 rounded-md p-2 text-sm text-slate-700">
@@ -142,9 +148,19 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
     };
     const toggleCounselor = (id: number, enabled: boolean) => {
         if (pending.current) return;
-        setDisabledCounselors(previous => enabled ? previous.filter(item => item !== id) : [...new Set([...previous, id])].sort((a, b) => a - b));
+        setDisabledCounselors(previous => toggleCounselorIds(previous, [id], enabled));
         // A disabled counselor cannot stay the class default.
         if (!enabled) setDefaultCounselor(current => current === id ? null : current);
+        if (notice === 'saved') setNotice(null);
+    };
+    const toggleAllCounselors = (rows: ClassCounselor[], enabled: boolean) => {
+        if (pending.current) return;
+        const editableIds = rows.filter(row => row.admin_enabled && !row.locked).map(row => row.id);
+        if (editableIds.length === 0) return;
+        setDisabledCounselors(previous => toggleCounselorIds(previous, editableIds, enabled));
+        if (!enabled) {
+            setDefaultCounselor(current => current !== null && editableIds.includes(current) ? null : current);
+        }
         if (notice === 'saved') setNotice(null);
     };
     const chooseDefault = (id: number | null) => {
@@ -255,7 +271,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
         })}
         <p className="text-sm text-slate-600">{l('always')}: {settings.tools.filter(tool => tool.always_on).map(label).join(' · ')}</p>
         {settings.counselors.length > 0 && <ClassCounselorsSection counselors={settings.counselors} disabled={disabledCounselors}
-            defaultId={defaultCounselor} busy={busy} admin={admin} lockDisabled={busy || dirty} onLock={(kind, id, state) => void changeLock(kind, id, state)} onToggle={toggleCounselor} onDefault={chooseDefault} />}
+            defaultId={defaultCounselor} busy={busy} admin={admin} lockDisabled={busy || dirty} onLock={(kind, id, state) => void changeLock(kind, id, state)} onToggle={toggleCounselor} onToggleAll={toggleAllCounselors} onDefault={chooseDefault} />}
         <Card>
             <h2 className="text-lg font-bold text-slate-800">{l('personalAITitle')}</h2>
             <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
@@ -304,12 +320,13 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
     const l = (key: TextKey) => classSettingsText(lang, key);
     const groups = useTeacherResource('/api/admin/groups', parseClassGroups);
     const settings = useTeacherResource(`/api/teacher/groups/${groupId}/settings`, parseClassSettings);
-    const [tab, setTab] = useState<'overview' | 'students' | 'toolsTab' | 'paths' | 'forum' | 'audit'>(() => {
+    const [tab, setTab] = useState<'overview' | 'students' | 'paths' | 'forum' | 'audit' | 'toolsTab'>(() => {
         const raw = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tab') : null;
         return ({
             students: 'students',
             results: 'students',
             tools: 'toolsTab',
+            toolsTab: 'toolsTab',
             paths: 'paths',
             forum: 'forum',
             audit: 'audit',
@@ -323,7 +340,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
         <p>{l('loadError')}</p>
         <Button variant="secondary" onClick={() => { void groups.reload(); void settings.reload(); }}>{l('reload')}</Button>
     </Callout>;
-    const activeTabs = ['overview', 'students', 'toolsTab', 'paths', 'forum', 'audit'] as const;
+    const activeTabs = ['overview', 'students', 'paths', 'forum', 'audit', 'toolsTab'] as const;
     const breadcrumbItems = getClassBreadcrumbs(group.name, groupId, tab, lang, adminRoute);
     return <div className="space-y-5">
         <TeacherBreadcrumbs
@@ -360,17 +377,17 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
         <div id="class-panel-students" role="tabpanel" aria-labelledby="class-tab-students" hidden={tab !== 'students'} tabIndex={0}>
             {tab === 'students' && <PlanStudentsPanel base={`/api/admin/groups/${groupId}`} withNotes />}
         </div>
-        <div id="class-panel-toolsTab" role="tabpanel" aria-labelledby="class-tab-toolsTab" hidden={tab !== 'toolsTab'} tabIndex={0}>
-            <ClassToolsEditor admin={admin} initial={settings.data} onReload={() => { void settings.reload(); }} />
-        </div>
-        <div id="class-panel-audit" role="tabpanel" aria-labelledby="class-tab-audit" hidden={tab !== 'audit'} tabIndex={0}>
-            {tab === 'audit' && <ClassSettingsAudit key={settings.data.revision} settings={settings.data} />}
-        </div>
         <div id="class-panel-paths" role="tabpanel" aria-labelledby="class-tab-paths" hidden={tab !== 'paths'} tabIndex={0}>
             <ClassPathsTab groupId={groupId} classSettings={settings.data} institutionId={group.institution_id ?? null} />
         </div>
         <div id="class-panel-forum" role="tabpanel" aria-labelledby="class-tab-forum" hidden={tab !== 'forum'} tabIndex={0}>
             <ForumView groupId={groupId} />
+        </div>
+        <div id="class-panel-audit" role="tabpanel" aria-labelledby="class-tab-audit" hidden={tab !== 'audit'} tabIndex={0}>
+            {tab === 'audit' && <ClassSettingsAudit key={settings.data.revision} settings={settings.data} />}
+        </div>
+        <div id="class-panel-toolsTab" role="tabpanel" aria-labelledby="class-tab-toolsTab" hidden={tab !== 'toolsTab'} tabIndex={0}>
+            <ClassToolsEditor admin={admin} initial={settings.data} onReload={() => { void settings.reload(); }} />
         </div>
     </div>;
 

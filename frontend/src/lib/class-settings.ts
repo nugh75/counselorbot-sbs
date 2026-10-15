@@ -112,3 +112,14 @@ export function filterClassCounselors(rows: ClassCounselor[], category: string, 
     return rows.filter(row => (!category || row.approach_categories.includes(category))
         && (!needle || row.name.toLocaleLowerCase().includes(needle)));
 }
+
+export function toggleCounselorIds(
+    disabledIds: readonly number[],
+    targetIds: readonly number[],
+    enabled: boolean
+): number[] {
+    if (enabled) {
+        return disabledIds.filter(id => !targetIds.includes(id));
+    }
+    return [...new Set([...disabledIds, ...targetIds])].sort((a, b) => a - b);
+}

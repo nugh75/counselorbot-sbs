@@ -126,7 +126,7 @@ test('category actions affect only editable rows; tabs retain the draft and supp
     const f = await fixture();
     try {
         const overview = f.page.getByRole('tab', { name: 'Overview', exact: true });
-        await overview.focus(); await f.page.keyboard.press('ArrowRight');
+        await overview.focus(); await f.page.keyboard.press('ArrowLeft');
         assert.equal(await f.page.getByRole('tab', { name: 'Tools & counselors', exact: true }).getAttribute('aria-selected'), 'true');
         const category = f.page.locator('details').filter({ has: f.page.locator('summary').filter({ hasText: /^Questionnaires$/ }) });
         await category.getByRole('button', { name: 'Disable all', exact: true }).click();
