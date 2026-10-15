@@ -72,6 +72,7 @@ import { chatPreferenceLabel, essentialSteps, nextEssentialPhase, essentialPhase
 import { isGoalInstrument, type GoalDraft } from '@/lib/goal-draft';
 import { GoalDraftCard } from '@/components/qsa/GoalDraftCard';
 import { DocenzaClassBar, readStoredDocenzaGroupIds } from '@/components/qsa/DocenzaClassBar';
+import { initialDocenzaGroupIds } from '@/lib/docenza-groups';
 
 // --- Types ---
 
@@ -462,10 +463,11 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // Strumento Idea: la variante decide di che materia si parla, la versione
     // dice al pannello che la mappa e' cambiata.
     const isIdea = questionnaireType === 'IDEA';
-    // Chat docenza: classi scelte per la conversazione. La selezione resta nel
-    // browser e viene rispedita a ogni turno; il server la riverifica sempre.
+    // Chat docenza: classi scelte per la conversazione. Viaggiano a ogni turno
+    // e nello snapshot della sessione; la ripresa usa quelle salvate, mai la
+    // preferenza del browser. Il server le riverifica sempre.
     const isDocenza = questionnaireType === 'OBIETTIVO_DOCENZA';
-    const [docenzaGroupIds, setDocenzaGroupIds] = useState<number[]>(readStoredDocenzaGroupIds);
+    const [docenzaGroupIds, setDocenzaGroupIds] = useState<number[]>(() => initialDocenzaGroupIds(frozenSnapshot, sessionId, readStoredDocenzaGroupIds));
     // Taccuino nel contesto: il docente lo sceglie dal popover Opzioni e la
     // scelta vive nel browser (stessa filosofia di docenzaGroupIds); il
     // server riverifica il ruolo a ogni turno. 'default' non viaggia mai.
@@ -789,6 +791,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     if (frozenSnapshot.practice_notebook_id) {
                         setPracticeNotebookId(frozenSnapshot.practice_notebook_id);
                     }
+                    setDocenzaGroupIds(frozenSnapshot.group_ids ?? []);
                     // Le fasi già aperte restano tali: altrimenti l'effetto di cambio
                     // fase rigenera l'intro della fase ripresa e lo studente si
                     // rilegge la presentazione sotto alla conversazione di prima.
@@ -1404,6 +1407,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         reasoning_effort: reasoningEffort,
         notebook_context: notebookContext !== 'default' ? notebookContext : undefined,
         practice_notebook_id: notebookContext === 'practice' && practiceNotebookId ? practiceNotebookId : undefined,
+        group_ids: isDocenza ? docenzaGroupIds : undefined,
         label: `${questionnaireType} — ${getPhaseLabel(currentPhase)}`,
     });
 
@@ -1430,7 +1434,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             const snapshot = buildSnapshot();
             await freezeSession(snapshot);
             pendingSnapshotRef.current = null;
-            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature });
+            savedSignatureRef.current = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature, groupIds: docenzaGroupIds });
             toast.success(t('frozen.frozen'));
             onFrozen?.();
         } catch {
@@ -1456,7 +1460,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             isLoading,
             completed: completedRef.current,
         })) return;
-        const signature = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature });
+        const signature = autoFreezeSignature({ messages, currentPhase, responseLength, responseFormat, guidedPath, notebookContext: notebookSignature, groupIds: docenzaGroupIds });
         if (signature === savedSignatureRef.current) return;
         pendingSnapshotRef.current = { snapshot: buildSnapshot(), signature };
         const timer = window.setTimeout(() => { void flushAutoFreeze(); }, AUTO_FREEZE_DELAY_MS);
@@ -1464,7 +1468,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         // buildSnapshot legge lo stato corrente a ogni render: le dipendenze qui
         // sono quello che rende lo snapshot diverso dal precedente.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookSignature, isLoading, sessionId, preview]);
+    }, [messages, currentPhase, responseLength, responseFormat, guidedPath, notebookSignature, docenzaGroupIds, isLoading, sessionId, preview]);
 
     // Uscita dallo strumento con un turno ancora in attesa: `pagehide` copre tab
     // chiusa, ricarica e link che lasciano la pagina (il logo dell'header è un
@@ -1995,7 +1999,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                             </div>
                         )}
                         {isDocenza && (
-                            <DocenzaClassBar selected={docenzaGroupIds} onChange={setDocenzaGroupIds} notebookContext={notebookContext} />
+                            <DocenzaClassBar selected={docenzaGroupIds} onChange={setDocenzaGroupIds} notebookContext={isTeacherUser ? notebookContext : 'default'} />
                         )}
                         {isIdea && ideaReference && (
                             <div className="mb-2 flex min-w-0 items-center gap-2 rounded-md border border-teal-100 bg-teal-50 px-2.5 py-2 text-xs text-teal-900">

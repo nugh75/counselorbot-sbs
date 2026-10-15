@@ -82,7 +82,8 @@ def visible_group_for_teacher(db: Session, username: str, group_id: int) -> mode
         db.query(models.GroupShare.id)
         .filter(
             models.GroupShare.group_id == group_id,
-            models.GroupShare.shared_with_username == username,
+            # Salvato in minuscolo, come lo legge l'elenco delle classi.
+            models.GroupShare.shared_with_username == username.lower(),
         )
         .first()
     )

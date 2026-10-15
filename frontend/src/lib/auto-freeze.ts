@@ -33,6 +33,7 @@ export function autoFreezeSignature(input: {
     responseFormat?: string;
     guidedPath?: string;
     notebookContext?: string;
+    groupIds?: number[];
 }): string {
     const last = input.messages[input.messages.length - 1];
     return [
@@ -42,6 +43,7 @@ export function autoFreezeSignature(input: {
         input.responseFormat ?? "standard",
         input.guidedPath ?? "complete",
         input.notebookContext ?? "default",
+        (input.groupIds ?? []).join(','),
         last ? last.content.length : 0,
     ].join('|');
 }

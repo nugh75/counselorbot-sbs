@@ -2993,19 +2993,20 @@ def build_context_envelope(
         # dell'envelope: stesso slot [PROFILE], punteggi e portfolio restano
         # fuori di proposito. Le classi restano legate alla chat docenza:
         # group_ids e' riverificato a ogni turno, una condivisione revocata
-        # esce dal contesto senza rifare la selezione.
+        # esce dal contesto senza rifare la selezione. Con il componente
+        # "profile" spento non entrano ne' il taccuino ne' le classi.
         profile_block = "\n\n".join(
             s for s in (
                 teacher_notebook_context(db, username_for_context),
                 teacher_groups_context(db, username_for_context, getattr(request, "group_ids", None)) if is_docenza_chat else "",
             ) if s
-        )
+        ) if include_profile else ""
     if is_practice_notebook:
         # Studente simulato: il suo taccuino al posto di quello reale, i
         # punteggi della sessione restano (sono quelli che il docente usa
         # per la prova). Niente portfolio, obiettivi o classi del docente.
         profile_block = "\n\n".join(
-            s for s in (practice_notebook_context(practice_notebook), system_prompt_scores) if s
+            s for s in (practice_notebook_context(practice_notebook) if include_profile else "", system_prompt_scores) if s
         )
     simulation_block = simulation_notice(language) if is_practice_notebook else ""
     if components is not None:

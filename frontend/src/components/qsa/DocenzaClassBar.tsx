@@ -4,10 +4,13 @@
 // (OBIETTIVO_DOCENZA): il docente sceglie una o piu' classi tra quelle che
 // gestisce o che gli sono state condivise; gli id viaggiano in ogni turno
 // (chatPayload.group_ids) e il server riverifica l'accesso a ogni turno.
+// Anche per l'admin l'elenco (`own=true`) mostra solo proprie o condivise:
+// le stesse che il contesto accetta.
 
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { NotebookContextChoice } from '@/lib/notebook-context';
+import { docenzaClassesInContext } from '@/lib/docenza-groups';
 import { useI18n } from '@/lib/i18n-context';
 import { useTeacherResource } from '@/components/teacher/useTeacherResource';
 import { teacherAreaText } from '@/lib/i18n-teacher-area';
@@ -86,7 +89,7 @@ function parseGroups(payload: unknown): TeacherGroup[] {
 export function DocenzaClassBar({ selected, onChange, notebookContext = 'default' }: { selected: number[]; onChange: (ids: number[]) => void; notebookContext?: NotebookContextChoice }) {
     const { lang, t } = useI18n();
     const texts = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
-    const { data: groups, loading, failed, forbidden, reload } = useTeacherResource('/api/admin/groups', parseGroups);
+    const { data: groups, loading, failed, forbidden, reload } = useTeacherResource('/api/admin/groups?own=true', parseGroups);
 
     const toggle = (id: number) => {
         const next = selected.includes(id) ? selected.filter((value) => value !== id) : [...selected, id];
@@ -100,7 +103,7 @@ export function DocenzaClassBar({ selected, onChange, notebookContext = 'default
                 <GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />
                 {texts.label}
             </p>
-            <p className="mt-0.5 text-2xs text-indigo-700/80">{notebookContext === 'teacher' ? texts.hint : texts.hintNoNotebook}</p>
+            <p className="mt-0.5 text-2xs text-indigo-700/80">{docenzaClassesInContext(notebookContext) ? texts.hint : texts.hintNoNotebook}</p>
             {loading && <p role="status" className="mt-1 flex items-center gap-1 text-xs text-slate-500"><Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> {t('common.loading')}</p>}
             {forbidden ? <p role="alert" className="mt-1 text-xs text-red-600">{teacherAreaText(lang, 'forbidden')}</p>
                 : failed && <div role="alert" className="mt-1 flex flex-wrap items-center gap-3 text-xs text-red-600">

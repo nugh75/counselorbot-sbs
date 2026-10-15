@@ -48,6 +48,7 @@ def _detail(row: models.FrozenSession) -> schemas.FrozenSessionDetail:
         reasoning_effort=data.get("reasoning_effort"),
         notebook_context=data.get("notebook_context"),
         practice_notebook_id=data.get("practice_notebook_id"),
+        group_ids=data.get("group_ids") or [],
         pdf_token=data.get("pdf_token"),
     )
 
