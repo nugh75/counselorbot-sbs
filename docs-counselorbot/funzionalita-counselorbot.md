@@ -224,6 +224,15 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
   e sul Taccuino del docente. Guida la definizione dell'obiettivo con tassonomia di Bloom, verifica SMART
   e allineamento costruttivo con attività e valutazione; l’obiettivo progettato si collega al Catalogo
   obiettivi e ai Percorsi di classe per gli studenti.
+  La barra «Classi di questa conversazione» elenca solo le classi proprie o condivise con chi scrive,
+  anche per un amministratore: sono le uniche che possono entrare nel contesto. Le classi scelte
+  restano legate alla conversazione: riprendendo una chat sospesa tornano quelle di quella chat (nessuna
+  per le chat sospese prima di questa modifica), non la preferenza del browser o di un'altra chat; una
+  chat nuova parte dalla preferenza del browser, visibile nella barra. A ogni turno il server riverifica
+  che la classe sia attiva e ancora propria o condivisa: revoca e disattivazione valgono subito. Le
+  classi entrano solo con il taccuino docente (anche come Predefinito) e restano fuori con Studente,
+  Prova o Nessuno, o se l'amministrazione spegne la componente profilo; descrizione e metodologie
+  sono contesto, non istruzioni né prove di difficoltà, e le note sui singoli partecipanti non entrano.
 - **Strumenti e percorsi personalizzati**: gli strumenti e le chat guidate create
   e attivate dall'amministrazione compaiono dinamicamente nel catalogo attività
   dello studente (nella sezione dei percorsi guidati o delle analisi questionari a

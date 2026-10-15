@@ -1,3 +1,49 @@
+# Handoff S5: contesto classi della chat Obiettivi docente (blocco 1)
+Data: 2026-10-15 | Branch: `fix/goal-guided-group-context` | Agente: `s5-obiettivi-contesto-auto`
+
+Contratto stabile per il successore (blocco 2, prompt/focus/progressione):
+`docs/operations/docenza-group-context.md`. In sintesi:
+
+- `group_ids` viaggia a ogni turno ed è salvato nello snapshot congelato
+  (`FrozenSessionCreate`/`FrozenSessionDetail`, JSON esistente, assente → `[]`).
+  Ripresa = selezione della sessione (vuota per snapshot vecchi); chat nuova =
+  preferenza del browser visibile nella barra. Cambio selezione → autosalvataggio.
+- Ogni turno: solo classi attive proprie/condivise, anche per l'admin; condivisioni
+  confrontate in minuscolo come salvate. Revoca/disattivazione immediate.
+- Barra: `/admin/groups?own=true` (stesso insieme del builder); senza `own` la
+  gestione admin resta invariata. Hint: default docenza = classi incluse.
+- Componente `profile` spento: fuori taccuino docente, classi e taccuino di prova;
+  restano `[SIMULATION]` e punteggi come nel ramo studente.
+- Invariati: opt-in `context_visible_to_students`, `TeacherNote` mai nel contesto,
+  student/practice/none escludono le classi, nessun cambio auth/consenso/punteggi.
+
+Bug del Diario corretti e verificati con test: `b06f03a8` (snapshot),
+`e0929d44` (hint), `9a8571fc` (profile=false, solo locale), `caa98bfa` (admin e
+co-docente con maiuscole nel nome utente: stessa classe di disallineamento).
+Riprodotti prima del fix: 5 test nuovi rossi sul codice originale.
+
+Verifiche (PostgreSQL tmpfs su rete Docker interna, nessun dato reale, nessun
+container produttivo toccato):
+
+| Controllo | Esito |
+| --- | --- |
+| `test_docenza_group_context.py` sul codice originale | 5 failed, 4 passed (riproduzione) |
+| Stessa suite dopo il fix | 9 passed |
+| Regressione contesto/classi/forum/obiettivi/assegnazioni/percorsi (17 file, sorgenti montati) | 391 passed, 6 skipped (4 inizialmente rossi solo per `docs/` non montato, poi verdi) |
+| Immagine backend ricostruita `counselorbot-goal-context-validation:20261015-s5`, 9 file mirati | 177 passed, 6 skipped |
+| Smoke + livelli contesto + prompt + autointerrogazione, stessa immagine | 1058 passed, 1 deselected |
+| Smoke `component_flags_disable_parts` | 1 failed, baseline noto `f6ff90ff` (`'domanda' == ''`), invariato |
+| Frontend `npm test` | 473 passed |
+| `npm run build` (Webpack) | superato |
+| `tsc --noEmit` dopo il build (genera `next-env.d.ts`) | 0 errori |
+| `npm run lint` | i18n ok; 6 errori ESLint preesistenti in 6 file non toccati (identici a `origin/main`, Diario `50db1e7c`); file modificati senza errori né avvisi |
+| `make guidance-refresh/check`, check `--base origin/main` | superati |
+
+Limiti: la selezione classi resta nella barra del composer (non prima del primo
+turno); nessuna prova browser end-to-end, la ripresa è coperta da test unitari
+del ripristino e da test API dello snapshot. Guida UI nelle sei lingue rivista:
+il testo esistente resta corretto, nessuno screenshot da rigenerare.
+
 # Handoff: autointerrogazione e scaffolding metacognitivo
 Data: 2026-10-15 | Branch: `feature/self-questioning-metacognitive-scaffolding`
 
