@@ -9,14 +9,14 @@ from types import SimpleNamespace
 from .prompt_variants import level_config, variant_levels, variant_text
 from .chat_preferences import apply_response_format
 from .qsa_essential import validate_path, directive as essential_directive, is_essential_summary
-from .prompt_contract import turn_contract
+from .prompt_contract import QUESTIONNAIRE_DIALOGUES, turn_contract
 from .journey_context import SYNTHESIS_STEPS, journey_context, session_evidence
 from . import models, recommendation_blocks, session_ledger, thread_guard
 from . import recommendation_service as _recommendation_service
 from .i18n_fields import localized
 from .idea_map import IDEA_INSTRUMENT
 from .memory_service import session_memory
-from .prompt_config import SYSTEM_PROMPT_DEFAULTS
+from .prompt_config import SYSTEM_PROMPT_DEFAULTS, WELCOME_PHASE_IDS
 from .chat_logic import PROMPT_COMPONENT_DEFAULTS
 from .skills import engine as skills_engine
 from .skills import intents as skills_intents
@@ -433,6 +433,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
             evidence, coverage = journey_context(
                 messages, request.language or "it", ai=ai_service if allow_generation else None,
                 provider=provider, model=model,
+                preserve_self_questions=questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES,
             )
         components["journey_evidence"] = evidence
         components["journey_coverage"] = coverage
@@ -477,10 +478,26 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         components["thread_guard"] = thread
         if thread:
             system_prompt_final += "\n\n" + thread
+    # This selects question wording only. Step content, consent and advancement
+    # remain owned by the existing guided path, including its essential variant.
+    reflection_stage = None
+    if questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES:
+        if is_synthesis:
+            reflection_stage = "synthesis"
+        elif essential:
+            reflection_stage = "area"
+        elif (step and request.phase not in WELCOME_PHASE_IDS
+              and request.phase != "savickas-patto"
+              and not _is_intro_step_mode(step.system_prompt_mode)):
+            reflection_stage = "profile" if is_step_entry and step.system_prompt_mode in {
+                "factor", "qsar-factor", "qpcs-factor", "qpcc-factor", "qap-factor",
+            } else "area"
+        elif request.phase == "questions":
+            reflection_stage = "follow-up"
     contract = turn_contract(
         language=request.language or "it", questionnaire_type=questionnaire_type,
         phase=request.phase, advice_allowed=bool(component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
-        synthesis=bool(is_synthesis),
+        synthesis=bool(is_synthesis), reflection_stage=reflection_stage,
     )
     system_prompt_final += "\n\n" + contract
     if questionnaire_type.upper() == 'QPCC':
