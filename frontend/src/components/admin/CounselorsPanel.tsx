@@ -1,10 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Check, X, Languages } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X, Languages, Sparkles } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { LANGUAGES } from '@/lib/i18n';
+import { CounselorCover } from '@/components/questionnaire/CounselorCover';
+import { CounselorCoverModal } from '@/components/admin/CounselorCoverModal';
+import type { PublicCounselor } from '@/lib/counselor';
 
 const QTYPES = ['QSA', 'QSAr', 'ZTPI', 'SAVICKAS', 'EVENTO_STUDIO', 'EVENTO_PROFESSIONALE', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA', 'QPCS', 'QPCC', 'QAP', 'IDEA'];
 
@@ -60,6 +63,7 @@ interface Counselor {
     voice_mapping: Record<string, string> | null;
     persona: string | null;
     avatar: string | null;
+    approach_categories?: string[] | null;
     preset_id: number | null;
     questionnaire_types: string[] | null;
     language: string[];
@@ -92,6 +96,7 @@ export function CounselorsPanel() {
     const [form, setForm] = useState<FormState>(EMPTY);
     const [saving, setSaving] = useState(false);
     const [tLang, setTLang] = useState(uiLang);
+    const [coverModalOpen, setCoverModalOpen] = useState(false);
 
     const refresh = useCallback(async () => {
         setLoading(true);
@@ -227,19 +232,55 @@ export function CounselorsPanel() {
 
     const inputCls = 'h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-sky-400';
 
-    const renderForm = () => (
-        <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.slug')}
-                    <input className={inputCls} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="marco" />
-                </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.name')}
-                    <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.avatar')}
-                    <input className={inputCls} value={form.avatar} onChange={(e) => setForm({ ...form, avatar: e.target.value })} placeholder="https://..." />
-                </label>
-                <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.preset')}
+    const renderForm = () => {
+        const previewCounselor: PublicCounselor = {
+            id: typeof editingId === 'number' ? editingId : 0,
+            slug: form.slug || 'counselor',
+            name: form.name || 'Counselor',
+            description: form.description || null,
+            approach_categories: editingId !== 'new' && editingId !== null
+                ? counselors.find((c) => c.id === editingId)?.approach_categories || []
+                : [],
+            avatar: form.avatar.trim() || null,
+            avatar_url: form.avatar.trim() || null,
+            language: form.language,
+            is_active: form.is_active,
+        };
+
+        return (
+            <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.slug')}
+                        <input className={inputCls} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="marco" />
+                    </label>
+                    <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.name')}
+                        <input className={inputCls} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                    </label>
+                    <div className="flex flex-col gap-1 text-xs font-medium text-slate-500">
+                        <div className="flex items-center justify-between">
+                            <span>{t('admin.counselors.avatar')}</span>
+                            <button
+                                type="button"
+                                onClick={() => setCoverModalOpen(true)}
+                                className="inline-flex items-center gap-1 text-2xs font-semibold text-indigo-600 hover:text-indigo-800 transition"
+                            >
+                                <Sparkles className="h-3 w-3 text-amber-500" aria-hidden />
+                                <span>{t('admin.counselors.coverButton')}</span>
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="relative aspect-[16/9] h-9 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-100 shadow-2xs">
+                                <CounselorCover
+                                    counselor={previewCounselor}
+                                    src={form.avatar.trim() || null}
+                                    alt={form.name || 'Counselor'}
+                                    compact
+                                />
+                            </div>
+                            <input className={inputCls} value={form.avatar} onChange={(e) => setForm({ ...form, avatar: e.target.value })} placeholder="https://..." />
+                        </div>
+                    </div>
+                    <label className="flex flex-col text-xs font-medium text-slate-500">{t('admin.counselors.preset')}
                     <select className={inputCls} value={form.preset_id} onChange={(e) => setForm({ ...form, preset_id: e.target.value })}>
                         <option value="">{t('admin.counselors.noPreset')}</option>
                         {presets.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.provider}/{p.model})</option>)}
@@ -364,6 +405,7 @@ export function CounselorsPanel() {
             </div>
         </div>
     );
+};
 
     return (
         <div className="space-y-4">
@@ -421,6 +463,30 @@ export function CounselorsPanel() {
                     </tbody>
                 </table>
             </div>
+
+            {coverModalOpen && (
+                <CounselorCoverModal
+                    open={coverModalOpen}
+                    onClose={() => setCoverModalOpen(false)}
+                    counselorId={editingId}
+                    counselorName={form.name}
+                    counselorSlug={form.slug}
+                    description={form.description}
+                    persona={form.persona}
+                    currentAvatar={form.avatar.trim() || null}
+                    approachCategories={
+                        editingId !== 'new' && editingId !== null
+                            ? counselors.find((c) => c.id === editingId)?.approach_categories || []
+                            : []
+                    }
+                    onAvatarSaved={(newAvatarUrl) => {
+                        setForm((prev) => ({ ...prev, avatar: newAvatarUrl }));
+                        if (editingId !== 'new' && editingId !== null) {
+                            void refresh();
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 }

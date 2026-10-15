@@ -4,9 +4,12 @@ Admin: CRUD completo su /admin/counselors (nome, descrizione, persona, modello
 via preset, questionari gestiti). Pubblico: GET /counselors espone solo i campi
 user-facing dei counselor attivi (per il selettore lato studente).
 """
+import glob
+import os
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, auth, database, prompt_revisions, personal_api, class_access
@@ -18,6 +21,29 @@ from sqlalchemy import cast as sa_cast, String
 
 router = APIRouter()
 get_db = database.get_db
+
+COUNSELOR_AVATARS_STORAGE_DIR = os.getenv(
+    "COUNSELOR_AVATARS_STORAGE_DIR",
+    os.path.join(database.DATA_DIR, "counselors"),
+)
+MAX_COUNSELOR_AVATAR_BYTES = 5 * 1024 * 1024  # 5 MB
+ALLOWED_COUNSELOR_AVATAR_TYPES = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+    "image/svg+xml": ".svg",
+}
+
+
+def _get_counselor_avatar_dir() -> str:
+    path = COUNSELOR_AVATARS_STORAGE_DIR
+    try:
+        os.makedirs(path, exist_ok=True)
+        return path
+    except OSError:
+        fallback = os.path.abspath("data/uploads/counselors")
+        os.makedirs(fallback, exist_ok=True)
+        return fallback
 
 # Provider che girano in locale; tutto il resto e' API esterna a pagamento.
 _LOCAL_PROVIDERS = {"ollama", "llamacpp"}
@@ -357,3 +383,82 @@ async def translate_counselor(
     translate_counselor_sync(db, counselor_id, force=True)
     db.refresh(counselor)
     return _serialize(counselor, _preset_map(db))
+
+
+@router.post("/admin/counselors/{counselor_id}/avatar", response_model=schemas.CounselorResponse)
+@router.post("/api/admin/counselors/{counselor_id}/avatar", response_model=schemas.CounselorResponse)
+async def upload_counselor_avatar(
+    counselor_id: int,
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(auth.get_current_active_admin),
+    db: Session = Depends(get_db),
+):
+    """Carica l'immagine avatar/copertina per un counselor."""
+    counselor = (
+        db.query(models.Counselor)
+        .filter(models.Counselor.id == counselor_id, models.Counselor.owner_username.is_(None))
+        .first()
+    )
+    if not counselor:
+        raise HTTPException(status_code=404, detail="Counselor non trovato")
+
+    content_type = (file.content_type or "").lower().split(";")[0].strip()
+    ext = ALLOWED_COUNSELOR_AVATAR_TYPES.get(content_type)
+    if not ext:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato non supportato. Usa PNG, JPG, WebP o SVG.",
+        )
+    contents = await file.read(MAX_COUNSELOR_AVATAR_BYTES + 1)
+    await file.close()
+    if not contents:
+        raise HTTPException(status_code=400, detail="Il file e' vuoto.")
+    if len(contents) > MAX_COUNSELOR_AVATAR_BYTES:
+        raise HTTPException(status_code=413, detail="L'immagine supera i 5 MB.")
+
+    storage_dir = _get_counselor_avatar_dir()
+    for existing in glob.glob(os.path.join(storage_dir, f"counselor_{counselor_id}.*")) + glob.glob(os.path.join(storage_dir, f"counselor_{counselor_id}_*")):
+        try:
+            os.remove(existing)
+        except OSError:
+            pass
+
+    filename = f"counselor_{counselor_id}{ext}"
+    dest_path = os.path.join(storage_dir, filename)
+    with open(dest_path, "wb") as fh:
+        fh.write(contents)
+
+    avatar_path = f"/api/counselors/{counselor.id}/avatar"
+    counselor.avatar = avatar_path
+    counselor.avatar_url = avatar_path
+    db.commit()
+    db.refresh(counselor)
+    return _serialize(counselor, _preset_map(db))
+
+
+@router.get("/counselors/{counselor_id}/avatar")
+@router.get("/api/counselors/{counselor_id}/avatar")
+async def get_counselor_avatar(
+    counselor_id: int,
+):
+    """Eroga l'immagine avatar/copertina caricata per il counselor."""
+    storage_dir = _get_counselor_avatar_dir()
+    for ext, mime in [
+        (".png", "image/png"),
+        (".jpg", "image/jpeg"),
+        (".jpeg", "image/jpeg"),
+        (".webp", "image/webp"),
+        (".svg", "image/svg+xml"),
+    ]:
+        path = os.path.join(storage_dir, f"counselor_{counselor_id}{ext}")
+        if os.path.isfile(path):
+            return FileResponse(path, media_type=mime, headers={"Cache-Control": "public, max-age=3600"})
+
+    matching = sorted(glob.glob(os.path.join(storage_dir, f"counselor_{counselor_id}*")))
+    if matching and os.path.isfile(matching[0]):
+        ext = os.path.splitext(matching[0])[1].lower()
+        mime = {v: k for k, v in ALLOWED_COUNSELOR_AVATAR_TYPES.items()}.get(ext, "application/octet-stream")
+        return FileResponse(matching[0], media_type=mime, headers={"Cache-Control": "public, max-age=3600"})
+
+    raise HTTPException(status_code=404, detail="Avatar del counselor non trovato")
+

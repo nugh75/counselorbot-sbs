@@ -1,3 +1,37 @@
+# Handoff S18: Generatore prompt IA per copertine counselor e upload avatar in CounselorsPanel (Issue #288)
+Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
+
+- Titolo: 'feat: generatore prompt IA per copertine counselor e upload avatar in CounselorsPanel'
+- Branch: `feat/counselor-cover-ai-prompt`
+- Issue collegate: Closes #288
+- Obiettivo:
+  1. Introdurre nel pannello di amministrazione e configurazione dei counselor (`frontend/src/components/admin/CounselorsPanel.tsx`) la stessa funzionalità di generazione e gestione avanzata delle copertine 16:9 introdotta per le classi.
+  2. Implementare il generatore di prompt IA ottimizzato per DALL-E/ChatGPT e Gemini/Imagen nello stile concettuale di CounselorBot (palette verde petrolio `#042f2e` / `#0f766e`, indaco `#1e1b4b`, ardesia, accenti ambra `#f59e0b`, ottone e ciano, assenza di caratteri o ritratti fotografici).
+  3. Fornire 12 metafore/temi visivi consigliati (`COUNSELOR_METAPHOR_PRESETS`), pulsante copia rapida negli appunti con feedback visivo, e link esterni a ChatGPT e Gemini.
+  4. Mostrare l'anteprima live orizzontale 16:9 con il componente `CounselorCover` (incluso fallback procedurale dinamico in assenza di asset o errore di caricamento) sia nel form di `CounselorsPanel` sia in cima al modale.
+  5. Implementare l'endpoint backend per l'upload e la memorizzazione persistente su disco dell'avatar/copertina (`POST /api/admin/counselors/{counselor_id}/avatar`) con validazione MIME e limite 5MB, e il serving pubblico con header di cache (`GET /api/counselors/{counselor_id}/avatar`).
+  6. Supporto i18n completo nelle 6 lingue della piattaforma (`it`, `en`, `es`, `fr`, `de`, `sv`).
+- Modifiche realizzate:
+  1. Backend:
+     - `backend/routes/counselors.py`: implementati `upload_counselor_avatar` (`POST /api/admin/counselors/{counselor_id}/avatar` e `/admin/...`) con validazione tipi (PNG, JPG, WebP, SVG) e max 5MB, salvataggio su filesystem in `data/uploads/counselors/` e aggiornamento `avatar` e `avatar_url`, e `get_counselor_avatar` (`GET /api/counselors/{counselor_id}/avatar` e `/counselors/...`) con `Cache-Control: public, max-age=3600`.
+     - `backend/tests/test_counselor_avatar.py`: test per upload PNG/SVG, salvataggio nel database, serving pubblico con cache-control, validazione formato/dimensione, e risposte 400/404/413.
+  2. Frontend:
+     - `frontend/src/lib/counselor-cover-prompt.ts`: esportati `composeCounselorCoverAIPrompt` e `COUNSELOR_METAPHOR_PRESETS` (12 metafore visive consigliate).
+     - `frontend/src/lib/counselor-cover-prompt.test.ts`: test unitari per i preset di metafore, la generazione corretta del prompt 16:9 conforme al brand, e la gestione dei fallback su opzioni vuote.
+     - `frontend/src/components/admin/CounselorCoverModal.tsx`: modale accessibile con tabs "Crea con IA", "Carica da computer" e "URL o preset manuale", anteprima 16:9 con `CounselorCover`, copia del prompt con feedback visivo e link esterni a ChatGPT e Gemini.
+     - `frontend/src/components/admin/CounselorsPanel.tsx`: integrata l'anteprima 16:9 dell'avatar con `CounselorCover` accanto al campo di input, aggiunto il pulsante «✨ Crea con IA / Gestisci copertina», gestione dello stato del modale e aggiornamento dinamico di `form.avatar`.
+     - `frontend/src/lib/i18n-admin.ts`: aggiunte tutte le chiavi di traduzione per la gestione delle copertine dei counselor in tutte e 6 le lingue (`it`, `en`, `es`, `fr`, `de`, `sv`).
+  3. Documentazione e conformità:
+     - `docs-counselorbot/funzionalita-counselorbot.md`: documentata la gestione delle copertine e il generatore di prompt IA nel pannello counselor.
+- Verifiche superate:
+  - Controllo i18n: `node frontend/scripts/check-i18n.mjs` (3.359 chiavi verificate in 6 lingue, 0 violazioni).
+  - TypeScript: `npx tsc --noEmit` (0 errori, Node v22.23.3).
+  - Test frontend: `npm test` (466/466 superati, 0 fallimenti).
+  - Backend pytest: `pytest backend/tests/test_counselor_avatar.py` (3/3 passati).
+  - Piattaforma guidance: `make guidance-refresh && make guidance-check`.
+
+---
+
 # Handoff S17: Copertine rettangolari 16:9 stile counselor per le classi con 10 preset, upload e prompt IA (Issue #286)
 Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
 
