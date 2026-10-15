@@ -173,6 +173,9 @@ export const classSettingsTexts = {
     deleteClassConfirmAction: ['Elimina definitivamente', 'Delete permanently', 'Eliminar definitivamente', 'Supprimer définitivement', 'Dauerhaft löschen', 'Ta bort permanent'],
     cancel: ['Annulla', 'Cancel', 'Cancelar', 'Annuler', 'Abbrechen', 'Avbryt'],
     deleteClassHasPlansError: ['La classe è agganciata a piani di somministrazione: disattivarla invece di eliminarla.', 'The class is linked to administration plans: deactivate it instead of deleting it.', 'La clase está vinculada a planes de administración: desactívala en lugar de eliminarla.', 'La classe est associée à des plans de passation : désactivez-la au lieu de la supprimer.', 'Die Klasse ist mit Durchführungsplänen verknüpft: Deaktivieren Sie sie statt sie zu löschen.', 'Klassen är kopplad till genomförandeplaner: inaktivera den istället för att ta bort den.'],
+    statusActive: ['Attiva', 'Active', 'Activa', 'Active', 'Aktiv', 'Aktiv'],
+    statusInactive: ['Inattiva', 'Inactive', 'Inactiva', 'Inactive', 'Inaktiv', 'Inaktiv'],
+    shared: ['Condivisa', 'Shared', 'Compartida', 'Partagée', 'Geteilt', 'Delad'],
 } as const satisfies Record<string, readonly [string, string, string, string, string, string]>;
 
 export function classSettingsText(lang: string, key: keyof typeof classSettingsTexts): string {

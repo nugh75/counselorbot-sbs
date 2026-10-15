@@ -12,6 +12,7 @@ export interface StudentGroup {
     owner_username: string;
     is_active: boolean;
     members_count: number;
+    shares_count?: number;
     created_at: string | null;
 }
 

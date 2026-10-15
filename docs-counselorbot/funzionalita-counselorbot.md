@@ -756,8 +756,8 @@ La gestione dei gruppi è distinta dall’iscrizione personale a un gruppo.
 **Navigazione secondaria e breadcrumbs accessibili dell'Area Docente (Issue #268).**
 In tutte le sottopagine dell'Area Docente (`/docente/<slug>` e nell'Hub di classe `/docente/classi/{id}`), la navigazione secondaria e di orientamento è standardizzata tramite il componente accessibile `TeacherBreadcrumbs` (`<nav aria-label="...">` con lista semantica `<ol>` / `<li>`, `aria-current="page"` sull'elemento attivo finale e target touch >= 44px). Lo schema gerarchico comune collega la radice «Area docenti» (`/docente`), le eventuali sezioni genitore (es. «Risorse didattiche» per Strategie e Letture/materiali, o «Palestra di prova» per i Taccuini di simulazione) e la sezione corrente. Nelle viste contestuali di classe (`/docente/classi/{id}`), il selettore rapido `ClassQuickSwitcher` (`<select>` accessibile con etichette tradotte nelle 6 lingue ufficiali) consente al docente di passare istantaneamente tra le proprie classi attive preservando il tab secondario attivo (partecipanti/risultati, strumenti, percorsi, forum) senza dover tornare alla home o all'elenco classi. Sono inoltre fornite le route e i redirect dedicati `/docente/palestra` (verso `/docente/taccuini-prova`), `/docente/obiettivi` (verso `/docente/catalogo-obiettivi`) e `/docente/proposte` (verso `/docente/assegnazioni`).
 
-**Class settings and results overview (#88–#95, #109, #246).** From Teacher area →
-Classes, **Open class** opens `/docente/classi/{id}`; next to it, **Participants & results**, **Tools &
+**Class settings and results overview (#88–#95, #109, #246, #277).** From Teacher area →
+Classes (`/docente/classi`), each class card provides a streamlined directory view with direct links: **Open class** opens `/docente/classi/{id}`; next to it, **Participants & results**, **Tools &
 counselors** and **Paths** open those tabs directly (`?tab=students`, `?tab=tools`, `?tab=paths`;
 `forum` and `audit` work too).
 The **Participants & results** tab (`?tab=students`) provides an at-a-glance overview
@@ -1185,19 +1185,7 @@ un errore conserva bozza e protezione. Ripristinare i valori salvati rimuove la
 protezione; una nuova scheda conserva la bozza nel tab originale. Nessuna cache
 persistente delle bozze del docente o dei dati del popup tra account.
 
-La pagina **Gruppi e classi** mette la creazione prima dell’elenco e i campi
-modificabili prima degli inviti e della gestione dentro ogni scheda. Tutte le
-classi e i gruppi partono aperti: puoi comprimerli e riaprirli da tastiera senza
-perdere la bozza o avviare operazioni. La chiusura conserva anche note e messaggi
-in bozza di un dettaglio partecipante già aperto. Nome e scuola/ente rimangono in sola
-lettura dopo la creazione; fascia e istituto si salvano quando cambia la tendina.
-Descrizione, metodologie e condivisione del contesto con gli studenti richiedono
-**Salva**. Lo stato della bozza, il salvataggio e gli errori rimangono visibili
-anche a scheda chiusa. **Riprova salvataggio** ripete l’operazione fallita,
-conservando il contesto scritto; i dati salvati non vengono trasferiti a un’altra
-classe e una risposta tardiva non cancella le nuove modifiche. Inviti,
-condivisioni con colleghi, partecipanti e assegnazioni conservano azioni e
-permessi esistenti. Le tre sezioni del Taccuino del docente restano sempre aperte.
+La pagina **Gruppi e classi** (`GroupsPanel`, Issue #277) presenta una directory di classi pulita, compatta e moderna utilizzata sia nell'Area Docente (`/docente/classi`) sia nel pannello Amministrazione (`/admin?tab=groupsClasses`). Il comando di creazione («+ Nuovo gruppo o classe») precede l'elenco e consente una compilazione rapida a quattro campi con reindirizzamento immediato all'Hub della classe creata (`{basePath}/{id}`). Ciascuna scheda classe della directory espone il nome cliccabile con link all'Hub, il codice classe (`GR-XXXXXX`) con copia rapida negli appunti in un click e feedback visivo, il numero di iscritti, l'ente/istituto, il docente proprietario, il badge di stato («Attiva» / «Inattiva») e il badge «Condivisa» (visibile se la classe è condivisa con colleghi o se l'utente corrente non ne è il proprietario). Un pulsante d'azione primario evidente («Apri classe →») e le scorciatoie dirette alle tab secondarie più usate (Partecipanti e risultati, Strumenti e counselor, Percorsi) offrono navigazione istantanea senza duplicare form o fisarmoniche pesanti nella directory. Le impostazioni complete della classe, gli inviti studenti e la gestione delle condivisioni risiedono ordinatamente nella tab Panoramica dell'Hub di classe (`ClassOverviewTab`, Issue #276). Le tre sezioni del Taccuino del docente restano sempre aperte.
 
 Un errore nel caricamento delle classi gestite, del Taccuino del docente o delle
 classi selezionabili nella chat viene segnalato con **Riprova**: non significa
