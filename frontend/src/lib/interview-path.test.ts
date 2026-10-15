@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
-import { acceptsAgreement, advanceButtons, advanceLabelKey, autoAdvancesOnGenerate, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from './interview-path.ts';
+import { acceptsAgreement, advanceButtons, advanceLabelKey, advancesOnSignal, autoAdvancesOnGenerate, currentGoalPhase, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from './interview-path.ts';
 
 const idle = { analysisStep: true, suggestion: false, userMessages: 0 };
 
@@ -144,4 +144,38 @@ test('the way on reads as a new topic in an interview and as the next step elsew
     assert.equal(advanceLabelKey('QPCC', 'qpcc-profilo'), 'guided.nextTopic');
     assert.equal(advanceLabelKey('ZTPI', 'ztpi-t1'), 'guided.nextStep');
     assert.equal(advanceLabelKey('SAVICKAS', 'questions'), 'guided.concludeSession');
+});
+
+const GOAL_PHASES = ['obbdocenza-intro', 'obbdocenza-partenza', 'obbdocenza-livello', 'obbdocenza-piano', 'obbdocenza-verifica', 'obbdocenza-final'];
+
+test('Obiettivo: opening and agreement are one step, closed only by the agreement', () => {
+    assert.ok(isAgreementStep('OBIETTIVO_DOCENZA', 'obbdocenza-intro'));
+    assert.ok(!isAgreementStep('OBIETTIVO_DOCENZA', 'obbdocenza-patto'));
+    assert.ok(acceptsAgreement('OBIETTIVO_STUDIO', 'obbstudio-intro', 'it', 'Accetto'));
+    assert.deepEqual(advanceButtons('OBIETTIVO_DOCENZA', 'obbdocenza-intro', 'intro', { conclusion: false, suggestion: false, userMessages: 5 }), { standard: false, interview: false });
+    assert.deepEqual(interviewQuickReplies('OBIETTIVO_DOCENZA', 'obbdocenza-intro', { analysisStep: true, suggestion: false, userMessages: 0 }), [{ key: 'guided.qr.accept', action: 'send', emphasis: true }]);
+});
+
+test('Obiettivo: a completed reply with the signal moves on without asking the person', () => {
+    assert.ok(advancesOnSignal('OBIETTIVO_DOCENZA') && advancesOnSignal('OBIETTIVO_STUDIO'));
+    assert.ok(!advancesOnSignal('SAVICKAS') && !advancesOnSignal('QPCC'));
+    assert.equal(userDecidesAdvance('OBIETTIVO_DOCENZA', 'obbdocenza-piano', 'Attività concordate.'), false);
+    assert.equal(userDecidesAdvance('SAVICKAS', 'savickas-q1', 'Testo.'), true, 'other interview paths unchanged');
+    assert.ok(autoAdvancesOnGenerate('OBIETTIVO_STUDIO', 'obbstudio-livello'));
+    for (const step of ['obbstudio-partenza', 'obbstudio-piano', 'obbstudio-verifica', 'obbstudio-final']) {
+        assert.ok(!autoAdvancesOnGenerate('OBIETTIVO_STUDIO', step), step);
+    }
+    assert.ok(autoAdvancesOnGenerate('SAVICKAS', 'savickas-final'), 'other interview paths unchanged');
+});
+
+test('Obiettivo: phases of the eleven-step path resume in the phase that absorbed them', () => {
+    assert.equal(currentGoalPhase('OBIETTIVO_DOCENZA', 'obbdocenza-patto', GOAL_PHASES), 'obbdocenza-intro');
+    assert.equal(currentGoalPhase('OBIETTIVO_DOCENZA', 'obbdocenza-smart', GOAL_PHASES), 'obbdocenza-livello');
+    assert.equal(currentGoalPhase('OBIETTIVO_DOCENZA', 'obbdocenza-sfida', GOAL_PHASES), 'obbdocenza-livello');
+    assert.equal(currentGoalPhase('OBIETTIVO_DOCENZA', 'questions', GOAL_PHASES), 'obbdocenza-final');
+    assert.equal(currentGoalPhase('OBIETTIVO_DOCENZA', 'conclusion', GOAL_PHASES), 'obbdocenza-final');
+    assert.equal(currentGoalPhase('OBIETTIVO_DOCENZA', 'obbdocenza-piano', GOAL_PHASES), 'obbdocenza-piano');
+    // An administrator kept SMART: it stays where it is.
+    assert.equal(currentGoalPhase('OBIETTIVO_DOCENZA', 'obbdocenza-smart', [...GOAL_PHASES, 'obbdocenza-smart']), 'obbdocenza-smart');
+    assert.equal(currentGoalPhase('QSA', 'questions', ['cognitive']), 'questions');
 });

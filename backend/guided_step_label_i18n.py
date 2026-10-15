@@ -13,6 +13,8 @@ admin-customised translations are never overwritten.
 import re
 from typing import Dict
 
+from .obiettivo_layout import PREFIXES as OBIETTIVO_PREFIXES, current_label, step_labels as obiettivo_step_labels
+
 SECONDARY_LANGS = ["en", "es", "fr", "de", "sv"]
 
 _STEP_ORDINAL_PREFIX = re.compile(
@@ -381,58 +383,25 @@ for _prefix in ("evstudio", "evprof"):
         STEP_LABEL_I18N[f"{_prefix}-{_suffix}"] = dict(_labels)
 
 
-# --- OBIETTIVO_STUDIO / OBIETTIVO_DOCENZA: stesso percorso, stesse etichette ---
-_OBIETTIVO_STEP_LABELS: Dict[str, Dict[str, str]] = {
-    "intro": {
-        "en": "0. Introduction", "es": "0. Presentación", "fr": "0. Présentation",
-        "de": "0. Vorstellung", "sv": "0. Presentation",
-    },
-    "patto": {
-        "en": "0. Collaboration Agreement", "es": "0. Pacto de Colaboración",
-        "fr": "0. Pacte de Collaboration", "de": "0. Kooperationsvereinbarung",
-        "sv": "0. Samarbetsöverenskommelse",
-    },
-    "partenza": {
-        "en": "1. Where I start from", "es": "1. Desde donde parto", "fr": "1. D’où je pars",
-        "de": "1. Wo ich ansetze", "sv": "1. Var jag börjar",
-    },
-    "livello": {
-        "en": "2. The level (Bloom)", "es": "2. El nivel (Bloom)", "fr": "2. Le niveau (Bloom)",
-        "de": "2. Die Stufe (Bloom)", "sv": "2. Nivån (Bloom)",
-    },
-    "smart": {
-        "en": "3. The SMART test", "es": "3. La prueba SMART", "fr": "3. L’épreuve SMART",
-        "de": "3. Der SMART-Test", "sv": "3. SMART-testet",
-    },
-    "sfida": {
-        "en": "4. Specific and challenging", "es": "4. Específico y exigente", "fr": "4. Spécifique et exigeant",
-        "de": "4. Konkret und fordernd", "sv": "4. Konkret och utmanande",
-    },
-    "piano": {
-        "en": "5. How I get there", "es": "5. Cómo llego", "fr": "5. Comment j’y arrive",
-        "de": "5. Wie ich es erreiche", "sv": "5. Hur jag når dit",
-    },
-    "verifica": {
-        "en": "6. How I will know I made it", "es": "6. Cómo sabré que lo logré", "fr": "6. Comment je saurai que c’est atteint",
-        "de": "6. Woran ich den Erfolg erkenne", "sv": "6. Hur jag vet att jag lyckats",
-    },
-    "final": {
-        "en": "7. Summary of the objective", "es": "7. Síntesis del objetivo", "fr": "7. Synthèse de l’objectif",
-        "de": "7. Zusammenfassung des Ziels", "sv": "7. Sammanfattning av målet",
-    },
-}
-for _prefix in ("obbstudio", "obbdocenza"):
-    for _suffix, _labels in _OBIETTIVO_STEP_LABELS.items():
-        STEP_LABEL_I18N[f"{_prefix}-{_suffix}"] = dict(_labels)
+# --- OBIETTIVO_STUDIO / OBIETTIVO_DOCENZA: fasi d'azione, per strumento ---
+# Studio parla in prima persona, Docenza dei destinatari: le etichette vivono in
+# obiettivo_layout insieme alla lettura delle etichette di fabbrica precedenti.
+for _prefix in OBIETTIVO_PREFIXES.values():
+    for _suffix, _labels in obiettivo_step_labels(_prefix).items():
+        STEP_LABEL_I18N[f"{_prefix}-{_suffix}"] = {lang: text for lang, text in _labels.items() if lang != "it"}
 
 
 def resolve_step_label(step, lang: str) -> str:
-    """Return the localized label for a GuidedStep, falling back to the Italian base."""
+    """Return the localized label for a GuidedStep, falling back to the Italian base.
+
+    A factory label that was later renamed reads as its current version; a label
+    written by an administrator is returned as it is.
+    """
     if lang and lang != "it" and step.label_i18n:
         localized = step.label_i18n.get(lang)
         if localized:
-            return localized
-    return step.label
+            return current_label(step.id, localized)
+    return current_label(step.id, step.label)
 
 
 def seed_step_label_i18n(db, models) -> int:

@@ -6,6 +6,7 @@ are excluded. Recognised legacy hashes and seed/migration revisions establish
 factory ownership; administrator-owned or unrecognised texts are preserved.
 """
 import json
+from functools import lru_cache
 from pathlib import Path
 
 from . import models, prompt_config, prompt_revisions
@@ -35,8 +36,32 @@ def factory_catalog():
     return configs, steps
 
 
+def _read_legacy():
+    return json.loads((Path(__file__).parent / "prompt_factory_legacy.json").read_text(encoding="utf-8"))
+
+
+_cached_legacy = lru_cache(maxsize=1)(_read_legacy)
+
+
+def factory_owned(db, scope, key, value, *, legacy=None, cached=False):
+    """True se `value` e' un testo di fabbrica che l'allineamento puo' sostituire.
+
+    Di fabbrica: hash registrato o revisione seed/migration uguale al testo, e
+    nessuna revisione dell'amministratore come ultima parola.
+    """
+    legacy = legacy or (_cached_legacy() if cached else _read_legacy())
+    group = "configs" if scope == "config" else "steps"
+    revision = prompt_revisions.latest(db, scope, key)
+    if revision is not None and revision.origin == prompt_revisions.ORIGIN_ADMIN:
+        return False
+    versioned_factory = revision is not None and revision.value == value and revision.origin in {
+        prompt_revisions.ORIGIN_SEED, prompt_revisions.ORIGIN_MIGRATION,
+    }
+    return versioned_factory or digest(value) in legacy[group].get(key, [])
+
+
 def make_plan(db, *, lock_rows=False):
-    legacy = json.loads((Path(__file__).parent / "prompt_factory_legacy.json").read_text(encoding="utf-8"))
+    legacy = _read_legacy()
     configs, steps = factory_catalog()
     changes, preserved = [], []
     targets = (
@@ -55,12 +80,7 @@ def make_plan(db, *, lock_rows=False):
             if scope == "guided_step" and (row.questionnaire_type or "").upper() != steps[key]["questionnaire_type"].upper():
                 preserved.append({"scope": scope, "key": key, "reason": "different_instrument"})
                 continue
-            revision = prompt_revisions.latest(db, scope, key)
-            versioned_factory = revision is not None and revision.value == before and revision.origin in {
-                prompt_revisions.ORIGIN_SEED, prompt_revisions.ORIGIN_MIGRATION,
-            }
-            known_factory = digest(before) in legacy[group].get(key, [])
-            if (revision is not None and revision.origin == prompt_revisions.ORIGIN_ADMIN) or not (known_factory or versioned_factory):
+            if not factory_owned(db, scope, key, before, legacy=legacy):
                 preserved.append({"scope": scope, "key": key, "reason": "personalised"})
                 continue
             changes.append({"scope": scope, "key": key, "before": before, "after": after,

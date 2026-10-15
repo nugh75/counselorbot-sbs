@@ -60,8 +60,8 @@ TOOL_DESCRIPTIONS = {
     "SAVICKAS": "narrative career-construction interview",
     "EVENTO_STUDIO": "guided look back at one significant study event: the facts, what worked, what did not, a second look and what to try next time",
     "EVENTO_PROFESSIONALE": "guided look back at one significant work event: the facts, what worked, what did not, a second look and what to try next time",
-    "OBIETTIVO_STUDIO": "guided path to set one learning objective: starting area, Bloom level, SMART check, challenge, plan and proof",
-    "OBIETTIVO_DOCENZA": "guided path to set one didactic objective for a class: Bloom level, SMART check, alignment with activities and assessment",
+    "OBIETTIVO_STUDIO": "guided path to set one learning objective: what to learn, making it precise, how to get there, how to check it and the final objective",
+    "OBIETTIVO_DOCENZA": "guided path to set one didactic objective for a class: what students should learn, making it precise, aligned activities, how to check it and the final objective",
     "IDEA": "open conversation for a specific idea, decision or project the student already brings; not for students who do not yet know what they want",
     "pqbl": "active learning and questions generated from a study PDF",
 }

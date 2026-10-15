@@ -444,12 +444,13 @@ def _guided_prompt_markdown(
     from ..chat_logic import _apply_global_directives, _instrument_meta_system_prompt, _step_allows_practical_advice
     from ..prompt_contract import turn_contract
     _ensure_questionnaire_guided_steps(db, questionnaire_type)
-    steps = (
+    from ..obiettivo_layout import active_guided_steps
+    steps = active_guided_steps(db, (
         db.query(models.GuidedStep)
         .filter(models.GuidedStep.questionnaire_type == questionnaire_type)
         .order_by(models.GuidedStep.sort_order)
         .all()
-    )
+    ))
     sections = [
         f"# Guided prompts: {questionnaire_type}",
         "",

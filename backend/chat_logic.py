@@ -27,6 +27,8 @@ from .skills import engine as skills_engine
 from .skills import intents as skills_intents
 from . import recommendation_service as _recommendation_service
 from .guided_step_label_i18n import STEP_LABEL_I18N, resolve_step_label
+from .goal_draft import is_goal_instrument
+from .obiettivo_layout import active_guided_steps
 from sqlalchemy import func
 
 from .idea_map import IDEA_INSTRUMENT, focused_branch, map_context_for
@@ -899,6 +901,7 @@ def _guided_path_context(db, questionnaire_type: str, current_step_id: str | Non
         .order_by(models.GuidedStep.sort_order.asc(), models.GuidedStep.id.asc())
         .all()
     )
+    steps = active_guided_steps(db, steps)
     if not steps:
         return ""
 
@@ -932,6 +935,8 @@ def _guided_path_context(db, questionnaire_type: str, current_step_id: str | Non
         if current_index + 1 < len(steps):
             next_step = steps[current_index + 1]
             lines.append(f"Next guided step: {resolve_step_label(next_step, language or 'it')} [id: {next_step.id}].")
+        elif is_goal_instrument(qtype):
+            lines.append("This is the last step: the path ends here with the final objective and the choice to save it.")
         else:
             lines.append("This is the last configured analysis step; after it the UI moves to reflection questions and conclusion.")
     else:

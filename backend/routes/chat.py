@@ -52,6 +52,7 @@ from ..qsa_extractor import (
 )
 from ..guided_text_i18n import SECONDARY_LANGS, resolve_text, QUESTIONS_LABEL, PHASE_WORD
 from ..guided_step_label_i18n import resolve_step_label, strip_step_ordinal
+from ..obiettivo_layout import active_guided_steps
 from ..guided_step_questions_seed import FIXED_QUESTIONS_STEP_ID
 from ..prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
@@ -386,13 +387,13 @@ async def get_guided_ui_texts(questionnaire_type: str = "QSA", lang: str = "it",
     result["label_guided_questions"] = strip_step_ordinal(result["label_guided_questions"])
     result["label_guided_conclusion"] = strip_step_ordinal(result["label_guided_conclusion"])
 
-    # Dynamic steps filtered by questionnaire_type
-    steps = (
+    # Dynamic steps filtered by questionnaire_type (Obiettivo: retired factory steps left out)
+    steps = active_guided_steps(db, (
         db.query(models.GuidedStep)
         .filter(models.GuidedStep.questionnaire_type == questionnaire_type)
         .order_by(models.GuidedStep.sort_order)
         .all()
-    )
+    ))
     question_rows = (
         db.query(models.GuidedStepQuestion)
         .filter(

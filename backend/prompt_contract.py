@@ -97,9 +97,26 @@ def objective_focus_stage(phase: str | None) -> str | None:
     return None
 
 
-def _objective_focus_contract(questionnaire_type: str, stage: str) -> str:
+def _objective_focus_contract(questionnaire_type: str, stage: str, entry: bool = False) -> str:
     """How the Obiettivo paths reach ONE usable objective; DB step texts keep their order."""
     teaching = questionnaire_type == "OBIETTIVO_DOCENZA"
+    # Valgono in ogni fase e anche sui testi DB non ancora allineati: sono i
+    # difetti visti in produzione (vincoli aggiunti, dettagli persi, conferme
+    # chieste a ogni passaggio, obiettivo ripetuto a ogni turno, gergo).
+    conduct = (
+        "Use everyday words and ONE main question per turn; when a word may be unclear, add a "
+        "short example of possible answers. Build the objective only from what the person said: "
+        "a detail taken from the notebook"
+        + (" or the class context" if teaching else "")
+        + " goes in only if the person confirms it, and you say where it comes from. Keep every "
+        "detail already agreed unless the person removes it, and add no feature, constraint or "
+        "condition they did not state. Repeat the whole objective only when it changes. When the "
+        "current step is complete, the step marker moves the application on by itself: never ask "
+        "the person whether to go on or to confirm moving on."
+    )
+    if entry and stage != "synthesis":
+        conduct += (" This is the first reply of the step: begin with ONE short sentence that says "
+                    "what you do now in this step.")
     no_self_questions = (
         "Never ask the person to formulate questions about themselves, and never make that "
         "a goal or a condition for moving on."
@@ -114,6 +131,14 @@ def _objective_focus_contract(questionnaire_type: str, stage: str) -> str:
             "State ONE objective, the one agreed with the person. Mention other outcomes only as "
             "kept aside for another objective, and only if the person named them. Points the "
             "person chose to leave open stay named as open, not filled in. " + no_invention
+            + " The subject of the objective is "
+            + ("the students of the class, never the teacher. " if teaching else "the person ('I'). ")
+            + "When you name a Bloom level, it must be the level of the verb you use ('create' is "
+            "creating, 'use' or 'carry out' is applying). If the agreed proof or criterion does not "
+            "check a requirement the objective names, say so as an open point instead of hiding it. "
+            "Ask no further question and no reflective questions. " + no_self_questions
+            + ("" if entry else " If the person writes after the final objective, answer only "
+               "that message and restate the objective only if they change it.")
         )
     elif stage == "design":
         task = (
@@ -163,7 +188,7 @@ def _objective_focus_contract(questionnaire_type: str, stage: str) -> str:
     return (
         f"{OBJECTIVE_FOCUS_SENTINEL}\n"
         f"This path builds ONE usable {'didactic' if teaching else 'learning'} objective; it is "
-        "not a self-reflection exercise. " + task
+        "not a self-reflection exercise. " + task + " " + conduct
     )
 
 
@@ -220,7 +245,8 @@ def platform_context(db, full: bool = True) -> str:
 def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
                   advice_allowed: bool, synthesis: bool = False,
                   reflection_stage: str | None = None,
-                  objective_stage: str | None = None) -> str:
+                  objective_stage: str | None = None,
+                  objective_entry: bool = False) -> str:
     lines = [
         "[TURN CONTRACT]",
         f"Current task: {questionnaire_type or 'counselor chat'}, {phase or 'free conversation'}. Response language: {language}.",
@@ -253,7 +279,7 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
     if questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES and reflection_stage:
         lines.append(_self_questioning_contract(reflection_stage))
     if is_goal_instrument(questionnaire_type) and objective_stage:
-        lines.append(_objective_focus_contract(questionnaire_type, objective_stage))
+        lines.append(_objective_focus_contract(questionnaire_type, objective_stage, objective_entry))
     if questionnaire_type == "IDEA":
         lines.append("IDEA follows the focused branch of its map. Use no [[AVANZA_STEP]] marker or fixed sequence. "
                      "Write visible text first, a recommendations block if required second, and the idea patch LAST. "
