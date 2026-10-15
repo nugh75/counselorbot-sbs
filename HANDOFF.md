@@ -1,5 +1,6 @@
 # Handoff S5: contesto classi della chat Obiettivi docente (blocco 1)
 Data: 2026-10-15 | Branch: `fix/goal-guided-group-context` | Agente: `s5-obiettivi-contesto-auto`
+PR draft: https://github.com/nugh75/counselorbot-sbs/pull/291 (Project CounselorBot). Revisione non Claude obbligatoria prima del merge.
 
 Contratto stabile per il successore (blocco 2, prompt/focus/progressione):
 `docs/operations/docenza-group-context.md`. In sintesi:
