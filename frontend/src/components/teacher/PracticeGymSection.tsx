@@ -19,14 +19,14 @@ export function PracticeGymSection() {
             </div>
 
             <div
-                className="mt-3 rounded-2xl border border-purple-200/90 bg-gradient-to-br from-purple-50/70 via-white to-indigo-50/40 p-4 sm:p-6 shadow-xs"
+                className="mt-3 rounded-2xl border border-emerald-200/90 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/40 p-4 sm:p-6 shadow-xs"
                 data-testid="practice-gym-card"
             >
                 <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                     <div className="min-w-0 flex-1 space-y-3">
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-900">
-                                <ShieldCheck className="h-3.5 w-3.5 text-purple-700" aria-hidden />
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900">
+                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" aria-hidden />
                                 {l('practiceGymBadge')}
                             </span>
                         </div>
@@ -41,13 +41,13 @@ export function PracticeGymSection() {
                         </div>
 
                         <div className="flex flex-wrap gap-2 pt-1">
-                            <span className="rounded-md border border-purple-200 bg-white/80 px-2.5 py-1 text-xs font-medium text-purple-900">
+                            <span className="rounded-md border border-emerald-200 bg-white/80 px-2.5 py-1 text-xs font-medium text-emerald-900">
                                 {l('practiceGymTagSimulatedStudents')}
                             </span>
-                            <span className="rounded-md border border-purple-200 bg-white/80 px-2.5 py-1 text-xs font-medium text-purple-900">
+                            <span className="rounded-md border border-emerald-200 bg-white/80 px-2.5 py-1 text-xs font-medium text-emerald-900">
                                 {l('practiceGymTagPromptTesting')}
                             </span>
-                            <span className="rounded-md border border-purple-200 bg-white/80 px-2.5 py-1 text-xs font-medium text-purple-900">
+                            <span className="rounded-md border border-emerald-200 bg-white/80 px-2.5 py-1 text-xs font-medium text-emerald-900">
                                 {l('practiceGymTagSafeEnvironment')}
                             </span>
                         </div>
@@ -56,17 +56,17 @@ export function PracticeGymSection() {
                             <Link
                                 href="/docente/taccuini-prova"
                                 data-testid="practice-gym-cta"
-                                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-purple-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700 active:scale-[0.99]"
+                                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 active:scale-[0.99]"
                             >
                                 <FlaskConical className="h-4 w-4 shrink-0 text-white" aria-hidden />
                                 <span>{l('practiceGymCta')}</span>
-                                <ArrowRight className="h-4 w-4 shrink-0 text-purple-200" aria-hidden />
+                                <ArrowRight className="h-4 w-4 shrink-0 text-emerald-200" aria-hidden />
                             </Link>
 
                             <Link
                                 href="/docente/taccuini-prova"
                                 data-testid="practice-gym-notebooks-link"
-                                className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-purple-800 underline-offset-4 hover:underline"
+                                className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-emerald-800 underline-offset-4 hover:underline"
                             >
                                 <span>{l('practiceGymManageNotebooks')}</span>
                                 <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
