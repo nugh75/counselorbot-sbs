@@ -122,7 +122,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                     type="button"
                     disabled={!groups || loading}
                     onClick={() => setCreating(true)}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50"
                 >
                     <Plus className="h-4 w-4" /> {texts.newGroup}
                 </button>
@@ -136,7 +136,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                             value={newName}
                             onChange={(event) => setNewName(event.target.value)}
                             placeholder={texts.namePlaceholder}
-                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-600 focus:outline-none"
+                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none"
                         />
                     </label>
                     <label className="min-w-0 text-xs font-semibold text-slate-600">
@@ -145,7 +145,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                             value={newSchool}
                             onChange={(event) => setNewSchool(event.target.value)}
                             placeholder={texts.schoolPlaceholder}
-                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-600 focus:outline-none"
+                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none"
                         />
                     </label>
                     <label className="min-w-0 text-xs font-semibold text-slate-600">
@@ -155,7 +155,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                             onChange={(event) => setNewLevel(event.target.value)}
                             title={texts.levelHint}
                             aria-label={texts.levelLabel}
-                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-600 focus:outline-none"
+                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none"
                         >
                             <option value="">{texts.levelNone}</option>
                             <option value="secondaria">{texts.levelSecondaria}</option>
@@ -171,7 +171,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                             onChange={(event) => setNewInstitutionId(event.target.value)}
                             title={texts.institutionHint}
                             aria-label={texts.institutionLabel}
-                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-600 focus:outline-none"
+                            className="mt-1 min-h-11 w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-600 focus:outline-none"
                         >
                             <option value="">{texts.institutionNone}</option>
                             {institutions.map((institution) => (
@@ -186,7 +186,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                             type="button"
                             disabled={busy || loading || !groups || !newName.trim()}
                             onClick={() => void create()}
-                            className="min-h-11 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                            className="min-h-11 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
                         >
                             {texts.create}
                         </button>
@@ -247,7 +247,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                         <h3 className="text-base font-bold text-slate-900 sm:text-lg">
                                             <Link
                                                 href={`${basePath}/${group.id}`}
-                                                className="hover:text-emerald-700 hover:underline focus-visible:outline-2"
+                                                className="hover:text-indigo-700 hover:underline focus-visible:outline-2"
                                             >
                                                 {group.name}
                                             </Link>
@@ -270,7 +270,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                         </span>
                                         {/* Shared badge: Condivisa */}
                                         {isShared && (
-                                            <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
+                                            <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
                                                 <Share2 className="h-3 w-3" aria-hidden="true" />
                                                 {classSettingsText(lang, 'shared')}
                                             </span>
@@ -296,7 +296,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                                             ? classSettingsText(lang, 'copied')
                                                             : `${classSettingsText(lang, 'copyCode')} ${group.code}`
                                                     }
-                                                    className="inline-flex min-h-6 min-w-6 items-center justify-center text-slate-500 hover:text-emerald-700 focus-visible:outline-2"
+                                                    className="inline-flex min-h-6 min-w-6 items-center justify-center text-slate-500 hover:text-indigo-700 focus-visible:outline-2"
                                                 >
                                                     {copiedCodeId === group.id ? (
                                                         <Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
@@ -340,7 +340,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                     <Link
                                         href={`${basePath}/${group.id}`}
                                         aria-label={classSettingsText(lang, 'open')}
-                                        className="inline-flex min-h-11 items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2"
+                                        className="inline-flex min-h-11 items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2"
                                     >
                                         <span>{classSettingsText(lang, 'open')}</span>
                                         <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -352,21 +352,21 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
                                 <Link
                                     href={`${basePath}/${group.id}?tab=students`}
-                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-emerald-700 focus-visible:outline-2"
+                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-2"
                                 >
                                     <Users className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
                                     <span>{classSettingsText(lang, 'students')}</span>
                                 </Link>
                                 <Link
                                     href={`${basePath}/${group.id}?tab=tools`}
-                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-emerald-700 focus-visible:outline-2"
+                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-2"
                                 >
                                     <Wrench className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
                                     <span>{classSettingsText(lang, 'toolsTab')}</span>
                                 </Link>
                                 <Link
                                     href={`${basePath}/${group.id}?tab=paths`}
-                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-emerald-700 focus-visible:outline-2"
+                                    className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-indigo-700 focus-visible:outline-2"
                                 >
                                     <Route className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
                                     <span>{classSettingsText(lang, 'paths')}</span>

@@ -58,7 +58,7 @@ export function ClassQuickSwitcher({
                     value={currentGroupId}
                     disabled={!hasMultiple}
                     onChange={handleChange}
-                    className="min-h-[44px] appearance-none rounded-lg border border-slate-300 bg-white py-1.5 pl-8 pr-8 text-xs font-semibold text-slate-700 shadow-xs transition hover:border-emerald-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:cursor-default disabled:opacity-80"
+                    className="min-h-[44px] appearance-none rounded-lg border border-slate-300 bg-white py-1.5 pl-8 pr-8 text-xs font-semibold text-slate-700 shadow-xs transition hover:border-indigo-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-default disabled:opacity-80"
                 >
                     {activeGroups.map(group => (
                         <option key={group.id} value={group.id}>
