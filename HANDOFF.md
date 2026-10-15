@@ -1,3 +1,26 @@
+# Handoff S12: Allineamento colori Palestra di prova (Area Docente) alla palette verde/petrol del brand
+Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
+
+- Titolo: 'Area Docente: Allineamento colori della Palestra di prova alla palette verde del brand CounselorBot'.
+- Branch: `fix/teacher-gym-brand-colors`
+- Modifiche realizzate:
+  1. `frontend/src/components/teacher/PracticeGymSection.tsx`: rimossa ogni sfumatura viola/indigo e allineati gli stili alla palette ufficiale verde/petrol (emerald / teal) del brand:
+     - Card container: `border-emerald-200/90 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/40`
+     - Badge «Simulazione protetta»: `bg-emerald-100 text-emerald-900` con icona ShieldCheck `text-emerald-700`
+     - Tag chip descrittivi: `border-emerald-200 bg-white/80 text-emerald-900`
+     - CTA primaria «Entra nella Palestra di prova»: `bg-emerald-700 hover:bg-emerald-800 text-white focus-visible:outline-emerald-700` con freccia `text-emerald-200`
+     - Link secondario «Taccuini di prova»: `text-emerald-800 hover:underline`
+  2. `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`: documentata la conformità della Palestra di prova alla palette verde del brand e sincronizzato lo stato della guida di piattaforma con `make guidance-refresh`.
+- Verifiche superate:
+  - Assenza completa di classi `purple`, `violet` o `indigo` in `PracticeGymSection.tsx`.
+  - Test unitari frontend: `npm test` (452/452 superati, 0 fallimenti).
+  - Controllo tipi TypeScript: `npx tsc --noEmit` (0 errori).
+  - Controllo localizzazione: `node scripts/check-i18n.mjs` (3.329 chiavi allineate nelle 6 lingue).
+  - Guida di piattaforma: `make guidance-refresh && make guidance-check` e check `--base origin/main` (SUCCESS).
+- Vincoli rispettati: nessun merge autonomo non autorizzato (auto-merge impostato via PR secondo istruzioni utente), nessun deploy diretto, nessun comando sudo.
+
+---
+
 # Handoff S11: Build di produzione frontend con Webpack in ambienti Docker containerizzati
 Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
 
