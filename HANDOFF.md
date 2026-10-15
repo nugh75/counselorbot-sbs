@@ -1,3 +1,166 @@
+# Handoff: autointerrogazione e scaffolding metacognitivo
+Data: 2026-10-15 | Branch: `feature/self-questioning-metacognitive-scaffolding`
+
+- Ambito: tutte le chat guidate dei questionari QSA, QSAr, ZTPI, QPCS, QPCC, QAP
+  e Savickas, anche con Iride. Cambia il modo di porre domande, non la struttura:
+  numero/ordine dei passi, domande previste, consenso, punteggi e avanzamento
+  restano invariati. IDEA, Eventi, Obiettivi e chat libera restano fuori ambito.
+- `backend/prompt_contract.py`: invito contestualizzato dopo il profilo; esplorazione
+  graduale e adattiva, una domanda principale per turno; autointerrogazione
+  facoltativa a fine area, sostegno leggero prima degli esempi, accoglienza delle
+  domande spontanee e del rifiuto. Nessun nuovo turno richiesto, nessuna condizione
+  aggiunta per proseguire: si conserva la navigazione specifica di ogni strumento,
+  senza riaprire le aree già lasciate. Accordi e introduzioni sono esclusi; il
+  percorso essenziale conserva i suoi compiti e la sintesi senza altre domande.
+  Il contratto segue i testi DB anche nelle varianti Totale/Ristretto/Minimo:
+  non occorre migrare o riscrivere prompt personalizzati.
+- `backend/chat_preparation.py` e `backend/journey_context.py`: nella riduzione
+  delle conversazioni lunghe dei sette questionari si richiede di conservare testualmente le domande
+  personali, le correzioni, i ritiri e la distinzione rispetto ai suggerimenti del
+  counselor. Si usa la trascrizione già persistita; nessuna nuova tabella o stato
+  inferito. La fedeltà della riduzione generativa resta dipendente dal modello.
+- `backend/tests/test_self_questioning.py`: envelope reali in sei lingue,
+  tutti i passi dei sette strumenti e follow-up con risposte approfondite/terse, difficoltà iniziale e
+  persistente, domanda spontanea e rifiuto; parità Prompt Lab/runtime, varianti
+  compatte, consenso invariato, sintesi con correzioni e attribuzione, isolamento
+  per persona/sessione e nessuna evidenza generata per sessioni vuote. Verificati
+  anche compiti del percorso essenziale e invarianza delle definizioni dei passi.
+- Documentazione: riferimento funzionale aggiornato e manifest guidance rigenerato.
+  Guida UI nelle sei lingue e screenshot esaminati: descrivono la navigazione e
+  conservano validità; nessuna modifica a controlli, layout o passi.
+
+Simulazioni qualitative manuali (esempi sintetici costruiti applicando il nuovo
+contratto; **non output di un provider live**, né risultati finti di test LLM).
+Il percorso completo di esempio è QPCS, con le cinque aree originarie:
+
+| Caso | Scambio simulato e controllo |
+| --- | --- |
+| Dopo il profilo | Dati sintetici: S3=7, gli altri fattori=5. «Nelle risposte al questionario la perseveranza risulta una risorsa percepita. Quale aspetto di questa lettura vorresti comprendere meglio?» → «Il rapporto con l’ansia». Una scelta libera, nessuna esperienza dedotta dal punteggio. |
+| Emozioni, risposta approfondita | «Prima dell’orale temo di dimenticare; dopo la prima risposta mi sciolgo. Per me conta riuscire a iniziare». → «Di quel momento iniziale, che cosa ti piacerebbe capire meglio?» → «Cosa mi aiuta a partire». → «Se ti va, come metteresti questa curiosità in una domanda tua?» → «Che cosa mi aiuta a iniziare quando sono in ansia?». Invito dopo esperienza e interpretazione, non a ogni turno. |
+| Comunicazione, risposta tersa | «Boh, a volte». → «Ti viene in mente una conversazione recente di cui ti va di parlare? Possiamo anche proseguire». → «No, passiamo». → «Va bene, puoi passare alla prossima area». Nessuna attribuzione di difficoltà, nessuna domanda obbligatoria. |
+| Volizione, fatica iniziale | «Non so che domanda farmi». → «Riguardo al compito che hai descritto, quale parte vorresti capire meglio? Puoi anche lasciarla aperta». La prima risposta aiuta a trovare il focus e non formula una domanda al posto della persona. |
+| Volizione, fatica persistente | «Non mi viene, mi dai uno spunto?» → «Potresti partire dal momento in cui decidi se continuare: è solo uno spunto da cambiare o lasciare. Ti interessa quel momento?» → «No, andiamo avanti». → «Va bene». Supporto ulteriore solo dopo richiesta, nessun completamento forzato. |
+| Strategie/collaborazione, domanda spontanea | «Collego le idee meglio parlando con un compagno; mi chiedo: come capisco quando il confronto mi aiuta davvero?» → «Hai già dato forma a una domanda tua: “come capisco quando il confronto mi aiuta davvero?”. Possiamo tenerla aperta». Nessuna richiesta duplicata di formularne un’altra, nessun paragone con altri studenti. |
+| Fiducia, chiusura variata | «Mi sento capace nel laboratorio, sul futuro non ho ancora un’idea». → «Sul legame fra laboratorio e futuro, ti andrebbe di lasciare una domanda da riprendere?» → «Non adesso». → «Possiamo lasciarlo così». Nessuna scoperta o decisione presunta; chiusura diversa da quella dell’area emozioni. |
+| Cinque aree e sintesi | La persona ha attraversato tutte le aree, due con rifiuto; aggiunge «Ritiro la domanda sull’ansia, tengo quella sul confronto». → «Hai scelto di tenere aperta “come capisco quando il confronto mi aiuta davvero?” e di lasciare quella sull’ansia. Quali domande, se ce ne sono, vorresti continuare a esplorare?» Nessuna domanda attribuita alle aree saltate, nessun piano imposto o episodio nuovo. |
+
+Prima/dopo (comportamento, non trascrizioni di produzione):
+- Prima: spiegazione → risultato → domande esplorative → lettura del counselor;
+  chiusura su proposte e una domanda riflessiva del counselor.
+- Dopo: l’esplorazione resta, ma si può arrivare a una domanda della persona;
+  «Non so» riceve prima aiuto a individuare cosa capire, «passiamo» viene rispettato;
+  la sintesi restituisce le domande effettivamente espresse e lascia la scelta.
+
+Verifica delle altre chat, sempre con esempi sintetici manuali:
+- QSA, elaborazione: «Rileggo, ma non so cosa ricordo» → «Di quello che succede
+  quando rileggi, quale aspetto vorresti capire meglio?». Si mantiene l’analisi
+  dei fattori; nessuna abitudine ulteriore viene dedotta.
+- QSAr, autoregolazione: «A volte» → «Ti viene in mente un momento recente in cui
+  è successo? Puoi anche proseguire». Sostegno concreto, senza generalizzare.
+- ZTPI, passato: «Non voglio raccontare episodi» → «Va bene, possiamo restare alla
+  lettura del risultato». Nessun ricordo o trauma inventato, nessun obbligo narrativo.
+- QPCC, insicurezza/inadeguatezza: «Non so che domanda farmi» → «Di ciò che hai
+  raccontato sul colloquio, quale parte vorresti comprendere meglio?». Prima si
+  cerca il focus, senza assegnare diagnosi né confondere le due scale.
+- QAP, curiosità: «Mi chiedo: cosa voglio conoscere di quel lavoro?» → «Possiamo
+  partire dalla tua domanda: “cosa voglio conoscere di quel lavoro?”». Nessuna
+  richiesta duplicata di autointerrogazione o scelta professionale imposta.
+- Savickas: resta la domanda prevista sui modelli di ruolo; dopo la risposta
+  «Ammiro la pazienza di mia zia» → «Che cosa vorresti capire meglio di questa
+  qualità per te?». Nessuna sostituzione della domanda narrativa né nuova fase.
+
+Bug preesistente registrato nel Diario: `f6ff90ff-0b05-41f8-9ac7-0eaea2a302e9`,
+triage confermato, sync `not-linked` (nessuna issue GitHub pubblicata).
+`test_smoke.py::test_build_context_envelope_component_flags_disable_parts`
+fallisce perché si aspetta `full_message == ""` ma riceve `"domanda"`. Riprodotto
+isolatamente sia sul ramo sia sui tre moduli originali di HEAD `0024ec2d` copiati
+con `git show` in uno snapshot temporaneo, senza toccare il checkout principale.
+Comando: `python -m pytest -q --disable-warnings backend/tests/test_smoke.py::test_build_context_envelope_component_flags_disable_parts`
+su PostgreSQL effimero `counselorbot_test`, `PYTHON_DOTENV_DISABLED=1`.
+Non modificato in questa PR; escluso esplicitamente dal secondo run di regressione.
+
+## Recupero S2: consegna verificata
+
+- Agente: `s2-autointerrogazione`, 2026-10-15. Lavoro del predecessore conservato
+  e completato nello stesso worktree e branch. Nessun altro agente avviato.
+- Commit funzionale: `0dedc1aa` — `feat: scaffold optional self-questioning in guided chats`.
+- PR draft: https://github.com/nugh75/counselorbot-sbs/pull/290,
+  `feat: introdurre autointerrogazione facoltativa nelle chat guidate`, verso
+  `main`, aggiunta al Project **CounselorBot**. Draft per baseline smoke rosso;
+  notifica di apertura sottoposta tramite la CLI Diario al Timoniere
+  (`submitted=true`, ricezione non confermata, `delivery_unknown`; mobile disattivo).
+- Ultime precisazioni del contratto: priorità alle domande personali nella
+  sintesi, ritiri espliciti, nessuna citazione inventata se manca il testo,
+  nessuna emozione o bisogno presunto, niente lunghe premesse. L'invito usa un
+  follow-up disponibile; esaurito il limite si chiude senza altre domande.
+  La difficoltà persistente non provoca ripetizioni o aiuti crescenti non richiesti.
+- Nuovi controlli oltre al recupero: cronologia effettiva della difficoltà e del
+  rifiuto nelle cinque aree QPCS, isolamento della conversazione, conservazione
+  nell'envelope delle domande specifiche ZTPI/Savickas/QPCC/QAP e blocco di
+  qualsiasi generazione accidentale nella nuova suite.
+- Motivazione dell'ampiezza: i sette percorsi usano `prepare_chat_turn` e il
+  contratto del turno condivisi. Si adatta la formulazione senza imporre le cinque
+  aree QPCS a QAP, QSA/QSAr, ZTPI o Savickas. Introduzioni e patti esclusi; compiti
+  narrativi, limiti dei follow-up, confronto psicometrico ZTPI e sintesi essenziale
+  senza domande preservati. Dettagli: `docs/operations/self-questioning-validation.md`,
+  collegato da `CONTEXT.md`.
+
+Verifiche effettivamente eseguite su immagine backend ricostruita:
+
+| Controllo | Risultato |
+| --- | --- |
+| `python -m pytest -q --disable-warnings backend/tests/test_self_questioning.py` | **751 passed**, 53,19 s; contratto/envelope/evidenza, nessun modello live |
+| `python -m pytest -q --disable-warnings backend/tests/test_chat_preparation.py` in processo separato | **6 passed**, 30,81 s; parità runtime/audit nei percorsi e nelle lingue esistenti |
+| Regressione indicata nel documento operativo, con esclusione nominativa dello smoke già noto | **354 passed, 1 deselected**, 32,57 s |
+| `python3 -m unittest discover -s scripts/tests -p test_platform_guidance_check.py` | **3 passed** |
+| `make guidance-refresh`, `make guidance-check`, `python3 scripts/check-platform-guidance.py --check --base origin/main`, `git diff --check` | Superati |
+| Smoke dei component flags sul branch | **1 failed**, errore già noto `domanda` invece di messaggio vuoto |
+| Baseline `0024ec2d`: smoke dei component flags + smoke Obiettivo + parità nello stesso processo | **2 failed, 1 passed**; confermati sia il difetto noto sia quello di ordine della suite |
+
+Il primo run combinato aveva **358 passed, 2 failed, 1 deselected**: la parità
+contava anche i 18 passi dei due percorsi Obiettivo creati prima dallo smoke
+(83 invece di 65); il controllo QPCC non trovava le fixture non incluse nel
+Dockerfile. Il run definitivo esegue la parità in un processo separato e monta
+in sola lettura `questionari/item_catalog/qpcc.json` e
+`frontend/src/lib/qpcc-schema.json`. Nessun test nuovo fallisce o viene saltato.
+Il difetto di conteggio è preesistente, riprodotto sui tre moduli originali di
+HEAD copiati con `git show` in un container temporaneo. Non corretto fuori ambito.
+
+Bug nel Diario:
+
+- `f6ff90ff-0b05-41f8-9ac7-0eaea2a302e9`: smoke component flags, già registrato;
+  riprodotto nuovamente sul ramo e sul baseline. Resta un difetto aperto.
+- `cb078c90-086d-4ca5-8e71-ecb4403b8b24`: dipendenza dall'ordine del test di
+  parità, nuovo riscontro verificato, triage **confermato**, sync **not-linked**.
+  Nessuna issue GitHub aperta manualmente.
+- **Bug non registrati: nessuno.** I due tentativi iniziali non validi di
+  registrazione del secondo bug non hanno scritto dati; la registrazione finale
+  è stata confermata dalla CLI.
+
+Limiti e operazioni:
+
+- Gli esempi manuali A–F sopra restano esempi redazionali; non provano varietà,
+  fluidità o obbedienza di Iride. Nessun LLM live, credenziale, `.env` o dato di
+  produzione letto. La fedeltà dopo riduzione generativa resta da campionare;
+  non è garantita da un registro deterministico delle domande.
+- Guida chat nelle sei lingue e screenshot esistente `chat-guidata.png`
+  riesaminati: documentano controlli e navigazione invariati, non i risultati di
+  questa strategia. Nessuna modifica UI, nessuna nuova cattura richiesta.
+- Rebuild **completato solo per test**, immagine
+  `counselorbot-self-questioning-validation:20261015-s2`, ID `7006e0db1c86`.
+  Contesto di build composto solo da file necessari versionati e nuovo test;
+  PostgreSQL dedicato su tmpfs, rete interna senza provider o porte pubblicate.
+- Container di test terminati. Arrestati sia
+  `counselorbot-self-questioning-s2-postgres` sia il PostgreSQL di test ereditato
+  `counselorbot-self-questioning-postgres`. Nessun processo dev avviato o lasciato
+  in esecuzione; nessun container produttivo riavviato, nessun deploy/sudo.
+- Handoff/documento operativo in commit documentale separato; il log del branch
+  contiene entrambi i commit. Revisione cross-modello affidata al Timoniere.
+
+Revisione cross-modello ancora necessaria prima del merge; nessun merge eseguito.
+
+---
+
 # Handoff S18: Generatore prompt IA per copertine counselor e upload avatar in CounselorsPanel (Issue #288)
 Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
 
