@@ -76,6 +76,97 @@ def _self_questioning_contract(stage: str) -> str:
     )
 
 
+OBJECTIVE_FOCUS_SENTINEL = "[OBJECTIVE FOCUS]"
+
+_OBJECTIVE_PREFIXES = ("obbstudio-", "obbdocenza-")
+_OBJECTIVE_STAGES = {
+    "definition": ("-partenza", "-livello", "-smart", "-sfida", "-essential-focus", "-essential-smart"),
+    "design": ("-piano", "-verifica", "-essential-plan"),
+    "synthesis": ("-final", "-essential-summary"),
+}
+
+
+def objective_focus_stage(phase: str | None) -> str | None:
+    """Stage of the Obiettivo paths; welcome, agreement and free phases have none."""
+    phase = phase or ""
+    if not phase.startswith(_OBJECTIVE_PREFIXES):
+        return None
+    for stage, suffixes in _OBJECTIVE_STAGES.items():
+        if phase.endswith(suffixes):
+            return stage
+    return None
+
+
+def _objective_focus_contract(questionnaire_type: str, stage: str) -> str:
+    """How the Obiettivo paths reach ONE usable objective; DB step texts keep their order."""
+    teaching = questionnaire_type == "OBIETTIVO_DOCENZA"
+    no_self_questions = (
+        "Never ask the person to formulate questions about themselves, and never make that "
+        "a goal or a condition for moving on."
+    )
+    no_invention = (
+        "Do not invent percentages, deadlines, needs, difficulties, levels or past successes"
+        + ("; descriptions and methodologies of the class are context, not evidence of "
+           "difficulty or performance." if teaching else ".")
+    )
+    if stage == "synthesis":
+        task = (
+            "State ONE objective, the one agreed with the person. Mention other outcomes only as "
+            "kept aside for another objective, and only if the person named them. Points the "
+            "person chose to leave open stay named as open, not filled in. " + no_invention
+        )
+    elif stage == "design":
+        task = (
+            "The objective agreed so far stays the single focus: do not reopen it or add new "
+            "objectives unless the person changes it; outcomes set aside stay aside. Ask only "
+            "for what this step still lacks, ONE main question per turn, reusing what was "
+            "already said. "
+            + ("Start from the expected proof and align activities and assessment with the "
+               "students' observable result, not with the teacher's activity. " if teaching else
+               "Keep the plan personal: small first steps and one if-then plan in their words. ")
+            + no_invention + " A check date only if the person gives one. " + no_self_questions
+        )
+    else:
+        audience = (
+            "which students of the class" if teaching else "the person as the learner"
+        )
+        task = (
+            "Every question you ask must collect something still missing from that objective. "
+            + no_self_questions + " "
+            "Focus on ONE precise thing. If the person names several results or learnings, name "
+            "them in a few words, propose one as the priority "
+            + ("for this class or group " if teaching else "for now ")
+            + "with a short reason drawn from what they said, keep the others aside for another "
+            "objective, and ask which one to take now. If the focus is already single and clear, "
+            "acknowledge it and do not ask again. As soon as the focus is chosen, offer ONE "
+            "editable draft of the objective in a single sentence, then ask ONE main question "
+            "about the element that would change it most. Reuse what the person, the notebook"
+            + (", the class context" if teaching else "")
+            + " and earlier turns already gave; never ask again for something already said; "
+            "a later correction replaces the earlier version. "
+            f"The objective is defined enough when it names: the audience ({audience}), an "
+            "observable result of the learner, a circumscribed content, and a plausible proof "
+            "with a proportionate condition or criterion. "
+            + ("'Doing a lesson on X' describes the teacher's activity: help state what the "
+               "students will be able to do. " if teaching else "")
+            + "'Understand better' must become something one can see or hear. " + no_invention
+            + " A preliminary proof only needs to be plausible: full rubrics, activity sequences "
+            "and calendars come later. Use Bloom's levels and the SMART check only to spot gaps: "
+            "name a level or a letter only when it fixes something missing, never go through them "
+            "one by one and never lecture on taxonomies; where a step instruction asks to test "
+            "every letter or present every level, apply it only to what is actually missing. "
+            "If the objective is already well defined, say so, restate it and move on. If it is "
+            "too broad, propose a narrower first result for the person to confirm; do not impose "
+            "it. If the person wants to continue with points still open, name them briefly and "
+            "continue."
+        )
+    return (
+        f"{OBJECTIVE_FOCUS_SENTINEL}\n"
+        f"This path builds ONE usable {'didactic' if teaching else 'learning'} objective; it is "
+        "not a self-reflection exercise. " + task
+    )
+
+
 def persona_context(persona: str | None, name: str | None = None) -> str:
     if not persona:
         return ""
@@ -128,7 +219,8 @@ def platform_context(db, full: bool = True) -> str:
 
 def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
                   advice_allowed: bool, synthesis: bool = False,
-                  reflection_stage: str | None = None) -> str:
+                  reflection_stage: str | None = None,
+                  objective_stage: str | None = None) -> str:
     lines = [
         "[TURN CONTRACT]",
         f"Current task: {questionnaire_type or 'counselor chat'}, {phase or 'free conversation'}. Response language: {language}.",
@@ -160,6 +252,8 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
             lines.append(GOAL_DRAFT_DIRECTIVE)
     if questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES and reflection_stage:
         lines.append(_self_questioning_contract(reflection_stage))
+    if is_goal_instrument(questionnaire_type) and objective_stage:
+        lines.append(_objective_focus_contract(questionnaire_type, objective_stage))
     if questionnaire_type == "IDEA":
         lines.append("IDEA follows the focused branch of its map. Use no [[AVANZA_STEP]] marker or fixed sequence. "
                      "Write visible text first, a recommendations block if required second, and the idea patch LAST. "

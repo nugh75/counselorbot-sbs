@@ -68,7 +68,7 @@ import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-cont
 import { EMPTY_RECOMMENDATIONS, normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 
 import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
-import { chatPreferenceLabel, essentialSteps, nextEssentialPhase, essentialPhasesFor, isEssentialInstrument, isEssentialSummaryPhase, type ResponseFormat, type GuidedPath } from '@/lib/chat-preferences';
+import { chatPreferenceLabel, essentialSteps, essentialReplyPhase, essentialAdvancesOnSignal, essentialSignalAdvances, essentialPhasesFor, isEssentialInstrument, isEssentialSummaryPhase, type ResponseFormat, type GuidedPath } from '@/lib/chat-preferences';
 import { isGoalInstrument, type GoalDraft } from '@/lib/goal-draft';
 import { GoalDraftCard } from '@/components/qsa/GoalDraftCard';
 import { DocenzaClassBar, readStoredDocenzaGroupIds } from '@/components/qsa/DocenzaClassBar';
@@ -1144,6 +1144,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 // percorsi a intervista resta valida solo la sintesi).
                 if (!essential && shouldAdvance && autoAdvancesOnGenerate(questionnaireType, step.id)) {
                     await advancePhase();
+                } else if (essential && essentialSignalAdvances(questionnaireType, step.id, { completed: true, marker: shouldAdvance, entry: true })) {
+                    // Obiettivo: l'apertura di «completare l'obiettivo» trova
+                    // l'obiettivo gia' definito e passa alla fase successiva.
+                    await advancePhase();
                 }
             } else if (streamOk) {
                 // Stream ok ma nessun testo di risposta (es. reasoning ha esaurito il budget):
@@ -1231,7 +1235,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const handleSend = async (e: { preventDefault: () => void }, overrideText?: string, audioReady = false, onPartial?: (reply: string) => void) => {
         e.preventDefault();
         const userMessage = (overrideText ?? input).trim();
-        const responsePhase = essential ? nextEssentialPhase(currentPhase) : currentPhase;
+        const responsePhase = essential ? essentialReplyPhase(questionnaireType, currentPhase) : currentPhase;
         if (!userMessage || isLoading || currentPhase === FIXED_CONCLUSION_ID || (audioBusy && !audioReady)) return;
 
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
@@ -1321,7 +1325,16 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             } else {
                 dropLast();
             }
-            if (essential && cleanText) {
+            if (essential && essentialAdvancesOnSignal(questionnaireType)) {
+                // Obiettivo: la fase resta aperta finche' il modello non la
+                // chiude col marcatore su una risposta completata; la fase
+                // successiva si apre poi con il suo turno.
+                if (essentialSignalAdvances(questionnaireType, currentPhase, { completed: true, marker: shouldAdvance, entry: false })) {
+                    await advancePhase(userMessage);
+                } else if (cleanText) {
+                    void recordMemoryEvent(currentPhase, false, userMessage);
+                }
+            } else if (essential && cleanText) {
                 processedPhases.current.add(responsePhase);
                 setCurrentPhase(responsePhase);
                 void recordMemoryEvent(responsePhase, isEssentialSummaryPhase(responsePhase), userMessage);
@@ -1491,7 +1504,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             {(['complete', 'essential'] as const).map(path => <label key={path} className="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 p-3">
                 <input type="radio" name="qsa-path" value={path} checked={guidedPath === path} onChange={() => setGuidedPath(path)} className="mt-1" />
                 <span><span className="block font-medium">{chatPreferenceLabel(activeLocale, path)}</span>
-                    <span className="text-sm text-slate-600">{chatPreferenceLabel(activeLocale, path === 'essential' ? 'essentialHelp' : 'completeHelp')}</span></span>
+                    <span className="text-sm text-slate-600">{chatPreferenceLabel(activeLocale, path === 'essential' ? (essentialAdvancesOnSignal(questionnaireType) ? 'essentialHelpGoal' : 'essentialHelp') : 'completeHelp')}</span></span>
             </label>)}
             {/* Il formato è scelto nella pagina Impostazioni del flusso: qui
                 resta solo il bivio del percorso, per non chiederlo due volte. */}

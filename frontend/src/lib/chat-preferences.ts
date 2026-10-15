@@ -22,9 +22,11 @@ const labels = {
         "summary": "Sintesi",
         "finish": "Concludi",
         "followup": "Puoi concludere oppure approfondire scrivendo qui.",
-        "areaLevel": "Area e livello",
-        "smartCheck": "Verifica SMART",
-        "planProof": "Piano e prova"
+        "focusDraft": "Focus e prima bozza",
+        "completeObjective": "Completare l'obiettivo",
+        "planProof": "Piano e prova",
+        "alignAssess": "Attività e verifica",
+        "essentialHelpGoal": "3 fasi brevi (focus, obiettivo, piano), poi una sintesi: si passa avanti quando la fase è pronta o quando scegli di proseguire."
     },
     "en": {
         "format": "Format",
@@ -44,9 +46,11 @@ const labels = {
         "summary": "Summary",
         "finish": "Finish",
         "followup": "You can finish or write here to explore further.",
-        "areaLevel": "Area and level",
-        "smartCheck": "SMART check",
-        "planProof": "Plan and proof"
+        "focusDraft": "Focus and first draft",
+        "completeObjective": "Complete the objective",
+        "planProof": "Plan and proof",
+        "alignAssess": "Activities and assessment",
+        "essentialHelpGoal": "3 short stages (focus, objective, plan), then a summary: you move on when a stage is ready or when you choose to."
     },
     "es": {
         "format": "Formato",
@@ -66,9 +70,11 @@ const labels = {
         "summary": "Síntesis",
         "finish": "Concluir",
         "followup": "Puedes concluir o escribir aquí para profundizar.",
-        "areaLevel": "Área y nivel",
-        "smartCheck": "Prueba SMART",
-        "planProof": "Plan y prueba"
+        "focusDraft": "Foco y primer borrador",
+        "completeObjective": "Completar el objetivo",
+        "planProof": "Plan y prueba",
+        "alignAssess": "Actividades y evaluación",
+        "essentialHelpGoal": "3 fases breves (foco, objetivo, plan) y una síntesis: se avanza cuando la fase está lista o cuando decides continuar."
     },
     "fr": {
         "format": "Format",
@@ -88,9 +94,11 @@ const labels = {
         "summary": "Synthèse",
         "finish": "Terminer",
         "followup": "Vous pouvez terminer ou écrire ici pour approfondir.",
-        "areaLevel": "Domaine et niveau",
-        "smartCheck": "Épreuve SMART",
-        "planProof": "Plan et preuve"
+        "focusDraft": "Focus et première ébauche",
+        "completeObjective": "Compléter l’objectif",
+        "planProof": "Plan et preuve",
+        "alignAssess": "Activités et évaluation",
+        "essentialHelpGoal": "3 étapes brèves (focus, objectif, plan), puis une synthèse : on avance quand l’étape est prête ou quand vous choisissez de continuer."
     },
     "de": {
         "format": "Format",
@@ -110,9 +118,11 @@ const labels = {
         "summary": "Zusammenfassung",
         "finish": "Abschließen",
         "followup": "Du kannst abschließen oder hier zur Vertiefung schreiben.",
-        "areaLevel": "Bereich und Stufe",
-        "smartCheck": "SMART-Test",
-        "planProof": "Plan und Nachweis"
+        "focusDraft": "Fokus und erster Entwurf",
+        "completeObjective": "Ziel vervollständigen",
+        "planProof": "Plan und Nachweis",
+        "alignAssess": "Aktivitäten und Überprüfung",
+        "essentialHelpGoal": "3 kurze Phasen (Fokus, Ziel, Plan), dann eine Zusammenfassung: Es geht weiter, wenn eine Phase fertig ist oder wenn du weitermachen möchtest."
     },
     "sv": {
         "format": "Format",
@@ -132,9 +142,11 @@ const labels = {
         "summary": "Sammanfattning",
         "finish": "Avsluta",
         "followup": "Du kan avsluta eller skriva här för att fördjupa samtalet.",
-        "areaLevel": "Område och nivå",
-        "smartCheck": "SMART-test",
-        "planProof": "Plan och bevis"
+        "focusDraft": "Fokus och första utkast",
+        "completeObjective": "Komplettera målet",
+        "planProof": "Plan och bevis",
+        "alignAssess": "Aktiviteter och bedömning",
+        "essentialHelpGoal": "3 korta faser (fokus, mål, plan), sedan en sammanfattning: du går vidare när en fas är klar eller när du väljer det."
     }
 };
 
@@ -142,9 +154,10 @@ export function chatPreferenceLabel(lang: Lang, key: keyof typeof labels.it): st
     return (labels[lang] || labels.en)[key];
 }
 
-// Percorsi con versione essenziale: il QSA è stato il primo; i due percorsi
-// Obiettivo riusano lo stesso meccanismo (fasi virtuali fuori dalla tabella
-// degli step, il client avanza dopo ogni risposta completata).
+// Percorsi con versione essenziale: il QSA è stato il primo e avanza dopo ogni
+// risposta completata; i due percorsi Obiettivo riusano le fasi virtuali fuori
+// dalla tabella degli step, ma una fase si chiude sul marcatore di avanzamento
+// (o quando la persona sceglie di proseguire), non dopo un numero fisso di risposte.
 export const ESSENTIAL_INSTRUMENTS = ['QSA', 'OBIETTIVO_STUDIO', 'OBIETTIVO_DOCENZA'] as const;
 export type EssentialInstrument = (typeof ESSENTIAL_INSTRUMENTS)[number];
 
@@ -172,6 +185,31 @@ export function essentialPhasesFor(type: string): readonly string[] {
     throw new Error(`Unsupported essential instrument: ${type}`);
 }
 
+// Obiettivo: fasi chiuse dal marcatore. QSA: tre risposte, una per fase.
+export function essentialAdvancesOnSignal(type: string): boolean {
+    return type === 'OBIETTIVO_STUDIO' || type === 'OBIETTIVO_DOCENZA';
+}
+
+// Fase a cui risponde il turno della persona: nel QSA la successiva (la
+// risposta apre la fase dopo), negli Obiettivo quella in corso, finché il
+// modello non la chiude.
+export function essentialReplyPhase(type: string, phase: string): string {
+    return essentialAdvancesOnSignal(type) ? phase : nextEssentialPhase(phase);
+}
+
+// Solo una risposta completata (stream chiuso con done) puo' far avanzare.
+// Nelle aperture, senza una risposta della persona, avanza solo «completare
+// l'obiettivo» quando trova l'obiettivo gia' definito.
+export function essentialSignalAdvances(
+    type: string,
+    phase: string,
+    turn: { completed: boolean; marker: boolean; entry: boolean },
+): boolean {
+    if (!essentialAdvancesOnSignal(type) || !turn.completed || !turn.marker) return false;
+    if (isEssentialSummaryPhase(phase)) return false;
+    return !turn.entry || phase.endsWith('-essential-smart');
+}
+
 export function nextEssentialPhase(phase: string): string {
     const phases = ESSENTIAL_PHASES_BY_PREFIX.find((candidates) => candidates.includes(phase)) ?? ESSENTIAL_PHASES;
     const index = phases.indexOf(phase);
@@ -186,6 +224,6 @@ export function essentialSteps(type: string, lang: Lang) {
     const phases = essentialPhasesFor(type);
     const names: readonly string[] = type === 'QSA'
         ? ['focus', 'experience', 'action', 'summary']
-        : ['areaLevel', 'smartCheck', 'planProof', 'summary'];
+        : ['focusDraft', 'completeObjective', type === 'OBIETTIVO_DOCENZA' ? 'alignAssess' : 'planProof', 'summary'];
     return phases.map((id, index) => ({ id, sort_order: index, label: chatPreferenceLabel(lang, names[index] as keyof typeof labels.it), system_prompt_mode: type === 'QSA' ? 'generic' : 'obiettivo-interview', color_theme: 'indigo' }));
 }
