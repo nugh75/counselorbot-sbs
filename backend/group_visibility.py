@@ -21,9 +21,15 @@ def _is_admin(identity) -> bool:
 
 
 def _visible_group_query(db: Session, identity):
-    query = db.query(models.StudentGroup)
     if _is_admin(identity):
-        return query
+        return db.query(models.StudentGroup)
+    return owned_or_shared_group_query(db, identity)
+
+
+def owned_or_shared_group_query(db: Session, identity):
+    """Classi proprie o condivise, anche per l'amministratore: sono le sole
+    che entrano nel contesto docente (teacher_context.visible_group_for_teacher)."""
+    query = db.query(models.StudentGroup)
     username = _username(identity)
     # Proprietario o condivisa (shared_with_username e' salvato lowercase)
     shared_ids = db.query(models.GroupShare.group_id).filter(

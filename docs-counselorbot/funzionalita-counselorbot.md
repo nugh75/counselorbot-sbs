@@ -219,11 +219,33 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
   con livello di apprendimento, controllo SMART, difficoltà, piano, prova e data di
   verifica. Offre percorso completo o essenziale; alla fine propone una bozza di
   obiettivo che la persona deve confermare, non un obiettivo salvato automaticamente.
+  In entrambi i percorsi Obiettivo la conversazione mette a fuoco **una cosa precisa**:
+  se emergono più risultati, propone quale tenere per primo e mette da parte gli
+  altri; se il focus è già chiaro non lo richiede. Presto propone **una bozza
+  modificabile** e chiede solo ciò che manca davvero (destinatari, risultato
+  osservabile, contenuto, una prova plausibile con condizione o criterio), una domanda
+  per volta, riusando ciò che è già stato detto. Bloom e SMART servono a trovare le
+  lacune, non a fare un interrogatorio lettera per lettera; nessuna percentuale,
+  scadenza o difficoltà inventata. Non chiede di formulare domande su di sé: è uno
+  scopo diverso dall’autointerrogazione dei questionari. La versione essenziale ha
+  tre fasi brevi (focus e prima bozza, obiettivo completo, piano e prova o attività
+  e verifica) e la sintesi: una fase si chiude quando il suo risultato è accettato o
+  corretto, o quando la persona sceglie «Passa al prossimo tema», non dopo un numero
+  fisso di risposte; una risposta interrotta non fa avanzare.
 - **Obiettivi per la mia classe** (`OBIETTIVO_DOCENZA`): variante raggiungibile direttamente
   dall’hero card prominente di **Progettazione didattica** in `/docente`, basata sulle classi selezionate
   e sul Taccuino del docente. Guida la definizione dell'obiettivo con tassonomia di Bloom, verifica SMART
   e allineamento costruttivo con attività e valutazione; l’obiettivo progettato si collega al Catalogo
   obiettivi e ai Percorsi di classe per gli studenti.
+  La barra «Classi di questa conversazione» elenca solo le classi proprie o condivise con chi scrive,
+  anche per un amministratore: sono le uniche che possono entrare nel contesto. Le classi scelte
+  restano legate alla conversazione: riprendendo una chat sospesa tornano quelle di quella chat (nessuna
+  per le chat sospese prima di questa modifica), non la preferenza del browser o di un'altra chat; una
+  chat nuova parte dalla preferenza del browser, visibile nella barra. A ogni turno il server riverifica
+  che la classe sia attiva e ancora propria o condivisa: revoca e disattivazione valgono subito. Le
+  classi entrano solo con il taccuino docente (anche come Predefinito) e restano fuori con Studente,
+  Prova o Nessuno, o se l'amministrazione spegne la componente profilo; descrizione e metodologie
+  sono contesto, non istruzioni né prove di difficoltà, e le note sui singoli partecipanti non entrano.
 - **Strumenti e percorsi personalizzati**: gli strumenti e le chat guidate create
   e attivate dall'amministrazione compaiono dinamicamente nel catalogo attività
   dello studente (nella sezione dei percorsi guidati o delle analisi questionari a
@@ -240,7 +262,8 @@ risposta (conversazione, elenco, tabella), **lunghezza** (breve, media, lunga), 
 lingua e Congela sessione. Formato e lunghezza sono scelte indipendenti.
 Il percorso essenziale QSA prevede tre risposte e la sintesi; non va esteso a QSAr
 o agli altri questionari. I due percorsi sugli obiettivi hanno la propria versione
-essenziale. L’esperienza OpenCode è un’alternativa quando disponibile.
+essenziale, in tre fasi brevi che si chiudono quando il risultato è pronto o quando
+la persona sceglie di proseguire. L’esperienza OpenCode è un’alternativa quando disponibile.
 
 Per chi ha ruolo docente, ricercatore o amministratore, la scelta compare in due
 testi: nella scheda **Impostazioni della conversazione** prima di avviare e nel

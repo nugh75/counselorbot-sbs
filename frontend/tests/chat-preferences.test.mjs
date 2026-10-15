@@ -38,6 +38,10 @@ async function fixture(width, instrument = 'QSA', experience = 'standard') {
         else if (['/api/chat/stream', '/api/site-chat/stream', '/api/opencode/workspace/prefs/chat'].includes(url.pathname)) {
             const body = req.postDataJSON(); state.streams.push(body);
             if (state.fail) return route.fulfill({ status: 503, json: {} });
+            if (state.script) {
+                const { text, done = true } = state.script(body);
+                return route.fulfill({ contentType: 'text/event-stream', body: event({ conversation_id: 'prefs-conversation' }) + event({ display: text }) + (done ? event({ done: true, response: text, conversation_id: 'prefs-conversation' }) : '') });
+            }
             const reply = body.response_format === 'table' ? '| Tema | Passo |\n| --- | --- |\n| Studio | Prova |' : `Risposta ${state.streams.length}: ${body.phase || 'chat'}`;
             return route.fulfill({ contentType: 'text/event-stream', body: event({ conversation_id: 'prefs-conversation' }) + event({ display: reply }) + event({ done: true, response: reply, conversation_id: 'prefs-conversation' }) });
         }
@@ -175,6 +179,67 @@ test('Assistant uses the selected format for subsequent replies', async () => {
         await input.fill('Come funziona il QSA?'); await input.press('Enter');
         await page.getByRole('table').waitFor();
         assert.equal(state.streams[0].response_format, 'table');
+        assert.deepEqual(state.errors, []);
+    } finally { await context.close(); }
+});
+
+test('Obiettivo essential keeps a stage open until the marker closes it, never on an interrupted stream', async () => {
+    const { context, page, state } = await fixture(390, 'OBIETTIVO_STUDIO');
+    const phases = { focus: 'obbstudio-essential-focus', define: 'obbstudio-essential-smart', plan: 'obbstudio-essential-plan', summary: 'obbstudio-essential-summary' };
+    // Synthetic replies: the fixture decides where the model would put the marker.
+    let interrupted = false;
+    state.script = body => {
+        const message = body.memory_message ?? '';
+        if (body.partial_response !== undefined) return { text: `${body.partial_response} fine. [[AVANZA_STEP]]`, done: !interrupted };
+        if (message === 'Con una scheda guida') return { text: 'Obiettivo: con una scheda guida descrivo l’andamento.', done: false };
+        if (message === 'Scelgo i grafici') return { text: 'Bozza: descrivo l’andamento di un grafico. [[AVANZA_STEP]]' };
+        if (body.phase === phases.summary) return { text: 'Sintesi: un solo obiettivo, la prova scelta.' };
+        return { text: `Turno ${state.streams.length}: ${body.phase}` };
+    };
+    try {
+        await page.goto(`${origin}/?resume=1`);
+        await page.getByRole('radio', { name: /Percorso essenziale/ }).check();
+        await page.getByText(/3 fasi brevi \(focus, obiettivo, piano\)/).waitFor();
+        await page.getByRole('button', { name: 'Inizia', exact: true }).click();
+        await page.getByRole('log').getByText(`Turno 1: ${phases.focus}`, { exact: true }).waitFor();
+        const send = async text => { await page.locator('#guided-composer').fill(text); await page.locator('#guided-composer').press('Enter'); };
+
+        // Several wishes, no marker: the stage stays open and the next reply is still focus.
+        await send('Vorrei imparare grafici, collaborazione e relazione');
+        await page.getByRole('log').getByText(`Turno 2: ${phases.focus}`, { exact: true }).waitFor();
+        await send('Scelgo i grafici');
+        await page.getByRole('log').getByText(`Turno 4: ${phases.define}`, { exact: true }).waitFor();
+        assert.equal(await page.getByRole('log').getByText('[[AVANZA_STEP]]').count(), 0, 'the marker is never shown');
+
+        // Interrupted stream with the marker: no advance while the reply is incomplete.
+        interrupted = true;
+        await send('Con una scheda guida');
+        await page.getByRole('button', { name: 'Continua', exact: true }).waitFor({ timeout: 10000 });
+        assert.ok(state.streams.every(x => x.phase !== phases.plan), 'no plan before the reply completes');
+        interrupted = false;
+        await page.getByRole('button', { name: 'Continua', exact: true }).click();
+        const planOpening = state.streams.length + 1;
+        await page.getByRole('log').getByText(`Turno ${planOpening}: ${phases.plan}`, { exact: true }).waitFor();
+
+        // The person chooses to move on with points still open: the summary is generated.
+        await send('Inizio domani');
+        await page.getByRole('log').getByText(`Turno ${planOpening + 1}: ${phases.plan}`, { exact: true }).waitFor();
+        await page.getByRole('button', { name: 'Passa al prossimo tema', exact: true }).click();
+        await page.getByRole('log').getByText('Sintesi: un solo obiettivo, la prova scelta.', { exact: true }).waitFor();
+        await page.getByText('Puoi concludere oppure approfondire scrivendo qui.').waitFor();
+
+        const replies = state.streams.filter(x => x.memory_message);
+        assert.deepEqual(replies.map(x => [x.memory_message, x.phase]).filter(([m]) => !m.startsWith('Con una')), [
+            ['Vorrei imparare grafici, collaborazione e relazione', phases.focus],
+            ['Scelgo i grafici', phases.focus],
+            ['Inizio domani', phases.plan],
+        ]);
+        assert.ok(state.streams.filter(x => x.memory_message === 'Con una scheda guida').every(x => x.phase === phases.define));
+        const openings = state.streams.filter(x => x.use_phase_prompt).map(x => x.phase);
+        assert.deepEqual(openings, [phases.focus, phases.define, phases.plan, phases.summary]);
+        assert.ok(state.streams.every(x => x.guided_path === 'essential'));
+        await page.waitForTimeout(1700);
+        assert.equal(state.snapshot.current_phase, phases.summary);
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
 });

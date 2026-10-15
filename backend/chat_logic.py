@@ -875,8 +875,8 @@ def _phase_factor_codes(db, phase: Optional[str]) -> set[str]:
 # di navigazione quando la richiesta arriva con guided_path="essential".
 _ESSENTIAL_PATH_DESCRIPTIONS = {
     "QSA": "Essential QSA path: choose a focus, give one example, agree or adapt one action, receive a summary. Exactly three student replies; further discussion is optional.",
-    "OBIETTIVO_STUDIO": "Essential learning-objective path: choose the area and Bloom level with an observable verb, run one quick SMART check, agree the first steps with one if-then plan and a proof, receive the objective restated in its complete well-written form (who + observable verb + what + condition + criterion). Exactly three student replies; further discussion is optional.",
-    "OBIETTIVO_DOCENZA": "Essential didactic-objective path: choose the area and Bloom level for the class with an observable verb, run one quick SMART check, align one activity and the assessment, receive the objective in its complete ABCD form (audience + observable verb + what + lesson condition + criterion tied to the assessment). Exactly three student replies; further discussion is optional.",
+    "OBIETTIVO_STUDIO": "Essential learning-objective path in three short stages: focus on ONE precise thing with an early editable draft, complete only what the objective still lacks (observable verb, content, plausible proof), agree the first steps with one if-then plan and a proof; then the objective restated in its complete well-written form (who + observable verb + what + condition + criterion). A stage closes when its result is agreed or the person chooses to move on, not after a fixed number of replies; further discussion is optional.",
+    "OBIETTIVO_DOCENZA": "Essential didactic-objective path in three short stages: focus on ONE precise result for the class with an early editable draft, complete only what the objective still lacks (audience, observable verb, content, plausible proof), align one or two activities and the assessment; then the objective in its complete ABCD form (audience + observable verb + what + lesson condition + criterion tied to the assessment). A stage closes when its result is agreed or the teacher chooses to move on, not after a fixed number of replies; further discussion is optional.",
 }
 
 
@@ -2993,19 +2993,20 @@ def build_context_envelope(
         # dell'envelope: stesso slot [PROFILE], punteggi e portfolio restano
         # fuori di proposito. Le classi restano legate alla chat docenza:
         # group_ids e' riverificato a ogni turno, una condivisione revocata
-        # esce dal contesto senza rifare la selezione.
+        # esce dal contesto senza rifare la selezione. Con il componente
+        # "profile" spento non entrano ne' il taccuino ne' le classi.
         profile_block = "\n\n".join(
             s for s in (
                 teacher_notebook_context(db, username_for_context),
                 teacher_groups_context(db, username_for_context, getattr(request, "group_ids", None)) if is_docenza_chat else "",
             ) if s
-        )
+        ) if include_profile else ""
     if is_practice_notebook:
         # Studente simulato: il suo taccuino al posto di quello reale, i
         # punteggi della sessione restano (sono quelli che il docente usa
         # per la prova). Niente portfolio, obiettivi o classi del docente.
         profile_block = "\n\n".join(
-            s for s in (practice_notebook_context(practice_notebook), system_prompt_scores) if s
+            s for s in (practice_notebook_context(practice_notebook) if include_profile else "", system_prompt_scores) if s
         )
     simulation_block = simulation_notice(language) if is_practice_notebook else ""
     if components is not None:

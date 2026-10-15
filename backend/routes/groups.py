@@ -28,7 +28,7 @@ from ..reading_audience import AUDIENCE_BANDS
 from ..user_names import store_user_display_name
 from ..class_tools import ALWAYS_ON, tool_catalog
 from ..class_access import FORUM_OPTIONS, forum_option
-from ..group_visibility import _is_admin, _username, _visible_group_query
+from ..group_visibility import _is_admin, _username, _visible_group_query, owned_or_shared_group_query
 
 router = APIRouter()
 get_db = database.get_db
@@ -482,10 +482,14 @@ async def put_class_settings(
 
 @router.get("/admin/groups")
 async def list_groups(
+    own: bool = False,
     current_user=Depends(auth.get_current_plan_manager),
     db: Session = Depends(get_db),
 ):
-    groups = _visible_group_query(db, current_user).order_by(models.StudentGroup.created_at.desc()).all()
+    # own=true: solo classi proprie o condivise anche per l'admin, le stesse
+    # che il contesto della chat docenza accetta.
+    query = owned_or_shared_group_query(db, current_user) if own else _visible_group_query(db, current_user)
+    groups = query.order_by(models.StudentGroup.created_at.desc()).all()
     return [_serialize_group(db, group) for group in groups]
 
 

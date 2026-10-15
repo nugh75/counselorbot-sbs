@@ -153,4 +153,7 @@ manual saving creates a meaningful history revision. Errors remain visible.
 Input and conversation-mode preferences are saved only through their explicit
 checkboxes; Idea asks for its mode each time. Response format (conversation, bullets,
 table) is independent of response length. QSA offers its own essential path of
-three replies and a summary; do not extend this to other scored questionnaires.
+three replies and a summary; do not extend this to other scored questionnaires. The two objective paths have their own essential version in three short stages
+(focus and first draft, complete objective, plan or aligned activities): a stage closes
+when its result is agreed or when the person chooses to move on, not after a fixed
+number of replies.

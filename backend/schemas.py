@@ -1170,6 +1170,9 @@ class FrozenSessionCreate(BaseModel):
     reasoning_effort: Optional[str] = None
     notebook_context: Optional[str] = None  # taccuino nel contesto: studente|docente|prova|nessuno
     practice_notebook_id: Optional[int] = None  # taccuino di prova scelto (solo con "practice")
+    # Chat docenza: classi scelte per questa sessione. Solo id, mai un
+    # permesso: il server li riverifica a ogni turno.
+    group_ids: List[int] = Field(default_factory=list)
     label: Optional[str] = Field(default=None, max_length=200)
     pdf_token: Optional[str] = None
 
@@ -1192,6 +1195,10 @@ class FrozenSessionCreate(BaseModel):
     @validator("notebook_context", pre=True)
     def _known_notebook_context(cls, v):
         return v if v in ("student", "teacher", "practice", "none") else None
+
+    @validator("group_ids", pre=True)
+    def _clean_group_ids(cls, v):
+        return _practice_group_ids(v)
 
     @validator("questionnaire_type", pre=True)
     def _known_questionnaire(cls, v):
@@ -1228,6 +1235,7 @@ class FrozenSessionDetail(FrozenSessionSummary):
     reasoning_effort: Optional[str] = None
     notebook_context: Optional[str] = None
     practice_notebook_id: Optional[int] = None
+    group_ids: List[int] = Field(default_factory=list)
     pdf_token: Optional[str] = None
 
 

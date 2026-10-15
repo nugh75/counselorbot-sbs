@@ -36,6 +36,8 @@ export interface FrozenSessionDetail extends FrozenSessionSummary {
     response_length?: 'short' | 'medium' | 'long' | null;
     notebook_context?: 'student' | 'teacher' | 'practice' | 'none' | null;
     practice_notebook_id?: number | null;
+    // Chat docenza: classi scelte per questa sessione (vuoto negli snapshot precedenti).
+    group_ids?: number[];
     reasoning_effort?: 'off' | 'standard' | 'deep' | null;
     pdf_token?: string | null;
 }
@@ -55,6 +57,7 @@ export interface FrozenSessionSnapshot {
     response_length: 'short' | 'medium' | 'long';
     notebook_context?: 'student' | 'teacher' | 'practice' | 'none';
     practice_notebook_id?: number;
+    group_ids?: number[];
     // Solo la chat guidata: la sandbox OpenCode parla con il proprio agente e
     // non ha una leva sul ragionamento.
     reasoning_effort?: 'off' | 'standard' | 'deep';

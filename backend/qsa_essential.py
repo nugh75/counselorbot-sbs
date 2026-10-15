@@ -1,9 +1,10 @@
-"""Le conversazioni essenziali hanno tre turni della persona; lo strumento non cambia.
+"""Percorsi essenziali: fasi virtuali fuori dalla tabella `guided_steps`.
 
-Il percorso essenziale QSA è nato per primo; i due percorsi Obiettivo di
-apprendimento riutilizzano lo stesso meccanismo (fasi virtuali fuori dalla tabella
-`guided_steps`, il client avanza dopo ogni risposta). Il registro tiene le fasi
-e le istruzioni per strumento; `validate_path` resta il portone: una
+Il percorso essenziale QSA è nato per primo e avanza dopo ogni risposta (tre
+turni della persona). I due percorsi Obiettivo riusano le fasi virtuali ma non
+il conteggio: ogni fase si chiude sul marcatore [[AVANZA_STEP]] quando il suo
+risultato c'è, o quando la persona sceglie di proseguire. Il registro tiene le
+fasi e le istruzioni per strumento; `validate_path` resta il portone: una
 combinazione strumento/fase non valida è un 422, mai un percorso improvvisato.
 """
 from fastapi import HTTPException
@@ -55,30 +56,130 @@ _QSA_TASKS = {
     QSA_PHASES[3]: "Conclude now: summarize the chosen priority, an evidenced resource, the concrete situation and the action as confirmed or modified by the person. Distinguish a proposal from an agreed action. State that only the selected topic was explored, not the full profile. Do not ask another question. Further discussion is optional and initiated by the person.",
 }
 
+# Obiettivo: tre fasi brevi e una sintesi. Una fase non dura una risposta fissa:
+# si chiude quando il suo risultato c'e' (accettato o corretto dalla persona) o
+# quando la persona sceglie di proseguire, e il modello lo segnala con il
+# marcatore gia' usato dal percorso completo. Ogni fase ha un'apertura (nessuna
+# risposta da valutare) e un turno di risposta.
+_CLOSE = (
+    "Close the stage only when {done}, or when the person asks to move on (then name the points "
+    "still open): restate {what} in one sentence, ask no new question, and put only [[AVANZA_STEP]] "
+    "on the last line. Otherwise keep working on this stage and end with ONE question."
+)
+_NO_MARKER = " Do not emit [[AVANZA_STEP]] in this opening: the person has not answered yet."
+
+
+def _focus_tasks(learner: str, outcome: str, grounding: str) -> tuple[str, str]:
+    work = (
+        f"If several results or learnings appear, name them briefly, propose one as the priority {learner} "
+        "with a short reason drawn from what was said, keep the others aside and ask which one to take now. "
+        "If the focus is single, offer ONE editable draft of the objective in one sentence and ask ONE question "
+        "about the element that would change it most. If a well-defined objective is already there, recognise it "
+        "and restate it."
+    )
+    entry = (
+        "Stage 1 of 3 (focus and first draft), opening. If nothing yet says what the person has in mind, ask in "
+        f"ONE short question what {outcome}, offering at most two possibilities grounded in {grounding}, never "
+        "invented. If an intention is already available, work on it. " + work + _NO_MARKER
+    )
+    reply = (
+        "Stage 1 of 3: focus and first draft. " + work + " " + _CLOSE.format(
+            done="the person has chosen ONE focus and accepted or corrected a draft", what="the draft")
+    )
+    return entry, reply
+
+
+_DEFINE_ENTRY = (
+    "Stage 2 of 3 (complete the objective), opening. Check the agreed draft against what a usable objective "
+    "needs: {audience}, an observable result of the learner, a circumscribed content, a plausible proof with a "
+    "proportionate condition or criterion. If something essential is missing, name it and ask ONE question about "
+    "the most important gap; do not list every SMART letter or Bloom level. If nothing essential is missing, say "
+    "in one sentence that the objective is already well defined, restate it, and put only [[AVANZA_STEP]] on the "
+    "last line."
+)
+_DEFINE_REPLY = (
+    "Stage 2 of 3: complete the objective. Integrate the answer into the draft and restate it; if the objective "
+    "is too broad, propose a narrower first result for the person to confirm. If an essential element is still "
+    "missing, ask ONE question about it. "
+)
+
+_OBBSTUDIO_FOCUS = _focus_tasks(
+    "for now", "they would like to learn or be able to do", "their notebook or class context")
+_OBBDOCENZA_FOCUS = _focus_tasks(
+    "for this class or group", "they would like their students to learn or be able to do",
+    "the teacher's notebook or the class context supplied")
+
 _OBBSTUDIO_TASKS = {
-    OBBSTUDIO_PHASES[0]: "Help the person choose the AREA of their learning objective and the right level (Bloom's taxonomy, in plain words: remember, understand, apply, analyse, evaluate, create), grounded in what they said or in the notebook context you have. The verb attached to the level must pass the visibility test: if you cannot see or hear someone doing it ('know', 'understand', 'appreciate'), it is not a performance. End with exactly ONE short question asking them to confirm area and level, or to adjust them. Do not write the objective for them.",
-    OBBSTUDIO_PHASES[1]: "Run ONE quick SMART check on the objective: name the letter or letters that still fail (specific, measurable, achievable, relevant, time-bound) and ask ONE question to fix the most important one. Do not list all five letters. End with that one question.",
-    OBBSTUDIO_PHASES[2]: "Help the person name the FIRST small steps and ONE if-then plan (if [obstacle or situation], then I [action]), plus ONE concrete proof of success and when to check it. Ask at most two short questions. Do not build the plan for them; proposals are options they can turn down.",
-    OBBSTUDIO_PHASES[3]: "Conclude now: restate the objective ONE last time in its complete, well-written form (Mager): who ('I') + one observable verb at the agreed Bloom level, never a bare mental state + what + condition ('given X', 'in the exam', 'during the group work') + criterion ('in at least 8 cases out of 10', 'within 20 minutes'), using the proof they chose as the criterion; keep an element implicit only if it is truly obvious. Then give back the first steps, the if-then plan and the proof with its date, in the person's words. Distinguish proposals from commitments. Say that the objective can be saved in their personal goals and reviewed there. Do not ask another question.",
+    OBBSTUDIO_PHASES[0]: _OBBSTUDIO_FOCUS,
+    OBBSTUDIO_PHASES[1]: (
+        _DEFINE_ENTRY.format(audience="the person as the learner"),
+        _DEFINE_REPLY + _CLOSE.format(
+            done="the objective is defined enough and the person accepted or corrected it", what="the objective"),
+    ),
+    OBBSTUDIO_PHASES[2]: (
+        "Stage 3 of 3 (plan and proof), opening. Keep the objective fixed. Ask ONE question to start the plan: the "
+        "first small step, or where and when they will work on it, reusing what they already said. Toward the end "
+        "of the stage there should be the first small steps, ONE if-then plan (if [situation or obstacle], then I "
+        "[action]) and ONE concrete proof of success." + _NO_MARKER,
+        "Stage 3 of 3: plan and proof. Help the person name the first small steps, ONE if-then plan (if [situation "
+        "or obstacle], then I [action]) and ONE concrete proof of success, with a check date only if they give one. "
+        "Do not build the plan for them; proposals are options they can turn down. Do not write the summary. "
+        + _CLOSE.format(done="steps, if-then plan and proof are agreed", what="the plan"),
+    ),
+    OBBSTUDIO_PHASES[3]: "Conclude now: restate the objective ONE last time in its complete, well-written form (Mager): who ('I') + one observable verb at the agreed Bloom level, never a bare mental state + what + condition ('given X', 'in the exam', 'during the group work') + criterion ('in at least 8 cases out of 10', 'within 20 minutes'), using the proof they chose as the criterion; keep an element implicit only if it is truly obvious, and never invent a figure or a date. Then give back the first steps, the if-then plan and the proof with its date if they chose one, in the person's words. Other outcomes appear only as kept aside, if the person named them; points left open stay open. Distinguish proposals from commitments. Say that the objective can be saved in their personal goals and reviewed there. Do not ask another question and do not emit [[AVANZA_STEP]].",
 }
 
 _OBBDOCENZA_TASKS = {
-    OBBDOCENZA_PHASES[0]: "Help the teacher choose the AREA and the right Bloom level for the class's learning objective (in plain words: remember, understand, apply, analyse, evaluate, create), grounded in what they said about the class or the curriculum. The verb attached to the level must pass the visibility test: if you cannot see or hear a student doing it ('know', 'understand', 'appreciate'), it is not a performance. End with exactly ONE short question asking them to confirm area and level, or to adjust them. Do not write the objective for them.",
-    OBBDOCENZA_PHASES[1]: "Run ONE quick SMART check on the didactic objective: name the letter or letters that still fail (specific, measurable, achievable, relevant, time-bound) and ask ONE question to fix the most important one. Do not list all five letters. End with that one question.",
-    OBBDOCENZA_PHASES[2]: "Help the teacher name ONE or TWO class activities aligned with the verb and level of the objective, and ONE assessment that asks the same kind of performance (constructive alignment). Ask at most two short questions. Do not design for them; proposals are options they can turn down.",
-    OBBDOCENZA_PHASES[3]: "Conclude now: restate the didactic objective ONE last time in its complete, well-written form (Mager, ABCD): audience (which students of the named class, in the teacher's words) + one observable verb at the agreed Bloom level, never a bare mental state + what + lesson condition ('using the lab tool', 'in 45 minutes', 'working in pairs') + criterion tied to the assessment they planned ('correctly solving 8 of the 10 exercises', 'matching the rubric at level 3'). Then give back the aligned activities and assessment and the proof with its date, in the teacher's words. Distinguish proposals from commitments. Say that the objective can be saved among their own goals, published in their goal catalog for the groups they manage, or assigned to a group or a participant: all three are explicit choices. Do not ask another question.",
+    OBBDOCENZA_PHASES[0]: _OBBDOCENZA_FOCUS,
+    OBBDOCENZA_PHASES[1]: (
+        _DEFINE_ENTRY.format(audience="which students of the class"),
+        _DEFINE_REPLY + "'Doing a lesson on X' is the teacher's activity: help state what the students will be "
+        "able to do. " + _CLOSE.format(
+            done="the objective is defined enough and the teacher accepted or corrected it", what="the objective"),
+    ),
+    OBBDOCENZA_PHASES[2]: (
+        "Stage 3 of 3 (aligned activities and assessment), opening. Keep the objective fixed and start from its "
+        "proof (backward design): ask ONE question about the assessment, or about the one class activity that "
+        "would let students practise exactly that performance, reusing what the teacher already said." + _NO_MARKER,
+        "Stage 3 of 3: aligned activities and assessment. Help the teacher name ONE or TWO class activities "
+        "aligned with the verb and level of the objective and ONE assessment that asks the same kind of "
+        "performance (constructive alignment). Do not design for them; proposals are options they can turn down. "
+        "Do not write the summary. " + _CLOSE.format(
+            done="activities and assessment are agreed and aligned", what="the activities and the assessment"),
+    ),
+    OBBDOCENZA_PHASES[3]: "Conclude now: restate the didactic objective ONE last time in its complete, well-written form (Mager, ABCD): audience (which students of the named class, in the teacher's words) + one observable verb at the agreed Bloom level, never a bare mental state + what + lesson condition ('using the lab tool', 'in 45 minutes', 'working in pairs') + criterion tied to the assessment they planned ('correctly solving 8 of the 10 exercises', 'matching the rubric at level 3'); never invent a figure or a date. Then give back the aligned activities and assessment and the proof with its date if one was chosen, in the teacher's words. Other outcomes appear only as kept aside, if the teacher named them; points left open stay open. Distinguish proposals from commitments. Say that the objective can be saved among their own goals, published in their goal catalog for the groups they manage, or assigned to a group or a participant: all three are explicit choices. Do not ask another question and do not emit [[AVANZA_STEP]].",
 }
 
+_OBIETTIVO_PATHS = (OBBSTUDIO_PHASES, OBBDOCENZA_PHASES)
 
-def directive(phase: str) -> str:
+
+def advances_on_signal(phase: str | None) -> bool:
+    """Le fasi Obiettivo avanzano sul marcatore; il QSA essenziale dopo ogni risposta."""
+    return any(phase in phases for phases in _OBIETTIVO_PATHS)
+
+
+def directive(phase: str, entry: bool = False) -> str:
     if phase == "qsa-essential-followup":
         return "\n\n[QSA ESSENTIAL FOLLOW-UP] The essential path is complete. Answer only this voluntary follow-up about the explored topic; do not restart the path or add mandatory questions. Keep unexamined factors distinct from the explored topic."
     task = _phase_task(phase)
     if task is None:
         return ""
-    path_name = "QSA" if phase in QSA_PHASES else ("learning objective" if phase in OBBSTUDIO_PHASES else "didactic objective")
+    if advances_on_signal(phase):
+        if isinstance(task, tuple):
+            task = task[0] if entry else task[1]
+        path_name = "learning objective" if phase in OBBSTUDIO_PHASES else "didactic objective"
+        return (
+            "\n\n[ESSENTIAL PATH - CURRENT TURN]\n"
+            f"This is the essential {path_name} conversation, not the complete guided path: three short stages "
+            "and a summary. A stage lasts as many replies as it needs and no more: the application moves on only "
+            "when you close the current stage with [[AVANZA_STEP]] on the last line, or when the person chooses to. "
+            "Never explain the marker. Do not add an introduction, agreement turn, questionnaire or reflection "
+            "battery. Never answer on behalf of the person. Current-turn instructions override generic requests to "
+            "cover every aspect or ask further questions. " + task
+        )
+    path_name = "QSA"
     return (
-        ("\n\n[QSA ESSENTIAL PATH - CURRENT TURN]\n" if phase in QSA_PHASES else "\n\n[ESSENTIAL PATH - CURRENT TURN]\n") +
+        "\n\n[QSA ESSENTIAL PATH - CURRENT TURN]\n" +
         f"This is the essential {path_name} conversation, not the complete guided path. "
         "The application controls progression: the application moves to the next step after each completed reply. "
         "Do not add an introduction, agreement turn, questionnaire, reflection battery or mandatory follow-up. "
