@@ -765,7 +765,13 @@ of student submissions and notes: an **Overview matrix** (table of students × c
 instruments showing completion dates, compact scores, attempt count and an inspection card
 with full score factors and conversation transcript reader) and a **Participants list**
 offering participant notebooks (learner model), notes and teacher-to-student messaging.
-Overview shows class context; **Tools & counselors** lets owners, co-teachers and administrators
+The **Overview** tab (`ClassOverviewTab`, Issue #276) serves as the central operational hub of the class:
+1. **Quick Links & Indicators**: responsive metric cards for enrolled students (`group.members_count`), enabled tools count, class paths, and class forum, enabling instant 1-click tab switching.
+2. **Student Invitation**: prominent class code display with one-click clipboard copy, direct web enrollment link (`/gruppo?g={code}`), Telegram bot deep-link (`https://t.me/{bot}?start=g_{code}`), and student visibility guidance.
+3. **Colleague & Tutor Sharing**: view authorized co-teachers (`/api/admin/groups/{id}/shares`), select and add colleagues from `/api/admin/users-summary` (excluding class owner), and revoke shares with instant feedback.
+4. **Class Details & Anagrafica**: direct inline editing of class name, school/campus, educational level (upper secondary, university, adult education), partner institution, description, methodologies, and student area visibility toggle, protected by draft guards and explicit save/discard actions.
+5. **Class Status & Actions**: active/archived toggle (`PUT /api/admin/groups/{id}` with `is_active`) and secure class deletion (`DELETE /api/admin/groups/{id}`) with modal confirmation dialog and prevention of deletion if linked to administration plans.
+**Tools & counselors** lets owners, co-teachers and administrators
 choose student questionnaires, guided chats (including dynamic instruments),
 personal tools, Compass, Assistant and the class forum. Saves are explicit;
 category actions change only editable items. Errors retain drafts; a concurrent
