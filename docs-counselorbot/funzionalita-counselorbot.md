@@ -1223,7 +1223,7 @@ ZTPI e Savickas. Le proposte AI aiutano a riflettere, non sono diagnosi o decisi
 vincolanti. Le funzioni disabilitate o non autorizzate non vanno presentate come
 accessibili a ogni account. L’assistente deve indicare la pagina e il prossimo
 passo utile, senza inventare pulsanti o promettere azioni eseguite automaticamente.
-Gli aggiornamenti tecnici delle dipendenze del server non cambiano funzioni, dati salvati o esportazioni descritti in questa guida.
+Gli aggiornamenti tecnici delle dipendenze del server non cambiano funzioni, dati salvati o esportazioni descritti in questa guida. Per la compilazione containerizzata di produzione del frontend in Docker, il comando di build adotta esplicitamente Webpack (`next build --webpack`) e disabilita la telemetria Next.js (`NEXT_TELEMETRY_DISABLED=1`) per prevenire timeout e deadlock IPC sotto emulazione o vincoli di memoria.
 
 ### Sezioni della configurazione
 

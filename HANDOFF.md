@@ -1,3 +1,26 @@
+# Handoff S11: Build di produzione frontend con Webpack in ambienti Docker containerizzati
+Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
+
+- Titolo: 'Build frontend: adozione di Webpack per prevenire deadlock IPC di Turbopack in container Docker'.
+- Branch: `fix/frontend-docker-build-webpack`
+- Problema risolto:
+  Durante il build Docker del frontend (`counselorbot-frontend`), Next.js 16 (`next: 16.3.8`) utilizza Turbopack di default per `next build`.
+  Nei container Linux (specie sotto emulazione o con memoria assegnata limitata), Turbopack andava incontro a deadlock e timeout sul loader IPC di PostCSS per Tailwind v4 (`Error: Node.js subprocess crashed while evaluating loaders [postcss]: failed to receive message ... deadline has elapsed`), bloccando il build per oltre 2.8 ore prima di fallire.
+  L'adozione di Webpack (`next build --webpack`) risolve alla radice il problema: la compilazione si completa con successo in circa 3 minuti con basso consumo di memoria ed evitando qualsiasi deadlock IPC.
+- Modifiche realizzate:
+  1. `frontend/package.json`: aggiornato lo script di build in modo esplicito: `"build": "next build --webpack"`.
+  2. `frontend/Dockerfile`: disabilitata la telemetria di Next.js nello stage `builder` tramite `ENV NEXT_TELEMETRY_DISABLED=1` per evitare attese di rete inutili durante la compilazione.
+  3. `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`: documentata la configurazione di compilazione e riallineato il manifest di guida di piattaforma tramite `make guidance-refresh`.
+- Verifiche superate:
+  - Compilazione frontend di produzione: `npm run build` completato con successo (63/63 pagine generate, 0 errori).
+  - Test unitari frontend: `npm test` (452/452 superati, 0 fallimenti).
+  - Controllo tipi TypeScript: `npx tsc --noEmit` (0 errori).
+  - Localizzazione: `node scripts/check-i18n.mjs` (3.329 chiavi allineate nelle 6 lingue).
+  - Guida di piattaforma: `make guidance-refresh && make guidance-check` e check `--base origin/main` (SUCCESS).
+- Vincoli rispettati: nessun merge autonomo (in attesa di review utente da app mobile), nessun deploy diretto, nessun comando sudo.
+
+---
+
 # Handoff S10: Area Docente - Navigazione secondaria coerente e breadcrumbs (Issue #268)
 Data: 2026-10-14 | Stato: completato, verificato, pronto per commit/PR
 
