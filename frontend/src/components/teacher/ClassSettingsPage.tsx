@@ -30,7 +30,7 @@ import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
 import { teacherAreaText } from '@/lib/i18n-teacher-area';
 import { TeacherBreadcrumbs } from './TeacherBreadcrumbs';
 import { ClassQuickSwitcher } from './ClassQuickSwitcher';
-import type { TeacherBreadcrumbItem } from '@/lib/teacher-breadcrumbs';
+import { getClassBreadcrumbs, type TeacherBreadcrumbItem } from '@/lib/teacher-breadcrumbs';
 
 type TextKey = keyof typeof classSettingsTexts;
 const categories = ['assessment', 'guided', 'personal', 'support', 'forum'] as const;
@@ -70,12 +70,12 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
             </div>
             <div role="radiogroup" aria-label={l('counselorDefault')} className="space-y-1">
                 <label className="flex min-h-[44px] items-center gap-3 rounded-md p-2 text-sm text-slate-700">
-                    <input type="radio" name="class-default-counselor" className="h-5 w-5 accent-indigo-600" checked={defaultId === null}
+                    <input type="radio" name="class-default-counselor" className="h-5 w-5 accent-emerald-600" checked={defaultId === null}
                         disabled={busy} onChange={() => onDefault(null)} />{l('counselorNoDefault')}
                 </label>
                 {rows.map(row => <div key={row.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md p-2">
                     <label className="flex min-h-[44px] min-w-0 flex-[1_1_14rem] items-center gap-3 text-sm text-slate-700">
-                        <input type="checkbox" className="h-5 w-5 shrink-0 accent-indigo-600" aria-label={row.name}
+                        <input type="checkbox" className="h-5 w-5 shrink-0 accent-emerald-600" aria-label={row.name}
                             checked={isEnabled(row)} disabled={busy || !row.admin_enabled || row.locked} title={row.locked ? l('locked') : undefined}
                             aria-describedby={!row.admin_enabled ? `counselor-disabled-${row.id}` : undefined}
                             onChange={event => onToggle(row.id, event.target.checked)} />
@@ -90,7 +90,7 @@ function ClassCounselorsSection({ counselors, disabled, defaultId, busy, onToggl
                     <ClassSettingLock item={row} label={row.name} admin={admin} disabled={lockDisabled}
                         onChange={state => onLock('counselor', String(row.id), state)} />
                     <label className="flex min-h-[44px] items-center gap-2 text-sm text-slate-600">
-                        <input type="radio" name="class-default-counselor" className="h-5 w-5 accent-indigo-600"
+                        <input type="radio" name="class-default-counselor" className="h-5 w-5 accent-emerald-600"
                             aria-label={`${l('counselorDefault')}: ${row.name}`} checked={defaultId === row.id}
                             disabled={busy || !isEnabled(row)} onChange={() => onDefault(row.id)} />{l('counselorDefault')}
                     </label>
@@ -238,7 +238,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                         {rows.map(tool => <div key={tool.key} className="min-w-0 space-y-1 rounded-md p-2 text-sm text-slate-700">
                             <label className="flex min-h-[44px] min-w-0 items-start gap-3">
-                            <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-indigo-600" aria-label={label(tool)}
+                            <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-emerald-600" aria-label={label(tool)}
                                 checked={isEnabled(tool)} disabled={busy || !tool.admin_enabled || tool.locked} title={tool.locked ? l('locked') : undefined}
                                 aria-describedby={!tool.admin_enabled ? `tool-disabled-${tool.key}` : undefined}
                                 onChange={event => change([tool], event.target.checked)} />
@@ -259,7 +259,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
         <Card>
             <h2 className="text-lg font-bold text-slate-800">{l('personalAITitle')}</h2>
             <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
-                <input type="checkbox" className="h-5 w-5 accent-indigo-600" checked={personalAI} disabled={busy}
+                <input type="checkbox" className="h-5 w-5 accent-emerald-600" checked={personalAI} disabled={busy}
                     onChange={event => { if (!pending.current) { setPersonalAI(event.target.checked); setNotice(null); } }} />
                 {l('personalAIToggle')}
             </label>
@@ -272,7 +272,7 @@ function ClassToolsEditor({ initial, onReload, admin }: { initial: ClassSettings
                 const metadata = forum[`${name}_lock`];
                 return <div key={name} className="mb-3 space-y-1">
                     <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700">
-                        <input type="checkbox" className="h-5 w-5 accent-indigo-600" checked={forum[name]} disabled={busy || forum[`${name}_locked`]}
+                        <input type="checkbox" className="h-5 w-5 accent-emerald-600" checked={forum[name]} disabled={busy || forum[`${name}_locked`]}
                             onChange={event => { if (!pending.current) { setForum(previous => ({ ...previous, [name]: event.target.checked })); setNotice(null); } }} />
                         {title}
                         {forum[`${name}_locked`] && <span className="flex items-center gap-1"><Lock className="h-4 w-4" aria-hidden />{forumText(lang, 'lockedOption')}</span>}
@@ -324,27 +324,14 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
         <Button variant="secondary" onClick={() => { void groups.reload(); void settings.reload(); }}>{l('reload')}</Button>
     </Callout>;
     const activeTabs = ['overview', 'students', 'toolsTab', 'paths', 'forum', 'audit'] as const;
-    const breadcrumbItems: TeacherBreadcrumbItem[] = [
-        { label: teacherAreaText(lang, 'title'), href: '/docente' },
-        {
-            label: group.name || teacherAreaText(lang, 'classFallback'),
-            href: tab !== 'overview' ? `/docente/classi/${groupId}` : undefined,
-            current: tab === 'overview',
-        },
-        ...(tab !== 'overview' ? [{
-            label: l(tab),
-            current: true,
-        }] : []),
-    ];
+    const breadcrumbItems = getClassBreadcrumbs(group.name, groupId, tab, lang, adminRoute);
     return <div className="space-y-5">
-        {!adminRoute && (
-            <TeacherBreadcrumbs
-                items={breadcrumbItems}
-                extra={<ClassQuickSwitcher currentGroupId={groupId} groups={groups.data} currentTab={tab} />}
-            />
-        )}
+        <TeacherBreadcrumbs
+            items={breadcrumbItems}
+            extra={<ClassQuickSwitcher currentGroupId={groupId} groups={groups.data} currentTab={tab} basePath={adminRoute ? '/admin/classi' : '/docente/classi'} />}
+        />
         <header className="flex flex-wrap items-center justify-between gap-3">
-            <Link href={adminRoute ? ADMIN_CLASSES_HREF : "/docente/classi"} className="inline-flex min-h-[44px] items-center gap-2 text-sm text-indigo-700"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
+            <Link href={adminRoute ? ADMIN_CLASSES_HREF : "/docente/classi"} className="inline-flex min-h-[44px] items-center gap-2 text-sm text-teal-700 hover:text-teal-800 font-medium"><ArrowLeft className="h-4 w-4" aria-hidden />{l('back')}</Link>
             <div><h1 className="break-words text-2xl font-bold text-slate-800">{group.name}</h1><p className="text-sm text-slate-600">{group.members_count} {l('members')}{group.school && ` · ${group.school}`}</p></div>
         </header>
         <div role="tablist" aria-label={group.name} className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
@@ -356,7 +343,7 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
                     event.preventDefault();
                     const next = event.key === 'Home' ? 0 : event.key === 'End' ? activeTabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + activeTabs.length) % activeTabs.length;
                     setTab(activeTabs[next]); tabRefs.current[next]?.focus();
-                }} className={`min-h-[44px] rounded-md px-4 text-sm font-semibold ${tab === key ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}>{l(key)}</button>)}
+                }} className={`min-h-[44px] rounded-md px-4 text-sm font-semibold ${tab === key ? 'bg-emerald-50 text-emerald-800 border-b-2 border-emerald-600' : 'text-slate-600 hover:bg-slate-100'}`}>{l(key)}</button>)}
         </div>
         <div id="class-panel-overview" role="tabpanel" aria-labelledby="class-tab-overview" hidden={tab !== 'overview'} tabIndex={0}>
             {tab === 'overview' && (

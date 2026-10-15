@@ -381,11 +381,11 @@ export function ClassOverviewTab({
                     <button
                         type="button"
                         onClick={() => onSelectTab('students')}
-                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-indigo-300 hover:shadow-sm"
+                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-emerald-300 hover:shadow-sm"
                     >
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-semibold text-slate-700">{l('enrolledStudents')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100">
                                 <Users className="h-4 w-4" aria-hidden />
                             </span>
                         </div>
@@ -393,7 +393,7 @@ export function ClassOverviewTab({
                             <span className="text-2xl font-bold text-slate-900">{group.members_count}</span>
                             <span className="text-xs text-slate-500">{l('members')}</span>
                         </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-indigo-700 group-hover:underline">
+                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-emerald-700 group-hover:underline">
                             {l('goToStudents')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                         </div>
                     </button>
@@ -402,11 +402,11 @@ export function ClassOverviewTab({
                     <button
                         type="button"
                         onClick={() => onSelectTab('toolsTab')}
-                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-indigo-300 hover:shadow-sm"
+                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-emerald-300 hover:shadow-sm"
                     >
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-semibold text-slate-700">{l('enabledTools')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100">
                                 <Wrench className="h-4 w-4" aria-hidden />
                             </span>
                         </div>
@@ -414,7 +414,7 @@ export function ClassOverviewTab({
                             <span className="text-2xl font-bold text-slate-900">{enabledToolsCount}</span>
                             <span className="text-sm text-slate-500">/ {nonAlwaysOnTools.length}</span>
                         </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-indigo-700 group-hover:underline">
+                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-emerald-700 group-hover:underline">
                             {l('goToTools')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                         </div>
                     </button>
@@ -423,18 +423,18 @@ export function ClassOverviewTab({
                     <button
                         type="button"
                         onClick={() => onSelectTab('paths')}
-                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-indigo-300 hover:shadow-sm"
+                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-emerald-300 hover:shadow-sm"
                     >
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-semibold text-slate-700">{l('classPaths')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100">
                                 <Route className="h-4 w-4" aria-hidden />
                             </span>
                         </div>
                         <div className="mt-3">
                             <p className="line-clamp-2 text-xs text-slate-600">{l('classPathsDesc')}</p>
                         </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-indigo-700 group-hover:underline">
+                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-emerald-700 group-hover:underline">
                             {l('goToPaths')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                         </div>
                     </button>
@@ -443,18 +443,18 @@ export function ClassOverviewTab({
                     <button
                         type="button"
                         onClick={() => onSelectTab('forum')}
-                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-indigo-300 hover:shadow-sm"
+                        className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xs transition hover:border-emerald-300 hover:shadow-sm"
                     >
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-semibold text-slate-700">{l('classForum')}</span>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100">
                                 <MessageSquare className="h-4 w-4" aria-hidden />
                             </span>
                         </div>
                         <div className="mt-3">
                             <p className="line-clamp-2 text-xs text-slate-600">{l('classForumDesc')}</p>
                         </div>
-                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-indigo-700 group-hover:underline">
+                        <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-emerald-700 group-hover:underline">
                             {l('goToForum')} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                         </div>
                     </button>
@@ -467,7 +467,7 @@ export function ClassOverviewTab({
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                         <div>
                             <h2 id="class-invitation-heading" className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                                <UserPlus className="h-5 w-5 text-indigo-700" aria-hidden />
+                                <UserPlus className="h-5 w-5 text-emerald-700" aria-hidden />
                                 {l('inviteStudentsTitle')}
                             </h2>
                             <p className="mt-0.5 text-xs text-slate-500">{l('inviteStudentsHint')}</p>
@@ -475,10 +475,10 @@ export function ClassOverviewTab({
                     </div>
 
                     {/* Codice classe in evidenza */}
-                    <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-indigo-900">{l('classCode')}</span>
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-emerald-900">{l('classCode')}</span>
                         <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-                            <span className="font-mono text-2xl font-extrabold tracking-widest text-indigo-950 sm:text-3xl">
+                            <span className="font-mono text-2xl font-extrabold tracking-widest text-emerald-950 sm:text-3xl">
                                 {group.code}
                             </span>
                             <Button
@@ -560,7 +560,7 @@ export function ClassOverviewTab({
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                         <div>
                             <h2 id="class-sharing-heading" className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                                <Share2 className="h-5 w-5 text-indigo-700" aria-hidden />
+                                <Share2 className="h-5 w-5 text-emerald-700" aria-hidden />
                                 {l('shareWithColleagues')}
                             </h2>
                             <p className="mt-0.5 text-xs text-slate-500">{l('shareHint')}</p>
@@ -655,7 +655,7 @@ export function ClassOverviewTab({
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                         <div>
                             <h2 id="class-details-heading" className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                                <FileText className="h-5 w-5 text-indigo-700" aria-hidden />
+                                <FileText className="h-5 w-5 text-emerald-700" aria-hidden />
                                 {l('classDetailsTitle')}
                             </h2>
                             <p className="mt-0.5 text-xs text-slate-500">{l('classDetailsHint')}</p>
@@ -764,7 +764,7 @@ export function ClassOverviewTab({
                                 checked={visible}
                                 onChange={e => setVisible(e.target.checked)}
                                 disabled={saveBusy}
-                                className="h-4 w-4 rounded-xs border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                className="h-4 w-4 rounded-xs border-slate-300 text-emerald-600 focus:ring-emerald-500"
                             />
                             <span>{l('shareContextToStudents')}</span>
                         </label>
@@ -816,7 +816,7 @@ export function ClassOverviewTab({
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                         <div>
                             <h2 id="class-status-heading" className="flex items-center gap-2 text-lg font-bold text-slate-800">
-                                <Power className="h-5 w-5 text-indigo-700" aria-hidden />
+                                <Power className="h-5 w-5 text-emerald-700" aria-hidden />
                                 {l('classStatusTitle')}
                             </h2>
                             <p className="mt-0.5 text-xs text-slate-500">

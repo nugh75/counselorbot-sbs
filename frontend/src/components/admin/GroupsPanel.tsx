@@ -122,7 +122,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                     type="button"
                     disabled={!groups || loading}
                     onClick={() => setCreating(true)}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
                 >
                     <Plus className="h-4 w-4" /> {texts.newGroup}
                 </button>
@@ -186,7 +186,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                             type="button"
                             disabled={busy || loading || !groups || !newName.trim()}
                             onClick={() => void create()}
-                            className="min-h-11 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+                            className="min-h-11 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                         >
                             {texts.create}
                         </button>
@@ -340,7 +340,7 @@ export function GroupsPanel({ institutionId, basePath: explicitBasePath }: Group
                                     <Link
                                         href={`${basePath}/${group.id}`}
                                         aria-label={classSettingsText(lang, 'open')}
-                                        className="inline-flex min-h-11 items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2"
+                                        className="inline-flex min-h-11 items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2"
                                     >
                                         <span>{classSettingsText(lang, 'open')}</span>
                                         <ArrowRight className="h-4 w-4" aria-hidden="true" />

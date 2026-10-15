@@ -1,3 +1,46 @@
+# Handoff S14: Allineamento navigazione admin, breadcrumb e test di integrazione gestione classi (Issue #278)
+Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
+
+- Titolo: 'test: allineamento navigazione admin, breadcrumb e test di integrazione gestione classi'
+- Branch: `test/admin-class-navigation-and-integration`
+- Issue collegate: Closes #278
+- Obiettivo:
+  Consolidare e validare l'intera Milestone #15 («Unificazione gestione classi e Hub operativo (Docente & Admin)») allineando la navigazione admin con link diretti all'Hub di classe, breadcrumb gerarchici dedicati e test di regressione/integrazione completi.
+- Modifiche realizzate:
+  1. `frontend/src/components/admin/AdminClassesPanel.tsx`:
+     - Modificato il link per gli studenti da `/docente/classi` a `/admin/classi/${row.id}?tab=students` affinché l'amministratore possa aprire direttamente la tab studenti nell'Hub di classe dedicato senza rimbalzare nell'area docente.
+     - Allineati i collegamenti alla palette verde/petrol del brand (`text-teal-700 hover:text-teal-800 underline`).
+  2. `frontend/src/lib/teacher-breadcrumbs.ts`:
+     - Aggiunta la funzione `getClassBreadcrumbs(groupName, groupId, tab, lang, adminRoute)`:
+       - Modalità admin (`adminRoute=true`): `Dashboard Admin` (`/admin`) > `Classi` (`/admin?tab=groupsClasses`) > `[Nome Classe]` > `[Tab]`.
+       - Modalità docente (`adminRoute=false`): `Area docenti` (`/docente`) > `[Nome Classe]` > `[Tab]`.
+  3. `frontend/src/lib/teacher-quick-switcher.ts` e `frontend/src/components/teacher/ClassQuickSwitcher.tsx`:
+     - Aggiunto supporto a `basePath` in `computeClassSwitchUrl` e `ClassQuickSwitcher` (default `/docente/classi`, `/admin/classi` quando contestuale all'amministrazione) per preservare la rotta corrente al cambio classe.
+     - Allineato lo stile a verde emerald (`hover:border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/20`).
+  4. `frontend/src/components/teacher/ClassSettingsPage.tsx`:
+     - Integrato `getClassBreadcrumbs` sempre visibile (inclusa la modalità `adminRoute`).
+     - Tasto «Indietro» allineato verso `ADMIN_CLASSES_HREF` (`/admin?tab=groupsClasses`) quando `adminRoute=true`.
+     - Styling tab e controlli di blocco/opzioni allineati a verde (`bg-emerald-50 text-emerald-800 border-b-2 border-emerald-600`, `accent-emerald-600`).
+  5. `frontend/src/components/admin/GroupsPanel.tsx` e `frontend/src/components/teacher/ClassOverviewTab.tsx`:
+     - Eliminati tutti i residui `indigo`, convertiti in palette verde (`emerald` / `teal`).
+  6. `frontend/src/lib/i18n-class-settings.ts`:
+     - Aggiunta chiave `adminDashboard` in tutte le 6 lingue ufficiali (`it`, `en`, `es`, `fr`, `de`, `sv`).
+  7. Copertura Test & Aggiornamento:
+     - `frontend/src/lib/teacher-breadcrumbs.test.ts`: test completi di `getClassBreadcrumbs` per rotte docente e admin su tutte le lingue e verifica di `computeClassSwitchUrl` con `basePath`.
+     - `frontend/src/lib/groups-directory.test.ts`: verifica generazione link diretti all'Hub classe admin e tab studenti.
+     - `frontend/src/lib/class-settings.test.ts`: verifica presenza e fallback di `adminDashboard`.
+     - `frontend/tests/teacher-class-management.test.mjs`: allineati i flussi e rimossi i selettori obsoleti degli accordion eliminati in `GroupsPanel`.
+  8. `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`:
+     - Aggiornata la documentazione delle funzionalità per la navigazione admin delle classi e allineato lo stato della guida di piattaforma con `make guidance-refresh`.
+- Verifiche superate:
+  - TypeScript: `npx tsc --noEmit` (0 errori).
+  - Test unitari frontend: `npm test` (458/458 superati, 0 fallimenti).
+  - Controllo localizzazione: `node scripts/check-i18n.mjs` (3.329 chiavi verificate in 6 lingue).
+  - Guida di piattaforma: `make guidance-refresh && make guidance-check` (0 violazioni, documentazione allineata).
+- Conformità brand: 100% verde (`emerald`, `teal`, `#17747a`), nessun viola/purple.
+
+---
+
 # Handoff S13: Snellimento directory classi in GroupsPanel con accesso diretto all'Hub di classe (Issue #277)
 Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
 
