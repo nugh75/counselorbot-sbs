@@ -40,6 +40,7 @@ from ..strategy_memory import shared_response_memory
 from .. import recommendation_blocks
 from .. import event_booklet
 from .. import goal_draft
+from .. import control_markers
 from .. import thread_guard
 from .. import recommendation_service as _recommendation_service
 from ..certified_reading_service import certified_reading_memory
@@ -655,7 +656,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
                    mode=request.mode, phase=request.phase, conversation_id=conversation_id)
         raise HTTPException(status_code=502, detail=str(e))
     # I blocchi privati escono subito: non devono raggiungere lo studente, il
-    # transcript, il log o il PDF.
+    # transcript, il log o il PDF. Per primi i segnali di controllo, in ogni chat.
+    response_content, control_signals = control_markers.extract(response_content)
     booklet_draft = None
     goal_draft_value = None
     draft_mod = _draft_module(questionnaire_type)
@@ -820,6 +822,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
         "recommendations": recommendations_for_response,
         "event_booklet": booklet_draft,
         "goal_draft": goal_draft_value,
+        "control_signals": control_signals,
     }
 
 
@@ -1025,6 +1028,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 display_response = recommendation_blocks.strip_for_display(display_response)
                 if draft_mod is not None:
                     display_response = draft_mod.strip_for_display(display_response)
+                display_response = control_markers.strip_for_display(display_response)
                 display_response, truncated = _limit_visible_words(display_response, effective_response_length)
                 event = {"display": display_response}
                 if effective_response_length is None:
@@ -1044,7 +1048,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             if request.partial_response and not "".join(chunks[1:]).strip():
                 raise AIError("The provider returned no continuation.")
             # I blocchi privati escono prima di ogni altra elaborazione: non devono
-            # raggiungere lo studente, il transcript, il log o il PDF.
+            # raggiungere lo studente, il transcript, il log o il PDF. Per primi i
+            # segnali di controllo, in ogni chat.
+            raw_response, control_signals = control_markers.extract(raw_response)
             if draft_mod is event_booklet:
                 raw_response, booklet_draft = event_booklet.extract(raw_response)
             elif draft_mod is goal_draft:
@@ -1086,7 +1092,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 recommended = recommendation_blocks.retain_visible(
                     recommended, response_content, readings=reading_candidates, strategies=strategy_candidates,
                 )
-            if not response_content.strip():
+            # Una risposta fatta del solo segnale (la persona ha chiesto di
+            # proseguire) e' completa anche senza testo visibile.
+            if not response_content.strip() and not control_signals:
                 # Lo stream e' andato a buon fine — il contenuto e' arrivato —
                 # ma la pipeline visibile lo ha svuotato: tipicamente un canale
                 # <think> attorno a spazi. Qui il ripiego di `stream_response`
@@ -1097,6 +1105,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     full_message, system_prompt_final, request.mode,
                     max_tokens=max_tokens, provider=c_provider, model=c_model, history=history,
                 )
+                retry, control_signals = control_markers.extract(retry)
                 if draft_mod is event_booklet:
                     retry, booklet_draft = event_booklet.extract(retry)
                 elif draft_mod is goal_draft:
@@ -1120,7 +1129,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                     if _requires_complete_factor_output(request.mode) else None,
                 )
                 retry, _ = _limit_visible_words(retry, effective_response_length)
-                if not retry.strip():
+                if not retry.strip() and not control_signals:
                     raise AIError(
                         "Il provider AI e il modello di riserva hanno risposto senza "
                         "contenuto visibile. Riprova il turno."
@@ -1130,7 +1139,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 yield f"data: {_json.dumps({'display': response_content})}\n\n"
 
             if truncated and questionnaire_type != IDEA_INSTRUMENT:
-                yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value})}\n\n"
+                yield f"data: {_json.dumps({'done': True, 'incomplete': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals})}\n\n"
                 return
 
             # Transcript verbatim role-tagged per la sessione (Fase 2).
@@ -1186,7 +1195,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
                 finally:
                     recommendation_db.close()
 
-            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': recommended['strategy'], 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value})}\n\n"
+            yield f"data: {_json.dumps({'done': True, 'response': response_content, 'session_id': session_id, 'conversation_id': conversation_id, 'strategy_ids': strategy_ids, 'certified_strategy_ids': recommended['strategy'], 'response_id': response_id, 'idea_revision_id': idea_revision_id, 'recommendations': recommendations_for_response, 'event_booklet': booklet_draft, 'goal_draft': goal_draft_value, 'control_signals': control_signals})}\n\n"
         except Exception as e:
             logger.error(f"Errore stream chat session {session_id}: {e}")
             try:

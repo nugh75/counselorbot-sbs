@@ -34,6 +34,7 @@ from ..chat_logic import (
     _strip_generic_acknowledgement,
 )
 from .. import pii
+from .. import control_markers
 from ..api_models import SiteChatRequest
 from ..chat_logic import conversation_id_for, log_error, _portfolio_context
 from ..memory_service import session_memory
@@ -514,7 +515,7 @@ async def site_chat_stream(
                     continue
                 chunks.append(text)
                 display_response, truncated = _limit_visible_words(
-                    _strip_fonte_tokens("".join(chunks)), visible_length
+                    control_markers.strip_for_display(_strip_fonte_tokens("".join(chunks))), visible_length
                 )
                 event = {"display": display_response}
                 if request.response_length is None:
@@ -523,7 +524,9 @@ async def site_chat_stream(
                 if truncated:
                     break
 
-            answer = _strip_generic_acknowledgement(_strip_fonte_tokens("".join(chunks)))
+            answer = _strip_generic_acknowledgement(
+                control_markers.strip_control_markers(_strip_fonte_tokens("".join(chunks)))
+            )
             if request.partial_response and not "".join(chunks[1:]).strip():
                 raise AIError("The provider returned no continuation.")
             answer, truncated = _limit_visible_words(answer, visible_length)

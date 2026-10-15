@@ -9,6 +9,7 @@ from fpdf import FPDF
 from fpdf.enums import MethodReturnValue
 from PIL import Image, ImageDraw, ImageFont
 
+from .control_markers import strip_control_markers
 from .diagram_blocks import segments as diagram_segments
 from .diagram_render import DiagramSpec, DiagramSpecError, describe, render as render_diagram
 from .reading_frame import frame as reading_labels
@@ -705,7 +706,7 @@ def _text_card(
     text_color: tuple[int, int, int] = APP_TEXT,
     inset: float = 0,
 ) -> None:
-    cleaned = _latin1(_strip_markdown(text)).strip()
+    cleaned = _latin1(_strip_markdown(strip_control_markers(text))).strip()
     if not cleaned:
         return
     card_w = content_w - inset
@@ -892,7 +893,7 @@ def _render_conversation(
 
     for msg in messages:
         role = msg.get("role", "")
-        text = msg.get("text", "").strip()
+        text = strip_control_markers(msg.get("text"))
         if not text:
             continue
         label = ui["counselor"] if role == "counselor" else ui["student"]

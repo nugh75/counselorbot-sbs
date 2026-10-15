@@ -68,6 +68,7 @@ import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-cont
 import { EMPTY_RECOMMENDATIONS, normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 
 import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
+import { ADVANCE_STEP, stripControlMarkers, stripControlMarkersForDisplay } from '@/lib/control-markers';
 import { chatPreferenceLabel, essentialSteps, essentialReplyPhase, essentialAdvancesOnSignal, essentialSignalAdvances, essentialPhasesFor, isEssentialInstrument, isEssentialSummaryPhase, type ResponseFormat, type GuidedPath } from '@/lib/chat-preferences';
 import { isGoalInstrument, type GoalDraft } from '@/lib/goal-draft';
 import { GoalDraftCard } from '@/components/qsa/GoalDraftCard';
@@ -263,7 +264,6 @@ function normalizeLoadedSteps(questionnaireType: string, loadedSteps: StepDef[])
 
 const FIXED_QUESTIONS_ID = 'questions';
 const FIXED_CONCLUSION_ID = 'conclusion';
-const STEP_ADVANCE_MARKER = '[[AVANZA_STEP]]';
 
 // --- Sidebar section labels per prefix ---
 
@@ -543,13 +543,20 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // stata detta: entrando in un ramo nuovo la chat parte vuota, e a spiegare
     // dove si e' finiti ci pensa la scheda del ramo. Niente viene cancellato,
     // solo tenuto fuori dagli occhi.
+    // I segnali di controllo non si vedono mai, nemmeno nei testi ripresi da
+    // uno snapshot o arrivati a meta': una bolla fatta del solo segnale sparisce.
+    const displayedMessages = messages
+        .map((message, index) => ({
+            message: message.role === 'assistant' ? { ...message, content: stripControlMarkersForDisplay(message.content) } : message,
+            index,
+        }))
+        .filter(({ message, index }) => message.content.trim() || !messages[index].content.trim() || message.reasoning);
     const visibleMessages = (() => {
         if (!isIdea || !ideaFocus || ideaSegments.length === 0) {
-            return messages.map((message, index) => ({ message, index }));
+            return displayedMessages;
         }
         const opening = ideaSegments[0];
-        return messages
-            .map((message, index) => ({ message, index }))
+        return displayedMessages
             .filter(({ index }) => {
                 if (index < opening.start) return opening.branchId === ideaFocus;
                 const segment = ideaSegments.filter((row) => row.start <= index).pop();
@@ -916,12 +923,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         isAnalysisStep(phaseId) ? reasoningEffort : 'off'
     );
 
-    const extractAdvanceSignal = (rawText: string): { cleanText: string; shouldAdvance: boolean } => {
-        const shouldAdvance = rawText.includes(STEP_ADVANCE_MARKER);
-        const cleanText = rawText.replace(/\[\[AVANZA_STEP\]\]/g, '').trim();
-        return { cleanText, shouldAdvance };
-    };
-
     // Idea: dopo ogni turno il server dice quale passo ripara cio' che manca,
     // e quel passo diventa il contesto del turno seguente. Nessun avanzamento,
     // nessun ordine: si torna indietro quando serve.
@@ -1100,6 +1101,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             };
 
             let responseText = '';
+            let advanceSignal = false;
             let streamOk = false;
             let stepErrorCode: string | undefined;
             const updateLast = (content: string) => {
@@ -1122,6 +1124,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             try {
                 const result = await streamChat(buildPayload(false), (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
                 responseText = result.response || '';
+                advanceSignal = result.control_signals.includes(ADVANCE_STEP);
                 if (result.conversation_id) setConversationId(result.conversation_id);
                 adoptRecommendations(result.recommendations);
                 if (result.event_booklet) setEventBookletDraft(result.event_booklet);
@@ -1136,9 +1139,14 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 dropLast();
             }
 
-            if (streamOk && extractAdvanceSignal(responseText).cleanText) {
-                const { cleanText, shouldAdvance } = extractAdvanceSignal(responseText);
+            const cleanText = responseText.trim();
+            if (streamOk && cleanText) {
+                const shouldAdvance = advanceSignal;
                 updateLast(cleanText);
+                // Obiettivi: la sintesi è l'ultima fase, il percorso è concluso.
+                if (!essential && isGoalInstrument(questionnaireType) && step.id === phases[phases.length - 1]) {
+                    void recordMemoryEvent(step.id, true);
+                }
                 // Percorsi a intervista e QPCS: l'utente decide quando cambiare step.
                 // Non avanzare automaticamente sulla generazione dello step (nei
                 // percorsi a intervista resta valida solo la sintesi).
@@ -1318,8 +1326,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             refreshIdeaWorkspace(result.idea_revision_id);
             if (isIdea) setIdeaDrew(result.idea_revision_id != null);
 
-            // Sul testo completo applica il segnale di avanzamento
-            const { cleanText, shouldAdvance } = extractAdvanceSignal(response || '');
+            // Il segnale di avanzamento arriva fuori dal testo (filtro comune).
+            const cleanText = (response || '').trim();
+            const shouldAdvance = result.control_signals.includes(ADVANCE_STEP);
             if (cleanText) {
                 updateLast(cleanText);
             } else {
@@ -1546,8 +1555,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const awaitingAssistantBubble = lastVisible?.role === 'assistant' && !lastVisible.content.trim();
     const liveAnnouncement = isLoading
         ? t('guided.processing')
-        : lastMessage?.role === 'assistant' && lastMessage.content.trim()
-            ? lastMessage.content
+        : lastMessage?.role === 'assistant' && stripControlMarkers(lastMessage.content)
+            ? stripControlMarkers(lastMessage.content)
             : '';
 
     // Nessun segnaposto d'attesa: la casella resta scrivibile mentre la risposta

@@ -32,7 +32,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from ..chat_preferences import apply_response_format
-from .. import auth, class_access, database, models, pii
+from .. import auth, class_access, control_markers, database, models, pii
 from ..anonymous_codes import code_for_identity
 from ..ai_service import AIService
 from ..api_models import ChatRequest, OpencodeChatRequest, OpencodeWorkspaceRequest
@@ -1022,7 +1022,10 @@ async def chat_opencode(
                                     full_text = ""
                                 full_text += delta
                                 if text_part_count > 1:
-                                    display_text, _ = _limit_visible_words(request.partial_response + full_text, request.response_length)
+                                    display_text, _ = _limit_visible_words(
+                                        control_markers.strip_for_display(request.partial_response + full_text),
+                                        request.response_length,
+                                    )
                                     yield f"data: {json.dumps({'display': display_text})}\n\n"
                         elif event_type == "session.error":
                             error = properties.get("error") or "OpenCode error"
@@ -1049,7 +1052,7 @@ async def chat_opencode(
 
                             if request.partial_response and not full_text.strip():
                                 raise RuntimeError("The provider returned no continuation.")
-                            full_text = request.partial_response + full_text
+                            full_text = control_markers.strip_control_markers(request.partial_response + full_text)
                             full_text, _ = _limit_visible_words(full_text, request.response_length)
                             # Persist response as candidate for student feedback
                             response_id = None

@@ -17,6 +17,7 @@ from starlette.concurrency import run_in_threadpool
 
 from . import administration_context, class_access, database, models
 from .api_models import ChatRequest
+from .control_markers import strip_control_markers
 from .chat_logic import _ensure_questionnaire_guided_steps, strip_markdown
 from .diagram_blocks import extract as extract_diagrams
 from .diagram_render import DiagramSpecError, render as render_diagram
@@ -33,7 +34,6 @@ NARRATIVE_QUESTIONNAIRES = ("SAVICKAS", "IDEA")
 ALL_QUESTIONNAIRES = SCORE_QUESTIONNAIRES + NARRATIVE_QUESTIONNAIRES
 # Variante Idea usata dal bot: la stessa che il web propone di default.
 IDEA_DEFAULT_VARIANT = "student-path"
-STEP_ADVANCE_MARKER = "[[AVANZA_STEP]]"
 # Percorsi a intervista: ogni turno ripete le istruzioni del passo
 # (speculare a frontend/src/lib/interview-path.ts).
 INTERVIEW_PATH_QUESTIONNAIRES = ("SAVICKAS", "QPCC", "QAP")
@@ -654,7 +654,7 @@ async def _call_chat(db: Session, state: models.TelegramConversationState, *, me
         logger.exception("Telegram: errore pipeline chat (session %s)", state.session_id)
         return None
     state.conversation_id = result.get("conversation_id") or state.conversation_id
-    text = (result.get("response") or "").replace(STEP_ADVANCE_MARKER, "").strip()
+    text = strip_control_markers(result.get("response"))
     return strip_markdown(text)
 
 
