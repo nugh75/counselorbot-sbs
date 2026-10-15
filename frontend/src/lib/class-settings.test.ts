@@ -32,7 +32,11 @@ test('class settings labels cover six languages and fallback to English', () => 
     assert.equal(classSettingsText('sv', 'save'), 'Spara');
     assert.equal(classSettingsText('fr', 'overview'), 'Vue d’ensemble');
     assert.equal(classSettingsText('it', 'students'), 'Partecipanti e risultati');
-    assert.equal(classSettingsText('en', 'students'), 'Participants and results');
+    assert.equal(classSettingsText('it', 'inviteStudentsTitle'), 'Invito studenti');
+    assert.equal(classSettingsText('en', 'inviteStudentsTitle'), 'Student invitation');
+    assert.equal(classSettingsText('it', 'classDetailsTitle'), 'Anagrafica e informazioni di classe');
+    assert.equal(classSettingsText('en', 'shareWithColleagues'), 'Share with colleagues & tutors');
+    assert.equal(classSettingsText('it', 'classStatusTitle'), 'Stato e gestione classe');
     assert.equal(classSettingsText('unknown', 'save'), 'Save');
 });
 

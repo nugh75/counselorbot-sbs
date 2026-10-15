@@ -21,6 +21,7 @@ import { TeacherForbidden, TeacherLoading } from './TeacherAccess';
 import { ClassSettingLock } from './ClassSettingLock';
 import { ClassSettingsAudit } from './ClassSettingsAudit';
 import { ClassPathsTab } from './ClassPathsTab';
+import { ClassOverviewTab } from './ClassOverviewTab';
 import { PlanStudentsPanel } from '@/components/admin/PlanStudentsPanel';
 import { useTeacherAccessState } from './useTeacherAccessState';
 import { useTeacherResource } from './useTeacherResource';
@@ -358,11 +359,16 @@ function ClassDetail({ groupId, admin, adminRoute }: { groupId: number; admin: b
                 }} className={`min-h-[44px] rounded-md px-4 text-sm font-semibold ${tab === key ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}>{l(key)}</button>)}
         </div>
         <div id="class-panel-overview" role="tabpanel" aria-labelledby="class-tab-overview" hidden={tab !== 'overview'} tabIndex={0}>
-            <Card><p className="font-mono text-sm text-slate-600">{group.code}</p>
-                {group.description && <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{group.description}</p>}
-                {group.methodologies && <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{group.methodologies}</p>}
-                <Link href="/docente/classi" className="mt-3 inline-flex min-h-[44px] items-center text-sm text-indigo-700">{l('back')}</Link>
-            </Card>
+            {tab === 'overview' && (
+                <ClassOverviewTab
+                    group={group}
+                    settings={settings.data}
+                    onReload={() => { void groups.reload(); void settings.reload(); }}
+                    onSelectTab={(newTab) => setTab(newTab)}
+                    admin={admin}
+                    adminRoute={adminRoute}
+                />
+            )}
         </div>
         <div id="class-panel-students" role="tabpanel" aria-labelledby="class-tab-students" hidden={tab !== 'students'} tabIndex={0}>
             {tab === 'students' && <PlanStudentsPanel base={`/api/admin/groups/${groupId}`} withNotes />}
