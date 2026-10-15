@@ -1,3 +1,47 @@
+# Handoff S15: Ripristino token palette brand petrolio (indigo) nei componenti di classe (Issue #282)
+Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
+
+- Titolo: 'fix: align class components to indigo petrol brand palette'
+- Branch: `fix/restore-brand-petrol-palette`
+- Issue collegate: Closes #282
+- Obiettivo:
+  Correggere la palette cromatica nei componenti di classe ripristinando l'uso dei token ufficiali della scala `indigo-*` (rimappata su verde petrolio istituzionale `#155e63` in `globals.css`), rimuovendo le utility `emerald-*` e `teal-*` usate erroneamente per controlli UI, pulsanti, tab, link, breadcrumb e bordi.
+- Modifiche realizzate:
+  1. `frontend/src/components/admin/GroupsPanel.tsx`:
+     - Pulsante «+ Nuova classe» e pulsante di submit form «Crea»: allineati a `bg-indigo-600 hover:bg-indigo-700 text-white`.
+     - Input e select di creazione classe: focus ring allineato a `focus:border-indigo-600`.
+     - Link al titolo classe: hover allineato a `hover:text-indigo-700`.
+     - Pulsanti «Apri classe →»: allineati a `bg-indigo-600 hover:bg-indigo-700`.
+     - Scorciatoie veloci (Partecipanti, Strumenti, Percorsi): hover allineato a `hover:text-indigo-700`.
+     - Badge «Condivisa»: bordo e testo allineati a `border-indigo-200 bg-indigo-50 text-indigo-700`.
+     - Icona/bottone copia codice: hover allineato a `hover:text-indigo-700`.
+  2. `frontend/src/components/teacher/ClassOverviewTab.tsx`:
+     - Card indicatori metriche (Partecipanti, Strumenti, Percorsi, Forum): `hover:border-indigo-300`, `bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100`, `text-indigo-700`.
+     - Icone d'intestazione sezioni (`UserPlus`, `Share2`, `FileText`, `Power`): `text-indigo-700`.
+     - Box Codice Classe in evidenza: `border-indigo-100 bg-indigo-50/50`, `text-indigo-900`, `text-indigo-950`.
+     - Checkbox visibilità contesto studenti nel form: `text-indigo-600 focus:ring-indigo-500`.
+     - Mantenute le utility semantiche `emerald` per stati di successo (badge «Attiva», messaggi di salvataggio riuscito e icona Check di copia).
+  3. `frontend/src/components/teacher/ClassSettingsPage.tsx`:
+     - Checkbox e radio button di counselor, strumenti, assistente personale e forum: ripristinato `accent-indigo-600`.
+     - Link «Indietro»: ripristinato `text-indigo-700 hover:text-indigo-800`.
+     - Tab attiva: ripristinato `bg-indigo-50 text-indigo-700`.
+  4. `frontend/src/components/admin/AdminClassesPanel.tsx`:
+     - Link modifica/audit e link studenti: ripristinato `text-indigo-700 hover:text-indigo-800 underline`.
+  5. `frontend/src/components/teacher/ClassQuickSwitcher.tsx`:
+     - Select switcher rapido: hover e focus ring allineati a `hover:border-indigo-400 focus:border-indigo-500 focus:ring-indigo-500/20`.
+  6. `frontend/src/components/teacher/TeacherBreadcrumbs.tsx`:
+     - Link breadcrumbs: hover e focus outline allineati a `hover:text-indigo-700 focus-visible:outline-indigo-600`.
+  7. `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`:
+     - Aggiornata la documentazione delle funzionalità per specificare l'uso dei token istituzionali `indigo-*` (petrol) e allineato lo stato della guida di piattaforma con `make guidance-refresh`.
+- Verifiche superate:
+  - TypeScript: `npx tsc --noEmit` (0 errori, Node v22.23.3).
+  - Test unitari frontend: `npm test` (458/458 superati, 0 fallimenti).
+  - Controllo localizzazione: `node scripts/check-i18n.mjs` (3.329 chiavi verificate in 6 lingue).
+  - Guida di piattaforma: `make guidance-refresh && make guidance-check` (0 violazioni, documentazione allineata).
+  - CI diff guidance: `python3 scripts/check-platform-guidance.py --base origin/main` (0 violazioni).
+
+---
+
 # Handoff S14: Allineamento navigazione admin, breadcrumb e test di integrazione gestione classi (Issue #278)
 Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
 
