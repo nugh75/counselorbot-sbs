@@ -152,6 +152,28 @@ la riflessione sui fattori; un punteggio alto non è sempre un punto di forza, p
 alcuni fattori sono invertiti. Non si fanno diagnosi. La scheda di ciascuno strumento
 (`/strumenti/<codice>`) ne spiega finalità, svolgimento e dati necessari.
 
+Nelle chat guidate dei questionari, anche con Iride, dopo la lettura del profilo
+una domanda contestualizzata aiuta la persona a scegliere cosa comprendere meglio.
+Durante gli approfondimenti il counselor accompagna gradualmente dall’esperienza
+e dalla sua interpretazione a ciò che resta da capire, con una domanda principale
+per turno. A fine area può invitare a formulare una propria domanda, con parole
+legate alla conversazione e senza una formula fissa. L’invito è facoltativo: una
+domanda spontanea viene accolta, chi fatica riceve prima un sostegno leggero per
+individuare cosa vorrebbe capire, e si può saltare o proseguire senza giustificarsi.
+La sintesi privilegia le domande personali espresse e le eventuali correzioni,
+rispetta quelle ritirate e le distingue dalle proposte del counselor; quando il
+passo consente una domanda conclusiva, invita a scegliere quali continuare a
+esplorare. Non richiede un piano o una decisione. Le domande restano
+nella trascrizione della sessione già prevista; non viene creato un nuovo registro.
+La strategia riguarda QSA, QSAr, ZTPI, QPCS, QPCC, QAP e l’intervista narrativa
+Savickas; viene applicata dal contratto del turno anche ai prompt già configurati,
+senza riscriverli nel database. Cambia il modo di porre le domande: numero e ordine
+dei passi, domande previste, consenso e avanzamento restano quelli di ciascun
+percorso. L’autointerrogazione non aggiunge turni obbligatori né condizioni per
+proseguire; usa le domande disponibili nel passo, senza superarne il limite, e
+non insiste se la difficoltà persiste. Il QPCS conserva le sue cinque aree. Nel percorso essenziale restano
+validi i limiti dei turni e della sintesi, che non richiede altre risposte.
+
 Il **QPCC di Pellerey–Orio** è rivolto a giovani e adulti in cerca di occupazione
 o in contesti professionali relazionali. Il questionario canonico ha 63 item,
 quattro dimensioni connesse e dieci scale, con punteggi stanine 1–9:

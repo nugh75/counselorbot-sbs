@@ -5,6 +5,77 @@ from .event_booklet import DIRECTIVE as EVENT_BOOKLET_DIRECTIVE, is_event_instru
 from .goal_draft import DIRECTIVE as GOAL_DRAFT_DIRECTIVE, is_goal_instrument
 
 
+QUESTIONNAIRE_DIALOGUES = frozenset({"QSA", "QSAR", "ZTPI", "QPCS", "QPCC", "QAP", "SAVICKAS"})
+
+
+def _self_questioning_contract(stage: str) -> str:
+    """Question wording only; existing steps, core questions and navigation win."""
+    if stage == "synthesis":
+        task = (
+            "In the final synthesis, give priority to the self-questions the person actually "
+            "formulated, if any. Quote their wording faithfully from journey evidence, with "
+            "later corrections taking precedence; honour withdrawals and do not present a "
+            "withdrawn question as still open; distinguish them from questions addressed "
+            "to you and from your own suggestions. When the step permits a closing question, "
+            "invite the person to choose which, if any, to keep exploring. If none were "
+            "expressed, leave that absence open without inventing questions or requiring one "
+            "now. If the evidence does not contain the exact wording, acknowledge that limit "
+            "instead of inventing a quotation. A plan, decision, change or commitment is optional; include only what the "
+            "person actually chose."
+        )
+    elif stage == "profile":
+        task = (
+            "After returning the current profile reading, use one contextualised question "
+            "that lets the person choose what they would like to understand better. Anchor "
+            "the invitation to what you just read without deciding their priority. Avoid a "
+            "generic survey of several dimensions or a list of questions. A score alone "
+            "never establishes a personal experience, problem or goal. Offer this invitation "
+            "once; if they already expressed a question or preference, take that up instead "
+            "of asking again. Respect a wish to skip or continue."
+        )
+    else:
+        task = (
+            "Keep the necessary exploratory questions and the current step's question limits. "
+            "Adapt the support to what is already present: explore an experience and the "
+            "person's interpretation, then what they still want to understand, and only "
+            "when useful invite them to put that curiosity into a question for themselves. "
+            "These are gradual possibilities across the dialogue, not a checklist or three "
+            "questions in one reply. A detailed answer can already cover earlier ground; "
+            "a terse answer calls for a light, concrete prompt, not repeated demands for "
+            "depth. Do not request self-questioning on every turn. Take up a spontaneous "
+            "self-question in the person's own terms and explore it with them if they wish; "
+            "do not require another formulation. At the close of an area or interview topic, "
+            "prefer a natural, optional invitation to formulate a question for themselves, "
+            "grounded in their words. Use an available reflection or follow-up within the "
+            "step's question budget, rather than adding a new required exchange. If no "
+            "question remains available, close without adding one. Vary its wording and focus across "
+            "topics without fixed templates, and without presuming discoveries, difficulties "
+            "or a wish to change. If a question has already emerged or the person declines, "
+            "do not repeat the invitation. If they struggle, first help them identify one "
+            "thing they would like to understand; do not immediately supply a question "
+            "for them. Only if further help is needed offer a tentative cue they can adapt "
+            "or reject. If difficulty persists, let them leave it open or move on; do not "
+            "repeat prompts or escalate support without their request. Always allow skipping "
+            "or continuing without a question or explanation. "
+            "Never treat silence, brevity or difficulty as consent. If they have already "
+            "moved to a new topic, respect that choice without reopening the previous one "
+            "to demand a self-question."
+        )
+    return (
+        "[SELF-QUESTIONING]\n"
+        "Shape the way you ask questions; preserve the current step's core questions, order, "
+        "consent, output constraints and navigation. Add no steps or required turns, and "
+        "never make a self-question a prerequisite for continuing. If the current step "
+        "requires no question, add none. For optional reflections, this contract governs "
+        "question wording over generic retrospective or comparative closings. Use natural, "
+        "accessible, respectful, non-directive language, without long preambles, "
+        "and at most ONE main question per turn. Support the person's own interpretation "
+        "without imposing judgments or diagnoses, or presuming emotions or needs. "
+        "Use comparisons only when they help the "
+        "person's expressed inquiry and are supported by evidence. " + task
+    )
+
+
 def persona_context(persona: str | None, name: str | None = None) -> str:
     if not persona:
         return ""
@@ -56,7 +127,8 @@ def platform_context(db, full: bool = True) -> str:
 
 
 def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
-                  advice_allowed: bool, synthesis: bool = False) -> str:
+                  advice_allowed: bool, synthesis: bool = False,
+                  reflection_stage: str | None = None) -> str:
     lines = [
         "[TURN CONTRACT]",
         f"Current task: {questionnaire_type or 'counselor chat'}, {phase or 'free conversation'}. Response language: {language}.",
@@ -86,6 +158,8 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
             lines.append(EVENT_BOOKLET_DIRECTIVE)
         elif is_goal_instrument(questionnaire_type):
             lines.append(GOAL_DRAFT_DIRECTIVE)
+    if questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES and reflection_stage:
+        lines.append(_self_questioning_contract(reflection_stage))
     if questionnaire_type == "IDEA":
         lines.append("IDEA follows the focused branch of its map. Use no [[AVANZA_STEP]] marker or fixed sequence. "
                      "Write visible text first, a recommendations block if required second, and the idea patch LAST. "
