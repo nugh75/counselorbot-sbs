@@ -297,7 +297,7 @@ export default function AdminPage() {
                         {activeTab === 'questionnaires' && <QuestionnaireEditor />}
                         {activeTab === 'researchContacts' && <ResearchContactsPanel />}
                         {activeTab === 'administrationPlans' && <AdministrationPlansPanel />}
-                        {activeTab === 'groupsClasses' && <div className="space-y-6">{classAdmin && <AdminClassesPanel />}<GroupsPanel /></div>}
+                        {activeTab === 'groupsClasses' && <div className="space-y-6">{classAdmin && <AdminClassesPanel />}<GroupsPanel basePath="/admin/classi" /></div>}
                         {activeTab === 'usersSummary' && <UsersSummaryPanel />}
                         {activeTab === 'training' && <TrainingDatasetPanel />}
                         {activeTab === 'pqbl' && <PqblAdminPanel />}

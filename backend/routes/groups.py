@@ -65,6 +65,7 @@ def _valid_level(value) -> str | None:
 
 
 def _serialize_group(db: Session, group: models.StudentGroup) -> dict:
+    shares_count = db.query(models.GroupShare).filter(models.GroupShare.group_id == group.id).count()
     return {
         "id": group.id,
         "code": group.code,
@@ -79,6 +80,7 @@ def _serialize_group(db: Session, group: models.StudentGroup) -> dict:
         "owner_username": group.owner_username,
         "is_active": group.is_active,
         "members_count": _members_count(db, group.id),
+        "shares_count": shares_count,
         "created_at": group.created_at.isoformat() if group.created_at else None,
     }
 

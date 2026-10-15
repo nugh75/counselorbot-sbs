@@ -1,3 +1,33 @@
+# Handoff S13: Snellimento directory classi in GroupsPanel con accesso diretto all'Hub di classe (Issue #277)
+Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
+
+- Titolo: 'Area Docente e Admin: snellire la directory classi in GroupsPanel con accesso diretto all'Hub di classe'.
+- Branch: `feature/groups-panel-streamlining`
+- Issue collegate: Closes #277
+- Modifiche realizzate:
+  1. `frontend/src/components/admin/GroupsPanel.tsx`:
+     - Rimosse le pesanti sezioni duplicate e i relativi accordion (inclusione di `PlanStudentsPanel`, `GroupAssignments`, box link invito e box di condivisione colleghi con check-boxes, ora centralizzati nella tab Panoramica dell'Hub di classe).
+     - Trasformata la lista in una directory di classi pulita, compatta e moderna sia per docenti (`/docente/classi`) che per amministratori (`/admin?tab=groupsClasses`).
+     - Aggiunta prop opzionale `basePath?: string` con fallback dinamico su `/admin/classi` se il pathname inizia con `/admin`, altrimenti `/docente/classi`.
+     - Ciascuna scheda classe mostra: nome della classe con link diretto a `{basePath}/{group.id}`, codice classe (`group.code`) in font mono con icona/bottone rapido per copiare negli appunti (e feedback visivo temporaneo), numero iscritti (`group.members_count`), scuola/istituto, docente proprietario (`group.owner_username`), badge di stato («Attiva» in verde emerald o «Inattiva» in slate) e badge «Condivisa» in teal (se condivisa con altri colleghi o se l'utente corrente non è il proprietario).
+     - Pulsante d'azione primario evidente: «Apri classe →» (`min-h-11`, touch target >= 44px) con link a `{basePath}/{group.id}`.
+     - Scorciatoie rapide alle tab più usate: Studenti (`?tab=students`), Strumenti e counselor (`?tab=tools`), Didattica/Percorsi (`?tab=paths`).
+     - Form compatto per la creazione rapida («+ Nuovo gruppo o classe») a 4 campi; al salvataggio con successo (`POST /api/admin/groups`), reindirizza direttamente all'Hub della nuova classe creata (`router.push('${basePath}/${createdGroup.id}')`).
+     - Puliti tutti gli import e gli stati inutilizzati (`PlanStudentsPanel`, `GroupAssignments`, `allUsers`, ecc.).
+  2. `frontend/src/app/admin/page.tsx`: passato esplicitamente `basePath="/admin/classi"` a `<GroupsPanel />`.
+  3. `backend/routes/groups.py` e `frontend/src/components/teacher/class-group-types.ts`: aggiunto `shares_count` alla serializzazione del gruppo (`StudentGroup`), permettendo di determinare immediatamente lo stato di condivisione della classe.
+  4. `frontend/src/lib/i18n-class-settings.ts` e `frontend/src/components/teacher/class-group-texts.ts`: aggiunte tutte le traduzioni per stato attivo/inattivo, condivisa, copia codice, ecc. nelle 6 lingue ufficiali (`it`, `en`, `es`, `fr`, `de`, `sv`).
+  5. `frontend/src/lib/groups-directory.test.ts`: test unitari per la risoluzione del `basePath`, per la determinazione dello stato «Condivisa», per la persistenza di `shares_count` in `parseClassGroups` e per la completezza delle traduzioni nelle 6 lingue.
+  6. `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`: aggiornata la documentazione delle funzionalità per la Issue #277 e allineato il manifest di guida di piattaforma con `make guidance-refresh`.
+- Verifiche superate:
+  - Controllo tipi TypeScript: `npx tsc --noEmit` (0 errori).
+  - Test unitari frontend: `npm test` (456/456 superati, 0 fallimenti).
+  - Controllo localizzazione: `node scripts/check-i18n.mjs` (3.329 chiavi verificate).
+  - Guida di piattaforma: `make guidance-refresh && make guidance-check` (0 violazioni, documentazione allineata).
+- Conformità brand: utilizzo esclusivo della palette verde (`emerald`, `teal`, petrol `#17747a`), nessun viola/purple.
+
+---
+
 # Handoff S12: Allineamento colori Palestra di prova (Area Docente) alla palette verde/petrol del brand
 Data: 2026-10-15 | Stato: completato, verificato, pronto per commit/PR
 
