@@ -59,8 +59,8 @@ function ClassDirectory({ rows }: { rows: AdminClass[] }) {
                     <p>{l('owner')}: {row.owner_display_name || row.owner_username}</p><p>{row.members_count} {l('members')}</p><p>{l(row.is_active ? 'active' : 'inactive')}</p></div>
                 {row.co_teachers.length > 0 && <p>{row.co_teachers.join(' · ')}</p>}
                 <p>{row.has_custom_settings && `${l('customSettings')} · `}{l('lockCount')}: {row.locked_items_count}</p>
-                <Link href={`/admin/classi/${row.id}`} className="inline-flex min-h-[44px] items-center text-indigo-700 underline">{l('adminEdit')} · {l('audit')}</Link>
-                <Link href="/docente/classi" className="ml-4 inline-flex min-h-[44px] items-center text-indigo-700 underline">{l('students')}</Link>
+                <Link href={`/admin/classi/${row.id}`} className="inline-flex min-h-[44px] items-center text-teal-700 hover:text-teal-800 underline">{l('adminEdit')} · {l('audit')}</Link>
+                <Link href={`/admin/classi/${row.id}?tab=students`} className="ml-4 inline-flex min-h-[44px] items-center text-teal-700 hover:text-teal-800 underline">{l('students')}</Link>
             </article></Card>)}
         </>}
     </div>;

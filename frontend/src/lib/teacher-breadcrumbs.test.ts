@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { getTeacherBreadcrumbsForSlug } from './teacher-breadcrumbs.ts';
+import { getClassBreadcrumbs, getTeacherBreadcrumbsForSlug } from './teacher-breadcrumbs.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
 import { teacherAreaSlugs } from './teacher-area.ts';
 import type { Lang } from './i18n.ts';
@@ -92,5 +92,62 @@ test('computeClassSwitchUrl preserves active tabs and handles overview properly'
     assert.equal(active.length, 2);
     assert.deepEqual(active.map((g: { id: number }) => g.id), [1, 3]);
     assert.deepEqual(getActiveSwitchGroups(undefined), []);
+
+    // Custom basePath support (e.g. /admin/classi)
+    assert.equal(computeClassSwitchUrl(42, undefined, '/admin/classi'), '/admin/classi/42');
+    assert.equal(computeClassSwitchUrl(42, 'overview', '/admin/classi'), '/admin/classi/42');
+    assert.equal(computeClassSwitchUrl(42, 'students', '/admin/classi'), '/admin/classi/42?tab=students');
+    assert.equal(computeClassSwitchUrl(42, 'toolsTab', '/admin/classi'), '/admin/classi/42?tab=toolsTab');
+    assert.equal(computeClassSwitchUrl(42, 'paths', '/admin/classi'), '/admin/classi/42?tab=paths');
+});
+
+test('getClassBreadcrumbs generates correct hierarchy for teacher and admin routes', () => {
+    for (const lang of languages) {
+        // Teacher route overview: [Area docenti, Classe 3A]
+        const teacherOverview = getClassBreadcrumbs('Classe 3A', 10, 'overview', lang, false);
+        assert.equal(teacherOverview.length, 2);
+        assert.equal(teacherOverview[0].href, '/docente');
+        assert.equal(teacherOverview[1].label, 'Classe 3A');
+        assert.equal(teacherOverview[1].href, undefined);
+        assert.equal(teacherOverview[1].current, true);
+
+        // Teacher route sub-tab: [Area docenti, Classe 3A (link), Tab]
+        const teacherStudents = getClassBreadcrumbs('Classe 3A', 10, 'students', lang, false);
+        assert.equal(teacherStudents.length, 3);
+        assert.equal(teacherStudents[0].href, '/docente');
+        assert.equal(teacherStudents[1].label, 'Classe 3A');
+        assert.equal(teacherStudents[1].href, '/docente/classi/10');
+        assert.equal(teacherStudents[1].current, false);
+        assert.equal(teacherStudents[2].current, true);
+        assert.ok(teacherStudents[2].label && teacherStudents[2].label.trim().length > 0);
+
+        // Admin route overview: [Dashboard Admin, Classi, Classe 3A]
+        const adminOverview = getClassBreadcrumbs('Classe 3A', 10, 'overview', lang, true);
+        assert.equal(adminOverview.length, 3);
+        assert.equal(adminOverview[0].href, '/admin');
+        assert.ok(adminOverview[0].label && adminOverview[0].label.trim().length > 0);
+        assert.equal(adminOverview[1].href, '/admin?tab=groupsClasses');
+        assert.ok(adminOverview[1].label && adminOverview[1].label.trim().length > 0);
+        assert.equal(adminOverview[2].label, 'Classe 3A');
+        assert.equal(adminOverview[2].href, undefined);
+        assert.equal(adminOverview[2].current, true);
+
+        // Admin route sub-tab: [Dashboard Admin, Classi, Classe 3A (link), Tab]
+        for (const subTab of ['students', 'toolsTab', 'paths', 'forum', 'audit'] as const) {
+            const adminTab = getClassBreadcrumbs('Classe 3A', 10, subTab, lang, true);
+            assert.equal(adminTab.length, 4);
+            assert.equal(adminTab[0].href, '/admin');
+            assert.equal(adminTab[1].href, '/admin?tab=groupsClasses');
+            assert.equal(adminTab[2].label, 'Classe 3A');
+            assert.equal(adminTab[2].href, '/admin/classi/10');
+            assert.equal(adminTab[2].current, false);
+            assert.equal(adminTab[3].current, true);
+            assert.ok(adminTab[3].label && adminTab[3].label.trim().length > 0);
+        }
+
+        // Fallback name when empty
+        const fallback = getClassBreadcrumbs('', 10, 'overview', lang, false);
+        assert.ok(fallback[1].label && fallback[1].label.trim().length > 0);
+    }
 });
 

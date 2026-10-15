@@ -128,3 +128,22 @@ test('directory i18n keys are present and localized across all 6 languages', () 
         assert.ok(groupDict.ownerLabel, `Missing ownerLabel in ${lang}`);
     }
 });
+
+test('admin class links route directly to the admin class hub and tabs', () => {
+    const adminBasePath = resolveBasePath(undefined, '/admin?tab=groupsClasses');
+    assert.equal(adminBasePath, '/admin/classi');
+
+    const groupId = 55;
+    // Overview Hub Link
+    const overviewHref = `${adminBasePath}/${groupId}`;
+    assert.equal(overviewHref, '/admin/classi/55');
+
+    // Students Tab Link (replaces legacy /docente/classi redirection)
+    const studentsHref = `${adminBasePath}/${groupId}?tab=students`;
+    assert.equal(studentsHref, '/admin/classi/55?tab=students');
+
+    // Tools and Paths tabs
+    assert.equal(`${adminBasePath}/${groupId}?tab=tools`, '/admin/classi/55?tab=tools');
+    assert.equal(`${adminBasePath}/${groupId}?tab=paths`, '/admin/classi/55?tab=paths');
+});
+
