@@ -1,5 +1,6 @@
 # Handoff S8: fasi Obiettivo con etichette d'azione e marcatore sempre nascosto
 Data: 2026-10-15 | Branch: `feature/goal-guided-phase-redesign` (da `origin/main` d5edc358) | Agente: `s8-fasi-obiettivo` | Task `155e1298`
+PR: https://github.com/nugh75/counselorbot-sbs/pull/293 (Project CounselorBot, verso `main`). Revisione cross-modello: a scelta dell'utente.
 
 ## Piano (scritto prima delle modifiche)
 
