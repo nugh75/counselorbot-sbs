@@ -23,6 +23,7 @@ import re
 
 from . import models, recommendation_service
 from .diagram_blocks import strip_for_speech
+from .control_markers import strip_control_markers
 
 MAX_ANSWERS = 6
 KEEP_RECENT = 2
@@ -251,7 +252,7 @@ def _replayed(rows: list, step_id: str | None) -> bool:
 
 
 def _visible(row) -> str:
-    return strip_for_speech((row.details or {}).get("bot_response") or "")
+    return strip_for_speech(strip_control_markers((row.details or {}).get("bot_response")))
 
 
 def _proposed_action(rows: list) -> str:

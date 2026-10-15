@@ -26,6 +26,7 @@ import remarkGfm from 'remark-gfm';
 import { useI18n } from '@/lib/i18n-context';
 import { Button } from '@/components/ui/Button';
 import { ChatBubble } from '@/components/ui/ChatBubble';
+import { stripControlMarkers } from '@/lib/control-markers';
 
 type LogDetails = Record<string, unknown>;
 
@@ -1239,7 +1240,9 @@ export function LogViewer() {
                             {!sessionLoading && sessionLogs.map((log) => {
                                 const details = asObject(log.details);
                                 const userText = firstText(details, ['user_input', 'effective_user_input', 'question']);
-                                const botText = firstText(details, ['bot_response', 'answer']);
+                                // La conversazione si legge come in chat: i log scritti prima
+                                // del filtro comune possono ancora avere segnali di controllo.
+                                const botText = stripControlMarkers(firstText(details, ['bot_response', 'answer']));
                                 const error = textValue(details.error);
                                 return (
                                     <article key={log.id} className="min-w-0 space-y-3">

@@ -15,6 +15,7 @@ from ..validation_export import build_validation_csv, validation_query, validati
 from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from ..pdf_generator import generate_questionnaire_pdf
 from ..diagram_blocks import strip_for_speech
+from ..control_markers import strip_control_markers
 from ..message_diagrams import attach_message_diagrams
 from ..visual_tools import load_workspace
 from ..ai_service import AIService
@@ -612,7 +613,8 @@ def _session_conversation_messages(db: Session, session_id: str) -> list[dict]:
     for row in log_rows:
         d = row.details or {}
         user_input = (d.get("user_input") or "").strip()
-        bot_response = (d.get("bot_response") or "").strip()
+        # Log scritti prima del filtro comune possono ancora contenere segnali.
+        bot_response = strip_control_markers(d.get("bot_response"))
         if user_input:
             messages.append({"role": "student", "text": user_input})
         if bot_response:
@@ -668,7 +670,7 @@ def _final_step_summary(
         .order_by(models.Log.timestamp.desc(), models.Log.id.desc())
         .first()
     )
-    summary = ((row.details or {}).get("bot_response") or "").strip() if row else ""
+    summary = strip_control_markers((row.details or {}).get("bot_response")) if row else ""
     return (summary or None), (row.id if row else None)
 
 

@@ -7202,8 +7202,9 @@ def test_every_gate_that_would_silently_exclude_obiettivo_lets_it_through():
 
     assert MODE_TO_SYSTEM_PROMPT_KEY["obiettivo-interview"] == "prompt_obiettivo_interview"
     assert MODE_TO_SYSTEM_PROMPT_KEY["obiettivo-summary"] == "prompt_obiettivo_summary"
-    assert len(DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS) == 9
-    assert len(DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS) == 9
+    # Passaggio iniziale (presentazione e accordo) e cinque fasi d'azione.
+    assert len(DEFAULT_OBIETTIVO_STUDIO_GUIDED_STEPS) == 6
+    assert len(DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS) == 6
     # Le varianti docenza portano il contenuto progettuale (allineamento), non
     # il piano personale dello studente.
     docenza_piano = next(step for step in DEFAULT_OBIETTIVO_DOCENZA_GUIDED_STEPS if step["id"] == "obbdocenza-piano")
@@ -7222,7 +7223,7 @@ def test_every_gate_that_would_silently_exclude_obiettivo_lets_it_through():
                 .filter(models.GuidedStep.questionnaire_type == code)
                 .all()
             )
-            assert len(steps) == 9, f"gli step di {code} non sono stati seminati"
+            assert len(steps) == 6, f"gli step di {code} non sono stati seminati"
             for step in steps:
                 assert (step.label_i18n or {}).get("sv"), f"{step.id} senza traduzioni"
     finally:

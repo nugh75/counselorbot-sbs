@@ -5,6 +5,8 @@
 import { withViewAsHeaders } from './auth.ts';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
 import { chatHTTPErrorCode, safeChatErrorCode } from './chat-errors.ts';
+// @ts-expect-error -- Node's direct TypeScript runner requires the extension.
+import { CONTROL_MARKERS, extractControlSignals, stripControlMarkersForDisplay, type ControlSignal } from './control-markers.ts';
 import type { RecommendationCatalog } from '@/lib/recommendations';
 import type { EventBookletDraft } from '@/lib/event-booklet';
 import type { GoalDraft } from '@/lib/goal-draft';
@@ -20,11 +22,13 @@ export interface ChatStreamResult {
     recommendations?: RecommendationCatalog;
     event_booklet?: EventBookletDraft | null;
     goal_draft?: GoalDraft | null;
+    // Segnali di controllo del modello (es. AVANZA_STEP): mai nel testo.
+    control_signals: ControlSignal[];
 }
 
 export class IncompleteChatStreamError extends Error {
-    partial: ChatStreamResult;
-    constructor(partial: ChatStreamResult, options?: ErrorOptions) {
+    partial: Omit<ChatStreamResult, 'control_signals'>;
+    constructor(partial: Omit<ChatStreamResult, 'control_signals'>, options?: ErrorOptions) {
         super('The response was interrupted before completion.', options);
         this.name = 'IncompleteChatStreamError';
         this.partial = partial;
@@ -76,6 +80,9 @@ export async function streamChat(
     let recommendations: RecommendationCatalog | undefined;
     let eventBooklet: EventBookletDraft | null | undefined;
     let goalDraftValue: GoalDraft | null | undefined;
+    let serverSignals: string[] = [];
+    // Ogni testo che esce di qui passa dal filtro comune dei segnali.
+    const emit = () => onDelta(stripControlMarkersForDisplay(full));
 
     try {
         for (;;) {
@@ -92,7 +99,7 @@ export async function streamChat(
                 const json = line.slice(5).trim();
                 if (!json) continue;
 
-                let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; incomplete?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; recommendations?: RecommendationCatalog; event_booklet?: EventBookletDraft | null; goal_draft?: GoalDraft | null; error?: string; error_code?: string };
+                let evt: { delta?: string; display?: string; reasoning?: string; done?: boolean; incomplete?: boolean; response?: string; session_id?: string; conversation_id?: string; strategy_ids?: string[]; response_id?: string; idea_revision_id?: number; sources?: string[]; recommendations?: RecommendationCatalog; event_booklet?: EventBookletDraft | null; goal_draft?: GoalDraft | null; control_signals?: string[]; error?: string; error_code?: string };
                 try {
                     evt = JSON.parse(json);
                 } catch {
@@ -112,16 +119,17 @@ export async function streamChat(
                 }
                 if (typeof evt.display === 'string') {
                     full = evt.display;
-                    onDelta(full);
+                    emit();
                 } else if (typeof evt.delta === 'string') {
                     full += evt.delta;
-                    onDelta(full);
+                    emit();
                 }
                 if (evt.done) {
                     completed = true;
                     incomplete = evt.incomplete === true;
                     if (typeof evt.response === 'string') full = evt.response;
-                    if (incomplete) onDelta(full);
+                    if (incomplete) emit();
+                    if (Array.isArray(evt.control_signals)) serverSignals = evt.control_signals;
                     sessionId = evt.session_id ?? sessionId;
                     conversationId = evt.conversation_id ?? conversationId;
                     strategyIds = evt.strategy_ids;
@@ -137,14 +145,17 @@ export async function streamChat(
         }
     } catch (error) {
         if (signal?.aborted || !full.trim()) throw error;
-        throw new IncompleteChatStreamError({ response: full, session_id: sessionId, conversation_id: conversationId }, { cause: error });
+        throw new IncompleteChatStreamError({ response: extractControlSignals(full).visible, session_id: sessionId, conversation_id: conversationId }, { cause: error });
     } finally {
         await reader.cancel().catch(() => {});
         reader.releaseLock();
     }
     if (!completed || incomplete) {
-        throw new IncompleteChatStreamError({ response: full, session_id: sessionId, conversation_id: conversationId });
+        throw new IncompleteChatStreamError({ response: extractControlSignals(full).visible, session_id: sessionId, conversation_id: conversationId });
     }
 
-    return { response: full, session_id: sessionId, conversation_id: conversationId, strategy_ids: strategyIds, response_id: responseId, idea_revision_id: ideaRevisionId, sources, recommendations, event_booklet: eventBooklet, goal_draft: goalDraftValue };
+    const { visible, signals } = extractControlSignals(full);
+    const known = serverSignals.filter((name): name is ControlSignal => (CONTROL_MARKERS as readonly string[]).includes(name));
+    const controlSignals = [...new Set<ControlSignal>([...known, ...signals])];
+    return { control_signals: controlSignals, response: visible, session_id: sessionId, conversation_id: conversationId, strategy_ids: strategyIds, response_id: responseId, idea_revision_id: ideaRevisionId, sources, recommendations, event_booklet: eventBooklet, goal_draft: goalDraftValue };
 }

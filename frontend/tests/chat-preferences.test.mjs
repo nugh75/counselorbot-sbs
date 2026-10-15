@@ -29,7 +29,7 @@ async function fixture(width, instrument = 'QSA', experience = 'standard') {
         else if (url.pathname === '/api/session/frozen') data = state.snapshot ? [state.snapshot] : [];
         else if (url.pathname === '/api/session/frozen/prefs') data = state.snapshot;
         else if (url.pathname === '/api/session/freeze') { state.snapshot = req.postDataJSON(); state.freezes.push(state.snapshot); data = state.snapshot; }
-        else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: [{ id: 'intro', label: 'Introduzione', sort_order: 0, system_prompt_mode: 'generic' }] };
+        else if (url.pathname === '/api/qsa/guided-ui-texts') data = { guided_steps: state.guidedSteps ?? [{ id: 'intro', label: 'Introduzione', sort_order: 0, system_prompt_mode: 'generic' }] };
         else if (url.pathname === '/api/memory/user/prefs') data = {};
         else if (url.pathname.endsWith('/recommendations')) data = { reading: [], strategy: [] };
         else if (url.pathname === '/api/opencode/workspace') { state.workspaces++; data = { key: 'prefs', session_id: 'oc-prefs', api_available: true, needs_seed: false, history: [{ role: 'assistant', content: 'Benvenuto' }] }; }
@@ -39,8 +39,8 @@ async function fixture(width, instrument = 'QSA', experience = 'standard') {
             const body = req.postDataJSON(); state.streams.push(body);
             if (state.fail) return route.fulfill({ status: 503, json: {} });
             if (state.script) {
-                const { text, done = true } = state.script(body);
-                return route.fulfill({ contentType: 'text/event-stream', body: event({ conversation_id: 'prefs-conversation' }) + event({ display: text }) + (done ? event({ done: true, response: text, conversation_id: 'prefs-conversation' }) : '') });
+                const { text, done = true, display = text, signals } = state.script(body);
+                return route.fulfill({ contentType: 'text/event-stream', body: event({ conversation_id: 'prefs-conversation' }) + event({ display }) + (done ? event({ done: true, response: text, conversation_id: 'prefs-conversation', control_signals: signals }) : '') });
             }
             const reply = body.response_format === 'table' ? '| Tema | Passo |\n| --- | --- |\n| Studio | Prova |' : `Risposta ${state.streams.length}: ${body.phase || 'chat'}`;
             return route.fulfill({ contentType: 'text/event-stream', body: event({ conversation_id: 'prefs-conversation' }) + event({ display: reply }) + event({ done: true, response: reply, conversation_id: 'prefs-conversation' }) });
@@ -240,6 +240,84 @@ test('Obiettivo essential keeps a stage open until the marker closes it, never o
         assert.ok(state.streams.every(x => x.guided_path === 'essential'));
         await page.waitForTimeout(1700);
         assert.equal(state.snapshot.current_phase, phases.summary);
+        assert.deepEqual(state.errors, []);
+    } finally { await context.close(); }
+});
+
+// Percorso completo Obiettivo: passaggio iniziale con l'accordo e cinque fasi d'azione.
+const GOAL_STEPS = [
+    ['obbstudio-intro', 'Presentazione e accordo', 'intro'],
+    ['obbstudio-partenza', 'Cosa voglio imparare', 'obiettivo-interview'],
+    ['obbstudio-livello', "Rendiamo l'obiettivo preciso", 'obiettivo-interview'],
+    ['obbstudio-piano', 'Come ci arrivo', 'obiettivo-interview'],
+    ['obbstudio-verifica', 'Come capirò di avercela fatta', 'obiettivo-interview'],
+    ['obbstudio-final', "L'obiettivo finale", 'obiettivo-summary'],
+].map(([id, label, system_prompt_mode], sort_order) => ({ id, label, sort_order, system_prompt_mode }));
+
+test('Obiettivo complete path moves on by itself on the signal and ends on the final objective', async () => {
+    const { context, page, state } = await fixture(1440, 'OBIETTIVO_STUDIO');
+    state.guidedSteps = GOAL_STEPS;
+    const advance = ['AVANZA_STEP'];
+    state.script = body => {
+        const message = body.memory_message ?? '';
+        if (body.use_phase_prompt && body.phase === 'obbstudio-livello') return { text: 'È già preciso.', display: 'È già preciso. [[AVANZA_', signals: advance };
+        if (body.use_phase_prompt) return { text: `Apertura: ${body.phase}` };
+        if (message === 'Voglio leggere i grafici') return { text: 'Bozza fissata.', signals: advance };
+        if (message === 'Esercizi a casa') return { text: 'Primi passi concordati. [[AVANZA_STEP]]' };
+        if (message === 'Una prova scritta') return { text: 'Prova concordata.', signals: advance };
+        return { text: `Risposta: ${body.phase}` };
+    };
+    try {
+        await page.goto(`${origin}/?resume=1`);
+        await page.getByRole('button', { name: 'Inizia', exact: true }).click();
+        await page.getByRole('log').getByText('Apertura: obbstudio-intro', { exact: true }).waitFor();
+        await page.getByRole('button', { name: 'Accetto', exact: true }).click();
+        await page.getByRole('log').getByText('Apertura: obbstudio-partenza', { exact: true }).waitFor();
+        const send = async text => { await page.locator('#guided-composer').fill(text); await page.locator('#guided-composer').press('Enter'); };
+        await send('Voglio leggere i grafici');
+        // «Rendiamo l'obiettivo preciso» trova l'obiettivo già preciso e passa oltre.
+        await page.getByRole('log').getByText('Apertura: obbstudio-piano', { exact: true }).waitFor();
+        await send('Esercizi a casa');
+        await page.getByRole('log').getByText('Apertura: obbstudio-verifica', { exact: true }).waitFor();
+        await send('Una prova scritta');
+        await page.getByRole('log').getByText('Apertura: obbstudio-final', { exact: true }).waitFor();
+        await page.getByText('Puoi concludere oppure approfondire scrivendo qui.').waitFor();
+        await page.getByRole('button', { name: 'Concludi', exact: true }).waitFor();
+        assert.equal(await page.getByRole('button', { name: 'Passa al prossimo tema', exact: true }).count(), 0);
+        assert.equal(await page.getByText('Domande e Approfondimenti').count(), 0);
+        assert.equal(await page.getByText(/AVANZA/).count(), 0, 'the signal is never shown');
+        const openings = state.streams.filter(x => x.use_phase_prompt).map(x => x.phase);
+        assert.deepEqual(openings, GOAL_STEPS.map(step => step.id));
+        // Nessuna conferma chiesta: ogni fase si è chiusa sulla sola risposta della persona.
+        assert.deepEqual(state.streams.filter(x => x.memory_message).map(x => x.memory_message),
+            ['Voglio leggere i grafici', 'Esercizi a casa', 'Una prova scritta']);
+        await page.waitForTimeout(1700);
+        assert.equal(state.snapshot.current_phase, 'obbstudio-final');
+        assert.ok(state.snapshot.messages.every(m => !/AVANZA/.test(m.content)));
+        assert.deepEqual(state.errors, []);
+    } finally { await context.close(); }
+});
+
+test('Obiettivo snapshot frozen on a retired phase resumes in the phase that absorbed it', async () => {
+    const { context, page, state } = await fixture(1440, 'OBIETTIVO_STUDIO');
+    state.guidedSteps = GOAL_STEPS;
+    state.snapshot = {
+        session_id: 'prefs', questionnaire_type: 'OBIETTIVO_STUDIO', current_phase: 'obbstudio-smart', scores: {},
+        counselor_id: 1, experience: 'standard', locale: 'it', guided_path: 'complete', response_format: 'standard',
+        messages: [
+            { role: 'assistant', content: 'Benvenuto.' },
+            { role: 'system', content: '--- Alla prova SMART ---' },
+            { role: 'assistant', content: 'Manca il criterio. [[AVANZA_STEP]]' },
+            { role: 'assistant', content: '[[AVANZA_STEP]]' },
+        ],
+    };
+    try {
+        await page.goto(`${origin}/?resume=1`);
+        await page.getByRole('log').getByText('Manca il criterio.', { exact: true }).waitFor();
+        await page.getByRole('navigation', { name: 'Avanzamento del percorso' }).getByText("Rendiamo l'obiettivo preciso").waitFor();
+        await page.waitForTimeout(500);
+        assert.equal(state.streams.length, 0, 'the resumed phase is not opened again');
+        assert.equal(await page.getByText(/AVANZA/).count(), 0, 'old snapshots never show the signal');
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
 });

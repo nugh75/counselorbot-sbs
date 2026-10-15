@@ -24,7 +24,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
 import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
-import { acceptsAgreement, advanceButtons, advanceLabelKey, autoAdvancesOnGenerate, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from '@/lib/interview-path';
+import { acceptsAgreement, advanceButtons, advanceLabelKey, advancesOnSignal, autoAdvancesOnGenerate, currentGoalPhase, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from '@/lib/interview-path';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { NotebookContextSelector } from '@/components/qsa/NotebookContextSelector';
@@ -68,6 +68,7 @@ import { diagramContentForSpeech, splitDiagramContent } from '@/lib/diagram-cont
 import { EMPTY_RECOMMENDATIONS, normalizeRecommendationCatalog, type RecommendationCatalog } from '@/lib/recommendations';
 
 import { ResponseFormatSelector } from '@/components/ui/ResponseFormatSelector';
+import { ADVANCE_STEP, stripControlMarkers, stripControlMarkersForDisplay } from '@/lib/control-markers';
 import { chatPreferenceLabel, essentialSteps, essentialReplyPhase, essentialAdvancesOnSignal, essentialSignalAdvances, essentialPhasesFor, isEssentialInstrument, isEssentialSummaryPhase, type ResponseFormat, type GuidedPath } from '@/lib/chat-preferences';
 import { isGoalInstrument, type GoalDraft } from '@/lib/goal-draft';
 import { GoalDraftCard } from '@/components/qsa/GoalDraftCard';
@@ -263,7 +264,6 @@ function normalizeLoadedSteps(questionnaireType: string, loadedSteps: StepDef[])
 
 const FIXED_QUESTIONS_ID = 'questions';
 const FIXED_CONCLUSION_ID = 'conclusion';
-const STEP_ADVANCE_MARKER = '[[AVANZA_STEP]]';
 
 // --- Sidebar section labels per prefix ---
 
@@ -543,13 +543,20 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     // stata detta: entrando in un ramo nuovo la chat parte vuota, e a spiegare
     // dove si e' finiti ci pensa la scheda del ramo. Niente viene cancellato,
     // solo tenuto fuori dagli occhi.
+    // I segnali di controllo non si vedono mai, nemmeno nei testi ripresi da
+    // uno snapshot o arrivati a meta': una bolla fatta del solo segnale sparisce.
+    const displayedMessages = messages
+        .map((message, index) => ({
+            message: message.role === 'assistant' ? { ...message, content: stripControlMarkersForDisplay(message.content) } : message,
+            index,
+        }))
+        .filter(({ message, index }) => message.content.trim() || !messages[index].content.trim() || message.reasoning);
     const visibleMessages = (() => {
         if (!isIdea || !ideaFocus || ideaSegments.length === 0) {
-            return messages.map((message, index) => ({ message, index }));
+            return displayedMessages;
         }
         const opening = ideaSegments[0];
-        return messages
-            .map((message, index) => ({ message, index }))
+        return displayedMessages
             .filter(({ index }) => {
                 if (index < opening.start) return opening.branchId === ideaFocus;
                 const segment = ideaSegments.filter((row) => row.start <= index).pop();
@@ -763,22 +770,28 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 }));
                 setSteps(normalizedSteps);
 
+                // Obiettivi: niente domande finali né congedo, la sintesi è l'ultima
+                // fase e porta la scelta di salvataggio.
                 const phaseOrder = [
                     ...normalizedSteps.map((s: StepDef) => s.id),
-                    ...(essential ? [] : [FIXED_QUESTIONS_ID, FIXED_CONCLUSION_ID]),
+                    ...(essential || isGoalInstrument(questionnaireType) ? [] : [FIXED_QUESTIONS_ID, FIXED_CONCLUSION_ID]),
                 ];
                 setPhases(phaseOrder);
                 const sessionScope = `${questionnaireType}:${sessionId}`;
                 const shouldRestoreSession = loadedSessionScopeRef.current !== sessionScope;
 
-                if (frozenSnapshot && frozenSnapshot.session_id === sessionId && shouldRestoreSession && phaseOrder.includes(frozenSnapshot.current_phase)) {
+                // Una fase del percorso Obiettivo precedente riprende nella fase che l'ha assorbita.
+                const frozenPhase = frozenSnapshot ? currentGoalPhase(questionnaireType, frozenSnapshot.current_phase, phaseOrder) : '';
+                if (frozenSnapshot && frozenSnapshot.session_id === sessionId && shouldRestoreSession && phaseOrder.includes(frozenPhase)) {
                     // Ripristino da snapshot congelato: ha precedenza sulla memoria di sessione.
                     const restoredMessages = frozenSnapshot.messages as ChatMessage[];
-                    setCurrentPhase(frozenSnapshot.current_phase);
+                    setCurrentPhase(frozenPhase);
                     setMessages(restoredMessages);
                     setResponseFormat(frozenSnapshot.response_format ?? "standard");
                     setConversationId(frozenSnapshot.conversation_id ?? undefined);
-                    if (essential) processedPhases.current.add(frozenSnapshot.current_phase);
+                    // Negli Obiettivi le etichette sono cambiate: il separatore salvato
+                    // non basta a dire che la fase ripresa era gia' aperta.
+                    if (essential || (isGoalInstrument(questionnaireType) && restoredMessages.length > 0)) processedPhases.current.add(frozenPhase);
                     if (frozenSnapshot.response_length) {
                         setResponseLength(frozenSnapshot.response_length);
                     }
@@ -811,7 +824,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                         const memRes = await fetch(`/api/memory/user/${sessionId}`);
                         if (memRes.ok) {
                             const memData = await memRes.json();
-                            const restoredPhase = memData.current_phase as string | undefined;
+                            const restoredPhase = memData.current_phase
+                                ? currentGoalPhase(questionnaireType, memData.current_phase as string, phaseOrder)
+                                : undefined;
                             if (restoredPhase && phaseOrder.includes(restoredPhase) && shouldRestoreSession) {
                                 const restoredQuestionsLabel = data.label_guided_questions || t('guided.questionsLabel');
                                 const restoredConclusionLabel = data.label_guided_conclusion || t('guided.conclusionLabel');
@@ -915,12 +930,6 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const effortForPhase = (phaseId: string): ReasoningEffort => (
         isAnalysisStep(phaseId) ? reasoningEffort : 'off'
     );
-
-    const extractAdvanceSignal = (rawText: string): { cleanText: string; shouldAdvance: boolean } => {
-        const shouldAdvance = rawText.includes(STEP_ADVANCE_MARKER);
-        const cleanText = rawText.replace(/\[\[AVANZA_STEP\]\]/g, '').trim();
-        return { cleanText, shouldAdvance };
-    };
 
     // Idea: dopo ogni turno il server dice quale passo ripara cio' che manca,
     // e quel passo diventa il contesto del turno seguente. Nessun avanzamento,
@@ -1100,6 +1109,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             };
 
             let responseText = '';
+            let advanceSignal = false;
             let streamOk = false;
             let stepErrorCode: string | undefined;
             const updateLast = (content: string) => {
@@ -1122,6 +1132,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             try {
                 const result = await streamChat(buildPayload(false), (full) => updateLast(full), controller.signal, (r) => updateReasoning(r));
                 responseText = result.response || '';
+                advanceSignal = result.control_signals.includes(ADVANCE_STEP);
                 if (result.conversation_id) setConversationId(result.conversation_id);
                 adoptRecommendations(result.recommendations);
                 if (result.event_booklet) setEventBookletDraft(result.event_booklet);
@@ -1136,9 +1147,14 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 dropLast();
             }
 
-            if (streamOk && extractAdvanceSignal(responseText).cleanText) {
-                const { cleanText, shouldAdvance } = extractAdvanceSignal(responseText);
+            const cleanText = responseText.trim();
+            if (streamOk && cleanText) {
+                const shouldAdvance = advanceSignal;
                 updateLast(cleanText);
+                // Obiettivi: la sintesi è l'ultima fase, il percorso è concluso.
+                if (!essential && isGoalInstrument(questionnaireType) && step.id === phases[phases.length - 1]) {
+                    void recordMemoryEvent(step.id, true);
+                }
                 // Percorsi a intervista e QPCS: l'utente decide quando cambiare step.
                 // Non avanzare automaticamente sulla generazione dello step (nei
                 // percorsi a intervista resta valida solo la sintesi).
@@ -1149,6 +1165,10 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     // l'obiettivo gia' definito e passa alla fase successiva.
                     await advancePhase();
                 }
+            } else if (streamOk && advanceSignal && !essential && advancesOnSignal(questionnaireType) && autoAdvancesOnGenerate(questionnaireType, step.id)) {
+                // Apertura fatta del solo segnale: la fase era gia' compiuta.
+                dropLast();
+                await advancePhase();
             } else if (streamOk) {
                 // Stream ok ma nessun testo di risposta (es. reasoning ha esaurito il budget):
                 // non lasciare il vuoto, segnala l'errore così l'utente può ripetere lo step.
@@ -1318,8 +1338,9 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
             refreshIdeaWorkspace(result.idea_revision_id);
             if (isIdea) setIdeaDrew(result.idea_revision_id != null);
 
-            // Sul testo completo applica il segnale di avanzamento
-            const { cleanText, shouldAdvance } = extractAdvanceSignal(response || '');
+            // Il segnale di avanzamento arriva fuori dal testo (filtro comune).
+            const cleanText = (response || '').trim();
+            const shouldAdvance = result.control_signals.includes(ADVANCE_STEP);
             if (cleanText) {
                 updateLast(cleanText);
             } else {
@@ -1529,11 +1550,16 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const sidebarPhases = phases;
     const hasScoreEntries = scoreGroups.some(group => group.entries.length > 0);
     const isAgreementPhase = isAgreementStep(questionnaireType, currentPhase);
+    // Dall'ultima fase non si passa oltre: negli Obiettivi è la sintesi, con
+    // bozza e scelta di salvataggio; altrove il congedo.
+    const hasNextPhase = phases.indexOf(currentPhase) < phases.length - 1;
+    const goalFinal = !essential && isGoalInstrument(questionnaireType) && phases.length > 0 && !hasNextPhase;
     const quickReplies: QuickReply[] = interviewQuickReplies(questionnaireType, currentPhase, {
         analysisStep: isAnalysisStep(currentPhase),
         suggestion: showAdvanceSuggestion,
         userMessages: userMessagesInPhase,
-    }).map(({ key, ...reply }) => ({ ...reply, label: t(key) }));
+    }).filter((reply) => reply.action !== 'advance' || hasNextPhase)
+        .map(({ key, ...reply }) => ({ ...reply, label: t(key) }));
     // Annuncio per screen reader. Il trascritto è un role="log": va bene per
     // navigarlo, ma da solo non dice nulla mentre la risposta arriva. Un
     // aria-live sul contenitore riannuncerebbe a ogni token dello streaming,
@@ -1546,8 +1572,8 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const awaitingAssistantBubble = lastVisible?.role === 'assistant' && !lastVisible.content.trim();
     const liveAnnouncement = isLoading
         ? t('guided.processing')
-        : lastMessage?.role === 'assistant' && lastMessage.content.trim()
-            ? lastMessage.content
+        : lastMessage?.role === 'assistant' && stripControlMarkers(lastMessage.content)
+            ? stripControlMarkers(lastMessage.content)
             : '';
 
     // Nessun segnaposto d'attesa: la casella resta scrivibile mentre la risposta
@@ -1556,12 +1582,13 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
         ? t('guided.input.pattoPlaceholder')
         : t('guided.input.placeholder');
     const showPreviousStep = !essential && currentPhase !== FIXED_CONCLUSION_ID && phases.indexOf(currentPhase) > 0;
-    const { standard: showStandardAdvance, interview: showInterviewAdvance } = essential ? { standard: false, interview: false } : advanceButtons(
+    const advance = essential || !hasNextPhase ? { standard: false, interview: false } : advanceButtons(
         questionnaireType,
         currentPhase,
         getStepDef(currentPhase)?.system_prompt_mode,
         { conclusion: currentPhase === FIXED_CONCLUSION_ID, suggestion: showAdvanceSuggestion, userMessages: userMessagesInPhase },
     );
+    const { standard: showStandardAdvance, interview: showInterviewAdvance } = advance;
     const showRepeatStep = currentPhase !== FIXED_CONCLUSION_ID;
     const essentialSummary = essential && isEssentialSummaryPhase(currentPhase);
     const hasStepNavigation = showPreviousStep || showStandardAdvance || showInterviewAdvance || showRepeatStep;
@@ -1577,7 +1604,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const messageActionClass = 'chat-action-item flex min-h-[44px] w-full items-center gap-2 rounded-md px-2 text-left text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50';
     const renderStepNavigation = () => (
         <div className="flex shrink-0 items-center gap-1">
-            {essentialSummary && <Button type="button" variant="secondary" disabled={isLoading} onClick={handleComplete}>{chatPreferenceLabel(activeLocale, "finish")}</Button>}
+            {(essentialSummary || goalFinal) && <Button type="button" variant="secondary" disabled={isLoading} onClick={handleComplete}>{chatPreferenceLabel(activeLocale, "finish")}</Button>}
             {showPreviousStep && <Tooltip content={t('guided.prevStep')} side="top">
                 <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.prevStep')} disabled={isLoading} onClick={goToPreviousStep}>
                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -1942,7 +1969,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                 {currentPhase === FIXED_CONCLUSION_ID && !voiceMode && isEventInstrument(questionnaireType) && (
                     <EventMilestoneCard sessionId={sessionId} draft={eventBookletDraft} />
                 )}
-                {(currentPhase === FIXED_CONCLUSION_ID || essentialSummary) && !voiceMode && isGoalInstrument(questionnaireType) && (
+                {(currentPhase === FIXED_CONCLUSION_ID || essentialSummary || goalFinal) && !voiceMode && isGoalInstrument(questionnaireType) && (
                     <GoalDraftCard questionnaireType={questionnaireType} sessionId={sessionId} draft={goalDraftValue} onChange={setGoalDraftValue} />
                 )}
                 {currentPhase === FIXED_CONCLUSION_ID && !voiceMode ? (
@@ -1957,7 +1984,7 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
                     </div>
                 ) : (
                     <form onSubmit={handleSend} className="border-t border-slate-100 bg-white">
-                        {essentialSummary && <p className="px-3 pt-2 text-sm text-slate-600">{chatPreferenceLabel(activeLocale, "followup")}</p>}
+                        {(essentialSummary || goalFinal) && <p className="px-3 pt-2 text-sm text-slate-600">{chatPreferenceLabel(activeLocale, "followup")}</p>}
                         {isIdea && sessionId && (
                             <IdeaBranchBar
                                 sessionId={sessionId}

@@ -78,9 +78,11 @@ def test_welcome_system_and_step_share_one_mandate_without_placeholders(qtype):
     step = next(s for s in ALL_STEPS if s["questionnaire_type"] == qtype and s["id"].endswith("-intro"))["prompt"]
     assert not PLACEHOLDER.findall(system) and not PLACEHOLDER.findall(step)
     assert "ask about the objective" not in system
-    # The step's single invitation is the one question the system allows.
-    assert "the optional invitation above is the only question" in system
-    assert "invite them, without insisting" in step
+    # Welcome and agreement are one turn: confirming is the one question allowed.
+    assert "the request to confirm the way of working is the only question" in system
+    assert "confirm this way of working with the button below" in step
+    assert "five steps" in system and "five steps" in step
+    assert "7 steps" not in system + step
     outcome = "their students to learn" if qtype == "OBIETTIVO_DOCENZA" else "they would like to learn"
     assert outcome in system and outcome in step
 
@@ -120,14 +122,17 @@ def test_focus_contract_reaches_every_working_step_and_never_self_questioning(ru
 
 
 def test_stages_follow_the_existing_order_and_skip_welcome_and_agreement():
-    expected = {"intro": None, "patto": None, "partenza": "definition", "livello": "definition",
-                "smart": "definition", "sfida": "definition", "piano": "design", "verifica": "design",
-                "final": "synthesis"}
+    expected = {"intro": None, "partenza": "definition", "livello": "definition",
+                "piano": "design", "verifica": "design", "final": "synthesis"}
     for prefix, steps in (("obbstudio", STUDIO), ("obbdocenza", DOCENZA)):
         assert [step["id"] for step in sorted(steps, key=lambda s: s["sort_order"])] == [
             f"{prefix}-{suffix}" for suffix in expected]
         for suffix, stage in expected.items():
             assert objective_focus_stage(f"{prefix}-{suffix}") == stage
+        # Retired steps kept by an administrator still get their stage.
+        assert objective_focus_stage(f"{prefix}-patto") is None
+        assert objective_focus_stage(f"{prefix}-smart") == "definition"
+        assert objective_focus_stage(f"{prefix}-sfida") == "definition"
     for phase in ("questions", "conclusion", None, "qpcs-sintesi", "evstudio-final", "qsa-essential-focus"):
         assert objective_focus_stage(phase) is None
 
@@ -156,17 +161,20 @@ def test_factory_steps_check_gaps_instead_of_interrogating():
         by_suffix = {step["id"].split("-", 1)[1]: step["prompt"] for step in steps}
         assert "ONE precise thing" in by_suffix["partenza"] and "draft" in by_suffix["partenza"]
         assert "keep the others aside" in by_suffix["partenza"]
-        assert "ONE letter at a time" not in by_suffix["smart"]
-        assert "Do not go through the letters one by one" in by_suffix["smart"]
-        assert "Present the whole taxonomy only if the person asks" in by_suffix["livello"]
-        assert "Present the six levels" not in by_suffix["livello"]
-        assert "Keep the agreed objective fixed" in by_suffix["piano"]
+        # Bloom, SMART and challenge are silent checks of one step.
+        assert "never go through them one by one" in by_suffix["livello"]
+        assert "Never name these tools" in by_suffix["livello"]
+        assert "it must be the level of that verb" in by_suffix["livello"]
+        assert "Keep it fixed" in by_suffix["piano"]
         assert "Never invent percentages or dates" in by_suffix["verifica"]
         for suffix, prompt in by_suffix.items():
             assert not PLACEHOLDER.findall(prompt), suffix
-            if suffix not in ("intro",):
-                assert prompt.rstrip().endswith("[[AVANZA_STEP]]."), suffix
-    assert "Start from the expected proof" in STEPS["obbdocenza-piano"]["prompt"]
+            if suffix in ("partenza", "livello", "piano", "verifica"):
+                assert "only [[AVANZA_STEP]]" in prompt and "ask whether to go on" in prompt, suffix
+                assert "say in one short sentence" in prompt, suffix
+            if suffix == "final":
+                assert "do not use the step marker" in prompt and "no reflective questions" in prompt
+    assert "the proof will ask" in STEPS["obbdocenza-piano"]["prompt"]
 
 
 def test_contract_survives_admin_owned_step_text_without_rewriting_it(runtime):
@@ -304,7 +312,7 @@ def test_every_obiettivo_factory_text_is_registered_with_its_predecessor():
 def test_alignment_updates_factory_rows_and_preserves_personalised_ones():
     with artifact_session() as db:
         partenza = STEPS["obbdocenza-partenza"]
-        smart = STEPS["obbdocenza-smart"]
+        smart = STEPS["obbdocenza-livello"]
         db.add(models.GuidedStep(**{**partenza, "prompt": "Older factory partenza."}))
         db.add(models.GuidedStep(**{**smart, "prompt": "Teacher's own SMART step."}))
         db.flush()

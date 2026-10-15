@@ -30,6 +30,58 @@ testi DB personalizzati e nelle varianti compatte. I testi degli step restano
 dell'amministratore: dove chiedono ancora tutte le lettere SMART o tutti i
 livelli, il contratto dice di applicarli solo a ciò che manca.
 
+## Percorso completo: un passaggio iniziale e cinque fasi (blocco 3)
+
+Le undici fasi precedenti (Presentazione, Patto, Da dove parto, Il livello
+(Bloom), Alla prova SMART, Specifico e sfidante, Come ci arrivo, Come saprò di
+esserci riuscito, Sintesi, Domande e Approfondimenti, Conclusione) nominavano il
+metodo, rilavoravano la stessa frase in tre fasi e chiudevano con domande su di
+sé. Ora (`backend/obiettivo_layout.py`, etichette in sei lingue):
+
+| Id (invariato) | Docenza | Studio |
+| --- | --- | --- |
+| `*-intro` | 0. Presentazione e accordo | 0. Presentazione e accordo |
+| `*-partenza` | 1. Cosa vuoi che imparino | 1. Cosa voglio imparare |
+| `*-livello` | 2. Rendiamo l'obiettivo preciso | 2. Rendiamo l'obiettivo preciso |
+| `*-piano` | 3. Come ci arriveranno | 3. Come ci arrivo |
+| `*-verifica` | 4. Come verificherai che ci sono riusciti | 4. Come capirò di avercela fatta |
+| `*-final` | 5. L'obiettivo finale | 5. L'obiettivo finale |
+
+- **Presentazione e accordo**: un solo turno che presenta i cinque passi e chiede
+  di confermare il modo di lavorare con il pulsante «Accetto» esistente (lo step
+  d'accordo è ora `*-intro`; non si salta con la freccia). Se la persona scrive
+  la sua idea, viene riconosciuta come punto di partenza e si chiede di nuovo la
+  conferma.
+- **Rendiamo l'obiettivo preciso**: Bloom (verbo osservabile, livello del verbo),
+  SMART e sfida/orientamento sono controlli interni; si nomina solo ciò che manca,
+  una domanda alla volta. Se l'obiettivo è già preciso, lo dice e passa oltre
+  nella stessa apertura.
+- **Come verificherai**: la prova e il criterio devono controllare ogni requisito
+  dell'obiettivo; se non lo fanno (es. «sequenza coerente» verificata solo con
+  «percorso completato») lo si dice e si sceglie se aggiungere il controllo o
+  togliere il requisito.
+- **L'obiettivo finale**: sintesi, bozza (`GoalDraftCard`) e «Concludi» nella
+  stessa fase; niente «Domande e Approfondimenti» né «Conclusione». Soggetto:
+  gli studenti in Docenza, «io» in Studio; il livello di Bloom nominato è quello
+  del verbo; un criterio che non controlla i requisiti resta segnalato come punto
+  aperto; nessuna domanda riflessiva.
+
+**Passaggio di fase** (come l'essenziale): una risposta completata con il segnale
+`AVANZA_STEP` apre da sola la fase successiva, senza chiedere conferme; la nuova
+fase inizia dicendo in una frase che cosa si fa ora e non ripete l'obiettivo se
+non è cambiato. «Passa al prossimo tema» resta la scelta della persona.
+Le altre chat a intervista (Savickas, Eventi, QPCC, QAP) non cambiano.
+
+**Contratto runtime** (`prompt_contract._objective_focus_contract`, vale anche
+senza allineamento dei testi): parole comuni con un esempio quando una parola può
+non essere chiara; una domanda per turno; bozza solo da ciò che la persona ha
+detto, un dato del taccuino o della classe solo se confermato e con la fonte;
+dettagli concordati conservati; obiettivo ripetuto solo quando cambia; mai
+chiedere se proseguire; frase d'apertura della fase; regole della sintesi sopra;
+dopo la sintesi si risponde solo al messaggio nuovo.
+
+Il segnale non si vede mai, in nessuna chat né export: `control-markers.md`.
+
 ## Percorso essenziale: tre fasi brevi, non tre risposte
 
 Fasi invariate negli id (snapshot e ripresa compatibili):
@@ -58,12 +110,13 @@ fase e l'altra compare il separatore della fase e un breve turno di apertura.
 
 ## Installazioni esistenti
 
-Il codice porta subito contratto, fasi essenziali ed etichette. I testi salvati
-nel database (`prompt_obiettivo_interview`, `prompt_obiettivo_summary`,
-`prompt_obbstudio_intro`, `prompt_obbdocenza_intro` e 16 step `obbstudio-*` /
-`obbdocenza-*`, il patto escluso) **non** si aggiornano all'avvio. In
-particolare il bug della presentazione sparisce su un'installazione esistente
-solo dopo l'allineamento, perché il testo vive nella riga `configs`.
+Il codice porta subito contratto, fasi, etichette, avanzamento, filtro del
+segnale e PDF. I testi salvati nel database (`prompt_obiettivo_interview`,
+`prompt_obiettivo_summary`, `prompt_obbstudio_intro`, `prompt_obbdocenza_intro`,
+`counselorbot_chat_context` e i 12 step `obbstudio-*` / `obbdocenza-*` rimasti)
+**non** si aggiornano all'avvio. Finché non si allinea, la presentazione non
+chiede ancora l'accordo (il pulsante «Accetto» c'è comunque) e i testi dei passi
+parlano ancora di «7 passi»; il contratto runtime corregge già la conduzione.
 
 `prompt_factory_legacy.json` conserva gli hash dei testi precedenti e registra i
 nuovi: un testo di fabbrica viene riconosciuto, uno personalizzato resta com'è.
@@ -86,7 +139,25 @@ Dopo merge e deploy (passo manuale, nessun sudo):
    precedente di ciascuna chiave (`POST /api/admin/prompt-revisions/{id}/restore`);
    il ripristino è una scelta amministrativa e rende il testo protetto.
 
-Le etichette degli step nel DB (es. «1. Da dove parto») non cambiano.
+Struttura delle fasi sulle installazioni esistenti, **senza scritture nel DB**:
+
+- `*-patto`, `*-smart`, `*-sfida` non sono più nei default; le righe restano e
+  vengono tenute fuori dal percorso (interfaccia, contesto del percorso, export
+  OpenCode) solo se il loro testo è di fabbrica (hash registrato o revisione
+  seed/migration, nessuna revisione admin). Uno step personalizzato resta, con
+  la sua etichetta. Le installazioni nuove seminano solo le sei righe nuove.
+- Le etichette di fabbrica precedenti (italiano e traduzioni) si leggono come
+  quelle nuove (`resolve_step_label`); un'etichetta scritta dall'amministratore
+  resta com'è. Il pannello step mostra ancora le etichette salvate.
+- Sessioni e snapshot con le fasi precedenti riprendono nella fase che le ha
+  assorbite: patto → presentazione e accordo, SMART e sfida → «Rendiamo
+  l'obiettivo preciso», domande e conclusione → «L'obiettivo finale», senza
+  rigenerare l'apertura (`currentGoalPhase`).
+
+Il PDF rende apostrofi, virgolette e trattini tipografici e mostra la legenda
+Forza/Norma/Crescita solo quando ci sono etichette per fattore.
+
+Ritorno indietro della struttura: revert del codice; nessun dato da ripristinare.
 
 ## Esempi sintetici (prima/dopo)
 
@@ -128,6 +199,13 @@ stream non completato, aperture, etichette in sei lingue, cablaggio del
 componente) e `tests/chat-preferences.test.mjs` (browser con API simulate:
 fase che resta aperta, marcatore nascosto, stream interrotto senza avanzamento
 fino a «Continua», «Passa al prossimo tema», sintesi e snapshot).
+
+Blocco 3: `backend/tests/test_goal_phase_redesign.py` (fasi e etichette in sei
+lingue, layout precedente letto come nuovo, step personalizzati conservati,
+contesto del percorso, contratto di conduzione e sintesi, PDF tipografico e
+legenda), `backend/tests/test_control_markers.py` (guardia su tutti i tipi di
+chat), `frontend/src/lib/interview-path.test.ts`, `control-markers.test.ts` e i
+due test browser «Obiettivo complete path…» e «Obiettivo snapshot frozen…».
 
 Limite: i test controllano ciò che il modello riceve e la meccanica; la qualità
 dialogica (focus scelto bene, bozza utile, assenza di ripetizioni) richiede una

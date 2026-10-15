@@ -215,9 +215,14 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
   prossima volta), seguiti dalla sintesi al passo 7. La sintesi è una bozza di
   tappa della Linea del tempo da rivedere e salvare esplicitamente; ciò che si
   proverà la prossima volta può diventare un obiettivo. Non sono eventi del calendario.
-- **Il mio obiettivo di apprendimento** (`OBIETTIVO_STUDIO`): definisce un obiettivo,
-  con livello di apprendimento, controllo SMART, difficoltà, piano, prova e data di
-  verifica. Offre percorso completo o essenziale; alla fine propone una bozza di
+- **Il mio obiettivo di apprendimento** (`OBIETTIVO_STUDIO`): definisce un obiettivo.
+  Il percorso completo ha un passaggio iniziale (presentazione e accordo, confermato
+  con «Accetto») e cinque fasi che dicono che cosa si fa: *Cosa voglio imparare*,
+  *Rendiamo l'obiettivo preciso* (livello, controllo SMART e sfida come controlli
+  interni), *Come ci arrivo*, *Come capirò di avercela fatta*, *L'obiettivo finale*.
+  Una fase passa alla successiva da sola quando il suo risultato è concordato, senza
+  chiedere conferme; la nuova fase si apre dicendo in una frase che cosa si fa.
+  Offre percorso completo o essenziale; alla fine propone una bozza di
   obiettivo che la persona deve confermare, non un obiettivo salvato automaticamente.
   In entrambi i percorsi Obiettivo la conversazione mette a fuoco **una cosa precisa**:
   se emergono più risultati, propone quale tenere per primo e mette da parte gli
@@ -234,9 +239,11 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
   fisso di risposte; una risposta interrotta non fa avanzare.
 - **Obiettivi per la mia classe** (`OBIETTIVO_DOCENZA`): variante raggiungibile direttamente
   dall’hero card prominente di **Progettazione didattica** in `/docente`, basata sulle classi selezionate
-  e sul Taccuino del docente. Guida la definizione dell'obiettivo con tassonomia di Bloom, verifica SMART
-  e allineamento costruttivo con attività e valutazione; l’obiettivo progettato si collega al Catalogo
-  obiettivi e ai Percorsi di classe per gli studenti.
+  e sul Taccuino del docente. Stesso percorso, con le fasi rivolte ai destinatari: *Cosa vuoi che
+  imparino*, *Rendiamo l'obiettivo preciso*, *Come ci arriveranno* (attività allineate all'obiettivo),
+  *Come verificherai che ci sono riusciti* (prova e criterio), *L'obiettivo finale*, in cui il soggetto
+  sono gli studenti; l’obiettivo progettato si collega al Catalogo obiettivi e ai Percorsi di classe
+  per gli studenti.
   La barra «Classi di questa conversazione» elenca solo le classi proprie o condivise con chi scrive,
   anche per un amministratore: sono le uniche che possono entrare nel contesto. Le classi scelte
   restano legate alla conversazione: riprendendo una chat sospesa tornano quelle di quella chat (nessuna

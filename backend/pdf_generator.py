@@ -9,6 +9,7 @@ from fpdf import FPDF
 from fpdf.enums import MethodReturnValue
 from PIL import Image, ImageDraw, ImageFont
 
+from .control_markers import strip_control_markers
 from .diagram_blocks import segments as diagram_segments
 from .diagram_render import DiagramSpec, DiagramSpecError, describe, render as render_diagram
 from .reading_frame import frame as reading_labels
@@ -465,9 +466,20 @@ def _normalize_lang(language: str | None) -> str:
     return code if code in SUPPORTED_LANGS else DEFAULT_LANG
 
 
+# Punteggiatura tipografica che i modelli scrivono di continuo e che latin-1
+# non ha: senza questa tabella diventava "?" ("nell?interfaccia").
+_TYPOGRAPHIC = str.maketrans({
+    "\u2018": "'", "\u2019": "'", "\u201a": "'", "\u2032": "'",
+    "\u201c": '"', "\u201d": '"', "\u201e": '"', "\u2033": '"',
+    "\u2013": "-", "\u2014": "-", "\u2012": "-", "\u2212": "-",
+    "\u2026": "...", "\u2022": "-", "\u2192": "->", "\u2190": "<-",
+    "\u2264": "<=", "\u2265": ">=", "\u202f": " ", "\u2009": " ", "\u200b": "",
+})
+
+
 def _latin1(text: str) -> str:
     """I font core fpdf usano latin-1: sostituisci i caratteri non rappresentabili."""
-    return text.encode("latin-1", "replace").decode("latin-1")
+    return text.translate(_TYPOGRAPHIC).encode("latin-1", "replace").decode("latin-1")
 
 
 class ResultPDF(FPDF):
@@ -694,7 +706,7 @@ def _text_card(
     text_color: tuple[int, int, int] = APP_TEXT,
     inset: float = 0,
 ) -> None:
-    cleaned = _latin1(_strip_markdown(text)).strip()
+    cleaned = _latin1(_strip_markdown(strip_control_markers(text))).strip()
     if not cleaned:
         return
     card_w = content_w - inset
@@ -881,7 +893,7 @@ def _render_conversation(
 
     for msg in messages:
         role = msg.get("role", "")
-        text = msg.get("text", "").strip()
+        text = strip_control_markers(msg.get("text"))
         if not text:
             continue
         label = ui["counselor"] if role == "counselor" else ui["student"]
@@ -993,6 +1005,9 @@ def generate_questionnaire_pdf(
         _render_score_chart(pdf, questionnaire_type, scores, lang, ui, content_w)
 
     has_inverted = False
+    # La legenda spiega i colori delle etichette per fattore: senza quelle
+    # (Obiettivi, Eventi, Idea, Savickas) parlerebbe di qualcosa che non c'e'.
+    has_score_labels = False
 
     if questionnaire_type == "SAVICKAS":
         pdf.set_font("Helvetica", "", 12)
@@ -1006,6 +1021,7 @@ def generate_questionnaire_pdf(
         has_factor_info = any(code in trans for code in scores)
 
         if has_factor_info:
+            has_score_labels = True
             _section_heading(pdf, ui["by_factor"], content_w)
 
             for code, value in scores.items():
@@ -1050,22 +1066,22 @@ def generate_questionnaire_pdf(
                 pdf.set_text_color(25, 25, 30)
                 pdf.cell(0, 7, _latin1(f"{code}: {value_int}/9"), new_x="LMARGIN", new_y="NEXT")
 
-    # Legenda
-    pdf.ln(3)
-    _section_heading(pdf, ui["legend"], content_w)
+    if has_score_labels:
+        pdf.ln(3)
+        _section_heading(pdf, ui["legend"], content_w)
 
-    legend_items = [
-        (ui["strength"], (34, 197, 94)),
-        (ui["normal"], (234, 179, 8)),
-        (ui["growth"], (239, 68, 68)),
-    ]
-    for leg_label, leg_color in legend_items:
-        pdf.set_fill_color(*leg_color)
-        pdf.set_font("Helvetica", "", 8)
-        pdf.set_text_color(60, 60, 70)
-        pdf.cell(6, 5, "", fill=True)
-        pdf.cell(2, 5, "")
-        pdf.cell(0, 5, _latin1(leg_label), new_x="LMARGIN", new_y="NEXT")
+        legend_items = [
+            (ui["strength"], (34, 197, 94)),
+            (ui["normal"], (234, 179, 8)),
+            (ui["growth"], (239, 68, 68)),
+        ]
+        for leg_label, leg_color in legend_items:
+            pdf.set_fill_color(*leg_color)
+            pdf.set_font("Helvetica", "", 8)
+            pdf.set_text_color(60, 60, 70)
+            pdf.cell(6, 5, "", fill=True)
+            pdf.cell(2, 5, "")
+            pdf.cell(0, 5, _latin1(leg_label), new_x="LMARGIN", new_y="NEXT")
 
     # Nota fattori invertiti
     if has_inverted:

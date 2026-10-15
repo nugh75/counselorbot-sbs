@@ -1,4 +1,5 @@
 from .qpcc import directive as qpcc_directive
+from .obiettivo_layout import step_labels as obiettivo_step_labels
 import json
 from pathlib import Path
 from typing import Dict, List
@@ -878,9 +879,10 @@ _OBIETTIVO_INTRO_FLOW = _text("obiettivo_intro_flow") + '\n'
 
 
 def _obiettivo_intro_system_prompt(questionnaire_type: str) -> str:
-    # Stesso mandato dello step di presentazione: un solo invito facoltativo a
-    # dire che cosa si ha in mente, nessuna analisi. I segnaposto si risolvono
-    # qui come negli step, o il modello li riceverebbe tali e quali.
+    # Stesso mandato dello step di presentazione, che e' anche l'accordo di
+    # lavoro: un'unica richiesta, confermare (pulsante o «accetto»), nessuna
+    # analisi. I segnaposto si risolvono qui come negli step, o il modello li
+    # riceverebbe tali e quali.
     flow = _OBIETTIVO_INTRO_FLOW
     for placeholder, value in _OBIETTIVO_STEP_REPLACEMENTS[questionnaire_type].items():
         flow = flow.replace("{" + placeholder + "}", value)
@@ -891,9 +893,9 @@ def _obiettivo_intro_system_prompt(questionnaire_type: str) -> str:
         + flow
         + "\n"
         "Do NOT yet: analyse anything, propose a draft of the objective or ask follow-up "
-        "questions; the optional invitation above is the only question of this welcome. "
-        "If the person already says what they have in mind, acknowledge it in one sentence "
-        "as the starting point and invite them to continue."
+        "questions; the request to confirm the way of working is the only question of this "
+        "welcome. If the person already says what they have in mind, acknowledge it in one "
+        "sentence as the starting point of step 1 and ask them to confirm the way of working."
     ) + INTRO_ALLOWED_QUESTIONS
 
 
@@ -2110,19 +2112,16 @@ DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS: List[Dict] = _evento_guided_steps("EV
 
 
 # --- Default Obiettivo di apprendimento guided steps (seeded into guided_steps table) ---
-# Stesso percorso per i due strumenti: presentazione, patto, sette passi,
-# sintesi. Gli step condivisi portano i segnaposto di
-# _OBIETTIVO_STEP_REPLACEMENTS (in testa alla sezione Obiettivo); piano,
-# verifica e sintesi hanno un testo per strumento, perché il contenuto cambia
-# davvero.
+# Stesso percorso per i due strumenti: un passaggio iniziale (presentazione e
+# accordo) e cinque fasi d'azione (obiettivo_layout). Gli step condivisi portano
+# i segnaposto di _OBIETTIVO_STEP_REPLACEMENTS (in testa alla sezione
+# Obiettivo); piano, verifica e sintesi hanno un testo per strumento, perché il
+# contenuto cambia davvero.
 
 _OBIETTIVO_STEP_FILE_NAMES = {
     "intro": "obiettivo_intro_step_prompt",
-    "patto": "obiettivo_step_patto",
     "partenza": "obiettivo_step_partenza",
-    "livello": "obiettivo_step_livello",
-    "smart": "obiettivo_step_smart",
-    "sfida": "obiettivo_step_sfida",
+    "livello": "obiettivo_step_preciso",
 }
 
 _OBIETTIVO_STEP_VARIANTS = {
@@ -2148,33 +2147,32 @@ def _obiettivo_step_text(questionnaire_type: str, suffix: str) -> str:
     return text
 
 
-# (suffisso id, ordine, etichetta, modo, colore)
+# (suffisso id, ordine, modo, colore). Ordini e id dei passi rimasti sono quelli
+# del percorso precedente: le righe gia' nel DB restano coerenti.
 _OBIETTIVO_STEP_SPECS = (
-    ("intro", -1, "0. Presentazione", "intro", "teal"),
-    ("patto", 0, "0. Patto di Collaborazione", "obiettivo-interview", "cyan"),
-    ("partenza", 1, "1. Da dove parto", "obiettivo-interview", "blue"),
-    ("livello", 2, "2. Il livello (Bloom)", "obiettivo-interview", "indigo"),
-    ("smart", 3, "3. Alla prova SMART", "obiettivo-interview", "green"),
-    ("sfida", 4, "4. Specifico e sfidante", "obiettivo-interview", "amber"),
-    ("piano", 5, "5. Come ci arrivo", "obiettivo-interview", "purple"),
-    ("verifica", 6, "6. Come saprò di esserci riuscito", "obiettivo-interview", "rose"),
-    ("final", 7, "7. Sintesi dell'obiettivo", "obiettivo-summary", "purple"),
+    ("intro", -1, "intro", "teal"),
+    ("partenza", 1, "obiettivo-interview", "blue"),
+    ("livello", 2, "obiettivo-interview", "indigo"),
+    ("piano", 5, "obiettivo-interview", "purple"),
+    ("verifica", 6, "obiettivo-interview", "rose"),
+    ("final", 7, "obiettivo-summary", "purple"),
 )
 
 
 def _obiettivo_guided_steps(questionnaire_type: str) -> List[Dict]:
     prefix = OBIETTIVO_STEP_PREFIXES[questionnaire_type]
+    labels = obiettivo_step_labels(prefix)
     return [
         {
             "id": f"{prefix}-{suffix}",
             "sort_order": sort_order,
-            "label": label,
+            "label": labels[suffix]["it"],
             "prompt": _obiettivo_step_text(questionnaire_type, suffix),
             "system_prompt_mode": mode,
             "color_theme": color,
             "questionnaire_type": questionnaire_type,
         }
-        for suffix, sort_order, label, mode, color in _OBIETTIVO_STEP_SPECS
+        for suffix, sort_order, mode, color in _OBIETTIVO_STEP_SPECS
     ]
 
 

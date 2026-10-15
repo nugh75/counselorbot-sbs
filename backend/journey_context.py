@@ -4,6 +4,7 @@ from __future__ import annotations
 from . import models
 from .ai_service import AIError
 from .diagram_blocks import strip_for_speech
+from .control_markers import strip_control_markers
 
 
 SYNTHESIS_STEPS = {
@@ -35,7 +36,7 @@ def session_evidence(db, session_id: str, username: str, conversation_id: str | 
     for row in query.order_by(models.Log.timestamp.asc(), models.Log.id.asc()).all():
         details = row.details or {}
         for role, key in (("student", "user_input"), ("counselor", "bot_response")):
-            text = (details.get(key) or "").strip()
+            text = strip_control_markers(details.get(key))
             if text:
                 messages.append({"role": role, "text": text})
     return messages

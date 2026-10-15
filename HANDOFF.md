@@ -1,3 +1,94 @@
+# Handoff S8: fasi Obiettivo con etichette d'azione e marcatore sempre nascosto
+Data: 2026-10-15 | Branch: `feature/goal-guided-phase-redesign` (da `origin/main` d5edc358) | Agente: `s8-fasi-obiettivo` | Task `155e1298`
+PR: https://github.com/nugh75/counselorbot-sbs/pull/293 (Project CounselorBot, verso `main`). Revisione cross-modello: a scelta dell'utente.
+
+## Piano (scritto prima delle modifiche)
+
+Indagine (fatti): fasi = righe `guided_steps` seminate da `prompt_config._OBIETTIVO_STEP_SPECS`
+solo su strumento vuoto (in produzione: 9 righe docenza, 0 studio); il client aggiunge
+`questions` e `conclusion` (`GuidedChatInterface.tsx`); etichette `label`/`label_i18n` del DB
+(`guided_step_label_i18n.py`). Marcatore: tolto dal client solo a fine stream; il backend
+salva `bot_response` grezzo nei `Log`, e PDF, conversazione dell'Area personale, sintesi dello
+step e prove del percorso li rileggono così (`routes/survey.py`, `journey_context.py`,
+`session_ledger.py`). PDF: `_latin1` trasforma ’ “ ” – — … in `?`; legenda stampata sempre.
+Avanzamento completo Obiettivo: il marcatore mostra solo un suggerimento, la persona deve
+chiedere di andare avanti e ogni apertura riformula l'obiettivo.
+
+1. Marcatore nascosto ovunque: un filtro backend (`control_markers.py`) applicato dove si
+   rileggono i log (PDF/testo, conversazione mostrata, sintesi, prove, voce) e un filtro
+   frontend (`lib/control-markers.ts`) su streaming, rendering, ripresa. Il meccanismo di
+   avanzamento delle altre chat non cambia. Test su più strumenti ed export.
+2. Fasi Obiettivo (studio e docenza): passaggio iniziale unico «Presentazione e accordo»
+   (`*-intro`, ora passo dell'accordo con il pulsante Accetto) + 5 fasi:
+   `*-partenza` Cosa vuoi che imparino / Cosa voglio imparare · `*-livello` Rendiamo
+   l'obiettivo preciso (Bloom, SMART, sfida come controlli interni) · `*-piano` Come ci
+   arriveranno / Come ci arrivo · `*-verifica` Come verificherai che ci sono riusciti / Come
+   capirò di avercela fatta · `*-final` L'obiettivo finale (sintesi + scelta di salvataggio).
+   Id invariati: niente migrazione di schema. `*-patto`, `*-smart`, `*-sfida` escono dai
+   default; sulle installazioni esistenti vengono nascosti in lettura solo se il loro testo è
+   di fabbrica (stessa regola di «Allinea prompt di fabbrica»), mai cancellati; le etichette di
+   fabbrica vecchie si leggono con le nuove, quelle personalizzate restano. Niente
+   «Domande e Approfondimenti» né «Conclusione» per gli Obiettivi.
+3. Avanzamento completo Obiettivo come l'essenziale: risposta completata con marcatore →
+   fase successiva; apertura che avanza solo in «Rendiamo l'obiettivo preciso» se già definito;
+   sintesi mai. Contratto runtime: apertura con una frase su cosa si fa ora, nessuna
+   riformulazione identica, nessuna richiesta di conferma, una domanda in parole semplici,
+   bozza solo da ciò che è stato detto o dal contesto dichiarato con la fonte, dettagli
+   concordati conservati; sintesi con Bloom coerente col verbo, destinatari come soggetto in
+   docenza, criterio che non controlla i requisiti segnalato; nessuna domanda su di sé.
+4. Testi di fabbrica (passi, presentazione, sistema intervista/sintesi) riscritti; hash
+   precedenti registrati in `prompt_factory_legacy.json` → applicati solo con «Allinea prompt
+   di fabbrica». Il contratto runtime vale subito anche senza allineamento.
+5. Compatibilità: snapshot congelati e memoria con fasi ritirate mappati (patto→intro,
+   smart/sfida→livello, questions/conclusion→final) senza rigenerare l'apertura.
+6. PDF: caratteri tipografici resi, legenda solo con punteggi per fattore.
+7. Test backend/frontend, documentazione (`goal-focused-definition.md`, `CONTEXT.md`).
+
+Aggiunta di perimetro (utente, via Timoniere): il segnale resta nascosto in TUTTE le chat,
+con codice condiviso nel percorso comune, registro unico, guardia sui tipi di chat
+registrati e documentazione per le chat future (`docs/operations/control-markers.md`).
+
+## Esito
+
+Contratti: `docs/operations/control-markers.md` (segnali) e
+`docs/operations/goal-focused-definition.md` § «Percorso completo» (fasi Obiettivo).
+Scostamenti dalla proposta, motivati dal codice: presentazione e accordo restano lo step
+`*-intro` (ora step d'accordo), il patto non è più un passo; le fasi tengono gli id
+`partenza/livello/piano/verifica/final` per non toccare snapshot e log; Studio usa
+«Come capirò di avercela fatta» (forma neutra rispetto al genere).
+
+Verifiche (PostgreSQL tmpfs su rete Docker interna `counselorbot-goal-phases-s8`, immagine
+`counselorbot-goal-focus-validation:20261015-s6` con una copia del backend del ramo, nessun
+dato reale, nessun provider, nessun container produttivo toccato; `next dev` su
+127.0.0.1:3158 con API tutte simulate, fermato a fine lavoro):
+
+| Controllo | Esito |
+| --- | --- |
+| `test_control_markers.py` (guardia: 14 tipi di chat × 2 rotte, cronologia, PDF) | verde; per mutazione (estrazione tolta) 28/28 rossi |
+| `test_goal_phase_redesign.py`, `test_pdf_export_text.py` | 24 + 2 verdi |
+| 31 suite mirate (obiettivi, contratto, prompt, allineamento, revisioni, PDF, eventi, taccuini, docenza, ledger…) | 1141 passed |
+| `test_smoke.py` + `test_chat_preparation.py` | 2 failed, 211 passed: stessi 2 dell'immagine base (`f6ff90ff` e `test_all_steps_and_languages…`) |
+| Frontend `npm test` | 491 passed |
+| Browser `chat-preferences.test.mjs` | 3 test Obiettivo (essenziale, completo, snapshot su fase ritirata) e i 2 QSA verdi; 6 rossi tutti sul selettore «Formato» (difetto preesistente `dace5f97`, codice non toccato) |
+| `tsc --noEmit`, `npm run build` | 0 errori (esclusi i moduli `.png` senza `next-env.d.ts` generato) / build riuscita |
+| `npm run lint` | i18n ok; 6 errori preesistenti in file non toccati (`50db1e7c`) |
+| `make guidance-check` | allineato dopo `guidance-refresh` |
+
+Passo manuale dopo merge e deploy (nessun sudo): Amministrazione → **Allinea prompt di
+fabbrica** (con il controllo in sola lettura del documento operativo). Senza, filtro dei
+segnali, fasi, etichette, avanzamento, PDF e contratto runtime funzionano subito; i testi
+DB di presentazione e passi restano quelli vecchi (es. «7 passi»).
+
+Limiti: nessuna chiamata a modelli; verificate consegna al modello e meccanica, non la
+qualità delle risposte reali. Il pannello admin degli step mostra ancora le righe e le
+etichette salvate (patto/SMART/sfida inclusi). La scheda strumento nel DB resta col testo
+precedente (`c44c5f4a`).
+
+Bug del Diario risolti qui: `5a883270`, `589f502e`, `c498289a`, `0f1d6b34`, `7ec58d51`,
+`cdd6b63d`, `510fe79f` (`0f6c3351` scartato, accordo col pulsante invariato). Registrati:
+`58beb31e` (ambiente di test senza `backend/__init__.py`), `c44c5f4a` (scheda strumento).
+Bug non registrati: nessuno.
+
 # Handoff S6: Obiettivi, un focus preciso e una bozza presto (blocco 2)
 Data: 2026-10-15 | Branch: `feature/goal-guided-focused-definition` (stacked su
 `fix/goal-guided-group-context`, PR #291) | Agente: `s6-obiettivi-focus` | Task `13b12039`
