@@ -274,6 +274,26 @@ DEFAULT_GUIDED_TEXT_EVENTO_PROFESSIONALE_CONCLUSION = (
 OBIETTIVO_DOMAINS = {"OBIETTIVO_STUDIO": "learning", "OBIETTIVO_DOCENZA": "teaching"}
 OBIETTIVO_STEP_PREFIXES = {"OBIETTIVO_STUDIO": "obbstudio", "OBIETTIVO_DOCENZA": "obbdocenza"}
 
+# Segnaposto dei testi di fabbrica Obiettivo (step e presentazione): {who} è
+# chi apprende nella voce della conversazione, {context} da dove parte
+# l'obiettivo, {objective}/{outcome} come si nomina e che cosa si chiede.
+_OBIETTIVO_STEP_REPLACEMENTS = {
+    "OBIETTIVO_STUDIO": {
+        "who": "you",
+        "context": "their notebook, the context of their class when present, a recent result, a course or a task they find hard",
+        "domain": "learning",
+        "objective": "learning objective",
+        "outcome": "they would like to learn or be able to do",
+    },
+    "OBIETTIVO_DOCENZA": {
+        "who": "your students",
+        "context": "the teacher's notebook (disciplines, methodologies, experience), the class context provided for this conversation, a recent activity or a topic the class finds hard",
+        "domain": "teaching",
+        "objective": "didactic objective for their class",
+        "outcome": "they would like their students to learn or be able to do",
+    },
+}
+
 DEFAULT_SYSTEM_PROMPT_OBIETTIVO_INTERVIEW = _text("default_system_prompt_obiettivo_interview")
 
 DEFAULT_SYSTEM_PROMPT_OBIETTIVO_SUMMARY = _text("default_system_prompt_obiettivo_summary")
@@ -857,15 +877,23 @@ _EVENTO_INTRO_FLOW = _text("evento_intro_flow") + '\n'
 _OBIETTIVO_INTRO_FLOW = _text("obiettivo_intro_flow") + '\n'
 
 
-def _obiettivo_intro_system_prompt(domain: str) -> str:
+def _obiettivo_intro_system_prompt(questionnaire_type: str) -> str:
+    # Stesso mandato dello step di presentazione: un solo invito facoltativo a
+    # dire che cosa si ha in mente, nessuna analisi. I segnaposto si risolvono
+    # qui come negli step, o il modello li riceverebbe tali e quali.
+    flow = _OBIETTIVO_INTRO_FLOW
+    for placeholder, value in _OBIETTIVO_STEP_REPLACEMENTS[questionnaire_type].items():
+        flow = flow.replace("{" + placeholder + "}", value)
     return (
         "You are introducing yourself to the person at the start of the learning-objective "
-        f"path on their {domain} objective.\n\n"
+        f"path on their {OBIETTIVO_DOMAINS[questionnaire_type]} objective.\n\n"
         "In this turn:\n"
-        + _OBIETTIVO_INTRO_FLOW
+        + flow
         + "\n"
-        "Do NOT yet: ask about the objective or analyse anything. This is only the "
-        "welcome, not the conversation."
+        "Do NOT yet: analyse anything, propose a draft of the objective or ask follow-up "
+        "questions; the optional invitation above is the only question of this welcome. "
+        "If the person already says what they have in mind, acknowledge it in one sentence "
+        "as the starting point and invite them to continue."
     ) + INTRO_ALLOWED_QUESTIONS
 
 
@@ -885,9 +913,9 @@ DEFAULT_SYSTEM_PROMPT_EVSTUDIO_INTRO = _evento_intro_system_prompt("study")
 
 DEFAULT_SYSTEM_PROMPT_EVPROF_INTRO = _evento_intro_system_prompt("work")
 
-DEFAULT_SYSTEM_PROMPT_OBBSTUDIO_INTRO = _obiettivo_intro_system_prompt("learning")
+DEFAULT_SYSTEM_PROMPT_OBBSTUDIO_INTRO = _obiettivo_intro_system_prompt("OBIETTIVO_STUDIO")
 
-DEFAULT_SYSTEM_PROMPT_OBBDOCENZA_INTRO = _obiettivo_intro_system_prompt("teaching")
+DEFAULT_SYSTEM_PROMPT_OBBDOCENZA_INTRO = _obiettivo_intro_system_prompt("OBIETTIVO_DOCENZA")
 
 DEFAULT_SYSTEM_PROMPT_QPCS_INTRO = (
     "You are introducing yourself to the student at the start of the QPCS "
@@ -2083,22 +2111,10 @@ DEFAULT_EVENTO_PROFESSIONALE_GUIDED_STEPS: List[Dict] = _evento_guided_steps("EV
 
 # --- Default Obiettivo di apprendimento guided steps (seeded into guided_steps table) ---
 # Stesso percorso per i due strumenti: presentazione, patto, sette passi,
-# sintesi. Gli step condivisi portano i segnaposto {who} (chi apprende:
-# "you" / "your students"), {context} (da dove parte l'obiettivo) e {domain}
-# (learning / teaching); piano, verifica e sintesi hanno un testo per
-# strumento, perché il contenuto cambia davvero.
-_OBIETTIVO_STEP_REPLACEMENTS = {
-    "OBIETTIVO_STUDIO": {
-        "who": "you",
-        "context": "their notebook, the context of their class when present, a recent result, a course or a task they find hard",
-        "domain": "learning",
-    },
-    "OBIETTIVO_DOCENZA": {
-        "who": "your students",
-        "context": "the teacher's notebook (disciplines, methodologies, experience), the class context provided for this conversation, a recent activity or a topic the class finds hard",
-        "domain": "teaching",
-    },
-}
+# sintesi. Gli step condivisi portano i segnaposto di
+# _OBIETTIVO_STEP_REPLACEMENTS (in testa alla sezione Obiettivo); piano,
+# verifica e sintesi hanno un testo per strumento, perché il contenuto cambia
+# davvero.
 
 _OBIETTIVO_STEP_FILE_NAMES = {
     "intro": "obiettivo_intro_step_prompt",

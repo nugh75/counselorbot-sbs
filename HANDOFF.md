@@ -1,3 +1,74 @@
+# Handoff S6: Obiettivi, un focus preciso e una bozza presto (blocco 2)
+Data: 2026-10-15 | Branch: `feature/goal-guided-focused-definition` (stacked su
+`fix/goal-guided-group-context`, PR #291) | Agente: `s6-obiettivi-focus` | Task `13b12039`
+PR draft stacked: https://github.com/nugh75/counselorbot-sbs/pull/292 (Project CounselorBot). Revisione non Claude obbligatoria prima del merge.
+
+Contratto e procedura: `docs/operations/goal-focused-definition.md`. In sintesi:
+
+- `backend/prompt_contract.py`: contratto runtime `[OBJECTIVE FOCUS]` in
+  `[TURN CONTRACT]` per OBIETTIVO_DOCENZA/STUDIO, fasi `definition` (partenza →
+  sfida, essenziale focus/smart), `design` (piano, verifica, essenziale plan),
+  `synthesis` (sintesi); presentazione e patto esclusi. Un focus preciso,
+  priorità proposta e altri risultati da parte, bozza modificabile presto, una
+  domanda sul dato mancante, riuso di taccuino/classe/turni, Bloom e SMART come
+  controlli delle lacune, niente invenzioni, niente autointerrogazione. Vale
+  anche sui testi DB personalizzati senza riscriverli.
+- `backend/prompts/obiettivo_*.md` e i due system prompt: stessi criteri nei
+  testi di fabbrica (ordine e numero dei passi invariati, patto invariato).
+- Presentazione (bug `f8e237bd`): sistema e step con un unico mandato (un solo
+  invito facoltativo), segnaposto risolti per strumento (`prompt_config.py`).
+- `backend/qsa_essential.py` + `chat_preparation.py`: fasi essenziali Obiettivo
+  con apertura/risposta; si chiudono su `[[AVANZA_STEP]]`. `chat_logic.py`:
+  descrizione del percorso senza «tre risposte». QSA invariato.
+- Frontend: `chat-preferences.ts` (`essentialReplyPhase`,
+  `essentialSignalAdvances`, etichette e aiuto in sei lingue),
+  `GuidedChatInterface.tsx` (la risposta resta nella fase; avanzamento solo su
+  risposta completata col marcatore, apertura di «completare l'obiettivo» se già
+  definito, «Passa al prossimo tema» invariato). Guida §7 in sei lingue.
+- `prompt_factory_legacy.json`: nuovi hash accanto ai precedenti (20 chiavi).
+
+Cambiamenti visibili dell'essenziale Obiettivo: aiuto «3 fasi brevi (focus,
+obiettivo, piano)…»; fasi *Focus e prima bozza*, *Completare l'obiettivo*,
+*Piano e prova* / *Attività e verifica*, *Sintesi*; una fase può durare più
+risposte; al passaggio compaiono separatore e breve apertura della fase.
+
+Esempi sintetici prima/dopo (costruiti dai mandati, **non** output di un modello):
+nel documento operativo. Nessuna chiamata a provider, nessuna conversazione LLM.
+
+Verifiche (PostgreSQL tmpfs su rete Docker interna `counselorbot-goal-focus-s6`,
+immagine `counselorbot-goal-focus-validation:20261015-s6`, nessun dato reale,
+nessun container produttivo toccato; dev server Next su 127.0.0.1:3151 con API
+tutte simulate dai test):
+
+| Controllo | Esito |
+| --- | --- |
+| Riproduzione bug `f8e237bd` (script su `prompt_config`) | immagine blocco 1: 4 violazioni, exit 1; questo ramo: OK |
+| `test_goal_focused_definition.py` | 36 passed |
+| 16 suite mirate (autointerrogazione, preferenze chat, file prompt, allineamento/aggiornamenti/revisioni prompt, mappa prompt, docenza, contesto docente, obiettivi, taccuini, deriva coppie) | 965 passed |
+| `test_smoke.py` | 206 passed, 1 failed: baseline noto `f6ff90ff` (`'domanda' == ''`), invariato |
+| Suite backend completa, confronto con immagine blocco 1 | interrotta dal tetto di memoria Docker (4 GB condivisi con la produzione) a `test_path_publication`; i 15 file con F/E fino a lì (migrazioni, concorrenza, amministrazione IT/in-app, credenziali istituto, diagrammi, orientamento, `test_chat_preparation`) danno **gli stessi 103** FAILED/ERROR su immagine blocco 1 e su questo ramo: richiedono DB/servizi dedicati (es. URL `127.0.0.1:18650`), non toccati qui |
+| Frontend `npm test` | 483 passed (10 nuovi) |
+| Browser `chat-preferences.test.mjs` | nuovo test Obiettivo e test QSA «failed essential turn»/«complete QSA» verdi; 3 test rossi anche con i file di HEAD (selettore Formato spostato): Diario `dace5f97`, confermato |
+| `npm run build` (Webpack), `tsc --noEmit` | superati, 0 errori |
+| `npm run lint` | i18n ok; file modificati senza errori; 6 errori ESLint preesistenti in 6 file non toccati (Diario `50db1e7c`) |
+| `make guidance-refresh/check` | superati |
+
+Passo manuale dopo merge e deploy (non eseguito, nessun sudo): Amministrazione →
+**Allinea prompt di fabbrica**, con controllo preventivo in sola lettura indicato
+nel documento operativo. Senza questo passo, sulle installazioni esistenti il
+contratto runtime e l'essenziale funzionano subito, ma i testi DB degli step e
+la presentazione (bug `f8e237bd`) restano quelli vecchi.
+
+Limiti: verificata la consegna al modello e la meccanica, non la qualità di
+risposte reali (serve valutazione autorizzata con modello). Selezione classi
+invariata dal blocco 1 (barra del composer). Dopo la sintesi essenziale un
+messaggio libero usa ancora il compito di sintesi (comportamento preesistente,
+Diario `c5fd53ac`, sospetto, non corretto: fuori contratto).
+
+Bug del Diario: `f8e237bd` risolto qui (fix + test). Registrati: `dace5f97`
+(test browser Formato, baseline), `c5fd53ac` (approfondimento dopo la sintesi).
+Bug non registrati: nessuno.
+
 # Handoff S5: contesto classi della chat Obiettivi docente (blocco 1)
 Data: 2026-10-15 | Branch: `fix/goal-guided-group-context` | Agente: `s5-obiettivi-contesto-auto`
 PR draft: https://github.com/nugh75/counselorbot-sbs/pull/291 (Project CounselorBot). Revisione non Claude obbligatoria prima del merge.
