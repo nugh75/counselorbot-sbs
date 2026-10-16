@@ -35,12 +35,12 @@ def main() -> int:
     args = parser.parse_args()
 
     from backend import database
-    from backend.instrument_translation import ollama_translator
+    from backend.instrument_translation import configured_translator
 
     catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
     db = next(database.get_db())
     try:
-        translate, model = ollama_translator(db)
+        translate, model = configured_translator(db)
         print(f"modello: {model}")
         for entry in catalog:
             for field in _fields(entry):
