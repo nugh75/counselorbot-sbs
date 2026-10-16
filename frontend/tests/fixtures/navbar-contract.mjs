@@ -107,7 +107,6 @@ export const LABELS = {
     reader: 'Lettore audio',
     resume: 'Riprendi un’attività',
     retry: 'Riprova',
-    feedback: 'Questionario di gradimento',
     services: 'Servizi piattaforma ai4educ',
     logout: 'Logout',
     adminLogin: 'Accesso admin',
@@ -141,7 +140,6 @@ export const ENTRY_HREFS = {
     student: '/profilo',
     teacher: '/docente',
     admin: '/admin',
-    feedback: '/questionario',
     counselor: '/counselor',
 };
 
@@ -173,7 +171,7 @@ export function expectedNavbar(profileKey, width, { resume = { rows: [], error: 
     const auth = identity.authenticated;
     const account = auth && (identity.name || identity.email || identity.username);
     const resumeVisible = resume.rows.length > 0 || resume.error;
-    const utilities = [LABELS.feedback, LABELS.darkIcon, LABELS.motion, LABELS.language];
+    const utilities = [LABELS.darkIcon, LABELS.motion, LABELS.language];
 
     if (loading) {
         return { bar: size === 'xl' ? [LABELS.home, ...utilities] : [LABELS.home], menu: null };
@@ -206,7 +204,7 @@ export function expectedNavbar(profileKey, width, { resume = { rows: [], error: 
     if (size === 'compact') menu.push(...primary);
     menu.push(...roleItems, LABELS.reader);
     if (size !== 'xl') {
-        menu.push(...resumeBlock(resume), LABELS.feedback);
+        menu.push(...resumeBlock(resume));
         if (expect.services) menu.push(LABELS.services);
         menu.push(authLabel, LABELS.darkRow, LABELS.motion, ...LABELS.languages);
     }
