@@ -127,10 +127,10 @@ export const LABELS = {
 export const LOCALIZED = {
     it: { menu: 'Menu', guide: 'Guida', student: 'Area studente', teacher: 'Area docente', admin: 'Area amministrazione', assistant: 'Assistente', bussola: 'Apri la Bussola', logout: 'Logout', adminLogin: 'Accesso admin' },
     en: { menu: 'Menu', guide: 'Guide', student: 'Student area', teacher: 'Teacher area', admin: 'Administration area', assistant: 'Assistant', bussola: 'Open the Compass', logout: 'Logout', adminLogin: 'Admin access' },
-    es: { menu: 'Menú', guide: 'Guía', student: 'Área del estudiante', teacher: 'Área docente', admin: 'Área de administración', assistant: 'Asistente docente', bussola: 'Abrir la Brújula', logout: 'Salir', adminLogin: 'Acceso admin' },
-    fr: { menu: 'Menu', guide: 'Guide', student: 'Espace élève', teacher: 'Espace enseignant', admin: 'Espace administration', assistant: 'Assistant enseignant', bussola: 'Ouvrir la Boussole', logout: 'Déconnexion', adminLogin: 'Accès admin' },
-    de: { menu: 'Menü', guide: 'Anleitung', student: 'Bereich für Lernende', teacher: 'Lehrkräftebereich', admin: 'Verwaltungsbereich', assistant: 'Lehrkraft-Assistent', bussola: 'Kompass öffnen', logout: 'Abmelden', adminLogin: 'Admin-Zugang' },
-    sv: { menu: 'Meny', guide: 'Guide', student: 'Elevområde', teacher: 'Lärarområde', admin: 'Administrationsområde', assistant: 'Lärarassistent', bussola: 'Öppna Kompassen', logout: 'Logga ut', adminLogin: 'Adminåtkomst' },
+    es: { menu: 'Menú', guide: 'Guía', student: 'Área del estudiante', teacher: 'Área docente', admin: 'Área de administración', assistant: 'Asistente', bussola: 'Abrir la Brújula', logout: 'Salir', adminLogin: 'Acceso admin' },
+    fr: { menu: 'Menu', guide: 'Guide', student: 'Espace élève', teacher: 'Espace enseignant', admin: 'Espace administration', assistant: 'Assistant', bussola: 'Ouvrir la Boussole', logout: 'Déconnexion', adminLogin: 'Accès admin' },
+    de: { menu: 'Menü', guide: 'Anleitung', student: 'Bereich für Lernende', teacher: 'Lehrkräftebereich', admin: 'Verwaltungsbereich', assistant: 'Assistent', bussola: 'Kompass öffnen', logout: 'Abmelden', adminLogin: 'Admin-Zugang' },
+    sv: { menu: 'Meny', guide: 'Guide', student: 'Elevområde', teacher: 'Lärarområde', admin: 'Administrationsområde', assistant: 'Assistent', bussola: 'Öppna Kompassen', logout: 'Logga ut', adminLogin: 'Adminåtkomst' },
 };
 
 export const ENTRY_HREFS = {

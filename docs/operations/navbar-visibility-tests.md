@@ -12,6 +12,7 @@ esplicito, non per effetto collaterale.
 | --- | --- | --- |
 | `frontend/tests/fixtures/navbar-contract.mjs` | Identità e accessi sintetici A/S/D/R/M (S senza classi, una classe, due classi, vista `all`), etichette italiane e nelle sei lingue scritte a mano, `expectedNavbar(profilo, larghezza)` con l'elenco ordinato dei controlli visibili in barra e nel menu | Condiviso |
 | `frontend/src/lib/navbar-visibility.test.ts` | Matrice ruoli: i predicati di `roles.ts`, `isToolAllowed` e `classViewOptions` producono il contratto di ogni profilo; bordi 1023/1024 e 1279/1280; ogni voce raggiungibile in ogni fascia; Area docente/Amministrazione solo nel menu | `npm test` (Node 22) |
+| `frontend/src/lib/navbar-terminology.test.ts` | Testi della barra (P1) scritti a mano nelle sei lingue: Assistente generico, «Area studente» uguale in navbar e pagine, badge strumento tradotto con ripiego sul nome del catalogo e sul codice degli strumenti dinamici | `npm test` (Node 22) |
 | `backend/tests/test_navbar_area_guards.py` | HTTP 401/403/200 delle guardie dietro `/profilo`, `/docente`, `/admin` per A/S/D/R/M; marker docente/ricerca identici tra backend e `roles.ts` | pytest, nessun DB |
 | `frontend/tests/navbar-visibility.test.mjs` | Navbar realmente renderizzata (Playwright): matrice 8 profili × 390/768/1023/1024/1279/1280/1440, link visibili e destinazioni, caricamento identità/accesso, errori API, riprese, sei lingue, tastiera, tema e movimento | Dev isolato :3149 |
 
