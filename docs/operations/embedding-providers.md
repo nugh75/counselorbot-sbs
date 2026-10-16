@@ -143,7 +143,10 @@ Builds that embed share one exclusive reservation (thread lock plus a flock on
 overlap, so at most one collection embeds at a time across workers. A refused
 background build is retried by the next search that finds the index stale. A
 collection deleted after the job took its list is recorded as `skipped`
-(`collection_removed`) and never falls back to the default collection.
+(`collection_removed`) and never falls back to the default collection: the job
+uses the strict `find_index()` (no default), and a deletion after the lookup makes
+the build fail under the collection lock, after which the job checks existence
+again. Deleting a dynamic collection does not wait for the job.
 `GET /admin/document-retrieval` also returns `reindex_job`, `dimensions_warning`
 (`embedding_dimensions_unusual` for `google/gemini-embedding-2` outside 768, 1536
 or 3072) and `semantic_suspended_seconds` (remaining query cooldown).

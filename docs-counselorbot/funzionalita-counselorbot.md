@@ -159,7 +159,8 @@ shown. The Guide remains available independently of these class toggles.
   disattivato e l'avanzamento ricompare anche ricaricando la pagina. Si
   indicizza una sola collezione alla volta: se è già in corso
   un'indicizzazione, il pannello lo dice e non ne avvia un'altra; una
-  collezione eliminata nel frattempo risulta «saltata». I lotti
+  collezione eliminata nel frattempo risulta «saltata», senza che al suo posto
+  venga indicizzata un'altra collezione. I lotti
   verso il provider esterno vengono ritentati in automatico su limiti di
   frequenza, errori temporanei e tempi scaduti. Un errore su una collezione non
   ferma le altre né sospende la loro ricerca per significato, e quella
