@@ -59,6 +59,7 @@ from ..rag_index import (
     get_document_preview,
     collection_exists,
     list_collections,
+    EmbeddingUnavailable,
     DEFAULT_TOP_K,
     COLLECTION_COMPETENZE,
     COLLECTION_COUNSELORBOT,
@@ -144,6 +145,30 @@ _NO_MATERIAL_MESSAGE_BY_LANG = {
 
 def _no_material_message(language: str | None) -> str:
     return _NO_MATERIAL_MESSAGE_BY_LANG.get(language or "it", _NO_MATERIAL_MESSAGE_BY_LANG["it"])
+
+
+# Ricerca nei materiali non disponibile (backend di embedding irraggiungibile):
+# testo per l'utente al posto dell'errore tecnico, che resta solo nei log.
+_RETRIEVAL_UNAVAILABLE_MESSAGE_BY_LANG = {
+    "it": "La ricerca nei materiali non è disponibile in questo momento. "
+          "Riprova tra qualche minuto o contatta un amministratore.",
+    "en": "Searching the materials is not available right now. "
+          "Please try again in a few minutes or contact an administrator.",
+    "es": "La búsqueda en los materiales no está disponible en este momento. "
+          "Inténtalo de nuevo dentro de unos minutos o contacta con un administrador.",
+    "fr": "La recherche dans les documents n'est pas disponible pour le moment. "
+          "Réessaie dans quelques minutes ou contacte un administrateur.",
+    "de": "Die Suche in den Materialien ist im Moment nicht verfügbar. "
+          "Bitte versuche es in ein paar Minuten erneut oder wende dich an einen Administrator.",
+    "sv": "Sökningen i materialet är inte tillgänglig just nu. "
+          "Försök igen om några minuter eller kontakta en administratör.",
+}
+
+
+def _retrieval_unavailable_message(language: str | None) -> str:
+    return _RETRIEVAL_UNAVAILABLE_MESSAGE_BY_LANG.get(
+        language or "it", _RETRIEVAL_UNAVAILABLE_MESSAGE_BY_LANG["it"]
+    )
 
 # Etichetta interna per separare i like del site-chat nella memoria condivisa
 # e nella vista admin (riusa il sistema feedback degli altri strumenti).
@@ -380,11 +405,12 @@ async def site_chat_stream(
             request.audience, cat_weights, aud_weights, max_per_source, min_score,
         )
     except AIError as e:
-        logger.error("Site-chat retrieval AIError: %s", e)
+        if not isinstance(e, EmbeddingUnavailable):  # già segnalato una volta da rag_index
+            logger.error("Site-chat retrieval AIError: %s", e)
         log_error(db, session_id, str(e), action="chat_error", questionnaire_type=_SITE_QTYPE,
                   mode="site_chat", phase=request.audience, conversation_id=conversation_id)
         results = None
-        retrieval_error = str(e)
+        retrieval_error = _retrieval_unavailable_message(request.language)
     else:
         retrieval_error = None
         results = _filter_single_instrument_results(question, results)

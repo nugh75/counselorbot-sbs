@@ -1,5 +1,8 @@
-"""Recupero senza backend di embedding: cooldown e indice coerente."""
+"""Recupero senza backend di embedding: cooldown, indice coerente, SSE pulito."""
+import asyncio
+import json
 import logging
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -115,3 +118,41 @@ def test_failed_rebuild_keeps_the_previous_index_aligned_and_recovers(clock, tmp
     assert len(index.search(ai, "domanda")) == 3
     assert len(index.chunks) == len(index.matrix) == 3
 
+
+@pytest.mark.parametrize("language", ["it", "en", "es", "fr", "de", "sv"])
+def test_site_chat_sse_shows_a_localized_message_without_transport_details(monkeypatch, clock, tmp_path, language):
+    from backend.routes import site_chat
+    from backend.api_models import SiteChatRequest
+
+    ai = _Embedder(fail=True)
+    ai.config = {}
+    ai.stream_response = MagicMock()
+    index = _index(tmp_path, _Corpus())
+    monkeypatch.setattr(site_chat, "AIService", lambda db, username=None: ai)
+    monkeypatch.setattr(site_chat, "get_index", lambda collection: index)
+    monkeypatch.setattr(site_chat, "_resolve_site_prompt", lambda *a: "Prompt")
+    monkeypatch.setattr(site_chat, "_apply_language_directive", lambda text, *a, **kw: text)
+    monkeypatch.setattr(site_chat, "_resolve_counselor", lambda *a: (None, None))
+    monkeypatch.setattr(site_chat, "_portfolio_context", lambda *a: "")
+    monkeypatch.setattr(site_chat, "_top_k", lambda ai: 3)
+    monkeypatch.setattr(site_chat, "_retrieval_params", lambda ai: ({}, {}, 2, 0))
+    monkeypatch.setattr(site_chat, "log_error", MagicMock())
+    memory = MagicMock()
+    memory.get_relevant_context.return_value = ""
+    monkeypatch.setattr(site_chat, "session_memory", memory)
+
+    async def run():
+        response = await site_chat.site_chat_stream(
+            SiteChatRequest(message="Che cos'è il QSA?", collection="competenzestrategiche", language=language),
+            current_user={}, db=MagicMock(),
+        )
+        return [chunk async for chunk in response.body_iterator]
+
+    for _ in range(2):  # primo errore e turno successivo in cooldown
+        chunks = asyncio.run(run())
+        raw = "".join(chunks)
+        for detail in ("Ollama", "Errno", "Connection refused", "fake-embed", "Embedding"):
+            assert detail not in raw
+        last = json.loads(chunks[-1].removeprefix("data: ").strip())
+        assert last == {"error": site_chat._RETRIEVAL_UNAVAILABLE_MESSAGE_BY_LANG[language]}
+    ai.stream_response.assert_not_called()
