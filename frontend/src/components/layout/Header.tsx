@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { BookOpen, Bot, ClipboardList, Compass, GraduationCap, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, type LucideIcon } from 'lucide-react';
@@ -19,23 +20,23 @@ import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
 import { LANGUAGES } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
+import { currentHeaderLink, headerNavigation, type HeaderLink, type HeaderLinkKey } from '@/lib/header-navigation';
 import { resumeLabel } from '@/lib/resume-label';
 import { useUserAccess } from '@/lib/use-user-access';
-import { isToolAllowed } from '@/lib/user-access';
+import type { UserAccess } from '@/lib/user-access';
 import { useI18n } from '@/lib/i18n-context';
-import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
 import { useDisclosure } from '@/lib/use-disclosure';
 import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries, type ResumeEntries } from '@/lib/use-resume-entries';
 
-interface SecondaryItem {
-    key: string;
-    href: string;
-    external?: boolean;
-    menuOnly?: boolean;
-    icon: LucideIcon;
-    label: string;
-}
+const LINK_ICONS: Record<HeaderLinkKey, LucideIcon> = {
+    orientation: Compass,
+    assistant: Bot,
+    guide: BookOpen,
+    profile: User,
+    'teacher-panel': GraduationCap,
+    admin: Settings,
+};
 
 const SEPARATOR = 'mx-1 h-5 w-px shrink-0 bg-slate-200 dark:bg-slate-700';
 
@@ -43,6 +44,9 @@ export function Header() {
     const { t } = useI18n();
     const { access, loading: accessLoading } = useUserAccess();
     const [identity, setIdentity] = useState<Identity | null | undefined>(undefined);
+    // Solo il percorso: nessuna voce punta a `/`, e la home toglie dall'URL le
+    // query della chat appena lette (vedi `CHAT_QUERY_KEYS`).
+    const pathname = usePathname();
     // Le voci "Riprendi" vivono qui e servono due rendering: l'icona su schermi
     // >= xl e il menu mobile. Un solo fetch, lo stesso elenco.
     const resumeEntries = useResumeEntries(Boolean(identity?.authenticated));
@@ -51,67 +55,30 @@ export function Header() {
         getIdentity().then(setIdentity);
     }, []);
 
-    const accountLabel = identity?.name || identity?.email || identity?.username;
-    // Servizi ai4educ, mostrati solo ad admin e ricercatori: admin -> manager, ricercatore -> portale.
-    const consoleUrl = identity?.is_admin ? AI4EDUC_MANAGER_URL : AI4EDUC_PORTAL_URL;
-    const canOpenAssistant = canUseAssistant(identity) && !accessLoading && isToolAllowed(access, 'assistant');
-    const canOpenResearchConsole = canUseResearchConsole(identity);
-    const canOpenPersonalPage = canUsePersonalPage(identity);
+    // Una sola descrizione delle voci per barra e menu (P3 dell'audit navbar).
+    const nav = headerNavigation({ identity, access, accessLoading });
+    const current = currentHeaderLink(nav.links, pathname);
+    const servicesHref = nav.services === 'manager' ? AI4EDUC_MANAGER_URL : nav.services === 'portal' ? AI4EDUC_PORTAL_URL : undefined;
+    const authHref = nav.auth === 'logout' ? AI4AUTH_LOGOUT_URL : ai4authLoginUrl('/admin');
+    const authLabel = nav.auth === 'logout' ? t('nav.logout') : t('nav.adminLogin');
+    const AuthIcon = nav.auth === 'logout' ? LogOut : LogIn;
 
-    const isLoading = identity === undefined;
-    const isAuthenticated = !!identity?.authenticated;
-    const showServices = isAuthenticated && canOpenResearchConsole;
-    const authHref = isAuthenticated ? AI4AUTH_LOGOUT_URL : ai4authLoginUrl('/admin');
-    const authLabel = isAuthenticated ? t('nav.logout') : t('nav.adminLogin');
-    const AuthIcon = isAuthenticated ? LogOut : LogIn;
-
-    // Navigazione per dominio: in linea i quattro ingressi principali; le voci
-    // di ruolo (Area docente, Amministrazione) stanno solo nel menu.
-    const workItems: SecondaryItem[] = [];
-    const accountItems: SecondaryItem[] = [];
-    if (isAuthenticated && !accessLoading && isToolAllowed(access, 'bussola')) {
-        workItems.push({ key: 'orientation', href: '/bussola', icon: Compass, label: t('orientation.landing.open') });
-    }
-    if (canOpenAssistant) {
-        workItems.push({ key: 'assistant', href: '/assistente', icon: Bot, label: t('assistant.title') });
-    }
-    // Guida all'interfaccia: disponibile per tutti, anche senza login.
-    accountItems.push({ key: 'guide', href: '/guide', icon: BookOpen, label: t('nav.guide') });
-    if (canOpenPersonalPage) {
-        accountItems.push({ key: 'profile', href: '/profilo', icon: User, label: t('profile.nav') });
-    }
-    const menuOnlyItems: SecondaryItem[] = [];
-    if (canUseTeacherAssistant(identity)) {
-        // Docenti, ricercatori e admin: gruppi/classi (piani di somministrazione).
-        menuOnlyItems.push({
-            key: 'teacher-panel',
-            href: '/docente',
-            menuOnly: true,
-            icon: GraduationCap,
-            label: t('nav.teacherPanel'),
-        });
-    }
-    if (canOpenResearchConsole) {
-        menuOnlyItems.push({ key: 'admin', href: '/admin', icon: Settings, label: t('nav.admin'), menuOnly: true });
-    }
-    const secondaryItems = [...workItems, ...accountItems, ...menuOnlyItems];
-
-    const desktopItems = secondaryItems.filter(item => !item.menuOnly);
-    // I quattro ingressi principali in linea da `lg`; il menu a tre punti segue
+    // Le voci non `menuOnly` in linea da `lg`; il menu a tre punti segue
     // subito dopo e contiene le voci di ruolo.
     const workInline = (
-        <div className="hidden items-center gap-1 lg:flex">
-            {desktopItems.map((item) => {
-                const Icon = item.icon;
+        <nav aria-label={t('header.navigation')} className="hidden items-center gap-1 lg:flex">
+            {nav.links.filter(link => !link.menuOnly).map((link) => {
+                const Icon = LINK_ICONS[link.key];
+                const label = t(link.labelKey);
                 return (
-                    <Tooltip key={item.key} content={item.label}>
-                        <Link href={item.href} className="console-topbar-icon" aria-label={item.label}>
+                    <Tooltip key={link.key} content={label}>
+                        <Link href={link.href} className="console-topbar-icon" aria-label={label} aria-current={link.key === current ? 'page' : undefined}>
                             <Icon className="w-4 h-4" />
                         </Link>
                     </Tooltip>
                 );
             })}
-        </div>
+        </nav>
     );
 
     return (
@@ -131,10 +98,10 @@ export function Header() {
                         {/* Strumento e counselor selezionati: badge compatti durante il percorso. */}
                         <div className="hidden shrink-0 items-center gap-1 xl:flex">
                             <HeaderInstrument />
-                            {isAuthenticated && <HeaderCounselor />}
+                            {nav.authenticated && <HeaderCounselor />}
                         </div>
 
-                        {isLoading ? (
+                        {nav.loading ? (
                             // Riserva lo spazio mentre l'identità arriva: niente layout shift.
                             <div className="hidden items-center gap-1 lg:flex" aria-hidden="true">
                                 <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></span>
@@ -143,46 +110,49 @@ export function Header() {
                         ) : (
                             <>
                                 {/* Vista attiva dello studente con classi (#146). */}
-                                {isAuthenticated && <ClassViewSwitcher className="hidden lg:flex" />}
+                                {nav.classView && <ClassViewSwitcher access={access} className="hidden lg:flex" />}
 
                                 {/* I quattro ingressi principali, poi il menu a tre punti. */}
                                 {workInline}
 
                                 <HeaderMenu
-                                    items={secondaryItems}
+                                    links={nav.links}
+                                    current={current}
                                     resumeEntries={resumeEntries}
                                     label={t('header.menu')}
-                                    accountLabel={accountLabel}
+                                    accountLabel={nav.account?.label}
+                                    access={access}
+                                    classView={nav.classView}
                                     authHref={authHref}
                                     authLabel={authLabel}
                                     authIcon={AuthIcon}
-                                    servicesHref={showServices ? consoleUrl : undefined}
+                                    servicesHref={servicesHref}
                                     servicesLabel={t('header.services')}
                                 />
 
-                                {accountLabel && canOpenPersonalPage && (
+                                {nav.account?.href && (
                                     <Link
-                                        href="/profilo"
-                                        title={[identity?.username, identity?.email, identity?.groups.join(', ')].filter(Boolean).join(' - ')}
+                                        href={nav.account.href}
+                                        title={nav.account.title}
                                         className="hidden xl:inline min-w-0 max-w-32 truncate px-2 text-sm text-slate-500 hover:text-indigo-600 transition-colors font-medium"
                                     >
-                                        {accountLabel}
+                                        {nav.account.label}
                                     </Link>
                                 )}
-                                {accountLabel && !canOpenPersonalPage && (
+                                {nav.account && !nav.account.href && (
                                     <span
-                                        title={[identity?.username, identity?.email, identity?.groups.join(', ')].filter(Boolean).join(' - ')}
+                                        title={nav.account.title}
                                         className="hidden xl:inline min-w-0 max-w-32 truncate px-2 text-sm text-slate-500 font-medium"
                                     >
-                                        {accountLabel}
+                                        {nav.account.label}
                                     </span>
                                 )}
 
                                 {/* Accedi ad altre risorse: subito prima di Esci. */}
-                                {showServices && (
+                                {servicesHref && (
                                     <div className="hidden xl:block">
                                         <Tooltip content={t('header.services')}>
-                                            <a href={consoleUrl} className="console-topbar-icon" aria-label={t('header.services')} title={t('header.services')}>
+                                            <a href={servicesHref} className="console-topbar-icon" aria-label={t('header.services')} title={t('header.services')}>
                                                 <LayoutGrid className="w-4 h-4" />
                                             </a>
                                         </Tooltip>
@@ -226,20 +196,26 @@ export function Header() {
 }
 
 function HeaderMenu({
-    items,
+    links,
+    current,
     resumeEntries,
     label,
     accountLabel,
+    access,
+    classView,
     authHref,
     authLabel,
     authIcon: AuthIcon,
     servicesHref,
     servicesLabel,
 }: {
-    items: SecondaryItem[];
+    links: HeaderLink[];
+    current: HeaderLinkKey | null;
     resumeEntries: ResumeEntries;
     label: string;
     accountLabel?: string;
+    access: UserAccess | null;
+    classView: boolean;
     authHref: string;
     authLabel: string;
     authIcon: LucideIcon;
@@ -300,27 +276,21 @@ function HeaderMenu({
                             </div>
                         </div>
                     )}
-                    {accountLabel && (
-                        <ClassViewSwitcher labelled className="border-b border-slate-100 px-3 py-2 dark:border-slate-700 lg:hidden" />
+                    {accountLabel && classView && (
+                        <ClassViewSwitcher access={access} labelled className="border-b border-slate-100 px-3 py-2 dark:border-slate-700 lg:hidden" />
                     )}
-                    {items.map((item) => {
-                        const Icon = item.icon;
-                            const inner = (
-                                <>
+                    {/* Da `lg` restano solo le voci `menuOnly`: senza, il landmark si nasconde. */}
+                    <nav aria-label={t('header.menuNavigation')} className={cn(!links.some(link => link.menuOnly) && 'lg:hidden')}>
+                        {links.map((link) => {
+                            const Icon = LINK_ICONS[link.key];
+                            return (
+                                <Link key={link.key} href={link.href} className={cn(itemClass, !link.menuOnly && 'lg:hidden')} aria-current={link.key === current ? 'page' : undefined} onClick={close}>
                                     <Icon className="w-4 h-4 shrink-0" />
-                                    <span className="truncate">{item.label}</span>
-                                </>
-                            );
-                            return item.external ? (
-                                <a key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "lg:hidden")} onClick={close}>
-                                    {inner}
-                                </a>
-                            ) : (
-                                <Link key={item.key}href={item.href} className={cn(itemClass, !item.menuOnly && "lg:hidden")} onClick={close}>
-                                    {inner}
+                                    <span className="truncate">{t(link.labelKey)}</span>
                                 </Link>
                             );
-                    })}
+                        })}
+                    </nav>
                     {/* Il lettore segue le voci di navigazione, dopo "Gruppi e classi". */}
                     <VoiceReaderMenuEntry className={itemClass} onActivate={close} getOpener={() => triggerRef.current} />
                     <div className="xl:hidden">
