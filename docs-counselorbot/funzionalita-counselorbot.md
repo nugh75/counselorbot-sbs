@@ -148,7 +148,7 @@ shown. The Guide remains available independently of these class toggles.
   `API_KEY_OPENROUTER`, impostata nel file .env del server) è presente, mai il
   suo valore. Il pulsante «Prova» invia una frase fittizia e, se non riesce, ne
   dice il motivo (chiave rifiutata, credito esaurito, modello non disponibile,
-  richiesta rifiutata, limite di frequenza, errore del provider, rete, tempo
+  nessun endpoint del provider che rispetti la politica privacy, richiesta rifiutata, limite di frequenza, errore del provider, rete, tempo
   scaduto, dimensione dei vettori diversa da quella richiesta). Una dimensione
   insolita per google/gemini-embedding-2 (diversa da 768, 1536 o 3072) viene
   segnalata. Per ogni collezione il pannello mostra lo stato dell'indice; un
@@ -162,7 +162,12 @@ shown. The Guide remains available independently of these class toggles.
   collezione eliminata nel frattempo risulta «saltata», senza che al suo posto
   venga indicizzata un'altra collezione. I lotti
   verso il provider esterno vengono ritentati in automatico su limiti di
-  frequenza, errori temporanei e tempi scaduti. Un errore su una collezione non
+  frequenza, errori temporanei e tempi scaduti. I passaggi vuoti non vengono
+  inviati al provider e restano cercabili per parole chiave; un passaggio troppo
+  lungo viene accorciato invece di far fallire la collezione. Con Gemini via
+  OpenRouter, gli endpoint senza conservazione dei dati non accettano lotti:
+  l'indicizzazione invia una richiesta per passaggio, più lenta ma allo stesso
+  costo; per collezioni grandi è consigliato Mistral. Un errore su una collezione non
   ferma le altre né sospende la loro ricerca per significato, e quella
   collezione continua a usare l'indice precedente. Se la ricerca per significato
   è sospesa dopo un errore del provider, il pannello lo dice.

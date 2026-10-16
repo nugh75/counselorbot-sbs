@@ -280,7 +280,10 @@ aggiornato l'informativa. La procedura non richiede `sudo`.
    vettore**: valgono `google/gemini-embedding-2` a 768 dimensioni
    (`mistral-embed` a 1024 per Mistral). **Modalità di ricerca**: «Ibrida:
    parole chiave + significato (consigliata)». Premere **Salva recupero
-   documenti**.
+   documenti**. Con Gemini via OpenRouter gli endpoint a conservazione zero
+   (ZDR) non accettano lotti: l'indicizzazione invia una richiesta per
+   passaggio ed è più lenta (stesso costo); per collezioni grandi è
+   consigliato Mistral, che accetta lotti da 32.
 5. **Prova.** Premere **Prova**: invia una frase fittizia, senza dati
    personali, e costa una frazione di centesimo. Esito atteso: «Funziona:
    vettore di 768 dimensioni» (1024 con Mistral). Gli esiti «manca la chiave
