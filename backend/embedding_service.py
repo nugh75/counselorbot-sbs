@@ -217,7 +217,7 @@ def embed_texts(
             client = OpenAI(
                 api_key=key,
                 base_url="https://openrouter.ai/api/v1",
-                timeout=httpx.Timeout(timeout, connect=10.0),
+                timeout=float(timeout),
                 max_retries=0,
             )
         else:

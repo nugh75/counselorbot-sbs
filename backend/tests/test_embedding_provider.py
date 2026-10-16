@@ -116,6 +116,7 @@ def test_external_dispatch_batches_dimensions_usage_cost(
             constructor.call_args.kwargs["base_url"] == "https://openrouter.ai/api/v1"
         )
         assert constructor.call_args.kwargs["max_retries"] == 0
+        assert constructor.call_args.kwargs["timeout"] == 120.0
         assert calls[0]["dimensions"] == 768
         client.close.assert_called_once()
     else:

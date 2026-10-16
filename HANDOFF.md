@@ -1,6 +1,6 @@
 # Handoff s15: provider embedding configurabile (Blocco 3)
 Data: 2026-10-16 | Branch: `feat/embedding-provider-configurable` (da `origin/main` 49e8e9fa)
-Agente: `s15-cx-blocco3-provider`, Codex gpt-6.1-sol high | Task `a1d1ce5e-1b67-4f6c-a7b8-1699aebde7ae` | Issue #306, milestone #18
+Agente: `s15-cx-blocco3-provider`, Codex gpt-6.1-sol high | Task `a1d1ce5e-1b67-4f6c-a7b8-1699aebde7ae` | Issue #306, PR #307, milestone #18
 
 Backend: `embedding_service.py` smista Ollama, Mistral, OpenRouter e none;
 modello/dimensioni/prezzi persistono in Config via API admin esistente. Default
@@ -22,10 +22,13 @@ manifesto guida. Guida UI/screenshot rivisti: nessuna nuova UI in questo blocco.
 Rebuild isolato `counselorbot-embedding-validation:s15` riuscito, niente deploy,
 sudo, .env, dati/porte di produzione o stack portabile modificati.
 
-Stato verifiche al primo commit: 82 test provider/RAG + 3 sottotest, 72 test
-routing/PII, 3 test guida verdi; Ruff F sui moduli coinvolti, format dei file nuovi,
-mypy locale e guidance-check verdi. Suite finale nell’immagine aggiornata (4 nuovi
-test aggiuntivi) e mypy con SDK completi ancora in corso: PR deve restare in bozza.
+Verifiche locali: 86 test provider/RAG + 3 sottotest, 72 test routing/PII e 3 test
+guida verdi; Ruff F sui moduli coinvolti, format dei file nuovi, mypy locale e
+guidance-check verdi. Mypy con SDK completi ha rilevato il timeout OpenAI tipizzato
+come httpx2: corretto usando il timeout numerico supportato da entrambe le versioni
+(bug `393dd8a3`), con test SDK su trasporto finto. Il workflow Document retrieval
+esegue Ruff, mypy con tutte le dipendenze e la suite offline. Politica consegna:
+rendere pronta PR #307 solo dopo tutti i check verdi; nessun merge o deploy manuale.
 
 Bug Diario: `eea9b649` (refuso cooldown/cleanup SDK introdotto e corretto prima del
 commit); `8ef0d4ef` (fixture test senza prompt_revisions, corretto, suite verde).
