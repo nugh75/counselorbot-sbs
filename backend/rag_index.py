@@ -1,20 +1,8 @@
-"""RAG index per il chatbot del sito competenzestrategiche.it.
+"""Local document retrieval: always-on BM25, optional vectors and graph expansion.
 
-Indice locale ibrido (vettori + grafo) costruito sui markdown convertiti da
-`docs/graphify-out/converted/` con espansione del contesto via il grafo di
-conoscenza in `docs/graphify-out/cache/semantic/*.json` (nodi/archi prodotti
-dalla skill graphify).
-
-- Embeddings: locali via Ollama (modello `embedding_model`, default bge-m3),
-  calcolati attraverso `AIService.embed_texts`.
-- Similarità: coseno in puro Python (corpus piccolo → niente numpy).
-- Persistenza: un singolo JSON in `RAG_INDEX_DIR`; ricostruzione incrementale
-  quando cambia la firma del corpus (hash dei file) o il modello di embedding.
-- Grounding: la retrieval ritorna i chunk; è il prompt di sistema della route a
-  imporre di rispondere SOLO dai materiali.
-
-Il corpus `graphify-out` è ancora in costruzione (popolato da un altro LLM):
-l'indice si ricostruisce da solo quando compaiono nuovi file convertiti.
+Lexical postings and corpus metadata share the per-collection JSON in
+RAG_INDEX_DIR; vectors and the incremental embedding cache remain separate.
+No network is required for lexical collection, persistence or queries.
 """
 from __future__ import annotations
 
@@ -26,6 +14,8 @@ import os
 import re
 import threading
 import time
+import unicodedata
+from collections import Counter
 
 import numpy as np
 
@@ -122,7 +112,7 @@ DEFAULT_CATEGORY_WEIGHTS = {
     "studi": 0.9, "convegni": 0.75, "approfondimenti": 0.5, "altro": 0.9,
 }
 
-# Quanti tra i migliori match GREZZI (per coseno) garantire sempre nel contesto,
+# Quanti tra i migliori match GREZZI (BM25, coseno o RRF) garantire sempre nel contesto,
 # così il peso categoria non seppellisce mai l'evidenza più pertinente.
 _RAW_GUARANTEE = 2
 
@@ -688,6 +678,8 @@ def default_scope_for(collection: str, source: str) -> bool:
         # Replacing PDFs must not also enroll existing README/bibliography files.
         # Hand-authored Markdown remains available through explicit admin scope.
         path = _resolve_collection_source(collection, source)
+        if path is None:
+            return False
         try:
             with open(path, encoding="utf-8") as stream:
                 if stream.read(12) != "<!-- pdf2md ":
@@ -985,6 +977,87 @@ class _EmbeddingCooldown:
 _embedding_cooldown = _EmbeddingCooldown(EMBEDDING_FAILURE_COOLDOWN_SECONDS)
 
 
+# Compact stopword lists for the six UI languages, applied after accent folding.
+# Keep factor codes (A1, C1...), names and numbers intact; no stemming by default.
+_STOPWORDS = frozenset("""
+    a ad al alla alle allo ai agli anche che chi con da dal dalla dei degli del
+    della delle di e ed gli i il in la le lo ma nel nella nei non o per piu se
+    si su sul sulla tra un una uno come cosa sono essere questo questa
+    a an and are as at be by for from how in is it of on or that the this to
+    was what when where which who will with you your
+    al como con cual de del el ella en es esta este la las los mas o para por
+    que se sin sobre su un una y
+    au aux avec ce ces dans de des du elle en est et il je la le les mais ne
+    ou par pas plus pour que qui sans se son sur un une vous
+    aber als am an auf aus bei das dem den der des die ein eine einer eines
+    fur im in ist mit nicht oder sich sie sind und von was wie zu zum zur
+    ar att av de den det du en ett for fran har hur i inte jag med men och om
+    pa som till under vad var vi vilka
+""".split())
+_LEXICAL_VERSION = 1
+_RRF_K = 60
+
+
+def _lexical_tokens(text: str) -> list[str]:
+    folded = "".join(c for c in unicodedata.normalize("NFKD", text.casefold())
+                     if not unicodedata.combining(c))
+    return [t for t in re.findall(r"[^\W_]+", folded, flags=re.UNICODE)
+            if t not in _STOPWORDS]
+
+
+class _BM25Index:
+    """Sparse postings; numpy scores only documents containing a query term."""
+
+    def __init__(self, chunks: list[dict]):
+        postings: dict[str, list[list[int]]] = {}
+        lengths = []
+        for idx, chunk in enumerate(chunks):
+            # Filename metadata retrieves authors absent from the passage itself.
+            tokens = _lexical_tokens(" ".join(str(chunk.get(k, ""))
+                                              for k in ("source", "title", "text")))
+            lengths.append(len(tokens))
+            for token, count in Counter(tokens).items():
+                postings.setdefault(token, []).append([idx, count])
+        self._set_data(lengths, postings)
+
+    def _set_data(self, lengths, postings):
+        self.lengths = np.asarray(lengths, dtype=np.float32)
+        self.postings = {t: np.asarray(rows, dtype=np.int32) for t, rows in postings.items()}
+        average = float(self.lengths.mean()) if len(self.lengths) else 0.0
+        self.normalizer = 1.2 * (0.25 + 0.75 * self.lengths / max(average, 1.0))
+
+    def serialize(self) -> dict:
+        return {"version": _LEXICAL_VERSION, "lengths": self.lengths.tolist(),
+                "postings": {t: rows.tolist() for t, rows in self.postings.items()}}
+
+    @classmethod
+    def restore(cls, data: dict, chunks: list[dict]):
+        if data.get("version") != _LEXICAL_VERSION or len(data.get("lengths", [])) != len(chunks):
+            return cls(chunks)  # Upgrade legacy metadata locally, without embedding.
+        obj = cls.__new__(cls)
+        obj._set_data(data["lengths"], data["postings"])
+        return obj
+
+    def scores(self, query: str) -> np.ndarray:
+        scores = np.zeros(len(self.lengths), dtype=np.float64)
+        for token in sorted(set(_lexical_tokens(query))):
+            rows = self.postings.get(token)
+            if rows is None:
+                continue
+            ids, tf = rows[:, 0], rows[:, 1]
+            idf = np.log1p((len(scores) - len(ids) + 0.5) / (len(ids) + 0.5))
+            scores[ids] += idf * tf * 2.2 / (tf + self.normalizer[ids])
+        return scores
+
+
+def _rank_fusion(*rankings: list[int]) -> dict[int, float]:
+    scores: dict[int, float] = {}
+    for ranking in rankings:
+        for rank, idx in enumerate(ranking, 1):
+            scores[idx] = scores.get(idx, 0.0) + 1.0 / (_RRF_K + rank)
+    return scores
+
+
 # ---------------------------------------------------------------------------
 # Indice
 # ---------------------------------------------------------------------------
@@ -1016,22 +1089,25 @@ class SiteRagIndex:
         self.embedding_model: str = ""
         self.built_at: float = 0.0
         self._loaded = False
+        self.lexical: _BM25Index | None = None
 
     # --- persistenza (meta in JSON, vettori in .npy) ---
     def _load_from_disk(self) -> bool:
-        if not os.path.exists(self.index_path) or not os.path.exists(self.emb_path):
+        if not os.path.exists(self.index_path):
             return False
         try:
             with open(self.index_path, encoding="utf-8") as f:
                 data = json.load(f)
-            matrix = np.load(self.emb_path)
+            matrix = (np.load(self.emb_path)
+                      if data.get("vectors_available", True) and os.path.exists(self.emb_path) else None)
         except Exception as e:
             logger.warning("Indice RAG non leggibile: %s", e)
             return False
         self.chunks = data.get("chunks", [])
         self.categories = [category_for(c["source"]) for c in self.chunks]
-        self.matrix = matrix.astype(np.float32, copy=False)
-        self.norms = np.linalg.norm(self.matrix, axis=1) if len(self.matrix) else np.zeros(0, dtype=np.float32)
+        self.matrix = matrix.astype(np.float32, copy=False) if matrix is not None else None
+        self.norms = np.linalg.norm(self.matrix, axis=1) if self.matrix is not None else None
+        self.lexical = _BM25Index.restore(data.get("lexical", {}), self.chunks)
         self.adjacency = {k: set(v) for k, v in data.get("adjacency", {}).items()}
         self.relpath_to_node = data.get("relpath_to_node", {})
         self.node_to_relpath = data.get("node_to_relpath", {})
@@ -1042,13 +1118,15 @@ class SiteRagIndex:
         return True
 
     def _save_to_disk(self):
-        os.makedirs(INDEX_DIR, exist_ok=True)
+        os.makedirs(os.path.dirname(self.index_path), exist_ok=True)
         tmp_json = self.index_path + ".tmp"
         payload = {
             "embedding_model": self.embedding_model,
             "built_at": self.built_at,
             "signature": self.signature,
             "chunks": self.chunks,
+            "vectors_available": self.matrix is not None,
+            "lexical": self.lexical.serialize() if self.lexical is not None else {},
             "adjacency": {k: sorted(v) for k, v in self.adjacency.items()},
             "relpath_to_node": self.relpath_to_node,
             "node_to_relpath": self.node_to_relpath,
@@ -1059,11 +1137,12 @@ class SiteRagIndex:
         os.replace(tmp_json, self.index_path)
 
     # --- build / ensure ---
-    def _is_current(self, ai_service) -> bool:
+    def _is_current(self, ai_service, require_vectors: bool = True) -> bool:
         """L'indice in memoria è già allineato a corpus + modello?"""
-        if not self._loaded or self.matrix is None:
+        if not self._loaded or self.lexical is None:
             return False
-        if self.embedding_model != (ai_service.embedding_model or "qwen3-embedding:4b"):
+        if require_vectors and (self.matrix is None or self.embedding_model !=
+                                (ai_service.embedding_model or "qwen3-embedding:4b")):
             return False
         return self._signature_fn() == self.signature
 
@@ -1072,12 +1151,12 @@ class SiteRagIndex:
             return True
         return not self._is_current(ai_service)
 
-    def build(self, ai_service):
+    def build(self, ai_service, require_vectors: bool = True):
         """(Ri)costruisce l'indice. Lock cross-worker (file) per evitare che i 4
         worker uvicorn embeddino lo stesso corpus in parallelo: chi non costruisce
         ricarica da disco il risultato dell'altro."""
         with self._lock:
-            os.makedirs(INDEX_DIR, exist_ok=True)
+            os.makedirs(os.path.dirname(self.index_path), exist_ok=True)
             with open(self.lock_path, "w") as lockf:
                 try:
                     fcntl.flock(lockf, fcntl.LOCK_EX)
@@ -1085,35 +1164,41 @@ class SiteRagIndex:
                     pass
                 # Un altro worker potrebbe aver costruito mentre attendevamo il lock.
                 self._load_from_disk()
-                if self._is_current(ai_service):
+                if self._is_current(ai_service, require_vectors):
                     return
-                self._do_build(ai_service)
+                self._do_build(ai_service, require_vectors)
 
-    def _do_build(self, ai_service):
+    def _do_build(self, ai_service, require_vectors: bool = True):
         model = ai_service.embedding_model or "qwen3-embedding:4b"
-        chunks, signature = self._collector()
-        graph = self._graph_loader()
-
-        if not chunks:
-            logger.warning("Nessun documento nel corpus RAG.")
-            matrix = np.zeros((0, 1), dtype=np.float32)
-        else:
-            matrix = self._embed_chunks(ai_service, model, chunks)
-
-        # Stato aggiornato solo a embedding riuscito: un build fallito lascia
-        # l'indice precedente coerente (chunk e matrice allineati).
-        self.adjacency, self.relpath_to_node, self.node_to_relpath = graph
-        self.chunks = chunks
-        self.categories = [category_for(c["source"]) for c in chunks]
-        self.signature = signature
+        if not self._is_current(ai_service, require_vectors=False):
+            chunks, signature = self._collector()
+            graph = self._graph_loader()
+            self.lexical = _BM25Index(chunks)
+            self.adjacency, self.relpath_to_node, self.node_to_relpath = graph
+            self.chunks = chunks
+            self.categories = [category_for(c["source"]) for c in chunks]
+            self.signature = signature
+            self.matrix = self.norms = None  # Never pair new chunks with old vectors.
+            self.built_at = time.time()
+            self._loaded = True
+        if self.embedding_model != model:
+            self.matrix = self.norms = None
         self.embedding_model = model
-        self.built_at = time.time()
-        self._loaded = True
-        self.matrix = matrix
-        self.norms = np.linalg.norm(matrix, axis=1) if len(matrix) else np.zeros(0, dtype=np.float32)
+        if not self.chunks:
+            self.matrix = np.zeros((0, 1), dtype=np.float32)
+            self.norms = np.zeros(0, dtype=np.float32)
+        # Publish lexical data before any potentially failing network operation.
         self._save_to_disk()
-        if chunks:
-            logger.info("RAG build completato: %d chunk indicizzati", len(self.chunks))
+        if require_vectors and self.chunks and self.matrix is None:
+            try:
+                _embedding_cooldown.check(model)
+                matrix = self._embed_chunks(ai_service, model, self.chunks)
+            except EmbeddingUnavailable:
+                return  # BM25 stays available throughout the shared cooldown.
+            self.matrix = matrix
+            self.norms = np.linalg.norm(matrix, axis=1)
+            self._save_to_disk()
+        logger.info("RAG build completato: %d chunk indicizzati", len(self.chunks))
 
     def _embed_chunks(self, ai_service, model: str, chunks: list[dict]) -> np.ndarray:
         texts = [c["text"] for c in chunks]
@@ -1142,68 +1227,71 @@ class SiteRagIndex:
         cache.save(keys, matrix, model)
         return matrix
 
-    def ensure(self, ai_service):
-        if self.needs_rebuild(ai_service):
-            self.build(ai_service)
+    def ensure(self, ai_service, retrieval_mode: str = "hybrid"):
+        if not self._loaded:
+            self._load_from_disk()
+        require_vectors = retrieval_mode != "lexical"
+        if require_vectors:
+            try:
+                _embedding_cooldown.check(ai_service.embedding_model or "qwen3-embedding:4b")
+            except EmbeddingUnavailable:
+                require_vectors = False
+        if not self._is_current(ai_service, require_vectors):
+            self.build(ai_service, require_vectors=require_vectors)
 
-    # --- retrieval ibrida ---
     def search(self, ai_service, query: str, top_k: int = DEFAULT_TOP_K,
                audience: str = "studente", weights: dict | None = None,
                audience_weights: dict | None = None, max_per_source: int = 3,
-               min_score: float = 0.0):
-        """Retrieval ibrido con priorità per macro-categoria.
+               min_score: float = 0.0, retrieval_mode: str = "hybrid"):
+        """BM25/vector retrieval with RRF before category weights and graph expansion.
 
-        score pesato = coseno × peso(categoria) × moltiplicatore(pubblico). Applica
-        soglia minima sul coseno grezzo e un tetto di chunk per documento, poi
-        espande via grafo. Ritorna {score, weighted, category, source, title, text}.
-        Solleva EmbeddingUnavailable durante il cooldown, senza toccare il corpus."""
+        min_score applies to cosine only. Missing/failed vectors fall back to
+        BM25 in both hybrid and vector modes. Lexical mode never calls embeddings.
+        """
+        if retrieval_mode not in {"hybrid", "lexical", "vector"}:
+            raise ValueError("retrieval_mode must be hybrid, lexical or vector")
+        if not query.strip() or top_k <= 0 or max_per_source <= 0:
+            return []
+        self.ensure(ai_service, retrieval_mode)
+        if not self.chunks or self.lexical is None:
+            return []
+        lexical_scores = self.lexical.scores(query)
+        lexical_rank = [int(i) for i in np.argsort(-lexical_scores, kind="stable")
+                        if lexical_scores[i] > 0]
+        vector_rank = []
+        vector_scores = None
         model = ai_service.embedding_model or "qwen3-embedding:4b"
-        _embedding_cooldown.check(model)
-        self.ensure(ai_service)
-        if not self.chunks or self.matrix is None or len(self.matrix) == 0:
-            return []
-        q_vec = _embedding_cooldown.call(model, lambda: ai_service.embed_query(query))
-        if not q_vec:
-            return []
-        q = np.asarray(q_vec, dtype=np.float32)
-        q_norm = float(np.linalg.norm(q))
-        if q_norm == 0.0:
-            return []
-
+        if retrieval_mode != "lexical" and self.matrix is not None and self.norms is not None and self.embedding_model == model:
+            try:
+                _embedding_cooldown.check(model)
+                q_vec = _embedding_cooldown.call(model, lambda: ai_service.embed_query(query))
+            except EmbeddingUnavailable:
+                q_vec = None
+            if q_vec is not None and len(q_vec):
+                q = np.asarray(q_vec, dtype=np.float32)
+                q_norm = float(np.linalg.norm(q))
+                if q_norm:
+                    vector_scores = (self.matrix @ q) / (self.norms * q_norm + 1e-9)
+                    vector_rank = [int(i) for i in np.argsort(-vector_scores, kind="stable")
+                                   if vector_scores[i] >= min_score]
+                    if not vector_rank:
+                        vector_rank = [int(i) for i in np.argsort(-vector_scores, kind="stable")[:top_k]]
+        if retrieval_mode == "vector" and vector_rank and vector_scores is not None:
+            raw_scores = {i: float(vector_scores[i]) for i in vector_rank}
+        elif retrieval_mode == "hybrid" and vector_rank:
+            raw_scores = _rank_fusion(vector_rank, lexical_rank)
+        else:
+            raw_scores = {i: float(lexical_scores[i]) for i in lexical_rank}
         weights = weights or DEFAULT_CATEGORY_WEIGHTS
         aud = (audience_weights or {}).get(audience, {})
-
-        # Coseno vettorizzato, poi score pesato per macro-categoria + pubblico.
-        sims = (self.matrix @ q) / (self.norms * q_norm + 1e-9)
 
         def cat_weight(idx: int) -> float:
             cat = self.categories[idx] if idx < len(self.categories) else "altro"
             base = weights.get(cat, DEFAULT_CATEGORY_WEIGHTS.get(cat, 0.8))
             return float(base) * float(aud.get(cat, 1.0))
 
-        # Boost lessicale: query del tipo "cosa dice <autore> su X" → il nome
-        # dell'autore/strumento è nel nome del file ma pesa poco nell'embedding.
-        # Se un termine (≥4 lettere) della domanda è nel basename della sorgente, boosta.
-        qterms = {t for t in re.findall(r"[a-zàèéìòùç0-9]{4,}", query.lower())}
-
-        def name_boost(idx: int) -> float:
-            stem = self.chunks[idx]["source"].rsplit("/", 1)[-1].lower()
-            return 1.4 if any(t in stem for t in qterms) else 1.0
-
-        # Candidati sopra soglia, ordinati per score pesato.
-        cand = []  # (weighted, raw, idx)
-        for idx in range(len(sims)):
-            raw = float(sims[idx])
-            if raw < min_score:
-                continue
-            cand.append((raw * cat_weight(idx) * name_boost(idx), raw, idx))
-        if not cand:
-            # Tutto sotto soglia (probabile fuori tema): prendi comunque i top grezzi,
-            # così il prompt di grounding può dichiarare che non è nei materiali.
-            for i in np.argsort(-sims)[:top_k]:
-                idx = int(i)
-                cand.append((float(sims[idx]) * cat_weight(idx), float(sims[idx]), idx))
-        cand.sort(key=lambda t: -t[0])
+        cand = [(raw * cat_weight(idx), raw, idx) for idx, raw in raw_scores.items()]
+        cand.sort(key=lambda t: (-t[0], t[2]))
 
         # Selezione top_k con cap per sorgente (diversità).
         per_src: dict[str, int] = {}
@@ -1223,15 +1311,17 @@ class SiteRagIndex:
         # escludere l'evidenza più pertinente, es. un paper accademico). ESCLUDE
         # 'approfondimenti' (i libroni esterni), che NON vanno mai forzati dentro.
         guaranteed = 0
-        for i in np.argsort(-sims):
-            idx = int(i)
-            if float(sims[idx]) < min_score or guaranteed >= _RAW_GUARANTEE:
+        for idx in sorted(raw_scores, key=lambda i: (-raw_scores[i], i)):
+            if guaranteed >= _RAW_GUARANTEE:
                 break
             cat = self.categories[idx] if idx < len(self.categories) else "altro"
-            if cat == "approfondimenti" or idx in selected_idx:
+            src = self.chunks[idx]["source"]
+            if cat == "approfondimenti" or idx in selected_idx or per_src.get(src, 0) >= max_per_source:
                 continue
             selected_idx.add(idx)
-            top.append((float(sims[idx]) * cat_weight(idx), float(sims[idx]), idx))
+            per_src[src] = per_src.get(src, 0) + 1
+            raw = raw_scores[idx]
+            top.append((raw * cat_weight(idx), raw, idx))
             guaranteed += 1
 
         selected_sources = {self.chunks[idx]["source"] for _, _, idx in top}
@@ -1278,6 +1368,8 @@ class SiteRagIndex:
             "loaded": self._loaded,
             "collection": self.mode,
             "n_chunks": len(self.chunks),
+            "lexical_available": self.lexical is not None,
+            "vectors_available": self.matrix is not None,
             "n_sources": len({c["source"] for c in self.chunks}),
             "n_graph_nodes": len(self.node_to_relpath),
             "embedding_model": self.embedding_model,
@@ -1641,7 +1733,7 @@ def get_document_preview(source: str, collection: str = COLLECTION_COMPETENZE):
 
 def build_context(results: list[dict], max_chars: int = 10000) -> tuple[str, list[str]]:
     """Compone il blocco di contesto citato per il prompt e l'elenco fonti."""
-    parts = []
+    parts: list[str] = []
     sources: list[str] = []
     used = 0
     for i, r in enumerate(results, 1):

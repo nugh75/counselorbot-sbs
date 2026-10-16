@@ -1,3 +1,31 @@
+# Handoff s14: BM25 sempre attivo e fusione RRF (Blocco 2)
+Data: 2026-10-16 | Branch: `feat/rag-bm25-always-on` (da `origin/main` e03f4ab1)
+Agente: `s14-cx-blocco2-bm25`, Codex gpt-6.1-sol high | Task `123d2d01-3ba7-4378-99c2-2a0e75e407c6` | Issue #304
+
+`backend/rag_index.py`: BM25 puro Python/numpy persistito nel JSON della
+collezione prima degli embedding; tokenizzazione per sei lingue UI, accenti,
+metadati di titolo/nome file, codici fattore preservati. Modalità Python
+`hybrid|lexical|vector`, RRF k=60 prima di pesi/cap/grafo; errori/cooldown
+embedding lasciano BM25 disponibile. Vale per collezioni dinamiche, chat guidate
+ed assistente del sito senza modificare i chiamanti. Nessun provider esterno o
+configurazione Admin anticipata. Garanzia grezza corretta per rispettare il cap
+per sorgente (bug Diario `4cd31859`).
+
+Verifiche: suite retrieval/Markdown/degradazione/guida, 59 test + 3 sottotest
+verdi con PostgreSQL effimero su rete Docker interna, nessuna porta pubblicata;
+ruff F, mypy del modulo, test e controllo platform guidance. Benchmark reale:
+7.641 chunk, host build 15,171 s, query mediana/p95 25,682/47,574 ms; dettagli,
+limiti Docker e procedura in `docs/operations/rag-bm25.md`. Workflow CI dedicato
+`Document retrieval` con embedder finti. Immagine di verifica isolata
+`counselorbot-bm25-validation:s14`; nessun deploy, sudo, `.env` o stack portabile
+toccato. Provider live/qualità LLM non verificati, fuori da questo blocco.
+I bug già noti `089e7cd5`, `54e4d065`, `c996ef4c` risultano già risolti da PR #303.
+
+Bug non registrati: nessuno (il primo tentativo senza env del Diario è stato
+ripetuto correttamente con le variabili del progetto). Il bug transitorio
+`fffbc5a2` introdotto durante l'editing è stato corretto prima del commit e il
+relativo test Markdown è verde.
+
 # Handoff S9: «Percorsi di classe» diventano «Piano operativo»
 Data: 2026-10-16 | Branch: `feature/rename-class-paths-operational-plan` (da `origin/main` b61064ab) | Agente: `s9-piano-operativo` | Task `a09fa477`
 Ambito scelto dall'utente: testi visibili + URL. API backend, nomi interni nel codice e schema DB invariati (nessuna migrazione).
