@@ -19,7 +19,12 @@ browser). **Riprendi un’attività** è in fondo, con l’immagine del puzzle;
 le attività interrotte sono raggiungibili anche dalla navigazione.
 Il vecchio catalogo strumenti separato non c’è più: i suoi elementi sono in
 **Attività e percorsi** (`/?view=home`; anche i vecchi link `/?view=questionnaires`
-portano qui). Sotto la Bussola, **Consigliati per te** propone fino a tre strumenti:
+portano qui). Anche il vecchio URL `/strumenti` (con o senza slash finale)
+reindirizza in modo permanente (HTTP 308) a `/?view=home`, conservando gli altri
+parametri della query e l’eventuale ancora; `view=home` prevale su un vecchio
+parametro `view`. Le schede `/strumenti/<codice>` restano ai loro indirizzi e il
+collegamento «Vai agli strumenti» dopo un invito `/gruppo?g=...` apre ancora
+`/?view=home`. Sotto la Bussola, **Consigliati per te** propone fino a tre strumenti:
 prima quelli con una chat in pausa, poi quelli indicati dall’ultima Bussola, esclusi
 gli strumenti già compilati; senza questi segnali la sezione non compare. Ogni
 scheda mostra, quando servono, il segno «In pausa dal…» con Riprendi, il badge

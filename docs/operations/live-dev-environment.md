@@ -20,6 +20,13 @@ Da SSH: `ssh -N -L 3147:127.0.0.1:3147 <user>@<server>`, poi
 `http://localhost:3147`. Fuori dal browser di test non c'è un backend utilizzabile.
 Copertura e limiti: [first-use-hints-validation.md](first-use-hints-validation.md).
 
+Lo stesso runner isolato verifica i redirect legacy P6: da `frontend/`,
+`LEGACY_ROUTES_BASE_URL=http://127.0.0.1:3147 node --test tests/legacy-routes.test.mjs`.
+Controlla HTTP 308, query (anche ripetute/codificate), slash finale, destinazione
+senza loop, schede strumento, redirect preesistenti, ancora e cronologia del
+browser e ritorno al catalogo dall’invito di gruppo. Le API sono tutte simulate,
+le richieste esterne bloccate; non verifica SSO o permessi backend.
+
 ### Compilazioni di classe nella dashboard docente (S3)
 
 `scripts/dev-teacher-class-compilations-tests.sh` verifica e usa solo
