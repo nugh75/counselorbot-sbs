@@ -228,8 +228,9 @@ il titolo di pagina a `text-2xl font-bold`; non si inventano altre scale.
   Non c’è un ordine obbligatorio. «Per saperne di più» raccoglie tre `details`
   chiusi: uso dei questionari, Area personale, risorse e accompagnamento.
   Seguono i collegamenti alla Guida e a «Dati e riservatezza»:
-  `/guide/dati-riservatezza`, che distingue elaborazione locale, filtro per
-  fornitori esterni e accessi ai contenuti. Il ritorno `/?view=intro` apre
+  `/guide/dati-riservatezza`, che in quattro sezioni distingue elaborazione
+  locale, filtro per fornitori esterni, recupero dei documenti e accessi ai
+  contenuti. Il ritorno `/?view=intro` apre
   la presentazione anche per chi ha già uno storico. I testi seguono la
   presentazione PEF del 21 settembre 2026, incluse le note del relatore.
   Prompt e provenienza delle immagini sono nel README della cartella.
