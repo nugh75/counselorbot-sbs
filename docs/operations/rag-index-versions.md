@@ -51,8 +51,8 @@ vectors for a later rebuild.
 `generation`, `embedding_provider`, `embedding_dimensions` and `built_at`.
 `last_build_error` is a sanitized code. A repeated start while building coalesces.
 Upload, delete and document-scope updates schedule the same background worker.
-Existing Admin panels accept the response; progress/estimate presentation belongs
-to block 6. `build()` remains the synchronous worker/testing entrypoint.
+The Document retrieval panel (block 6) shows per-collection status and estimates
+and reindexes through `/admin/document-retrieval/collections/{id}/...`. `build()` remains the synchronous worker/testing entrypoint.
 
 Privacy gates remain in force for every document and query operation; a cached
 index does not authorize sending a private collection to an external provider.

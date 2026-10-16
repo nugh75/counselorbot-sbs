@@ -139,16 +139,27 @@ shown. The Guide remains available independently of these class toggles.
   dall’amministratore restano solo a parole chiave finché non vengono marcate
   «Pubblicabile a un provider di embedding esterno» nel pannello Documenti RAG.
   Con OpenRouter la piattaforma chiede solo provider senza raccolta né conservazione
-  dei dati. La pagina «Dati e riservatezza» descrive questo trattamento. Il pannello
-  dedicato di amministrazione degli embedding arriverà in un blocco successivo.
+  dei dati. La pagina «Dati e riservatezza» descrive questo trattamento.
+  In Configurazione → Generale la sezione «Recupero documenti» (solo
+  amministratori) permette di passare da embedding locale (Ollama) a esterno
+  (Mistral diretto o OpenRouter) o a nessun embedding (solo parole chiave), di
+  scegliere modello, dimensioni e modalità di ricerca (ibrida, solo parole chiave,
+  solo significato) e mostra se la chiave di sistema (`API_KEY_MISTRAL`,
+  `API_KEY_OPENROUTER`, impostata nel file .env del server) è presente, mai il
+  suo valore. Il pulsante «Prova» invia una frase fittizia; per ogni collezione
+  il pannello mostra lo stato dell'indice, la stima dei costi e «Reindicizza».
+  Se il rilevatore locale dei dati personali non risponde, il pannello spiega
+  che le domande verso il modello esterno sono disattivate e propone, senza
+  applicarlo da solo, il filtro di base senza Ollama; il rilevatore non viene
+  ritentato per un minuto dopo un errore.
   Gli indici sono separati per provider, modello e dimensione. La reindicizzazione
   lavora in background: nel frattempo la ricerca usa le parole chiave sui materiali
   già indicizzati; il nuovo indice entra in servizio solo quando è completo. Un
   errore mantiene disponibile il precedente. I file degli indici già presenti
   sono riconosciuti; le generazioni non più usate vengono pulite dopo almeno 24 ore.
   La ricerca verifica la dimensione dei vettori e usa le parole chiave in caso
-  di incompatibilità. Il backend calcola una stima di token e costo prima del build; la visualizzazione dedicata arriverà nel pannello di
-  amministrazione successivo. Le collezioni vuote non richiedono embedding;
+  di incompatibilità. Il backend calcola una stima di token e costo prima del
+  build, visibile nella sezione «Recupero documenti». Le collezioni vuote non richiedono embedding;
   una cache di vettori non valida viene ignorata e ricostruita.
   La ricerca combina parole chiave (BM25, inclusi titoli e nomi dei file) e
   similarità semantica quando gli embedding sono disponibili. Senza embedding

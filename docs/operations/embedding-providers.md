@@ -1,9 +1,10 @@
 # Configurable embedding providers (block 3)
 
-Backend configuration uses the existing `configs` table and admin-only
-`GET/POST /admin/config` API (public proxy prefix `/api`). No migration, personal
-API credential, `.env` edit or new dependency is required. Dedicated Admin UI
-belongs to block 6. The API validates provider names, dimensions and prices.
+Backend configuration uses the existing `configs` table. Administrators change
+it in **Configuration → General → Document retrieval** (block 6, below) or through
+the generic admin-only `GET/POST /admin/config` API (public proxy prefix `/api`).
+No migration, personal API credential, `.env` edit or new dependency is required.
+The APIs validate provider names, dimensions, prices and the retrieval mode.
 
 | Key | Default / meaning |
 | --- | --- |
@@ -13,6 +14,7 @@ belongs to block 6. The API validates provider names, dimensions and prices.
 | `embedding_prices_per_million` | JSON mapping `provider/model` to USD per million input tokens, e.g. `{"mistral/mistral-embed": 0.10}`. Overrides the defaults below. Unknown models require an explicit price. |
 | `ai_timeout_seconds` | Existing setting, 120 seconds, bounded to 10–600 seconds |
 | `monthly_budget_usd` | Existing system budget, 0 = unlimited; checked before each external batch |
+| `rag_retrieval_mode` | `hybrid` (BM25 + vectors, RRF), `lexical` (BM25 only, never calls the provider) or `vector` (vectors, BM25 fallback). Applies to every search without an explicit mode |
 
 `openai`, `gemini`, `together`, `fireworks` and `deepinfra` are reserved valid
 provider names but **not implemented in this block**. Calls fail with
@@ -60,9 +62,15 @@ config bypass. "External" means any provider other than `ollama`.
 settings (`pii_ner_enabled`, `pii_ner_model`, `external_pii_fallback`). With
 `block`, an unreachable NER detector refuses the query (`embedding_privacy_blocked`)
 and the search uses BM25 for that turn without starting the provider cooldown.
+A failed NER attempt is not retried for `NER_RETRY_SECONDS` (60 s) per
+`ollama_ip`/model and process: meanwhile the query is refused at once (still
+fail-closed) instead of waiting for the 10 s detector timeout on every turn and
+collection. With `send_raw` the deterministic filter alone applies meanwhile.
 Unlike chat, redaction is always applied, even with `external_pii_redact=false`:
 retrieval never needs the real values. Score-like figures (`4/9`, `3,5/9`, `75%`,
-dates written with slashes) are then removed and the query is capped to 4,000
+dates written with slashes, `4 su 9`/`4 out of 9`, `percentile 75`/`75° percentile`,
+`punteggio: 4`/`score: 4`, `4 punti`, with the equivalents in the six interface
+languages) are then removed and the query is capped to 4,000
 UTF-8 bytes. A query left empty is refused (`embedding_query_empty`).
 
 The guided chat also composes a separate `vector_query` without
@@ -82,6 +90,46 @@ additional processor that forwards to the model provider (Google for the default
 `google/gemini-embedding-2`), with an extra-EU transfer. The privacy notice, DPAs
 and transfer assessment require review by the data controller; the texts in this
 repository are not legal wording.
+
+### Installations without Ollama (NER)
+
+The platform defaults are `pii_ner_enabled=true` and `external_pii_fallback=block`.
+On an installation without Ollama the local NER detector is unreachable, so
+**student queries are never embedded externally**: documents are indexed with
+vectors, but every query falls back to BM25. This is deliberate (fail-closed) and
+is never changed automatically. The Document retrieval panel shows it as
+"local detector unreachable → external questions disabled" once a query or the
+**Test** button has met the failure. The documented choice is up to the
+administrator:
+
+1. restore the local detector (Ollama with `pii_ner_model`, default `qwen3:0.6b`);
+2. or choose **Basic filter only (without Ollama)** (`pii_ner_enabled=false`,
+   `external_pii_redact=true`, `external_pii_fallback=block`), from the panel button
+   or from "Data protection for external models". The deterministic filter then
+   removes e-mails, phone numbers and recognised identifiers, but not every name
+   or address in free text: it does not guarantee anonymity.
+
+The NER status is the last outcome seen by the worker answering the request; a
+fresh worker reports `unknown` until its first query or test.
+
+## Admin panel (block 6)
+
+Configuration → General → **Document retrieval**, administrators only, with the
+same guards as the other AI settings (`require_admin`, `no-store`, the
+`X-Requested-With: CounselorBot` header for writes, view-as refused).
+
+| Endpoint (prefix `/api`) | Purpose |
+| --- | --- |
+| `GET /admin/document-retrieval` | Provider, model, dimensions, mode; for each provider its default/suggested models, key variable names and `key_present` (boolean, **never the value**); NER status; per-collection index status |
+| `PUT /admin/document-retrieval` | `{provider, model, dimensions, mode}`. Empty model = provider default, saved explicitly; dimensions are cleared for Ollama/none and validated per model |
+| `POST /admin/document-retrieval/test` | Embeds one fixed fictitious, non-personal sentence with the saved settings; for external providers it also runs the query filter locally (`query_filter`). Returns only sanitized codes |
+| `GET /admin/document-retrieval/collections/{id}/estimate` | Offline token/cost estimate (block 5), no provider call |
+| `POST /admin/document-retrieval/collections/{id}/reindex` | Starts the background build (block 5) |
+
+System keys stay in the server `.env` (`API_KEY_MISTRAL`, `API_KEY_OPENROUTER`);
+the panel explains this and never accepts a key. Switching to an external provider
+applies the block 4 privacy policy above, which the panel recalls. After a model
+change, reindex the collections: until then, searches use BM25.
 
 ## Accounting, failures and caches
 
