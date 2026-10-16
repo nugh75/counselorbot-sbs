@@ -126,10 +126,25 @@ shown. The Guide remains available independently of these class toggles.
   **CounselorBot**. Le altre basi restano distinte; non attribuire alla piattaforma
   le funzioni di competenzestrategiche.it. Il presente documento viene letto a ogni
   richiesta CounselorBot; i documenti di approfondimento sono recuperati dall’indice.
-  Se il servizio di ricerca semantica (embedding) non risponde, per le altre basi
-  compare un messaggio nella lingua dell’interfaccia che invita a riprovare tra
-  qualche minuto, senza dettagli tecnici; per circa cinque minuti la ricerca non
-  viene ritentata. La base CounselorBot risponde comunque da questo documento.
+  Il backend supporta embedding locali Ollama (predefinito), Mistral diretto,
+  OpenRouter oppure nessun embedding, con modello, dimensioni e prezzi per modello
+  salvati nelle impostazioni AI (OpenRouter usa per default google/gemini-embedding-2
+  a 768 dimensioni; Mistral usa mistral-embed). I costi API di sistema entrano nei log e nel budget
+  mensile; i tentativi hanno un timeout limitato e gli errori mantengono disponibile
+  la ricerca per parole chiave. In questa fase solo i corpus editoriali predefiniti possono essere
+  indicizzati all’esterno: le domande restano lessicali fino al filtro privacy;
+  le memorie restano sempre locali/lessicali e le raccolte caricate non vengono
+  inviate all’esterno. Il pannello
+  dedicato di amministrazione arriverà in un blocco successivo.
+  La ricerca combina parole chiave (BM25, inclusi titoli e nomi dei file) e
+  similarità semantica quando gli embedding sono disponibili. Senza embedding
+  continua sulle parole chiave, anche per le basi dinamiche: per circa cinque
+  minuti non ritenta il servizio semantico. La normalizzazione degli accenti
+  permette, ad esempio, di cercare «capacita» o «självreglerat» nei materiali
+  corrispondenti. I risultati limitano i passaggi dello stesso documento per
+  dare spazio a fonti diverse. La ricerca lessicale non traduce tra lingue. La base
+  CounselorBot usa anche questo documento letto dal vivo. Se il recupero fallisce
+  per altri motivi compare un messaggio localizzato privo di dettagli tecnici.
 - **Guida interfaccia** (`/guide`): con percorsi per uso personale e per docenti,
   immagini ingrandibili e collegamenti alle sezioni. È pubblica anche senza login
   nelle installazioni che consentono accesso pubblico; su `counselorbot.labform.net`

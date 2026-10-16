@@ -1,0 +1,51 @@
+name: Document retrieval
+on:
+  push:
+    paths:
+      - 'backend/rag_index.py'
+      - 'backend/embedding_service.py'
+      - 'backend/ai_service.py'
+      - 'backend/memory_embeddings.py'
+      - 'backend/tests/test_embedding_provider.py'
+      - 'backend/tests/test_rag_*.py'
+      - 'scripts/benchmark-rag-bm25.py'
+      - '.github/workflows/rag-retrieval.yml'
+  pull_request:
+    paths:
+      - 'backend/rag_index.py'
+      - 'backend/embedding_service.py'
+      - 'backend/ai_service.py'
+      - 'backend/memory_embeddings.py'
+      - 'backend/tests/test_embedding_provider.py'
+      - 'backend/tests/test_rag_*.py'
+      - 'scripts/benchmark-rag-bm25.py'
+      - '.github/workflows/rag-retrieval.yml'
+permissions:
+  contents: read
+jobs:
+  offline-retrieval:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: 'sqlite:///:memory:'
+      DATA_DIR: '/tmp/rag-test-data'
+      SESSION_MEMORY_DIR: '/tmp/rag-test-memory'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt ruff mypy
+      - name: Lint changed retrieval code
+        run: >-
+          ruff check --select F backend/rag_index.py backend/tests/test_rag_bm25.py
+          backend/tests/test_rag_embedding_degradation.py backend/embedding_service.py
+          backend/ai_service.py backend/memory_embeddings.py backend/tests/test_embedding_provider.py
+          scripts/benchmark-rag-bm25.py
+      - run: mypy --explicit-package-bases --follow-imports=silent --ignore-missing-imports backend/rag_index.py backend/embedding_service.py
+      - name: Offline regression tests (fake embedders)
+        run: >-
+          python -m pytest backend/tests/test_embedding_provider.py backend/tests/test_rag_bm25.py
+          backend/tests/test_rag_embedding_degradation.py backend/tests/test_rag_markdown.py
+          -q --disable-warnings
