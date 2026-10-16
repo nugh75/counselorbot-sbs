@@ -660,10 +660,10 @@ SITE_CHAT_CONFIG_DEFINITIONS: List[Dict[str, str]] = [
     },
     {
         "key": "embedding_model",
-        "label": "Site Chat - Modello Embedding (Ollama)",
-        "description": "Modello di embedding locale (via Ollama) per il RAG del chatbot del sito. "
-                       "Default qwen3-embedding:4b (già installato, SOTA multilingue). "
-                       "Alternative: bge-m3 (richiede ollama pull), nomic-embed-text.",
+        "label": "Recupero documenti - Modello di embedding",
+        "description": "Modello del provider di embedding scelto in Amministrazione, sezione Recupero documenti "
+                       "(Ollama locale: qwen3-embedding:4b, bge-m3, nomic-embed-text; Mistral: mistral-embed; "
+                       "OpenRouter: google/gemini-embedding-2). Vuoto = predefinito del provider.",
         "default": "qwen3-embedding:4b",
     },
     {

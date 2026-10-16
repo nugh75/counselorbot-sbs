@@ -63,7 +63,13 @@ CONFIG_DEFINITIONS = [
         "{}",
         'Prezzi USD per milione di token input: JSON {"provider/model": prezzo}. Sovrascrive i prezzi embedding predefiniti.',
     ),
+    (
+        "rag_retrieval_mode",
+        "hybrid",
+        "Modalità di recupero documenti: hybrid (parole chiave + vettori), lexical (solo parole chiave), vector (vettori, con ripiego sulle parole chiave).",
+    ),
 ]
+RETRIEVAL_MODES = ("hybrid", "lexical", "vector")
 
 
 # "private" = user-derived text (memories, episodes): local providers only.
@@ -125,6 +131,11 @@ def ner_status(config: Mapping) -> str:
     return "unreachable" if failed_at is not None else "unknown"
 
 
+def retrieval_mode(config: Mapping) -> str:
+    mode = str(config.get("rag_retrieval_mode") or "hybrid").strip().lower()
+    return mode if mode in RETRIEVAL_MODES else "hybrid"
+
+
 def filter_external_query(config: Mapping, texts: list[str]) -> list[str]:
     """Apply the external chat PII policy to query texts, then drop numeric scores.
 
@@ -177,6 +188,8 @@ class EmbeddingError(Exception):
 def validate_config(key: str, value: str):
     if key == "embedding_provider" and value not in PROVIDERS:
         raise ValueError("Unknown embedding provider")
+    if key == "rag_retrieval_mode" and value not in RETRIEVAL_MODES:
+        raise ValueError("Retrieval mode must be hybrid, lexical or vector")
     if (
         key == "embedding_dimensions"
         and value
