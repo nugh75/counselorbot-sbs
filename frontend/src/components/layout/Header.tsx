@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
@@ -25,6 +25,7 @@ import { isToolAllowed } from '@/lib/user-access';
 import { useI18n } from '@/lib/i18n-context';
 import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from '@/lib/roles';
 import { useDarkMode } from '@/lib/use-dark-mode';
+import { useDisclosure } from '@/lib/use-disclosure';
 import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, useResumeEntries, type ResumeEntries } from '@/lib/use-resume-entries';
 
 interface SecondaryItem {
@@ -247,32 +248,14 @@ function HeaderMenu({
 }) {
     const { lang, setLang, t, tf } = useI18n();
     const dark = useDarkMode();
-    const [open, setOpen] = useState(false);
-    const ref = useRef<HTMLDivElement>(null);
-    const triggerRef = useRef<HTMLButtonElement>(null);
+    // L'id resta `mobile-menu`: lo cercano il dialog counselor e i test.
+    const { open, containerRef, triggerRef, triggerProps, onBlur, close, closeToTrigger } = useDisclosure('mobile-menu');
+    // Il menu si chiude dopo il cambio lingua: la regione di stato annuncia la
+    // lingua scelta mentre il focus torna al pulsante del menu.
+    const [chosenLanguage, setChosenLanguage] = useState<string | null>(null);
     const { frozen, localResume, pqbl: pqblResume, count: resumeCount } = resumeEntries;
     const currentLanguage = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
 
-    useEffect(() => {
-        if (!open) return;
-        const onPointerDown = (e: MouseEvent) => {
-            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-        };
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                setOpen(false);
-                triggerRef.current?.focus();
-            }
-        };
-        document.addEventListener('mousedown', onPointerDown);
-        document.addEventListener('keydown', onKeyDown);
-        return () => {
-            document.removeEventListener('mousedown', onPointerDown);
-            document.removeEventListener('keydown', onKeyDown);
-        };
-    }, [open]);
-
-    const close = () => setOpen(false);
     // Ricarica invece di navigare: la home legge lo snapshot dai query param al mount.
     const resumeWithReload = (href: string) => {
         window.location.assign(href);
@@ -285,28 +268,29 @@ function HeaderMenu({
         } catch {
             /* storage non disponibile: la scelta vale solo per la sessione */
         }
-        close();
+        closeToTrigger();
     };
     const itemClass = 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700';
 
     return (
-        <div ref={ref} className="relative">
+        <div ref={containerRef} className="relative" onBlur={onBlur}>
             <button
                 type="button"
                 ref={triggerRef}
+                {...triggerProps}
                 className="console-topbar-icon console-topbar-icon--lg"
-                aria-expanded={open}
-                aria-controls="mobile-menu"
                 aria-label={label}
-                onClick={() => setOpen((v) => !v)}
             >
                 <MoreVertical className="w-4 h-4" />
             </button>
+            <span role="status" className="sr-only">
+                {chosenLanguage === lang ? `${t('nav.language')}: ${currentLanguage.label}` : ''}
+            </span>
             {open && (
-                <div id="mobile-menu" className="absolute right-0 top-full z-[60] mt-2 max-h-[calc(100dvh-4.5rem)] w-[min(88vw,18rem)] overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+                <div id="mobile-menu" className="header-panel absolute right-0 top-full z-[60] mt-2 max-h-[calc(100dvh-4.5rem)] w-[min(88vw,18rem)] overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
                     <div className="compact-header-selection flex xl:hidden flex-wrap items-center gap-2 px-3 py-2 empty:hidden">
                         <HeaderInstrument />
-                        {accountLabel && <HeaderCounselor inline onNavigate={() => setOpen(false)} />}
+                        {accountLabel && <HeaderCounselor inline onNavigate={close} />}
                     </div>
                     {accountLabel && (
                         <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-700 xl:hidden">
@@ -420,10 +404,13 @@ function HeaderMenu({
                                     type="button"
                                     onClick={() => {
                                         setLang(language.code);
-                                        close();
+                                        setChosenLanguage(language.code);
+                                        closeToTrigger();
                                     }}
                                     title={language.label}
                                     aria-label={language.label}
+                                    aria-pressed={language.code === lang}
+                                    lang={language.code}
                                     className={cn(
                                         'flex min-h-[44px] items-center justify-center rounded-md transition-colors hover:bg-slate-50 dark:hover:bg-slate-700',
                                         language.code === lang && 'bg-indigo-50 ring-1 ring-indigo-200 dark:bg-indigo-950',

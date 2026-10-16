@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { useEffect, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { LOCAL_RESUME_HREF, PQBL_RESUME_HREF, resumeHref, type ResumeEntries } from '@/lib/use-resume-entries';
 import { resumeLabel } from '@/lib/resume-label';
 import { useI18n } from '@/lib/i18n-context';
+import { useDisclosure } from '@/lib/use-disclosure';
 import { Tooltip } from '@/components/ui/Tooltip';
 
 // Pulsante "Riprendi" nell'header: compare quando c'è una sessione congelata
@@ -16,35 +16,25 @@ import { Tooltip } from '@/components/ui/Tooltip';
 export function HeaderResume({ entries }: { entries: ResumeEntries }) {
     const { t, tf } = useI18n();
     const { frozen, localResume, pqbl, count } = entries;
-    const [open, setOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
+    const { open, containerRef, triggerRef, triggerProps, onBlur, close } = useDisclosure('resume-panel');
     const resumeWithReload = (href: string) => {
         window.location.assign(href);
     };
 
-    // Più sessioni congelate: chiudi il menu al click fuori.
-    useEffect(() => {
-        const onClick = (e: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
-        };
-        document.addEventListener('mousedown', onClick);
-        return () => document.removeEventListener('mousedown', onClick);
-    }, []);
-
     if (count === 0 && !entries.error) return null;
 
     // Resume apre sempre l'elenco: l'interazione resta prevedibile sia con una
-    // sola sessione, sia quando convivono più snapshot e una chat locale.
+    // sola sessione, sia quando convivono più snapshot e una chat locale. È un
+    // elenco di link e pulsanti (disclosure), non un menu ARIA: si scorre con Tab.
     return (
-        <div className="relative" ref={menuRef}>
+        <div className="relative" ref={containerRef} onBlur={onBlur}>
             <Tooltip content={t('frozen.resumeTitle')}>
                 <button
                     type="button"
-                    onClick={() => setOpen((o) => !o)}
+                    ref={triggerRef}
+                    {...triggerProps}
                     className="console-topbar-icon"
                     aria-label={t('frozen.resumeTitle')}
-                    aria-haspopup="menu"
-                    aria-expanded={open}
                 >
                     <RotateCcw className="h-4 w-4" />
                 </button>
@@ -52,21 +42,20 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
 
             {open && (
                 <div
-                    role="menu"
-                    className="absolute right-0 mt-1 w-56 max-h-64 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-[60]"
+                    id="resume-panel"
+                    className="header-panel absolute right-0 mt-1 w-56 max-h-64 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-[60]"
                 >
                     <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-100">
                         {t('frozen.resumeTitle')}
                     </div>
                     <ResumeLoadError entries={entries} />
                     {frozen.map((row) => (
-                        <ResumeEntry key={row.session_id} menuItem target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
+                        <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
                             <Link
-                                role="menuitem"
                                 href={resumeHref(row)}
                                 onClick={(event) => {
                                     event.preventDefault();
-                                    setOpen(false);
+                                    close();
                                     resumeWithReload(resumeHref(row));
                                 }}
                                 className="block truncate px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
@@ -76,13 +65,12 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
                         </ResumeEntry>
                     ))}
                     {localResume && (
-                        <ResumeEntry menuItem target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${resumeLabel(localResume.instrument, null, tf)}`}>
+                        <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${resumeLabel(localResume.instrument, null, tf)}`}>
                             <Link
-                                role="menuitem"
                                 href={LOCAL_RESUME_HREF}
                                 onClick={(event) => {
                                     event.preventDefault();
-                                    setOpen(false);
+                                    close();
                                     resumeWithReload(LOCAL_RESUME_HREF);
                                 }}
                                 className="block truncate border-t border-slate-100 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
@@ -92,11 +80,10 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
                         </ResumeEntry>
                     )}
                     {pqbl && (
-                        <ResumeEntry menuItem target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
+                        <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
                             <Link
-                                role="menuitem"
                                 href={PQBL_RESUME_HREF}
-                                onClick={() => setOpen(false)}
+                                onClick={close}
                                 className="block truncate border-t border-slate-100 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                             >
                                 {t('header.resume')} · {t('pqbl.card.title')}

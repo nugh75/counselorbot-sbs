@@ -105,6 +105,8 @@
   --console-text-2: #64748b;
   --console-primary: #155e63;
   --console-primary-soft: #e9f2f2;
+  /* Anello di focus: almeno 3:1 sulle superfici del tema (WCAG 1.4.11). */
+  --console-focus: var(--console-primary);
   --console-topbar-surface: var(--console-surface);
   --console-topbar-border: var(--console-border);
   --console-topbar-hover: var(--console-bg);
@@ -307,9 +309,15 @@ h1.text-3xl {
 /* Accessibilità: anello di focus visibile da tastiera su elementi interattivi.
    I titoli messi a fuoco dal codice (tabindex="-1") non mostrano l'anello. */
 :where(a, button, input, textarea, select, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
-  outline: 2px solid var(--console-primary);
+  outline: 2px solid var(--console-focus);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
+}
+
+/* Nei pannelli dell'header le voci occupano tutta la larghezza di un contenitore
+   scrollabile: l'anello esterno verrebbe tagliato ai bordi, quindi va dentro. */
+.header-panel :focus-visible {
+  outline-offset: -2px;
 }
 
 /* Rispetta chi preferisce meno movimento: azzera animazioni/transizioni. */
@@ -527,6 +535,9 @@ h1.text-3xl {
   --console-text-1: #f1f5f9;
   --console-text-2: #94a3b8;
   --console-primary-soft: #103f42;
+  /* Il petrolio #155e63 sul fondo #1e293b dava 1,96:1. Questo tono chiaro della
+     stessa tinta dà 6,97:1 su #1e293b, 8,50:1 su #0f172a, 4,93:1 su #334155. */
+  --console-focus: #67c1c4;
   --console-topbar-surface: #1e293b;
   --console-topbar-border: #334155;
   --console-topbar-hover: #334155;
