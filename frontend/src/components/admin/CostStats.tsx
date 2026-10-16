@@ -64,7 +64,7 @@ interface CostStatsData {
     avg_turns_per_session: number;
     avg_sessions_per_user: number;
     monthly_budget_usd: number;
-    budget_fallback_model: string;
+    budget_fallback_target: string;
     month_to_date_cost: number;
     budget_remaining: number;
     budget_exceeded: boolean;
@@ -317,7 +317,7 @@ export function CostStats() {
                         </div>
                     </div>
 
-                    {/* Budget mensile (kill-switch verso Ollama locale) */}
+                    {/* Budget mensile: a superamento si passa al ripiego configurato */}
                     <div className={`rounded-lg border p-4 ${data.budget_exceeded ? 'border-rose-300 bg-rose-50/50' : 'border-slate-200 bg-white'}`}>
                         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
                             <Wallet className="h-4 w-4" />{t('admin.costs.budget.title')}
@@ -358,7 +358,7 @@ export function CostStats() {
                                     {data.budget_exceeded && (
                                         <span className="ml-2 inline-flex items-center gap-1 font-medium text-rose-600">
                                             <AlertTriangle className="h-3.5 w-3.5" />
-                                            {t('admin.costs.budget.fallback')}: ollama / {data.budget_fallback_model}
+                                            {t('admin.costs.budget.fallback')}: {data.budget_fallback_target || '—'}
                                         </span>
                                     )}
                                 </p>
