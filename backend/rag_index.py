@@ -11,6 +11,7 @@ import fcntl
 import hashlib
 import json
 import logging
+import math
 import os
 import re
 import shutil
@@ -973,6 +974,11 @@ class _EmbeddingCooldown:
         with self._lock:
             self._until.pop(model, None)
 
+    def remaining(self, model: str) -> int:
+        """Seconds of semantic search still suspended for this model (0 = active)."""
+        with self._lock:
+            return max(0, math.ceil(self._until.get(model, 0.0) - time.monotonic()))
+
     def call(self, model: str, fn):
         try:
             result = fn()
@@ -987,6 +993,12 @@ class _EmbeddingCooldown:
 
 
 _embedding_cooldown = _EmbeddingCooldown(EMBEDDING_FAILURE_COOLDOWN_SECONDS)
+
+
+def build_error_code(exc: Exception) -> str:
+    """Sanitized reason for the Admin panel: classified embedding codes only."""
+    code = getattr(exc, "code", None)
+    return code if isinstance(code, str) and code.startswith("embedding_") else "rag_build_failed"
 
 
 # Compact stopword lists for the six UI languages, applied after accent folding.
@@ -1091,6 +1103,9 @@ class SiteRagIndex:
         self._invalid_vectors = False
         self._owner = self
         self.last_build_error: str | None = None
+        # Failed builds pause automatic retries for this collection only: query
+        # embeddings and the other collections keep their own state.
+        self._build_failed_at: float | None = None
         self.generation: str | None = None
         self.embedding_provider = "ollama"
         self.embedding_dimensions: int | None = None
@@ -1247,8 +1262,12 @@ class SiteRagIndex:
             return True
         return not self._is_current(ai_service, self._vectors_allowed(ai_service))
 
-    def build(self, ai_service, require_vectors: bool = True):
-        """Synchronous worker entrypoint. Readers keep their immutable snapshot."""
+    def build(self, ai_service, require_vectors: bool = True, progress=None):
+        """Synchronous worker entrypoint. Readers keep their immutable snapshot.
+
+        `progress(phase, done, total)` reports collecting, embedding (uncached
+        chunks embedded so far) and saving.
+        """
         require_vectors = require_vectors and self._vectors_allowed(ai_service)
         with self._lock:
             os.makedirs(os.path.dirname(self.index_path) or ".", exist_ok=True)
@@ -1264,24 +1283,44 @@ class SiteRagIndex:
                 if candidate._is_current(ai_service, require_vectors):
                     self._publish(candidate)
                     self.last_build_error = None
+                    self._build_failed_at = None
                     return
                 try:
-                    candidate._do_build(ai_service, require_vectors)
+                    candidate._do_build(ai_service, require_vectors, progress)
+                    if progress is not None:
+                        progress("saving", 0, 0)
                     candidate._save_to_disk()
                 except Exception as exc:
-                    self.last_build_error = "rag_build_failed"
-                    _embedding_cooldown.failure(_embedding_key(ai_service), AIError(type(exc).__name__))
+                    self._record_build_failure(exc)
                     raise
                 self._publish(candidate)
                 self.last_build_error = None
+                self._build_failed_at = None
         try:
             self.cleanup_orphaned_indexes()
         except OSError:
             logger.warning("Pulizia indici RAG orfani rinviata")
 
-    def _do_build(self, ai_service, require_vectors: bool = True):
+    def _record_build_failure(self, exc: Exception):
+        first = not self._build_paused()
+        self.last_build_error = build_error_code(exc)
+        self._build_failed_at = time.monotonic()
+        if first:
+            logger.warning(
+                "Indicizzazione '%s' non riuscita (%s): ricerca semantica della collezione "
+                "sospesa per %d s, le altre collezioni non cambiano",
+                os.path.basename(self.index_path), self.last_build_error, EMBEDDING_FAILURE_COOLDOWN_SECONDS,
+            )
+
+    def _build_paused(self) -> bool:
+        failed_at = self._build_failed_at
+        return failed_at is not None and time.monotonic() - failed_at < EMBEDDING_FAILURE_COOLDOWN_SECONDS
+
+    def _do_build(self, ai_service, require_vectors: bool = True, progress=None):
         model = _embedding_key(ai_service)
         if not self._is_current(ai_service, require_vectors=False):
+            if progress is not None:
+                progress("collecting", 0, 0)
             self.chunks, self.signature = self._collector()
             self.lexical = _BM25Index(self.chunks)
             self.adjacency, self.relpath_to_node, self.node_to_relpath = self._graph_loader()
@@ -1295,8 +1334,7 @@ class SiteRagIndex:
         self.embedding_model = model
         self.embedding_provider = getattr(ai_service, "embedding_provider", "ollama")
         if require_vectors and self.chunks and self.matrix is None:
-            _embedding_cooldown.check(model)
-            self.matrix = self._embed_chunks(ai_service, model, self.chunks)
+            self.matrix = self._embed_chunks(ai_service, model, self.chunks, progress)
             self.norms = np.linalg.norm(self.matrix, axis=1)
         self.embedding_dimensions = self.matrix.shape[1] if self.matrix is not None else None
         self._invalid_vectors = False
@@ -1341,17 +1379,25 @@ class SiteRagIndex:
         return {**result, "n_chunks": len(chunks), "unique_chunks": len(unique),
                 "cached_chunks": len(unique) - len(missing), "vectors_allowed": allowed}
 
-    def _embed_chunks(self, ai_service, model: str, chunks: list[dict]) -> np.ndarray:
+    def _embed_chunks(self, ai_service, model: str, chunks: list[dict], progress=None) -> np.ndarray:
         cache = self._cache(ai_service)
         unique = {_EmbeddingCache.key(model, c["text"]): c["text"] for c in chunks}
         vectors = {key: cache.get(key) for key in unique}
         missing = [key for key, value in vectors.items() if value is None]
+        if progress is not None:
+            progress("embedding", 0, len(missing))
         if missing:
-            new = _embedding_cooldown.call(model, lambda: ai_service.embed_texts(
-                [unique[key] for key in missing], public_corpus=self.public_corpus))
+            options: dict = {"retries": embedding_service.RETRY_ATTEMPTS}
+            if progress is not None:
+                options["progress"] = lambda done: progress("embedding", done, len(missing))
+            # A build failure stays with this collection (see build): it does
+            # not suspend query embeddings of the others.
+            new = ai_service.embed_texts([unique[key] for key in missing],
+                                         public_corpus=self.public_corpus, **options)
             if len(new) != len(missing):
                 raise AIError("embedding_invalid_response")
             vectors.update(zip(missing, new))
+            _embedding_cooldown.success(model)
         try:
             matrix = np.asarray([vectors[_EmbeddingCache.key(model, c["text"])] for c in chunks], dtype=np.float32)
         except (TypeError, ValueError):
@@ -1390,10 +1436,9 @@ class SiteRagIndex:
                         with Session(bind=bind) as db:
                             service.db = db
                             self.build(service)
-                except Exception:
-                    # build records a sanitized status and the shared cooldown.
-                    self.last_build_error = "rag_build_failed"
-                    _embedding_cooldown.failure(_embedding_key(service), AIError("rag_build_failed"))
+                except Exception as exc:
+                    # Sanitized status for this collection only (build may have recorded it).
+                    self._record_build_failure(exc)
                 finally:
                     self._building = False
 
@@ -1464,7 +1509,7 @@ class SiteRagIndex:
             _embedding_cooldown.check(_embedding_key(ai_service))
         except EmbeddingUnavailable:
             return
-        if not self._is_current(ai_service, True):
+        if not self._is_current(ai_service, True) and not self._build_paused():
             self.start_build(ai_service)
 
     def search(self, ai_service, query: str, top_k: int = DEFAULT_TOP_K,
