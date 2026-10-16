@@ -1470,7 +1470,7 @@ class SiteRagIndex:
     def search(self, ai_service, query: str, top_k: int = DEFAULT_TOP_K,
                audience: str = "studente", weights: dict | None = None,
                audience_weights: dict | None = None, max_per_source: int = 3,
-               min_score: float = 0.0, retrieval_mode: str = "hybrid",
+               min_score: float = 0.0, retrieval_mode: str | None = None,
                vector_query: str | None = None):
         """BM25/vector retrieval with RRF before category weights and graph expansion.
 
@@ -1479,7 +1479,10 @@ class SiteRagIndex:
         `vector_query` replaces `query` for an external embedding provider (callers
         pass it without profile scores); BM25 always uses `query` locally. External
         queries are embedded only for public collections, after the PII filter.
+        Without an explicit mode, the Admin setting `rag_retrieval_mode` applies.
         """
+        if retrieval_mode is None:
+            retrieval_mode = embedding_service.retrieval_mode(getattr(ai_service, "config", None) or {})
         if retrieval_mode not in {"hybrid", "lexical", "vector"}:
             raise ValueError("retrieval_mode must be hybrid, lexical or vector")
         if not query.strip() or top_k <= 0 or max_per_source <= 0:

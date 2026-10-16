@@ -643,36 +643,58 @@ def test_admin_cost_stats_shape():
         assert key in body, f"cost-stats manca '{key}': {body}"
 
 
-def test_budget_lock_forces_ollama():
-    """Con budget mensile superato, AIService instrada i modelli a pagamento su Ollama."""
-    from backend.ai_service import AIService
+def test_budget_lock_uses_the_configured_fallback():
+    """Con budget mensile superato, AIService passa al ripiego configurato, non a Ollama."""
+    from backend.ai_service import AIError, AIService
     from backend.database import SessionLocal
     db = SessionLocal()
     try:
-        # Budget piccolo + un costo nel mese corrente che lo supera.
-        for key, value in (("monthly_budget_usd", "0.001"), ("budget_fallback_model", "qwen3.5:9b")):
+        def _set(key, value):
             row = db.query(models.Config).filter(models.Config.key == key).first()
             if row:
+                old = row.value
                 row.value = value
             else:
+                old = None
                 db.add(models.Config(key=key, value=value))
+            return old
+
+        # Budget piccolo + un costo nel mese corrente che lo supera, con un
+        # ripiego locale configurato (nessun Ollama, nessuna rete nei test).
+        old_budget = _set("monthly_budget_usd", "0.001")
+        old_fallback = _set("ai_fallback_targets", '[{"provider": "llamacpp", "model": "default"}]')
         db.add(models.Log(session_id="budget-test", action="chat_message", cost_usd=0.05))
         db.commit()
 
         ai = AIService(db)
         assert ai.monthly_budget_usd == 0.001
         assert ai._budget_is_locked() is True
-        assert ai._apply_budget_lock("openrouter", "deepseek/deepseek-v4-flash") == ("ollama", "qwen3.5:9b")
-        # I provider gia' locali restano invariati.
-        assert ai._apply_budget_lock("ollama", "gemma4:12b") == ("ollama", "gemma4:12b")
+        assert ai._apply_budget_lock("openrouter", "deepseek/deepseek-v4-flash") == ("llamacpp", "default")
+        # I provider gia' gratuiti restano invariati.
+        assert ai._apply_budget_lock("llamacpp", "default") == ("llamacpp", "default")
+
+        # Nessun ripiego configurato: errore chiaro, non una chiamata a Ollama.
+        _set("ai_fallback_targets", "[]")
+        db.commit()
+        ai_no_fallback = AIService(db)
+        try:
+            ai_no_fallback._apply_budget_lock("openrouter", "paid-model")
+            raise AssertionError("atteso AIError senza ripieghi configurati")
+        except AIError as exc:
+            assert exc.code == "chat.errors.budget", exc.code
+            assert "ripiego configurato" in str(exc), str(exc)
 
         # Budget azzerato -> nessun lock.
-        row = db.query(models.Config).filter(models.Config.key == "monthly_budget_usd").first()
-        row.value = "0"
+        _set("monthly_budget_usd", "0")
         db.commit()
         ai2 = AIService(db)
         assert ai2._budget_is_locked() is False
         assert ai2._apply_budget_lock("openrouter", "x") == ("openrouter", "x")
+
+        # Ripristina i valori precedenti.
+        _set("monthly_budget_usd", old_budget if old_budget is not None else "0")
+        if old_fallback is not None:
+            _set("ai_fallback_targets", old_fallback)
     finally:
         # Pulizia: riporta il budget a 0 per non influenzare altri test.
         row = db.query(models.Config).filter(models.Config.key == "monthly_budget_usd").first()

@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 import math
 import re
+import threading
+import time
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -61,7 +63,13 @@ CONFIG_DEFINITIONS = [
         "{}",
         'Prezzi USD per milione di token input: JSON {"provider/model": prezzo}. Sovrascrive i prezzi embedding predefiniti.',
     ),
+    (
+        "rag_retrieval_mode",
+        "hybrid",
+        "Modalità di recupero documenti: hybrid (parole chiave + vettori), lexical (solo parole chiave), vector (vettori, con ripiego sulle parole chiave).",
+    ),
 ]
+RETRIEVAL_MODES = ("hybrid", "lexical", "vector")
 
 
 # "private" = user-derived text (memories, episodes): local providers only.
@@ -70,14 +78,62 @@ PURPOSES = {"document", "query", "private"}
 QUERY_LOCAL_ERRORS = {"embedding_privacy_blocked", "embedding_query_empty"}
 # Bytes of filtered query sent externally: retrieval needs the opening, not the whole turn.
 EXTERNAL_QUERY_MAX_BYTES = 4000
-# Scores and score-like figures (4/9, 3,5/9, 75%, 12/05/2001) never reach an external provider.
-_SCORE_RE = re.compile(r"\b\d+(?:[.,]\d+)?(?:(?:\s*/\s*\d+(?:[.,]\d+)?)+|\s*%)")
+# Scores and score-like figures never reach an external provider: 4/9, 3,5/9,
+# 75%, 12/05/2001, "4 su 9", "percentile 75", "75° percentile", "punteggio: 4",
+# "4 punti", with the equivalents in the six interface languages.
+_NUM = r"\d+(?:[.,]\d+)?"
+_SCORE_WORDS = (r"punteggi[oa]?|voto|score[sd]?|puntuaci[oó]n|puntaje|nota|note|"
+                r"punktzahl|punktwert|punkte|poäng|resultat|stanine|sten")
+_PERCENTILE = r"percentile|percentil|perzentil|centile"
+_OF = r"su|out\s+of|of|de|sur|sobre|von|aus|av"
+_VALUE = rf"{_NUM}(?:\s*/\s*{_NUM})*(?:\s*%|\s+(?:{_OF})\s+{_NUM})?"
+_SCORE_RE = re.compile(
+    rf"\b{_NUM}(?:(?:\s*/\s*{_NUM})+|\s*%)"
+    rf"|\b{_NUM}\s+(?:{_OF})\s+{_NUM}"
+    rf"|\b(?:{_PERCENTILE})\s*[:=]?\s*{_VALUE}"
+    rf"|\b{_NUM}\s*(?:°|º|th|st|nd|rd|e|ème|er|\.)?\s*(?:{_PERCENTILE})\b"
+    rf"|\b(?:{_SCORE_WORDS})\s*[:=]?\s*{_VALUE}"
+    rf"|\b{_NUM}\s*(?:punt[io]s?|points?|pts?|punkte?|poäng)\b",
+    re.IGNORECASE,
+)
+# A failed NER attempt is not retried for this long: the query stays local
+# (fail-closed with `block`) without paying the detector timeout on every turn.
+NER_RETRY_SECONDS = 60
+_ner_failures: dict[tuple[str, str], float] = {}
+_ner_lock = threading.Lock()
+_clock = time.monotonic
 # OpenRouter routing: only providers that neither collect nor retain request data.
 OPENROUTER_PRIVACY_ROUTING = {"data_collection": "deny", "zdr": True}
 
 
 def is_external(provider: str | None) -> bool:
     return (provider or "ollama") not in {"ollama", "none"}
+
+
+def _ner_settings(config: Mapping) -> tuple[bool, str, str]:
+    flag = config.get("pii_ner_enabled")
+    enabled = (
+        pii_ner.is_ner_enabled()
+        if flag is None
+        else str(flag).strip().lower() not in ("0", "false", "no", "off")
+    )
+    base = (config.get("ollama_ip") or "http://localhost:11434").rstrip("/")
+    return enabled, base, config.get("pii_ner_model") or pii_ner.get_ner_model()
+
+
+def ner_status(config: Mapping) -> str:
+    """Last NER outcome seen by this process: disabled, unreachable or unknown."""
+    enabled, base, model = _ner_settings(config)
+    if not enabled:
+        return "disabled"
+    with _ner_lock:
+        failed_at = _ner_failures.get((base, model))
+    return "unreachable" if failed_at is not None else "unknown"
+
+
+def retrieval_mode(config: Mapping) -> str:
+    mode = str(config.get("rag_retrieval_mode") or "hybrid").strip().lower()
+    return mode if mode in RETRIEVAL_MODES else "hybrid"
 
 
 def filter_external_query(config: Mapping, texts: list[str]) -> list[str]:
@@ -87,18 +143,29 @@ def filter_external_query(config: Mapping, texts: list[str]) -> list[str]:
     nothing and there is no response to restore. `pii_ner_enabled` and
     `external_pii_fallback` (block | send_raw) follow the chat settings.
     """
-    flag = config.get("pii_ner_enabled")
-    ner_enabled = (
-        None
-        if flag is None
-        else str(flag).strip().lower() not in ("0", "false", "no", "off")
+    ner_enabled, base, model = _ner_settings(config)
+    key = (base, model)
+    with _ner_lock:
+        failed_at = _ner_failures.get(key)
+    cooling = (
+        ner_enabled
+        and failed_at is not None
+        and _clock() - failed_at < NER_RETRY_SECONDS
     )
     anonymized, _mapping, ner_ok = pii_ner.anonymize_texts(
         list(texts),
-        ollama_base=(config.get("ollama_ip") or "http://localhost:11434").rstrip("/"),
-        ner_enabled=ner_enabled,
-        ner_model=config.get("pii_ner_model"),
+        ollama_base=base,
+        ner_enabled=ner_enabled and not cooling,
+        ner_model=model,
     )
+    if cooling:
+        ner_ok = False
+    elif ner_enabled:
+        with _ner_lock:
+            if ner_ok:
+                _ner_failures.pop(key, None)
+            else:
+                _ner_failures[key] = _clock()
     fallback = (config.get("external_pii_fallback") or "block").strip().lower()
     if not ner_ok and fallback == "block":
         raise EmbeddingError("embedding_privacy_blocked")
@@ -121,6 +188,8 @@ class EmbeddingError(Exception):
 def validate_config(key: str, value: str):
     if key == "embedding_provider" and value not in PROVIDERS:
         raise ValueError("Unknown embedding provider")
+    if key == "rag_retrieval_mode" and value not in RETRIEVAL_MODES:
+        raise ValueError("Retrieval mode must be hybrid, lexical or vector")
     if (
         key == "embedding_dimensions"
         and value

@@ -103,6 +103,68 @@ def _chat_model(model_id):
     return bool(lowered) and not any(marker in lowered for marker in NON_CHAT_MODEL_MARKERS)
 
 
+# Ripiego per budget superato. Il provider non e' piu' cablato su Ollama: su
+# un'installazione portabile quel servizio puo' non esistere, e ogni chat
+# fallirebbe. Il target si sceglie fra i ripieghi configurati dall'admin
+# (`ai_fallback_targets`), che sono coppie provider/modello.
+BUDGET_FALLBACK_ERROR_CODE = "chat.errors.budget"
+BUDGET_FALLBACK_NO_TARGET_MESSAGE = (
+    "Budget mensile superato e nessun modello di ripiego configurato. "
+    "Aggiungi provider e modello fra i ripieghi in Amministrazione, poi riprova."
+)
+BUDGET_FALLBACK_UNAVAILABLE_MESSAGE = (
+    "Budget mensile superato e i ripieghi configurati non sono disponibili "
+    "({providers}): serve un provider locale o gratuito con le credenziali a "
+    "posto. Ollama non e' piu' il ripiego predefinito."
+)
+
+
+def is_free_target(provider: str, model: str) -> bool:
+    """True se il target non genera costo a consumo (provider locale o gratuiti)."""
+    return provider in LOCAL_PROVIDERS or (
+        provider == "openrouter"
+        and (model == "openrouter/free"
+             or (model.endswith(":free") and not model.startswith("openrouter/auto")))
+    )
+
+
+def provider_available(config: dict, provider: str) -> bool:
+    """True se il provider e' instradabile: locale/OmniRoute, oppure con chiave.
+
+    Non verifica la raggiungibilita' in rete: e' un controllo di configurazione,
+    coerente con `provider_configured` dei preset."""
+    if provider in LOCAL_PROVIDERS or provider == 'omniroute':
+        return True
+    return bool((config.get(config_key(provider)) or '').strip())
+
+
+def configured_fallback_targets(config: dict) -> list:
+    """Coppie (provider, modello) dei ripieghi configurati, in ordine.
+
+    Tollera JSON malformato (la validazione avviene al salvataggio) e ignora le
+    voci incomplete."""
+    raw = config.get("ai_fallback_targets", "[]")
+    try:
+        parsed = json.loads(raw) if isinstance(raw, str) else raw
+    except (TypeError, ValueError):
+        return []
+    targets = []
+    for target in parsed or []:
+        if not isinstance(target, dict):
+            continue
+        provider = str(target.get("provider") or "").strip()
+        model = str(target.get("model") or "").strip()
+        if provider and model:
+            targets.append((provider, model))
+    return targets
+
+
+def budget_fallback_targets(config: dict) -> list:
+    """Ripieghi usabili a budget superato: locali/gratuiti con provider configurato."""
+    return [(provider, model) for provider, model in configured_fallback_targets(config)
+            if is_free_target(provider, model) and provider_available(config, provider)]
+
+
 class AIService:
     def __init__(self, db: Session, username: str | None = None):
         self.db = db
@@ -329,16 +391,34 @@ class AIService:
             self._budget_locked_cache = True
         return self._budget_locked_cache
 
+    def _budget_fallback_target(self):
+        """(provider, modello) del ripiego quando il budget mensile e' superato.
+
+        Sceglie il primo ripiego configurato su un provider locale o gratuito e
+        disponibile. Se non ce n'e' nessuno solleva `AIError` con un codice
+        localizzabile: non si torna piu' a Ollama, che su un'installazione
+        portabile non esiste."""
+        usable = budget_fallback_targets(self.config)
+        if usable:
+            return usable[0]
+        configured = configured_fallback_targets(self.config)
+        if not configured:
+            raise AIError(BUDGET_FALLBACK_NO_TARGET_MESSAGE, code=BUDGET_FALLBACK_ERROR_CODE)
+        providers = ", ".join(sorted({provider for provider, _ in configured}))
+        raise AIError(BUDGET_FALLBACK_UNAVAILABLE_MESSAGE.format(providers=providers),
+                      code=BUDGET_FALLBACK_ERROR_CODE)
+
     def _apply_budget_lock(self, provider: str, model: str):
-        """Se il budget e' superato, forza Ollama locale + modello di fallback.
-        Lascia invariati i provider gia' locali. Non tocca il benchmark
+        """Se il budget e' superato, passa al ripiego configurato.
+        Lascia invariati i provider gia' gratuiti. Non tocca il benchmark
         (che usa call_model, percorso esplicito dell'admin)."""
         if self.personal_target:
             return self.personal_target
         if not self._free_target(provider, model) and self._budget_is_locked():
-            fallback = self.budget_fallback_model or 'muse-glimmer:30b'
-            logger.info(f"Budget mensile superato: fallback {provider}/{model} -> ollama/{fallback}")
-            return 'ollama', fallback
+            fallback_provider, fallback_model = self._budget_fallback_target()
+            logger.info("Budget mensile superato: fallback %s/%s -> %s/%s",
+                        provider, model, fallback_provider, fallback_model)
+            return fallback_provider, fallback_model
         return provider, model
 
     def _openrouter_reasoning(self) -> dict:
@@ -591,8 +671,7 @@ class AIService:
 
     @staticmethod
     def _free_target(provider, model):
-        return provider in LOCAL_PROVIDERS or (provider == "openrouter" and
-                (model == "openrouter/free" or (model.endswith(":free") and not model.startswith("openrouter/auto"))))
+        return is_free_target(provider, model)
 
     def _targets(self, provider, model):
         primary = self._selected_target(provider, model)

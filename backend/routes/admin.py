@@ -17,7 +17,7 @@ from .. import content_version_service
 from .. import prompt_revisions
 from ..dynamic_registry import invalidate_instrument_cache
 from ..content_versions import CATALOG_CONTENT_TYPES, CONTENT_TYPES, ContentVersionError
-from ..ai_service import AIService
+from ..ai_service import AIService, configured_fallback_targets
 from ..api_secrets import (
     API_KEY_ENV_MAP,
     provider_from_config_key,
@@ -713,6 +713,10 @@ def _budget_status(db: Session, now: datetime) -> dict:
     except (TypeError, ValueError):
         budget = 0.0
     fallback = (_cfg("budget_fallback_model", "qwen3.5:9b") or "qwen3.5:9b").strip()
+    # Ripiego per budget: non piu' Ollama cablato, ma il primo ripiego
+    # configurato (`ai_fallback_targets`). Vuoto = a budget superato l'invio
+    # si ferma con un errore invece di tentare un provider assente.
+    fallback_target = configured_fallback_targets({"ai_fallback_targets": _cfg("ai_fallback_targets", "[]")})
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     spent = db.query(func.coalesce(func.sum(models.Log.cost_usd), 0.0)).filter(
         models.Log.timestamp >= month_start,
@@ -722,6 +726,7 @@ def _budget_status(db: Session, now: datetime) -> dict:
     return {
         "monthly_budget_usd": round(budget, 8),
         "budget_fallback_model": fallback,
+        "budget_fallback_target": ", ".join(f"{provider}/{model}" for provider, model in fallback_target),
         "month_to_date_cost": spent,
         "budget_remaining": round(budget - spent, 8) if budget > 0 else 0.0,
         "budget_exceeded": bool(budget > 0 and spent >= budget),

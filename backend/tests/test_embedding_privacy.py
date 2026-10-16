@@ -26,6 +26,7 @@ STUDENT_TEXT = "Sono Mario Rossi, mario.rossi@example.com, C1 4/9 e A2r 3,5/9, 7
 def no_network(monkeypatch):
     monkeypatch.setattr(httpx.Client, "send", Mock(side_effect=AssertionError("real HTTP")))
     monkeypatch.setattr(rag, "_embedding_cooldown", rag._EmbeddingCooldown(300))
+    monkeypatch.setattr(embeddings, "_ner_failures", {})
 
 
 def external(db, monkeypatch, provider, **config):  # noqa: F811
@@ -105,6 +106,24 @@ def test_filter_strips_score_figures_and_caps_length():
     assert exc.value.code == "embedding_query_empty"
 
 
+@pytest.mark.parametrize("text", [
+    "C1 4 su 9", "C1 punteggio: 4", "C1 percentile 75", "C1 75° percentile", "C1 voto 8",
+    "C1 4 out of 9", "C1 score: 4", "C1 75th percentile", "C1 4 points",
+    "C1 4 de 9", "C1 puntuación: 7", "C1 percentil 75",
+    "C1 4 sur 9", "C1 80e centile",
+    "C1 4 von 9", "C1 Punktzahl: 4", "C1 Perzentil 75", "C1 4 Punkte",
+    "C1 4 av 9", "C1 poäng 7", "C1 percentil 75",
+    "C1 punteggio 4/9", "C1 stanine 4",
+])
+def test_filter_strips_written_score_notations_in_the_interface_languages(text):
+    assert embeddings.filter_external_query({"pii_ner_enabled": "false"}, [text]) == ["C1"]
+
+
+def test_filter_keeps_ordinary_numbers_useful_for_retrieval():
+    text = "Studio 3 ore al giorno, capitolo 2 e 3, C1 A2r"
+    assert embeddings.filter_external_query({"pii_ner_enabled": "false"}, [text]) == [text]
+
+
 @pytest.mark.parametrize("provider", EXTERNAL)
 def test_external_query_anonymized_even_when_chat_redaction_is_off(db, monkeypatch, provider):  # noqa: F811
     ai, _, calls = external(db, monkeypatch, provider, external_pii_redact="false")
@@ -129,10 +148,36 @@ def test_ner_down_with_block_policy_keeps_query_local_without_cooldown(db, monke
     assert index.search(ai, "Testo Mario Rossi")  # BM25 answers
     documents_only = len(calls)
     assert documents_only == 1 and "Mario" not in str(sent_texts(calls))
-    # The provider is healthy: no cooldown, later queries embed again.
+    # The provider is healthy: no provider cooldown. Once the short NER retry
+    # interval has passed, later queries embed again.
     monkeypatch.setattr(pii_ner, "_ner_entities", lambda *args: [])
+    now = embeddings._clock()
+    monkeypatch.setattr(embeddings, "_clock", lambda: now + embeddings.NER_RETRY_SECONDS)
     assert index.search(ai, "Testo Mario Rossi")
     assert len(calls) == documents_only + 1
+
+
+@pytest.mark.parametrize("fallback,sent", [("block", []), ("send_raw", ["mail [[PII:EMAIL:1]]"])])
+def test_failed_ner_is_not_retried_during_its_cooldown(db, monkeypatch, fallback, sent):  # noqa: F811
+    ai, _, calls = external(db, monkeypatch, "mistral", pii_ner_enabled="true",
+                            external_pii_fallback=fallback)
+    now = [1000.0]
+    monkeypatch.setattr(embeddings, "_clock", lambda: now[0])
+    ner = Mock(side_effect=httpx.ConnectError("down"))
+    monkeypatch.setattr(pii_ner, "_ner_entities", ner)
+    for _ in range(3):
+        try:
+            ai.embed_query("mail mario.rossi@example.com", public_corpus=True)
+        except AIError as exc:
+            assert exc.code == "embedding_privacy_blocked"
+    # One detector timeout per cooldown; the policy stays fail-closed meanwhile.
+    assert ner.call_count == 1 and sent_texts(calls) == sent * 3
+    assert embeddings.ner_status(ai.config) == "unreachable"
+    now[0] += embeddings.NER_RETRY_SECONDS
+    ner.side_effect, ner.return_value = None, []
+    ai.embed_query("mail mario.rossi@example.com", public_corpus=True)
+    assert ner.call_count == 2 and embeddings.ner_status(ai.config) == "unknown"
+    assert sent_texts(calls)[-1] == "mail [[PII:EMAIL:1]]"
 
 
 @pytest.mark.parametrize("provider", EXTERNAL)

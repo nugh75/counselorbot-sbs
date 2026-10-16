@@ -67,6 +67,7 @@ from .routes import memory as memory_routes
 from .routes import site_chat as site_chat_routes
 from .routes import learner_profile as learner_profile_routes
 from .routes import external_privacy as external_privacy_routes
+from .routes import document_retrieval as document_retrieval_routes
 from .routes import personal_api as personal_api_routes
 from .routes import teacher_profile as teacher_profile_routes
 from .routes import practice_notebooks as practice_notebook_routes
@@ -909,11 +910,11 @@ def _run_seed_and_migrations():
             ("log_retention_days", "90", "Giorni di conservazione dei log; 0 disattiva la retention automatica."),
             ("usd_eur_rate", "0.92", "Tasso di cambio USD->EUR per la conversione dei costi nel pannello admin."),
             ("monthly_budget_usd", "0", "Budget mensile in USD; raggiunto il limite registrato si usano solo modelli locali o OpenRouter gratuiti (0 = nessun limite)."),
-            ("ai_fallback_targets", "[]", "Ripieghi in ordine: lista JSON di provider e model, massimo tre. Il modello scelto resta il primo tentativo; i servizi a pagamento si fermano quando la spesa registrata raggiunge il budget mensile."),
+            ("ai_fallback_targets", "[]", "Ripieghi in ordine: lista JSON di provider e model, massimo tre. Il modello scelto resta il primo tentativo; i servizi a pagamento si fermano quando la spesa registrata raggiunge il budget mensile. A budget superato si passa al primo ripiego locale o gratuito disponibile; senza ripieghi usabili l'invio si ferma con un errore, non si torna a Ollama."),
             ("model_context_profiles", "{}", "Profili JSON per provider/modello: context_tokens, input_tokens e compact. Usare limiti verificati sul server e sul compito."),
             ("ai_timeout_seconds", "120", "Timeout di lettura per tentativo AI, da 10 a 600 secondi."),
             ("omniroute_url", "http://omniroute:20128/v1", "Endpoint OpenAI compatibile OmniRoute; OMNIROUTE_API_URL nell'ambiente prevale."),
-            ("budget_fallback_model", "muse-glimmer:30b", "Modello Ollama locale usato quando il budget mensile e' superato."),
+            ("budget_fallback_model", "muse-glimmer:30b", "Modello Ollama predefinito quando si sceglie il provider Ollama senza indicare un modello. Non e' piu' il ripiego per budget."),
             ("readings_allow_sensitive", "false", "Se true, le letture marcate sensibili possono essere proposte allo studente quando e' lui a nominare quel tema. Spenta: restano solo nel catalogo admin."),
             ("counselor_restricted_instruments", '["IDEA"]', "Strumenti a invito: un counselor li serve solo se li elenca nei suoi questionari. Per gli altri strumenti, lista vuota continua a valere 'tutti'."),
             ("feature_idea_focus", "false", "Strumento Idea (chat libera che mette a fuoco un'idea costruendo una mappa). Spento: non compare fra gli strumenti e gli endpoint della mappa rispondono 404."),
@@ -2031,6 +2032,7 @@ app.include_router(memory_routes.router)
 app.include_router(site_chat_routes.router)
 app.include_router(learner_profile_routes.router)
 app.include_router(external_privacy_routes.router)
+app.include_router(document_retrieval_routes.router)
 app.include_router(personal_api_routes.router)
 app.include_router(teacher_profile_routes.router)
 app.include_router(practice_notebook_routes.router)

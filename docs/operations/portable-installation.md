@@ -188,10 +188,13 @@ l'amministrazione offre `local` oppure `basic`: il filtro base ha limiti
 esplicitati nell'interfaccia e non garantisce anonimato. Non passare a
 `basic`, disattivare la redazione o usare `send_raw` automaticamente.
 
-Il limite mensile, se attivato, può scegliere un fallback Ollama quando la
-spesa raggiunge il budget. Su una macchina senza Ollama, configurare gli
-eventuali ripieghi soltanto su destinazioni effettivamente disponibili e
-verificare il comportamento al raggiungimento del limite.
+Il limite mensile, se attivato, a spesa raggiunta passa al primo ripiego
+configurato disponibile fra i provider locali o gratuiti (per esempio
+llama.cpp, oppure un modello gratuito di un provider con chiave). Il ripiego
+non è più fissato a Ollama: su una macchina senza Ollama configurare almeno un
+ripiego utilizzabile, altrimenti la chat si ferma con un messaggio chiaro
+invece di tentare un servizio assente. Verificare il comportamento al
+raggiungimento del limite.
 
 ## Funzioni opzionali e limiti senza Ollama
 

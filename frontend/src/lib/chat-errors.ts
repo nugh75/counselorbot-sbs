@@ -1,5 +1,5 @@
 const personalReasons = new Set(['authentication', 'modelUnavailable', 'quota', 'rateLimit', 'privacy', 'invalidRequest', 'connection', 'configuration', 'counselor', 'classShare']);
-const chatReasons = new Set(['connection', 'access', 'configuration']);
+const chatReasons = new Set(['connection', 'access', 'configuration', 'budget']);
 
 // Only fixed codes may cross the proxy/UI boundary; upstream messages stay private.
 export function safeChatErrorCode(value: unknown): string | undefined {
