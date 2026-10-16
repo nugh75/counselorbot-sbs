@@ -2204,9 +2204,13 @@ def _retrieved_context(
     excluded_certified_strategy_ids: set[str] | None = None,
     username: str = "",
     practice_notebook_id: int | None = None,
+    vector_query: str | None = None,
 ) -> tuple[str, List[str], List[str], dict[str, list[str]], List[str], dict[str, dict]]:
     """Fonti KNOWLEDGE per l'envelope: RAG (competenzestrategiche, counselorbot, questionari)
     + strategie approvate + certificate per-fattore + risposte votate.
+
+    `vector_query` (senza punteggi) sostituisce `query` per un provider di
+    embedding esterno; BM25 e strategie usano `query` solo in locale.
 
     I dati studente (profilo dichiarato, punteggi, stato sessione, goals/
     episodi) NON vivono più qui: sono assemblati in `build_context_envelope`
@@ -2287,6 +2291,7 @@ def _retrieved_context(
                         ai_service, query,
                         top_k=6, audience="studente",
                         max_per_source=2, min_score=0.25,
+                        vector_query=vector_query,
                     ),
                     questionnaire_type,
                 )
@@ -2309,6 +2314,7 @@ def _retrieved_context(
                         ai_service, query,
                         top_k=3, audience="studente",
                         max_per_source=2, min_score=0.25,
+                        vector_query=vector_query,
                     ),
                     questionnaire_type,
                 )
@@ -2331,6 +2337,7 @@ def _retrieved_context(
                         ai_service, query,
                         top_k=4, audience="studente",
                         max_per_source=2, min_score=0.25,
+                        vector_query=vector_query,
                     ),
                     questionnaire_type,
                 )

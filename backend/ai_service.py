@@ -1246,10 +1246,11 @@ class AIService:
         return embedding_service.identity(self.embedding_provider, self.embedding_model, self.embedding_dimensions)
 
     def embed_texts(self, texts, model: str = None, *, purpose="document", public_corpus=False):
-        """System embedding dispatch. External calls accept only explicitly public documents.
+        """System embedding dispatch under the external privacy policy.
 
-        Query and memory text stay local/lexical until privacy block 4. Accounting
-        is independent of chat usage and caller transactions.
+        External providers accept public-corpus documents and privacy-filtered
+        queries (`embedding_service.filter_external_query`); `purpose="private"`
+        stays local. Accounting is independent of chat usage and caller transactions.
         """
         def budget_locked():
             # Re-read between paid batches, including costs just recorded here.
@@ -1266,8 +1267,8 @@ class AIService:
         finally:
             self._budget_locked_cache = None
 
-    def embed_query(self, text: str, model: str = None):
-        vecs = self.embed_texts([text], model=model, purpose="query")
+    def embed_query(self, text: str, model: str = None, *, public_corpus=False):
+        vecs = self.embed_texts([text], model=model, purpose="query", public_corpus=public_corpus)
         return vecs[0] if vecs else []
 
     def preload_ollama_model(self):

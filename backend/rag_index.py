@@ -19,6 +19,7 @@ from collections import Counter
 
 import numpy as np
 
+from . import embedding_service
 from .ai_service import AIError
 
 logger = logging.getLogger(__name__)
@@ -969,6 +970,10 @@ class _EmbeddingCooldown:
         try:
             result = fn()
         except AIError as e:
+            if getattr(e, "code", None) in embedding_service.QUERY_LOCAL_ERRORS:
+                # Query refused by the privacy filter: the provider is healthy, no cooldown.
+                logger.info("Query embedding skipped by privacy policy (%s): BM25 only", e.code)
+                raise EmbeddingUnavailable(f"Embedding '{model}' non usato per questa query") from e
             raise self.failure(model, e) from e
         self.success(model)
         return result
@@ -1070,7 +1075,7 @@ class SiteRagIndex:
 
     def __init__(self, *, docs_dir: str, index_path: str, emb_path: str,
                  cache_path: str, lock_path: str, collector, graph_loader,
-                 signature_fn, mode: str = "graphify", public_corpus: bool = False):
+                 signature_fn, mode: str = "graphify", public_corpus=False):
         self._lock = threading.Lock()
         # Config della collezione (paths + funzioni di raccolta/grafo/firma).
         self.docs_dir = docs_dir
@@ -1082,7 +1087,9 @@ class SiteRagIndex:
         self._graph_loader = graph_loader
         self._signature_fn = signature_fn
         self.mode = mode
-        self.public_corpus = public_corpus
+        # bool, or a callable read at each use (dynamic collections: admin flag on disk,
+        # so every worker sees a change without restart).
+        self._public_corpus = public_corpus
         self.chunks: list[dict] = []
         self.categories: list[str] = []            # macro-categoria per chunk (allineata a chunks)
         self.matrix: np.ndarray | None = None     # (n, d) float32
@@ -1140,6 +1147,16 @@ class SiteRagIndex:
             json.dump(payload, f, ensure_ascii=False)
         np.save(self.emb_path, self.matrix if self.matrix is not None else np.zeros((0, 1), dtype=np.float32))
         os.replace(tmp_json, self.index_path)
+
+    @property
+    def public_corpus(self) -> bool:
+        """True if documents and filtered queries of this collection may go to an external API."""
+        value = self._public_corpus
+        return bool(value() if callable(value) else value)
+
+    @public_corpus.setter
+    def public_corpus(self, value):
+        self._public_corpus = value
 
     def _vectors_allowed(self, ai_service) -> bool:
         provider = getattr(ai_service, "embedding_provider", "ollama")
@@ -1252,11 +1269,15 @@ class SiteRagIndex:
     def search(self, ai_service, query: str, top_k: int = DEFAULT_TOP_K,
                audience: str = "studente", weights: dict | None = None,
                audience_weights: dict | None = None, max_per_source: int = 3,
-               min_score: float = 0.0, retrieval_mode: str = "hybrid"):
+               min_score: float = 0.0, retrieval_mode: str = "hybrid",
+               vector_query: str | None = None):
         """BM25/vector retrieval with RRF before category weights and graph expansion.
 
         min_score applies to cosine only. Missing/failed vectors fall back to
         BM25 in both hybrid and vector modes. Lexical mode never calls embeddings.
+        `vector_query` replaces `query` for an external embedding provider (callers
+        pass it without profile scores); BM25 always uses `query` locally. External
+        queries are embedded only for public collections, after the PII filter.
         """
         if retrieval_mode not in {"hybrid", "lexical", "vector"}:
             raise ValueError("retrieval_mode must be hybrid, lexical or vector")
@@ -1271,11 +1292,19 @@ class SiteRagIndex:
         vector_rank = []
         vector_scores = None
         model = _embedding_key(ai_service)
-        if (retrieval_mode != "lexical" and getattr(ai_service, "embedding_provider", "ollama") == "ollama"
+        if (retrieval_mode != "lexical" and self._vectors_allowed(ai_service)
                 and self.matrix is not None and self.norms is not None and self.embedding_model == model):
+            if embedding_service.is_external(getattr(ai_service, "embedding_provider", "ollama")):
+                text = query if vector_query is None else vector_query
+
+                def embed():
+                    return ai_service.embed_query(text, public_corpus=self.public_corpus)
+            else:
+                def embed():
+                    return ai_service.embed_query(query)
             try:
                 _embedding_cooldown.check(model)
-                q_vec = _embedding_cooldown.call(model, lambda: ai_service.embed_query(query))
+                q_vec = _embedding_cooldown.call(model, embed)
             except EmbeddingUnavailable:
                 q_vec = None
             if q_vec is not None and len(q_vec):
@@ -1489,6 +1518,38 @@ def is_dynamic_collection(slug: str | None) -> bool:
     return os.path.isdir(_dynamic_dir(slug))
 
 
+def _read_collection_meta(slug: str) -> dict:
+    try:
+        with open(os.path.join(_dynamic_dir(slug), _COLLECTION_META_FILE), encoding="utf-8") as f:
+            meta = json.load(f)
+        return meta if isinstance(meta, dict) else {}
+    except Exception:
+        return {}
+
+
+def is_api_publishable(slug: str) -> bool:
+    """Admin flag: may this dynamic collection go to an external embedding API?
+
+    Missing or unreadable metadata means no (BM25 only): uploaded documents may
+    be internal material, so publication is an explicit opt-in."""
+    return _read_collection_meta(slug).get("api_publishable") is True
+
+
+def set_api_publishable(slug: str, publishable: bool) -> dict:
+    """Persist the flag in the collection metadata (read again at every use)."""
+    if not is_dynamic_collection(slug):
+        raise ValueError(f"Collezione dinamica '{slug}' non trovata")
+    meta = _read_collection_meta(slug) or {"id": slug, "label": slug}
+    meta["api_publishable"] = bool(publishable)
+    path = os.path.join(_dynamic_dir(slug), _COLLECTION_META_FILE)
+    tmp = f"{path}.tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False)
+    os.replace(tmp, path)
+    return {"id": slug, "label": str(meta.get("label") or slug), "mode": "plain",
+            "builtin": False, "api_publishable": bool(publishable)}
+
+
 def _make_dynamic_index(slug: str) -> "SiteRagIndex":
     d = _dynamic_dir(slug)
     return SiteRagIndex(
@@ -1500,7 +1561,7 @@ def _make_dynamic_index(slug: str) -> "SiteRagIndex":
         collector=lambda: _collect_scoped_plain(slug, d),
         graph_loader=_empty_graph,
         signature_fn=lambda: _scoped_plain_signature(slug, d),
-        mode="plain",
+        mode="plain", public_corpus=lambda: is_api_publishable(slug),
     )
 
 
@@ -1514,11 +1575,7 @@ def get_dynamic_index(slug: str) -> "SiteRagIndex":
 
 
 def _read_collection_label(slug: str) -> str:
-    try:
-        with open(os.path.join(_dynamic_dir(slug), _COLLECTION_META_FILE), encoding="utf-8") as f:
-            return str(json.load(f).get("label") or slug)
-    except Exception:
-        return slug
+    return str(_read_collection_meta(slug).get("label") or slug)
 
 
 def graphify_graph_path_for(collection: str) -> str | None:
@@ -1547,7 +1604,7 @@ def list_collections() -> list[dict]:
     """Tutte le collezioni disponibili: builtin + dinamiche."""
     out = [
         {"id": cid, "label": BUILTIN_COLLECTION_LABELS.get(cid, cid),
-         "mode": idx.mode, "builtin": True,
+         "mode": idx.mode, "builtin": True, "api_publishable": idx.public_corpus,
          "graph_available": graphify_graph_path_for(cid) is not None}
         for cid, idx in RAG_COLLECTIONS.items()
     ]
@@ -1559,6 +1616,7 @@ def list_collections() -> list[dict]:
                 continue
             out.append({"id": name, "label": _read_collection_label(name),
                         "mode": "plain", "builtin": False,
+                        "api_publishable": is_api_publishable(name),
                         "graph_available": graphify_graph_path_for(name) is not None})
     return out
 
@@ -1574,9 +1632,10 @@ def create_dynamic_collection(slug: str, label: str) -> dict:
     d = _dynamic_dir(slug)
     os.makedirs(d, exist_ok=True)
     with open(os.path.join(d, _COLLECTION_META_FILE), "w", encoding="utf-8") as f:
-        json.dump({"id": slug, "label": label or slug, "created_at": time.time()},
-                  f, ensure_ascii=False)
-    return {"id": slug, "label": label or slug, "mode": "plain", "builtin": False}
+        json.dump({"id": slug, "label": label or slug, "created_at": time.time(),
+                   "api_publishable": False}, f, ensure_ascii=False)
+    return {"id": slug, "label": label or slug, "mode": "plain", "builtin": False,
+            "api_publishable": False}
 
 
 def delete_dynamic_collection(slug: str):
