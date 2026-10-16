@@ -6,6 +6,7 @@ import { ChevronDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
 import { useUserAccess } from '@/lib/use-user-access';
 import { isToolAllowed } from '@/lib/user-access';
+import { FeedbackEntry } from './FeedbackEntry';
 
 const activities = [
     { key: 'compass', image: 'compass', title: 'app.intro.action.compass.label', action: 'app.intro.action.compass.open', anchor: null },
@@ -64,6 +65,7 @@ export function IntroScreen({
                 <div className="text-center">
                     <button type="button" onClick={() => onOpenTools?.()} className="inline-flex min-h-11 items-center rounded-md text-sm font-semibold text-indigo-700 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600">{t('app.intro.entry.all')}</button>
                 </div>
+                <FeedbackEntry />
             </section>
 
             <div className="space-y-2 text-center text-sm">
