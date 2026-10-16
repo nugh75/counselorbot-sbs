@@ -12,6 +12,7 @@ import math
 import re
 import threading
 import time
+from collections import deque
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -308,11 +309,25 @@ def _retry_after(exc) -> float | None:
     return value if value is not None and math.isfinite(value) and value >= 0 else None
 
 
+def _no_policy_endpoint(exc) -> bool:
+    """OpenRouter 404 "No endpoints found matching your data policy".
+
+    Reads the error object the SDK parsed from the body; the text itself never
+    leaves this function.
+    """
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict) and isinstance(body.get("error"), dict):
+        body = body["error"]
+    message = body.get("message") if isinstance(body, dict) else None
+    return isinstance(message, str) and "data policy" in message.lower()
+
+
 def classify_error(exc: Exception) -> tuple[str, bool]:
     """Sanitized code and retryability from the SDK/transport error type and HTTP status.
 
-    Only the class name and status are inspected: messages and bodies may echo
-    input text or credentials and never leave this function.
+    Only the class name and status are inspected, plus the parsed error message
+    of a 404 to tell a missing model from the privacy routing: messages and
+    bodies may echo input text or credentials and never leave this function.
     """
     name = type(exc).__name__.lower()
     status = _http_status(exc)
@@ -331,6 +346,8 @@ def classify_error(exc: Exception) -> tuple[str, bool]:
     if status == 402:
         return "embedding_quota_exceeded", False
     if status == 404:
+        if _no_policy_endpoint(exc):
+            return "embedding_privacy_unavailable", False
         return "embedding_model_unavailable", False
     if status in (400, 413, 422):
         return "embedding_request_rejected", False
@@ -369,9 +386,14 @@ def _batches(texts: list[str], provider: str):
     batch: list[str] = []
     size = 0
     for text in texts:
-        length = len(text.encode("utf-8"))
-        if not text.strip() or length > limit:
-            raise EmbeddingError("embedding_input_limit")
+        if not text.strip():
+            raise EmbeddingError("embedding_input_empty")
+        encoded = text.encode("utf-8")
+        if len(encoded) > limit:
+            # The opening is enough to place a passage: truncate on a character boundary.
+            text = encoded[:limit].decode("utf-8", "ignore")
+            encoded = text.encode("utf-8")
+        length = len(encoded)
         if len(batch) >= 32 or size + length > batch_limit:
             yield batch
             batch, size = [], 0
@@ -464,7 +486,13 @@ def embed_texts(
         else:
             client = httpx.Client(timeout=httpx.Timeout(timeout, connect=10.0))
         try:
-            for batch in batches:
+            pending = deque(batches)
+            one_per_request = False
+            while pending:
+                batch = pending.popleft()
+                if one_per_request and len(batch) > 1:
+                    pending.extendleft([text] for text in reversed(batch))
+                    continue
                 if external and budget_locked():
                     raise EmbeddingError("embedding_budget_exceeded")
                 if provider == "ollama":
@@ -504,7 +532,19 @@ def embed_texts(
                         kwargs["dimensions"] = dimensions
                     # OpenRouter is an extra US processor: refuse providers that keep data.
                     kwargs["extra_body"] = {"provider": dict(OPENROUTER_PRIVACY_ROUTING)}
-                    response = _with_retry(lambda: client.embeddings.create(**kwargs), retries)
+                    try:
+                        response = _with_retry(lambda: client.embeddings.create(**kwargs), retries)
+                    except EmbeddingError as exc:
+                        # Zero-retention endpoints may not support batches (Gemini:
+                        # 404 from 2 inputs). Send this batch and the rest one input
+                        # per request; the privacy routing never relaxes.
+                        if len(batch) > 1 and exc.code in (
+                            "embedding_model_unavailable", "embedding_privacy_unavailable"
+                        ):
+                            one_per_request = True
+                            pending.extendleft([text] for text in reversed(batch))
+                            continue
+                        raise
                     raw = None
                 # Account for every successful paid response, even malformed vectors.
                 if external:

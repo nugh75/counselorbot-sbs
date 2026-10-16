@@ -43,12 +43,14 @@ export function errorText(code: string | null | undefined): DocumentRetrievalKey
         case 'embedding_auth_failed': return 'errAuth';
         case 'embedding_quota_exceeded': return 'errQuota';
         case 'embedding_model_unavailable': return 'errModel';
+        case 'embedding_privacy_unavailable': return 'errPrivacyRouting';
         case 'embedding_request_rejected': return 'errRequest';
         case 'embedding_rate_limited': return 'errRateLimited';
         case 'embedding_provider_error': return 'errProvider';
         case 'embedding_network': return 'errNetwork';
         case 'embedding_dimensions_mismatch': case 'embedding_invalid_dimensions': return 'errDimensions';
         case 'embedding_input_limit': return 'errInputLimit';
+        case 'embedding_input_empty': return 'errInputEmpty';
         default: return 'errConfig';
     }
 }

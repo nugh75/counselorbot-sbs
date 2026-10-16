@@ -274,10 +274,20 @@ def test_full_input_validated_before_first_paid_batch(db, monkeypatch):
     _, constructor, _ = fake_client(monkeypatch, "mistral")
     with pytest.raises(AIError) as exc:
         service(db, "mistral").embed_texts(
-            ["public"] * 32 + ["a" * 16001], public_corpus=True
+            ["public"] * 32 + ["  \n"], public_corpus=True
         )
-    assert exc.value.code == "embedding_input_limit"
+    assert exc.value.code == "embedding_input_empty"
     constructor.assert_not_called()
+
+
+@pytest.mark.parametrize("provider", ["mistral", "openrouter"])
+def test_oversized_text_is_truncated_on_a_character_boundary(db, monkeypatch, provider):
+    monkeypatch.setenv(f"API_KEY_{provider.upper()}", "fake")
+    _, _, calls = fake_client(monkeypatch, provider)
+    vectors = service(db, provider).embed_texts(["è" * 5000, "public"], public_corpus=True)
+    sent = calls[0].get("input", calls[0].get("inputs"))
+    assert len(vectors) == 2 and sent[1] == "public"
+    assert sent[0] == "è" * 4000 and len(sent[0].encode("utf-8")) == 8000
 
 
 def test_malformed_paid_response_is_accounted(db, monkeypatch):
@@ -540,6 +550,114 @@ def test_interactive_calls_never_wait_for_retries(db, monkeypatch):
     with pytest.raises(AIError) as exc:
         service(db, "mistral").embed_query("domanda", public_corpus=True)
     assert exc.value.code == "embedding_rate_limited" and len(calls) == 1
+
+
+class _PolicyNotFound(_StatusError):
+    """OpenRouter 404 when no endpoint meets the zero-retention routing."""
+
+    def __init__(self, message="No endpoints found matching your data policy (Zero data retention)"):
+        super().__init__(404)
+        self.body = {"message": message, "code": 404, "metadata": {"routing_funnel": ["sk-secret input text"]}}
+
+
+def _batchless_zdr_client(monkeypatch, single_error=None):
+    """Gemini via OpenRouter with ZDR: 1 input works, 2 or more get a 404."""
+    client, _, calls = fake_client(monkeypatch, "openrouter")
+    succeed = client.embeddings.create.side_effect
+
+    def create(**kwargs):
+        if len(kwargs["input"]) > 1:
+            calls.append(kwargs)
+            raise _PolicyNotFound()
+        if single_error is not None:
+            calls.append(kwargs)
+            raise single_error
+        return succeed(**kwargs)
+
+    client.embeddings.create.side_effect = create
+    return calls
+
+
+def test_openrouter_zdr_without_batches_falls_back_to_one_input_per_request(db, monkeypatch):
+    monkeypatch.setenv("API_KEY_OPENROUTER", "fake")
+    sleeps = []
+    monkeypatch.setattr(embeddings, "_sleep", sleeps.append)
+    calls = _batchless_zdr_client(monkeypatch)
+    done = []
+    texts = [f"public {i}" for i in range(34)]
+    vectors = service(db, "openrouter").embed_texts(texts, public_corpus=True, retries=3, progress=done.append)
+    assert len(vectors) == 34 and done == list(range(1, 35))
+    # One refused batch, then one input per request for the rest of the build.
+    sizes = [len(call["input"]) for call in calls]
+    assert sizes == [32] + [1] * 34 and [c["input"][0] for c in calls[1:]] == texts
+    assert all(c["extra_body"] == {"provider": {"data_collection": "deny", "zdr": True}} for c in calls)
+    assert sleeps == [] and db.query(models.Log).count() == 34
+
+
+def test_openrouter_retries_stay_per_request_after_the_fallback(db, monkeypatch):
+    monkeypatch.setenv("API_KEY_OPENROUTER", "fake")
+    sleeps = []
+    monkeypatch.setattr(embeddings, "_sleep", sleeps.append)
+    calls = _batchless_zdr_client(monkeypatch)
+    client = embeddings.OpenAI.return_value
+    fallback = client.embeddings.create.side_effect
+    limited = [_StatusError(429, retry_after=3)]
+
+    def create(**kwargs):
+        if len(kwargs["input"]) == 1 and limited:
+            calls.append(kwargs)
+            raise limited.pop()
+        return fallback(**kwargs)
+
+    client.embeddings.create.side_effect = create
+    vectors = service(db, "openrouter").embed_texts(["a", "b"], public_corpus=True, retries=2)
+    assert len(vectors) == 2 and sleeps == [3.0]
+    assert [c["input"] for c in calls] == [["a", "b"], ["a"], ["a"], ["b"]]
+
+
+@pytest.mark.parametrize("single_error,code", [
+    (_PolicyNotFound(), "embedding_privacy_unavailable"),
+    (_StatusError(404), "embedding_model_unavailable"),
+])
+def test_openrouter_single_input_404_reports_policy_or_missing_model(db, monkeypatch, single_error, code):
+    monkeypatch.setenv("API_KEY_OPENROUTER", "fake")
+    calls = _batchless_zdr_client(monkeypatch, single_error=single_error)
+    with pytest.raises(AIError) as exc:
+        service(db, "openrouter").embed_texts(["public a", "public b"], public_corpus=True, retries=2)
+    assert exc.value.code == code
+    assert "secret" not in str(exc.value) and "public" not in str(exc.value)
+    assert [len(c["input"]) for c in calls] == [2, 1]
+    assert db.query(models.Log).count() == 0
+
+
+def test_mistral_404_never_falls_back_to_single_inputs(db, monkeypatch):
+    monkeypatch.setenv("API_KEY_MISTRAL", "fake")
+    calls = _failing_client(monkeypatch, "mistral", [_PolicyNotFound()])
+    with pytest.raises(AIError) as exc:
+        service(db, "mistral").embed_texts(["public a", "public b"], public_corpus=True, retries=2)
+    assert exc.value.code == "embedding_privacy_unavailable" and len(calls) == 1
+
+
+@pytest.mark.parametrize("model", ["mistralai/mistral-embed-2312", "google/gemini-embedding-2"])
+def test_openrouter_batches_stay_at_32_when_the_provider_accepts_them(db, monkeypatch, model):
+    monkeypatch.setenv("API_KEY_OPENROUTER", "fake")
+    _, _, calls = fake_client(monkeypatch, "openrouter")
+    service(db, "openrouter", embedding_model=model).embed_texts(
+        [f"public {i}" for i in range(40)], public_corpus=True)
+    assert [len(c["input"]) for c in calls] == [32, 8]
+
+
+def test_real_openai_sdk_policy_404_is_read_from_the_parsed_error():
+    from openai import NotFoundError
+
+    request = httpx.Request("POST", "https://openrouter.ai/api/v1/embeddings")
+    response = httpx.Response(404, request=request)
+    policy = NotFoundError("sk-leak", response=response, body={
+        "message": "No endpoints found matching your data policy (Zero data retention).", "code": 404})
+    missing = NotFoundError("sk-leak", response=response, body={"message": "Model not found", "code": 404})
+    assert embeddings.classify_error(policy) == ("embedding_privacy_unavailable", False)
+    assert embeddings.classify_error(missing) == ("embedding_model_unavailable", False)
+    assert embeddings.classify_error(_PolicyNotFound()) == ("embedding_privacy_unavailable", False)
 
 
 @pytest.mark.parametrize("error,code", [

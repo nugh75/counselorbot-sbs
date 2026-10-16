@@ -41,10 +41,20 @@ and [OpenRouter embeddings API](https://openrouter.ai/docs/api/api-reference/emb
 closed after each operation. Batches contain at most 32 texts and, for external
 providers, at most 16,000 UTF-8 bytes for Mistral or 32,000 for OpenRouter;
 each external text is limited to 8,000 bytes. These conservative limits avoid downloading
-a tokenizer. Oversized/empty inputs fail before the first paid batch; custom
-models with smaller context limits may still reject a batch. No automatic
-truncation. OpenRouter retries are disabled; Mistral uses the SDK's explicit
+a tokenizer. A longer text is truncated on a character boundary (its opening
+places the passage); an empty or whitespace-only input fails before the first
+paid batch with `embedding_input_empty`. Index builds never send blank chunks:
+they stay in BM25 with a zero vector row, which keeps the matrix aligned and is
+never ranked by meaning. Custom models with smaller context limits may still
+reject a batch. OpenRouter retries are disabled; Mistral uses the SDK's explicit
 no-retry policy. Ollama keeps its existing batches of 32 texts.
+
+Zero-retention OpenRouter endpoints may not support batches:
+`google/gemini-embedding-2` with the routing below accepts one input but
+answers 404 for two or more. On an OpenRouter 404 for a batch, the call sends
+that batch and the rest one input per request (same retries, progress after
+each request, same routing). It is slower but costs the same; Mistral direct and
+`mistralai/mistral-embed-2312` via OpenRouter accept batches of 32 and keep them.
 
 ## Privacy policy (block 4)
 
@@ -81,9 +91,10 @@ every worker applies a change immediately.
 
 OpenRouter requests carry `provider: {"data_collection": "deny", "zdr": true}`
 ([provider routing](https://openrouter.ai/docs/api/api-reference/embeddings/create-embeddings)).
-If no zero-retention endpoint serves the chosen model, OpenRouter returns an
-error and retrieval falls back to BM25: this has not been tested against the
-live API.
+If no zero-retention endpoint serves the chosen model, OpenRouter returns a 404
+"No endpoints found matching your data policy": even a single input fails with
+`embedding_privacy_unavailable` and retrieval falls back to BM25. The routing
+is never relaxed to make a model work.
 
 Processors: Mistral direct is established in the EU. OpenRouter (US) is an
 additional processor that forwards to the model provider (Google for the default
@@ -167,10 +178,11 @@ on recorded spending, not an atomic reservation across concurrent requests.
 Missing key (`embedding_missing_key`), budget (`embedding_budget_exceeded`),
 unsupported provider, missing price, invalid input/response and timeout are
 classified `AIError`s with sanitized messages. Provider errors are classified
-from the SDK exception type and HTTP status only, never from bodies:
+from the SDK exception type and HTTP status, never returning bodies:
 `embedding_auth_failed` (401/403), `embedding_quota_exceeded` (402),
-`embedding_model_unavailable` (404, including OpenRouter finding no endpoint for
-the zero-retention routing), `embedding_request_rejected` (400/413/422),
+`embedding_model_unavailable` (404), `embedding_privacy_unavailable` (404 whose
+parsed SDK error names the data policy: no endpoint meets the zero-retention
+routing; the message itself is never kept), `embedding_request_rejected` (400/413/422),
 `embedding_rate_limited` (429), `embedding_provider_error` (5xx),
 `embedding_network`, `embedding_timeout` and `embedding_dimensions_mismatch`
 (a requested size the provider ignored). Index builds retry a batch up to 5 times
