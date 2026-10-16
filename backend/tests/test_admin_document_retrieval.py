@@ -3,6 +3,9 @@
 Fake SDK clients and a fake collection only: real HTTP transport fails the test.
 """
 
+import json
+import threading
+
 import httpx
 import pytest
 from fastapi import FastAPI
@@ -11,7 +14,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from backend import auth, database, embedding_service as embeddings, models, pii_ner
+from backend import auth, database, embedding_service as embeddings, models, pii_ner, rag_index as rag, rag_reindex_job
 from backend.ai_service import AIService
 from backend.api_secrets import API_KEY_ENV_MAP
 from backend.routes import document_retrieval
@@ -48,6 +51,8 @@ def _service(db):
 
 @pytest.fixture
 def collection(monkeypatch, tmp_path):
+    # Job state and indexes live in the test directory only.
+    monkeypatch.setattr(rag, "INDEX_DIR", str(tmp_path))
     index = _index(tmp_path, _Corpus())
     index.public_corpus = True
     item = {"id": "demo", "label": "Demo", "builtin": True, "api_publishable": True, "mode": "plain"}
@@ -197,3 +202,163 @@ def test_configured_lexical_mode_never_calls_the_provider(client, db, monkeypatc
     _put(client, provider="mistral", mode="lexical")
     assert collection.search(_service(db), "Testo 1")
     constructor.assert_not_called()
+
+
+class _Texts(_Corpus):
+    def __init__(self, texts):
+        super().__init__(len(texts))
+        self.texts = texts
+
+    def chunks(self):
+        return [{"source": f"doc{i}.md", "title": f"Doc {i}", "text": t} for i, t in enumerate(self.texts)]
+
+    def signature(self):
+        return {f"doc{i}.md": str(hash(t)) for i, t in enumerate(self.texts)}
+
+
+@pytest.fixture
+def collections(monkeypatch, tmp_path, collection):
+    """Three public collections; the middle one can be made to fail on its own."""
+    corpora = {"alpha": _Texts([f"Alpha {i}" for i in range(40)]),
+               "broken": _Texts(["Broken 0"]),
+               "gamma": _Texts(["Gamma 0", "Gamma 1"])}
+    indexes = {}
+    for cid, corpus in corpora.items():
+        indexes[cid] = _index(tmp_path, corpus, cid)
+        indexes[cid].public_corpus = True
+    items = [{"id": cid, "label": cid.title(), "builtin": True, "api_publishable": True, "mode": "plain"}
+             for cid in corpora]
+    for module in (document_retrieval, rag):
+        monkeypatch.setattr(module, "get_index", lambda c: indexes[c])
+    monkeypatch.setattr(document_retrieval, "list_collections", lambda: [dict(i) for i in items])
+    monkeypatch.setattr(document_retrieval, "collection_exists", lambda c: c in indexes)
+    yield corpora, indexes
+    assert rag_reindex_job.wait(5)
+
+
+def _run_all(client):
+    response = client.post("/admin/document-retrieval/reindex-all")
+    assert response.status_code == 200
+    assert rag_reindex_job.wait(5)
+    return response.json(), client.get("/admin/document-retrieval/reindex-all").json()
+
+
+def test_estimate_all_sums_collections_without_provider_calls(client, monkeypatch, collections):
+    monkeypatch.setenv("API_KEY_MISTRAL", SECRET)
+    _, _, calls = fake_client(monkeypatch, "mistral")
+    _put(client, provider="mistral")
+    plan = client.get("/admin/document-retrieval/estimate").json()
+    assert plan["input_count"] == 43 and plan["price_known"] is True and plan["estimated_cost_usd"] > 0
+    assert [c["id"] for c in plan["collections"]] == ["alpha", "broken", "gamma"]
+    assert calls == []
+
+
+def test_reindex_all_runs_in_sequence_with_batch_progress_and_retries(client, monkeypatch, collections):
+    monkeypatch.setenv("API_KEY_MISTRAL", SECRET)
+    client_mock, _, calls = fake_client(monkeypatch, "mistral")
+    succeed = client_mock.embeddings.create.side_effect
+    limited = [True]
+
+    def create(**kwargs):
+        if limited and kwargs["inputs"][0].startswith("Alpha 32"):
+            limited.clear()
+            calls.append(kwargs)
+            raise type("RateLimitError", (Exception,), {"status_code": 429, "headers": {"retry-after": "0"}})()
+        return succeed(**kwargs)
+
+    client_mock.embeddings.create.side_effect = create
+    sleeps = []
+    monkeypatch.setattr(embeddings, "_sleep", sleeps.append)
+    seen = []
+    write = rag_reindex_job._write
+    monkeypatch.setattr(rag_reindex_job, "_write", lambda state: (
+        seen.append((state["current"], state["collections"][0]["done"], state["collections"][0]["total"])),
+        write(state)))
+    _put(client, provider="mistral")
+    started, job = _run_all(client)
+    assert started["started"] is True and started["job"]["status"] == "running"
+    assert job["status"] == "done" and job["finished_at"] >= job["started_at"]
+    assert [(c["id"], c["status"], c["done"], c["total"], c["error"]) for c in job["collections"]] == [
+        ("alpha", "done", 40, 40, None), ("broken", "done", 1, 1, None), ("gamma", "done", 2, 2, None)]
+    # Progress after each batch of the first collection, then the next ones in order.
+    assert ("alpha", 32, 40) in seen and seen.index(("alpha", 32, 40)) < seen.index(("alpha", 40, 40))
+    assert sleeps == [0.0] and len(calls) == 5  # 2 alpha batches + 1 retry + broken + gamma
+    state = client.get("/admin/document-retrieval").json()
+    assert all(c["vectors_match"] and not c["building"] for c in state["collections"][1:])
+    assert state["reindex_job"]["status"] == "done" and SECRET not in json.dumps(state)
+
+
+def test_one_failing_collection_does_not_stop_or_suspend_the_others(client, db, monkeypatch, collections):
+    corpora, indexes = collections
+    monkeypatch.setenv("API_KEY_MISTRAL", SECRET)
+    fake_client(monkeypatch, "mistral")
+    _put(client, provider="mistral")
+    _run_all(client)
+    previous = indexes["broken"].matrix
+    # The new corpus has a passage over the per-input limit: only this collection fails.
+    corpora["broken"].texts = ["Broken 0", "x" * 9000]
+    corpora["alpha"].texts = corpora["alpha"].texts + ["Alpha extra"]
+    _, job = _run_all(client)
+    assert job["status"] == "done"
+    assert [(c["id"], c["status"], c["error"]) for c in job["collections"]] == [
+        ("alpha", "done", None), ("broken", "error", "embedding_input_limit"), ("gamma", "done", None)]
+    # Previous vectors still serve the failed collection; semantic search is not suspended.
+    assert indexes["broken"].matrix is previous and len(indexes["broken"].chunks) == 1
+    state = client.get("/admin/document-retrieval").json()
+    assert state["semantic_suspended_seconds"] == 0
+    assert {c["id"]: c["last_build_error"] for c in state["collections"]}["broken"] == "embedding_input_limit"
+    ai = _service(db)
+    ai.embed_query = lambda text, **kw: [1.0] * 1024
+    assert indexes["gamma"].search(ai, "Gamma")[0]["score"] > 0
+
+
+def test_reindex_all_is_idempotent_while_running_in_any_worker(client, monkeypatch, collections):
+    monkeypatch.setenv("API_KEY_MISTRAL", SECRET)
+    client_mock, _, calls = fake_client(monkeypatch, "mistral")
+    succeed = client_mock.embeddings.create.side_effect
+    entered, release = threading.Event(), threading.Event()
+
+    def blocking(**kwargs):
+        entered.set()
+        assert release.wait(5)
+        return succeed(**kwargs)
+
+    client_mock.embeddings.create.side_effect = blocking
+    _put(client, provider="mistral")
+    first = client.post("/admin/document-retrieval/reindex-all").json()
+    try:
+        assert entered.wait(5)
+        second = client.post("/admin/document-retrieval/reindex-all").json()
+        assert second["started"] is False and second["job"]["started_at"] == first["job"]["started_at"]
+        running = client.get("/admin/document-retrieval").json()["reindex_job"]
+        assert running["status"] == "running" and running["current"] == "alpha"
+        assert running["collections"][0]["phase"] == "embedding"
+        assert [c["status"] for c in running["collections"]] == ["running", "pending", "pending"]
+    finally:
+        release.set()
+    assert rag_reindex_job.wait(5)
+    assert client.get("/admin/document-retrieval/reindex-all").json()["status"] == "done"
+    assert len(calls) == 4  # the second request started nothing
+
+
+def test_job_left_running_by_a_stopped_worker_is_reported_interrupted(client, tmp_path, collection):
+    state_path, _ = rag_reindex_job._paths()
+    with open(state_path, "w") as f:
+        json.dump({"status": "running", "collections": [{"id": "demo", "status": "running"}]}, f)
+    job = client.get("/admin/document-retrieval/reindex-all").json()
+    assert job["status"] == "interrupted" and job["collections"][0]["status"] == "interrupted"
+    assert client.get("/admin/document-retrieval").json()["reindex_job"]["status"] == "interrupted"
+
+
+def test_unusual_dimensions_are_saved_with_a_warning(client):
+    assert _put(client, provider="openrouter", dimensions="786").json()["dimensions_warning"] == "embedding_dimensions_unusual"
+    assert _put(client, provider="openrouter", dimensions="1536").json()["dimensions_warning"] is None
+    assert _put(client, provider="mistral").json()["dimensions_warning"] is None
+
+
+def test_reindex_all_endpoints_are_admin_and_browser_only(client):
+    assert TestClient(client.app).post("/admin/document-retrieval/reindex-all").status_code == 403
+    client.actor["identity"] = dict(client.actor["identity"], is_admin=False, is_researcher=True)
+    for path in ("/admin/document-retrieval/reindex-all", "/admin/document-retrieval/estimate"):
+        assert client.get(path).status_code == 403
+    assert client.post("/admin/document-retrieval/reindex-all").status_code == 403
