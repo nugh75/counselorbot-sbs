@@ -86,6 +86,53 @@ def test_paid_fallback_cannot_bypass_monthly_lock(ai, monkeypatch, auto_model):
     assert ai._targets("openrouter", "openrouter/free")[0] == ("openrouter", "openrouter/free")
 
 
+def test_budget_lock_uses_a_configured_non_ollama_fallback_target(ai, monkeypatch):
+    """A budget superato il ripiego e' quello configurato, non Ollama."""
+    ai.config["ai_fallback_targets"] = json.dumps([{"provider": "llamacpp", "model": "default"}])
+    monkeypatch.setattr(ai, "_budget_is_locked", lambda: True)
+    assert ai._apply_budget_lock("openrouter", "deepseek/deepseek-v4-flash") == ("llamacpp", "default")
+    # Un provider gia' gratuito resta invariato.
+    assert ai._apply_budget_lock("llamacpp", "default") == ("llamacpp", "default")
+
+
+def test_budget_fallback_prefers_an_available_free_target(ai, monkeypatch):
+    ai.config["ai_fallback_targets"] = json.dumps([
+        {"provider": "openai", "model": "gpt-4o"},
+        {"provider": "openrouter", "model": "openrouter/free"},
+        {"provider": "llamacpp", "model": "default"},
+    ])
+    ai.config["api_key_openrouter"] = "test-key"
+    monkeypatch.setattr(ai, "_budget_is_locked", lambda: True)
+    assert ai._budget_fallback_target() == ("openrouter", "openrouter/free")
+
+
+def test_budget_lock_without_a_usable_fallback_raises_a_clear_error(ai, monkeypatch):
+    """Nessun ripiego usabile -> errore localizzabile, mai una chiamata a Ollama."""
+    monkeypatch.setattr(ai, "_budget_is_locked", lambda: True)
+    ai.config["ai_fallback_targets"] = "[]"
+    with pytest.raises(AIError, match="nessun modello di ripiego configurato") as none_configured:
+        ai._targets("openrouter", "paid-model")
+    assert none_configured.value.code == "chat.errors.budget"
+    # Ripiego su un provider a pagamento senza chiave: configurato ma non usabile.
+    ai.config["ai_fallback_targets"] = json.dumps([{"provider": "openai", "model": "gpt-4o"}])
+    with pytest.raises(AIError, match="non sono disponibili") as unavailable:
+        ai._apply_budget_lock("anthropic", "claude")
+    assert unavailable.value.code == "chat.errors.budget"
+    assert "openai" in str(unavailable.value)
+
+
+def test_budget_lock_failure_never_dispatches_a_provider(ai, monkeypatch):
+    """Senza ripieghi l'invio si ferma prima di qualsiasi chiamata di rete."""
+    monkeypatch.setattr(ai, "_budget_is_locked", lambda: True)
+    ai.config["ai_fallback_targets"] = "[]"
+    dispatched = []
+    ai._providers["openrouter"].update(call=lambda *a, **k: dispatched.append(a) or "x")
+    with pytest.raises(AIError):
+        ai.get_response("question", "system", "generic", provider="openrouter", model="paid-model")
+    assert dispatched == []
+    assert ai.last_attempts == []
+
+
 def test_omniroute_primary_uses_its_own_model_and_endpoint(ai, monkeypatch):
     ai.config["omniroute_url"] = "http://private-gateway:20128/v1"
     assert ai._selected_target("omniroute", None) == ("omniroute", "auto/best-chat")
