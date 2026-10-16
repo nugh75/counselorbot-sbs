@@ -242,7 +242,7 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
   e sul Taccuino del docente. Stesso percorso, con le fasi rivolte ai destinatari: *Cosa vuoi che
   imparino*, *Rendiamo l'obiettivo preciso*, *Come ci arriveranno* (attività allineate all'obiettivo),
   *Come verificherai che ci sono riusciti* (prova e criterio), *L'obiettivo finale*, in cui il soggetto
-  sono gli studenti; l’obiettivo progettato si collega al Catalogo obiettivi e ai Percorsi di classe
+  sono gli studenti; l’obiettivo progettato si collega al Catalogo obiettivi e ai Piani operativi
   per gli studenti.
   La barra «Classi di questa conversazione» elenca solo le classi proprie o condivise con chi scrive,
   anche per un amministratore: sono le uniche che possono entrare nel contesto. Le classi scelte
@@ -504,7 +504,7 @@ I dati account restano nel menu della testata, senza un riquadro nell’ingresso
 | Risultati e conversazioni | `/profilo/compilazioni` | Consultare i risultati e le conversazioni disponibili nel proprio account; scrivere «La mia lettura» di ogni risultato (punti di forza, aree da far crescere, cosa mi dice di me) e renderne un’area un obiettivo. |
 | Analisi combinata dei profili | `/profilo/analisi-combinata` | Generare una lettura integrata di almeno due strumenti tra QSA, QSAr e ZTPI. Si apre dal gruppo Conoscermi e riflettere e non compare più sotto i singoli risultati. |
 | Assegnazioni | `/profilo/assegnazioni` | Lavorare sulle proposte del docente, condividere una restituzione e leggere il riscontro. Lista breve con filtri (gruppo, tipo, finalità richiesta/proposta, stato) e un solo dettaglio aperto alla volta; pianificazione con spiegazione del lavoro personale; anteprima di restituzione con destinatario esplicito e copia fissa. Se l’attività indica degli strumenti, nel dettaglio ognuno si apre con «Apri qui» in una finestra dentro l’attività (Esc o «Chiudi e torna all’attività» riportano al punto di partenza) oppure con «Apri a pagina intera»; uno strumento disattivato dopo l’invio per la classe o il gruppo resta elencato come non disponibile. La revoca conferma in linea sulla scheda. |
-| Percorsi di classe | `/profilo/percorsi` | Seguire i percorsi di apprendimento strutturati pubblicati dai docenti per la propria classe; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. Un passo incontro mostra data, ora, luogo o link; dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo) e il passo risulta fatto: non c’è registro del docente. Il percorso prioritario è inoltre visualizzato in cima alla panoramica dell'Area studente (`/profilo`) come hero card, con il catalogo strumenti sotto collassato. |
+| Piani operativi | `/profilo/piani-operativi` | Seguire i piani operativi (fino a ottobre 2026 «Percorsi di classe»: sequenze ordinate di attività) pubblicati dai docenti per la propria classe; il vecchio indirizzo /profilo/percorsi (anche con i sottopercorsi) reindirizza qui in modo permanente; un passo di somministrazione si apre in `/profilo/piani-operativi/{pathId}/{stepId}` e il suo approfondimento guidato in `/profilo/piani-operativi/{pathId}/{stepId}/approfondimento`; barra di avanzamento, card e passo corrente in petrolio come il resto del sito (l’ocra resta solo sul segno ▶ del passo corrente e sul pulsante «Inizia»), completamento manuale per gli strumenti personali e blocco sequenziale in modalità vincolante. Un passo incontro mostra data, ora, luogo o link; dall’inizio dell’incontro lo studente preme «Ho partecipato» (e può annullarlo) e il passo risulta fatto: non c’è registro del docente. Il piano operativo prioritario è inoltre visualizzato in cima alla panoramica dell'Area studente (`/profilo`) come hero card, con il catalogo strumenti sotto collassato. |
 | Gruppi e classi | `/profilo/classi` | Consultare le proprie iscrizioni e aderire con un codice di invito; collegamenti contestuali alle assegnazioni del gruppo; messaggi generali del docente leggibili direttamente nella pagina; uscire da un gruppo richiede una conferma che nomina il gruppo e le conseguenze. |
 | Orientamento | `/profilo/orientamento` | Consultare riferimenti e opportunità resi disponibili dall’istituzione. |
 | Telegram | `/profilo/telegram` | Collegare l’account per le funzioni disponibili nel bot, con guida a tre passi (Apri il bot, Conferma, Verifica collegamento), scadenza del codice visibile e verifica automatica al ritorno nella scheda. |
@@ -698,14 +698,14 @@ e sulla sessione: nessun nuovo permesso o allargamento della visibilità.
 Nel menu della header la voce verso l'area è «Area docente» con l'icona a berretto
 da laurea, uguale per docenti, ricercatori e amministrazione.
 
-La Guida interfaccia (`/guide`) ha una sezione «Percorsi di classe e incontri» sia per il
-docente (con lo screenshot dell’editor del percorso: passi, chat guidata e incontro di
-seguito) sia per lo studente (con lo screenshot della pagina Percorsi di classe), nelle sei
+La Guida interfaccia (`/guide`) ha una sezione «Piani operativi e incontri» sia per il
+docente (con lo screenshot dell’editor del piano operativo: passi, chat guidata e incontro di
+seguito) sia per lo studente (con lo screenshot della pagina Piani operativi), nelle sei
 lingue; gli screenshot si rigenerano con `GUIDE_SCREENS=class-paths` in
 `frontend/scripts/capture-guide.mjs`.
 
 `/docente` è una panoramica illustrata organizzata in tre pilastri distinti:
-1. **Didattica e Classi**: la hero di progettazione didattica attiva con AI (`DidacticDesignSection`, con badge e CTA per `OBIETTIVO_DOCENZA`, link al Catalogo obiettivi e ai Percorsi), il cruscotto operativo «Le mie classi» (`MyClassesSection`, card attive con codice invito, partecipanti e accesso rapido all'Hub di classe) e il gruppo illustrato **Classe e assegnazioni** (`/docente/istituti`, `/docente/classi`, `/docente/compilazioni`, `/docente/percorsi`, `/docente/incontri`, `/docente/assegnazioni`).
+1. **Didattica e Classi**: la hero di progettazione didattica attiva con AI (`DidacticDesignSection`, con badge e CTA per `OBIETTIVO_DOCENZA`, link al Catalogo obiettivi e ai Piani operativi), il cruscotto operativo «Le mie classi» (`MyClassesSection`, card attive con codice invito, partecipanti e accesso rapido all'Hub di classe) e il gruppo illustrato **Classe e assegnazioni** (`/docente/istituti`, `/docente/classi`, `/docente/compilazioni`, `/docente/piani-operativi`, `/docente/incontri`, `/docente/assegnazioni`).
 2. **Palestra di simulazione e prova**: sezione dedicata in evidenza con badge sandbox protetto coerente con la palette verde del brand (`PracticeGymSection` con accenti emerald/teal e pulsante CTA per `/docente/taccuini-prova`), dove creare e gestire studenti fittizi per testare questionari, prompt e dinamiche di colloquio prima delle sessioni reali, con la garanzia esplicita di nessun impatto sulle classi reali né sui dati reali degli studenti.
 3. **Profilo professionale e risorse**: lo spazio professionale del docente, chiaramente separato dalla palestra di prova, contenente il **Taccuino del docente** (`/docente/taccuino`, senza form nella home, per definire ruolo, pratica didattica e interessi di crescita), seguito dalla sezione accorpata **Libreria e risorse didattiche** (`TeacherResourcesSection`, con accesso all'hub unificato `/docente/risorse` e collegamenti diretti a `/docente/strategie` e `/docente/materiali`), dal gruppo **Somministrazioni e ricerca** (`/docente/orientamento`, `/docente/somministrazioni`) e dalle connessioni AI personali (`PersonalAIConnections`). Il Catalogo obiettivi (`/docente/catalogo-obiettivi`) trova il suo posizionamento naturale all'interno del flusso di progettazione didattica nel primo pilastro. Ogni voce apre una pagina dedicata con il ritorno all’Area docenti: `/docente/istituti` (primo elenco del gruppo **Classe e assegnazioni**: creare un istituto, unirsi a uno esistente, impostarne codice e
 assegnazioni**: creare un istituto, unirsi a uno esistente, impostarne codice e
@@ -713,12 +713,13 @@ password per le somministrazioni e vederne le classi; visibile a docenti e
 amministratori, ciascuno limitato agli istituti di cui è membro, e chi crea un
 istituto ne diventa membro), `/docente/compilazioni` (Compilazioni degli studenti con
 immagine `compilazioni.png`: selezione della classe, elenco cronologico dei risultati,
-lettura della conversazione e link rapido alla matrice dei partecipanti), `/docente/percorsi` (Percorsi di classe con una propria
-immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano e seguono i suoi percorsi
-con lo stesso editor della scheda Percorsi della classe; nell’editor (della classe e dei
+lettura della conversazione e link rapido alla matrice dei partecipanti), `/docente/piani-operativi` (Piani operativi, fino a ottobre 2026 «Percorsi di classe»: il vecchio
+indirizzo /docente/percorsi reindirizza qui in modo permanente; con una propria
+immagine, `percorsi-classe.png`: si sceglie la classe e si preparano, pubblicano e seguono i suoi piani operativi
+con lo stesso editor della scheda Piani operativi della classe; nell’editor (della classe e dei
 modelli) un solo **+ Aggiungi passo** chiede «Cosa fa lo studente in questo passo?» e
 mostra solo il modulo del tipo scelto: compila un questionario (sempre tramite
-somministrazione), fa una chat guidata (sui risultati di un questionario del percorso, oppure un
+somministrazione), fa una chat guidata (sui risultati di un questionario del piano operativo, oppure un
 percorso guidato per riflettere su un’esperienza o una scelta: Savickas, Evento di
 studio, Evento professionale, Obiettivo di studio, Idea; quelli integrati senza voce nel
 catalogo sono sempre disponibili, anche per gli studenti delle classi, e il passo si
@@ -727,7 +728,7 @@ nessuno, un debriefing con la classe o il gruppo oppure un colloquio individuale
 tra gli incontri di quel tipo o creato al momento, che viene inserito subito dopo la
 chat come passo «Seguito della chat guidata #n»; nell’avanzamento il docente vede
 accanto all’incontro chi ha completato la chat; se toglie la chat o l’incontro, l’altro
-passo resta valido; salvare come modello un percorso con incontri non è ancora possibile), svolge un’attività (assegnazione), usa uno strumento (solo
+passo resta valido; salvare come modello un piano operativo con incontri non è ancora possibile), svolge un’attività (assegnazione), usa uno strumento (solo
 strumenti personali: Tavolo, obiettivi, azioni, linea del tempo, Portfolio, flashcard,
 carte, confronto, Bussola, assistente), partecipa a un incontro (incontri della classe o
 del gruppo: argomento, data e ora, durata, in presenza con luogo oppure online con link;
@@ -742,7 +743,7 @@ vede chi ha preso le altre e, se il docente annulla la sua, vede l’avviso e ne
 un’altra; due prenotazioni contemporanee della stessa fascia non possono riuscire entrambe;
 un incontro può valere **anche per altre classi o gruppi** gestiti dal docente («Anche per
 altre classi o gruppi» nel modulo): gli studenti di tutte quelle classi lo vedono, con il
-nome della propria classe, lo possono avere come passo del proprio percorso e
+nome della propria classe, lo possono avere come passo del proprio piano operativo e
 condividono le stesse fasce; il docente vede le classi coinvolte e le presenze per
 classe; lo modifica chi gestisce la classe in cui è stato creato
 e un incontro annullato rende il passo non disponibile; nei modelli l’incontro è ancora
@@ -752,7 +753,7 @@ il passo», da aprire quando servono, e «Pubblica» è un pulsante petrolio com
 questionari inseriti in passato come strumento continuano a funzionare e sono segnalati
 come «Inserito come strumento: non raccoglie dati di somministrazione»; `?class={id}` la preseleziona
 e i link dalle Somministrazioni portano qui; sopra, **I miei modelli** e **Preset
-condivisi**: un modello è un percorso generale con passi astratti — strumento,
+condivisi**: un modello è un piano operativo generale con passi astratti — strumento,
 questionario con strumento e lingua, chat sui risultati di un questionario precedente,
 attività con un obiettivo del catalogo comune, discussione con titolo e testo — che
 si crea, modifica, elimina, condivide come preset per tutti i docenti senza revisione
@@ -763,31 +764,31 @@ in un’unica operazione: se manca qualcosa, per esempio l’istituto della clas
 questionario, non si crea nulla e il blocco elenca i passi da sistemare; gli studenti
 non vedono nulla prima della pubblicazione e le modifiche successive al modello non
 toccano le copie già applicate finché il docente non sceglie «Aggiorna da modello»
-nell’editor del percorso: prima elenca le differenze (passi nuovi, modificati o tolti
+nell’editor del piano operativo: prima elenca le differenze (passi nuovi, modificati o tolti
 dal modello), poi aggiorna solo i passi che nessuno studente ha iniziato e che non hanno
 ancora creato un oggetto nella classe, mantiene l’ordine dei passi esistenti e, in un
-percorso pubblicato, crea subito i nuovi passi, senza cambiare nulla se uno è bloccato;
-«Salva come modello» nell’editor di un percorso ne fa
+piano operativo pubblicato, crea subito i nuovi passi, senza cambiare nulla se uno è bloccato;
+«Salva come modello» nell’editor di un piano operativo ne fa
 un nuovo modello privato, rifiutando obiettivi di una sola classe e discussioni non
 nate da un modello, perché il testo del forum non esce mai dal forum), `/docente/classi` (gruppi e classi gestiti, contesto classe, blocco «Assegnazioni
 della classe» con l’elenco in sola lettura delle assegnazioni del gruppo e il
 link alla pagina dedicata con filtro già impostato),
 `/docente/incontri` (Incontri, con la propria immagine `incontri.png`, nel gruppo **Classe e
-assegnazioni** dopo Percorsi di classe: si sceglie la classe o il gruppo e si creano,
+assegnazioni** dopo Piani operativi: si sceglie la classe o il gruppo e si creano,
 spostano e annullano gli incontri di classe o di gruppo e i colloqui individuali a fasce,
-con prenotazioni, presenze e altre classi coinvolte, senza aprire un percorso;
-`?class={id}` la preseleziona; aggiungere un incontro a un percorso resta nell’editor del
-percorso), `/docente/assegnazioni` (pagina di sola assegnazione: da «Nuova assegnazione» si
+con prenotazioni, presenze e altre classi coinvolte, senza aprire un piano operativo;
+`?class={id}` la preseleziona; aggiungere un incontro a un piano operativo resta nell’editor del
+piano operativo), `/docente/assegnazioni` (pagina di sola assegnazione: da «Nuova assegnazione» si
 sceglie un obiettivo pubblicato del catalogo — obbligatorio — per il gruppo o la
 classe, si possono allegare facoltativamente strategie e materiali e si indicano
 istruzioni, finalità, scadenza e richiesta di restituzione, oltre agli **strumenti da
 usare nell’attività** — uno o più strumenti personali abilitati per la classe o il
 gruppo, che lo studente apre in una finestra dentro l’attività o a pagina intera; lo
-stesso campo c’è nell’attività di un modello di percorso, e alla pubblicazione uno
+stesso campo c’è nell’attività di un modello di piano operativo, e alla pubblicazione uno
 strumento nel frattempo disattivato blocca il passo; l’elenco mostra invii,
 destinatari e restituzioni, con revoca a conferma in linea sulla scheda, «Elimina»
 finché nessuno studente l’ha iniziata (nessuna pianificazione né consegna) e nessun passo
-di percorso la usa — altrimenti la scheda dice perché e resta la revoca — e gli
+di piano operativo la usa — altrimenti la scheda dice perché e resta la revoca — e gli
 allegati visibili nel dettaglio), `/docente/catalogo-obiettivi` (solo creazione e
 gestione del catalogo: le voci pubblicate non si assegnano da qui), `/docente/risorse` (hub della Libreria e risorse didattiche con consultazione e gestione a schede tra Strategie e Materiali), `/docente/strategie`,
 `/docente/materiali`, `/docente/orientamento` (solo docenti) e
@@ -796,7 +797,7 @@ della panoramica. Nella home dell’Area docenti (`/docente`), una sezione promi
 **Progettazione didattica** mette in primo piano la didattica attiva con l’AI (hero card con link
 diretto ad `OBIETTIVO_DOCENZA`, badge AI, evidenza dei pilastri metodologici Bloom, SMART e
 allineamento costruttivo) e guida il flusso verso la pubblicazione nel Catalogo obiettivi e
-l'integrazione nei Percorsi di classe per gli studenti. Subito sotto, il cruscotto operativo
+l'integrazione nei Piani operativi per gli studenti. Subito sotto, il cruscotto operativo
 **Le mie classi** (`MyClassesSection`, Issue #265) mostra le classi attive del docente sotto forma
 di card intuitive con metadati essenziali (nome classe, numero partecipanti, istituto o codice invito
 `GR-XXXXXX`), link diretto rapido all'Hub della specifica classe (`/docente/classi/{id}`), collegamento
@@ -812,11 +813,11 @@ le assegnazioni attive.
 La gestione dei gruppi è distinta dall’iscrizione personale a un gruppo.
 
 **Navigazione secondaria, breadcrumbs e switcher di classe (Issue #268, #278, #282).**
-In tutte le sottopagine dell'Area Docente (`/docente/<slug>` e nell'Hub di classe `/docente/classi/{id}`) e nella rotta amministrativa della classe (`/admin/classi/{id}`, Issue #278), la navigazione secondaria e di orientamento è standardizzata tramite il componente accessibile `TeacherBreadcrumbs` (`<nav aria-label="...">` con lista semantica `<ol>` / `<li>`, `aria-current="page"` sull'elemento attivo finale, palette istituzionale petrol `indigo-*` e target touch >= 44px). Lo schema gerarchico comune collega la radice «Area docenti» (`/docente`) o «Dashboard Admin» (`/admin` con ritorno alle classi `/admin?tab=groupsClasses` in modalità amministratore), le eventuali sezioni genitore e la sezione o tab corrente. Nelle viste contestuali di classe (`/docente/classi/{id}` e `/admin/classi/{id}`), il selettore rapido `ClassQuickSwitcher` (`<select>` accessibile con etichette tradotte nelle 6 lingue ufficiali) consente di passare istantaneamente tra le classi attive preservando il tab secondario attivo (partecipanti/risultati, strumenti, percorsi, forum) e la rotta contestuale (docente o admin) senza rimbalzi indesiderati. Sono inoltre fornite le route e i redirect dedicati `/docente/palestra` (verso `/docente/taccuini-prova`), `/docente/obiettivi` (verso `/docente/catalogo-obiettivi`) e `/docente/proposte` (verso `/docente/assegnazioni`).
+In tutte le sottopagine dell'Area Docente (`/docente/<slug>` e nell'Hub di classe `/docente/classi/{id}`) e nella rotta amministrativa della classe (`/admin/classi/{id}`, Issue #278), la navigazione secondaria e di orientamento è standardizzata tramite il componente accessibile `TeacherBreadcrumbs` (`<nav aria-label="...">` con lista semantica `<ol>` / `<li>`, `aria-current="page"` sull'elemento attivo finale, palette istituzionale petrol `indigo-*` e target touch >= 44px). Lo schema gerarchico comune collega la radice «Area docenti» (`/docente`) o «Dashboard Admin» (`/admin` con ritorno alle classi `/admin?tab=groupsClasses` in modalità amministratore), le eventuali sezioni genitore e la sezione o tab corrente. Nelle viste contestuali di classe (`/docente/classi/{id}` e `/admin/classi/{id}`), il selettore rapido `ClassQuickSwitcher` (`<select>` accessibile con etichette tradotte nelle 6 lingue ufficiali) consente di passare istantaneamente tra le classi attive preservando il tab secondario attivo (partecipanti/risultati, strumenti, piani operativi, forum) e la rotta contestuale (docente o admin) senza rimbalzi indesiderati. Sono inoltre fornite le route e i redirect dedicati `/docente/palestra` (verso `/docente/taccuini-prova`), `/docente/obiettivi` (verso `/docente/catalogo-obiettivi`) e `/docente/proposte` (verso `/docente/assegnazioni`).
 
 **Class settings and results overview (#88–#95, #109, #246, #277).** From Teacher area →
 Classes (`/docente/classi`), each class card provides a streamlined directory view with direct links: **Open class** opens `/docente/classi/{id}`; next to it, **Participants & results**, **Tools &
-counselors** and **Paths** open those tabs directly (`?tab=students`, `?tab=tools`, `?tab=paths`;
+counselors** and **Operational plans** open those tabs directly (`?tab=students`, `?tab=tools`, `?tab=paths`;
 `forum` and `audit` work too).
 The **Participants & results** tab (`?tab=students`) provides an at-a-glance overview
 of student submissions and notes: an **Overview matrix** (table of students × completed
@@ -824,7 +825,7 @@ instruments showing completion dates, compact scores, attempt count and an inspe
 with full score factors and conversation transcript reader) and a **Participants list**
 offering participant notebooks (learner model), notes and teacher-to-student messaging.
 The **Overview** tab (`ClassOverviewTab`, Issue #276) serves as the central operational hub of the class:
-1. **Quick Links & Indicators**: responsive metric cards for enrolled students (`group.members_count`), enabled tools count, class paths, and class forum, enabling instant 1-click tab switching.
+1. **Quick Links & Indicators**: responsive metric cards for enrolled students (`group.members_count`), enabled tools count, operational plans, and class forum, enabling instant 1-click tab switching.
 2. **Student Invitation**: prominent class code display with one-click clipboard copy, direct web enrollment link (`/gruppo?g={code}`), Telegram bot deep-link (`https://t.me/{bot}?start=g_{code}`), and student visibility guidance.
 3. **Colleague & Tutor Sharing**: view authorized co-teachers (`/api/admin/groups/{id}/shares`), select and add colleagues from `/api/admin/users-summary` (excluding class owner), and revoke shares with instant feedback.
 4. **Class Details & Anagrafica**: direct inline editing of class name, school/campus, educational level (upper secondary, university, adult education), partner institution, description, methodologies, and student area visibility toggle, protected by draft guards and explicit save/discard actions.
@@ -834,7 +835,7 @@ choose student questionnaires, guided chats (including dynamic instruments),
 personal tools, Compass, Assistant and the class forum. Nella barra dei tab di classe
 (`ClassSettingsPage`, Issue #284), il tab «Strumenti e counselor» è posizionato
 in fondo all'elenco dopo «Registro modifiche», secondo la sequenza ordinata:
-`overview` (Panoramica) → `students` (Studenti e risultati) → `paths` (Percorsi di classe) →
+`overview` (Panoramica) → `students` (Studenti e risultati) → `paths` (Piani operativi) →
 `forum` (Forum) → `audit` (Registro modifiche) → `toolsTab` (Strumenti e counselor), con
 perfetto allineamento sequenziale dei rispettivi pannelli `role="tabpanel"` nel DOM.
 Nella sezione Counselor (`ClassCounselorsSection`, Issue #284), analogamente alle categorie
@@ -865,7 +866,7 @@ follows the account across devices and Telegram, and every server guard
 (`/user/access`, tool and counselor checks) applies it. A class left or
 deactivated falls back to the class view. `PUT /api/user/access/view` with
 `{"view": "all" | "classes" | <class id>}` saves it. Students without a class and
-staff see no selector. Class paths and the class forum always follow their own
+staff see no selector. Operational plans and the class forum always follow their own
 class settings, whichever view is active.
 
 Institutional counselors can be enabled individually with a class default.
@@ -884,7 +885,7 @@ administrator-change and lock badges and cannot edit locked items. **Change
 history** is a read-only, append-only audit of teacher/admin changes and admin
 lock/unlock events, with actor, timestamp, old/new values and optional reason,
 visible to owner, co-teachers and administrators. Forum moderation has its own
-separate log. Settings locks do not apply to class-path steps or forum messages.
+separate log. Settings locks do not apply to operational-plan steps or forum messages.
 
 The six-language public guide retains its existing eight teacher and sixteen
 student sections, including the class forum guide (#107). Teacher section 2
@@ -895,37 +896,37 @@ retains Compass/Assistant guidance. Genuine UI screenshots use synthetic,
 read-only API fixtures in Italian, English, Spanish, French, German and Swedish
 (`frontend/public/guide/{it,en,es,fr,de,sv}/`). Regenerate the eight affected
 screens per language with `GUIDE_SCREENS=class-settings` and
-`frontend/scripts/capture-guide.mjs`. Class paths are distinct from the guided
+`frontend/scripts/capture-guide.mjs`. Operational plans are distinct from the guided
 path inside one instrument: a strict step lock does not disable its catalog tool.
 
-**Class paths builder (P1, #96).** The **Class paths** tab on `/docente/classi/{id}`
-provides the teacher-side builder for sequenced class learning paths (`class_paths`
+**Operational plans builder (P1, #96).** The **Operational plans** tab on `/docente/classi/{id}`
+provides the teacher-side builder for sequenced operational plans (`class_paths`
 and `class_path_steps`). The class owner, co-teachers and administrators can create
-draft paths, define title and description, choose the progression mode (`recommended`
+draft plans, define title and description, choose the progression mode (`recommended`
 suggested sequence vs `strict` linear prerequisite order), and assemble steps. Each
 step references an instrument key enabled for the class (excluding always-on tools
 and administrator-disabled instruments; invalid tools are rejected with HTTP 422),
 with optional step title overrides, student instructions and due dates. A step whose
 tool the class later disables shows a «Not available» badge in the builder, as students
-see it in their path.
+see it in their plan.
 The step builder supports position numbering, reordering via up/down buttons (and
 keyboard), removal (X icon), and displays a self-marking flag icon for tools
 without automated completion detection (such as personal-area tools). Steps are
 renumbered sequentially by array order and omitted step IDs are soft-removed
 (`removed_at`). Concurrent edits are guarded by a revision counter: an HTTP 409
 conflict preserves the local draft and prompts the teacher to reload. Paths can be
-archived, restored, or deleted. Path authorization fails closed with HTTP 403
-(access denied) for unknown path IDs and unauthorized teachers alike, preventing
+archived, restored, or deleted. Plan authorization fails closed with HTTP 403
+(access denied) for unknown plan IDs and unauthorized teachers alike, preventing
 existence oracles. All interfaces and messages are translated across
 the 6 platform languages.
 
-**Class paths publishing and student view (P2, #97).** Teachers can publish paths via a sticky `[Publish]` button on `/docente/classi/{id}` (calling `POST /teacher/paths/{path_id}/publish`), which sets status to `published` and marks `published_at` on first publication. Teachers can also archive and restore paths. Students enrolled in active classes view published paths at `/profilo/percorsi` (accessible from the first group «Conoscermi e riflettere» in the student area, `/profilo`). The layout strictly follows identity guidelines: ochre is used only for the current step's play icon and `Button variant="accent"` for `[Inizia]` (the current step container and badge are petrol), with petrol for primary structure and slate for neutrals. Each published path card displays class name, title, description, and overall progress count and progress bar (`done of total done`). In strict mode (`strict`), future steps are locked (displaying a lock icon with «Si sblocca dopo il passo {n}») until preceding steps are finished. Steps whose tool is disabled for the student's class are displayed as unavailable and excluded from both total and done counts. For tools without automatic detection, students can mark and unmark steps as completed (`POST / DELETE /user/paths/{path_id}/steps/{step_id}/done`). Attempts to self-mark unavailable or auto-detect tools are rejected with HTTP 422. Progress resolution guarantees teacher precedence over student self-marks. Non-members receive HTTP 403 without existence oracles. All interfaces and notices are fully translated into the 6 platform languages.
+**Operational plans publishing and student view (P2, #97).** Teachers can publish plans via a sticky `[Publish]` button on `/docente/classi/{id}` (calling `POST /teacher/paths/{path_id}/publish`), which sets status to `published` and marks `published_at` on first publication. Teachers can also archive and restore plans. Students enrolled in active classes view published plans at `/profilo/piani-operativi` (accessible from the first group «Conoscermi e riflettere» in the student area, `/profilo`). The layout strictly follows identity guidelines: ochre is used only for the current step's play icon and `Button variant="accent"` for `[Inizia]` (the current step container and badge are petrol), with petrol for primary structure and slate for neutrals. Each published plan card displays class name, title, description, and overall progress count and progress bar (`done of total done`). In strict mode (`strict`), future steps are locked (displaying a lock icon with «Si sblocca dopo il passo {n}») until preceding steps are finished. Steps whose tool is disabled for the student's class are displayed as unavailable and excluded from both total and done counts. For tools without automatic detection, students can mark and unmark steps as completed (`POST / DELETE /user/paths/{path_id}/steps/{step_id}/done`). Attempts to self-mark unavailable or auto-detect tools are rejected with HTTP 422. Progress resolution guarantees teacher precedence over student self-marks. Non-members receive HTTP 403 without existence oracles. All interfaces and notices are fully translated into the 6 platform languages.
 
-**Automatic step completion and strict mode (P3, #98).** Step completion is computed on read (`GET /user/paths`), never stored, from evidence the student created at or after the path's `published_at`: a questionnaire result of that type for scored instruments (`tool_category=assessment`); a completed Bussola session (`completed_at`); a saved Tavolo (`saved_at`); a new personal goal; a completed pQBL learning session (`pqbl_session_completed` log); an Idea map revision with a branch to work on (the `idea_map` focus rule); and, for guided chats (Savickas, Evento, Obiettivo di studio, dynamic guided instruments), a new server-side `guided_chat_completed` log written when a `/chat` or `/chat/stream` turn on the instrument's last guided step completes. The marker is written once per session, instrument and student: further turns or a resumed session add nothing, and admin preview turns write none. Evidence created before `published_at` is ignored. The state of each step follows teacher mark > student mark > automatic evidence > not done; automatic completions show «rilevato automaticamente» (6 languages). In strict mode a step counts as done only when every earlier available step is done: all steps after the current one render locked (`🔒 Si sblocca dopo il passo {n}`, where {n} is the current step) and are excluded from the done count, even if they already have evidence or a self-mark; they count again as soon as the earlier steps are completed. Unavailable steps are skipped by the ordering. The lock affects the class path only: tool access, the catalog and the chat guards are unchanged.
+**Automatic step completion and strict mode (P3, #98).** Step completion is computed on read (`GET /user/paths`), never stored, from evidence the student created at or after the plan's `published_at`: a questionnaire result of that type for scored instruments (`tool_category=assessment`); a completed Bussola session (`completed_at`); a saved Tavolo (`saved_at`); a new personal goal; a completed pQBL learning session (`pqbl_session_completed` log); an Idea map revision with a branch to work on (the `idea_map` focus rule); and, for guided chats (Savickas, Evento, Obiettivo di studio, dynamic guided instruments), a new server-side `guided_chat_completed` log written when a `/chat` or `/chat/stream` turn on the instrument's last guided step completes. The marker is written once per session, instrument and student: further turns or a resumed session add nothing, and admin preview turns write none. Evidence created before `published_at` is ignored. The state of each step follows teacher mark > student mark > automatic evidence > not done; automatic completions show «rilevato automaticamente» (6 languages). In strict mode a step counts as done only when every earlier available step is done: all steps after the current one render locked (`🔒 Si sblocca dopo il passo {n}`, where {n} is the current step) and are excluded from the done count, even if they already have evidence or a self-mark; they count again as soon as the earlier steps are completed. Unavailable steps are skipped by the ordering. The lock affects the operational plan only: tool access, the catalog and the chat guards are unchanged.
 
-**Teacher progress view and overrides (P4, #99).** Once a path is published, the path editor in the **Class paths** tab shows a **Progressi** section: a students × steps matrix (`GET /teacher/paths/{path_id}/progress`, owner, co-teachers and admins; drafts get 422). Only current members of the class are listed: students who left keep their marks but disappear from the matrix. Each cell shows a check icon (done) or `·` (not done) followed by the source — `a` automatic, `s` student, `t` teacher — or a lock icon (locked by strict order) and `—` (tool no longer available, excluded from the counts). Each row ends with the student's done count and a footer row gives the done count per step. Filters: all, late (an available step past its due date and not done) and not started (nothing done yet). Cells are buttons, so the matrix works with the keyboard; on phones it becomes a per-student list with an expandable row. Selecting a cell opens a panel where the teacher can **mark done**, **mark not done** (optional reason, up to 500 characters) or **clear the teacher mark** (`PUT /teacher/paths/{path_id}/steps/{step_id}/progress/{username}` with `state` `done`, `not_done` or `clear`). The mark is stored with author and time and wins over the student's mark and the automatic evidence, in the teacher matrix and in the student's own view (which shows «fonte: docente»); clearing it falls back to the student mark, then to automatic evidence. In strict order a teacher mark on a later step is kept and shown in the panel, but the step stays locked until the earlier steps are done. Steps whose tool is unavailable accept only `clear` (422 otherwise); unknown students or steps outside the path get 404. All labels exist in the 6 platform languages.
+**Teacher progress view and overrides (P4, #99).** Once an operational plan is published, the plan editor in the **Operational plans** tab shows a **Progressi** section: a students × steps matrix (`GET /teacher/paths/{path_id}/progress`, owner, co-teachers and admins; drafts get 422). Only current members of the class are listed: students who left keep their marks but disappear from the matrix. Each cell shows a check icon (done) or `·` (not done) followed by the source — `a` automatic, `s` student, `t` teacher — or a lock icon (locked by strict order) and `—` (tool no longer available, excluded from the counts). Each row ends with the student's done count and a footer row gives the done count per step. Filters: all, late (an available step past its due date and not done) and not started (nothing done yet). Cells are buttons, so the matrix works with the keyboard; on phones it becomes a per-student list with an expandable row. Selecting a cell opens a panel where the teacher can **mark done**, **mark not done** (optional reason, up to 500 characters) or **clear the teacher mark** (`PUT /teacher/paths/{path_id}/steps/{step_id}/progress/{username}` with `state` `done`, `not_done` or `clear`). The mark is stored with author and time and wins over the student's mark and the automatic evidence, in the teacher matrix and in the student's own view (which shows «fonte: docente»); clearing it falls back to the student mark, then to automatic evidence. In strict order a teacher mark on a later step is kept and shown in the panel, but the step stays locked until the earlier steps are done. Steps whose tool is unavailable accept only `clear` (422 otherwise); unknown students or steps outside the plan get 404. All labels exist in the 6 platform languages.
 
-**Class path placement on home and student area (P5, #100).** When a student belongs to a class with an active published class pathway, the path is prioritized as the first hero element (`ClassPathHeroCard`) on both the student home (`/` and `/?view=home`) and the student area overview (`/profilo`). The general tool catalog (or personal tools catalog on `/profilo`) is collapsed below with an accessible toggle button («Mostra catalogo strumenti» / «Nascondi catalogo strumenti») and explanatory subtitle in all 6 languages, remembering open/closed state in `localStorage` per browser. The hero card displays class name, title, description, progress count and progress bar, highlighting the current active step in petrol (petrol border and badge) with ochre kept only for the play icon and `Button variant="accent"` for `[Inizia]`; the card itself uses the standard petrol border, no ochre surfaces with self-marking support where applicable. When multiple paths exist, the one with the nearest upcoming due date (or incomplete step due date) is selected, with a link to all class paths (`/profilo/percorsi`). For students without active class paths (or without a class), the experience is completely unchanged and the catalog opens normally without collapse.
+**Operational plan placement on home and student area (P5, #100).** When a student belongs to a class with an active published operational plan, the plan is prioritized as the first hero element (`ClassPathHeroCard`) on both the student home (`/` and `/?view=home`) and the student area overview (`/profilo`). The general tool catalog (or personal tools catalog on `/profilo`) is collapsed below with an accessible toggle button («Mostra catalogo strumenti» / «Nascondi catalogo strumenti») and explanatory subtitle in all 6 languages, remembering open/closed state in `localStorage` per browser. The hero card displays class name, title, description, progress count and progress bar, highlighting the current active step in petrol (petrol border and badge) with ochre kept only for the play icon and `Button variant="accent"` for `[Inizia]`; the card itself uses the standard petrol border, no ochre surfaces with self-marking support where applicable. When multiple plans exist, the one with the nearest upcoming due date (or incomplete step due date) is selected, with a link to all operational plans (`/profilo/piani-operativi`). For students without active operational plans (or without a class), the experience is completely unchanged and the catalog opens normally without collapse.
 
 **Class forum (F1, #102).** Teachers open the Forum tab on
 `/docente/classi/{id}`; students open the forum link in their Classes list,
@@ -954,11 +955,11 @@ NUL); tabs and line breaks are kept. Character lengths for titles and messages a
 
 **Forum resource links (F5, #106).** When opening a class discussion, a class
 teacher or administrator may select an optional link to a step of a published
-class path or an active assignment addressed to the whole class. Targets must
-belong to that class; drafts, removed steps, archived paths, revoked assignments
+operational plan or an active assignment addressed to the whole class. Targets must
+belong to that class; drafts, removed steps, archived plans, revoked assignments
 and individual assignments cannot be selected. The discussion shows the resource
-name and opens the student path step or assignment details; teachers open their
-class paths tab or sent assignments. A removed, archived, revoked or deleted
+name and opens the student plan step or assignment details; teachers open their
+operational plans tab or sent assignments. A removed, archived, revoked or deleted
 resource becomes plain unavailable text without an active link. Hidden topics do
 not expose resource metadata to students. The path step and assignment details
 show “Discuss in the class forum” for each linked discussion. These links open
@@ -1727,9 +1728,9 @@ columns is left to a later reviewed migration. The bcrypt helper now uses the
 `bcrypt` package directly, because passlib 1.7.4 cannot initialise bcrypt 4.1+.
 
 
-### Italian questionnaire administration in class paths
+### Italian questionnaire administration in operational plans
 
-Teachers can create or select an Italian administration in the class Paths tab.
+Teachers can create or select an Italian administration in the class Operational plans tab.
 The class and research views reference the same administration ID; the server
 resolves the class and institute. The institute owns the external code and
 write-only password verifier. Students open competenzestrategiche.it and log in
@@ -1744,7 +1745,7 @@ atomically and returns their acknowledgement before the chat opens. Manual Itali
 scores have source `in-app`, capture method `manual_scores`, and source system
 `competenzestrategiche.it`; this does not verify external submission. Failed saves
 retain the scoped browser draft and retry identity. Drafts belong to the account,
-path and step; passwords and verification grants are never saved with them.
+plan and step; passwords and verification grants are never saved with them.
 
 Completion requires the authenticated student, exact administration, instrument,
 locale and step activation time. A future teacher-confirmed import for that student
@@ -1753,14 +1754,14 @@ this is distinct committed import evidence, never a source label, upload or prev
 The importer itself is not available in this release. A results deep dive is a
 separate optional step, never implied by entering scores. Published target identity is
 immutable; replace a step rather than reusing its ID for another target. A step
-removed before its first publication and restored on a published path is activated
+removed before its first publication and restored on a published plan is activated
 when restored, so only evidence recorded after that moment completes it. Teacher
 progress overrides retain precedence, and unavailable steps never grant access.
 Existing tool-key steps and their explicit marks remain supported. Historical
 results are `in-app` with unknown capture method; no historical guided entries are
 invented.
 
-Concurrent guided-entry retries are serialized for the path and exact administration;
+Concurrent guided-entry retries are serialized for the plan and exact administration;
 identical retries reuse the original acknowledgement, while changed retry content
 is rejected. Current class settings and administration availability are checked again
 at the write, even after switching between All tools and a class view.
@@ -1770,7 +1771,7 @@ Its action stays disabled until an institute grant and a counselor are available
 a failed save leaves the form and scoped draft available for retry.
 
 The public teacher guide describes creating/selecting the Italian administration
-in the class Paths tab, its shared research identity, explicit save/publication and
+in the class Operational plans tab, its shared research identity, explicit save/publication and
 replacement of activated targets in all six interface languages.
 
 
@@ -1808,15 +1809,15 @@ completes an administration step. Research counts include each in-app result onc
 
 ### Optional guided deep dive on an administration result
 
-A class path may add a `guided_results_chat` step after a questionnaire
-administration step of the same path. The teacher chooses it in the path builder
+An operational plan may add a `guided_results_chat` step after a questionnaire
+administration step of the same plan. The teacher chooses it in the plan builder
 under "Guided results deep dive" by selecting a saved, earlier administration step;
 each administration step can have at most one deep dive. Its Add step action uses the
 lucide plus icon with a text label, like the administration section. The server rejects a deep
 dive placed before its administration (`results_step_order`), one that points to
-another path, a tool step or an unsaved step (`results_step_invalid`) and a second
+another plan, a tool step or an unsaved step (`results_step_invalid`) and a second
 deep dive on the same administration (`duplicate_results_chat`). Removing an
-administration while its deep dive stays in the path is a conflict
+administration while its deep dive stays in the plan is a conflict
 (`results_step_referenced`); remove the deep dive first. The linked administration
 is part of the immutable target once the step is activated. Omitting the step keeps
 the deep dive optional; removing it later never undoes the administration step.
@@ -1826,7 +1827,7 @@ a new, server-issued guided session to that student, deep-dive step and the resu
 that completes the administration (guided entry or a confirmed import); starting
 again resumes the same session, also under concurrent requests. Without a recorded
 result, including when only a teacher override marks the administration done, the
-deep dive cannot start (`results_step_incomplete`). Strict paths keep the step
+deep dive cannot start (`results_step_incomplete`). Strict plans keep the step
 locked until the earlier steps are done.
 
 The step is done only when the server records the final guided turn of that bound
@@ -1841,10 +1842,10 @@ upgrade adds `class_path_steps.results_step_id`, widens the step target check an
 creates `class_path_deep_dive_sessions`; it is replay-safe and keeps existing steps.
 
 
-### Goal assignments as class-path steps
+### Goal assignments as operational-plan steps
 
-A class path may add an `assignment` step that references one `TeacherAssignment`
-by `assignment_id`. The teacher selects an existing assignment in the path builder
+An operational plan may add an `assignment` step that references one `TeacherAssignment`
+by `assignment_id`. The teacher selects an existing assignment in the plan builder
 or creates one there with the usual assignment form, fixed to the class and
 delivered to the whole class: a published catalog goal is the anchor and certified
 strategies and readings are optional attachments. The server builds the delivered
@@ -1857,14 +1858,14 @@ On save and publish the server accepts only an assignment of the same class
 (`assignment_class_mismatch`), delivered to the whole class rather than to chosen
 students (`assignment_targeted`), anchored to a catalog goal (`assignment_not_goal`),
 not revoked (`assignment_revoked`) and in an active class
-(`assignment_class_inactive`); the same assignment cannot appear twice in a path
+(`assignment_class_inactive`); the same assignment cannot appear twice in an operational plan
 (`duplicate_assignment_step`). A rejected save writes nothing and the builder keeps
 the draft. Targeted assignments stay available on the standalone Assignments page.
-The saved assignment row is locked during the path save, so a concurrent revocation
+The saved assignment row is locked during the plan save, so a concurrent revocation
 applies after it. The referenced assignment is part of the immutable target once
 the step is activated; reordering keeps the step identity and activation time.
 
-The path step and the standalone page open the same assignment and share one
+The plan step and the standalone page open the same assignment and share one
 `AssignmentWork` state. The step's link is `/profilo/assegnazioni#assignment-{id}`;
 launching it is not evidence. The step is done when the current class member has a
 current explicit submission (`submission` present) whose `submitted_at` is at or
@@ -1879,20 +1880,22 @@ its time only, never the submitted text. Whole-class delivery follows current cl
 membership, also for students who join later. The database upgrade adds
 `class_path_steps.assignment_id` (restricting deletion of a referenced assignment)
 and widens the step target check; it is replay-safe and keeps existing steps.
+Deleting such an assignment from Assignments is refused with a message that it is
+a step of an operational plan: remove the step first, or revoke the assignment.
 
 
-### Exact class discussions as class-path steps
+### Exact class discussions as operational-plan steps
 
-A class path may add a `forum` step that references one discussion of the class
-forum by `topic_id`. In the path builder the "Forum discussion" section lists the
+An operational plan may add a `forum` step that references one discussion of the class
+forum by `topic_id`. In the plan builder the "Forum discussion" section lists the
 published, visible discussions of this class, read through the forum's own topic
-list; the teacher selects one and adds it as a step, once per path. On save and
+list; the teacher selects one and adds it as a step, once per plan. On save and
 publish the server accepts only a discussion of the same class
 (`forum_topic_class_mismatch`), published and not hidden (`forum_topic_unavailable`),
 in an active class (`forum_class_inactive`) whose own forum setting is on
-(`forum_disabled_for_class`); the same discussion cannot appear twice in a path
+(`forum_disabled_for_class`); the same discussion cannot appear twice in an operational plan
 (`duplicate_forum_step`). A rejected save writes nothing and the builder keeps the
-draft. The discussion row is locked during the path save, so a concurrent hide
+draft. The discussion row is locked during the plan save, so a concurrent hide
 applies after it. The referenced discussion is part of the immutable target once
 the step is activated; reordering keeps the step identity and activation time.
 
@@ -1914,7 +1917,7 @@ forum setting decides even when the student uses the All tools view or views
 another class. Students cannot self-mark the step; teacher marks keep their
 precedence.
 
-Path responses carry only identifiers and states. The step's target summary is
+Plan responses carry only identifiers and states. The step's target summary is
 `{id, group_id, locked}`, without the discussion title. `/user/paths` adds
 `forum_state` with four booleans (`pending`, `hidden`, `locked`, `muted`) so the
 student page explains the next move: awaiting approval, discussion locked, forum
@@ -1927,7 +1930,7 @@ reaches the AI, RAG, context, research exports or PDFs. `backend/forum_completio
 is the only module outside the forum boundary that reads forum tables, and it may
 name only identifier, author, status and timestamp columns, never a whole row.
 `backend/path_step_types.py` is its single consumer, and the privacy tests pin every
-module that can load it to the class-path routes and their administration seams.
+module that can load it to the operational-plan routes and their administration seams.
 The forum's class-visibility helper moved to `backend/group_visibility.py`, so the
 forum router no longer imports the class-management router. The database upgrade
 adds `class_path_steps.topic_id` (deleting a referenced discussion is refused,
@@ -1935,16 +1938,16 @@ while deleting the whole class still cascades) and widens the step target check;
 it is replay-safe and keeps existing steps.
 
 
-### Publishing and managing a mixed class path
+### Publishing and managing a mixed operational plan
 
-The teacher journey runs Teacher area → Institutes → institute → class → Class
-paths tab (the class card in the institute and class lists also links straight to
-that tab). One path can mix every step type: `questionnaire_administration`,
+The teacher journey runs Teacher area → Institutes → institute → class → Operational
+plans tab (the class card in the institute and class lists also links straight to
+that tab). One plan can mix every step type: `questionnaire_administration`,
 `guided_results_chat`, `assignment`, `forum` and `tool`. The class tab passes the
 class's institute to the builder; when the class has none, the administration
 section explains that administration steps need one and links to Institutes.
 
-Publication validates the whole path at once. `POST /teacher/paths/{id}/publish`
+Publication validates the whole plan at once. `POST /teacher/paths/{id}/publish`
 resolves every active step through the shared typed-step descriptor (targets,
 platform and class capabilities, institute context, deep-dive source) and, when any
 step is blocked, returns `409` with
@@ -1962,11 +1965,11 @@ previous behaviour. The builder sends the revision it last loaded (after saving
 pending edits, Publish uses the revision returned by that save) and disables
 archive/restore while the draft has unsaved edits.
 
-Restore of a path that was already published goes live through the same validation
-as publication: blocked steps are reported the same way and the path stays archived,
-and steps added while the path was archived are activated at restore time (before
+Restore of an operational plan that was already published goes live through the same validation
+as publication: blocked steps are reported the same way and the plan stays archived,
+and steps added while the plan was archived are activated at restore time (before
 this change they stayed without an activation time and could never complete). A
-never-published path returns to draft without validation.
+never-published plan returns to draft without validation.
 
 Identity rules are unchanged and now covered together by synthetic tests: reorder
 and title, instruction or due-date edits keep step IDs and activation times; the
