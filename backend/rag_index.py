@@ -1406,7 +1406,7 @@ class SiteRagIndex:
         model = _embedding_key(ai_service)
         cache = self._cache(ai_service)
         unique = {_EmbeddingCache.key(model, c["text"]): c["text"] for c in chunks}
-        missing = [text for key, text in unique.items() if cache.get(key) is None]
+        missing = [text for key, text in unique.items() if cache.get(key) is None and text.strip()]
         allowed = self._vectors_allowed(ai_service)
         config = {**getattr(ai_service, "config", {}),
                   "embedding_provider": getattr(ai_service, "embedding_provider", "ollama"),
@@ -1420,7 +1420,10 @@ class SiteRagIndex:
         cache = self._cache(ai_service)
         unique = {_EmbeddingCache.key(model, c["text"]): c["text"] for c in chunks}
         vectors = {key: cache.get(key) for key in unique}
-        missing = [key for key, value in vectors.items() if value is None]
+        # Blank chunks are never sent: they stay searchable by BM25 and get a zero
+        # row so the matrix stays aligned with the chunks (cosine 0, never ranked).
+        blank = {key for key, text in unique.items() if not text.strip()}
+        missing = [key for key, value in vectors.items() if value is None and key not in blank]
         if progress is not None:
             progress("embedding", 0, len(missing))
         if missing:
@@ -1435,6 +1438,12 @@ class SiteRagIndex:
                 raise AIError("embedding_invalid_response")
             vectors.update(zip(missing, new))
             _embedding_cooldown.success(model)
+        if blank:
+            width = getattr(ai_service, "embedding_dimensions", None) or next(
+                (len(v) for key, v in vectors.items() if v is not None and key not in blank), None)
+            if not width:
+                raise AIError("embedding_input_empty", code="embedding_input_empty")
+            vectors.update((key, np.zeros(width, dtype=np.float32)) for key in blank)
         try:
             matrix = np.asarray([vectors[_EmbeddingCache.key(model, c["text"])] for c in chunks], dtype=np.float32)
         except (TypeError, ValueError):
@@ -1626,10 +1635,11 @@ class SiteRagIndex:
                     q_norm = 0.0
                 if q_norm:
                     vector_scores = (self.matrix @ q) / (self.norms * q_norm + 1e-9)
-                    vector_rank = [int(i) for i in np.argsort(-vector_scores, kind="stable")
-                                   if vector_scores[i] >= min_score]
+                    # Zero rows (blank chunks) have no meaning to compare.
+                    ranked = [int(i) for i in np.argsort(-vector_scores, kind="stable") if self.norms[i] > 0]
+                    vector_rank = [i for i in ranked if vector_scores[i] >= min_score]
                     if not vector_rank:
-                        vector_rank = [int(i) for i in np.argsort(-vector_scores, kind="stable")[:top_k]]
+                        vector_rank = ranked[:top_k]
         if retrieval_mode == "vector" and vector_rank and vector_scores is not None:
             raw_scores = {i: float(vector_scores[i]) for i in vector_rank}
         elif retrieval_mode == "hybrid" and vector_rank:

@@ -296,21 +296,52 @@ def test_one_failing_collection_does_not_stop_or_suspend_the_others(client, db, 
     _put(client, provider="mistral")
     _run_all(client)
     previous = indexes["broken"].matrix
-    # The new corpus has a passage over the per-input limit: only this collection fails.
-    corpora["broken"].texts = ["Broken 0", "x" * 9000]
+    # The provider refuses a passage of the new corpus: only this collection fails.
+    client_mock, _, _ = fake_client(monkeypatch, "mistral")
+    succeed = client_mock.embeddings.create.side_effect
+
+    def create(**kwargs):
+        if "Broken refused" in kwargs["inputs"]:
+            raise type("PaymentRequired", (Exception,), {"status_code": 402})()
+        return succeed(**kwargs)
+
+    client_mock.embeddings.create.side_effect = create
+    corpora["broken"].texts = ["Broken 0", "Broken refused"]
     corpora["alpha"].texts = corpora["alpha"].texts + ["Alpha extra"]
     _, job = _run_all(client)
     assert job["status"] == "done"
     assert [(c["id"], c["status"], c["error"]) for c in job["collections"]] == [
-        ("alpha", "done", None), ("broken", "error", "embedding_input_limit"), ("gamma", "done", None)]
+        ("alpha", "done", None), ("broken", "error", "embedding_quota_exceeded"), ("gamma", "done", None)]
     # Previous vectors still serve the failed collection; semantic search is not suspended.
     assert indexes["broken"].matrix is previous and len(indexes["broken"].chunks) == 1
     state = client.get("/admin/document-retrieval").json()
     assert state["semantic_suspended_seconds"] == 0
-    assert {c["id"]: c["last_build_error"] for c in state["collections"]}["broken"] == "embedding_input_limit"
+    assert {c["id"]: c["last_build_error"] for c in state["collections"]}["broken"] == "embedding_quota_exceeded"
     ai = _service(db)
     ai.embed_query = lambda text, **kw: [1.0] * 1024
     assert indexes["gamma"].search(ai, "Gamma")[0]["score"] > 0
+
+
+def test_blank_passages_are_never_sent_and_the_collection_completes(client, db, monkeypatch, collections):
+    corpora, indexes = collections
+    monkeypatch.setenv("API_KEY_MISTRAL", SECRET)
+    _, _, calls = fake_client(monkeypatch, "mistral")
+    # Production case: a large collection with a few empty or whitespace-only chunks.
+    corpora["broken"].texts = ["Broken 0", "", "  \n\t", "Broken 3"]
+    _put(client, provider="mistral")
+    assert client.get("/admin/document-retrieval/estimate").json()["input_count"] == 44
+    _, job = _run_all(client)
+    assert [(c["id"], c["status"], c["done"], c["total"], c["error"]) for c in job["collections"]] == [
+        ("alpha", "done", 40, 40, None), ("broken", "done", 2, 2, None), ("gamma", "done", 2, 2, None)]
+    assert all(text.strip() for call in calls for text in call["inputs"])
+    # Zero rows keep the matrix aligned with the BM25 chunks and never rank by meaning.
+    index = indexes["broken"]
+    assert index.matrix.shape == (4, 1024) and not index.matrix[1:3].any()
+    ai = _service(db)
+    ai.embed_query = lambda text, **kw: [1.0] * 1024
+    results = index.search(ai, "Broken", retrieval_mode="vector")
+    assert results and all(r["text"].strip() for r in results)
+    assert index.search(ai, "Broken", retrieval_mode="hybrid")
 
 
 def test_reindex_all_is_idempotent_while_running_in_any_worker(client, monkeypatch, collections):

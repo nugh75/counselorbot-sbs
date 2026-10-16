@@ -274,10 +274,20 @@ def test_full_input_validated_before_first_paid_batch(db, monkeypatch):
     _, constructor, _ = fake_client(monkeypatch, "mistral")
     with pytest.raises(AIError) as exc:
         service(db, "mistral").embed_texts(
-            ["public"] * 32 + ["a" * 16001], public_corpus=True
+            ["public"] * 32 + ["  \n"], public_corpus=True
         )
-    assert exc.value.code == "embedding_input_limit"
+    assert exc.value.code == "embedding_input_empty"
     constructor.assert_not_called()
+
+
+@pytest.mark.parametrize("provider", ["mistral", "openrouter"])
+def test_oversized_text_is_truncated_on_a_character_boundary(db, monkeypatch, provider):
+    monkeypatch.setenv(f"API_KEY_{provider.upper()}", "fake")
+    _, _, calls = fake_client(monkeypatch, provider)
+    vectors = service(db, provider).embed_texts(["è" * 5000, "public"], public_corpus=True)
+    sent = calls[0].get("input", calls[0].get("inputs"))
+    assert len(vectors) == 2 and sent[1] == "public"
+    assert sent[0] == "è" * 4000 and len(sent[0].encode("utf-8")) == 8000
 
 
 def test_malformed_paid_response_is_accounted(db, monkeypatch):

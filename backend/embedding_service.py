@@ -369,9 +369,14 @@ def _batches(texts: list[str], provider: str):
     batch: list[str] = []
     size = 0
     for text in texts:
-        length = len(text.encode("utf-8"))
-        if not text.strip() or length > limit:
-            raise EmbeddingError("embedding_input_limit")
+        if not text.strip():
+            raise EmbeddingError("embedding_input_empty")
+        encoded = text.encode("utf-8")
+        if len(encoded) > limit:
+            # The opening is enough to place a passage: truncate on a character boundary.
+            text = encoded[:limit].decode("utf-8", "ignore")
+            encoded = text.encode("utf-8")
+        length = len(encoded)
         if len(batch) >= 32 or size + length > batch_limit:
             yield batch
             batch, size = [], 0
