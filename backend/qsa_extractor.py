@@ -8,7 +8,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import requests
 from pdf2image import convert_from_path
@@ -27,6 +27,22 @@ DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_OCR_MODEL = "glm-ocr:latest"
 DEFAULT_PARSER_MODEL = "qwen3.8:latest"
 MAX_PDF_PAGES = 6
+# Codice restituito quando il ripiego esterno non e' configurato/raggiungibile:
+# `routes/chat.py` lo traduce in un messaggio localizzato per l'utente.
+VISION_UNAVAILABLE_CODE = "qsa.errors.visionUnavailable"
+PRIVACY_BLOCKED_CODE = "personalAPI.errors.privacy"
+
+#: Firma del ripiego: `(prompt, immagine_base64) -> testo del modello`.
+#: In produzione e' `AIService.call_vision`; nei test un finto, senza rete.
+VisionCall = Callable[[str, str], str]
+
+
+class VisionUnavailableError(RuntimeError):
+    """Nessun provider di visione configurato per il ripiego OCR esterno."""
+
+    code = VISION_UNAVAILABLE_CODE
+
+
 QSA_FACTORS = tuple(f"C{index}" for index in range(1, 8)) + tuple(
     f"A{index}" for index in range(1, 8)
 )
@@ -298,102 +314,71 @@ def _parse_scores(
         raise
 
 
-def _run_openrouter_fallback(
+def _strip_json_fences(content: str) -> str:
+    text = content.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
+
+def _run_vision_fallback(
     images: list[str],
     questionnaire_type: str,
     expected_factors: tuple[str, ...],
+    vision_call: VisionCall | None,
 ) -> dict[str, int]:
+    """Ripiego OCR/punteggi tramite il provider di visione configurato.
+
+    Nessun modello e' cablato: `vision_call` e' `AIService.call_vision`, che
+    risolve il provider, applica la policy privacy esterna della chat e chiama il
+    client corrispondente. Senza provider `vision_call` solleva un errore
+    classificato, propagato al chiamante per un messaggio localizzato."""
     logger.info(
-        f"[Fallback] Avvio fallback su OpenRouter per tipo questionario: '{questionnaire_type}' "
-        f"con {len(images)} pagine disponibili."
+        f"[Fallback] Avvio ripiego via provider di visione per tipo questionario: "
+        f"'{questionnaire_type}' con {len(images)} pagine disponibili."
     )
-    api_key = os.getenv("OPENROUTER_API_KEY") or os.getenv("API_KEY_OPENROUTER")
-    if not api_key:
-        logger.error("[Fallback] Chiave API OpenRouter (OPENROUTER_API_KEY/API_KEY_OPENROUTER) non trovata nell'ambiente.")
-        raise ValueError("Missing OpenRouter API key for fallback")
+    if vision_call is None:
+        logger.error("[Fallback] Nessun provider di visione configurato per il ripiego.")
+        raise VisionUnavailableError(
+            "Nessun provider di visione configurato per l'estrazione del documento"
+        )
 
     if not images:
-        logger.error("[Fallback] Nessuna immagine di pagina disponibile per il fallback.")
+        logger.error("[Fallback] Nessuna immagine di pagina disponibile per il ripiego.")
         raise ValueError("No pages available to process")
 
-    # Use the first page for the score table extraction
+    # La tabella dei punteggi sta nella prima pagina: basta quella.
     encoded_image = images[0]
+    prompt = (
+        f"Extract the scores for the factors {', '.join(expected_factors)} "
+        f"from this {questionnaire_type} profile page. "
+        "Return ONLY a raw JSON object whose keys are the factor names and whose values are integers from 1 to 9. "
+        "Do not include any explanation or markdown formatting."
+    )
     logger.info(
-        f"[Fallback] Invio della prima pagina a OpenRouter (modello: 'google/gemini-2.5-flash-lite-preview-09-2025'). "
+        f"[Fallback] Invio della prima pagina al provider di visione configurato. "
         f"Dimensione base64 dell'immagine: {len(encoded_image)} caratteri."
     )
 
+    content = vision_call(prompt, encoded_image)
+    logger.info("[Fallback] Risposta del provider di visione ricevuta.")
+
+    content_clean = _strip_json_fences(content or "")
     try:
-        response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://counselorbot.ai",
-                "X-Title": "CounselorBot",
-            },
-            json={
-                "model": "google/gemini-2.5-flash-lite-preview-09-2025",
-                "messages": [{
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": (
-                                f"Extract the scores for the factors {', '.join(expected_factors)} "
-                                f"from this {questionnaire_type} profile page. "
-                                "Return ONLY a raw JSON object whose keys are the factor names and whose values are integers from 1 to 9. "
-                                "Do not include any explanation or markdown formatting."
-                            ),
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"},
-                        },
-                    ],
-                }],
-            },
-            timeout=60,
+        parsed_json = json.loads(content_clean)
+        logger.info(f"[Fallback] JSON del ripiego decodificato correttamente: {parsed_json}")
+    except json.JSONDecodeError as json_exc:
+        logger.error(
+            f"[Fallback] Impossibile decodificare il JSON del ripiego vision. "
+            f"Contenuto pulito: '{content_clean}'. Errore: {json_exc}"
         )
-        
-        logger.info(f"[Fallback] Risposta HTTP ricevuta da OpenRouter. Status code: {response.status_code}")
-        response.raise_for_status()
-        
-        res_json = response.json()
-        logger.info(f"[Fallback] Response JSON completo da OpenRouter: {res_json}")
-        
-        content = res_json["choices"][0]["message"]["content"].strip()
-        logger.info(f"[Fallback] Contenuto estratto da OpenRouter: '{content}'")
-        
-        if content.startswith("```json"):
-            content = content[7:]
-        elif content.startswith("```"):
-            content = content[3:]
-        if content.endswith("```"):
-            content = content[:-3]
-        
-        content_clean = content.strip()
-        try:
-            parsed_json = json.loads(content_clean)
-            logger.info(f"[Fallback] JSON fallback decodificato correttamente: {parsed_json}")
-        except json.JSONDecodeError as json_exc:
-            logger.error(
-                f"[Fallback] Impossibile decodificare il JSON del fallback OpenRouter. "
-                f"Contenuto pulito: '{content_clean}'. Errore: {json_exc}"
-            )
-            raise ValueError(f"La risposta del fallback OpenRouter non è un JSON valido: {json_exc}") from json_exc
-            
-        return _validate_scores(parsed_json, expected_factors)
-        
-    except requests.RequestException as req_exc:
-        error_msg = f"[Fallback] Richiesta HTTP a OpenRouter fallita: {req_exc}"
-        if req_exc.response is not None:
-            error_msg += f" - Risposta del server: {req_exc.response.text}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from req_exc
-    except Exception as exc:
-        logger.error(f"[Fallback] Errore imprevisto nel fallback OpenRouter: {exc}")
-        raise
+        raise ValueError(f"La risposta del ripiego vision non è un JSON valido: {json_exc}") from json_exc
+
+    return _validate_scores(parsed_json, expected_factors)
 
 
 def extract_questionnaire_data(
@@ -403,8 +388,14 @@ def extract_questionnaire_data(
     ollama_url: str | None = None,
     ocr_model: str | None = None,
     parser_model: str | None = None,
+    vision_call: VisionCall | None = None,
 ) -> dict[str, int] | dict[str, str]:
-    """Estrae e valida un profilo provando prima localmente con Ollama, poi con fallback OpenRouter."""
+    """Estrae e valida un profilo provando prima con Ollama, poi con il provider di visione.
+
+    `vision_call` e' il ripiego esterno (in produzione `AIService.call_vision`):
+    risolve il provider/modello configurati, applica la policy privacy esterna
+    della chat e non usa alcun modello cablato. Se manca o non e' configurato il
+    risultato porta `error_code` per un messaggio localizzato a valle."""
     logger.info(
         f"[Pipeline] Inizio pipeline di estrazione per il file: '{file_path}'. "
         f"Tipo questionario richiesto: '{questionnaire_type}'."
@@ -453,18 +444,31 @@ def extract_questionnaire_data(
         except Exception as local_exc:
             logger.warning(
                 f"[Pipeline] Estrazione locale fallita con errore: {local_exc}. "
-                f"Procedo con il TENTATIVO DI FALLBACK via OpenRouter..."
+                f"Procedo con il TENTATIVO DI FALLBACK via provider di visione..."
             )
             try:
-                scores = _run_openrouter_fallback(images, questionnaire_type, expected_factors)
-                logger.info(f"[Pipeline] Estrazione via fallback OpenRouter completata con successo! Punteggi estratti: {scores}")
+                scores = _run_vision_fallback(
+                    images, questionnaire_type, expected_factors, vision_call)
+                logger.info(f"[Pipeline] Estrazione via provider di visione completata con successo! Punteggi estratti: {scores}")
                 return scores
+            except VisionUnavailableError as vision_exc:
+                logger.error(f"[Pipeline] Ripiego vision non disponibile: {vision_exc}.")
+                return {"error": str(vision_exc), "error_code": vision_exc.code}
             except Exception as fallback_exc:
+                # Un errore classificato a monte (privacy, chiave, trasporto) conserva
+                # il codice: il chiamante lo traduce in un messaggio localizzato.
+                code = getattr(fallback_exc, "code", None)
+                if isinstance(code, str) and code:
+                    logger.error(
+                        f"[Pipeline] Ripiego vision fallito con codice {code}: {fallback_exc}."
+                    )
+                    return {"error": str(fallback_exc), "error_code": code}
                 logger.error(
-                    f"[Pipeline] Anche il fallback su OpenRouter è fallito. Errore fallback: {fallback_exc}."
+                    f"[Pipeline] Anche il ripiego via provider di visione è fallito. "
+                    f"Errore fallback: {fallback_exc}."
                 )
                 raise RuntimeError(
-                    f"Estrazione fallita sia localmente ({local_exc}) sia con fallback OpenRouter ({fallback_exc})"
+                    f"Estrazione fallita sia localmente ({local_exc}) sia con ripiego vision ({fallback_exc})"
                 ) from fallback_exc
             
     except Exception as exc:
@@ -478,6 +482,7 @@ def extract_qsa_data(
     ollama_url: str | None = None,
     ocr_model: str | None = None,
     parser_model: str | None = None,
+    vision_call: VisionCall | None = None,
 ) -> dict[str, int] | dict[str, str]:
     """Wrapper compatibile per l'estrazione del profilo QSA."""
     return extract_questionnaire_data(
@@ -486,4 +491,5 @@ def extract_qsa_data(
         ollama_url=ollama_url,
         ocr_model=ocr_model,
         parser_model=parser_model,
+        vision_call=vision_call,
     )

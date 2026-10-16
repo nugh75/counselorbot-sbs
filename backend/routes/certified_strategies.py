@@ -3,7 +3,8 @@
 Tabella DB strutturata (nome, fattori collegati, quando raccomandarla), distinta
 dalla knowledge base file-based. Le voci `certified` attive vengono iniettate nel
 contesto della chat dello studente da `certified_strategy_service`. L'endpoint
-`/translate` riempie en/es/sv da IT via Ollama (best-effort, poi revisionabili).
+`/translate` riempie en/es/sv da IT con il provider AI configurato (best-effort,
+poi revisionabili).
 """
 from typing import List
 
@@ -14,6 +15,7 @@ from .. import models, schemas, auth, database
 from ..certified_translation import translate_strategies
 from ..content_versions_seed import derive_strategy_versions
 from ..content_version_service import publish_catalog_source
+from ..translation_provider import TranslationUnavailable
 
 router = APIRouter()
 get_db = database.get_db
@@ -116,7 +118,9 @@ async def translate_certified_strategy(
         raise HTTPException(status_code=404, detail="Strategia non trovata")
     try:
         translated = translate_strategies(db, content_key=strategy.slug)
-    except Exception as e:  # noqa: BLE001 - best-effort, Ollama puo' non essere raggiungibile
+    except TranslationUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:  # noqa: BLE001 - best-effort, il provider puo' non essere raggiungibile
         raise HTTPException(status_code=502, detail=f"Traduzione non disponibile: {e}")
     if not translated and not any(
         (getattr(strategy, f"{field}_it", None) or "").strip()

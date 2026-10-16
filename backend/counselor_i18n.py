@@ -2,22 +2,22 @@
 
 La descrizione "sorgente" resta in italiano nel campo `Counselor.description`.
 Le traduzioni nelle altre lingue vivono nel campo JSON `Counselor.description_i18n`
-come mappa {lang: testo}. La generazione e' best-effort via Ollama (modello
-configurabile, default gemma): se Ollama non e' raggiungibile la chiamata
-fallisce in silenzio e la UI fa fallback all'italiano.
+come mappa {lang: testo}. La generazione e' best-effort attraverso il provider AI
+attivo (o il preset `translation_provider`), non piu' cablata su Ollama: se il
+provider non e' raggiungibile la chiamata fallisce in silenzio e la UI fa
+fallback all'italiano.
 """
 from __future__ import annotations
 
-import json
 import logging
 import os
 import threading
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 
-import httpx
 from sqlalchemy.orm import Session
 
 from . import models, database
+from .translation_provider import resolve_target, translate_payload
 
 logger = logging.getLogger(__name__)
 
@@ -31,27 +31,8 @@ LANG_NAMES = {
     "sv": "Swedish (Svenska)",
 }
 
-DEFAULT_MODEL = "gemma4:e4b"
-
-
-def _ollama_base(db: Session) -> str:
-    env = os.environ.get("OLLAMA_BASE_URL")
-    if env:
-        return env.rstrip("/")
-    row = db.query(models.Config).filter(models.Config.key == "ollama_ip").first()
-    if row and row.value:
-        return str(row.value).rstrip("/")
-    return "http://localhost:11434"
-
-
-def _model(db: Session) -> str:
-    env = os.environ.get("COUNSELOR_TRANSLATE_MODEL")
-    if env:
-        return env
-    row = db.query(models.Config).filter(models.Config.key == "counselor_translate_model").first()
-    if row and row.value:
-        return str(row.value)
-    return DEFAULT_MODEL
+# Translator: (testo italiano) -> {lingua: traduzione}
+Translator = Callable[[str], Dict[str, str]]
 
 
 def localized_description(counselor: models.Counselor, lang: Optional[str]) -> Optional[str]:
@@ -85,16 +66,16 @@ def localized_tagline(counselor: models.Counselor, lang: Optional[str]) -> Optio
     return None
 
 
+def build_description_prompt(
+    text: str, context: str = "", targets: Optional[List[str]] = None
+) -> Tuple[str, str]:
+    """Costruisce (system, user) per tradurre un testo italiano nelle lingue date.
 
-def generate_translations(
-    base_url: str, model: str, text: str, context: str = ""
-) -> Dict[str, str]:
-    """Traduce `text` (italiano) in tutte le TARGET_LANGS con una sola chiamata Ollama.
-
-    Ritorna {lang: testo}. Solleva eccezione se la chiamata fallisce: il chiamante
-    deve gestirla (best-effort).
+    Un unico prompt chiede tutte le lingue in una risposta JSON: e' il formato
+    che il traduttore e i test si aspettano.
     """
-    targets = ", ".join(f"{code} = {LANG_NAMES[code]}" for code in TARGET_LANGS)
+    langs = list(targets or TARGET_LANGS)
+    targets_desc = ", ".join(f"{code} = {LANG_NAMES.get(code, code)}" for code in langs)
     system = (
         "You are a professional translator for a counseling/education web app. "
         "Translate the given Italian sentence into the requested languages. "
@@ -115,32 +96,39 @@ def generate_translations(
     # parla il testo. Il chiamante lo sa, il traduttore no.
     if context:
         system = f"{system} CONTEXT: {context}"
+    example = ", ".join(f'"{code}": "..."' for code in langs)
     user = (
-        f"Languages (code = name): {targets}.\n"
+        f"Languages (code = name): {targets_desc}.\n"
         f"Italian text to translate:\n{text}\n\n"
-        f'Return JSON like {{"en": "...", "es": "...", "fr": "...", "de": "...", "sv": "..."}}.'
+        f"Return JSON like {{{example}}}."
     )
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        "stream": False,
-        "format": "json",
-        "keep_alive": "5m",
-        "think": False,
-        "options": {"temperature": 0.2},
-    }
-    resp = httpx.post(
-        f"{base_url}/api/chat",
-        json=payload,
-        timeout=httpx.Timeout(180.0, connect=4.0),
-    )
-    resp.raise_for_status()
-    content = resp.json().get("message", {}).get("content", "") or "{}"
-    data = json.loads(content)
-    return {code: str(data[code]).strip() for code in TARGET_LANGS if data.get(code)}
+    return system, user
+
+
+def configured_translator(
+    db: Session, context: str = "", targets: Optional[List[str]] = None
+) -> Tuple[Translator, str]:
+    """Traduttore vero (provider AI configurato) piu' l'etichetta di provenienza."""
+    target = resolve_target(db)
+    langs = list(targets or TARGET_LANGS)
+
+    def translate(text: str) -> Dict[str, str]:
+        system, user = build_description_prompt(text, context, langs)
+        return translate_payload(target, system, user, langs)
+
+    return translate, target.label
+
+
+def generate_translations(
+    db: Session, text: str, context: str = ""
+) -> Dict[str, str]:
+    """Traduce `text` in tutte le TARGET_LANGS con una sola chiamata del provider.
+
+    Ritorna {lang: testo}. Solleva eccezione se la chiamata fallisce: il chiamante
+    deve gestirla (best-effort).
+    """
+    translate, _label = configured_translator(db, context)
+    return translate(text)
 
 
 def _needs_translation(counselor: models.Counselor) -> bool:
@@ -160,7 +148,7 @@ def translate_counselor_sync(db: Session, counselor_id: int, force: bool = False
     if not force and not _needs_translation(counselor):
         return
     try:
-        translations = generate_translations(_ollama_base(db), _model(db), counselor.description.strip())
+        translations = generate_translations(db, counselor.description.strip())
     except Exception as e:  # noqa: BLE001 - best-effort
         logger.warning("Counselor %s translation failed: %s", counselor_id, e)
         return

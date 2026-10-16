@@ -131,11 +131,16 @@ shown. The Guide remains available independently of these class toggles.
   salvati nelle impostazioni AI (OpenRouter usa per default google/gemini-embedding-2
   a 768 dimensioni; Mistral usa mistral-embed). I costi API di sistema entrano nei log e nel budget
   mensile; i tentativi hanno un timeout limitato e gli errori mantengono disponibile
-  la ricerca per parole chiave. In questa fase solo i corpus editoriali predefiniti possono essere
-  indicizzati all’esterno: le domande restano lessicali fino al filtro privacy;
-  le memorie restano sempre locali/lessicali e le raccolte caricate non vengono
-  inviate all’esterno. Il pannello
-  dedicato di amministrazione arriverà in un blocco successivo.
+  la ricerca per parole chiave. Con un provider esterno escono solo i corpus
+  editoriali predefiniti e le domande dopo lo stesso filtro dei dati personali
+  della chat (con `block`, se il filtro non risponde, la domanda usa solo le parole
+  chiave), senza punteggi dei questionari. Le memorie e gli episodi delle conversazioni
+  usano solo il modello locale o le parole chiave, mai un’API. Le basi caricate
+  dall’amministratore restano solo a parole chiave finché non vengono marcate
+  «Pubblicabile a un provider di embedding esterno» nel pannello Documenti RAG.
+  Con OpenRouter la piattaforma chiede solo provider senza raccolta né conservazione
+  dei dati. La pagina «Dati e riservatezza» descrive questo trattamento. Il pannello
+  dedicato di amministrazione degli embedding arriverà in un blocco successivo.
   La ricerca combina parole chiave (BM25, inclusi titoli e nomi dei file) e
   similarità semantica quando gli embedding sono disponibili. Senza embedding
   continua sulle parole chiave, anche per le basi dinamiche: per circa cinque
@@ -168,7 +173,13 @@ le dieci stanine già calcolate; la somministrazione interna è sospesa perché
 i 25 item sostitutivi non sono i 63 item canonici e manca la chiave autorizzata.
 
 I risultati si inseriscono manualmente oppure si estraggono da PDF/immagine, con
-controllo della persona prima di proseguire. La visualizzazione e la chat aiutano
+controllo della persona prima di proseguire. L'estrazione prova prima l'OCR locale;
+se non è disponibile (per esempio su un'installazione senza Ollama) usa un provider
+di visione scelto dall'amministratore tra quelli supportati, senza alcun modello
+predefinito, e passa dalla stessa protezione dei dati della chat: nella modalità
+bloccante l'invio del documento viene fermato. Se non c'è alcun servizio di visione
+utilizzabile compare un messaggio localizzato che invita a inserire i dati a mano.
+La visualizzazione e la chat aiutano
 la riflessione sui fattori; un punteggio alto non è sempre un punto di forza, perché
 alcuni fattori sono invertiti. Non si fanno diagnosi. La scheda di ciascuno strumento
 (`/strumenti/<codice>`) ne spiega finalità, svolgimento e dati necessari.
@@ -1354,6 +1365,20 @@ nessun ripiego è configurato e utilizzabile, la chat si ferma con un messaggio
 chiaro e tradotto nelle sei lingue, invece di tentare un servizio assente.
 Nella pagina **Costi** la riga «Fallback attivo» mostra il ripiego configurato
 (o un trattino se non ce n’è nessuno).
+
+Le **traduzioni del catalogo** — strategie e letture certificate, item e fattori
+degli strumenti, descrizioni dei counselor — usano lo stesso provider AI attivo:
+non serve più un modello locale dedicato. Il pulsante **Traduci** del catalogo
+certificato e gli script di traduzione seguono provider e modello attivi; un
+preset `translation_provider`/`translation_model` (anche da variabili
+d’ambiente) può scegliere un provider o un modello diversi per le sole
+traduzioni. Se non c’è un provider configurato o manca la chiave di sistema, la
+traduzione si ferma con un messaggio esplicito invece di un errore di trasporto.
+I testi tradotti sono contenuti editoriali e seguono la protezione dei dati per i
+modelli esterni. Gli stessi provider valgono per gli script di traduzione del
+catalogo e degli strumenti (`scripts/translate_*.py`). La disattivazione delle
+traduzioni dei counselor
+(`COUNSELOR_TRANSLATE_DISABLED`) resta invariata.
 
 ### Mappa dei prompt delle chat guidate
 

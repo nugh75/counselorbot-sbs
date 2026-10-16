@@ -164,6 +164,10 @@ class _FakeAIService:
     def generate_summary(self, *a, **k):
         return "riassunto test"
 
+    def call_vision(self, prompt, image_base64, **kwargs):
+        # Il ripiego OCR non e' mai atteso dai test che usano questo finto.
+        raise AssertionError("Vision fallback non previsto in _FakeAIService")
+
     def list_models(self, *a, **k):
         return []
 

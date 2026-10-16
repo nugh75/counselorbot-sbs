@@ -44,21 +44,44 @@ models with smaller context limits may still reject a batch. No automatic
 truncation. OpenRouter retries are disabled; Mistral uses the SDK's explicit
 no-retry policy. Ollama keeps its existing batches of 32 texts.
 
-## Temporary privacy guard, to review in block 4
+## Privacy policy (block 4)
 
-External providers accept only `purpose="document", public_corpus=True`.
-Only the four built-in editorial corpus indexes opt in. Dynamic collections and
-all `MemoryEmbedder` items remain local/lexical, including when cached vectors
-exist. Every external query is rejected with `embedding_privacy_blocked`, even
-when passed `public_corpus=True`. `SiteRagIndex` directly uses BM25 for external
-queries without triggering the shared provider cooldown. `none` avoids every
-embedding call, including cached vector queries.
+Enforced in `embedding_service.embed_texts`, the single exit point, with no
+config bypass. "External" means any provider other than `ollama`.
 
-There is no runtime setting to bypass this guard. Block 4 must apply the agreed
-PII policy and remove numerical profile scores before enabling external queries;
-session memories must remain local. Do not enable external user-text embedding
-in production before that work. External public-corpus indexing is available now,
-but query ranking remains lexical in this intermediate block.
+| Text | Purpose | External provider |
+| --- | --- | --- |
+| Built-in corpus documents | `document`, `public_corpus=True` | Allowed |
+| Dynamic collection documents | `document` | Only if the admin flags the collection `api_publishable` (default no → BM25 only) |
+| Retrieval query (chat, site assistant) | `query` | Only against a public collection, after `filter_external_query` |
+| Session memories, episodes, strategy/catalog ranking (`MemoryEmbedder`) | `private` | Never: local Ollama or keyword fallback |
+
+`filter_external_query` runs `pii_ner.anonymize_texts` with the external chat
+settings (`pii_ner_enabled`, `pii_ner_model`, `external_pii_fallback`). With
+`block`, an unreachable NER detector refuses the query (`embedding_privacy_blocked`)
+and the search uses BM25 for that turn without starting the provider cooldown.
+Unlike chat, redaction is always applied, even with `external_pii_redact=false`:
+retrieval never needs the real values. Score-like figures (`4/9`, `3,5/9`, `75%`,
+dates written with slashes) are then removed and the query is capped to 4,000
+UTF-8 bytes. A query left empty is refused (`embedding_query_empty`).
+
+The guided chat also composes a separate `vector_query` without
+`scores_context` when the provider is external; BM25 and local vectors keep the
+full query in-process. Dynamic collections store the flag in
+`.collection.json` (`PATCH /admin/rag/collections/{slug}`), read at each use so
+every worker applies a change immediately.
+
+OpenRouter requests carry `provider: {"data_collection": "deny", "zdr": true}`
+([provider routing](https://openrouter.ai/docs/api/api-reference/embeddings/create-embeddings)).
+If no zero-retention endpoint serves the chosen model, OpenRouter returns an
+error and retrieval falls back to BM25: this has not been tested against the
+live API.
+
+Processors: Mistral direct is established in the EU. OpenRouter (US) is an
+additional processor that forwards to the model provider (Google for the default
+`google/gemini-embedding-2`), with an extra-EU transfer. The privacy notice, DPAs
+and transfer assessment require review by the data controller; the texts in this
+repository are not legal wording.
 
 ## Accounting, failures and caches
 
