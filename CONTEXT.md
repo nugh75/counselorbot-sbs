@@ -276,6 +276,8 @@ On the **first startup** after this feature, `reconcile` writes a baseline: a pr
 `AIService` (`backend/ai_service.py`) dispatches through a provider registry supporting **13 providers**: openai, anthropic, gemini, mistral, openrouter, ollama, llamacpp, **groq**, **cerebras**, **deepseek**, **together**, **fireworks**, **deepinfra**. Each provider: `call`, `stream`, `call_max`, `stream_max`. `disable_thinking` per-provider, driven by reasoning profiles (`backend/reasoning_profiles.py`). **Error contract**: config/provider failures raise `AIError` — never returned as chat content. Monthly budget fallback (`monthly_budget_usd`) switches to Ollama local model when exceeded.
 
 ### RAG System
+Document retrieval always builds a local multilingual BM25 index (text, title, filename) in the collection JSON. `SiteRagIndex.search(..., retrieval_mode="hybrid" | "lexical" | "vector")` defaults to hybrid RRF (k=60); unavailable vectors fall back to BM25, respecting the shared five-minute embedding cooldown. Lexical mode makes no embedding calls. Category/audience weights, source caps and graph expansion follow ranking. See `docs/operations/rag-bm25.md` for persistence, score semantics and the offline framework benchmark. Provider configuration remains a later block.
+
 Four built-in knowledge collections (plus dynamic collections created via admin UI):
 
 | Collection | Source | Description |
