@@ -1,3 +1,30 @@
+# Handoff s16: politica privacy degli embedding (Blocco 4)
+Data: 2026-10-16 | Branch: `feat/embedding-privacy-policy` (da `origin/main` 2c97dc0d)
+Agente: `s16-op-blocco4-privacy`, Claude Opus 5.5 high | Task `4b69ef06-e952-4dd4-a9cb-24e55d7a05cb` | milestone #18
+
+Il guard temporaneo del blocco 3 è sostituito dalla politica in
+`embedding_service.embed_texts` (unico punto di uscita, nessun bypass da config):
+`purpose="private"` (MemoryEmbedder: memorie, episodi, strategie, catalogo) mai
+esterno; documenti solo da corpus pubblico; query solo verso corpus pubblico e
+dopo `filter_external_query` (stesso filtro PII della chat, sempre applicato;
+`block` con NER giù → BM25 senza cooldown; punteggi tipo 4/9, 75% e date rimossi;
+massimo 4000 byte). La chat guidata passa `vector_query` senza `scores_context`
+quando il provider è esterno. Collezioni dinamiche: flag `api_publishable` in
+`.collection.json` (default false, PATCH `/admin/rag/collections/{slug}`, casella
+nel pannello Documenti RAG), letto a ogni uso. OpenRouter riceve
+`provider: {data_collection: deny, zdr: true}`: non verificato sull'API reale
+(se nessun endpoint ZDR serve il modello, errore → BM25).
+
+Testi: sezione «Ricerca nei materiali» in `/guide/dati-riservatezza` (6 lingue),
+`docs/protocollo-sperimentazione.md` §7 con segnaposto del fornitore configurato,
+`embedding-providers.md`, CONTEXT, funzionalità. Informativa/DPA da rivedere
+con il titolare: i testi non sono formulazioni legali.
+
+Test: `backend/tests/test_embedding_privacy.py` (19) + suite provider/RAG; suite
+ampia su Postgres 16 usa e getta (porta 55447, container
+`counselorbot-s16-privacy-pg`, da rimuovere). Fallimenti preesistenti su main in
+`test_smoke.py`: bug `6c8f223f` e `47a13138`. Nessun deploy, sudo o `.env`.
+
 # Handoff s15: provider embedding configurabile (Blocco 3)
 Data: 2026-10-16 | Branch: `feat/embedding-provider-configurable` (da `origin/main` 49e8e9fa)
 Agente: `s15-cx-blocco3-provider`, Codex gpt-6.1-sol high | Task `a1d1ce5e-1b67-4f6c-a7b8-1699aebde7ae` | Issue #306, PR #307, milestone #18
