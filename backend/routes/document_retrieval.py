@@ -181,7 +181,10 @@ async def estimate(collection: str, identity=Depends(require_admin), db: Session
 async def reindex(collection: str, identity=Depends(require_admin), db: Session = Depends(get_db)):
     index = get_index(_require_collection(collection))
     ai_service = AIService(db)
-    await run_in_threadpool(index.start_build, ai_service)
+    started = await run_in_threadpool(index.start_build, ai_service)
+    if not started and not index._building:
+        # Another collection or «Reindicizza tutto» holds the build reservation.
+        raise HTTPException(409, 'Another index build is running')
     return {'status': 'building', 'collection': _collection_status(
         ai_service, next(c for c in list_collections() if c['id'] == collection))}
 
@@ -216,5 +219,5 @@ def reindex_all_status(identity=Depends(require_admin)):
 @router.post('/admin/document-retrieval/reindex-all', dependencies=[Depends(browser_mutation)])
 async def reindex_all(identity=Depends(require_admin), db: Session = Depends(get_db)):
     """Start one sequential job over every collection; idempotent while it runs."""
-    started, job = await run_in_threadpool(rag_reindex_job.start, AIService(db), list_collections())
-    return {'started': started, 'job': job}
+    started, job, reason = await run_in_threadpool(rag_reindex_job.start, AIService(db), list_collections())
+    return {'started': started, 'job': job, 'reason': reason}

@@ -995,6 +995,43 @@ class _EmbeddingCooldown:
 _embedding_cooldown = _EmbeddingCooldown(EMBEDDING_FAILURE_COOLDOWN_SECONDS)
 
 
+class _BuildReservation:
+    """At most one embedding build at a time: background builds and «Reindicizza
+    tutto» share it. A thread lock covers this process, a flock the other workers.
+    It may be released by a thread other than the one that acquired it."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._file = None
+
+    def acquire(self) -> bool:
+        if not self._lock.acquire(blocking=False):
+            return False
+        try:
+            os.makedirs(INDEX_DIR, exist_ok=True)
+            lockf = open(os.path.join(INDEX_DIR, ".embedding-build.lock"), "a")
+            try:
+                fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                lockf.close()
+                self._lock.release()
+                return False
+        except Exception:
+            self._lock.release()
+            raise
+        self._file = lockf
+        return True
+
+    def release(self):
+        lockf, self._file = self._file, None
+        if lockf is not None:
+            lockf.close()
+        self._lock.release()
+
+
+_build_reservation = _BuildReservation()
+
+
 def build_error_code(exc: Exception) -> str:
     """Sanitized reason for the Admin panel: classified embedding codes only."""
     code = getattr(exc, "code", None)
@@ -1409,7 +1446,11 @@ class SiteRagIndex:
         return matrix
 
     def start_build(self, ai_service) -> bool:
-        """Start at most one thread. Production services own a separate DB session."""
+        """Start at most one thread. Production services own a separate DB session.
+
+        False when this collection is already building, or when another build
+        (any collection, any worker) or «Reindicizza tutto» holds the reservation.
+        """
         with self._schedule_lock:
             if self._building:
                 return False
@@ -1417,6 +1458,8 @@ class SiteRagIndex:
                 self._load_from_disk()
             if not self._loaded:
                 self.build(ai_service, require_vectors=False)
+            if not _build_reservation.acquire():
+                return False
             from .ai_service import AIService
             from sqlalchemy.orm import Session
 
@@ -1441,9 +1484,15 @@ class SiteRagIndex:
                     self._record_build_failure(exc)
                 finally:
                     self._building = False
+                    _build_reservation.release()
 
             self._build_thread = threading.Thread(target=run, name="rag-index-build", daemon=True)
-            self._build_thread.start()
+            try:
+                self._build_thread.start()
+            except Exception:
+                self._building = False
+                _build_reservation.release()
+                raise
             return True
 
     def wait_for_build(self, timeout: float = 30) -> bool:

@@ -71,8 +71,12 @@ def read_state() -> dict:
     return state
 
 
-def start(ai_service, collections: list[dict]) -> tuple[bool, dict]:
-    """Start the job unless one is running (in any worker): (started, state)."""
+def start(ai_service, collections: list[dict]) -> tuple[bool, dict, str | None]:
+    """Start the job unless one is running (in any worker): (started, state, reason).
+
+    The job holds the shared build reservation for its whole life, so it never
+    overlaps a single-collection build and none can start while it runs.
+    """
     global _thread
     state_path, lock_path = _paths()
     os.makedirs(os.path.dirname(state_path), exist_ok=True)
@@ -82,8 +86,11 @@ def start(ai_service, collections: list[dict]) -> tuple[bool, dict]:
             fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             lockf.close()
-            return False, read_state()
-        state = {
+            return False, read_state(), "reindex_running"
+        if not rag_index._build_reservation.acquire():
+            lockf.close()
+            return False, read_state(), "build_in_progress"
+        state: dict = {
             "status": "running", "started_at": time.time(), "finished_at": None,
             "current": None, "provider": getattr(ai_service, "embedding_provider", "ollama"),
             "model": getattr(ai_service, "embedding_model", ""),
@@ -94,12 +101,19 @@ def start(ai_service, collections: list[dict]) -> tuple[bool, dict]:
         try:
             _write(state)
         except Exception:
-            lockf.close()
+            _release(lockf)
             raise
         _thread = threading.Thread(target=_run, args=(lockf, state, ai_service),
                                    name="rag-reindex-all", daemon=True)
         _thread.start()
-        return True, copy.deepcopy(state)
+        return True, copy.deepcopy(state), None
+
+
+def _release(lockf):
+    try:
+        rag_index._build_reservation.release()
+    finally:
+        lockf.close()  # Releases the job lock for every worker.
 
 
 def wait(timeout: float | None = None) -> bool:
@@ -135,7 +149,7 @@ def _run(lockf, state: dict, ai_service):
         try:
             _write(state)
         finally:
-            lockf.close()  # Releases the job lock for every worker.
+            _release(lockf)
 
 
 def _index_all(state: dict, service):
@@ -151,9 +165,15 @@ def _index_all(state: dict, service):
             _write(state)
 
         index = rag_index.get_index(entry["id"])
+        # The reservation excludes start_build(), so the flag is free: the job owns it.
         with index._schedule_lock:
-            owned = not index._building
-            index._building = True
+            busy = index._building
+            if not busy:
+                index._building = True
+        if busy:
+            entry.update(status="error", phase=None, error="rag_build_busy")
+            _write(state)
+            continue
         try:
             # Per-collection lock and atomic publish: the previous index serves
             # until this one is complete, and a failure stays here.
@@ -162,6 +182,5 @@ def _index_all(state: dict, service):
         except Exception as exc:
             entry.update(status="error", phase=None, error=rag_index.build_error_code(exc))
         finally:
-            if owned:
-                index._building = False
+            index._building = False
         _write(state)

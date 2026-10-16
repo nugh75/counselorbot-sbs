@@ -362,3 +362,68 @@ def test_reindex_all_endpoints_are_admin_and_browser_only(client):
     for path in ("/admin/document-retrieval/reindex-all", "/admin/document-retrieval/estimate"):
         assert client.get(path).status_code == 403
     assert client.post("/admin/document-retrieval/reindex-all").status_code == 403
+
+
+def _blocking_client(monkeypatch):
+    """Fake Mistral that holds every call until released and records overlap."""
+    client_mock, _, calls = fake_client(monkeypatch, "mistral")
+    succeed = client_mock.embeddings.create.side_effect
+    entered, release = threading.Event(), threading.Event()
+    active, peak, lock = [0], [0], threading.Lock()
+
+    def blocking(**kwargs):
+        with lock:
+            active[0] += 1
+            peak[0] = max(peak[0], active[0])
+        entered.set()
+        try:
+            assert release.wait(5)
+            return succeed(**kwargs)
+        finally:
+            with lock:
+                active[0] -= 1
+
+    client_mock.embeddings.create.side_effect = blocking
+    return calls, entered, release, peak
+
+
+def test_single_builds_and_reindex_all_share_one_reservation(client, db, monkeypatch, collections):
+    _, indexes = collections
+    monkeypatch.setenv("API_KEY_MISTRAL", SECRET)
+    calls, entered, release, peak = _blocking_client(monkeypatch)
+    _put(client, provider="mistral")
+    for index in indexes.values():
+        del index.start_build  # the real background entrypoint, not the inline test helper
+    gamma = indexes["gamma"]
+    try:
+        assert gamma.start_build(_service(db))
+        assert entered.wait(5)
+        # A single build is embedding: reindex-all does not start and says why.
+        data = client.post("/admin/document-retrieval/reindex-all").json()
+        assert (data["started"], data["reason"]) == (False, "build_in_progress")
+        assert data["job"]["status"] == "idle"
+        # Nor does a single build of another collection.
+        assert client.post("/admin/document-retrieval/collections/alpha/reindex").status_code == 409
+    finally:
+        release.set()
+    assert gamma.wait_for_build(5) and not gamma._building
+    entered.clear()
+    release.clear()
+    gamma.matrix = None  # make gamma stale again so a single build would embed
+    gamma.embedding_model = "other"
+    try:
+        assert client.post("/admin/document-retrieval/reindex-all").json()["started"] is True
+        assert entered.wait(5)
+        # While the job runs, every single build is refused and leaves the job's flag alone.
+        assert gamma.start_build(_service(db)) is False
+        assert client.post("/admin/document-retrieval/collections/gamma/reindex").status_code == 409
+        assert indexes["alpha"]._building is True
+    finally:
+        release.set()
+    assert rag_reindex_job.wait(5)
+    job = client.get("/admin/document-retrieval/reindex-all").json()
+    assert [c["status"] for c in job["collections"]] == ["done", "done", "done"]
+    assert peak[0] == 1  # never two collections embedding at once
+    assert not any(index._building for index in indexes.values())
+    assert rag._build_reservation.acquire()  # released at the end
+    rag._build_reservation.release()
