@@ -472,3 +472,135 @@ def test_external_batch_payload_byte_limit(db, monkeypatch, provider, expected):
     _, _, calls = fake_client(monkeypatch, provider)
     service(db, provider).embed_texts(["a" * 8000] * 3, public_corpus=True)
     assert [len(call.get("input", call.get("inputs"))) for call in calls] == expected
+
+
+class _StatusError(Exception):
+    """SDK-like HTTP error: the message stands for a body that must never escape."""
+
+    def __init__(self, status, retry_after=None):
+        super().__init__("raw provider body with sk-secret and input text")
+        self.status_code = status
+        self.headers = {} if retry_after is None else {"retry-after": str(retry_after)}
+
+
+def _failing_client(monkeypatch, provider, errors):
+    client, constructor, calls = fake_client(monkeypatch, provider)
+    succeed = client.embeddings.create.side_effect
+
+    def create(**kwargs):
+        if errors:
+            calls.append(kwargs)
+            raise errors.pop(0)
+        return succeed(**kwargs)
+
+    client.embeddings.create.side_effect = create
+    return calls
+
+
+@pytest.mark.parametrize("provider", ["mistral", "openrouter"])
+def test_build_batches_retry_rate_limits_and_report_progress(db, monkeypatch, provider):
+    monkeypatch.setenv(f"API_KEY_{provider.upper()}", "fake")
+    sleeps = []
+    monkeypatch.setattr(embeddings, "_sleep", sleeps.append)
+    calls = _failing_client(monkeypatch, provider, [_StatusError(429, retry_after=7), _StatusError(503)])
+    done = []
+    vectors = service(db, provider).embed_texts(
+        [f"public {i}" for i in range(33)], public_corpus=True, retries=3, progress=done.append)
+    assert len(vectors) == 33 and done == [32, 33]
+    assert sleeps == [7.0, 4.0]  # Retry-After first, then exponential backoff
+    assert len(calls) == 4 and db.query(models.Log).count() == 2  # only paid successes
+
+
+@pytest.mark.parametrize("status,code,retryable", [
+    (401, "embedding_auth_failed", False),
+    (403, "embedding_auth_failed", False),
+    (402, "embedding_quota_exceeded", False),
+    (404, "embedding_model_unavailable", False),
+    (400, "embedding_request_rejected", False),
+    (422, "embedding_request_rejected", False),
+    (429, "embedding_rate_limited", True),
+    (502, "embedding_provider_error", True),
+])
+def test_provider_errors_are_classified_without_details(db, monkeypatch, status, code, retryable):
+    monkeypatch.setenv("API_KEY_MISTRAL", "fake")
+    sleeps = []
+    monkeypatch.setattr(embeddings, "_sleep", sleeps.append)
+    calls = _failing_client(monkeypatch, "mistral", [_StatusError(status) for _ in range(3)])
+    with pytest.raises(AIError) as exc:
+        service(db, "mistral").embed_texts(["public"], public_corpus=True, retries=2)
+    assert exc.value.code == code and "secret" not in str(exc.value) and "public" not in str(exc.value)
+    assert len(calls) == (3 if retryable else 1) and len(sleeps) == (2 if retryable else 0)
+
+
+def test_interactive_calls_never_wait_for_retries(db, monkeypatch):
+    monkeypatch.setenv("API_KEY_MISTRAL", "fake")
+    monkeypatch.setattr(embeddings, "_sleep", lambda s: pytest.fail("query must not sleep"))
+    calls = _failing_client(monkeypatch, "mistral", [_StatusError(429)])
+    db.merge(models.Config(key="pii_ner_enabled", value="false"))
+    with pytest.raises(AIError) as exc:
+        service(db, "mistral").embed_query("domanda", public_corpus=True)
+    assert exc.value.code == "embedding_rate_limited" and len(calls) == 1
+
+
+@pytest.mark.parametrize("error,code", [
+    (httpx.ConnectError("refused http://internal"), "embedding_network"),
+    (httpx.ReadTimeout("slow"), "embedding_timeout"),
+    (ValueError("unexpected"), "embedding_unavailable"),
+])
+def test_transport_errors_are_classified(error, code):
+    assert embeddings.classify_error(error)[0] == code
+
+
+def test_ignored_dimension_request_is_reported_as_mismatch(db, monkeypatch):
+    monkeypatch.setenv("API_KEY_OPENROUTER", "fake")
+    client, _, _ = fake_client(monkeypatch, "openrouter")
+    client.embeddings.create.side_effect = lambda **kw: SimpleNamespace(
+        data=[SimpleNamespace(index=0, embedding=[1.0] * 768)], usage=SimpleNamespace(prompt_tokens=1))
+    with pytest.raises(AIError) as exc:
+        service(db, "openrouter", embedding_dimensions="786").embed_texts(["public"], public_corpus=True)
+    assert exc.value.code == "embedding_dimensions_mismatch"
+    assert embeddings.dimensions_warning("openrouter", "google/gemini-embedding-2", 786) == "embedding_dimensions_unusual"
+    assert embeddings.dimensions_warning("openrouter", "google/gemini-embedding-2", 1536) is None
+    assert embeddings.dimensions_warning("openrouter", "qwen/qwen3-embedding-8b", 786) is None
+
+
+@pytest.mark.parametrize("provider", ["mistral", "openrouter"])
+def test_real_sdk_rate_limit_is_retried_and_auth_error_classified(db, monkeypatch, provider):
+    # Real SDK error types over a mock transport: status and Retry-After are read
+    # from the SDK exceptions, never their bodies.
+    from mistralai.client import Mistral
+    from openai import OpenAI
+    from httpx._client import Client as HTTPClient
+
+    monkeypatch.setenv(f"API_KEY_{provider.upper()}", "fake-system")
+    sleeps = []
+    monkeypatch.setattr(embeddings, "_sleep", sleeps.append)
+    replies = []
+    dimensions = 1024 if provider == "mistral" else 768
+
+    def respond(request):
+        status = replies.pop(0)
+        if status != 200:
+            return httpx.Response(status, headers={"retry-after": "1"}, json={"message": "sk-leak"})
+        return httpx.Response(200, json={
+            "id": "r", "model": "m", "object": "list",
+            "data": [{"object": "embedding", "index": 0, "embedding": [1.0] * dimensions}],
+            "usage": {"prompt_tokens": 1, "total_tokens": 1, "completion_tokens": 0}})
+
+    def http():
+        # One client per SDK instance: closing the SDK closes its transport.
+        client = HTTPClient(transport=httpx.MockTransport(respond))
+        client.send = ORIGINAL_HTTP_SEND.__get__(client, HTTPClient)
+        return client
+
+    if provider == "mistral":
+        monkeypatch.setattr(embeddings, "Mistral", lambda **kwargs: Mistral(client=http(), **kwargs))
+    else:
+        monkeypatch.setattr(embeddings, "OpenAI", lambda **kwargs: OpenAI(http_client=http(), **kwargs))
+    replies[:] = [429, 200]
+    assert service(db, provider).embed_texts(["public"], public_corpus=True, retries=2)
+    assert sleeps == [1.0] and replies == []
+    replies[:] = [401]
+    with pytest.raises(AIError) as exc:
+        service(db, provider).embed_texts(["public"], public_corpus=True, retries=2)
+    assert exc.value.code == "embedding_auth_failed" and "leak" not in str(exc.value)
