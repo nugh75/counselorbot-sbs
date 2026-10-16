@@ -32,7 +32,7 @@ def main() -> int:
     args = parser.parse_args()
 
     from backend import database, models
-    from backend.instrument_translation import ollama_translator, translate_instrument
+    from backend.instrument_translation import configured_translator, translate_instrument
 
     targets = [t.strip() for t in args.targets.split(",") if t.strip()]
     if not targets:
@@ -49,7 +49,7 @@ def main() -> int:
             print("serve --instruments oppure --all", file=sys.stderr)
             return 2
 
-        translate, model = ollama_translator(db)
+        translate, model = configured_translator(db)
         print(f"modello: {model} · sorgente: {args.source} · destinazioni: {','.join(targets)}")
         for code in codes:
             done = translate_instrument(
