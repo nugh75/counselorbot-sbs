@@ -126,6 +126,16 @@ shown. The Guide remains available independently of these class toggles.
   **CounselorBot**. Le altre basi restano distinte; non attribuire alla piattaforma
   le funzioni di competenzestrategiche.it. Il presente documento viene letto a ogni
   richiesta CounselorBot; i documenti di approfondimento sono recuperati dall’indice.
+  Il backend supporta embedding locali Ollama (predefinito), Mistral diretto,
+  OpenRouter oppure nessun embedding, con modello, dimensioni e prezzi per modello
+  salvati nelle impostazioni AI (OpenRouter usa per default google/gemini-embedding-2
+  a 768 dimensioni; Mistral usa mistral-embed). I costi API di sistema entrano nei log e nel budget
+  mensile; i tentativi hanno un timeout limitato e gli errori mantengono disponibile
+  la ricerca per parole chiave. In questa fase solo i corpus editoriali predefiniti possono essere
+  indicizzati all’esterno: le domande restano lessicali fino al filtro privacy;
+  le memorie restano sempre locali/lessicali e le raccolte caricate non vengono
+  inviate all’esterno. Il pannello
+  dedicato di amministrazione arriverà in un blocco successivo.
   La ricerca combina parole chiave (BM25, inclusi titoli e nomi dei file) e
   similarità semantica quando gli embedding sono disponibili. Senza embedding
   continua sulle parole chiave, anche per le basi dinamiche: per circa cinque

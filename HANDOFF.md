@@ -1,3 +1,41 @@
+# Handoff s15: provider embedding configurabile (Blocco 3)
+Data: 2026-10-16 | Branch: `feat/embedding-provider-configurable` (da `origin/main` 49e8e9fa)
+Agente: `s15-cx-blocco3-provider`, Codex gpt-6.1-sol high | Task `a1d1ce5e-1b67-4f6c-a7b8-1699aebde7ae` | Issue #306, PR #307, milestone #18
+
+Backend: `embedding_service.py` smista Ollama, Mistral, OpenRouter e none;
+modello/dimensioni/prezzi persistono in Config via API admin esistente. Default
+Ollama preservato; modello esterno vuoto seleziona mistral-embed o
+OpenRouter google/gemini-embedding-2 a 768 dimensioni. Al cambio provider cancellare
+il vecchio embedding_model o salvare il nuovo modello. Gli altri cinque provider
+sono riservati e falliscono con errore classificato, senza chiamate esterne.
+Log separato per batch pagato, costo configurabile per modello, budget ricontrollato
+tra batch, chiavi di sistema risolte da env senza credenziali personali.
+
+Guard esplicito prima del blocco 4: all’esterno solo documenti dei quattro corpus
+pubblici predefiniti. Query sempre BM25 quando il provider è esterno; memorie
+sempre locali/keyword; collezioni dinamiche mai inviate. Nessun flag di bypass.
+Identità cache/cooldown separate per provider/modello/dimensioni; percorsi indice e
+build atomico restano al blocco 5. UI dedicata al blocco 6.
+
+Documentazione: `docs/operations/embedding-providers.md`, CONTEXT, funzionalità e
+manifesto guida. Guida UI/screenshot rivisti: nessuna nuova UI in questo blocco.
+Rebuild isolato `counselorbot-embedding-validation:s15` riuscito, niente deploy,
+sudo, .env, dati/porte di produzione o stack portabile modificati.
+
+Verifiche locali: 86 test provider/RAG + 3 sottotest, 72 test routing/PII e 3 test
+guida verdi; Ruff F sui moduli coinvolti, format dei file nuovi, mypy locale e
+guidance-check verdi. Mypy con SDK completi ha rilevato il timeout OpenAI tipizzato
+come httpx2: corretto usando il timeout numerico supportato da entrambe le versioni
+(bug `393dd8a3`), con test SDK su trasporto finto. Il workflow Document retrieval
+esegue Ruff, mypy con tutte le dipendenze e la suite offline. Politica consegna:
+rendere pronta PR #307 solo dopo tutti i check verdi; nessun merge o deploy manuale.
+
+Bug Diario: `eea9b649` (refuso cooldown/cleanup SDK introdotto e corretto prima del
+commit); `8ef0d4ef` (fixture test senza prompt_revisions, corretto, suite verde).
+`615f4a79`: F401 os inutilizzato preesistente in backend/main.py: resta fuori ambito;
+Ruff dell’intero file main.py non è verde. Nessun bug non registrato.
+I bug 089e7cd5, 54e4d065, c996ef4c risultano già risolti dai blocchi precedenti.
+
 # Handoff s14: BM25 sempre attivo e fusione RRF (Blocco 2)
 Data: 2026-10-16 | Branch: `feat/rag-bm25-always-on` (da `origin/main` e03f4ab1)
 Agente: `s14-cx-blocco2-bm25`, Codex gpt-6.1-sol high | Task `123d2d01-3ba7-4378-99c2-2a0e75e407c6` | Issue #304

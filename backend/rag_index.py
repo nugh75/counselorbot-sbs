@@ -1061,12 +1061,16 @@ def _rank_fusion(*rankings: list[int]) -> dict[int, float]:
 # ---------------------------------------------------------------------------
 # Indice
 # ---------------------------------------------------------------------------
+def _embedding_key(ai_service) -> str:
+    return getattr(ai_service, "embedding_cache_key", None) or ai_service.embedding_model or "qwen3-embedding:4b"
+
+
 class SiteRagIndex:
     """Indice in-memory persistito su disco. Thread-safe per build/reload."""
 
     def __init__(self, *, docs_dir: str, index_path: str, emb_path: str,
                  cache_path: str, lock_path: str, collector, graph_loader,
-                 signature_fn, mode: str = "graphify"):
+                 signature_fn, mode: str = "graphify", public_corpus: bool = False):
         self._lock = threading.Lock()
         # Config della collezione (paths + funzioni di raccolta/grafo/firma).
         self.docs_dir = docs_dir
@@ -1078,6 +1082,7 @@ class SiteRagIndex:
         self._graph_loader = graph_loader
         self._signature_fn = signature_fn
         self.mode = mode
+        self.public_corpus = public_corpus
         self.chunks: list[dict] = []
         self.categories: list[str] = []            # macro-categoria per chunk (allineata a chunks)
         self.matrix: np.ndarray | None = None     # (n, d) float32
@@ -1136,25 +1141,30 @@ class SiteRagIndex:
         np.save(self.emb_path, self.matrix if self.matrix is not None else np.zeros((0, 1), dtype=np.float32))
         os.replace(tmp_json, self.index_path)
 
+    def _vectors_allowed(self, ai_service) -> bool:
+        provider = getattr(ai_service, "embedding_provider", "ollama")
+        return provider != "none" and (provider == "ollama" or self.public_corpus)
+
     # --- build / ensure ---
     def _is_current(self, ai_service, require_vectors: bool = True) -> bool:
         """L'indice in memoria è già allineato a corpus + modello?"""
         if not self._loaded or self.lexical is None:
             return False
         if require_vectors and (self.matrix is None or self.embedding_model !=
-                                (ai_service.embedding_model or "qwen3-embedding:4b")):
+                                _embedding_key(ai_service)):
             return False
         return self._signature_fn() == self.signature
 
     def needs_rebuild(self, ai_service) -> bool:
         if not self._loaded and not self._load_from_disk():
             return True
-        return not self._is_current(ai_service)
+        return not self._is_current(ai_service, self._vectors_allowed(ai_service))
 
     def build(self, ai_service, require_vectors: bool = True):
         """(Ri)costruisce l'indice. Lock cross-worker (file) per evitare che i 4
         worker uvicorn embeddino lo stesso corpus in parallelo: chi non costruisce
         ricarica da disco il risultato dell'altro."""
+        require_vectors = require_vectors and self._vectors_allowed(ai_service)
         with self._lock:
             os.makedirs(os.path.dirname(self.index_path), exist_ok=True)
             with open(self.lock_path, "w") as lockf:
@@ -1169,7 +1179,7 @@ class SiteRagIndex:
                 self._do_build(ai_service, require_vectors)
 
     def _do_build(self, ai_service, require_vectors: bool = True):
-        model = ai_service.embedding_model or "qwen3-embedding:4b"
+        model = _embedding_key(ai_service)
         if not self._is_current(ai_service, require_vectors=False):
             chunks, signature = self._collector()
             graph = self._graph_loader()
@@ -1219,7 +1229,7 @@ class SiteRagIndex:
             len(texts), len(texts) - len(miss_txt), len(miss_txt), model,
         )
         if miss_txt:
-            new = _embedding_cooldown.call(model, lambda: ai_service.embed_texts(miss_txt))
+            new = _embedding_cooldown.call(model, lambda: ai_service.embed_texts(miss_txt, public_corpus=self.public_corpus))
             for j, idx in enumerate(miss_idx):
                 vectors[idx] = np.asarray(new[j], dtype=np.float32)
 
@@ -1230,10 +1240,10 @@ class SiteRagIndex:
     def ensure(self, ai_service, retrieval_mode: str = "hybrid"):
         if not self._loaded:
             self._load_from_disk()
-        require_vectors = retrieval_mode != "lexical"
+        require_vectors = retrieval_mode != "lexical" and self._vectors_allowed(ai_service)
         if require_vectors:
             try:
-                _embedding_cooldown.check(ai_service.embedding_model or "qwen3-embedding:4b")
+                _embedding_cooldown.check(_embedding_key(ai_service))
             except EmbeddingUnavailable:
                 require_vectors = False
         if not self._is_current(ai_service, require_vectors):
@@ -1260,8 +1270,9 @@ class SiteRagIndex:
                         if lexical_scores[i] > 0]
         vector_rank = []
         vector_scores = None
-        model = ai_service.embedding_model or "qwen3-embedding:4b"
-        if retrieval_mode != "lexical" and self.matrix is not None and self.norms is not None and self.embedding_model == model:
+        model = _embedding_key(ai_service)
+        if (retrieval_mode != "lexical" and getattr(ai_service, "embedding_provider", "ollama") == "ollama"
+                and self.matrix is not None and self.norms is not None and self.embedding_model == model):
             try:
                 _embedding_cooldown.check(model)
                 q_vec = _embedding_cooldown.call(model, lambda: ai_service.embed_query(query))
@@ -1387,7 +1398,7 @@ site_rag_index = SiteRagIndex(
     collector=_collect_guides_only,
     graph_loader=_load_graph,
     signature_fn=lambda: _scoped_corpus_signature(COLLECTION_COMPETENZE),
-    mode="graphify",
+    mode="graphify", public_corpus=True,
 )
 
 # Collezione: CounselorBot piattaforma + validazione (plain, docs_dir esterno).
@@ -1400,7 +1411,7 @@ counselorbot_rag_index = SiteRagIndex(
     collector=_collect_counselorbot_plus_validazione,
     graph_loader=_empty_graph,
     signature_fn=_counselorbot_validazione_signature,
-    mode="plain",
+    mode="plain", public_corpus=True,
 )
 
 # Collezione: framework teorico e articoli di ricerca (graphify).
@@ -1413,7 +1424,7 @@ framework_rag_index = SiteRagIndex(
     collector=_collect_framework,
     graph_loader=_load_graph,
     signature_fn=lambda: _scoped_corpus_signature(COLLECTION_FRAMEWORK),
-    mode="graphify",
+    mode="graphify", public_corpus=True,
 )
 
 # Collezione: questionari e strumenti (graphify).
@@ -1426,7 +1437,7 @@ questionari_rag_index = SiteRagIndex(
     collector=_collect_questionari_graphify,
     graph_loader=_load_graph,
     signature_fn=lambda: _scoped_corpus_signature(COLLECTION_QUESTIONARI),
-    mode="graphify",
+    mode="graphify", public_corpus=True,
 )
 
 RAG_COLLECTIONS = {

@@ -141,7 +141,7 @@ class _FakeAIService:
         self.disable_thinking = False
         self.embedding_model = "bge-m3"
 
-    def embed_texts(self, texts, model=None):
+    def embed_texts(self, texts, model=None, **kwargs):
         # Vettore deterministico fittizio per ogni testo (nessuna rete).
         return [[float(len(t) % 7), 1.0, 0.5] for t in texts]
 

@@ -20,7 +20,7 @@ from backend import rag_index as rag  # noqa: E402
 class OfflineEmbedder:
     embedding_model = "benchmark-offline"
 
-    def embed_texts(self, texts):
+    def embed_texts(self, texts, **kwargs):
         raise AssertionError("Lexical benchmark must never request embeddings")
 
     def embed_query(self, query):

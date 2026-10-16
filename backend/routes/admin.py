@@ -1163,6 +1163,8 @@ async def create_or_update_config(config: schemas.ConfigCreate, current_user: mo
         raise HTTPException(403, 'Accesso riservato agli amministratori')
     from ..model_context import context_levels, validate_routing_config
     try:
+        from ..embedding_service import validate_config as validate_embedding_config
+        validate_embedding_config(config.key, config.value)
         validate_routing_config(config.key, config.value)
         if config.key in {"model_context_profiles", "model_context_levels"}:
             # Both Config rows form one contract, including first insertions.
