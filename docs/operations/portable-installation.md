@@ -209,7 +209,7 @@ raggiungimento del limite.
 | Assistente piattaforma | Il documento live può fornire grounding senza embedding; la generazione richiede comunque un provider funzionante. |
 | Memoria semantica | Sempre per parole chiave senza Ollama: memorie ed episodi non vanno mai a un'API. |
 | Upload OCR QSA | Ollama assente: il ripiego usa il provider di visione configurato (`vision_provider`/`vision_model`) tramite `AIService` e il filtro privacy della chat. Senza provider di visione l'utente riceve un messaggio chiaro. |
-| OCR pQBL di PDF scansionati | Ancora solo Ollama; i PDF con testo nativo funzionano. Issue #318. |
+| OCR pQBL di PDF scansionati | Ollama assente: l'OCR usa il provider di visione configurato (`vision_provider`/`vision_model`) con il filtro privacy della chat; senza provider di visione compare un errore chiaro. I PDF con testo nativo funzionano sempre. |
 | Traduzioni automatiche counselor | Tentativi automatici disabilitati; usa descrizioni disponibili. Le traduzioni del catalogo usano il provider AI attivo. |
 | Ripiego per budget | Passa al primo ripiego locale o gratuito configurato; senza ripieghi la chat si ferma con un messaggio chiaro. |
 | Thread guard | Disattivato inizialmente; il preset di fabbrica richiede Ollama. |
