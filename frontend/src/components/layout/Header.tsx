@@ -8,12 +8,12 @@ import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
 import { BookOpen, Bot, ClipboardList, Compass, GraduationCap, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, type LucideIcon } from 'lucide-react';
 import { ClassViewSwitcher } from './ClassViewSwitcher';
-import { LanguageSwitcher } from './LanguageSwitcher';
+import { HeaderAccount } from './HeaderAccount';
+import { HeaderAreas } from './HeaderAreas';
 import { HeaderCounselor } from './HeaderCounselor';
 import { HeaderInstrument } from './HeaderInstrument';
 import { HeaderResume } from './HeaderResume';
 import { MotionToggle } from './MotionToggle';
-import { ThemeToggle } from './ThemeToggle';
 import { VoiceReaderMenuEntry } from '@/components/voice-reader/VoiceReader';
 import { FlagIcon } from './FlagIcon';
 import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
@@ -47,8 +47,8 @@ export function Header() {
     // Solo il percorso: nessuna voce punta a `/`, e la home toglie dall'URL le
     // query della chat appena lette (vedi `CHAT_QUERY_KEYS`).
     const pathname = usePathname();
-    // Le voci "Riprendi" vivono qui e servono due rendering: l'icona su schermi
-    // >= xl e il menu mobile. Un solo fetch, lo stesso elenco.
+    // Le voci "Riprendi" vivono qui e servono due rendering: il pulsante della
+    // barra da `lg` e il menu mobile. Un solo fetch, lo stesso elenco.
     const resumeEntries = useResumeEntries(Boolean(identity?.authenticated));
 
     useEffect(() => {
@@ -59,23 +59,24 @@ export function Header() {
     const nav = headerNavigation({ identity, access, accessLoading });
     const current = currentHeaderLink(nav.links, pathname);
     const servicesHref = nav.services === 'manager' ? AI4EDUC_MANAGER_URL : nav.services === 'portal' ? AI4EDUC_PORTAL_URL : undefined;
+    // Menu compatto (< lg, P5): «Accesso admin» torna a /admin come prima.
     const authHref = nav.auth === 'logout' ? AI4AUTH_LOGOUT_URL : ai4authLoginUrl('/admin');
     const authLabel = nav.auth === 'logout' ? t('nav.logout') : t('nav.adminLogin');
     const AuthIcon = nav.auth === 'logout' ? LogOut : LogIn;
 
-    // Le voci non `menuOnly` in linea da `lg`; il menu a tre punti segue
-    // subito dopo e contiene le voci di ruolo.
+    // Barra desktop (P4): prima l'ingresso alle aree, poi gli strumenti di
+    // supporto, con etichette visibili e mai tagliate. Se lo spazio manca si
+    // accorciano vista classe, counselor e nome dell'account, a destra.
     const workInline = (
-        <nav aria-label={t('header.navigation')} className="hidden items-center gap-1 lg:flex">
-            {nav.links.filter(link => !link.menuOnly).map((link) => {
+        <nav aria-label={t('header.navigation')} className="hidden shrink-0 items-center gap-1 lg:flex">
+            <HeaderAreas areas={nav.links.filter(link => link.group === 'area')} current={current} icons={LINK_ICONS} />
+            {nav.links.filter(link => link.group === 'support').map((link) => {
                 const Icon = LINK_ICONS[link.key];
-                const label = t(link.labelKey);
                 return (
-                    <Tooltip key={link.key} content={label}>
-                        <Link href={link.href} className="console-topbar-icon" aria-label={label} aria-current={link.key === current ? 'page' : undefined}>
-                            <Icon className="w-4 h-4" />
-                        </Link>
-                    </Tooltip>
+                    <Link key={link.key} href={link.href} className="console-topbar-action shrink-0" aria-current={link.key === current ? 'page' : undefined}>
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="whitespace-nowrap">{t(link.barLabelKey ?? link.labelKey)}</span>
+                    </Link>
                 );
             })}
         </nav>
@@ -94,104 +95,87 @@ export function Header() {
                         </a>
                     </div>
 
+                    {nav.loading ? (
+                        // Riserva lo spazio mentre l'identità arriva: niente layout shift.
+                        <div className="hidden items-center gap-1 lg:flex" aria-hidden="true">
+                            <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></span>
+                            <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></span>
+                        </div>
+                    ) : workInline}
+
                     <div className="ml-auto flex min-w-0 items-center gap-1">
-                        {/* Strumento e counselor selezionati: badge compatti durante il percorso. */}
-                        <div className="hidden shrink-0 items-center gap-1 xl:flex">
+                        {/* Vista attiva dello studente con classi (#146). */}
+                        {!nav.loading && nav.classView && <ClassViewSwitcher access={access} className="hidden lg:flex" />}
+
+                        {/* Contesto della conversazione: strumento e counselor scelti,
+                            Riprendi. Selezioni salvate, non la prova di una chat aperta. */}
+                        <div role="group" aria-label={t('header.conversation')} className="header-group hidden shrink-0 items-center gap-1 lg:flex">
                             <HeaderInstrument />
                             {nav.authenticated && <HeaderCounselor />}
-                        </div>
-
-                        {nav.loading ? (
-                            // Riserva lo spazio mentre l'identità arriva: niente layout shift.
-                            <div className="hidden items-center gap-1 lg:flex" aria-hidden="true">
-                                <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></span>
-                                <span className="console-topbar-icon"><span className="block h-4 w-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></span>
-                            </div>
-                        ) : (
-                            <>
-                                {/* Vista attiva dello studente con classi (#146). */}
-                                {nav.classView && <ClassViewSwitcher access={access} className="hidden lg:flex" />}
-
-                                {/* I quattro ingressi principali, poi il menu a tre punti. */}
-                                {workInline}
-
-                                <HeaderMenu
-                                    links={nav.links}
-                                    current={current}
-                                    resumeEntries={resumeEntries}
-                                    label={t('header.menu')}
-                                    accountLabel={nav.account?.label}
-                                    access={access}
-                                    classView={nav.classView}
-                                    authHref={authHref}
-                                    authLabel={authLabel}
-                                    authIcon={AuthIcon}
-                                    servicesHref={servicesHref}
-                                    servicesLabel={t('header.services')}
-                                />
-
-                                {nav.account?.href && (
-                                    <Link
-                                        href={nav.account.href}
-                                        title={nav.account.title}
-                                        className="hidden xl:inline min-w-0 max-w-32 truncate px-2 text-sm text-slate-500 hover:text-indigo-600 transition-colors font-medium"
-                                    >
-                                        {nav.account.label}
-                                    </Link>
-                                )}
-                                {nav.account && !nav.account.href && (
-                                    <span
-                                        title={nav.account.title}
-                                        className="hidden xl:inline min-w-0 max-w-32 truncate px-2 text-sm text-slate-500 font-medium"
-                                    >
-                                        {nav.account.label}
-                                    </span>
-                                )}
-
-                                {/* Accedi ad altre risorse: subito prima di Esci. */}
-                                {servicesHref && (
-                                    <div className="hidden xl:block">
-                                        <Tooltip content={t('header.services')}>
-                                            <a href={servicesHref} className="console-topbar-icon" aria-label={t('header.services')} title={t('header.services')}>
-                                                <LayoutGrid className="w-4 h-4" />
-                                            </a>
-                                        </Tooltip>
-                                    </div>
-                                )}
-
-                                <div className="hidden xl:block">
-                                    <Tooltip content={authLabel}>
-                                        <a href={authHref} className="console-topbar-icon" aria-label={authLabel}>
-                                            <AuthIcon className="w-4 h-4" />
-                                        </a>
-                                    </Tooltip>
-                                </div>
-                            </>
-                        )}
-
-                        <span className={cn(SEPARATOR, 'hidden xl:block')} />
-
-                        {/* Riprendi la sessione interrotta (se presente). Su mobile la
-                            stessa lista sta nel menu: qui l'icona affollerebbe la barra. */}
-                        <div className="hidden xl:block">
                             <HeaderResume entries={resumeEntries} />
                         </div>
 
-                        {/* Set minimo sempre disponibile: feedback, tema, lingua. */}
-                        <div className="hidden items-center gap-1 xl:flex">
+                        <div className="hidden shrink-0 lg:block">
                             <Tooltip content={t('nav.feedback')}>
                                 <Link href="/questionario" className="console-topbar-icon" aria-label={t('nav.feedback')}>
                                     <ClipboardList className="w-4 h-4" />
                                 </Link>
                             </Tooltip>
-                            <ThemeToggle />
-                            <MotionToggle />
-                            <LanguageSwitcher />
                         </div>
+
+                        {!nav.loading && (
+                            <>
+                                <span className={cn(SEPARATOR, 'hidden lg:block')} />
+                                <div className="hidden min-w-0 items-center gap-1 lg:flex">
+                                    <HeaderAccount
+                                        account={nav.account}
+                                        servicesHref={servicesHref}
+                                        servicesLabel={t('header.services')}
+                                        logoutHref={nav.authenticated ? AI4AUTH_LOGOUT_URL : undefined}
+                                    />
+                                    {!nav.authenticated && <SignInLink pathname={pathname} />}
+                                </div>
+
+                                <div className="lg:hidden">
+                                    <HeaderMenu
+                                        links={nav.links}
+                                        current={current}
+                                        resumeEntries={resumeEntries}
+                                        label={t('header.menu')}
+                                        accountLabel={nav.account?.label}
+                                        access={access}
+                                        classView={nav.classView}
+                                        authHref={authHref}
+                                        authLabel={authLabel}
+                                        authIcon={AuthIcon}
+                                        servicesHref={servicesHref}
+                                        servicesLabel={t('header.services')}
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </header>
         </TooltipProvider>
+    );
+}
+
+// «Accedi» per chi non ha fatto l'accesso: ai4auth riporta alla pagina
+// corrente (solo percorsi di questa app, vedi `createAuthUrls`). L'accesso
+// amministrativo esplicito resta /login, che torna a /admin, o «Accedi» da /admin.
+function SignInLink({ pathname }: { pathname: string }) {
+    const { t } = useI18n();
+    return (
+        <a
+            href={ai4authLoginUrl(pathname)}
+            // La query (es. /admin?tab=logs) non passa da usePathname: si legge al click.
+            onClick={(event) => { event.currentTarget.href = ai4authLoginUrl(`${location.pathname}${location.search}${location.hash}`); }}
+            className="console-topbar-action shrink-0 font-semibold text-indigo-700"
+        >
+            <LogIn className="h-4 w-4 shrink-0" />
+            <span className="whitespace-nowrap">{t('header.signIn')}</span>
+        </a>
     );
 }
 
@@ -264,12 +248,12 @@ function HeaderMenu({
             </span>
             {open && (
                 <div id="mobile-menu" className="header-panel absolute right-0 top-full z-[60] mt-2 max-h-[calc(100dvh-4.5rem)] w-[min(88vw,18rem)] overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
-                    <div className="compact-header-selection flex xl:hidden flex-wrap items-center gap-2 px-3 py-2 empty:hidden">
+                    <div className="compact-header-selection flex flex-wrap items-center gap-2 px-3 py-2 empty:hidden">
                         <HeaderInstrument />
                         {accountLabel && <HeaderCounselor inline onNavigate={close} />}
                     </div>
                     {accountLabel && (
-                        <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-700 xl:hidden">
+                        <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-700">
                             <div className="text-2xs font-semibold uppercase tracking-wide text-slate-500">{t('header.account')}</div>
                             <div className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100" title={accountLabel}>
                                 {accountLabel}
@@ -277,14 +261,13 @@ function HeaderMenu({
                         </div>
                     )}
                     {accountLabel && classView && (
-                        <ClassViewSwitcher access={access} labelled className="border-b border-slate-100 px-3 py-2 dark:border-slate-700 lg:hidden" />
+                        <ClassViewSwitcher access={access} labelled className="border-b border-slate-100 px-3 py-2 dark:border-slate-700" />
                     )}
-                    {/* Da `lg` restano solo le voci `menuOnly`: senza, il landmark si nasconde. */}
-                    <nav aria-label={t('header.menuNavigation')} className={cn(!links.some(link => link.menuOnly) && 'lg:hidden')}>
+                    <nav aria-label={t('header.menuNavigation')}>
                         {links.map((link) => {
                             const Icon = LINK_ICONS[link.key];
                             return (
-                                <Link key={link.key} href={link.href} className={cn(itemClass, !link.menuOnly && 'lg:hidden')} aria-current={link.key === current ? 'page' : undefined} onClick={close}>
+                                <Link key={link.key} href={link.href} className={itemClass} aria-current={link.key === current ? 'page' : undefined} onClick={close}>
                                     <Icon className="w-4 h-4 shrink-0" />
                                     <span className="truncate">{t(link.labelKey)}</span>
                                 </Link>
@@ -293,7 +276,7 @@ function HeaderMenu({
                     </nav>
                     {/* Il lettore segue le voci di navigazione, dopo "Gruppi e classi". */}
                     <VoiceReaderMenuEntry className={itemClass} onActivate={close} getOpener={() => triggerRef.current} />
-                    <div className="xl:hidden">
+                    <div>
                     {/* Sessioni congelate + chat locale interrotta: su mobile questa è
                         l'unica porta, l'icona "Riprendi" della topbar non c'è. */}
                     {(resumeCount > 0 || resumeEntries.error) && (

@@ -10,7 +10,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 // (osserva la classe) → niente setState in effect.
 const STORAGE_KEY = 'cb_theme';
 
-export function ThemeToggle() {
+export function ThemeToggle({ labelled = false }: { labelled?: boolean }) {
     const { t } = useI18n();
     const dark = useDarkMode();
 
@@ -29,10 +29,11 @@ export function ThemeToggle() {
             <button
                 type="button"
                 onClick={toggle}
-                className="console-topbar-icon"
-                aria-label={dark ? t('theme.switchToLight') : t('theme.switchToDark')}
+                className={labelled ? 'flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100' : 'console-topbar-icon'}
+                aria-label={labelled ? undefined : dark ? t('theme.switchToLight') : t('theme.switchToDark')}
             >
                 {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {labelled && <span>{dark ? t('theme.toLight') : t('theme.toDark')}</span>}
             </button>
         </Tooltip>
     );

@@ -3,6 +3,11 @@
 // by the desktop bar and by the compact menu alike. Pure data: Header maps
 // `key` to an icon, `labelKey` to the current language, services and auth to
 // the configured ai4auth/ai4educ URLs.
+//
+// Placement (P4): below `lg` (1024px) every link sits in the three-dot menu.
+// From `lg` the bar shows them with visible labels: the `area` group through
+// the «Area» selector (a plain link when only one area is open), then the
+// `support` group.
 
 import type { Identity } from './auth';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
@@ -16,7 +21,7 @@ export type HeaderLinkKey = 'orientation' | 'assistant' | 'guide' | 'profile' | 
 
 // `support`: tools and help open to everyone allowed. `area`: the workspaces a
 // person can enter (Studente / Docente / Amministrazione), the entries of the
-// future «Area» selector (P4) and a group of the grouped mobile menu (P5).
+// desktop «Area» selector (P4) and a group of the grouped mobile menu (P5).
 export type HeaderLinkGroup = 'support' | 'area';
 
 export interface HeaderLink {
@@ -24,9 +29,9 @@ export interface HeaderLink {
     href: string;
     labelKey: string;
     group: HeaderLinkGroup;
-    // In the three-dot menu at every width. The other links sit in the bar from
-    // `lg` (1024px) and in the menu below it: never both at once.
-    menuOnly: boolean;
+    // Shorter label for the desktop bar, where the menu's call to action
+    // («Apri la Bussola») would read as a sentence; the menu keeps `labelKey`.
+    barLabelKey?: string;
 }
 
 export interface HeaderNavigationInput {
@@ -49,10 +54,14 @@ export interface HeaderNavigation {
     links: HeaderLink[];
     // Student with classes: the active view selector.
     classView: boolean;
-    // Name shown in the bar (link to /profilo when allowed) and in the menu.
-    account: { label: string; title: string; href: string | null } | null;
+    // Name on the account menu trigger and in the compact menu: an identifier,
+    // never a second door to /profilo (the «Area studente» entry is the one).
+    // `detail` is the email or username shown under the name when it differs.
+    account: { label: string; detail: string | null; title: string } | null;
     // ai4educ services: manager for admins, portal for researchers.
     services: 'manager' | 'portal' | null;
+    // Compact menu only: «Accesso admin» back to /admin. The desktop bar
+    // offers guests «Accedi» back to the current page instead.
     auth: 'logout' | 'adminLogin';
 }
 
@@ -65,26 +74,26 @@ const tool = (key: string): Visible => ({ access, accessLoading }) => !accessLoa
 // Order is the reading order of both the bar and the menu.
 export const HEADER_LINKS: readonly (HeaderLink & { visible: Visible })[] = [
     {
-        key: 'orientation', href: '/bussola', labelKey: 'orientation.landing.open', group: 'support', menuOnly: false,
+        key: 'orientation', href: '/bussola', labelKey: 'orientation.landing.open', group: 'support', barLabelKey: 'nav.orientation',
         visible: (input) => authenticated(input) && tool('bussola')(input),
     },
     {
-        key: 'assistant', href: '/assistente', labelKey: 'assistant.title', group: 'support', menuOnly: false,
+        key: 'assistant', href: '/assistente', labelKey: 'assistant.title', group: 'support',
         visible: (input) => canUseAssistant(input.identity) && tool('assistant')(input),
     },
     // Interface guide: for everyone, guests included.
-    { key: 'guide', href: '/guide', labelKey: 'nav.guide', group: 'support', menuOnly: false, visible: () => true },
+    { key: 'guide', href: '/guide', labelKey: 'nav.guide', group: 'support', visible: () => true },
     {
-        key: 'profile', href: '/profilo', labelKey: 'profile.nav', group: 'area', menuOnly: false,
+        key: 'profile', href: '/profilo', labelKey: 'profile.nav', group: 'area',
         visible: ({ identity }) => canUsePersonalPage(identity),
     },
     // Teachers, researchers and admins: classes, plans and resources.
     {
-        key: 'teacher-panel', href: '/docente', labelKey: 'nav.teacherPanel', group: 'area', menuOnly: true,
+        key: 'teacher-panel', href: '/docente', labelKey: 'nav.teacherPanel', group: 'area',
         visible: ({ identity }) => canUseTeacherAssistant(identity),
     },
     {
-        key: 'admin', href: '/admin', labelKey: 'nav.admin', group: 'area', menuOnly: true,
+        key: 'admin', href: '/admin', labelKey: 'nav.admin', group: 'area',
         visible: ({ identity }) => canUseResearchConsole(identity),
     },
 ];
@@ -93,6 +102,7 @@ export function headerNavigation(input: HeaderNavigationInput): HeaderNavigation
     const { identity, access } = input;
     const isAuthenticated = Boolean(identity?.authenticated);
     const label = identity?.name || identity?.email || identity?.username;
+    const detail = [identity?.email, identity?.username].find((value) => value && value !== label) ?? null;
     return {
         loading: identity === undefined,
         authenticated: isAuthenticated,
@@ -100,8 +110,8 @@ export function headerNavigation(input: HeaderNavigationInput): HeaderNavigation
         classView: isAuthenticated && classViewOptions(access).length > 0,
         account: label ? {
             label,
+            detail,
             title: [identity?.username, identity?.email, identity?.groups.join(', ')].filter(Boolean).join(' - '),
-            href: canUsePersonalPage(identity) ? '/profilo' : null,
         } : null,
         services: isAuthenticated && canUseResearchConsole(identity) ? (identity?.is_admin ? 'manager' : 'portal') : null,
         auth: isAuthenticated ? 'logout' : 'adminLogin',

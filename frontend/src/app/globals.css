@@ -351,9 +351,23 @@ h1.text-3xl {
   transition: background-color 0.1s ease, color 0.1s ease;
 }
 
-.console-topbar-action:hover {
+.console-topbar-action:hover,
+.console-topbar-action[aria-expanded='true'],
+.console-topbar-action[aria-current='page'],
+.console-topbar-action[data-current] {
   background: var(--console-topbar-hover);
   color: var(--console-topbar-text-hover);
+}
+
+/* Voce o area corrente nella barra desktop (P4). */
+.console-topbar-action[aria-current='page'],
+.console-topbar-action[data-current] {
+  font-weight: 600;
+}
+
+/* Gruppo conversazione senza strumento, counselor né riprese: niente gruppo. */
+.header-group:empty {
+  display: none;
 }
 
 .console-topbar-icon {
@@ -395,6 +409,10 @@ h1.text-3xl {
   .console-topbar-icon {
     width: 44px;
     height: 44px;
+  }
+
+  .console-topbar-action {
+    min-height: 44px;
   }
 }
 
