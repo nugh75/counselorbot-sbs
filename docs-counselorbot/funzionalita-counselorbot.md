@@ -1335,6 +1335,16 @@ personale e che per dare i modelli GPT alla classe serve una chiave API condivis
 Le **API Keys** della piattaforma sono dell’amministratore e restano fuori dal
 blocco, subito sotto.
 
+Il **budget mensile** e i **ripieghi** convivono: quando la spesa registrata
+raggiunge il limite, i modelli a pagamento si fermano e l’invio passa al primo
+ripiego configurato disponibile fra i provider locali o gratuiti (per esempio
+llama.cpp locale, oppure un modello gratuito di un provider con chiave). Il
+ripiego **non è più fissato a Ollama**: su un’installazione senza Ollama, se
+nessun ripiego è configurato e utilizzabile, la chat si ferma con un messaggio
+chiaro e tradotto nelle sei lingue, invece di tentare un servizio assente.
+Nella pagina **Costi** la riga «Fallback attivo» mostra il ripiego configurato
+(o un trattino se non ce n’è nessuno).
+
 ### Mappa dei prompt delle chat guidate
 
 **Amministrazione → Configurazione & Prompt → Mappa dei prompt**
