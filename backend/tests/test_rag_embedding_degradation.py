@@ -1,4 +1,4 @@
-"""Recupero senza backend di embedding: cooldown, indice coerente, SSE pulito."""
+"""BM25 remains available through embedding failure and recovery; SSE stays safe."""
 import asyncio
 import json
 import logging
@@ -76,41 +76,36 @@ def test_failed_embeddings_collect_the_corpus_once_per_cooldown(clock, tmp_path,
 
     with caplog.at_level(logging.WARNING, logger=rag.logger.name):
         for _ in range(3):
-            with pytest.raises(rag.EmbeddingUnavailable):
-                index.search(ai, "domanda")
+            assert index.search(ai, "Testo")
     assert corpus.calls == 1
     assert ai.calls == 1
     assert len([r for r in caplog.records if "sospesa" in r.getMessage()]) == 1
 
     clock.now += rag.EMBEDDING_FAILURE_COOLDOWN_SECONDS - 1
-    with pytest.raises(rag.EmbeddingUnavailable):
-        index.search(ai, "domanda")
+    assert index.search(ai, "Testo")
     assert corpus.calls == 1
 
     clock.now += 2
-    with pytest.raises(rag.EmbeddingUnavailable):
-        index.search(ai, "domanda")
-    assert corpus.calls == 2
+    assert index.search(ai, "Testo")
+    assert corpus.calls == 1  # retry embeddings without recollecting unchanged corpus
 
 
 def test_cooldown_covers_every_collection_of_the_same_model(clock, tmp_path):
     first, second, ai = _Corpus(), _Corpus(), _Embedder(fail=True)
-    with pytest.raises(rag.EmbeddingUnavailable):
-        _index(tmp_path, first, "a").search(ai, "domanda")
-    with pytest.raises(rag.EmbeddingUnavailable):
-        _index(tmp_path, second, "b").search(ai, "domanda")
-    assert (first.calls, second.calls, ai.calls) == (1, 0, 1)
+    assert _index(tmp_path, first, "a").search(ai, "Testo")
+    assert _index(tmp_path, second, "b").search(ai, "Testo")
+    assert (first.calls, second.calls, ai.calls) == (1, 1, 1)
 
 
-def test_failed_rebuild_keeps_the_previous_index_aligned_and_recovers(clock, tmp_path):
+def test_failed_rebuild_publishes_new_lexical_chunks_and_recovers(clock, tmp_path):
     corpus, ai = _Corpus(n=2), _Embedder(fail=False)
     index = _index(tmp_path, corpus)
     assert len(index.search(ai, "domanda")) == 2
 
     corpus.n, ai.fail = 3, True
-    with pytest.raises(rag.EmbeddingUnavailable):
-        index.search(ai, "domanda")
-    assert len(index.chunks) == len(index.matrix) == 2
+    assert index.search(ai, "Testo")
+    assert len(index.chunks) == 3
+    assert index.matrix is None  # New lexical chunks must never use stale vectors.
     assert index.needs_rebuild(ai)
 
     clock.now += rag.EMBEDDING_FAILURE_COOLDOWN_SECONDS + 1
@@ -120,14 +115,21 @@ def test_failed_rebuild_keeps_the_previous_index_aligned_and_recovers(clock, tmp
 
 
 @pytest.mark.parametrize("language", ["it", "en", "es", "fr", "de", "sv"])
-def test_site_chat_sse_shows_a_localized_message_without_transport_details(monkeypatch, clock, tmp_path, language):
+@pytest.mark.parametrize("lexical_fallback", [True, False])
+def test_site_chat_sse_uses_bm25_or_localized_error(monkeypatch, clock, tmp_path, language, lexical_fallback):
     from backend.routes import site_chat
     from backend.api_models import SiteChatRequest
 
     ai = _Embedder(fail=True)
     ai.config = {}
-    ai.stream_response = MagicMock()
-    index = _index(tmp_path, _Corpus())
+    ai.stream_response = MagicMock(side_effect=lambda *a, **kw: iter(["Risposta dai materiali."]))
+    if lexical_fallback:
+        index = _index(tmp_path, _Corpus())
+    else:
+        # Keep coverage of the localized route error for failures beyond BM25.
+        index = MagicMock()
+        index.search.side_effect = rag.EmbeddingUnavailable(_TRANSPORT_ERROR)
+    monkeypatch.setattr(site_chat.database, "SessionLocal", MagicMock())
     monkeypatch.setattr(site_chat, "AIService", lambda db, username=None: ai)
     monkeypatch.setattr(site_chat, "get_index", lambda collection: index)
     monkeypatch.setattr(site_chat, "_resolve_site_prompt", lambda *a: "Prompt")
@@ -143,7 +145,7 @@ def test_site_chat_sse_shows_a_localized_message_without_transport_details(monke
 
     async def run():
         response = await site_chat.site_chat_stream(
-            SiteChatRequest(message="Che cos'è il QSA?", collection="competenzestrategiche", language=language),
+            SiteChatRequest(message="Testo", collection="competenzestrategiche", language=language),
             current_user={}, db=MagicMock(),
         )
         return [chunk async for chunk in response.body_iterator]
@@ -154,5 +156,15 @@ def test_site_chat_sse_shows_a_localized_message_without_transport_details(monke
         for detail in ("Ollama", "Errno", "Connection refused", "fake-embed", "Embedding"):
             assert detail not in raw
         last = json.loads(chunks[-1].removeprefix("data: ").strip())
-        assert last == {"error": site_chat._RETRIEVAL_UNAVAILABLE_MESSAGE_BY_LANG[language]}
-    ai.stream_response.assert_not_called()
+        if lexical_fallback:
+            assert last["done"] and last["sources"]
+            assert last["response"] == "Risposta dai materiali."
+            assert "error" not in last
+        else:
+            assert last == {"error": site_chat._RETRIEVAL_UNAVAILABLE_MESSAGE_BY_LANG[language]}
+    if lexical_fallback:
+        assert ai.calls == 1
+        assert ai.stream_response.call_count == 2
+        assert "Testo" in ai.stream_response.call_args.args[0]
+    else:
+        ai.stream_response.assert_not_called()
