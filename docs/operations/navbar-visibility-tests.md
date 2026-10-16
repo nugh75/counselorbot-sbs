@@ -56,12 +56,9 @@ finale). Il progresso locale **non** si cancella e `/profilo/pqbl` resta
 raggiungibile in lettura dall'Area studente.
 
 Il test `pQBL resume is hidden when the class turns pQBL off (N7)` descrive il
-contratto ed è marcato `todo` per non bloccare la suite: la correzione è una
-piccola PR `fix` separata, prima di P4/P5. Evidenza di sorgente:
-`frontend/src/lib/use-resume-entries.ts:89` restituisce il progresso pQBL senza
-`isToolAllowed`. Bug Diario `df1e9edb-bfb9-49fa-a1fe-18a7de9c2051`, ancora
-**sospetto**: la corsa browser che lo riproduce non si è conclusa in P0 (server
-dev fermato per memoria scarsa). Il caso anonimo (progresso locale visibile
+contratto. La correzione (#335) passa l'ingresso pQBL per `isToolAllowed` in
+`frontend/src/lib/resume-access.ts`, con test unitari in `resume-access.test.ts`;
+il test browser non è più `todo`. Il caso anonimo (progresso locale visibile
 anche senza login) non è deciso qui.
 
 ## Come lanciarli
