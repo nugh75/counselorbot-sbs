@@ -131,13 +131,13 @@ test('class paths translations cover six languages and fallback to English', () 
         assert.ok(translations.every(t => t.trim().length > 0), key);
     }
 
-    assert.equal(classPathText('en', 'pathsTitle'), 'Class paths');
-    assert.equal(classPathText('it', 'pathsTitle'), 'Percorsi di classe');
-    assert.equal(classPathText('es', 'pathsTitle'), 'Itinerarios de clase');
-    assert.equal(classPathText('fr', 'pathsTitle'), 'Parcours de classe');
-    assert.equal(classPathText('de', 'pathsTitle'), 'Klassenpfade');
-    assert.equal(classPathText('sv', 'pathsTitle'), 'Klassvägar');
-    assert.equal(classPathText('unknown', 'pathsTitle'), 'Class paths');
+    assert.equal(classPathText('en', 'pathsTitle'), 'Operational plans');
+    assert.equal(classPathText('it', 'pathsTitle'), 'Piani operativi');
+    assert.equal(classPathText('es', 'pathsTitle'), 'Planes operativos');
+    assert.equal(classPathText('fr', 'pathsTitle'), 'Plans opérationnels');
+    assert.equal(classPathText('de', 'pathsTitle'), 'Arbeitspläne');
+    assert.equal(classPathText('sv', 'pathsTitle'), 'Arbetsplaner');
+    assert.equal(classPathText('unknown', 'pathsTitle'), 'Operational plans');
 
     assert.equal(classPathText('it', 'current'), 'In corso');
     assert.equal(classPathText('en', 'current'), 'Current');

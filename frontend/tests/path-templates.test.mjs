@@ -135,7 +135,7 @@ async function prepare(page) {
     const cards = page.locator('[data-testid="path-step-card"]');
     await cards.nth(1).getByText('Da preparare · Somministrazione del questionario · QSA IT').waitFor();
     await cards.nth(2).getByText(/Da preparare · .*Com’è andata\?/).waitFor();
-    assert.equal(await page.getByText('Verrà creato quando pubblichi il percorso; fino ad allora gli studenti non vedono nulla.').count(), 2);
+    assert.equal(await page.getByText('Verrà creato quando pubblichi il piano operativo; fino ad allora gli studenti non vedono nulla.').count(), 2);
     await page.getByRole('button', { name: 'Salva come modello' }).click();
     await page.getByText('Salvato tra i tuoi modelli.').waitFor();
 
@@ -143,9 +143,9 @@ async function prepare(page) {
     await page.getByRole('button', { name: 'Aggiorna da modello' }).click();
     const update = page.locator('[aria-label="Aggiorna da modello"]');
     await update.getByText('Nuovo · Strumento · Tavolo').waitFor();
-    await update.getByText('già creato nella classe: modificalo nel percorso').waitFor();
+    await update.getByText('già creato nella classe: modificalo nel piano operativo').waitFor();
     await update.getByRole('button', { name: 'Applica aggiornamento' }).click();
-    await page.getByText('Percorso aggiornato dal modello.').waitFor();
+    await page.getByText('Piano operativo aggiornato dal modello.').waitFor();
     assert.equal(await cards.count(), 4);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);

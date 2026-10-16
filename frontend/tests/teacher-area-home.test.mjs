@@ -183,7 +183,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
 for (const [slug, h1, marker] of [
     ['classi', 'Gruppi e classi', 'Gruppi e classi che gestisco'],
     ['assegnazioni', 'Assegnazioni', 'Nuova assegnazione'],
-    ['piani-operativi', 'Percorsi di classe', 'Non hai ancora classi: creane una in Gruppi e classi per preparare un percorso.'],
+    ['piani-operativi', 'Piani operativi', 'Non hai ancora classi: creane una in Gruppi e classi per preparare un piano operativo.'],
     ['incontri', 'Incontri', 'Non hai ancora classi o gruppi: creane uno in Gruppi e classi per organizzare un incontro.'],
     ['somministrazioni', 'Piani di somministrazione', 'Piani di somministrazione'],
 ]) {

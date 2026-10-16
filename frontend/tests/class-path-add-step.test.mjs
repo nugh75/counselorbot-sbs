@@ -95,7 +95,7 @@ async function openEditor(page) {
 
     // Guided chat: on the results of a questionnaire step, or standalone.
     await open('Fa una chat guidata');
-    await add.getByText('Sui risultati di un questionario del percorso').waitFor();
+    await add.getByText('Sui risultati di un questionario del piano operativo').waitFor();
     // Guided paths: the class's catalog row (Savickas) and the built-in ones without a row.
     const chats = add.getByRole('combobox', { name: /^Percorso guidato/ });
     const names = await chats.locator('option').allTextContents();

@@ -333,7 +333,7 @@ test('Home with several paths: path with nearest due date displayed first, link 
         assert.ok((await heroCard.innerText()).includes('Inizio anno'));
 
         // Link to all paths mentions count (2)
-        const allPathsLink = heroCard.getByRole('link', { name: /Vedi tutti i percorsi di classe/i });
+        const allPathsLink = heroCard.getByRole('link', { name: /Vedi tutti i piani operativi/i });
         await allPathsLink.waitFor({ state: 'visible' });
         assert.equal(await allPathsLink.getAttribute('href'), '/profilo/piani-operativi');
         assert.ok((await allPathsLink.innerText()).includes('(2)'));

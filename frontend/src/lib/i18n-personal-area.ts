@@ -23,7 +23,7 @@ const labels = {
 } satisfies Record<string, Localized>;
 
 const names = {
-    'piani-operativi': ['Percorsi di classe', 'Class paths', 'Recorridos de clase', 'Parcours de classe', 'Klassenwege', 'Klassvägar'],
+    'piani-operativi': ['Piani operativi', 'Operational plans', 'Planes operativos', 'Plans opérationnels', 'Arbeitspläne', 'Arbetsplaner'],
     'analisi-combinata': ["Analisi Combinata dei Profili", "Combined Profile Analysis", "Análisis de Perfil Combinado", "Analyse de Profil Combiné", "Kombinierte Profilanalyse", "Kombinerad profilanalys"],
     obiettivi: ['Obiettivi', 'Goals', 'Objetivos', 'Objectifs', 'Ziele', 'Mål'],
     azioni: ['Azioni', 'Actions', 'Acciones', 'Actions', 'Aktionen', 'Åtgärder'],
