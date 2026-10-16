@@ -312,7 +312,9 @@ def test_only_the_final_turn_of_the_bound_session_completes(api, route):
     launched = client.post(
         f"/user/paths/{path['id']}/steps/{path['steps'][1]['id']}/launch"
     ).json()
-    assert launched["start_href"].endswith("/approfondimento")
+    assert launched["start_href"] == (
+        f"/profilo/piani-operativi/{path['id']}/{path['steps'][1]['id']}/approfondimento"
+    )
     response = start(client, path)
     assert response.status_code == 200, response.text
     session = response.json()

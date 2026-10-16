@@ -38,7 +38,7 @@ for (const viewport of [{ width: 1280, height: 950 }, { width: 390, height: 844 
     await card('Piano libero').getByRole('button', { name: 'Elimina' }).waitFor();
     assert.equal(await card('Piano iniziato').getByRole('button', { name: 'Elimina' }).count(), 0);
     await card('Piano iniziato').getByText('Non si può eliminare perché uno studente l’ha già iniziata: puoi revocarla.').waitFor();
-    await card('Piano nel percorso').getByText(/è un passo di un percorso/).waitFor();
+    await card('Piano nel percorso').getByText(/è un passo di un piano operativo/).waitFor();
     // The confirmation says what is lost, then the card disappears.
     await card('Piano libero').getByRole('button', { name: 'Elimina' }).click();
     await card('Piano libero').getByText(/sparirà per tutti e non si potrà recuperare/).waitFor();

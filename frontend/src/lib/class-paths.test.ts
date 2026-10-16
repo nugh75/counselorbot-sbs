@@ -131,13 +131,13 @@ test('class paths translations cover six languages and fallback to English', () 
         assert.ok(translations.every(t => t.trim().length > 0), key);
     }
 
-    assert.equal(classPathText('en', 'pathsTitle'), 'Class paths');
-    assert.equal(classPathText('it', 'pathsTitle'), 'Percorsi di classe');
-    assert.equal(classPathText('es', 'pathsTitle'), 'Itinerarios de clase');
-    assert.equal(classPathText('fr', 'pathsTitle'), 'Parcours de classe');
-    assert.equal(classPathText('de', 'pathsTitle'), 'Klassenpfade');
-    assert.equal(classPathText('sv', 'pathsTitle'), 'Klassvägar');
-    assert.equal(classPathText('unknown', 'pathsTitle'), 'Class paths');
+    assert.equal(classPathText('en', 'pathsTitle'), 'Operational plans');
+    assert.equal(classPathText('it', 'pathsTitle'), 'Piani operativi');
+    assert.equal(classPathText('es', 'pathsTitle'), 'Planes operativos');
+    assert.equal(classPathText('fr', 'pathsTitle'), 'Plans opérationnels');
+    assert.equal(classPathText('de', 'pathsTitle'), 'Arbeitspläne');
+    assert.equal(classPathText('sv', 'pathsTitle'), 'Arbetsplaner');
+    assert.equal(classPathText('unknown', 'pathsTitle'), 'Operational plans');
 
     assert.equal(classPathText('it', 'current'), 'In corso');
     assert.equal(classPathText('en', 'current'), 'Current');
@@ -332,7 +332,7 @@ test('typed administration targets and activation survive teacher and student pa
     const payload = {id:12,path_id:1,position:1,step_type:'questionnaire_administration',tool_key:null,
         administration_plan_id:3,active_from:'2026-10-09T20:00:00Z',auto_detect:true,can_self_mark:false,
         target_summary:{id:3,code:'AP-SYN',title:'Synthetic',instrument_code:'QSA',locale:'it',institution_name:'Synthetic'},
-        completion_kind:'confirmed_import',state:'done',source:'automatic',start_href:'/profilo/percorsi/1/12'};
+        completion_kind:'confirmed_import',state:'done',source:'automatic',start_href:'/profilo/piani-operativi/1/12'};
     const teacher=parseClassPathStep(payload);
     const student=parseStudentClassPathStep(payload);
     assert.equal(teacher.step_type,'questionnaire_administration');
@@ -340,7 +340,7 @@ test('typed administration targets and activation survive teacher and student pa
     assert.equal(teacher.active_from,'2026-10-09T20:00:00Z');
     assert.equal(student.target_summary?.code,'AP-SYN');
     assert.equal(student.completion_kind,'confirmed_import');
-    assert.equal(student.start_href,'/profilo/percorsi/1/12');
+    assert.equal(student.start_href,'/profilo/piani-operativi/1/12');
     assert.equal(student.can_self_mark,false);
     assert.equal(parseClassPathStep({tool_key:'QSA'}).step_type,'tool');
 });
@@ -349,7 +349,7 @@ test('deep-dive steps keep their bound administration step for teacher and stude
     const payload = {id:13,path_id:1,position:2,step_type:'guided_results_chat',tool_key:null,
         administration_plan_id:null,results_step_id:12,auto_detect:true,can_self_mark:false,
         target_summary:{id:3,code:'AP-SYN',title:'Synthetic',instrument_code:'QSA',locale:'it',institution_name:'Synthetic'},
-        completion_kind:'guided_results_chat',state:'done',source:'automatic',start_href:'/profilo/percorsi/1/13/approfondimento'};
+        completion_kind:'guided_results_chat',state:'done',source:'automatic',start_href:'/profilo/piani-operativi/1/13/approfondimento'};
     const teacher=parseClassPathStep(payload);
     const student=parseStudentClassPathStep(payload);
     assert.equal(teacher.step_type,'guided_results_chat');

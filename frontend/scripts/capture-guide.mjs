@@ -337,13 +337,13 @@ try {
         }
         if (classPathsCapture) {
             authenticated = true; teacher = true;
-            await go('/docente/percorsi?class=91');
+            await go('/docente/piani-operativi?class=91');
             await page.getByRole('button', { name: classPathText(lang, 'open'), exact: true }).click();
             const editor = page.locator('[data-testid="add-step"]').locator('..');
             await editor.locator('[data-testid="path-step-card"]').nth(2).waitFor();
             await capture('teacher-class-paths', editor);
             teacher = false;
-            await go('/profilo/percorsi');
+            await go('/profilo/piani-operativi');
             await page.locator('[data-testid="meeting-details"]').first().waitFor();
             await capture('class-paths', page.locator('main#contenuto'));
             await context.close();

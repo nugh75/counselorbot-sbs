@@ -1,7 +1,7 @@
 import type { PersonalGoal } from './goals';
 
 export const personalAreaGroups = [
-    { id: 'reflection', slugs: ['percorsi', 'taccuino', 'cambiamenti', 'compilazioni', 'analisi-combinata'] },
+    { id: 'reflection', slugs: ['piani-operativi', 'taccuino', 'cambiamenti', 'compilazioni', 'analisi-combinata'] },
     { id: 'journey', slugs: ['obiettivi', 'azioni', 'timeline'] },
     { id: 'study', slugs: ['pqbl', 'flashcard', 'carte', 'confronto', 'tavolo'] },
     { id: 'works', slugs: ['portfolio'] },
@@ -9,7 +9,7 @@ export const personalAreaGroups = [
 ] as const;
 
 export const personalAreaImages = {
-    percorsi: '/images/platform/chat-guidata.png',
+    'piani-operativi': '/images/platform/chat-guidata.png',
     'analisi-combinata': '/images/intro/profiles.png',
     obiettivi: '/images/cards/focus_goal.png',
     azioni: '/images/platform/bacheca-azioni.png',

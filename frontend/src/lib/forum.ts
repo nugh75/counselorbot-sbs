@@ -77,7 +77,7 @@ export function forumTargetHref(link: ForumTarget & { available: boolean }, staf
     if (!link.available) return undefined;
     if (staffGroupId !== undefined) return link.kind === 'path_step'
         ? `/docente/classi/${staffGroupId}?tab=paths` : `/docente/assegnazioni#assignment-${link.id}`;
-    return link.kind === 'path_step' ? `/profilo/percorsi#class-step-${link.id}` : `/profilo/assegnazioni#assignment-${link.id}`;
+    return link.kind === 'path_step' ? `/profilo/piani-operativi#class-step-${link.id}` : `/profilo/assegnazioni#assignment-${link.id}`;
 }
 
 export interface ForumList extends ForumState {

@@ -247,12 +247,12 @@ export function AdministrationStepFlow({
         sessionId={ack.session_id}
         counselorId={getSelectedCounselorId()}
         locale={lang}
-        onComplete={() => router.push("/profilo/percorsi")}
+        onComplete={() => router.push("/profilo/piani-operativi")}
       />
     );
   return (
     <div className="space-y-4">
-      <Link href="/profilo/percorsi">{l("back")}</Link>
+      <Link href="/profilo/piani-operativi">{l("back")}</Link>
       <h1 className="text-xl font-semibold">{l("administration")}</h1>
       {localeUnavailable && (
         <Callout variant="danger">{l("localeUnavailable")}</Callout>
@@ -320,7 +320,7 @@ export function AdministrationStepFlow({
             </Card>
           )}
           {!getSelectedCounselorId() && (
-            <Link href={`/counselor?next=${encodeURIComponent(`/profilo/percorsi/${pathId}/${stepId}`)}`}>
+            <Link href={`/counselor?next=${encodeURIComponent(`/profilo/piani-operativi/${pathId}/${stepId}`)}`}>
               {l("counselor")}
             </Link>
           )}
@@ -366,7 +366,7 @@ export function AdministrationStepFlow({
           onSubmit={(values) => {remember(values);void enter({ scores: values });}}
           />
           {!getSelectedCounselorId() && (
-            <Link href={`/counselor?next=${encodeURIComponent(`/profilo/percorsi/${pathId}/${stepId}`)}`}>
+            <Link href={`/counselor?next=${encodeURIComponent(`/profilo/piani-operativi/${pathId}/${stepId}`)}`}>
               {l("counselor")}
             </Link>
           )}

@@ -65,7 +65,7 @@ test('catalogo-obiettivi and percorsi produce direct 2-level breadcrumbs', () =>
         assert.equal(goalItems[0].href, '/docente');
         assert.equal(goalItems[1].current, true);
 
-        const pathItems = getTeacherBreadcrumbsForSlug('percorsi', lang);
+        const pathItems = getTeacherBreadcrumbsForSlug('piani-operativi', lang);
         assert.equal(pathItems.length, 2);
         assert.equal(pathItems[0].href, '/docente');
         assert.equal(pathItems[1].current, true);

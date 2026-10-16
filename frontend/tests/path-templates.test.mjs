@@ -1,4 +1,4 @@
-// Path templates in /docente/percorsi (#172), with synthetic APIs only:
+// Path templates in /docente/piani-operativi (#172), with synthetic APIs only:
 // create a template, apply it to a class, see its pending steps in the class
 // editor and save the class path back as a template.
 import assert from 'node:assert/strict';
@@ -98,7 +98,7 @@ async function prepare(page) {
     const errors = await prepare(page);
     const requests = [];
     page.on('request', request => { if (request.url().includes('/api/teacher/')) requests.push(`${request.method()} ${new URL(request.url()).pathname}`); });
-    await page.goto(`${origin}/docente/percorsi`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: 'I miei modelli' }).waitFor();
     await page.getByText('Non hai ancora modelli.').waitFor();
 
@@ -116,7 +116,7 @@ async function prepare(page) {
     const tools = await editor.getByRole('combobox', { name: /^Strumento/ }).locator('option').allTextContents();
     assert.ok(tools.includes('Tavolo') && !tools.some(name => /Savickas|QSA/i.test(name)), tools.join(', '));
     await editor.getByRole('combobox', { name: /^Strumento/ }).selectOption('tavolo');
-    await addStep('Fa una chat guidata', 'Sui risultati di un questionario del percorso');
+    await addStep('Fa una chat guidata', 'Sui risultati di un questionario del piano operativo');
     // A results chat without an earlier questionnaire cannot be saved.
     assert.equal(await editor.getByRole('button', { name: 'Salva modello' }).isDisabled(), true);
     await addStep('Compila un questionario');
@@ -135,7 +135,7 @@ async function prepare(page) {
     const cards = page.locator('[data-testid="path-step-card"]');
     await cards.nth(1).getByText('Da preparare · Somministrazione del questionario · QSA IT').waitFor();
     await cards.nth(2).getByText(/Da preparare · .*Com’è andata\?/).waitFor();
-    assert.equal(await page.getByText('Verrà creato quando pubblichi il percorso; fino ad allora gli studenti non vedono nulla.').count(), 2);
+    assert.equal(await page.getByText('Verrà creato quando pubblichi il piano operativo; fino ad allora gli studenti non vedono nulla.').count(), 2);
     await page.getByRole('button', { name: 'Salva come modello' }).click();
     await page.getByText('Salvato tra i tuoi modelli.').waitFor();
 
@@ -143,9 +143,9 @@ async function prepare(page) {
     await page.getByRole('button', { name: 'Aggiorna da modello' }).click();
     const update = page.locator('[aria-label="Aggiorna da modello"]');
     await update.getByText('Nuovo · Strumento · Tavolo').waitFor();
-    await update.getByText('già creato nella classe: modificalo nel percorso').waitFor();
+    await update.getByText('già creato nella classe: modificalo nel piano operativo').waitFor();
     await update.getByRole('button', { name: 'Applica aggiornamento' }).click();
-    await page.getByText('Percorso aggiornato dal modello.').waitFor();
+    await page.getByText('Piano operativo aggiornato dal modello.').waitFor();
     assert.equal(await cards.count(), 4);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);
@@ -160,7 +160,7 @@ async function prepare(page) {
     // Phone width: the templates panel and the apply form stay inside the viewport.
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const errors = await prepare(page);
-    await page.goto(`${origin}/docente/percorsi`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: 'Preset condivisi' }).waitFor();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);

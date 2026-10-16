@@ -1,4 +1,4 @@
-// «+ Aggiungi passo» (#173) in /docente/percorsi, with synthetic APIs only: one
+// «+ Aggiungi passo» (#173) in /docente/piani-operativi, with synthetic APIs only: one
 // flow with six step types, a tool menu of personal tools only and older
 // questionnaire tool steps labelled as collecting no administration data.
 import assert from 'node:assert/strict';
@@ -58,7 +58,7 @@ async function prepare(page) {
 }
 
 async function openEditor(page) {
-    await page.goto(`${origin}/docente/percorsi`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'Apri' }).click();
     await page.locator('[data-testid="path-step-card"]').first().waitFor();
 }
@@ -95,7 +95,7 @@ async function openEditor(page) {
 
     // Guided chat: on the results of a questionnaire step, or standalone.
     await open('Fa una chat guidata');
-    await add.getByText('Sui risultati di un questionario del percorso').waitFor();
+    await add.getByText('Sui risultati di un questionario del piano operativo').waitFor();
     // Guided paths: the class's catalog row (Savickas) and the built-in ones without a row.
     const chats = add.getByRole('combobox', { name: /^Percorso guidato/ });
     const names = await chats.locator('option').allTextContents();

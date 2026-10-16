@@ -340,7 +340,7 @@ def step_descriptor(db, path, step):
         "availability_reason": None,
         "auto_detect": True,
         "instrument_code": plan.instrument_code,
-        "start_href": f"/profilo/percorsi/{path.id}/{step.id}"
+        "start_href": f"/profilo/piani-operativi/{path.id}/{step.id}"
         + ("/approfondimento" if deep_dive else ""),
         "target_summary": {
             "id": plan.id,

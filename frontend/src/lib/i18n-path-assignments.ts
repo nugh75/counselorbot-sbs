@@ -45,12 +45,12 @@ export const pathAssignmentTexts = {
     "Mål från katalogen med bifogade strategier och material, tilldelat hela klassen. Steget är klart när eleven uttryckligen lämnar in sitt arbete efter att steget har aktiverats; att öppna tilldelningen, planera den privat eller få återkoppling räcker inte, och lärarens återkoppling krävs inte. Om eleven drar tillbaka inlämningen eller tilldelningen återkallas är steget inte längre klart. Det är samma tilldelning som på sidan Tilldelningar: tilldelningar till enskilda elever stannar bara där.",
   ],
   invalid: [
-    "Usa un’assegnazione attiva a tutta questa classe, con un obiettivo del catalogo, una sola volta per percorso.",
-    "Use an active assignment to this whole class, with a catalog goal, once per path.",
-    "Usa una asignación activa para toda esta clase, con un objetivo del catálogo, una sola vez por itinerario.",
-    "Utilisez une attribution active à toute cette classe, avec un objectif du catalogue, une seule fois par parcours.",
-    "Verwende eine aktive Zuweisung an diese ganze Klasse mit einem Katalogziel, einmal pro Pfad.",
-    "Använd en aktiv tilldelning till hela den här klassen, med ett mål från katalogen, en gång per väg.",
+    "Usa un’assegnazione attiva a tutta questa classe, con un obiettivo del catalogo, una sola volta per piano operativo.",
+    "Use an active assignment to this whole class, with a catalog goal, once per operational plan.",
+    "Usa una asignación activa para toda esta clase, con un objetivo del catálogo, una sola vez por plan operativo.",
+    "Utilisez une attribution active à toute cette classe, avec un objectif du catalogue, une seule fois par plan opérationnel.",
+    "Verwende eine aktive Zuweisung an diese ganze Klasse mit einem Katalogziel, einmal pro Arbeitsplan.",
+    "Använd en aktiv tilldelning till hela den här klassen, med ett mål från katalogen, en gång per arbetsplan.",
   ],
   loadError: [
     "Impossibile caricare le assegnazioni della classe.",

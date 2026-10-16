@@ -6,7 +6,7 @@ import { StudentClassPathsPage } from '@/components/profile/StudentClassPathsPag
 export default function ClassPathsPage() {
     return (
         <main className="page-wide space-y-5 px-4 py-8">
-            <PersonalAreaHeader slug="percorsi" />
+            <PersonalAreaHeader slug="piani-operativi" />
             <StudentClassPathsPage />
         </main>
     );

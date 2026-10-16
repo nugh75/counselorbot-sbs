@@ -1,3 +1,70 @@
+# Handoff S9: «Percorsi di classe» diventano «Piano operativo»
+Data: 2026-10-16 | Branch: `feature/rename-class-paths-operational-plan` (da `origin/main` b61064ab) | Agente: `s9-piano-operativo` | Task `a09fa477`
+Ambito scelto dall'utente: testi visibili + URL. API backend, nomi interni nel codice e schema DB invariati (nessuna migrazione).
+
+## Inventario (prima delle modifiche)
+
+Rotte frontend della funzione:
+- `/docente/percorsi` (Area docenti, slug `percorsi` in `lib/teacher-area.ts`, breadcrumb in `lib/teacher-breadcrumbs.ts`, chiavi slug in `lib/i18n-teacher-area.ts`).
+- `/profilo/percorsi`, `/profilo/percorsi/{path}/{step}`, `/profilo/percorsi/{path}/{step}/approfondimento` (Area personale, slug `percorsi` in `lib/personal-area.ts` e `lib/i18n-personal-area.ts`).
+- Generate dal backend: `start_href` in `backend/path_step_types.py` (`/profilo/percorsi/{path}/{step}[/approfondimento]`), salvato solo nelle risposte, non nel DB.
+- Link interni: `ClassPathHeroCard`, `AdministrationStepFlow`, `ResultsDeepDiveFlow`, `lib/forum.ts` (`/profilo/percorsi#class-step-N`), `DidacticDesignSection`, `app/docente/somministrazioni/page.tsx` (`?class=`), `app/guide/page.tsx` (TEACHER_ROUTES).
+- `?tab=paths` di `/docente/classi/{id}` e `/admin/classi/{id}`: chiave tecnica inglese come `students`/`toolsTab`, non contiene il nome della funzione → resta invariata.
+
+Testi della funzione (6 lingue it/en/es/fr/de/sv), file dedicati in cui ogni «percorso» è il percorso di classe salvo «percorso guidato»:
+`i18n-class-paths.ts`, `i18n-path-publication.ts`, `i18n-path-templates.ts`, `i18n-path-forum.ts`, `i18n-path-assignments.ts`, `i18n-administration-steps.ts`, `i18n-step-kinds.ts` (solo le righe sul percorso della classe).
+File misti (solo chiavi della funzione): `i18n-teacher-area.ts` (nome, descrizione, breadcrumb, vuoto, hero progettazione), `i18n-class-settings.ts` (scheda, card panoramica con descrizione oggi sbagliata «Percorsi guidati…», «Visualizza percorsi»), `i18n-personal-area.ts`, `i18n-guide-audiences.ts` (distinzione, sezione docente 9), `i18n.ts` (`guide.section17`, prompt assistente docente `cb_console`/`cb_guida`), `i18n-forum.ts` (`guideLinks`), `components/teacher/class-group-texts.ts` (`percorsiPath`).
+
+NON toccare (altri usi di «percorso»): percorsi guidati/chat guidate degli strumenti (`GuidedStep`, «Percorso guidato», `chooseGuidedPath`, `chatStandalone`), «Il mio percorso»/journey personale (`i18n-goals`, `cb_percorso`, gruppo Area personale), PDF «Percorso dell'obiettivo», «Scelta del percorso» (segnalazioni), percorsi narrativi/pQBL, «Percorso di navigazione» (aria breadcrumb), «percorso DOCENZA», Modelli (restano «modello», cambia solo «un percorso generale» → «un piano operativo generale»).
+
+Backend: nessun testo visibile della funzione (errori API in inglese tecnico, non mostrati come tali) → cambia solo `start_href`.
+Email/notifiche: nessuna email/notifica nomina la funzione (verificato con grep backend).
+Immagine guida `public/guide/*/teacher-class-paths.png`: screenshot con l'etichetta vecchia; non rigenerata (serve ambiente con dati), segnalata.
+
+## Nome per lingua (coerente col registro esistente, genere invariato rispetto a percorso/itinerario/parcours/Pfad/väg)
+IT piano operativo / piani operativi · EN operational plan(s) · ES plan(es) operativo(s) · FR plan(s) opérationnel(s) · DE Arbeitsplan / Arbeitspläne · SV arbetsplan / arbetsplaner.
+
+## Piano
+1. URL: `app/docente/percorsi` → `app/docente/piani-operativi`, `app/profilo/percorsi` → `app/profilo/piani-operativi`; slug `piani-operativi`; redirect permanenti (308) in `next.config.ts` per `/docente/percorsi` e `/profilo/percorsi/:path*` (query e #ancora conservate); `start_href` backend e link interni aggiornati. Test: redirect in `lib/` (config) + backend `start_href`.
+2. Testi: tutte le chiavi sopra nelle 6 lingue, articoli e plurali; test che nessun testo della funzione nomini più percorso/class path/itinerario de clase/parcours de classe/Klassenpfad/klassväg e che le 6 lingue ci siano (`npm run i18n:check`).
+3. Test live Playwright (`frontend/tests/*.mjs`) aggiornati ai nuovi URL/testi (eseguiti solo se l'ambiente lo consente).
+4. Documentazione: `docs-counselorbot/funzionalita-counselorbot.md`, Guida interfaccia (testi `guide.*`), `CONTEXT.md` (glossario), `make guidance-refresh` + `check-platform-guidance.py --check`.
+5. Verifiche: `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build` (isolato), pytest backend mirati.
+
+## Esito
+
+Issue #298. Fatto come da piano; in più: due testi che chiamavano «percorsi guidati» i piani
+operativi (hero progettazione didattica, card panoramica classe) o «class path» il percorso
+guidato Obiettivo (guida docente, EN/DE) ora dicono la cosa giusta; testi mancati
+dall'inventario iniziale e corretti: rifiuto di eliminare un'assegnazione che è un passo,
+nota sui blocchi admin. `percorsiPath` in `class-group-texts.ts` è inutilizzato (lasciato, solo
+tradotto). Screenshot studente della Guida rigenerati (`GUIDE_SCREENS=class-paths`, API
+sintetiche); quello docente non contiene il nome ed è identico.
+
+Verifiche (Node 22; build e `next start` su 127.0.0.1:3189 senza backend; PostgreSQL 15 su
+tmpfs con `--network none`, immagine `counselorbot-goal-focus-validation:20261015-s6` con copia
+del ramo; nessun container o dato di produzione toccato, nessuna chiamata LLM):
+
+| Controllo | Esito |
+| --- | --- |
+| `npm test` (con `operational-plan-naming.test.ts`) | 495/495 |
+| `i18n:check`, `tsc --noEmit`, `next build` | ok |
+| `npm run lint` | 6 errori preesistenti in file non toccati |
+| Redirect vecchi URL (`curl`) | 308 con query conservata, nuove pagine 200 |
+| pytest mirati (class paths, deep dive, forum/assegnazioni, incontri, IT administration, guida) | 194 + 15 + 52 passati dopo i fix |
+| Browser: add-step, placement, path-templates, class-meetings, individual-meetings, forum, assignment-delete | verdi |
+| Browser: guide-audiences | 10/12; 2 timeout di `reload` a 1440px dopo le asserzioni (`802ea9ab`, sospetto) |
+| Browser: teacher-area-home | rosso preesistente su «Cataloghi» (`b13c1129`) |
+| Browser: guided-chat-follow-up | rosso su colloquio individuale, logica non toccata (`dd958fd5`, sospetto) |
+| `make guidance-check` | allineato |
+
+Bug registrati: `95c5c68b` (stato guida registrato da albero sporco, corretto qui col refresh),
+`a227b327` (test rotte Area personale: pagine dei passi non documentate e regex senza
+maiuscole, corretto qui), `b13c1129`, `dd958fd5`, `802ea9ab`. Bug non registrati: nessuno.
+
+Passi manuali: nessun sudo, nessuna migrazione, nessun allineamento prompt; al deploy
+ricostruire le immagini frontend e backend.
+
 # Handoff S8: fasi Obiettivo con etichette d'azione e marcatore sempre nascosto
 Data: 2026-10-15 | Branch: `feature/goal-guided-phase-redesign` (da `origin/main` d5edc358) | Agente: `s8-fasi-obiettivo` | Task `155e1298`
 PR: https://github.com/nugh75/counselorbot-sbs/pull/293 (Project CounselorBot, verso `main`). Revisione cross-modello: a scelta dell'utente.

@@ -273,7 +273,7 @@ export function ClassPathHeroCard({ path, totalPathsCount = 1, onReload }: Props
             {/* Footer: link to all class paths */}
             <div className="flex items-center justify-end border-t border-slate-100 pt-3 dark:border-slate-800">
                 <Link
-                    href="/profilo/percorsi"
+                    href="/profilo/piani-operativi"
                     className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-indigo-700 transition-colors hover:text-indigo-900 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
                 >
                     <span>

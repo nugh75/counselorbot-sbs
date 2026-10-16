@@ -52,7 +52,7 @@ await page.route('**/*', async route => {
     return json([]);
 });
 
-await page.goto(`${origin}/docente/percorsi`, { waitUntil: 'domcontentloaded' });
+await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded' });
 await page.getByRole('button', { name: 'Apri' }).click();
 const add = page.locator('[data-testid="add-step"]');
 const cards = page.locator('[data-testid="path-step-card"]');

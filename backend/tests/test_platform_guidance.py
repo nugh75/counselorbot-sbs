@@ -101,7 +101,7 @@ def test_reference_personal_routes_are_real_and_cover_the_personal_area():
     from backend.platform_guidance import read_platform_guide
     root = Path(__file__).resolve().parents[2]
     reference = read_platform_guide()
-    documented = set(re.findall(r'`(/profilo(?:/[a-z{}-]+)*)`', reference))
+    documented = set(re.findall(r'`(/profilo(?:/[A-Za-z{}-]+)*)`', reference))
     actual = {re.sub(r'\[([^]]+)\]', r'{\1}', '/' + str(path.parent.relative_to(root / 'frontend/src/app')))
               for path in (root / 'frontend/src/app/profilo').rglob('page.tsx')}
     assert documented == actual
