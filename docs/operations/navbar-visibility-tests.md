@@ -161,3 +161,6 @@ Arresto: Ctrl-C nel terminale dello script. Da SSH:
 - La home toglie dall'URL le query della chat appena lette: Header passa solo il
   percorso al matcher. Per una futura voce «Attività e percorsi» (`/?view=home`,
   P4) il matcher supporta la query, ma serve lo stato di pagina della home.
+- Verifiche: `npm test` 581/581 (Node 22), ESLint e `tsc` sui file toccati,
+  `i18n:check`, guidance check; suite browser completa su :3149 **92/92**, con
+  le aspettative P0 invariate salvo il caso pagina (aria-current e landmark).
