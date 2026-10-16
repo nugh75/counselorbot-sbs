@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from . import models
 from . import embedding_service
 from . import personal_api
+from . import vision_service
 from . import pii
 from . import pii_ner
 from .api_secrets import API_KEY_ENV_MAP, config_key, resolve_api_secrets
@@ -685,6 +686,27 @@ class AIService:
             if self.personal_target:
                 raise self._personal_failure(e) from None
             raise AIError(f"Errore AI ({provider}/{model}): {type(e).__name__}") from e
+
+    def call_vision(self, prompt: str, image_base64: str, *, provider: str | None = None,
+                    model: str | None = None, timeout: int | None = None) -> str:
+        """OCR di una pagina con il provider di visione configurato.
+
+        Il ripiego di `qsa_extractor` passa da qui: nessun modello e' cablato e i
+        provider esterni attraversano `_anonymize_external` — la stessa policy
+        della chat, `external_pii_fallback=block` compreso. Con `block` e detector
+        NER locale non raggiungibile la chiamata esterna viene bloccata (AIError
+        con codice privacy) invece di esporre il documento. Un provider assente o
+        mal configurato solleva `vision_service.VisionError`, classificato e
+        tradotto per l'utente dal chiamante."""
+        if self.personal_error:
+            raise AIError(self.personal_error, code=self.personal_error_code)
+        resolved_provider, resolved_model = vision_service.resolve(self.config, provider, model)
+        self.last_provider, self.last_model = resolved_provider, resolved_model
+        prompt, _system, _history, _mapping = self._anonymize_external(
+            resolved_provider, prompt, "", [])
+        return vision_service.call(
+            self.config, self.db, resolved_provider, resolved_model, prompt,
+            image_base64, timeout=timeout)
 
     # Token massimi per i riassunti (~80 parole → 120 token sono sufficienti)
     SUMMARY_MAX_TOKENS = 300

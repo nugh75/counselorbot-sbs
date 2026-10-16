@@ -21,7 +21,7 @@ function isScoreMap(value: unknown): value is Record<string, number> {
 }
 
 export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUploaderProps) {
-    const { t } = useI18n();
+    const { t, lang } = useI18n();
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [fileInputRef, setFileInputRef] = useState<HTMLInputElement | null>(null);
@@ -67,6 +67,8 @@ export function PDFUploader({ onUploadComplete, questionnaire, onBack }: PDFUplo
             const formData = new FormData();
             formData.append('file', file);
             formData.append('questionnaire_type', questionnaire.id);
+            // Lingua dell'interfaccia: l'errore del ripiego OCR arriva localizzato.
+            formData.append('lang', lang);
             
             // Adjust the URL if necessary based on your Next.js proxy or backend URL
             // Assuming Next.js rewrites /api -> Backend
