@@ -10,6 +10,7 @@ import { PersonalAPIPolicy } from '@/components/admin/PersonalAPIPolicy';
 import { ChatGPTSettingsPanel } from '@/components/admin/ChatGPTSettingsPanel';
 import { personalAPIText } from '@/lib/i18n-personal-api';
 import { ExternalPrivacySettings } from '@/components/admin/ExternalPrivacySettings';
+import { DocumentRetrievalSettings } from '@/components/admin/DocumentRetrievalSettings';
 import { Callout } from '@/components/ui/Callout';
 import { PromptHistory } from '@/components/admin/PromptHistory';
 import { PromptRequestPreview, GuidedStepPromptPreview } from '@/components/admin/PromptRequestPreview';
@@ -1913,6 +1914,9 @@ export function ConfigForm() {
                 <ChatGPTSettingsPanel />
                 <ExternalPrivacySettings />
             </section>
+
+            {/* Recupero documenti: provider di embedding (locale, esterno, nessuno) e indici */}
+            <DocumentRetrievalSettings />
 
             {/* 3. API Keys */}
             <div className="space-y-4">
