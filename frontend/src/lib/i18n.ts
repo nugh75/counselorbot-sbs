@@ -1340,6 +1340,7 @@ const it: Dict = {
     'q.EVENTO_PROFESSIONALE.name': 'Evento professionale',
     'q.OBIETTIVO_STUDIO.name': 'Obiettivo di apprendimento',
     'q.OBIETTIVO_DOCENZA.name': 'Obiettivi per la classe',
+    'q.IDEA.name': 'Idea',
     'app.intro.compact.workspace.open': "Apri Area studente",
     'app.intro.compact.explore': "Esplora",
 };
@@ -2643,6 +2644,7 @@ const en: Dict = {
     'q.EVENTO_PROFESSIONALE.name': 'Professional event',
     'q.OBIETTIVO_STUDIO.name': 'Learning objective',
     'q.OBIETTIVO_DOCENZA.name': 'Class objectives',
+    'q.IDEA.name': 'Idea',
     'app.intro.compact.workspace.open': "Open student area",
     'app.intro.compact.explore': "Explore",
 };
@@ -3945,6 +3947,7 @@ const es: Dict = {
     'q.EVENTO_PROFESSIONALE.name': 'Evento profesional',
     'q.OBIETTIVO_STUDIO.name': 'Objetivo de aprendizaje',
     'q.OBIETTIVO_DOCENZA.name': 'Objetivos para la clase',
+    'q.IDEA.name': 'Idea',
     'app.intro.compact.workspace.open': "Abrir área del estudiante",
     'app.intro.compact.explore': "Explorar",
 };
@@ -5247,6 +5250,7 @@ const fr: Dict = {
     'q.EVENTO_PROFESSIONALE.name': 'Événement professionnel',
     'q.OBIETTIVO_STUDIO.name': 'Objectif d’apprentissage',
     'q.OBIETTIVO_DOCENZA.name': 'Objectifs pour la classe',
+    'q.IDEA.name': 'Idée',
     'app.intro.compact.workspace.open': "Ouvrir l’espace élève",
     'app.intro.compact.explore': "Explorer",
 };
@@ -6549,6 +6553,7 @@ const de: Dict = {
     'q.EVENTO_PROFESSIONALE.name': 'Berufliches Ereignis',
     'q.OBIETTIVO_STUDIO.name': 'Lernziel',
     'q.OBIETTIVO_DOCENZA.name': 'Klassenziele',
+    'q.IDEA.name': 'Idee',
     'app.intro.compact.workspace.open': "Bereich für Lernende öffnen",
     'app.intro.compact.explore': "Entdecken",
 };
@@ -7851,6 +7856,7 @@ const sv: Dict = {
     'q.EVENTO_PROFESSIONALE.name': 'Professionell händelse',
     'q.OBIETTIVO_STUDIO.name': 'Inlärningsmål',
     'q.OBIETTIVO_DOCENZA.name': 'Klassmål',
+    'q.IDEA.name': 'Idé',
     'app.intro.compact.workspace.open': "Öppna elevområde",
     'app.intro.compact.explore': "Utforska",
 };
