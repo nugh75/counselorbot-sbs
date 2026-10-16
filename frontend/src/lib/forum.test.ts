@@ -6,7 +6,7 @@ import { forumDraftValid, forumLink, parseForumTopic, parseForumUnread, parseFor
 test('linked resources produce local destinations only while available', () => {
     const target = { kind: 'path_step' as const, id: 7, title: null, tool_key: 'QSA', path_title: 'Start' };
     assert.deepEqual(parseForumTargets({ targets: [target] }).targets, [target]);
-    assert.equal(forumTargetHref({ ...target, available: true }), '/profilo/percorsi#class-step-7');
+    assert.equal(forumTargetHref({ ...target, available: true }), '/profilo/piani-operativi#class-step-7');
     assert.equal(forumTargetHref({ ...target, available: true }, 10), '/docente/classi/10?tab=paths');
     assert.equal(forumTargetHref({ ...target, available: false }), undefined);
     assert.equal(forumTargetHref({ ...target, kind: 'assignment', available: true }), '/profilo/assegnazioni#assignment-7');

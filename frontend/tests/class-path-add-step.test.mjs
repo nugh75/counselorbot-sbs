@@ -1,4 +1,4 @@
-// «+ Aggiungi passo» (#173) in /docente/percorsi, with synthetic APIs only: one
+// «+ Aggiungi passo» (#173) in /docente/piani-operativi, with synthetic APIs only: one
 // flow with six step types, a tool menu of personal tools only and older
 // questionnaire tool steps labelled as collecting no administration data.
 import assert from 'node:assert/strict';
@@ -58,7 +58,7 @@ async function prepare(page) {
 }
 
 async function openEditor(page) {
-    await page.goto(`${origin}/docente/percorsi`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'Apri' }).click();
     await page.locator('[data-testid="path-step-card"]').first().waitFor();
 }

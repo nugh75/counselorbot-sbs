@@ -1,4 +1,4 @@
-// Path templates in /docente/percorsi (#172), with synthetic APIs only:
+// Path templates in /docente/piani-operativi (#172), with synthetic APIs only:
 // create a template, apply it to a class, see its pending steps in the class
 // editor and save the class path back as a template.
 import assert from 'node:assert/strict';
@@ -98,7 +98,7 @@ async function prepare(page) {
     const errors = await prepare(page);
     const requests = [];
     page.on('request', request => { if (request.url().includes('/api/teacher/')) requests.push(`${request.method()} ${new URL(request.url()).pathname}`); });
-    await page.goto(`${origin}/docente/percorsi`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: 'I miei modelli' }).waitFor();
     await page.getByText('Non hai ancora modelli.').waitFor();
 
@@ -160,7 +160,7 @@ async function prepare(page) {
     // Phone width: the templates panel and the apply form stay inside the viewport.
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const errors = await prepare(page);
-    await page.goto(`${origin}/docente/percorsi`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: 'Preset condivisi' }).waitFor();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     assert.deepEqual(errors, []);

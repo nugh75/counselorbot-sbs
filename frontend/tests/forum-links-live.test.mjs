@@ -57,7 +57,7 @@ test('live resource links, student navigation, archive/revoke and departure', as
             const listing = await json(await teacher.request.get(`${origin}/api/groups/${groupId}/forum/topics`));
             topics[kind] = listing.topics.find(topic => topic.title === title).id;
         }
-        await page.goto(`${origin}/profilo/percorsi`);
+        await page.goto(`${origin}/profilo/piani-operativi`);
         await page.locator(`#class-step-${stepId}`).getByRole('link', { name: 'Discuss in the class forum', exact: true }).click();
         await page.getByRole('heading', { name: 'C22 step discussion', exact: true }).waitFor();
         await page.getByRole('link', { name: /C22 live step/ }).click();

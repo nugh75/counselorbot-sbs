@@ -514,7 +514,7 @@ const names = {
     'taccuini-prova': ['Taccuini di prova', 'Practice notebooks', 'Cuadernos de práctica', 'Carnets d’entraînement', 'Übungs-Notizbücher', 'Övningsanteckningsböcker'],
     classi: ['Gruppi e classi', 'Groups and classes', 'Grupos y clases', 'Groupes et classes', 'Gruppen und Klassen', 'Grupper och klasser'],
     compilazioni: ['Compilazioni degli studenti', 'Student submissions', 'Resultados de los estudiantes', 'Résultats des élèves', 'Ergebnisse der Lernenden', 'Elevernas resultat'],
-    percorsi: ['Percorsi di classe', 'Class paths', 'Itinerarios de clase', 'Parcours de classe', 'Klassenpfade', 'Klassvägar'],
+    'piani-operativi': ['Percorsi di classe', 'Class paths', 'Itinerarios de clase', 'Parcours de classe', 'Klassenpfade', 'Klassvägar'],
     incontri: ['Incontri', 'Meetings', 'Encuentros', 'Rencontres', 'Treffen', 'Möten'],
     assegnazioni: ['Assegnazioni', 'Assignments', 'Asignaciones', 'Attributions', 'Zuweisungen', 'Tilldelningar'],
     'catalogo-obiettivi': ['Catalogo obiettivi', 'Goal catalog', 'Catálogo de objetivos', 'Catalogue d’objectifs', 'Zielkatalog', 'Målkatalog'],
@@ -607,7 +607,7 @@ const descriptions = {
         "Planen Sie Treffen mit der Klasse oder Gruppe und Einzeltermine mit buchbaren Zeitfenstern, auch mit Ansprechpersonen oder Fachleuten.",
         "Planera möten med klassen eller gruppen och enskilda samtal med bokningsbara tider, även med kontaktpersoner eller experter.",
     ],
-    percorsi: [
+    'piani-operativi': [
         'Prepara e pubblica la sequenza di passi che una classe percorre, e seguine l’avanzamento.',
         'Prepare and publish the sequence of steps a class walks through, and follow its progress.',
         'Prepara y publica la secuencia de pasos que recorre una clase y sigue su avance.',

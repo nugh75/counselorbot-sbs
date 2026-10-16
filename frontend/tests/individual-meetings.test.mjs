@@ -90,7 +90,7 @@ async function open(viewport, user) {
 {
     // Teacher: an individual meeting with an external expert, slots and bookings.
     const { page, errors, state } = await open({ width: 1280, height: 950 }, 'teacher.test');
-    await page.goto(`${origin}/docente/percorsi`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'Apri' }).click();
     const add = page.locator('[data-testid="add-step"]');
     await add.getByRole('button', { name: '+ Aggiungi passo' }).click();

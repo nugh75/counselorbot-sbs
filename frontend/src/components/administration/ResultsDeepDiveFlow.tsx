@@ -59,12 +59,12 @@ export function ResultsDeepDiveFlow({
         sessionId={session.session_id}
         counselorId={getSelectedCounselorId()}
         locale={lang}
-        onComplete={() => router.push("/profilo/percorsi")}
+        onComplete={() => router.push("/profilo/piani-operativi")}
       />
     );
   return (
     <div className="space-y-4">
-      <Link href="/profilo/percorsi">{l("back")}</Link>
+      <Link href="/profilo/piani-operativi">{l("back")}</Link>
       <h1 className="text-xl font-semibold">{l("deepDive")}</h1>
       {failure === "incomplete" && (
         <Callout variant="warning">{l("deepDiveIncomplete")}</Callout>

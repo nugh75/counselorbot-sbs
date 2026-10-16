@@ -31,7 +31,7 @@ import { classSettingsText } from '@/lib/i18n-class-settings';
 import { forumText } from '@/lib/i18n-forum';
 import { ADMIN_CLASSES_HREF } from '@/lib/admin-navigation';
 
-const TEACHER_ROUTES = ['/docente', '/docente/classi', '/docente', '/docente', '/docente', '/docente', '/bussola', '/docente/classi', '/docente/percorsi'];
+const TEACHER_ROUTES = ['/docente', '/docente/classi', '/docente', '/docente', '/docente', '/docente', '/bussola', '/docente/classi', '/docente/piani-operativi'];
 
 export default function GuidePage() {
     return <Suspense><GuideContent /></Suspense>;

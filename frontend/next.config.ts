@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { backendOrigin } from './src/lib/backend-origin';
+import { legacyRouteRedirects } from './src/lib/legacy-routes';
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -19,6 +20,7 @@ const nextConfig: NextConfig = {
         destination: "/:path*",
         permanent: true,
       },
+      ...legacyRouteRedirects,
     ];
   },
   async rewrites() {

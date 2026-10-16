@@ -388,7 +388,7 @@ for (const target of [linkedStep, linkedAssignment]) {
             await f.page.goto(`${origin}/profilo/classi/102/forum?topic=102`);
             await f.page.getByRole('heading', { name: 'Read your QSA', exact: true }).waitFor();
             assert.equal(await f.page.getByRole('link', { name: new RegExp(target.title) }).getAttribute('href'), target.kind === 'path_step'
-                ? '/profilo/percorsi#class-step-7' : '/profilo/assegnazioni#assignment-8');
+                ? '/profilo/piani-operativi#class-step-7' : '/profilo/assegnazioni#assignment-8');
             f.state.topics[0].link.available = false;
             await f.page.reload();
             await f.page.getByText(/Unavailable/).waitFor();
@@ -404,7 +404,7 @@ test('a class path step links to its exact forum discussion', async () => {
         await f.page.route('**/api/user/paths', route => route.fulfill({ json: [{ id: 1, group_id: 102, group_name: 'Synthetic class', title: 'Start of year',
             mode: 'recommended', steps: [{ id: 7, tool_key: 'QSA', title: 'Reading QSA', state: 'not_done', can_self_mark: false }], done: 0, total: 1 }] }));
         await f.page.route('**/api/user/forum/links', route => route.fulfill({ json: { links: [{ kind: 'path_step', id: 7, topic_id: 102, group_id: 102 }] } }));
-        await f.page.goto(`${origin}/profilo/percorsi`);
+        await f.page.goto(`${origin}/profilo/piani-operativi`);
         const link = f.page.getByRole('link', { name: 'Discuss in the class forum', exact: true });
         assert.equal(await link.getAttribute('href'), '/profilo/classi/102/forum?topic=102');
         await link.click();

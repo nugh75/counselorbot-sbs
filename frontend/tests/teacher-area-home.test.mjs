@@ -89,7 +89,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     // La hero di progettazione didattica include l'azione primaria e i link al catalogo e ai percorsi
     assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/?start=OBIETTIVO_DOCENZA"]').count(), 1);
     assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/docente/catalogo-obiettivi"]').count(), 1);
-    assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/docente/percorsi"]').count(), 1);
+    assert.equal(await page.locator('[data-testid="teacher-didactic-design-section"] a[href="/docente/piani-operativi"]').count(), 1);
     const ctaBox = await page.locator('[data-testid="didactic-design-cta"]').boundingBox();
     assert.ok(ctaBox && ctaBox.height >= 44, 'didactic design CTA meets 44px touch target');
     // Sezione Libreria e risorse didattiche accorpata
@@ -100,7 +100,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     assert.equal(await page.locator('[data-testid="teacher-resources-materials-link"]').getAttribute('href'), '/docente/materiali');
 
     // link illustrati dei gruppi e del flusso didattico
-    for (const href of ['/docente/classi', '/docente/percorsi', '/docente/incontri', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/risorse', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
+    for (const href of ['/docente/classi', '/docente/piani-operativi', '/docente/incontri', '/docente/assegnazioni', '/docente/catalogo-obiettivi', '/docente/risorse', '/docente/strategie', '/docente/materiali', '/docente/orientamento', '/docente/somministrazioni']) {
         assert.ok(await page.locator(`a[href="${href}"]`).count() >= 1, `link ${href}`);
     }
     assert.ok(await page.locator('[data-teacher-area-home] img').first().isVisible());
@@ -183,7 +183,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
 for (const [slug, h1, marker] of [
     ['classi', 'Gruppi e classi', 'Gruppi e classi che gestisco'],
     ['assegnazioni', 'Assegnazioni', 'Nuova assegnazione'],
-    ['percorsi', 'Percorsi di classe', 'Non hai ancora classi: creane una in Gruppi e classi per preparare un percorso.'],
+    ['piani-operativi', 'Percorsi di classe', 'Non hai ancora classi: creane una in Gruppi e classi per preparare un percorso.'],
     ['incontri', 'Incontri', 'Non hai ancora classi o gruppi: creane uno in Gruppi e classi per organizzare un incontro.'],
     ['somministrazioni', 'Piani di somministrazione', 'Piani di somministrazione'],
 ]) {

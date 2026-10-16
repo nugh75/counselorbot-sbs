@@ -105,7 +105,7 @@ export function DidacticDesignSection() {
                         </Link>
 
                         <Link
-                            href="/docente/percorsi"
+                            href="/docente/piani-operativi"
                             data-testid="didactic-design-paths-link"
                             className="group flex min-h-[44px] items-center gap-3 rounded-xl border border-slate-200/90 bg-white/90 p-3 shadow-xs transition hover:border-indigo-300 hover:bg-slate-50"
                         >

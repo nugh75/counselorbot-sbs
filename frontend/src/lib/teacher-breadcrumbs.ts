@@ -50,7 +50,7 @@ export function getTeacherBreadcrumbsForSlug(slug: TeacherAreaSlug, lang: Lang):
                 root,
                 { label: teacherAreaText(lang, 'breadcrumbObiettivi'), current: true },
             ];
-        case 'percorsi':
+        case 'piani-operativi':
             return [
                 root,
                 { label: teacherAreaText(lang, 'breadcrumbPercorsi'), current: true },

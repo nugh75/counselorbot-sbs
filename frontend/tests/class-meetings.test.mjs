@@ -90,7 +90,7 @@ async function open(viewport, user) {
 {
     // Teacher: plan, move and cancel; add a meeting as a step. Templates do not offer meetings yet.
     const { page, errors, state } = await open({ width: 1280, height: 950 }, 'teacher.test');
-    await page.goto(`${origin}/docente/percorsi`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/docente/piani-operativi`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'Nuovo modello' }).click();
     const editor = page.locator('[data-testid="path-template-editor"]');
     await editor.getByRole('button', { name: '+ Aggiungi passo' }).click();
@@ -140,7 +140,7 @@ async function open(viewport, user) {
 {
     // Student: link in the path, attendance from the start, timeline list.
     const { page, errors } = await open({ width: 1280, height: 950 }, 'alice');
-    await page.goto(`${origin}/profilo/percorsi`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/profilo/piani-operativi`, { waitUntil: 'domcontentloaded' });
     const details = page.locator('[data-testid="meeting-details"]').first();
     await details.getByRole('link', { name: 'Apri il link dell’incontro' }).waitFor();
     assert.equal(await details.getByRole('link').getAttribute('href'), 'https://meet.example.invalid/3b');
