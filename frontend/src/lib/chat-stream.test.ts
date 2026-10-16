@@ -35,7 +35,7 @@ test('a gateway HTML error does not expose its body or masquerade as a partial r
 
 test('chat infrastructure errors have messages in all six interface languages', () => {
     for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv'] as const) {
-        for (const reason of ['connection', 'access', 'configuration']) assert.ok(chatErrorText(lang, `chat.errors.${reason}`));
+        for (const reason of ['connection', 'access', 'configuration', 'budget']) assert.ok(chatErrorText(lang, `chat.errors.${reason}`));
         assert.ok(chatErrorText(lang, 'personalAPI.errors.privacy'));
         assert.equal(chatErrorText(lang, 'chat.errors.private-fixture-key'), null);
     }

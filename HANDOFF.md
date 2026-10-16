@@ -1,3 +1,31 @@
+# Handoff s22: aggiornamento e verifica PR #310
+Data: 2026-10-16 | Branch: `fix/budget-fallback-configured-provider` | Agente: `s22-cx-fix-310`
+Issue #309, PR #310 | Milestone #18. Compito Diario `8bfb8212` lasciato invariato (`fatto`).
+
+Completato il merge pendente di `origin/main` (`9e72bfc1`, PR #317) con
+`cc98cbad`: conservate le modifiche RAG di main e il ripiego del budget dai
+provider configurati. Incluso il manifest della documentazione già aggiornato
+nel worktree e verificato con il controllo guidance.
+
+Verifiche: routing/budget **22 passati**, frontend streaming/errori **19 passati**,
+lint F di `ai_service.py` superato, controllo guidance e relativi **3 test** superati.
+Smoke completo: **201 passati, 6 falliti identici** sul branch e su main
+`9e72bfc1`, nella stessa immagine `counselorbot-budget-validation:s22` e sul
+PostgreSQL isolato `cb-s18-test-pg`. Baseline main ottenuta sostituendo nell'immagine
+le versioni originali dei cinque file backend modificati dalla PR. Nessuna
+regressione aggiuntiva rilevata; nessuna modifica al codice necessaria.
+
+Fallimenti preesistenti: quattro test accedono a `site_chat_routes.site_rag_index`
+rimosso dal router (Diario `c9ec0514-ba28-4169-b00e-8a58279dca22`);
+`test_rag_docs_dynamic_collection_upload_preview_and_delete` presume un build
+sincrono dopo il cambio di ambito (Diario `79b1c34f-d0d6-4291-9806-96fb5054b035`);
+`test_build_context_envelope_component_flags_disable_parts` resta il noto
+`f6ff90ff-0b05-41f8-9ac7-0eaea2a302e9`. I due nuovi record sono confermati con
+evidenze `test:` e agente `s22-cx-fix-310`.
+
+Immagine backend ricompilata per verifica; nessun deploy o intervento sulla
+produzione, nessun sudo, nessun nuovo server dev avviato.
+
 # Handoff s19: indici per modello e reindicizzazione atomica (Blocco 5)
 Data: 2026-10-16 | Branch: `feat/rag-index-per-model` | Agente: `s19-cx-blocco5-indici`, Codex gpt-6.1-sol high
 Task `a960c2f4-399d-464e-afc2-c9fb35f2b187` | Issue #316, PR #317 | Milestone #18
