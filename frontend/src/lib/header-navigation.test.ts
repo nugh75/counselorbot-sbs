@@ -27,24 +27,32 @@ const nav = (key: ProfileKey, extra: Partial<Parameters<typeof headerNavigation>
     headerNavigation({ identity: PROFILES[key].identity, access: PROFILES[key].access, accessLoading: false, ...extra });
 const keys = (navigation: HeaderNavigation) => navigation.links.map((link) => link.key);
 
-// Where the Header renders each link: inline links in the bar from `lg` and in
-// the menu below it, menu-only links in the menu at every width.
+// Where the Header renders each link (P4): below `lg` every link in the menu;
+// from `lg` the `area` group behind the «Area» selector (a plain link when it
+// holds one area), then the `support` group with its bar labels.
 function placed(navigation: HeaderNavigation, width: number) {
-    const compact = band(width) === 'compact';
     const label = (link: HeaderLink) => LINK_LABELS[link.key];
+    if (band(width) === 'compact') return { bar: [], menu: navigation.links.map(label), areas: null };
+    const areas = navigation.links.filter((link) => link.group === 'area').map(label);
+    const support = navigation.links.filter((link) => link.group === 'support')
+        .map((link) => (link.barLabelKey ? LABELS.bussolaBar : label(link)));
     return {
-        bar: compact ? [] : navigation.links.filter((link) => !link.menuOnly).map(label),
-        menu: navigation.links.filter((link) => compact || link.menuOnly).map(label),
+        bar: [...(areas.length > 1 ? [LABELS.area] : areas), ...support],
+        menu: [],
+        areas: areas.length > 1 ? areas : null,
     };
 }
 
-test('one description drives the bar and the menu of the P0 contract at every width', () => {
+const BAR_NAMES = new Set([...LINK_NAMES, LABELS.area, LABELS.bussolaBar]);
+
+test('one description drives the bar, the Area selector and the menu at every width', () => {
     for (const key of Object.keys(PROFILES) as ProfileKey[]) {
         for (const width of VIEWPORTS) {
-            const { bar, menu } = expectedNavbar(key, width);
+            const { bar, menu, areas } = expectedNavbar(key, width);
             assert.deepEqual(placed(nav(key), width), {
-                bar: bar.filter((name: string) => LINK_NAMES.has(name)),
+                bar: bar.filter((name: string) => BAR_NAMES.has(name)),
                 menu: (menu ?? []).filter((name: string) => LINK_NAMES.has(name)),
+                areas,
             }, `${key} at ${width}px`);
         }
     }
@@ -55,7 +63,8 @@ test('links keep their order, destinations and groups', () => {
     for (const link of HEADER_LINKS as readonly HeaderLink[]) assert.equal(link.href, ENTRY_HREFS[FIXTURE_ENTRY[link.key]], link.key);
     // The «Area» selector of P4 reads this group: Studente, Docente, Amministrazione.
     assert.deepEqual(HEADER_LINKS.filter((link: HeaderLink) => link.group === 'area').map((link: HeaderLink) => link.key), ['profile', 'teacher-panel', 'admin']);
-    assert.deepEqual(HEADER_LINKS.filter((link: HeaderLink) => link.menuOnly).map((link: HeaderLink) => link.key), ['teacher-panel', 'admin']);
+    // Only the Compass has a shorter bar label than its menu call to action.
+    assert.deepEqual(HEADER_LINKS.filter((link: HeaderLink) => link.barLabelKey).map((link: HeaderLink) => [link.key, link.barLabelKey]), [['orientation', 'nav.orientation']]);
 });
 
 const PREDICATES: [string, ProfileKey, Record<string, unknown>][] = [
@@ -77,14 +86,20 @@ for (const [name, key, expected] of PREDICATES) {
     });
 }
 
-test('the account names the person and links to the student area', () => {
+test('the account names the person, never a second link to the student area', () => {
     assert.deepEqual(nav('D').account, {
         label: 'Docente Sintetico',
+        detail: 'docente.sintetico@example.invalid',
         title: 'docente.sintetico - docente.sintetico@example.invalid - docenti',
-        href: '/profilo',
     });
     const unnamed = { ...PROFILES.S.identity, name: '' };
-    assert.equal(headerNavigation({ identity: unnamed, access: null, accessLoading: false }).account?.label, 'studente.sintetico@example.invalid');
+    assert.deepEqual(headerNavigation({ identity: unnamed, access: null, accessLoading: false }).account, {
+        label: 'studente.sintetico@example.invalid',
+        detail: 'studente.sintetico',
+        title: 'studente.sintetico - studente.sintetico@example.invalid - studenti',
+    });
+    const usernameOnly = { ...PROFILES.S.identity, name: '', email: '' };
+    assert.equal(headerNavigation({ identity: usernameOnly, access: null, accessLoading: false }).account?.detail, null);
 });
 
 test('nothing but the brand while the identity loads, even for staff with access cached', () => {
@@ -182,8 +197,8 @@ for (const [key, pathname, search, expected] of CURRENT_CASES) {
 
 test('the most specific link is the current one', () => {
     const links = [
-        { key: 'teacher-panel', href: '/docente', labelKey: '', group: 'area', menuOnly: false },
-        { key: 'guide', href: '/docente/risorse', labelKey: '', group: 'support', menuOnly: false },
+        { key: 'teacher-panel', href: '/docente', labelKey: '', group: 'area' },
+        { key: 'guide', href: '/docente/risorse', labelKey: '', group: 'support' },
     ] as HeaderLink[];
     assert.equal(currentHeaderLink(links, '/docente/risorse/materiali'), 'guide');
     assert.equal(currentHeaderLink(links, '/docente/classi'), 'teacher-panel');
