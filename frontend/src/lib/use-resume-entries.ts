@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import { getResume, subscribeToResume, type ResumePoint } from '@/lib/resume';
 import { listFrozenSessions, subscribeToFrozenSessions, type FrozenSessionSummary } from '@/lib/frozen-session';
 import { hasPqblProgress, subscribeToPqblProgress } from '@/lib/pqbl-progress';
-import { isToolAllowed } from '@/lib/user-access';
+import { allowedResumeEntries } from '@/lib/resume-access';
 import { useUserAccess } from '@/lib/use-user-access';
 
 export interface ResumeEntries {
@@ -75,26 +75,12 @@ export function useResumeEntries(enabled = true): ResumeEntries {
         return () => { alive = false; unsubscribe(); };
     }, [attempt, enabled]);
 
-    const allowedFrozen = useMemo(() => {
-        if (!access || !access.restricted) return frozen;
-        return frozen.filter((row) => isToolAllowed(access, row.questionnaire_type));
-    }, [frozen, access]);
+    const allowed = useMemo(
+        () => allowedResumeEntries(access, { frozen, localResume, pqbl }),
+        [access, frozen, localResume, pqbl],
+    );
 
-    const allowedLocalResume = useMemo(() => {
-        if (!localResume) return null;
-        if (!access || !access.restricted) return localResume;
-        return isToolAllowed(access, localResume.instrument) ? localResume : null;
-    }, [localResume, access]);
-
-    return {
-        frozen: allowedFrozen,
-        localResume: allowedLocalResume,
-        pqbl,
-        error,
-        loading,
-        retry,
-        count: allowedFrozen.length + (allowedLocalResume ? 1 : 0) + (pqbl ? 1 : 0),
-    };
+    return { ...allowed, error, loading, retry };
 }
 
 // Riprendere ricarica la pagina: la home legge lo snapshot dai query param al

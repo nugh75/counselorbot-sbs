@@ -13,8 +13,6 @@ const origin = process.env.NAVBAR_BASE_URL || 'http://127.0.0.1:3149';
 const shots = process.env.NAVBAR_SCREENSHOTS || '';
 // Dev compilation and hydration can be slow on a cold server or a slow disk.
 const SETTLE_MS = Number(process.env.NAVBAR_SETTLE_MS || 45000);
-// Diario bug df1e9edb (N7): the test below states the contract, `todo` until the fix.
-const N7_BUG = 'N7, Diario df1e9edb: pQBL resume ignores the class tool switch';
 let browser;
 before(async () => {
     browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
@@ -290,7 +288,7 @@ test('pQBL progress is listed as resumable when the class allows it', async () =
 // Contract decided in P0 (N7): a class that turns pQBL off hides its resume
 // entry like the other resumable sessions, because continuing is a write the
 // server rejects; the local progress is kept, the page stays readable.
-test('pQBL resume is hidden when the class turns pQBL off (N7)', { todo: N7_BUG }, async () => {
+test('pQBL resume is hidden when the class turns pQBL off (N7)', async () => {
     const { page, context } = await fixture({ profile: 'S1', width: 390, storage: pqblStorage });
     try {
         await page.goto(`${origin}/guide`);
