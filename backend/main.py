@@ -896,9 +896,12 @@ def _run_seed_and_migrations():
             db.add(db_user)
             db.commit()
 
+        from .embedding_service import CONFIG_DEFINITIONS as EMBEDDING_CONFIG_DEFINITIONS
+
         # Config operative per il logging: redazione PII e retention giorni.
         # Valore testuale coerente con il resto della tabella configs.
         for key, default, descr in [
+            *EMBEDDING_CONFIG_DEFINITIONS,
             ("log_pii_redact", "true", "Redazione PII (email/telefono/cf/iban/piva/carta/targa) nei log conversazionali (true/false)."),
             ("log_full_prompt", "true", "Salva nei log il prompt finale completo e l'envelope dei messaggi (true/false)."),
             ("log_retention_days", "90", "Giorni di conservazione dei log; 0 disattiva la retention automatica."),

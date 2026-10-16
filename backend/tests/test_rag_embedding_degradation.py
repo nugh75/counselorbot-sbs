@@ -26,7 +26,7 @@ class _Embedder:
         self.embedding_model = "fake-embed"
         self.calls = 0
 
-    def embed_texts(self, texts):
+    def embed_texts(self, texts, **kwargs):
         self.calls += 1
         if self.fail:
             raise AIError(_TRANSPORT_ERROR)
