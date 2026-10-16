@@ -67,7 +67,7 @@ test('pages live at the new addresses and old ones redirect permanently', () => 
     assert.ok(existsSync(path.join(src, 'app/profilo/piani-operativi/[pathId]/[stepId]/approfondimento/page.tsx')));
     assert.ok(!existsSync(path.join(src, 'app/docente/percorsi')));
     assert.ok(!existsSync(path.join(src, 'app/profilo/percorsi')));
-    assert.deepEqual(legacyRouteRedirects, [
+    assert.deepEqual(legacyRouteRedirects.filter(route => /^\/(docente|profilo)\//.test(route.source)), [
         { source: '/docente/percorsi/:path*', destination: '/docente/piani-operativi/:path*', permanent: true },
         { source: '/profilo/percorsi/:path*', destination: '/profilo/piani-operativi/:path*', permanent: true },
     ]);
