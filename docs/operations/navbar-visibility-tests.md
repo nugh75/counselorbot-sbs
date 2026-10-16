@@ -11,7 +11,8 @@ esplicito, non per effetto collaterale.
 | File | Cosa verifica | Dove gira |
 | --- | --- | --- |
 | `frontend/tests/fixtures/navbar-contract.mjs` | Identità e accessi sintetici A/S/D/R/M (S senza classi, una classe, due classi, vista `all`), etichette italiane e nelle sei lingue scritte a mano, `expectedNavbar(profilo, larghezza)` con l'elenco ordinato dei controlli visibili in barra e nel menu | Condiviso |
-| `frontend/src/lib/navbar-visibility.test.ts` | Matrice ruoli: i predicati di `roles.ts`, `isToolAllowed` e `classViewOptions` producono il contratto di ogni profilo; bordi 1023/1024 e 1279/1280; ogni voce raggiungibile in ogni fascia; Area docente/Amministrazione solo nel menu | `npm test` (Node 22) |
+| `frontend/src/lib/navbar-visibility.test.ts` | Matrice ruoli: la descrizione unica `header-navigation.ts` (P3) produce il contratto di ogni profilo; bordi 1023/1024 e 1279/1280; ogni voce raggiungibile in ogni fascia; Area docente/Amministrazione solo nel menu | `npm test` (Node 22) |
+| `frontend/src/lib/header-navigation.test.ts` | Descrizione unica delle voci (P3): collocazione barra/menu per fascia uguale al contratto, ordine/destinazioni/gruppi, predicati in tabella (ruoli, accesso in caricamento o fallito, identità in caricamento o fallita, anteprima ruoli), pagina/sottopagina e query della chat per `aria-current` | `npm test` (Node 22) |
 | `frontend/src/lib/navbar-terminology.test.ts` | Testi della barra (P1) scritti a mano nelle sei lingue: Assistente generico, «Area studente» uguale in navbar e pagine, badge strumento tradotto con ripiego sul nome del catalogo e sul codice degli strumenti dinamici | `npm test` (Node 22) |
 | `backend/tests/test_navbar_area_guards.py` | HTTP 401/403/200 delle guardie dietro `/profilo`, `/docente`, `/admin` per A/S/D/R/M; marker docente/ricerca identici tra backend e `roles.ts` | pytest, nessun DB |
 | `frontend/tests/navbar-visibility.test.mjs` | Navbar realmente renderizzata (Playwright): matrice 8 profili × 390/768/1023/1024/1279/1280/1440, link visibili e destinazioni, caricamento identità/accesso, errori API, riprese, sei lingue, tastiera, tema e movimento | Dev isolato :3149 |
@@ -27,8 +28,13 @@ diff del test. Per decisione dell'utente l'etichetta resta «Area studente»
   tre punti, nell'ordine reale; href delle voci (`/bussola`, `/assistente`,
   `/guide`, `/profilo`, `/docente`, `/admin`, `/questionario`, `/counselor`,
   logout, accesso admin con ritorno `/admin`); nessuno scroll orizzontale.
-- **Pagina**: stesse voci su `/guide`, `/profilo`, `/docente`, `/questionario`;
-  oggi nessun `aria-current` né landmark `<nav>` nella barra (N5).
+- **Pagina (P3)**: stesse voci su `/guide`, `/profilo`, `/docente`, `/questionario`;
+  la voce dell'area corrente ha `aria-current="page"` (in barra o nel menu, dove
+  è visibile), nessuna su `/questionario`; landmark «Navigazione principale» in
+  barra e «Navigazione del menu» nel menu, nascosto da `lg` se non contiene voci
+  `menuOnly` (nessun landmark vuoto).
+- **Richieste (P3)**: una sola lettura di `/api/auth/me`; riaprire il menu non
+  rilegge `/api/user/access` (il selettore vista riceve l'accesso da Header).
 - **Lingue**: IT/EN/ES/FR/DE/SV, `html.lang`, voci di ruolo per R e accesso
   anonimo, nessuna voce duplicata o privilegiata in più.
 - **Caricamento**: con `/api/auth/me` in attesa solo brand (più utilità a
@@ -112,8 +118,9 @@ Arresto: Ctrl-C nel terminale dello script. Da SSH:
 - La CI di GitHub esegue solo i controlli di documentazione: né i test Node né
   Playwright girano in CI. La matrice ruoli è quindi anche nel test unitario;
   la suite browser va lanciata a mano prima di ogni PR navbar.
-- Il test unitario replica la composizione di `Header.tsx` (righe 56–95) finché
-  P3 non la centralizza; la suite browser verifica il render reale.
+- Dal P3 il test unitario legge la stessa descrizione renderizzata da Header
+  (`frontend/src/lib/header-navigation.ts`); la suite browser verifica il render
+  reale, incluse le classi Tailwind che applicano `menuOnly` e le fasce.
 - Le fixture non certificano gli URL ai4auth/Console dell'installazione né i
   gruppi reali; le guardie per strumento (`require_tool`) sono coperte dai test
   backend esistenti di `class_access` con PostgreSQL di test.
@@ -145,3 +152,12 @@ Arresto: Ctrl-C nel terminale dello script. Da SSH:
   1440 e 390 px: `button "Cambia lingua: Italiano" [expanded]`, `button
   "Menu" [expanded]`, `button "Italiano" [pressed]`, nessun `menu`/`menuitem`.
   Nessuna prova con uno screen reader reale (VoiceOver/NVDA).
+
+## Esito della sessione P3 (17 ottobre 2026)
+
+- Header e menu compatto leggono `headerNavigation()` e `currentHeaderLink()`
+  da `frontend/src/lib/header-navigation.ts`. Unici cambi visibili:
+  `aria-current="page"` (con fondo leggero) e i due landmark `<nav>` nominati.
+- La home toglie dall'URL le query della chat appena lette: Header passa solo il
+  percorso al matcher. Per una futura voce «Attività e percorsi» (`/?view=home`,
+  P4) il matcher supporta la query, ma serve lo stato di pagina della home.

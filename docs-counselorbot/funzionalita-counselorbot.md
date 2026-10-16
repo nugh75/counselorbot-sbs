@@ -49,6 +49,12 @@ La testata mette in evidenza i quattro ingressi principali: **Bussola**,
 per docenti/ricercatori, **Area amministrazione** per admin e ricercatori) restano nel menu a tre
 punti, insieme a uscita e preferenze; su schermi stretti il menu raccoglie tutte
 le voci nello stesso ordine.
+Gli ingressi stanno in un’area di navigazione con nome («Navigazione
+principale» nella barra, «Navigazione del menu» nel menu a tre punti). La voce
+dell’area in cui ci si trova, anche in una sua sottopagina (per esempio
+`/profilo/pqbl` per l’Area studente), è segnata come pagina corrente con un fondo
+leggero e viene annunciata dagli screen reader; una chat aperta dalla home non
+segna nessuna voce.
 Il menu a tre punti, l’elenco **Riprendi un’attività** e il selettore della
 lingua si aprono da tastiera con Invio o Spazio, si percorrono con Tab e si
 chiudono con Esc, che riporta il focus al pulsante, oppure uscendo con Tab. Il
