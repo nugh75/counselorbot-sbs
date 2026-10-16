@@ -43,6 +43,15 @@ diff del test. Per decisione dell'utente l'etichetta resta «Area studente»
   senza ricaricare.
 - **Tastiera**: skip link, brand, apertura del menu con Invio, Tab dentro il
   menu, Escape chiude e riporta il focus al trigger.
+- **Pannelli dell'header (P2)**: menu a tre punti, «Riprendi» e lingua sono
+  disclosure (`aria-expanded`/`aria-controls`, nessun `role=menu`); Tab entra
+  nel pannello, Escape chiude e riporta il focus al trigger; a 390px Tab
+  raggiunge ogni controllo visibile del menu nell'ordine del contratto e
+  uscendo con Tab il menu si chiude; la scelta della lingua (barra e menu)
+  espone `aria-pressed`/`lang`, riporta il focus al trigger e viene annunciata;
+  la riga del tema riporta il focus al menu; anello di focus `#67c1c4` nel tema
+  scuro con offset interno nei pannelli; selettore lingua a 44px con puntatore
+  coarse (`hasTouch`).
 - **Preferenze**: tema scuro salvato e movimento ridotto dal sistema.
 - **Screenshot**: opzionali con `NAVBAR_SCREENSHOTS=<cartella>`.
 
@@ -120,3 +129,19 @@ Arresto: Ctrl-C nel terminale dello script. Da SSH:
   riprese, N7, tastiera, preferenze) **non hanno un esito**: la corsa è stata
   interrotta insieme al server dev per memoria scarsa sulla macchina. Vanno
   rilanciati con la procedura sopra prima di togliere la PR dalla bozza.
+
+## Esito della sessione P2 (16 ottobre 2026)
+
+- `npm test` 518/518 (Node 22), incluso `disclosure.test.ts`; ESLint e `tsc`
+  sui file toccati, `i18n:check`, `guidance-check` passati.
+- Browser, suite completa su :3149: 88 passati, 1 `todo` (N7), 1 scaduto.
+  Lo scaduto è «the navbar ignores the current page»: dopo `/guide` il server
+  dev sta ancora ottimizzando le schermate della guida (`/_next/image`), le sei
+  connessioni del browser sono occupate e `page.goto('/profilo')` resta in coda
+  oltre 600 s. Caricata da sola, `/profilo` risponde in 22 s; con
+  `/_next/image` bloccato lo stesso test passa in 15 s. Non dipende dal
+  prodotto; bug registrato nel Diario, da correggere nel test.
+- Verifica assistiva: albero di accessibilità di Chromium (`ariaSnapshot`) a
+  1440 e 390 px: `button "Cambia lingua: Italiano" [expanded]`, `button
+  "Menu" [expanded]`, `button "Italiano" [pressed]`, nessun `menu`/`menuitem`.
+  Nessuna prova con uno screen reader reale (VoiceOver/NVDA).

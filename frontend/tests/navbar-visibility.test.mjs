@@ -28,11 +28,11 @@ function deferred() {
 
 // `auth`, `access` and `state.frozen` take 'ok', 'error' (HTTP 500), 'abort'
 // (network failure) or a deferred() that holds the answer until released.
-async function fixture({ profile = 'S', width = 1440, locale = 'it', dark = false, reducedMotion = 'no-preference', auth = 'ok', access = 'ok', frozen = [], storage = {} } = {}) {
+async function fixture({ profile = 'S', width = 1440, locale = 'it', dark = false, reducedMotion = 'no-preference', touch = false, auth = 'ok', access = 'ok', frozen = [], storage = {} } = {}) {
     const { identity } = PROFILES[profile];
     let accessPayload = PROFILES[profile].access;
     const state = { frozen };
-    const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion });
+    const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion, hasTouch: touch });
     await context.route(url => !['127.0.0.1', 'localhost'].includes(url.hostname), route => route.abort());
     const page = await context.newPage();
     page.setDefaultTimeout(SETTLE_MS);
@@ -77,14 +77,16 @@ async function fixture({ profile = 'S', width = 1440, locale = 'it', dark = fals
 const header = page => page.locator('header.console-header');
 const trigger = page => page.locator('button[aria-controls="mobile-menu"]');
 const mobileMenu = page => page.locator('#mobile-menu');
+const resumePanel = page => page.locator('#resume-panel');
+const PANELS = '#mobile-menu, #resume-panel, #language-panel';
 
 // Accessible names of the controls a person can see, in DOM order. The bar
-// excludes the open menu; the menu and resume popover are read on their own.
+// excludes the open header panels; each panel is read on its own.
 function names(locator) {
-    return locator.evaluate(root => [...root.querySelectorAll('a, button, select')]
-        .filter(el => root.id === 'mobile-menu' || !el.closest('#mobile-menu, [role="menu"]'))
+    return locator.evaluate((root, panels) => [...root.querySelectorAll('a, button, select')]
+        .filter(el => root.matches(panels) || !el.closest(panels))
         .filter(el => el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }))
-        .map(el => el.getAttribute('aria-label') || el.labels?.[0]?.textContent?.trim() || el.textContent.trim()));
+        .map(el => el.getAttribute('aria-label') || el.labels?.[0]?.textContent?.trim() || el.textContent.trim()), PANELS);
 }
 
 function links(locator) {
@@ -232,7 +234,7 @@ for (const width of [390, 1440]) {
             await page.goto(`${origin}/guide`);
             const failed = expectedNavbar('S', width, { resume: { rows: [], error: true } });
             await eventually(() => names(header(page)), failed.bar, 'bar');
-            const list = width < 1280 ? mobileMenu(page) : header(page).locator('[role="menu"]');
+            const list = width < 1280 ? mobileMenu(page) : resumePanel(page);
             await (width < 1280 ? trigger(page) : header(page).getByRole('button', { name: LABELS.resume, exact: true })).click();
             if (width < 1280) await eventually(() => names(list), failed.menu, 'menu');
             state.frozen = FROZEN_ROWS;
@@ -259,10 +261,10 @@ for (const [profile, allowed] of [['S', ['QSA', 'SAVICKAS']], ['S1', ['QSA']]]) 
                     await eventually(() => names(mobileMenu(page)), expected.menu, 'menu');
                 } else {
                     await header(page).getByRole('button', { name: LABELS.resume, exact: true }).click();
-                    await eventually(() => names(header(page).locator('[role="menu"]')), rows.flatMap(label => [label, `${LABELS.deleteSession}: ${label}`]), 'popover');
+                    await eventually(() => names(resumePanel(page)), rows.flatMap(label => [label, `${LABELS.deleteSession}: ${label}`]), 'popover');
                 }
                 for (const row of FROZEN_ROWS.filter(row => allowed.includes(row.questionnaire_type))) {
-                    const link = page.getByRole(width < 1280 ? 'link' : 'menuitem', { name: row.label, exact: true });
+                    const link = page.getByRole('link', { name: row.label, exact: true });
                     assert.equal(await link.getAttribute('href'), `/?frozen=${row.session_id}`);
                 }
             } finally { await context.close(); }
@@ -329,6 +331,134 @@ test('menu disclosure: keyboard open, Escape closes and returns focus', async ()
         assert.equal(await mobileMenu(page).count(), 0);
         assert.equal(await trigger(page).getAttribute('aria-expanded'), 'false');
         assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-controls')), 'mobile-menu');
+    } finally { await context.close(); }
+});
+
+// P2 (audit N4/N8): menu, Riprendi and language share one disclosure pattern.
+const focusedName = page => page.evaluate(() => document.activeElement?.getAttribute('aria-label') || document.activeElement?.textContent?.trim());
+const focusedPanel = page => page.evaluate(panels => document.activeElement?.closest(panels)?.id || null, PANELS);
+
+test('menu, resume and language panels are disclosures with Tab and Escape', async () => {
+    const { page, context } = await fixture({ profile: 'D', width: 1440, frozen: FROZEN_ROWS });
+    try {
+        await page.goto(`${origin}/guide`);
+        await eventually(() => names(header(page)), expectedNavbar('D', 1440, { resume: { rows: FROZEN_ROWS.map(row => row.label) } }).bar, 'bar');
+        for (const id of ['mobile-menu', 'resume-panel', 'language-panel']) {
+            const button = page.locator(`button[aria-controls="${id}"]`);
+            assert.equal(await button.getAttribute('aria-expanded'), 'false', id);
+            assert.equal(await button.getAttribute('aria-haspopup'), null, id);
+            await button.focus();
+            await page.keyboard.press('Enter');
+            assert.equal(await button.getAttribute('aria-expanded'), 'true', id);
+            assert.equal(await header(page).locator('[role="menu"], [role="menuitem"]').count(), 0, `${id}: no ARIA menu`);
+            await page.keyboard.press('Tab');
+            assert.equal(await focusedPanel(page), id, `${id}: Tab enters the panel`);
+            await page.keyboard.press('Escape');
+            assert.equal(await page.locator(`#${id}`).count(), 0, `${id}: Escape closes`);
+            assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-controls')), id, `${id}: focus back on the trigger`);
+        }
+    } finally { await context.close(); }
+});
+
+test('Tab reaches every visible menu control, then leaving the menu closes it', async () => {
+    const { page, context } = await fixture({ profile: 'D', width: 390, frozen: FROZEN_ROWS });
+    try {
+        await page.goto(`${origin}/guide`);
+        await eventually(() => names(header(page)), expectedNavbar('D', 390).bar, 'bar');
+        await trigger(page).focus();
+        await page.keyboard.press('Enter');
+        const expected = expectedNavbar('D', 390, { resume: { rows: FROZEN_ROWS.map(row => row.label) } }).menu;
+        await eventually(() => names(mobileMenu(page)), expected, 'menu');
+        const reached = [];
+        for (let i = 0; i <= expected.length; i++) {
+            await page.keyboard.press('Tab');
+            if (await focusedPanel(page) !== 'mobile-menu') break;
+            reached.push(await focusedName(page));
+        }
+        assert.deepEqual(reached, expected, 'Tab order is the visible order');
+        assert.equal(await mobileMenu(page).count(), 0, 'Tab out closes the menu');
+        assert.equal(await trigger(page).getAttribute('aria-expanded'), 'false');
+    } finally { await context.close(); }
+});
+
+test('a language choice returns focus to its trigger and is announced', async () => {
+    for (const width of [1440, 390]) {
+        const { page, context } = await fixture({ profile: 'A', width });
+        try {
+            await page.goto(`${origin}/guide`);
+            await eventually(() => names(header(page)), expectedNavbar('A', width).bar, 'bar');
+            const id = width < 1280 ? 'mobile-menu' : 'language-panel';
+            await page.locator(`button[aria-controls="${id}"]`).focus();
+            await page.keyboard.press('Enter');
+            const panel = page.locator(`#${id}`);
+            const pressed = await panel.locator('button[aria-pressed="true"]').evaluateAll(els => els.map(el => el.getAttribute('aria-label')));
+            assert.deepEqual(pressed, ['Italiano'], `${width}: current language exposed`);
+            const english = panel.getByRole('button', { name: 'English', exact: true });
+            assert.equal(await english.getAttribute('lang'), 'en');
+            await english.focus();
+            await page.keyboard.press('Enter');
+            assert.equal(await panel.count(), 0, `${width}: choice closes the panel`);
+            assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
+            assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-controls')), id, `${width}: focus back on the trigger`);
+            if (width < 1280) {
+                assert.equal(await header(page).getByRole('status').textContent(), 'Change language: English');
+            } else {
+                assert.equal(await focusedName(page), 'Change language: English');
+            }
+        } finally { await context.close(); }
+    }
+});
+
+test('the theme row returns focus to the menu trigger', async () => {
+    const { page, context } = await fixture({ profile: 'A', width: 390 });
+    try {
+        await page.goto(`${origin}/guide`);
+        await eventually(() => names(header(page)), expectedNavbar('A', 390).bar, 'bar');
+        await trigger(page).click();
+        await mobileMenu(page).getByRole('button', { name: LABELS.darkRow, exact: true }).focus();
+        await page.keyboard.press('Enter');
+        assert.equal(await page.evaluate(() => document.documentElement.classList.contains('dark')), true);
+        assert.equal(await mobileMenu(page).count(), 0);
+        assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-controls')), 'mobile-menu');
+    } finally { await context.close(); }
+});
+
+test('the focus ring keeps 3:1 on the dark header and stays inside panels', async () => {
+    const { page, context } = await fixture({ profile: 'A', width: 390, dark: true });
+    try {
+        await page.goto(`${origin}/guide`);
+        await trigger(page).waitFor();
+        for (let i = 0; i < 6 && await page.evaluate(() => document.activeElement?.getAttribute('aria-controls')) !== 'mobile-menu'; i++) {
+            await page.keyboard.press('Tab');
+        }
+        const ring = el => ({ visible: el.matches(':focus-visible'), color: getComputedStyle(el).outlineColor, offset: getComputedStyle(el).outlineOffset });
+        // #67c1c4 on #1e293b: 6.97:1 (the petrol #155e63 gave 1.96:1).
+        assert.deepEqual(await trigger(page).evaluate(ring), { visible: true, color: 'rgb(103, 193, 196)', offset: '2px' });
+        await page.keyboard.press('Enter');
+        await page.keyboard.press('Tab');
+        const inside = await page.evaluate(() => {
+            const el = document.activeElement;
+            return { panel: el?.closest('#mobile-menu')?.id, color: getComputedStyle(el).outlineColor, offset: getComputedStyle(el).outlineOffset };
+        });
+        assert.deepEqual(inside, { panel: 'mobile-menu', color: 'rgb(103, 193, 196)', offset: '-2px' });
+    } finally { await context.close(); }
+});
+
+test('the language selector keeps 44px targets with a coarse pointer', async () => {
+    const { page, context } = await fixture({ profile: 'A', width: 1440, touch: true });
+    try {
+        await page.goto(`${origin}/guide`);
+        assert.equal(await page.evaluate(() => matchMedia('(pointer: coarse)').matches), true, 'coarse pointer emulated');
+        await eventually(() => names(header(page)), expectedNavbar('A', 1440).bar, 'bar');
+        const button = page.locator('button[aria-controls="language-panel"]');
+        assert.ok((await button.boundingBox()).height >= 44, 'trigger');
+        await button.click();
+        const sizes = await page.locator('#language-panel button').evaluateAll(els => els.map(el => {
+            const box = el.getBoundingClientRect();
+            return Math.min(box.width, box.height);
+        }));
+        assert.equal(sizes.length, 6);
+        for (const size of sizes) assert.ok(size >= 44, `option ${size}px`);
     } finally { await context.close(); }
 });
 

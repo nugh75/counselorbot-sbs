@@ -116,7 +116,8 @@ export const LABELS = {
     lightIcon: 'Passa al tema chiaro',
     lightRow: 'Tema chiaro',
     motion: 'Riduci il movimento',
-    language: 'Cambia lingua',
+    // The trigger names the current language (P2), announced again after a choice.
+    language: 'Cambia lingua: Italiano',
     languages: ['Italiano', 'English', 'Español', 'Français', 'Deutsch', 'Svenska'],
     deleteSession: 'Elimina sessione',
     resumeLocal: 'Riprendi',
