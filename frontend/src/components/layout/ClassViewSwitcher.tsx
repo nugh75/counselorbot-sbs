@@ -5,14 +5,14 @@ import { Layers } from 'lucide-react';
 import { classViewOptions, currentClassView, parseClassView, saveClassView } from '@/lib/class-view';
 import { classViewText } from '@/lib/i18n-class-view';
 import { useI18n } from '@/lib/i18n-context';
-import { useUserAccess } from '@/lib/use-user-access';
+import type { UserAccess } from '@/lib/user-access';
 import { cn } from '@/lib/utils';
 
 // Student view switcher (#146): full view or a class view, stored server side.
-// Renders nothing for students with no class and for staff.
-export function ClassViewSwitcher({ labelled = false, className }: { labelled?: boolean; className?: string }) {
+// Renders nothing for students with no class and for staff. `access` comes from
+// the Header: opening the menu does not read /api/user/access again.
+export function ClassViewSwitcher({ access, labelled = false, className }: { access: UserAccess | null; labelled?: boolean; className?: string }) {
     const { lang } = useI18n();
-    const { access } = useUserAccess();
     const [saving, setSaving] = useState(false);
     const [failed, setFailed] = useState(false);
     const id = useId();

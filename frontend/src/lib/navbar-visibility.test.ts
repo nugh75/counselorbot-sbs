@@ -1,9 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 // @ts-expect-error -- Node runs TypeScript files directly.
-import { canUseAssistant, canUsePersonalPage, canUseResearchConsole, canUseTeacherAssistant } from './roles.ts';
-// @ts-expect-error -- Node runs TypeScript files directly.
-import { isToolAllowed } from './user-access.ts';
+import { headerNavigation } from './header-navigation.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
 import { classViewOptions } from './class-view.ts';
 // @ts-expect-error -- Node runs TypeScript files directly.
@@ -15,20 +13,22 @@ import type { UserAccess } from './user-access';
 type Profile = { identity: Identity; access: UserAccess | null; expect: Record<string, unknown> };
 const PROFILES = FIXTURES as unknown as Record<keyof typeof FIXTURES, Profile>;
 
-// Mirrors the predicates Header.tsx composes (lines 56–95) until P3 gives them
-// one definition; tests/navbar-visibility.test.mjs checks the rendered navbar.
+// The role contract read from the one description the Header renders
+// (lib/header-navigation.ts); tests/navbar-visibility.test.mjs checks the
+// rendered navbar.
 function navbarFlags({ identity, access }: Profile) {
-    const auth = Boolean(identity.authenticated);
+    const nav = headerNavigation({ identity, access, accessLoading: false });
+    const has = (key: string) => nav.links.some((link: { key: string }) => link.key === key);
     return {
-        bussola: auth && isToolAllowed(access, 'bussola'),
-        assistant: canUseAssistant(identity) && isToolAllowed(access, 'assistant'),
-        student: canUsePersonalPage(identity),
-        teacher: canUseTeacherAssistant(identity),
-        admin: canUseResearchConsole(identity),
-        services: auth && canUseResearchConsole(identity) ? (identity.is_admin ? 'manager' : 'portal') : null,
-        view: classViewOptions(access).map((option: { kind: string; name?: string }) =>
+        bussola: has('orientation'),
+        assistant: has('assistant'),
+        student: has('profile'),
+        teacher: has('teacher-panel'),
+        admin: has('admin'),
+        services: nav.services,
+        view: (nav.classView ? classViewOptions(access) : []).map((option: { kind: string; name?: string }) =>
             option.kind === 'class' ? classViewText('it', 'class', option.name) : classViewText('it', option.kind as 'all' | 'classes')),
-        auth: auth ? 'logout' : 'adminLogin',
+        auth: nav.auth,
     };
 }
 
