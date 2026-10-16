@@ -168,7 +168,13 @@ le dieci stanine già calcolate; la somministrazione interna è sospesa perché
 i 25 item sostitutivi non sono i 63 item canonici e manca la chiave autorizzata.
 
 I risultati si inseriscono manualmente oppure si estraggono da PDF/immagine, con
-controllo della persona prima di proseguire. La visualizzazione e la chat aiutano
+controllo della persona prima di proseguire. L'estrazione prova prima l'OCR locale;
+se non è disponibile (per esempio su un'installazione senza Ollama) usa un provider
+di visione scelto dall'amministratore tra quelli supportati, senza alcun modello
+predefinito, e passa dalla stessa protezione dei dati della chat: nella modalità
+bloccante l'invio del documento viene fermato. Se non c'è alcun servizio di visione
+utilizzabile compare un messaggio localizzato che invita a inserire i dati a mano.
+La visualizzazione e la chat aiutano
 la riflessione sui fattori; un punteggio alto non è sempre un punto di forza, perché
 alcuni fattori sono invertiti. Non si fanno diagnosi. La scheda di ciascuno strumento
 (`/strumenti/<codice>`) ne spiega finalità, svolgimento e dati necessari.

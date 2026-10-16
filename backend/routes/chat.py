@@ -48,6 +48,8 @@ from ..i18n_fields import localized
 from ..qsa_extractor import (
     DEFAULT_OCR_MODEL,
     DEFAULT_PARSER_MODEL,
+    PRIVACY_BLOCKED_CODE,
+    VISION_UNAVAILABLE_CODE,
     extract_questionnaire_data,
 )
 from ..guided_text_i18n import SECONDARY_LANGS, resolve_text, QUESTIONS_LABEL, PHASE_WORD
@@ -1360,10 +1362,66 @@ async def audit_qsa(
     return {"status": "ok"}
 
 
+# Estrazione del PDF senza un provider di visione utilizzabile (nessun modello
+# cablato): messaggio per l'utente al posto dell'errore tecnico, che resta nei
+# log. Il filtro privacy esterno blocca l'invio del documento con policy `block`.
+_VISION_UNAVAILABLE_MESSAGE_BY_LANG = {
+    "it": "Non è stato possibile leggere il documento: nessun servizio di visione (OCR) "
+          "è configurato o raggiungibile. Contatta un amministratore o inserisci i dati manualmente.",
+    "en": "The document could not be read: no vision (OCR) service is configured or reachable. "
+          "Contact an administrator or enter the data manually.",
+    "es": "No se ha podido leer el documento: no hay ningún servicio de visión (OCR) configurado "
+          "o accesible. Contacta con un administrador o introduce los datos manualmente.",
+    "fr": "Le document n'a pas pu être lu : aucun service de vision (OCR) n'est configuré ou "
+          "accessible. Contacte un administrateur ou saisis les données manuellement.",
+    "de": "Das Dokument konnte nicht gelesen werden: Es ist kein Vision- (OCR-) Dienst konfiguriert "
+          "oder erreichbar. Wende dich an einen Administrator oder gib die Daten manuell ein.",
+    "sv": "Dokumentet kunde inte läsas: ingen visions- (OCR-) tjänst är konfigurerad eller nåbar. "
+          "Kontakta en administratör eller ange uppgifterna manuellt.",
+}
+_VISION_PRIVACY_MESSAGE_BY_LANG = {
+    "it": "Il documento non può essere inviato a un servizio esterno con la protezione dei dati "
+          "attuale. Riprova, oppure contatta un amministratore.",
+    "en": "The document cannot be sent to an external service under the current data protection "
+          "settings. Try again or contact an administrator.",
+    "es": "El documento no se puede enviar a un servicio externo con la protección de datos actual. "
+          "Inténtalo de nuevo o contacta con un administrador.",
+    "fr": "Le document ne peut pas être envoyé à un service externe avec la protection des données "
+          "actuelle. Réessaie ou contacte un administrateur.",
+    "de": "Das Dokument kann mit dem aktuellen Datenschutz nicht an einen externen Dienst gesendet "
+          "werden. Versuche es erneut oder wende dich an einen Administrator.",
+    "sv": "Dokumentet kan inte skickas till en extern tjänst med det aktuella dataskyddet. "
+          "Försök igen eller kontakta en administratör.",
+}
+_VISION_UNAVAILABLE_CODES = frozenset({
+    VISION_UNAVAILABLE_CODE, "vision_not_configured", "vision_unsupported_provider",
+    "vision_model_missing", "vision_missing_key", "vision_unavailable",
+    "vision_timeout", "vision_invalid_response",
+})
+
+
+def _qsa_extraction_error(extraction_data: dict, language: str | None) -> HTTPException:
+    """Traduce l'esito dell'estrazione in un errore HTTP chiaro e localizzato.
+
+    I codici di configurazione/mancanza del provider e il blocco privacy danno un
+    messaggio per l'utente; ogni altro errore resta il testo tecnico (i dettagli
+    di trasporto non arrivano comunque qui)."""
+    code = extraction_data.get("error_code")
+    lang = _normalize_language(language)
+    if code in _VISION_UNAVAILABLE_CODES:
+        detail = _VISION_UNAVAILABLE_MESSAGE_BY_LANG.get(lang, _VISION_UNAVAILABLE_MESSAGE_BY_LANG["it"])
+    elif code == PRIVACY_BLOCKED_CODE:
+        detail = _VISION_PRIVACY_MESSAGE_BY_LANG.get(lang, _VISION_PRIVACY_MESSAGE_BY_LANG["it"])
+    else:
+        detail = extraction_data["error"]
+    return HTTPException(status_code=400, detail=detail)
+
+
 @router.post("/qsa/upload")
 async def upload_qsa_document(
     file: UploadFile = File(...),
     questionnaire_type: str = Form("QSA"),
+    lang: str | None = Form(None),
     db: Session = Depends(database.get_db),
     identity: dict = Depends(auth.get_current_user),
 ):
@@ -1395,10 +1453,13 @@ async def upload_qsa_document(
             ollama_url=ai_service.config.get("ollama_ip"),
             ocr_model=ai_service.config.get("qsa_ocr_model") or DEFAULT_OCR_MODEL,
             parser_model=ai_service.config.get("qsa_parser_model") or DEFAULT_PARSER_MODEL,
+            # Ripiego esterno con provider/modello vision configurabili e stessa
+            # policy privacy della chat (block compreso): nessun modello cablato.
+            vision_call=ai_service.call_vision,
         )
         extraction_data = await run_in_threadpool(extractor)
         if "error" in extraction_data:
-            raise HTTPException(status_code=400, detail=extraction_data["error"])
+            raise _qsa_extraction_error(extraction_data, lang)
 
         # Save PDF to uploads/qsa with a token
         import shutil
