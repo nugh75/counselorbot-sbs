@@ -62,6 +62,9 @@ non deve essere restituito al browser o accettato dagli header del client.
 Lasciare vuote `API_KEY_*` e `OMNIROUTE_API_KEY` finché l'operatore indica
 il provider. Non ereditare chiavi da altri container. Le chiavi di sistema
 sono lette dall'ambiente del backend, non recuperate mediante API Console.
+Il recupero documenti con embedding esterni riusa `API_KEY_MISTRAL` oppure
+`API_KEY_OPENROUTER`: nessuna nuova variabile (vedi
+[Recupero documenti senza Ollama](#recupero-documenti-senza-ollama)).
 
 ## Build e avvio
 
@@ -202,11 +205,13 @@ raggiungimento del limite.
 | --- | --- |
 | Questionari, punteggi manuali, area personale | Richiedono il sito e l'identità appropriata; non installano un LLM. |
 | Chat, pQBL e sintesi AI | In attesa di provider, modello e scelta privacy dell'operatore. |
-| RAG con embedding | Richiede Ollama remoto o una futura implementazione di provider embedding alternativo. |
+| Recupero documenti (RAG) | Ricerca per parole chiave (BM25) sempre attiva, senza chiavi. Ricerca per significato con Mistral o OpenRouter: vedi [Recupero documenti senza Ollama](#recupero-documenti-senza-ollama). |
 | Assistente piattaforma | Il documento live può fornire grounding senza embedding; la generazione richiede comunque un provider funzionante. |
-| Memoria semantica | Ripiega sulla ricerca per parole quando gli embedding non rispondono. |
-| Upload OCR QSA | Ollama assente; fallback OpenRouter non configurato. Il fallback invia direttamente la prima pagina con modello preview hardcoded e va verificato separatamente. |
-| Traduzioni automatiche counselor | Tentativi automatici disabilitati; usa descrizioni disponibili. |
+| Memoria semantica | Sempre per parole chiave senza Ollama: memorie ed episodi non vanno mai a un'API. |
+| Upload OCR QSA | Ollama assente: il ripiego usa il provider di visione configurato (`vision_provider`/`vision_model`) tramite `AIService` e il filtro privacy della chat. Senza provider di visione l'utente riceve un messaggio chiaro. |
+| OCR pQBL di PDF scansionati | Ancora solo Ollama; i PDF con testo nativo funzionano. Issue #318. |
+| Traduzioni automatiche counselor | Tentativi automatici disabilitati; usa descrizioni disponibili. Le traduzioni del catalogo usano il provider AI attivo. |
+| Ripiego per budget | Passa al primo ripiego locale o gratuito configurato; senza ripieghi la chat si ferma con un messaggio chiaro. |
 | Thread guard | Disattivato inizialmente; il preset di fabbrica richiede Ollama. |
 | Trascrizione audio locale e Piper | Servizi esclusi dallo stack portabile iniziale; installazione e risorse dedicate necessarie. |
 | Edge TTS | Richiede connessione al servizio esterno e collaudo separato. |
@@ -214,6 +219,122 @@ raggiungimento del limite.
 
 Ollama remoto è un'opzione futura per mantenere le funzioni implementate,
 non un prerequisito che questa procedura installa sul Mac.
+
+## Recupero documenti senza Ollama
+
+Il recupero documenti alimenta la chat guidata (materiali di
+competenzestrategiche.it, CounselorBot e questionari) e l'Assistente. Ha due
+livelli:
+
+- **parole chiave (BM25)**: indice locale sempre attivo, calcolato senza rete
+  né chiavi e salvato nel volume `rag_index`;
+- **significato (embedding)**: vettori calcolati da un modello. Senza Ollama
+  si usa un provider esterno con chiave di sistema: Mistral diretto
+  (`mistral-embed`, 1024 dimensioni, fornitore UE) oppure OpenRouter
+  (predefinito `google/gemini-embedding-2` a 768 dimensioni, fornitore USA
+  che inoltra a Google). Per questa installazione è previsto OpenRouter con
+  `google/gemini-embedding-2`.
+
+| Funzione | Solo parole chiave (nessuna chiave) | Con embedding esterno (Mistral o OpenRouter) | Non disponibile senza Ollama |
+| --- | --- | --- | --- |
+| Materiali nella chat guidata | Passaggi trovati per parole, titoli e nomi dei file; nessun errore visibile | Ricerca ibrida parole + significato (fusione RRF) | — |
+| Assistente del sito, tutte le collezioni predefinite | Come sopra; un guasto del servizio mostra un messaggio localizzato, mai l'errore tecnico | Come sopra | — |
+| Collezioni caricate dall'amministratore | Parole chiave | Vettori solo se la collezione è marcata «Pubblicabile a un provider di embedding esterno»; altrimenti parole chiave | — |
+| Domande degli studenti | Restano nel backend | Inviate al provider solo dopo il filtro dei dati personali della chat e senza punteggi. Con NER locale assente serve il filtro di base (vedi passo 6) | Filtro NER locale dei nomi |
+| Memorie, episodi, strategie e letture certificate | Parole chiave | Parole chiave: i testi privati non vanno mai a un'API | Ordinamento semantico locale |
+| Costi | Nessuno | Registrati nei log `embedding` e nel budget mensile; stima prima di reindicizzare | — |
+
+Nessuna variabile nuova: si riusano `API_KEY_MISTRAL` o `API_KEY_OPENROUTER`
+(accettata anche `OPENROUTER_API_KEY`). Provider, modello, dimensioni e
+modalità sono impostazioni del DB, modificabili solo da Amministrazione.
+Dettagli tecnici in [Provider di embedding](embedding-providers.md),
+[indice BM25](rag-bm25.md) e [indici per modello](rag-index-versions.md).
+
+### Attivazione per l'amministratore
+
+Prima di iniziare: il titolare del trattamento deve aver accettato il
+fornitore (Mistral UE, oppure OpenRouter USA con trasferimento extra-UE) e
+aggiornato l'informativa. La procedura non richiede `sudo`.
+
+1. **Chiave di sistema.** Nel `.env` del checkout portabile impostare
+   `API_KEY_OPENROUTER=<chiave>` (scelta prevista) oppure
+   `API_KEY_MISTRAL=<chiave>`. Usare una chiave dedicata al servizio, mai
+   una chiave personale. Non stampare il file, non copiarlo in chat o in Git.
+2. **Ricreare il backend** perché legga la nuova variabile:
+
+   ```bash
+   docker compose --env-file .env -f docker-compose.portable.yml up -d --force-recreate --no-deps counselorbot-backend
+   docker compose --env-file .env -f docker-compose.portable.yml ps
+   ```
+
+   Se l'immagine è precedente a questa funzione (nessuna sezione «Recupero
+   documenti» in Amministrazione), ricostruire backend e frontend con
+   `up -d --build`. Il volume `rag_index` resta: l'indice BM25 esistente
+   continua a servire.
+3. **Aprire il pannello.** Amministrazione → Configurazione & Prompt →
+   sezione **Generale** → **Recupero documenti**. Scegliere **Esterno:
+   OpenRouter** (oppure **Esterno: Mistral diretto (UE)**). Il pannello deve
+   mostrare «Chiave API_KEY_OPENROUTER: presente». Se dice «assente», la
+   variabile non è arrivata al container: ricontrollare i passi 1 e 2.
+4. **Modello e modalità.** Lasciare vuoti **Modello** e **Dimensioni del
+   vettore**: valgono `google/gemini-embedding-2` a 768 dimensioni
+   (`mistral-embed` a 1024 per Mistral). **Modalità di ricerca**: «Ibrida:
+   parole chiave + significato (consigliata)». Premere **Salva recupero
+   documenti**.
+5. **Prova.** Premere **Prova**: invia una frase fittizia, senza dati
+   personali, e costa una frazione di centesimo. Esito atteso: «Funziona:
+   vettore di 768 dimensioni» (1024 con Mistral). Gli esiti «manca la chiave
+   di sistema», «prezzo del modello non configurato», «budget mensile
+   esaurito» o «servizio non raggiungibile» indicano il passo da correggere;
+   intanto la ricerca resta per parole chiave.
+6. **Condizione N1: NER locale assente.** Con le impostazioni di fabbrica
+   (`pii_ner_enabled=true`, `external_pii_fallback=block`) le domande degli
+   studenti passano dal rilevatore locale dei dati personali, che vive su
+   Ollama. Senza Ollama il rilevatore non risponde e, per sicurezza, **nessuna
+   domanda viene inviata al provider**: i documenti ricevono i vettori, ma
+   ogni ricerca resta per parole chiave. Il pannello lo mostra così:
+   - prima di una prova, con un provider esterno salvato: «Le domande verso
+     il modello esterno richiedono il rilevatore locale di dati personali
+     (Ollama, modello …)»;
+   - dopo **Prova** o dopo una domanda: «Rilevatore locale non
+     raggiungibile: le domande verso il modello esterno sono disattivate…»
+     con il pulsante **Usa solo il filtro di base**.
+
+   Per attivare le query vettoriali esterne l'amministratore sceglie il filtro
+   **basic**: pulsante **Usa solo il filtro di base**, oppure «Solo filtro di
+   base (senza Ollama)» in **Protezione dei dati per i modelli esterni**.
+   Risultato: `pii_ner_enabled=false`, `external_pii_redact=true`,
+   `external_pii_fallback=block`. Il filtro deterministico toglie e-mail,
+   telefoni e identificativi riconosciuti, ma non tutti i nomi: non garantisce
+   l'anonimato. Nulla cambia finché non lo sceglie l'amministratore. Su questa
+   macchina `basic` è già attivo dal 5 ottobre 2026: in quel caso nessuno dei
+   due messaggi compare. Ripremere **Prova** per confermarlo.
+7. **Reindicizzare.** Nella lista **Indici per collezione** premere prima
+   **Stima costi** (calcolo locale, nessuna chiamata) e poi **Reindicizza**
+   per ciascuna collezione. «Framework teorico» vale circa il 90% del
+   volume. Lo stato passa da «Da reindicizzare per il modello scelto (ora
+   parole chiave)» a «Indicizzazione in corso…» e infine a «Parole chiave +
+   significato pronti». Durante il build la ricerca usa le parole chiave e il
+   nuovo indice entra in servizio solo quando è completo. Le collezioni non
+   pubblicabili restano «Non pubblicabile: resta solo parole chiave con un
+   modello esterno». Una collezione non reindicizzata a mano viene comunque
+   indicizzata in background alla prima ricerca che la usa: fare la stima
+   prima di salvare il provider se il budget è stretto.
+8. **Verificare.** Fare una domanda all'Assistente su una collezione
+   indicizzata e controllare risposta e fonti. Poi leggere i log senza
+   stampare segreti:
+
+   ```bash
+   docker compose --env-file .env -f docker-compose.portable.yml logs --since 15m counselorbot-backend | grep -i embedding
+   ```
+
+   Non devono comparire errori di embedding ripetuti. I costi compaiono nei
+   log `embedding` e rientrano nel budget mensile, se attivo.
+
+**Tornare indietro:** scegliere «Nessuno (solo parole chiave)» e salvare.
+Nessuna richiesta parte più, la ricerca usa BM25 e gli indici vettoriali
+restano sul volume per un eventuale ritorno. Per revocare la chiave,
+svuotarla nel `.env` e ripetere il passo 2.
 
 ## Verifiche e manutenzione
 
