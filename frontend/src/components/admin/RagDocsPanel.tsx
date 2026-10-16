@@ -14,6 +14,7 @@ interface RagCollection {
     label: string;
     mode: 'graphify' | 'plain' | string;
     builtin: boolean;
+    api_publishable?: boolean;
     upload_dir?: string | null;
     graph_available?: boolean;
 }
@@ -180,6 +181,23 @@ export function RagDocsPanel() {
         } catch (e) {
             console.error('Failed to delete collection', e);
             setError(t('admin.rag.error.delete'));
+        }
+    };
+
+    const handleApiPublishable = async (publishable: boolean) => {
+        if (!currentCollection || currentCollection.builtin) return;
+        setError(null);
+        try {
+            const res = await fetch(`/api/admin/rag/collections/${encodeURIComponent(currentCollection.id)}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ api_publishable: publishable }),
+            });
+            if (!res.ok) throw new Error('update failed');
+            await loadCollections();
+        } catch (e) {
+            console.error('Failed to update collection', e);
+            setError(t('admin.rag.error.apiPublishable'));
         }
     };
 
@@ -409,6 +427,20 @@ export function RagDocsPanel() {
                             )}
                             {currentCollection.mode === 'graphify' && (
                                 <p className="text-[11px] text-amber-600 mt-1">{t('admin.rag.graphifyNote')}</p>
+                            )}
+                            {!currentCollection.builtin && (
+                                <label className="mt-2 flex max-w-xl items-start gap-2 text-xs text-slate-600">
+                                    <input
+                                        type="checkbox"
+                                        className="mt-0.5"
+                                        checked={Boolean(currentCollection.api_publishable)}
+                                        onChange={(e) => void handleApiPublishable(e.target.checked)}
+                                    />
+                                    <span>
+                                        <span className="font-semibold text-slate-700">{t('admin.rag.apiPublishable')}</span>
+                                        <span className="block text-[11px] text-slate-500">{t('admin.rag.apiPublishableHint')}</span>
+                                    </span>
+                                </label>
                             )}
                         </div>
                         <div className="flex flex-wrap gap-2">
