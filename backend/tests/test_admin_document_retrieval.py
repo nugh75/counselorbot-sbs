@@ -427,3 +427,22 @@ def test_single_builds_and_reindex_all_share_one_reservation(client, db, monkeyp
     assert not any(index._building for index in indexes.values())
     assert rag._build_reservation.acquire()  # released at the end
     rag._build_reservation.release()
+
+
+def test_failed_thread_start_releases_locks_and_allows_a_new_start(client, monkeypatch, collections):
+    monkeypatch.setenv("API_KEY_MISTRAL", SECRET)
+    fake_client(monkeypatch, "mistral")
+    _put(client, provider="mistral")
+
+    def refuse(self):
+        raise RuntimeError("can't start new thread")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(rag_reindex_job.threading.Thread, "start", refuse)
+        data = client.post("/admin/document-retrieval/reindex-all").json()
+    assert (data["started"], data["reason"], data["job"]["status"]) == (False, "job_start_failed", "error")
+    assert client.get("/admin/document-retrieval/reindex-all").json()["status"] == "error"
+    assert rag._build_reservation.acquire()
+    rag._build_reservation.release()
+    _, job = _run_all(client)
+    assert job["status"] == "done"

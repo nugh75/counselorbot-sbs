@@ -103,9 +103,22 @@ def start(ai_service, collections: list[dict]) -> tuple[bool, dict, str | None]:
         except Exception:
             _release(lockf)
             raise
-        _thread = threading.Thread(target=_run, args=(lockf, state, ai_service),
-                                   name="rag-reindex-all", daemon=True)
-        _thread.start()
+        thread = threading.Thread(target=_run, args=(lockf, state, ai_service),
+                                  name="rag-reindex-all", daemon=True)
+        try:
+            thread.start()
+        except Exception:
+            # No worker will release the locks: record the failure so a new start works.
+            logger.exception("Avvio della reindicizzazione completa non riuscito")
+            state.update(status="error", finished_at=time.time())
+            for entry in state["collections"]:
+                entry["status"] = "interrupted"
+            try:
+                _write(state)
+            finally:
+                _release(lockf)
+            return False, copy.deepcopy(state), "job_start_failed"
+        _thread = thread
         return True, copy.deepcopy(state), None
 
 
