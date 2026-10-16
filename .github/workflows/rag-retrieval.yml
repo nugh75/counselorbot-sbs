@@ -8,6 +8,9 @@ on:
       - 'backend/embedding_service.py'
       - 'backend/vision_service.py'
       - 'backend/qsa_extractor.py'
+      - 'backend/pqbl_generator.py'
+      - 'backend/routes/pqbl.py'
+      - 'backend/tests/test_pqbl_vision_ocr.py'
       - 'backend/ai_service.py'
       - 'backend/memory_embeddings.py'
       - 'backend/chat_preparation.py'
@@ -29,6 +32,9 @@ on:
       - 'backend/embedding_service.py'
       - 'backend/vision_service.py'
       - 'backend/qsa_extractor.py'
+      - 'backend/pqbl_generator.py'
+      - 'backend/routes/pqbl.py'
+      - 'backend/tests/test_pqbl_vision_ocr.py'
       - 'backend/ai_service.py'
       - 'backend/memory_embeddings.py'
       - 'backend/chat_preparation.py'
@@ -67,10 +73,11 @@ jobs:
           backend/vision_service.py backend/qsa_extractor.py backend/ai_service.py
           backend/memory_embeddings.py backend/tests/test_embedding_provider.py
           backend/tests/test_embedding_privacy.py
-          backend/tests/test_qsa_vision_fallback.py scripts/benchmark-rag-bm25.py
+          backend/tests/test_qsa_vision_fallback.py backend/pqbl_generator.py
+          backend/routes/pqbl.py backend/tests/test_pqbl_vision_ocr.py scripts/benchmark-rag-bm25.py
       - run: mypy --explicit-package-bases --follow-imports=silent --ignore-missing-imports backend/rag_index.py backend/embedding_service.py backend/vision_service.py backend/routes/document_retrieval.py
       - name: Offline regression tests (fake embedders)
         run: >-
           python -m pytest backend/tests/test_admin_document_retrieval.py backend/tests/test_embedding_privacy.py backend/tests/test_embedding_provider.py backend/tests/test_rag_bm25.py
           backend/tests/test_rag_embedding_degradation.py backend/tests/test_rag_index_versions.py backend/tests/test_rag_markdown.py
-          backend/tests/test_qsa_vision_fallback.py -q --disable-warnings
+          backend/tests/test_qsa_vision_fallback.py backend/tests/test_pqbl_vision_ocr.py -q --disable-warnings
