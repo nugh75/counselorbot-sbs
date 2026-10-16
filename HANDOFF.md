@@ -21,8 +21,8 @@ Testi: sezione «Ricerca nei materiali» in `/guide/dati-riservatezza` (6 lingue
 con il titolare: i testi non sono formulazioni legali.
 
 Test: `backend/tests/test_embedding_privacy.py` (19) + suite provider/RAG; suite
-ampia su Postgres 16 usa e getta (porta 55447, container
-`counselorbot-s16-privacy-pg`, da rimuovere). Fallimenti preesistenti su main in
+ampia su Postgres 16 usa e getta (porta 55447, container già rimosso).
+PR #313 in bozza, issue #312. Fallimenti preesistenti su main in
 `test_smoke.py`: bug `6c8f223f` e `47a13138`. Nessun deploy, sudo o `.env`.
 
 # Handoff s15: provider embedding configurabile (Blocco 3)
