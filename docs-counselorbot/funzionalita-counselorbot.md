@@ -156,7 +156,10 @@ shown. The Guide remains available independently of these class toggles.
   complessiva dei costi, poi indicizza tutte le collezioni una dopo l'altra.
   Durante il lavoro mostra la percentuale e, per ogni collezione, «in attesa»,
   «in corso: x/y passaggi», «completata» o «errore: motivo». Il pulsante resta
-  disattivato e l'avanzamento ricompare anche ricaricando la pagina. I lotti
+  disattivato e l'avanzamento ricompare anche ricaricando la pagina. Si
+  indicizza una sola collezione alla volta: se è già in corso
+  un'indicizzazione, il pannello lo dice e non ne avvia un'altra; una
+  collezione eliminata nel frattempo risulta «saltata». I lotti
   verso il provider esterno vengono ritentati in automatico su limiti di
   frequenza, errori temporanei e tempi scaduti. Un errore su una collezione non
   ferma le altre né sospende la loro ricerca per significato, e quella
