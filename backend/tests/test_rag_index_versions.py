@@ -261,10 +261,14 @@ def test_cross_worker_lock_avoids_duplicate_embedding_calls(tmp_path):
         assert ai.entered.wait(2)
         assert second.search(ai, "Testo")
         assert second.stats()["building"]
+        # The shared build reservation refuses a second build while one embeds.
+        assert second.start_build(ai) is False
     finally:
         ai.release.set()
         assert first.wait_for_build(5)
-        assert second.wait_for_build(5)
+    # The next search adopts the committed generation without embedding again.
+    assert second.search(ai, "Testo")
+    assert second.wait_for_build(5)
     assert ai.calls == 1
     assert first.generation == second.generation
 

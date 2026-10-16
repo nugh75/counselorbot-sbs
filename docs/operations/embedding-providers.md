@@ -123,13 +123,33 @@ same guards as the other AI settings (`require_admin`, `no-store`, the
 | `GET /admin/document-retrieval` | Provider, model, dimensions, mode; for each provider its default/suggested models, key variable names and `key_present` (boolean, **never the value**); NER status; per-collection index status |
 | `PUT /admin/document-retrieval` | `{provider, model, dimensions, mode}`. Empty model = provider default, saved explicitly; dimensions are cleared for Ollama/none and validated per model |
 | `POST /admin/document-retrieval/test` | Embeds one fixed fictitious, non-personal sentence with the saved settings; for external providers it also runs the query filter locally (`query_filter`). Returns only sanitized codes |
+| `GET /admin/document-retrieval/estimate` | Sum of the offline estimates of every collection, shown before «Reindicizza tutto» |
+| `POST /admin/document-retrieval/reindex-all` | Starts one job that indexes every collection in sequence and returns `{started, job, reason}`. Nothing starts when a job already runs (`reason: reindex_running`), when a single-collection build holds the reservation (`build_in_progress`) or when the worker thread cannot start (`job_start_failed`, state `error`, locks released) |
+| `GET /admin/document-retrieval/reindex-all` | Job state: `status` (`idle`, `running`, `done`, `error`, `interrupted`), `current`, `started_at`/`finished_at`, and per collection `status`, `phase` (`collecting`, `embedding`, `saving`), `done`/`total` uncached chunks and a classified `error` |
 | `GET /admin/document-retrieval/collections/{id}/estimate` | Offline token/cost estimate (block 5), no provider call |
-| `POST /admin/document-retrieval/collections/{id}/reindex` | Starts the background build (block 5) |
+| `POST /admin/document-retrieval/collections/{id}/reindex` | Starts the background build (block 5); kept for compatibility, no longer a panel button. `409` while another build or the job holds the reservation |
 
 System keys stay in the server `.env` (`API_KEY_MISTRAL`, `API_KEY_OPENROUTER`);
 the panel explains this and never accepts a key. Switching to an external provider
 applies the block 4 privacy policy above, which the panel recalls. After a model
-change, reindex the collections: until then, searches use BM25.
+change, use «Reindicizza tutto»: until a collection is reindexed, its searches use BM25.
+
+The job state is `reindex-all.json` in the index directory, written after every
+batch, and an exclusive `flock` on `.reindex-all.lock` is held for the whole job.
+Every worker and a page reload therefore see the same progress. A state still
+`running` without a lock holder (worker restarted) is reported as `interrupted`.
+Builds that embed share one exclusive reservation (thread lock plus a flock on
+`.embedding-build.lock`): `start_build()` of any collection and the job never
+overlap, so at most one collection embeds at a time across workers. A refused
+background build is retried by the next search that finds the index stale. A
+collection deleted after the job took its list is recorded as `skipped`
+(`collection_removed`) and never falls back to the default collection: the job
+uses the strict `find_index()` (no default), and a deletion after the lookup makes
+the build fail under the collection lock, after which the job checks existence
+again. Deleting a dynamic collection does not wait for the job.
+`GET /admin/document-retrieval` also returns `reindex_job`, `dimensions_warning`
+(`embedding_dimensions_unusual` for `google/gemini-embedding-2` outside 768, 1536
+or 3072) and `semantic_suspended_seconds` (remaining query cooldown).
 
 ## Accounting, failures and caches
 
@@ -146,8 +166,18 @@ on recorded spending, not an atomic reservation across concurrent requests.
 
 Missing key (`embedding_missing_key`), budget (`embedding_budget_exceeded`),
 unsupported provider, missing price, invalid input/response and timeout are
-classified `AIError`s with sanitized messages. Existing RAG cooldown and BM25
-handle failures. The embedding path resolves system environment keys again at
+classified `AIError`s with sanitized messages. Provider errors are classified
+from the SDK exception type and HTTP status only, never from bodies:
+`embedding_auth_failed` (401/403), `embedding_quota_exceeded` (402),
+`embedding_model_unavailable` (404, including OpenRouter finding no endpoint for
+the zero-retention routing), `embedding_request_rejected` (400/413/422),
+`embedding_rate_limited` (429), `embedding_provider_error` (5xx),
+`embedding_network`, `embedding_timeout` and `embedding_dimensions_mismatch`
+(a requested size the provider ignored). Index builds retry a batch up to 5 times
+on 429, 5xx, network errors and timeouts. They honour `Retry-After`, otherwise
+back off exponentially (2, 4, 8… s, at most 60 s), and report progress after every
+batch. Queries, the panel test and private ranking never retry. Existing RAG
+cooldown and BM25 handle failures. The embedding path resolves system environment keys again at
 call time; personal/shared chat connections cannot replace them.
 
 Cache and cooldown identities include provider/model/dimensions; legacy Ollama

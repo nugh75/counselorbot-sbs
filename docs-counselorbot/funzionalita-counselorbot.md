@@ -146,8 +146,26 @@ shown. The Guide remains available independently of these class toggles.
   scegliere modello, dimensioni e modalità di ricerca (ibrida, solo parole chiave,
   solo significato) e mostra se la chiave di sistema (`API_KEY_MISTRAL`,
   `API_KEY_OPENROUTER`, impostata nel file .env del server) è presente, mai il
-  suo valore. Il pulsante «Prova» invia una frase fittizia; per ogni collezione
-  il pannello mostra lo stato dell'indice, la stima dei costi e «Reindicizza».
+  suo valore. Il pulsante «Prova» invia una frase fittizia e, se non riesce, ne
+  dice il motivo (chiave rifiutata, credito esaurito, modello non disponibile,
+  richiesta rifiutata, limite di frequenza, errore del provider, rete, tempo
+  scaduto, dimensione dei vettori diversa da quella richiesta). Una dimensione
+  insolita per google/gemini-embedding-2 (diversa da 768, 1536 o 3072) viene
+  segnalata. Per ogni collezione il pannello mostra lo stato dell'indice; un
+  solo pulsante «Reindicizza tutto» chiede conferma mostrando la stima
+  complessiva dei costi, poi indicizza tutte le collezioni una dopo l'altra.
+  Durante il lavoro mostra la percentuale e, per ogni collezione, «in attesa»,
+  «in corso: x/y passaggi», «completata» o «errore: motivo». Il pulsante resta
+  disattivato e l'avanzamento ricompare anche ricaricando la pagina. Si
+  indicizza una sola collezione alla volta: se è già in corso
+  un'indicizzazione, il pannello lo dice e non ne avvia un'altra; una
+  collezione eliminata nel frattempo risulta «saltata», senza che al suo posto
+  venga indicizzata un'altra collezione. I lotti
+  verso il provider esterno vengono ritentati in automatico su limiti di
+  frequenza, errori temporanei e tempi scaduti. Un errore su una collezione non
+  ferma le altre né sospende la loro ricerca per significato, e quella
+  collezione continua a usare l'indice precedente. Se la ricerca per significato
+  è sospesa dopo un errore del provider, il pannello lo dice.
   Se il rilevatore locale dei dati personali non risponde, il pannello spiega
   che le domande verso il modello esterno sono disattivate e propone, senza
   applicarlo da solo, il filtro di base senza Ollama; il rilevatore non viene
@@ -159,8 +177,8 @@ shown. The Guide remains available independently of these class toggles.
   «Recupero documenti» sceglie il provider esterno, lascia vuoti modello e
   dimensioni (predefiniti), salva e preme «Prova»; se il pannello segnala il
   rilevatore locale non raggiungibile, sceglie il filtro di base, altrimenti le
-  domande degli studenti restano solo a parole chiave; infine usa «Stima costi»
-  e «Reindicizza» per ogni collezione. «Nessuno (solo parole chiave)» annulla
+  domande degli studenti restano solo a parole chiave; infine preme
+  «Reindicizza tutto», controlla la stima e conferma. «Nessuno (solo parole chiave)» annulla
   la scelta senza perdere gli indici.
   Gli indici sono separati per provider, modello e dimensione. La reindicizzazione
   lavora in background: nel frattempo la ricerca usa le parole chiave sui materiali

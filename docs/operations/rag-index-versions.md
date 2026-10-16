@@ -40,8 +40,10 @@ of chunks, graph and matrix. While rebuilding or switching models, searches use
 BM25 over the active corpus. After the candidate is complete and validated, its
 files are written, the collection JSON is replaced atomically, and the in-memory
 snapshot is published. An embedding, collection or disk-publication failure leaves
-the prior active index intact in memory and on disk. The existing cooldown avoids
-repeated failed embedding attempts. Query dimension/finite-value checks precede
+the prior active index intact in memory and on disk. A failed build records a
+classified `last_build_error` and pauses automatic rebuilds of that collection
+only for five minutes. Other collections and query embeddings are not suspended:
+the shared cooldown covers failed query embeddings only. Query dimension/finite-value checks precede
 matrix multiplication; incompatible queries fall back to BM25 and invalidate the
 vectors for a later rebuild.
 
@@ -51,8 +53,9 @@ vectors for a later rebuild.
 `generation`, `embedding_provider`, `embedding_dimensions` and `built_at`.
 `last_build_error` is a sanitized code. A repeated start while building coalesces.
 Upload, delete and document-scope updates schedule the same background worker.
-The Document retrieval panel (block 6) shows per-collection status and estimates
-and reindexes through `/admin/document-retrieval/collections/{id}/...`. `build()` remains the synchronous worker/testing entrypoint.
+The Document retrieval panel (block 6) shows per-collection status and reindexes
+every collection with one tracked job (`/admin/document-retrieval/reindex-all`,
+see `embedding-providers.md`). `build()` remains the synchronous worker/testing entrypoint.
 
 Privacy gates remain in force for every document and query operation; a cached
 index does not authorize sending a private collection to an external provider.

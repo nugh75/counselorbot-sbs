@@ -13,11 +13,11 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
-from .. import embedding_service, models
+from .. import embedding_service, models, rag_reindex_job
 from ..ai_service import AIError, AIService
 from ..api_secrets import API_KEY_ENV_MAP, environment_secret
 from ..database import get_db
-from ..rag_index import _embedding_key, collection_exists, get_index, list_collections
+from ..rag_index import _embedding_cooldown, _embedding_key, collection_exists, get_index, list_collections
 from . import external_privacy
 from .chatgpt import browser_mutation
 from .personal_api import PrivateRoute, require_admin
@@ -81,6 +81,10 @@ def state(db):
         'provider': provider,
         'model': model,
         'dimensions': dimensions,
+        # Advisory: a valid but unusual size (e.g. 786 typed for 768).
+        'dimensions_warning': embedding_service.dimensions_warning(provider, model, dimensions),
+        # Query embeddings paused after a provider error: search uses keywords meanwhile.
+        'semantic_suspended_seconds': _embedding_cooldown.remaining(_embedding_key(ai_service)),
         'mode': embedding_service.retrieval_mode(config),
         'providers': [{
             'id': pid,
@@ -100,6 +104,7 @@ def state(db):
             'queries_blocked': external and ner == 'unreachable' and fallback == 'block',
         },
         'collections': [_collection_status(ai_service, item) for item in list_collections()],
+        'reindex_job': rag_reindex_job.read_state(),
     }
 
 
@@ -176,6 +181,43 @@ async def estimate(collection: str, identity=Depends(require_admin), db: Session
 async def reindex(collection: str, identity=Depends(require_admin), db: Session = Depends(get_db)):
     index = get_index(_require_collection(collection))
     ai_service = AIService(db)
-    await run_in_threadpool(index.start_build, ai_service)
+    started = await run_in_threadpool(index.start_build, ai_service)
+    if not started and not index._building:
+        # Another collection or «Reindicizza tutto» holds the build reservation.
+        raise HTTPException(409, 'Another index build is running')
     return {'status': 'building', 'collection': _collection_status(
         ai_service, next(c for c in list_collections() if c['id'] == collection))}
+
+
+def _estimate_all(ai_service):
+    rows = [{'id': item['id'], 'label': item['label'], **get_index(item['id']).estimate_reindex(ai_service)}
+            for item in list_collections()]
+    paid = [row for row in rows if row['input_count']]
+    known = all(row['price_known'] for row in paid)
+    return {
+        'input_count': sum(row['input_count'] for row in rows),
+        'estimated_tokens': sum(row['estimated_tokens'] for row in rows),
+        'estimated_cost_usd': sum(row['estimated_cost_usd'] or 0 for row in paid) if known else None,
+        'price_known': known,
+        'collections': [{key: row[key] for key in ('id', 'label', 'input_count', 'estimated_tokens',
+                                                   'estimated_cost_usd', 'price_known', 'vectors_allowed')}
+                        for row in rows],
+    }
+
+
+@router.get('/admin/document-retrieval/estimate')
+async def estimate_all(identity=Depends(require_admin), db: Session = Depends(get_db)):
+    """Total offline estimate for «Reindicizza tutto»: no provider call."""
+    return await run_in_threadpool(_estimate_all, AIService(db))
+
+
+@router.get('/admin/document-retrieval/reindex-all')
+def reindex_all_status(identity=Depends(require_admin)):
+    return rag_reindex_job.read_state()
+
+
+@router.post('/admin/document-retrieval/reindex-all', dependencies=[Depends(browser_mutation)])
+async def reindex_all(identity=Depends(require_admin), db: Session = Depends(get_db)):
+    """Start one sequential job over every collection; idempotent while it runs."""
+    started, job, reason = await run_in_threadpool(rag_reindex_job.start, AIService(db), list_collections())
+    return {'started': started, 'job': job, 'reason': reason}

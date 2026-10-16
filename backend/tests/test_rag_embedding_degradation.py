@@ -100,11 +100,28 @@ def test_failed_embeddings_collect_the_corpus_once_per_cooldown(clock, tmp_path,
     assert corpus.calls == 1  # retry embeddings without recollecting unchanged corpus
 
 
-def test_cooldown_covers_every_collection_of_the_same_model(clock, tmp_path):
+def test_build_failure_pauses_only_its_collection(clock, tmp_path):
     first, second, ai = _Corpus(), _Corpus(), _Embedder(fail=True)
-    assert _index(tmp_path, first, "a").search(ai, "Testo")
-    assert _index(tmp_path, second, "b").search(ai, "Testo")
-    assert (first.calls, second.calls, ai.calls) == (1, 1, 1)
+    failed = _index(tmp_path, first, "a")
+    assert failed.search(ai, "Testo")
+    assert failed.search(ai, "Testo")  # paused: no automatic retry
+    assert ai.calls == 1 and failed.last_build_error == "rag_build_failed"
+    # The other collection keeps its own state and still builds its vectors.
+    ai.fail = False
+    other = _index(tmp_path, second, "b")
+    assert other.search(ai, "Testo")
+    assert other.matrix is not None and other.last_build_error is None
+    assert rag._embedding_cooldown.remaining("fake-embed") == 0
+
+
+def test_query_failure_still_covers_every_collection(clock, tmp_path):
+    ai = _Embedder(fail=False)
+    first, second = _index(tmp_path, _Corpus(), "a"), _index(tmp_path, _Corpus(), "b")
+    assert first.search(ai, "Testo") and second.search(ai, "Testo")
+    calls, ai.fail = ai.calls, True
+    assert first.search(ai, "Testo") and second.search(ai, "Testo")
+    assert ai.calls == calls + 1  # the provider is down for every collection
+    assert rag._embedding_cooldown.remaining("fake-embed") > 0
 
 
 def test_failed_rebuild_keeps_previous_index_and_recovers(clock, tmp_path):

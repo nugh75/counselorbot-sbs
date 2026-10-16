@@ -1346,12 +1346,14 @@ class AIService:
     def embedding_cache_key(self):
         return embedding_service.identity(self.embedding_provider, self.embedding_model, self.embedding_dimensions)
 
-    def embed_texts(self, texts, model: str = None, *, purpose="document", public_corpus=False):
+    def embed_texts(self, texts, model: str = None, *, purpose="document", public_corpus=False,
+                    retries=0, progress=None):
         """System embedding dispatch under the external privacy policy.
 
         External providers accept public-corpus documents and privacy-filtered
         queries (`embedding_service.filter_external_query`); `purpose="private"`
         stays local. Accounting is independent of chat usage and caller transactions.
+        `retries`/`progress` serve index builds: see `embedding_service.embed_texts`.
         """
         def budget_locked():
             # Re-read between paid batches, including costs just recorded here.
@@ -1361,7 +1363,7 @@ class AIService:
         try:
             return embedding_service.embed_texts(
                 self.config, self.db, budget_locked, texts, model=model,
-                purpose=purpose, public_corpus=public_corpus,
+                purpose=purpose, public_corpus=public_corpus, retries=retries, progress=progress,
             )
         except embedding_service.EmbeddingError as exc:
             raise AIError("Embedding non disponibile: " + exc.code, code=exc.code) from None

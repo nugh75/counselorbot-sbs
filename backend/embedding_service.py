@@ -104,6 +104,14 @@ _ner_lock = threading.Lock()
 _clock = time.monotonic
 # OpenRouter routing: only providers that neither collect nor retain request data.
 OPENROUTER_PRIVACY_ROUTING = {"data_collection": "deny", "zdr": True}
+# Retries per batch for index builds (rate limits, provider errors, timeouts).
+# Interactive callers (queries, probe, private ranking) keep the default of 0.
+RETRY_ATTEMPTS = 5
+RETRY_BASE_SECONDS = 2.0
+RETRY_MAX_SECONDS = 60.0
+# Recommended output sizes: other values may be ignored or rejected upstream.
+RECOMMENDED_DIMENSIONS = {"google/gemini-embedding-2": (768, 1536, 3072)}
+_sleep = time.sleep
 
 
 def is_external(provider: str | None) -> bool:
@@ -274,6 +282,75 @@ def estimate_cost(config: Mapping, texts: list[str]) -> dict:
     }
 
 
+def dimensions_warning(provider: str, model: str, dimensions: int | None) -> str | None:
+    """Advisory only: a valid but unusual size, e.g. 786 typed instead of 768."""
+    recommended = RECOMMENDED_DIMENSIONS.get(model) if provider == "openrouter" else None
+    if dimensions and recommended and dimensions not in recommended:
+        return "embedding_dimensions_unusual"
+    return None
+
+
+def _http_status(exc) -> int | None:
+    status = getattr(exc, "status_code", None)
+    if not isinstance(status, int):
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+    return status if isinstance(status, int) else None
+
+
+def _retry_after(exc) -> float | None:
+    headers = getattr(exc, "headers", None)
+    if headers is None:
+        headers = getattr(getattr(exc, "response", None), "headers", None)
+    try:
+        value = float(headers.get("retry-after")) if headers is not None else None
+    except (AttributeError, TypeError, ValueError):
+        return None
+    return value if value is not None and math.isfinite(value) and value >= 0 else None
+
+
+def classify_error(exc: Exception) -> tuple[str, bool]:
+    """Sanitized code and retryability from the SDK/transport error type and HTTP status.
+
+    Only the class name and status are inspected: messages and bodies may echo
+    input text or credentials and never leave this function.
+    """
+    name = type(exc).__name__.lower()
+    status = _http_status(exc)
+    if "timeout" in name or isinstance(exc, (TimeoutError, httpx.TimeoutException)) or status == 408:
+        return "embedding_timeout", True
+    if status is None:
+        if any(word in name for word in ("connect", "network", "noresponse", "protocol", "readerror")):
+            return "embedding_network", True
+        return "embedding_unavailable", False
+    if status == 429:
+        return "embedding_rate_limited", True
+    if status >= 500:
+        return "embedding_provider_error", True
+    if status in (401, 403):
+        return "embedding_auth_failed", False
+    if status == 402:
+        return "embedding_quota_exceeded", False
+    if status == 404:
+        return "embedding_model_unavailable", False
+    if status in (400, 413, 422):
+        return "embedding_request_rejected", False
+    return "embedding_unavailable", False
+
+
+def _with_retry(call: Callable[[], Any], retries: int):
+    for attempt in range(retries + 1):
+        try:
+            return call()
+        except Exception as exc:
+            code, retryable = classify_error(exc)
+            if not retryable or attempt >= retries:
+                raise EmbeddingError(code) from None
+            delay = _retry_after(exc)
+            if delay is None:
+                delay = RETRY_BASE_SECONDS * 2 ** attempt
+            _sleep(min(delay, RETRY_MAX_SECONDS))
+
+
 def _field(obj, key, default=None):
     return (
         obj.get(key, default) if isinstance(obj, dict) else getattr(obj, key, default)
@@ -313,7 +390,11 @@ def embed_texts(
     purpose: str = "document",
     public_corpus: bool = False,
     model: str | None = None,
+    retries: int = 0,
+    progress: Callable[[int], None] | None = None,
 ):
+    """Embed in provider-sized batches. `progress(done)` runs after each batch;
+    `retries` > 0 retries a batch on rate limits, provider errors and timeouts."""
     if purpose not in PURPOSES:
         raise EmbeddingError("embedding_invalid_purpose")
     if not texts:
@@ -394,20 +475,24 @@ def embed_texts(
                     }
                     if dimensions:
                         payload["dimensions"] = dimensions
-                    response = client.post(
-                        f"{(config.get('ollama_ip') or 'http://localhost:11434').rstrip('/')}/api/embed",
-                        json=payload,
-                    )
-                    response.raise_for_status()
-                    response = response.json()
+
+                    def call():
+                        reply = client.post(
+                            f"{(config.get('ollama_ip') or 'http://localhost:11434').rstrip('/')}/api/embed",
+                            json=payload,
+                        )
+                        reply.raise_for_status()
+                        return reply.json()
+
+                    response = _with_retry(call, retries)
                     raw = response.get("embeddings")
                 elif provider == "mistral":
-                    response = client.embeddings.create(
+                    response = _with_retry(lambda: client.embeddings.create(
                         model=model,
                         inputs=batch,
                         timeout_ms=timeout * 1000,
                         retries=None,
-                    )
+                    ), retries)
                     raw = None
                 else:
                     kwargs = {
@@ -419,7 +504,7 @@ def embed_texts(
                         kwargs["dimensions"] = dimensions
                     # OpenRouter is an extra US processor: refuse providers that keep data.
                     kwargs["extra_body"] = {"provider": dict(OPENROUTER_PRIVACY_ROUTING)}
-                    response = client.embeddings.create(**kwargs)
+                    response = _with_retry(lambda: client.embeddings.create(**kwargs), retries)
                     raw = None
                 # Account for every successful paid response, even malformed vectors.
                 if external:
@@ -484,8 +569,13 @@ def embed_texts(
                         raise EmbeddingError("embedding_invalid_response")
                     expected = expected or len(vector)
                     if len(vector) != expected:
-                        raise EmbeddingError("embedding_invalid_response")
+                        # Requested size ignored or unsupported upstream (e.g. 786 for 768).
+                        raise EmbeddingError(
+                            "embedding_dimensions_mismatch" if dimensions else "embedding_invalid_response"
+                        )
                 vectors.extend(raw)
+                if progress is not None:
+                    progress(len(vectors))
         finally:
             if provider == "mistral":
                 client.__exit__(None, None, None)
@@ -495,11 +585,5 @@ def embed_texts(
         raise
     except Exception as exc:
         # Never propagate response bodies, input texts, keys or transport URLs.
-        code = (
-            "embedding_timeout"
-            if isinstance(exc, (TimeoutError, httpx.TimeoutException))
-            or "timeout" in type(exc).__name__.lower()
-            else "embedding_unavailable"
-        )
-        raise EmbeddingError(code) from None
+        raise EmbeddingError(classify_error(exc)[0]) from None
     return vectors
