@@ -62,12 +62,22 @@ def clock(monkeypatch, tmp_path):
 
 
 def _index(tmp_path, corpus, name="plain"):
-    return rag.SiteRagIndex(
+    index = rag.SiteRagIndex(
         docs_dir=str(tmp_path), index_path=str(tmp_path / f"{name}.json"),
         emb_path=str(tmp_path / f"{name}.npy"), cache_path=str(tmp_path / f"{name}.npz"),
         lock_path=str(tmp_path / f".{name}.lock"), collector=corpus.collect,
         graph_loader=rag._empty_graph, signature_fn=corpus.signature, mode="plain",
     )
+    # These legacy tests assert deterministic cooldown/call counts. Real thread
+    # concurrency and nonblocking behavior are covered in test_rag_index_versions.
+    def inline_build(ai):
+        try:
+            index.build(ai)
+        except Exception:
+            pass
+        return True
+    index.start_build = inline_build
+    return index
 
 
 def test_failed_embeddings_collect_the_corpus_once_per_cooldown(clock, tmp_path, caplog):
@@ -97,15 +107,15 @@ def test_cooldown_covers_every_collection_of_the_same_model(clock, tmp_path):
     assert (first.calls, second.calls, ai.calls) == (1, 1, 1)
 
 
-def test_failed_rebuild_publishes_new_lexical_chunks_and_recovers(clock, tmp_path):
+def test_failed_rebuild_keeps_previous_index_and_recovers(clock, tmp_path):
     corpus, ai = _Corpus(n=2), _Embedder(fail=False)
     index = _index(tmp_path, corpus)
     assert len(index.search(ai, "domanda")) == 2
 
     corpus.n, ai.fail = 3, True
     assert index.search(ai, "Testo")
-    assert len(index.chunks) == 3
-    assert index.matrix is None  # New lexical chunks must never use stale vectors.
+    assert len(index.chunks) == 2
+    assert index.matrix is not None  # Failed candidate never replaces active data.
     assert index.needs_rebuild(ai)
 
     clock.now += rag.EMBEDDING_FAILURE_COOLDOWN_SECONDS + 1

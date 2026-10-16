@@ -172,6 +172,39 @@ def identity(provider: str, model: str, dimensions: int | None):
     )
 
 
+def estimate_cost(config: Mapping, texts: list[str]) -> dict:
+    """Offline planning estimate, using the same operator prices as accounting.
+
+    Three characters/token is approximate; UTF-8 bytes give the conservative
+    upper estimate used by accounting when a provider omits usage. No key/DB.
+    """
+    provider, model, dimensions = options(config)
+    validate_config(
+        "embedding_prices_per_million",
+        config.get("embedding_prices_per_million") or "{}",
+    )
+    prices = {
+        **DEFAULT_PRICES,
+        **json.loads(config.get("embedding_prices_per_million") or "{}"),
+    }
+    price = 0.0 if provider in {"ollama", "none"} else prices.get(f"{provider}/{model}")
+    tokens = sum(math.ceil(len(text) / 3) for text in texts)
+    upper = sum(len(text.encode("utf-8")) for text in texts)
+    return {
+        "provider": provider,
+        "model": model,
+        "dimensions": dimensions,
+        "input_count": len(texts),
+        "estimated_tokens": tokens,
+        "upper_bound_tokens": upper,
+        "price_per_million": price,
+        "estimated_cost_usd": None if price is None else tokens * price / 1_000_000,
+        "upper_bound_cost_usd": None if price is None else upper * price / 1_000_000,
+        "price_known": price is not None,
+        "approximate": True,
+    }
+
+
 def _field(obj, key, default=None):
     return (
         obj.get(key, default) if isinstance(obj, dict) else getattr(obj, key, default)

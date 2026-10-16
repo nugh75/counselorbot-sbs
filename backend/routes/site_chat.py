@@ -53,7 +53,6 @@ from ..prompt_config import (
     DEFAULT_QUESTIONARI_CHAT_CONTEXT,
 )
 from ..rag_index import (
-    site_rag_index,
     get_index,
     build_context,
     get_document_preview,
@@ -342,11 +341,12 @@ async def site_chat_reindex(
     current_user: dict = Depends(auth.get_current_active_admin),
     db: Session = Depends(get_db),
 ):
-    """Ricostruisce da zero l'indice RAG della collezione (solo admin)."""
+    """Avvia il build atomico in background; BM25 resta disponibile (solo admin)."""
     ai_service = AIService(db)
     index = get_index(_normalize_collection(collection))
-    await run_in_threadpool(index.build, ai_service)
-    return {"status": "ok", "stats": index.stats()}
+    estimate = await run_in_threadpool(index.estimate_reindex, ai_service)
+    await run_in_threadpool(index.start_build, ai_service)
+    return {"status": "building", "stats": index.stats(), "estimate": estimate}
 
 
 @router.post("/site-chat/stream")

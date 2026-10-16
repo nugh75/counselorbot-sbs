@@ -6,12 +6,15 @@ No network is required for lexical collection, persistence or queries.
 """
 from __future__ import annotations
 
+import copy
 import fcntl
 import hashlib
 import json
 import logging
 import os
 import re
+import shutil
+import tempfile
 import threading
 import time
 import unicodedata
@@ -903,12 +906,16 @@ class _EmbeddingCache:
         if not os.path.exists(self.path):
             return
         try:
-            data = np.load(self.path, allow_pickle=True)
-            if str(data["model"]) != model:
-                return  # modello diverso → cache non valida
-            keys = data["keys"].tolist()
-            self._vecs = data["vecs"]
-            self._map = {k: i for i, k in enumerate(keys)}
+            with np.load(self.path, allow_pickle=True) as data:
+                if str(data["model"]) != model:
+                    return
+                keys = data["keys"].tolist()
+                vecs = data["vecs"]
+                if (vecs.ndim != 2 or vecs.shape[1] == 0 or len(keys) != len(vecs)
+                        or not np.isfinite(vecs).all()):
+                    return
+                self._vecs = vecs
+                self._map = {k: i for i, k in enumerate(keys)}
         except Exception as e:
             logger.warning("Cache embedding non leggibile: %s", e)
 
@@ -1077,6 +1084,16 @@ class SiteRagIndex:
                  cache_path: str, lock_path: str, collector, graph_loader,
                  signature_fn, mode: str = "graphify", public_corpus=False):
         self._lock = threading.Lock()
+        self._state_lock = threading.RLock()
+        self._schedule_lock = threading.Lock()
+        self._build_thread: threading.Thread | None = None
+        self._building = False
+        self._invalid_vectors = False
+        self._owner = self
+        self.last_build_error: str | None = None
+        self.generation: str | None = None
+        self.embedding_provider = "ollama"
+        self.embedding_dimensions: int | None = None
         # Config della collezione (paths + funzioni di raccolta/grafo/firma).
         self.docs_dir = docs_dir
         self.index_path = index_path
@@ -1103,50 +1120,100 @@ class SiteRagIndex:
         self._loaded = False
         self.lexical: _BM25Index | None = None
 
-    # --- persistenza (meta in JSON, vettori in .npy) ---
+    # Immutable generations; the existing JSON path is the atomic commit point.
+    _STATE_FIELDS = (
+        "chunks", "categories", "matrix", "norms", "lexical", "adjacency",
+        "relpath_to_node", "node_to_relpath", "signature", "embedding_model",
+        "embedding_provider", "embedding_dimensions", "built_at", "_loaded",
+        "generation", "_invalid_vectors",
+    )
+
+    @property
+    def versions_dir(self) -> str:
+        return self.index_path + ".versions"
+
+    def _publish(self, candidate):
+        with self._state_lock:
+            for field in self._STATE_FIELDS:
+                setattr(self, field, getattr(candidate, field))
+
     def _load_from_disk(self) -> bool:
-        if not os.path.exists(self.index_path):
-            return False
         try:
             with open(self.index_path, encoding="utf-8") as f:
                 data = json.load(f)
-            matrix = (np.load(self.emb_path)
-                      if data.get("vectors_available", True) and os.path.exists(self.emb_path) else None)
-        except Exception as e:
-            logger.warning("Indice RAG non leggibile: %s", e)
+            generation = data.get("generation")
+            # Only locally generated basenames can select vector files.
+            if generation and (os.path.basename(generation) != generation or not generation.startswith("v2-")):
+                return False
+            vector_path = os.path.join(self.versions_dir, generation, "vectors.npy") if generation else self.emb_path
+            matrix = (np.load(vector_path, allow_pickle=False)
+                      if data.get("vectors_available", True) and os.path.exists(vector_path) else None)
+            candidate = copy.copy(self)
+            candidate.chunks = data.get("chunks", [])
+            if matrix is not None and (matrix.ndim != 2 or len(matrix) != len(candidate.chunks)
+                                       or matrix.shape[1] == 0 or not np.isfinite(matrix).all()):
+                matrix = None  # Legacy/corrupt vectors can always recover via BM25.
+            candidate.categories = [category_for(c["source"]) for c in candidate.chunks]
+            candidate.matrix = matrix.astype(np.float32, copy=False) if matrix is not None else None
+            candidate.norms = np.linalg.norm(matrix, axis=1) if matrix is not None else None
+            candidate.lexical = _BM25Index.restore(data.get("lexical", {}), candidate.chunks)
+            candidate.adjacency = {k: set(v) for k, v in data.get("adjacency", {}).items()}
+            candidate.relpath_to_node = data.get("relpath_to_node", {})
+            candidate.node_to_relpath = data.get("node_to_relpath", {})
+            candidate.signature = data.get("signature", {})
+            candidate.embedding_model = data.get("embedding_model", "")
+            candidate.embedding_provider = data.get("embedding_provider", "ollama")
+            candidate.embedding_dimensions = matrix.shape[1] if matrix is not None else None
+            candidate.built_at = data.get("built_at", 0.0)
+            candidate.generation = generation
+            candidate._invalid_vectors = False
+            candidate._loaded = True
+            self._publish(candidate)
+            return True
+        except FileNotFoundError:
             return False
-        self.chunks = data.get("chunks", [])
-        self.categories = [category_for(c["source"]) for c in self.chunks]
-        self.matrix = matrix.astype(np.float32, copy=False) if matrix is not None else None
-        self.norms = np.linalg.norm(self.matrix, axis=1) if self.matrix is not None else None
-        self.lexical = _BM25Index.restore(data.get("lexical", {}), self.chunks)
-        self.adjacency = {k: set(v) for k, v in data.get("adjacency", {}).items()}
-        self.relpath_to_node = data.get("relpath_to_node", {})
-        self.node_to_relpath = data.get("node_to_relpath", {})
-        self.signature = data.get("signature", {})
-        self.embedding_model = data.get("embedding_model", "")
-        self.built_at = data.get("built_at", 0.0)
-        self._loaded = True
-        return True
+        except Exception:
+            logger.warning("Indice RAG non leggibile; ricostruzione locale richiesta")
+            return False
 
-    def _save_to_disk(self):
-        os.makedirs(os.path.dirname(self.index_path), exist_ok=True)
-        tmp_json = self.index_path + ".tmp"
-        payload = {
+    def _payload(self) -> dict:
+        return {
+            "format_version": 2, "generation": self.generation,
             "embedding_model": self.embedding_model,
-            "built_at": self.built_at,
-            "signature": self.signature,
-            "chunks": self.chunks,
-            "vectors_available": self.matrix is not None,
+            "embedding_provider": self.embedding_provider,
+            "embedding_dimensions": self.embedding_dimensions,
+            "built_at": self.built_at, "signature": self.signature,
+            "chunks": self.chunks, "vectors_available": self.matrix is not None,
             "lexical": self.lexical.serialize() if self.lexical is not None else {},
             "adjacency": {k: sorted(v) for k, v in self.adjacency.items()},
             "relpath_to_node": self.relpath_to_node,
             "node_to_relpath": self.node_to_relpath,
         }
-        with open(tmp_json, "w", encoding="utf-8") as f:
+
+    def _save_to_disk(self):
+        os.makedirs(self.versions_dir, exist_ok=True)
+        # Hash prevents path injection and distinguishes provider/model/overrides;
+        # actual output dimension is also explicit in every generation name.
+        namespace = hashlib.sha256((self.embedding_provider + "/" + self.embedding_model).encode()).hexdigest()[:24]
+        directory = tempfile.mkdtemp(prefix=f"v2-{namespace}-d{self.embedding_dimensions or 0}-", dir=self.versions_dir)
+        self.generation = os.path.basename(directory)
+        if self.matrix is not None:
+            np.save(os.path.join(directory, "vectors.npy"), self.matrix)
+            keys = [_EmbeddingCache.key(self.embedding_model, c["text"]) for c in self.chunks]
+            _EmbeddingCache(os.path.join(directory, "cache.npz")).save(keys, self.matrix, self.embedding_model)
+        payload = self._payload()
+        with open(os.path.join(directory, "index.json"), "w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False)
-        np.save(self.emb_path, self.matrix if self.matrix is not None else np.zeros((0, 1), dtype=np.float32))
-        os.replace(tmp_json, self.index_path)
+        fd, temporary = tempfile.mkstemp(prefix=".publish-", dir=os.path.dirname(self.index_path) or ".")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temporary, self.index_path)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
 
     @property
     def public_corpus(self) -> bool:
@@ -1167,8 +1234,11 @@ class SiteRagIndex:
         """L'indice in memoria è già allineato a corpus + modello?"""
         if not self._loaded or self.lexical is None:
             return False
-        if require_vectors and (self.matrix is None or self.embedding_model !=
-                                _embedding_key(ai_service)):
+        if require_vectors and ((self.chunks and self.matrix is None) or self._invalid_vectors
+                                or self.embedding_model != _embedding_key(ai_service)
+                                or self.embedding_provider != getattr(ai_service, "embedding_provider", "ollama")
+                                or (self.chunks and getattr(ai_service, "embedding_dimensions", None) is not None
+                                    and self.embedding_dimensions != ai_service.embedding_dimensions)):
             return False
         return self._signature_fn() == self.signature
 
@@ -1178,93 +1248,224 @@ class SiteRagIndex:
         return not self._is_current(ai_service, self._vectors_allowed(ai_service))
 
     def build(self, ai_service, require_vectors: bool = True):
-        """(Ri)costruisce l'indice. Lock cross-worker (file) per evitare che i 4
-        worker uvicorn embeddino lo stesso corpus in parallelo: chi non costruisce
-        ricarica da disco il risultato dell'altro."""
+        """Synchronous worker entrypoint. Readers keep their immutable snapshot."""
         require_vectors = require_vectors and self._vectors_allowed(ai_service)
         with self._lock:
-            os.makedirs(os.path.dirname(self.index_path), exist_ok=True)
+            os.makedirs(os.path.dirname(self.index_path) or ".", exist_ok=True)
             with open(self.lock_path, "w") as lockf:
-                try:
-                    fcntl.flock(lockf, fcntl.LOCK_EX)
-                except OSError:
-                    pass
-                # Un altro worker potrebbe aver costruito mentre attendevamo il lock.
-                self._load_from_disk()
-                if self._is_current(ai_service, require_vectors):
+                fcntl.flock(lockf, fcntl.LOCK_EX)
+                # Inspect another worker's committed state without replacing ours
+                # until validation/build succeeds.
+                candidate = copy.copy(self)
+                candidate._state_lock = threading.RLock()
+                candidate._load_from_disk()
+                if self._invalid_vectors and candidate.generation == self.generation:
+                    candidate._invalid_vectors = True
+                if candidate._is_current(ai_service, require_vectors):
+                    self._publish(candidate)
+                    self.last_build_error = None
                     return
-                self._do_build(ai_service, require_vectors)
+                try:
+                    candidate._do_build(ai_service, require_vectors)
+                    candidate._save_to_disk()
+                except Exception as exc:
+                    self.last_build_error = "rag_build_failed"
+                    _embedding_cooldown.failure(_embedding_key(ai_service), AIError(type(exc).__name__))
+                    raise
+                self._publish(candidate)
+                self.last_build_error = None
+        try:
+            self.cleanup_orphaned_indexes()
+        except OSError:
+            logger.warning("Pulizia indici RAG orfani rinviata")
 
     def _do_build(self, ai_service, require_vectors: bool = True):
         model = _embedding_key(ai_service)
         if not self._is_current(ai_service, require_vectors=False):
-            chunks, signature = self._collector()
-            graph = self._graph_loader()
-            self.lexical = _BM25Index(chunks)
-            self.adjacency, self.relpath_to_node, self.node_to_relpath = graph
-            self.chunks = chunks
-            self.categories = [category_for(c["source"]) for c in chunks]
-            self.signature = signature
-            self.matrix = self.norms = None  # Never pair new chunks with old vectors.
-            self.built_at = time.time()
-            self._loaded = True
-        if self.embedding_model != model:
+            self.chunks, self.signature = self._collector()
+            self.lexical = _BM25Index(self.chunks)
+            self.adjacency, self.relpath_to_node, self.node_to_relpath = self._graph_loader()
+            self.categories = [category_for(c["source"]) for c in self.chunks]
+            self.matrix = self.norms = None
+        if (self.embedding_model != model or self._invalid_vectors
+                or self.embedding_provider != getattr(ai_service, "embedding_provider", "ollama")
+                or (getattr(ai_service, "embedding_dimensions", None) is not None
+                    and self.embedding_dimensions != ai_service.embedding_dimensions)):
             self.matrix = self.norms = None
         self.embedding_model = model
-        if not self.chunks:
-            self.matrix = np.zeros((0, 1), dtype=np.float32)
-            self.norms = np.zeros(0, dtype=np.float32)
-        # Publish lexical data before any potentially failing network operation.
-        self._save_to_disk()
+        self.embedding_provider = getattr(ai_service, "embedding_provider", "ollama")
         if require_vectors and self.chunks and self.matrix is None:
-            try:
-                _embedding_cooldown.check(model)
-                matrix = self._embed_chunks(ai_service, model, self.chunks)
-            except EmbeddingUnavailable:
-                return  # BM25 stays available throughout the shared cooldown.
-            self.matrix = matrix
-            self.norms = np.linalg.norm(matrix, axis=1)
-            self._save_to_disk()
-        logger.info("RAG build completato: %d chunk indicizzati", len(self.chunks))
+            _embedding_cooldown.check(model)
+            self.matrix = self._embed_chunks(ai_service, model, self.chunks)
+            self.norms = np.linalg.norm(self.matrix, axis=1)
+        self.embedding_dimensions = self.matrix.shape[1] if self.matrix is not None else None
+        self._invalid_vectors = False
+        self.built_at = time.time()
+        self._loaded = True
+
+    def _cache(self, ai_service) -> _EmbeddingCache:
+        model = _embedding_key(ai_service)
+        if self._invalid_vectors:
+            return _EmbeddingCache(self.cache_path)
+        expected = getattr(ai_service, "embedding_dimensions", None)
+        # Newest completed generation for this identity. Legacy cache is only
+        # trusted for the old Ollama identity, never for an external provider.
+        paths = []
+        namespace = hashlib.sha256((getattr(ai_service, "embedding_provider", "ollama") + "/" + model).encode()).hexdigest()[:24]
+        if os.path.isdir(self.versions_dir):
+            paths = sorted((os.path.join(self.versions_dir, name, "cache.npz")
+                            for name in os.listdir(self.versions_dir) if name.startswith(f"v2-{namespace}-")),
+                           key=lambda p: os.path.getmtime(os.path.dirname(p)), reverse=True)
+        if getattr(ai_service, "embedding_provider", "ollama") == "ollama":
+            paths.append(self.cache_path)
+        for path in paths:
+            cache = _EmbeddingCache(path)
+            cache.load(model)
+            if cache._vecs is not None and (expected is None or cache._vecs.shape[1] == expected):
+                return cache
+        return _EmbeddingCache(self.cache_path)
+
+    def estimate_reindex(self, ai_service) -> dict:
+        """Read-only, offline plan reusable by Admin; counts unique uncached chunks."""
+        chunks = self.chunks if self._is_current(ai_service, False) else self._collector()[0]
+        model = _embedding_key(ai_service)
+        cache = self._cache(ai_service)
+        unique = {_EmbeddingCache.key(model, c["text"]): c["text"] for c in chunks}
+        missing = [text for key, text in unique.items() if cache.get(key) is None]
+        allowed = self._vectors_allowed(ai_service)
+        config = {**getattr(ai_service, "config", {}),
+                  "embedding_provider": getattr(ai_service, "embedding_provider", "ollama"),
+                  "embedding_model": ai_service.embedding_model,
+                  "embedding_dimensions": str(getattr(ai_service, "embedding_dimensions", None) or "")}
+        result = embedding_service.estimate_cost(config, missing if allowed else [])
+        return {**result, "n_chunks": len(chunks), "unique_chunks": len(unique),
+                "cached_chunks": len(unique) - len(missing), "vectors_allowed": allowed}
 
     def _embed_chunks(self, ai_service, model: str, chunks: list[dict]) -> np.ndarray:
-        texts = [c["text"] for c in chunks]
-        cache = _EmbeddingCache(self.cache_path)
-        cache.load(model)
-        keys = [_EmbeddingCache.key(model, t) for t in texts]
-        vectors: list = [None] * len(texts)
-        miss_idx, miss_txt = [], []
-        for i, k in enumerate(keys):
-            v = cache.get(k)
-            if v is None:
-                miss_idx.append(i)
-                miss_txt.append(texts[i])
-            else:
-                vectors[i] = v
-        logger.info(
-            "RAG build: %d chunk (cache hit %d, da embeddare %d) modello=%s",
-            len(texts), len(texts) - len(miss_txt), len(miss_txt), model,
-        )
-        if miss_txt:
-            new = _embedding_cooldown.call(model, lambda: ai_service.embed_texts(miss_txt, public_corpus=self.public_corpus))
-            for j, idx in enumerate(miss_idx):
-                vectors[idx] = np.asarray(new[j], dtype=np.float32)
-
-        matrix = np.asarray(vectors, dtype=np.float32)
-        cache.save(keys, matrix, model)
+        cache = self._cache(ai_service)
+        unique = {_EmbeddingCache.key(model, c["text"]): c["text"] for c in chunks}
+        vectors = {key: cache.get(key) for key in unique}
+        missing = [key for key, value in vectors.items() if value is None]
+        if missing:
+            new = _embedding_cooldown.call(model, lambda: ai_service.embed_texts(
+                [unique[key] for key in missing], public_corpus=self.public_corpus))
+            if len(new) != len(missing):
+                raise AIError("embedding_invalid_response")
+            vectors.update(zip(missing, new))
+        try:
+            matrix = np.asarray([vectors[_EmbeddingCache.key(model, c["text"])] for c in chunks], dtype=np.float32)
+        except (TypeError, ValueError):
+            raise AIError("embedding_invalid_dimensions") from None
+        expected = getattr(ai_service, "embedding_dimensions", None)
+        if (matrix.ndim != 2 or matrix.shape[1] == 0 or not np.isfinite(matrix).all()
+                or (expected is not None and matrix.shape[1] != expected)):
+            raise AIError("embedding_invalid_dimensions")
         return matrix
+
+    def start_build(self, ai_service) -> bool:
+        """Start at most one thread. Production services own a separate DB session."""
+        with self._schedule_lock:
+            if self._building:
+                return False
+            if not self._loaded:
+                self._load_from_disk()
+            if not self._loaded:
+                self.build(ai_service, require_vectors=False)
+            from .ai_service import AIService
+            from sqlalchemy.orm import Session
+
+            service = ai_service
+            bind = None
+            if isinstance(ai_service, AIService):
+                bind = ai_service.db.get_bind()
+                service = copy.copy(ai_service)
+                service.config = dict(ai_service.config)
+            self._building = True
+
+            def run():
+                try:
+                    if bind is None:  # Offline embedders have no database.
+                        self.build(service)
+                    else:
+                        with Session(bind=bind) as db:
+                            service.db = db
+                            self.build(service)
+                except Exception:
+                    # build records a sanitized status and the shared cooldown.
+                    self.last_build_error = "rag_build_failed"
+                    _embedding_cooldown.failure(_embedding_key(service), AIError("rag_build_failed"))
+                finally:
+                    self._building = False
+
+            self._build_thread = threading.Thread(target=run, name="rag-index-build", daemon=True)
+            self._build_thread.start()
+            return True
+
+    def wait_for_build(self, timeout: float = 30) -> bool:
+        thread = self._build_thread
+        if thread is not None:
+            thread.join(timeout)
+        return not self._building
+
+    def _disk_building(self) -> bool:
+        if not os.path.exists(self.lock_path):
+            return False
+        try:
+            with open(self.lock_path, "r") as lockf:
+                try:
+                    fcntl.flock(lockf, fcntl.LOCK_SH | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    return True
+        except OSError:
+            pass
+        return False
+
+    def cleanup_orphaned_indexes(self, min_age_seconds: float = 86400) -> int:
+        """Remove only old v2 generations of this collection under the build lock.
+
+        Keep the in-memory and disk active generations. Legacy portable files
+        are untouched. Grace period protects other workers holding old snapshots.
+        """
+        if not os.path.isdir(self.versions_dir):
+            return 0
+        with self._lock, open(self.lock_path, "a") as lockf:
+            try:
+                fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                return 0
+            try:
+                with open(self.index_path, encoding="utf-8") as f:
+                    disk_generation = json.load(f).get("generation")
+            except (OSError, ValueError):
+                return 0  # Cannot prove which files are active.
+            keep = {self.generation, disk_generation}
+            removed = 0
+            for name in os.listdir(self.versions_dir):
+                path = os.path.join(self.versions_dir, name)
+                if (name.startswith("v2-") and name not in keep and not os.path.islink(path)
+                        and os.path.isdir(path) and time.time() - os.path.getmtime(path) >= min_age_seconds):
+                    shutil.rmtree(path)
+                    removed += 1
+            return removed
 
     def ensure(self, ai_service, retrieval_mode: str = "hybrid"):
         if not self._loaded:
             self._load_from_disk()
+        # Cold start publishes lexical-only data before any network operation.
+        if not self._loaded:
+            self.build(ai_service, require_vectors=False)
         require_vectors = retrieval_mode != "lexical" and self._vectors_allowed(ai_service)
-        if require_vectors:
-            try:
-                _embedding_cooldown.check(_embedding_key(ai_service))
-            except EmbeddingUnavailable:
-                require_vectors = False
-        if not self._is_current(ai_service, require_vectors):
-            self.build(ai_service, require_vectors=require_vectors)
+        if not require_vectors:
+            if (not self._is_current(ai_service, False) and not self._building
+                    and not self._disk_building()):
+                self.build(ai_service, require_vectors=False)
+            return
+        try:
+            _embedding_cooldown.check(_embedding_key(ai_service))
+        except EmbeddingUnavailable:
+            return
+        if not self._is_current(ai_service, True):
+            self.start_build(ai_service)
 
     def search(self, ai_service, query: str, top_k: int = DEFAULT_TOP_K,
                audience: str = "studente", weights: dict | None = None,
@@ -1284,6 +1485,15 @@ class SiteRagIndex:
         if not query.strip() or top_k <= 0 or max_per_source <= 0:
             return []
         self.ensure(ai_service, retrieval_mode)
+        with self._state_lock:
+            snapshot = copy.copy(self)
+            snapshot._owner = self
+            snapshot._building = self._building or self._disk_building()
+        return snapshot._search_snapshot(ai_service, query, top_k, audience, weights,
+                                         audience_weights, max_per_source, min_score, retrieval_mode, vector_query)
+
+    def _search_snapshot(self, ai_service, query, top_k, audience, weights,
+                         audience_weights, max_per_source, min_score, retrieval_mode, vector_query=None):
         if not self.chunks or self.lexical is None:
             return []
         lexical_scores = self.lexical.scores(query)
@@ -1292,7 +1502,8 @@ class SiteRagIndex:
         vector_rank = []
         vector_scores = None
         model = _embedding_key(ai_service)
-        if (retrieval_mode != "lexical" and self._vectors_allowed(ai_service)
+        if (retrieval_mode != "lexical" and not self._building and not self._invalid_vectors
+                and self._vectors_allowed(ai_service)
                 and self.matrix is not None and self.norms is not None and self.embedding_model == model):
             if embedding_service.is_external(getattr(ai_service, "embedding_provider", "ollama")):
                 text = query if vector_query is None else vector_query
@@ -1310,6 +1521,12 @@ class SiteRagIndex:
             if q_vec is not None and len(q_vec):
                 q = np.asarray(q_vec, dtype=np.float32)
                 q_norm = float(np.linalg.norm(q))
+                if q.ndim != 1 or q.shape[0] != self.matrix.shape[1] or not np.isfinite(q).all():
+                    _embedding_cooldown.failure(model, AIError("embedding_query_dimension_mismatch"))
+                    with self._owner._state_lock:
+                        if self._owner.generation == self.generation:
+                            self._owner._invalid_vectors = True
+                    q_norm = 0.0
                 if q_norm:
                     vector_scores = (self.matrix @ q) / (self.norms * q_norm + 1e-9)
                     vector_rank = [int(i) for i in np.argsort(-vector_scores, kind="stable")
@@ -1406,6 +1623,11 @@ class SiteRagIndex:
     def stats(self) -> dict:
         return {
             "loaded": self._loaded,
+            "building": self._building or self._disk_building(),
+            "last_build_error": self.last_build_error,
+            "generation": self.generation,
+            "embedding_provider": self.embedding_provider,
+            "embedding_dimensions": self.embedding_dimensions,
             "collection": self.mode,
             "n_chunks": len(self.chunks),
             "lexical_available": self.lexical is not None,
@@ -1518,6 +1740,12 @@ def is_dynamic_collection(slug: str | None) -> bool:
     return os.path.isdir(_dynamic_dir(slug))
 
 
+def _collect_dynamic_corpus(slug: str, directory: str):
+    if not os.path.isdir(directory):
+        raise ValueError("RAG collection removed")
+    return _collect_scoped_plain(slug, directory)
+
+
 def _read_collection_meta(slug: str) -> dict:
     try:
         with open(os.path.join(_dynamic_dir(slug), _COLLECTION_META_FILE), encoding="utf-8") as f:
@@ -1558,7 +1786,7 @@ def _make_dynamic_index(slug: str) -> "SiteRagIndex":
         emb_path=os.path.join(INDEX_DIR, f"dyn_{slug}_embeddings.npy"),
         cache_path=os.path.join(INDEX_DIR, f"dyn_{slug}_embed_cache.npz"),
         lock_path=os.path.join(INDEX_DIR, f".dyn_{slug}.build.lock"),
-        collector=lambda: _collect_scoped_plain(slug, d),
+        collector=lambda: _collect_dynamic_corpus(slug, d),
         graph_loader=_empty_graph,
         signature_fn=lambda: _scoped_plain_signature(slug, d),
         mode="plain", public_corpus=lambda: is_api_publishable(slug),
@@ -1640,22 +1868,22 @@ def create_dynamic_collection(slug: str, label: str) -> dict:
 
 def delete_dynamic_collection(slug: str):
     """Rimuove cartella documenti + file indice di una collezione dinamica."""
-    import shutil
     if not is_dynamic_collection(slug):
         raise ValueError(f"Collezione dinamica '{slug}' non trovata")
-    shutil.rmtree(_dynamic_dir(slug), ignore_errors=True)
-    for p in (
-        os.path.join(INDEX_DIR, f"dyn_{slug}_rag_index.json"),
-        os.path.join(INDEX_DIR, f"dyn_{slug}_embeddings.npy"),
-        os.path.join(INDEX_DIR, f"dyn_{slug}_embed_cache.npz"),
-        os.path.join(INDEX_DIR, f".dyn_{slug}.build.lock"),
-    ):
-        try:
-            os.remove(p)
-        except OSError:
-            pass
-    with _dynamic_lock:
-        _dynamic_indexes.pop(slug, None)
+    index = get_dynamic_index(slug)
+    os.makedirs(INDEX_DIR, exist_ok=True)
+    with index._lock, open(index.lock_path, "a") as lockf:
+        fcntl.flock(lockf, fcntl.LOCK_EX)
+        shutil.rmtree(_dynamic_dir(slug))
+        shutil.rmtree(index.versions_dir, ignore_errors=True)
+        for path in (index.index_path, index.emb_path, index.cache_path):
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                pass
+        # Keep the lock inode: another worker may already be waiting on it.
+        with _dynamic_lock:
+            _dynamic_indexes.pop(slug, None)
 
 
 def collection_exists(collection: str | None) -> bool:

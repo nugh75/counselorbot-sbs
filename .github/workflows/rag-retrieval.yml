@@ -3,13 +3,14 @@ on:
   push:
     paths:
       - 'backend/rag_index.py'
+      - 'backend/routes/site_chat.py'
+      - 'backend/routes/rag_docs.py'
       - 'backend/embedding_service.py'
       - 'backend/vision_service.py'
       - 'backend/qsa_extractor.py'
       - 'backend/ai_service.py'
       - 'backend/memory_embeddings.py'
       - 'backend/chat_preparation.py'
-      - 'backend/routes/rag_docs.py'
       - 'backend/tests/test_embedding_provider.py'
       - 'backend/tests/test_embedding_privacy.py'
       - 'backend/tests/test_qsa_vision_fallback.py'
@@ -19,13 +20,14 @@ on:
   pull_request:
     paths:
       - 'backend/rag_index.py'
+      - 'backend/routes/site_chat.py'
+      - 'backend/routes/rag_docs.py'
       - 'backend/embedding_service.py'
       - 'backend/vision_service.py'
       - 'backend/qsa_extractor.py'
       - 'backend/ai_service.py'
       - 'backend/memory_embeddings.py'
       - 'backend/chat_preparation.py'
-      - 'backend/routes/rag_docs.py'
       - 'backend/tests/test_embedding_provider.py'
       - 'backend/tests/test_embedding_privacy.py'
       - 'backend/tests/test_qsa_vision_fallback.py'
@@ -51,15 +53,16 @@ jobs:
       - run: pip install -r backend/requirements.txt ruff mypy
       - name: Lint changed retrieval code
         run: >-
-          ruff check --select F backend/rag_index.py backend/tests/test_rag_bm25.py
-          backend/tests/test_rag_embedding_degradation.py backend/embedding_service.py
+          ruff check --select F backend/rag_index.py backend/routes/site_chat.py
+          backend/routes/rag_docs.py backend/tests/test_rag_bm25.py
+          backend/tests/test_rag_embedding_degradation.py backend/tests/test_rag_index_versions.py backend/embedding_service.py
           backend/vision_service.py backend/qsa_extractor.py backend/ai_service.py
           backend/memory_embeddings.py backend/tests/test_embedding_provider.py
-          backend/tests/test_embedding_privacy.py backend/routes/rag_docs.py
+          backend/tests/test_embedding_privacy.py
           backend/tests/test_qsa_vision_fallback.py scripts/benchmark-rag-bm25.py
       - run: mypy --explicit-package-bases --follow-imports=silent --ignore-missing-imports backend/rag_index.py backend/embedding_service.py backend/vision_service.py
       - name: Offline regression tests (fake embedders)
         run: >-
           python -m pytest backend/tests/test_embedding_privacy.py backend/tests/test_embedding_provider.py backend/tests/test_rag_bm25.py
-          backend/tests/test_rag_embedding_degradation.py backend/tests/test_rag_markdown.py
+          backend/tests/test_rag_embedding_degradation.py backend/tests/test_rag_index_versions.py backend/tests/test_rag_markdown.py
           backend/tests/test_qsa_vision_fallback.py -q --disable-warnings

@@ -184,6 +184,9 @@ def test_dynamic_collection_is_bm25_only_until_flagged(db, monkeypatch, dynamic_
     flagged = asyncio.run(rag_update_collection(
         "interni", RagCollectionUpdate(api_publishable=True), current_user={"is_admin": True}))
     assert flagged["api_publishable"] is True
+    # This contract tests publication consent and query filtering. Complete the
+    # worker synchronously; threaded/session isolation is tested separately.
+    index.build(ai)
     assert index.search(ai, "consiglio riservato")
     assert len(calls) == 2  # documents, then the filtered query
     assert index.matrix is not None
