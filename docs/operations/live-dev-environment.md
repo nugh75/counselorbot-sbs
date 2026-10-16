@@ -27,6 +27,16 @@ senza loop, schede strumento, redirect preesistenti, ancora e cronologia del
 browser e ritorno al catalogo dall’invito di gruppo. Le API sono tutte simulate,
 le richieste esterne bloccate; non verifica SSO o permessi backend.
 
+### Contratti di visibilità della navbar (P0)
+
+`bash scripts/dev-navbar-tests.sh`: Next dev con hot reload su `127.0.0.1:3149`
+(lo script si ferma se la porta è occupata), backend `127.0.0.1:9` non
+raggiungibile. Le API sono intercettate nel browser con utenti sintetici A/S/D/R/M;
+nessun DB, SSO o provider. In un altro terminale `cd frontend && node --test
+tests/navbar-visibility.test.mjs`. Stop con Ctrl-C. Tunnel `ssh -N -L 3149:127.0.0.1:3149
+<utente>@<server>`, URL `http://localhost:3149/guide`. Copertura e limiti:
+[navbar-visibility-tests.md](navbar-visibility-tests.md).
+
 ### Compilazioni di classe nella dashboard docente (S3)
 
 `scripts/dev-teacher-class-compilations-tests.sh` verifica e usa solo
