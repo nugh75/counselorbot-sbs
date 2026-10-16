@@ -89,7 +89,7 @@ def _resolve_doc_file(collection: str, source: str) -> str | None:
 
 def _reindex(db: Session, collection: str):
     index = get_index(collection)
-    index.build(AIService(db))
+    index.start_build(AIService(db))
     return index.stats()
 
 
@@ -139,7 +139,7 @@ async def rag_delete_collection(
     if not is_dynamic_collection(slug):
         raise HTTPException(status_code=400, detail="Solo le collezioni dinamiche sono eliminabili")
     try:
-        delete_dynamic_collection(slug)
+        await run_in_threadpool(delete_dynamic_collection, slug)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     return {"status": "ok"}

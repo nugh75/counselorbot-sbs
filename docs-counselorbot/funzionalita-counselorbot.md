@@ -136,6 +136,14 @@ shown. The Guide remains available independently of these class toggles.
   le memorie restano sempre locali/lessicali e le raccolte caricate non vengono
   inviate all’esterno. Il pannello
   dedicato di amministrazione arriverà in un blocco successivo.
+  Gli indici sono separati per provider, modello e dimensione. La reindicizzazione
+  lavora in background: nel frattempo la ricerca usa le parole chiave sui materiali
+  già indicizzati; il nuovo indice entra in servizio solo quando è completo. Un
+  errore mantiene disponibile il precedente. I file degli indici già presenti
+  sono riconosciuti; le generazioni non più usate vengono pulite dopo almeno 24 ore.
+  La ricerca verifica la dimensione dei vettori e usa le parole chiave in caso
+  di incompatibilità. Il backend calcola una stima di token e costo prima del build; la visualizzazione dedicata arriverà nel pannello di
+  amministrazione successivo.
   La ricerca combina parole chiave (BM25, inclusi titoli e nomi dei file) e
   similarità semantica quando gli embedding sono disponibili. Senza embedding
   continua sulle parole chiave, anche per le basi dinamiche: per circa cinque

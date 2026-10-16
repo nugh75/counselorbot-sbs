@@ -1,3 +1,37 @@
+# Handoff s19: indici per modello e reindicizzazione atomica (Blocco 5)
+Data: 2026-10-16 | Branch: `feat/rag-index-per-model` | Agente: `s19-cx-blocco5-indici`, Codex gpt-6.1-sol high
+Task `a960c2f4-399d-464e-afc2-c9fb35f2b187` | Issue #316 | Milestone #18
+
+`backend/rag_index.py`: generazioni immutabili per provider/modello/dimensione,
+manifest JSON atomico sul percorso esistente, riconoscimento degli indici legacy
+sul volume `rag_index`, cache incrementale e deduplica dei chunk. Build in
+background con sessione DB e configurazione proprie, lock cross-worker, snapshot
+coerente dei lettori, BM25 durante il build, precedente indice conservato dopo
+errori di embedding o pubblicazione. Controllo shape/valori finiti della query,
+ricostruzione anche se cambia la dimensione dietro lo stesso alias. Pulizia delle
+generazioni orfane dopo 24 ore; eliminazione delle collezioni sotto lo stesso lock.
+
+`estimate_reindex()` e `embedding_service.estimate_cost()` sono riusabili dal
+Blocco 6: stima offline token/costo, cache/duplicati, prezzi configurabili,
+prezzo sconosciuto esplicito, vincoli privacy rispettati. `POST /site-chat/reindex`
+restituisce `building`, `stats`, `estimate`; polling su `/site-chat/stats`.
+Anche upload, delete e ambito documenti usano il worker. UI dedicata al Blocco 6;
+Guida interfaccia e screenshot rivisti: nessun layout o testo UI nuovo.
+Contratto storage/API/rollback in `docs/operations/rag-index-versions.md`.
+
+Verifiche: 142 test + 6 sottotest verdi su PostgreSQL effimero in tmpfs,
+rete Docker interna senza porte pubblicate; ulteriori 19 test del nuovo modulo
+verdi dopo completamento cleanup. Il primo giro della guida su SQLite non era
+compatibile con `artifact_session`: rieseguito correttamente su PostgreSQL.
+Ruff F, format dei file nuovi, mypy e guidance-check; rebuild dell'immagine
+isolata `counselorbot-rag-index-validation:s19`. Nessun provider live, deploy,
+sudo, `.env`, stack portabile o dato produttivo toccato.
+
+Bug Diario: `ee5ffca7` (indice attivo cancellato prima del nuovo build),
+`e7d27479` (shape query non verificata), `97ff2519` (import inutilizzato nella
+rotta site-chat). I bug `089e7cd5`, `54e4d065`, `c996ef4c` erano già risolti dai
+blocchi precedenti. Bug non registrati: nessuno.
+
 # Handoff s15: provider embedding configurabile (Blocco 3)
 Data: 2026-10-16 | Branch: `feat/embedding-provider-configurable` (da `origin/main` 49e8e9fa)
 Agente: `s15-cx-blocco3-provider`, Codex gpt-6.1-sol high | Task `a1d1ce5e-1b67-4f6c-a7b8-1699aebde7ae` | Issue #306, PR #307, milestone #18

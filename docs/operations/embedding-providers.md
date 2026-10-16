@@ -81,8 +81,11 @@ call time; personal/shared chat connections cannot replace them.
 
 Cache and cooldown identities include provider/model/dimensions; legacy Ollama
 cache identities remain valid when no dimensions are specified. This prevents
-cross-provider reuse now. Separate index files and atomic background rebuilds
-remain block 5; this block retains the existing index paths and rebuild lifecycle.
+cross-provider reuse now. Indexes and caches now live in provider/model/dimension-specific immutable
+generations with atomic background publication (block 5). The existing JSON path
+remains the commit point and legacy portable files are recognized. See
+[model-versioned indexes](rag-index-versions.md) for reindexing, offline cost
+estimates and orphan cleanup.
 
 ## Offline verification
 
