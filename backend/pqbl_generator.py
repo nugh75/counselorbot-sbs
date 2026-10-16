@@ -31,6 +31,29 @@ MAX_TEXT_CHARS_PER_SEGMENT = 30_000
 # Testo minimo perché il PDF sia considerato leggibile (sotto = scansione).
 MIN_TEXT_CHARS = 100
 
+# Prompt OCR: output Markdown per mantenere la struttura anche con l'OCR. Usato
+# sia dall'OCR locale sia dal provider di visione configurato.
+OCR_PROMPT = (
+    "Faithfully and completely transcribe all visible text in this page in "
+    "Markdown format (using #, ##, lists, tables if present) in its original "
+    "language. Do not interpret."
+)
+#: Codice stabile del PDF scansionato senza OCR utilizzabile; il messaggio
+#: dell'eccezione arriva all'utente in `error_detail` tramite `routes/pqbl.py`.
+OCR_UNAVAILABLE_CODE = "pqbl.errors.ocrUnavailable"
+
+
+class OcrUnavailableError(ValueError):
+    """PDF senza testo nativo e senza OCR configurato o raggiungibile.
+
+    Sottoclasse di `ValueError` perché il ciclo di generazione di
+    `routes/pqbl.py` tratta i guasti di un singolo segmento senza interrompere
+    gli altri. `code` è stabile: il chiamante lo distingue dal testo tecnico."""
+
+    def __init__(self, message: str, code: str = OCR_UNAVAILABLE_CODE):
+        super().__init__(message)
+        self.code = code
+
 ALLOWED_SESSION_SIZES = (10, 20, 30)
 QUESTIONS_PER_CHUNK = 4
 OPTION_KEYS = ("A", "B", "C", "D")
@@ -47,18 +70,139 @@ def pdf_total_pages(path: str) -> int:
     return len(PdfReader(path).pages)
 
 
-def extract_pdf_text_range(path: str, start_page: int, end_page: int) -> str:
+def render_pages_to_images(path: str, start_page: int, end_page: int) -> list:
+    """Rasterizza le pagine richieste (1-based per pdf2image) in immagini JPEG.
+
+    Isolata per poterla sostituire nei test senza poppler né rete."""
+    from pdf2image import convert_from_path
+
+    return convert_from_path(
+        path, dpi=150, first_page=start_page + 1, last_page=end_page
+    )
+
+
+def _page_image_base64(image) -> str:
+    import base64
+    import io
+
+    buffered = io.BytesIO()
+    image.save(buffered, format="JPEG")
+    return base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+
+def _join_page_texts(pages: List[str]) -> str:
+    return "\n\n".join(text.strip() for text in pages if text and text.strip()).strip()
+
+
+def _local_ollama_ocr(images: list, ollama_url: str, ocr_model: str) -> str:
+    """OCR locale via Ollama. Ritorna il testo estratto (vuoto se nessuno)."""
+    import httpx
+
+    pages: List[str] = []
+    for i, image in enumerate(images):
+        payload = {
+            "model": ocr_model,
+            "prompt": OCR_PROMPT,
+            "images": [_page_image_base64(image)],
+            "stream": False,
+            "options": {"temperature": 0},
+        }
+        logger.info(f"pQBL: OCR locale con {ocr_model} per pagina {i + 1}...")
+        response = httpx.post(f"{ollama_url}/api/generate", json=payload, timeout=240.0)
+        response.raise_for_status()
+        pages.append(response.json().get("response") or "")
+    return _join_page_texts(pages)
+
+
+def _vision_ocr(images: list, vision_call) -> str:
+    """OCR via il provider di visione configurato (in produzione `AIService.call_vision`).
+
+    Nessun modello è cablato: `vision_call` risolve provider e modello dalla
+    configurazione e applica la stessa policy privacy esterna della chat."""
+    pages: List[str] = []
+    for image in images:
+        pages.append(vision_call(OCR_PROMPT, _page_image_base64(image)) or "")
+    return _join_page_texts(pages)
+
+
+def ocr_pdf_pages(
+    path: str,
+    start_page: int,
+    end_page: int,
+    *,
+    ollama_url: str | None = None,
+    ocr_model: str | None = None,
+    vision_call=None,
+) -> str:
+    """OCR di un range di pagine scansionate: prima Ollama locale, poi vision.
+
+    `vision_call` ha firma `(prompt, immagine_base64) -> testo` (in produzione
+    `AIService.call_vision`). Solleva `OcrUnavailableError` (con codice stabile)
+    se nessun OCR produce testo a sufficienza; nessun modello esterno è cablato."""
+    import os
+
+    url = (
+        ollama_url
+        or os.getenv("OLLAMA_BASE_URL")
+        or "http://host.docker.internal:11434"
+    ).rstrip("/")
+    model = ocr_model or os.getenv("QSA_OCR_MODEL") or "glm-ocr:latest"
+    images = render_pages_to_images(path, start_page, end_page)
+    if not images:
+        raise OcrUnavailableError(
+            f"Le pagine {start_page + 1}-{end_page} del PDF non sono state "
+            "convertite in immagini per l'OCR."
+        )
+    local_text = ""
+    try:
+        # OCR locale: su un'installazione senza Ollama fallisce e si ripiega sul
+        # provider di visione configurato.
+        local_text = _local_ollama_ocr(images, url, model)
+    except Exception as exc:
+        logger.warning(
+            f"pQBL: OCR locale Ollama non disponibile per le pagine "
+            f"{start_page + 1}-{end_page}: {exc}"
+        )
+    if len(local_text) >= MIN_TEXT_CHARS:
+        return local_text
+    if vision_call is None:
+        raise OcrUnavailableError(
+            f"Le pagine {start_page + 1}-{end_page} del PDF sono una scansione e "
+            "nessun provider di visione (OCR) è configurato."
+        )
+    logger.info(
+        f"pQBL: OCR locale insufficiente ({len(local_text)} char); uso il provider "
+        "di visione configurato."
+    )
+    try:
+        return _vision_ocr(images, vision_call)
+    except Exception as exc:
+        code = getattr(exc, "code", None)
+        if isinstance(code, str) and code:
+            raise OcrUnavailableError(
+                f"Le pagine {start_page + 1}-{end_page} del PDF sono una scansione e "
+                f"il provider di visione non è utilizzabile ({code}).",
+                code=code,
+            ) from None
+        raise
+
+
+def extract_pdf_text_range(path: str, start_page: int, end_page: int, *,
+                           vision_call=None) -> str:
     """Estrae il testo da un range di pagine di un PDF in formato Markdown.
 
     Args:
         path: percorso del file PDF.
         start_page: indice prima pagina (0-based).
         end_page: indice fine pagina (esclusivo).
+        vision_call: ripiego OCR esterno per i PDF scansionati (in produzione
+            `AIService.call_vision`): risolve il provider di visione configurato e
+            applica la policy privacy esterna della chat. None = solo OCR locale.
 
-    Solleva ValueError se il range non produce testo sufficiente.
+    Il testo nativo (pymupdf/pypdf) è sempre il primo tentativo e non richiede
+    OCR. Solleva `OcrUnavailableError` se il range non produce testo a
+    sufficienza e nessun OCR è utilizzabile.
     """
-    import os
-
     full_text = ""
     try:
         import pymupdf4llm
@@ -83,58 +227,29 @@ def extract_pdf_text_range(path: str, start_page: int, end_page: int) -> str:
             logger.error(f"pQBL: ripiego pypdf fallito: {fallback_err}")
             full_text = ""
 
-    # Fallback su GLM OCR se il testo estratto è insufficiente (< MIN_TEXT_CHARS)
+    # OCR di ripiego se il testo nativo è insufficiente (< MIN_TEXT_CHARS):
+    # prima l'OCR locale Ollama, poi il provider di visione configurato. Il testo
+    # nativo continua a funzionare anche senza alcun OCR disponibile.
     if len(full_text) < MIN_TEXT_CHARS:
-        logger.info(f"pQBL: testo insufficiente ({len(full_text)} char) nelle pagine {start_page + 1}-{end_page}. Tento fallback su GLM OCR...")
+        logger.info(
+            f"pQBL: testo insufficiente ({len(full_text)} char) nelle pagine "
+            f"{start_page + 1}-{end_page}. Tento l'OCR..."
+        )
         try:
-            from pdf2image import convert_from_path
-            import io
-            import base64
-            import httpx
-
-            # Converti solo le pagine richieste (1-based per pdf2image)
-            images = convert_from_path(
-                path,
-                dpi=150,  # Risoluzione bilanciata per velocità/qualità OCR
-                first_page=start_page + 1,
-                last_page=end_page,
-            )
-            
-            ocr_pages = []
-            ollama_url = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434").rstrip('/')
-            ocr_model = os.getenv("QSA_OCR_MODEL", "glm-ocr:latest")
-            
-            for i, img in enumerate(images):
-                # Converti in JPEG base64
-                buffered = io.BytesIO()
-                img.save(buffered, format="JPEG")
-                img_b64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
-                
-                payload = {
-                    "model": ocr_model,
-                    # Chiediamo esplicitamente output Markdown per mantenere la struttura anche con l'OCR!
-                    "prompt": "Faithfully and completely transcribe all visible text in this page in Markdown format (using #, ##, lists, tables if present) in its original language. Do not interpret.",
-                    "images": [img_b64],
-                    "stream": False,
-                    "options": {"temperature": 0},
-                }
-                
-                logger.info(f"pQBL: Esecuzione OCR con {ocr_model} per pagina {start_page + i + 1}...")
-                response = httpx.post(f"{ollama_url}/api/generate", json=payload, timeout=240.0)
-                response.raise_for_status()
-                text = response.json().get("response", "").strip()
-                if text:
-                    ocr_pages.append(text)
-            
-            ocr_text = "\n\n".join(ocr_pages).strip()
+            ocr_text = ocr_pdf_pages(
+                path, start_page, end_page, vision_call=vision_call)
             if len(ocr_text) >= MIN_TEXT_CHARS:
                 logger.info(f"pQBL: OCR completato con successo ({len(ocr_text)} caratteri estratti).")
                 return ocr_text[:MAX_TEXT_CHARS_PER_SEGMENT]
+        except OcrUnavailableError:
+            # Errore classificato (manca il provider o non è utilizzabile):
+            # propaga il codice al chiamante senza perdere il messaggio chiaro.
+            raise
         except Exception as ocr_err:
-            logger.error(f"pQBL: Fallback OCR fallito per le pagine {start_page + 1}-{end_page}: {ocr_err}")
+            logger.error(f"pQBL: OCR fallito per le pagine {start_page + 1}-{end_page}: {ocr_err}")
 
     if len(full_text) < MIN_TEXT_CHARS:
-        raise ValueError(
+        raise OcrUnavailableError(
             f"Le pagine {start_page + 1}-{end_page} del PDF non contengono "
             "testo estraibile a sufficienza. Il PDF potrebbe essere una scansione."
         )

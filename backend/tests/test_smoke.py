@@ -5059,7 +5059,9 @@ def test_pqbl_upload_and_learning_flow():
     original_generate = pqbl_routes.generate_batch_for_chunk
     original_split = pqbl_routes.split_text_into_chunks
     pqbl_routes.pdf_total_pages = lambda path: 3
-    pqbl_routes.extract_pdf_text_range = lambda path, start, end: canned_text
+    extract_kwargs = []
+    pqbl_routes.extract_pdf_text_range = (
+        lambda path, start, end, **kwargs: extract_kwargs.append(kwargs) or canned_text)
     pqbl_routes.split_text_into_chunks = lambda text: [canned_text]
     pqbl_routes.generate_batch_for_chunk = lambda ai, text, idx, lang, qp, provider=None, model=None: _pqbl_canned_bank(4)
     try:
@@ -5089,6 +5091,8 @@ def test_pqbl_upload_and_learning_flow():
         assert doc["n_questions"] == 4
         assert len(doc["skills"]) == 2
         assert doc["onboarding_text"]
+        # I segmenti passano il provider di visione configurato per l'OCR dei PDF scansionati.
+        assert any(callable(kw.get("vision_call")) for kw in extract_kwargs), extract_kwargs
 
         # stesso testo + stesso provider -> riuso del bank
         r = client.post("/pqbl/upload", files={"file": ("dispensa.pdf", b"%PDF-1.4 x", "application/pdf")},
@@ -5182,7 +5186,7 @@ def test_pqbl_early_break_aligns_chunks():
     original_generate = pqbl_routes.generate_batch_for_chunk
     original_split = pqbl_routes.split_text_into_chunks
     pqbl_routes.pdf_total_pages = lambda path: 12  # 4 segmenti da 3 pag
-    pqbl_routes.extract_pdf_text_range = lambda path, start, end: canned_text
+    pqbl_routes.extract_pdf_text_range = lambda path, start, end, **kwargs: canned_text
     pqbl_routes.split_text_into_chunks = lambda text: [canned_text, canned_text]  # 2 chunk per segmento
     pqbl_routes.generate_batch_for_chunk = lambda ai, text, idx, lang, qp, provider=None, model=None: _pqbl_canned_bank(4)
     try:

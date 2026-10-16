@@ -193,7 +193,10 @@ def _generate_all_chunks(document_id: str):
 
             try:
                 logger.info(f"pQBL: estrazione pagine {start_page + 1}-{end_page} (segmento {seg_idx + 1}/{n_segments})")
-                text = extract_pdf_text_range(file_path, start_page, end_page)
+                # PDF scansionati: l'estrazione ripiega sull'OCR (prima locale, poi
+                # il provider di visione configurato, con la policy privacy della chat).
+                text = extract_pdf_text_range(
+                    file_path, start_page, end_page, vision_call=ai.call_vision)
                 chunk_texts = split_text_into_chunks(text)
                 
                 # Calcola quanti chunk ci servono al massimo per raggiungere la dimensione richiesta
