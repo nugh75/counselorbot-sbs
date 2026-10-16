@@ -800,10 +800,9 @@ def analyze_turn(
     briefs = _tool_briefs(db, message, history, lang, allowed_tool_ids)
     current_cards = [{"id": item["id"], "reason": str(item.get("reason") or "")[:600]}
                      for item in (current_recommendations or []) if item.get("id") in TOOL_IDS and item.get("id") in allowed_tool_ids][:3]
+    # Senza preset del counselor provider e model restano None: AIService usa il
+    # provider attivo e il modello configurati (active_provider/model_name).
     counselor, provider, model, disable_thinking, reasoning_budget = _counselor_runtime(db, counselor_id)
-    if provider is None and model is None:
-        # Modello predefinito della Bussola: senza preset del counselor usa qwen3.8.
-        provider, model = "ollama", "qwen3.8:latest"
     catalog = "\n\n".join(
         "\n".join([f"{label}:"] + [f"- {tool_id}: {TOOL_DESCRIPTIONS[tool_id]}" for tool_id in ids if tool_id in allowed_tool_ids])
         for label, ids in TOOL_GROUPS

@@ -34,7 +34,7 @@ from sqlalchemy import func
 from .idea_map import IDEA_INSTRUMENT, focused_branch, map_context_for
 from .idea_reference import reference_context_for
 from .idea_sources import context_for as idea_sources_context_for
-from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context
+from .rag_index import site_rag_index, counselorbot_rag_index, questionari_rag_index, build_context as rag_build_context, EmbeddingUnavailable
 from .api_models import ChatRequest
 from .prompt_config import (
     DEFAULT_SYSTEM_PROMPT_GENERIC,
@@ -2293,6 +2293,8 @@ def _retrieved_context(
                 _collect_sources(rag_results)
                 if rag_results:
                     graph_context = rag_build_context(rag_results, max_chars=3500)[0]
+        except EmbeddingUnavailable:
+            graph_context = ""  # già segnalato una volta per cooldown da rag_index
         except Exception as e:
             logger.warning(f"RAG competenzestrategiche non disponibile: {e}")
             graph_context = ""
@@ -2313,6 +2315,8 @@ def _retrieved_context(
                 _collect_sources(cb_results)
                 if cb_results:
                     counselorbot_context = rag_build_context(cb_results, max_chars=3500)[0]
+        except EmbeddingUnavailable:
+            counselorbot_context = ""  # già segnalato una volta per cooldown da rag_index
         except Exception as e:
             logger.warning(f"RAG counselorbot non disponibile: {e}")
             counselorbot_context = ""
@@ -2333,6 +2337,8 @@ def _retrieved_context(
                 _collect_sources(q_results)
                 if q_results:
                     questionari_context = rag_build_context(q_results, max_chars=3500)[0]
+        except EmbeddingUnavailable:
+            questionari_context = ""  # già segnalato una volta per cooldown da rag_index
         except Exception as e:
             logger.warning(f"RAG questionari non disponibile: {e}")
             questionari_context = ""

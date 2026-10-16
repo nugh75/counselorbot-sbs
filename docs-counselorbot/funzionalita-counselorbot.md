@@ -119,11 +119,17 @@ shown. The Guide remains available independently of these class toggles.
 - **Bussola** (`/bussola`): conversazione per orientarsi fra gli strumenti. Non
   somministra questionari, non raccoglie punteggi e non svolge al proprio interno
   le altre interviste. Le raccomandazioni aprono gli strumenti nelle loro pagine.
+  Usa il modello del preset del counselor scelto; senza preset usa il provider e
+  il modello attivi configurati dall’amministratore.
 - **Assistente** (`/assistente`): risponde sui materiali della base selezionata,
   con modalità studente o docente. Per l’interfaccia e le funzionalità scegliere
   **CounselorBot**. Le altre basi restano distinte; non attribuire alla piattaforma
   le funzioni di competenzestrategiche.it. Il presente documento viene letto a ogni
   richiesta CounselorBot; i documenti di approfondimento sono recuperati dall’indice.
+  Se il servizio di ricerca semantica (embedding) non risponde, per le altre basi
+  compare un messaggio nella lingua dell’interfaccia che invita a riprovare tra
+  qualche minuto, senza dettagli tecnici; per circa cinque minuti la ricerca non
+  viene ritentata. La base CounselorBot risponde comunque da questo documento.
 - **Guida interfaccia** (`/guide`): con percorsi per uso personale e per docenti,
   immagini ingrandibili e collegamenti alle sezioni. È pubblica anche senza login
   nelle installazioni che consentono accesso pubblico; su `counselorbot.labform.net`

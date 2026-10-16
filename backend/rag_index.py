@@ -29,6 +29,8 @@ import time
 
 import numpy as np
 
+from .ai_service import AIError
+
 logger = logging.getLogger(__name__)
 
 # --- Percorsi (override via env in Docker) ---
@@ -930,6 +932,59 @@ class _EmbeddingCache:
             logger.warning("Salvataggio cache embedding fallito: %s", e)
 
 
+# Dopo un errore di embedding la ricerca semantica resta sospesa per questo
+# intervallo: niente rilettura del corpus né nuovi tentativi a ogni turno.
+EMBEDDING_FAILURE_COOLDOWN_SECONDS = 300
+
+
+class EmbeddingUnavailable(AIError):
+    """Backend di embedding non disponibile (errore recente o cooldown in corso)."""
+
+
+class _EmbeddingCooldown:
+    """Cache negativa per modello, condivisa da tutte le collezioni del processo:
+    il backend di embedding è lo stesso, quindi un errore vale per tutte."""
+
+    def __init__(self, seconds: float):
+        self.seconds = seconds
+        self._lock = threading.Lock()
+        self._until: dict[str, float] = {}
+
+    def check(self, model: str):
+        with self._lock:
+            active = time.monotonic() < self._until.get(model, 0.0)
+        if active:
+            raise EmbeddingUnavailable(f"Embedding '{model}' sospeso dopo un errore recente")
+
+    def failure(self, model: str, error: Exception) -> EmbeddingUnavailable:
+        with self._lock:
+            now = time.monotonic()
+            already = now < self._until.get(model, 0.0)
+            self._until[model] = now + self.seconds
+        if not already:
+            # Un solo avviso per cooldown: i turni successivi falliscono in silenzio.
+            logger.warning(
+                "Embedding '%s' non disponibile, ricerca semantica sospesa per %d s: %s",
+                model, self.seconds, error,
+            )
+        return EmbeddingUnavailable(f"Embedding '{model}' non disponibile")
+
+    def success(self, model: str):
+        with self._lock:
+            self._until.pop(model, None)
+
+    def call(self, model: str, fn):
+        try:
+            result = fn()
+        except AIError as e:
+            raise self.failure(model, e) from e
+        self.success(model)
+        return result
+
+
+_embedding_cooldown = _EmbeddingCooldown(EMBEDDING_FAILURE_COOLDOWN_SECONDS)
+
+
 # ---------------------------------------------------------------------------
 # Indice
 # ---------------------------------------------------------------------------
@@ -1037,21 +1092,30 @@ class SiteRagIndex:
     def _do_build(self, ai_service):
         model = ai_service.embedding_model or "qwen3-embedding:4b"
         chunks, signature = self._collector()
-        self.adjacency, self.relpath_to_node, self.node_to_relpath = self._graph_loader()
+        graph = self._graph_loader()
+
+        if not chunks:
+            logger.warning("Nessun documento nel corpus RAG.")
+            matrix = np.zeros((0, 1), dtype=np.float32)
+        else:
+            matrix = self._embed_chunks(ai_service, model, chunks)
+
+        # Stato aggiornato solo a embedding riuscito: un build fallito lascia
+        # l'indice precedente coerente (chunk e matrice allineati).
+        self.adjacency, self.relpath_to_node, self.node_to_relpath = graph
         self.chunks = chunks
         self.categories = [category_for(c["source"]) for c in chunks]
         self.signature = signature
         self.embedding_model = model
         self.built_at = time.time()
         self._loaded = True
+        self.matrix = matrix
+        self.norms = np.linalg.norm(matrix, axis=1) if len(matrix) else np.zeros(0, dtype=np.float32)
+        self._save_to_disk()
+        if chunks:
+            logger.info("RAG build completato: %d chunk indicizzati", len(self.chunks))
 
-        if not chunks:
-            logger.warning("Nessun documento nel corpus RAG.")
-            self.matrix = np.zeros((0, 1), dtype=np.float32)
-            self.norms = np.zeros(0, dtype=np.float32)
-            self._save_to_disk()
-            return
-
+    def _embed_chunks(self, ai_service, model: str, chunks: list[dict]) -> np.ndarray:
         texts = [c["text"] for c in chunks]
         cache = _EmbeddingCache(self.cache_path)
         cache.load(model)
@@ -1070,15 +1134,13 @@ class SiteRagIndex:
             len(texts), len(texts) - len(miss_txt), len(miss_txt), model,
         )
         if miss_txt:
-            new = ai_service.embed_texts(miss_txt)
+            new = _embedding_cooldown.call(model, lambda: ai_service.embed_texts(miss_txt))
             for j, idx in enumerate(miss_idx):
                 vectors[idx] = np.asarray(new[j], dtype=np.float32)
 
-        self.matrix = np.asarray(vectors, dtype=np.float32)
-        self.norms = np.linalg.norm(self.matrix, axis=1)
-        cache.save(keys, self.matrix, model)
-        self._save_to_disk()
-        logger.info("RAG build completato: %d chunk indicizzati", len(self.chunks))
+        matrix = np.asarray(vectors, dtype=np.float32)
+        cache.save(keys, matrix, model)
+        return matrix
 
     def ensure(self, ai_service):
         if self.needs_rebuild(ai_service):
@@ -1093,11 +1155,14 @@ class SiteRagIndex:
 
         score pesato = coseno × peso(categoria) × moltiplicatore(pubblico). Applica
         soglia minima sul coseno grezzo e un tetto di chunk per documento, poi
-        espande via grafo. Ritorna {score, weighted, category, source, title, text}."""
+        espande via grafo. Ritorna {score, weighted, category, source, title, text}.
+        Solleva EmbeddingUnavailable durante il cooldown, senza toccare il corpus."""
+        model = ai_service.embedding_model or "qwen3-embedding:4b"
+        _embedding_cooldown.check(model)
         self.ensure(ai_service)
         if not self.chunks or self.matrix is None or len(self.matrix) == 0:
             return []
-        q_vec = ai_service.embed_query(query)
+        q_vec = _embedding_cooldown.call(model, lambda: ai_service.embed_query(query))
         if not q_vec:
             return []
         q = np.asarray(q_vec, dtype=np.float32)
