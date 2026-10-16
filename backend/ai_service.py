@@ -13,6 +13,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import models
+from . import embedding_service
 from . import personal_api
 from . import pii
 from . import pii_ner
@@ -176,8 +177,7 @@ class AIService:
         self.ollama_num_ctx = self._int_config('ollama_num_ctx', 16384, 2048, 32768)
         self.ollama_keep_alive = self.config.get('ollama_keep_alive', '5m') or '5m'
         self.ollama_preload_enabled = str(self.config.get('ollama_preload', 'false')).lower() == 'true'
-        # Modello di embedding locale (via Ollama) per il RAG del chatbot del sito.
-        self.embedding_model = (self.config.get('embedding_model') or 'qwen3-embedding:4b').strip()
+        self.embedding_provider, self.embedding_model, self.embedding_dimensions = embedding_service.options(self.config)
         # Anonimizzazione PII verso provider esterni (vedi `_anonymize_external`).
         # `block` = errore se il detector NER non risponde; `send_raw` = invio comunque.
         self.external_pii_redact = str(self.config.get('external_pii_redact', 'true')).lower() not in ('0', 'false', 'no', 'off')
@@ -1241,51 +1241,33 @@ class AIService:
                 if text:
                     yield text
 
-    # ---------------------------------------------------------------------
-    # Embeddings (locali, via Ollama) — usati dal RAG del chatbot del sito.
-    # ---------------------------------------------------------------------
-    def embed_texts(self, texts, model: str = None):
-        """Ritorna la lista di vettori di embedding per `texts` (lista di stringhe).
+    @property
+    def embedding_cache_key(self):
+        return embedding_service.identity(self.embedding_provider, self.embedding_model, self.embedding_dimensions)
 
-        Usa l'endpoint Ollama /api/embed (batch). Il modello di default è
-        `embedding_model` (bge-m3). Solleva AIError su fallimento, coerente con
-        il resto del service (mai stringhe d'errore come risultato)."""
-        if not texts:
-            return []
-        base_url = (self._get_api_key('ollama_ip') or "http://localhost:11434").rstrip('/')
-        model = model or self.embedding_model
-        if not model:
-            raise AIError("Modello di embedding non configurato (embedding_model)")
+    def embed_texts(self, texts, model: str = None, *, purpose="document", public_corpus=False):
+        """System embedding dispatch. External calls accept only explicitly public documents.
 
-        vectors: list[list[float]] = []
-        # Batch contenuti per non superare i limiti di payload del server.
-        BATCH = 32
+        Query and memory text stay local/lexical until privacy block 4. Accounting
+        is independent of chat usage and caller transactions.
+        """
+        def budget_locked():
+            # Re-read between paid batches, including costs just recorded here.
+            self._budget_locked_cache = None
+            return self._budget_is_locked()
+
         try:
-            with httpx.Client(timeout=httpx.Timeout(self._int_config("ai_timeout_seconds", 120, 10, 600), connect=10.0)) as client:
-                for start in range(0, len(texts), BATCH):
-                    batch = texts[start:start + BATCH]
-                    resp = client.post(
-                        f"{base_url}/api/embed",
-                        json={"model": model, "input": batch, "keep_alive": self.ollama_keep_alive},
-                    )
-                    resp.raise_for_status()
-                    data = resp.json()
-                    embeddings = data.get("embeddings")
-                    if not embeddings or len(embeddings) != len(batch):
-                        raise AIError(
-                            f"Risposta embeddings inattesa da Ollama (modello '{model}'): "
-                            f"attesi {len(batch)} vettori, ricevuti {len(embeddings or [])}"
-                        )
-                    vectors.extend(embeddings)
-        except AIError:
-            raise
-        except Exception as e:
-            raise AIError(f"Errore embeddings Ollama (modello '{model}'): {e}") from e
-        return vectors
+            return embedding_service.embed_texts(
+                self.config, self.db, budget_locked, texts, model=model,
+                purpose=purpose, public_corpus=public_corpus,
+            )
+        except embedding_service.EmbeddingError as exc:
+            raise AIError("Embedding non disponibile: " + exc.code, code=exc.code) from None
+        finally:
+            self._budget_locked_cache = None
 
     def embed_query(self, text: str, model: str = None):
-        """Embedding di una singola stringa (comodità). Ritorna un vettore."""
-        vecs = self.embed_texts([text], model=model)
+        vecs = self.embed_texts([text], model=model, purpose="query")
         return vecs[0] if vecs else []
 
     def preload_ollama_model(self):

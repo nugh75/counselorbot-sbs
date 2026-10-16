@@ -58,8 +58,11 @@ class MemoryEmbedder:
         query = (query or "").strip()
         if not query or not items or ai_service is None:
             return None
+        # Never use external embeddings or cached external vectors for private memory.
+        if getattr(ai_service, "embedding_provider", "ollama") != "ollama":
+            return None
         try:
-            model = str(getattr(ai_service, "embedding_model", "") or "")
+            model = str(getattr(ai_service, "embedding_cache_key", None) or getattr(ai_service, "embedding_model", "") or "")
             if not model:
                 return None
             vectors = self._embed_cached(ai_service, model, [query] + list(items))
@@ -88,7 +91,7 @@ class MemoryEmbedder:
         missing = [(key, text) for key, text in zip(keys, texts) if key not in cached]
 
         if missing:
-            raw = ai_service.embed_texts([text for _, text in missing], model=model)
+            raw = ai_service.embed_texts([text for _, text in missing])
             matrix = np.asarray(raw, dtype=np.float32)
             if matrix.ndim != 2 or matrix.shape[0] != len(missing) or matrix.shape[1] < 8:
                 return None
