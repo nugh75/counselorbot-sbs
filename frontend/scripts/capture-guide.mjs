@@ -42,6 +42,8 @@ try {
         let admin = false;
         let classSettingsCapture = process.env.GUIDE_SCREENS === 'class-settings';
         const classPathsCapture = process.env.GUIDE_SCREENS === 'class-paths';
+        // Without an active class plan the home shows the introduction, not the plan card.
+        const introductionCapture = process.env.GUIDE_SCREENS === 'introduction';
         let authenticated = false;
         page.on('pageerror', error => errors.push(error.message));
         await page.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); }, lang);
@@ -175,7 +177,7 @@ try {
                 published_at: classPath.published_at, steps: pathSteps.map((step, i) => ({ ...step, available: true, done_count: [2, 1, 0][i] })), students: [] };
             else if (path === '/teacher/groups/91/meetings') data = [meeting];
             else if (path === '/teacher/groups/91/meeting-referents') data = [];
-            else if (path === '/user/paths') data = [studentPath];
+            else if (path === '/user/paths') data = introductionCapture ? [] : [studentPath];
             else if (path === '/user/meetings') data = [meeting];
             else if (path === '/teacher/groups/91/settings') data = classSettingsCapture || classPathsCapture ? settings : {
                 group_id: 91, revision: 1, disabled_tool_keys: [], tools: [], disabled_counselor_ids: [],
@@ -200,6 +202,14 @@ try {
                 await page.locator('[data-institution-categories] img').evaluate(element => element.decode());
                 await page.locator('summary').filter({ hasText: categoryText(lang, 'contacts') }).evaluate(el => { el.parentElement.open = true; });
                 await page.locator('summary').filter({ hasText: categoryText(lang, 'events') }).evaluate(el => { el.parentElement.open = true; });
+                await page.evaluate(() => window.scrollTo(0, 0));
+            }
+            if (name === 'introduction') {
+                // Lazy illustrations below the fold, satisfaction questionnaire included.
+                for (const image of await page.locator('[data-testid="intro-screen"] img').all()) {
+                    await image.scrollIntoViewIfNeeded();
+                    await image.evaluate(element => element.decode());
+                }
                 await page.evaluate(() => window.scrollTo(0, 0));
             }
             if (name === 'personal-area' || name === 'teacher-area') {
@@ -228,7 +238,7 @@ try {
             assert.deepEqual(errors, []);
             assert.deepEqual((await page.getByRole('alert').allTextContents()).filter(text => text.trim()), []);
             if (name === 'orientation') await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
-            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(fullClassPage || ['activities', 'personal-area', 'teacher-area', 'teacher-groups', 'teacher-notebook', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
+            await (locator || page).screenshot({ path: `public/guide/${lang}/${name}.png`, ...(fullClassPage || ['introduction', 'activities', 'personal-area', 'teacher-area', 'teacher-groups', 'teacher-notebook', 'institution-categories', 'orientation'].includes(name) ? { fullPage: true } : {}) });
             if (fullClassPage) await page.setViewportSize({ width: 1440, height: 1000 });
             console.log(`${lang}/${name}`);
         }
@@ -324,6 +334,12 @@ try {
             await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
             for (const image of await page.locator('[data-personal-area-header] img').all()) { await image.scrollIntoViewIfNeeded(); await image.evaluate(el => el.decode()); }
             await capture('orientation');
+            await context.close();
+            continue;
+        }
+        if (process.env.GUIDE_SCREENS === 'introduction') {
+            authenticated = true;
+            await go('/'); await capture('introduction');
             await context.close();
             continue;
         }
