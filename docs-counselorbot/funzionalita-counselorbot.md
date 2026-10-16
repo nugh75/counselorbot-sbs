@@ -131,11 +131,16 @@ shown. The Guide remains available independently of these class toggles.
   salvati nelle impostazioni AI (OpenRouter usa per default google/gemini-embedding-2
   a 768 dimensioni; Mistral usa mistral-embed). I costi API di sistema entrano nei log e nel budget
   mensile; i tentativi hanno un timeout limitato e gli errori mantengono disponibile
-  la ricerca per parole chiave. In questa fase solo i corpus editoriali predefiniti possono essere
-  indicizzati all’esterno: le domande restano lessicali fino al filtro privacy;
-  le memorie restano sempre locali/lessicali e le raccolte caricate non vengono
-  inviate all’esterno. Il pannello
-  dedicato di amministrazione arriverà in un blocco successivo.
+  la ricerca per parole chiave. Con un provider esterno escono solo i corpus
+  editoriali predefiniti e le domande dopo lo stesso filtro dei dati personali
+  della chat (con `block`, se il filtro non risponde, la domanda usa solo le parole
+  chiave), senza punteggi dei questionari. Le memorie e gli episodi delle conversazioni
+  usano solo il modello locale o le parole chiave, mai un’API. Le basi caricate
+  dall’amministratore restano solo a parole chiave finché non vengono marcate
+  «Pubblicabile a un provider di embedding esterno» nel pannello Documenti RAG.
+  Con OpenRouter la piattaforma chiede solo provider senza raccolta né conservazione
+  dei dati. La pagina «Dati e riservatezza» descrive questo trattamento. Il pannello
+  dedicato di amministrazione degli embedding arriverà in un blocco successivo.
   Gli indici sono separati per provider, modello e dimensione. La reindicizzazione
   lavora in background: nel frattempo la ricerca usa le parole chiave sui materiali
   già indicizzati; il nuovo indice entra in servizio solo quando è completo. Un

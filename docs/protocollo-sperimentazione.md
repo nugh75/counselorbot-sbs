@@ -133,6 +133,20 @@ Per i docenti:
   (redazione PII attiva di default).
 - Le comunicazioni verso provider AI esterni usano anonimizzazione reversibile
   dei dati personali.
+- Ricerca nei materiali (embedding): l'amministrazione sceglie tra modello
+  locale (Ollama), fornitore esterno o sola ricerca per parole chiave. Con un
+  fornitore esterno escono solo i materiali pubblici della piattaforma (e le
+  collezioni caricate che l'amministrazione marca come pubblicabili) e le
+  domande dopo lo stesso filtro dei dati personali della chat, senza punteggi
+  dei questionari. Memorie ed episodi delle conversazioni restano sul server.
+  Fornitore configurato: `[Mistral diretto (UE) | OpenRouter (USA) verso
+  Google Gemini Embedding 2 | nessuno]`. Con Mistral diretto il fornitore è
+  stabilito nell'UE. Con OpenRouter intervengono un responsabile aggiuntivo
+  (OpenRouter, USA) e il fornitore del modello (Google), con trasferimento
+  extra-UE; la piattaforma chiede a OpenRouter solo provider senza raccolta né
+  conservazione dei dati (`data_collection: deny`, `zdr: true`). Informativa,
+  DPA e valutazione dei trasferimenti sono da verificare con il titolare del
+  trattamento.
 - Per la ricerca: `[consenso informato, codici anonimi, modalità di conservazione]`.
 
 ---

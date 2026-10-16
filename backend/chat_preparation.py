@@ -11,7 +11,7 @@ from .chat_preferences import apply_response_format
 from .qsa_essential import validate_path, directive as essential_directive, is_essential_summary
 from .prompt_contract import QUESTIONNAIRE_DIALOGUES, objective_focus_stage, turn_contract
 from .journey_context import SYNTHESIS_STEPS, journey_context, session_evidence
-from . import models, recommendation_blocks, session_ledger, thread_guard
+from . import embedding_service, models, recommendation_blocks, session_ledger, thread_guard
 from . import recommendation_service as _recommendation_service
 from .i18n_fields import localized
 from .idea_map import IDEA_INSTRUMENT
@@ -173,6 +173,19 @@ class PreparedTurn:
     sanitize: bool
     components: dict
 
+
+
+def _retrieval_queries(step_label: str, message: str, scores_context: str, tail: str,
+                       *, external_embedding: bool) -> tuple[str, str | None]:
+    """Query RAG del turno: `(query, vector_query)`.
+
+    `query` (BM25, vettori locali, strategie) resta nel processo e include i
+    punteggi. Con un provider di embedding esterno `vector_query` omette
+    `scores_context`: i punteggi dei questionari non escono mai dal server."""
+    query = " ".join(part for part in (step_label, message, scores_context, tail) if part and part.strip())
+    if not external_embedding:
+        return query, None
+    return query, " ".join(part for part in (step_label, message, tail) if part and part.strip())
 
 def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
                       c_persona="", counselor_name=None, include_retrieval=True,
@@ -356,12 +369,16 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         skills_blocks = retrieval_context.get("skills_blocks", {})
         recommendation_meta = retrieval_context.get("recommendation_meta", {})
     elif include_retrieval and (component_flags.get("knowledge", True) or skills_engine.enabled(db, questionnaire_type)):
-        retrieval_query = f"{step_label} {model_message if component_flags.get('step_prompt', True) else ''} {component_scores_context}".strip()
         # Follow-up in-step: la domanda dello studente spesso non ha contenuto
         # ("puoi approfondire?") — accoda la coda dell'ultima risposta assistant
         # così il retrieval trova il materiale del tema in discussione.
-        if _is_conversational_mode(request.mode):
-            retrieval_query = f"{retrieval_query} {_conversational_retrieval_tail(session_id)}".strip()
+        retrieval_query, vector_query = _retrieval_queries(
+            step_label,
+            model_message if component_flags.get('step_prompt', True) else '',
+            component_scores_context,
+            _conversational_retrieval_tail(session_id) if _is_conversational_mode(request.mode) else '',
+            external_embedding=embedding_service.is_external(getattr(ai_service, "embedding_provider", None)),
+        )
         retrieval_request = request.copy(update={"scores_context": component_scores_context})
         (
             knowledge_context, strategy_ids, certified_strategy_ids, skills_blocks,
@@ -369,6 +386,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         ) = _retrieved_context(
             db, session_id, retrieval_request, questionnaire_type, retrieval_query,
             ai_service=ai_service,
+            vector_query=vector_query,
             certified_strategy_limit=component_options["certified_strategy_limit"],
             component_flags=component_flags,
             excluded_certified_strategy_ids=previous_certified_strategy_ids(db, conversation_id),

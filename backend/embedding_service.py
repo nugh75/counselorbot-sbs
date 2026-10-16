@@ -1,9 +1,15 @@
-"""System-only embedding backends; external user text is blocked until privacy block 4."""
+"""System-only embedding backends with the external privacy policy (block 4).
+
+External providers receive only public corpus documents and privacy-filtered
+queries: same PII filter as external chat, numeric scores removed. Private text
+(session memories, episodes, short-text ranking) never leaves the process.
+"""
 
 from __future__ import annotations
 
 import json
 import math
+import re
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -12,7 +18,7 @@ from mistralai.client import Mistral
 from openai import OpenAI
 from sqlalchemy.orm import Session
 
-from . import models
+from . import models, pii_ner
 from .api_secrets import resolve_api_secret
 
 PROVIDERS = {
@@ -56,6 +62,54 @@ CONFIG_DEFINITIONS = [
         'Prezzi USD per milione di token input: JSON {"provider/model": prezzo}. Sovrascrive i prezzi embedding predefiniti.',
     ),
 ]
+
+
+# "private" = user-derived text (memories, episodes): local providers only.
+PURPOSES = {"document", "query", "private"}
+# Per-query refusals: the provider is healthy, so they must not trigger the RAG cooldown.
+QUERY_LOCAL_ERRORS = {"embedding_privacy_blocked", "embedding_query_empty"}
+# Bytes of filtered query sent externally: retrieval needs the opening, not the whole turn.
+EXTERNAL_QUERY_MAX_BYTES = 4000
+# Scores and score-like figures (4/9, 3,5/9, 75%, 12/05/2001) never reach an external provider.
+_SCORE_RE = re.compile(r"\b\d+(?:[.,]\d+)?(?:(?:\s*/\s*\d+(?:[.,]\d+)?)+|\s*%)")
+# OpenRouter routing: only providers that neither collect nor retain request data.
+OPENROUTER_PRIVACY_ROUTING = {"data_collection": "deny", "zdr": True}
+
+
+def is_external(provider: str | None) -> bool:
+    return (provider or "ollama") not in {"ollama", "none"}
+
+
+def filter_external_query(config: Mapping, texts: list[str]) -> list[str]:
+    """Apply the external chat PII policy to query texts, then drop numeric scores.
+
+    Unlike chat, redaction is not optional here: placeholders cost retrieval
+    nothing and there is no response to restore. `pii_ner_enabled` and
+    `external_pii_fallback` (block | send_raw) follow the chat settings.
+    """
+    flag = config.get("pii_ner_enabled")
+    ner_enabled = (
+        None
+        if flag is None
+        else str(flag).strip().lower() not in ("0", "false", "no", "off")
+    )
+    anonymized, _mapping, ner_ok = pii_ner.anonymize_texts(
+        list(texts),
+        ollama_base=(config.get("ollama_ip") or "http://localhost:11434").rstrip("/"),
+        ner_enabled=ner_enabled,
+        ner_model=config.get("pii_ner_model"),
+    )
+    fallback = (config.get("external_pii_fallback") or "block").strip().lower()
+    if not ner_ok and fallback == "block":
+        raise EmbeddingError("embedding_privacy_blocked")
+    out = []
+    for text in anonymized:
+        text = " ".join(_SCORE_RE.sub(" ", text or "").split())
+        text = text.encode("utf-8")[:EXTERNAL_QUERY_MAX_BYTES].decode("utf-8", "ignore")
+        if not text.strip():
+            raise EmbeddingError("embedding_query_empty")
+        out.append(text)
+    return out
 
 
 class EmbeddingError(Exception):
@@ -191,7 +245,7 @@ def embed_texts(
     public_corpus: bool = False,
     model: str | None = None,
 ):
-    if purpose not in {"document", "query"}:
+    if purpose not in PURPOSES:
         raise EmbeddingError("embedding_invalid_purpose")
     if not texts:
         return []
@@ -202,8 +256,10 @@ def embed_texts(
     if provider == "none":
         raise EmbeddingError("embedding_disabled")
     external = provider != "ollama"
-    # This guard has no config bypass. Block 4 must filter queries before changing it.
-    if external and (purpose != "document" or not public_corpus):
+    # Privacy policy, no config bypass: private text never leaves the process;
+    # documents only from a public corpus; queries only against a public corpus
+    # and only after the PII filter and score removal.
+    if external and (purpose == "private" or not public_corpus):
         raise EmbeddingError("embedding_privacy_blocked")
     if not model:
         raise EmbeddingError("embedding_invalid_config")
@@ -216,6 +272,8 @@ def embed_texts(
         and dimensions > 3072
     ):
         raise EmbeddingError("embedding_invalid_dimensions")
+    if external and purpose == "query":
+        texts = filter_external_query(config, texts)
     # Validate the whole input before spending on its first batch.
     batches = list(_batches(texts, provider))
     try:
@@ -290,6 +348,8 @@ def embed_texts(
                     }
                     if dimensions:
                         kwargs["dimensions"] = dimensions
+                    # OpenRouter is an extra US processor: refuse providers that keep data.
+                    kwargs["extra_body"] = {"provider": dict(OPENROUTER_PRIVACY_ROUTING)}
                     response = client.embeddings.create(**kwargs)
                     raw = None
                 # Account for every successful paid response, even malformed vectors.

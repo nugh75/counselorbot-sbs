@@ -36,6 +36,7 @@ from ..rag_index import (
     graphify_graph_path_for,
     is_dynamic_collection,
     list_collections,
+    set_api_publishable,
     set_source_scope,
     source_scope_state,
     upload_dir_for,
@@ -52,6 +53,10 @@ _MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB, coerente col limite nginx
 class RagCollectionCreate(BaseModel):
     id: str
     label: str = ""
+
+
+class RagCollectionUpdate(BaseModel):
+    api_publishable: bool
 
 
 class RagDocScopeUpdate(BaseModel):
@@ -128,6 +133,23 @@ async def rag_create_collection(
         return create_dynamic_collection(payload.id.strip().lower(), payload.label.strip())
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.patch("/admin/rag/collections/{slug}")
+async def rag_update_collection(
+    slug: str,
+    payload: RagCollectionUpdate,
+    current_user: dict = Depends(auth.get_current_active_admin),
+):
+    """Marca una collezione dinamica come pubblicabile a un provider di embedding esterno.
+
+    Predefinito: no (solo BM25). Le collezioni builtin sono corpus pubblico fisso."""
+    if not is_dynamic_collection(slug):
+        raise HTTPException(status_code=400, detail="Solo le collezioni dinamiche hanno questa impostazione")
+    try:
+        return set_api_publishable(slug, payload.api_publishable)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.delete("/admin/rag/collections/{slug}")

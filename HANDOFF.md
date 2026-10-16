@@ -1,6 +1,6 @@
 # Handoff s19: indici per modello e reindicizzazione atomica (Blocco 5)
 Data: 2026-10-16 | Branch: `feat/rag-index-per-model` | Agente: `s19-cx-blocco5-indici`, Codex gpt-6.1-sol high
-Task `a960c2f4-399d-464e-afc2-c9fb35f2b187` | Issue #316 | Milestone #18
+Task `a960c2f4-399d-464e-afc2-c9fb35f2b187` | Issue #316, PR #317 | Milestone #18
 
 `backend/rag_index.py`: generazioni immutabili per provider/modello/dimensione,
 manifest JSON atomico sul percorso esistente, riconoscimento degli indici legacy
@@ -18,19 +18,53 @@ restituisce `building`, `stats`, `estimate`; polling su `/site-chat/stats`.
 Anche upload, delete e ambito documenti usano il worker. UI dedicata al Blocco 6;
 Guida interfaccia e screenshot rivisti: nessun layout o testo UI nuovo.
 Contratto storage/API/rollback in `docs/operations/rag-index-versions.md`.
+Integrata PR #313 con merge di `origin/main` b827d676: conservati filtro PII,
+`vector_query` senza punteggi, blocco delle memorie esterne e `api_publishable`.
 
-Verifiche: 142 test + 6 sottotest verdi su PostgreSQL effimero in tmpfs,
-rete Docker interna senza porte pubblicate; ulteriori 19 test del nuovo modulo
-verdi dopo completamento cleanup. Il primo giro della guida su SQLite non era
-compatibile con `artifact_session`: rieseguito correttamente su PostgreSQL.
-Ruff F, format dei file nuovi, mypy e guidance-check; rebuild dell'immagine
-isolata `counselorbot-rag-index-validation:s19`. Nessun provider live, deploy,
-sudo, `.env`, stack portabile o dato produttivo toccato.
+Verifiche finali dopo merge privacy: 162 test + 6 sottotest verdi su PostgreSQL
+effimero in tmpfs, rete Docker interna senza porte pubblicate (provider, privacy,
+versioni RAG, BM25, degradazione, Markdown/PDF, guida). Nuovo modulo: 21 test,
+compresi corpus vuoto e cache legacy non valida. Ruff F, format del modulo di
+test nuovo, mypy locale (3 moduli), guidance-refresh/check e rebuild dell'immagine
+isolata `counselorbot-rag-index-validation:s19` verdi. La CI dedicata verifica
+anche mypy con tutti gli SDK. Il primo giro guida su SQLite era incompatibile
+con `artifact_session`, poi rieseguito su PostgreSQL; il passaggio locale mypy
+con SDK completi è stato interrotto dopo l'esito verde della stessa verifica CI.
+Nessun provider live, deploy, sudo, `.env`, stack portabile o dato produttivo
+modificato. Nessun server dev avviato; container e rete temporanei di test rimossi.
 
 Bug Diario: `ee5ffca7` (indice attivo cancellato prima del nuovo build),
 `e7d27479` (shape query non verificata), `97ff2519` (import inutilizzato nella
-rotta site-chat). I bug `089e7cd5`, `54e4d065`, `c996ef4c` erano già risolti dai
+rotta site-chat), `e7e58b52` (collezione vuota con dimensioni esplicite),
+`a41de8b2` (cache legacy con vettori a zero colonne). I bug `089e7cd5`, `54e4d065`, `c996ef4c` erano già risolti dai
 blocchi precedenti. Bug non registrati: nessuno.
+
+# Handoff s16: politica privacy degli embedding (Blocco 4)
+Data: 2026-10-16 | Branch: `feat/embedding-privacy-policy` (da `origin/main` 2c97dc0d)
+Agente: `s16-op-blocco4-privacy`, Claude Opus 5.5 high | Task `4b69ef06-e952-4dd4-a9cb-24e55d7a05cb` | milestone #18
+
+Il guard temporaneo del blocco 3 è sostituito dalla politica in
+`embedding_service.embed_texts` (unico punto di uscita, nessun bypass da config):
+`purpose="private"` (MemoryEmbedder: memorie, episodi, strategie, catalogo) mai
+esterno; documenti solo da corpus pubblico; query solo verso corpus pubblico e
+dopo `filter_external_query` (stesso filtro PII della chat, sempre applicato;
+`block` con NER giù → BM25 senza cooldown; punteggi tipo 4/9, 75% e date rimossi;
+massimo 4000 byte). La chat guidata passa `vector_query` senza `scores_context`
+quando il provider è esterno. Collezioni dinamiche: flag `api_publishable` in
+`.collection.json` (default false, PATCH `/admin/rag/collections/{slug}`, casella
+nel pannello Documenti RAG), letto a ogni uso. OpenRouter riceve
+`provider: {data_collection: deny, zdr: true}`: non verificato sull'API reale
+(se nessun endpoint ZDR serve il modello, errore → BM25).
+
+Testi: sezione «Ricerca nei materiali» in `/guide/dati-riservatezza` (6 lingue),
+`docs/protocollo-sperimentazione.md` §7 con segnaposto del fornitore configurato,
+`embedding-providers.md`, CONTEXT, funzionalità. Informativa/DPA da rivedere
+con il titolare: i testi non sono formulazioni legali.
+
+Test: `backend/tests/test_embedding_privacy.py` (19) + suite provider/RAG; suite
+ampia su Postgres 16 usa e getta (porta 55447, container già rimosso).
+PR #313 in bozza, issue #312. Fallimenti preesistenti su main in
+`test_smoke.py`: bug `6c8f223f` e `47a13138`. Nessun deploy, sudo o `.env`.
 
 # Handoff s15: provider embedding configurabile (Blocco 3)
 Data: 2026-10-16 | Branch: `feat/embedding-provider-configurable` (da `origin/main` 49e8e9fa)
