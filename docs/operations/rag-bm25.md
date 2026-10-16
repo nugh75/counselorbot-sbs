@@ -21,7 +21,8 @@ No database, tokenizer download, new dependency or network call is needed.
 - `vector`: cosine when available, BM25 fallback when vectors cannot be used.
 
 This is a Python retrieval option. Admin configuration and configurable
-embedding providers belong to later blocks and are not introduced here.
+embedding providers are documented in [embedding providers](embedding-providers.md);
+a dedicated Admin retrieval panel belongs to block 6.
 Category and audience weights apply after fusion, then source caps and the
 existing raw-result guarantee and graph expansion. The guarantee also respects
 the source cap. The return shape and positional arguments are unchanged.
@@ -34,19 +35,19 @@ A lexical query with no matching terms returns no passages.
 
 ## Persistence and unavailable embeddings
 
-The collection JSON now also contains versioned lexical postings and document
-lengths; `.npy` vectors and the incremental embedding cache keep their existing
-paths. Lexical data is published before attempting embeddings. A missing vector
-file does not prevent lexical loading; older JSON indexes construct BM25 locally
-from their saved chunks on reload. New JSON includes `vectors_available` so old
-vectors cannot be associated with newly collected chunks after a failed build.
+The collection JSON contains versioned lexical postings and document lengths.
+Cold starts publish BM25 before scheduling embeddings. Since block 5, vectors
+and chunk caches live in immutable provider/model/dimension generations;
+the existing JSON path is the atomic publication point. Legacy JSON/`.npy`
+indexes remain readable, and missing vectors do not prevent lexical loading.
+See [versioned indexes](rag-index-versions.md) for storage and API details.
 
-On embedding build/query failure, retrieval uses BM25 while the Blocco 1
-five-minute negative cache suppresses retries across collections in the same
-worker. After cooldown, unchanged chunks are not collected again: vector
-construction retries from the current lexical corpus and existing cache.
-Corpus/scope changes still refresh the lexical index during cooldown.
-`stats()` includes `lexical_available` and `vectors_available`.
+During a background rebuild or model switch, retrieval uses BM25 over the active
+corpus. A failed build preserves that entire previous index. The five-minute
+negative cache suppresses repeated embedding attempts; after cooldown the worker
+reuses compatible chunk caches. New corpus/scope data is published with a
+successful candidate; lexical-only mode can refresh it without embeddings.
+`stats()` includes `lexical_available`, `vectors_available` and `building`.
 No `.env` change, migration, sudo command or deploy is required by this PR.
 The runtime backend image must be rebuilt when this change is later deployed.
 

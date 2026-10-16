@@ -78,7 +78,7 @@ def test_lexical_mode_does_not_embed_and_roundtrips(tmp_path):
     payload = json.loads((tmp_path / "plain.json").read_text())
     assert payload["lexical"]["version"] == rag._LEXICAL_VERSION
     assert not payload["vectors_available"]
-    (tmp_path / "plain.npy").unlink()  # Lexical reload needs no vector file.
+    assert not (tmp_path / "plain.npy").exists()  # No legacy vector file required.
     restored = _index(tmp_path, corpus)
     assert restored.search(ai, "Testo", retrieval_mode="lexical") == first
     assert corpus.calls == 1 and ai.calls == 0
@@ -116,6 +116,7 @@ def test_rrf_orders_by_ranks_not_score_scales(tmp_path):
     ai.embed_texts = Mock(return_value=[[0, 1], [1, 0], [0.8, 0.6]])
     ai.embed_query = Mock(return_value=[1, 0])
     index = _index(tmp_path, _corpus(chunks))
+    index.build(ai)
     hybrid = index.search(ai, "rare", retrieval_mode="hybrid")
     assert hybrid[0]["source"] == "b.md"  # vector #1 + lexical #2 beats lexical #1 + vector #3
     expected = rag._rank_fusion([1, 2, 0], [0, 1])

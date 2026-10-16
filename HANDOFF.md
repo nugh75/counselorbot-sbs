@@ -1,3 +1,44 @@
+# Handoff s19: indici per modello e reindicizzazione atomica (Blocco 5)
+Data: 2026-10-16 | Branch: `feat/rag-index-per-model` | Agente: `s19-cx-blocco5-indici`, Codex gpt-6.1-sol high
+Task `a960c2f4-399d-464e-afc2-c9fb35f2b187` | Issue #316, PR #317 | Milestone #18
+
+`backend/rag_index.py`: generazioni immutabili per provider/modello/dimensione,
+manifest JSON atomico sul percorso esistente, riconoscimento degli indici legacy
+sul volume `rag_index`, cache incrementale e deduplica dei chunk. Build in
+background con sessione DB e configurazione proprie, lock cross-worker, snapshot
+coerente dei lettori, BM25 durante il build, precedente indice conservato dopo
+errori di embedding o pubblicazione. Controllo shape/valori finiti della query,
+ricostruzione anche se cambia la dimensione dietro lo stesso alias. Pulizia delle
+generazioni orfane dopo 24 ore; eliminazione delle collezioni sotto lo stesso lock.
+
+`estimate_reindex()` e `embedding_service.estimate_cost()` sono riusabili dal
+Blocco 6: stima offline token/costo, cache/duplicati, prezzi configurabili,
+prezzo sconosciuto esplicito, vincoli privacy rispettati. `POST /site-chat/reindex`
+restituisce `building`, `stats`, `estimate`; polling su `/site-chat/stats`.
+Anche upload, delete e ambito documenti usano il worker. UI dedicata al Blocco 6;
+Guida interfaccia e screenshot rivisti: nessun layout o testo UI nuovo.
+Contratto storage/API/rollback in `docs/operations/rag-index-versions.md`.
+Integrata PR #313 con merge di `origin/main` b827d676: conservati filtro PII,
+`vector_query` senza punteggi, blocco delle memorie esterne e `api_publishable`.
+
+Verifiche finali dopo merge privacy: 162 test + 6 sottotest verdi su PostgreSQL
+effimero in tmpfs, rete Docker interna senza porte pubblicate (provider, privacy,
+versioni RAG, BM25, degradazione, Markdown/PDF, guida). Nuovo modulo: 21 test,
+compresi corpus vuoto e cache legacy non valida. Ruff F, format del modulo di
+test nuovo, mypy locale (3 moduli), guidance-refresh/check e rebuild dell'immagine
+isolata `counselorbot-rag-index-validation:s19` verdi. La CI dedicata verifica
+anche mypy con tutti gli SDK. Il primo giro guida su SQLite era incompatibile
+con `artifact_session`, poi rieseguito su PostgreSQL; il passaggio locale mypy
+con SDK completi è stato interrotto dopo l'esito verde della stessa verifica CI.
+Nessun provider live, deploy, sudo, `.env`, stack portabile o dato produttivo
+modificato. Nessun server dev avviato; container e rete temporanei di test rimossi.
+
+Bug Diario: `ee5ffca7` (indice attivo cancellato prima del nuovo build),
+`e7d27479` (shape query non verificata), `97ff2519` (import inutilizzato nella
+rotta site-chat), `e7e58b52` (collezione vuota con dimensioni esplicite),
+`a41de8b2` (cache legacy con vettori a zero colonne). I bug `089e7cd5`, `54e4d065`, `c996ef4c` erano già risolti dai
+blocchi precedenti. Bug non registrati: nessuno.
+
 # Handoff s16: politica privacy degli embedding (Blocco 4)
 Data: 2026-10-16 | Branch: `feat/embedding-privacy-policy` (da `origin/main` 2c97dc0d)
 Agente: `s16-op-blocco4-privacy`, Claude Opus 5.5 high | Task `4b69ef06-e952-4dd4-a9cb-24e55d7a05cb` | milestone #18
