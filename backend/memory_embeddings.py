@@ -1,6 +1,6 @@
 """Retrieval semantico per le memorie (episodi di sessione, strategie).
 
-Usa `AIService.embed_texts` (Ollama, default bge-m3) con una piccola cache
+Usa `AIService.embed_texts` solo con provider locale (Ollama) e una piccola cache
 npz persistente, stessa filosofia di `rag_index._EmbeddingCache` ma per testi
 brevi e volatili. Qualsiasi anomalia (Ollama spento, modello non configurato,
 risposta malformata, AIService mockato nei test) produce `None`: il chiamante
@@ -58,7 +58,8 @@ class MemoryEmbedder:
         query = (query or "").strip()
         if not query or not items or ai_service is None:
             return None
-        # Never use external embeddings or cached external vectors for private memory.
+        # Privacy policy: memories, episodes and their queries use only the local
+        # provider (or the caller's keyword fallback), never an external API.
         if getattr(ai_service, "embedding_provider", "ollama") != "ollama":
             return None
         try:
@@ -91,7 +92,8 @@ class MemoryEmbedder:
         missing = [(key, text) for key, text in zip(keys, texts) if key not in cached]
 
         if missing:
-            raw = ai_service.embed_texts([text for _, text in missing])
+            # purpose="private": refused by every external provider, even if the check above changes.
+            raw = ai_service.embed_texts([text for _, text in missing], purpose="private")
             matrix = np.asarray(raw, dtype=np.float32)
             if matrix.ndim != 2 or matrix.shape[0] != len(missing) or matrix.shape[1] < 8:
                 return None

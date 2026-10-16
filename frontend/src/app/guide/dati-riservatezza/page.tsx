@@ -8,7 +8,7 @@ export default function DataPrivacyPage() {
     return (
         <div className="page-narrow space-y-7">
             <h1 className="font-display text-2xl font-bold text-slate-900">{t('app.intro.compact.privacy.title')}</h1>
-            {['local', 'external', 'access'].map(section => (
+            {['local', 'external', 'retrieval', 'access'].map(section => (
                 <section key={section} className="space-y-2">
                     <h2 className="text-lg font-semibold text-slate-900">{t(`app.intro.compact.privacy.${section}.title`)}</h2>
                     <p className="leading-relaxed text-slate-600">{t(`app.intro.compact.privacy.${section}.body`)}</p>

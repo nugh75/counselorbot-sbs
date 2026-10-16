@@ -1,4 +1,7 @@
-"""Offline provider/config/accounting/temporary privacy contract: no network clients."""
+"""Offline provider/config/accounting contract: no network clients.
+
+Privacy policy tests live in test_embedding_privacy.py.
+"""
 
 import asyncio
 import json
@@ -202,42 +205,6 @@ def test_missing_key_classified_and_bm25_fallback(db, monkeypatch, tmp_path, pro
     assert index.matrix is None and db.query(models.Log).count() == 0
 
 
-@pytest.mark.parametrize("provider", ["mistral", "openrouter"])
-def test_external_queries_and_private_documents_never_leave_process(
-    db, monkeypatch, provider, tmp_path
-):
-    monkeypatch.setenv(f"API_KEY_{provider.upper()}", "fake")
-    _, constructor, _ = fake_client(monkeypatch, provider)
-    ai = service(db, provider)
-    for call in [
-        lambda: ai.embed_query("student scores and name"),
-        lambda: ai.embed_texts(["memory transcript"]),
-        lambda: ai.embed_texts(["private"], purpose="query", public_corpus=True),
-    ]:
-        with pytest.raises(AIError) as exc:
-            call()
-        assert exc.value.code == "embedding_privacy_blocked"
-    embedder = MemoryEmbedder(tmp_path / "memory.npz")
-    assert embedder.rank(ai, "private", ["transcript"], 1) is None
-    index = _index(tmp_path, _Corpus())  # private/dynamic default
-    assert index.search(ai, "Testo")
-    assert index.matrix is None
-    constructor.assert_not_called()
-    index.public_corpus = True
-    assert index.search(ai, "student Testo")  # documents only are embedded
-    assert constructor.call_count == 1
-    assert all(
-        "student" not in t
-        for t in constructor.return_value.embeddings.create.call_args.kwargs.get(
-            "inputs",
-            constructor.return_value.embeddings.create.call_args.kwargs.get("input"),
-        )
-    )
-    ai.embed_query = Mock(side_effect=AssertionError("external query called"))
-    assert index.search(ai, "Testo", retrieval_mode="vector")
-    ai.embed_query.assert_not_called()
-
-
 def test_none_skips_cached_vectors_and_all_clients(db, tmp_path):
     index = _index(tmp_path, _Corpus())
     index.build(_Embedder(fail=False))
@@ -420,6 +387,10 @@ def test_real_sdk_contract_with_mock_transport(db, monkeypatch, provider):
         assert body["input"] == ["public corpus"]
         if provider == "openrouter":
             assert body["dimensions"] == 768
+            # Real SDK serialization of the zero-retention routing request.
+            assert body["provider"] == {"data_collection": "deny", "zdr": True}
+        else:
+            assert "provider" not in body
         assert db.query(models.Log).one().details["usage"]["prompt_tokens"] == 12
     finally:
         http.close()
@@ -490,7 +461,7 @@ def test_local_memory_ranking_and_cache_stay_available(tmp_path):
     embedder = MemoryEmbedder(tmp_path / "memory.npz")
     assert embedder.rank(ai, "query", ["item"], 1) == [0]
     assert embedder.rank(ai, "query", ["item"], 1) == [0]
-    ai.embed_texts.assert_called_once_with(["query", "item"])
+    ai.embed_texts.assert_called_once_with(["query", "item"], purpose="private")
 
 
 @pytest.mark.parametrize(

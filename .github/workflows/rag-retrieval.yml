@@ -8,7 +8,10 @@ on:
       - 'backend/qsa_extractor.py'
       - 'backend/ai_service.py'
       - 'backend/memory_embeddings.py'
+      - 'backend/chat_preparation.py'
+      - 'backend/routes/rag_docs.py'
       - 'backend/tests/test_embedding_provider.py'
+      - 'backend/tests/test_embedding_privacy.py'
       - 'backend/tests/test_qsa_vision_fallback.py'
       - 'backend/tests/test_rag_*.py'
       - 'scripts/benchmark-rag-bm25.py'
@@ -21,7 +24,10 @@ on:
       - 'backend/qsa_extractor.py'
       - 'backend/ai_service.py'
       - 'backend/memory_embeddings.py'
+      - 'backend/chat_preparation.py'
+      - 'backend/routes/rag_docs.py'
       - 'backend/tests/test_embedding_provider.py'
+      - 'backend/tests/test_embedding_privacy.py'
       - 'backend/tests/test_qsa_vision_fallback.py'
       - 'backend/tests/test_rag_*.py'
       - 'scripts/benchmark-rag-bm25.py'
@@ -49,10 +55,11 @@ jobs:
           backend/tests/test_rag_embedding_degradation.py backend/embedding_service.py
           backend/vision_service.py backend/qsa_extractor.py backend/ai_service.py
           backend/memory_embeddings.py backend/tests/test_embedding_provider.py
+          backend/tests/test_embedding_privacy.py backend/routes/rag_docs.py
           backend/tests/test_qsa_vision_fallback.py scripts/benchmark-rag-bm25.py
       - run: mypy --explicit-package-bases --follow-imports=silent --ignore-missing-imports backend/rag_index.py backend/embedding_service.py backend/vision_service.py
       - name: Offline regression tests (fake embedders)
         run: >-
-          python -m pytest backend/tests/test_embedding_provider.py backend/tests/test_rag_bm25.py
+          python -m pytest backend/tests/test_embedding_privacy.py backend/tests/test_embedding_provider.py backend/tests/test_rag_bm25.py
           backend/tests/test_rag_embedding_degradation.py backend/tests/test_rag_markdown.py
           backend/tests/test_qsa_vision_fallback.py -q --disable-warnings
