@@ -1,13 +1,13 @@
 """Traduzione dei contenuti certificati (strategie e letture) nelle sei lingue.
 
-La sorgente e' l'italiano. Le traduzioni arrivano da Ollama e nascono
-`translated`, mai `certified`: una macchina propone, l'admin certifica. Lo stato
-per lingua vive nel registro `content_language_versions`, non nella riga: una
-strategia certificata in italiano non e' certificata in tedesco solo perche' il
-tedesco esiste.
+La sorgente e' l'italiano. Le traduzioni nascono `translated`, mai `certified`:
+una macchina propone, l'admin certifica. Lo stato per lingua vive nel registro
+`content_language_versions`, non nella riga: una strategia certificata in
+italiano non e' certificata in tedesco solo perche' il tedesco esiste.
 
-Il traduttore e' un parametro, non una dipendenza fissa: i test lo sostituiscono
-e non toccano la rete.
+La traduzione passa dal provider AI configurato (attivo o preset
+`translation_provider`). Il traduttore resta un parametro iniettabile: i test lo
+sostituiscono e non toccano la rete.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .content_version_service import get_version, upsert_version
-from .counselor_i18n import TARGET_LANGS, _model, _ollama_base, generate_translations
+from .counselor_i18n import TARGET_LANGS, configured_translator
 from .i18n_fields import merged_i18n
 
 logger = logging.getLogger(__name__)
@@ -45,15 +45,13 @@ STRATEGY_CONTEXT = (
 )
 
 
-def ollama_translator(db: Session, context: str = "") -> tuple[Translator, str]:
-    """Traduttore vero, piu' l'etichetta del modello da registrare come provenienza."""
-    base_url = _ollama_base(db)
-    model = _model(db)
+def default_translator(db: Session, context: str = "") -> tuple[Translator, str]:
+    """Traduttore vero, piu' l'etichetta del modello da registrare come provenienza.
 
-    def translate(text: str) -> Dict[str, str]:
-        return generate_translations(base_url, model, text, context)
-
-    return translate, model
+    Passa dal provider AI attivo (o dal preset `translation_provider`): il
+    catalogo certificato e' testo editoriale, non dato utente.
+    """
+    return configured_translator(db, context)
 
 
 def _missing_langs(
@@ -129,7 +127,7 @@ def translate_strategies(
 ) -> int:
     """Traduce le strategie certificate dall'italiano. Ritorna le righe toccate."""
     if translate is None:
-        translate, model_label = ollama_translator(db, STRATEGY_CONTEXT)
+        translate, model_label = default_translator(db, STRATEGY_CONTEXT)
 
     touched = 0
     query = db.query(models.CertifiedStrategy)
@@ -184,7 +182,7 @@ def translate_readings(
     scritta da una persona non viene sovrascritta se non con `force`.
     """
     if translate is None:
-        translate, model_label = ollama_translator(db, READING_CONTEXT)
+        translate, model_label = default_translator(db, READING_CONTEXT)
 
     touched = 0
     rows = db.query(models.CertifiedReading).order_by(models.CertifiedReading.id).all()

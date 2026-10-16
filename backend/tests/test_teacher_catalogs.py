@@ -163,3 +163,33 @@ def test_teacher_can_use_catalog_helpers(setup, monkeypatch):
     strategy = client.post('/admin/certified-strategies', json=strategy_payload()).json()
     monkeypatch.setattr(certified_strategies, 'translate_strategies', lambda *args, **kwargs: ['fr'])
     assert client.post(f'/admin/certified-strategies/{strategy["id"]}/translate').status_code == 200
+
+
+def test_translate_without_a_provider_answers_503_with_a_clear_message(setup, monkeypatch):
+    from backend.translation_provider import TranslationUnavailable
+    client, _, _ = setup
+    strategy = client.post('/admin/certified-strategies', json=strategy_payload()).json()
+
+    def unavailable(*args, **kwargs):
+        raise TranslationUnavailable(
+            "Nessun provider AI configurato per la traduzione: scegli il provider attivo "
+            "in Amministrazione oppure imposta translation_provider."
+        )
+
+    monkeypatch.setattr(certified_strategies, 'translate_strategies', unavailable)
+    response = client.post(f'/admin/certified-strategies/{strategy["id"]}/translate')
+    assert response.status_code == 503, response.text
+    assert 'Nessun provider AI configurato' in response.json()['detail']
+
+
+def test_translate_provider_failure_answers_502(setup, monkeypatch):
+    client, _, _ = setup
+    strategy = client.post('/admin/certified-strategies', json=strategy_payload()).json()
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("provider non raggiungibile")
+
+    monkeypatch.setattr(certified_strategies, 'translate_strategies', boom)
+    response = client.post(f'/admin/certified-strategies/{strategy["id"]}/translate')
+    assert response.status_code == 502, response.text
+    assert 'Traduzione non disponibile' in response.json()['detail']

@@ -17,18 +17,17 @@ mezza tradotta non e' una lingua, e dichiararla tale nasconderebbe i buchi.
 """
 from __future__ import annotations
 
-import json
 import logging
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 
-import httpx
 from sqlalchemy.orm import Session
 
 from . import models
 from .content_version_service import get_version, upsert_version
 from .content_versions import INSTRUMENT_STATUSES
-from .counselor_i18n import LANG_NAMES, _model, _ollama_base
+from .counselor_i18n import LANG_NAMES
 from .i18n_fields import localized, merged_i18n
+from .translation_provider import resolve_target, translate_payload
 
 logger = logging.getLogger(__name__)
 
@@ -38,21 +37,8 @@ Translator = Callable[[str, str, List[str]], Dict[str, str]]
 DEFAULT_SOURCE = "en"
 
 
-def ollama_translator(db: Session) -> tuple[Translator, str]:
-    """Traduttore vero, piu' l'etichetta del modello da registrare come provenienza."""
-    base_url = _ollama_base(db)
-    model = _model(db)
-
-    def translate(text: str, source: str, wanted: List[str]) -> Dict[str, str]:
-        return translate_item(base_url, model, text, source, wanted)
-
-    return translate, model
-
-
-def translate_item(
-    base_url: str, model: str, text: str, source: str, wanted: List[str]
-) -> Dict[str, str]:
-    """Traduce un item mantenendo il costrutto misurato, non la lettera.
+def item_prompt(text: str, source: str, wanted: List[str]) -> Tuple[str, str]:
+    """Costruisce (system, user) per tradurre un item mantenendo il costrutto misurato.
 
     Il principio 1 del protocollo di validazione chiede equivalenza prima della
     traduzione letterale: un item deve conservare cio' che misura e restare
@@ -76,25 +62,29 @@ def translate_item(
         f"Item to translate:\n{text}\n\n"
         f"Return JSON with exactly these keys: {', '.join(wanted)}."
     )
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        "stream": False,
-        "format": "json",
-        "keep_alive": "5m",
-        "think": False,
-        "options": {"temperature": 0.2},
-    }
-    resp = httpx.post(
-        f"{base_url}/api/chat", json=payload, timeout=httpx.Timeout(180.0, connect=4.0)
-    )
-    resp.raise_for_status()
-    content = resp.json().get("message", {}).get("content", "") or "{}"
-    data = json.loads(content)
-    return {code: str(data[code]).strip() for code in wanted if data.get(code)}
+    return system, user
+
+
+def configured_translator(db: Session) -> tuple[Translator, str]:
+    """Traduttore vero (provider AI attivo o preset), piu' l'etichetta di provenienza.
+
+    Passa da `AIService`: gli item sono testo editoriale, non dato utente.
+    """
+    target = resolve_target(db)
+
+    def translate(text: str, source: str, wanted: List[str]) -> Dict[str, str]:
+        system, user = item_prompt(text, source, wanted)
+        return translate_payload(target, system, user, list(wanted))
+
+    return translate, target.label
+
+
+def translate_item(
+    db: Session, text: str, source: str, wanted: List[str]
+) -> Dict[str, str]:
+    """Traduce un item con il provider configurato (helper per script e test)."""
+    translate, _label = configured_translator(db)
+    return translate(text, source, wanted)
 
 
 def _fill(row, field: str, source: str, targets: List[str], translate: Translator,
@@ -212,7 +202,7 @@ def translate_instrument(
 ) -> int:
     """Traduce nome, fattori e item di uno strumento. Ritorna gli item toccati."""
     if translate is None:
-        translate, model_label = ollama_translator(db)
+        translate, model_label = configured_translator(db)
 
     instrument = db.query(models.Instrument).filter(models.Instrument.code == code).first()
     if not instrument:
