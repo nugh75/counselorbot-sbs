@@ -52,7 +52,7 @@ export function Header() {
     }, []);
 
     const accountLabel = identity?.name || identity?.email || identity?.username;
-    // Console ai4educ: admin -> manager, tutti gli altri (incl. caricamento) -> portale.
+    // Servizi ai4educ, mostrati solo ad admin e ricercatori: admin -> manager, ricercatore -> portale.
     const consoleUrl = identity?.is_admin ? AI4EDUC_MANAGER_URL : AI4EDUC_PORTAL_URL;
     const canOpenAssistant = canUseAssistant(identity) && !accessLoading && isToolAllowed(access, 'assistant');
     const canOpenResearchConsole = canUseResearchConsole(identity);

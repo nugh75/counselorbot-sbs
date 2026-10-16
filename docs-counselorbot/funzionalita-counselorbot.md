@@ -45,8 +45,8 @@ personale, accanto alle Flashcard. Il catalogo non contiene più il riquadro
 indietro e la navigazione permettono di tornare alle pagine precedenti.
 
 La testata mette in evidenza i quattro ingressi principali: **Bussola**,
-**Assistente**, **Guida** e **Profilo**. Le voci legate al ruolo (**Area docente**
-per docenti/ricercatori, **Amministrazione** per gli admin) restano nel menu a tre
+**Assistente**, **Guida** e **Area studente**. Le voci legate al ruolo (**Area docente**
+per docenti/ricercatori, **Area amministrazione** per admin e ricercatori) restano nel menu a tre
 punti, insieme a uscita e preferenze; su schermi stretti il menu raccoglie tutte
 le voci nello stesso ordine.
 Il menu a tre punti, l’elenco **Riprendi un’attività** e il selettore della
