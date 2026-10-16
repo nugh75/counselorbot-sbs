@@ -116,7 +116,7 @@ async function prepare(page) {
     const tools = await editor.getByRole('combobox', { name: /^Strumento/ }).locator('option').allTextContents();
     assert.ok(tools.includes('Tavolo') && !tools.some(name => /Savickas|QSA/i.test(name)), tools.join(', '));
     await editor.getByRole('combobox', { name: /^Strumento/ }).selectOption('tavolo');
-    await addStep('Fa una chat guidata', 'Sui risultati di un questionario del percorso');
+    await addStep('Fa una chat guidata', 'Sui risultati di un questionario del piano operativo');
     // A results chat without an earlier questionnaire cannot be saved.
     assert.equal(await editor.getByRole('button', { name: 'Salva modello' }).isDisabled(), true);
     await addStep('Compila un questionario');
