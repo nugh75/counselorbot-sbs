@@ -31,14 +31,14 @@ def main() -> int:
 
     from backend import database
     from backend.certified_translation import (
-        ollama_translator,
+        default_translator,
         translate_readings,
         translate_strategies,
     )
 
     db = database.SessionLocal()
     try:
-        translate, model = ollama_translator(db)
+        translate, model = default_translator(db)
         print(f"modello: {model}")
         if args.what in ("strategies", "all"):
             done = translate_strategies(

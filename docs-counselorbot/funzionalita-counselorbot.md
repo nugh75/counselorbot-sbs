@@ -1345,6 +1345,20 @@ personale e che per dare i modelli GPT alla classe serve una chiave API condivis
 Le **API Keys** della piattaforma sono dell’amministratore e restano fuori dal
 blocco, subito sotto.
 
+Le **traduzioni del catalogo** — strategie e letture certificate, item e fattori
+degli strumenti, descrizioni dei counselor — usano lo stesso provider AI attivo:
+non serve più un modello locale dedicato. Il pulsante **Traduci** del catalogo
+certificato e gli script di traduzione seguono provider e modello attivi; un
+preset `translation_provider`/`translation_model` (anche da variabili
+d’ambiente) può scegliere un provider o un modello diversi per le sole
+traduzioni. Se non c’è un provider configurato o manca la chiave di sistema, la
+traduzione si ferma con un messaggio esplicito invece di un errore di trasporto.
+I testi tradotti sono contenuti editoriali e seguono la protezione dei dati per i
+modelli esterni. Gli stessi provider valgono per gli script di traduzione del
+catalogo e degli strumenti (`scripts/translate_*.py`). La disattivazione delle
+traduzioni dei counselor
+(`COUNSELOR_TRANSLATE_DISABLED`) resta invariata.
+
 ### Mappa dei prompt delle chat guidate
 
 **Amministrazione → Configurazione & Prompt → Mappa dei prompt**
