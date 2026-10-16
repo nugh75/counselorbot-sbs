@@ -37,7 +37,7 @@ async function fixture({ profile = 'S', width = 1440, locale = 'it', dark = fals
     const page = await context.newPage();
     page.setDefaultTimeout(SETTLE_MS);
     page.setDefaultNavigationTimeout(600000);
-    const errors = [], writes = [];
+    const errors = [], writes = [], reads = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(({ locale, dark, storage }) => {
         localStorage.setItem('cb_lang', locale);
@@ -53,6 +53,7 @@ async function fixture({ profile = 'S', width = 1440, locale = 'it', dark = fals
     await page.route('**/api/**', async route => {
         const request = route.request(), path = new URL(request.url()).pathname;
         if (request.method() !== 'GET') writes.push({ path, body: request.postDataJSON() });
+        else reads.push(path);
         if (path === '/api/auth/me') return answer(route, auth, identity);
         if (path === '/api/user/access/view' && request.method() === 'PUT') {
             const view = request.postDataJSON().view;
@@ -71,7 +72,7 @@ async function fixture({ profile = 'S', width = 1440, locale = 'it', dark = fals
         if (path === '/api/counselors') return route.fulfill({ json: [{ id: 1, name: 'Counselor Sintetico', slug: 'c1', language: ['it'], is_active: true, suitable: true, model_origin: 'local' }] });
         return route.fulfill({ json: [] });
     });
-    return { page, context, errors, writes, state };
+    return { page, context, errors, writes, reads, state };
 }
 
 const header = page => page.locator('header.console-header');
@@ -87,6 +88,21 @@ function names(locator) {
         .filter(el => root.matches(panels) || !el.closest(panels))
         .filter(el => el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }))
         .map(el => el.getAttribute('aria-label') || el.labels?.[0]?.textContent?.trim() || el.textContent.trim()), PANELS);
+}
+
+// Visible controls marked as the current page.
+function currentNames(locator) {
+    return locator.evaluate((root, panels) => [...root.querySelectorAll('[aria-current="page"]')]
+        .filter(el => root.matches(panels) || !el.closest(panels))
+        .filter(el => el.checkVisibility({ checkVisibilityCSS: true }))
+        .map(el => el.getAttribute('aria-label') || el.textContent.trim()), PANELS);
+}
+
+// Names of the navigation landmarks a person can reach.
+function landmarks(locator) {
+    return locator.evaluate(root => [...root.querySelectorAll('nav')]
+        .filter(el => el.checkVisibility({ checkVisibilityCSS: true }))
+        .map(el => el.getAttribute('aria-label')));
 }
 
 function links(locator) {
@@ -146,15 +162,55 @@ for (const profile of Object.keys(PROFILES)) {
     }
 }
 
-test('the navbar ignores the current page: same entries, no current marker', async () => {
+// P3: same entries on every page, the current area marked with
+// aria-current="page" inside a named navigation landmark.
+test('the navbar marks the current page in a named navigation landmark', async () => {
     const { page, context } = await fixture({ profile: 'D', width: 1280 });
     try {
-        for (const path of ['/guide', '/profilo', '/docente', '/questionario']) {
+        for (const [path, bar, menu] of [['/guide', [LABELS.guide], []], ['/profilo', [LABELS.student], []], ['/docente', [], [LABELS.teacher]], ['/questionario', [], []]]) {
             await page.goto(`${origin}${path}`);
             await eventually(() => names(header(page)), expectedNavbar('D', 1280).bar, path);
-            assert.equal(await header(page).locator('[aria-current]').count(), 0, path);
-            assert.equal(await header(page).locator('nav').count(), 0, `${path} has no navigation landmark`);
+            assert.deepEqual(await currentNames(header(page)), bar, `${path} bar`);
+            assert.deepEqual(await landmarks(header(page)), ['Navigazione principale'], `${path} bar landmark`);
+            await trigger(page).click();
+            assert.deepEqual(await currentNames(mobileMenu(page)), menu, `${path} menu`);
+            assert.deepEqual(await landmarks(mobileMenu(page)), ['Navigazione del menu'], `${path} menu landmark`);
+            await page.keyboard.press('Escape');
         }
+    } finally { await context.close(); }
+});
+
+test('compact menu marks the current page; no empty landmark from lg', async () => {
+    for (const [profile, width, path, current, menuLandmarks] of [['S', 390, '/profilo', [LABELS.student], ['Navigazione del menu']], ['A', 1024, '/guide', [LABELS.guide], []]]) {
+        const { page, context } = await fixture({ profile, width });
+        try {
+            await page.goto(`${origin}${path}`);
+            await eventually(() => names(header(page)), expectedNavbar(profile, width).bar, `${profile} bar`);
+            await trigger(page).click();
+            await eventually(() => names(mobileMenu(page)), expectedNavbar(profile, width).menu, `${profile} menu`);
+            const all = [...await currentNames(header(page)), ...await currentNames(mobileMenu(page))];
+            assert.deepEqual(all, current, `${profile} at ${width}px`);
+            assert.deepEqual(await landmarks(mobileMenu(page)), menuLandmarks, `${profile} menu landmark`);
+        } finally { await context.close(); }
+    }
+});
+
+test('one identity read; opening the menu reads no access again', async () => {
+    const { page, context, reads } = await fixture({ profile: 'S2', width: 390 });
+    try {
+        await page.goto(`${origin}/guide`);
+        await eventually(() => names(header(page)), expectedNavbar('S2', 390).bar, 'bar');
+        await trigger(page).click();
+        await mobileMenu(page).getByLabel(LABELS.view, { exact: true }).waitFor();
+        const accessReads = reads.filter(path => path === '/api/user/access').length;
+        for (let i = 0; i < 2; i++) {
+            await page.keyboard.press('Escape');
+            await trigger(page).click();
+            await mobileMenu(page).getByLabel(LABELS.view, { exact: true }).waitFor();
+        }
+        await page.waitForTimeout(500);
+        assert.equal(reads.filter(path => path === '/api/auth/me').length, 1, 'identity');
+        assert.equal(reads.filter(path => path === '/api/user/access').length, accessReads, 'access');
     } finally { await context.close(); }
 });
 
