@@ -309,13 +309,18 @@ aggiornato l'informativa. La procedura non richiede `sudo`.
    l'anonimato. Nulla cambia finché non lo sceglie l'amministratore. Su questa
    macchina `basic` è già attivo dal 5 ottobre 2026: in quel caso nessuno dei
    due messaggi compare. Ripremere **Prova** per confermarlo.
-7. **Reindicizzare.** Nella lista **Indici per collezione** premere prima
-   **Stima costi** (calcolo locale, nessuna chiamata) e poi **Reindicizza**
-   per ciascuna collezione. «Framework teorico» vale circa il 90% del
-   volume. Lo stato passa da «Da reindicizzare per il modello scelto (ora
-   parole chiave)» a «Indicizzazione in corso…» e infine a «Parole chiave +
-   significato pronti». Durante il build la ricerca usa le parole chiave e il
-   nuovo indice entra in servizio solo quando è completo. Le collezioni non
+7. **Reindicizzare.** Sotto **Indici per collezione** premere una sola volta
+   **Reindicizza tutto**. La conferma mostra la stima complessiva (calcolo
+   locale, nessuna chiamata); poi premere **Avvia**. «Framework teorico» vale
+   circa il 90% del volume. Durante il lavoro il pannello mostra la
+   percentuale e, per ogni collezione, «in attesa», «in corso: x/y
+   passaggi», «completata» oppure «errore: motivo». Il pulsante resta
+   disattivato e l'avanzamento ricompare anche ricaricando la pagina. Un
+   errore su una collezione non ferma le altre e lascia attivo il suo indice
+   precedente; i limiti di frequenza del provider vengono ritentati in
+   automatico. Lo stato finale è «Parole chiave + significato pronti».
+   Mentre una collezione viene indicizzata la sua ricerca usa le parole chiave;
+   il nuovo indice entra in servizio solo quando è completo. Le collezioni non
    pubblicabili restano «Non pubblicabile: resta solo parole chiave con un
    modello esterno». Una collezione non reindicizzata a mano viene comunque
    indicizzata in background alla prima ricerca che la usa: fare la stima
