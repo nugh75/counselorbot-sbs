@@ -489,8 +489,38 @@ def test_plain_text_reply_is_kept_and_uses_local_ranking():
 
     assert analysis.reply.startswith("Il QSA osserva come studi")
     assert [row["id"] for row in analysis.recommendations] == ["QSA"]
-    assert kwargs["model"] == "qwen3.8:latest"
+    assert kwargs["provider"] is None and kwargs["model"] is None
     assert kwargs["json_mode"] is False
+
+
+def test_orientation_without_preset_uses_the_active_non_ollama_provider():
+    # Senza preset del counselor la Bussola non impone ollama/qwen3.8: la scelta
+    # passa per la risoluzione reale di AIService sul provider attivo.
+    from backend.ai_service import AIService as RealAIService
+
+    class _ConfiguredService(_FakeAIService):
+        personal_error = None
+        chatgpt_model = None
+        personal_target = None
+
+        def __init__(self, db=None, username=None):
+            super().__init__(db, username)
+            self.config = {"active_provider": "mistral", "model_name": "mistral-small-latest"}
+
+        def get_response(self, *args, **kwargs):
+            type(self).last_target = RealAIService._selected_target(self, kwargs["provider"], kwargs["model"])
+            return super().get_response(*args, **kwargs)
+
+    orientation.AIService = _ConfiguredService
+    db = _Session()
+    try:
+        analysis = analyze_turn(db, "Voglio organizzare meglio lo studio", "it")
+    finally:
+        orientation.AIService = _FakeAIService
+        db.close()
+
+    assert _ConfiguredService.last_target == ("mistral", "mistral-small-latest")
+    assert analysis.reply == "Hai descritto un obiettivo di studio concreto."
 
 
 def test_model_output_is_filtered_through_closed_contract():
