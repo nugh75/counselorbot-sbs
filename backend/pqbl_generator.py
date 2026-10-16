@@ -17,10 +17,9 @@ from __future__ import annotations
 
 import json
 import logging
-import math
 import re
 import unicodedata
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -553,7 +552,7 @@ def generate_batch_for_chunk(
             questions_raw = payload.get("questions") or []
         
         if not isinstance(questions_raw, list):
-            last_problems = [f"Il modello non ha restituito una lista di domande"]
+            last_problems = ["Il modello non ha restituito una lista di domande"]
             if _attempt < 2:
                 logger.warning(f"pQBL: output non valido per chunk {chunk_index} al tentativo {_attempt + 1}: {last_problems[0]}. Riprovo...")
                 continue
