@@ -417,3 +417,32 @@ def test_deleted_collection_removes_versions_and_cannot_be_republished(
     with pytest.raises(ValueError, match="collection removed"):
         index.build(Embedder(1536, "new"))
     assert not os.path.exists(index.index_path)
+
+
+def test_empty_collection_with_dimensions_becomes_current_without_embedding(tmp_path):
+    corpus = _Corpus(n=0)
+    index, ai = index_at(tmp_path, corpus), Embedder()
+    index.build(ai)
+    generation = index.generation
+    for _ in range(3):
+        assert index.search(ai, "Testo") == []
+        assert not index.needs_rebuild(ai)
+    assert ai.calls == 0 and index.generation == generation
+    assert not index.stats()["building"]
+
+
+def test_zero_width_legacy_cache_is_ignored_and_rebuilt(tmp_path):
+    corpus, ai = _Corpus(), Embedder()
+    ai.embedding_dimensions = None
+    ai.embed_texts = Mock(return_value=[[1.0] * 1024] * 2)
+    keys = [
+        rag._EmbeddingCache.key(ai.embedding_cache_key, c["text"])
+        for c in corpus.chunks()
+    ]
+    rag._EmbeddingCache(str(tmp_path / "legacy.npz")).save(
+        keys, np.zeros((2, 0)), ai.embedding_cache_key
+    )
+    index = index_at(tmp_path, corpus)
+    index.build(ai)
+    assert ai.embed_texts.call_count == 1
+    assert index.matrix.shape == (2, 1024)

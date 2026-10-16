@@ -911,7 +911,7 @@ class _EmbeddingCache:
                     return
                 keys = data["keys"].tolist()
                 vecs = data["vecs"]
-                if (vecs.ndim != 2 or len(keys) != len(vecs)
+                if (vecs.ndim != 2 or vecs.shape[1] == 0 or len(keys) != len(vecs)
                         or not np.isfinite(vecs).all()):
                     return
                 self._vecs = vecs
@@ -1221,7 +1221,7 @@ class SiteRagIndex:
         if require_vectors and ((self.chunks and self.matrix is None) or self._invalid_vectors
                                 or self.embedding_model != _embedding_key(ai_service)
                                 or self.embedding_provider != getattr(ai_service, "embedding_provider", "ollama")
-                                or (getattr(ai_service, "embedding_dimensions", None) is not None
+                                or (self.chunks and getattr(ai_service, "embedding_dimensions", None) is not None
                                     and self.embedding_dimensions != ai_service.embedding_dimensions)):
             return False
         return self._signature_fn() == self.signature

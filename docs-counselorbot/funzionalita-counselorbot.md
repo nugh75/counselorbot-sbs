@@ -143,7 +143,8 @@ shown. The Guide remains available independently of these class toggles.
   sono riconosciuti; le generazioni non più usate vengono pulite dopo almeno 24 ore.
   La ricerca verifica la dimensione dei vettori e usa le parole chiave in caso
   di incompatibilità. Il backend calcola una stima di token e costo prima del build; la visualizzazione dedicata arriverà nel pannello di
-  amministrazione successivo.
+  amministrazione successivo. Le collezioni vuote non richiedono embedding;
+  una cache di vettori non valida viene ignorata e ricostruita.
   La ricerca combina parole chiave (BM25, inclusi titoli e nomi dei file) e
   similarità semantica quando gli embedding sono disponibili. Senza embedding
   continua sulle parole chiave, anche per le basi dinamiche: per circa cinque
