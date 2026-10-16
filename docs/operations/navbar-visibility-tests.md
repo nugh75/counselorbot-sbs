@@ -26,8 +26,11 @@ diff del test. Per decisione dell'utente l'etichetta resta «Area studente»
 - **Visibilità**: per ogni profilo e larghezza, nomi accessibili dei controlli
   visibili (`checkVisibility`, non solo presenza nel DOM) in barra e nel menu a
   tre punti, nell'ordine reale; href delle voci (`/bussola`, `/assistente`,
-  `/guide`, `/profilo`, `/docente`, `/admin`, `/questionario`, `/counselor`,
-  logout, accesso admin con ritorno `/admin`); nessuno scroll orizzontale.
+  `/guide`, `/profilo`, `/docente`, `/admin`, `/counselor`, logout, accesso
+  admin con ritorno `/admin`); nessuno scroll orizzontale.
+- **Questionario di gradimento**: non è più in barra né nel menu (nessun link
+  `/questionario` nell'header); sta nella home, subito dopo «Vedi tutte le
+  attività e i percorsi», e per l'anonimo sotto «Accedi a CounselorBot».
 - **Pagina (P3)**: stesse voci su `/guide`, `/profilo`, `/docente`, `/questionario`;
   la voce dell'area corrente ha `aria-current="page"` (in barra o nel menu, dove
   è visibile), nessuna su `/questionario`; landmark «Navigazione principale» in
