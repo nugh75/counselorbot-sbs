@@ -54,7 +54,7 @@ export function errorText(code: string | null | undefined): DocumentRetrievalKey
 }
 
 export type JobStatus = 'idle' | 'running' | 'done' | 'error' | 'interrupted';
-export type JobCollectionStatus = 'pending' | 'running' | 'done' | 'error' | 'interrupted';
+export type JobCollectionStatus = 'pending' | 'running' | 'done' | 'error' | 'skipped' | 'interrupted';
 
 export interface ReindexJobCollection {
     id: string;
@@ -79,7 +79,7 @@ export function jobPercent(job: ReindexJob): number {
     const items = job.collections;
     if (!items.length) return job.status === 'running' ? 0 : 100;
     const units = items.reduce((sum, c) => {
-        if (c.status === 'done' || c.status === 'error') return sum + 1;
+        if (c.status === 'done' || c.status === 'error' || c.status === 'skipped') return sum + 1;
         if (c.status === 'running' && c.total > 0) return sum + Math.min(1, c.done / c.total) * 0.95;
         return sum;
     }, 0);
@@ -95,6 +95,7 @@ export function jobCollectionText(c: ReindexJobCollection): { key: DocumentRetri
             return { key: c.phase === 'saving' ? 'jobSaving' : 'jobCollecting', values: {} };
         case 'done': return { key: c.total > 0 ? 'jobDone' : 'jobUpToDate', values: { total: c.total } };
         case 'error': return { key: 'jobError', values: {} };
+        case 'skipped': return { key: 'jobSkipped', values: {} };
         default: return { key: 'jobInterrupted', values: {} };
     }
 }

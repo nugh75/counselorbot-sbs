@@ -115,7 +115,10 @@ export function DocumentRetrievalSettings() {
         setPlan(null);
         const response = await apiFetch('/api/admin/document-retrieval/reindex-all', { method: 'POST', ...mutation });
         if (!response.ok) throw new Error();
-        setJob((await response.json()).job);
+        const data: { started: boolean; job: ReindexJob; reason: string | null } = await response.json();
+        setJob(data.job);
+        // A single-collection build holds the reservation: nothing started.
+        if (data.reason === 'build_in_progress') setNotice({ variant: 'danger', text: l('reindexBusy') });
     });
 
     const provider = state?.providers.find(p => p.id === draft?.provider);

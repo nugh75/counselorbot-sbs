@@ -62,6 +62,7 @@ test('job percentage counts finished collections and the share of the current on
         { ...entry, status: 'running', phase: 'embedding', done: 50, total: 100 }, { ...entry },
     ] }), 62);
     assert.equal(jobPercent({ status: 'done', collections: [{ ...entry, status: 'done' }] }), 100);
+    assert.equal(jobPercent({ status: 'done', collections: [{ ...entry, status: 'done' }, { ...entry, status: 'skipped' }] }), 100);
 });
 
 test('each collection line says waiting, x/y, done or error', () => {
@@ -74,6 +75,7 @@ test('each collection line says waiting, x/y, done or error', () => {
     assert.equal(jobCollectionText({ ...entry, status: 'done' }).key, 'jobUpToDate');
     assert.equal(jobCollectionText({ ...entry, status: 'error', error: 'embedding_rate_limited' }).key, 'jobError');
     assert.equal(jobCollectionText({ ...entry, status: 'interrupted' }).key, 'jobInterrupted');
+    assert.equal(jobCollectionText({ ...entry, status: 'skipped', error: 'collection_removed' }).key, 'jobSkipped');
     const line = documentRetrievalText('it', 'jobEmbedding', { done: 32, total: 7641 });
     assert.equal(line, 'in corso: 32/7641 passaggi');
     for (const lang of ['it', 'en', 'es', 'fr', 'de', 'sv'] as const) {
