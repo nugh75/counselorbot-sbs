@@ -228,8 +228,8 @@ def collections(monkeypatch, tmp_path, collection):
         indexes[cid].public_corpus = True
     items = [{"id": cid, "label": cid.title(), "builtin": True, "api_publishable": True, "mode": "plain"}
              for cid in corpora]
-    for module in (document_retrieval, rag):
-        monkeypatch.setattr(module, "get_index", lambda c: indexes[c])
+    monkeypatch.setattr(document_retrieval, "get_index", lambda c: indexes[c])
+    monkeypatch.setattr(rag, "find_index", lambda c: indexes.get(c))
     monkeypatch.setattr(document_retrieval, "list_collections", lambda: [dict(i) for i in items])
     for module in (document_retrieval, rag):
         monkeypatch.setattr(module, "collection_exists", lambda c: c in indexes)
@@ -457,11 +457,47 @@ def test_collection_removed_after_the_snapshot_is_skipped(client, monkeypatch, c
     items = [{"id": cid, "label": cid} for cid in indexes]
     removed = indexes.pop("broken")  # deleted after the job took its list
     built = []
-    get_index = rag.get_index
-    monkeypatch.setattr(rag, "get_index", lambda c: built.append(c) or get_index(c))
+    find_index = rag.find_index
+    monkeypatch.setattr(rag, "find_index", lambda c: built.append(c) or find_index(c))
     started, _, _ = rag_reindex_job.start(_service(client.app.dependency_overrides[database.get_db]()), items)
     assert started and rag_reindex_job.wait(5)
     job = rag_reindex_job.read_state()
     assert [(c["id"], c["status"], c["error"]) for c in job["collections"]] == [
         ("alpha", "done", None), ("broken", "skipped", "collection_removed"), ("gamma", "done", None)]
-    assert built == ["alpha", "gamma"] and removed.matrix is None
+    assert built == ["alpha", "broken", "gamma"] and removed.matrix is None
+
+
+@pytest.mark.parametrize("deleted_at", ["lookup", "build"])
+def test_dynamic_collection_deleted_during_the_job_never_builds_the_default(
+        client, db, monkeypatch, tmp_path, deleted_at):
+    # Real dynamic collection and real strict lookup; only the default index is a sentinel.
+    monkeypatch.setattr(rag, "DYNAMIC_ROOT", str(tmp_path / "dynamic"))
+    monkeypatch.setattr(rag, "_dynamic_indexes", {})
+    monkeypatch.setattr(rag.site_rag_index, "build",
+                        lambda *a, **kw: pytest.fail("default collection built"))
+    _put(client, provider="none", mode="lexical")
+    rag.create_dynamic_collection("temporanea", "Temporanea")
+    (tmp_path / "dynamic" / "temporanea" / "nota.md").write_text("# Nota\n\nTesto", encoding="utf-8")
+    is_dynamic = rag.is_dynamic_collection
+    calls = []
+
+    def deleting(slug):
+        # Deterministic race: the collection is deleted right after the check
+        # answered "exists" (lookup) or right before its build starts (build).
+        exists = is_dynamic(slug)
+        calls.append(slug)
+        if deleted_at == "lookup" and slug == "temporanea" and len(calls) == 1:
+            rag.delete_dynamic_collection(slug)
+        return exists
+
+    monkeypatch.setattr(rag, "is_dynamic_collection", deleting)
+    if deleted_at == "build":
+        index = rag.get_dynamic_index("temporanea")
+        build = index.build
+        monkeypatch.setattr(index, "build", lambda *a, **kw: (
+            rag.delete_dynamic_collection("temporanea"), build(*a, **kw)))
+    started, _, _ = rag_reindex_job.start(_service(db), [{"id": "temporanea", "label": "Temporanea"}])
+    assert started and rag_reindex_job.wait(5)
+    entry = rag_reindex_job.read_state()["collections"][0]
+    assert (entry["status"], entry["error"]) == ("skipped", "collection_removed")
+    assert not (tmp_path / "dynamic" / "temporanea").exists()

@@ -2014,14 +2014,18 @@ def docs_roots_for(collection: str) -> list[str]:
     return [DOCS_DIR]
 
 
+def find_index(collection: str | None) -> "SiteRagIndex | None":
+    """Strict lookup: the collection's index, or None if it does not exist (no fallback)."""
+    if collection in RAG_COLLECTIONS:
+        return RAG_COLLECTIONS[collection]
+    if collection and is_dynamic_collection(collection):
+        return get_dynamic_index(collection)
+    return None
+
+
 def get_index(collection: str | None) -> "SiteRagIndex":
     """Indice della collezione richiesta (default: competenzestrategiche)."""
-    coll = collection or COLLECTION_COMPETENZE
-    if coll in RAG_COLLECTIONS:
-        return RAG_COLLECTIONS[coll]
-    if is_dynamic_collection(coll):
-        return get_dynamic_index(coll)
-    return site_rag_index
+    return find_index(collection or COLLECTION_COMPETENZE) or site_rag_index
 
 
 def _safe_doc_abspath(relpath: str, docs_dir: str = DOCS_DIR) -> str | None:

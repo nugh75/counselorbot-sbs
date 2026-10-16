@@ -167,9 +167,10 @@ def _run(lockf, state: dict, ai_service):
 
 def _index_all(state: dict, service):
     for entry in state["collections"]:
-        # A collection deleted after the snapshot is skipped: get_index() would
-        # otherwise fall back to the default collection.
-        if not rag_index.collection_exists(entry["id"]):
+        # Strict lookup in one step: a collection deleted after the snapshot is
+        # skipped, never replaced by get_index()'s default collection.
+        index = rag_index.find_index(entry["id"])
+        if index is None:
             entry.update(status="skipped", error="collection_removed")
             _write(state)
             continue
@@ -183,7 +184,6 @@ def _index_all(state: dict, service):
                 entry.update(done=done, total=total)
             _write(state)
 
-        index = rag_index.get_index(entry["id"])
         # The reservation excludes start_build(), so the flag is free: the job owns it.
         with index._schedule_lock:
             busy = index._building
@@ -199,7 +199,12 @@ def _index_all(state: dict, service):
             index.build(service, progress=progress)
             entry.update(status="done", phase=None)
         except Exception as exc:
-            entry.update(status="error", phase=None, error=rag_index.build_error_code(exc))
+            if rag_index.collection_exists(entry["id"]):
+                entry.update(status="error", phase=None, error=rag_index.build_error_code(exc))
+            else:
+                # Deleted after the lookup: delete_dynamic_collection() holds the
+                # collection lock, so the build fails here and nothing is published.
+                entry.update(status="skipped", phase=None, error="collection_removed")
         finally:
             index._building = False
         _write(state)
