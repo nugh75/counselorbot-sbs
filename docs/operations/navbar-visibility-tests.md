@@ -42,6 +42,15 @@ diff del test. Per decisione dell'utente l'etichetta resta «Area studente»
   senza ricaricare.
 - **Tastiera**: skip link, brand, apertura del menu con Invio, Tab dentro il
   menu, Escape chiude e riporta il focus al trigger.
+- **Pannelli dell'header (P2)**: menu a tre punti, «Riprendi» e lingua sono
+  disclosure (`aria-expanded`/`aria-controls`, nessun `role=menu`); Tab entra
+  nel pannello, Escape chiude e riporta il focus al trigger; a 390px Tab
+  raggiunge ogni controllo visibile del menu nell'ordine del contratto e
+  uscendo con Tab il menu si chiude; la scelta della lingua (barra e menu)
+  espone `aria-pressed`/`lang`, riporta il focus al trigger e viene annunciata;
+  la riga del tema riporta il focus al menu; anello di focus `#67c1c4` nel tema
+  scuro con offset interno nei pannelli; selettore lingua a 44px con puntatore
+  coarse (`hasTouch`).
 - **Preferenze**: tema scuro salvato e movimento ridotto dal sistema.
 - **Screenshot**: opzionali con `NAVBAR_SCREENSHOTS=<cartella>`.
 

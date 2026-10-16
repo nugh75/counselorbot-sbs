@@ -44,6 +44,13 @@ La testata mette in evidenza i quattro ingressi principali: **Bussola**,
 per docenti/ricercatori, **Amministrazione** per gli admin) restano nel menu a tre
 punti, insieme a uscita e preferenze; su schermi stretti il menu raccoglie tutte
 le voci nello stesso ordine.
+Il menu a tre punti, l’elenco **Riprendi un’attività** e il selettore della
+lingua si aprono da tastiera con Invio o Spazio, si percorrono con Tab e si
+chiudono con Esc, che riporta il focus al pulsante, oppure uscendo con Tab. Il
+pulsante della lingua dice la lingua attuale e, dopo la scelta, la nuova lingua
+viene annunciata. Nel tema scuro l’anello di focus usa un petrolio chiaro ben
+leggibile; con lo schermo touch anche il selettore della lingua ha bersagli da
+44 px.
 
 L’accesso personale usa l’account della Console ai4educ collegata all’installazione.
 Login, uscita e collegamenti a Portale, Console e Segreti seguono i domini
