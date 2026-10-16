@@ -1,3 +1,24 @@
+# Handoff n7: terminologia della navbar (P1)
+Data: 2026-10-16 | Branch: `fix/navbar-terminology` | Agente: `n7-opus-navbar-p1`, Claude Opus 5.5 high
+Compito Diario `881c2cf4-e5c4-49c7-a1fd-124fa37695ee` | Issue #337 | Milestone #21
+
+Blocco P1 di `docs/operations/audit-navbar.md`, con le decisioni dell'utente:
+«Area studente» resta (niente «Area personale»). Assistente generico in ES/FR/DE/SV
+come in IT/EN (titolo e testi di accesso, che lo riservavano ai docenti); badge
+strumento dell'header tradotto (`q.<codice>.name`, ripiego sul nome del catalogo e
+sul codice degli strumenti dinamici; aggiunta `q.IDEA.name`). Glossario
+`CONTEXT.md`, `funzionalita-counselorbot.md`, commenti di `roles.ts` e `Header.tsx`
+allineati. Fixture P0 aggiornata solo per l'Assistente; nuova guardia
+`frontend/src/lib/navbar-terminology.test.ts`. URL, ruoli e comportamento invariati.
+
+Verifiche: `npm run i18n:check`, `npm test` 518/518 (Node 22, include P0 e naming
+operativo), `tsc --noEmit`, ESLint sui file toccati, guidance check. **Suite browser
+P0 non eseguita**: :3149 occupata dal dev server di un altro worktree e memoria
+libera scarsa; va lanciata prima di togliere la PR dalla bozza. Restano invariati,
+fuori perimetro: `admin.rolePreview.cap.teacherAssistant` (è davvero la capacità
+docente) e gli screenshot della Guida ES/FR/DE/SV, che possono mostrare il vecchio
+titolo dell'Assistente. Nessun server dev avviato, nessun Docker, deploy o sudo.
+
 # Handoff s22: aggiornamento e verifica PR #310
 Data: 2026-10-16 | Branch: `fix/budget-fallback-configured-provider` | Agente: `s22-cx-fix-310`
 Issue #309, PR #310 | Milestone #18. Compito Diario `8bfb8212` lasciato invariato (`fatto`).
