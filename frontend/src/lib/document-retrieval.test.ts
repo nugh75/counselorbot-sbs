@@ -48,6 +48,7 @@ test('provider errors map to a readable reason each', () => {
         embedding_auth_failed: 'errAuth', embedding_quota_exceeded: 'errQuota', embedding_model_unavailable: 'errModel',
         embedding_request_rejected: 'errRequest', embedding_rate_limited: 'errRateLimited', embedding_provider_error: 'errProvider',
         embedding_network: 'errNetwork', embedding_dimensions_mismatch: 'errDimensions', embedding_input_limit: 'errInputLimit',
+        embedding_input_empty: 'errInputEmpty', embedding_privacy_unavailable: 'errPrivacyRouting',
     };
     for (const [code, key] of Object.entries(codes)) {
         assert.equal(errorText(code), key);
