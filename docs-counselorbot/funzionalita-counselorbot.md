@@ -152,6 +152,16 @@ shown. The Guide remains available independently of these class toggles.
   che le domande verso il modello esterno sono disattivate e propone, senza
   applicarlo da solo, il filtro di base senza Ollama; il rilevatore non viene
   ritentato per un minuto dopo un errore.
+  Su un’installazione senza Ollama, come quella portabile, la ricerca per parole
+  chiave funziona senza alcuna chiave. Per aggiungere la ricerca per significato
+  l’amministratore: imposta la chiave di sistema `API_KEY_OPENROUTER` oppure
+  `API_KEY_MISTRAL` nel file .env del server e fa ricreare il backend; in
+  «Recupero documenti» sceglie il provider esterno, lascia vuoti modello e
+  dimensioni (predefiniti), salva e preme «Prova»; se il pannello segnala il
+  rilevatore locale non raggiungibile, sceglie il filtro di base, altrimenti le
+  domande degli studenti restano solo a parole chiave; infine usa «Stima costi»
+  e «Reindicizza» per ogni collezione. «Nessuno (solo parole chiave)» annulla
+  la scelta senza perdere gli indici.
   Gli indici sono separati per provider, modello e dimensione. La reindicizzazione
   lavora in background: nel frattempo la ricerca usa le parole chiave sui materiali
   già indicizzati; il nuovo indice entra in servizio solo quando è completo. Un
