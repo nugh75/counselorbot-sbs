@@ -231,7 +231,8 @@ def collections(monkeypatch, tmp_path, collection):
     for module in (document_retrieval, rag):
         monkeypatch.setattr(module, "get_index", lambda c: indexes[c])
     monkeypatch.setattr(document_retrieval, "list_collections", lambda: [dict(i) for i in items])
-    monkeypatch.setattr(document_retrieval, "collection_exists", lambda c: c in indexes)
+    for module in (document_retrieval, rag):
+        monkeypatch.setattr(module, "collection_exists", lambda c: c in indexes)
     yield corpora, indexes
     assert rag_reindex_job.wait(5)
 
@@ -446,3 +447,21 @@ def test_failed_thread_start_releases_locks_and_allows_a_new_start(client, monke
     rag._build_reservation.release()
     _, job = _run_all(client)
     assert job["status"] == "done"
+
+
+def test_collection_removed_after_the_snapshot_is_skipped(client, monkeypatch, collections):
+    _, indexes = collections
+    monkeypatch.setenv("API_KEY_MISTRAL", SECRET)
+    fake_client(monkeypatch, "mistral")
+    _put(client, provider="mistral")
+    items = [{"id": cid, "label": cid} for cid in indexes]
+    removed = indexes.pop("broken")  # deleted after the job took its list
+    built = []
+    get_index = rag.get_index
+    monkeypatch.setattr(rag, "get_index", lambda c: built.append(c) or get_index(c))
+    started, _, _ = rag_reindex_job.start(_service(client.app.dependency_overrides[database.get_db]()), items)
+    assert started and rag_reindex_job.wait(5)
+    job = rag_reindex_job.read_state()
+    assert [(c["id"], c["status"], c["error"]) for c in job["collections"]] == [
+        ("alpha", "done", None), ("broken", "skipped", "collection_removed"), ("gamma", "done", None)]
+    assert built == ["alpha", "gamma"] and removed.matrix is None

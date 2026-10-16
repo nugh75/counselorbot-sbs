@@ -167,6 +167,12 @@ def _run(lockf, state: dict, ai_service):
 
 def _index_all(state: dict, service):
     for entry in state["collections"]:
+        # A collection deleted after the snapshot is skipped: get_index() would
+        # otherwise fall back to the default collection.
+        if not rag_index.collection_exists(entry["id"]):
+            entry.update(status="skipped", error="collection_removed")
+            _write(state)
+            continue
         state["current"] = entry["id"]
         entry.update(status="running", phase="collecting")
         _write(state)
