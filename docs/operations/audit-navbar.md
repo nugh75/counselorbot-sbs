@@ -169,7 +169,10 @@ non è una concessione al vero studente. Prove: `auth.ts:93`, `:129`,
 ### Viewport e ordine effettivo
 
 Classi Tailwind `lg`/`xl` senza override di breakpoint nel progetto: 1024/1280 px
-con la radice standard. La categoria fisica «tablet» non è un permesso: un tablet
+con dimensione iniziale del font del browser a 16px. I breakpoint media in rem
+non seguono la regola `html { font-size: 15px }` del prodotto
+(`frontend/src/app/globals.css:286`), che invece riduce le misure in rem dei
+controlli. La categoria fisica «tablet» non è un permesso: un tablet
 in orizzontale può ricevere il layout desktop intermedio.
 
 | Elementi | <1024 px (telefono/tablet verticale) | 1024–1279 px (tablet orizzontale/desktop stretto) | ≥1280 px (desktop ampio) |
@@ -182,9 +185,11 @@ in orizzontale può ricevere il layout desktop intermedio.
 
 Il menu ha larghezza `min(88vw,18rem)`, altezza massima
 `calc(100dvh - 4.5rem)` e scroll verticale (`Header.tsx:306`). Il trigger e le righe
-compatte sono da 44px; le icone desktop da 32px, elevate a 44px con puntatore
+compatte sono da 44px; le icone desktop da `2rem` (30px con la radice a 15px), elevate a 44px con puntatore
 coarse (`globals.css:351`, `:369`, `:379`). Il selettore lingua autonomo mantiene
-trigger da 32px e opzioni da 36px (`LanguageSwitcher.tsx:31`, `:48`).
+trigger da `2rem` (30px) e opzioni da `2.25rem` (33,75px)
+(`LanguageSwitcher.tsx:31`, `:48`). Il link counselor usa `min-h-11`
+(`2.75rem`, 41,25px), non il minimo letterale da 44px delle righe del menu.
 
 ### Pagina, lingua e sessione
 
@@ -302,7 +307,7 @@ rinomina della voce.
 | N5 / P2 orientamento | Nessun pathname/`aria-current` in Header; assente landmark `<nav>` per i suoi link (`Header.tsx:101`, `:293`). Breadcrumb docente invece lo gestisce (`TeacherBreadcrumbs.tsx:25`, `:52`). | Stato corrente con match di area e sotto-rotta, landmark nominato; distinguere la home `/` dalle chat aperte tramite query. |
 | N6 / P2 mobile e ordine | Menu compatto raggruppa selezioni, account, navigazione, lettore, N riprese con cancellazione, feedback, servizi, auth, tema, movimento e sei bandiere (`Header.tsx:306–437`). Desktop `xl` aggiunge molti controlli in una sola riga. | Su mobile può essere necessario scorrere per lingua/logout; su desktop con nomi lunghi o zoom va misurato lo spazio. Introdurre gruppi titolati e overflow deterministico; non dichiarare overflow riprodotto senza misura. |
 | N7 / P2 robustezza | `use-resume-entries.ts:36`, `:89`: pQBL non filtrato per accesso classe; ripresa locale non subordinata all'autenticazione. `Header.tsx:133` usa authenticated, `:309` accountLabel per counselor compatto. | Verificare su logout, storage condiviso e classe che disabilita pQBL: il link può essere una ripresa legittima in sola lettura, non dedurre 403. Allineare la visibilità al contratto di ripresa senza cancellare dati locali automaticamente. Diario `854c3b63-5d10-4a16-8f27-33cbd59c41e4`. |
-| N8 / P2 contrasto e target | `globals.css:309`, `:524`: focus `#155e63` su superficie scura `#1e293b`, contrasto calcolato 1,96:1; icone standard 4,76:1 chiaro e 5,71:1 scuro. Lingua desktop 32/36px anche con puntatore coarse (`LanguageSwitcher.tsx:31`, `:48`). | Palette icone di base leggibile; anello di focus scuro da correggere/verificare sui controlli effettivi; uniformare target touch a 44px. Calcolo sui token, non certificazione del contrasto di ogni stato nel browser. Diario `5776d4e6-b3e0-4b3c-a95a-a5321df09b06`. |
+| N8 / P2 contrasto e target | `globals.css:309`, `:524`: focus `#155e63` su superficie scura `#1e293b`, contrasto calcolato 1,96:1; icone standard 4,76:1 chiaro e 5,71:1 scuro. Lingua desktop 30/33,75px con radice a 15px, anche con puntatore coarse (`LanguageSwitcher.tsx:31`, `:48`). | Palette icone di base leggibile; anello di focus scuro da correggere/verificare sui controlli effettivi; uniformare target touch a 44px. Calcolo sui token, non certificazione del contrasto di ogni stato nel browser. Diario `5776d4e6-b3e0-4b3c-a95a-a5321df09b06`. |
 | N9 / P2 accesso anonimo | `Header.tsx:63` ritorno login sempre `/admin` e testo «Accesso admin». | Lo studente anonimo entra dal percorso sbagliato rispetto all'intento. Proporre «Accedi» con ritorno sicuro alla destinazione; preservare `/admin` per accesso amministrativo esplicito. |
 
 ### Cose controllate che non sono nuovi bug confermati
