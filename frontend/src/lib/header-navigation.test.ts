@@ -27,15 +27,15 @@ const nav = (key: ProfileKey, extra: Partial<Parameters<typeof headerNavigation>
     headerNavigation({ identity: PROFILES[key].identity, access: PROFILES[key].access, accessLoading: false, ...extra });
 const keys = (navigation: HeaderNavigation) => navigation.links.map((link) => link.key);
 
-// Where the Header renders each link (P4): below `lg` every link in the menu;
-// from `lg` the `area` group behind the «Area» selector (a plain link when it
-// holds one area), then the `support` group with its bar labels.
+// Where the Header renders each link: below `lg` (P5) the «Menu» panel lists
+// the `area` group, then the `support` group; from `lg` (P4) the `area` group
+// sits behind the «Area» selector (a plain link when it holds one area), then
+// the `support` group. Same labels everywhere.
 function placed(navigation: HeaderNavigation, width: number) {
     const label = (link: HeaderLink) => LINK_LABELS[link.key];
-    if (band(width) === 'compact') return { bar: [], menu: navigation.links.map(label), areas: null };
     const areas = navigation.links.filter((link) => link.group === 'area').map(label);
-    const support = navigation.links.filter((link) => link.group === 'support')
-        .map((link) => (link.barLabelKey ? LABELS.bussolaBar : label(link)));
+    const support = navigation.links.filter((link) => link.group === 'support').map(label);
+    if (band(width) === 'compact') return { bar: [], menu: [...areas, ...support], areas: null };
     return {
         bar: [...(areas.length > 1 ? [LABELS.area] : areas), ...support],
         menu: [],
@@ -43,7 +43,7 @@ function placed(navigation: HeaderNavigation, width: number) {
     };
 }
 
-const BAR_NAMES = new Set([...LINK_NAMES, LABELS.area, LABELS.bussolaBar]);
+const BAR_NAMES = new Set([...LINK_NAMES, LABELS.area]);
 
 test('one description drives the bar, the Area selector and the menu at every width', () => {
     for (const key of Object.keys(PROFILES) as ProfileKey[]) {
@@ -63,13 +63,14 @@ test('links keep their order, destinations and groups', () => {
     for (const link of HEADER_LINKS as readonly HeaderLink[]) assert.equal(link.href, ENTRY_HREFS[FIXTURE_ENTRY[link.key]], link.key);
     // The «Area» selector of P4 reads this group: Studente, Docente, Amministrazione.
     assert.deepEqual(HEADER_LINKS.filter((link: HeaderLink) => link.group === 'area').map((link: HeaderLink) => link.key), ['profile', 'teacher-panel', 'admin']);
-    // Only the Compass has a shorter bar label than its menu call to action.
-    assert.deepEqual(HEADER_LINKS.filter((link: HeaderLink) => link.barLabelKey).map((link: HeaderLink) => [link.key, link.barLabelKey]), [['orientation', 'nav.orientation']]);
+    // One label per link in the bar and in the «Menu» panel (P5): «Bussola»,
+    // not the call to action «Apri la Bussola» of its page.
+    assert.equal(HEADER_LINKS.find((link: HeaderLink) => link.key === 'orientation')?.labelKey, 'nav.orientation');
 });
 
 const PREDICATES: [string, ProfileKey, Record<string, unknown>][] = [
-    ['guest', 'A', { links: ['guide'], classView: false, account: null, services: null, auth: 'adminLogin' }],
-    ['student without classes', 'S', { links: ['orientation', 'assistant', 'guide', 'profile'], classView: false, services: null, auth: 'logout' }],
+    ['guest', 'A', { links: ['guide'], classView: false, account: null, services: null }],
+    ['student without classes', 'S', { links: ['orientation', 'assistant', 'guide', 'profile'], classView: false, services: null }],
     ['student whose class turns the Assistant off', 'S1', { links: ['orientation', 'guide', 'profile'], classView: true }],
     ['student whose classes turn the Compass off', 'S2', { links: ['assistant', 'guide', 'profile'], classView: true }],
     ['student in the full view', 'Sall', { links: ['orientation', 'assistant', 'guide', 'profile'], classView: true }],
@@ -81,7 +82,7 @@ const PREDICATES: [string, ProfileKey, Record<string, unknown>][] = [
 for (const [name, key, expected] of PREDICATES) {
     test(`navigation predicates for the ${name}`, () => {
         const navigation = nav(key);
-        const actual: Record<string, unknown> = { links: keys(navigation), classView: navigation.classView, account: navigation.account, services: navigation.services, auth: navigation.auth };
+        const actual: Record<string, unknown> = { links: keys(navigation), classView: navigation.classView, account: navigation.account, services: navigation.services };
         for (const field of Object.keys(expected)) assert.deepEqual(actual[field], expected[field], field);
     });
 }
@@ -119,7 +120,7 @@ test('a failed identity read is a guest, a failed access read filters nothing', 
     const guest = headerNavigation({ identity: null, access: null, accessLoading: false });
     assert.equal(guest.loading, false);
     assert.deepEqual(keys(guest), ['guide']);
-    assert.equal(guest.auth, 'adminLogin');
+    assert.equal(guest.authenticated, false);
     const unfiltered = nav('S1', { access: null });
     assert.deepEqual(keys(unfiltered), ['orientation', 'assistant', 'guide', 'profile']);
     assert.equal(unfiltered.classView, false);

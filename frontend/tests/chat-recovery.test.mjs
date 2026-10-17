@@ -185,6 +185,8 @@ test('mobile navigation exposes retry after frozen-session failure', async () =>
         await page.goto(`${origin}/profilo/taccuino`, { waitUntil: 'networkidle' });
         await page.locator('button[aria-controls="mobile-menu"]').click();
         const menu = page.locator('#mobile-menu');
+        // P5: the resume rows wait in the «Riprendi» sub-panel of the menu.
+        await menu.locator('button[aria-controls="mobile-resume"]').click();
         await menu.getByText('Impossibile aggiornare le sessioni da riprendere.').waitFor();
         control.frozenError = false;
         await menu.getByRole('button', { name: 'Riprova', exact: true }).click();
@@ -210,6 +212,7 @@ for (const surface of ['desktop', 'mobile', 'home']) {
             } else if (surface === 'mobile') {
                 await page.locator('button[aria-controls="mobile-menu"]').click();
                 list = page.locator('#mobile-menu');
+                await list.locator('button[aria-controls="mobile-resume"]').click();
             } else list = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Riprendi un’attività', exact: true }) });
             const remove = list.getByLabel('Elimina sessione: Sessione da ritrovare', { exact: true });
             const box = await remove.boundingBox();
