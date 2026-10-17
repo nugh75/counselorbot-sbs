@@ -1447,21 +1447,27 @@ tastiera (frecce, Invio, Esc). La sezione scelta resta nell’indirizzo
 (`/admin?section=qsa`): ricaricando la pagina o condividendo il link si riapre
 la stessa sezione; un valore non riconosciuto apre Generale.
 
-Nella sezione Generale, dopo modello attivo, ripieghi e funzioni, il blocco
-**API personali e ChatGPT** riunisce in quest’ordine **API personali**,
-**Collegamento ChatGPT** e **Protezione dei dati per i modelli esterni**. Per
-ciascuna delle due funzioni, **Chi può usarle** / **Chi può usarlo** ha due caselle
-indipendenti: **Docenti**, che usano le proprie chiavi o il proprio abbonamento
-nelle proprie chat, e **Studenti**, che li usano nelle chat delle loro classi se il
-docente della classe lo consente. Sotto le API personali una terza casella permette
-ai docenti di mettere a disposizione degli studenti delle loro classi una propria
-chiave API (mai degli altri docenti); l’abbonamento ChatGPT resta personale. Le
-installazioni esistenti partono con le caselle Docenti e Studenti attive. I messaggi
-«collegamento disattivato» e la Guida indicano questo blocco. La pagina **API e
-ChatGPT** del docente spiega, rivolgendosi a lui, che il suo abbonamento ChatGPT è
-personale e che per dare i modelli GPT alla classe serve una chiave API condivisa.
-Le **API Keys** della piattaforma sono dell’amministratore e restano fuori dal
-blocco, subito sotto.
+Nella sezione Generale, le sezioni operative principali presentano in primo piano
+**Funzioni**, l'**AI dello studente** (che riunisce in quest'ordine **API personali**,
+**Collegamento ChatGPT** e **Protezione dei dati per i modelli esterni**), il
+**Recupero documenti** e le **API Keys** con le connessioni locali della piattaforma.
+La configurazione dell'IA di sistema ha minor risalto ed è collocata dopo le sezioni
+principali come blocco compatto e collassabile denominato **«Riserva di sistema (quando
+l'utente non ha ChatGPT o una chiave personale)»**, con un promemoria visibile che
+esplicita la gerarchia di scelta del modello a tre livelli: 1) abbonamento ChatGPT
+dell'utente (se collegato), 2) connessione API personale o condivisa, 3) riserva di sistema
+per chi non possiede 1 o 2.
+
+Se provider e modello non sono impostati, il pannello dichiara espressamente lo stato reale
+(«Nessuna riserva di sistema configurata: gli utenti senza ChatGPT o chiave personale non
+possono chattare»). Il pulsante **«Prova»** (protetto da `browser_mutation` come le altre
+mutazioni amministrative) interroga con una richiesta minima il modello primario salvato
+e ciascun ripiego in ordine, mostrando latenza in millisecondi, modello effettivo ed
+eventuale codice d'errore leggibile (`auth`, `model_not_found`, `quota`, `network`,
+`timeout`, `rate_limit`, `invalid_request`, `not_configured`) senza esporre credenziali
+o chiavi segrete. La configurazione grezza dei target di ripiego in formato JSON
+(`ai_fallback_targets`), il timeout per tentativo (`ai_timeout_seconds`) e la gestione
+del contesto risiedono in un dettaglio avanzato espandibile separato.
 
 Il **budget mensile** e i **ripieghi** convivono: quando la spesa registrata
 raggiunge il limite, i modelli a pagamento si fermano e l’invio passa al primo

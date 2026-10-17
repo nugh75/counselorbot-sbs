@@ -19,6 +19,8 @@ import { ModelContextSettings } from '@/components/admin/ModelContextSettings';
 import { AI4EDUC_SECRETS_URL } from '@/lib/auth';
 import { SectionFilter, type SectionFilterGroup } from '@/components/admin/SectionFilter';
 import { PromptMap, writeInstrumentParam } from '@/components/admin/PromptMap';
+import { systemAIText } from '@/lib/i18n-system-ai';
+import { formatProbeDetail, systemAIRoleLabel, type SystemAITestResponse } from '@/lib/system-ai-fallback';
 
 // --- Types ---
 
@@ -1101,8 +1103,10 @@ export function ConfigForm() {
         setToast({ type, msg });
         window.setTimeout(() => setToast(null), 2500);
     };
-    const [activeProvider, setActiveProvider] = useState('openai');
-    const [activeModel, setActiveModel] = useState('gpt-4o');
+    const [activeProvider, setActiveProvider] = useState('');
+    const [activeModel, setActiveModel] = useState('');
+    const [systemAITesting, setSystemAITesting] = useState(false);
+    const [systemAIProbeResults, setSystemAIProbeResults] = useState<SystemAITestResponse | null>(null);
     const [envOverrides, setEnvOverrides] = useState<Record<string, boolean>>({});
     const [apiKeyStatuses, setApiKeyStatuses] = useState<APIKeyStatus[]>([]);
     const [apiKeyVerification, setApiKeyVerification] = useState<Record<string, APIKeyVerification>>({});
@@ -1154,8 +1158,8 @@ export function ConfigForm() {
                 setSavedConfigs(data);
                 const prov = data.find(c => c.key === 'active_provider')?.value;
                 const mod = data.find(c => c.key === 'model_name')?.value;
-                if (prov) setActiveProvider(prov);
-                if (mod) setActiveModel(mod);
+                if (prov !== undefined) setActiveProvider(prov || '');
+                if (mod !== undefined) setActiveModel(mod || '');
             } else if (configRes.status === 401 || configRes.status === 403) {
                 window.location.href = '/';
             }
@@ -1173,6 +1177,11 @@ export function ConfigForm() {
     };
 
     const fetchModels = async (provider: string) => {
+        if (!provider) {
+            setLiveModels([]);
+            setModelsLoading(false);
+            return;
+        }
         setModelsLoading(true);
         try {
             const res = await fetch(`/api/admin/models?provider=${encodeURIComponent(provider)}`, { headers: authHeaders() });
@@ -1203,13 +1212,13 @@ export function ConfigForm() {
         fireworks: 'api_key_fireworks',
         deepinfra: 'api_key_deepinfra',
     };
-    const activeKeyField = PROVIDER_KEY_FIELD[activeProvider];
+    const activeKeyField = activeProvider ? PROVIDER_KEY_FIELD[activeProvider] : undefined;
     const activeKeyMissing = !!activeKeyField
         && !apiKeyStatuses.find(item => item.provider === activeProvider)?.configured;
 
     useEffect(() => { fetchConfigs(); }, []);
     useEffect(() => {
-        if (activeKeyMissing) { setLiveModels([]); return; }
+        if (!activeProvider || activeKeyMissing) { setLiveModels([]); return; }
         fetchModels(activeProvider);
     }, [activeProvider, activeKeyMissing]);
 
@@ -1236,6 +1245,7 @@ export function ConfigForm() {
     // Opzioni della tendina: modelli live se disponibili, altrimenti fallback statico.
     // Il modello attivo viene sempre incluso così resta selezionato anche se non in elenco.
     const modelOptions = (() => {
+        if (!activeProvider) return [];
         const base = liveModels.length > 0 ? liveModels : (PROVIDERS[activeProvider]?.models || []);
         return activeModel && !base.includes(activeModel) ? [activeModel, ...base] : base;
     })();
@@ -1322,6 +1332,40 @@ export function ConfigForm() {
     const handleModelChange = (model: string) => {
         setActiveModel(model);
         handleSaveConfig({ key: 'model_name', value: model, description: 'Es. gpt-4o, claude-3-opus' });
+    };
+
+    const handleTestSystemAI = async () => {
+        setSystemAITesting(true);
+        setSystemAIProbeResults(null);
+        try {
+            const res = await fetch('/api/admin/system-ai/test', {
+                method: 'POST',
+                headers: {
+                    ...authHeaders(),
+                    'X-Requested-With': 'CounselorBot',
+                },
+            });
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                const detail = typeof errorData.detail === 'string' ? errorData.detail : `HTTP ${res.status}`;
+                showToast('error', detail);
+                return;
+            }
+            const data: SystemAITestResponse = await res.json();
+            setSystemAIProbeResults(data);
+            if (!data.system_configured || data.results.length === 0) {
+                showToast('error', systemAIText(lang, 'toastNotConfigured'));
+            } else if (data.results.every(r => r.ok)) {
+                showToast('success', systemAIText(lang, 'toastSuccess'));
+            } else {
+                showToast('error', systemAIText(lang, 'toastFailed'));
+            }
+        } catch (error) {
+            console.error('Failed to test system AI fallback', error);
+            showToast('error', systemAIText(lang, 'toastNetworkError'));
+        } finally {
+            setSystemAITesting(false);
+        }
     };
 
     // --- Guided Steps CRUD ---
@@ -1770,116 +1814,7 @@ export function ConfigForm() {
 
             {activeSection === 'general' && (
             <div className="space-y-8">
-            {/* 1. Provider & Model Selection */}
-            <div className="glass-panel p-6 space-y-6">
-                <h3 className="text-lg font-medium text-slate-900 flex items-center gap-2">
-                    <Server className="w-5 h-5 text-indigo-600" />
-                    {t('admin.config.aiActive')}
-                </h3>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">{t('admin.config.provider')}</label>
-                        <select
-                            value={activeProvider}
-                            onChange={(e) => handleProviderChange(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
-                        >
-                            {Object.entries(PROVIDERS).map(([key, data]) => (
-                                <option key={key} value={key}>{data.label}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-slate-700">{t('admin.config.model')}</label>
-                            <button
-                                type="button"
-                                onClick={() => fetchModels(activeProvider)}
-                                disabled={modelsLoading || activeKeyMissing}
-                                className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
-                                title={t('admin.config.reloadTitle')}
-                            >
-                                <RefreshCw className={`w-3 h-3 ${modelsLoading ? 'animate-spin' : ''}`} />
-                                {modelsLoading
-                                    ? t('admin.config.modelsLoading')
-                                    : liveModels.length > 0
-                                        ? t('admin.config.modelsLive', { n: liveModels.length })
-                                        : t('admin.config.reload')}
-                            </button>
-                        </div>
-                        <div className="relative">
-                            <Cpu className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
-                            <select
-                                value={activeKeyMissing ? '' : activeModel}
-                                onChange={(e) => handleModelChange(e.target.value)}
-                                disabled={activeKeyMissing}
-                                className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                {activeKeyMissing ? (
-                                    <option value="">{t('admin.config.modelNeedsKey')}</option>
-                                ) : (
-                                    modelOptions.map((model) => (
-                                        <option key={model} value={model}>{model}</option>
-                                    ))
-                                )}
-                            </select>
-                        </div>
-                        {activeKeyMissing ? (
-                            <p className="text-xs text-amber-600">{t('admin.config.modelNeedsKeyHint')}</p>
-                        ) : (
-                            liveModels.length === 0 && !modelsLoading && (
-                                <p className="text-xs text-amber-600">{t('admin.config.providerUnreachable')}</p>
-                            )
-                        )}
-                    </div>
-
-                    <div className="md:col-span-2 flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                        <input
-                            id="disable_thinking"
-                            type="checkbox"
-                            className="w-4 h-4 accent-blue-600 cursor-pointer"
-                            checked={getConfigValue('disable_thinking') === 'true'}
-                            onChange={(e) => {
-                                const val = e.target.checked ? 'true' : 'false';
-                                setConfigDraft('disable_thinking', val, 'Disattiva il reasoning/thinking sui modelli che lo supportano');
-                                handleSaveConfig({ key: 'disable_thinking', value: val, description: 'Disattiva il reasoning/thinking sui modelli che lo supportano' });
-                            }}
-                        />
-                        <label htmlFor="disable_thinking" className="text-sm font-medium text-slate-700 cursor-pointer">
-                            {t('admin.config.noThinking')} <strong>{t('admin.config.noThinkingName')}</strong>
-                            <span className="block text-xs text-slate-500 font-normal">{t('admin.config.noThinkingDesc')}</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div className="space-y-4 rounded-lg border border-slate-200 p-4">
-                <h3 className="text-sm font-semibold text-slate-700">{t('admin.routing.title')}</h3>
-                <p className="text-sm text-slate-600">{t('admin.routing.help')}</p>
-                {[
-                    ['ai_fallback_targets', 'admin.routing.targets', '[]'],
-                    ['ai_timeout_seconds', 'admin.routing.timeout', '120'],
-                ].map(([key, label, fallback]) => (
-                    <div key={key} className="space-y-2">
-                        <label htmlFor={key} className="block text-sm font-medium text-slate-700">{t(label)}</label>
-                        <textarea id={key} rows={key === 'ai_timeout_seconds' ? 1 : 3}
-                            value={getConfigValue(key) || fallback}
-                            onChange={event => setConfigDraft(key, event.target.value, t(label))}
-                            className="w-full rounded-md border border-slate-300 bg-slate-50 p-2 font-mono text-xs text-slate-900" />
-                        <Button onClick={() => handleSaveConfig({ key, value: getConfigValue(key) || fallback, description: t(label) })}>
-                            {t('common.save')}
-                        </Button>
-                    </div>
-                ))}
-                <p className="text-xs text-slate-500">{t('admin.routing.example')}</p>
-                <code className="block overflow-x-auto text-xs text-slate-700">{'[{"provider":"openrouter","model":"openrouter/free"},{"provider":"omniroute","model":"auto/best-chat"}]'}</code>
-                <code className="block overflow-x-auto text-xs text-slate-700">{'{"ollama/qwen3.8:latest":{"context_tokens":16384,"input_tokens":8000,"compact":true}}'}</code>
-                <ModelContextSettings />
-            </div>
-
-            {/* 1bis. Funzioni */}
+            {/* 1. Funzioni */}
             <div className="space-y-4 rounded-lg border border-slate-200 p-4">
                 <h3 className="text-sm font-semibold text-slate-700">{t('admin.features.title')}</h3>
                 <div className="space-y-2">
@@ -2049,6 +1984,243 @@ export function ConfigForm() {
                     })}
                 </div>
             </div>
+
+            {/* Riserva di sistema (quando l'utente non ha ChatGPT o una chiave personale) */}
+            <details
+                className="group rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6"
+                data-testid="system-ai-fallback-section"
+            >
+                <summary className="flex flex-wrap items-center justify-between gap-3 cursor-pointer select-none">
+                    <div className="flex items-center gap-2">
+                        <Server className="w-5 h-5 text-indigo-600 shrink-0" />
+                        <h3 className="text-base font-semibold text-slate-900 inline">
+                            {systemAIText(lang, 'title')}
+                        </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {activeProvider && activeModel ? (
+                            <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
+                                {systemAIText(lang, 'configured')}: {PROVIDERS[activeProvider]?.label || activeProvider} ({activeModel})
+                            </span>
+                        ) : (
+                            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+                                {systemAIText(lang, 'notConfigured')}
+                            </span>
+                        )}
+                        <span className="text-xs text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+                    </div>
+                </summary>
+
+                <div className="space-y-6 pt-2">
+                    {/* Spiegazione ordine di scelta 1-2-3 */}
+                    <div className="rounded-lg bg-slate-50 border border-slate-200 p-3.5 text-xs text-slate-700 leading-relaxed space-y-1">
+                        <p className="font-semibold text-slate-800">
+                            {systemAIText(lang, 'orderHelp')}
+                        </p>
+                        <p className="text-slate-600">
+                            {systemAIText(lang, 'sectionHelp')}
+                        </p>
+                    </div>
+
+                    {/* Avviso stato reale quando non configurata */}
+                    {(!activeProvider || !activeModel) && (
+                        <Callout variant="warning">
+                            {systemAIText(lang, 'noFallbackWarning')}
+                        </Callout>
+                    )}
+
+                    {/* Selezione Provider e Modello */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">
+                                {systemAIText(lang, 'provider')}
+                            </label>
+                            <select
+                                value={activeProvider}
+                                onChange={(e) => handleProviderChange(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                            >
+                                <option value="">{systemAIText(lang, 'noProviderSelected')}</option>
+                                {Object.entries(PROVIDERS).map(([key, data]) => (
+                                    <option key={key} value={key}>{data.label}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-slate-700">
+                                    {systemAIText(lang, 'model')}
+                                </label>
+                                {activeProvider && (
+                                    <button
+                                        type="button"
+                                        onClick={() => fetchModels(activeProvider)}
+                                        disabled={modelsLoading || activeKeyMissing}
+                                        className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
+                                        title={t('admin.config.reloadTitle')}
+                                    >
+                                        <RefreshCw className={`w-3 h-3 ${modelsLoading ? 'animate-spin' : ''}`} />
+                                        {modelsLoading
+                                            ? t('admin.config.modelsLoading')
+                                            : liveModels.length > 0
+                                                ? t('admin.config.modelsLive', { n: liveModels.length })
+                                                : t('admin.config.reload')}
+                                    </button>
+                                )}
+                            </div>
+                            <div className="relative">
+                                <Cpu className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
+                                <select
+                                    value={!activeProvider ? '' : (activeKeyMissing ? '' : activeModel)}
+                                    onChange={(e) => handleModelChange(e.target.value)}
+                                    disabled={!activeProvider || activeKeyMissing}
+                                    className="w-full bg-slate-50 border border-slate-300 rounded-md p-3 pl-10 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {!activeProvider ? (
+                                        <option value="">{systemAIText(lang, 'modelEmpty')}</option>
+                                    ) : activeKeyMissing ? (
+                                        <option value="">{t('admin.config.modelNeedsKey')}</option>
+                                    ) : (
+                                        modelOptions.map((model) => (
+                                            <option key={model} value={model}>{model}</option>
+                                        ))
+                                    )}
+                                </select>
+                            </div>
+                            {activeProvider && activeKeyMissing ? (
+                                <p className="text-xs text-amber-600">{t('admin.config.modelNeedsKeyHint')}</p>
+                            ) : (
+                                activeProvider && liveModels.length === 0 && !modelsLoading && (
+                                    <p className="text-xs text-amber-600">{t('admin.config.providerUnreachable')}</p>
+                                )
+                            )}
+                        </div>
+
+                        <div className="md:col-span-2 flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                            <input
+                                id="disable_thinking"
+                                type="checkbox"
+                                className="w-4 h-4 accent-blue-600 cursor-pointer"
+                                checked={getConfigValue('disable_thinking') === 'true'}
+                                onChange={(e) => {
+                                    const val = e.target.checked ? 'true' : 'false';
+                                    setConfigDraft('disable_thinking', val, 'Disattiva il reasoning/thinking sui modelli che lo supportano');
+                                    handleSaveConfig({ key: 'disable_thinking', value: val, description: 'Disattiva il reasoning/thinking sui modelli che lo supportano' });
+                                }}
+                            />
+                            <label htmlFor="disable_thinking" className="text-sm font-medium text-slate-700 cursor-pointer">
+                                {t('admin.config.noThinking')} <strong>{t('admin.config.noThinkingName')}</strong>
+                                <span className="block text-xs text-slate-500 font-normal">{t('admin.config.noThinkingDesc')}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Pulsante Prova */}
+                    <div className="flex flex-wrap items-center gap-3 pt-2">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={handleTestSystemAI}
+                            disabled={systemAITesting}
+                            className="flex items-center gap-2"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${systemAITesting ? 'animate-spin' : ''}`} />
+                            {systemAITesting ? systemAIText(lang, 'testingButton') : systemAIText(lang, 'testButton')}
+                        </Button>
+                    </div>
+
+                    {/* Risultati prova */}
+                    {systemAIProbeResults && (
+                        <div className="space-y-3">
+                            {(!systemAIProbeResults.system_configured || systemAIProbeResults.results.length === 0) ? (
+                                <Callout variant="warning" title={systemAIText(lang, 'notConfigured')}>
+                                    <p className="text-xs">{systemAIText(lang, 'noFallbackWarning')}</p>
+                                </Callout>
+                            ) : (
+                                <Callout
+                                    variant={systemAIProbeResults.results.every(r => r.ok) ? 'success' : 'danger'}
+                                    title={systemAIText(lang, systemAIProbeResults.results.every(r => r.ok) ? 'testSuccessTitle' : 'testFailureTitle')}
+                                >
+                                    <p className="text-xs mb-3">{systemAIText(lang, 'testResultsIntro')}</p>
+                                    <div className="space-y-2">
+                                        {systemAIProbeResults.results.map((result, idx) => {
+                                            const roleText = systemAIRoleLabel(lang, result.role, result.role === 'fallback' ? idx : undefined);
+                                            const detailText = formatProbeDetail(lang, result);
+                                            return (
+                                                <div
+                                                    key={`${result.role}-${result.provider}-${result.model}-${idx}`}
+                                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-md border border-slate-200/80 bg-white/90 text-xs text-slate-800"
+                                                >
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <span className="font-semibold text-slate-900 shrink-0">
+                                                            {roleText}:
+                                                        </span>
+                                                        <code className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px] truncate">
+                                                            {result.provider} / {result.model}
+                                                        </code>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 shrink-0">
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full font-medium ${
+                                                            result.ok ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                                                        }`}>
+                                                            {result.ok ? 'OK' : (result.error_code || 'error')}
+                                                        </span>
+                                                        <span className="text-slate-500">
+                                                            {`${result.elapsed_ms} ms`}
+                                                        </span>
+                                                    </div>
+                                                    {detailText && (
+                                                        <div className="sm:hidden text-[11px] text-slate-600">
+                                                            {detailText}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </Callout>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Dettaglio avanzato per JSON di routing e timeout */}
+                    <details className="rounded-lg border border-slate-200 bg-slate-50/70 p-4 space-y-4">
+                        <summary className="cursor-pointer text-sm font-semibold text-slate-700 select-none">
+                            {systemAIText(lang, 'advancedTitle')}
+                        </summary>
+                        <p className="text-xs text-slate-600">
+                            {systemAIText(lang, 'advancedHelp')}
+                        </p>
+                        {[
+                            ['ai_fallback_targets', 'admin.routing.targets', '[]'],
+                            ['ai_timeout_seconds', 'admin.routing.timeout', '120'],
+                        ].map(([key, label, fallback]) => (
+                            <div key={key} className="space-y-2">
+                                <label htmlFor={key} className="block text-sm font-medium text-slate-700">{t(label)}</label>
+                                <textarea
+                                    id={key}
+                                    rows={key === 'ai_timeout_seconds' ? 1 : 3}
+                                    value={getConfigValue(key) || fallback}
+                                    onChange={event => setConfigDraft(key, event.target.value, t(label))}
+                                    className="w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs text-slate-900"
+                                />
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleSaveConfig({ key, value: getConfigValue(key) || fallback, description: t(label) })}
+                                >
+                                    {t('common.save')}
+                                </Button>
+                            </div>
+                        ))}
+                        <p className="text-xs text-slate-500">{t('admin.routing.example')}</p>
+                        <code className="block overflow-x-auto text-xs text-slate-700 font-mono p-2 bg-white rounded border border-slate-200">
+                            {'[{"provider":"openrouter","model":"openrouter/free"},{"provider":"omniroute","model":"auto/best-chat"}]'}
+                        </code>
+                        <ModelContextSettings />
+                    </details>
+                </div>
+            </details>
 
             {/* Placeholder Language Mappings */}
             <div className="glass-panel p-6 space-y-4">
