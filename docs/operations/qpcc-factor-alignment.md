@@ -32,6 +32,12 @@ percepita e competenza effettiva.
 la copia frontend è verificata da un test di parità. Le chiavi di traduzione
 sono `factor.QPCC.<codice>`, perché A1–A3 e C1–C2 coincidono come sigle con QSA
 ma misurano costrutti differenti. I nomi QSA e gli altri strumenti restano invariati.
+Le lingue di sistema sono le sei di `APP_LOCALES` (`it`, `en`, `es`, `fr`, `de`, `sv`,
+`backend/content_versions.py`). La lingua ucraina, menzionata nella scheda storica
+usata con i tutor PEF per via dello studio pilota Erasmus+ PAGOSTE 2020 (Margottini
+& Leproni), non è supportata da CounselorBot; la valutazione di fattibilità e
+l'analisi di impatto sono documentate in [`valutazione-lingua-ucraina-qpcc.md`](../validazione/valutazione-lingua-ucraina-qpcc.md) (#243).
+
 
 Il percorso legge un profilo già calcolato; non somministra 63 domande in chat.
 Si rivolge a giovani e adulti in cerca di occupazione o in professioni relazionali:

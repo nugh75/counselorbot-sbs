@@ -20,7 +20,7 @@ Questo file raccoglie la cronologia dettagliata delle attività svolte per il pr
 * **Milestone**: N.12 'Incontro tutor PEF del 12 ottobre 2026' (aperta).
 * **Issue aperte**:
   - #242 QPCC: allineare i campi del questionario ai campi della piattaforma (aperta).
-  - #243 Lingua ucraina: valutare il supporto per il QPCC (aperta).
+  - #243 Lingua ucraina: valutare il supporto per il QPCC (valutata: supporto escluso per la piattaforma corrente coerentemente con `APP_LOCALES` in `backend/content_versions.py`; chiarita derivazione storica da Erasmus+ PAGOSTE 2020 e documentato piano di fattibilità con stima dello sforzo in `docs/validazione/valutazione-lingua-ucraina-qpcc.md`).
   - #244 Area docente: rendere raggiungibili i risultati della chat guidata dello studente di prova (aperta).
   - #245 Taccuino di prova: chiarire e uniformare il comportamento del salvataggio del profilo (aperta).
   - #246 Vista d'insieme dei risultati e delle chat dei propri studenti (aperta).
@@ -86,7 +86,7 @@ Questo file raccoglie la cronologia dettagliata delle attività svolte per il pr
 * **Milestone**: N.12 'Incontro tutor PEF del 12 ottobre 2026' (open).
 * **Open issues**:
   - #242 QPCC: align the questionnaire fields with the platform fields (open).
-  - #243 Ukrainian language: evaluate support for the QPCC (open).
+  - #243 Ukrainian language: evaluate support for the QPCC (evaluated: support excluded for current platform scope aligned with `APP_LOCALES` in `backend/content_versions.py`; historical source clarified from Erasmus+ PAGOSTE 2020 and feasibility plan with effort estimate documented in `docs/validazione/valutazione-lingua-ucraina-qpcc.md`).
   - #244 Teacher area: make the trial student's guided-chat results reachable (open).
   - #245 Trial notebook: clarify and unify the profile-saving behavior (open).
   - #246 Overview of results and chats of one's own students (open).
