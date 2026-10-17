@@ -9,7 +9,13 @@ un elenco di azioni che l’assistente può eseguire al posto della persona.
 
 La presentazione (`/`) offre quattro ingressi illustrati: **Bussola**, **Analisi
 questionari**, **Percorsi guidati**, **Area studente e strumenti**. Il collegamento
-“Vedi tutte le attività e i percorsi” apre il catalogo (`/?view=home`). Nel catalogo
+“Vedi tutte le attività e i percorsi” apre il catalogo (`/?view=home`). Subito sotto,
+un riquadro illustrato in evidenza, **Dicci com’è andata**, apre il **Questionario di
+gradimento** (`/questionario`), tradotto nelle sei lingue; chi non ha ancora
+effettuato l’accesso lo trova sotto il pulsante «Accedi a CounselorBot». Il
+questionario non è più nella barra di navigazione né nel menu a tre punti.
+L’illustrazione del riquadro è decorativa: il titolo e la descrizione accanto ne
+portano il significato, anche per gli screen reader. Nel catalogo
 viene prima la Bussola, poi le analisi dei questionari, i percorsi guidati e l’Area
 personale e strumenti. Se lo studente appartiene a una classe con almeno un percorso
 di classe attivo pubblicato, la home (`/` e `/?view=home`) pone il percorso in cima

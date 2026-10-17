@@ -26,8 +26,11 @@ diff del test. Per decisione dell'utente l'etichetta resta «Area studente»
 - **Visibilità**: per ogni profilo e larghezza, nomi accessibili dei controlli
   visibili (`checkVisibility`, non solo presenza nel DOM) in barra e nel menu a
   tre punti, nell'ordine reale; href delle voci (`/bussola`, `/assistente`,
-  `/guide`, `/profilo`, `/docente`, `/admin`, `/questionario`, `/counselor`,
-  logout, accesso admin con ritorno `/admin`); nessuno scroll orizzontale.
+  `/guide`, `/profilo`, `/docente`, `/admin`, `/counselor`, logout, accesso
+  admin con ritorno `/admin`); nessuno scroll orizzontale.
+- **Questionario di gradimento**: non è più in barra né nel menu (nessun link
+  `/questionario` nell'header); sta nella home, subito dopo «Vedi tutte le
+  attività e i percorsi», e per l'anonimo sotto «Accedi a CounselorBot».
 - **Pagina (P3)**: stesse voci su `/guide`, `/profilo`, `/docente`, `/questionario`;
   la voce dell'area corrente ha `aria-current="page"` (in barra o nel menu, dove
   è visibile), nessuna su `/questionario`; landmark «Navigazione principale» in
@@ -184,8 +187,9 @@ Arresto: Ctrl-C nel terminale dello script. Da SSH:
 ## Esito della sessione P4 (17 ottobre 2026)
 
 - Barra desktop da 1024 px come descritto sopra; menu a tre punti solo sotto
-  1024 px e invariato (P5). La voce «Questionario di gradimento» resta dov'era
-  (icona in barra, ora da 1024 px): la sposta alla home una PR parallela.
+  1024 px e invariato (P5). Dopo il merge di #344 il «Questionario di
+  gradimento» è solo nella home: né in barra, né nel menu a tre punti, né nel
+  menu dell'account (il test della home controlla anche il pannello account).
 - Verifiche: `npm test` 582/582 (Node 22), ESLint e `tsc` sui file toccati,
   `i18n:check`, guidance check; suite browser completa **101/101** su un dev
   isolato :3151 (la :3149 era occupata da un altro worktree).

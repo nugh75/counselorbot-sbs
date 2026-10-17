@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { BookOpen, Bot, ClipboardList, Compass, GraduationCap, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, Compass, GraduationCap, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, type LucideIcon } from 'lucide-react';
 import { ClassViewSwitcher } from './ClassViewSwitcher';
 import { HeaderAccount } from './HeaderAccount';
 import { HeaderAreas } from './HeaderAreas';
@@ -16,7 +16,7 @@ import { HeaderResume } from './HeaderResume';
 import { MotionToggle } from './MotionToggle';
 import { VoiceReaderMenuEntry } from '@/components/voice-reader/VoiceReader';
 import { FlagIcon } from './FlagIcon';
-import { Tooltip, TooltipProvider } from '@/components/ui/Tooltip';
+import { TooltipProvider } from '@/components/ui/Tooltip';
 import { LANGUAGES } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { ai4authLoginUrl, AI4AUTH_LOGOUT_URL, AI4EDUC_PORTAL_URL, AI4EDUC_MANAGER_URL, getIdentity, type Identity } from '@/lib/auth';
@@ -113,14 +113,6 @@ export function Header() {
                             <HeaderInstrument />
                             {nav.authenticated && <HeaderCounselor />}
                             <HeaderResume entries={resumeEntries} />
-                        </div>
-
-                        <div className="hidden shrink-0 lg:block">
-                            <Tooltip content={t('nav.feedback')}>
-                                <Link href="/questionario" className="console-topbar-icon" aria-label={t('nav.feedback')}>
-                                    <ClipboardList className="w-4 h-4" />
-                                </Link>
-                            </Tooltip>
                         </div>
 
                         {!nav.loading && (
@@ -327,10 +319,6 @@ function HeaderMenu({
                             )}
                         </div>
                     )}
-                    <Link href="/questionario" className={itemClass} onClick={close}>
-                        <ClipboardList className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{t('nav.feedback')}</span>
-                    </Link>
                     {servicesHref && (
                         <a href={servicesHref} className={itemClass} onClick={close}>
                             <LayoutGrid className="h-4 w-4 shrink-0" />

@@ -268,3 +268,8 @@ GUIDE_SCREENS=personal-area node --experimental-strip-types scripts/capture-guid
 
 `GUIDE_BASE_URL` può puntare al frontend locale di verifica. La cattura include
 l’intera pagina e attende le immagini; gli altri screenshot restano invariati.
+
+Allo stesso modo `GUIDE_SCREENS=introduction` aggiorna solo la presentazione
+(`introduction.png`, pagina intera con il Questionario di gradimento): la fixture
+non restituisce piani operativi attivi, altrimenti la home mostrerebbe la scheda
+del piano al posto della presentazione.

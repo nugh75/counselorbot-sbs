@@ -132,6 +132,7 @@ function assertDestinations(rows, profile) {
         const key = Object.keys(ENTRY_HREFS).find(entry => LABELS[entry] === name);
         if (key) assert.equal(href, ENTRY_HREFS[key], name);
         if (name === LABELS.home) assert.equal(href, '/');
+        assert.notEqual(href, '/questionario', `${name}: the satisfaction questionnaire lives on the home page`);
         // One door to /profilo (P4): the person's name is not a link.
         assert.notEqual(name, PROFILES[profile].identity.name, 'the account name is not a link');
         if (name === LABELS.logout || name === LABELS.signOut) assert.match(href, /\/logout/);
@@ -185,6 +186,27 @@ for (const profile of Object.keys(PROFILES)) {
         });
     }
 }
+
+// The satisfaction questionnaire left the navbar for the home page: the
+// introduction, or the sign-in screen anonymous people get on `/`.
+test('the satisfaction questionnaire is on the home page, not in the navbar', async () => {
+    for (const [profile, width, screen] of [['A', 390, 'main'], ['S', 1440, '[data-testid="intro-screen"]']]) {
+        const { page, context, errors } = await fixture({ profile, width });
+        try {
+            await page.goto(`${origin}/`);
+            const feedback = page.locator(screen).getByRole('link', { name: /^Dicci com’è andata/ });
+            await feedback.waitFor();
+            assert.equal(await feedback.getAttribute('href'), '/questionario');
+            const expected = expectedNavbar(profile, width);
+            await eventually(() => names(header(page)), expected.bar, `${profile} bar`);
+            // Below 1024px the three-dot menu, from 1024px the account menu (P4).
+            await (expected.menu ? trigger(page) : accountTrigger(page)).click();
+            await eventually(() => names(expected.menu ? mobileMenu(page) : accountPanel(page)), expected.menu ?? expected.account, `${profile} menu`);
+            assert.equal(await header(page).locator('a[href="/questionario"]').count(), 0);
+            assert.deepEqual(errors, []);
+        } finally { await context.close(); }
+    }
+});
 
 // P3/P4: same entries on every page; the «Area» selector names the current
 // area and marks it with aria-current="page" in its panel, inside the named

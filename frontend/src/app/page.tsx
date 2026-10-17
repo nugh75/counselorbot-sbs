@@ -36,6 +36,7 @@ import { MessageSquare, Terminal, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { FlowStepper } from '@/components/ui/FlowStepper';
 import { IntroScreen } from '@/components/home/IntroScreen';
+import { FeedbackEntry } from '@/components/home/FeedbackEntry';
 import { toast } from '@/components/ui/Toast';
 import { useI18n } from '@/lib/i18n-context';
 import { addCompletedProfile, getCompletedProfiles } from '@/lib/profile-tracker';
@@ -894,6 +895,7 @@ export default function Home() {
                         {t('home.auth.cta')}
                     </a>
                 </div>
+                <FeedbackEntry className="mt-5" />
             </div>
         );
     }

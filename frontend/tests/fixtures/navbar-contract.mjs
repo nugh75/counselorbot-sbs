@@ -117,7 +117,6 @@ export const LABELS = {
     reader: 'Lettore audio',
     resume: 'Riprendi un’attività',
     retry: 'Riprova',
-    feedback: 'Questionario di gradimento',
     services: 'Servizi piattaforma ai4educ',
     logout: 'Logout',
     adminLogin: 'Accesso admin',
@@ -151,7 +150,6 @@ export const ENTRY_HREFS = {
     student: '/profilo',
     teacher: '/docente',
     admin: '/admin',
-    feedback: '/questionario',
     counselor: '/counselor',
 };
 
@@ -189,7 +187,7 @@ export function expectedNavbar(profileKey, width, { resume = { rows: [], error: 
     const resumeVisible = resume.rows.length > 0 || resume.error;
 
     if (loading) {
-        return { bar: compact ? [LABELS.home] : [LABELS.home, LABELS.feedback], menu: null, areas: null, account: null };
+        return { bar: [LABELS.home], menu: null, areas: null, account: null };
     }
 
     const tools = accessLoading ? [] : [
@@ -208,7 +206,7 @@ export function expectedNavbar(profileKey, width, { resume = { rows: [], error: 
         const bar = [LABELS.home, ...areaEntry, ...tools, LABELS.guide, ...view];
         if (auth) bar.push(LABELS.counselor);
         if (resumeVisible) bar.push(LABELS.resume);
-        bar.push(LABELS.feedback, account ? LABELS.account(account) : LABELS.preferences);
+        bar.push(account ? LABELS.account(account) : LABELS.preferences);
         if (!auth) bar.push(LABELS.signIn);
         return {
             bar,
@@ -224,7 +222,7 @@ export function expectedNavbar(profileKey, width, { resume = { rows: [], error: 
 
     const menu = [];
     if (account) menu.push(LABELS.counselor, ...view);
-    menu.push(...tools, LABELS.guide, ...areaItems, LABELS.reader, ...resumeBlock(resume), LABELS.feedback);
+    menu.push(...tools, LABELS.guide, ...areaItems, LABELS.reader, ...resumeBlock(resume));
     if (expect.services) menu.push(LABELS.services);
     menu.push(LABELS[expect.auth], LABELS.darkRow, LABELS.motion, ...LABELS.languages);
     return { bar: [LABELS.home, LABELS.menu], menu, areas: null, account: null };
