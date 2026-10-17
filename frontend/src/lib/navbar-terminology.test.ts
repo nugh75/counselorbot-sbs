@@ -59,3 +59,26 @@ test('the header badge falls back to the catalogue name, then to the dynamic cod
     assert.equal(instrumentLabel('QSA', 'QSA', translator('fr')), 'QSA');
     assert.equal(instrumentLabel('MY_SCHOOL_TOOL', undefined, translator('de')), 'MY_SCHOOL_TOOL');
 });
+
+test('the satisfaction questionnaire sits on the introduction, right after the catalogue link, and on the sign-in screen, not in the header', () => {
+    assert.deepEqual(byLang('app.intro.feedback.title'), ['Dicci com’è andata', 'Tell us how it went', 'Cuéntanos qué tal te fue', 'Dites-nous comment ça s’est passé', 'Sag uns, wie es war', 'Berätta hur det gick']);
+    assert.deepEqual(byLang('app.intro.feedback.body'), [
+        'Questionario di gradimento: aiutaci a migliorare CounselorBot.',
+        'Feedback survey: help us improve CounselorBot.',
+        'Encuesta de satisfacción: ayúdanos a mejorar CounselorBot.',
+        'Questionnaire de satisfaction : aidez-nous à améliorer CounselorBot.',
+        'Zufriedenheitsumfrage: Hilf uns, CounselorBot zu verbessern.',
+        'Nöjdhetsenkät: hjälp oss att förbättra CounselorBot.',
+    ]);
+    const component = (file: string) => readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '../components', file), 'utf8');
+    assert.doesNotMatch(component('layout/Header.tsx'), /\/questionario/);
+    assert.match(component('home/FeedbackEntry.tsx'), /<Link href="\/questionario"/);
+    const intro = component('home/IntroScreen.tsx');
+    const all = intro.indexOf("t('app.intro.entry.all')");
+    const feedback = intro.indexOf('<FeedbackEntry');
+    assert.ok(all >= 0 && feedback > all, 'feedback entry after «Vedi tutte le attività e i percorsi»');
+    assert.equal(intro.slice(all, feedback).match(/<(Link|button|a)\b/g), null, 'no other control in between');
+    // Anonymous people see the sign-in screen instead of the introduction.
+    const home = readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '../app/page.tsx'), 'utf8');
+    assert.ok(home.indexOf('<FeedbackEntry', home.indexOf("t('home.auth.cta')")) > 0, 'feedback entry on the sign-in screen');
+});

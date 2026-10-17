@@ -1,3 +1,26 @@
+# Handoff n11: Questionario di gradimento in home
+Data: 2026-10-17 | Branch: `feat/home-feedback-cta` | Agente: `n11-opus-home-feedback`, Claude Opus 5.5 high
+Compito Diario `71dd68ba-7e18-4f91-a92a-17d007620546` | Issue #342 | Milestone #21
+
+«Questionario di gradimento» (`/questionario`) tolto dalla barra (icona `xl` e riga
+del menu compatto; chiave `nav.feedback` rimossa). Nuovo `FeedbackEntry`
+(`frontend/src/components/home/FeedbackEntry.tsx`): riquadro illustrato
+«Dicci com’è andata» subito dopo «Vedi tutte le attività e i percorsi» e, per chi
+non ha effettuato l’accesso (che su `/` vede la schermata «Accesso richiesto», non
+la presentazione), sotto «Accedi a CounselorBot». Illustrazione decorativa
+`frontend/public/images/intro/feedback.png` (alt vuoto, prompt nel README). Testi
+`app.intro.feedback.*` e `guide.section2.body` nelle sei lingue; contratto P0
+aggiornato; guardia in `navbar-terminology.test.ts`; screenshot `introduction`
+della guida rigenerati con la nuova cattura mirata `GUIDE_SCREENS=introduction`.
+
+Verifiche: `npm test`, `i18n:check`, `tsc --noEmit`, ESLint sui file toccati,
+guidance refresh/check; suite browser navbar 93/93 + test home/anonimo su :3149.
+`account-onboarding`: 5/7 test della presentazione verdi; i due a 320/390px
+scadono anche senza la nuova card (`profiles.png` mai servita dal dev server in
+concorrenza), bug sospetto registrato nel Diario. Gli altri screenshot della guida
+a 1440px mostrano ancora l’icona del questionario in barra. Server dev :3149
+avviato da `scripts/dev-navbar-tests.sh`; nessun Docker, deploy o sudo.
+
 # Handoff n7: terminologia della navbar (P1)
 Data: 2026-10-16 | Branch: `fix/navbar-terminology` | Agente: `n7-opus-navbar-p1`, Claude Opus 5.5 high
 Compito Diario `881c2cf4-e5c4-49c7-a1fd-124fa37695ee` | Issue #337 | Milestone #21

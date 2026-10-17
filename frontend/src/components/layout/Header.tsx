@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ResumeEntry } from '@/components/layout/ResumeEntry';
 import { ResumeLoadError } from '@/components/layout/ResumeLoadError';
-import { BookOpen, Bot, ClipboardList, Compass, GraduationCap, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, Compass, GraduationCap, LayoutGrid, LogIn, LogOut, Moon, MoreVertical, RotateCcw, Settings, Sun, User, type LucideIcon } from 'lucide-react';
 import { ClassViewSwitcher } from './ClassViewSwitcher';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { HeaderCounselor } from './HeaderCounselor';
@@ -177,13 +177,8 @@ export function Header() {
                             <HeaderResume entries={resumeEntries} />
                         </div>
 
-                        {/* Set minimo sempre disponibile: feedback, tema, lingua. */}
+                        {/* Set minimo sempre disponibile: tema, movimento, lingua. */}
                         <div className="hidden items-center gap-1 xl:flex">
-                            <Tooltip content={t('nav.feedback')}>
-                                <Link href="/questionario" className="console-topbar-icon" aria-label={t('nav.feedback')}>
-                                    <ClipboardList className="w-4 h-4" />
-                                </Link>
-                            </Tooltip>
                             <ThemeToggle />
                             <MotionToggle />
                             <LanguageSwitcher />
@@ -344,10 +339,6 @@ function HeaderMenu({
                             )}
                         </div>
                     )}
-                    <Link href="/questionario" className={itemClass} onClick={close}>
-                        <ClipboardList className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{t('nav.feedback')}</span>
-                    </Link>
                     {servicesHref && (
                         <a href={servicesHref} className={itemClass} onClick={close}>
                             <LayoutGrid className="h-4 w-4 shrink-0" />

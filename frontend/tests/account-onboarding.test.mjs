@@ -326,7 +326,12 @@ for (const width of [390, 1440]) {
             const intro = page.getByTestId('intro-screen');
             assert.deepEqual(await intro.locator('article h3').allTextContents(), ['Bussola', 'Analisi questionari', 'Percorsi guidati', 'Area studente e strumenti']);
             const images = intro.locator('img');
-            assert.equal(await images.count(), 4);
+            assert.equal(await images.count(), 5);
+            // Satisfaction questionnaire (moved from the navbar): the control right after the catalogue link.
+            const feedback = intro.getByRole('link', { name: 'Dicci com’è andata Questionario di gradimento: aiutaci a migliorare CounselorBot.', exact: true });
+            assert.equal(await feedback.getAttribute('href'), '/questionario');
+            assert.equal(await tools.evaluate(el => el.parentElement.nextElementSibling?.getAttribute('href')), '/questionario');
+            await feedback.scrollIntoViewIfNeeded(); // below the fold on phones: lazy image
             await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
             assert.equal(await intro.getByRole('link', { name: 'Apri Area studente', exact: true }).getAttribute('href'), '/profilo');
             assert.equal(await intro.locator('details[open]').count(), 0);
@@ -404,7 +409,8 @@ for (const [locale, width, dark, title] of [['de', 320, true, 'Fragebogenanalyse
             assert.equal(await intro.locator('article').count(), 4);
             assert.equal(await intro.locator('details[open]').count(), 0);
             assert.equal((await intro.innerText()).includes('app.intro.'), false);
-            assert.ok(await intro.evaluate(el => [...el.querySelectorAll('article')].every(card => card.getBoundingClientRect().right <= el.getBoundingClientRect().right + 1)), 'long translated titles stay within the page');
+            assert.ok(await intro.evaluate(el => [...el.querySelectorAll('article, a[href="/questionario"]')].every(card => card.getBoundingClientRect().right <= el.getBoundingClientRect().right + 1)), 'long translated titles stay within the page');
+            await intro.locator('a[href="/questionario"]').scrollIntoViewIfNeeded(); // lazy image below the fold
             await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="intro-screen"] img')].every(img => img.complete && img.naturalWidth > 0));
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             await page.waitForFunction(() => {

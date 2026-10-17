@@ -127,6 +127,7 @@ function assertDestinations(rows, profile) {
         const key = Object.keys(ENTRY_HREFS).find(entry => LABELS[entry] === name);
         if (key) assert.equal(href, ENTRY_HREFS[key], name);
         if (name === LABELS.home) assert.equal(href, '/');
+        assert.notEqual(href, '/questionario', `${name}: the satisfaction questionnaire lives on the home page`);
         if (name === PROFILES[profile].identity.name) assert.equal(href, '/profilo');
         if (name === LABELS.logout) assert.match(href, /\/logout/);
         if (name === LABELS.adminLogin) assert.match(decodeURIComponent(href), /\/admin/);
@@ -161,6 +162,25 @@ for (const profile of Object.keys(PROFILES)) {
         });
     }
 }
+
+// The satisfaction questionnaire left the navbar for the home page: the
+// introduction, or the sign-in screen anonymous people get on `/`.
+test('the satisfaction questionnaire is on the home page, not in the navbar', async () => {
+    for (const [profile, width, screen] of [['A', 390, 'main'], ['S', 1440, '[data-testid="intro-screen"]']]) {
+        const { page, context, errors } = await fixture({ profile, width });
+        try {
+            await page.goto(`${origin}/`);
+            const feedback = page.locator(screen).getByRole('link', { name: /^Dicci com’è andata/ });
+            await feedback.waitFor();
+            assert.equal(await feedback.getAttribute('href'), '/questionario');
+            await eventually(() => names(header(page)), expectedNavbar(profile, width).bar, `${profile} bar`);
+            await trigger(page).click();
+            await eventually(() => names(mobileMenu(page)), expectedNavbar(profile, width).menu, `${profile} menu`);
+            assert.equal(await header(page).locator('a[href="/questionario"]').count(), 0);
+            assert.deepEqual(errors, []);
+        } finally { await context.close(); }
+    }
+});
 
 // P3: same entries on every page, the current area marked with
 // aria-current="page" inside a named navigation landmark.
