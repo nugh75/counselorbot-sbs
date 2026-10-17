@@ -1,4 +1,6 @@
 """Presentation preferences; independent of response length and instrument scoring."""
+from __future__ import annotations
+
 from typing import Literal
 
 ResponseFormat = Literal["standard", "bullets", "table"]
