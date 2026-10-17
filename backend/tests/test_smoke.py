@@ -5479,7 +5479,8 @@ def test_build_context_envelope_component_flags_disable_parts():
     assert "META QSA" in system_final
     assert "KNOWLEDGE_BLOCK" not in system_final
     assert "SCORES" not in full_message
-    assert full_message == ""
+    # Nessun flag governa la domanda dello studente: spenti i componenti resta solo lei.
+    assert full_message == "domanda"
     assert history == []
     assert components["system_prompt"] == ""
     assert components["meta_system_prompt"] == "META QSA"
