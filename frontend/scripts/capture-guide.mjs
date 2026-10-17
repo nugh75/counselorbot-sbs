@@ -1,11 +1,10 @@
 // Real application rendering, isolated synthetic API fixtures; no production writes.
 // Run from frontend: node --experimental-strip-types scripts/capture-guide.mjs
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { personalAreaName } from '../src/lib/i18n-personal-area.ts';
 import { teacherAreaName } from '../src/lib/i18n-teacher-area.ts';
-import { classCompilationsText } from '../src/lib/i18n-class-compilations.ts';
 import { categoryText } from '../src/lib/i18n-institution-categories.ts';
 import { goalText } from '../src/lib/i18n-goals.ts';
 import { assignmentText } from '../src/lib/i18n-assignments.ts';
@@ -46,7 +45,9 @@ try {
         const introductionCapture = process.env.GUIDE_SCREENS === 'introduction';
         let authenticated = false;
         page.on('pageerror', error => errors.push(error.message));
-        await page.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); }, lang);
+        // With an active class plan the home and Student area catalogs start collapsed:
+        // open them as a person who expanded them would, so their cards stay in the shots.
+        await page.addInitScript(lang => { localStorage.setItem('cb_lang', lang); localStorage.setItem('cb_theme', 'light'); localStorage.setItem('cb_home_catalog_open', 'true'); localStorage.setItem('cb_profile_catalog_open', 'true'); }, lang);
         const group = { id: 91, name: groupName, code: 'DEMO-3B', school: '', school_level: 'secondaria', institution_id: null, description: instructions, methodologies: null, context_visible_to_students: false, owner_username: 'teacher.demo', is_active: true, members_count: 2, created_at: '2026-09-21T08:00:00Z' };
         const labels = key => Object.fromEntries(locales.map(locale => [locale, classSettingsText(locale, key)]));
         const tool = (key, category, enabled = true, admin_enabled = true, locked = false) => ({
@@ -105,6 +106,10 @@ try {
             const request = route.request();
             const url = new URL(request.url());
             if (url.origin !== origin) return route.abort();
+            // The dev image optimizer can hang on a request and then on every
+            // request for the same image: serve public images from their file.
+            const publicImage = url.pathname === '/_next/image' && `public${url.searchParams.get('url')}`;
+            if (publicImage && !publicImage.includes('..') && existsSync(publicImage)) return route.fulfill({ path: publicImage });
             if (!url.pathname.startsWith('/api/')) return request.method() === 'GET' ? route.continue() : route.abort();
             assert.equal(request.method(), 'GET', `Screenshot attempted a write: ${url.pathname}`);
             let data = [];
@@ -213,10 +218,6 @@ try {
                 await page.evaluate(() => window.scrollTo(0, 0));
             }
             if (name === 'personal-area' || name === 'teacher-area') {
-                if (name === 'teacher-area') {
-                    await page.getByLabel(classCompilationsText(lang, 'classLabel'), { exact: true }).selectOption('91');
-                    await page.locator('[data-class-compilations] li > p').filter({ hasText: 'student.demo' }).waitFor();
-                }
                 await page.addStyleTag({ content: 'nextjs-portal { display: none !important; }' });
                 for (const image of await page.locator('[data-personal-area-home] img, [data-teacher-area-home] img').all()) {
                     await image.scrollIntoViewIfNeeded();
