@@ -326,6 +326,22 @@ degli step successivi, il Session Ledger include la cronologia delle letture pro
 relative risposte dello studente e la direttiva di considerare la versione dello studente
 come riferimento primario senza mai riproporre letture rifiutate o corrette.
 
+All'interno della progressiva convergenza verso il facilitatore metacognitivo,
+la direttiva `[ANCHOR]` nei prompt di fabbrica dei fattori (QSA, QSAr, ZTPI, QPCS, QPCC, QAP)
+è stata rimossa poiché la regola della domanda riflessiva ed esperienziale viene assorbita
+direttamente dal contratto di facilitazione, riducendo l'ingombro dell'envelope.
+La direttiva `[SECOND-LEVEL METHOD]` è stata snellita per concentrarsi esclusivamente
+sull'offerta di un'ipotesi interpretativa prima di qualunque consiglio pratico, eliminando
+il divieto di value-check e le regole rigide sulla domanda.
+La direttiva `[DEPTH ON REQUEST]` orienta l'approfondimento verso l'agire e le scelte dello studente
+anziché imporre un aneddoto scolastico preconfezionato dal modello;
+in sintesi, `[PERSPECTIVE]` offre il nesso con taccuino e portfolio come domanda aperta
+che lo studente può cogliere o lasciare.
+Infine, il contratto canonico in codice di QPCC (`qpcc.directive()`) adotta il criterio
+flessibile di permanenza nell'area ancorato alle scelte e all'agire dello studente con
+un tetto di sicurezza (circa 5 scambi) superando il vincolo numerico rigido dei turni fissi.
+
+
 Il **QPCC di Pellerey–Orio** è rivolto a giovani e adulti in cerca di occupazione
 o in contesti professionali relazionali. Il questionario canonico ha 63 item,
 quattro dimensioni connesse e dieci scale, con punteggi stanine 1–9:
