@@ -304,6 +304,14 @@ Palette scura: base `#0f172a`, superficie `#1e293b`, riempimento `#334155`.
 > letterale) non ha remap e resterà chiara su fondo scuro. È il modo più comune
 > di rompere il tema scuro in questo progetto.
 
+Le tappe dei gradienti (`from-*`, `via-*`, `to-*`) non impostano
+`background-color` ma le variabili `--tw-gradient-from/via/to`: la loro voce nel
+remap ridefinisce quella variabile (`.dark .via-white { --tw-gradient-via: #1e293b; }`),
+con la tinta scura del pastello corrispondente e la stessa opacità. Lo stesso vale
+per le varianti `hover:`/`group-hover:`, che sono classi a sé. La guardia
+`frontend/src/lib/teacher-area-dark-theme.test.ts` controlla che ogni sfondo chiaro
+e ogni testo di tinta scura usati nell'area docente abbiano la loro voce.
+
 ---
 
 ## 7. Superfici oltre l'app web

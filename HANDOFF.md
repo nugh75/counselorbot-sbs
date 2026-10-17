@@ -1,3 +1,20 @@
+# Handoff d1: tema scuro area docente
+Data: 2026-10-17 | Branch: `fix/teacher-area-dark-theme` | Agente: `d1-opus-teacher-dark`, Claude Opus 5.5 high
+Compito Diario `915b2b9a-ac41-46e9-a801-ec21ce052f4f` | Issue #352 | Milestone #23
+
+Nella home `/docente` le card «Progetta obiettivo per la classe» e «Palestra di
+prova: studenti fittizi» (e il vuoto di «Le mie classi», l'hub risorse) restavano
+chiare in tema scuro: tappe di gradiente, `bg-white/80|90`, testi
+`emerald-800/900`, `indigo-950`, `red-900`, `amber-600` e varianti
+`hover:`/`group-hover:` senza voce nel remap. Aggiunte le voci in fondo a
+`globals.css` (le tappe ridefiniscono `--tw-gradient-*`), regola in
+`docs/design.md` §6, guardia `src/lib/teacher-area-dark-theme.test.ts` (rossa su
+main, verde ora). Tema chiaro identico al pixel; testi in scuro 5,3–13,9:1.
+Pagine di destinazione (`/docente/taccuini-prova`, `/docente/catalogo-obiettivi`)
+già leggibili. Verifiche: `npm test` 586/586, ESLint, `tsc --noEmit`. Dev
+fixture solo frontend su :3134 con `next dev --webpack` (Turbopack rifiuta il
+symlink `node_modules` del worktree), fermato. Nessun Docker, deploy o sudo.
+
 # Handoff n12: menu mobile a gruppi (P5)
 Data: 2026-10-17 | Branch: `feat/navbar-mobile-groups` | Agente: `n12-opus-navbar-p5`, Claude Opus 5.5 high
 Compito Diario `4c7f91cd-4637-4950-803f-3e96d36762b3` | Issue #346 | PR #347 (bozza) | Milestone #21
