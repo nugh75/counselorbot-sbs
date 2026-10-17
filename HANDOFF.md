@@ -1,3 +1,16 @@
+# Handoff t1: allineamento calibrazione Prompt Lab a percezione di competenza (A6) e facilitazione metacognitiva
+Data: 2026-10-17 | Branch: `fix/prompt-lab-metacognitive-calibration` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #366 | Milestone #1 | PR #367
+
+Allineato il caso di calibrazione di Prompt Lab (`calibration-good`) e il test di base del fattore A6 al costrutto effettivo e al paradigma di facilitazione metacognitiva:
+- A6 descrive la percezione di competenza e fiducia nelle proprie capacità nello studio (non l'ansia).
+- Eliminato il convenevole cerimonioso iniziale (`Certo.`).
+- Sostituita la formulazione aneddotica/situazionale (`qual è il momento in cui cominci a sentirti così`, `momento recente`) con una domanda di processo metacognitivo focalizzata su scelte strategiche, comportamenti e conseguenze sul lavoro di studio (`che cosa scegli di fare di solito, e che conseguenze ha questo modo di procedere sul tuo lavoro?`).
+- `backend/chat_preferences.py`: aggiunto `from __future__ import annotations`.
+- `backend/prompt_lab/evaluation.py`: aggiornati `_CALIBRATION_CASE` e `CALIBRATION_CASES[calibration-good]`.
+- `backend/tests/test_prompt_lab_engine.py`: aggiornato `calibrated()` e aggiunto `test_calibration_good_aligns_with_metacognitive_facilitation` (39/39 passati).
+- Documentazione: aggiornato `docs-counselorbot/funzionalita-counselorbot.md` e riallineato `docs/operations/platform-guidance-state.json` (`make guidance-refresh` e `make guidance-check`).
+
 # Handoff a4: comandi avanti e indietro sempre visibili nella chat guidata
 Data: 2026-10-17 | Branch: `fix/guided-chat-nav-buttons` | Agente: `a4-agy-guided-nav`, Gemini 3.8 Flash (High)
 Issue #248 | Milestone #12 (Incontro tutor PEF del 12 ottobre 2026)
