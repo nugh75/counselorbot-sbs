@@ -192,14 +192,15 @@ Arresto: Ctrl-C nel terminale dello script. Da SSH:
   menu dell'account (il test della home controlla anche il pannello account).
 - Verifiche: `npm test` 582/582 (Node 22), ESLint e `tsc` sui file toccati,
   `i18n:check`, guidance check; suite browser completa **101/101** su un dev
-  isolato :3151 (la :3149 era occupata da un altro worktree).
-- `tests/account-onboarding.test.mjs`: «navbar counselor returns to the same
-  conversation and draft» passa a 390/1024/1440 (bozza e conversazione
-  conservate dal dialog del counselor aperto dalla barra). I test first-use
-  verificano i suggerimenti (counselor e Area studente nella barra da 1024 px)
-  ma poi scadono su `waitForURL('/profilo/taccuino')` a ogni larghezza, 1023 px
-  compreso; con `/_next/image` bloccato passano. Stessa causa ambientale del
-  test pagina corrente (ora con `/_next/image` bloccato): bug sospetto nel Diario.
+  isolato :3151, **102/102** dopo il merge di #344 (la :3149 era occupata da un altro worktree).
+- `tests/account-onboarding.test.mjs`, dopo il merge di #344 e su un server dev
+  appena avviato: 43/46. Passano bozza e conversazione conservate dal dialog del
+  counselor aperto dalla barra (390/1024/1440), i suggerimenti di primo uso
+  (counselor e Area studente nella barra da 1024 px) e l'introduzione con il
+  gradimento. I 3 falliti (catalogo `/?view=questionnaires` senza titolo «QSA»)
+  falliscono uguali su `origin/main`: bug sospetto nel Diario. Su un server dev
+  rimasto acceso a lungo (immagini aggiunte durante la corsa) le attese su
+  `/_next/image` scadevano: riavviare il server prima della suite.
 - `tests/design-usability.test.mjs` «header controls outside chat do not
   overlap»: `goto('/', networkidle)` scade a 30 s anche a 768 px nel dev
   isolato; la stessa verifica (nomi lunghi, tedesco, admin) è coperta dai nuovi
