@@ -142,6 +142,19 @@ def _recommendation_candidates(
     return readings, strategies
 
 
+def is_hypothesis_allowed(*, questionnaire_type: str, phase: str | None, is_synthesis: bool) -> bool:
+    """True if the current instrument and step allow interpretive hypothesis notes."""
+    if is_synthesis:
+        return False
+    q_type = (questionnaire_type or "").upper()
+    if q_type in QUESTIONNAIRE_DIALOGUES:
+        return True
+    if q_type in {"EVENTO", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE"}:
+        phase_str = (phase or "").lower()
+        return phase_str in {"rilettura", "prossima"} or phase_str.endswith("-rilettura") or phase_str.endswith("-prossima")
+    return False
+
+
 @dataclass
 class PreparedTurn:
     prompt_key: str
@@ -172,6 +185,7 @@ class PreparedTurn:
     history: list
     sanitize: bool
     components: dict
+    hypothesis_allowed: bool = False
 
 
 
@@ -409,9 +423,23 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     system_prompt = transform(recommendation_blocks.apply_directive,
         system_prompt, reading_candidates, strategy_candidates, idea=questionnaire_type == IDEA_INSTRUMENT,
     )
+    is_synthesis = request.phase in SYNTHESIS_STEPS or (step and step.system_prompt_mode.endswith("-summary"))
+    is_synthesis = is_synthesis or (essential and is_essential_summary(request.phase))
+    facilitation_contract_enabled = bool(
+        str(configs.get("facilitation_contract_enabled", "false")).lower() in {"1", "true", "yes", "on"}
+    )
+    hypothesis_allowed = bool(
+        facilitation_contract_enabled
+        and is_hypothesis_allowed(
+            questionnaire_type=questionnaire_type,
+            phase=request.phase,
+            is_synthesis=bool(is_synthesis),
+        )
+    )
     notes_tail = recommendation_blocks.notes_directive(
         advice_allowed=bool(component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
         idea=questionnaire_type == IDEA_INSTRUMENT,
+        hypothesis_allowed=hypothesis_allowed,
     )
     conversation_tail = _recommendation_service.conversation_context(
         db, session_id=session_id, username=identity.get("username", ""),
@@ -443,8 +471,6 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
     # the ledger below; on any other turn it needs a block of its own, because the
     # ledger is deliberately not injected there.
     guard_notes = thread_guard.pending(db, session_id=session_id) if include_history else []
-    is_synthesis = request.phase in SYNTHESIS_STEPS or (step and step.system_prompt_mode.endswith("-summary"))
-    is_synthesis = is_synthesis or (essential and is_essential_summary(request.phase))
     if is_synthesis:
         if journey_override is not None:
             evidence, coverage = journey_override, "supplied"
@@ -498,6 +524,40 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         components["thread_guard"] = thread
         if thread:
             system_prompt_final += "\n\n" + thread
+    thread_state = None
+    if facilitation_contract_enabled and (
+        questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES
+        or questionnaire_type.upper() in {"EVENTO", "EVENTO_STUDIO", "EVENTO_PROFESSIONALE"}
+    ):
+        all_hypotheses = session_ledger.hypotheses(
+            db, session_id=session_id, username=(identity or {}).get("username", ""), step_id=request.phase,
+        )
+        step_hypotheses = [h for h in all_hypotheses if h.get("step") == request.phase]
+        if is_step_entry:
+            thread_state = "introduced"
+        else:
+            open_hypo = next((h for h in step_hypotheses if h.get("status") == "proposed" and not h.get("reply")), None)
+            if open_hypo:
+                user_msg = (request.message or "").strip()
+                if user_msg:
+                    thread_state = "hypothesis_answered"
+                else:
+                    thread_state = "hypothesis_open"
+            elif any(h.get("status") == "answered" or h.get("reply") for h in step_hypotheses):
+                thread_state = "hypothesis_answered"
+            else:
+                thread_state = "exploring"
+
+        if include_history and not is_step_entry and not is_synthesis:
+            if thread_state in ("hypothesis_open", "hypothesis_answered"):
+                pending_rep = (request.message or "").strip() if thread_state == "hypothesis_answered" else None
+                ref_thread = session_ledger.reflection_thread(
+                    step_hypotheses, step_id=request.phase, pending_reply=pending_rep,
+                )
+                if ref_thread:
+                    system_prompt_final += "\n\n" + ref_thread
+                    components["reflection_thread"] = ref_thread
+
     # This selects question wording only. Step content, consent and advancement
     # remain owned by the existing guided path, including its essential variant.
     reflection_stage = None
@@ -514,9 +574,6 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
             } else "area"
         elif request.phase == "questions":
             reflection_stage = "follow-up"
-    facilitation_contract_enabled = bool(
-        str(configs.get("facilitation_contract_enabled", "false")).lower() in {"1", "true", "yes", "on"}
-    )
     contract = turn_contract(
         language=request.language or "it", questionnaire_type=questionnaire_type,
         phase=request.phase, advice_allowed=bool(component_options["certified_strategy_limit"] and component_flags.get("certified_strategies", True)),
@@ -524,6 +581,7 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         objective_stage=objective_focus_stage(request.phase),
         objective_entry=is_step_entry,
         facilitation_contract_enabled=facilitation_contract_enabled,
+        thread_state=thread_state,
     )
     system_prompt_final += "\n\n" + contract
     if questionnaire_type.upper() == 'QPCC':
@@ -630,4 +688,5 @@ def prepare_chat_turn(db, ai_service, request, session_id, identity, *,
         history=history,
         sanitize=sanitize,
         components=components,
+        hypothesis_allowed=hypothesis_allowed,
     )

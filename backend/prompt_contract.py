@@ -80,7 +80,15 @@ def _self_questioning_contract(stage: str) -> str:
     )
 
 
-def _facilitation_contract(stage: str) -> str:
+_THREAD_STATE_LINES = {
+    "introduced": "The topic has just opened: explore what the student does, before any reading.",
+    "exploring": "",
+    "hypothesis_open": "You offered a reading; it has not been answered yet. Do not add another.",
+    "hypothesis_answered": "The student answered your reading (see REFLECTION THREAD). Take their version as the starting point; if they rejected it, drop it.",
+}
+
+
+def _facilitation_contract(stage: str, thread_state: str | None = None) -> str:
     """Metacognitive facilitation: inquiry on choices and consequences, flexible depth, no ceremonial preambles, open hypotheses."""
     if stage == "synthesis":
         task = (
@@ -114,6 +122,8 @@ def _facilitation_contract(stage: str) -> str:
             "If the student is brief or uncertain, offer a light, grounded reflection rather than demanding depth or escalating prompts. "
             "Always allow skipping or continuing without justification."
         )
+    state_line = _THREAD_STATE_LINES.get(thread_state, "") if thread_state else ""
+    suffix = f" {state_line}" if state_line else ""
     return (
         f"{FACILITATION_SENTINEL}\n"
         "You act as a metacognitive facilitator, not a procedural interviewer or diagnosing counselor. "
@@ -128,7 +138,7 @@ def _facilitation_contract(stage: str) -> str:
         "Conduct an internal value-check on every turn (ensuring your response is coherent with what the student reported, advances "
         "understanding of choices, and respects autonomy); use an explicit check only when proposing a key hypothesis, before a synthesis, "
         "or when a misalignment appears. Never presume emotional states; treat brief answers as communication style or fatigue, not resistance. "
-        "At most ONE main question per turn. " + task
+        "At most ONE main question per turn. " + task + suffix
     )
 
 
@@ -303,7 +313,8 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
                   reflection_stage: str | None = None,
                   objective_stage: str | None = None,
                   objective_entry: bool = False,
-                  facilitation_contract_enabled: bool = False) -> str:
+                  facilitation_contract_enabled: bool = False,
+                  thread_state: str | None = None) -> str:
     lines = [
         "[TURN CONTRACT]",
         f"Current task: {questionnaire_type or 'counselor chat'}, {phase or 'free conversation'}. Response language: {language}.",
@@ -335,7 +346,7 @@ def turn_contract(*, language: str, questionnaire_type: str, phase: str | None,
             lines.append(GOAL_DRAFT_DIRECTIVE)
     if questionnaire_type.upper() in QUESTIONNAIRE_DIALOGUES and reflection_stage:
         if facilitation_contract_enabled:
-            lines.append(_facilitation_contract(reflection_stage))
+            lines.append(_facilitation_contract(reflection_stage, thread_state=thread_state))
         else:
             lines.append(_self_questioning_contract(reflection_stage))
     if is_goal_instrument(questionnaire_type) and objective_stage:
