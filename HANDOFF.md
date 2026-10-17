@@ -1,3 +1,24 @@
+# Handoff g1: palette della Palestra di prova
+Data: 2026-10-17 | Branch: `fix/practice-gym-palette` | Agente: `g1-opus-gym-palette`, Claude Opus 5.5 high
+Compito Diario `2b1b88a5-d95b-412e-b134-a23cf4193319` | Issue #354 | Milestone #24
+
+La card «Palestra di prova» della home `/docente` (`PracticeGymSection.tsx`) era
+verde/teal (`emerald-*`, `teal-*`). Ora: bordo e gradiente petrol
+(`indigo-200/90`, `from-indigo-50/50 via-white to-white`), badge «Simulazione
+protetta» slate con scudo petrol, etichette slate, CTA d'ingresso
+`ochre-600`/`ochre-700`, link «Taccuini di prova» `indigo-700`. Tolte da
+`globals.css` le tre voci del remap rimaste orfane (`border-emerald-200/90`,
+`from-emerald-50/70`, `to-teal-50/40`); guardia `teacher-area-dark-theme.test.ts`
+aggiornata alle nuove tappe. Restano in verde solo i «Salvato» (ruolo success);
+il teal di chat guidata e Bussola è di IDEA/Bussola, fuori perimetro. Contrasti
+misurati: chiaro 4,65 (CTA ocra)–16,3:1, scuro 4,65–14,0:1. Regola in
+`docs/design.md` §2.4. Schermate `teacher-area` della guida rigenerate nelle sei
+lingue (una sola esecuzione `GUIDE_SCREENS=teacher-area`).
+
+Verifiche: `npm test` 586/586 (Node 22), ESLint sui file toccati, `tsc --noEmit`.
+Dev solo frontend su :3134 con fixture (`next dev --webpack`), fermato. Suite
+browser non eseguite. Nessun Docker, deploy o sudo.
+
 # Handoff d1: tema scuro area docente
 Data: 2026-10-17 | Branch: `fix/teacher-area-dark-theme` | Agente: `d1-opus-teacher-dark`, Claude Opus 5.5 high
 Compito Diario `915b2b9a-ac41-46e9-a801-ec21ce052f4f` | Issue #352 | Milestone #23

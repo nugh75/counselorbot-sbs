@@ -114,6 +114,12 @@ servono a separare oggetti pari-grado; non vanno bene come secondo vocabolario d
 stato. `green` in particolare è un doppione di `emerald`: nel nuovo codice si usa
 `emerald`.
 
+Una sezione non si riconosce da una tinta propria. La Palestra di prova
+(`PracticeGymSection`) è petrol come il resto dell'area docente, con la CTA
+d'ingresso in `ochre-600` e etichette `slate`; che sia una simulazione lo dicono
+il badge «Simulazione protetta» e l'icona scudo, non un verde. `emerald` resta
+solo per il «Salvato» del repertorio, cioè per il ruolo success.
+
 ### 2.5 Le variabili `--console-*`
 
 Palette condivisa con ai4educ-console, così la topbar e il fondo pagina sono gli

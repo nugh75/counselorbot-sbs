@@ -611,8 +611,7 @@ h1.text-3xl {
 .dark .border-indigo-100\/90,
 .dark .border-indigo-200,
 .dark .border-indigo-200\/90 { border-color: #1f7376; }
-.dark .border-emerald-200,
-.dark .border-emerald-200\/90 { border-color: #047857; }
+.dark .border-emerald-200 { border-color: #047857; }
 
 /* Sfondi pastello dei callout/badge → tinte scure leggibili */
 .dark .bg-indigo-50 { background-color: #103f42; }
@@ -762,12 +761,10 @@ h1.text-3xl {
 .dark .to-white { --tw-gradient-to: #1e293b; }
 .dark .from-indigo-50\/70 { --tw-gradient-from: rgba(16, 63, 66, 0.7); }
 .dark .from-indigo-50\/50 { --tw-gradient-from: rgba(16, 63, 66, 0.5); }
-.dark .from-emerald-50\/70 { --tw-gradient-from: rgba(5, 46, 22, 0.7); }
 .dark .from-amber-50\/60 { --tw-gradient-from: rgba(58, 34, 6, 0.6); }
 .dark .via-sky-50\/40 { --tw-gradient-via: rgba(8, 47, 73, 0.4); }
 .dark .to-sky-50\/40 { --tw-gradient-to: rgba(8, 47, 73, 0.4); }
 .dark .to-sky-50\/30 { --tw-gradient-to: rgba(8, 47, 73, 0.3); }
-.dark .to-teal-50\/40 { --tw-gradient-to: rgba(4, 47, 46, 0.4); }
 .dark .to-orange-50\/40 { --tw-gradient-to: rgba(67, 20, 7, 0.4); }
 
 /* ---- Diagrammi inline: passo-passo e messa a fuoco ----
