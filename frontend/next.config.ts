@@ -5,6 +5,13 @@ import { legacyRouteRedirects } from './src/lib/legacy-routes';
 const nextConfig: NextConfig = {
   output: "standalone",
   serverExternalPackages: [],
+  images: {
+    // Fixture-only browser test runners (scripts/dev-*-tests.sh) serve the
+    // original files: the macOS dev optimiser can take tens of seconds per
+    // WebP and stalls networkidle and the next navigation. Never set in the
+    // Docker image, so production keeps optimising.
+    unoptimized: process.env.NEXT_IMAGES_UNOPTIMIZED === '1',
+  },
   experimental: {
     proxyTimeout: 600_000, // 10 min for long AI responses (matches nginx)
   },

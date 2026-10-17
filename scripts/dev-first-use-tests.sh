@@ -2,5 +2,5 @@
 # Browser fixtures only: no backend, database or production services.
 set -euo pipefail
 cd "$(dirname "$0")/../frontend"
-export BACKEND_ORIGIN=http://127.0.0.1:9 NEXT_TELEMETRY_DISABLED=1
+export BACKEND_ORIGIN=http://127.0.0.1:9 NEXT_TELEMETRY_DISABLED=1 NEXT_IMAGES_UNOPTIMIZED=1
 exec npm run dev -- --webpack --hostname 127.0.0.1 --port 3147
