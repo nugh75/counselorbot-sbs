@@ -405,8 +405,11 @@ prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
 
 ## Chat, voce e ripresa
 
-Nella chat guidata si scrive sotto la conversazione. La barra dei passi permette
-indietro, ripeti e avanti. Il menu a tre punti offre pannello, **formato** della
+Nella chat guidata si scrive sotto la conversazione. La barra dei passi mantiene
+i comandi indietro e avanti sempre visibili e raggiungibili: indietro è attivo se
+esiste un passo precedente (disattivato al primo passo), avanti passa alla fase
+successiva (disattivato all'ultima fase); ripeti permette di ricaricare il passo
+corrente (tranne al congedo). Il menu a tre punti offre pannello, **formato** della
 risposta (conversazione, elenco, tabella), **lunghezza** (breve, media, lunga), voce,
 lingua e Congela sessione. Formato e lunghezza sono scelte indipendenti.
 Il percorso essenziale QSA prevede tre risposte e la sintesi; non va esteso a QSAr
