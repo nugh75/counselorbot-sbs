@@ -42,7 +42,7 @@ try {
         let classSettingsCapture = process.env.GUIDE_SCREENS === 'class-settings';
         const classPathsCapture = process.env.GUIDE_SCREENS === 'class-paths';
         // Without an active class plan the home shows the introduction, not the plan card.
-        const introductionCapture = process.env.GUIDE_SCREENS === 'introduction';
+        let introductionCapture = process.env.GUIDE_SCREENS === 'introduction';
         let authenticated = false;
         page.on('pageerror', error => errors.push(error.message));
         // With an active class plan the home and Student area catalogs start collapsed:
@@ -393,7 +393,9 @@ try {
         await go('/profilo/classi/91/forum');
         await page.getByRole('heading', { level: 1 }).first().waitFor();
         await capture('class-forum', page.locator('section').first());
+        introductionCapture = true;
         await go('/'); await capture('introduction');
+        introductionCapture = false;
         await go('/?view=home'); await capture('activities');
         await go('/profilo/pqbl'); await capture('pdf-study');
         await go('/profilo/flashcard'); await capture('flashcards');
