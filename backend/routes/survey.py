@@ -14,7 +14,6 @@ from ..anonymous_codes import get_or_create_anonymous_research_code
 from ..validation_export import build_validation_csv, validation_query, validation_summary
 from ..strategy_memory import APPROVED_STRATEGIES_CONFIG_KEY, shared_response_memory, strategy_memory
 from ..pdf_generator import generate_questionnaire_pdf
-from ..diagram_blocks import strip_for_speech
 from ..control_markers import strip_control_markers
 from ..message_diagrams import attach_message_diagrams
 from ..visual_tools import load_workspace

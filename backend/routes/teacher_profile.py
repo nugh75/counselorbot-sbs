@@ -10,7 +10,7 @@ admin (come la gestione piani/classi).
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas

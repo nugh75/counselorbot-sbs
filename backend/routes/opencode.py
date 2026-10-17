@@ -38,7 +38,6 @@ from ..ai_service import AIService
 from ..api_models import ChatRequest, OpencodeChatRequest, OpencodeWorkspaceRequest
 from ..chat_continuation import continuation_message, continuation_prefix
 from ..chat_logic import (
-    _apply_language_directive,
     _apply_qsa_factor_directive,
     _apply_response_length_directive,
     _ensure_questionnaire_guided_steps,

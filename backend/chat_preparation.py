@@ -37,7 +37,6 @@ from .chat_logic import (
     _conversational_retrieval_tail,
     _is_conversational_mode,
     _is_intro_step_mode,
-    extract_clean_student_message,
     filter_scores_by_components,
     format_step_continuation_prompt,
     get_prompt_component_flags,

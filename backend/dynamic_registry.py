@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Callable, Optional, Set
+from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 

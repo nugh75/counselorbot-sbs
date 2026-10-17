@@ -38,7 +38,6 @@ from ..idea_map import (
     chosen_focus,
     closure_ready,
     create_manual_branch,
-    current_focus,
     delete_branch,
     edit_node,
     next_move,

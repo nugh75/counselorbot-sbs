@@ -16,7 +16,7 @@ from ..path_step_types import (step_descriptor, completion_evidence, validate_st
                                apply_step_target, administration_target, forum_student_state,
                                publication_problems)
 from ..class_tools import ALWAYS_ON, PERSONAL_TOOL_KEYS, builtin_guided_paths, tool_catalog
-from .groups import _is_admin, _username, _visible_group_query
+from .groups import _username, _visible_group_query
 
 router = APIRouter()
 get_db = database.get_db

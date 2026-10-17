@@ -628,20 +628,17 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     knowledge_context = prepared.knowledge_context
     strategy_ids = prepared.strategy_ids
     certified_strategy_ids = prepared.certified_strategy_ids
-    reading_ids = prepared.reading_ids
     recommendation_meta = prepared.recommendation_meta
     reading_candidates = prepared.reading_candidates
     strategy_candidates = prepared.strategy_candidates
     system_prompt_final = prepared.system_prompt_final
     full_message = prepared.full_message
     history = prepared.history
-    sanitize = prepared.sanitize
     session_memory.update_context(
         session_id, questionnaire_type=questionnaire_type,
         scores_context=model_scores_context, language=request.language or "",
         phase=request.phase or "", step_label=step_label,
     )
-    has_recommendation_candidates = bool(reading_candidates or strategy_candidates)
 
     # 4. Get AI Response (KNOWLEDGE nel system, continuity nella history -> no summary).
     try:
@@ -888,7 +885,6 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     knowledge_context = prepared.knowledge_context
     strategy_ids = prepared.strategy_ids
     certified_strategy_ids = prepared.certified_strategy_ids
-    reading_ids = prepared.reading_ids
     recommendation_meta = prepared.recommendation_meta
     reading_candidates = prepared.reading_candidates
     strategy_candidates = prepared.strategy_candidates
@@ -902,9 +898,6 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
         phase=request.phase or "", step_label=step_label,
     )
     has_recommendation_candidates = bool(reading_candidates or strategy_candidates)
-
-    provider = c_provider or ai_service.config.get('active_provider', 'unknown')
-    model = c_model or ai_service.config.get('model_name', 'unknown')
 
     def _log_stream(
         response_content: str,

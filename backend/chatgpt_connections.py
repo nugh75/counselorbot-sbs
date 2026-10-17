@@ -14,7 +14,7 @@ import threading
 import time
 import uuid
 
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import InvalidToken
 import httpx
 from jose import jwt, JWTError
 from sqlalchemy.dialects.postgresql import insert

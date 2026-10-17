@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from .ai_service import AIService, AIError
 from .chat_logic import SUPPORTED_AI_LANGUAGES
 from .idea_map import outline
-from .diagram_render import DiagramSpec, describe, spec_fingerprint
+from .diagram_render import DiagramSpec, spec_fingerprint
 
 logger = logging.getLogger(__name__)
 

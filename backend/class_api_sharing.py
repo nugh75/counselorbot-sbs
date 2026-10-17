@@ -6,7 +6,7 @@ students never see the key. ChatGPT subscriptions are never offered.
 """
 from datetime import datetime, timezone
 
-from sqlalchemy import func, or_
+from sqlalchemy import func
 
 from . import models, personal_api
 

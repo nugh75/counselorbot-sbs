@@ -5,7 +5,7 @@ modello risponde). L'endpoint marca `provider_configured` per ogni preset: i
 provider locali (ollama/llamacpp) sono sempre disponibili; gli altri lo sono
 solo se hanno una chiave API configurata (DB o env).
 """
-from typing import List, Optional
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
