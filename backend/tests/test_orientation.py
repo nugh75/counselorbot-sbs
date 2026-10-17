@@ -329,10 +329,19 @@ def test_the_context_reaches_the_prompt():
 
 def test_every_catalog_tool_has_a_brief():
     """Uno strumento senza spiegazione lunga tornerebbe alla riga di sessanta caratteri."""
+    from backend import qpcc
     from backend.orientation import TOOL_IDS
 
     assert set(TOOL_BRIEFS) == set(TOOL_IDS)
     for tool_id, brief in TOOL_BRIEFS.items():
+        if tool_id == "QPCC":
+            # Il QPCC usa il contratto canonico (PR #252): quattro dimensioni e
+            # dieci fattori al posto delle quattro sezioni descrittive.
+            assert brief.startswith(qpcc.directive()), tool_id
+            assert "four interconnected dimensions" in brief
+            assert all(code in brief for code in qpcc.CODES)
+            assert "WHAT YOU GET" in brief
+            continue
         for heading in ("WHAT IT LOOKS AT", "WHAT YOU GET", "WHEN IT IS THE RIGHT MOMENT", "WHAT IT DOES NOT DO"):
             assert heading in brief, f"{tool_id} manca {heading}"
         # Abbastanza lunga da essere una spiegazione, non una parafrasi del catalogo.
