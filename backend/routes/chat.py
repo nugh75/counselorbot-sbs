@@ -34,7 +34,7 @@ from ..idea_map import (
 )
 from ..memory_service import session_memory
 from ..reasoning_profiles import effort_overrides
-from ..chat_preparation import prepare_chat_turn
+from ..chat_preparation import practice_notebook_id_for_turn, prepare_chat_turn
 from ..class_path_completion import record_guided_chat_completion
 from ..strategy_memory import shared_response_memory
 from .. import recommendation_blocks
@@ -730,6 +730,8 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks, db: Sess
     _cost_usd = _usage_cost_usd(_usage, _provider, _model)
     _details = pii.redact_details({
         "conversation_id": conversation_id,
+        # Taccuino di prova riverificato: l'area docente ritrova la chat anche conclusa.
+        "practice_notebook_id": practice_notebook_id_for_turn(db, identity, request),
         "mode": request.mode,
         "phase": request.phase,
         "user_input": "" if request.internal_message else request.message,
@@ -906,6 +908,9 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
     provider = c_provider or ai_service.config.get('active_provider', 'unknown')
     model = c_model or ai_service.config.get('model_name', 'unknown')
 
+    # Risolto qui, con la sessione della richiesta: il log scrive dopo lo stream.
+    practice_notebook_id = practice_notebook_id_for_turn(db, identity, request)
+
     def _log_stream(
         response_content: str,
         usage: dict | None = None,
@@ -920,6 +925,7 @@ async def chat_stream(request: ChatRequest, db: Session = Depends(get_db), ident
             cost_usd = _usage_cost_usd(usage, provider, model)
             _details = pii.redact_details({
                 "conversation_id": conversation_id,
+                "practice_notebook_id": practice_notebook_id,
                 "mode": request.mode,
                 "phase": request.phase,
                 "user_input": "" if request.internal_message else request.message,

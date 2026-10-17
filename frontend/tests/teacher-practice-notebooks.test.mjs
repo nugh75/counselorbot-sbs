@@ -122,7 +122,7 @@ test('il docente crea, modifica, archivia, ripristina ed elimina i taccuini di p
     await page.getByRole('heading', { level: 1, name: 'Taccuini di prova' }).waitFor();
     await page.getByRole('heading', { name: 'Giulia, 3ª liceo' }).waitFor();
     assert.ok(await page.getByText('Ansia da verifica').isVisible());
-    await page.locator('[data-practice-notebook="1"] [data-practice-chats]').getByText('Nessuna chat aperta con questo studente.', { exact: false }).waitFor();
+    await page.locator('[data-practice-notebook="1"] [data-practice-chats]').getByText('Nessuna chat con questo studente.', { exact: false }).waitFor();
 
     await page.getByRole('button', { name: 'Nuovo taccuino di prova' }).click();
     await page.getByLabel('Nome dello studente immaginario').fill('  Marco, adulto in formazione ');
