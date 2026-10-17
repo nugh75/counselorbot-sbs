@@ -341,6 +341,17 @@ Infine, il contratto canonico in codice di QPCC (`qpcc.directive()`) adotta il c
 flessibile di permanenza nell'area ancorato alle scelte e all'agire dello studente con
 un tetto di sicurezza (circa 5 scambi) superando il vincolo numerico rigido dei turni fissi.
 
+I testi di fabbrica degli step di QSA, QSAr, ZTPI e QPCS sono stati riscritti in chiave
+di facilitazione metacognitiva: il profilo e i fattori vengono presentati come lenti e
+ipotesi aperte di funzionamento anziché come verdetti o etichette fisse; le domande
+di chiusura indagano le scelte strategiche, i comportamenti concreti nello studio e le
+loro conseguenze (eliminando la trappola aneddotica e la cronaca situazionale «a real, recent situation»);
+sono stati rimossi i commenti pratici e i consigli non richiesti nei singoli fattori interpretativi
+di QSAr e ZTPI. Gli hash dei testi di fabbrica precedenti restano censiti in `prompt_factory_legacy.json`
+per consentire l'aggiornamento sicuro e trasparente tramite la funzione «Allinea prompt di fabbrica»
+senza alterare le personalizzazioni introdotte dagli amministratori.
+
+
 
 Il **QPCC di Pellerey–Orio** è rivolto a giovani e adulti in cerca di occupazione
 o in contesti professionali relazionali. Il questionario canonico ha 63 item,
