@@ -387,7 +387,7 @@ h1.text-3xl {
   color: var(--console-topbar-text-hover);
 }
 
-/* Voce della pagina corrente nel menu a tre punti (aria-current, P3). */
+/* Voce della pagina corrente nei pannelli dell'header, menu mobile compreso (aria-current, P3). */
 .header-panel a[aria-current='page'] {
   font-weight: 600;
   background: var(--console-topbar-hover);
@@ -399,8 +399,6 @@ h1.text-3xl {
   width: 44px;
   height: 44px;
 }
-
-.compact-header-selection button { min-height: 44px; }
 
 /* Su puntatore grossolano ogni icona della topbar prende la stessa misura: da
    sm in su la barra ne mostra fino a dodici, e a 32px erano bersagli stretti

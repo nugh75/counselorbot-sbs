@@ -4,10 +4,10 @@
 // `key` to an icon, `labelKey` to the current language, services and auth to
 // the configured ai4auth/ai4educ URLs.
 //
-// Placement (P4): below `lg` (1024px) every link sits in the three-dot menu.
-// From `lg` the bar shows them with visible labels: the `area` group through
-// the «Area» selector (a plain link when only one area is open), then the
-// `support` group.
+// Placement: from `lg` (1024px, P4) the bar shows the links with visible
+// labels: the `area` group through the «Area» selector (a plain link when only
+// one area is open), then the `support` group. Below `lg` (P5) the «Menu»
+// panel lists the same groups under their titles, in the same order.
 
 import type { Identity } from './auth';
 // @ts-expect-error -- Node's direct TypeScript runner requires the extension.
@@ -29,9 +29,6 @@ export interface HeaderLink {
     href: string;
     labelKey: string;
     group: HeaderLinkGroup;
-    // Shorter label for the desktop bar, where the menu's call to action
-    // («Apri la Bussola») would read as a sentence; the menu keeps `labelKey`.
-    barLabelKey?: string;
 }
 
 export interface HeaderNavigationInput {
@@ -54,15 +51,12 @@ export interface HeaderNavigation {
     links: HeaderLink[];
     // Student with classes: the active view selector.
     classView: boolean;
-    // Name on the account menu trigger and in the compact menu: an identifier,
+    // Name on the account menu trigger and in the «Menu» panel: an identifier,
     // never a second door to /profilo (the «Area studente» entry is the one).
     // `detail` is the email or username shown under the name when it differs.
     account: { label: string; detail: string | null; title: string } | null;
     // ai4educ services: manager for admins, portal for researchers.
     services: 'manager' | 'portal' | null;
-    // Compact menu only: «Accesso admin» back to /admin. The desktop bar
-    // offers guests «Accedi» back to the current page instead.
-    auth: 'logout' | 'adminLogin';
 }
 
 type Visible = (input: HeaderNavigationInput) => boolean;
@@ -74,7 +68,7 @@ const tool = (key: string): Visible => ({ access, accessLoading }) => !accessLoa
 // Order is the reading order of both the bar and the menu.
 export const HEADER_LINKS: readonly (HeaderLink & { visible: Visible })[] = [
     {
-        key: 'orientation', href: '/bussola', labelKey: 'orientation.landing.open', group: 'support', barLabelKey: 'nav.orientation',
+        key: 'orientation', href: '/bussola', labelKey: 'nav.orientation', group: 'support',
         visible: (input) => authenticated(input) && tool('bussola')(input),
     },
     {
@@ -114,7 +108,6 @@ export function headerNavigation(input: HeaderNavigationInput): HeaderNavigation
             title: [identity?.username, identity?.email, identity?.groups.join(', ')].filter(Boolean).join(' - '),
         } : null,
         services: isAuthenticated && canUseResearchConsole(identity) ? (identity?.is_admin ? 'manager' : 'portal') : null,
-        auth: isAuthenticated ? 'logout' : 'adminLogin',
     };
 }
 

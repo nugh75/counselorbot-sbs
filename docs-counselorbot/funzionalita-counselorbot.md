@@ -13,7 +13,7 @@ questionari**, **Percorsi guidati**, **Area studente e strumenti**. Il collegame
 un riquadro illustrato in evidenza, **Dicci com’è andata**, apre il **Questionario di
 gradimento** (`/questionario`), tradotto nelle sei lingue; chi non ha ancora
 effettuato l’accesso lo trova sotto il pulsante «Accedi a CounselorBot». Il
-questionario non è più nella barra di navigazione né nel menu a tre punti.
+questionario non è più nella barra di navigazione né nel pannello Menu.
 L’illustrazione del riquadro è decorativa: il titolo e la descrizione accanto ne
 portano il significato, anche per gli screen reader. Nel catalogo
 viene prima la Bussola, poi le analisi dei questionari, i percorsi guidati e l’Area
@@ -68,21 +68,33 @@ login riporta alla pagina da cui è partito (da `/admin` torna a `/admin`; `/log
 resta l’accesso amministrativo esplicito). Se lo spazio non basta (1024 px, nomi
 lunghi, tedesco o francese) si accorciano vista classe, nome del counselor e nome
 dell’account, mai le voci di navigazione.
-Sotto 1024 px il menu a tre punti raccoglie tutte le voci (ingressi, aree,
-lettore, riprese, preferenze, «Accesso admin» o «Logout»), come prima del
-riordino desktop.
+Sotto 1024 px (telefono e tablet in verticale) la barra mostra il marchio e il
+pulsante **Menu** con l’icona a tre righe. Il pannello si apre sotto la barra, a
+tutta larghezza sul telefono, e raccoglie le stesse funzioni del desktop in
+gruppi con un titolo: in alto la **Vista attiva** per chi ha classi, poi
+**Area** (Area studente, Area docente, Area amministrazione secondo il ruolo),
+**Supporto** (Bussola, Assistente, Guida), **Conversazione** (strumento scelto,
+counselor e **Riprendi un’attività**, che apre il proprio elenco con il numero
+delle attività, Riprova in caso di errore e la cancellazione di ogni riga) e
+infine **Account** con nome, servizi, preferenze, lingue con il loro nome ed
+**Esci** in fondo; chi non ha fatto l’accesso trova **Preferenze** e **Accedi**,
+che riporta alla pagina corrente. Le riprese restano chiuse finché non si apre
+il loro elenco, così lingua ed Esci non arrivano mai dopo tutte le sessioni. Il
+pannello scorre se lo schermo è basso, non sposta la pagina di lato e si chiude
+con Esc, scegliendo una voce o tornando indietro; il focus torna al pulsante
+Menu.
 Gli ingressi stanno in un’area di navigazione con nome («Navigazione
-principale» nella barra, «Navigazione del menu» nel menu a tre punti). La voce
+principale» nella barra, «Navigazione del menu» nel pannello Menu). La voce
 dell’area in cui ci si trova, anche in una sua sottopagina (per esempio
 `/profilo/pqbl` per l’Area studente), è segnata come pagina corrente con un fondo
 leggero e viene annunciata dagli screen reader; una chat aperta dalla home non
 segna nessuna voce.
-Il selettore Area, il menu dell’account, il menu a tre punti e l’elenco
+Il selettore Area, il menu dell’account, il pannello Menu e l’elenco
 **Riprendi un’attività** si aprono da tastiera con Invio o Spazio, si percorrono
 con Tab e si chiudono con Esc, che riporta il focus al pulsante, oppure uscendo
-con Tab. Nel menu dell’account la lingua scelta resta selezionata e annunciata
-come premuta; nel menu a tre punti la scelta chiude il menu e la nuova lingua
-viene annunciata. Nel tema scuro l’anello di focus usa un petrolio chiaro ben
+con Tab. Nel menu dell’account e nel pannello Menu tema, movimento e lingua
+cambiano sul posto: la lingua scelta resta selezionata e annunciata come
+premuta. Nel tema scuro l’anello di focus usa un petrolio chiaro ben
 leggibile; con lo schermo touch i comandi della barra e le lingue hanno bersagli
 da 44 px.
 
@@ -255,7 +267,7 @@ shown. The Guide remains available independently of these class toggles.
   screenshot pertinente; le schermate della piattaforma sono disponibili nelle
   sei lingue, mentre le due viste della chat sono dimostrazioni in italiano.
 - Interfaccia e conversazioni: italiano, inglese, spagnolo, francese, tedesco e
-  svedese. Sono disponibili tema chiaro/scuro, navigazione responsive e lettura vocale dal menu dell’account (da 1024 px) o dal menu a tre punti.
+  svedese. Sono disponibili tema chiaro/scuro, navigazione responsive e lettura vocale dal menu dell’account (da 1024 px) o dal pannello Menu.
 
 ## Analisi dei questionari
 
@@ -823,7 +835,7 @@ e sulla sessione: nessun nuovo permesso o allargamento della visibilità.
 
 Nella header la voce verso l'area è «Area docente» con l'icona a berretto da
 laurea, uguale per docenti, ricercatori e amministrazione: nel selettore «Area» da
-1024 px, nel menu a tre punti sotto.
+1024 px, nel gruppo «Area» del pannello Menu sotto.
 
 La Guida interfaccia (`/guide`) ha una sezione «Piani operativi e incontri» sia per il
 docente (con lo screenshot dell’editor del piano operativo: passi, chat guidata e incontro di
@@ -983,7 +995,7 @@ new work and frozen-session resume are blocked for disabled tools.
 **Student view switcher (#146).** Class settings are a recommended view, not a
 hard block. A student with at least one active class gets an **Active view**
 selector in the top bar (inline from `lg`, where long class names are truncated
-and the open list shows them in full; in the three-dot menu on smaller screens): **All tools** shows every tool and counselor the platform offers to
+and the open list shows them in full; at the top of the «Menu» panel on smaller screens): **All tools** shows every tool and counselor the platform offers to
 students (global disables and teacher-only tools still apply); the class view is
 the default — with one class it is that class, with several **My classes** keeps
 the union above and each class can be chosen alone (only its settings count).

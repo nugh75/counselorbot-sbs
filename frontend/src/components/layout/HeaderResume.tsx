@@ -10,18 +10,16 @@ import { useI18n } from '@/lib/i18n-context';
 import { useDisclosure } from '@/lib/use-disclosure';
 import { Tooltip } from '@/components/ui/Tooltip';
 
+const ROW = 'block truncate px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50';
+
 // Pulsante "Riprendi" nell'header: compare quando c'è una sessione congelata
 // sul server (ripresa da qualsiasi dispositivo) o una chat interrotta salvata
 // localmente. Le voci arrivano dall'header, che le condivide col menu mobile.
 export function HeaderResume({ entries }: { entries: ResumeEntries }) {
-    const { t, tf } = useI18n();
-    const { frozen, localResume, pqbl, count } = entries;
+    const { t } = useI18n();
     const { open, containerRef, triggerRef, triggerProps, onBlur, close } = useDisclosure('resume-panel');
-    const resumeWithReload = (href: string) => {
-        window.location.assign(href);
-    };
 
-    if (count === 0 && !entries.error) return null;
+    if (entries.count === 0 && !entries.error) return null;
 
     // Resume apre sempre l'elenco: l'interazione resta prevedibile sia con una
     // sola sessione, sia quando convivono più snapshot e una chat locale. È un
@@ -48,50 +46,63 @@ export function HeaderResume({ entries }: { entries: ResumeEntries }) {
                     <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-100">
                         {t('frozen.resumeTitle')}
                     </div>
-                    <ResumeLoadError entries={entries} />
-                    {frozen.map((row) => (
-                        <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
-                            <Link
-                                href={resumeHref(row)}
-                                onClick={(event) => {
-                                    event.preventDefault();
-                                    close();
-                                    resumeWithReload(resumeHref(row));
-                                }}
-                                className="block truncate px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                            >
-                                {resumeLabel(row.questionnaire_type, row.label, tf)}
-                            </Link>
-                        </ResumeEntry>
-                    ))}
-                    {localResume && (
-                        <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${resumeLabel(localResume.instrument, null, tf)}`}>
-                            <Link
-                                href={LOCAL_RESUME_HREF}
-                                onClick={(event) => {
-                                    event.preventDefault();
-                                    close();
-                                    resumeWithReload(LOCAL_RESUME_HREF);
-                                }}
-                                className="block truncate border-t border-slate-100 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                            >
-                                {t('header.resume')} · {resumeLabel(localResume.instrument, null, tf)}
-                            </Link>
-                        </ResumeEntry>
-                    )}
-                    {pqbl && (
-                        <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
-                            <Link
-                                href={PQBL_RESUME_HREF}
-                                onClick={close}
-                                className="block truncate border-t border-slate-100 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                            >
-                                {t('header.resume')} · {t('pqbl.card.title')}
-                            </Link>
-                        </ResumeEntry>
-                    )}
+                    <ResumeList entries={entries} onNavigate={close} />
                 </div>
             )}
         </div>
+    );
+}
+
+// Righe dell'elenco «Riprendi», condivise dal pannello della barra e dal
+// sotto-pannello del menu mobile (P5): errore con Riprova, sessioni congelate,
+// chat locale interrotta, pQBL. Ogni riga ha la sua cancellazione confermata.
+export function ResumeList({ entries, onNavigate }: { entries: ResumeEntries; onNavigate: () => void }) {
+    const { t, tf } = useI18n();
+    const { frozen, localResume, pqbl } = entries;
+    // Ricarica invece di navigare: la home legge lo snapshot dai query param al mount.
+    const resumeWithReload = (href: string) => {
+        window.location.assign(href);
+    };
+    return (
+        <>
+            <ResumeLoadError entries={entries} />
+            {frozen.map((row) => (
+                <ResumeEntry key={row.session_id} target={{ kind: 'session', sessionId: row.session_id }} label={resumeLabel(row.questionnaire_type, row.label, tf)}>
+                    <Link
+                        href={resumeHref(row)}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            onNavigate();
+                            resumeWithReload(resumeHref(row));
+                        }}
+                        className={ROW}
+                    >
+                        {resumeLabel(row.questionnaire_type, row.label, tf)}
+                    </Link>
+                </ResumeEntry>
+            ))}
+            {localResume && (
+                <ResumeEntry target={{ kind: 'session', sessionId: localResume.sessionId }} label={`${t('header.resume')} · ${resumeLabel(localResume.instrument, null, tf)}`}>
+                    <Link
+                        href={LOCAL_RESUME_HREF}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            onNavigate();
+                            resumeWithReload(LOCAL_RESUME_HREF);
+                        }}
+                        className={`${ROW} border-t border-slate-100`}
+                    >
+                        {t('header.resume')} · {resumeLabel(localResume.instrument, null, tf)}
+                    </Link>
+                </ResumeEntry>
+            )}
+            {pqbl && (
+                <ResumeEntry target={{ kind: 'pqbl' }} label={`${t('header.resume')} · ${t('pqbl.card.title')}`}>
+                    <Link href={PQBL_RESUME_HREF} onClick={onNavigate} className={`${ROW} border-t border-slate-100`}>
+                        {t('header.resume')} · {t('pqbl.card.title')}
+                    </Link>
+                </ResumeEntry>
+            )}
+        </>
     );
 }
