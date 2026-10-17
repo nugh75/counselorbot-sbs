@@ -138,11 +138,11 @@ for (const initialError of [false, true]) {
             }
             await page.getByRole('button', { name: 'Riprendi un’attività', exact: true }).click();
             await page.getByText('Impossibile aggiornare le sessioni da riprendere.').waitFor();
-            if (!initialError) assert.equal(await page.getByRole('menuitem', { name: 'Sessione da ritrovare', exact: true }).count(), 1);
+            if (!initialError) assert.equal(await page.locator('#resume-panel').getByRole('link', { name: 'Sessione da ritrovare', exact: true }).count(), 1);
             control.frozenError = false;
             await page.getByRole('button', { name: 'Riprova', exact: true }).click();
             await page.getByRole('button', { name: 'Riprova', exact: true }).waitFor({ state: 'hidden' });
-            assert.equal(await page.getByRole('menuitem', { name: 'Sessione da ritrovare', exact: true }).count(), 1);
+            assert.equal(await page.locator('#resume-panel').getByRole('link', { name: 'Sessione da ritrovare', exact: true }).count(), 1);
             assert.deepEqual(control.details, []);
             assert.deepEqual(control.errors, []);
         } finally { await context.close(); }
@@ -208,7 +208,8 @@ for (const surface of ['desktop', 'mobile', 'home']) {
             let list;
             if (surface === 'desktop') {
                 await page.getByRole('button', { name: 'Riprendi un’attività', exact: true }).click();
-                list = page.getByRole('menu');
+                // P2: the desktop Riprendi panel is a disclosure of links, not an ARIA menu.
+                list = page.locator('#resume-panel');
             } else if (surface === 'mobile') {
                 await page.locator('button[aria-controls="mobile-menu"]').click();
                 list = page.locator('#mobile-menu');
@@ -259,7 +260,7 @@ test('a local-only resume point can be deleted when no server snapshot exists', 
             dispatchEvent(new Event('counselorbot-resume-change'));
         });
         await page.getByRole('button', { name: 'Riprendi un’attività', exact: true }).click();
-        const menu = page.getByRole('menu');
+        const menu = page.locator('#resume-panel');
         const remove = menu.locator('button[aria-label^="Elimina sessione:"]').last();
         page.once('dialog', dialog => dialog.accept());
         await remove.click();
