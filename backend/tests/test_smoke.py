@@ -3262,6 +3262,8 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
             files={"file": ("intro.md", b"# Intro\n\nContenuto indicizzato per il test.", "text/markdown")},
         )
         assert upload.status_code == 200, upload.text
+        # Il reindex parte in background (start_build): si guarda l'esito a build finito.
+        assert rag_index.get_index(slug).wait_for_build()
         assert upload.json()["stats"]["n_chunks"] >= 1
 
         listed = client.get(f"/admin/rag/docs?collection={slug}")
@@ -3283,6 +3285,7 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
             "in_scope": False,
         })
         assert scoped_out.status_code == 200, scoped_out.text
+        assert rag_index.get_index(slug).wait_for_build()
         assert scoped_out.json()["scope"]["in_scope"] is False
         assert scoped_out.json()["scope"]["forced"] is True
 
@@ -3300,6 +3303,7 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
             "in_scope": True,
         })
         assert scoped_in.status_code == 200, scoped_in.text
+        assert rag_index.get_index(slug).wait_for_build()
         assert scoped_in.json()["scope"]["in_scope"] is True
         assert scoped_in.json()["scope"]["forced"] is True
 
@@ -3325,6 +3329,7 @@ def test_rag_docs_dynamic_collection_upload_preview_and_delete():
 
         deleted_doc = client.delete(f"/admin/rag/docs?collection={slug}&source=intro.md")
         assert deleted_doc.status_code == 200, deleted_doc.text
+        assert rag_index.get_index(slug).wait_for_build()
 
         deleted_collection = client.delete(f"/admin/rag/collections/{slug}")
         assert deleted_collection.status_code == 200, deleted_collection.text
