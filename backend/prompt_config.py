@@ -1727,8 +1727,9 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "sort_order": 1,
         "label": "1. Fattori Cognitivi",
         "prompt": (
-            "Analyse ONLY the cognitive factors of my QSAr profile: C1r, C2r, C3r and C4r. "
-            "For each, give the score, interpretation and a short practical comment."
+            "Read ONLY the cognitive factors of my QSAr profile: C1r, C2r, C3r and C4r. "
+            "For each, give the score and its interpretation as an open reading of study strategies, "
+            "without practical advice. Close by asking what I actually do in practice when studying new material."
         ),
         "system_prompt_mode": "qsar-factor",
         "color_theme": "blue",
@@ -1739,8 +1740,9 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "sort_order": 2,
         "label": "2. Fattori Affettivi",
         "prompt": (
-            "Analyse ONLY the affective factors of my QSAr profile: A1r, A2r, A3r and A4r. "
-            "For each, give the score, interpretation and a short practical comment."
+            "Read ONLY the affective factors of my QSAr profile: A1r, A2r, A3r and A4r. "
+            "For each, give the score and its interpretation as an open reading of study attitudes, "
+            "without practical advice. Close by asking what I actually do when facing difficult tasks or exam pressure."
         ),
         "system_prompt_mode": "qsar-factor",
         "color_theme": "purple",
@@ -1751,8 +1753,9 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "sort_order": 3,
         "label": "3. Elaborazione e Organizzazione",
         "prompt": (
-            "Analyse together C1r (elaborative strategies) and C3r (graphic strategies and "
-            "semantic organisers), assessing how the student understands and remembers."
+            "Read together C1r (elaborative strategies) and C3r (graphic strategies and "
+            "semantic organisers), offering ONE hypothesis on how the student understands and remembers. "
+            "Close by asking what they actually do when organizing complex material and what that produces."
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "indigo",
@@ -1763,8 +1766,9 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "sort_order": 4,
         "label": "4. Autoregolazione e Attenzione",
         "prompt": (
-            "Analyse together C2r (self-regulated strategies) and C4r (lack of attention "
-            "control), respecting the inverted direction of C4r."
+            "Read together C2r (self-regulated strategies) and C4r (lack of attention "
+            "control) as ONE hypothesis on self-regulation, respecting the inverted direction of C4r. "
+            "Close by asking what they actually do when concentration wavers and how that choice works."
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "teal",
@@ -1775,8 +1779,9 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "sort_order": 5,
         "label": "5. Motivazione e Competenza",
         "prompt": (
-            "Analyse together A2r (volition) and A4r (perceived competence), "
-            "assessing effort and confidence in one's own abilities."
+            "Read together A2r (volition) and A4r (perceived competence) "
+            "as ONE hypothesis on effort and confidence. "
+            "Close by asking what they actually do when a task starts to feel demanding, and what that leads to."
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "pink",
@@ -1787,8 +1792,9 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "sort_order": 6,
         "label": "6. Gestione Emotiva",
         "prompt": (
-            "Analyse A1r (anxiety and emotional control), respecting its "
-            "inverted direction and proposing practical, non-diagnostic suggestions."
+            "Read A1r (anxiety and emotional control) as an open hypothesis about how emotional tension "
+            "affects study, respecting its inverted direction and without practical advice. "
+            "Close by asking what they actually do when tension rises around deadlines or tests."
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "rose",
@@ -1799,8 +1805,9 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "sort_order": 7,
         "label": "7. Attribuzioni Causali",
         "prompt": (
-            "Analyse A3r (causal attributions) and explain practically how the way "
-            "successes and difficulties are read can support studying."
+            "Read A3r (causal attributions) as an open hypothesis on how the way successes and "
+            "difficulties are explained affects studying. "
+            "Close by asking what they actually do and think when an outcome is not what they hoped, and what follows from that way of seeing it."
         ),
         "system_prompt_mode": "qsar-second-level",
         "color_theme": "orange",
@@ -1811,13 +1818,13 @@ DEFAULT_QSAR_GUIDED_STEPS: List[Dict] = [
         "sort_order": 8,
         "label": "8. Sintesi Integrata",
         "prompt": (
-            "Integrated synthesis of the WHOLE QSAr profile: C1r, C2r, C3r, C4r, A1r, A2r, "
+            "Integrated reading of the WHOLE QSAr profile: C1r, C2r, C3r, C4r, A1r, A2r, "
             "A3r, A4r. Do NOT re-analyse each factor one by one: identify the 2-3 most "
             "salient relationships in this profile that cross the cognitive and affective "
             "areas (e.g. anxiety A1r affecting attention control C4r; perceived competence "
-            "A4r sustaining volition A2r and self-regulated strategies C2r) and build a "
-            "single integrated picture of how the student studies and why, grounded in the "
-            "actual scores. Respect the inverted direction of C4r and A1r."
+            "A4r sustaining volition A2r and self-regulated strategies C2r) and offer a "
+            "single integrated hypothesis of how the student studies and why, grounded in what "
+            "emerged in conversation and confirmed by the student. Respect the inverted direction of C4r and A1r."
             + SYNTHESIS_ADVICE_DIRECTIVE
         ),
         "system_prompt_mode": "qsar-second-level",
@@ -1844,11 +1851,12 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "sort_order": 1,
         "label": "1. Passato Negativo",
         "prompt": (
-            "Analyse the Past Negative factor of my time-perspective profile. "
-            "Give the score, the zone "
-            "(In line with the balanced profile / Close to the balanced profile / Area for growth), "
-            "what it means for the student, and a short practical comment. "
-            "Do not use acronyms with the student."
+            "Read the Past Negative factor of my time-perspective profile: "
+            "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
+            "and explain in simple words that it describes a habit of recalling past difficulties or negative experiences. "
+            "Offer it as a possible habit of attention, not a fixed trait, and do not add practical advice. "
+            "Close by asking how this shows in the way the student approaches new challenges or exams — "
+            "what they choose to do, and what that produces. Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "rose",
@@ -1859,11 +1867,12 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "sort_order": 2,
         "label": "2. Passato Positivo",
         "prompt": (
-            "Analyse the Past Positive factor of my time-perspective profile. "
-            "Give the score, the zone "
-            "(In line with the balanced profile / Close to the balanced profile / Area for growth), "
-            "what it means, and a practical comment. "
-            "Do not use acronyms with the student."
+            "Read the Past Positive factor of my time-perspective profile: "
+            "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
+            "and explain in simple words that it describes drawing on positive past experiences and roots. "
+            "Offer it as an attention resource, not a trait, and do not add practical advice. "
+            "Close by asking what they actually do when preparing for demanding work — "
+            "whether they draw on past successes and what effect that has. Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "amber",
@@ -1874,12 +1883,12 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "sort_order": 3,
         "label": "3. Presente Edonistico",
         "prompt": (
-            "Analyse the Present Hedonistic factor of my time-perspective profile. "
-            "Give the score, the zone "
-            "(In line with the balanced profile / Close to the balanced profile / Area for growth), "
-            "what it means, and a practical comment. "
-            "Always explain in simple terms that 'hedonistic' also means the ability to live in the present "
-            "and seize the moment (carpe diem), beyond the pursuit of immediate gratification. "
+            "Read the Present Hedonistic factor of my time-perspective profile: "
+            "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
+            "and explain in simple words that 'hedonistic' means living in the present and seizing the moment (carpe diem). "
+            "Offer it as a habit of attention, not a trait, and do not add practical advice. "
+            "Close by asking how this shows when balancing study with other activities — "
+            "what they choose when study requires immediate sacrifice and what that choice costs or saves them. "
             "Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
@@ -1891,13 +1900,13 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "sort_order": 4,
         "label": "4. Presente Fatalistico",
         "prompt": (
-            "Analyse the Present Fatalistic factor of my time-perspective profile. "
-            "Give the score, the zone "
-            "(In line with the balanced profile / Close to the balanced profile / Area for growth), "
-            "what it means, and a practical comment. "
-            "Always explain in simple terms that 'fatalistic' means the feeling of being unable "
-            "to influence events and a tendency towards resignation. "
-            "Do not use acronyms with the student."
+            "Read the Present Fatalistic factor of my time-perspective profile: "
+            "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
+            "and explain in simple words that 'fatalistic' means the feeling that what happens does not depend much on you. "
+            "Offer it as a possible habit of attention, not a trait, and do not add practical advice. "
+            "Close by asking how this shows in the way the student prepares — "
+            "what they choose to do, or not do, when they feel the outcome is not up to them — "
+            "and what that choice costs or saves them. Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
         "color_theme": "red",
@@ -1908,10 +1917,12 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "sort_order": 5,
         "label": "5. Futuro",
         "prompt": (
-            "Analyse the Future factor of my time-perspective profile. "
-            "Give the score, the zone "
-            "(In line with the balanced profile / Close to the balanced profile / Area for growth), "
-            "what it means, and a practical comment. "
+            "Read the Future factor of my time-perspective profile: "
+            "give the zone (In line with the balanced profile / Close to the balanced profile / Area for growth) "
+            "and explain in simple words that it reflects planning, goal orientation, and working for future outcomes. "
+            "Offer it as an orientation habit, not a trait, and do not add practical advice. "
+            "Close by asking how this translates into the way they structure their study — "
+            "what they choose to prioritize in the present and what that brings. "
             "Do not use acronyms with the student."
         ),
         "system_prompt_mode": "ztpi-factor",
@@ -1923,11 +1934,11 @@ DEFAULT_ZTPI_GUIDED_STEPS: List[Dict] = [
         "sort_order": 6,
         "label": "6. Profilo Temporale Equilibrato",
         "prompt": (
-            "Final time-perspective analysis: compare my overall profile with "
+            "Final time-perspective reading: compare my overall profile with "
             "Zimbardo's ideal balanced time perspective. "
             "Indicate which factors are in line with the balanced time perspective and which deviate, "
             "specifying for each factor whether it is below, inside or above the ideal range. "
-            "Add a short reading of the overall deviation. "
+            "Offer a short integrated hypothesis of the overall balance as a lens on how time perspective influences study choices. "
             "In the text for the student do not use acronyms: replace acronyms with full names. "
             "Explain the terms explicitly: 'present hedonistic' = living in the present and seizing the moment (carpe diem), "
             "with balance and responsibility; "
@@ -2359,9 +2370,9 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "was still open, close it in ONE short sentence, then focus fully on this area. "
             "Explain the area in one or two simple sentences: how you recognise and handle "
             "anxiety, fear of making mistakes and tension when facing difficult or demanding "
-            "tasks. Refer to the student's self-assessment result for this area (as "
-            "self-perception, not a judgement), then open the reflection with ONE question "
-            "connected to a real, recent situation."
+            "tasks. Refer to the student's self-assessment result for this area as their own "
+            "self-perception, then open the reflection with ONE question about what they do "
+            "when tension rises in a demanding task — how they usually respond and what that response leads to."
         ),
         "system_prompt_mode": "qpcs-analysis",
         "color_theme": "blue",
@@ -2378,9 +2389,9 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "discussing the previous topic. Explain the area in one or two simple sentences: how "
             "you express your ideas, make sure you are understood and that you have understood "
             "others, and how you feel when talking with new or important people. Refer to the "
-            "student's self-assessment result for this area (as self-perception, not a "
-            "judgement), then open the reflection with ONE question connected to a real "
-            "situation."
+            "student's self-assessment result for this area as self-perception, not a "
+            "judgement, then open the reflection with ONE question about what they do when "
+            "they need to share ideas or ask for clarification in study or group work, and what usually happens."
         ),
         "system_prompt_mode": "qpcs-analysis",
         "color_theme": "indigo",
@@ -2396,9 +2407,9 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "connect it to this area), then focus fully on this area and do NOT keep discussing "
             "the previous topic. Explain the area in one or two simple sentences: how you keep "
             "going and finish what you start, even when a task is boring or tiring, and how you "
-            "stay focused. Refer to the student's self-assessment result for this area (as "
-            "self-perception, not a judgement), then open the reflection with ONE question "
-            "connected to a real situation."
+            "stay focused. Refer to the student's self-assessment result for this area as "
+            "self-perception, not a judgement, then open the reflection with ONE question "
+            "about what they actually do when study becomes tedious or difficult, how they choose to proceed, and what that produces."
         ),
         "system_prompt_mode": "qpcs-analysis",
         "color_theme": "amber",
@@ -2415,9 +2426,9 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "discussing the previous topic. Explain the area in one or two simple sentences: how "
             "you study and learn - connecting new things to what you already know, spotting the "
             "important information and applying it to real life - and how you work together with "
-            "others. Refer to the student's self-assessment result for this area (as "
-            "self-perception, not a judgement), then open the reflection with ONE question "
-            "connected to a real situation."
+            "others. Refer to the student's self-assessment result for this area as "
+            "self-perception, not a judgement, then open the reflection with ONE question "
+            "about what strategies they actually use when studying new material, and what results those ways of working give."
         ),
         "system_prompt_mode": "qpcs-analysis",
         "color_theme": "teal",
@@ -2434,9 +2445,9 @@ DEFAULT_QPCS_GUIDED_STEPS: List[Dict] = [
             "do NOT keep discussing the previous topic. Explain the area in one or two simple "
             "sentences: how capable you feel of succeeding in your activities and whether you have "
             "a sense of what matters to you and an idea of a life or career project. Refer to the "
-            "student's self-assessment result for this area (as self-perception, not a "
-            "judgement), then open the reflection with ONE question connected to a real "
-            "situation."
+            "student's self-assessment result for this area as self-perception, not a "
+            "judgement, then open the reflection with ONE question about how their confidence "
+            "shapes the choices they make about study or future plans, and where that leads."
         ),
         "system_prompt_mode": "qpcs-analysis",
         "color_theme": "rose",

@@ -1,3 +1,23 @@
+# Handoff t5: riscrittura step di fabbrica QSA, QSAr, ZTPI e QPCS come ipotesi e indagine sull'agire (fase 4)
+Data: 2026-10-17 | Branch: `feature/factory-step-prompts-refactor` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #374 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 4 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md):
+- `backend/prompts/qsa_step_*.md`:
+  - `qsa_step_cognitive.md` e `qsa_step_affective.md`: fattori restituiti come lenti aperte sui processi e sulle abitudini di studio, non come etichette rigide. Domande centrate su cosa fa lo studente in pratica nello studio.
+  - `qsa_step_sl_elaboration.md`, `qsa_step_sl_selfcontrol.md`, `qsa_step_sl_motivation.md`, `qsa_step_sl_emotions.md`, `qsa_step_sl_attribution.md`, `qsa_step_sl_social.md`, `qsa_step_sl_synthesis.md`: interazioni tra fattori formulate come ipotesi aperte («as ONE hypothesis about how this student...») con indagine centrata su comportamenti, scelte e conseguenze («what they actually do, how they choose that, and what that way of acting produces»). Preservate le guardie di simmetria (A2/A5) e aggancio (A6).
+- `backend/prompt_config.py`:
+  - `DEFAULT_QSAR_GUIDED_STEPS`: rimozione di «short practical comment» su fattori cognitivi e affettivi; lenti di secondo livello presentate come ipotesi aperte e domande sull'agire e sulle scelte pratiche nello studio.
+  - `DEFAULT_ZTPI_GUIDED_STEPS`: rimozione di «a practical comment» nei singoli fattori (t1-t5); fattori inquadrati come abitudini di attenzione anziché tratti immutabili; domande focalizzate su scelte e conseguenze nella preparazione (incluso Presente Fatalistico come da §6.2 dell'audit).
+  - `DEFAULT_QPCS_GUIDED_STEPS`: rimozione di «connected to a real, recent situation» in tutte le aree (emozioni, comunicazione, volizione, apprendimento, fiducia) in favore di domande di indagine su come lo studente agisce, sceglie e risponde alle situazioni impegnative o di studio.
+- `backend/prompt_factory_legacy.json`:
+  - Verificata la presenza di tutti gli hash precedenti per garantire la piena compatibilità con la funzione «Allinea prompt di fabbrica» senza alterare le personalizzazioni admin.
+- Test:
+  - `backend/tests/test_chat_preparation.py` (6/6 passati, preservazione di tutte le definizioni di step).
+  - `backend/tests/test_prompt_factory_alignment.py` e `test_control_markers.py` (50/50 passati).
+  - Suite di regressione completa in Docker: 870/870 passati.
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
 # Handoff t4: rimozione [ANCHOR] e ritocco di testi e sentinelle in codice (fase 3)
 Data: 2026-10-17 | Branch: `feature/code-prompts-cleanup` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
 Issue #372 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
