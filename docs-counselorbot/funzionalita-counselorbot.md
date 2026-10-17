@@ -1604,7 +1604,10 @@ Prompt Lab conserva negli snapshot questi livelli e le assegnazioni e adatta
 ogni prova al modello scelto. Il risultato conserva il rapporto dei token del
 contesto effettivamente inviato. Un conteggio minore non dimostra una risposta
 migliore: la verifica automatica richiede lettura educativa dei risultati e
-non attiva configurazioni o prompt.
+non attiva configurazioni o prompt. I casi di calibrazione verificano che il
+giudice distingua risposte aderenti alla facilitazione metacognitiva (es. fattore
+A6 come percezione di competenza, senza convenevoli né aneddotica situazionale)
+da risposte arbitrarie o scorrette.
 
 1. **Comune a tutte le chat guidate**: la persona del counselor (sola lettura;
    «Modifica» apre un riquadro che salva con la stessa funzione del tab Counselor,
