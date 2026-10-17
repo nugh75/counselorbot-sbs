@@ -1,7 +1,7 @@
 // Client HTTP dei taccuini di prova del docente (vedi practice-notebooks.ts).
 
 import { apiFetch } from '@/lib/auth';
-import { parsePracticeNotebooks, parsePracticeResults, practiceNotebookBody, type PracticeNotebook, type PracticeNotebookData, type PracticeResult } from '@/lib/practice-notebooks';
+import { parsePracticeNotebooks, parsePracticeResults, practiceNotebookBody, type PracticeChat, type PracticeChatMessage, type PracticeNotebook, type PracticeNotebookData, type PracticeResult } from '@/lib/practice-notebooks';
 
 const BASE = '/api/teacher/practice-notebooks';
 
@@ -48,6 +48,13 @@ export const practiceNotebookApi = {
     },
     async removeResult(id: number, resultId: number): Promise<void> {
         await json(await apiFetch(`${BASE}/${id}/results/${resultId}`, { method: 'DELETE' }));
+    },
+    async chats(id: number): Promise<PracticeChat[]> {
+        return json(await apiFetch(`${BASE}/${id}/chats`));
+    },
+    async transcript(id: number, sessionId: string): Promise<PracticeChatMessage[]> {
+        const body = await json<{ messages?: PracticeChatMessage[] }>(await apiFetch(`${BASE}/${id}/chats/${encodeURIComponent(sessionId)}`));
+        return Array.isArray(body.messages) ? body.messages : [];
     },
     async updateResult(id: number, resultId: number, scores: Record<string, number>): Promise<PracticeResult> {
         return json(await apiFetch(`${BASE}/${id}/results/${resultId}`, {

@@ -21,6 +21,7 @@ import {
     type PracticeNotebookData,
 } from '@/lib/practice-notebooks';
 import { practiceNotebookApi } from '@/lib/practice-notebooks-api';
+import { PracticeChats } from './PracticeChats';
 import { PracticeRepertoire } from './PracticeRepertoire';
 
 type Draft = { id: number | 'new'; title: string; values: PracticeNotebookData; groupIds: number[] };
@@ -183,29 +184,6 @@ export function PracticeNotebooks() {
         );
     };
 
-    const practiceChats = (notebook: PracticeNotebook) => {
-        const rows = (chats ?? []).filter((chat) => chat.practice_notebook_id === notebook.id);
-        return (
-            <section data-practice-chats className="space-y-2 border-t border-slate-200 pt-3">
-                <h3 className="text-sm font-semibold text-slate-700">{l('practiceChats')}</h3>
-                <p className="text-xs text-slate-500">{l('practiceChatsHint')}</p>
-                {chatsFailed && <p role="alert" className="text-xs text-red-600">{l('chatsError')}</p>}
-                {chats !== null && !rows.length && <p className="text-xs text-slate-500">{l('noPracticeChats')}</p>}
-                <ul className="space-y-2">
-                    {rows.map((chat) => (
-                        <li key={chat.session_id} data-practice-chat={chat.session_id} className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 p-2 text-sm">
-                            <span className="min-w-0 flex-1 text-slate-800">
-                                {chat.label || chat.questionnaire_type}
-                                {chat.updated_at && <span className="ml-2 text-xs text-slate-500">{new Date(chat.updated_at).toLocaleDateString(lang)}</span>}
-                            </span>
-                            <Link href={`/?frozen=${encodeURIComponent(chat.session_id)}`} className={`${secondary} inline-flex items-center`}>{l('openChat')}</Link>
-                        </li>
-                    ))}
-                </ul>
-            </section>
-        );
-    };
-
     const summary = (notebook: PracticeNotebook) => {
         const filled = PRACTICE_NOTEBOOK_FIELDS.filter((field) => (notebook.data[field.key] ?? '').trim());
         if (!filled.length) return <p className="text-sm text-slate-500">{l('noFields')}</p>;
@@ -243,7 +221,7 @@ export function PracticeNotebooks() {
                                 <h2 className="text-base font-bold text-slate-800">{notebook.title}</h2>
                                 {summary(notebook)}
                                 {classSummary(notebook)}
-                                {practiceChats(notebook)}
+                                <PracticeChats notebookId={notebook.id} openChats={chats?.filter((chat) => chat.practice_notebook_id === notebook.id) ?? null} openChatsFailed={chatsFailed} />
                                 <PracticeRepertoire notebookId={notebook.id} />
                                 <div className="flex flex-wrap gap-2">
                                     <button type="button" disabled={busy} className={secondary}
