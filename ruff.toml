@@ -1,0 +1,5 @@
+# I test importano fixture pytest condivise da altri moduli di test: il
+# parametro omonimo che le usa e' per Ruff una ridefinizione (F811), per pytest
+# e' proprio l'uso della fixture.
+[lint.per-file-ignores]
+"backend/tests/*.py" = ["F811"]
