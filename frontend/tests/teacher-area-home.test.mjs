@@ -44,7 +44,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
     await page.goto(`${origin}/docente`, { waitUntil: 'networkidle' });
     await page.getByRole('heading', { level: 2, name: 'Progettazione didattica' }).waitFor();
     await page.locator('[data-testid="didactic-design-cta"]').waitFor();
-    // intestazioni di gruppo in ordine: Didattica, Le mie classi, Classe e assegnazioni, Palestra, Profilo docente, Cataloghi
+    // intestazioni di gruppo in ordine: Didattica, Le mie classi, Classe e assegnazioni, Palestra, Profilo docente, Libreria e risorse
     const h2 = await page.getByRole('heading', { level: 2 }).allTextContents();
     assert.deepEqual(h2.slice(0, 6), [
         'Progettazione didattica',
@@ -52,7 +52,7 @@ async function prepare(page, { lang = 'it', teacher = true, researcher = false }
         'Classe e assegnazioni',
         'Palestra di prova e simulazione',
         'Profilo professionale del docente',
-        'Cataloghi',
+        'Libreria e risorse didattiche',
     ]);
     // Sezione Le mie classi (zero-state con mock vuoto)
     await page.locator('[data-testid="teacher-my-classes-section"]').waitFor();

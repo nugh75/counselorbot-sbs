@@ -1,3 +1,43 @@
+# Handoff t2: baseline test frontend verde (IN PAUSA)
+Data: 2026-10-17 | Branch: `fix/frontend-test-baseline` | Agente: `t2-opus-tests-frontend`, Claude Opus 5.5 high
+Compito Diario `d08c88cd-7195-4be8-b4bb-346151081739` | Milestone #22 | PR in bozza
+
+Sospeso su richiesta del Timoniere (PC sovraccarico): da riprendere di notte.
+
+Fatto (commit sul branch):
+- ESLint: 6 errori preesistenti corretti (setState negli effect → pattern
+  «aggiorna lo stato al cambio di prop»; cast `PersonalAreaSlug` invece di
+  `any`). `npm run lint` 0 errori (61 warning), `npm test` 584/584,
+  `tsc --noEmit` verde (serve `npx next typegen` per `next-env.d.ts`).
+- Test obsoleti aggiornati: `chat-recovery` (`#resume-panel` di link al posto di
+  `role=menu`, P2), `voice-reader` (pannello account ≥1024 px, «Menu» sotto,
+  P4/P5), `teacher-area-home` («Libreria e risorse didattiche», ea6683af),
+  `chat-preferences` (solo Discorsivo/Per punti, 9c5230fb).
+- `capture-guide.mjs`: «Assegna» parte da «Nuova assegnazione» in
+  `/docente/assegnazioni` (fd95444d).
+- `NEXT_IMAGES_UNOPTIMIZED=1` solo in `dev-navbar-tests.sh` e
+  `dev-first-use-tests.sh` (WebP del dev macOS 10–30 s); produzione invariata.
+- Bug a227b327 già risolto su main (riferimento `/profilo` = rotte reali).
+
+Da fare (nessuna suite browser modificata è stata ancora eseguita fino in fondo):
+- Eseguire, una alla volta, chat-recovery, voice-reader, teacher-area-home,
+  chat-preferences, account-onboarding, guide-audiences,
+  guided-chat-follow-up, navbar-visibility. Il dev su :3149 ricompilava ogni
+  rotta in 30–150 s (swap 8,3/9 GB) e i `goto` da 30 s scadevano: usare una
+  build isolata (`BACKEND_ORIGIN=http://127.0.0.1:9 NEXT_IMAGES_UNOPTIMIZED=1
+  npm run build`, poi `next start -H 127.0.0.1 -p 3149`), come in P5. La build
+  è stata interrotta prima della fine.
+- account-onboarding (df5b5b0a/696f4962): la scheda QSA in `ReturningHome` ha
+  il nome in `<span>` e «Analizza» al posto di «Continua»; verificare in browser
+  se aggiornare il test e perché `#tools-assessment` non risulta visibile.
+- guided-chat-follow-up (dd958fd5), guide-audiences (802ea9ab), avvisi primo
+  uso mobile (b1b747e7), fixture radio taccuini (fcc442d0): da riprodurre.
+- 7b42478e: runner Docker ad hoc, soluzione `localhost` già documentata in
+  `practice-notebook-profile-chat-validation.md`; non verificato.
+- Documentare esito e comandi in `docs/operations/`, aggiornare i bug nel Diario.
+
+Nessun server, build o suite lasciati attivi; nessun Docker, deploy o sudo.
+
 # Handoff n12: menu mobile a gruppi (P5)
 Data: 2026-10-17 | Branch: `feat/navbar-mobile-groups` | Agente: `n12-opus-navbar-p5`, Claude Opus 5.5 high
 Compito Diario `4c7f91cd-4637-4950-803f-3e96d36762b3` | Issue #346 | PR #347 (bozza) | Milestone #21

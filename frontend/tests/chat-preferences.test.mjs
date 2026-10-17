@@ -42,7 +42,7 @@ async function fixture(width, instrument = 'QSA', experience = 'standard') {
                 const { text, done = true, display = text, signals } = state.script(body);
                 return route.fulfill({ contentType: 'text/event-stream', body: event({ conversation_id: 'prefs-conversation' }) + event({ display }) + (done ? event({ done: true, response: text, conversation_id: 'prefs-conversation', control_signals: signals }) : '') });
             }
-            const reply = body.response_format === 'table' ? '| Tema | Passo |\n| --- | --- |\n| Studio | Prova |' : `Risposta ${state.streams.length}: ${body.phase || 'chat'}`;
+            const reply = `Risposta ${state.streams.length}: ${body.phase || 'chat'}`;
             return route.fulfill({ contentType: 'text/event-stream', body: event({ conversation_id: 'prefs-conversation' }) + event({ display: reply }) + event({ done: true, response: reply, conversation_id: 'prefs-conversation' }) });
         }
         return route.fulfill({ json: data });
@@ -77,11 +77,12 @@ for (const width of [390, 1440]) {
             assert.equal(state.streams.length, 4, 'resume does not generate another opening');
             await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
             assert.equal(await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).getAttribute('aria-checked'), 'true');
-            await page.getByRole('radio', { name: 'Formato: Tabella', exact: true }).click(); await page.keyboard.press('Escape');
+            // The selector offers only Discorsivo and Per punti since 9c5230fb.
+            await page.getByRole('radio', { name: 'Formato: Discorsivo', exact: true }).click(); await page.keyboard.press('Escape');
             await page.locator('#guided-composer').fill('Approfondiamo'); await page.locator('#guided-composer').press('Enter');
-            await page.getByRole('table').waitFor();
+            await page.getByRole('log').getByText('Risposta 5: qsa-essential-followup', { exact: true }).waitFor();
             assert.equal(state.streams.at(-1).phase, 'qsa-essential-followup');
-            assert.equal(state.streams.at(-1).response_format, 'table');
+            assert.equal(state.streams.at(-1).response_format, 'standard');
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             assert.deepEqual(state.errors, []);
         } finally { await context.close(); }
@@ -93,10 +94,12 @@ test('QSAr keeps its original path and receives the format choice', async () => 
         await page.goto(`${origin}/?resume=1`); await page.locator('#guided-composer').waitFor();
         assert.equal(await page.getByRole('radio', { name: /Percorso essenziale/ }).count(), 0);
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
-        await page.getByRole('radio', { name: 'Formato: Tabella', exact: true }).click(); await page.keyboard.press('Escape');
+        await page.getByRole('radio', { name: 'Formato: Per punti', exact: true }).click(); await page.keyboard.press('Escape');
+        const replies = page.getByRole('log').getByText(/^Risposta \d+: /);
+        const before = await replies.count();
         await page.locator('#guided-composer').fill('Un confronto'); await page.locator('#guided-composer').press('Enter');
-        await page.getByRole('table').waitFor();
-        assert.equal(state.streams.at(-1).guided_path, 'complete'); assert.equal(state.streams.at(-1).response_format, 'table');
+        await replies.nth(before).waitFor();
+        assert.equal(state.streams.at(-1).guided_path, 'complete'); assert.equal(state.streams.at(-1).response_format, 'bullets');
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
 });
@@ -109,12 +112,12 @@ test('OpenCode sends the chosen format', async () => {
         await page.getByText('Risposta 1: chat', { exact: true }).waitFor();
         assert.equal(state.streams[0].response_format, 'bullets');
         const workspaceRequests = state.workspaces;
-        await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('table');
+        await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('standard');
         await page.locator('form textarea').fill('Metti a confronto'); await page.locator('form textarea').press('Enter');
-        await page.getByRole('table').waitFor();
+        await page.getByText('Risposta 2: chat', { exact: true }).waitFor();
         assert.equal(await page.getByText('Risposta 1: chat', { exact: true }).count(), 1);
         assert.equal(state.workspaces, workspaceRequests, 'a presentation preference must not restart the workspace');
-        assert.equal(state.streams.at(-1).response_format, 'table');
+        assert.equal(state.streams.at(-1).response_format, 'standard');
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
 });
@@ -159,10 +162,11 @@ test('Compass sends the preference and renders a table on mobile', async () => {
         assert.equal(await page.getByRole('button', { name: 'Il tuo taccuino', exact: true }).count(), 0);
         assert.equal(await page.getByRole('button', { name: 'Libretto dello studente', exact: true }).count(), 0);
         await page.getByRole('button', { name: 'Opzioni della conversazione', exact: true }).click();
-        await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('table'); await page.keyboard.press('Escape');
+        await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('bullets'); await page.keyboard.press('Escape');
         await page.locator('#bussola-composer').fill('Cosa posso fare?'); await page.locator('#bussola-composer').press('Enter');
+        // The fixture reply is a Markdown table: it must render without horizontal overflow.
         await page.getByRole('table').waitFor();
-        assert.equal(state.streams[0].response_format, 'table');
+        assert.equal(state.streams[0].response_format, 'bullets');
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
@@ -174,11 +178,11 @@ test('Assistant uses the selected format for subsequent replies', async () => {
         await page.goto(`${origin}/assistente`);
         assert.equal(await page.getByRole('button', { name: 'Il tuo taccuino', exact: true }).count(), 0);
         assert.equal(await page.getByRole('button', { name: 'Libretto dello studente', exact: true }).count(), 0);
-        await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('table');
+        await page.getByRole('combobox', { name: 'Formato', exact: true }).selectOption('bullets');
         const input = page.locator('main textarea').last();
         await input.fill('Come funziona il QSA?'); await input.press('Enter');
-        await page.getByRole('table').waitFor();
-        assert.equal(state.streams[0].response_format, 'table');
+        await page.getByText('Risposta 1: chat', { exact: true }).waitFor();
+        assert.equal(state.streams[0].response_format, 'bullets');
         assert.deepEqual(state.errors, []);
     } finally { await context.close(); }
 });

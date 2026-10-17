@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BookOpen, Sparkles, Library } from 'lucide-react';
 import { useI18n } from '@/lib/i18n-context';
@@ -22,13 +22,14 @@ export function TeacherResourcesHub({ defaultTab }: { defaultTab?: ResourcesTab 
     })();
 
     const [activeTab, setActiveTab] = useState<ResourcesTab>(initialTab);
-
-    useEffect(() => {
+    const [syncedSearchParams, setSyncedSearchParams] = useState(searchParams);
+    if (searchParams !== syncedSearchParams) {
+        setSyncedSearchParams(searchParams);
         const param = searchParams?.get('tab');
         if (param === 'materiali' || param === 'strategie') {
             setActiveTab(param);
         }
-    }, [searchParams]);
+    }
 
     const handleTabChange = (tab: ResourcesTab) => {
         setActiveTab(tab);

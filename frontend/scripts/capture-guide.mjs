@@ -422,9 +422,12 @@ try {
         const catalogSection = page.getByRole('region', { name: goalText(lang, 'catalog'), exact: true });
         await catalogSection.getByRole('heading', { name: title, exact: true }).waitFor();
         await capture('teacher-catalog', catalogSection);
-        await catalogSection.getByRole('button', { name: assignmentText(lang, 'assign'), exact: true }).click();
+        // The catalog is authoring only: assignments start from «New assignment» (fd95444d).
+        await go('/docente/assegnazioni');
+        await page.getByRole('button', { name: assignmentText(lang, 'newAssignment'), exact: true }).click();
         const dialog = page.getByRole('dialog');
         await dialog.getByLabel(assignmentText(lang, 'group'), { exact: true }).selectOption('91');
+        await dialog.getByLabel(assignmentText(lang, 'goal'), { exact: true }).selectOption('1');
         await dialog.getByLabel(assignmentText(lang, 'instructions'), { exact: true }).fill(instructions);
         await dialog.getByLabel(learningText(lang, 'intent')).selectOption('requested');
         await dialog.getByLabel(learningText(lang, 'dueDate'), { exact: true }).fill('2026-10-15');

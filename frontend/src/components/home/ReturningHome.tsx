@@ -61,12 +61,14 @@ export function ReturningHome({
     const formatDate = (iso: string) => new Date(iso).toLocaleDateString(lang);
 
     const [internalPaths, setInternalPaths] = useState<StudentClassPath[] | null>(paths ?? null);
+    const [syncedPaths, setSyncedPaths] = useState(paths);
+    if (paths !== syncedPaths) {
+        setSyncedPaths(paths);
+        if (paths !== undefined) setInternalPaths(paths);
+    }
 
     useEffect(() => {
-        if (paths !== undefined) {
-            setInternalPaths(paths);
-            return;
-        }
+        if (paths !== undefined) return;
         let alive = true;
         apiFetch('/api/user/paths')
             .then((res) => (res.ok ? res.json() : []))

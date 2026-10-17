@@ -67,7 +67,8 @@ async function fixture({ width = 1440, guest = false, admin = false, live = fals
 }
 
 async function openVoiceReader(page, name = 'Lettore audio') {
-    const menu = page.getByRole('button', { name: /^(Menu|Menü|Menú|Meny)$/i });
+    // P4/P5: «Menu» below 1024px, the account/preferences panel on desktop.
+    const menu = page.locator('button[aria-controls="mobile-menu"], button[aria-controls="account-panel"]').filter({ visible: true });
     await menu.click();
     await page.getByRole('button', { name, exact: true }).click();
 }
