@@ -87,7 +87,11 @@ export function PracticeNotebooks() {
         setDirty(false);
         setError('');
     };
-    const closeDraft = () => { setDraft(null); setDirty(false); };
+    const closeDraft = () => {
+        if (busy || (dirty && !window.confirm(learningText(lang, 'leaveDraft')))) return;
+        setDraft(null);
+        setDirty(false);
+    };
     const edit = (patch: Partial<Draft>) => {
         setDraft((current) => current && { ...current, ...patch });
         setDirty(true);
@@ -100,7 +104,7 @@ export function PracticeNotebooks() {
         const ok = await run(() => draft.id === 'new'
             ? practiceNotebookApi.create(draft.title, draft.values, groupIds ?? [])
             : practiceNotebookApi.update(draft.id, { title: draft.title, values: draft.values, groupIds }));
-        if (ok) closeDraft();
+        if (ok) { setDraft(null); setDirty(false); }
     };
 
     const active = (notebooks ?? []).filter((notebook) => !notebook.archived_at);
