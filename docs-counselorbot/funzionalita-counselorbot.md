@@ -1340,10 +1340,10 @@ I risultati di una chat guidata in prova si ritrovano nella scheda dello student
 simulato (Issue #244): dalla home dell’Area docenti, «Entra nella Palestra di prova»
 o il collegamento «Chat e risultati degli studenti di prova» aprono
 `/docente/taccuini-prova`; nella scheda, **Chat guidate di prova** elenca le chat
-ancora aperte con quel taccuino e **Riapri la conversazione** ne mostra la
-trascrizione per rileggerla e proseguire, mentre i punteggi inseriti in chat restano
-nei **Profili nei questionari** con l’indicazione «da una chat in prova». Una chat
-conclusa esce dall’elenco: ne restano i punteggi, non la trascrizione.
+con quel taccuino, in corso e concluse (Issue #364): **Leggi la trascrizione** la
+mostra in qualsiasi momento, anche dopo «Concludi», e per quelle in corso **Riapri la
+conversazione** permette di proseguire. I punteggi inseriti in chat restano nei
+**Profili nei questionari** con l’indicazione «da una chat in prova».
 
 Il Taccuino del docente è un’autodescrizione del ruolo e della pratica abituale,
 con sei campi **facoltativi** su una sola colonna, come il taccuino dello studente (la nota in testa alla pagina ricorda le scelte Predefinito, Studente, Docente, Prova e Nessuno), nell’ordine: discipline abituali, esperienza di
