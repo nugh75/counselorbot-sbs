@@ -95,11 +95,14 @@ test('one door to the student area: the account menu names the person only', () 
 // group of the «Menu» panel is the desktop account panel.
 test('the Menu panel ends with the account group, resume rows stay in their sub-panel', () => {
     const rows = ['Sessione A', 'Sessione B', 'Sessione C'];
+    // The fixture infers `rows: never[]` from its default value.
+    const menu = (key: keyof typeof PROFILES, resumeOpen: boolean) =>
+        expectedNavbar(key, 390, { resume: { rows, error: false }, resumeOpen } as never).menu as string[];
     for (const key of Object.keys(PROFILES) as (keyof typeof PROFILES)[]) {
-        const closed = expectedNavbar(key, 390, { resume: { rows } }).menu!;
-        const open = expectedNavbar(key, 390, { resume: { rows }, resumeOpen: true }).menu!;
-        const { account } = expectedNavbar(key, 1440);
-        const tail = key === 'A' ? [...account!, LABELS.signIn] : account!;
+        const closed = menu(key, false);
+        const open = menu(key, true);
+        const account = expectedNavbar(key, 1440).account as string[];
+        const tail = key === 'A' ? [...account, LABELS.signIn] : account;
         assert.deepEqual(closed.slice(-tail.length), tail, `${key}: account group last`);
         assert.equal(closed.some(name => rows.includes(name)), false, `${key}: rows closed`);
         assert.ok(closed.indexOf(LABELS.resume) < closed.indexOf(LABELS.languages[0]), key);
