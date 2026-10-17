@@ -24,7 +24,7 @@ import { useI18n } from '@/lib/i18n-context';
 import { isNearBottom } from '@/lib/chat-scroll';
 import { stepLabel, stripStepOrdinal } from '@/lib/i18n-steps';
 import type { Lang } from '@/lib/i18n';
-import { acceptsAgreement, advanceButtons, advanceLabelKey, advancesOnSignal, autoAdvancesOnGenerate, currentGoalPhase, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from '@/lib/interview-path';
+import { acceptsAgreement, advanceLabelKey, advancesOnSignal, autoAdvancesOnGenerate, currentGoalPhase, interviewQuickReplies, isAgreementStep, stepInstructionsMessage, userDecidesAdvance } from '@/lib/interview-path';
 import { AutoGrowTextarea } from '@/components/ui/AutoGrowTextarea';
 import { ResponseLengthSelector, type ResponseLength } from '@/components/ui/ResponseLengthSelector';
 import { NotebookContextSelector } from '@/components/qsa/NotebookContextSelector';
@@ -1581,22 +1581,14 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const inputPlaceholder = isAgreementPhase
         ? t('guided.input.pattoPlaceholder')
         : t('guided.input.placeholder');
-    const showPreviousStep = !essential && currentPhase !== FIXED_CONCLUSION_ID && phases.indexOf(currentPhase) > 0;
-    const advance = essential || !hasNextPhase ? { standard: false, interview: false } : advanceButtons(
-        questionnaireType,
-        currentPhase,
-        getStepDef(currentPhase)?.system_prompt_mode,
-        { conclusion: currentPhase === FIXED_CONCLUSION_ID, suggestion: showAdvanceSuggestion, userMessages: userMessagesInPhase },
-    );
-    const { standard: showStandardAdvance, interview: showInterviewAdvance } = advance;
+    const canGoPrevious = phases.indexOf(currentPhase) > 0;
     const showRepeatStep = currentPhase !== FIXED_CONCLUSION_ID;
     const essentialSummary = essential && isEssentialSummaryPhase(currentPhase);
-    const hasStepNavigation = showPreviousStep || showStandardAdvance || showInterviewAdvance || showRepeatStep;
+    const hasStepNavigation = phases.length > 0;
 
     const nextStepLabel = t(advanceLabelKey(questionnaireType, currentPhase));
-    // Nella barra in fondo: fase in cui si è e fase a cui si punta. Se il
-    // prossimo avanzamento non è disponibile, il traguardo non viene promesso.
-    const targetPhase = (showStandardAdvance || showInterviewAdvance)
+    // Nella barra in fondo: fase in cui si è e fase a cui si punta.
+    const targetPhase = hasNextPhase
         ? phases[phases.indexOf(currentPhase) + 1]
         : undefined;
     const targetPhaseLabel = targetPhase ? getPhaseLabel(targetPhase) : null;
@@ -1605,22 +1597,21 @@ export function GuidedChatInterface({ counselorId, scores, questionnaireType, on
     const renderStepNavigation = () => (
         <div className="flex shrink-0 items-center gap-1">
             {(essentialSummary || goalFinal) && <Button type="button" variant="secondary" disabled={isLoading} onClick={handleComplete}>{chatPreferenceLabel(activeLocale, "finish")}</Button>}
-            {showPreviousStep && <Tooltip content={t('guided.prevStep')} side="top">
-                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.prevStep')} disabled={isLoading} onClick={goToPreviousStep}>
+            <Tooltip content={t('guided.prevStep')} side="top">
+                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.prevStep')} disabled={isLoading || !canGoPrevious} onClick={goToPreviousStep}>
                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                 </Button>
-            </Tooltip>}
+            </Tooltip>
             {showRepeatStep && <Tooltip content={t('guided.repeatStep')} side="top">
                 <Button type="button" variant="ghost" className={stepButtonClass} aria-label={t('guided.repeatStep')} disabled={isLoading} onClick={repeatCurrentStep}>
                     <RotateCcw className="h-5 w-5" aria-hidden="true" />
                 </Button>
             </Tooltip>}
-            {(showStandardAdvance || showInterviewAdvance) && <Tooltip content={nextStepLabel} side="top">
-                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={nextStepLabel} disabled={isLoading} onClick={() => void advancePhase()}>
+            <Tooltip content={nextStepLabel} side="top">
+                <Button type="button" variant="ghost" className={stepButtonClass} aria-label={nextStepLabel} disabled={isLoading || !hasNextPhase} onClick={() => void advancePhase()}>
                     {currentPhase === FIXED_QUESTIONS_ID ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <ChevronRight className="h-5 w-5" aria-hidden="true" />}
                 </Button>
-            </Tooltip>}
-
+            </Tooltip>
         </div>
     );
     const stepNavigation = !isIdea && hasStepNavigation ? <nav aria-label={chatLayoutLabel(activeLocale, 'navigation')} className="flex shrink-0 items-center justify-between gap-2 bg-slate-50 px-2 py-1 lg:rounded-lg lg:border lg:border-slate-200 lg:px-3">
