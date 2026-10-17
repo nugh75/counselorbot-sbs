@@ -4,6 +4,7 @@ import os
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy.engine import make_url
 from backend import auth, database, models
 from backend.routes import class_paths, administration_plans
 from backend.tests.artifact_database import artifact_session
@@ -11,7 +12,7 @@ from backend.tests.artifact_database import artifact_session
 
 @pytest.fixture
 def api():
-    assert os.environ["DATABASE_URL"] == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
+    assert make_url(os.environ["DATABASE_URL"]).database == "counselorbot_test"
     with artifact_session() as db:
         school = models.Institution(
             slug="synthetic-it",

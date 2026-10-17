@@ -9,6 +9,7 @@ from threading import Event
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
 from backend import auth, database, models, path_step_types
@@ -65,7 +66,7 @@ def drop(engine, schema):
 
 
 def test_hiding_waits_for_a_concurrent_path_save(monkeypatch):
-    assert os.environ["DATABASE_URL"] == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
+    assert make_url(os.environ["DATABASE_URL"]).database == "counselorbot_test"
     schema = "tf154r_" + uuid.uuid4().hex
     engine, factory, make_app, group_id = committed_app(schema)
     app, _student_app = make_app(TEACHER), make_app(STUDENT)
@@ -113,7 +114,7 @@ def test_hiding_waits_for_a_concurrent_path_save(monkeypatch):
 
 
 def test_concurrent_replies_and_approval_settle_on_one_completion():
-    assert os.environ["DATABASE_URL"] == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
+    assert make_url(os.environ["DATABASE_URL"]).database == "counselorbot_test"
     schema = "tf154a_" + uuid.uuid4().hex
     engine, factory, make_app, group_id = committed_app(schema)
     app, student_app = make_app(TEACHER), make_app(STUDENT)

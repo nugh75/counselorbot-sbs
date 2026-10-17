@@ -6,6 +6,7 @@ from importlib import import_module
 
 import pytest
 from sqlalchemy import create_engine, event, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.exc import IntegrityError
 
 from backend import models
@@ -18,7 +19,7 @@ migration = import_module("backend.migrations.20261009_assignment_steps")
 @pytest.fixture
 def upgraded_tf5():
     """A TF5 schema: typed steps and deep dives without the assignment target."""
-    assert os.environ["DATABASE_URL"] == "postgresql://c5_test@127.0.0.1:18650/counselorbot_test"
+    assert make_url(os.environ["DATABASE_URL"]).database == "counselorbot_test"
     engine = create_engine(os.environ["DATABASE_URL"])
     schema = "tf153_" + uuid.uuid4().hex
 
