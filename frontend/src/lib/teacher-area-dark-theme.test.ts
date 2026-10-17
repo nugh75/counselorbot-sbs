@@ -52,7 +52,7 @@ test('every light background and dark text in the teacher area has a dark-theme 
 test('the class-goal and practice-gym cards turn dark, light theme untouched', () => {
     // Le tappe del gradiente sono variabili: il remap ridefinisce la variabile,
     // non `background-color`, altrimenti il gradiente coprirebbe il colore.
-    for (const stop of ['via-white', 'from-indigo-50\\/70', 'from-emerald-50\\/70', 'to-sky-50\\/40', 'to-teal-50\\/40']) {
+    for (const stop of ['via-white', 'from-indigo-50\\/70', 'to-sky-50\\/40', 'from-indigo-50\\/50', 'to-white']) {
         const rule = darkBlock.slice(darkBlock.indexOf(`.dark .${stop} {`)).split('}')[0];
         assert.match(rule, /--tw-gradient-(from|via|to):/, `${stop} deve ridefinire la sua tappa`);
     }
