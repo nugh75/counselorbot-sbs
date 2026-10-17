@@ -351,6 +351,17 @@ di QSAr e ZTPI. Gli hash dei testi di fabbrica precedenti restano censiti in `pr
 per consentire l'aggiornamento sicuro e trasparente tramite la funzione «Allinea prompt di fabbrica»
 senza alterare le personalizzazioni introdotte dagli amministratori.
 
+Nei percorsi a intervista qualitativa (QPCC, QAP, Savickas, Evento Significativo) e nell'analisi QPCS,
+il budget numerico rigido di turni («at most two follow-ups», «two or three questions in total») è
+stato sostituito da un criterio qualitativo di comprensione orientato all'agire con tetto di sicurezza
+a circa cinque scambi: il chatbot resta nell'area finché lo studente la sviluppa, esplorando cosa fa,
+come sceglie e quali conseguenze ne derivano, e chiude il passaggio quando emerge un modo concreto di
+agire e lo studente ha risposto a una lettura di esso, oppure su richiesta esplicita o al raggiungimento
+del tetto massimo di scambi. I testi di step e i prompt di sistema d'intervista (QPCC, QAP, Savickas,
+Evento e QPCS) e i relativi hash legacy in `prompt_factory_legacy.json` garantiscono piena continuità,
+prevenzione dei loop conversazionali e compatibilità con l'allineamento dei prompt di fabbrica.
+
+
 
 
 Il **QPCC di Pellerey–Orio** è rivolto a giovani e adulti in cerca di occupazione

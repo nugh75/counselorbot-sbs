@@ -1,3 +1,22 @@
+# Handoff t6: profondità d'intervista: budget → criterio di comprensione con tetto di sicurezza (fase 5)
+Data: 2026-10-18 | Branch: `feature/interview-depth-safety-cap` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #376 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 5 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md):
+- Transizione dal budget rigido di turni («at most two follow-ups», «two or three questions in total») a un criterio qualitativo di comprensione orientato all'agire con tetto di sicurezza flessibile a circa cinque scambi:
+  - `backend/prompts/prompt_qpcc_interview.md`: sostituito il budget di follow-up con permanenza nell'area ancorata a ciò che la persona fa, come sceglie e cosa produce, chiusura su risposta all'ipotesi o richiesta di avanzamento o tetto di circa 5 scambi.
+  - `backend/prompt_config.py` (`DEFAULT_QPCC_GUIDED_STEPS`): riscritti `qpcc-comunicazione`, `qpcc-controllo`, `qpcc-volizione`, `qpcc-elaborazione`, `qpcc-convinzioni` con il medesimo criterio qualitativo.
+  - `backend/prompts/prompt_qap_interview.md` e `DEFAULT_QAP_GUIDED_STEPS`: riscritti `qap-preoccupazione`, `qap-controllo`, `qap-curiosita`, `qap-fiducia` sostituendo la richiesta aneddotica con indagine sulle scelte e sulle modalità di azione e tetto di circa 5 scambi.
+  - `backend/prompts/default_system_prompt_savickas_interview.md` e `DEFAULT_SAVICKAS_GUIDED_STEPS`: preservate le 5 domande narrative fisse di Savickas; allineati i follow-up all'indagine sul significato per l'agire e scelte con tetto di circa 5 scambi.
+  - `backend/prompts/default_system_prompt_evento_interview.md`: rimosso il limite fisso a 2 follow-up in favore dell'indagine sui fatti e sulla rilettura con le parole della persona e tetto di circa 5 scambi.
+  - `backend/prompts/default_system_prompt_qpcs_analysis.md`: rimossi «ask at most two or three questions in total» e «once you have enough, be PROACTIVE...», sostituiti da una domanda riflessiva per turno sull'agire e permanenza fino alla risposta alla lettura come ipotesi.
+- Preservazione factory legacy (`backend/prompt_factory_legacy.json`):
+  - Registrati tutti gli hash preesistenti di Main per garantire la compatibilità con la funzione «Allinea prompt di fabbrica» senza toccare personalizzazioni admin.
+- Test:
+  - `backend/tests/test_prompt_factory_alignment.py`, `test_control_markers.py`, `test_self_questioning.py` (801/801 verdi).
+  - `backend/tests/test_chat_preparation.py`, `test_evento_significativo.py`, `test_prompt_pair_drift.py` (22/22 verdi).
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
 # Handoff t5: riscrittura step di fabbrica QSA, QSAr, ZTPI e QPCS come ipotesi e indagine sull'agire (fase 4)
 Data: 2026-10-17 | Branch: `feature/factory-step-prompts-refactor` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
 Issue #374 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
