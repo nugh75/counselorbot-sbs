@@ -1221,6 +1221,9 @@ class FrozenSessionSummary(BaseModel):
     current_phase: str = ""
     experience: Optional[str] = None
     updated_at: Optional[datetime] = None
+    # Taccuino di prova della sessione (solo in prova): l'area docente elenca
+    # le chat di ciascuno studente simulato.
+    practice_notebook_id: Optional[int] = None
 
 
 class FrozenSessionDetail(FrozenSessionSummary):
@@ -1234,7 +1237,6 @@ class FrozenSessionDetail(FrozenSessionSummary):
     conversation_id: Optional[str] = None
     reasoning_effort: Optional[str] = None
     notebook_context: Optional[str] = None
-    practice_notebook_id: Optional[int] = None
     group_ids: List[int] = Field(default_factory=list)
     pdf_token: Optional[str] = None
 

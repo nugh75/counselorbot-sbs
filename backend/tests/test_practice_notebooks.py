@@ -339,6 +339,18 @@ def test_frozen_session_keeps_the_practice_choice():
         assert detail["practice_notebook_id"] == 7
 
 
+def test_frozen_list_names_the_practice_notebook_only_in_practice():
+    """L'area docente raggiunge le chat di prova dal taccuino: il riepilogo lo indica."""
+    with artifact_session() as db:
+        client = _app(db, TEACHER, frozen_sessions.router)
+        base = {"questionnaire_type": "QSA", "messages": [], "current_phase": "intro"}
+        client.post("/session/freeze", json={**base, "session_id": "p1", "notebook_context": "practice", "practice_notebook_id": 7})
+        client.post("/session/freeze", json={**base, "session_id": "own", "notebook_context": "teacher", "practice_notebook_id": 7})
+        rows = {row["session_id"]: row for row in client.get("/session/frozen").json()}
+        assert rows["p1"]["practice_notebook_id"] == 7
+        assert rows["own"]["practice_notebook_id"] is None
+
+
 # --- Classi dello studente simulato ----------------------------------------
 
 def _groups(db):
