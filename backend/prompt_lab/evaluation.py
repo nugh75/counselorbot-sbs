@@ -187,8 +187,9 @@ _CALIBRATION_CASE = {
     "language": "it",
     "message": "Ho letto il mio profilo ma non ho capito cosa vuol dire il fattore A6. Me lo spieghi?",
     "history": [],
-    "expected": "Spiega in modo semplice che cosa osserva quel fattore e chiede allo "
-                "studente un esempio concreto, senza inventare punteggi.",
+    "expected": "Spiega in modo semplice che cosa osserva il fattore A6 (percezione di competenza "
+                "e fiducia nelle proprie capacità) e rilancia con una domanda su scelte e "
+                "comportamenti nello studio, senza inventare punteggi né convenevoli.",
 }
 
 CALIBRATION_CASES: tuple[dict[str, Any], ...] = (
@@ -197,9 +198,10 @@ CALIBRATION_CASES: tuple[dict[str, Any], ...] = (
         "expect_pass": True,
         "case": dict(_CALIBRATION_CASE),
         "response": (
-            "Certo. Il fattore A6 guarda quanto l'ansia si fa sentire mentre studi: "
-            "non dice se sei capace, dice quanto la tensione entra nel lavoro. "
-            "Mi racconti un momento recente in cui l'hai sentita mentre studiavi?"
+            "Il fattore A6 descrive la percezione di competenza: quanta fiducia hai nelle "
+            "tue capacità quando affronti lo studio e ti trovi davanti a un compito impegnativo. "
+            "Quando ti capita di pensare di non essere all'altezza di una materia, che cosa scegli "
+            "di fare di solito, e che conseguenze ha questo modo di procedere sul tuo lavoro?"
         ),
     },
     {
