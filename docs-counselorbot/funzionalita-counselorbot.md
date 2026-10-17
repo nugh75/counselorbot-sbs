@@ -339,8 +339,12 @@ non si riutilizzano o convertono per iniziare/riprendere il nuovo percorso.
 Le nuove compilazioni richiedono un profilo completo con dieci stanine intere
 tra 1 e 9. Gli eventuali codici K in una
 vecchia bozza locale non entrano nel nuovo invio. Interfaccia, fattori e indicazioni
-sono disponibili in tutte le sei lingue. Audit e aggiornamento esplicito dei
+sono disponibili in tutte le sei lingue di piattaforma (`it, en, es, fr, de, sv`);
+la lingua ucraina citata in schede storiche di ricerca (Erasmus+ PAGOSTE 2020) non è
+servita da CounselorBot (valutazione di fattibilità in `docs/validazione/valutazione-lingua-ucraina-qpcc.md`).
+Audit e aggiornamento esplicito dei
 prompt salvati: `docs/operations/qpcc-factor-alignment.md`.
+
 
 ## Percorsi guidati senza punteggi
 

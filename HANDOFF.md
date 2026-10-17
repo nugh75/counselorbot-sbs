@@ -1,3 +1,21 @@
+# Handoff a3: valutazione lingua ucraina per il QPCC (#243)
+Data: 2026-10-17 | Branch: `docs/qpcc-ukrainian-evaluation` | Agente: `a3-agy-qpcc-ukrainian`, Gemini 3.8 Flash
+Issue #243 | Milestone #12 'Incontro tutor PEF del 12 ottobre 2026'
+
+Valutazione tecnica, redazionale e psicometrica sul supporto della lingua ucraina per il QPCC a seguito del quesito posto dai tutor del PEF nell'incontro del 12 ottobre 2026.
+
+Esito della valutazione: supporto escluso per l'attuale perimetro operativo e di ricerca di CounselorBot, coerentemente con `APP_LOCALES` (`backend/content_versions.py: APP_LOCALES = ("it", "en", "es", "fr", "de", "sv")`). La menzione dell'ucraino nella scheda storica presentata ai tutor deriva dalla sperimentazione pilota del progetto europeo Erasmus+ PAGOSTE 2020 condotta con formatori VET (Margottini & Leproni, 2020; Ottone, 2023).
+
+Documentazione e allineamenti prodotti:
+- Documento di valutazione completo e studio di fattibilità con stima dello sforzo (10–12 settimane/persona in caso di apertura futura): `docs/validazione/valutazione-lingua-ucraina-qpcc.md`.
+- Scheda bibliografica del QPCC aggiornata per chiarire le versioni linguistiche e le sei lingue servite da CounselorBot: `docs/questionari/strumenti/schede-bibliografiche/QPCC_it.md`.
+- Aggiornamento della documentazione di validazione: `docs/validazione/dettagli-validazione-questionari.md`.
+- Aggiornamento della documentazione operativa: `docs/operations/qpcc-factor-alignment.md`.
+- Aggiornamento guida funzionalità: `docs-counselorbot/funzionalita-counselorbot.md` (e allineamento hash con `make guidance-refresh`).
+- Aggiornamento diario di progetto: `docs/progetto/diario.md` (sezioni IT ed EN).
+
+Verifiche eseguite: `make guidance-check` superato; test di coerenza di `APP_LOCALES` (`backend/content_versions.py`) e test di parità e schema QPCC (`test_qpcc_alignment.py`) passati. Nessun servizio dev avviato, nessun container/deploy/sudo necessario.
+
 # Handoff g1: palette della Palestra di prova
 Data: 2026-10-17 | Branch: `fix/practice-gym-palette` | Agente: `g1-opus-gym-palette`, Claude Opus 5.5 high
 Compito Diario `2b1b88a5-d95b-412e-b134-a23cf4193319` | Issue #354 | Milestone #24
