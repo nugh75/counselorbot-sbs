@@ -307,10 +307,14 @@ La strategia riguarda QSA, QSAr, ZTPI, QPCS, QPCC, QAP e l’intervista narrativ
 Savickas; viene applicata dal contratto del turno anche ai prompt già configurati,
 senza riscriverli nel database. Cambia il modo di porre le domande: numero e ordine
 dei passi, domande previste, consenso e avanzamento restano quelli di ciascun
-percorso. L’autointerrogazione non aggiunge turni obbligatori né condizioni per
-proseguire; usa le domande disponibili nel passo, senza superarne il limite, e
-non insiste se la difficoltà persiste. Il QPCS conserva le sue cinque aree. Nel percorso essenziale restano
-validi i limiti dei turni e della sintesi, che non richiede altre risposte.
+L'opzione di configurazione `facilitation_contract_enabled` (disattivata di default per
+preservare l'envelope e il comportamento canonico) abilita il contratto di facilitazione
+metacognitiva (`[FACILITATION]`). Il facilitatore metacognitivo sostituisce l'aneddotica
+situazionale/temporale («qual è il momento in cui...») con l'indagine sull'agire (scelte,
+comportamenti e conseguenze nello studio), rimuove formule cerimoniose («Grazie per aver
+condiviso», «Capisco»), ancora la profondità alla comprensione dell'esperienza (esperienza
+concreta, comprensione dell'agire, elementi per la sintesi) e propone letture solo come
+ipotesi aperte che lo studente è libero di confermare, correggere o rifiutare.
 
 Il **QPCC di Pellerey–Orio** è rivolto a giovani e adulti in cerca di occupazione
 o in contesti professionali relazionali. Il questionario canonico ha 63 item,

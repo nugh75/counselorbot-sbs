@@ -560,9 +560,12 @@ SYSTEM_PROMPT_DEFINITIONS.extend([
     {"key": 'prompt_qap_summary', "label": 'prompt qap summary', "description": 'Percorso riflessivo canonico QPCC/QAP', "default": _text("prompt_qap_summary")},
 ])
 
+FACILITATION_CONTRACT_ENABLED_KEY = "facilitation_contract_enabled"
+
 SYSTEM_PROMPT_DEFAULTS: Dict[str, str] = {
     item["key"]: item["default"] for item in SYSTEM_PROMPT_DEFINITIONS
 }
+SYSTEM_PROMPT_DEFAULTS[FACILITATION_CONTRACT_ENABLED_KEY] = "false"
 
 
 # --- Chatbot informativo sul sito competenzestrategiche.it (RAG) ---
