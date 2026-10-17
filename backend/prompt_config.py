@@ -347,8 +347,7 @@ DEFAULT_SYSTEM_PROMPT_QPCC_FACTOR = (
     qpcc_directive('qpcc-profilo') + "\nRead every available factor with its code, localised name, exact stanine and a brief explanation. "
     "Use a table with Factor, Score, Interpretation, Description. For A1/A2/A3 describe lower, moderate or higher difficulty. "
     "For M2 describe lower, moderate or higher ego orientation without labelling it strength or weakness. "
-    "For the other scales discuss reported resources. No practical advice in the profile step. Never invent missing scores. "
-    + "[ANCHOR]" + _FACTOR_TABLE_RULES.split("[ANCHOR]", 1)[1]
+    "For the other scales discuss reported resources. No practical advice in the profile step. Never invent missing scores."
 )
 
 # QAP — Career Adaptability (CAAS, Savickas-Porfeli)

@@ -1,3 +1,31 @@
+# Handoff t4: rimozione [ANCHOR] e ritocco di testi e sentinelle in codice (fase 3)
+Data: 2026-10-17 | Branch: `feature/code-prompts-cleanup` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #372 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 3 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md):
+- `backend/prompts/default_system_prompt_factor.md`, `default_system_prompt_qsar_factor.md`, `default_system_prompt_ztpi_factor.md`, `factor_table_rules.md`:
+  - Rimossa la direttiva `[ANCHOR]`, assorbita e governata direttamente dal contratto di facilitazione per evitare formule stereotipate e alleggerire l'envelope.
+- `backend/prompt_config.py`:
+  - Rimosso l'append di `[ANCHOR]` in `DEFAULT_SYSTEM_PROMPT_QPCC_FACTOR`.
+- `backend/prompts/default_second_level_method.md`:
+  - Snellite le istruzioni di secondo livello per preservare esclusivamente la parte (1), ossia l'offerta di un'ipotesi interpretativa prima di ogni consiglio pratico. Eliminati i divieti rigidi di value-check e le regole restrittive sulla formulazione delle domande (assorbite in `[FACILITATION]`).
+- `backend/prompts/default_qa_depth_directive.md`:
+  - Ritoccato il punto (2) di `[DEPTH ON REQUEST]` per connettere la spiegazione del meccanismo a scelte, abitudini e agire nello studio dello studente (o offrire una situazione concreta come esempio da riconoscere/correggere), evitando che il modello imponga un aneddoto scolastico prefissato.
+- `backend/chat_preparation.py`:
+  - Ritoccata la direttiva `[PERSPECTIVE]` in sintesi: il nesso tra il filo emerso nella sessione, il taccuino e il portfolio viene offerto come domanda aperta che lo studente è libero di cogliere o lasciare.
+- `backend/qpcc.py`:
+  - `qpcc.directive()`: sostituito il vecchio budget rigido a turni fissi («Ask ONE main open question and at most two concrete follow-ups») con il criterio flessibile di permanenza nell'area ancorato alle scelte e all'agire con tetto di sicurezza (circa cinque scambi).
+- Verifiche di contrazione envelope (`make prompt-dry`):
+  - QSA cognitive: 14795 → 14395 (-400 caratteri)
+  - QSA sl-motivation: 17314 → 16770 (-544 caratteri)
+  - QSAr cognitive: 13620 → 13220 (-400 caratteri)
+  - ZTPI t1: 15085 → 14685 (-400 caratteri)
+  - QPCS profilo: 13940 → 13540 (-400 caratteri)
+  - QAP profilo: 13907 → 13507 (-400 caratteri)
+- Test aggiornati: `backend/tests/test_prompt_files.py`, `backend/tests/test_prompt_pair_drift.py`, `backend/tests/test_qsa_factor_directive.py`.
+- Regressione completa superata in container Docker: 811/811 test verdi.
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
 # Handoff t3: blocco note per ipotesi, accoppiamento risposte e sezione ledger (fase 2)
 Data: 2026-10-17 | Branch: `feature/hypothesis-notes-ledger` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
 Issue #370 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze

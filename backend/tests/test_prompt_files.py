@@ -77,20 +77,14 @@ def test_every_guided_step_has_a_prompt():
 
 
 def test_every_first_level_factor_prompt_asks_one_anchoring_question():
-    """Gli step di primo livello spiegavano e non chiedevano mai.
-
-    Sui log di produzione solo il 16% dei turni in modalita' `factor` portava
-    una domanda, ed e' li' che due terzi delle sessioni si fermavano: 36 a
-    `intro`, 31 a `cognitive`. La direttiva vive nei default di fabbrica e,
-    per QPCS/QPCC/QAP, nel blocco condiviso `factor_table_rules`: se qualcuno
-    la toglie, il silenzio torna senza che nessuno se ne accorga.
+    """Gli step di primo livello non contengono piu' [ANCHOR] hardcodato:
+    la regola della domanda riflessiva ed esperienziale e' assorbita nel
+    contratto di facilitazione (fase 3 dell'audit).
     """
     defaults = {row["key"]: row.get("default", "") for row in prompt_config.ALL_CONFIG_TEXT_DEFINITIONS}
     for key in ("prompt_factor", "prompt_qsar_factor", "prompt_ztpi_factor",
                 "prompt_qpcs_factor", "prompt_qpcc_factor", "prompt_qap_factor"):
-        assert "[ANCHOR]" in defaults[key], key
-        assert "ONE short question" in defaults[key], key
-        assert defaults[key].count("[ANCHOR]") == 1, f"{key}: direttiva duplicata"
+        assert "[ANCHOR]" not in defaults[key], f"{key}: [ANCHOR] ancora presente"
 
 
 if __name__ == "__main__":

@@ -52,6 +52,8 @@ def directive(phase=None):
         'Other scales describe perceived resources, not grades or diagnoses. K1-K5 are not QPCC factors and must never be inferred or reused. '
         'This canonical schema takes priority over any older five-area description in stored instructions or conversation history. '
         'Current step factors: '+', '.join(scope)+'. Distinguish each factor by its code and meaning even when discussing one dimension. '
-        'Ask ONE main open question and at most two concrete follow-ups, use work/job-seeking examples relevant to the person. '
+        'Stay with this area while the student is developing it: ONE question per turn, aimed at what they do, how they choose and what it produces. '
+        'Close the area when a concrete way of acting has emerged and they have answered one reading of it, when they ask to move on, or after about five exchanges at most. '
+        'Use work/job-seeking examples relevant to the person. '
         'The agreement requires explicit acceptance. In the summary distinguish proposals from commitments and retain only agreed timeframes.'
     )
