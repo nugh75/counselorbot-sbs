@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 /**
  * Hook to manage collapsed/expanded state of a catalog section.
@@ -8,38 +8,26 @@ import { useCallback, useEffect, useState } from 'react';
  * - When hasActivePath is true: defaults to collapsed (false), unless user previously toggled it open in localStorage.
  * - Safe against storage access exceptions (private browsing / disabled cookies).
  */
-export function useCollapsedCatalog(storageKey: string, hasActivePath: boolean) {
-    const [isOpen, setIsOpen] = useState<boolean>(() => {
-        if (!hasActivePath) return true;
-        try {
-            if (typeof window !== 'undefined') {
-                const stored = window.localStorage.getItem(storageKey);
-                if (stored !== null) return stored === 'true';
-            }
-        } catch {
-            // Ignore storage access error
-        }
-        return false;
-    });
-
-    useEffect(() => {
-        if (!hasActivePath) {
-            setIsOpen(true);
-            return;
-        }
-
-        try {
+function storedOpenState(storageKey: string, hasActivePath: boolean): boolean {
+    if (!hasActivePath) return true;
+    try {
+        if (typeof window !== 'undefined') {
             const stored = window.localStorage.getItem(storageKey);
-            if (stored !== null) {
-                setIsOpen(stored === 'true');
-                return;
-            }
-        } catch {
-            // Ignore storage access error
+            if (stored !== null) return stored === 'true';
         }
+    } catch {
+        // Ignore storage access error
+    }
+    return false;
+}
 
-        setIsOpen(false);
-    }, [storageKey, hasActivePath]);
+export function useCollapsedCatalog(storageKey: string, hasActivePath: boolean) {
+    const [isOpen, setIsOpen] = useState<boolean>(() => storedOpenState(storageKey, hasActivePath));
+    const [syncedFor, setSyncedFor] = useState({ storageKey, hasActivePath });
+    if (syncedFor.storageKey !== storageKey || syncedFor.hasActivePath !== hasActivePath) {
+        setSyncedFor({ storageKey, hasActivePath });
+        setIsOpen(storedOpenState(storageKey, hasActivePath));
+    }
 
     const toggle = useCallback(() => {
         setIsOpen((prev) => {

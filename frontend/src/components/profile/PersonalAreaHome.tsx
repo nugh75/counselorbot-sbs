@@ -95,8 +95,14 @@ export function PersonalAreaHome() {
     }, []);
 
     useEffect(() => {
-        void loadPaths();
-    }, [loadPaths]);
+        let active = true;
+        void apiFetch('/api/user/paths').then(async res => {
+            if (!res.ok) return;
+            const data = await res.json();
+            if (active) setPaths(parseStudentClassPaths(data));
+        }).catch(() => {});
+        return () => { active = false; };
+    }, []);
 
     const currentPath = useMemo(() => selectCurrentClassPath(paths), [paths]);
     const hasActivePath = Boolean(currentPath);
