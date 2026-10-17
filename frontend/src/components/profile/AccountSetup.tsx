@@ -66,8 +66,8 @@ export function AccountSetup({ counselorOnly = false, onReturn }: { counselorOnl
         {prefs && (counselorOnly || !prefs.counselor_ready ?
             <>
             {!prefs.counselor_ready && <Callout>
-                <p data-first-use-hint="counselor" className="hidden xl:block">{t('setup.counselorHint')}</p>
-                <p data-first-use-hint="counselor" className="xl:hidden">{t('setup.counselorHintCompact', { menu: t('header.menu') })}</p>
+                <p data-first-use-hint="counselor" className="hidden lg:block">{t('setup.counselorHint')}</p>
+                <p data-first-use-hint="counselor" className="lg:hidden">{t('setup.counselorHintCompact', { menu: t('header.menu') })}</p>
             </Callout>}
             <CounselorSelector questionnaireType={instrument} questionnaireName={instrument} initialSelectedId={prefs.counselor_id ?? getSelectedCounselorId()} busy={busy}
                 onContinue={id => void finish(id)} onBack={goBack} />

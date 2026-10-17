@@ -1,12 +1,13 @@
-// Visibility contract of the global navbar as shipped today (P0 of
-// docs/operations/audit-navbar.md). Synthetic identities and access payloads
-// only: no SSO, no real accounts. Labels are written here instead of being read
-// from the dictionaries, so any copy or visibility change shows up as a test
-// change that the redesign PRs (P1–P5) must update on purpose.
+// Visibility contract of the global navbar (P0 of
+// docs/operations/audit-navbar.md, desktop updated by P4). Synthetic identities
+// and access payloads only: no SSO, no real accounts. Labels are written here
+// instead of being read from the dictionaries, so any copy or visibility change
+// shows up as a test change that the redesign PRs (P1–P5) must update on purpose.
 
 export const VIEWPORTS = [390, 768, 1023, 1024, 1279, 1280, 1440];
 
-// Tailwind `lg` and `xl` at the browser's default 16px root font size.
+// Tailwind `lg` and `xl` at the browser's default 16px root font size. Since P4
+// the bar is the same from `lg`: `xl` only widens the account name.
 export function band(width) {
     return width < 1024 ? 'compact' : width < 1280 ? 'lg' : 'xl';
 }
@@ -99,11 +100,20 @@ export const LABELS = {
     counselor: 'Scegli il counselor',
     view: 'Vista attiva',
     bussola: 'Apri la Bussola',
+    // Desktop bar label (P4); the compact menu keeps the call to action.
+    bussolaBar: 'Bussola',
     assistant: 'Assistente',
     guide: 'Guida',
     student: 'Area studente',
     teacher: 'Area docente',
     admin: 'Area amministrazione',
+    // Desktop «Area» selector outside the areas; inside one it names the area.
+    area: 'Area',
+    // Desktop account menu (P4): trigger, guest preferences, sign in and out.
+    account: name => `Account: ${name}`,
+    preferences: 'Preferenze',
+    signIn: 'Accedi',
+    signOut: 'Esci',
     reader: 'Lettore audio',
     resume: 'Riprendi un’attività',
     retry: 'Riprova',
@@ -125,12 +135,12 @@ export const LABELS = {
 
 // Role-dependent labels in the six languages, independent of the dictionaries.
 export const LOCALIZED = {
-    it: { menu: 'Menu', guide: 'Guida', student: 'Area studente', teacher: 'Area docente', admin: 'Area amministrazione', assistant: 'Assistente', bussola: 'Apri la Bussola', logout: 'Logout', adminLogin: 'Accesso admin' },
-    en: { menu: 'Menu', guide: 'Guide', student: 'Student area', teacher: 'Teacher area', admin: 'Administration area', assistant: 'Assistant', bussola: 'Open the Compass', logout: 'Logout', adminLogin: 'Admin access' },
-    es: { menu: 'Menú', guide: 'Guía', student: 'Área del estudiante', teacher: 'Área docente', admin: 'Área de administración', assistant: 'Asistente', bussola: 'Abrir la Brújula', logout: 'Salir', adminLogin: 'Acceso admin' },
-    fr: { menu: 'Menu', guide: 'Guide', student: 'Espace élève', teacher: 'Espace enseignant', admin: 'Espace administration', assistant: 'Assistant', bussola: 'Ouvrir la Boussole', logout: 'Déconnexion', adminLogin: 'Accès admin' },
-    de: { menu: 'Menü', guide: 'Anleitung', student: 'Bereich für Lernende', teacher: 'Lehrkräftebereich', admin: 'Verwaltungsbereich', assistant: 'Assistent', bussola: 'Kompass öffnen', logout: 'Abmelden', adminLogin: 'Admin-Zugang' },
-    sv: { menu: 'Meny', guide: 'Guide', student: 'Elevområde', teacher: 'Lärarområde', admin: 'Administrationsområde', assistant: 'Assistent', bussola: 'Öppna Kompassen', logout: 'Logga ut', adminLogin: 'Adminåtkomst' },
+    it: { menu: 'Menu', guide: 'Guida', student: 'Area studente', teacher: 'Area docente', admin: 'Area amministrazione', assistant: 'Assistente', bussola: 'Apri la Bussola', logout: 'Logout', adminLogin: 'Accesso admin', bussolaBar: 'Bussola', area: 'Area', account: 'Account: ', preferences: 'Preferenze', signIn: 'Accedi', signOut: 'Esci' },
+    en: { menu: 'Menu', guide: 'Guide', student: 'Student area', teacher: 'Teacher area', admin: 'Administration area', assistant: 'Assistant', bussola: 'Open the Compass', logout: 'Logout', adminLogin: 'Admin access', bussolaBar: 'Compass', area: 'Area', account: 'Account: ', preferences: 'Preferences', signIn: 'Sign in', signOut: 'Sign out' },
+    es: { menu: 'Menú', guide: 'Guía', student: 'Área del estudiante', teacher: 'Área docente', admin: 'Área de administración', assistant: 'Asistente', bussola: 'Abrir la Brújula', logout: 'Salir', adminLogin: 'Acceso admin', bussolaBar: 'Brújula', area: 'Área', account: 'Cuenta: ', preferences: 'Preferencias', signIn: 'Iniciar sesión', signOut: 'Cerrar sesión' },
+    fr: { menu: 'Menu', guide: 'Guide', student: 'Espace élève', teacher: 'Espace enseignant', admin: 'Espace administration', assistant: 'Assistant', bussola: 'Ouvrir la Boussole', logout: 'Déconnexion', adminLogin: 'Accès admin', bussolaBar: 'Boussole', area: 'Espace', account: 'Compte : ', preferences: 'Préférences', signIn: 'Se connecter', signOut: 'Se déconnecter' },
+    de: { menu: 'Menü', guide: 'Anleitung', student: 'Bereich für Lernende', teacher: 'Lehrkräftebereich', admin: 'Verwaltungsbereich', assistant: 'Assistent', bussola: 'Kompass öffnen', logout: 'Abmelden', adminLogin: 'Admin-Zugang', bussolaBar: 'Kompass', area: 'Bereich', account: 'Konto: ', preferences: 'Einstellungen', signIn: 'Anmelden', signOut: 'Abmelden' },
+    sv: { menu: 'Meny', guide: 'Guide', student: 'Elevområde', teacher: 'Lärarområde', admin: 'Administrationsområde', assistant: 'Assistent', bussola: 'Öppna Kompassen', logout: 'Logga ut', adminLogin: 'Adminåtkomst', bussolaBar: 'Kompass', area: 'Område', account: 'Konto: ', preferences: 'Inställningar', signIn: 'Logga in', signOut: 'Logga ut' },
 };
 
 export const ENTRY_HREFS = {
@@ -160,53 +170,60 @@ function resumeBlock({ rows = [], error = false }) {
     ];
 }
 
-// Ordered accessible names of the visible navbar controls: `bar` outside the
-// three-dot menu, `menu` inside it once opened. `resume` lists resolved row
-// labels; `loading` is the state before /api/auth/me answers; `override`
-// replaces parts of the role contract (e.g. a failed access read).
-export function expectedNavbar(profileKey, width, { resume = { rows: [], error: false }, loading = false, accessLoading = false, override = {} } = {}) {
+// Ordered accessible names of the visible navbar controls. Below 1024px: `bar`
+// outside the three-dot menu, `menu` inside it once opened (unchanged since P0,
+// P5 redesigns it). From 1024px (P4) there is no three-dot menu: `areas` lists
+// the «Area» selector panel (null when a single area is a plain link) and
+// `account` the account panel («Preferenze» for guests). `resume` lists
+// resolved row labels; `loading` is the state before /api/auth/me answers;
+// `override` replaces parts of the role contract (e.g. a failed access read);
+// `area` is the label of the current area, shown by the selector.
+export function expectedNavbar(profileKey, width, { resume = { rows: [], error: false }, loading = false, accessLoading = false, override = {}, area = null } = {}) {
     const { identity } = PROFILES[profileKey];
     const expect = { ...PROFILES[profileKey].expect, ...override };
-    const size = band(width);
+    const compact = band(width) === 'compact';
     const auth = identity.authenticated;
     const account = auth && (identity.name || identity.email || identity.username);
     const resumeVisible = resume.rows.length > 0 || resume.error;
-    const utilities = [LABELS.darkIcon, LABELS.motion, LABELS.language];
 
     if (loading) {
-        return { bar: size === 'xl' ? [LABELS.home, ...utilities] : [LABELS.home], menu: null };
+        return { bar: [LABELS.home], menu: null, areas: null, account: null };
     }
 
     const tools = accessLoading ? [] : [
-        ...(expect.bussola ? [LABELS.bussola] : []),
+        ...(expect.bussola ? [compact ? LABELS.bussola : LABELS.bussolaBar] : []),
         ...(expect.assistant ? [LABELS.assistant] : []),
     ];
-    const primary = [...tools, LABELS.guide, ...(expect.student ? [LABELS.student] : [])];
-    const roleItems = [...(expect.teacher ? [LABELS.teacher] : []), ...(expect.admin ? [LABELS.admin] : [])];
+    const areaItems = [
+        ...(expect.student ? [LABELS.student] : []),
+        ...(expect.teacher ? [LABELS.teacher] : []),
+        ...(expect.admin ? [LABELS.admin] : []),
+    ];
     const view = auth && expect.view.length > 0 ? [LABELS.view] : [];
-    const authLabel = LABELS[expect.auth];
 
-    const bar = [LABELS.home];
-    if (size === 'xl' && auth) bar.push(LABELS.counselor);
-    if (size !== 'compact') bar.push(...view, ...primary);
-    bar.push(LABELS.menu);
-    if (size === 'xl') {
-        if (account) bar.push(account);
-        if (expect.services) bar.push(LABELS.services);
-        bar.push(authLabel);
+    if (!compact) {
+        const areaEntry = areaItems.length > 1 ? [area ?? LABELS.area] : areaItems;
+        const bar = [LABELS.home, ...areaEntry, ...tools, LABELS.guide, ...view];
+        if (auth) bar.push(LABELS.counselor);
         if (resumeVisible) bar.push(LABELS.resume);
-        bar.push(...utilities);
+        bar.push(account ? LABELS.account(account) : LABELS.preferences);
+        if (!auth) bar.push(LABELS.signIn);
+        return {
+            bar,
+            menu: null,
+            areas: areaItems.length > 1 ? areaItems : null,
+            account: [
+                ...(expect.services ? [LABELS.services] : []),
+                LABELS.darkRow, LABELS.motion, LABELS.reader, ...LABELS.languages,
+                ...(auth ? [LABELS.signOut] : []),
+            ],
+        };
     }
 
     const menu = [];
-    if (size !== 'xl' && account) menu.push(LABELS.counselor);
-    if (size === 'compact' && account) menu.push(...view);
-    if (size === 'compact') menu.push(...primary);
-    menu.push(...roleItems, LABELS.reader);
-    if (size !== 'xl') {
-        menu.push(...resumeBlock(resume));
-        if (expect.services) menu.push(LABELS.services);
-        menu.push(authLabel, LABELS.darkRow, LABELS.motion, ...LABELS.languages);
-    }
-    return { bar, menu };
+    if (account) menu.push(LABELS.counselor, ...view);
+    menu.push(...tools, LABELS.guide, ...areaItems, LABELS.reader, ...resumeBlock(resume));
+    if (expect.services) menu.push(LABELS.services);
+    menu.push(LABELS[expect.auth], LABELS.darkRow, LABELS.motion, ...LABELS.languages);
+    return { bar: [LABELS.home, LABELS.menu], menu, areas: null, account: null };
 }

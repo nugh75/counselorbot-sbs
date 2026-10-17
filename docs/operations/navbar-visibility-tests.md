@@ -10,12 +10,12 @@ esplicito, non per effetto collaterale.
 
 | File | Cosa verifica | Dove gira |
 | --- | --- | --- |
-| `frontend/tests/fixtures/navbar-contract.mjs` | Identità e accessi sintetici A/S/D/R/M (S senza classi, una classe, due classi, vista `all`), etichette italiane e nelle sei lingue scritte a mano, `expectedNavbar(profilo, larghezza)` con l'elenco ordinato dei controlli visibili in barra e nel menu | Condiviso |
-| `frontend/src/lib/navbar-visibility.test.ts` | Matrice ruoli: la descrizione unica `header-navigation.ts` (P3) produce il contratto di ogni profilo; bordi 1023/1024 e 1279/1280; ogni voce raggiungibile in ogni fascia; Area docente/Amministrazione solo nel menu | `npm test` (Node 22) |
-| `frontend/src/lib/header-navigation.test.ts` | Descrizione unica delle voci (P3): collocazione barra/menu per fascia uguale al contratto, ordine/destinazioni/gruppi, predicati in tabella (ruoli, accesso in caricamento o fallito, identità in caricamento o fallita, anteprima ruoli), pagina/sottopagina e query della chat per `aria-current` | `npm test` (Node 22) |
+| `frontend/tests/fixtures/navbar-contract.mjs` | Identità e accessi sintetici A/S/D/R/M (S senza classi, una classe, due classi, vista `all`), etichette italiane e nelle sei lingue scritte a mano, `expectedNavbar(profilo, larghezza)` con l'elenco ordinato dei controlli visibili: sotto 1024 px barra e menu a tre punti; da 1024 px (P4) barra, pannello del selettore «Area» e pannello dell'account | Condiviso |
+| `frontend/src/lib/navbar-visibility.test.ts` | Matrice ruoli: la descrizione unica `header-navigation.ts` (P3) produce il contratto di ogni profilo; bordo 1023/1024 (1279/1280 uguali da P4); ogni voce raggiungibile in ogni fascia; da 1024 px aree nel selettore «Area» (link semplice con una sola area), un solo ingresso a `/profilo`, «Esci» in fondo al menu account | `npm test` (Node 22) |
+| `frontend/src/lib/header-navigation.test.ts` | Descrizione unica delle voci (P3): collocazione barra/selettore Area/menu per fascia uguale al contratto, ordine/destinazioni/gruppi, etichetta breve di barra (`barLabelKey`), account senza link, predicati in tabella (ruoli, accesso in caricamento o fallito, identità in caricamento o fallita, anteprima ruoli), pagina/sottopagina e query della chat per `aria-current` | `npm test` (Node 22) |
 | `frontend/src/lib/navbar-terminology.test.ts` | Testi della barra (P1) scritti a mano nelle sei lingue: Assistente generico, «Area studente» uguale in navbar e pagine, badge strumento tradotto con ripiego sul nome del catalogo e sul codice degli strumenti dinamici | `npm test` (Node 22) |
 | `backend/tests/test_navbar_area_guards.py` | HTTP 401/403/200 delle guardie dietro `/profilo`, `/docente`, `/admin` per A/S/D/R/M; marker docente/ricerca identici tra backend e `roles.ts` | pytest, nessun DB |
-| `frontend/tests/navbar-visibility.test.mjs` | Navbar realmente renderizzata (Playwright): matrice 8 profili × 390/768/1023/1024/1279/1280/1440, link visibili e destinazioni, caricamento identità/accesso, errori API, riprese, sei lingue, tastiera, tema e movimento | Dev isolato :3149 |
+| `frontend/tests/navbar-visibility.test.mjs` | Navbar realmente renderizzata (Playwright): matrice 8 profili × 390/768/1023/1024/1279/1280/1440, link visibili e destinazioni, pannelli Area e account da 1024 px, caricamento identità/accesso, errori API, riprese, sei lingue, tastiera, tema e movimento; P4: «Accedi» con ritorno alla pagina, anteprima ruoli, nomi lunghi DE/FR, zoom 200% | Dev isolato :3149 |
 
 Le etichette non sono lette dai dizionari: un cambio di testo deve comparire nel
 diff del test. Per decisione dell'utente l'etichetta resta «Area studente»
@@ -62,6 +62,21 @@ diff del test. Per decisione dell'utente l'etichetta resta «Area studente»
   scuro con offset interno nei pannelli; selettore lingua a 44px con puntatore
   coarse (`hasTouch`).
 - **Preferenze**: tema scuro salvato e movimento ridotto dal sistema.
+- **Desktop P4 (da 1024 px)**: nessun menu a tre punti; selettore «Area» per
+  D/R/M (pannello `#area-panel`, nome dell'area corrente sul pulsante,
+  `aria-current` nel pannello), link «Area studente» per S; «Bussola»,
+  «Assistente», «Guida» con etichetta; gruppo conversazione (counselor,
+  Riprendi); menu account `#account-panel` con nome non cliccabile, servizi per
+  R/M, tema, movimento, lettore, sei lingue con nome, «Esci» in fondo; per A
+  «Preferenze» e «Accedi». La scelta della lingua lascia il pannello aperto e il
+  focus sulla lingua premuta. «Accedi» porta a ai4auth con `rd` uguale alla
+  pagina corrente con query (`/guide?…`, `/admin`). Anteprima ruoli: un admin
+  che guarda come studente o docente vede la barra di quell'account, senza
+  servizi. Nomi lunghi in tedesco e francese a 1024/1280/1440 (admin in
+  `/docente`, studente con due classi in `/profilo`, riprese presenti): nessuna
+  sovrapposizione, nessun controllo fuori viewport, etichette della navigazione
+  intere. Zoom 200% emulato come viewport dimezzato a DPR 2 (finestra 2048 →
+  1024 px, 1440 → 720 px). Bersagli da 44 px con puntatore coarse.
 - **Screenshot**: opzionali con `NAVBAR_SCREENSHOTS=<cartella>`.
 
 ## Contratto N7: ripresa pQBL con classe che disattiva lo strumento
@@ -127,7 +142,8 @@ Arresto: Ctrl-C nel terminale dello script. Da SSH:
 - Le fixture non certificano gli URL ai4auth/Console dell'installazione né i
   gruppi reali; le guardie per strumento (`require_tool`) sono coperte dai test
   backend esistenti di `class_access` con PostgreSQL di test.
-- Zoom 200%, nomi lunghi DE/FR e misure di overflow restano a P4/P5.
+- Zoom 200% è emulato (viewport CSS dimezzato, DPR 2), non lo zoom reale del
+  browser; nomi lunghi e overflow del menu compatto restano a P5.
 
 ## Esito della sessione P0 (16 ottobre 2026)
 
@@ -167,3 +183,25 @@ Arresto: Ctrl-C nel terminale dello script. Da SSH:
 - Verifiche: `npm test` 581/581 (Node 22), ESLint e `tsc` sui file toccati,
   `i18n:check`, guidance check; suite browser completa su :3149 **92/92**, con
   le aspettative P0 invariate salvo il caso pagina (aria-current e landmark).
+
+## Esito della sessione P4 (17 ottobre 2026)
+
+- Barra desktop da 1024 px come descritto sopra; menu a tre punti solo sotto
+  1024 px e invariato (P5). Dopo il merge di #344 il «Questionario di
+  gradimento» è solo nella home: né in barra, né nel menu a tre punti, né nel
+  menu dell'account (il test della home controlla anche il pannello account).
+- Verifiche: `npm test` 582/582 (Node 22), ESLint e `tsc` sui file toccati,
+  `i18n:check`, guidance check; suite browser completa **101/101** su un dev
+  isolato :3151, **102/102** dopo il merge di #344 (la :3149 era occupata da un altro worktree).
+- `tests/account-onboarding.test.mjs`, dopo il merge di #344 e su un server dev
+  appena avviato: 43/46. Passano bozza e conversazione conservate dal dialog del
+  counselor aperto dalla barra (390/1024/1440), i suggerimenti di primo uso
+  (counselor e Area studente nella barra da 1024 px) e l'introduzione con il
+  gradimento. I 3 falliti (catalogo `/?view=questionnaires` senza titolo «QSA»)
+  falliscono uguali su `origin/main`: bug sospetto nel Diario. Su un server dev
+  rimasto acceso a lungo (immagini aggiunte durante la corsa) le attese su
+  `/_next/image` scadevano: riavviare il server prima della suite.
+- `tests/design-usability.test.mjs` «header controls outside chat do not
+  overlap»: `goto('/', networkidle)` scade a 30 s anche a 768 px nel dev
+  isolato; la stessa verifica (nomi lunghi, tedesco, admin) è coperta dai nuovi
+  test P4 a 1024/1280/1440.

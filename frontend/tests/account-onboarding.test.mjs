@@ -61,7 +61,7 @@ async function firstUseAndReopen({ locale = 'it', width = 1440, ...options } = {
         await counselorHint.waitFor();
         assert.equal(await counselorHint.count(), 1);
         assert.ok((await counselorHint.innerText()).startsWith(copy.counselor));
-        assert.equal((await counselorHint.innerText()).includes(copy.menu), width < 1280);
+        assert.equal((await counselorHint.innerText()).includes(copy.menu), width < 1024);
         assert.equal(await hint(page, 'notebook').count(), 0);
         assert.equal(writes.length, 0);
         const card = page.getByRole('button', { name: /Counselor 1/ });
@@ -91,6 +91,8 @@ async function firstUseAndReopen({ locale = 'it', width = 1440, ...options } = {
         assert.equal(await page.locator('[data-first-use-hint]').count(), 0);
         // Follow exactly the entry points described by the notes.
         if (width < 1024) await page.locator('button[aria-controls="mobile-menu"]').click();
+        // From 1024px accounts with more than one area open the «Area» selector (P4).
+        else if (await page.locator('button[aria-controls="area-panel"]').count()) await page.locator('button[aria-controls="area-panel"]').click();
         await page.locator('header').getByRole('link', { name: copy.area, exact: true }).filter({ visible: true }).click();
         await page.locator('[data-personal-area-home]').getByRole('link', { name: copy.notebook, exact: true }).click();
         await page.waitForURL(`${origin}/profilo/taccuino`);
@@ -99,7 +101,7 @@ async function firstUseAndReopen({ locale = 'it', width = 1440, ...options } = {
         await field.waitFor();
         assert.equal(await field.inputValue(), 'Studio sintetico primo uso');
         assert.equal(await page.locator('[data-first-use-hint]').count(), 0);
-        if (width < 1280) await page.locator('button[aria-controls="mobile-menu"]').click();
+        if (width < 1024) await page.locator('button[aria-controls="mobile-menu"]').click();
         const counselorLink = page.locator('header').getByRole('link', { name: copy.choose, exact: true }).filter({ visible: true });
         await counselorLink.getByText('Counselor 1', { exact: true }).waitFor();
         assert.equal(await counselorLink.innerText(), 'Counselor 1');
@@ -122,7 +124,7 @@ for (const locale of Object.keys(firstUseCopy)) {
     }
 }
 for (const width of [1023, 1024, 1279, 1280]) {
-    test(`first-use hints follow the two navbar breakpoints at ${width}px`, () => firstUseAndReopen({ width }));
+    test(`first-use hints follow the navbar breakpoint at ${width}px`, () => firstUseAndReopen({ width }));
 }
 for (const [role, options] of [['teacher', { groups: ['docenti'] }], ['researcher', { groups: ['ricercatori'] }], ['admin', { groups: ['admins'], admin: true }]]) {
     test(`shared personal first-use invitation for ${role}`, () => firstUseAndReopen(options));
@@ -163,7 +165,7 @@ for (const width of [390, 1440]) {
             await page.evaluate(() => localStorage.removeItem('counselorbot_selected_counselor'));
             await page.reload();
             await page.waitForFunction(() => localStorage.getItem('counselorbot_selected_counselor') === '2');
-            if (width < 1280) await page.locator('button[aria-controls="mobile-menu"]').click();
+            if (width < 1024) await page.locator('button[aria-controls="mobile-menu"]').click();
             await page.getByRole('link', { name: 'Scegli il counselor', exact: true }).filter({ visible: true }).click();
             await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).waitFor();
             assert.equal(await page.locator('main select').count(), 0);
@@ -249,7 +251,7 @@ test('failed counselor save keeps the previous account preference and can be ret
     } finally { await context.close(); }
 });
 
-for (const width of [390, 1440]) {
+for (const width of [390, 1024, 1440]) {
     test(`navbar counselor returns to the same conversation and draft at ${width}px`, async () => {
         const { page, context, prefs } = await fixture({ width });
         try {
@@ -257,7 +259,7 @@ for (const width of [390, 1440]) {
             const composer = page.locator('#guided-composer');
             await composer.fill('Una domanda ancora da completare');
             const openCounselor = async () => {
-                if (width < 1280) await page.locator('button[aria-controls="mobile-menu"]').click();
+                if (width < 1024) await page.locator('button[aria-controls="mobile-menu"]').click();
                 await page.getByRole('link', { name: 'Scegli il counselor', exact: true }).filter({ visible: true }).click();
                 await page.getByRole('heading', { name: 'Scegli il counselor', exact: true }).waitFor();
             };

@@ -50,24 +50,41 @@ personale, accanto alle Flashcard. Il catalogo non contiene più il riquadro
 “Counselor · Come procediamo” né “Rivedi la presentazione iniziale”. Il comando
 indietro e la navigazione permettono di tornare alle pagine precedenti.
 
-La testata mette in evidenza i quattro ingressi principali: **Bussola**,
-**Assistente**, **Guida** e **Area studente**. Le voci legate al ruolo (**Area docente**
-per docenti/ricercatori, **Area amministrazione** per admin e ricercatori) restano nel menu a tre
-punti, insieme a uscita e preferenze; su schermi stretti il menu raccoglie tutte
-le voci nello stesso ordine.
+Da 1024 px la testata mostra gli ingressi con etichette visibili. Per primo
+l’ingresso alle aree: chi ha solo l’Area studente vede il link **Area studente**;
+docenti, ricercatori e admin vedono il selettore **Area**, che apre **Area
+studente**, **Area docente** e, per ricercatori e admin, **Area amministrazione**.
+Il selettore mostra il nome dell’area in cui ci si trova (per esempio «Area
+docente» dentro `/docente`). Seguono **Bussola**, **Assistente** e **Guida**.
+A destra, separato, il gruppo della conversazione (strumento scelto, counselor,
+**Riprendi un’attività** quando ci sono attività da riprendere) e il menu
+dell’account sotto il nome: il nome e l’email non sono un link (l’unico ingresso a
+`/profilo` è «Area studente»), poi **Servizi piattaforma ai4educ** per
+ricercatori e admin, le **Preferenze** (tema, movimento, lettore audio, lingua con
+il nome scritto accanto alla bandiera) ed **Esci** in fondo. Tema, movimento e
+lingua cambiano sul posto senza chiudere il pannello. Chi non ha fatto l’accesso
+trova lo stesso pannello come **Preferenze** e il pulsante **Accedi**, che dopo il
+login riporta alla pagina da cui è partito (da `/admin` torna a `/admin`; `/login`
+resta l’accesso amministrativo esplicito). Se lo spazio non basta (1024 px, nomi
+lunghi, tedesco o francese) si accorciano vista classe, nome del counselor e nome
+dell’account, mai le voci di navigazione.
+Sotto 1024 px il menu a tre punti raccoglie tutte le voci (ingressi, aree,
+lettore, riprese, preferenze, «Accesso admin» o «Logout»), come prima del
+riordino desktop.
 Gli ingressi stanno in un’area di navigazione con nome («Navigazione
 principale» nella barra, «Navigazione del menu» nel menu a tre punti). La voce
 dell’area in cui ci si trova, anche in una sua sottopagina (per esempio
 `/profilo/pqbl` per l’Area studente), è segnata come pagina corrente con un fondo
 leggero e viene annunciata dagli screen reader; una chat aperta dalla home non
 segna nessuna voce.
-Il menu a tre punti, l’elenco **Riprendi un’attività** e il selettore della
-lingua si aprono da tastiera con Invio o Spazio, si percorrono con Tab e si
-chiudono con Esc, che riporta il focus al pulsante, oppure uscendo con Tab. Il
-pulsante della lingua dice la lingua attuale e, dopo la scelta, la nuova lingua
+Il selettore Area, il menu dell’account, il menu a tre punti e l’elenco
+**Riprendi un’attività** si aprono da tastiera con Invio o Spazio, si percorrono
+con Tab e si chiudono con Esc, che riporta il focus al pulsante, oppure uscendo
+con Tab. Nel menu dell’account la lingua scelta resta selezionata e annunciata
+come premuta; nel menu a tre punti la scelta chiude il menu e la nuova lingua
 viene annunciata. Nel tema scuro l’anello di focus usa un petrolio chiaro ben
-leggibile; con lo schermo touch anche il selettore della lingua ha bersagli da
-44 px.
+leggibile; con lo schermo touch i comandi della barra e le lingue hanno bersagli
+da 44 px.
 
 L’accesso personale usa l’account della Console ai4educ collegata all’installazione.
 Login, uscita e collegamenti a Portale, Console e Segreti seguono i domini
@@ -84,8 +101,8 @@ essere modificata dalla pagina dei counselor. Prima della prima conferma del
 counselor una nota indica come ritrovarlo: premere il nome del counselor nella
 barra in alto oppure aprire «Menu» sugli schermi compatti. Al primo invito a
 compilare il Taccuino, prima del modulo, un’altra nota indica «Area studente» →
-«Taccuino», dove riaprirlo e modificarlo; su schermi compatti «Area studente» è
-nel «Menu» sotto 1024 px; il counselor è nel «Menu» sotto 1280 px.
+«Taccuino», dove riaprirlo e modificarlo; sotto 1024 px sia «Area studente» sia
+il counselor sono nel «Menu».
 Le note usano le etichette effettive nelle sei lingue e gli stati
 di primo uso esistenti, anche per gli altri ruoli che condividono questo ingresso
 al Taccuino personale. I nomi dell’area, del Taccuino e del Menu sono ripresi
@@ -238,7 +255,7 @@ shown. The Guide remains available independently of these class toggles.
   screenshot pertinente; le schermate della piattaforma sono disponibili nelle
   sei lingue, mentre le due viste della chat sono dimostrazioni in italiano.
 - Interfaccia e conversazioni: italiano, inglese, spagnolo, francese, tedesco e
-  svedese. Sono disponibili tema chiaro/scuro, navigazione responsive e lettura vocale dal menu a tre punti.
+  svedese. Sono disponibili tema chiaro/scuro, navigazione responsive e lettura vocale dal menu dell’account (da 1024 px) o dal menu a tre punti.
 
 ## Analisi dei questionari
 
@@ -804,8 +821,9 @@ interpretata come questionari incompleti. Sono conservati i controlli backend su
 ruolo, sulla proprietà/condivisione della classe, sull’appartenenza dello studente
 e sulla sessione: nessun nuovo permesso o allargamento della visibilità.
 
-Nel menu della header la voce verso l'area è «Area docente» con l'icona a berretto
-da laurea, uguale per docenti, ricercatori e amministrazione.
+Nella header la voce verso l'area è «Area docente» con l'icona a berretto da
+laurea, uguale per docenti, ricercatori e amministrazione: nel selettore «Area» da
+1024 px, nel menu a tre punti sotto.
 
 La Guida interfaccia (`/guide`) ha una sezione «Piani operativi e incontri» sia per il
 docente (con lo screenshot dell’editor del piano operativo: passi, chat guidata e incontro di
