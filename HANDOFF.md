@@ -1,3 +1,27 @@
+# Handoff a4: comandi avanti e indietro sempre visibili nella chat guidata
+Data: 2026-10-17 | Branch: `fix/guided-chat-nav-buttons` | Agente: `a4-agy-guided-nav`, Gemini 3.8 Flash (High)
+Issue #248 | Milestone #12 (Incontro tutor PEF del 12 ottobre 2026)
+
+Nella chat guidata (`frontend/src/components/qsa/GuidedChatInterface.tsx`) i pulsanti
+«Indietro» (`ChevronLeft`) e «Avanti» (`ChevronRight`/`CheckCircle2`) avevano visibilità
+condizionale: «Indietro» spariva al primo passo (`index === 0`), alla conclusione e
+in modalità essenziale; «Avanti» spariva all'ultimo passo, in modalità essenziale e nei
+percorsi a intervista (`SAVICKAS`, `QPCC`, `QAP`, `EVENTO_*`, `OBIETTIVO_*`) fino
+all'invio di 3 messaggi o al marker `[[AVANZA_STEP]]`.
+
+Risoluzione:
+- Comandi avanti e indietro resi sempre visibili nel DOM nella barra inferiore di navigazione.
+- «Indietro»: abilitato se `phases.indexOf(currentPhase) > 0` e non in caricamento; disabilitato al primo passo.
+- «Avanti»: abilitato se `hasNextPhase` (`phases.indexOf(currentPhase) < phases.length - 1`) e non in caricamento; disabilitato all'ultimo passo.
+- Indicatore traguardo: mostra costantemente `Passo X/Y: Fase corrente → Fase successiva` quando esiste una fase successiva.
+- Barra di navigazione mantenuta sempre visibile (`phases.length > 0`).
+- Logica del percorso (`frontend/src/lib/interview-path.ts`): regole di transizione, prompt e quick replies rimaste intatte senza alterazioni.
+- Test dedicato: `frontend/src/lib/guided-chat-nav.test.ts` verifica rendering continuo, stati disabilitati e integrità di `interview-path`.
+- Documentazione operativa: aggiornata in `docs-counselorbot/funzionalita-counselorbot.md` (§ Chat, voce e ripresa) con `make guidance-refresh`.
+
+Verifiche: `npm test` 593/593 superati; `make guidance-check` superato; zero regressioni.
+Nessun Docker, deploy o sudo.
+
 # Handoff g1: palette della Palestra di prova
 Data: 2026-10-17 | Branch: `fix/practice-gym-palette` | Agente: `g1-opus-gym-palette`, Claude Opus 5.5 high
 Compito Diario `2b1b88a5-d95b-412e-b134-a23cf4193319` | Issue #354 | Milestone #24
