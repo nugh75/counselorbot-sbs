@@ -1,3 +1,22 @@
+# Handoff t2: contratto di facilitazione metacognitiva governato da feature flag
+Data: 2026-10-17 | Branch: `feature/metacognitive-facilitation-contract` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
+Issue #368 | Milestone: Prompt guidati: personalizzazione e riduzione delle ridondanze
+
+Implementata la Fase 1 dell'audit (docs/audits/audit-facilitatore-metacognitivo.md):
+- Definito `_facilitation_contract(stage: str)` con sentinella `[FACILITATION]` in `backend/prompt_contract.py`.
+- Introdotto il parametro `facilitation_contract_enabled: bool = False` in `turn_contract()` e collegato alla lettura da `configs` in `backend/chat_preparation.py`.
+- Registrata la chiave `FACILITATION_CONTRACT_ENABLED_KEY = "facilitation_contract_enabled"` con default `"false"` in `backend/prompt_config.py`.
+- Invarianti pedagogiche incorporate:
+  1. Spostamento dall'aneddotica situazionale/cronachistica («qual è il momento in cui...») all'indagine metacognitiva su scelte, azioni e conseguenze («Di fronte a questa difficoltà, che cosa fai di solito? Come scegli di muoverti, e che conseguenze ha questo modo di procedere sul tuo lavoro?»).
+  2. Profondità flessibile basata su 3 condizioni di comprensione raggiunta (esperienza concreta emersa, comprensione del funzionamento dell'agire, elementi sufficienti per la sintesi), superando il vincolo rigido numerico.
+  3. Eliminazione dei convenevoli cerimoniosi («Grazie per aver condiviso», «Capisco la tua riflessione», «Certo.»).
+  4. Non forzare l'insight: interpretazioni offerte sempre come ipotesi aperte che lo studente è libero di confermare, correggere o rifiutare.
+  5. Value-check a due livelli: verifica interna continua, verifica esplicita solo nei momenti chiave (ipotesi rilevanti, prima di sintesi o disallineamenti).
+  6. Neutralità emotiva: risposte concise trattate come stile comunicativo o stanchezza, non resistenza.
+- Retrocompatibilità verificata: a flag spento (default `false`) l'output è identico byte per byte a `_self_questioning_contract` (`test_self_questioning.py`: 751/751 superati).
+- Test dedicati: `backend/tests/test_facilitation_contract.py` (7/7 superati).
+- Documentazione: aggiornati `docs-counselorbot/funzionalita-counselorbot.md` e `docs/operations/platform-guidance-state.json`.
+
 # Handoff t1: allineamento calibrazione Prompt Lab a percezione di competenza (A6) e facilitazione metacognitiva
 Data: 2026-10-17 | Branch: `fix/prompt-lab-metacognitive-calibration` | Agente: `t-agy-timoniere`, Gemini 3.8 Flash (High)
 Issue #366 | Milestone #1 | PR #367
