@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { apiFetch } from '@/lib/auth';
+import { listFrozenSessions, type FrozenSessionSummary } from '@/lib/frozen-session';
 import { useI18n } from '@/lib/i18n-context';
 import { useDraftGuard } from '@/lib/use-draft-guard';
 import { learningText } from '@/lib/i18n-assignment-work';
@@ -63,6 +64,16 @@ export function PracticeNotebooks() {
             .catch(() => { if (!controller.signal.aborted) setGroupsFailed(true); });
         return () => controller.abort();
     }, []);
+    // Chat guidate di prova ancora aperte (autosalvate): il docente le ritrova
+    // sotto lo studente simulato e le riapre come dall'header.
+    const [chats, setChats] = useState<FrozenSessionSummary[] | null>(null);
+    const [chatsFailed, setChatsFailed] = useState(false);
+    useEffect(() => {
+        listFrozenSessions()
+            .then((rows) => setChats(rows.filter((row) => row.practice_notebook_id != null)))
+            .catch(() => setChatsFailed(true));
+    }, []);
+
     const groupName = (group: ClassGroup) => group.school ? `${group.name} — ${group.school}` : group.name;
 
     const run = async (action: () => Promise<unknown>) => {
@@ -172,6 +183,29 @@ export function PracticeNotebooks() {
         );
     };
 
+    const practiceChats = (notebook: PracticeNotebook) => {
+        const rows = (chats ?? []).filter((chat) => chat.practice_notebook_id === notebook.id);
+        return (
+            <section data-practice-chats className="space-y-2 border-t border-slate-200 pt-3">
+                <h3 className="text-sm font-semibold text-slate-700">{l('practiceChats')}</h3>
+                <p className="text-xs text-slate-500">{l('practiceChatsHint')}</p>
+                {chatsFailed && <p role="alert" className="text-xs text-red-600">{l('chatsError')}</p>}
+                {chats !== null && !rows.length && <p className="text-xs text-slate-500">{l('noPracticeChats')}</p>}
+                <ul className="space-y-2">
+                    {rows.map((chat) => (
+                        <li key={chat.session_id} data-practice-chat={chat.session_id} className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 p-2 text-sm">
+                            <span className="min-w-0 flex-1 text-slate-800">
+                                {chat.label || chat.questionnaire_type}
+                                {chat.updated_at && <span className="ml-2 text-xs text-slate-500">{new Date(chat.updated_at).toLocaleDateString(lang)}</span>}
+                            </span>
+                            <Link href={`/?frozen=${encodeURIComponent(chat.session_id)}`} className={`${secondary} inline-flex items-center`}>{l('openChat')}</Link>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        );
+    };
+
     const summary = (notebook: PracticeNotebook) => {
         const filled = PRACTICE_NOTEBOOK_FIELDS.filter((field) => (notebook.data[field.key] ?? '').trim());
         if (!filled.length) return <p className="text-sm text-slate-500">{l('noFields')}</p>;
@@ -209,6 +243,7 @@ export function PracticeNotebooks() {
                                 <h2 className="text-base font-bold text-slate-800">{notebook.title}</h2>
                                 {summary(notebook)}
                                 {classSummary(notebook)}
+                                {practiceChats(notebook)}
                                 <PracticeRepertoire notebookId={notebook.id} />
                                 <div className="flex flex-wrap gap-2">
                                     <button type="button" disabled={busy} className={secondary}

@@ -26,6 +26,10 @@ simulato.
  │ [+ Nuovo taccuino di prova]                        │
  │ ┌ «Giulia, 3ª liceo» ───────────────────────────┐  │
  │ │ Classe: 3ª liceo · Difficoltà: ansia verifiche│  │
+ │ │ Chat guidate di prova                         │  │
+ │ │  QSA — Fase 2  [Riapri la conversazione]      │  │
+ │ │ Profili nei questionari (repertorio)          │  │
+ │ │  QSA · da una chat  [Avvia chat guidata]      │  │
  │ │ [Modifica] [Archivia]                         │  │
  │ └───────────────────────────────────────────────┘  │
  │ ▸ Archiviati (n)   [Ripristina] [Elimina]          │
@@ -125,10 +129,36 @@ Limiti:
 - La trascrizione, i punteggi e la memoria sono quelli della sessione del
   docente (sono parte della simulazione). Le sessioni in prova non compaiono
   tra le Compilazioni: PDF e conversazione dall'Area personale non le elencano.
+- Dopo «Concludi» la trascrizione di una chat di prova non è più
+  raggiungibile dal docente: l'area docente elenca solo le chat aperte.
 - Se in prova il docente sceglie un proprio risultato salvato, la chat usa quei
   punteggi con lo studente simulato e non li copia nel repertorio.
 - La Bussola non mostra la scelta prima di aprire una sessione: l'apertura usa
   la scelta già memorizzata nel browser (anche dalle chat guidate).
+
+## Dove ritrovare i risultati di una chat di prova
+
+Percorso del docente (issue #244):
+
+1. Area docenti (`/docente`) → sezione «Palestra di prova» → **Entra nella
+   Palestra di prova** oppure **Chat e risultati degli studenti di prova**:
+   entrambi aprono `/docente/taccuini-prova`.
+2. Nella scheda dello studente simulato, **Chat guidate di prova** elenca le
+   chat ancora aperte con quel taccuino (sessioni autosalvate con
+   `notebook_context="practice"`). **Riapri la conversazione** porta a
+   `/?frozen=<session_id>`: trascrizione completa, punteggi e taccuino della
+   sessione, con la possibilità di proseguire.
+3. Sotto, **Profili nei questionari** conserva i punteggi dello studente
+   simulato: quelli inseriti in una chat in prova portano «da una chat in
+   prova». Da ogni profilo **Avvia chat guidata** apre una chat nuova.
+
+`GET /session/frozen` riporta `practice_notebook_id` solo per le sessioni in
+prova (`null` per le altre): la pagina filtra per taccuino senza leggere i
+messaggi. Le stesse chat restano raggiungibili anche da «Riprendi» nell'header.
+
+Una chat conclusa con «Concludi» elimina lo snapshot e lascia l'elenco: ne
+restano i punteggi nel repertorio, ma la trascrizione non è più consultabile
+dall'area docente (limite noto, vedi sotto).
 
 ## Profili: salvataggio esplicito e avvio diretto
 

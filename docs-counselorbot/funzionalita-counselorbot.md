@@ -1336,6 +1336,15 @@ ripristinano ed eliminano (con conferma). Gli archiviati non compaiono nelle
 Opzioni della chat. Sono visibili solo al docente che li ha creati e non
 contengono né toccano dati di studenti reali: la pagina invita a non inserirne.
 
+I risultati di una chat guidata in prova si ritrovano nella scheda dello studente
+simulato (Issue #244): dalla home dell’Area docenti, «Entra nella Palestra di prova»
+o il collegamento «Chat e risultati degli studenti di prova» aprono
+`/docente/taccuini-prova`; nella scheda, **Chat guidate di prova** elenca le chat
+ancora aperte con quel taccuino e **Riapri la conversazione** ne mostra la
+trascrizione per rileggerla e proseguire, mentre i punteggi inseriti in chat restano
+nei **Profili nei questionari** con l’indicazione «da una chat in prova». Una chat
+conclusa esce dall’elenco: ne restano i punteggi, non la trascrizione.
+
 Il Taccuino del docente è un’autodescrizione del ruolo e della pratica abituale,
 con sei campi **facoltativi** su una sola colonna, come il taccuino dello studente (la nota in testa alla pagina ricorda le scelte Predefinito, Studente, Docente, Prova e Nessuno), nell’ordine: discipline abituali, esperienza di
 insegnamento sintetica, come insegno di solito, panoramica dei miei incarichi e

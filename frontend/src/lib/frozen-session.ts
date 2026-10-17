@@ -23,6 +23,8 @@ export interface FrozenSessionSummary {
     current_phase: string;
     experience?: 'standard' | 'opencode' | null;
     updated_at?: string | null;
+    // Solo in prova: il taccuino dello studente simulato (area docente).
+    practice_notebook_id?: number | null;
 }
 
 export interface FrozenSessionDetail extends FrozenSessionSummary {
@@ -35,7 +37,6 @@ export interface FrozenSessionDetail extends FrozenSessionSummary {
     conversation_id?: string | null;
     response_length?: 'short' | 'medium' | 'long' | null;
     notebook_context?: 'student' | 'teacher' | 'practice' | 'none' | null;
-    practice_notebook_id?: number | null;
     // Chat docenza: classi scelte per questa sessione (vuoto negli snapshot precedenti).
     group_ids?: number[];
     reasoning_effort?: 'off' | 'standard' | 'deep' | null;

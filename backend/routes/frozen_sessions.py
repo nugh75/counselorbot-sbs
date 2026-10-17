@@ -24,6 +24,7 @@ def _summary(row: models.FrozenSession) -> schemas.FrozenSessionSummary:
         current_phase=data.get("current_phase") or "",
         experience=data.get("experience"),
         updated_at=row.updated_at,
+        practice_notebook_id=data.get("practice_notebook_id") if data.get("notebook_context") == "practice" else None,
     )
 
 
@@ -36,7 +37,7 @@ def _detail(row: models.FrozenSession) -> schemas.FrozenSessionDetail:
         except ValueError:
             raise HTTPException(409, 'qpcc_legacy_profile')
     return schemas.FrozenSessionDetail(
-        **_summary(row).model_dump(),
+        **_summary(row).model_dump(exclude={"practice_notebook_id"}),
         messages=data.get("messages") or [],
         scores=data.get("scores") or {},
         counselor_id=data.get("counselor_id"),
