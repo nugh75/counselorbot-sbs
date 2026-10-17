@@ -19,6 +19,18 @@ Solo studio. Nessun prompt di produzione, nessun file backend o frontend modific
 9. **I test attuali non vedono il dialogo.** Il Prompt Lab valuta un turno per volta (`Case`: «*a case is a turn, not a conversation*»), i benchmark QSA misurano velocità e numero di parole. Serve un harness multi-turn con studenti simulati e un giudice calibrato sui tre esempi della visione.
 10. **Transizione in 6 fasi dietro un flag**, con l'envelope identico a oggi a flag spento: si allineano prima i testi in codice, poi i testi di fabbrica (via «Allinea prompt di fabbrica», che preserva i testi degli admin), e per ultimi i budget di profondità.
 
+### Decisioni prese (2026-10-17)
+
+Risposte dell'utente alle domande della §9, già integrate nel resto del documento:
+
+| # | Decisione | Effetto sulla proposta |
+|---|---|---|
+| 1 | **L'auto-interrogazione (self-question) è il modo principale di fare domande.** | Non viene declassata. Il contratto di facilitazione la mette al centro: le mosse su agire, scelte e conseguenze sono l'impalcatura che porta lo studente a formulare domande proprie (§4.1, §4.2). Restano le invarianti: mai prerequisito, mai a ogni turno, mai insistita dopo un rifiuto. |
+| 2 | **Evento è incluso** nella facilitazione. | Evento entra nel perimetro del contratto e del tracciamento ipotesi, soprattutto agli step `rilettura` e `prossima` (§4.1, §4.3). Il test che oggi esclude Evento va aggiornato. |
+| 3 | **Obiettivo resta fuori**, con le sole regole anti-cerimonia. | `[OBJECTIVE FOCUS]` invariato. Nessuna ipotesi e nessuna self-question in Obiettivo. |
+| 4 | **Il tetto di profondità va bene** come limite di sicurezza da tarare coi test. | §4.5 confermata. |
+| 5 | **Le ipotesi sono visibili allo studente nella barra laterale**, come le domande, e lo studente può marcarle. | Si aggiunge il lavoro frontend in fase 2. La marcatura dello studente diventa l'esito più autorevole: prevale su quello del guardiano (§4.3, §5). |
+
 ---
 
 ## 1. Perimetro e metodo
@@ -53,7 +65,7 @@ Solo studio. Nessun prompt di produzione, nessun file backend o frontend modific
 
 | # | Osservazione | Effetto atteso sul dialogo |
 |---|---|---|
-| C1 | Il **fine** del contratto è far formulare allo studente *una domanda per sé* («self-question»). È un prodotto metacognitivo legittimo, ma resta un **prodotto atteso**: il rischio è un nuovo «insight obbligatorio» spostato di un livello. | A fine area il bot tende a sollecitare la formulazione anche quando la conversazione è già arrivata altrove. |
+| C1 | Il **fine** del contratto è far formulare allo studente *una domanda per sé* («self-question»). È un prodotto metacognitivo legittimo, ma resta un **prodotto atteso**: il rischio è un nuovo «insight obbligatorio» spostato di un livello. | A fine area il bot tende a sollecitare la formulazione anche quando la conversazione è già arrivata altrove. **Decisione 1:** la self-question resta il modo principale; il rischio si gestisce con le invarianti esistenti, non togliendole il ruolo centrale. |
 | C2 | Non nomina l'**agire**: scelte, comportamenti, conseguenze. «*explore an experience*» lascia aperta la cronaca («quando», «com'era»). | Le domande di approfondimento scivolano sul tempo e sulla situazione. |
 | C3 | «*Label interpretations as hypotheses*» (r. 255) prescrive **un'etichetta**, non **una mossa**: nessun obbligo di restituire l'ipotesi allo studente perché la riconosca, la corregga o la rifiuti. | Ipotesi formalmente marcate («potrebbe essere che…») ma usate come conclusioni nel turno dopo. |
 | C4 | Nessuna nozione di **stato del filo**: introdotto / in approfondimento / ipotesi aperta / ipotesi risolta. Lo `stage` (`profile`, `area`, `synthesis`, `follow-up`) è il tipo di step, non il punto in cui è arrivata la comprensione. | Il contratto non può dire «approfondisci ancora» o «ora puoi proporre un collegamento». |
@@ -198,7 +210,9 @@ Questa scelta evita due errori: un classificatore che sbaglia e chiude un'ipotes
 
 ### 4.1 Principio: un solo contratto che governa le domande
 
-Oggi `[SELF-QUESTIONING]` dichiara di governare «*question wording over generic retrospective or comparative closings*». Un secondo contratto `[FACILITATION]` accanto a lui produrrebbe due fonti che si contendono la formulazione delle domande. **Proposta:** evolvere `_self_questioning_contract` in `_facilitation_contract(stage, thread_state)`. Il blocco mantiene la propria sentinella (oppure una nuova `[FACILITATION]` che la sostituisce, con test aggiornati), lo stesso perimetro (`QUESTIONNAIRE_DIALOGUES`), la stessa mappa degli stage e le stesse invarianti. La self-question resta, ma **declassata da meta a possibilità** fra le altre.
+Oggi `[SELF-QUESTIONING]` dichiara di governare «*question wording over generic retrospective or comparative closings*». Un secondo contratto `[FACILITATION]` accanto a lui produrrebbe due fonti che si contendono la formulazione delle domande. **Proposta:** evolvere `_self_questioning_contract` in `_facilitation_contract(stage, thread_state)`. Il blocco mantiene la propria sentinella (oppure una nuova `[FACILITATION]` che la sostituisce, con test aggiornati), la stessa mappa degli stage e le stesse invarianti. Il perimetro diventa `QUESTIONNAIRE_DIALOGUES` più i due strumenti Evento (decisione 2). Per Evento lo stage si ricava dagli step: `rilettura` e `prossima` valgono come `area`, `final` come `synthesis`; `patto` e i benvenuti restano esclusi come `savickas-patto`. Obiettivo resta fuori (decisione 3).
+
+**La self-question resta il modo principale di fare domande** (decisione 1). Il contratto non le affianca un secondo fine: le mosse della §4.2 (usare le parole dello studente, chiedere dell'agire, offrire una lente come ipotesi) sono il modo in cui il bot **prepara** l'auto-interrogazione. Il bot fa domande perché lo studente impari a farsene. Restano le invarianti: mai prerequisito, mai a ogni turno, nessuna insistenza dopo un rifiuto, nessuna domanda fornita al posto suo al primo ostacolo.
 
 ### 4.2 Contenuto del contratto: funzioni comunicative, non divieti
 
@@ -219,6 +233,10 @@ Replace these moves with their function:
   tied to something they said, and leave it to them to recognise, correct or reject it.
 - Instead of switching to the next dimension, bridge: name the thread that leads there
   from what they just said.
+These moves exist so that the student learns to question their own experience:
+self-questioning is the main way questions are asked here. When something they
+notice is still open, help them turn it into a question of their own, in their
+words, never as a requirement and never supplied for them at the first difficulty.
 
 Depth: stay with one experience until (a) a concrete way of acting has emerged,
 (b) the student starts describing how it works for them, and (c) a link with the
@@ -253,9 +271,11 @@ Le righe per stato sono **fatti più un vincolo minimo**. È la stessa filosofia
 
 - una sola per turno, testo copiato verbatim dalla risposta visibile (stessa validazione di `extract_notes`, senza l'obbligo del «?»);
 - campo opzionale `lens` (codice del fattore), validato contro i fattori dello step (`phase_codes`);
-- consentito solo quando lo stage non è `synthesis` e lo strumento è in `QUESTIONNAIRE_DIALOGUES` o è Evento (step `rilettura`).
+- consentito solo quando lo stage non è `synthesis` e lo strumento è in `QUESTIONNAIRE_DIALOGUES` o è Evento (decisione 2: step `rilettura` e `prossima`, dove le lenti e le alternative sono già offerte come opzioni rifiutabili).
 
-**Registro:** `RecommendationHistory` con `recommendation_type="advice"` e `payload.kind="hypothesis"`, come le domande, con stati `proposed → answered` (deterministico) e, se il guardiano è attivo, `outcome ∈ {confirmed, corrected, rejected}`. Nessuna tabella nuova e nessuna migrazione di schema: `payload` è JSON.
+**Registro:** `RecommendationHistory` con `recommendation_type="advice"` e `payload.kind="hypothesis"`, come le domande, con stati `proposed → answered` (deterministico) e `outcome ∈ {confirmed, corrected, rejected}`. Nessuna tabella nuova e nessuna migrazione di schema: `payload` è JSON.
+
+**Barra laterale** (decisione 5). Le ipotesi compaiono allo studente nel pannello raccomandazioni accanto alle domande (`frontend/src/components/qsa/RecommendationsPanel.tsx`, `frontend/src/lib/recommendations.ts`), con un'etichetta distinta (es. «Lettura proposta»). Lo studente può marcarle «mi ritrovo», «in parte», «non mi ritrovo», cioè `confirmed`, `corrected` e `rejected`, e riaprirle, come fa oggi con le domande (`revived`). Gerarchia degli esiti: **la marcatura dello studente prevale sempre**; poi la classificazione del guardiano, se è attivo; altrimenti resta `answered` con la sua risposta verbatim. Il guardiano non sovrascrive mai un esito scritto dallo studente (stessa regola di `_decayed`: «*il click dello studente non può essere annullato*»). La formulazione resta quella del counselor, copiata verbatim: niente etichette psicologiche aggiunte dall'interfaccia.
 
 **Accoppiamento deterministico:** il turno successivo all'ipotesi scrive `payload.reply` (il `user_input` pulito, max 240 caratteri) e passa lo stato ad `answered`. Va fatto nello stesso punto in cui oggi si registrano le note del turno, nell'endpoint, non in `chat_preparation`, che è di sola lettura e condiviso con l'audit.
 
@@ -326,7 +346,7 @@ Ogni fase si chiude con un PR atomico (issue + milestone), test mirati verdi, e 
 |---|---|---|---|---|
 | **0. Strumenti di misura** | Harness dialoghi multi-turn (§7) e correzione del caso di calibrazione «buono» del Prompt Lab. Baseline sul comportamento attuale. | nuovo `backend/dialogue_lab/` o `scripts/dialogue_eval.py`; `prompt_lab/evaluation.py:196-203` | Nessun effetto sul runtime. | Baseline registrata su ≥ 2 modelli × 12 scenari × 3 ripetizioni. |
 | **1. Contratto** | `_facilitation_contract` che sostituisce `_self_questioning_contract`, dietro il flag Config `facilitation_contract_enabled` (default `false`). | `prompt_contract.py`, `chat_preparation.py` (lettura del flag, passaggio di `thread_state`) | Flag spento = stesso testo di oggi. Raggiunge anche i prompt modificati dagli admin. | Test esistenti del self-questioning adattati; nuovo test «flag off ⇒ envelope invariato»; harness: ceremony rate e ancoraggio all'agire vs baseline. |
-| **2. Ipotesi** | `kind: "hypothesis"` nel blocco note, accoppiamento con la risposta, sezione ledger, blocco `[REFLECTION THREAD]`, `thread_state`. | `recommendation_blocks.py`, endpoint che registra le note, `session_ledger.py`, `chat_preparation.py` | Le voci `hypothesis` sono ignorate dalla sidebar finché il frontend non le mostra; nessuna migrazione. | Unit test su estrazione, accoppiamento, rendering, troncamento entro `MAX_BLOCK_CHARS`; harness: ipotesi riproposte dopo un rifiuto = 0. |
+| **2. Ipotesi** | `kind: "hypothesis"` nel blocco note, accoppiamento con la risposta, sezione ledger, blocco `[REFLECTION THREAD]`, `thread_state`. | `recommendation_blocks.py`, endpoint che registra le note, `session_ledger.py`, `chat_preparation.py`; frontend `RecommendationsPanel.tsx`, `lib/recommendations.ts` (marcatura dello studente) | Nessuna migrazione. Le sessioni senza ipotesi mostrano la barra laterale di oggi. Backend e frontend vanno in PR separati: prima il backend, con le voci ignorate da un frontend non aggiornato. | Unit test su estrazione, accoppiamento, rendering, troncamento entro `MAX_BLOCK_CHARS` e precedenza della marcatura sul guardiano; test frontend sul pannello; harness: ipotesi riproposte dopo un rifiuto = 0. |
 | **3. Testi in codice** | Rimozione di `[ANCHOR]` e ritocco di `[SECOND-LEVEL METHOD]`, `[DEPTH ON REQUEST]`, `[PERSPECTIVE]`, `qpcc.directive()`. | `prompts/default_*`, `chat_preparation.py:467-474`, `qpcc.py` | I testi `.md` sono default di fabbrica: in DB cambiano solo con l'allineamento (fase 4). Le sentinelle (`[SECOND-LEVEL METHOD]` & co.) restano, così le migrazioni in `main.py:1218-1346` non reinseriscono il vecchio testo. | Envelope prima/dopo con `make prompt-dry` per ogni strumento; misura dei caratteri. |
 | **4. Testi di fabbrica degli step** | Riscrittura degli step QSA, QSAr, ZTPI e QPCS (profilo come ipotesi, domanda sull'agire, niente «*practical comment*», niente «*real, recent situation*»). | `prompt_config.py`, `prompts/qsa_step_*.md` | Hash dei testi attuali in `prompt_factory_legacy.json`; applicazione via «Allinea prompt di fabbrica», che **non tocca i testi degli admin** (`factory_owned`). Le varianti CR (Ristretto/Minimo) vanno riallineate a parte. | `test_preparation_preserves_all_guided_step_definitions`; harness per strumento. |
 | **5. Profondità** | Budget → criterio + tetto negli step d'intervista (QPCC, QAP, Savickas, Evento) e nel prompt QPCS. | `prompt_config.py`, `prompts/prompt_q*_interview.md`, `default_system_prompt_{savickas,evento}_interview.md`, `default_system_prompt_qpcs_analysis.md` | Come la fase 4. Il tetto di sicurezza evita i loop. | Harness: distribuzione dei turni per area, avanzamenti prematuri, loop (area senza chiusura oltre il tetto) = 0. |
@@ -510,10 +530,9 @@ Per turno (T) e per dialogo (D). «Auto» = calcolabile senza modello; «Giudice
 - **Ipotesi dichiarate male.** Il modello può dimenticare il blocco privato. Effetto: si torna al comportamento di oggi, senza danni (degradazione silenziosa, come le domande).
 - **Loop.** Togliere il conteggio senza un tetto riaprirebbe il problema che il budget aveva chiuso. Il tetto resta.
 
-**Domande per te (decisioni pedagogiche, non tecniche)**
+**Decisioni pedagogiche:** prese il 2026-10-17, vedi la tabella in testa al documento. Evento e Obiettivo, il tetto e la visibilità sono confermati. La self-question resta il modo principale di fare domande.
 
-1. **Self-question:** resta un obiettivo di chiusura d'area (oggi) o diventa solo una possibilità fra le altre (proposta)?
-2. **Evento:** lo includiamo nella facilitazione (ipotesi allo step `rilettura`) o resta com'è, visto che è già il più allineato?
-3. **Obiettivo:** confermi che resta fuori, con solo i pattern anti-cerimonia?
-4. **Tetto di profondità:** va bene come limite di sicurezza da tarare coi test, o preferisci nessun tetto esplicito per alcuni strumenti (Savickas)?
-5. **Visibilità delle ipotesi:** devono comparire allo studente nella sidebar come oggi le domande (e poterle marcare), o restare solo interne?
+**Conseguenze da non dimenticare:**
+
+- `test_other_tools_do_not_receive_the_questionnaire_strategy` oggi elenca `EVENTO_STUDIO` ed `EVENTO_PROFESSIONALE` fra gli strumenti esclusi: va aggiornato in fase 1, tenendo Idea e Obiettivo esclusi.
+- Con le ipotesi visibili, la formulazione nella risposta conta doppio: lo studente la rilegge fuori dal dialogo. Il giudice multi-turn deve valutare anche la formulazione delle ipotesi registrate, non solo il turno (§7.4, *Hypothesis openness*).
