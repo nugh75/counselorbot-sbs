@@ -1328,9 +1328,12 @@ Opzioni) e trova i profili del suo repertorio accanto ai propri risultati salvat
 profili del repertorio non entrano mai nelle Compilazioni, nei confronti tra i profili
 del docente né nei dati di ricerca; in prova il confronto tra compilazioni usa il
 repertorio dello studente simulato e la Bussola conosce gli strumenti che ha già
-«compilato» (tipo e data, senza punteggi). Si creano, modificano, archiviano, ripristinano
-ed eliminano (con conferma) con salvataggio esplicito; gli archiviati non compaiono
-nelle Opzioni della chat. Sono visibili solo al docente che li ha creati e non
+«compilato» (tipo e data, senza punteggi). I profili si creano e modificano con
+salvataggio esplicito: i comandi Salva e Annulla sono presenti in testa e in coda
+all'editor nelle sei lingue ufficiali, con conferma prima di scartare modifiche non
+salvate sia per Annulla sia per l'uscita dalla pagina; gli elementi si archiviano,
+ripristinano ed eliminano (con conferma). Gli archiviati non compaiono nelle
+Opzioni della chat. Sono visibili solo al docente che li ha creati e non
 contengono né toccano dati di studenti reali: la pagina invita a non inserirne.
 
 Il Taccuino del docente è un’autodescrizione del ruolo e della pratica abituale,

@@ -133,13 +133,31 @@ Limiti:
 ## Profili: salvataggio esplicito e avvio diretto
 
 Sotto ogni taccuino attivo il repertorio riusa l’editor dei punteggi corrente,
-con il primario petrol **Salva** e l’icona di salvataggio nelle sei lingue.
+con la coppia di comandi **Salva** (primario petrol con icona di salvataggio) e
+**Annulla** (secondario con etichetta nelle sei lingue ufficiali: IT Annulla,
+EN Cancel, ES Cancelar, FR Annuler, DE Abbrechen, SV Avbryt). I comandi sono
+duplicati sia in testa sia in coda al modulo dei punteggi (`ScoreInputForm` con
+`submitAction="save"`), restando sempre raggiungibili anche dopo aver scorso i 25
+fattori del QSA senza dover risalire la pagina.
+
 Il comando resta nella pagina e non apre questionari o chat; i flussi ordinari
 dei questionari conservano **Continua** e la freccia avanti. Generazione e modifica
-non persistono: il salvataggio esegue POST per un nuovo profilo, PUT per uno
-esistente, mostra «Salvato» e rilegge il repertorio. Un errore mantiene il form;
-durante la richiesta campi e comandi sono disabilitati. L’uscita con modifiche
-richiede conferma, come negli altri editor espliciti.
+non persistono in automatico:
+
+- **Salvataggio**: esegue POST per un nuovo profilo o PUT per uno esistente;
+  durante la richiesta campi e pulsanti sono disabilitati (`busy`). A salvataggio
+  avvenuto chiude l’editor, mostra «Salvato» e rilegge il repertorio. In caso di
+  errore mantiene il modulo e i punteggi compilati per consentire il retry.
+- **Annullamento**: il pulsante «Annulla» (in testa o in coda) chiude subito l'editor
+  se non ci sono state modifiche; se ci sono modifiche non salvate (`dirty`) o un
+  profilo appena generato, richiede conferma esplicita («Ci sono modifiche non
+  salvate. Uscire e scartarle?») prima di chiudere e scartare i dati. Se l'utente
+  rifiuta, la bozza resta aperta. Lo stesso comportamento con conferma è uniformato
+  anche all'editor del taccuino di prova (`PracticeNotebooks`) e al cambio di strumento
+  dal selettore con modifiche pendenti.
+- **Uscita senza salvataggio**: qualsiasi tentativo di navigazione (link interni,
+  ritorno indietro nel browser, chiusura della scheda o ricaricamento) viene intercettato
+  da `useDraftGuard` con la stessa richiesta di conferma a protezione della bozza.
 
 `PUT /teacher/practice-notebooks/{notebook_id}/results/{result_id}` accetta
 solo `scores`, con la stessa validazione 1–9 del POST. Ruoli e proprietà sono
