@@ -1989,8 +1989,10 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Savickas interview - question 1 of 5. "
             "Ask this question: 'Who are three people you admired growing up "
             "(real or fictional) and what specific qualities do you admire in each of them?'. "
-            "Wait for the answer before asking one useful follow-up in a later turn. "
-            "When you have enough material, give a mini-summary and on the last line put only [[AVANZA_STEP]]."
+            "Wait for the answer before exploring what those qualities mean for them and their choices in practice. "
+            "Stay with this question while they develop it (about five exchanges at most); "
+            "when a concrete meaning has emerged and they have answered one reading of it, "
+            "give a mini-summary in their words and on the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "savickas-interview",
         "color_theme": "blue",
@@ -2004,8 +2006,10 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Savickas interview - question 2 of 5. "
             "Ask this question: 'Which magazines, websites, channels or content do you follow most willingly, "
             "and what attracts you about this content?'. "
-            "Wait for the answer before asking one useful follow-up in a later turn. "
-            "When you have enough material, give a mini-summary and on the last line put only [[AVANZA_STEP]]."
+            "Wait for the answer before exploring what interests, themes or environments this content opens up for them. "
+            "Stay with this question while they develop it (about five exchanges at most); "
+            "when a concrete meaning has emerged and they have answered one reading of it, "
+            "give a mini-summary in their words and on the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "savickas-interview",
         "color_theme": "indigo",
@@ -2019,8 +2023,10 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Savickas interview - question 3 of 5. "
             "Ask this question: 'What is your favourite story from a book, film or series? "
             "Tell it to me briefly and say what strikes you most about it.'. "
-            "Wait for the answer before asking one useful follow-up in a later turn. "
-            "When you have enough material, give a mini-summary and on the last line put only [[AVANZA_STEP]]."
+            "Wait for the answer before exploring how the central character or plot relates to their own way of facing challenges. "
+            "Stay with this question while they develop it (about five exchanges at most); "
+            "when a concrete meaning has emerged and they have answered one reading of it, "
+            "give a mini-summary in their words and on the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "savickas-interview",
         "color_theme": "amber",
@@ -2034,8 +2040,10 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Savickas interview - question 4 of 5. "
             "Ask this question: 'What is your motto, or the phrase that guides you most often? "
             "How do you apply it in important choices?'. "
-            "Wait for the answer before asking one useful follow-up in a later turn. "
-            "When you have enough material, give a mini-summary and on the last line put only [[AVANZA_STEP]]."
+            "Wait for the answer before exploring how this motto actually guides what they do when making a difficult choice. "
+            "Stay with this question while they develop it (about five exchanges at most); "
+            "when a concrete meaning has emerged and they have answered one reading of it, "
+            "give a mini-summary in their words and on the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "savickas-interview",
         "color_theme": "teal",
@@ -2049,8 +2057,10 @@ DEFAULT_SAVICKAS_GUIDED_STEPS: List[Dict] = [
             "Savickas interview - question 5 of 5. "
             "Ask this question: 'Tell me three early memories (ideally between ages 3 and 6) "
             "and give a short title to each memory.'. "
-            "Wait for the answer before asking one useful follow-up in a later turn. "
-            "When you have enough material, give a mini-summary and on the last line put only [[AVANZA_STEP]]."
+            "Wait for the answer before exploring what central motif or preoccupation recurs across these scenes. "
+            "Stay with this question while they develop it (about five exchanges at most); "
+            "when a concrete meaning has emerged and they have answered one reading of it, "
+            "give a mini-summary in their words and on the last line put only [[AVANZA_STEP]]."
         ),
         "system_prompt_mode": "savickas-interview",
         "color_theme": "rose",
@@ -2523,9 +2533,11 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'prompt': 'Explore A1 public speaking anxiety, part of the affective-emotional dimension. Ask '
             'how the person experiences speaking before others in a job-seeking or professional '
             'relational situation. Distinguish anxiety from C2 communicative competence; do not '
-            'infer that one determines the other. Ask ONE open question and at most two '
-            'follow-ups, request a concrete example, then a mini-summary and [[AVANZA_STEP]] on '
-            'the last line.',
+            'infer that one determines the other. Stay with this area while the person is developing '
+            'it: ONE question per turn, aimed at what they do, how they choose and what it produces. '
+            'Close the area when a concrete way of acting has emerged and they have answered one '
+            'reading of it, when they ask to move on, or after about five exchanges at most. Then '
+            'give back what emerged in their words and put only [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
   'color_theme': 'slate',
   'label_i18n': {'en': '2. Public speaking anxiety',
@@ -2538,10 +2550,13 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'sort_order': 3,
   'label': '3. Insicurezza e inadeguatezza',
   'prompt': 'Explore the other affective-emotional scales separately: A2 sense of insecurity and '
-            'A3 sense of inadequacy. Ask ONE open question on a real professional or job-seeking '
-            'situation, then at most two follow-ups to distinguish uncertainty from feeling '
-            'inadequate. Reflect without diagnosis or treating responsibility as a separate scale. '
-            'Close with a mini-summary and [[AVANZA_STEP]] on the last line.',
+            'A3 sense of inadequacy. Ask how the person experiences uncertainty and feeling inadequate '
+            'in professional or job-seeking situations, distinguishing the two without diagnosis. '
+            'Stay with this area while the person is developing it: ONE question per turn, aimed at '
+            'what they do, how they choose and what it produces. Close the area when a concrete way '
+            'of acting has emerged and they have answered one reading of it, when they ask to move on, '
+            'or after about five exchanges at most. Then give back what emerged in their words and put '
+            'only [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
   'color_theme': 'slate',
   'label_i18n': {'en': '3. Insecurity and inadequacy',
@@ -2554,10 +2569,13 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'sort_order': 4,
   'label': '4. Dimensione volitiva',
   'prompt': 'Explore the volitional dimension, distinguishing V1 self-regulation and perseverance '
-            'at work from V2 coping with personal challenges. Ask ONE open question on a work '
-            'commitment and at most two follow-ups to explore organisation/perseverance and '
-            'response to setbacks separately. Use a concrete example. Close with a mini-summary '
-            'and [[AVANZA_STEP]] on the last line.',
+            'at work from V2 coping with personal challenges. Ask how the person organises work '
+            'commitments and responds to setbacks, exploring the two aspects separately. Stay with '
+            'this area while the person is developing it: ONE question per turn, aimed at what they '
+            'do, how they choose and what it produces. Close the area when a concrete way of acting '
+            'has emerged and they have answered one reading of it, when they ask to move on, or after '
+            'about five exchanges at most. Then give back what emerged in their words and put only '
+            '[[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
   'color_theme': 'slate',
   'label_i18n': {'en': '4. Volitional dimension',
@@ -2570,10 +2588,13 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'sort_order': 5,
   'label': '5. Dimensione cognitiva',
   'prompt': 'Explore the cognitive dimension, distinguishing C1 elaborative competences from C2 '
-            'communicative competence. Ask ONE open question on understanding and communicating an '
-            'idea in a professional context; at most two follow-ups on connections/application and '
-            'clarity/engagement with interlocutors. C2 is not A1 anxiety. Close with a '
-            'mini-summary and [[AVANZA_STEP]] on the last line.',
+            'communicative competence. Ask how the person understands, connects and communicates '
+            'ideas in professional situations. C2 is not A1 anxiety. Stay with this area while the '
+            'person is developing it: ONE question per turn, aimed at what they do, how they choose '
+            'and what it produces. Close the area when a concrete way of acting has emerged and they '
+            'have answered one reading of it, when they ask to move on, or after about five exchanges '
+            'at most. Then give back what emerged in their words and put only [[AVANZA_STEP]] on the '
+            'last line.',
   'system_prompt_mode': 'qpcc-interview',
   'color_theme': 'slate',
   'label_i18n': {'en': '5. Cognitive dimension',
@@ -2586,11 +2607,13 @@ DEFAULT_QPCC_GUIDED_STEPS: List[Dict] = [{'id': 'qpcc-profilo',
   'sort_order': 6,
   'label': '6. Dimensione motivazionale',
   'prompt': 'Explore the motivational dimension, distinguishing M1 perceived competence, M2 ego '
-            'orientation and M3 causal attributions (internal locus of control). Ask ONE open '
-            'question on a professional success or setback; at most two follow-ups on perceived '
-            'capability, comparison/recognition and controllable causes. M2 is not automatically a '
-            'strength or difficulty. Close with a mini-summary and [[AVANZA_STEP]] on the last '
-            'line.',
+            'orientation and M3 causal attributions (internal locus of control). Ask how the person '
+            'experiences competence, recognition and causes of success or setbacks. M2 is not '
+            'automatically a strength or difficulty. Stay with this area while the person is '
+            'developing it: ONE question per turn, aimed at what they do, how they choose and what it '
+            'produces. Close the area when a concrete way of acting has emerged and they have answered '
+            'one reading of it, when they ask to move on, or after about five exchanges at most. Then '
+            'give back what emerged in their words and put only [[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qpcc-interview',
   'color_theme': 'slate',
   'label_i18n': {'en': '6. Motivational dimension',
@@ -2661,8 +2684,10 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
   'label': '2. Orientamento al Futuro',
   'prompt': 'Area 1/4 - Concern and future orientation (Concern). Explore how much the student thinks about '
             "and prepares for their future, and how aware they are that today's choices influence tomorrow. "
-            'Ask how they imagine the coming years and what they do to prepare. When the area is covered, '
-            'give a mini-summary and on the last line only [[AVANZA_STEP]].',
+            'Open by asking how they look at the coming years and what choices or preparation they actually '
+            'make today. Stay with this area while the student develops it (about five exchanges at most); '
+            'close when a concrete way of choosing or preparing has emerged and they have answered one reading '
+            'of it, then give back what emerged in their words and on the last line only [[AVANZA_STEP]].',
   'system_prompt_mode': 'qap-interview',
   'color_theme': 'blue',
   'label_i18n': {'en': '2. Future Orientation',
@@ -2675,9 +2700,12 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
   'sort_order': 3,
   'label': '3. Controllo e Autonomia',
   'prompt': 'Area 2/4 - Control and autonomy (Control). Explore how much the student decides autonomously, '
-            'takes responsibility for their own actions and relies on themselves in important choices. Ask '
-            'for an example of a decision they made on their own. When the area is covered, give a '
-            'mini-summary and on the last line only [[AVANZA_STEP]].',
+            'takes responsibility for their own actions and relies on themselves in important choices. '
+            'Open by asking what they do when an important decision is up to them, how they decide and '
+            'what follows from that way of choosing. Stay with this area while the student develops it '
+            '(about five exchanges at most); close when a concrete way of deciding has emerged and they '
+            'have answered one reading of it, then give back what emerged in their words and put only '
+            '[[AVANZA_STEP]] on the last line.',
   'system_prompt_mode': 'qap-interview',
   'color_theme': 'indigo',
   'label_i18n': {'en': '3. Control and Autonomy',
@@ -2690,9 +2718,11 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
   'sort_order': 4,
   'label': "4. Curiosità ed Esplorazione",
   'prompt': 'Area 3/4 - Curiosity and exploration (Curiosity). Explore how much the student explores the '
-            'environment around them, looks for opportunities to grow and carefully examines the options '
-            'before choosing. Ask for an example of something new they have explored recently. When the area '
-            'is covered, give a mini-summary and on the last line only [[AVANZA_STEP]].',
+            'environment around them, looks for opportunities to grow and examines options before choosing. '
+            'Open by asking what they do to explore new options or possibilities, how they go looking and '
+            'what that search produces. Stay with this area while the student develops it (about five exchanges '
+            'at most); close when a concrete way of exploring has emerged and they have answered one reading '
+            'of it, then give back what emerged in their words and on the last line only [[AVANZA_STEP]].',
   'system_prompt_mode': 'qap-interview',
   'color_theme': 'amber',
   'label_i18n': {'en': '4. Curiosity and Exploration',
@@ -2705,9 +2735,11 @@ DEFAULT_QAP_GUIDED_STEPS: List[Dict] = [{
   'sort_order': 5,
   'label': '5. Fiducia e Problem Solving',
   'prompt': 'Area 4/4 - Confidence (Confidence). Explore how capable the student feels of completing tasks, '
-            'overcoming obstacles and facing and solving problems. Ask for an example of an obstacle they '
-            'overcame. When the area is covered, give a mini-summary and on the last line only '
-            '[[AVANZA_STEP]].',
+            'overcoming obstacles and facing and solving problems. Open by asking what they do when they run '
+            'into a difficulty in a demanding task, how they respond and what that response leads to. '
+            'Stay with this area while the student develops it (about five exchanges at most); close when a '
+            'concrete way of tackling obstacles has emerged and they have answered one reading of it, then '
+            'give back what emerged in their words and on the last line only [[AVANZA_STEP]].',
   'system_prompt_mode': 'qap-interview',
   'color_theme': 'teal',
   'label_i18n': {'en': '5. Confidence and Problem Solving',
