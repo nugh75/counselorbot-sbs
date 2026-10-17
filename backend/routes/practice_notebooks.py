@@ -12,11 +12,13 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .. import auth, models, schemas
 from ..database import get_db
 from ..teacher_context import visible_group_for_teacher
+from .survey import _session_conversation_messages
 
 router = APIRouter()
 
@@ -209,3 +211,63 @@ async def update_practice_result(
     db.commit()
     db.refresh(result)
     return result
+
+
+# --- Chat guidate in prova: elenco e trascrizione, anche dopo «Concludi» ---
+
+def _practice_chat_query(db: Session, notebook: models.TeacherPracticeNotebook):
+    """Turni del docente in questo taccuino: registrati in prova o con punteggi da una chat.
+
+    Sempre filtrati sull'autore: un session_id nel repertorio non apre log altrui."""
+    from_results = select(models.TeacherPracticeResult.session_id).where(
+        models.TeacherPracticeResult.notebook_id == notebook.id,
+        models.TeacherPracticeResult.source == "chat",
+    )
+    return db.query(models.Log).filter(
+        models.Log.action == "chat_message",
+        models.Log.username == notebook.owner_username,
+        (models.Log.details["practice_notebook_id"].as_integer() == notebook.id)
+        | models.Log.session_id.in_(from_results),
+    )
+
+
+@router.get("/teacher/practice-notebooks/{notebook_id}/chats", response_model=List[schemas.PracticeChatSummary])
+async def list_practice_chats(
+    notebook_id: int,
+    current_user: dict = Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Chat del taccuino, dalla piu' recente."""
+    notebook = _owned(db, current_user["username"], notebook_id)
+    rows = (
+        _practice_chat_query(db, notebook)
+        .with_entities(
+            models.Log.session_id,
+            func.max(models.Log.questionnaire_type),
+            func.min(models.Log.timestamp),
+            func.max(models.Log.timestamp),
+            func.count(models.Log.id),
+        )
+        .group_by(models.Log.session_id)
+        .order_by(func.max(models.Log.timestamp).desc())
+        .all()
+    )
+    return [
+        schemas.PracticeChatSummary(session_id=session_id, questionnaire_type=questionnaire_type,
+                                    started_at=started_at, updated_at=updated_at, turns=turns)
+        for session_id, questionnaire_type, started_at, updated_at, turns in rows
+    ]
+
+
+@router.get("/teacher/practice-notebooks/{notebook_id}/chats/{session_id}")
+async def get_practice_chat_transcript(
+    notebook_id: int,
+    session_id: str,
+    current_user: dict = Depends(auth.get_current_plan_manager),
+    db: Session = Depends(get_db),
+):
+    """Trascrizione di una chat del taccuino, solo con i turni del docente."""
+    notebook = _owned(db, current_user["username"], notebook_id)
+    if not _practice_chat_query(db, notebook).filter(models.Log.session_id == session_id).first():
+        raise HTTPException(status_code=404, detail="Practice chat not found")
+    return {"session_id": session_id, "messages": _session_conversation_messages(db, session_id, notebook.owner_username)}

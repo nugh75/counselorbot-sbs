@@ -602,14 +602,12 @@ def _pdf_language(lang: str) -> str:
     return code if code in _PDF_SUMMARY_LANG_NAME else "it"
 
 
-def _session_conversation_messages(db: Session, session_id: str) -> list[dict]:
+def _session_conversation_messages(db: Session, session_id: str, username: str | None = None) -> list[dict]:
     messages: list[dict] = []
-    log_rows = (
-        db.query(models.Log)
-        .filter(models.Log.action == "chat_message", models.Log.session_id == session_id)
-        .order_by(models.Log.timestamp.asc())
-        .all()
-    )
+    query = db.query(models.Log).filter(models.Log.action == "chat_message", models.Log.session_id == session_id)
+    if username is not None:
+        query = query.filter(models.Log.username == username)
+    log_rows = query.order_by(models.Log.timestamp.asc()).all()
     for row in log_rows:
         d = row.details or {}
         user_input = (d.get("user_input") or "").strip()

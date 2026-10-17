@@ -941,6 +941,15 @@ class PracticeResultUpdate(BaseModel):
     _valid_scores = validator("scores", allow_reuse=True)(PracticeResultCreate._valid_scores.__func__)
 
 
+class PracticeChatSummary(BaseModel):
+    """Chat guidata in prova di un taccuino, aperta o conclusa (dai log dei turni)."""
+    session_id: str
+    questionnaire_type: Optional[str] = None
+    started_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    turns: int = 0
+
+
 class PracticeResultResponse(BaseModel):
     id: int
     notebook_id: int
